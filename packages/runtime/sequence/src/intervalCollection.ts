@@ -104,7 +104,7 @@ export class Interval implements ISerializableInterval {
     }
 }
 
-export class SharedStringInterval implements ISerializableInterval {
+export class SequenceInterval implements ISerializableInterval {
     public properties: MergeTree.PropertySet;
     private readonly checkMergeTree: MergeTree.MergeTree;
 
@@ -134,10 +134,10 @@ export class SharedStringInterval implements ISerializableInterval {
     }
 
     public clone() {
-        return new SharedStringInterval(this.start, this.end, this.intervalType);
+        return new SequenceInterval(this.start, this.end, this.intervalType);
     }
 
-    public compare(b: SharedStringInterval) {
+    public compare(b: SequenceInterval) {
         const startResult = this.start.compare(b.start);
         if (startResult === 0) {
             return (this.end.compare(b.end));
@@ -146,7 +146,7 @@ export class SharedStringInterval implements ISerializableInterval {
         }
     }
 
-    public overlaps(b: SharedStringInterval) {
+    public overlaps(b: SequenceInterval) {
         const result = (this.start.compare(b.end) < 0) &&
             (this.end.compare(b.start) >= 0);
         if (this.checkMergeTree) {
@@ -155,8 +155,8 @@ export class SharedStringInterval implements ISerializableInterval {
         return result;
     }
 
-    public union(b: SharedStringInterval) {
-        return new SharedStringInterval(this.start.min(b.start),
+    public union(b: SequenceInterval) {
+        return new SequenceInterval(this.start.min(b.start),
             this.end.max(b.end), this.intervalType);
     }
 
@@ -170,7 +170,7 @@ export class SharedStringInterval implements ISerializableInterval {
         return (endPos > bstart) && (startPos < bend);
     }
 
-    private checkOverlaps(b: SharedStringInterval, result: boolean) {
+    private checkOverlaps(b: SequenceInterval, result: boolean) {
         const astart = this.start.toPosition();
         const bstart = b.start.toPosition();
         const aend = this.end.toPosition();
@@ -203,12 +203,12 @@ function createPositionReference(client: MergeTree.Client, pos: number,
     return new MergeTree.LocalReference(client, undefined);
 }
 
-function createSharedStringInterval(
+function createSequenceInterval(
     label: string,
     start: number,
     end: number,
     client: MergeTree.Client,
-    intervalType: MergeTree.IntervalType): SharedStringInterval {
+    intervalType: MergeTree.IntervalType): SequenceInterval {
     let beginRefType = MergeTree.ReferenceType.RangeBegin;
     let endRefType = MergeTree.ReferenceType.RangeEnd;
     if (intervalType === MergeTree.IntervalType.Nest) {
@@ -236,8 +236,8 @@ function createSharedStringInterval(
         startLref.addProperties(rangeProp);
         endLref.addProperties(rangeProp);
 
-        const ival = new SharedStringInterval(startLref, endLref, intervalType, rangeProp);
-        // ival.checkMergeTree = sharedString.client.mergeTree;
+        const ival = new SequenceInterval(startLref, endLref, intervalType, rangeProp);
+        // ival.checkMergeTree = sequence.client.mergeTree;
         return ival;
     } else {
         return null;
@@ -365,48 +365,48 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
     }
 }
 
-function compareSharedStringIntervalEnds(a: SharedStringInterval, b: SharedStringInterval): number {
+function compareSequenceIntervalEnds(a: SequenceInterval, b: SequenceInterval): number {
     return a.end.compare(b.end);
 }
 
-class SharedStringIntervalCollectionFactory
-    implements IValueFactory<IntervalCollection<SharedStringInterval>> {
+class SequenceIntervalCollectionFactory
+    implements IValueFactory<IntervalCollection<SequenceInterval>> {
     public load(
         emitter: IValueOpEmitter,
         raw: ISerializedInterval[] = [],
-    ): IntervalCollection<SharedStringInterval> {
-        const helpers: IIntervalHelpers<SharedStringInterval> = {
-            compareEnds: compareSharedStringIntervalEnds,
-            create: createSharedStringInterval,
+    ): IntervalCollection<SequenceInterval> {
+        const helpers: IIntervalHelpers<SequenceInterval> = {
+            compareEnds: compareSequenceIntervalEnds,
+            create: createSequenceInterval,
         };
-        return new IntervalCollection<SharedStringInterval>(helpers, true, emitter, raw);
+        return new IntervalCollection<SequenceInterval>(helpers, true, emitter, raw);
     }
 
-    public store(value: IntervalCollection<SharedStringInterval>): ISerializedInterval[] {
+    public store(value: IntervalCollection<SequenceInterval>): ISerializedInterval[] {
         return value.serializeInternal();
     }
 }
 
-export class SharedStringIntervalCollectionValueType
-    implements IValueType<IntervalCollection<SharedStringInterval>> {
-    public static Name = "sharedStringIntervalCollection";
+export class SequenceIntervalCollectionValueType
+    implements IValueType<IntervalCollection<SequenceInterval>> {
+    public static Name = "sequenceIntervalCollection";
 
     public get name(): string {
-        return SharedStringIntervalCollectionValueType.Name;
+        return SequenceIntervalCollectionValueType.Name;
     }
 
-    public get factory(): IValueFactory<IntervalCollection<SharedStringInterval>> {
-        return SharedStringIntervalCollectionValueType._factory;
+    public get factory(): IValueFactory<IntervalCollection<SequenceInterval>> {
+        return SequenceIntervalCollectionValueType._factory;
     }
 
-    public get ops(): Map<string, IValueOperation<IntervalCollection<SharedStringInterval>>> {
-        return SharedStringIntervalCollectionValueType._ops;
+    public get ops(): Map<string, IValueOperation<IntervalCollection<SequenceInterval>>> {
+        return SequenceIntervalCollectionValueType._ops;
     }
 
-    private static readonly _factory: IValueFactory<IntervalCollection<SharedStringInterval>> =
-        new SharedStringIntervalCollectionFactory();
-    private static readonly _ops: Map<string, IValueOperation<IntervalCollection<SharedStringInterval>>> =
-        new Map<string, IValueOperation<IntervalCollection<SharedStringInterval>>>(
+    private static readonly _factory: IValueFactory<IntervalCollection<SequenceInterval>> =
+        new SequenceIntervalCollectionFactory();
+    private static readonly _ops: Map<string, IValueOperation<IntervalCollection<SequenceInterval>>> =
+        new Map<string, IValueOperation<IntervalCollection<SequenceInterval>>>(
         [[
             "add",
             {
@@ -628,7 +628,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval> {
 
     public attach(client: MergeTree.Client, label: string) {
         if (this.view) {
-            throw new Error("Only supports one SharedString attach");
+            throw new Error("Only supports one Sequence attach");
         }
 
         if ((client === undefined) && (this.requiresClient)) {
@@ -659,7 +659,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval> {
 
     public async getView(onDeserialize?: DeserializeCallback): Promise<IntervalCollectionView<TInterval>> {
         if (!this.view) {
-            return Promise.reject("attachSharedString must be called prior to retrieving the view");
+            return Promise.reject("attachSequence must be called prior to retrieving the view");
         }
 
         // Attach custom deserializers if specified
@@ -676,7 +676,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval> {
         op: ISequencedDocumentMessage) {
 
         if (!this.view) {
-            throw new Error("attachSharedString must be called");
+            throw new Error("attachSequence must be called");
         }
 
         return this.view.addInternal(serializedInterval, local, op);
@@ -684,7 +684,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval> {
 
     public serializeInternal() {
         if (!this.view) {
-            throw new Error("attachSharedString must be called");
+            throw new Error("attachSequence must be called");
         }
 
         return this.view.serializeInternal();

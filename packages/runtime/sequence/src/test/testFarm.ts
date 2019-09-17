@@ -78,7 +78,7 @@ export function propertyCopy() {
 function makeBookmarks(client: TestClient, bookmarkCount: number) {
     let mt = random.engines.mt19937();
     mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
-    let bookmarks = <SharedString.SharedStringInterval[]>[];
+    let bookmarks = <SharedString.SequenceInterval[]>[];
     let len = client.mergeTree.getLength(UniversalSequenceNumber, NonCollabClient);
     let maxRangeLen = Math.min(Math.floor(len / 100), 30);
     for (let i = 0; i < bookmarkCount; i++) {
@@ -109,7 +109,7 @@ function makeBookmarks(client: TestClient, bookmarkCount: number) {
             lref2.addProperties({ [MergeTree.reservedRangeLabelsKey]: ["bookmark"] });
             client.addLocalReference(lref1);
             client.addLocalReference(lref2);
-            bookmarks.push(new SharedString.SharedStringInterval(lref1, lref2, MergeTree.IntervalType.Simple));
+            bookmarks.push(new SharedString.SequenceInterval(lref1, lref2, MergeTree.IntervalType.Simple));
         } else {
             i--;
         }
@@ -214,8 +214,8 @@ export function TestPack(verbose = true) {
         let extractSnap = false;
         let includeMarkers = false;
         let measureBookmarks = true;
-        let bookmarks: SharedString.SharedStringInterval[];
-        let bookmarkRangeTree = new MergeTree.IntervalTree<SharedString.SharedStringInterval>();
+        let bookmarks: SharedString.SequenceInterval[];
+        let bookmarkRangeTree = new MergeTree.IntervalTree<SharedString.SequenceInterval>();
         let testOrdinals = true;
         let ordErrors = 0;
         let ordSuccess = 0;
@@ -588,8 +588,8 @@ export function TestPack(verbose = true) {
                     let len = server.mergeTree.getLength(UniversalSequenceNumber, server.getClientId());
                     let checkPos = <number[]>[];
                     let checkRange = <number[][]>[];
-                    let checkPosRanges = <SharedString.SharedStringInterval[]>[];
-                    let checkRangeRanges = <SharedString.SharedStringInterval[]>[];
+                    let checkPosRanges = <SharedString.SequenceInterval[]>[];
+                    let checkRangeRanges = <SharedString.SequenceInterval[]>[];
                     for (let i = 0; i < posChecksPerRound; i++) {
                         checkPos[i] = random.integer(0, len - 2)(mt);
                         let segoff1 = server.getContainingSegment(checkPos[i]);
@@ -597,7 +597,7 @@ export function TestPack(verbose = true) {
                         if (segoff1 && segoff1.segment && segoff2 && segoff2.segment) {
                             let lrefPos1 = new MergeTree.LocalReference(server, <MergeTree.BaseSegment>segoff1.segment, segoff1.offset);
                             let lrefPos2 = new MergeTree.LocalReference(server, <MergeTree.BaseSegment>segoff2.segment, segoff2.offset);
-                            checkPosRanges[i] = new SharedString.SharedStringInterval(lrefPos1, lrefPos2, MergeTree.IntervalType.Simple);
+                            checkPosRanges[i] = new SharedString.SequenceInterval(lrefPos1, lrefPos2, MergeTree.IntervalType.Simple);
                         } else {
                             i--;
                         }
@@ -615,7 +615,7 @@ export function TestPack(verbose = true) {
                         if (segoff1 && segoff1.segment && segoff2 && segoff2.segment) {
                             let lrefPos1 = new MergeTree.LocalReference(server, <MergeTree.BaseSegment>segoff1.segment, segoff1.offset);
                             let lrefPos2 = new MergeTree.LocalReference(server, <MergeTree.BaseSegment>segoff2.segment, segoff2.offset);
-                            checkRangeRanges[i] = new SharedString.SharedStringInterval(lrefPos1, lrefPos2, MergeTree.IntervalType.Simple);
+                            checkRangeRanges[i] = new SharedString.SequenceInterval(lrefPos1, lrefPos2, MergeTree.IntervalType.Simple);
                         } else {
                             i--;
                         }

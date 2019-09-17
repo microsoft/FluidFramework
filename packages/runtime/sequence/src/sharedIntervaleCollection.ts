@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ContentObjectStorage, IMapDataObject, IMapOperation, IValueChanged, IValueType, MapKernal } from "@prague/map";
+import { ContentObjectStorage, IMapDataObject, IMapOperation, IValueType, MapKernal } from "@prague/map";
 import {
     FileMode,
     ISequencedDocumentMessage,
@@ -33,13 +33,6 @@ import { pkgVersion } from "./packageVersion";
 
 const snapshotFileName = "header";
 const contentPath = "content";
-
-
-export const intervalCollectionMapPath = "intervalCollections/";
-
-function getIntervalCollectionPath(label: string): string {
-    return `${intervalCollectionMapPath}${label}`;
-}
 
 /**
  * The factory that defines the map
@@ -91,7 +84,7 @@ export class SharedIntervalCollectionFactory implements ISharedObjectFactory {
 export class SharedIntervalCollection<TInterval extends ISerializableInterval = Interval> extends SharedObject {
 
     public readonly [Symbol.toStringTag]: string = "SharedIntervalCollection";
-    protected readonly kernal: MapKernal;
+    protected readonly intervalMpkernal: MapKernal;
 
     /**
      * Constructs a new shared map. If the object is non-local an id and service interfaces will
@@ -104,7 +97,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
         private readonly valueType: IValueType<IntervalCollection<TInterval>>,
     ) {
         super(id, runtime, attributes);
-        this.kernal = new MapKernal(
+        this.intervalMpkernal = new MapKernal(
             runtime,
             this.handle,
             (op) => this.submitLocalMessage(op),
@@ -112,32 +105,24 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
         );
     }
 
-    public getIntervalCollection(key: string): IntervalCollection<TInterval> {
-        return this.kernal.get<IntervalCollection<TInterval>>(key);
-    }
-    public createIntervalCollection(key: string) {
-        this.kernal.set(key, undefined, this.valueType.name);
-    }
-
     public async waitSharedIntervalCollection(
         label: string,
     ): Promise<IntervalCollection<TInterval>> {
-        const translatedLabel = getIntervalCollectionPath(label);
-        return this.kernal.wait<IntervalCollection<TInterval>>(translatedLabel);
+        return this.intervalMpkernal.wait<IntervalCollection<TInterval>>(label);
     }
 
     // TODO: fix race condition on creation by putting type on every operation
-    public getSharedIntervalCollection(label: string): IntervalCollection<TInterval> {
-        return this.getSharedIntervalCollectionInternal(
-            label);
-    }
+    public getIntervalCollection(label: string): IntervalCollection<TInterval> {
+        if (!this.intervalMpkernal.has(label)) {
+            this.intervalMpkernal.set(
+                label,
+                undefined,
+                this.valueType.name);
+        }
 
-    // TODO: fix race condition on creation by putting type on every operation
-    public getGenericSharedIntervalCollection(
-        label: string,
-    ): IntervalCollection<TInterval> {
-        return this.getSharedIntervalCollectionInternal(
-            label);
+        const sharedCollection =
+            this.intervalMpkernal.get<IntervalCollection<TInterval>>(label);
+        return sharedCollection;
     }
 
     public snapshot(): ITree {
@@ -148,7 +133,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
                     path: snapshotFileName,
                     type: TreeEntry[TreeEntry.Blob],
                     value: {
-                        contents: this.kernal.serialize(),
+                        contents: this.intervalMpkernal.serialize(),
                         encoding: "utf-8",
                     },
                 },
@@ -170,26 +155,8 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
         return tree;
     }
 
-    /**
-     * Registers a listener on the specified events
-     */
-    public on(
-        event: "pre-op" | "op",
-        listener: (op: ISequencedDocumentMessage, local: boolean, target: this) => void): this;
-    public on(event: "valueChanged", listener: (
-        changed: IValueChanged,
-        local: boolean,
-        op: ISequencedDocumentMessage,
-        target: this) => void): this;
-    public on(event: string | symbol, listener: (...args: any[]) => void): this;
-
-    /* tslint:disable:no-unnecessary-override */
-    public on(event: string | symbol, listener: (...args: any[]) => void): this {
-        return super.on(event, listener);
-    }
-
     public serialize() {
-        return this.kernal.serialize();
+        return this.intervalMpkernal.serialize();
     }
 
     protected onDisconnect() {
@@ -205,7 +172,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
         const mapMessages: IMapOperation[] = [];
         const contentMessages: any[] = [];
         for (const message of pending) {
-            if (this.kernal.hasHandlerFor(message)) {
+            if (this.intervalMpkernal.hasHandlerFor(message)) {
                 mapMessages.push(message as IMapOperation);
             } else {
                 contentMessages.push(message);
@@ -214,7 +181,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
 
         // Deal with the map messages - for the map it's always last one wins so we just resend
         for (const message of mapMessages) {
-            const handler = this.kernal.messageHandlers.get(message.type);
+            const handler = this.intervalMpkernal.messageHandlers.get(message.type);
             handler.submit(message);
         }
 
@@ -229,7 +196,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
         const header = await storage.read(snapshotFileName);
 
         const data = header ? JSON.parse(fromBase64ToUtf8(header)) : {};
-        this.kernal.populate(data as IMapDataObject);
+        this.intervalMpkernal.populate(data as IMapDataObject);
 
         const contentStorage = new ContentObjectStorage(storage);
         await this.loadContent(
@@ -247,8 +214,8 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
         let handled = false;
         if (message.type === MessageType.Operation) {
             const op: IMapOperation = message.contents as IMapOperation;
-            if (this.kernal.messageHandlers.has(op.type)) {
-                this.kernal.messageHandlers.get(op.type)
+            if (this.intervalMpkernal.messageHandlers.has(op.type)) {
+                this.intervalMpkernal.messageHandlers.get(op.type)
                     .process(op, local, message);
                 handled = true;
             }
@@ -260,7 +227,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
     }
 
     protected registerCore() {
-        for (const value of this.kernal.values()) {
+        for (const value of this.intervalMpkernal.values()) {
             if (SharedObject.is(value)) {
                 value.register();
             }
@@ -303,22 +270,5 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
      */
     protected snapshotContent(): ITree {
         return null;
-    }
-
-    private getSharedIntervalCollectionInternal(
-        label: string,
-    ): IntervalCollection<TInterval> {
-        const translatedLabel = getIntervalCollectionPath(label);
-
-        if (!this.kernal.has(translatedLabel)) {
-            this.kernal.set(
-                translatedLabel,
-                undefined,
-                this.valueType.name);
-        }
-
-        const sharedCollection =
-        this.kernal.get<IntervalCollection<TInterval>>(translatedLabel);
-        return sharedCollection;
     }
 }

@@ -84,7 +84,7 @@ export class TableDocument extends PrimedComponent implements ITable {
     }
 
     public async getRange(label: string) {
-        const intervals = this.matrix.getSharedIntervalCollection(label);
+        const intervals = this.matrix.getIntervalCollection(label);
         const interval = (await intervals.getView()).nextInterval(0);
         return new CellRange(interval, this.localRefToRowCol);
     }
@@ -115,7 +115,7 @@ export class TableDocument extends PrimedComponent implements ITable {
         debug(`createInterval(${label}, ${minRow}:${minCol}..${maxRow}:${maxCol})`);
         const start = rowColToPosition(minRow, minCol);
         const end = rowColToPosition(maxRow, maxCol);
-        const intervals = this.matrix.getSharedIntervalCollection(label);
+        const intervals = this.matrix.getIntervalCollection(label);
         intervals.add(start, end, IntervalType.SlideOnRemove);
     }
 

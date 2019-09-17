@@ -23,14 +23,14 @@ import * as assert from "assert";
 const cloneDeep = require("lodash/cloneDeep") as <T>(value: T) => T;
 import {
     IntervalCollection,
-    SharedStringInterval,
-    SharedStringIntervalCollectionValueType,
+    SequenceInterval,
+    SequenceIntervalCollectionValueType,
 } from "./intervalCollection";
 import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent";
-import {intervalCollectionMapPath, SharedIntervalCollection} from "./sharedIntervaleCollection";
+import { SharedIntervalCollection} from "./sharedIntervaleCollection";
 
 export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
-extends SharedIntervalCollection<SharedStringInterval> {
+extends SharedIntervalCollection<SequenceInterval> {
     get loaded(): Promise<void> {
         return this.loadedDeferred.promise;
     }
@@ -93,7 +93,7 @@ extends SharedIntervalCollection<SharedStringInterval> {
         attributes: IChannelAttributes,
         public readonly segmentFromSpec: (spec: MergeTree.IJSONSegment) => MergeTree.ISegment,
     ) {
-        super(id, document, attributes, new SharedStringIntervalCollectionValueType());
+        super(id, document, attributes, new SequenceIntervalCollectionValueType());
 
         /* tslint:disable:no-unsafe-any */
         this.client = new MergeTree.Client(
@@ -496,24 +496,17 @@ extends SharedIntervalCollection<SharedStringInterval> {
 
     private initializeIntervalCollections() {
 
-        const intervalCollections = Array.from(this.kernal.keys())
-            .filter((key) => key.indexOf(intervalCollectionMapPath) === 0);
-
         // Listen and initialize new SharedIntervalCollections
-        this.on("valueChanged", (ev: IValueChanged) => {
-            if (ev.key.indexOf(intervalCollectionMapPath) !== 0) {
-                return;
-            }
-
-            const intervalCollection = this.kernal.get<IntervalCollection<SharedStringInterval>>(ev.key);
+        this.intervalMpkernal.on("valueChanged", (ev: IValueChanged) => {
+            const intervalCollection = this.intervalMpkernal.get<IntervalCollection<SequenceInterval>>(ev.key);
             if (!intervalCollection.attached) {
                 intervalCollection.attach(this.client, ev.key);
             }
         });
 
         // Initialize existing SharedIntervalCollections
-        for (const key of intervalCollections) {
-            const intervalCollection = this.kernal.get<IntervalCollection<SharedStringInterval>>(key);
+        for (const key of this.intervalMpkernal.keys()) {
+            const intervalCollection = this.intervalMpkernal.get<IntervalCollection<SequenceInterval>>(key);
             intervalCollection.attach(this.client, key);
         }
     }

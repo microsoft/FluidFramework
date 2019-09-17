@@ -3047,10 +3047,10 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     public wheelTicking = false;
     public topChar = -1;
     public cursor: FlowCursor;
-    public bookmarks: Sequence.SharedIntervalCollectionView<Sequence.SharedStringInterval>;
-    public tempBookmarks: Sequence.SharedStringInterval[];
-    public comments: Sequence.SharedIntervalCollection<Sequence.SharedStringInterval>;
-    public commentsView: Sequence.SharedIntervalCollectionView<Sequence.SharedStringInterval>;
+    public bookmarks: Sequence.IntervalCollectionView<Sequence.SequenceInterval>;
+    public tempBookmarks: Sequence.SequenceInterval[];
+    public comments: Sequence.IntervalCollection<Sequence.SequenceInterval>;
+    public commentsView: Sequence.IntervalCollectionView<Sequence.SequenceInterval>;
     public sequenceTest: Sequence.SharedNumberSequence;
     public persistentComponents: Map<IComponent, PersistentComponent>;
     public sequenceObjTest: Sequence.SharedObjectSequence<ISeqTestItem>;
@@ -4557,7 +4557,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
 
     public showAdjacentBookmark(before = true) {
         if (this.bookmarks) {
-            let result: Sequence.SharedStringInterval;
+            let result: Sequence.SequenceInterval;
             if (before) {
                 result = this.bookmarks.previousInterval(this.cursor.pos);
             } else {
@@ -5179,12 +5179,12 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             ]);
         }
 
-        const bookmarksCollection = this.sharedString.getSharedIntervalCollection("bookmarks");
+        const bookmarksCollection = this.sharedString.getIntervalCollection("bookmarks");
         this.bookmarks = await bookmarksCollection.getView();
 
         // For examples of showing the API we do interval adds on the collection with comments. But use
         // the view when doing bookmarks.
-        this.comments = this.sharedString.getSharedIntervalCollection("comments");
+        this.comments = this.sharedString.getIntervalCollection("comments");
         this.commentsView = await this.comments.getView();
 
         this.sequenceTest = await this.docRoot

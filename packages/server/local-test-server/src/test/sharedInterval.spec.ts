@@ -9,11 +9,11 @@ import { ISerializableValue, ISharedMap, SharedMap } from "@prague/map";
 import { IntervalType, LocalReference } from "@prague/merge-tree";
 import { IBlob } from "@prague/protocol-definitions";
 import {
+    IntervalCollectionView,
     ISerializedInterval,
-    SharedIntervalCollectionView,
+    SequenceInterval,
     SharedString,
     SharedStringFactory,
-    SharedStringInterval,
 } from "@prague/sequence";
 import * as assert from "assert";
 import {
@@ -27,7 +27,7 @@ import {
 
 const assertIntervalsHelper = (
     sharedString: SharedString,
-    intervals: SharedIntervalCollectionView<SharedStringInterval>,
+    intervals: IntervalCollectionView<SequenceInterval>,
     expected: ReadonlyArray<{start: number; end: number}>,
 ) => {
     const actual = intervals.findOverlappingIntervals(0, sharedString.getLength() - 1);
@@ -56,7 +56,7 @@ describe("SharedInterval", () => {
     describe("one client", () => {
         let host: TestHost;
         let sharedString: SharedString;
-        let intervals: SharedIntervalCollectionView<SharedStringInterval>;
+        let intervals: IntervalCollectionView<SequenceInterval>;
 
         const assertIntervals = (expected: ReadonlyArray<{start: number; end: number}>) => {
             assertIntervalsHelper(sharedString, intervals, expected);
@@ -254,7 +254,7 @@ describe("SharedInterval", () => {
 
             outerString1.insertText(0, "outer string");
 
-            outerString1.createIntervalCollection("comments");
+            outerString1.getIntervalCollection("comments");
             await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
 
             const intervalCollection1 = outerString1.getIntervalCollection("comments");
@@ -263,10 +263,6 @@ describe("SharedInterval", () => {
             assert.ok(intervalCollection1);
             assert.ok(intervalCollection2);
             assert.ok(intervalCollection3);
-
-            intervalCollection1.attach(outerString1.client, "comments");
-            intervalCollection2.attach(outerString2.client, "comments");
-            intervalCollection3.attach(outerString3.client, "comments");
 
             const comment1Text = user1Document.createString();
             comment1Text.insertText(0, "a comment...");
