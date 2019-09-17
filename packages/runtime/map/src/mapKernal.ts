@@ -196,37 +196,16 @@ export class MapKernal {
     }
 
     /**
-     * Public set API.  Type must be passed if setting a value type.
+     * Public set API.
      * @param key - key to set
-     * @param value - value to set (or initialization params if value type)
-     * @param type - type getting set (if value type)
+     * @param value - value to set
      */
-    public set(key: string, value: any, type?: string): this {
-        let localValue: ILocalValue;
-        let serializableValue: ISerializableValue;
-        if (type) {
-            // value is actually initialization params in the value type case
-            localValue = this.localValueMaker.makeValueType(type, this.makeMapValueOpEmitter(key), value);
-
-            // TODO ideally we could use makeSerializable in this case as well. But the interval
-            // collection has assumptions of attach being called prior. Given the IComponentSerializer it
-            // may be possible to remove custom value type serialization entirely.
-            const transformedValue = serializeHandles(
-                value,
-                this.runtime.IComponentSerializer,
-                this.runtime.IComponentHandleContext,
-                this.handle);
-
-            // This is a special form of serialized valuetype only used for set, containing info for initialization.
-            // After initialization, the serialized form will need to come from the .store of the value type's factory.
-            serializableValue = { type, value: transformedValue };
-        } else {
-            localValue = this.localValueMaker.fromInMemory(value);
-            serializableValue = localValue.makeSerializable(
-                this.runtime.IComponentSerializer,
-                this.runtime.IComponentHandleContext,
-                this.handle);
-        }
+    public set(key: string, value: any) {
+        const localValue = this.localValueMaker.fromInMemory(value);
+        const serializableValue = localValue.makeSerializable(
+            this.runtime.IComponentSerializer,
+            this.runtime.IComponentHandleContext,
+            this.handle);
 
         this.setCore(
             key,
@@ -241,7 +220,40 @@ export class MapKernal {
             value: serializableValue,
         };
         this.submitMapKeyMessage(op);
-        return this;
+    }
+
+    /**
+     * {@inheritDoc IValueTypeCreator.createValueType}
+     */
+    public createValueType(key: string, type: string, params: any) {
+        const localValue = this.localValueMaker.makeValueType(type, this.makeMapValueOpEmitter(key), params);
+
+        // TODO ideally we could use makeSerializable in this case as well. But the interval
+        // collection has assumptions of attach being called prior. Given the IComponentSerializer it
+        // may be possible to remove custom value type serialization entirely.
+        const transformedValue = serializeHandles(
+            params,
+            this.runtime.IComponentSerializer,
+            this.runtime.IComponentHandleContext,
+            this.handle);
+
+        // This is a special form of serialized valuetype only used for set, containing info for initialization.
+        // After initialization, the serialized form will need to come from the .store of the value type's factory.
+        const serializableValue = { type, value: transformedValue };
+
+        this.setCore(
+            key,
+            localValue,
+            true,
+            null,
+        );
+
+        const op: IMapSetOperation = {
+            key,
+            type: "set",
+            value: serializableValue,
+        };
+        this.submitMapKeyMessage(op);
     }
 
     /**

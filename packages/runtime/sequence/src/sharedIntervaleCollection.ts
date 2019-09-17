@@ -114,10 +114,10 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
     // TODO: fix race condition on creation by putting type on every operation
     public getIntervalCollection(label: string): IntervalCollection<TInterval> {
         if (!this.intervalMapkernal.has(label)) {
-            this.intervalMapkernal.set(
+            this.intervalMapkernal.createValueType(
                 label,
-                undefined,
-                this.valueType.name);
+                this.valueType.name,
+                undefined);
         }
 
         const sharedCollection =

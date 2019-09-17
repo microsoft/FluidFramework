@@ -65,7 +65,7 @@ export function create(
                 storageUrl,
             },
             tokens: { jwt: token },
-            type: "prague",
+            type: "fluid",
             url: fluidUrl,
         };
 

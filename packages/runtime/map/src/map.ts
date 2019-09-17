@@ -212,13 +212,20 @@ export class SharedMap extends SharedObject implements ISharedMap {
     }
 
     /**
-     * Public set API.  Type must be passed if setting a value type.
+     * Public set API.
      * @param key - key to set
-     * @param value - value to set (or initialization params if value type)
-     * @param type - type getting set (if value type)
+     * @param value - value to set
      */
-    public set(key: string, value: any, type?: string): this {
-        this.kernal.set(key, value, type);
+    public set(key: string, value: any): this {
+        this.kernal.set(key, value);
+        return this;
+    }
+
+    /**
+     * {@inheritDoc IValueTypeCreator.createValueType}
+     */
+    public createValueType(key: string, type: string, params: any): this {
+        this.createValueType(key, type, params);
         return this;
     }
 

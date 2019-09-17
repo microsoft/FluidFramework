@@ -149,7 +149,7 @@ async function randomizeMap(map: ISharedMap) {
     const keys = ["foo", "bar", "baz", "binky", "winky", "twinkie"];
 
     const counter: Counter =
-        map.set("counter", undefined, CounterValueType.Name).
+        map.createValueType("counter", CounterValueType.Name, undefined).
             get("counter");
 
     setInterval(async () => {
