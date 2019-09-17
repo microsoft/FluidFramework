@@ -512,10 +512,10 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
         const translatedLabel = getIntervalCollectionPath(label);
 
         if (!this.has(translatedLabel)) {
-            this.set(
+            this.createValueType(
                 translatedLabel,
-                undefined,
-                type);
+                type,
+                undefined);
         }
 
         const sharedCollection = this.get<SharedIntervalCollection<TInterval>>(translatedLabel);
