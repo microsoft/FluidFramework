@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { randomId, TokenList } from "@fluid-example/flow-util-lib";
 import { PrimedComponent, PrimedComponentFactory } from "@prague/aqueduct";
 import { IComponent, IComponentHandle, IComponentHTMLOptions } from "@prague/component-core-interfaces";
-import { randomId, TokenList } from "@fluid-example/flow-util-lib";
 import {
     BaseSegment,
     createInsertSegmentOp,

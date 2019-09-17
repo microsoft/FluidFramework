@@ -5,7 +5,7 @@
 
 import { Char, Direction, getDeltaX, KeyCode } from "@fluid-example/flow-util-lib";
 import { ISegment, TextSegment } from "@prague/merge-tree";
-import { FlowDocument } from "..";
+import { FlowDocument } from "../";
 import { ClipboardFormat } from "../clipboard/paste";
 import { Caret } from "../editor/caret";
 import { Tag } from "../util/tag";

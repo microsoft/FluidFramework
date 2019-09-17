@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent } from "@prague/aqueduct";
 import { controls, ui } from "@fluid-example/client-ui-lib";
+import { PrimedComponent } from "@prague/aqueduct";
 import {
     IComponentHandle,
     IComponentHTMLOptions,

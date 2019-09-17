@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { SpellChecker } from "@fluid-example/spellchecker-agent";
 import { IComponentHandle } from "@prague/component-core-interfaces";
 import { IHost } from "@prague/container-definitions";
 import * as MergeTree from "@prague/merge-tree";
 import { IDocumentServiceFactory } from "@prague/protocol-definitions";
 import * as Sequence from "@prague/sequence";
-import {SpellChecker} from "@fluid-example/spellchecker-agent";
 import { BaseWork } from "./baseWork";
 import { IWork } from "./definitions";
 

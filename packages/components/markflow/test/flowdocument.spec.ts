@@ -3,17 +3,15 @@
 * Licensed under the MIT License.
 */
 
-// tslint:disable-next-line:no-import-side-effect
-import "mocha";
-
+import { randomId } from "@fluid-example/flow-util-lib";
 // tslint:disable:binary-expression-operand-order
 import { TestHost } from "@prague/local-test-server";
 import { Marker, ReferenceType } from "@prague/merge-tree";
 import * as assert from "assert";
+// tslint:disable-next-line:no-import-side-effect
+import "mocha";
 import { FlowDocument, flowDocumentFactory } from "../src/document";
 import { FlowDocumentType } from "../src/runtime";
-
-import { randomId } from "@fluid-example/flow-util-lib";
 import { Tag } from "../src/util/tag";
 
 describe("FlowDocument", () => {

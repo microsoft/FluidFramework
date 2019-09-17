@@ -3,51 +3,35 @@
  * Licensed under the MIT License.
  */
 
+import { controls, ui } from "@fluid-example/client-ui-lib";
+import { TextAnalyzer } from "@fluid-example/intelligence-runner-agent";
 import { SharedCell } from "@prague/cell";
 import * as API from "@prague/client-api";
-import { controls, ui } from "@fluid-example/client-ui-lib";
 import {
     IComponent,
     IComponentHandle,
     IComponentHTMLVisual,
     IComponentLoadable,
     IRequest,
-    IResponse } from "@prague/component-core-interfaces";
+    IResponse,
+} from "@prague/component-core-interfaces";
 import { ComponentRuntime } from "@prague/component-runtime";
 import { IInk, Ink } from "@prague/ink";
-import { TextAnalyzer } from "@fluid-example/intelligence-runner-agent";
 import * as DistributedMap from "@prague/map";
-import {
-    ISharedMap,
-    SharedMap,
-} from "@prague/map";
+import { ISharedMap, SharedMap } from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
-import {
-    IComponentContext,
-    IComponentRuntime,
-    ITask,
-    ITaskManager,
-} from "@prague/runtime-definitions";
-import {
-    IProvideSharedString,
-    SharedNumberSequence,
-    SharedObjectSequence,
-    SharedString,
-} from "@prague/sequence";
+import { IComponentContext, IComponentRuntime, ITask, ITaskManager } from "@prague/runtime-definitions";
+import { IProvideSharedString, SharedNumberSequence, SharedObjectSequence, SharedString } from "@prague/sequence";
 import { EventEmitter } from "events";
 import { parse } from "querystring";
-// tslint:disable:no-var-requires
-const performanceNow = require("performance-now");
-const debug = require("debug")("fluid:shared-text");
 // tslint:enable:no-var-requires
 import * as url from "url";
 import { Document } from "./document";
-import {
-    downloadRawText,
-    getInsights,
-    setTranslation,
-} from "./utils";
+import { downloadRawText, getInsights, setTranslation } from "./utils";
 
+// tslint:disable:no-var-requires
+const performanceNow = require("performance-now");
+const debug = require("debug")("fluid:shared-text");
 /**
  * Helper function to retrieve the handle for the default component route
  */

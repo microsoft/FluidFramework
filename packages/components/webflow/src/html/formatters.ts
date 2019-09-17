@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent, IComponentHTMLView } from "@prague/component-core-interfaces";
 import { Caret as CaretUtil, Direction, Rect } from "@fluid-example/flow-util-lib";
+import { IComponent, IComponentHTMLView } from "@prague/component-core-interfaces";
 import { Marker, TextSegment } from "@prague/merge-tree";
 import * as assert from "assert";
 import { DocSegmentKind, getComponentOptions, getCss, getDocSegmentKind } from "../document";

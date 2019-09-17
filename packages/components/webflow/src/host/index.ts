@@ -4,7 +4,12 @@
  */
 
 import { PrimedComponent, PrimedComponentFactory } from "@prague/aqueduct";
-import { IComponent, IComponentHTMLOptions, IComponentHTMLView, IComponentHTMLVisual } from "@prague/component-core-interfaces";
+import {
+    IComponent,
+    IComponentHTMLOptions,
+    IComponentHTMLView,
+    IComponentHTMLVisual,
+} from "@prague/component-core-interfaces";
 import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
 import { FlowDocument } from "../document";
 import { FlowDocumentType } from "../runtime";

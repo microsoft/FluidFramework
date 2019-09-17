@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import { TextAnalyzer } from "@fluid-example/intelligence-runner-agent";
 import { IComponentHandle } from "@prague/component-core-interfaces";
 import { IHost } from "@prague/container-definitions";
-import { TextAnalyzer } from "@fluid-example/intelligence-runner-agent";
 import { ISharedMap, SharedMap } from "@prague/map";
 import { IDocumentServiceFactory } from "@prague/protocol-definitions";
 import * as Sequence from "@prague/sequence";
-import { BaseWork} from "./baseWork";
-import { IWork} from "./definitions";
+import { BaseWork } from "./baseWork";
+import { IWork } from "./definitions";
 
 export class IntelWork extends BaseWork implements IWork {
 

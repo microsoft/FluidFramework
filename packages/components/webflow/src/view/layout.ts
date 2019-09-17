@@ -2,13 +2,14 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IComponent } from "@prague/component-core-interfaces";
+
 import { Dom, Scheduler } from "@fluid-example/flow-util-lib";
+import { IComponent } from "@prague/component-core-interfaces";
 import { ISegment, LocalReference, MergeTreeMaintenanceType } from "@prague/merge-tree";
 import { SequenceEvent } from "@prague/sequence";
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import { Tag } from "..";
+import { Tag } from "../";
 import { FlowDocument } from "../document";
 import { clamp, done, emptyObject, getSegmentRange } from "../util";
 import { extractRef, updateRef } from "../util/localref";

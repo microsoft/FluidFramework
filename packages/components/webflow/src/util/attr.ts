@@ -5,7 +5,7 @@
 
 import { areStringsEquivalent } from "@fluid-example/flow-util-lib";
 import { ISegment } from "@prague/merge-tree";
-import { emptyObject } from ".";
+import { emptyObject } from "./";
 
 export interface IHTMLAttributes {
     src?: string;

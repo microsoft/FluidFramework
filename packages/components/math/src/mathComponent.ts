@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import * as SearchMenu from "@fluid-example/search-menu";
 import * as ClientUI from "@fluid-example/client-ui-lib";
+import { Caret, CaretEventType, Direction, ICaretEvent } from "@fluid-example/flow-util-lib";
+import * as SearchMenu from "@fluid-example/search-menu";
 import {
     IComponent,
     IComponentHandleContext,
-
     IComponentHTMLOptions,
     IComponentHTMLView,
     IComponentHTMLVisual,
@@ -18,23 +18,15 @@ import {
     IResponse,
 } from "@prague/component-core-interfaces";
 import { ComponentHandle, ComponentRuntime } from "@prague/component-runtime";
-import { Caret, CaretEventType, Direction, ICaretEvent } from "@fluid-example/flow-util-lib";
 import {
     ComponentCursorDirection,
     IComponentCollection,
     IComponentCursor,
     IComponentLayout,
 } from "@prague/framework-definitions";
-import {
-    ISharedMap,
-    SharedMap,
-} from "@prague/map";
+import { ISharedMap, SharedMap } from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
-import {
-    IComponentContext,
-    IComponentFactory,
-    IComponentRuntime,
-} from "@prague/runtime-definitions";
+import { IComponentContext, IComponentFactory, IComponentRuntime } from "@prague/runtime-definitions";
 import * as Sequence from "@prague/sequence";
 import { ISharedObjectFactory } from "@prague/shared-object-common";
 import * as Katex from "katex";
