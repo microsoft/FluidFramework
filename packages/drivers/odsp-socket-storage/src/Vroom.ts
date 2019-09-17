@@ -88,6 +88,8 @@ export async function getSocketStorageDiscovery(
   getVroomToken: (siteUrl: string) => Promise<string | undefined | null>,
   getPushToken: () => Promise<string | undefined | null>,
 ): Promise<ISocketStorageDiscovery> {
+  const pushTokenPromise = getPushToken();
+
   const joinSessionStartTime = performance.now();
   logger.send({
     category: "performance",
@@ -95,8 +97,6 @@ export async function getSocketStorageDiscovery(
     perfType: "start",
     tick: joinSessionStartTime,
   });
-
-  const pushTokenPromise = getPushToken();
 
   const joinSessionPromise = fetchOpStream(
     appId,
@@ -112,7 +112,18 @@ export async function getSocketStorageDiscovery(
       filter: whitelist([408, 409, 429, 500, 503]),
     },
     getVroomToken,
-  );
+  ).then((fetchWithRetryResponse: IFetchWithRetryResponse) => {
+    const joinSessionEndTime = performance.now();
+    logger.send({
+      category: "performance",
+      eventName: "joinSessionEnd",
+      perfType: "end",
+      tick: joinSessionEndTime,
+      duration: joinSessionEndTime - joinSessionStartTime,
+      status: fetchWithRetryResponse.response.status,
+    });
+    return fetchWithRetryResponse;
+  });
 
   const [pushToken, joinSessionResponse] = await Promise.all([pushTokenPromise, joinSessionPromise]);
 
@@ -132,15 +143,6 @@ export async function getSocketStorageDiscovery(
   const socketStorageDiscovery = responseJson as ISocketStorageDiscovery;
   // tslint:disable-next-line: no-non-null-assertion
   socketStorageDiscovery.socketToken = pushToken!;
-
-  const joinSessionEndTime = performance.now();
-  logger.send({
-    category: "performance",
-    eventName: "joinSessionEnd",
-    perfType: "end",
-    tick: joinSessionEndTime,
-    duration: joinSessionEndTime - joinSessionStartTime,
-  });
 
   return socketStorageDiscovery;
 }

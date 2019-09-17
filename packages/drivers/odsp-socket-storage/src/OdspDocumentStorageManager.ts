@@ -237,28 +237,39 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                 // snapshot code path. We should leverage the fact that these deltas are returned to speed up the deltas fetch.
                 const { headers, url } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/trees/latest?deltas=1&channels=1&blobs=2`, storageToken);
 
-                const {trees, blobs, ops, sha} = await this.fetchWrapper.get<IOdspSnapshot>(url, this.documentId, headers);
-
-                const treesLatestEndTime = performance.now();
-                this.logger.send({
-                    category: "performance",
-                    eventName: "treesLatestEnd",
-                    perfType: "end",
-                    duration: treesLatestEndTime - treesLatestStartTime,
-                    tick: treesLatestEndTime,
-                });
-
-                if (trees) {
-                    this.initTreesCache(trees);
+                let snapshot: IOdspSnapshot | undefined;
+                let status = 200;
+                try {
+                    snapshot = await this.fetchWrapper.get<IOdspSnapshot>(url, this.documentId, headers);
+                } catch (error) {
+                    status = error;
+                    throw error;
+                } finally {
+                    const treesLatestEndTime = performance.now();
+                    this.logger.send({
+                        category: "performance",
+                        eventName: "treesLatestEnd",
+                        perfType: "end",
+                        duration: treesLatestEndTime - treesLatestStartTime,
+                        tick: treesLatestEndTime,
+                        status,
+                        trees: snapshot && snapshot.trees && snapshot.trees.length,
+                        blobs: snapshot && snapshot.blobs && snapshot.blobs.length,
+                        ops: snapshot && snapshot.ops && snapshot.ops.length,
+                    });
                 }
 
-                if (blobs) {
-                    this.initBlobsCache(blobs);
+                if (snapshot.trees) {
+                    this.initTreesCache(snapshot.trees);
                 }
 
-                this.ops = ops;
+                if (snapshot.blobs) {
+                    this.initBlobsCache(snapshot.blobs);
+                }
 
-                return sha ? [{ id: sha, treeId: undefined! }] : [];
+                this.ops = snapshot.ops;
+
+                return snapshot.sha ? [{ id: snapshot.sha, treeId: undefined! }] : [];
             } else {
                 const { url, headers } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/versions?count=${count}`, storageToken);
 
