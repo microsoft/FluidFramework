@@ -171,19 +171,6 @@ export async function start(
     let urlResolver: IUrlResolver;
     let npm: string;
     switch (options.mode) {
-        case "live":
-            npm = "https://pragueauspkn-3873244262.azureedge.net";
-            const host = options.fluidHost ? options.fluidHost : "https://www.wu2.prague.office-int.com";
-            urlResolver = new InsecureUrlResolver(
-                host,
-                host.replace("www", "alfred"),
-                host.replace("www", "historian"),
-                options.tenantId ? options.tenantId : "stoic-gates",
-                options.tenantSecret ? options.tenantSecret : "1a7f744b3c05ddc525965f17a1b58aa0",
-                getUser(),
-                bearerSecret);
-            break;
-
         case "localhost":
             npm = "http://localhost:3002";
             const localHost = "http://localhost:3000";
@@ -199,7 +186,19 @@ export async function start(
 
         case "local":
             urlResolver = new TestResolver();
-        default:
+            break;
+
+        default: // live
+            npm = "https://pragueauspkn-3873244262.azureedge.net";
+            const host = options.fluidHost ? options.fluidHost : "https://www.wu2.prague.office-int.com";
+            urlResolver = new InsecureUrlResolver(
+                host,
+                host.replace("www", "alfred"),
+                host.replace("www", "historian"),
+                options.tenantId ? options.tenantId : "stoic-gates",
+                options.tenantSecret ? options.tenantSecret : "1a7f744b3c05ddc525965f17a1b58aa0",
+                getUser(),
+                bearerSecret);
     }
 
     let documentServiceFactory: IDocumentServiceFactory;
