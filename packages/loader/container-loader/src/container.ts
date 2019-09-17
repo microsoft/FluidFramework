@@ -413,13 +413,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return root;
     }
 
-    private async getVersion(version: string): Promise<IVersion[]> {
-        try {
-            return await this.storageService!.getVersions(version, 1);
-        } catch (error) {
-            this.logger.logException({ eventName: "GetVersionsFailed" }, error);
-            return [];
-        }
+    private getVersion(version: string): Promise<IVersion[]> {
+        return this.storageService!.getVersions(version, 1);
     }
 
     private connectToDeltaStream() {
