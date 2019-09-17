@@ -27,7 +27,7 @@ import {
     SharedStringIntervalCollectionValueType,
 } from "./intervalCollection";
 import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent";
-import {intervalCollectionMapPath, SharedIntervalCollection} from "./SharedIntervaleCollection";
+import {intervalCollectionMapPath, SharedIntervalCollection} from "./sharedIntervaleCollection";
 
 export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
 extends SharedIntervalCollection<SharedStringInterval> {
