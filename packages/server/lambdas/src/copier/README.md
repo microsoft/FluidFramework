@@ -1,7 +1,7 @@
-# Hard Disk
+# Copier
 
-![Man's first steps toward the SSD.](https://www.backblaze.com/blog/wp-content/uploads/2016/11/BRL61-IBM_305_RAMAC.jpeg)
+![Man meets his match.](https://www.glasbergen.com/wp-content/gallery/computer-cartoons/bizcom31.gif)
 
-The proverbial hard disk is [slow, (comparatively) fragile, and antiquated](https://en.wikipedia.org/wiki/Hard_disk_drive#Performance_characteristics), but also price-competitve and compelling for cold storage backups.
+The [copier](https://en.wikipedia.org/wiki/Photocopier) is an iconic staple of the late 20th century and early 21st century corporate environment. It has proven to be an endless source of frustration and entertainment for the modern digital worker, who just can't seem to escape its alluring grasp - its position in the office corner guaranteed by its sheer bureaucratic utility (even at only medium output efficiency).
 
-In our case, the hard-disk lambda retrieves raw deltas from Kafka and then writes this data to a database for longer-term, "set it and forget it {and _occasionally_ look into it}" storage.
+In our case, the copier lambda simply retrieves raw deltas (as they would also be retrieved by the deli lambda) from Kafka and then writes this data to a database for longer-term, "set it and forget it {and _occasionally_ look into it}" storage.
