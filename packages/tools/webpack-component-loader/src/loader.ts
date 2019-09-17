@@ -141,15 +141,14 @@ const bearerSecret = "VBQyoGpEYrTn3XQPtXW3K8fFDd";
 export async function start(
     packageJson: IPackage,
     options: IRouteOptions,
-    div: HTMLDivElement,
-    component: boolean
+    div: HTMLDivElement
 ): Promise<void> {
     const url = window.location.href;
 
     // Create Package
     const scriptId = "pragueDevServerScriptToLoad";
     const scriptIds = [scriptId];
-    const pkg = await getPkg(packageJson, scriptId, component);
+    const pkg = await getPkg(packageJson, scriptId, !!options.component);
 
     // Construct a request
     const req: IRequest = {

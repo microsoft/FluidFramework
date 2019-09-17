@@ -58,8 +58,7 @@ const fluid = (req: express.Request, res: express.Response,  baseDir: string, op
         FluidLoader.start(
             pkgJson,
             options,
-            document.getElementById("content"),
-            ${!!options.component})
+            document.getElementById("content"))
         .catch((error) => console.error(error));
     </script>
 </body>
