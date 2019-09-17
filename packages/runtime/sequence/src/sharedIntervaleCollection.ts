@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IMapDataObject, IMapOperation, IValueChanged, IValueType, MapKernal } from "@prague/map";
+import { ContentObjectStorage, IMapDataObject, IMapOperation, IValueChanged, IValueType, MapKernal } from "@prague/map";
 import {
     FileMode,
     ISequencedDocumentMessage,
@@ -34,15 +34,6 @@ import { pkgVersion } from "./packageVersion";
 const snapshotFileName = "header";
 const contentPath = "content";
 
-class ContentObjectStorage implements IObjectStorageService {
-    constructor(private readonly storage: IObjectStorageService) {
-    }
-
-    /* tslint:disable:promise-function-async */
-    public read(path: string): Promise<string> {
-        return this.storage.read(`${contentPath}/${path}`);
-    }
-}
 
 export const intervalCollectionMapPath = "intervalCollections/";
 

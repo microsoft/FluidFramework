@@ -37,7 +37,7 @@ import { pkgVersion } from "./packageVersion";
 const snapshotFileName = "header";
 const contentPath = "content";
 
-class ContentObjectStorage implements IObjectStorageService {
+export class ContentObjectStorage implements IObjectStorageService {
     constructor(private readonly storage: IObjectStorageService) {
     }
 
