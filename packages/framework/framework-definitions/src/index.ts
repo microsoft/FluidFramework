@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+export * from "./discover";
 export * from "./collection";
 export * from "./forge";
 export * from "./layout";
