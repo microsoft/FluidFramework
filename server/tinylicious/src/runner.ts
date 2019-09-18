@@ -22,7 +22,7 @@ import * as winston from "winston";
 import * as app from "./app";
 import * as io from "./io";
 
-export class AlfredRunner implements utils.IRunner {
+export class TinyliciousRunner implements utils.IRunner {
     private server: IWebServer;
     private runningDeferred: Deferred<void>;
 

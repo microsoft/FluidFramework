@@ -5,10 +5,11 @@
 
 import { runService } from "@microsoft/fluid-server-services-utils";
 import * as path from "path";
-import { AlfredResourcesFactory, AlfredRunnerFactory } from "./runnerFactory";
+import { TinyliciousRunnerFactory } from "./runnerFactory";
+import { TinyliciousResourcesFactory } from "./resourcesFactory";
 
 runService(
-    new AlfredResourcesFactory(),
-    new AlfredRunnerFactory(),
-    "alfred",
+    new TinyliciousResourcesFactory(),
+    new TinyliciousRunnerFactory(),
+    "tinylicious",
     path.join(__dirname, "../config.json"));
