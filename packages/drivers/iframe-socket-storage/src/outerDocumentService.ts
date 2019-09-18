@@ -8,6 +8,7 @@ import {
     IDocumentDeltaStorageService,
     IDocumentService,
     IDocumentStorageService,
+    ScopeType,
 } from "@prague/protocol-definitions";
 import { DocumentStorageService } from "@prague/routerlicious-socket-storage";
 import {
@@ -42,11 +43,19 @@ export interface IOuterProxy extends IOuterDocumentDeltaConnection,
 export class OuterDocumentService implements IDocumentService {
     public static async create(
         documentService: IDocumentService, frame: HTMLIFrameElement): Promise<OuterDocumentService> {
+        const client: IClient = {
+            permission: [],
+            scopes: [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
+            type: "browser",
+            user: {
+                id: "iframe-user",
+            },
+        };
 
         const [storage, deltaStorage, deltaConnection] = await Promise.all([
             documentService.connectToStorage(),
             documentService.connectToDeltaStorage(),
-            documentService.connectToDeltaStream(undefined as unknown as IClient),
+            documentService.connectToDeltaStream(client),
         ]);
 
         return new OuterDocumentService(
