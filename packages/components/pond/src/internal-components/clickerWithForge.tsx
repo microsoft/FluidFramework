@@ -29,7 +29,7 @@ export class ClickerWithInitialValue extends PrimedComponent implements ICompone
             startingValue = props.initialValue;
         }
 
-        this.root.set("clicks", startingValue, CounterValueType.Name);
+        this.root.createValueType("clicks", CounterValueType.Name, startingValue);
     }
 
     // start IComponentHTMLVisual

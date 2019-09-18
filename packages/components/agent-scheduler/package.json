@@ -69,6 +69,7 @@
     "@microsoft/fluid-map": "^0.10.0",
     "@microsoft/fluid-runtime-definitions": "^0.10.0",
     "@microsoft/fluid-shared-object-base": "^0.10.0",
+    "@prague/container-definitions": "^0.10.0",
     "debug": "^4.1.1"
   },
   "devDependencies": {

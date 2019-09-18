@@ -13,6 +13,7 @@ import {
     ScribeLambda,
     ScriptoriumLambda,
 } from "@microsoft/fluid-server-lambdas";
+import { IGitManager } from "@microsoft/fluid-server-services-client";
 import {
     IContext,
     IDatabaseManager,
@@ -30,7 +31,6 @@ import {
 import { ProtocolOpHandler } from "@prague/container-loader";
 import { IClient, IServiceConfiguration } from "@prague/protocol-definitions";
 import * as assert from "assert";
-import { IGitManager } from "../../services-client/dist";
 import { ILocalOrdererSetup } from "./interfaces";
 import { LocalKafka } from "./localKafka";
 import { LocalLambdaController } from "./localLambdaController";

@@ -31,7 +31,7 @@ export class TestResolver implements IUrlResolver {
                 storageUrl: "test.com",
             },
             tokens: { jwt: generateToken(this.tenantId, this.id, this.tokenKey, scopes) },
-            type: "prague",
+            type: "fluid",
             url: `fluid-test://test.com/${this.tenantId}/${this.id}`,
         };
 

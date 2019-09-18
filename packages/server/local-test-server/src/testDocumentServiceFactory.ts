@@ -31,9 +31,14 @@ export class TestDocumentServiceFactory implements IDocumentServiceFactory {
      * @param resolvedUrl - resolved URL of document
      */
     public createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
-        if (resolvedUrl.type !== "prague") {
-            // tslint:disable-next-line:max-line-length
-            return Promise.reject("Only Fluid components currently supported in the RouterliciousDocumentServiceFactory");
+        if (resolvedUrl.type !== "fluid") {
+              if (resolvedUrl.type === "prague") {
+                // tslint:disable-next-line:max-line-length
+                console.warn("IFluidResolvedUrl type === 'prague' has been deprecated. Please create IFluidResolvedUrls of type 'fluid' in the future.");
+            } else {
+                // tslint:disable-next-line:max-line-length
+                return Promise.reject("Only Fluid components currently supported in the RouterliciousDocumentServiceFactory");
+            }
         }
 
         const parsedUrl = parse(resolvedUrl.url);

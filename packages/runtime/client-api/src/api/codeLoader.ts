@@ -5,12 +5,12 @@
 
 import * as cell from "@microsoft/fluid-cell";
 import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
-import { ContainerRuntime, IComponentRegistry, IContainerRuntimeOptions } from "@microsoft/fluid-container-runtime";
+import { ContainerRuntime, IContainerRuntimeOptions } from "@microsoft/fluid-container-runtime";
 import * as ink from "@microsoft/fluid-ink";
 import * as map from "@microsoft/fluid-map";
 import { ConsensusQueue, ConsensusStack } from "@microsoft/fluid-ordered-collection";
 import { ConsensusRegisterCollection } from "@microsoft/fluid-register-collection";
-import { IComponentContext, IComponentFactory } from "@microsoft/fluid-runtime-definitions";
+import { IComponentContext, IComponentFactory, IComponentRegistry } from "@microsoft/fluid-runtime-definitions";
 import * as sequence from "@microsoft/fluid-sequence";
 import { IRequest } from "@prague/component-core-interfaces";
 import { ICodeLoader, IContainerContext, IRuntime, IRuntimeFactory } from "@prague/container-definitions";

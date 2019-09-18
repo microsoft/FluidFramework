@@ -6,8 +6,10 @@
 import { AgentSchedulerFactory } from "@component/agent-scheduler";
 import {
     ComponentFactoryTypes,
+    ComponentRegistryTypes,
     FlushMode,
     IAttachMessage,
+    IComponentRegistry,
     IComponentRuntime,
     IEnvelope,
     IHelpMessage,
@@ -69,21 +71,6 @@ import { LeaderElector } from "./leaderElection";
 import { Summarizer } from "./summarizer";
 import { SummaryManager } from "./summaryManager";
 import { analyzeTasks } from "./taskAnalyzer";
-
-declare module "@prague/component-core-interfaces" {
-    export interface IComponent extends Readonly<Partial<IProvideComponentRegistry>> {}
-}
-
-export type ComponentRegistryTypes =
-    IComponentRegistry | { get(name: string): Promise<ComponentFactoryTypes> | undefined };
-
-export interface IProvideComponentRegistry {
-    IComponentRegistry: IComponentRegistry;
-}
-
-export interface IComponentRegistry extends IProvideComponentRegistry {
-    get(name: string): Promise<ComponentFactoryTypes> | undefined;
-}
 
 interface IBufferedChunk {
     type: MessageType;
@@ -425,6 +412,10 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this._flushMode;
     }
 
+    public get IComponentRegistry(): IComponentRegistry {
+        return this.registry;
+    }
+
     public readonly IComponentSerializer: IComponentSerializer = new ComponentSerializer();
 
     public readonly IComponentHandleContext: IComponentHandleContext;
@@ -576,14 +567,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
     public get IComponentConfiguration() {
         return this.context.configuration;
-    }
-
-    /**
-     * Returns the component factory for a particular package.
-     * @param name - Name of the package.
-     */
-    public getPackage(name: string): Promise<ComponentFactoryTypes> {
-        return this.registry.get(name);
     }
 
     /**
@@ -745,6 +728,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             this.summaryManager.setConnected(clientId);
         } else {
             this.summaryManager.setDisconnected();
+            this.proposeLeadershipOnConnection = true;
         }
     }
 
@@ -1302,7 +1286,9 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     }
 
     private startLeaderElection() {
-        if (this.deltaManager && this.deltaManager.clientType === Browser) {
+        if (this.deltaManager &&
+            this.deltaManager.clientType === Browser &&
+            (this.context.configuration === undefined || this.context.configuration.canReconnect)) {
             this.initLeaderElection();
         }
     }
@@ -1329,7 +1315,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         });
         this.leaderElector.on("memberLeft", (clientId: string) => {
             debug(`Member ${clientId} left`);
-            if (this.leader) {
+            if (this.leader && this.deltaManager.active) {
                 this.runTaskAnalyzer();
             }
         });
@@ -1341,16 +1327,18 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             this.proposeLeadershipOnConnection = true;
             return;
         }
-        this.proposeLeadershipOnConnection = false;
 
-        this.leaderElector.proposeLeadership(this.clientId).then(() => {
-            debug(`Leadership proposal accepted for ${this.clientId}`);
-        }, (err) => {
-            debug(`Leadership proposal rejected ${err}`);
-            if (!this.connected) {
-                this.proposeLeadershipOnConnection = true;
-            }
-        });
+        if (this.deltaManager.active && this.leaderElector) {
+            this.proposeLeadershipOnConnection = false;
+            this.leaderElector.proposeLeadership(this.clientId).then(() => {
+                debug(`Leadership proposal accepted for ${this.clientId}`);
+            }, (err) => {
+                debug(`Leadership proposal rejected ${err}`);
+                if (!this.connected) {
+                    this.proposeLeadershipOnConnection = true;
+                }
+            });
+        }
     }
 
     /**

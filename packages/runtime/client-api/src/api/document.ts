@@ -105,13 +105,6 @@ export class Document extends EventEmitter {
         private readonly root: ISharedMap,
     ) {
         super();
-
-        this.runtime.getQuorum().on("removeMember", (leftClientId) => {
-            // Switch to read only mode if a client receives it's own leave message.
-            if (this.clientId === leftClientId) {
-                this.runtime.deltaManager.enableReadonlyMode();
-            }
-        });
     }
 
     public on(event: string | symbol, listener: (...args: any[]) => void): this {

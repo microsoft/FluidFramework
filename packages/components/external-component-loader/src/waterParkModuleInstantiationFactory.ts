@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ComponentRegistryTypes } from "@microsoft/fluid-container-runtime";
+import { ComponentRegistryTypes } from "@microsoft/fluid-runtime-definitions";
 import { SimpleContainerRuntimeFactory, SimpleModuleInstantiationFactory } from "@prague/aqueduct";
 import { IContainerContext, IRuntime } from "@prague/container-definitions";
 import * as uuid from "uuid";

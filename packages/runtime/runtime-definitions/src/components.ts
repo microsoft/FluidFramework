@@ -31,7 +31,8 @@ import {
 } from "@prague/protocol-definitions";
 
 import { EventEmitter } from "events";
-import { ComponentFactoryTypes, IChannel } from ".";
+import { IChannel } from ".";
+import { IProvideComponentRegistry } from "./componentRegistry";
 
 /**
  * Represents the runtime for the component. Contains helper functions/state of the component.
@@ -286,7 +287,11 @@ export enum FlushMode {
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
  */
-export interface IHostRuntime extends EventEmitter, IProvideComponentSerializer, IProvideComponentHandleContext {
+export interface IHostRuntime extends
+    EventEmitter,
+    IProvideComponentSerializer,
+    IProvideComponentHandleContext,
+    IProvideComponentRegistry {
     readonly id: string;
     readonly existing: boolean;
     readonly options: any;
@@ -326,12 +331,6 @@ export interface IHostRuntime extends EventEmitter, IProvideComponentSerializer,
      * Returns the current quorum.
      */
     getQuorum(): IQuorum;
-
-    /**
-     * Returns the component factory for a particular package.
-     * @param name - Name of the package.
-     */
-    getPackage(name: string): Promise<ComponentFactoryTypes>;
 
     /**
      * Used to raise an unrecoverable error on the runtime.

@@ -22,8 +22,7 @@ describe("Routerlicious", () => {
                 testMap = factory.create(runtime, "test");
 
                 testCounter = testMap.
-                    set("defaultCounter", undefined,
-                        map.CounterValueType.Name).
+                    createValueType("defaultCounter", map.CounterValueType.Name, undefined).
                     get("defaultCounter");
             });
 
@@ -35,7 +34,7 @@ describe("Routerlicious", () => {
 
                 it("Should be able to create a counter with predefined value", async () => {
                     const counterWithValue = testMap.
-                        set("defaultCounter", 50, map.CounterValueType.Name).
+                        createValueType("defaultCounter", map.CounterValueType.Name, 50).
                         get("defaultCounter");
                     assert.ok(counterWithValue);
 

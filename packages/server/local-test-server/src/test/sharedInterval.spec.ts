@@ -256,7 +256,7 @@ describe("SharedInterval", () => {
 
             outerString1.insertText(0, "outer string");
 
-            outerString1.set("comments", undefined, SharedStringIntervalCollectionValueType.Name);
+            outerString1.createValueType("comments", SharedStringIntervalCollectionValueType.Name, undefined);
             await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
 
             const intervalCollection1 = outerString1.get<SharedIntervalCollection<SharedStringInterval>>("comments");

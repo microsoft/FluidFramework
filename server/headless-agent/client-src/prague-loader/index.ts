@@ -82,7 +82,7 @@ export async function startLoading(
             storageUrl,
         },
         tokens: { jwt: token },
-        type: "prague",
+        type: "fluid",
         url: documentUrl,
     };
 

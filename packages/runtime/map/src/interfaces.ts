@@ -73,13 +73,24 @@ export interface IValueType<T> {
     ops: Map<string, IValueOperation<T>>;
 }
 
+export interface IValueTypeCreator {
+    /**
+     * Create a new value type at the given key.
+     * @alpha
+     * @param key - key to create the value type at
+     * @param type - type of the value type to create
+     * @param params - initialization params for the value type
+     */
+    createValueType(key: string, type: string, params: any): this;
+}
+
 /**
  * Interface describing actions on a directory.
  *
  * @remarks
  * When used as a Map, operates on its keys.
  */
-export interface IDirectory extends Map<string, any> {
+export interface IDirectory extends Map<string, any>, IValueTypeCreator {
     /**
      * The absolute path of the directory.
      */
@@ -98,13 +109,11 @@ export interface IDirectory extends Map<string, any> {
     wait<T = any>(key: string): Promise<T>;
 
     /**
-     * Sets the value stored at key to the provided value. An optional type can be specified to initialize the key
-     * to one of the value types.
+     * Sets the value stored at key to the provided value.
      * @param key - key to set at
-     * @param value - value to set, OR if type is provided then instead the initialization arguments for the value type
-     * @param type - if provided, will create a new value type at this key using the provided initialization arguements
+     * @param value - value to set
      */
-    set<T = any>(key: string, value: T, type?: string): this;
+    set<T = any>(key: string, value: T): this;
 
     /**
      * Creates an IDirectory child of this IDirectory.
@@ -161,7 +170,7 @@ export interface IDirectoryValueChanged extends IValueChanged {
 /**
  * Shared map interface
  */
-export interface ISharedMap extends ISharedObject, Map<string, any> {
+export interface ISharedMap extends ISharedObject, Map<string, any>, IValueTypeCreator {
     /**
      * Retrieves the given key from the map
      */
@@ -173,10 +182,9 @@ export interface ISharedMap extends ISharedObject, Map<string, any> {
     wait<T = any>(key: string): Promise<T>;
 
     /**
-     * Sets the key to the provided value. An optional type can be specified to initialize the key
-     * to one of the registered value types.
+     * Sets the key to the provided value.
      */
-    set<T = any>(key: string, value: T, type?: string): this;
+    set<T = any>(key: string, value: T): this;
 
     /**
      * Registers a listener on the specified events
