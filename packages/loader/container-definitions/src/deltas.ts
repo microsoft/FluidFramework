@@ -95,6 +95,7 @@ export interface IDeltaManager<T, U> extends EventEmitter, IDeltaSender, IDispos
     // Service configuration provided by the service.
     serviceConfiguration: IServiceConfiguration;
 
+    // Flag to indicate whether the client can write or not.
     active: boolean;
 
     close(): void;

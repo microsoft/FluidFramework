@@ -278,11 +278,11 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         }
     }
 
-    public updateJoinStatus() {
+    public updateQuorumJoin() {
         this.inQuorum = true;
     }
 
-    public updateLeaveStatus() {
+    public updateQuorumLeave() {
         this.inQuorum = false;
     }
 

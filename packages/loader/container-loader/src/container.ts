@@ -635,7 +635,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         protocol.quorum.on("removeMember", (clientId) => {
             if (clientId === this._clientId) {
-                this._deltaManager!.updateLeaveStatus();
+                this._deltaManager!.updateQuorumLeave();
             }
         });
 
@@ -867,7 +867,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             this.pendingClientId = context;
         } else if (value === ConnectionState.Connected) {
             this._clientId = this.pendingClientId;
-            this._deltaManager!.updateJoinStatus();
+            this._deltaManager!.updateQuorumJoin();
         } else if (value === ConnectionState.Disconnected) {
             // Important as we process our own joinSession message through delta request
             this.pendingClientId = undefined;
