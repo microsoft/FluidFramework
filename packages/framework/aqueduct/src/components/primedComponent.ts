@@ -156,36 +156,6 @@ export abstract class PrimedComponent extends EventEmitter implements IComponent
     // #endregion IComponentLoadable
 
     /**
-     * Calls existing, and opened().  Caller is responsible for ensuring this is only invoked once.
-     */
-    protected async initializeInternal(props?: any): Promise<void> {
-        // Initialize task manager.
-        this.internalTaskManager = await this.getComponent<ITaskManager>("_scheduler");
-
-        if (this.canForge) {
-            // Create a root directory and register it before calling componentInitializingFirstTime
-            this.internalRoot = SharedDirectory.create(this.runtime, this.rootDirectoryId);
-            this.internalRoot.register();
-            await this.componentInitializingFirstTime(props);
-        } else {
-            // Component has a root directory so we just need to set it before calling componentInitializingFromExisting
-            this.internalRoot = await this.runtime.getChannel(this.rootDirectoryId) as ISharedDirectory;
-
-            // This will actually be an ISharedMap if the channel was previously created by the older version of
-            // PrimedComponent which used a SharedMap.  Since SharedMap and SharedDirectory are compatible unless
-            // SharedDirectory-only commands are used on SharedMap, this will mostly just work for compatibility.
-            if (this.internalRoot.attributes.type === MapFactory.Type) {
-                this.runtime.logger.send({category: "generic", eventName: "MapPrimedComponent", message: "Legacy document, SharedMap is masquerading as SharedDirectory in PrimedComponent"});
-            }
-
-            await this.componentInitializingFromExisting();
-        }
-
-        // This always gets called at the end of initialize on FirstTime or from existing.
-        await this.componentHasInitialized();
-    }
-
-    /**
      * Calls create, initialize, and attach on a new component. Optional props will be passed in if the
      * component being created supports IComponentForge
      *
@@ -237,6 +207,39 @@ export abstract class PrimedComponent extends EventEmitter implements IComponent
      * Called every time the component is initialized after create or existing.
      */
     protected async componentHasInitialized(): Promise<void> { }
+
+    /**
+     * Internal initialize implementation.
+     *
+     * Calls componentInitializingFirstTime, componentInitializingFromExisting, and componentHasInitialized.
+     * Caller is responsible for ensuring this is only invoked once.
+     */
+    private async initializeInternal(props?: any): Promise<void> {
+        // Initialize task manager.
+        this.internalTaskManager = await this.getComponent<ITaskManager>("_scheduler");
+
+        if (this.canForge) {
+            // Create a root directory and register it before calling componentInitializingFirstTime
+            this.internalRoot = SharedDirectory.create(this.runtime, this.rootDirectoryId);
+            this.internalRoot.register();
+            await this.componentInitializingFirstTime(props);
+        } else {
+            // Component has a root directory so we just need to set it before calling componentInitializingFromExisting
+            this.internalRoot = await this.runtime.getChannel(this.rootDirectoryId) as ISharedDirectory;
+
+            // This will actually be an ISharedMap if the channel was previously created by the older version of
+            // PrimedComponent which used a SharedMap.  Since SharedMap and SharedDirectory are compatible unless
+            // SharedDirectory-only commands are used on SharedMap, this will mostly just work for compatibility.
+            if (this.internalRoot.attributes.type === MapFactory.Type) {
+                this.runtime.logger.send({category: "generic", eventName: "MapPrimedComponent", message: "Legacy document, SharedMap is masquerading as SharedDirectory in PrimedComponent"});
+            }
+
+            await this.componentInitializingFromExisting();
+        }
+
+        // This always gets called at the end of initialize on FirstTime or from existing.
+        await this.componentHasInitialized();
+    }
 
     /**
      * Given a request response will return a component if a component was in the response.
