@@ -42,7 +42,7 @@ export class TestComponent extends PrimedComponent {
     }
 
     protected async componentInitializingFirstTime() {
-        this.root.set("count", 0, CounterValueType.Name);
+        this.root.createValueType("count", CounterValueType.Name, 0);
     }
 
     protected async componentHasInitialized() {

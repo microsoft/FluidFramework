@@ -98,7 +98,7 @@ export async function testFluidService(config: Provider): Promise<void> {
             storageUrl,
         },
         tokens: { jwt: token },
-        type: "prague",
+        type: "fluid",
         url: documentUrl,
     };
 

@@ -14,12 +14,13 @@ import {
     IRuntime,
     IRuntimeFactory,
 } from "@prague/container-definitions";
-import { ContainerRuntime, IComponentRegistry, IContainerRuntimeOptions } from "@prague/container-runtime";
+import { ContainerRuntime, IContainerRuntimeOptions } from "@prague/container-runtime";
 import * as ink from "@prague/ink";
 import * as map from "@prague/map";
 import {
     IComponentContext,
     IComponentFactory,
+    IComponentRegistry,
 } from "@prague/runtime-definitions";
 import * as sequence from "@prague/sequence";
 import { Document } from "./document";

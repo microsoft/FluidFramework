@@ -2,16 +2,19 @@
 uid: SharedDirectory
 ---
 
-# SharedDirectory
+# SharedDirectory and IDirectory
 
 * Package: <xref:@prague/map!>
-* API documentation: <xref:@prague/map!SharedDirectory:class>
+* API documentation:
+  * <xref:@prague/map!SharedDirectory:class>
+  * <xref:@prague/map!IDirectory:interface>
 
 The SharedDirectory distributed data structure is similar to a <xref:SharedMap> and can be used to store key-value
 pairs. In addition to the typical Map functionality for getting, setting, and iterating over values, SharedDirectory
 provides a hierarchical organization of map-like data structures as SubDirectories. The values stored within can be
 accessed like a map, and the hierarchy can be navigated using path syntax. SubDirectories can be retrieved for use as
-working directories.  For example:
+working directories. This subdirectory tree can be used to give hierarchical structure to stored key/value pairs rather than
+storing them on a flat map. Both the `SharedDirectory` and any subdirectories are `IDirectories`.For example:
 
 ```ts
 mySharedDirectory.createSubDirectory("a").createSubDirectory("b").createSubDirectory("c").set("foo", val1);
@@ -23,15 +26,36 @@ It provides the same API for setting and
 retrieving values that JavaScript developers are accustomed to with the
 [Map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map) built-in object.
 
-Unlike JavaScript Maps, a SharedDirectory's keys must be strings. The value can be any Object, including another
-distributed data structure. Thus, you can use nested SharedDirectory and other distributed data structures to construct
-a Fluid data model.
+## Creation
+
+To create a `SharedDirectory`, call the static create method:
+
+```typescript
+const myDirectory = SharedDirectory.create(this.runtime, id);
+```
+
+## Usage
+
+The map operations on an `IDirectory` refer to the key/value pairs stored in that `IDirectory`, and function just like
+<xref:SharedMap> including the same restrictions on keys and values. To operate on the subdirectory structure, use the
+corresponding subdirectory methods.
+
+<xref:@prague/map!IDirectory%23getWorkingDirectory:member(1)>
+
+To "navigate" the subdirectory structure, `IDirectory` provides a
+<xref:@prague/map!IDirectory%23getWorkingDirectory:member(1)> method which takes a relative path and returns the
+`IDirectory` located at that path if it exists.
 
 [!INCLUDE [object-serialization](../includes/object-serialization.md)]
 
 SharedDirectory keys are *last write wins*; this behavior works well with few infrequent writers and many readers. In cases
 with many frequent writers it's best to design your use of the directory such that each writer writes to its own keys so
 they don't overwrite each other.
+
+## Eventing
+
+[valueChanged](xref:@prague/map!SharedDirectory%23on:member(2)) events additionally provide the absolute path to the
+subdirectory storing the value that changed.
 
 ## Related distributed data structures
 

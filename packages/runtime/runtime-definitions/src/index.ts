@@ -9,3 +9,4 @@ export * from "./componentFactory";
 export * from "./components";
 export * from "./protocol";
 export * from "./storage";
+export * from "./componentRegistry";
