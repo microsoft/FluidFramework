@@ -308,18 +308,18 @@ export class MapKernel {
         }
     }
 
-    public hasHandlerFor(message: any): boolean {
+    public hasHandlerFor(op: any): boolean {
         // tslint:disable-next-line:no-unsafe-any
-        return this.messageHandlers.has(message.type);
+        return this.messageHandlers.has(op.type);
     }
 
-    public trySubmitMessage(message: any): boolean {
+    public trySubmitMessage(op: any): boolean {
         // tslint:disable-next-line:no-unsafe-any
-        const type: string = message.type;
+        const type: string = op.type;
         if (this.messageHandlers.has(type)) {
             this.messageHandlers
                 .get(type)
-                .submit(message as IMapOperation);
+                .submit(op as IMapOperation);
             return true;
         }
         return false;
@@ -327,11 +327,10 @@ export class MapKernel {
 
     public tryProcessMessage(message: ISequencedDocumentMessage, local: boolean): boolean {
         // tslint:disable-next-line:no-unsafe-any
-        const type: string = message.type;
-        if (this.messageHandlers.has(type)) {
-            const op = message.contents as IMapOperation;
+        const op = message.contents as IMapOperation;
+        if (this.messageHandlers.has(op.type)) {
             this.messageHandlers
-                .get(type)
+                .get(op.type)
                 .process(op, local, message);
             return true;
         }
