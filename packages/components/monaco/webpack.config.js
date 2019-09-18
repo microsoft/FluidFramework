@@ -83,7 +83,8 @@ module.exports = env => {
         },
         devServer: {
             host: "0.0.0.0",
-            before: (app, server) => fluidRoute.before(app, server, __dirname, env),
+            before: (app, server) => fluidRoute.before(app, server),
+            after: (app, server) => fluidRoute.after(app, server, __dirname, env),
         },
         plugins: [
             // new MonacoWebpackPlugin()
