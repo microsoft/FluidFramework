@@ -164,9 +164,10 @@ export class Quorum extends EventEmitter implements IQuorum {
     public removeMember(clientId: string) {
         if (!this.members.has(clientId) && this.logger) {
             this.logger.sendErrorEvent({ eventName: "removeMemberNotFound", clientId });
+        } else {
+            this.members.delete(clientId);
+            this.emit("removeMember", clientId);
         }
-        this.members.delete(clientId);
-        this.emit("removeMember", clientId);
     }
 
     /**
