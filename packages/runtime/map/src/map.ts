@@ -29,7 +29,7 @@ import {
 import {
     valueTypes,
 } from "./localValues";
-import { IMapDataObject, MapKernel } from "./MapKernel";
+import { IMapDataObject, MapKernel } from "./mapKernel";
 import { pkgVersion } from "./packageVersion";
 
 const snapshotFileName = "header";
