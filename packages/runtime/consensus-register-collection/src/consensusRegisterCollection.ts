@@ -126,9 +126,6 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
      * The correct answer for this should become more clear as we build more scenarios on top of this.
      */
     public async write(key: string, value: T): Promise<void> {
-        if (this.isLocal()) {
-            return Promise.reject(`Local changes are not allowed`);
-        }
         if (this.state !== ConnectionState.Connected) {
             return Promise.reject(`Client is not connected`);
         }
@@ -339,8 +336,6 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
     }
 
     private async submit(message: IRegisterOperation): Promise<void> {
-        assert(!this.isLocal());
-
         const clientSequenceNumber = this.submitLocalMessage(message);
         // False positive - tslint couldn't track that the promise is stored in promiseResolveQueue and resolved later
         // tslint:disable:promise-must-complete

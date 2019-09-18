@@ -4,6 +4,7 @@
  */
 
 import {
+    ConnectionMode,
     IClient,
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
@@ -70,7 +71,7 @@ export class InnerDocumentService implements IDocumentService {
      *
      * @returns returns the document delta stream service for routerlicious driver.
      */
-    public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
+    public async connectToDeltaStream(client: IClient, mode: ConnectionMode): Promise<IDocumentDeltaConnection> {
         const connection = await this.outerProxy.getDetails();
         return InnerDocumentDeltaConnection.create(connection, this.outerProxy);
     }

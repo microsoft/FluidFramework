@@ -189,7 +189,6 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
         const localOrderManager = new LocalOrderManager(nodeFactory, reservationManager);
         const kafkaOrdererFactory = new KafkaOrdererFactory(
             producer,
-            storage,
             maxSendMessageSize,
             DefaultServiceConfiguration);
         const serverUrl = config.get("worker:serverUrl");
@@ -199,7 +198,6 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             const eventHubProducer = new services.EventHubProducer(config.get("eventHub:endpoint"), topic);
             eventHubOrdererFactory = new KafkaOrdererFactory(
                 eventHubProducer,
-                storage,
                 maxSendMessageSize,
                 DefaultServiceConfiguration);
         }
