@@ -1,1 +1,1 @@
-docker build -t dumbnose/devenv .
+docker build -t prague.azurecr.io/devenv .

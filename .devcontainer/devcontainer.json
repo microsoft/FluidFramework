@@ -3,7 +3,7 @@
 	"name": "Node.js 10",
 	// "dockerFile": "Dockerfile",
 
-	"image": "docker.io/dumbnose/devenv",
+	"image": "prague.azurecr.io/devenv",
 
 	"service": "development",
 
