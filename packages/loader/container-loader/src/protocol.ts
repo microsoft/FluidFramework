@@ -108,6 +108,8 @@ export class ProtocolOpHandler {
                 if (this.logger) {
                     this.logger.sendTelemetryEvent({
                         eventName: "Summarize",
+                        clientId: message.clientId,
+                        sequenceNumber: message.sequenceNumber,
                         summaryContent: message.contents as ISummaryContent,
                     });
                 }
