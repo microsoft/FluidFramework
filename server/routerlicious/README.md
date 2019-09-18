@@ -22,7 +22,7 @@ If you want to dive into the Prague internals, keep reading below.
 
 ## Help and Questions
 
-Questions can be directed to [Stack Overflow](https://stackoverflow.microsoft.com/questions/tagged/prague)
+Questions can be directed to [Stack Overflow](https://stackoverflow.microsoft.com/questions/tagged/fluid)
 
 ## Build and Deployment Status
 

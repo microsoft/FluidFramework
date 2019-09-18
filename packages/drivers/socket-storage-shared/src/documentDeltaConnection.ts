@@ -62,7 +62,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         mode: ConnectionMode): Promise<IDocumentDeltaConnection> {
 
         // Note on multiplex = false:
-        // Temp fix to address issues on SPO. Scriptor hits same URL for Prague & Notifications.
+        // Temp fix to address issues on SPO. Scriptor hits same URL for Fluid & Notifications.
         // As result Socket.io reuses socket (as there is no collision on namespaces).
         // ODSP does not currently supports multiple namespaces on same socket :(
         const socket = io(

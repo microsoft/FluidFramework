@@ -1,7 +1,7 @@
 {
   "name": "@microsoft/fluid-server-lambdas-driver",
   "version": "0.10.0",
-  "description": "Driver components for the prague service lambdas.",
+  "description": "Driver components for the Fluid service lambdas.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "sideEffects": false,

@@ -1,7 +1,7 @@
 {
   "name": "@microsoft/fluid-server-test-utils",
   "version": "0.10.0",
-  "description": "Prague test utility methods",
+  "description": "Fluid test utility methods",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {

@@ -1,7 +1,7 @@
 {
-  "name": "prague-health-monitor",
+  "name": "fluid-health-monitor",
   "version": "0.0.1",
-  "description": "Checks Prague service health using a script",
+  "description": "Checks Fluid service health using a script",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc && tslint 'src/**/*.ts'",

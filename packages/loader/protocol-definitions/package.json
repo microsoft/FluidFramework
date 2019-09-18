@@ -1,7 +1,7 @@
 {
   "name": "@prague/protocol-definitions",
   "version": "0.10.0",
-  "description": "Prague protocol definitions",
+  "description": "Fluid protocol definitions",
   "main": "dist/index.js",
   "module": "lib/index.js",
   "types": "dist/index.d.ts",

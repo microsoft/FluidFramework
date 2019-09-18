@@ -136,7 +136,6 @@ export function create(
                         packageUrl,
                         jwtToken,
                         );
-                    // response.send(page.replace(`placeholder_for_prague_script`, scriptCode));
                     const pageWithCode = page.concat(scriptCode);
                     response.send(pageWithCode);
                 } else {

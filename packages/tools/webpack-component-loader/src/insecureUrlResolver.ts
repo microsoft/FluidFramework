@@ -21,7 +21,7 @@ import * as jwt from "jsonwebtoken";
  * In our example we run a simple web server via webpack-dev-server. This defines a URL format of the form
  * http://localhost:8080/<documentId>/<path>.
  *
- * We then need to map that to a Prague based URL. These are of the form
+ * We then need to map that to a Fluid based URL. These are of the form
  * fluid://orderingUrl/<tenantId>/<documentId>/<path>.
  *
  * The tenantId/documentId pair defines the 'full' document ID the service makes use of. The path is then an optional

@@ -1,6 +1,6 @@
 {
   "name": "@chaincode/canvas",
-  "description": "Prague ink canvas",
+  "description": "Fluid ink canvas",
   "version": "0.10.0",
   "author": "Microsoft",
   "repository": "microsoft/prague",
