@@ -35,7 +35,7 @@ const snapshotFileName = "header";
 const contentPath = "content";
 
 /**
- * The factory that defines the map
+ * The factory that defines the SharedIntervalCollection
  */
 export class SharedIntervalCollectionFactory implements ISharedObjectFactory {
     public static readonly Type = "https://graph.microsoft.com/types/sharedIntervalCollection";
@@ -87,7 +87,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
     protected readonly intervalMapKernel: MapKernel;
 
     /**
-     * Constructs a new shared map. If the object is non-local an id and service interfaces will
+     * Constructs a new shared SharedIntervalCollection. If the object is non-local an id and service interfaces will
      * be provided
      */
     constructor(
