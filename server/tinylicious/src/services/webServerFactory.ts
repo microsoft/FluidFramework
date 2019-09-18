@@ -50,11 +50,11 @@ class SocketIoSocket implements IWebSocket {
 class SocketIoServer extends EventEmitter implements IWebSocketServer {
     private io: SocketIO.Server;
 
-    constructor(server: HttpServer) {
+    constructor(server: http.Server) {
         super();
 
-        const io = socketIo();
-        io.attach(server);
+        this.io = socketIo();
+        this.io.attach(server);
 
         this.io.on("connection", (socket: SocketIO.Socket) => {
             const webSocket = new SocketIoSocket(socket);
@@ -73,7 +73,7 @@ export class WebServerFactory implements IWebServerFactory {
         const server = http.createServer(requestListener);
         const httpServer = new HttpServer(server);
 
-        const socketIoServer = new SocketIoServer(httpServer);
+        const socketIoServer = new SocketIoServer(server);
 
         return new WebServer(httpServer, socketIoServer);
     }

@@ -3,18 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import { IDb } from "@microsoft/fluid-server-services-core";
+import { ICollection, IDb } from "@microsoft/fluid-server-services-core";
+import { EventEmitter } from "events";
+import { Collection } from "./collection";
 
-export class DB implements IDb {
-    public close(): Promise<void> {
-        throw new Error("Method not implemented.");
+export class DB extends EventEmitter implements IDb {
+    private collections = new Map<string, Collection<any>>();
+
+    public async close(): Promise<void> {
+        return;
     }
 
-    public on(event: string, listener: (...args: any[]) => void) {
-        throw new Error("Method not implemented.");
-    }
+    public collection<T>(name: string): ICollection<T> {
+        if (!this.collections.has(name)) {
+            const collection = new Collection();
+            this.collections.set(name, collection);
+        }
 
-    public collection<T>(name: string): import("@microsoft/fluid-server-services-core").ICollection<T> {
-        throw new Error("Method not implemented.");
+        return this.collections.get(name);
     }
 }

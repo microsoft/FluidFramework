@@ -29,5 +29,9 @@
             "reservations": "reservations",
             "scribeDeltas": "scribeDeltas"
         }
+    },
+    "error": {
+        "track": false,
+        "endpoint" : ""
     }
 }
