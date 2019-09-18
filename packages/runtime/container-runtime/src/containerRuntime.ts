@@ -45,8 +45,10 @@ import {
 } from "@prague/protocol-definitions";
 import {
     ComponentFactoryTypes,
+    ComponentRegistryTypes,
     FlushMode,
     IAttachMessage,
+    IComponentRegistry,
     IComponentRuntime,
     IEnvelope,
     IHelpMessage,
@@ -78,21 +80,6 @@ import { LeaderElector } from "./leaderElection";
 import { Summarizer } from "./summarizer";
 import { SummaryManager } from "./summaryManager";
 import { analyzeTasks } from "./taskAnalyzer";
-
-declare module "@prague/component-core-interfaces" {
-    export interface IComponent extends Readonly<Partial<IProvideComponentRegistry>> {}
-}
-
-export type ComponentRegistryTypes =
-    IComponentRegistry | { get(name: string): Promise<ComponentFactoryTypes> | undefined };
-
-export interface IProvideComponentRegistry {
-    IComponentRegistry: IComponentRegistry;
-}
-
-export interface IComponentRegistry extends IProvideComponentRegistry {
-    get(name: string): Promise<ComponentFactoryTypes> | undefined;
-}
 
 interface IBufferedChunk {
     type: MessageType;

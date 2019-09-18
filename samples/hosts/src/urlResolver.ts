@@ -56,7 +56,7 @@ export class InsecureUrlResolver implements IUrlResolver {
                 storageUrl,
             },
             tokens: { jwt: this.auth(this.tenantId, documentId) },
-            type: "prague",
+            type: "fluid",
             url: documentUrl,
         };
 

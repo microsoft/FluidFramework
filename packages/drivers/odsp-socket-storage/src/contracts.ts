@@ -18,7 +18,7 @@ export interface IWebsocketEndpoint {
 }
 
 export interface IOdspResolvedUrl extends api.IResolvedUrlBase {
-  type: "prague";
+  type: "fluid";
 
   // URL to send to fluid, contains the documentId and the path
   url: string;
