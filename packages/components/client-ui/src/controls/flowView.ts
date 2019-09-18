@@ -2785,7 +2785,8 @@ export class FlowCursor extends Cursor {
         // this would allow a user ID to be put on the wire which can then be mapped
         // back to an email, name, etc...
         const name = user.name;
-        const nameParts = name.split(" ");
+        // Name usually contains " ". Otherwise it's a clientId with "-".
+        const nameParts = name.indexOf(" ") !== -1 ? name.split(" ") : name.split("-");
         let initials = "";
         for (const part of nameParts) {
             initials += part.substring(0, 1);
@@ -5341,31 +5342,29 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
 
         if (segoff.segment) {
             const docClient = this.collabDocument.getClient(clientId);
-            if (docClient && docClient.client.type === "browser") {
-                const localPresenceInfo = {
-                    clientId,
-                    fresh: true,
-                    localRef: new MergeTree.LocalReference(this.client, segoff.segment as MergeTree.BaseSegment, segoff.offset,
-                        MergeTree.ReferenceType.SlideOnRemove),
-                    presenceColor: this.presenceVector.has(clientId) ?
-                        this.presenceVector.get(clientId).presenceColor :
-                        presenceColors[this.presenceVector.size % presenceColors.length],
-                    shouldShowCursor: () => {
-                        return this.collabDocument.clientId !== clientId &&
-                            Array.from(this.collabDocument.getClients().keys()).indexOf(clientId) !== -1;
-                    },
-                    user: docClient.client.user,
-                } as ILocalPresenceInfo;
-                if (remotePresenceInfo.origMark >= 0) {
-                    const markSegoff = this.sharedString.getContainingSegment(remotePresenceInfo.origMark);
-                    if (markSegoff.segment) {
-                        localPresenceInfo.markLocalRef =
-                            new MergeTree.LocalReference(this.client, markSegoff.segment as MergeTree.BaseSegment,
-                                markSegoff.offset, MergeTree.ReferenceType.SlideOnRemove);
-                    }
+            const localPresenceInfo = {
+                clientId,
+                fresh: true,
+                localRef: new MergeTree.LocalReference(this.client, segoff.segment as MergeTree.BaseSegment, segoff.offset,
+                    MergeTree.ReferenceType.SlideOnRemove),
+                presenceColor: this.presenceVector.has(clientId) ?
+                    this.presenceVector.get(clientId).presenceColor :
+                    presenceColors[this.presenceVector.size % presenceColors.length],
+                shouldShowCursor: () => {
+                    return this.collabDocument.clientId !== clientId;
+                },
+                // Temporary: Use the clientId as name if the user is not a part of the quorum.
+                user: docClient ? docClient.client.user : { name : clientId },
+            } as ILocalPresenceInfo;
+            if (remotePresenceInfo.origMark >= 0) {
+                const markSegoff = this.sharedString.getContainingSegment(remotePresenceInfo.origMark);
+                if (markSegoff.segment) {
+                    localPresenceInfo.markLocalRef =
+                        new MergeTree.LocalReference(this.client, markSegoff.segment as MergeTree.BaseSegment,
+                            markSegoff.offset, MergeTree.ReferenceType.SlideOnRemove);
                 }
-                this.updatePresenceVector(localPresenceInfo);
             }
+            this.updatePresenceVector(localPresenceInfo);
         }
     }
 
