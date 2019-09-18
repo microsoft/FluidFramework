@@ -3,9 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { SharedComponent, SharedComponentFactory, SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
-import { IComponent, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
-import { Clicker, ClickerName, ClickerWithInitialValue, ClickerWithInitialValueName } from "./internal-components";
+import {
+  PrimedComponent,
+  PrimedComponentFactory,
+  SimpleModuleInstantiationFactory,
+} from "@microsoft/fluid-aqueduct";
+import {
+  IComponent,
+  IComponentHTMLVisual,
+} from "@microsoft/fluid-component-core-interfaces";
+import {
+  Clicker,
+  ClickerName,
+  ClickerWithInitialValue,
+  ClickerWithInitialValueName,
+} from "./internal-components";
 
 // tslint:disable-next-line: no-var-requires no-require-imports
 const pkg = require("../package.json");
@@ -14,7 +26,7 @@ export const PondName = pkg.name as string;
 /**
  * Basic Pond example using new interfaces and stock component classes.
  */
-export class Pond extends SharedComponent implements IComponentHTMLVisual {
+export class Pond extends PrimedComponent implements IComponentHTMLVisual {
 
   public clicker2Render: IComponentHTMLVisual | undefined;
   public clicker3Render: IComponentHTMLVisual | undefined;
@@ -94,7 +106,7 @@ export class Pond extends SharedComponent implements IComponentHTMLVisual {
 
   public static getFactory() { return Pond.factory; }
 
-  private static readonly factory = new SharedComponentFactory(
+  private static readonly factory = new PrimedComponentFactory(
       Pond,
       [],
   );
