@@ -988,7 +988,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                     this,
                     new DocumentStorageServiceProxy(this.storage, flatBlobs),
                     this.context.scope,
-                    attachMessage.type);
+                    // tslint:disable-next-line: no-unsafe-any
+                    JSON.parse(attachMessage.type));
 
                 break;
 

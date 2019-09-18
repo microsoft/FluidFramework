@@ -27,8 +27,10 @@ import {
     TreeEntry,
 } from "@prague/protocol-definitions";
 import {
+    ComponentFactoryTypes,
     IAttachMessage,
     IComponentContext,
+    IComponentRegistry,
     IComponentRuntime,
     IEnvelope,
     IHostRuntime,
@@ -40,7 +42,7 @@ import { EventEmitter } from "events";
 import { ContainerRuntime } from "./containerRuntime";
 
 interface ISnapshotDetails {
-    pkg: string;
+    pkg: string | string[];
     snapshot: ISnapshotTree;
 }
 
@@ -152,7 +154,16 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
             const details = await this.getSnapshotDetails();
             this._baseSnapshot = details.snapshot;
             this.baseId = details.snapshot ? details.snapshot.id : null;
-            const factory = await this._hostRuntime.IComponentRegistry.get(details.pkg);
+            const packages = Array.isArray(details.pkg) ? details.pkg : [details.pkg];
+            let registry = this._hostRuntime.IComponentRegistry;
+            let factory: ComponentFactoryTypes & Partial<IComponentRegistry>;
+            for (const pkg of packages) {
+                factory = await registry.get(pkg);
+                registry = factory.IComponentRegistry;
+                if (!registry && pkg !== packages[packages.length - 1]) {
+                    throw new Error("Factory does not supply the component Registry");
+                }
+            }
 
             // During this call we will invoke the instantiate method - which will call back into us
             // via the bindRuntime call to resolve componentRuntimeDeferred
@@ -364,7 +375,7 @@ export class RemotedComponentContext extends ComponentContext {
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
         scope: IComponent,
-        private readonly type?: string,
+        private readonly pkg?: string | string [],
     ) {
         super(
             runtime,
@@ -394,7 +405,7 @@ export class RemotedComponentContext extends ComponentContext {
 
             if (tree === null || tree.blobs[".component"] === undefined) {
                 this.details = {
-                    pkg: this.type,
+                    pkg: this.pkg,
                     snapshot: tree,
                 };
             } else {
@@ -417,7 +428,7 @@ export class RemotedComponentContext extends ComponentContext {
 export class LocalComponentContext extends ComponentContext {
     constructor(
         id: string,
-        private readonly pkg: string,
+        private readonly pkg: string | string[],
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
         scope: IComponent,
@@ -450,7 +461,7 @@ export class LocalComponentContext extends ComponentContext {
         const message: IAttachMessage = {
             id: this.id,
             snapshot,
-            type: this.pkg,
+            type: JSON.stringify(this.pkg),
         };
 
         return message;
