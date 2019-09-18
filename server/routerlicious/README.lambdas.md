@@ -16,4 +16,4 @@ The meat of your code will live in the [src/](../../packages/server/lambdas/src/
 
 #### Misc.
 * Finally, meta-information can be kept anywhere but the trend is for anything related to config or setup for your lambda in particular to be kept in 
-[/packages/server/routerlicious/config/config.json](../../packages/server/routerlicious/config/config.json)
+[<root>/packages/server/routerlicious/config/config.json](../../packages/server/routerlicious/config/config.json)
