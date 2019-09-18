@@ -4,4 +4,3 @@
  */
 
 export { PrimedComponent } from "./primedComponent";
-export { SharedComponent } from "./sharedComponent";
