@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ContentObjectStorage, IMapDataObject, IMapOperation, IValueType, MapKernel } from "@prague/map";
+import { ContentObjectStorage, IMapDataObject, IValueType, MapKernel } from "@prague/map";
 import {
     FileMode,
     ISequencedDocumentMessage,
@@ -164,7 +164,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
         // REVIEW: Does it matter that the map and content message get out of order?
 
         // Filter the nonAck and pending messages into a map set and a content set.
-        const mapMessages: IMapOperation[] = [];
+        const mapMessages = [];
         const contentMessages: any[] = [];
         for (const message of pending) {
             if (this.intervalMapKernel.hasHandlerFor(message)) {
@@ -176,8 +176,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
 
         // Deal with the map messages - for the map it's always last one wins so we just resend
         for (const message of mapMessages) {
-            const handler = this.intervalMapKernel.messageHandlers.get(message.type);
-            handler.submit(message);
+            this.intervalMapKernel.trySubmitMessage(message);
         }
 
         // Allow content to catch up
@@ -212,12 +211,8 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
     protected processCore(message: ISequencedDocumentMessage, local: boolean) {
         let handled = false;
         if (message.type === MessageType.Operation) {
-            const op: IMapOperation = message.contents as IMapOperation;
-            if (this.intervalMapKernel.messageHandlers.has(op.type)) {
-                this.intervalMapKernel.messageHandlers.get(op.type)
-                    .process(op, local, message);
-                handled = true;
-            }
+            const op = message.contents;
+            handled = this.intervalMapKernel.tryProcessMessage(op, local, message);
         }
 
         if (!handled) {

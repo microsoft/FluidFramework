@@ -29,7 +29,7 @@ import {
     ValueTypeLocalValue,
 } from "./localValues";
 
-export interface IMapMessageHandler {
+interface IMapMessageHandler {
     process(op: IMapOperation, local: boolean, message: ISequencedDocumentMessage): void;
     submit(op: IMapOperation): void;
 }
@@ -60,7 +60,7 @@ interface IMapClearOperation {
 /**
  * Description of a map delta operation
  */
-export type IMapOperation = IMapKeyOperation | IMapClearOperation;
+type IMapOperation = IMapKeyOperation | IMapClearOperation;
 
 /**
  * Defines the in-memory object structure to be used for the conversion to/from serialized.
@@ -78,7 +78,7 @@ export class MapKernel {
     public get size() {
         return this.data.size;
     }
-    public readonly messageHandlers: ReadonlyMap<string, IMapMessageHandler> = new Map();
+    private readonly messageHandlers: ReadonlyMap<string, IMapMessageHandler> = new Map();
 
     private readonly data = new Map<string, ILocalValue>();
     private readonly pendingKeys: Map<string, number> = new Map();
@@ -92,7 +92,7 @@ export class MapKernel {
     constructor(
         private readonly runtime: IComponentRuntime,
         private readonly handle: IComponentHandle,
-        private readonly submitMessage: (op: IMapOperation) => number,
+        private readonly submitMessage: (op: any) => number,
         valueTypes: Readonly<IValueType<any>[]>,
         public readonly eventEmitter = new EventEmitter(),
     ) {
@@ -308,9 +308,33 @@ export class MapKernel {
         }
     }
 
-    public hasHandlerFor(message: any): message is IMapOperation {
+    public hasHandlerFor(message: any): boolean {
         // tslint:disable-next-line:no-unsafe-any
         return this.messageHandlers.has(message.type);
+    }
+
+    public trySubmitMessage(message: any): boolean {
+        // tslint:disable-next-line:no-unsafe-any
+        const type: string = message.type;
+        if (this.messageHandlers.has(type)) {
+            this.messageHandlers
+                .get(type)
+                .submit(message as IMapOperation);
+            return true;
+        }
+        return false;
+    }
+
+    public tryProcessMessage(op: any, local: boolean, message: ISequencedDocumentMessage): boolean {
+        // tslint:disable-next-line:no-unsafe-any
+        const type: string = message.type;
+        if (this.messageHandlers.has(type)) {
+            this.messageHandlers
+                .get(type)
+                .process(op as IMapOperation, local, message);
+            return true;
+        }
+        return false;
     }
 
     private setCore(key: string, value: ILocalValue, local: boolean, op: ISequencedDocumentMessage) {

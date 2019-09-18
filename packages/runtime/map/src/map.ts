@@ -29,7 +29,7 @@ import {
 import {
     valueTypes,
 } from "./localValues";
-import { IMapDataObject, IMapOperation, MapKernel } from "./MapKernel";
+import { IMapDataObject, MapKernel } from "./MapKernel";
 import { pkgVersion } from "./packageVersion";
 
 const snapshotFileName = "header";
@@ -125,7 +125,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
         this.kernel = new MapKernel(
             runtime,
             this.handle,
-            (op) => this.submitMapMessage(op),
+            (op) => this.submitLocalMessage(op),
             valueTypes,
             this,
         );
@@ -268,7 +268,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
         // REVIEW: Does it matter that the map and content message get out of order?
 
         // Filter the nonAck and pending messages into a map set and a content set.
-        const mapMessages: IMapOperation[] = [];
+        const mapMessages = [];
         const contentMessages: any[] = [];
         for (const message of pending) {
             if (this.kernel.hasHandlerFor(message)) {
@@ -280,8 +280,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
 
         // Deal with the map messages - for the map it's always last one wins so we just resend
         for (const message of mapMessages) {
-            const handler = this.kernel.messageHandlers.get(message.type);
-            handler.submit(message);
+            this.kernel.trySubmitMessage(message);
         }
 
         // Allow content to catch up
@@ -312,12 +311,8 @@ export class SharedMap extends SharedObject implements ISharedMap {
     protected processCore(message: ISequencedDocumentMessage, local: boolean) {
         let handled = false;
         if (message.type === MessageType.Operation) {
-            const op: IMapOperation = message.contents as IMapOperation;
-            if (this.kernel.messageHandlers.has(op.type)) {
-                this.kernel.messageHandlers.get(op.type)
-                    .process(op, local, message);
-                handled = true;
-            }
+            const op = message.contents;
+            handled = this.kernel.tryProcessMessage(op, local, message);
         }
 
         if (!handled) {
@@ -369,9 +364,5 @@ export class SharedMap extends SharedObject implements ISharedMap {
      */
     protected snapshotContent(): ITree {
         return null;
-    }
-
-    private submitMapMessage(op: IMapOperation): number {
-        return this.submitLocalMessage(op);
     }
 }
