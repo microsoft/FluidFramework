@@ -5174,8 +5174,8 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         // collections at the same time
         if (this.collabDocument.existing) {
             await Promise.all([
-                this.sharedString.waitSharedIntervalCollection("bookmarks"),
-                this.sharedString.waitSharedIntervalCollection("comments"),
+                this.sharedString.waitIntervalCollection("bookmarks"),
+                this.sharedString.waitIntervalCollection("comments"),
             ]);
         }
 
