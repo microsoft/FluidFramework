@@ -325,13 +325,14 @@ export class MapKernel {
         return false;
     }
 
-    public tryProcessMessage(op: any, local: boolean, message: ISequencedDocumentMessage): boolean {
+    public tryProcessMessage(message: ISequencedDocumentMessage, local: boolean): boolean {
         // tslint:disable-next-line:no-unsafe-any
         const type: string = message.type;
         if (this.messageHandlers.has(type)) {
+            const op = message.contents as IMapOperation;
             this.messageHandlers
                 .get(type)
-                .process(op as IMapOperation, local, message);
+                .process(op, local, message);
             return true;
         }
         return false;

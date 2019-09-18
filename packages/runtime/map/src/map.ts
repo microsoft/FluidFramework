@@ -311,8 +311,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
     protected processCore(message: ISequencedDocumentMessage, local: boolean) {
         let handled = false;
         if (message.type === MessageType.Operation) {
-            const op = message.contents;
-            handled = this.kernel.tryProcessMessage(op, local, message);
+            handled = this.kernel.tryProcessMessage(message, local);
         }
 
         if (!handled) {

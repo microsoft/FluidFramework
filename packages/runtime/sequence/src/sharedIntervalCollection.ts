@@ -211,8 +211,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
     protected processCore(message: ISequencedDocumentMessage, local: boolean) {
         let handled = false;
         if (message.type === MessageType.Operation) {
-            const op = message.contents;
-            handled = this.intervalMapKernel.tryProcessMessage(op, local, message);
+            handled = this.intervalMapKernel.tryProcessMessage(message, local);
         }
 
         if (!handled) {
