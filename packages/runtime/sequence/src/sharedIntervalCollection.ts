@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ContentObjectStorage, IMapDataObject, IValueType, MapKernel } from "@prague/map";
+import { ContentObjectStorage, IValueType, MapKernel } from "@prague/map";
 import {
     FileMode,
     ISequencedDocumentMessage,
@@ -193,8 +193,8 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
 
         const header = await storage.read(snapshotFileName);
 
-        const data = header ? JSON.parse(fromBase64ToUtf8(header)) : {};
-        this.intervalMapKernel.populate(data as IMapDataObject);
+        const data: string = header ? fromBase64ToUtf8(header) : undefined;
+        this.intervalMapKernel.populate(data);
 
         const contentStorage = new ContentObjectStorage(storage);
         await this.loadContent(

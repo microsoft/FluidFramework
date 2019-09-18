@@ -29,7 +29,7 @@ import {
 import {
     valueTypes,
 } from "./localValues";
-import { IMapDataObject, MapKernel } from "./mapKernel";
+import { MapKernel } from "./mapKernel";
 import { pkgVersion } from "./packageVersion";
 
 const snapshotFileName = "header";
@@ -293,8 +293,8 @@ export class SharedMap extends SharedObject implements ISharedMap {
 
         const header = await storage.read(snapshotFileName);
 
-        const data = header ? JSON.parse(fromBase64ToUtf8(header)) : {};
-        this.kernel.populate(data as IMapDataObject);
+        const data: string = header ? fromBase64ToUtf8(header) : undefined;
+        this.kernel.populate(data);
 
         const contentStorage = new ContentObjectStorage(storage);
         await this.loadContent(

@@ -15,6 +15,7 @@ import {
     serializeHandles,
     ValueType,
 } from "@prague/shared-object-common";
+import { safelyParseJSON } from "@prague/utils";
 import { EventEmitter } from "events";
 import {
     ISerializableValue,
@@ -66,7 +67,7 @@ type IMapOperation = IMapKeyOperation | IMapClearOperation;
  * Defines the in-memory object structure to be used for the conversion to/from serialized.
  * Directly used in JSON.stringify, direct result from JSON.parse
  */
-export interface IMapDataObject {
+interface IMapDataObject {
     [key: string]: ISerializableValue;
 }
 
@@ -297,8 +298,9 @@ export class MapKernel {
         return JSON.stringify(serializableMapData);
     }
 
-    public populate(data: IMapDataObject): void {
-        for (const [key, serializable] of Object.entries(data)) {
+    public populate(data: string): void {
+        const json = safelyParseJSON(data) as IMapDataObject;
+        for (const [key, serializable] of Object.entries(json)) {
             const localValue = {
                 key,
                 value: this.makeLocal(key, serializable),
