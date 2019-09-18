@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ITelemetryBaseLogger } from "@prague/container-definitions";
+import { ITelemetryLogger } from "@prague/container-definitions";
 import { IDocumentService, IDocumentServiceFactory } from "@prague/protocol-definitions";
 import { IOdspResolvedUrl } from "./contracts";
 import { FetchWrapper, IFetchWrapper } from "./fetchWrapper";
@@ -29,7 +29,7 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
     private readonly appId: string,
     private readonly getStorageToken: (siteUrl: string) => Promise<string | null>,
     private readonly getWebsocketToken: () => Promise<string | null>,
-    private readonly logger: ITelemetryBaseLogger,
+    private readonly logger: ITelemetryLogger,
     private readonly storageFetchWrapper: IFetchWrapper = new FetchWrapper(),
     private readonly deltasFetchWrapper: IFetchWrapper = new FetchWrapper(),
   ) {}

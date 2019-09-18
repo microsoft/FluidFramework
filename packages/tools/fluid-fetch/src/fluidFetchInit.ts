@@ -14,7 +14,7 @@ import {
 import * as odsp from "@prague/odsp-socket-storage";
 import { IDocumentService } from "@prague/protocol-definitions";
 import * as r11s from "@prague/routerlicious-socket-storage";
-import { BaseTelemetryNullLogger, fromBase64ToUtf8 } from "@prague/utils";
+import { fromBase64ToUtf8, TelemetryNullLogger } from "@prague/utils";
 
 import * as child_process from "child_process";
 import * as http from "http";
@@ -184,7 +184,7 @@ async function initializeODSPCore(server: string, drive: string, item: string, c
         "fluid-fetch",
         getStorageTokenStub,
         getWebsocketTokenStub,
-        new BaseTelemetryNullLogger());
+        new TelemetryNullLogger());
     paramDocumentService = await odspDocumentServiceFactory.createDocumentService(resolvedUrl);
 }
 

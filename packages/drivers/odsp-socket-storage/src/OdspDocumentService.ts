@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger } from "@prague/container-definitions";
+import { ITelemetryLogger } from "@prague/container-definitions";
 import {
     IClient,
     IDocumentDeltaConnection,
@@ -61,7 +61,7 @@ export class OdspDocumentService implements IDocumentService {
         private readonly snapshotStorageUrl: string,
         readonly getStorageToken: (siteUrl: string) => Promise<string | null>,
         readonly getWebsocketToken: () => Promise<string | null>,
-        private readonly logger: ITelemetryBaseLogger,
+        private readonly logger: ITelemetryLogger,
         private readonly storageFetchWrapper: IFetchWrapper,
         private readonly deltasFetchWrapper: IFetchWrapper,
         private readonly socketIOClientP: Promise<SocketIOClientStatic>,
@@ -113,7 +113,8 @@ export class OdspDocumentService implements IDocumentService {
               // the very first (proactive) call to fetch ops should be serviced from latest snapshot, resulting in no opStream call
               // any other requests are result of catching up on missing ops and are coming after websocket is established (or reconnected),
               // and thus we already have fresh join session call.
-              this.logger.send({category: "error", eventName: "OdspOpStreamPerf" });
+              // That said, tools like Fluid-fetcher will hit it, so that's valid code path.
+              this.logger.sendErrorEvent({ eventName: "OdspOpStreamPerf" });
 
               this.websocketEndpointP = this.websocketEndpointRequestThrottler.response;
             }

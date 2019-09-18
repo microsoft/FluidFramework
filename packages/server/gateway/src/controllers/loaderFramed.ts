@@ -18,7 +18,7 @@ import { OdspDocumentServiceFactory } from "@prague/odsp-socket-storage";
 import { IDocumentServiceFactory, IFluidResolvedUrl, IResolvedUrl } from "@prague/protocol-definitions";
 import { ContainerUrlResolver } from "@prague/routerlicious-host";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
-import { BaseTelemetryNullLogger } from "@prague/utils";
+import { TelemetryNullLogger } from "@prague/utils";
 import Axios from "axios";
 import { DocumentFactory } from "./documentFactory";
 import { IHostServices } from "./services";
@@ -85,7 +85,7 @@ export async function initialize(
             "Server-Gateway",
             (siteUrl: string) => Promise.resolve("fake token"),
             () => Promise.resolve("fake token"),
-            new BaseTelemetryNullLogger()));
+            new TelemetryNullLogger()));
 
         documentServiceFactories.push(new RouterliciousDocumentServiceFactory(
             false,

@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger } from "@prague/container-definitions";
+import { ITelemetryLogger } from "@prague/container-definitions";
+import { PerformanceEvent } from "@prague/utils";
 import { ISocketStorageDiscovery } from "./contracts";
 import { fetchWithRetry, IFetchWithRetryResponse, IRetryPolicy, linearBackoff, whitelist } from "./utils";
 
@@ -84,17 +85,11 @@ export async function getSocketStorageDiscovery(
   driveId: string,
   itemId: string,
   siteUrl: string,
-  logger: ITelemetryBaseLogger,
+  logger: ITelemetryLogger,
   getVroomToken: (siteUrl: string) => Promise<string | undefined | null>,
   getPushToken: () => Promise<string | undefined | null>,
 ): Promise<ISocketStorageDiscovery> {
-  const joinSessionStartTime = performance.now();
-  logger.send({
-    category: "performance",
-    eventName: "joinSessionStart",
-    perfType: "start",
-    tick: joinSessionStartTime,
-  });
+  const event = PerformanceEvent.start(logger, { eventName: "joinSession" });
 
   const pushTokenPromise = getPushToken();
 
@@ -133,14 +128,7 @@ export async function getSocketStorageDiscovery(
   // tslint:disable-next-line: no-non-null-assertion
   socketStorageDiscovery.socketToken = pushToken!;
 
-  const joinSessionEndTime = performance.now();
-  logger.send({
-    category: "performance",
-    eventName: "joinSessionEnd",
-    perfType: "end",
-    tick: joinSessionEndTime,
-    duration: joinSessionEndTime - joinSessionStartTime,
-  });
+  event.end();
 
   return socketStorageDiscovery;
 }
