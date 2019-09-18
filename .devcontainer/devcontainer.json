@@ -3,11 +3,9 @@
 	"name": "Node.js 10",
 	// "dockerFile": "Dockerfile",
 
-	"dockerComposeFile": "docker-compose.yml",
+	"image": "docker.io/dumbnose/devenv",
 
 	"service": "development",
-
-	"workspaceFolder": "/workspace",
 
 	"settings": { 
 		"terminal.integrated.shell.linux": "/usr/bin/zsh"
@@ -28,6 +26,7 @@
 	// 	"-u",
 	// 	"node"
 	// ],
+	"runArgs": ["-v","//var/run/docker.sock:/var/run/docker.sock"],
 
 	"extensions": [
 		"dbaeumer.vscode-eslint",
