@@ -129,6 +129,36 @@ describe("Loader", () => {
                     assert.strictEqual(sourceCount, 3);
                     assert.strictEqual(forwarderCount, 2);
                 });
+
+                it("Should unsubscribe all event listeners when disposed", () => {
+                    const disposedListener = () => assert.fail("Should be disposed");
+
+                    // verify listeners
+                    forwarder.on(testEvent, disposedListener);
+                    assert.strictEqual(source.listenerCount(testEvent), 1);
+                    assert.strictEqual(forwarder.listenerCount(testEvent), 1);
+
+                    // dispose
+                    forwarder.dispose();
+                    assert(forwarder.disposed);
+
+                    // verify no listeners
+                    assert.strictEqual(source.listenerCount(testEvent), 0);
+                    assert.strictEqual(forwarder.listenerCount(testEvent), 0);
+                    source.emit(testEvent);
+                });
+
+                it("Should not add new listeners to source after disposed", () => {
+                    const disposedListener = () => assert.fail("Should be disposed");
+
+                    forwarder.dispose();
+                    forwarder.on(testEvent, disposedListener);
+
+                    // verify no new listeners to source after disposed
+                    assert.strictEqual(source.listenerCount(testEvent), 0);
+                    assert.strictEqual(forwarder.listenerCount(testEvent), 1);
+                    source.emit(testEvent);
+                });
             });
         });
     });
