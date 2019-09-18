@@ -65,14 +65,17 @@ export class TestDocumentService implements api.IDocumentService {
      * Creates and returns a delta stream for testing.
      * @param client - client data
      */
-    public async connectToDeltaStream(client: api.IClient): Promise<api.IDocumentDeltaConnection> {
+    public async connectToDeltaStream(
+        client: api.IClient,
+        mode: api.ConnectionMode): Promise<api.IDocumentDeltaConnection> {
         // socketStorage.DocumentDeltaStorageService?
         return TestDocumentDeltaConnection.create(
             this.tenantId,
             this.documentId,
             this.tokenProvider.token,
             client,
-            this.testDeltaConnectionServer.webSocketServer);
+            this.testDeltaConnectionServer.webSocketServer,
+            mode);
     }
 
     /**
