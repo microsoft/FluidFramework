@@ -9,11 +9,13 @@ import { IDocumentMessage, MessageType } from "@prague/protocol-definitions";
 import { DebugLogger } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
+import { SinonFakeTimers, useFakeTimers } from "sinon";
 import { DeltaManager } from "../deltaManager";
 
 describe("Loader", () => {
     describe("Container Loader", () => {
         describe("Delta Manager", () => {
+            let clock: SinonFakeTimers;
             let deltaManager: DeltaManager;
             let logger: ITelemetryLogger;
             let deltaConnection: MockDocumentDeltaConnection;
@@ -22,40 +24,6 @@ describe("Loader", () => {
             let intendedResult: IProcessMessageResult;
             const docId = "docId";
             const submitEvent = "test-submit";
-            const enum WaitResult {
-                before = 0,
-                during = 1,
-                after = 2,
-            }
-
-            // helper function that resolves with different wait results depending on when the action resolves
-            // resolves with before if the action resolves before the until time
-            // resolves with after otherwise
-            function waitUntil(until: number, action: () => Promise<void>): Promise<WaitResult> {
-                return new Promise((resolve, reject) => {
-                    action().then(() => resolve(WaitResult.before));
-                    setTimeout(() => resolve(WaitResult.after), until);
-                });
-            }
-
-            // helper function that resolves with different wait results depending on when the action resolves
-            // resolves with before if the action resolves before the from time
-            // resolves with during if the action resolves between the from to the until time
-            // resolves with after if the action does not resolve before the until time
-            function waitFromUntil(from: number, until: number, action: () => Promise<void>): Promise<WaitResult> {
-                return new Promise((resolve, reject) => {
-                    let during = false;
-                    action().then(() => {
-                        resolve(during ? WaitResult.during : WaitResult.before);
-                    });
-                    setTimeout(() => {
-                        during = true;
-                    }, from);
-                    setTimeout(() => {
-                        resolve(WaitResult.after);
-                    }, until);
-                });
-            }
 
             async function startDeltaManager(readonly: boolean = false) {
                 await deltaManager.connect("test");
@@ -74,6 +42,10 @@ describe("Loader", () => {
                     type,
                 }]);
             }
+
+            before(() => {
+                clock = useFakeTimers();
+            });
 
             beforeEach(() => {
                 seq = 1;
@@ -104,6 +76,14 @@ describe("Loader", () => {
                 }, true);
             });
 
+            afterEach(() => {
+                clock.reset();
+            });
+
+            after(() => {
+                clock.restore();
+            });
+
             describe("Update Minimum Sequence Number", () => {
                 const expectedTimeout = 100;
 
@@ -115,113 +95,99 @@ describe("Loader", () => {
                 }
 
                 it("Should update after timeout with single op", async () => {
+                    let runCount = 0;
                     await startDeltaManager();
-                    const result = await waitFromUntil(expectedTimeout / 2, expectedTimeout * 2, () => {
-                        return new Promise((resolve, reject) => {
-                            emitter.on(submitEvent, (messages: IDocumentMessage[]) => {
-                                assertOneValidNoOp(messages);
-                                resolve();
-                            });
-
-                            emitSequentialOp();
-                        });
+                    emitter.on(submitEvent, (messages: IDocumentMessage[]) => {
+                        assertOneValidNoOp(messages);
+                        runCount++;
                     });
-                    assert.strictEqual(WaitResult.during, result);
+
+                    emitSequentialOp();
+                    clock.tick(expectedTimeout - 1);
+                    assert.strictEqual(runCount, 0);
+
+                    clock.tick(1);
+                    assert.strictEqual(runCount, 1);
                 });
 
                 it("Should not update early with successive ops", async () => {
                     const numberOfInterrupts = 10;
-                    const halfTimeout = expectedTimeout / 2;
-                    const expectedFromTime = expectedTimeout * numberOfInterrupts + halfTimeout;
-                    const expectedUntilTime = expectedFromTime + expectedTimeout;
+                    let runCount = 0;
 
                     await startDeltaManager();
-                    const resultP = waitFromUntil(expectedFromTime, expectedUntilTime, () => {
-                        return new Promise((resolve, reject) => {
-                            emitter.on(submitEvent, (messages: IDocumentMessage[]) => {
-                                assertOneValidNoOp(messages);
-                                resolve();
-                            });
-                        });
+                    emitter.on(submitEvent, (messages: IDocumentMessage[]) => {
+                        assertOneValidNoOp(messages);
+                        runCount++;
                     });
 
                     // initial op
                     emitSequentialOp();
-                    for (let i = 0; i < numberOfInterrupts; i++) {
-                        // emit every expectedTimeout, but offset by half to ensure they interrupt
-                        setTimeout(() => { emitSequentialOp(); }, expectedTimeout * i + halfTimeout);
-                    }
 
-                    assert.strictEqual(WaitResult.during, await resultP);
+                    for (let i = 0; i < numberOfInterrupts; i++) {
+                        clock.tick(expectedTimeout - 1);
+                        emitSequentialOp();
+                        clock.tick(1); // trigger canceled timeout, start new timeout
+                    }
+                    clock.tick(expectedTimeout - 1);
+                    assert.strictEqual(runCount, 0);
+
+                    clock.tick(1);
+                    assert.strictEqual(runCount, 1);
                 });
 
                 it("Should not update when receiving no-ops", async () => {
                     await startDeltaManager();
-                    const result = await waitFromUntil(0, expectedTimeout * 2, () => {
-                        return new Promise((resolve, reject) => {
-                            emitter.on(submitEvent, (messages: IDocumentMessage[]) => {
-                                assertOneValidNoOp(messages);
-                                assert(false);
-                                resolve();
-                            });
-
-                            emitSequentialOp(MessageType.NoOp);
-                        });
+                    emitter.on(submitEvent, (messages: IDocumentMessage[]) => {
+                        assertOneValidNoOp(messages);
+                        assert.fail("Should not send no-op.");
                     });
 
-                    assert.strictEqual(WaitResult.after, result);
+                    emitSequentialOp(MessageType.NoOp);
+                    clock.tick(expectedTimeout);
                 });
 
                 it("Should immediately update with immediate content", async () => {
                     intendedResult = { immediateNoOp: true };
+                    let runCount = 0;
                     await startDeltaManager();
-                    const result = await waitUntil(expectedTimeout / 2, () => {
-                        return new Promise((resolve, reject) =>  {
-                            emitter.on(submitEvent, (messages: IDocumentMessage[]) => {
-                                assertOneValidNoOp(messages, true);
-                                resolve();
-                            });
 
-                            emitSequentialOp();
-                        });
+                    emitter.on(submitEvent, (messages: IDocumentMessage[]) => {
+                        assertOneValidNoOp(messages, true);
+                        runCount++;
                     });
 
-                    assert.strictEqual(WaitResult.before, result);
+                    emitSequentialOp(MessageType.NoOp);
+                    assert.strictEqual(runCount, 1);
                 });
 
                 it("Should not update if op submitted during timeout", async () => {
                     const ignoreContent = "ignoreThisMessage";
                     let canIgnore = true;
                     await startDeltaManager();
-                    const result = await waitUntil(expectedTimeout * 2, () => {
-                        return new Promise((resolve, reject) =>  {
-                            emitter.on(submitEvent, (messages: IDocumentMessage[]) => {
-                                // we can ignore our own op
-                                if (
-                                    messages
-                                    && messages.length === 1
-                                    && messages[0].type === MessageType.Operation
-                                    && messages[0].contents
-                                    && JSON.parse(messages[0].contents as string) === ignoreContent
-                                    && canIgnore
-                                ) {
-                                    canIgnore = false;
-                                    return;
-                                }
-                                assertOneValidNoOp(messages);
-                                resolve();
-                            });
 
-                            setTimeout(
-                                () => deltaManager.submit(MessageType.Operation, ignoreContent),
-                                expectedTimeout / 2,
-                            );
-
-                            emitSequentialOp();
-                        });
+                    emitter.on(submitEvent, (messages: IDocumentMessage[]) => {
+                        // we can ignore our own op
+                        if (
+                            messages
+                            && messages.length === 1
+                            && messages[0].type === MessageType.Operation
+                            && messages[0].contents
+                            && JSON.parse(messages[0].contents as string) === ignoreContent
+                            && canIgnore
+                        ) {
+                            canIgnore = false;
+                            return;
+                        }
+                        assert.fail("Should not send no-op.");
                     });
 
-                    assert.strictEqual(WaitResult.after, result);
+                    emitSequentialOp();
+                    clock.tick(expectedTimeout - 1);
+                    deltaManager.submit(MessageType.Operation, ignoreContent);
+                    clock.tick(1);
+
+                    // make extra sure
+                    clock.tick(expectedTimeout);
                 });
             });
         });
