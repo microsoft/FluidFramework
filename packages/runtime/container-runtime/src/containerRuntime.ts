@@ -421,7 +421,10 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this._flushMode;
     }
 
-    public readonly IComponentRegistry: IComponentRegistry;
+    public get IComponentRegistry(): IComponentRegistry {
+        return this.registry;
+    }
+
     public readonly IComponentSerializer: IComponentSerializer = new ComponentSerializer();
 
     public readonly IComponentHandleContext: IComponentHandleContext;
@@ -485,8 +488,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         private readonly runtimeOptions: IContainerRuntimeOptions = { generateSummaries: false },
     ) {
         super();
-
-        this.IComponentRegistry = this.registry;
 
         this.chunkMap = new Map<string, string[]>(chunks);
 
