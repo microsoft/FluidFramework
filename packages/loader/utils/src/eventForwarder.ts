@@ -12,44 +12,62 @@ import { EventEmitter } from "events";
  * but the primary source needs to stay intact.
  */
 export class EventForwarder extends EventEmitter implements IDisposable {
+    protected static isEmitterEvent(event: string | symbol): boolean {
+        return event === EventForwarder.newListenerEvent || event === EventForwarder.removeListenerEvent;
+    }
+
+    private static readonly newListenerEvent = "newListener";
+    private static readonly removeListenerEvent = "removeListener";
+
     public get disposed() { return this.isDisposed; }
     private isDisposed: boolean = false;
 
-    private readonly disposalActions: (() => void)[] = [];
-    private readonly forwardingEvents: Set<string | symbol> = new Set<string | symbol>();
+    private readonly forwardingEvents: Map<string | symbol, () => void> =
+        new Map<string | symbol, () => void>();
 
-    constructor(emitter: EventEmitter) {
+    constructor(source: EventEmitter) {
         super();
-        if (emitter) {
+        if (source) {
             // newListener event is raised whenever someone starts listening to this events, so
             // we keep track of events being listened to, and start forwarding from the source
             // event emitter per event listened to on this
-            const newListenerHandler = (event: string | symbol) => this.forward(emitter, event);
-            this.on("newListener", newListenerHandler);
-            this.disposalActions.push(() => this.off("newListener", newListenerHandler));
+            const removeListenerHandler = (event: string | symbol) => this.unforward(event);
+            const newListenerHandler = (event: string | symbol) => this.forward(source, event);
+            this.on(EventForwarder.removeListenerEvent, removeListenerHandler);
+            this.on(EventForwarder.newListenerEvent, newListenerHandler);
         }
     }
 
     public dispose() {
         this.isDisposed = true;
-        for (const disposalAction of this.disposalActions) {
+        for (const listenerRemover of this.forwardingEvents.values()) {
             try {
-                disposalAction();
+                listenerRemover();
             } catch {
                 // should be fine because of removeAllListeners below
             }
         }
         this.removeAllListeners();
-        this.disposalActions.length = 0;
         this.forwardingEvents.clear();
     }
 
-    protected forward(emitter: EventEmitter, event: string | symbol): void {
-        if (emitter && event && !this.forwardingEvents.has(event) && event !== "newListener") {
+    protected forward(source: EventEmitter, event: string | symbol): void {
+        if (source && event && !EventForwarder.isEmitterEvent(event) && !this.forwardingEvents.has(event)) {
             const listener = (...args: any[]) => this.emit(event, ...args);
-            this.forwardingEvents.add(event);
-            emitter.on(event, listener);
-            this.disposalActions.push(() => emitter.off(event, listener));
+            this.forwardingEvents.set(event, () => source.off(event, listener));
+            source.on(event, listener);
+        }
+    }
+
+    protected unforward(event: string | symbol): void {
+        if (event && !EventForwarder.isEmitterEvent(event) && this.forwardingEvents.has(event)) {
+            if (this.listenerCount(event) === 0) {
+                const listenerRemover = this.forwardingEvents.get(event);
+                if (listenerRemover) {
+                    listenerRemover();
+                }
+                this.forwardingEvents.delete(event);
+            }
         }
     }
 }
