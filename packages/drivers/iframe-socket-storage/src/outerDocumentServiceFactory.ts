@@ -5,7 +5,7 @@
 
 import { IRequest } from "@prague/component-core-interfaces";
 import { IHost } from "@prague/container-definitions";
-import { IClient, IDocumentService, IDocumentServiceFactory, IResolvedUrl } from "@prague/protocol-definitions";
+import { ConnectionMode, IClient, IDocumentService, IDocumentServiceFactory, IResolvedUrl } from "@prague/protocol-definitions";
 import { OuterDocumentService } from "./outerDocumentService";
 
 /**
@@ -24,7 +24,9 @@ export class OuterDocumentServiceFactory implements IDocumentServiceFactory {
         const connectedDocumentService: IDocumentService =
             await this.documentServiceFactory.createDocumentService(resolvedUrl);
 
-        const documentServiceP = OuterDocumentService.create(connectedDocumentService, await this.frameP);
+        const mode: ConnectionMode = "write";
+
+        const documentServiceP = OuterDocumentService.create(connectedDocumentService, await this.frameP, mode);
 
         // tslint:disable-next-line: no-unsafe-any
         const clientDetails = this.options ? (this.options.client as IClient) : null;
@@ -32,7 +34,7 @@ export class OuterDocumentServiceFactory implements IDocumentServiceFactory {
         documentServiceP
             .then((documentService) => {
                 return Promise.all([
-                    documentService.connectToDeltaStream(clientDetails!, "write"),
+                    documentService.connectToDeltaStream(clientDetails!, mode),
                     documentService.connectToDeltaStorage(),
                     documentService.connectToStorage(),
                 ]);
