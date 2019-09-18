@@ -34,26 +34,26 @@ export interface IMapMessageHandler {
     submit(op: IMapOperation): void;
 }
 
-export interface IMapValueTypeOperation {
+interface IMapValueTypeOperation {
     type: "act";
     key: string;
     value: IValueTypeOperationValue;
 }
 
-export interface IMapSetOperation {
+interface IMapSetOperation {
     type: "set";
     key: string;
     value: ISerializableValue;
 }
 
-export interface IMapDeleteOperation {
+interface IMapDeleteOperation {
     type: "delete";
     key: string;
 }
 
-export type IMapKeyOperation = IMapValueTypeOperation | IMapSetOperation | IMapDeleteOperation;
+type IMapKeyOperation = IMapValueTypeOperation | IMapSetOperation | IMapDeleteOperation;
 
-export interface IMapClearOperation {
+interface IMapClearOperation {
     type: "clear";
 }
 
