@@ -152,7 +152,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
             const details = await this.getSnapshotDetails();
             this._baseSnapshot = details.snapshot;
             this.baseId = details.snapshot ? details.snapshot.id : null;
-            const factory = await this._hostRuntime.getPackage(details.pkg);
+            const factory = await this._hostRuntime.IComponentRegistry.get(details.pkg);
 
             // During this call we will invoke the instantiate method - which will call back into us
             // via the bindRuntime call to resolve componentRuntimeDeferred

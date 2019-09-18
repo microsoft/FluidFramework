@@ -421,6 +421,10 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this._flushMode;
     }
 
+    public get IComponentRegistry(): IComponentRegistry {
+        return this.registry;
+    }
+
     public readonly IComponentSerializer: IComponentSerializer = new ComponentSerializer();
 
     public readonly IComponentHandleContext: IComponentHandleContext;
@@ -572,14 +576,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
     public get IComponentConfiguration() {
         return this.context.configuration;
-    }
-
-    /**
-     * Returns the component factory for a particular package.
-     * @param name - Name of the package.
-     */
-    public getPackage(name: string): Promise<ComponentFactoryTypes> {
-        return this.registry.get(name);
     }
 
     /**
