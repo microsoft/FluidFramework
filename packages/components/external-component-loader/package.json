@@ -3,7 +3,7 @@
   "description": "Loads external components based on their url",
   "version": "0.10.0",
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "main": "dist/index.js",
   "module": "lib/index.js",
   "types": "dist/index.d.ts",

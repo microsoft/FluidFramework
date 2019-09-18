@@ -39,7 +39,7 @@
     "webpack:dev": "webpack --env=\"development\""
   },
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "dependencies": {
     "@chaincode/search-menu": "^0.10.0",
     "@prague/client-ui": "^0.10.0",

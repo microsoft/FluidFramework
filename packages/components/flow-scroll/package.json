@@ -42,7 +42,7 @@
     "webpack": "webpack --env.production"
   },
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "dependencies": {
     "@chaincode/flow-intel": "^0.10.0",

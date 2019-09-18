@@ -39,7 +39,7 @@
     "report-dir": "nyc/report"
   },
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "devDependencies": {
     "@microsoft/fluid-build-common": "^0.10.0",
     "@types/debug": "^0.0.31",

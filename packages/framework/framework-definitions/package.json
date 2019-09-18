@@ -18,7 +18,7 @@
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "dependencies": {
     "@prague/component-core-interfaces": "^0.10.0",
     "@prague/runtime-definitions": "^0.10.0"

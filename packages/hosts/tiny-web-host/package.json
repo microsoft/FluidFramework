@@ -21,7 +21,7 @@
     "webpack": "webpack  --env build"
   },
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "dependencies": {
     "@prague/base-host": "^0.10.0",

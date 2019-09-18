@@ -17,7 +17,7 @@
     "tsc": "tsc"
   },
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "dependencies": {
     "@prague/container-definitions": "^0.10.0",

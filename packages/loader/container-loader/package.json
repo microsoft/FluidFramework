@@ -41,7 +41,7 @@
     "report-dir": "nyc/report"
   },
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "dependencies": {
     "@prague/component-core-interfaces": "^0.10.0",
     "@prague/container-definitions": "^0.10.0",

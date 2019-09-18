@@ -3,7 +3,7 @@
   "description": "Chaincode component containing a table's data",
   "version": "0.10.0",
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "main": "dist/index.js",
   "module": "lib/index.js",
   "sideEffects": false,
