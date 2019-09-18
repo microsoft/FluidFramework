@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 import {
+    ConnectionMode,
     IClient,
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
@@ -42,7 +43,9 @@ export interface IOuterProxy extends IOuterDocumentDeltaConnection,
  */
 export class OuterDocumentService implements IDocumentService {
     public static async create(
-        documentService: IDocumentService, frame: HTMLIFrameElement): Promise<OuterDocumentService> {
+        documentService: IDocumentService,
+        frame: HTMLIFrameElement,
+        mode: ConnectionMode): Promise<OuterDocumentService> {
         const client: IClient = {
             permission: [],
             scopes: [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
@@ -55,7 +58,7 @@ export class OuterDocumentService implements IDocumentService {
         const [storage, deltaStorage, deltaConnection] = await Promise.all([
             documentService.connectToStorage(),
             documentService.connectToDeltaStorage(),
-            documentService.connectToDeltaStream(client),
+            documentService.connectToDeltaStream(client, mode),
         ]);
 
         return new OuterDocumentService(
@@ -129,7 +132,7 @@ export class OuterDocumentService implements IDocumentService {
      *
      * @returns returns the document delta stream service for routerlicious driver.
      */
-    public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
+    public async connectToDeltaStream(client: IClient, mode: ConnectionMode): Promise<IDocumentDeltaConnection> {
         return this.createDocumentDeltaConnection(client);
     }
 
@@ -157,6 +160,7 @@ export class OuterDocumentService implements IDocumentService {
                 initialMessages: this.deltaConnection.initialMessages,
                 initialSignals: this.deltaConnection.initialSignals,
                 maxMessageSize: this.deltaConnection.maxMessageSize,
+                mode: this.deltaConnection.mode,
                 parentBranch: this.deltaConnection.parentBranch,
                 serviceConfiguration: this.deltaConnection.serviceConfiguration,
                 version: this.deltaConnection.version,

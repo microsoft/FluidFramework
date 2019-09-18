@@ -12,6 +12,7 @@ import {
 } from "@prague/container-definitions";
 import {
     Browser,
+    ConnectionMode,
     IClient,
     IContentMessage,
     IDocumentDeltaStorageService,
@@ -57,17 +58,20 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     public readonly clientType: string;
     public get IDeltaSender() { return this; }
 
+    // Current conneciton mode. Initially write.
+    public connectionMode: ConnectionMode = "write";
+    // Overwrites the current connection mode to always write.
+    private readonly systemConnectionMode: ConnectionMode;
+
     private isDisposed: boolean = false;
     private pending: ISequencedDocumentMessage[] = [];
     private fetching = false;
 
+    private inQuorum = false;
+
     // Flag indicating whether or not we need to update the reference sequence number
     private updateHasBeenRequested = false;
     private updateSequenceNumberTimer: any;
-
-    // Flag indicating whether the client is only a receiving client. Client starts in readonly mode.
-    // Switches only on self client join message or on message submission.
-    private readonly = true;
 
     // The minimum sequence number and last sequence number received from the server
     private minSequenceNumber: number = 0;
@@ -141,6 +145,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         return this.connection!.details.serviceConfiguration;
     }
 
+    public get active(): boolean {
+         return this.inQuorum && this.connectionMode === "write";
+    }
+
     constructor(
         private readonly service: IDocumentService,
         private readonly client: IClient | null,
@@ -149,6 +157,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         super();
 
         this.clientType = (!this.client || !this.client.type) ? Browser : this.client.type;
+        this.systemConnectionMode = (this.client && this.client.mode === "write") ? "write" : "read";
 
         // Inbound message queue
         this._inboundPending = new DeltaQueue<ISequencedDocumentMessage>(
@@ -269,6 +278,14 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         }
     }
 
+    public updateQuorumJoin() {
+        this.inQuorum = true;
+    }
+
+    public updateQuorumLeave() {
+        this.inQuorum = false;
+    }
+
     public async connect(reason: string): Promise<IConnectionDetails> {
         if (this.connecting) {
             assert(!this.connection);
@@ -279,7 +296,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         }
 
         this.connecting = new Deferred<IConnectionDetails>();
-        this.connectCore(reason, InitialReconnectDelay);
+        this.connectCore(reason, InitialReconnectDelay, this.connectionMode);
 
         return this.connecting.promise;
     }
@@ -319,7 +336,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         };
 
         const outbound = this.createOutboundMessage(type, message);
-        this.readonly = false;
         this.stopSequenceNumberUpdate();
         this.emit("submitOp", message);
 
@@ -432,15 +448,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         return [];
     }
 
-    public enableReadonlyMode(): void {
-        this.stopSequenceNumberUpdate();
-        this.readonly = true;
-    }
-
-    public disableReadonlyMode(): void {
-        this.readonly = false;
-    }
-
     /**
      * Closes the connection and clears inbound & outbound queues.
      */
@@ -503,7 +510,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         }
     }
 
-    private connectCore(reason: string, delay: number): void {
+    private connectCore(reason: string, delay: number, mode: ConnectionMode): void {
         if (this.connectRepeatCount === 0) {
             this.connectStartTime = performanceNow();
         }
@@ -511,9 +518,12 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         DeltaConnection.connect(
             this.service,
-            this.client!).then(
+            this.client!,
+            mode).then(
             (connection) => {
                 this.connection = connection;
+                // back-compat for newer clients and old server. If the server does not have mode, we reset to write.
+                this.connectionMode = connection.details.mode ? connection.details.mode : "write";
 
                 this._outbound.systemResume();
 
@@ -558,17 +568,19 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                     }
                 });
 
+                // Always connect in write mode after getting nacked.
                 connection.on("nack", (target: number) => {
-                    this.reconnectOnError("Reconnecting on nack", connection);
+                    const nackReason = target === -1 ? "Reconnecting to start writing" : "Reconnecting on nack";
+                    this.reconnectOnError(nackReason, connection, "write");
                 });
 
+                //  Connection mode is always read on disconnect/error unless the system mode was write.
                 connection.on("disconnect", (disconnectReason) => {
-                    this.reconnectOnError(`Reconnecting on disconnect: ${disconnectReason}`, connection);
-                });
-
-                connection.on("pong", (latency: number) => {
-                    this.recordPingTime(latency);
-                    this.emit("pong", latency);
+                    const reconnectionMode = this.systemConnectionMode === "write" ? "write" : "read";
+                    this.reconnectOnError(
+                        `Reconnecting on disconnect: ${disconnectReason}`,
+                        connection,
+                        reconnectionMode);
                 });
 
                 connection.on("error", (error) => {
@@ -576,7 +588,13 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                     // We are getting transport errors from WebSocket here, right before or after "disconnect".
                     // This happens only in Firefox.
                     logNetworkFailure(this.logger, {eventName: "DeltaConnectionError"}, error);
-                    this.reconnectOnError("Reconnecting on error", connection);
+                    const reconnectionMode = this.systemConnectionMode === "write" ? "write" : "read";
+                    this.reconnectOnError("Reconnecting on error", connection, reconnectionMode);
+                });
+
+                connection.on("pong", (latency: number) => {
+                    this.recordPingTime(latency);
+                    this.emit("pong", latency);
                 });
 
                 // Notify of the connection
@@ -614,12 +632,11 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 }
 
                 const delayNext = Math.min(delay * 2, MaxReconnectDelay);
-                console.log("WaitForConnectedState");
-                waitForConnectedState(delayNext).then(() => this.connectCore(reason, delayNext));
+                waitForConnectedState(delayNext).then(() => this.connectCore(reason, delayNext, mode));
             });
     }
 
-    private reconnectOnError(reason: string, connection: DeltaConnection) {
+    private reconnectOnError(reason: string, connection: DeltaConnection, mode: ConnectionMode) {
         // we quite often get protocol errors before / after observing nack/disconnect
         // we do not want to run through same sequence twice.
         if (connection !== this.connection) {
@@ -629,6 +646,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         // avoid any re-entrancy - clear object reference
         this.connection = undefined;
+        this.connectionMode = "read";
 
         this._outbound.systemPause();
         this._outbound.clear();
@@ -644,7 +662,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             this._inboundSignal.clear();
         } else {
             this.logger.sendTelemetryEvent({eventName: "DeltaConnectionReconnect", reason});
-            this.connectCore(reason, InitialReconnectDelay);
+            this.connectCore(reason, InitialReconnectDelay, mode);
         }
     }
 
@@ -836,6 +854,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this.getDeltas(reason, from, to).then(
             (messages) => {
                 this.fetching = false;
+                this.emit("caughtUp");
                 this.catchUp(reason, messages);
             });
     }
@@ -905,8 +924,8 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
      * Acks the server to update the reference sequence number
      */
     private updateSequenceNumber(type: MessageType): void {
-        // Exit early for readonly clients. They don't take part in the minimum sequence number calculation.
-        if (this.readonly) {
+        // Exit early for inactive clients. They don't take part in the minimum sequence number calculation.
+        if (!this.active) {
             return;
         }
 

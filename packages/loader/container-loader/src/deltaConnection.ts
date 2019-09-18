@@ -7,6 +7,7 @@ import {
     IConnectionDetails,
 } from "@prague/container-definitions";
 import {
+    ConnectionMode,
     IClient,
     IContentMessage,
     IDocumentDeltaConnection,
@@ -21,8 +22,9 @@ import { EventEmitter } from "events";
 export class DeltaConnection extends EventEmitter {
     public static async connect(
         service: IDocumentService,
-        client: IClient) {
-        const connection = await service.connectToDeltaStream(client);
+        client: IClient,
+        mode: ConnectionMode) {
+        const connection = await service.connectToDeltaStream(client, mode);
         return new DeltaConnection(connection);
     }
 
@@ -53,6 +55,7 @@ export class DeltaConnection extends EventEmitter {
             initialMessages: connection.initialMessages,
             initialSignals: connection.initialSignals,
             maxMessageSize: connection.maxMessageSize,
+            mode: connection.mode,
             parentBranch: connection.parentBranch,
             serviceConfiguration: connection.serviceConfiguration,
             version: connection.version,
