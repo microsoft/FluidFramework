@@ -391,6 +391,7 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
                 //
                 // - nack could get a new msn - but might as well do it in the join?
                 this.onDisconnect();
+                this.emit("disconnected");
                 break;
 
             case ConnectionState.Connecting:
@@ -412,6 +413,7 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
                 // - we have a client ID
                 // - we are caught up enough to attempt to send messages
                 this.onConnect(pendingOps);
+                this.emit("connected");
 
                 break;
 

@@ -8,8 +8,8 @@ import {
     IRequest,
 } from "@prague/component-core-interfaces";
 import { IContainerContext } from "@prague/container-definitions";
-import { ComponentRegistryTypes, ContainerRuntime } from "@prague/container-runtime";
-import { IHostRuntime } from "@prague/runtime-definitions";
+import { ContainerRuntime } from "@prague/container-runtime";
+import { ComponentRegistryTypes, IHostRuntime } from "@prague/runtime-definitions";
 
 export class SimpleContainerRuntimeFactory {
     public static readonly defaultComponentId = "default";
