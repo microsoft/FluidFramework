@@ -9,13 +9,20 @@
 // * maxTime(ms) have passed with pending ops to summarize
 // * maxOps are waiting to summarize
 export interface ISummaryConfiguration {
-    idleTime: number;
-
-    maxTime: number;
-
-    maxOps: number;
+    intervals: ISummaryConfigurationInterval[];
 
     maxAckWaitTime: number;
+
+    // deprecated in favor of intervals
+    idleTime?: number;
+    maxTime?: number;
+    maxOps?: number;
+}
+
+export interface ISummaryConfigurationInterval {
+    maxOps: number;
+    idleTime: number;
+    maxTime: number;
 }
 
 /**

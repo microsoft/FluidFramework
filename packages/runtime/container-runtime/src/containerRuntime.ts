@@ -33,7 +33,6 @@ import {
     ISignalMessage,
     ISnapshotTree,
     ISummaryBlob,
-    ISummaryConfiguration,
     ISummaryTree,
     ITree,
     MessageType,
@@ -96,21 +95,6 @@ interface IBufferedChunk {
 
     content: string;
 }
-
-// Consider idle 5s of no activity. And snapshot if a minute has gone by with no snapshot.
-const IdleDetectionTime = 5000;
-
-const DefaultSummaryConfiguration: ISummaryConfiguration = {
-    idleTime: IdleDetectionTime,
-
-    maxTime: IdleDetectionTime * 12,
-
-    // Snapshot if 1000 ops received since last snapshot.
-    maxOps: 1000,
-
-    // Wait 10 minutes for summary ack
-    maxAckWaitTime: 600000,
-};
 
 /**
  * Options for container runtime.
@@ -551,10 +535,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
             this.clearPartialChunks(clientId);
         });
 
-        const summaryConfiguration = context.serviceConfiguration
-            ? { ...DefaultSummaryConfiguration, ...context.serviceConfiguration.summary }
-            : DefaultSummaryConfiguration;
-
         // We always create the summarizer in the case that we are asked to generate summaries. But this may
         // want to be on demand instead.
         // Don't use optimizations when generating summaries with a document loaded using snapshots.
@@ -562,7 +542,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         this.summarizer = new Summarizer(
             "/_summarizer",
             this,
-            summaryConfiguration,
+            this.context.serviceConfiguration ? this.context.serviceConfiguration.summary : undefined,
             () => this.generateSummary(!loadedFromSummary));
 
         // Create the SummaryManager and mark the initial state

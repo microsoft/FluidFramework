@@ -61,9 +61,18 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
     blockSize: 64436,
     maxMessageSize:  16 * 1024,
     summary: {
-        idleTime: 5000,
-        maxOps: 1000,
-        maxTime: 5000 * 12,
+        intervals: [
+            {
+                maxOps: 50,
+                maxTime: 300000 * 12,
+                idleTime: 300000,
+            },
+            {
+                maxOps: 1000,
+                maxTime: 5000 * 12,
+                idleTime: 5000,
+            },
+        ],
         maxAckWaitTime: 600000,
     },
 };
