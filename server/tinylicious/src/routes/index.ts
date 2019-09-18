@@ -12,7 +12,6 @@ import {
 } from "@microsoft/fluid-server-services-core";
 import { Router } from "express";
 import { Provider } from "nconf";
-import * as agent from "./agent";
 import * as api from "./api";
 
 export interface IRoutes {
@@ -26,10 +25,9 @@ export function create(
     mongoManager: MongoManager,
     storage: IDocumentStorage,
     producer: IProducer,
-    appTenants: IAlfredTenant[]) {
-
+    appTenants: IAlfredTenant[],
+) {
     return {
-        agent: agent.create(config),
         api: api.create(config, tenantManager, storage, mongoManager, producer, appTenants),
     };
 }
