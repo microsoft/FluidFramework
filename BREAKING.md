@@ -1,6 +1,6 @@
 # 0.10 Breaking Changes
 
-- [`@fluid-example/tiny-web-host` prague -> fluid changes](#praguetiny-web-host-prague---fluid-changes)
+- [`@fluid-example/tiny-web-host` prague -> fluid changes](#fluid-exampletiny-web-host-prague---fluid-changes)
 - [prague URIs changed to fluid](#prague-URIs-changed-to-fluid)
 - [DistributedSet removed](#distributedset-removed)
 - [`Stream` renamed to `Ink`](#stream-renamed-to-ink)
