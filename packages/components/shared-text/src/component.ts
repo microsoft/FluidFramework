@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { controls, ui } from "@fluid-example/client-ui-lib";
+import { TextAnalyzer } from "@fluid-example/intelligence-runner-agent";
 import { SharedCell } from "@microsoft/fluid-cell";
 import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
 import { IInk, Ink } from "@microsoft/fluid-ink";
@@ -20,7 +22,6 @@ import {
     SharedString,
 } from "@microsoft/fluid-sequence";
 import * as API from "@prague/client-api";
-import { controls, ui } from "@prague/client-ui";
 import {
     IComponent,
     IComponentHandle,
@@ -29,7 +30,6 @@ import {
     IRequest,
     IResponse,
 } from "@prague/component-core-interfaces";
-import { TextAnalyzer } from "@prague/intelligence-runner";
 import { EventEmitter } from "events";
 import { parse } from "querystring";
 import * as url from "url";

@@ -1,5 +1,5 @@
 {
-  "name": "@prague/intelligence-runner",
+  "name": "@fluid-example/intelligence-runner-agent",
   "version": "0.10.0",
   "description": "Generates insights on distributed data structures",
   "main": "dist/index.js",

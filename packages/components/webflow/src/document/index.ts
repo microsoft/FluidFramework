@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { randomId, TokenList } from "@fluid-example/flow-util-lib";
 import {
     createInsertSegmentOp,
     createRemoveRangeOp,
@@ -29,7 +30,6 @@ import {
 } from "@microsoft/fluid-sequence";
 import { PrimedComponent, PrimedComponentFactory } from "@prague/aqueduct";
 import { IComponent, IComponentHandle, IComponentHTMLOptions } from "@prague/component-core-interfaces";
-import { randomId, TokenList } from "@prague/flow-util";
 import * as assert from "assert";
 import { clamp, emptyArray } from "../util";
 import { IHTMLAttributes } from "../util/attr";

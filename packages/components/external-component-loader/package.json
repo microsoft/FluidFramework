@@ -1,5 +1,5 @@
 {
-  "name": "@chaincode/externalcomponentloader",
+  "name": "@microsoft/external-component-loader",
   "description": "Loads external components based on their url",
   "version": "0.10.0",
   "author": "Microsoft",

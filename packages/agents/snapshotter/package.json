@@ -1,5 +1,5 @@
 {
-  "name": "@prague/snapshotter",
+  "name": "@fluid-example/snapshotter-agent",
   "version": "0.10.0",
   "description": "Snapshotter for Prague container",
   "main": "dist/index.js",

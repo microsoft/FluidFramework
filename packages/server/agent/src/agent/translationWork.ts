@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { Translator } from "@fluid-example/translator-agent";
 import { ISharedMap } from "@microsoft/fluid-map";
 import * as Sequence from "@microsoft/fluid-sequence";
 import { IComponentHandle } from "@prague/component-core-interfaces";
 import { IHost } from "@prague/container-definitions";
 import { IDocumentServiceFactory } from "@prague/protocol-definitions";
-import { Translator } from "@prague/translator";
 import { Provider } from "nconf";
 import { BaseWork } from "./baseWork";
 import { IWork } from "./definitions";

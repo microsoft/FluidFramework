@@ -1,5 +1,5 @@
 {
-  "name": "@chaincode/flow-intel",
+  "name": "@fluid-example/flow-intel",
   "version": "0.10.0",
   "description": "Runs agents on webFlow",
   "main": "dist/index.js",
@@ -26,7 +26,7 @@
     "typescript": "~3.4.5"
   },
   "dependencies": {
-    "@chaincode/webflow": "^0.10.0",
+    "@fluid-example/webflow": "^0.10.0",
     "@prague/component-core-interfaces": "^0.10.0",
     "@microsoft/fluid-map": "^0.10.0",
     "request": "^2.88.0"

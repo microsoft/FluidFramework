@@ -3,8 +3,8 @@
 * Licensed under the MIT License.
 */
 
+import { randomId } from "@fluid-example/flow-util-lib";
 import { Marker, ReferenceType } from "@microsoft/fluid-merge-tree";
-import { randomId } from "@prague/flow-util";
 // tslint:disable:binary-expression-operand-order
 import { TestHost } from "@prague/local-test-server";
 import * as assert from "assert";

@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { TextAnalyzer } from "@chaincode/flow-intel";
-import { FlowIntelViewer } from "@chaincode/flow-intel-viewer";
-import { FlowDocument, FlowDocumentType } from "@chaincode/webflow";
+import { TextAnalyzer } from "@fluid-example/flow-intel";
+import { FlowIntelViewer } from "@fluid-example/flow-intel-viewer";
+import { FlowDocument, FlowDocumentType } from "@fluid-example/webflow";
 import { SharedMap } from "@microsoft/fluid-map";
 import {
     FlushMode,
@@ -29,7 +29,7 @@ import { importDoc } from "./template";
 const insightsMapId = "insights";
 
 export class WebFlowHost extends PrimedComponent implements IComponentHTMLVisual {
-    public static readonly type = "@chaincode/webflow-host";
+    public static readonly type = "@fluid-example/webflow-host";
 
     private intelViewer: FlowIntelViewer;
     constructor(runtime: IComponentRuntime, context: IComponentContext) {

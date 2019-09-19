@@ -1,5 +1,5 @@
 {
-  "name": "@component/agent-scheduler",
+  "name": "@microsoft/fluid-agent-scheduler",
   "description": "Component in charge of distributing agents across instances of a component",
   "version": "0.10.0",
   "author": "Microsoft",

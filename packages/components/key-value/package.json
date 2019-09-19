@@ -1,5 +1,5 @@
 {
-  "name": "@chaincode/key-value",
+  "name": "@fluid-example/key-value",
   "version": "0.10.0",
   "description": "Chaincode representing a key-value pair",
   "author": "Microsoft",

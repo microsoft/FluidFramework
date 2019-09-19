@@ -5,7 +5,7 @@
 
 // tslint:disable:no-bitwise whitespace align switch-default no-string-literal ban-types
 // tslint:disable:no-angle-bracket-type-assertion arrow-parens
-import * as SearchMenu from "@chaincode/search-menu";
+import * as SearchMenu from "@fluid-example/search-menu";
 import * as types from "@microsoft/fluid-map";
 import * as MergeTree from "@microsoft/fluid-merge-tree";
 import { IInboundSignalMessage } from "@microsoft/fluid-runtime-definitions";

@@ -2,11 +2,11 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
+import { Dom, Scheduler } from "@fluid-example/flow-util-lib";
 import { ISegment, LocalReference, MergeTreeMaintenanceType } from "@microsoft/fluid-merge-tree";
 import { SequenceEvent } from "@microsoft/fluid-sequence";
 // tslint:disable:align
 import { IComponent } from "@prague/component-core-interfaces";
-import { Dom, Scheduler } from "@prague/flow-util";
 import * as assert from "assert";
 import { Tag } from "../";
 import { FlowDocument } from "../document";

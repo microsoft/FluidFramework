@@ -23,7 +23,7 @@ import { defaultPartials } from "./partials";
 // tslint:disable-next-line: no-var-requires no-require-imports
 const pkgJson = require("../../package.json") as IPraguePackage;
 const defaultChaincode =
-    `@chaincode/externalcomponentloader@${pkgJson.version.endsWith(".0") ? "^" : ""}${pkgJson.version}`;
+    `@microsoft/external-component-loader@${pkgJson.version.endsWith(".0") ? "^" : ""}${pkgJson.version}`;
 
 export function create(
     config: Provider,

@@ -211,7 +211,7 @@ function initialize(
             config: {
                 "@chaincode:cdn": "https://pragueauspkn-3873244262.azureedge.net",
             },
-            package: `@chaincode/shared-text@${version}`,
+            package: `@fluid-example/shared-text@${version}`,
         };
         const createP = documentFactory.create(details);
         createP.then(
@@ -433,11 +433,11 @@ class ScribeFactory implements IComponentFactory, IRuntimeFactory {
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
         const registry = new Map<string, Promise<IComponentFactory>>([
-            ["@chaincode/scribe", Promise.resolve(this)],
+            ["@fluid-example/scribe", Promise.resolve(this)],
         ]);
 
         const defaultComponentId = "default";
-        const defaultComponent = "@chaincode/scribe";
+        const defaultComponent = "@fluid-example/scribe";
 
         const runtime = await ContainerRuntime.load(
             context,

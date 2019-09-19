@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { AgentSchedulerFactory } from "@component/agent-scheduler";
+import { AgentSchedulerFactory } from "@microsoft/fluid-agent-scheduler";
 import {
     ComponentFactoryTypes,
     ComponentRegistryTypes,

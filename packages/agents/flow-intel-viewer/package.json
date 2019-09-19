@@ -1,5 +1,5 @@
 {
-  "name": "@chaincode/flow-intel-viewer",
+  "name": "@fluid-example/flow-intel-viewer",
   "description": "Chaincode for viewing insights in flow-scroll",
   "version": "0.10.0",
   "author": "Microsoft",

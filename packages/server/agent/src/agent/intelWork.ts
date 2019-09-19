@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { TextAnalyzer } from "@fluid-example/intelligence-runner-agent";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import * as Sequence from "@microsoft/fluid-sequence";
 import { IComponentHandle } from "@prague/component-core-interfaces";
 import { IHost } from "@prague/container-definitions";
-import { TextAnalyzer } from "@prague/intelligence-runner";
 import { IDocumentServiceFactory } from "@prague/protocol-definitions";
 import { BaseWork } from "./baseWork";
 import { IWork } from "./definitions";
