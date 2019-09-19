@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { PrimedComponent, PrimedComponentFactory, SimpleContainerRuntimeFactory } from "@microsoft/fluid-aqueduct";
+import { IComponentHandle, IComponentLoadable } from "@microsoft/fluid-component-core-interfaces";
 import { WrappedComponentRegistry } from "@microsoft/fluid-container-runtime";
 import { IComponentContext, IComponentFactory, IComponentRegistry, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SharedString, SparseMatrix } from "@microsoft/fluid-sequence";
 import { ISharedObject } from "@microsoft/fluid-shared-object-base";
-import { PrimedComponent, PrimedComponentFactory, SimpleContainerRuntimeFactory } from "@prague/aqueduct";
-import { IComponentHandle, IComponentLoadable } from "@prague/component-core-interfaces";
 import {
     IDocumentDeltaEvent,
     ITestDeltaConnectionServer,

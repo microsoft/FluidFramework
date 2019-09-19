@@ -6,26 +6,26 @@
 // tslint:disable:no-bitwise whitespace align switch-default no-string-literal ban-types
 // tslint:disable:no-angle-bracket-type-assertion arrow-parens
 import * as SearchMenu from "@fluid-example/search-menu";
-import * as types from "@microsoft/fluid-map";
-import * as MergeTree from "@microsoft/fluid-merge-tree";
-import { IInboundSignalMessage } from "@microsoft/fluid-runtime-definitions";
-import * as Sequence from "@microsoft/fluid-sequence";
-import * as api from "@prague/client-api";
+import * as api from "@fluid-internal/client-api";
 import {
     IComponent,
     IComponentHandle,
     IComponentHTMLVisual,
     IComponentLoadable,
-} from "@prague/component-core-interfaces";
-import { IGenericBlob } from "@prague/container-definitions";
+} from "@microsoft/fluid-component-core-interfaces";
+import { IGenericBlob } from "@microsoft/fluid-container-definitions";
 import {
     ComponentCursorDirection,
     IComponentCollection,
     IComponentCursor,
     IComponentKeyHandlers,
     IComponentLayout,
-} from "@prague/framework-definitions";
-import { ISequencedDocumentMessage, IUser } from "@prague/protocol-definitions";
+} from "@microsoft/fluid-framework-interfaces";
+import * as types from "@microsoft/fluid-map";
+import * as MergeTree from "@microsoft/fluid-merge-tree";
+import { ISequencedDocumentMessage, IUser } from "@microsoft/fluid-protocol-definitions";
+import { IInboundSignalMessage } from "@microsoft/fluid-runtime-definitions";
+import * as Sequence from "@microsoft/fluid-sequence";
 import { blobUploadHandler } from "../blob";
 import { CharacterCodes, Paragraph, Table } from "../text";
 import * as ui from "../ui";

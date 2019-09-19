@@ -20,7 +20,7 @@
     "webpack-cli": "^3.1.2"
   },
   "dependencies": {
-    "@prague/client-api": "^0.1.4408",
+    "@fluid-internal/client-api": "^0.1.4408",
     "@microsoft/fluid-merge-tree": "^0.1.4408",
     "@microsoft/fluid-runtime-definitions": "^0.1.4408",
     "@prague/shared-string": "^0.1.4408",

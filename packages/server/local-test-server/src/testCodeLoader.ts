@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ICodeLoader, IRuntimeFactory } from "@prague/container-definitions";
+import { ICodeLoader, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
 
 /**
  * Implementation of the code loader for the local-test-server.  This expects that

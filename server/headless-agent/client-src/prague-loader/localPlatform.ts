@@ -4,7 +4,7 @@
  */
 
 // tslint:disable max-classes-per-file
-import { IPlatform } from "@prague/container-definitions";
+import { IPlatform } from "@microsoft/fluid-container-definitions";
 import { EventEmitter } from "events";
 
 class WebPlatform extends EventEmitter implements IPlatform {

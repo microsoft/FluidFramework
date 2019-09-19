@@ -1,5 +1,5 @@
 {
-  "name": "@prague/component-core-interfaces",
+  "name": "@microsoft/fluid-component-core-interfaces",
   "version": "0.10.0",
   "description": "Prague component interfaces",
   "main": "dist/index.js",

@@ -10,7 +10,7 @@ import {
     IComponentRouter,
     IRequest,
     IResponse,
-} from "@prague/component-core-interfaces";
+} from "@microsoft/fluid-component-core-interfaces";
 
 export class ComponentHandle implements IComponentHandle {
     private bound: Set<IComponentHandle> | undefined;

@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import * as API from "@prague/client-api";
-import { IRequest } from "@prague/component-core-interfaces";
-import { Container, Loader } from "@prague/container-loader";
+import * as API from "@fluid-internal/client-api";
+import { IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { Container, Loader } from "@microsoft/fluid-container-loader";
 import {
     IDocumentDeltaStorageService,
     IDocumentService,
     IDocumentStorageService,
     IFluidResolvedUrl,
-} from "@prague/protocol-definitions";
+} from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
 import { ITestDeltaConnectionServer, TestDeltaConnectionServer, TestDocumentServiceFactory, TestResolver } from "../";
 

@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "@fluid-example/webflow": "^0.10.0",
-    "@prague/component-core-interfaces": "^0.10.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.10.0",
     "@microsoft/fluid-map": "^0.10.0",
     "request": "^2.88.0"
   },

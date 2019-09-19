@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { SharedComponent, SharedComponentFactory, SimpleModuleInstantiationFactory } from "@prague/aqueduct";
-import { IComponent, IComponentHTMLVisual } from "@prague/component-core-interfaces";
+import { SharedComponent, SharedComponentFactory, SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
+import { IComponent, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
 import { Clicker, ClickerName, ClickerWithInitialValue, ClickerWithInitialValueName } from "./internal-components";
 
 // tslint:disable-next-line: no-var-requires no-require-imports

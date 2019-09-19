@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
+import { FileMode, ITree, TreeEntry } from "@microsoft/fluid-protocol-definitions";
 import { IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
 import { SharedObject, ValueType } from "@microsoft/fluid-shared-object-base";
-import { FileMode, ITree, TreeEntry } from "@prague/protocol-definitions";
-import { fromBase64ToUtf8 } from "@prague/utils";
 import * as assert from "assert";
 import { IConsensusOrderedCollectionValue } from "./values";
 

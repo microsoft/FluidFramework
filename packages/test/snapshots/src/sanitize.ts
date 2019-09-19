@@ -5,7 +5,7 @@
 
 import {
     ISequencedDocumentMessage,
-} from "@prague/protocol-definitions";
+} from "@microsoft/fluid-protocol-definitions";
 import * as fs from "fs";
 
 // tslint:disable:non-literal-fs-path

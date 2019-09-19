@@ -1,5 +1,5 @@
 {
-  "name": "@prague/framework-definitions",
+  "name": "@microsoft/fluid-framework-interfaces",
   "version": "0.10.0",
   "description": "Definitions for fluid framework.",
   "main": "dist/index.js",
@@ -20,7 +20,7 @@
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "dependencies": {
-    "@prague/component-core-interfaces": "^0.10.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.10.0",
     "@microsoft/fluid-runtime-definitions": "^0.10.0"
   },
   "devDependencies": {

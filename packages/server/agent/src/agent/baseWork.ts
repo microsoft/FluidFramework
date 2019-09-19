@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import * as api from "@prague/client-api";
-import { IHost } from "@prague/container-definitions";
-import { Browser, IDocumentServiceFactory } from "@prague/protocol-definitions";
+import * as api from "@fluid-internal/client-api";
+import { IHost } from "@microsoft/fluid-container-definitions";
+import { Browser, IDocumentServiceFactory } from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
 import { parse } from "url";
 import { debug } from "./debug";

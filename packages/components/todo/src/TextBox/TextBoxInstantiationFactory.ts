@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import { IComponentFactory } from "@microsoft/fluid-runtime-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
-import { PrimedComponentFactory } from "@prague/aqueduct";
 import { TextBox } from "./index";
 
 export const TextBoxInstantiationFactory: IComponentFactory = new PrimedComponentFactory(

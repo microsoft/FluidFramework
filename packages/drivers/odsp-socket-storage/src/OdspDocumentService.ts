@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@prague/container-definitions";
+import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
+import { SinglePromise } from "@microsoft/fluid-core-utils";
+import { DocumentDeltaConnection } from "@microsoft/fluid-driver-base";
 import {
     ConnectionMode,
     IClient,
@@ -12,9 +14,7 @@ import {
     IDocumentService,
     IDocumentStorageService,
     IErrorTrackingService,
-} from "@prague/protocol-definitions";
-import { DocumentDeltaConnection } from "@prague/socket-storage-shared";
-import { SinglePromise } from "@prague/utils";
+} from "@microsoft/fluid-protocol-definitions";
 import { ISocketStorageDiscovery } from "./contracts";
 import { IFetchWrapper } from "./fetchWrapper";
 import { OdspDeltaStorageService } from "./OdspDeltaStorageService";

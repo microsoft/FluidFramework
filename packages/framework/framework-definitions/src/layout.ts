@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-declare module "@prague/component-core-interfaces" {
+declare module "@microsoft/fluid-component-core-interfaces" {
     export interface IComponent extends Readonly<Partial<
     IProvideComponentLayout
     & IProvideComponentCursor

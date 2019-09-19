@@ -38,14 +38,14 @@
     "report-dir": "nyc/report"
   },
   "dependencies": {
-    "@prague/container-loader": "^0.10.0",
-    "@prague/gitresources": "^0.10.0",
-    "@prague/protocol-definitions": "^0.10.0",
+    "@microsoft/fluid-container-loader": "^0.10.0",
+    "@microsoft/fluid-gitresources": "^0.10.0",
+    "@microsoft/fluid-protocol-definitions": "^0.10.0",
     "@microsoft/fluid-runtime-definitions": "^0.10.0",
     "@microsoft/fluid-server-services": "^0.10.0",
     "@microsoft/fluid-server-services-client": "^0.10.0",
     "@microsoft/fluid-server-services-core": "^0.10.0",
-    "@prague/utils": "^0.10.0",
+    "@microsoft/fluid-core-utils": "^0.10.0",
     "async": "^2.6.1",
     "double-ended-queue": "^2.1.0-0",
     "lodash": "^4.17.11",

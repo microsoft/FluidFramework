@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-const api = require("@prague/client-api");
+const api = require("@fluid-internal/client-api");
 const socketStorage = require("@prague/socket-storage");
 const MergeTree = require("@microsoft/fluid-merge-tree");
 const jwt = require('jsonwebtoken');
