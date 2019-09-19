@@ -2,8 +2,9 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ITelemetryLogger } from "@prague/container-definitions";
+import { ITelemetryBaseLogger } from "@prague/container-definitions";
 import { IDocumentService, IDocumentServiceFactory } from "@prague/protocol-definitions";
+import { ChildLogger } from "@prague/utils";
 import { IOdspResolvedUrl } from "./contracts";
 import { FetchWrapper, IFetchWrapper } from "./fetchWrapper";
 import { getSocketIo } from "./getSocketIo";
@@ -27,9 +28,9 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
    */
   constructor(
     private readonly appId: string,
-    private readonly getStorageToken: (siteUrl: string) => Promise<string | null>,
+    private readonly getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
     private readonly getWebsocketToken: () => Promise<string | null>,
-    private readonly logger: ITelemetryLogger,
+    private readonly logger: ITelemetryBaseLogger,
     private readonly storageFetchWrapper: IFetchWrapper = new FetchWrapper(),
     private readonly deltasFetchWrapper: IFetchWrapper = new FetchWrapper(),
   ) {}
@@ -44,7 +45,7 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
       resolvedUrl.endpoints.snapshotStorageUrl,
       this.getStorageToken,
       this.getWebsocketToken,
-      this.logger,
+      ChildLogger.create(this.logger, "OdspDriver"),
       this.storageFetchWrapper,
       this.deltasFetchWrapper,
       Promise.resolve(getSocketIo()),

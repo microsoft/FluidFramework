@@ -10,7 +10,7 @@ import { OdspDocumentServiceFactory } from "@prague/odsp-socket-storage";
 import { IDocumentServiceFactory, IResolvedUrl } from "@prague/protocol-definitions";
 import { ContainerUrlResolver } from "@prague/routerlicious-host";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
-import { TelemetryNullLogger } from "@prague/utils";
+import { BaseTelemetryNullLogger } from "@prague/utils";
 import { DocumentFactory } from "./documentFactory";
 import { MicrosoftGraph } from "./graph";
 import { PackageManager } from "./packageManager";
@@ -45,7 +45,7 @@ export async function initialize(
         "Server-Gateway",
         (siteUrl: string) => Promise.resolve("fake token"),
         () => Promise.resolve("fake token"),
-        new TelemetryNullLogger()));
+        new BaseTelemetryNullLogger()));
 
     documentServiceFactories.push(new RouterliciousDocumentServiceFactory(
         false,

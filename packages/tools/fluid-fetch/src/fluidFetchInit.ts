@@ -6,7 +6,6 @@
 // tslint:disable:object-literal-sort-keys
 import {
     getDriveItemByFileId,
-    getODSPFluidResolvedUrl,
     IClientConfig,
     IODSPTokens,
     postTokenRequest,
@@ -14,7 +13,7 @@ import {
 import * as odsp from "@prague/odsp-socket-storage";
 import { IDocumentService } from "@prague/protocol-definitions";
 import * as r11s from "@prague/routerlicious-socket-storage";
-import { fromBase64ToUtf8, TelemetryNullLogger } from "@prague/utils";
+import { BaseTelemetryNullLogger, fromBase64ToUtf8 } from "@prague/utils";
 
 import * as child_process from "child_process";
 import * as http from "http";
@@ -117,32 +116,6 @@ async function getODSPTokens(
     return acquireTokens(server, clientConfig);
 }
 
-async function joinODSPSession(
-    server: string,
-    documentDrive: string,
-    documentItem: string,
-    clientConfig: IClientConfig,
-    forceTokenRefresh: boolean = false) {
-
-    const odspTokens = await getODSPTokens(server, clientConfig, forceTokenRefresh);
-    try {
-        const oldAccessToken = odspTokens.accessToken;
-        const resolvedUrl = await getODSPFluidResolvedUrl(server,
-            `drives/${documentDrive}/items/${documentItem}`, odspTokens, clientConfig);
-        if (oldAccessToken !== odspTokens.accessToken) {
-            await saveAccessToken(server, odspTokens);
-        }
-        return resolvedUrl;
-    } catch (e) {
-        const parsedBody = JSON.parse(e.requestResult.data);
-        if (parsedBody.error === "invalid_grant" && parsedBody.suberror === "consent_required" && !forceTokenRefresh) {
-            return joinODSPSession(server, documentDrive, documentItem, clientConfig, true);
-        }
-        const responseMsg = JSON.stringify(parsedBody.error, undefined, 2);
-        return Promise.reject(`Fail to connect to ODSP server\nError Response:\n${responseMsg}`);
-    }
-}
-
 function getClientConfig() {
     const clientConfig: IClientConfig = {
         get clientId() {
@@ -163,7 +136,12 @@ function getClientConfig() {
     return clientConfig;
 }
 
-async function initializeODSPCore(server: string, drive: string, item: string, clientConfig: IClientConfig) {
+async function initializeODSPCore(
+        odspUrl: string,
+        server: string,
+        drive: string,
+        item: string,
+        clientConfig: IClientConfig) {
     if (odspServers.indexOf(server) === -1) {
         return Promise.reject(new Error(`Tenant not supported: ${server}`));
     }
@@ -175,20 +153,24 @@ async function initializeODSPCore(server: string, drive: string, item: string, c
 
     console.log(`Connecting to ODSP:\n  server: ${server}\n  drive:  ${drive}\n  item:   ${item}`);
 
-    const resolvedUrl = await joinODSPSession(server, drive, item, clientConfig);
+    const resolver = new odsp.OdspUrlResolver();
+    const odspResolvedUrl = await resolver.resolve({ url: odspUrl }) as odsp.IOdspResolvedUrl;
 
-    const odspTokens = await getODSPTokens(server, clientConfig, false);
-    const getStorageTokenStub = (siteUrl: string) => Promise.resolve(odspTokens.accessToken);
-    const getWebsocketTokenStub = () => Promise.resolve("fake token");
+    const getStorageTokenStub = async (siteUrl: string, refresh: boolean) => {
+        const tokens = await getODSPTokens(server, clientConfig, refresh);
+        return tokens.accessToken;
+    };
+    const getWebsocketTokenStub = () => Promise.resolve("");
     const odspDocumentServiceFactory = new odsp.OdspDocumentServiceFactory(
-        "fluid-fetch",
+        clientConfig.clientId,
         getStorageTokenStub,
         getWebsocketTokenStub,
-        new TelemetryNullLogger());
-    paramDocumentService = await odspDocumentServiceFactory.createDocumentService(resolvedUrl);
+        new BaseTelemetryNullLogger());
+    paramDocumentService = await odspDocumentServiceFactory.createDocumentService(odspResolvedUrl);
 }
 
-async function initializeOfficeODSP(searchParams: URLSearchParams) {
+async function initializeOfficeODSP(url: URL) {
+    const searchParams = url.searchParams;
     const site = searchParams.get("site");
     if (site === null) {
         return Promise.reject("Missing site in the querystring");
@@ -201,9 +183,10 @@ async function initializeOfficeODSP(searchParams: URLSearchParams) {
     if (item === null) {
         return Promise.reject("Missing item in the querystring");
     }
-    const url = new URL(site);
     const server = url.host;
-    return initializeODSPCore(server, drive, item, getClientConfig());
+    const odspUrl = odsp.createOdspUrl(url.href, drive, item, url.pathname);
+
+    return initializeODSPCore(odspUrl, server, drive, item, getClientConfig());
 }
 
 async function resolveDriveItemByFileId(
@@ -231,15 +214,23 @@ async function resolveDriveItemByFileId(
     }
 }
 
-async function initializeODSPHosted(server: string, account: string, docId: string, clientConfig: IClientConfig) {
+async function initializeODSPHosted(
+        url: URL,
+        server: string,
+        account: string,
+        docId: string,
+        clientConfig: IClientConfig) {
     const driveItem = await resolveDriveItemByFileId(server, account, docId, clientConfig);
-    return initializeODSPCore(server, driveItem.drive, driveItem.item, clientConfig);
+    const odspUrl = odsp.createOdspUrl(url.href, driveItem.drive, driveItem.item, url.pathname);
+    return initializeODSPCore(odspUrl, server, driveItem.drive, driveItem.item, clientConfig);
 }
 
 async function initializeODSP(
-    server: string,
-    pathname: string,
-    searchParams: URLSearchParams) {
+    url: URL,
+    server: string) {
+
+    const pathname = url.pathname;
+    const searchParams = url.searchParams;
 
     const clientConfig = getClientConfig();
 
@@ -248,7 +239,7 @@ async function initializeODSP(
     if (sourceDoc) {
         const hostedMatch = pathname.match(/\/(personal|teams)\/([^\/]*)\//i);
         if (hostedMatch !== null) {
-            return initializeODSPHosted(server, `${hostedMatch[1]}/${hostedMatch[2]}`, sourceDoc, clientConfig);
+            return initializeODSPHosted(url, server, `${hostedMatch[1]}/${hostedMatch[2]}`, sourceDoc, clientConfig);
         }
     }
 
@@ -262,10 +253,12 @@ async function initializeODSP(
     const drive = joinSessionMatch[2];
     const item = joinSessionMatch[3];
 
-    return initializeODSPCore(server, drive, item, clientConfig);
+    const odspUrl = odsp.createOdspUrl(url.href, drive, item, url.pathname);
+    return initializeODSPCore(odspUrl, server, drive, item, clientConfig);
 }
 
-async function initializeFluidOffice(pathname: string) {
+async function initializeFluidOffice(urlSource: URL) {
+    const pathname = urlSource.pathname;
     const siteDriveItemMatch = pathname.match(/\/p\/([^\/]*)\/([^\/]*)\/([^\/]*)/);
 
     if (siteDriveItemMatch === null) {
@@ -290,7 +283,8 @@ async function initializeFluidOffice(pathname: string) {
     const drive = siteDriveItemMatch[2];
     const item = siteDriveItemMatch[3];
     // TODO: Assume df server now
-    return initializeODSPCore(server, drive, item, getClientConfig());
+    const odspUrl = odsp.createOdspUrl(url.href, drive, item, url.pathname);
+    return initializeODSPCore(odspUrl, server, drive, item, getClientConfig());
 }
 
 async function initializeR11s(server: string, pathname: string) {
@@ -378,13 +372,13 @@ export async function fluidFetchInit() {
 
         const server = url.hostname.toLowerCase();
         if (officeServers.indexOf(server) !== -1) {
-            return initializeOfficeODSP(url.searchParams);
+            return initializeOfficeODSP(url);
         } else if (odspServers.indexOf(server) !== -1) {
-            return initializeODSP(server, url.pathname, url.searchParams);
+            return initializeODSP(url, server);
         } else if (r11sServers.indexOf(server) !== -1) {
             return initializeR11s(server, url.pathname);
         } else if (fluidOfficeServers.indexOf(server) !== -1) {
-            return initializeFluidOffice(url.pathname);
+            return initializeFluidOffice(url);
         } else if (server === "localhost" && url.port === "3000") {
             return initializeR11sLocalhost(url.pathname);
         }

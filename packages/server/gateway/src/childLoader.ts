@@ -11,7 +11,7 @@ import { OdspDocumentServiceFactory } from "@prague/odsp-socket-storage";
 import { IDocumentServiceFactory, IResolvedUrl, ScopeType } from "@prague/protocol-definitions";
 import { ContainerUrlResolver } from "@prague/routerlicious-host";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
-import { Deferred, TelemetryNullLogger } from "@prague/utils";
+import { BaseTelemetryNullLogger, Deferred } from "@prague/utils";
 import Axios from "axios";
 import * as jwt from "jsonwebtoken";
 import { parse } from "url";
@@ -75,7 +75,7 @@ class KeyValueLoader {
             "Server-Gateway",
             (siteUrl: string) => Promise.resolve("fake token"),
             () => Promise.resolve("fake token"),
-            new TelemetryNullLogger()));
+            new BaseTelemetryNullLogger()));
 
         documentServiceFactories.push(new RouterliciousDocumentServiceFactory(
             false,
