@@ -16,72 +16,111 @@ import {
     TreeEntry,
 } from "@prague/protocol-definitions";
 
-import { IGeneratedSummaryData } from "./summarizer";
+export interface ISummaryStats {
+    treeNodeCount: number;
+    blobNodeCount: number;
+    handleNodeCount: number;
+    totalBlobSize: number;
+}
 
-export function convertToSummaryTree(
-    snapshot: ITree,
-    summaryData: IGeneratedSummaryData,
-    generateFullTreeNoOptimizations?: boolean,
-): SummaryTree {
-    if (snapshot.id && !generateFullTreeNoOptimizations) {
-        summaryData.handleNodeCount++;
-        return {
-            handle: snapshot.id,
-            handleType: SummaryType.Tree,
-            type: SummaryType.Handle,
+export interface IConvertedSummaryResults {
+    summaryStats: ISummaryStats;
+    summaryTree: SummaryTree;
+}
+
+export class SummaryTreeConverter {
+    public convertToSummaryTree(snapshot: ITree, generateFullTreeNoOptimizations?: boolean): IConvertedSummaryResults {
+        const summaryStats = this.mergeStats();
+        const summaryTree = this.convertToSummaryTreeCore(
+            snapshot,
+            summaryStats,
+            generateFullTreeNoOptimizations);
+
+        return { summaryStats, summaryTree };
+    }
+
+    // no args will generate empty stats
+    public mergeStats(...stats: ISummaryStats[]): ISummaryStats {
+        const results = {
+            treeNodeCount: 0,
+            blobNodeCount: 0,
+            handleNodeCount: 0,
+            totalBlobSize: 0,
         };
-    } else {
-        const summaryTree: ISummaryTree = {
-            tree: {},
-            type: SummaryType.Tree,
-        };
+        for (const stat of stats) {
+            results.treeNodeCount += stat.treeNodeCount;
+            results.blobNodeCount += stat.blobNodeCount;
+            results.handleNodeCount += stat.handleNodeCount;
+            results.totalBlobSize += stat.totalBlobSize;
+        }
+        return results;
+    }
 
-        for (const entry of snapshot.entries) {
-            let value: SummaryObject;
+    protected convertToSummaryTreeCore(
+        snapshot: ITree,
+        summaryStats: ISummaryStats,
+        generateFullTreeNoOptimizations?: boolean,
+    ): SummaryTree {
+        if (snapshot.id && !generateFullTreeNoOptimizations) {
+            summaryStats.handleNodeCount++;
+            return {
+                handle: snapshot.id,
+                handleType: SummaryType.Tree,
+                type: SummaryType.Handle,
+            };
+        } else {
+            const summaryTree: ISummaryTree = {
+                tree: {},
+                type: SummaryType.Tree,
+            };
 
-            switch (entry.type) {
-                case TreeEntry[TreeEntry.Blob]:
-                    const blob = entry.value as IBlob;
-                    let content: string | Buffer;
-                    if (blob.encoding === "base64") {
-                        content = Buffer.from(blob.contents, "base64");
-                        summaryData.totalBlobSize += content.byteLength;
-                    } else {
-                        content = blob.contents;
-                        summaryData.totalBlobSize += Buffer.byteLength(content);
-                    }
-                    value = {
-                        content,
-                        type: SummaryType.Blob,
-                    } as ISummaryBlob;
-                    summaryData.blobNodeCount++;
-                    break;
+            for (const entry of snapshot.entries) {
+                let value: SummaryObject;
 
-                case TreeEntry[TreeEntry.Tree]:
-                    value = convertToSummaryTree(
-                        entry.value as ITree,
-                        summaryData,
-                        generateFullTreeNoOptimizations);
-                    break;
+                switch (entry.type) {
+                    case TreeEntry[TreeEntry.Blob]:
+                        const blob = entry.value as IBlob;
+                        let content: string | Buffer;
+                        if (blob.encoding === "base64") {
+                            content = Buffer.from(blob.contents, "base64");
+                            summaryStats.totalBlobSize += content.byteLength;
+                        } else {
+                            content = blob.contents;
+                            summaryStats.totalBlobSize += Buffer.byteLength(content);
+                        }
+                        value = {
+                            content,
+                            type: SummaryType.Blob,
+                        } as ISummaryBlob;
+                        summaryStats.blobNodeCount++;
+                        break;
 
-                case TreeEntry[TreeEntry.Commit]:
-                    // probably should not reach this case and assert so,
-                    // when snapshotting the commits become strings not ITrees
-                    value = convertToSummaryTree(
-                        entry.value as ITree,
-                        summaryData,
-                        generateFullTreeNoOptimizations);
-                    break;
+                    case TreeEntry[TreeEntry.Tree]:
+                        value = this.convertToSummaryTreeCore(
+                            entry.value as ITree,
+                            summaryStats,
+                            generateFullTreeNoOptimizations);
+                        break;
 
-                default:
-                    throw new Error();
+                    case TreeEntry[TreeEntry.Commit]:
+                        // probably should not reach this case and assert so,
+                        // when snapshotting the commits become strings not ITrees
+                        value = this.convertToSummaryTreeCore(
+                            entry.value as ITree,
+                            summaryStats,
+                            generateFullTreeNoOptimizations);
+                        break;
+
+                    default:
+                        throw new Error("Unexpected TreeEntry type");
+                }
+
+                summaryTree.tree[entry.path] = value;
             }
 
-            summaryTree.tree[entry.path] = value;
+            summaryStats.treeNodeCount++;
+            return summaryTree;
         }
-
-        summaryData.treeNodeCount++;
-        return summaryTree;
     }
 }
 

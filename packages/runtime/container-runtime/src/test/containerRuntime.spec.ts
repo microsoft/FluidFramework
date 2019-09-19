@@ -9,12 +9,10 @@ import {
     ISummaryTree,
     ITree,
     SummaryObject,
-    SummaryTree,
     SummaryType,
 } from "@prague/protocol-definitions";
 import * as assert from "assert";
-import { IGeneratedSummaryData } from "../summarizer";
-import { BlobTreeEntry, convertToSummaryTree, TreeTreeEntry } from "../utils";
+import { BlobTreeEntry, IConvertedSummaryResults, SummaryTreeConverter, TreeTreeEntry } from "../utils";
 
 describe("Runtime", () => {
     describe("Container Runtime", () => {
@@ -42,19 +40,15 @@ describe("Runtime", () => {
             }
 
             describe("Convert to Summary Tree", () => {
-                let summaryData: IGeneratedSummaryData;
-                let rawTree: SummaryTree;
+                let summaryResults: IConvertedSummaryResults;
                 let bufferLength: number;
+                let converter: SummaryTreeConverter;
+
+                before(() => {
+                    converter = new SummaryTreeConverter();
+                });
 
                 beforeEach(() => {
-                    summaryData = {
-                        sequenceNumber: 0,
-                        treeNodeCount: 0,
-                        blobNodeCount: 0,
-                        handleNodeCount: 0,
-                        totalBlobSize: 0,
-                    };
-
                     const base64Content = Buffer.from("test-b64").toString("base64");
                     bufferLength = Buffer.from(base64Content, "base64").byteLength;
                     const inputTree: ITree = {
@@ -73,11 +67,11 @@ describe("Runtime", () => {
                             ] }),
                         ],
                     };
-                    rawTree = convertToSummaryTree(inputTree, summaryData);
+                    summaryResults = converter.convertToSummaryTree(inputTree);
                 });
 
                 it("Should convert correctly", () => {
-                    const summaryTree = assertSummaryTree(rawTree);
+                    const summaryTree = assertSummaryTree(summaryResults.summaryTree);
 
                     // blobs should parse
                     const blob = assertSummaryBlob(summaryTree.tree.b);
@@ -98,10 +92,10 @@ describe("Runtime", () => {
 
                 it("Should calculate summary data correctly", () => {
                     // nodes should count
-                    assert.strictEqual(summaryData.blobNodeCount, 3);
-                    assert.strictEqual(summaryData.handleNodeCount, 1);
-                    assert.strictEqual(summaryData.treeNodeCount, 2);
-                    assert.strictEqual(summaryData.totalBlobSize,
+                    assert.strictEqual(summaryResults.summaryStats.blobNodeCount, 3);
+                    assert.strictEqual(summaryResults.summaryStats.handleNodeCount, 1);
+                    assert.strictEqual(summaryResults.summaryStats.treeNodeCount, 2);
+                    assert.strictEqual(summaryResults.summaryStats.totalBlobSize,
                         bufferLength + Buffer.byteLength("test-blob") + Buffer.byteLength("test-u8"));
                 });
             });

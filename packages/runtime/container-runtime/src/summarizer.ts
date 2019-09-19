@@ -16,7 +16,7 @@ import {
 } from "@prague/protocol-definitions";
 import { ChildLogger, Deferred, PerformanceEvent } from "@prague/utils";
 import * as assert from "assert";
-import { ContainerRuntime } from "./containerRuntime";
+import { ContainerRuntime, IGeneratedSummaryData } from "./containerRuntime";
 
 /**
  * Wrapper interface holding summary details for a given op
@@ -30,14 +30,6 @@ interface IOpSummaryDetails {
 
     // The message to include with the summarize
     message: string;
-}
-
-export interface IGeneratedSummaryData {
-    sequenceNumber: number;
-    treeNodeCount: number;
-    blobNodeCount: number;
-    handleNodeCount: number;
-    totalBlobSize: number;
 }
 
 declare module "@prague/component-core-interfaces" {

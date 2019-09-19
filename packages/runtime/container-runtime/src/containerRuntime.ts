@@ -66,10 +66,15 @@ import { ComponentHandleContext } from "./componentHandleContext";
 import { debug } from "./debug";
 import { DocumentStorageServiceProxy } from "./documentStorageServiceProxy";
 import { LeaderElector } from "./leaderElection";
-import { IGeneratedSummaryData, Summarizer } from "./summarizer";
+import { Summarizer } from "./summarizer";
 import { SummaryManager } from "./summaryManager";
 import { analyzeTasks } from "./taskAnalyzer";
-import { BlobTreeEntry, CommitTreeEntry, convertToSummaryTree } from "./utils";
+import {
+    BlobTreeEntry,
+    CommitTreeEntry,
+    ISummaryStats,
+    SummaryTreeConverter,
+ } from "./utils";
 
 declare module "@prague/component-core-interfaces" {
     export interface IComponent extends Readonly<Partial<IProvideComponentRegistry>> {}
@@ -84,6 +89,15 @@ export interface IProvideComponentRegistry {
 
 export interface IComponentRegistry extends IProvideComponentRegistry {
     get(name: string): Promise<ComponentFactoryTypes> | undefined;
+}
+
+export interface IGeneratedSummaryData extends ISummaryStats {
+    sequenceNumber: number;
+}
+
+interface ISummaryTreeWithStats {
+    summaryStats: ISummaryStats;
+    summaryTree: ISummaryTree;
 }
 
 interface IBufferedChunk {
@@ -435,6 +449,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
 
     public readonly logger: ITelemetryLogger;
     private readonly summaryManager: SummaryManager;
+    private readonly summaryTreeConverter = new SummaryTreeConverter();
 
     private tasks: string[] = [];
     private leaderElector: LeaderElector;
@@ -905,31 +920,32 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
     /**
      * Returns a summary of the runtime at the current sequence number.
      */
-    private async summarize(
-        summaryData: IGeneratedSummaryData,
-        generateFullTreeNoOptimizations?: boolean,
-    ): Promise<ISummaryTree> {
-        const result: ISummaryTree = {
+    private async summarize(generateFullTreeNoOptimizations?: boolean): Promise<ISummaryTreeWithStats> {
+        const summaryTree: ISummaryTree = {
             tree: {},
             type: SummaryType.Tree,
         };
+        let summaryStats = this.summaryTreeConverter.mergeStats();
 
         // Iterate over each component and ask it to snapshot
         await Promise.all(Array.from(this.contexts).map(async ([key, value]) => {
             const snapshot = await value.snapshot();
-            const tree = convertToSummaryTree(snapshot, summaryData, generateFullTreeNoOptimizations);
-            result.tree[key] = tree;
+            const treeWithStats = this.summaryTreeConverter.convertToSummaryTree(
+                snapshot,
+                generateFullTreeNoOptimizations);
+            summaryTree.tree[key] = treeWithStats.summaryTree;
+            summaryStats = this.summaryTreeConverter.mergeStats(summaryStats, treeWithStats.summaryStats);
         }));
 
         if (this.chunkMap.size > 0) {
-            result.tree[".chunks"] = {
+            summaryTree.tree[".chunks"] = {
                 content: JSON.stringify([...this.chunkMap]),
                 type: SummaryType.Blob,
             };
         }
 
-        summaryData.treeNodeCount++;
-        return result;
+        summaryStats.treeNodeCount++; // add this root tree node
+        return { summaryStats, summaryTree };
     }
 
     private processCore(message: ISequencedDocumentMessage, local: boolean) {
@@ -1057,16 +1073,10 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
             const versions = await this.context.storage.getVersions(this.id, 1);
             const parents = versions.map((version) => version.id);
 
-            const summaryData = {
-                sequenceNumber: this.deltaManager.referenceSequenceNumber,
-                treeNodeCount: 0,
-                blobNodeCount: 0,
-                handleNodeCount: 0,
-                totalBlobSize: 0,
-            };
-            const summaryTree = await this.summarize(summaryData, generateFullTreeNoOptimizations);
+            const sequenceNumber = this.deltaManager.referenceSequenceNumber;
+            const treeWithStats = await this.summarize(generateFullTreeNoOptimizations);
 
-            const handle = await this.context.storage.uploadSummary(summaryTree);
+            const handle = await this.context.storage.uploadSummary(treeWithStats.summaryTree);
             const summary = {
                 handle: handle.handle,
                 head: parents[0],
@@ -1076,7 +1086,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
 
             this.submit(MessageType.Summarize, summary);
 
-            return summaryData;
+            return { sequenceNumber, ...treeWithStats.summaryStats };
         } catch (ex) {
             this.logger.logException({ eventName: "GenerateSummaryExceptionError" }, ex);
             throw ex;
