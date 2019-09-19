@@ -3,19 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as resources from "@prague/gitresources";
-import * as api from "@prague/protocol-definitions";
-
-export interface IWebsocketEndpoint {
-  deltaStorageUrl: string;
-
-  deltaStreamSocketUrl: string;
-
-  // The id of the web socket
-  id: string;
-
-  tenantId: string;
-}
+import * as resources from "@microsoft/fluid-gitresources";
+import * as api from "@microsoft/fluid-protocol-definitions";
 
 export interface IOdspResolvedUrl extends api.IResolvedUrlBase {
   type: "fluid";
@@ -111,7 +100,12 @@ export interface IDocumentStorageManager {
  * Socket storage discovery api response
  */
 export interface ISocketStorageDiscovery {
+    // The id of the web socket
     id: string;
+
+    // SPO gives us runtimeTenantId, we remap it to tenantId
+    // See getSocketStorageDiscovery
+    runtimeTenantId?: string;
     tenantId: string;
 
     snapshotStorageUrl: string;

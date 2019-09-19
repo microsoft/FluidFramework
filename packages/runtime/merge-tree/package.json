@@ -1,5 +1,5 @@
 {
-  "name": "@prague/merge-tree",
+  "name": "@microsoft/fluid-merge-tree",
   "version": "0.10.0",
   "description": "Merge tree",
   "main": "dist/index.js",
@@ -9,7 +9,7 @@
   "scripts": {
     "build": "concurrently npm:build:compile npm:tslint",
     "build:compile": "concurrently npm:tsc npm:build:esnext",
-    "build:docs": "echo \"Skipping @prague/merge-tree; see https://github.com/microsoft/Prague/issues/2270\"",
+    "build:docs": "echo \"Skipping @microsoft/fluid-merge-tree; see https://github.com/microsoft/Prague/issues/2270\"",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "build:test": "npm run tsc && npm run test",
@@ -21,7 +21,7 @@
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "nyc": {
     "all": true,
     "exclude": [
@@ -43,7 +43,7 @@
   },
   "devDependencies": {
     "@microsoft/fluid-build-common": "^0.10.0",
-    "@prague/runtime-test-utils": "^0.10.0",
+    "@microsoft/fluid-test-runtime-utils": "^0.10.0",
     "@types/diff": "^3.5.1",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.12.12",
@@ -59,11 +59,11 @@
     "typescript": "~3.4.5"
   },
   "dependencies": {
-    "@prague/component-core-interfaces": "^0.10.0",
-    "@prague/container-definitions": "^0.10.0",
-    "@prague/protocol-definitions": "^0.10.0",
-    "@prague/runtime-definitions": "^0.10.0",
-    "@prague/utils": "^0.10.0"
+    "@microsoft/fluid-component-core-interfaces": "^0.10.0",
+    "@microsoft/fluid-container-definitions": "^0.10.0",
+    "@microsoft/fluid-protocol-definitions": "^0.10.0",
+    "@microsoft/fluid-runtime-definitions": "^0.10.0",
+    "@microsoft/fluid-core-utils": "^0.10.0"
   },
   "license": "MIT"
 }

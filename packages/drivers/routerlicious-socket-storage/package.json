@@ -1,5 +1,5 @@
 {
-  "name": "@prague/routerlicious-socket-storage",
+  "name": "@microsoft/fluid-routerlicious-driver",
   "version": "0.10.0",
   "description": "Socket.IO + Git implementation of Fluid service API",
   "main": "dist/index.js",
@@ -19,7 +19,7 @@
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "devDependencies": {
     "@microsoft/api-extractor": "^7.3.11",
     "@microsoft/fluid-build-common": "^0.10.0",
@@ -36,11 +36,11 @@
     "typescript": "~3.4.5"
   },
   "dependencies": {
-    "@prague/gitresources": "^0.10.0",
-    "@prague/protocol-definitions": "^0.10.0",
+    "@microsoft/fluid-gitresources": "^0.10.0",
+    "@microsoft/fluid-protocol-definitions": "^0.10.0",
     "@microsoft/fluid-server-services-client": "^0.10.0",
-    "@prague/socket-storage-shared": "^0.10.0",
-    "@prague/utils": "^0.10.0",
+    "@microsoft/fluid-driver-base": "^0.10.0",
+    "@microsoft/fluid-core-utils": "^0.10.0",
     "axios": "^0.18.0",
     "comlink": "^4.0.2",
     "debug": "^4.1.1",

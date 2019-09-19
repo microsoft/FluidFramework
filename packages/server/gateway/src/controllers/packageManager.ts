@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IPackage } from "@prague/container-definitions";
+import { IPackage } from "@microsoft/fluid-container-definitions";
 import {
     IPackageList,
     IPackageManager,

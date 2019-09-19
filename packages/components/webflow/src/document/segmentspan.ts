@@ -4,7 +4,7 @@
  */
 
 // tslint:disable:binary-expression-operand-order
-import { ISegment } from "@prague/merge-tree";
+import { ISegment } from "@microsoft/fluid-merge-tree";
 
 export class SegmentSpan {
     public get segments(): ReadonlyArray<ISegment> { return this._segments; }

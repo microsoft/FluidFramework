@@ -9,12 +9,9 @@ import {
     IComponentRouter,
     IRequest,
     IResponse,
-} from "@prague/component-core-interfaces";
-import { IComponentForge } from "@prague/framework-definitions";
-import {
-    IComponentContext,
-    IComponentRuntime,
-} from "@prague/runtime-definitions";
+} from "@microsoft/fluid-component-core-interfaces";
+import { IComponentForge } from "@microsoft/fluid-framework-interfaces";
+import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { EventEmitter } from "events";
 
 /**

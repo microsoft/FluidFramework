@@ -4,10 +4,7 @@
  */
 
 import {
-    IAlfredTenant,
     IDocumentStorage,
-    IProducer,
-    ITenantManager,
     MongoManager,
 } from "@microsoft/fluid-server-services-core";
 import { Router } from "express";
@@ -21,13 +18,10 @@ export interface IRoutes {
 
 export function create(
     config: Provider,
-    tenantManager: ITenantManager,
     mongoManager: MongoManager,
     storage: IDocumentStorage,
-    producer: IProducer,
-    appTenants: IAlfredTenant[],
 ) {
     return {
-        api: api.create(config, tenantManager, storage, mongoManager, producer, appTenants),
+        api: api.create(config, storage, mongoManager),
     };
 }

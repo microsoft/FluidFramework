@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-    IComponent,
-    IRequest,
-    IResponse,
-} from "@prague/component-core-interfaces";
+import { IComponent, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import {
     ConnectionState,
     IBlobManager,
@@ -15,7 +11,8 @@ import {
     IGenericBlob,
     ILoader,
     IQuorum,
-} from "@prague/container-definitions";
+} from "@microsoft/fluid-container-definitions";
+import { Deferred, raiseConnectedEvent, readAndParse } from "@microsoft/fluid-core-utils";
 import {
     FileMode,
     IDocumentMessage,
@@ -25,7 +22,7 @@ import {
     ITree,
     MessageType,
     TreeEntry,
-} from "@prague/protocol-definitions";
+} from "@microsoft/fluid-protocol-definitions";
 import {
     IAttachMessage,
     IComponentContext,
@@ -33,8 +30,7 @@ import {
     IEnvelope,
     IHostRuntime,
     IInboundSignalMessage,
-} from "@prague/runtime-definitions";
-import { Deferred, raiseConnectedEvent, readAndParse } from "@prague/utils";
+} from "@microsoft/fluid-runtime-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { ContainerRuntime } from "./containerRuntime";
@@ -152,7 +148,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
             const details = await this.getSnapshotDetails();
             this._baseSnapshot = details.snapshot;
             this.baseId = details.snapshot ? details.snapshot.id : null;
-            const factory = await this._hostRuntime.getPackage(details.pkg);
+            const factory = await this._hostRuntime.IComponentRegistry.get(details.pkg);
 
             // During this call we will invoke the instantiate method - which will call back into us
             // via the bindRuntime call to resolve componentRuntimeDeferred

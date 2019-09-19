@@ -5,9 +5,9 @@
 
 /* tslint:disable:no-unsafe-any */
 /* tslint:disable:no-backbone-get-set-outside-model  */
-import * as api from "@prague/client-api";
-import { ISharedMap } from "@prague/map";
-import { MessageType } from "@prague/protocol-definitions";
+import * as api from "@fluid-internal/client-api";
+import { ISharedMap } from "@microsoft/fluid-map";
+import { MessageType } from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
 import {
     DocumentDeltaEventManager,

@@ -39,7 +39,7 @@
     "report-dir": "nyc/report"
   },
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "devDependencies": {
     "@microsoft/fluid-build-common": "^0.10.0",
     "@types/debug": "^0.0.31",
@@ -53,9 +53,9 @@
     "typescript": "~3.4.5"
   },
   "dependencies": {
-    "@prague/gitresources": "^0.10.0",
-    "@prague/protocol-definitions": "^0.10.0",
-    "@prague/utils": "^0.10.0",
+    "@microsoft/fluid-gitresources": "^0.10.0",
+    "@microsoft/fluid-protocol-definitions": "^0.10.0",
+    "@microsoft/fluid-core-utils": "^0.10.0",
     "@types/node": "^10.12.12",
     "axios": "^0.18.0",
     "debug": "^4.1.1"

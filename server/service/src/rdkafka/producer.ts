@@ -4,7 +4,7 @@
  */
 
 import { BoxcarType, IBoxcarMessage, IPendingBoxcar, IProducer } from "@microsoft/fluid-server-services-core";
-import { Deferred } from "@prague/utils";
+import { Deferred } from "@microsoft/fluid-core-utils";
 import * as Kafka from "node-rdkafka";
 
 // 1MB batch size / 16KB max message size

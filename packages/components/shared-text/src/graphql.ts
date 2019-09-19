@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentHTMLVisual } from "@prague/component-core-interfaces";
-import { SharedString } from "@prague/sequence";
+import { IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
+import { SharedString } from "@microsoft/fluid-sequence";
 import { EventEmitter } from "events";
 import * as GraphiQL from "graphiql";
 import * as React from "react";

@@ -3,13 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { AgentSchedulerFactory } from "@component/agent-scheduler";
-import {
-    IComponentHandleContext,
-    IComponentSerializer,
-    IRequest,
-    IResponse,
-} from "@prague/component-core-interfaces";
+import { AgentSchedulerFactory } from "@microsoft/fluid-agent-scheduler";
+import { IComponentHandleContext, IComponentSerializer, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import {
     ConnectionState,
     IBlobManager,
@@ -22,7 +17,16 @@ import {
     IQuorum,
     IRuntime,
     ITelemetryLogger,
-} from "@prague/container-definitions";
+} from "@microsoft/fluid-container-definitions";
+import {
+    buildHierarchy,
+    ComponentSerializer,
+    Deferred,
+    flatten,
+    isSystemType,
+    raiseConnectedEvent,
+    readAndParse,
+} from "@microsoft/fluid-core-utils";
 import {
     Browser,
     FileMode,
@@ -42,7 +46,7 @@ import {
     SummaryTree,
     SummaryType,
     TreeEntry,
-} from "@prague/protocol-definitions";
+} from "@microsoft/fluid-protocol-definitions";
 import {
     ComponentFactoryTypes,
     ComponentRegistryTypes,
@@ -54,25 +58,12 @@ import {
     IHelpMessage,
     IHostRuntime,
     IInboundSignalMessage,
-} from "@prague/runtime-definitions";
-import {
-    buildHierarchy,
-    ComponentSerializer,
-    Deferred,
-    flatten,
-    isSystemType,
-    raiseConnectedEvent,
-    readAndParse,
-} from "@prague/utils";
+} from "@microsoft/fluid-runtime-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 // tslint:disable-next-line:no-submodule-imports
 import * as uuid from "uuid/v4";
-import {
-    ComponentContext,
-    LocalComponentContext,
-    RemotedComponentContext,
-} from "./componentContext";
+import { ComponentContext, LocalComponentContext, RemotedComponentContext } from "./componentContext";
 import { ComponentHandleContext } from "./componentHandleContext";
 import { debug } from "./debug";
 import { DocumentStorageServiceProxy } from "./documentStorageServiceProxy";
@@ -421,6 +412,10 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this._flushMode;
     }
 
+    public get IComponentRegistry(): IComponentRegistry {
+        return this.registry;
+    }
+
     public readonly IComponentSerializer: IComponentSerializer = new ComponentSerializer();
 
     public readonly IComponentHandleContext: IComponentHandleContext;
@@ -572,14 +567,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
     public get IComponentConfiguration() {
         return this.context.configuration;
-    }
-
-    /**
-     * Returns the component factory for a particular package.
-     * @param name - Name of the package.
-     */
-    public getPackage(name: string): Promise<ComponentFactoryTypes> {
-        return this.registry.get(name);
     }
 
     /**

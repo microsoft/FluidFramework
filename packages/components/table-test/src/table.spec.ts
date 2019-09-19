@@ -4,23 +4,23 @@
  */
 
 import { TestHost } from "@prague/local-test-server";
-import "mocha";
 import {
     TableDocument,
     TableDocumentType,
     TableSliceType,
     TableSlice,
-} from "@chaincode/table-document";
+} from "@fluid-example/table-document";
 import * as assert from "assert";
+import "mocha";
 
 describe("TableDocument", () => {
     let host: TestHost;
 
     before(() => {
         host = new TestHost([
-            [TableDocumentType, import("@chaincode/table-document").then(
+            [TableDocumentType, import("@fluid-example/table-document").then(
                 (m) => m.TableDocument.getFactory())],
-            [TableSliceType, import("@chaincode/table-document").then(
+            [TableSliceType, import("@fluid-example/table-document").then(
                 (m) => m.TableSlice.getFactory())],
         ]);
     });

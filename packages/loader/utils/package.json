@@ -1,5 +1,5 @@
 {
-  "name": "@prague/utils",
+  "name": "@microsoft/fluid-core-utils",
   "version": "0.10.0",
   "description": "Collection of utility functions for Fluid",
   "main": "dist/index.js",
@@ -21,7 +21,7 @@
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "nyc": {
     "all": true,
     "exclude": [
@@ -56,10 +56,10 @@
     "typescript": "~3.4.5"
   },
   "dependencies": {
-    "@prague/component-core-interfaces": "^0.10.0",
-    "@prague/container-definitions": "^0.10.0",
-    "@prague/gitresources": "^0.10.0",
-    "@prague/protocol-definitions": "^0.10.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.10.0",
+    "@microsoft/fluid-container-definitions": "^0.10.0",
+    "@microsoft/fluid-gitresources": "^0.10.0",
+    "@microsoft/fluid-protocol-definitions": "^0.10.0",
     "debug": "^4.1.1",
     "lodash": "^4.17.11",
     "performance-now": "^2.1.0",

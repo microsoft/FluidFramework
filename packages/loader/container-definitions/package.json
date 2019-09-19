@@ -1,5 +1,5 @@
 {
-  "name": "@prague/container-definitions",
+  "name": "@microsoft/fluid-container-definitions",
   "version": "0.10.0",
   "description": "Fluid container definitions",
   "main": "dist/index.js",
@@ -19,10 +19,10 @@
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "dependencies": {
-    "@prague/component-core-interfaces": "^0.10.0",
-    "@prague/protocol-definitions": "^0.10.0"
+    "@microsoft/fluid-component-core-interfaces": "^0.10.0",
+    "@microsoft/fluid-protocol-definitions": "^0.10.0"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.3.11",

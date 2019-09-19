@@ -3,18 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import {
-    IRequest,
-} from "@prague/component-core-interfaces";
-import { ComponentRuntime, ISharedObjectRegistry } from "@prague/component-runtime";
-import {
-    IComponentContext,
-    IComponentFactory,
-    IComponentRuntime,
-} from "@prague/runtime-definitions";
-import {
-    ISharedObjectFactory,
-} from "@prague/shared-object-common";
+import { IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { ComponentRuntime, ISharedObjectRegistry } from "@microsoft/fluid-component-runtime";
+import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { SharedComponent } from "../components/sharedComponent";
 
 export class SharedComponentFactory implements IComponentFactory {

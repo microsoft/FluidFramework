@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { Snapshot } from "@prague/merge-tree";
-import * as mocks from "@prague/runtime-test-utils";
+import { Snapshot } from "@microsoft/fluid-merge-tree";
+import * as mocks from "@microsoft/fluid-test-runtime-utils";
 import { SharedString } from "../sharedString";
 
 export function* generateStrings() {

@@ -10,7 +10,7 @@ import {
     ICreateCommitParams,
     ICreateRefParams,
     ICreateTreeParams,
-} from "@prague/gitresources";
+} from "@microsoft/fluid-gitresources";
 import * as assert from "assert";
 import * as async from "async";
 import * as lorem from "lorem-ipsum";
