@@ -154,11 +154,11 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
             let registry = this._hostRuntime.IComponentRegistry;
             let factory: ComponentFactoryTypes & Partial<IComponentRegistry>;
             for (const pkg of packages) {
-                factory = await registry.get(pkg);
-                registry = factory.IComponentRegistry;
-                if (!registry && pkg !== packages[packages.length - 1]) {
+                if (!registry) {
                     throw new Error("Factory does not supply the component Registry");
                 }
+                factory = await registry.get(pkg);
+                registry = factory.IComponentRegistry;
             }
 
             // During this call we will invoke the instantiate method - which will call back into us
