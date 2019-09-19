@@ -11,10 +11,11 @@ import { InsecureUrlResolver } from "./urlResolver";
 import { attach, initializeChaincode, parsePackageName } from "./utils";
 
 // Base service configuration.
-const ordererUrl = "https://alfred.wu2.prague.office-int.com";
-const storageUrl = "https://historian.wu2.prague.office-int.com";
+const ordererUrl = "http://localhost:3000";
+const storageUrl = "http://localhost:3000";
 const npm = "https://pragueauspkn-3873244262.azureedge.net";
-const defaultPackage = "@chaincode/shared-text@0.3.5692";
+const defaultPackage = "@chaincode/smde@0.10.13378";
+
 // You'll likely want to create your own tenant at https://admin.wu2.prague.office-int.com and then change the
 // tenantId and tenantKey values.
 const tenantId = "determined-bassi";

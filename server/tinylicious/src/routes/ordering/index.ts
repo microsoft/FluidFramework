@@ -7,7 +7,6 @@ import {
     IDocumentStorage,
     MongoManager,
 } from "@microsoft/fluid-server-services-core";
-import * as cors from "cors";
 import { Router } from "express";
 import { Provider } from "nconf";
 import * as deltas from "./deltas";
@@ -23,7 +22,6 @@ export function create(
     const deltasRoute = deltas.create(config, mongoManager);
     const documentsRoute = documents.create(storage);
 
-    router.use(cors());
     router.use("/deltas", deltasRoute);
     router.use("/documents", documentsRoute);
 
