@@ -232,7 +232,7 @@ export class Loader extends EventEmitter implements ILoader {
         let canCache = true;
         let canReconnect = true;
         let connection = !parsed.version ? "open" : "close";
-        let version = parsed.version;
+        const version = parsed.version;
         let fromSequenceNumber = -1;
 
         if (request.headers) {
