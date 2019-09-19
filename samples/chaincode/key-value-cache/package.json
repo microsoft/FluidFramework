@@ -3,7 +3,7 @@
   "description": "Key-value cache that runs in the node.js service",
   "version": "0.9.2",
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {

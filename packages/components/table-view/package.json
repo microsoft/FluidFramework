@@ -44,7 +44,7 @@
     "webpack:dev": "webpack --env.development"
   },
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "dependencies": {
     "@fluid-example/table-document": "^0.10.0",
     "@microsoft/fluid-aqueduct": "^0.10.0",

@@ -3,7 +3,7 @@
   "description": "Scoreboard component",
   "version": "0.10.0",
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "main": "dist/main.bundle.js",
   "types": "dist/index.d.ts",
