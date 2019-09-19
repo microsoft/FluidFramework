@@ -37,9 +37,15 @@ import * as assert from "assert";
 import { EventEmitter } from "events";
 import { ContainerRuntime } from "./containerRuntime";
 
+enum SnapshotPkgType {
+    STRING,
+    JSON,
+}
+
 interface ISnapshotDetails {
-    pkg: string | string[];
+    pkg: string;
     snapshot: ISnapshotTree;
+    pkgType?: SnapshotPkgType;
 }
 
 /**
@@ -150,7 +156,8 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
             const details = await this.getSnapshotDetails();
             this._baseSnapshot = details.snapshot;
             this.baseId = details.snapshot ? details.snapshot.id : null;
-            const packages = Array.isArray(details.pkg) ? details.pkg : [details.pkg];
+            const packages = details.pkgType !== undefined && details.pkgType === SnapshotPkgType.JSON
+                ? JSON.parse(details.pkg) as string[] : [details.pkg];
             let registry = this._hostRuntime.IComponentRegistry;
             let factory: ComponentFactoryTypes & Partial<IComponentRegistry>;
             for (const pkg of packages) {
@@ -371,7 +378,7 @@ export class RemotedComponentContext extends ComponentContext {
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
         scope: IComponent,
-        private readonly pkg?: string | string [],
+        private readonly pkg?: string[],
     ) {
         super(
             runtime,
@@ -401,7 +408,8 @@ export class RemotedComponentContext extends ComponentContext {
 
             if (tree === null || tree.blobs[".component"] === undefined) {
                 this.details = {
-                    pkg: this.pkg,
+                    pkg: JSON.stringify(this.pkg),
+                    pkgType: SnapshotPkgType.JSON,
                     snapshot: tree,
                 };
             } else {
@@ -412,6 +420,7 @@ export class RemotedComponentContext extends ComponentContext {
 
                 this.details = {
                     pkg,
+                    pkgType: pkg.charAt(0) === "[" ? SnapshotPkgType.JSON : SnapshotPkgType.STRING,
                     snapshot: tree,
                 };
             }
@@ -424,7 +433,7 @@ export class RemotedComponentContext extends ComponentContext {
 export class LocalComponentContext extends ComponentContext {
     constructor(
         id: string,
-        private readonly pkg: string | string[],
+        private readonly pkg: string[],
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
         scope: IComponent,
@@ -465,8 +474,9 @@ export class LocalComponentContext extends ComponentContext {
 
     protected async getSnapshotDetails(): Promise<ISnapshotDetails> {
         return {
-            pkg: this.pkg,
+            pkg: JSON.stringify(this.pkg),
             snapshot: undefined,
+            pkgType: SnapshotPkgType.JSON,
         };
     }
 }

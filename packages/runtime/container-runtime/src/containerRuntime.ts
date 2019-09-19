@@ -859,7 +859,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
         const context = new LocalComponentContext(
             id,
-            pkg,
+            [pkg],
             this,
             this.storage,
             this.context.scope,
@@ -979,8 +979,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                     this,
                     new DocumentStorageServiceProxy(this.storage, flatBlobs),
                     this.context.scope,
-                    // tslint:disable-next-line: no-unsafe-any
-                    JSON.parse(attachMessage.type));
+                    attachMessage.type.charAt(0) === "[" ?
+                        JSON.parse(attachMessage.type) as string[] : [attachMessage.type]);
 
                 break;
 
