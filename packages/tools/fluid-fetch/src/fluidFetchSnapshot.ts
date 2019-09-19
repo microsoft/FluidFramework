@@ -25,6 +25,8 @@ import {
 
 import { latestVersionsId } from "./fluidFetchInit";
 
+// tslint:disable:non-literal-fs-path
+
 async function fetchSnapshotTreeBlobs(
     storage: IDocumentStorageService,
     tree: ISnapshotTree,
@@ -52,8 +54,7 @@ async function fetchSnapshotTreeBlobs(
         }
         const componentSnapShotTree = await storage.getSnapshotTree(componentVersions[0]);
         if (saveTreeDir !== undefined) {
-            const writeFile = util.promisify(fs.writeFile);
-            await writeFile(`${saveTreeDir}/${componentVersions[0].id}.json`,
+            fs.writeFileSync(`${saveTreeDir}/${componentVersions[0].id}.json`,
                 JSON.stringify(componentSnapShotTree, undefined, 2));
         }
         if (componentSnapShotTree) {
@@ -120,10 +121,9 @@ async function saveSnapshot(storage: IDocumentStorageService, version: IVersion,
         return Promise.reject(new Error("Failed to load snapshot tree"));
     }
     const mkdir = util.promisify(fs.mkdir);
-    const writeFile = util.promisify(fs.writeFile);
 
     await mkdir(`${outDir}/decoded`, { recursive: true });
-    await writeFile(`${outDir}/tree.json`, JSON.stringify(snapshotTree, undefined, 2));
+    fs.writeFileSync(`${outDir}/tree.json`, JSON.stringify(snapshotTree, undefined, 2));
     const blobs = await fetchSnapshotTreeBlobs(storage, snapshotTree, "", outDir);
     await Promise.all(blobs.map(async (blob) => {
         const data = await blob.blob;
@@ -132,14 +132,14 @@ async function saveSnapshot(storage: IDocumentStorageService, version: IVersion,
             return;
         }
         // tslint:disable-next-line:non-literal-fs-path
-        await writeFile(`${outDir}/${blob.blobId}`, data);
+        fs.writeFileSync(`${outDir}/${blob.blobId}`, data);
 
         const decoded = fromBase64ToUtf8(data);
         try {
             const object = JSON.parse(decoded);
-            await writeFile(`${outDir}/decoded/${blob.blobId}.json`, JSON.stringify(object, undefined, 2));
+            fs.writeFileSync(`${outDir}/decoded/${blob.blobId}.json`, JSON.stringify(object, undefined, 2));
         } catch (e) {
-            await writeFile(`${outDir}/decoded/${blob.blobId}.txt`, decoded);
+            fs.writeFileSync(`${outDir}/decoded/${blob.blobId}.txt`, decoded);
         }
     }));
 }
