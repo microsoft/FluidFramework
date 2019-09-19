@@ -31,9 +31,9 @@ import {
     TestTenantManager,
     TestWebSocketServer,
 } from "@microsoft/fluid-server-test-utils";
-import { RoundTrip } from "@prague/client-api";
-import { ConnectionMode, IClient, IContentMessage, IDocumentMessage, ISignalMessage, ITokenClaims } from "@prague/protocol-definitions";
-import { IConnect, IConnected } from "@prague/socket-storage-shared";
+import { RoundTrip } from "@fluid-internal/client-api";
+import { ConnectionMode, IClient, IContentMessage, IDocumentMessage, ISignalMessage, ITokenClaims } from "@microsoft/fluid-protocol-definitions";
+import { IConnect, IConnected } from "@microsoft/fluid-driver-base";
 import * as jwt from "jsonwebtoken";
 import * as randomName from "random-name";
 import * as semver from "semver";

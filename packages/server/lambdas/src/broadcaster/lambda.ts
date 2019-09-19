@@ -14,7 +14,7 @@ import {
     NackOperationType,
     SequencedOperationType,
 } from "@microsoft/fluid-server-services-core";
-import { INack, ISequencedDocumentMessage } from "@prague/protocol-definitions";
+import { INack, ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import * as _ from "lodash";
 
 class BroadcasterBatch {

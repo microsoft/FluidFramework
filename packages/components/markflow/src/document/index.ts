@@ -28,8 +28,8 @@ import {
     SharedStringFactory,
     SharedStringSegment,
 } from "@microsoft/fluid-sequence";
-import { PrimedComponent, PrimedComponentFactory } from "@prague/aqueduct";
-import { IComponent, IComponentHandle, IComponentHTMLOptions } from "@prague/component-core-interfaces";
+import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
+import { IComponent, IComponentHandle, IComponentHTMLOptions } from "@microsoft/fluid-component-core-interfaces";
 import * as assert from "assert";
 import { clamp, emptyArray } from "../util";
 import { IHTMLAttributes } from "../util/attr";

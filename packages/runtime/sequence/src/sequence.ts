@@ -7,8 +7,8 @@ import { IValueChanged, IValueType, SharedMap } from "@microsoft/fluid-map";
 import * as MergeTree from "@microsoft/fluid-merge-tree";
 import { IChannelAttributes, IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
 import { parseHandles, serializeHandles } from "@microsoft/fluid-shared-object-base";
-import { ISequencedDocumentMessage, ITree } from "@prague/protocol-definitions";
-import { ChildLogger, Deferred } from "@prague/utils";
+import { ISequencedDocumentMessage, ITree } from "@microsoft/fluid-protocol-definitions";
+import { ChildLogger, Deferred } from "@microsoft/fluid-core-utils";
 import * as assert from "assert";
 import {
     ISerializableInterval,

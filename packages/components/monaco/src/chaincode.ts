@@ -13,9 +13,9 @@ import {
 import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
 // inspiration for this example taken from https://github.com/agentcooper/typescript-play
-import { PrimedComponent } from "@prague/aqueduct";
-import { IComponentHandle, IComponentHTMLOptions, IComponentHTMLVisual } from "@prague/component-core-interfaces";
-import { IComponentLayout } from "@prague/framework-definitions";
+import { PrimedComponent } from "@microsoft/fluid-aqueduct";
+import { IComponentHandle, IComponentHTMLOptions, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentLayout } from "@microsoft/fluid-framework-interfaces";
 import * as monaco from "monaco-editor";
 
 /**

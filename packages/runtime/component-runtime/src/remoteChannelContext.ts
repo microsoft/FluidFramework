@@ -9,15 +9,15 @@ import {
     IComponentContext,
     IComponentRuntime,
 } from "@microsoft/fluid-runtime-definitions";
-import { ConnectionState } from "@prague/container-definitions";
+import { ConnectionState } from "@microsoft/fluid-container-definitions";
 import {
     IDocumentStorageService,
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITree,
     MessageType,
-} from "@prague/protocol-definitions";
-import { readAndParse } from "@prague/utils";
+} from "@microsoft/fluid-protocol-definitions";
+import { readAndParse } from "@microsoft/fluid-core-utils";
 import * as assert from "assert";
 import { createServiceEndpoints, IChannelContext, snapshotChannel } from "./channelContext";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";

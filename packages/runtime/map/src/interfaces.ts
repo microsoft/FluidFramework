@@ -4,7 +4,7 @@
  */
 
 import { ISharedObject } from "@microsoft/fluid-shared-object-base";
-import { ISequencedDocumentMessage } from "@prague/protocol-definitions";
+import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 
 export interface ISet<T> {
     add(value: T): ISet<T>;

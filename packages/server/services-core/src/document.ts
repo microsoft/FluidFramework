@@ -4,9 +4,9 @@
  */
 
 import { IGitCache } from "@microsoft/fluid-server-services-client";
-import { IProtocolState } from "@prague/container-definitions";
-import { ICommit, ICommitDetails } from "@prague/gitresources";
-import { IRangeTrackerSnapshot } from "@prague/utils";
+import { IProtocolState } from "@microsoft/fluid-container-definitions";
+import { ICommit, ICommitDetails } from "@microsoft/fluid-gitresources";
+import { IRangeTrackerSnapshot } from "@microsoft/fluid-core-utils";
 
 export interface IDocumentDetails {
     existing: boolean;

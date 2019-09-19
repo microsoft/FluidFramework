@@ -4,7 +4,7 @@
  */
 
 import { ISharedMap } from "@microsoft/fluid-map";
-import { IComponentHandle } from "@prague/component-core-interfaces";
+import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { default as axios } from "axios";
 
 export async function downloadRawText(textUrl: string): Promise<string> {

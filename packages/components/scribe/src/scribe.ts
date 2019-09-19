@@ -16,8 +16,8 @@ import {
     IComponentRouter,
     IRequest,
     IResponse,
-} from "@prague/component-core-interfaces";
-import { IContainerContext, IFluidCodeDetails, IRuntime, IRuntimeFactory } from "@prague/container-definitions";
+} from "@microsoft/fluid-component-core-interfaces";
+import { IContainerContext, IFluidCodeDetails, IRuntime, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
 import { IDocumentFactory } from "@prague/host-service-interfaces";
 import Axios from "axios";
 import { EventEmitter } from "events";

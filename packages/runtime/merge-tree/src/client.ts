@@ -4,8 +4,8 @@
  */
 
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
-import { ITelemetryLogger } from "@prague/container-definitions";
-import { ISequencedDocumentMessage, MessageType } from "@prague/protocol-definitions";
+import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
+import { ISequencedDocumentMessage, MessageType } from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
 import { IIntegerRange } from "./base";
 import * as Collections from "./collections";

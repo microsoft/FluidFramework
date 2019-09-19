@@ -6,21 +6,21 @@
 import { getRandomName } from "@microsoft/fluid-server-services-core";
 
 // tslint:disable no-string-literal trailing-comma no-shadowed-variable no-submodule-imports no-floating-promises
-import { SimpleModuleInstantiationFactory } from "@prague/aqueduct";
-import { IHostConfig, start as startCore } from "@prague/base-host";
+import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
+import { IHostConfig, start as startCore } from "@microsoft/fluid-base-host";
 import {
     IRequest,
-} from "@prague/component-core-interfaces";
+} from "@microsoft/fluid-component-core-interfaces";
 import {
     IFluidModule,
     IFluidPackage,
     IPackage,
     IPraguePackage,
-} from "@prague/container-definitions";
-import { extractDetails, IResolvedPackage } from "@prague/loader-web";
+} from "@microsoft/fluid-container-definitions";
+import { extractDetails, IResolvedPackage } from "@microsoft/fluid-web-code-loader";
 import {TestDeltaConnectionServer, TestDocumentServiceFactory, TestResolver} from "@prague/local-test-server";
-import { IDocumentServiceFactory, IUrlResolver, IUser } from "@prague/protocol-definitions";
-import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
+import { IDocumentServiceFactory, IUrlResolver, IUser } from "@microsoft/fluid-protocol-definitions";
+import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
 import * as jwt from "jsonwebtoken";
 import * as uuid from "uuid/v4";
 import { InsecureUrlResolver } from "./insecureUrlResolver";

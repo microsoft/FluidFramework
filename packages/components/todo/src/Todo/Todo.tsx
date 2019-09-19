@@ -6,9 +6,9 @@
 import { ISharedCell, SharedCell } from "@microsoft/fluid-cell";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import { SharedString } from "@microsoft/fluid-sequence";
-import { PrimedComponent } from "@prague/aqueduct";
-import { EmbeddedReactComponentFactory, IComponentReactViewable } from "@prague/aqueduct-react";
-import { IComponentHandle, IComponentHTMLVisual } from "@prague/component-core-interfaces";
+import { PrimedComponent } from "@microsoft/fluid-aqueduct";
+import { EmbeddedReactComponentFactory, IComponentReactViewable } from "@microsoft/fluid-aqueduct-react";
+import { IComponentHandle, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { TodoItemName } from "../TodoItem/index";

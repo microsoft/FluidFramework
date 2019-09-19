@@ -11,9 +11,9 @@ import {
     ISummaryTree,
     ITree,
     IVersion,
-} from "@prague/protocol-definitions";
-import { DocumentStorageService } from "@prague/routerlicious-socket-storage";
-import { buildHierarchy } from "@prague/utils";
+} from "@microsoft/fluid-protocol-definitions";
+import { DocumentStorageService } from "@microsoft/fluid-routerlicious-driver";
+import { buildHierarchy } from "@microsoft/fluid-core-utils";
 
 /**
  * Document access to underlying storage for routerlicious driver.

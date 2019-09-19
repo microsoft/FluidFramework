@@ -19,7 +19,7 @@ import {
     ISequencedDocumentMessage,
     MessageType,
     ScopeType,
-} from "@prague/protocol-definitions";
+} from "@microsoft/fluid-protocol-definitions";
 
 import hash = require("string-hash");
 

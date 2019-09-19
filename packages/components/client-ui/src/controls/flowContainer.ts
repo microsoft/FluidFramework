@@ -8,8 +8,8 @@ import { ISharedMap } from "@microsoft/fluid-map";
 import * as MergeTree from "@microsoft/fluid-merge-tree";
 import * as Sequence from "@microsoft/fluid-sequence";
 // tslint:disable:ban-types
-import * as api from "@prague/client-api";
-import { IComponentHandle } from "@prague/component-core-interfaces";
+import * as api from "@fluid-internal/client-api";
+import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import * as ui from "../ui";
 import { DockPanel } from "./dockPanel";
 import { FlowView, IOverlayMarker } from "./flowView";

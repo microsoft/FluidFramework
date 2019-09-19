@@ -4,9 +4,9 @@
  */
 
 import * as core from "@microsoft/fluid-server-services-core";
-import * as git from "@prague/gitresources";
-import { IClient, IClientJoin, ITokenClaims, ScopeType } from "@prague/protocol-definitions";
-import { fromUtf8ToBase64 } from "@prague/utils";
+import * as git from "@microsoft/fluid-gitresources";
+import { IClient, IClientJoin, ITokenClaims, ScopeType } from "@microsoft/fluid-protocol-definitions";
+import { fromUtf8ToBase64 } from "@microsoft/fluid-core-utils";
 import { Request, Response, Router } from "express";
 import * as jwt from "jsonwebtoken";
 import * as moniker from "moniker";

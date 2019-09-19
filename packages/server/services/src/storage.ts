@@ -16,8 +16,8 @@ import {
     ITenantManager,
     RawOperationType,
 } from "@microsoft/fluid-server-services-core";
-import { ICommit, ICommitDetails } from "@prague/gitresources";
-import { IDocumentAttributes, IDocumentSystemMessage, MessageType } from "@prague/protocol-definitions";
+import { ICommit, ICommitDetails } from "@microsoft/fluid-gitresources";
+import { IDocumentAttributes, IDocumentSystemMessage, MessageType } from "@microsoft/fluid-protocol-definitions";
 import * as moniker from "moniker";
 
 const StartingSequenceNumber = 0;

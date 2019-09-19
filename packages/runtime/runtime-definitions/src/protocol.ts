@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISignalMessage } from "@prague/protocol-definitions";
+import { ISignalMessage } from "@microsoft/fluid-protocol-definitions";
 
 /**
  * An envelope wraps the contents with the intended target

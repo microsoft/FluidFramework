@@ -4,8 +4,8 @@
  */
 
 import { ComponentRegistryTypes } from "@microsoft/fluid-runtime-definitions";
-import { SimpleContainerRuntimeFactory, SimpleModuleInstantiationFactory } from "@prague/aqueduct";
-import { IContainerContext, IRuntime } from "@prague/container-definitions";
+import { SimpleContainerRuntimeFactory, SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
+import { IContainerContext, IRuntime } from "@microsoft/fluid-container-definitions";
 import * as uuid from "uuid";
 import { ExternalComponentLoader, WaterParkLoaderName } from "./waterParkLoader";
 import { ExternalComponentView, WaterParkViewName } from "./waterParkView";

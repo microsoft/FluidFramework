@@ -4,8 +4,8 @@
  */
 
 import { Counter, CounterValueType, ISharedDirectory } from "@microsoft/fluid-map";
-import { PrimedComponent, PrimedComponentFactory } from "@prague/aqueduct";
-import { IComponentHTMLVisual } from "@prague/component-core-interfaces";
+import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
+import { IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 

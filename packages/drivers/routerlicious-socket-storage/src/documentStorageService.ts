@@ -4,7 +4,7 @@
  */
 
 import * as gitStorage from "@microsoft/fluid-server-services-client";
-import * as resources from "@prague/gitresources";
+import * as resources from "@microsoft/fluid-gitresources";
 import {
     FileMode,
     ICreateBlobResponse,
@@ -16,8 +16,8 @@ import {
     IVersion,
     SummaryObject,
     SummaryType,
-} from "@prague/protocol-definitions";
-import { buildHierarchy } from "@prague/utils";
+} from "@microsoft/fluid-protocol-definitions";
+import { buildHierarchy } from "@microsoft/fluid-core-utils";
 
 /**
  * Document access to underlying storage for routerlicious driver.

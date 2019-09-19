@@ -4,10 +4,10 @@
  */
 
 import { SharedString } from "@microsoft/fluid-sequence";
-import { PrimedComponent } from "@prague/aqueduct";
-import { CollaborativeTextArea, IComponentReactViewable } from "@prague/aqueduct-react";
-import { IComponentHandle, IComponentHTMLVisual } from "@prague/component-core-interfaces";
-import { IComponentForge } from "@prague/framework-definitions";
+import { PrimedComponent } from "@microsoft/fluid-aqueduct";
+import { CollaborativeTextArea, IComponentReactViewable } from "@microsoft/fluid-aqueduct-react";
+import { IComponentHandle, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentForge } from "@microsoft/fluid-framework-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 

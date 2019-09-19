@@ -13,8 +13,8 @@ import {
     IComponentHTMLView,
     IComponentHTMLVisual,
     IComponentLoadable,
-} from "@prague/component-core-interfaces";
-import { IComponentCollection } from "@prague/framework-definitions";
+} from "@microsoft/fluid-component-core-interfaces";
+import { IComponentCollection } from "@microsoft/fluid-framework-interfaces";
 import * as styles from "./index.css";
 
 const template = new Template(

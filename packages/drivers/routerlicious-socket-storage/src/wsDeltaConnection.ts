@@ -13,9 +13,9 @@ import {
     IServiceConfiguration,
     ISignalMessage,
     ITokenClaims,
-} from "@prague/protocol-definitions";
-import { IConnect, IConnected } from "@prague/socket-storage-shared";
-import { BatchManager } from "@prague/utils";
+} from "@microsoft/fluid-protocol-definitions";
+import { IConnect, IConnected } from "@microsoft/fluid-driver-base";
+import { BatchManager } from "@microsoft/fluid-core-utils";
 import { EventEmitter } from "events";
 import * as ws from "isomorphic-ws";
 import * as url from "url";

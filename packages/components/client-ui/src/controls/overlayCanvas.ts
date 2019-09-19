@@ -4,7 +4,7 @@
  */
 
 import * as ink from "@microsoft/fluid-ink";
-import * as api from "@prague/client-api";
+import * as api from "@fluid-internal/client-api";
 import * as assert from "assert";
 import * as ui from "../ui";
 import { getShapes } from "./canvasCommon";

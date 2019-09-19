@@ -4,7 +4,7 @@
  */
 
 import { IDatabaseManager } from "@microsoft/fluid-server-services-core";
-import * as api from "@prague/protocol-definitions";
+import * as api from "@microsoft/fluid-protocol-definitions";
 
 export class TestDeltaStorageService implements api.IDocumentDeltaStorageService {
     constructor(

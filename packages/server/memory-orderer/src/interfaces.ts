@@ -12,7 +12,7 @@ import {
     IOrderer,
     ISequencedOperationMessage,
 } from "@microsoft/fluid-server-services-core";
-import { IClient, IDocumentMessage, IServiceConfiguration } from "@prague/protocol-definitions";
+import { IClient, IDocumentMessage, IServiceConfiguration } from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
 
 export interface IConcreteNode extends EventEmitter {

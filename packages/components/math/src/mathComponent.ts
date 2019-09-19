@@ -22,13 +22,13 @@ import {
     IComponentRouter,
     IRequest,
     IResponse,
-} from "@prague/component-core-interfaces";
+} from "@microsoft/fluid-component-core-interfaces";
 import {
     ComponentCursorDirection,
     IComponentCollection,
     IComponentCursor,
     IComponentLayout,
-} from "@prague/framework-definitions";
+} from "@microsoft/fluid-framework-interfaces";
 import * as Katex from "katex";
 import * as MathExpr from "./mathExpr";
 

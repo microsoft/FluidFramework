@@ -1,5 +1,5 @@
 {
-  "name": "@prague/fluid-debugger",
+  "name": "@microsoft/fluid-debugger",
   "version": "0.10.0",
   "description": "Fluid Debugger - a tool to play through history of a file",
   "main": "dist/index.js",
@@ -20,9 +20,9 @@
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "dependencies": {
-    "@prague/protocol-definitions": "^0.10.0",
-    "@prague/replay-socket-storage": "^0.10.0",
-    "@prague/utils": "^0.10.0"
+    "@microsoft/fluid-protocol-definitions": "^0.10.0",
+    "@microsoft/fluid-replay-driver": "^0.10.0",
+    "@microsoft/fluid-core-utils": "^0.10.0"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.3.11",

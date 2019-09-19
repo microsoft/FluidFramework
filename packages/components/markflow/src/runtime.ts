@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SimpleModuleInstantiationFactory } from "@prague/aqueduct";
+import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 
 export const webflowType = "@fluid-example/webflow";
 export const FlowDocumentType = "@chaincode/flow-document";

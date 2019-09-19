@@ -4,8 +4,8 @@
  */
 
 import { IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
-import { ISequencedDocumentMessage } from "@prague/protocol-definitions";
-import { fromBase64ToUtf8 } from "@prague/utils";
+import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
+import { fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
 import * as assert from "assert";
 import { Client } from "./client";
 import { NonCollabClient, UniversalSequenceNumber } from "./constants";

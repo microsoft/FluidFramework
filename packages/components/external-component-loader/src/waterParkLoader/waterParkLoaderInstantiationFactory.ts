@@ -4,7 +4,7 @@
 */
 
 import { IComponentFactory } from "@microsoft/fluid-runtime-definitions";
-import { PrimedComponentFactory } from "@prague/aqueduct";
+import { PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import { ExternalComponentLoader } from "./externalComponentLoader";
 
 export const WaterParkLoaderInstantiationFactory: IComponentFactory = new PrimedComponentFactory(

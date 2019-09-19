@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as git from "@prague/gitresources";
-import { fromUtf8ToBase64 } from "@prague/utils";
+import * as git from "@microsoft/fluid-gitresources";
+import { fromUtf8ToBase64 } from "@microsoft/fluid-core-utils";
 import { RestWrapper } from "./restWrapper";
 import { IHistorian } from "./storage";
 

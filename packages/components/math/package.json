@@ -43,7 +43,7 @@
   "dependencies": {
     "@fluid-example/search-menu": "^0.10.0",
     "@fluid-example/client-ui-lib": "^0.10.0",
-    "@prague/component-core-interfaces": "^0.10.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.10.0",
     "@fluid-example/flow-util-lib": "^0.10.0",
     "@microsoft/fluid-component-runtime": "^0.10.0",
     "@microsoft/fluid-map": "^0.10.0",
@@ -51,7 +51,7 @@
     "@microsoft/fluid-runtime-definitions": "^0.10.0",
     "@microsoft/fluid-sequence": "^0.10.0",
     "@microsoft/fluid-shared-object-base": "^0.10.0",
-    "@prague/framework-definitions": "^0.10.0",
+    "@microsoft/fluid-framework-interfaces": "^0.10.0",
     "debug": "^4.1.1",
     "katex": "^0.10.2"
   },

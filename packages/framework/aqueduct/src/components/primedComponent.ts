@@ -5,7 +5,7 @@
 
 import { ISharedDirectory, MapFactory, SharedDirectory } from "@microsoft/fluid-map";
 import { ITaskManager } from "@microsoft/fluid-runtime-definitions";
-import { IRequest, IResponse } from "@prague/component-core-interfaces";
+import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import { SharedComponent } from "./sharedComponent";
 
 /**

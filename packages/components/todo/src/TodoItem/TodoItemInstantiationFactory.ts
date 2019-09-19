@@ -6,7 +6,7 @@
 import { SharedCell } from "@microsoft/fluid-cell";
 import { IComponentFactory } from "@microsoft/fluid-runtime-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
-import { PrimedComponentFactory } from "@prague/aqueduct";
+import { PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import { TodoItem } from "./index";
 
 export const TodoItemInstantiationFactory: IComponentFactory = new PrimedComponentFactory(

@@ -4,7 +4,7 @@
  */
 
 import { ICollection, IContext, IDocument } from "@microsoft/fluid-server-services-core";
-import { IRangeTrackerSnapshot } from "@prague/utils";
+import { IRangeTrackerSnapshot } from "@microsoft/fluid-core-utils";
 import * as winston from "winston";
 
 export interface IClientSequenceNumber {

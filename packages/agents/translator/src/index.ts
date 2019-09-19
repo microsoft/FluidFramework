@@ -5,7 +5,7 @@
 
 import { ISharedMap } from "@microsoft/fluid-map";
 import * as Sequence from "@microsoft/fluid-sequence";
-import { IComponentRouter, IComponentRunnable, IRequest, IResponse } from "@prague/component-core-interfaces";
+import { IComponentRouter, IComponentRunnable, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import { SharedStringTranslator } from "./sharedStringTranslator";
 
 interface ITokenConfig {

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IHeader } from "@prague/gitresources";
+import { IHeader } from "@microsoft/fluid-gitresources";
 import { Router } from "express";
 import * as nconf from "nconf";
 import { ICache, ITenantService } from "../../services";

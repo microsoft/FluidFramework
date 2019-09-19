@@ -30,8 +30,8 @@ import {
     ISequencedDocumentSystemMessage,
     ITrace,
     MessageType,
-} from "@prague/protocol-definitions";
-import { Heap, IComparer, IHeapNode, isSystemType, RangeTracker } from "@prague/utils";
+} from "@microsoft/fluid-protocol-definitions";
+import { Heap, IComparer, IHeapNode, isSystemType, RangeTracker } from "@microsoft/fluid-core-utils";
 import * as assert from "assert";
 import * as _ from "lodash";
 import * as winston from "winston";

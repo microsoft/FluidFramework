@@ -21,8 +21,8 @@ import {
     IComponentRouter,
     IRequest,
     IResponse,
-} from "@prague/component-core-interfaces";
-import { IContainerContext, IRuntime, IRuntimeFactory } from "@prague/container-definitions";
+} from "@microsoft/fluid-component-core-interfaces";
+import { IContainerContext, IRuntime, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
 import { EventEmitter } from "events";
 import * as $ from "jquery";
 

@@ -5,8 +5,8 @@
 
 import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
 import { ComponentRegistryTypes, IHostRuntime } from "@microsoft/fluid-runtime-definitions";
-import { IComponent, IRequest } from "@prague/component-core-interfaces";
-import { IContainerContext } from "@prague/container-definitions";
+import { IComponent, IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { IContainerContext } from "@microsoft/fluid-container-definitions";
 
 export class SimpleContainerRuntimeFactory {
     public static readonly defaultComponentId = "default";

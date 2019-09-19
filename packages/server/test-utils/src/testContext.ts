@@ -4,7 +4,7 @@
  */
 
 import { IContext } from "@microsoft/fluid-server-services-core";
-import * as utils from "@prague/utils";
+import * as utils from "@microsoft/fluid-core-utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 

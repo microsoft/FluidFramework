@@ -8,14 +8,14 @@ import {
     IComponentHTMLVisual,
     IComponentQueryableLegacy,
     IRequest,
-} from "@prague/component-core-interfaces";
-import { ICodeLoader } from "@prague/container-definitions";
-import { Container, Loader } from "@prague/container-loader";
-import { IResolvedPackage, WebCodeLoader } from "@prague/loader-web";
+} from "@microsoft/fluid-component-core-interfaces";
+import { ICodeLoader } from "@microsoft/fluid-container-definitions";
+import { Container, Loader } from "@microsoft/fluid-container-loader";
+import { IResolvedPackage, WebCodeLoader } from "@microsoft/fluid-web-code-loader";
 import {
     IFluidResolvedUrl,
     IResolvedUrl,
-} from "@prague/protocol-definitions";
+} from "@microsoft/fluid-protocol-definitions";
 import { IHostConfig } from "./hostConfig";
 
 export interface IPrivateSessionInfo {

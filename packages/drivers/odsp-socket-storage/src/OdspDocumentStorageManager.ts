@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@prague/container-definitions";
-import * as resources from "@prague/gitresources";
-import * as api from "@prague/protocol-definitions";
-import { buildHierarchy, fromBase64ToUtf8, fromUtf8ToBase64, PerformanceEvent } from "@prague/utils";
+import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
+import * as resources from "@microsoft/fluid-gitresources";
+import * as api from "@microsoft/fluid-protocol-definitions";
+import { buildHierarchy, fromBase64ToUtf8, fromUtf8ToBase64, PerformanceEvent } from "@microsoft/fluid-core-utils";
 import * as assert from "assert";
 import {
     IDocumentStorageGetVersionsResponse,

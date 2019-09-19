@@ -9,7 +9,7 @@ import {
     ISequencedDocumentMessage,
     ISnapshotTree,
     IVersion,
-} from "@prague/protocol-definitions";
+} from "@microsoft/fluid-protocol-definitions";
 import {
     FileSnapshotReader,
     IFileSnapshot,
@@ -17,8 +17,8 @@ import {
     ReadDocumentStorageServiceBase,
     ReplayController,
     SnapshotStorage,
-} from "@prague/replay-socket-storage";
-import { Deferred, readAndParse } from "@prague/utils";
+} from "@microsoft/fluid-replay-driver";
+import { Deferred, readAndParse } from "@microsoft/fluid-core-utils";
 import * as assert from "assert";
 import { IDebuggerController, IDebuggerUI } from "./fluidDebuggerUI";
 

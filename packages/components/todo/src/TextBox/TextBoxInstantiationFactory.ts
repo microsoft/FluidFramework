@@ -5,7 +5,7 @@
 
 import { IComponentFactory } from "@microsoft/fluid-runtime-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
-import { PrimedComponentFactory } from "@prague/aqueduct";
+import { PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import { TextBox } from "./index";
 
 export const TextBoxInstantiationFactory: IComponentFactory = new PrimedComponentFactory(

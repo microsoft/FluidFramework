@@ -5,8 +5,8 @@
 
 import { IGitCache } from "@microsoft/fluid-server-services-client";
 import { ITenantManager } from "@microsoft/fluid-server-services-core";
-import { IFluidCodeDetails } from "@prague/container-definitions";
-import { ICommit, ICommitDetails } from "@prague/gitresources";
+import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
+import { ICommit, ICommitDetails } from "@microsoft/fluid-gitresources";
 
 export interface IAlfred {
     createFork(tenantId: string, id: string): Promise<string>;

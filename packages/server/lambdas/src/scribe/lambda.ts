@@ -17,8 +17,8 @@ import {
     RawOperationType,
     SequencedOperationType,
 } from "@microsoft/fluid-server-services-core";
-import { IQuorumSnapshot, ProtocolOpHandler } from "@prague/container-loader";
-import { ICreateCommitParams, ICreateTreeEntry } from "@prague/gitresources";
+import { IQuorumSnapshot, ProtocolOpHandler } from "@microsoft/fluid-container-loader";
+import { ICreateCommitParams, ICreateTreeEntry } from "@microsoft/fluid-gitresources";
 import {
     FileMode,
     IDocumentAttributes,
@@ -30,7 +30,7 @@ import {
     ITreeEntry,
     MessageType,
     TreeEntry,
-} from "@prague/protocol-definitions";
+} from "@microsoft/fluid-protocol-definitions";
 import * as Deque from "double-ended-queue";
 import * as _ from "lodash";
 import { SequencedLambda } from "../sequencedLambda";

@@ -4,8 +4,8 @@
  */
 
 import * as MergeTree from "@microsoft/fluid-merge-tree";
-import { ICodeLoader, IHost } from "@prague/container-definitions";
-import { IDocumentServiceFactory } from "@prague/protocol-definitions";
+import { ICodeLoader, IHost } from "@microsoft/fluid-container-definitions";
+import { IDocumentServiceFactory } from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
 import { Provider } from "nconf";
 import { AgentLoader, IAgent } from "./agentLoader";

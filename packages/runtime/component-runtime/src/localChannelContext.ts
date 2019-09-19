@@ -4,8 +4,8 @@
  */
 
 import { IChannel, IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
-import { ConnectionState } from "@prague/container-definitions";
-import { IDocumentStorageService, ISequencedDocumentMessage, ITree, MessageType } from "@prague/protocol-definitions";
+import { ConnectionState } from "@microsoft/fluid-container-definitions";
+import { IDocumentStorageService, ISequencedDocumentMessage, ITree, MessageType } from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
 import { createServiceEndpoints, IChannelContext, snapshotChannel } from "./channelContext";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";

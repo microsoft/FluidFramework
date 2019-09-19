@@ -5,16 +5,16 @@
 
 import { MergeTreeDeltaType } from "@microsoft/fluid-merge-tree";
 import { SharedObjectSequence, SubSequence } from "@microsoft/fluid-sequence";
-import { PrimedComponent } from "@prague/aqueduct";
+import { PrimedComponent } from "@microsoft/fluid-aqueduct";
 import {
     IComponent,
     IComponentHandle,
     IComponentHTMLVisual,
     IComponentLoadable,
     IComponentQueryableLegacy,
-} from "@prague/component-core-interfaces";
-import { IPraguePackage } from "@prague/container-definitions";
-import { IComponentCollection } from "@prague/framework-definitions";
+} from "@microsoft/fluid-component-core-interfaces";
+import { IPraguePackage } from "@microsoft/fluid-container-definitions";
+import { IComponentCollection } from "@microsoft/fluid-framework-interfaces";
 
 // tslint:disable-next-line: no-var-requires no-require-imports
 const pkg = require("../../package.json") as IPraguePackage;

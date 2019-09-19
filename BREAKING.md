@@ -1,6 +1,6 @@
 # 0.10 Breaking Changes
 
-- [`@prague/tiny-web-host` prague -> fluid changes](#praguetiny-web-host-prague---fluid-changes)
+- [`@fluid-example/tiny-web-host` prague -> fluid changes](#praguetiny-web-host-prague---fluid-changes)
 - [prague URIs changed to fluid](#prague-URIs-changed-to-fluid)
 - [DistributedSet removed](#distributedset-removed)
 - [`Stream` renamed to `Ink`](#stream-renamed-to-ink)
@@ -9,8 +9,8 @@
 - [`.createValueType` replaces third argument to `.set`](#.createValueType-replaces-third-argument-to-.set)
 
 
-## `@prague/tiny-web-host` prague -> fluid changes
-`loadPragueComponent`, `loadIFramedPragueComponent`, and `isPragueUrl` from `@prague/tiny-web-host` have been renamed to `loadFluidComponent`, `loadIFramedFluidComponent`, and `isFluidUrl`, respectively.
+## `@fluid-example/tiny-web-host` prague -> fluid changes
+`loadPragueComponent`, `loadIFramedPragueComponent`, and `isPragueUrl` from `@fluid-example/tiny-web-host` have been renamed to `loadFluidComponent`, `loadIFramedFluidComponent`, and `isFluidUrl`, respectively.
 
 ## prague URIs changed to fluid
 `prague://` and `prague-odsp://` URIs have been changed to `fluid://` and `fluid-odsp://` respectively.

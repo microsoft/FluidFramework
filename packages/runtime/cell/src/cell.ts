@@ -5,9 +5,9 @@
 
 import { IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObjectFactory, SharedObject, ValueType } from "@microsoft/fluid-shared-object-base";
-import { ISerializedHandle } from "@prague/component-core-interfaces";
-import { FileMode, ISequencedDocumentMessage, ITree, MessageType, TreeEntry } from "@prague/protocol-definitions";
-import { fromBase64ToUtf8 } from "@prague/utils";
+import { ISerializedHandle } from "@microsoft/fluid-component-core-interfaces";
+import { FileMode, ISequencedDocumentMessage, ITree, MessageType, TreeEntry } from "@microsoft/fluid-protocol-definitions";
+import { fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
 import { CellFactory } from "./cellFactory";
 import { debug } from "./debug";
 import { ISharedCell } from "./interfaces";

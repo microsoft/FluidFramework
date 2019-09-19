@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ICodeLoader, IHost } from "@prague/container-definitions";
-import { Container, Loader } from "@prague/container-loader";
-import { Browser, IDocumentServiceFactory } from "@prague/protocol-definitions";
+import { ICodeLoader, IHost } from "@microsoft/fluid-container-definitions";
+import { Container, Loader } from "@microsoft/fluid-container-loader";
+import { Browser, IDocumentServiceFactory } from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
 import { parse } from "url";
 import { debug } from "../debug";

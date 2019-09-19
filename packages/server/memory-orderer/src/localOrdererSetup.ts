@@ -11,7 +11,7 @@ import {
     IDocumentStorage,
     ISequencedOperationMessage,
 } from "@microsoft/fluid-server-services-core";
-import { IDocumentAttributes } from "@prague/protocol-definitions";
+import { IDocumentAttributes } from "@microsoft/fluid-protocol-definitions";
 import { IGitManager } from "../../services-client/dist";
 import { ILocalOrdererSetup } from "./interfaces";
 

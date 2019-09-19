@@ -6,7 +6,7 @@
 import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
 import { SharedMap } from "@microsoft/fluid-map";
 import { IComponentContext, IComponentFactory } from "@microsoft/fluid-runtime-definitions";
-import { IRequest } from "@prague/component-core-interfaces";
+import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { PinpointRunner } from "./runner";
 
 class PinpointMapsFactory implements IComponentFactory {

@@ -6,9 +6,9 @@
 import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
 import { MapFactory } from "@microsoft/fluid-map";
 import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
-import { IRequest } from "@prague/component-core-interfaces";
-import { IBlobManager, IGenericBlob } from "@prague/container-definitions";
-import { IDocumentStorageService } from "@prague/protocol-definitions";
+import { IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { IBlobManager, IGenericBlob } from "@microsoft/fluid-container-definitions";
+import { IDocumentStorageService } from "@microsoft/fluid-protocol-definitions";
 
 // const blobMetaData = this.blobManager!.getBlobMetadata();
 // entries[".blobs"] = {

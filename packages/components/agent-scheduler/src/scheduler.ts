@@ -22,8 +22,8 @@ import {
     IComponentRunnable,
     IRequest,
     IResponse,
-} from "@prague/component-core-interfaces";
-import { ConnectionState } from "@prague/container-definitions";
+} from "@microsoft/fluid-component-core-interfaces";
+import { ConnectionState } from "@microsoft/fluid-container-definitions";
 import * as assert from "assert";
 import * as debug from "debug";
 import { EventEmitter } from "events";

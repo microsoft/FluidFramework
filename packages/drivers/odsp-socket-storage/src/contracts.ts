@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as resources from "@prague/gitresources";
-import * as api from "@prague/protocol-definitions";
+import * as resources from "@microsoft/fluid-gitresources";
+import * as api from "@microsoft/fluid-protocol-definitions";
 
 export interface IOdspResolvedUrl extends api.IResolvedUrlBase {
   type: "fluid";

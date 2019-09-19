@@ -5,7 +5,7 @@
 
 import { IChannelAttributes, IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
 import { SharedObject, ValueType } from "@microsoft/fluid-shared-object-base";
-import { ISequencedDocumentMessage, ITree, MessageType } from "@prague/protocol-definitions";
+import { ISequencedDocumentMessage, ITree, MessageType } from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
 import { debug } from "./debug";
 import { IConsensusOrderedCollection, IOrderedCollection } from "./interfaces";

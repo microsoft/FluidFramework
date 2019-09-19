@@ -10,8 +10,8 @@ import {
     ReadPolicy,
 } from "@microsoft/fluid-register-collection";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
-import * as api from "@prague/client-api";
-import { IComponentHandle } from "@prague/component-core-interfaces";
+import * as api from "@fluid-internal/client-api";
+import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import * as assert from "assert";
 import {
     DocumentDeltaEventManager,

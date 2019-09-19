@@ -4,7 +4,7 @@
  */
 
 import { ISharedMap } from "@microsoft/fluid-map";
-import { IComponent, IComponentHTMLView, IComponentHTMLVisual } from "@prague/component-core-interfaces";
+import { IComponent, IComponentHTMLView, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
 
 export class FlowIntelViewer implements IComponentHTMLVisual {
     public get IComponentHTMLVisual() { return this; }

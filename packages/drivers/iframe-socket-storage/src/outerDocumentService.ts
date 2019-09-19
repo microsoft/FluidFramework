@@ -10,15 +10,15 @@ import {
     IDocumentService,
     IDocumentStorageService,
     ScopeType,
-} from "@prague/protocol-definitions";
-import { DocumentStorageService } from "@prague/routerlicious-socket-storage";
+} from "@microsoft/fluid-protocol-definitions";
+import { DocumentStorageService } from "@microsoft/fluid-routerlicious-driver";
 import {
     IConnected,
     IInnerDocumentDeltaConnectionProxy,
     IOuterDocumentDeltaConnection,
     OuterDocumentDeltaConnection,
-} from "@prague/socket-storage-shared";
-import { Deferred } from "@prague/utils";
+} from "@microsoft/fluid-driver-base";
+import { Deferred } from "@microsoft/fluid-core-utils";
 import * as assert from "assert";
 import * as Comlink from "comlink";
 import { OuterDeltaStorageService } from "./outerDeltaStorageService";

@@ -4,9 +4,9 @@
  */
 
 import { GitManager, Historian, ICredentials, IGitCache } from "@microsoft/fluid-server-services-client";
-import * as api from "@prague/protocol-definitions";
-import { DocumentDeltaConnection } from "@prague/socket-storage-shared";
-import { fromUtf8ToBase64 } from "@prague/utils";
+import * as api from "@microsoft/fluid-protocol-definitions";
+import { DocumentDeltaConnection } from "@microsoft/fluid-driver-base";
+import { fromUtf8ToBase64 } from "@microsoft/fluid-core-utils";
 import Axios from "axios";
 import * as io from "socket.io-client";
 import { DeltaStorageService, DocumentDeltaStorageService } from "./deltaStorageService";

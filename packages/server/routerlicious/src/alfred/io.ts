@@ -7,7 +7,7 @@ import * as agent from "@microsoft/fluid-server-agent";
 import { canSummarize, canWrite } from "@microsoft/fluid-server-services-client";
 import * as core from "@microsoft/fluid-server-services-core";
 import { generateClientId, getRandomInt } from "@microsoft/fluid-server-services-utils";
-import * as api from "@prague/client-api";
+import * as api from "@fluid-internal/client-api";
 import {
     ConnectionMode,
     IClient,
@@ -17,9 +17,9 @@ import {
     INack,
     ISignalMessage,
     ITokenClaims,
-} from "@prague/protocol-definitions";
-import { IConnect, IConnected } from "@prague/socket-storage-shared";
-import { isSystemType } from "@prague/utils";
+} from "@microsoft/fluid-protocol-definitions";
+import { IConnect, IConnected } from "@microsoft/fluid-driver-base";
+import { isSystemType } from "@microsoft/fluid-core-utils";
 import * as jwt from "jsonwebtoken";
 import * as semver from "semver";
 import * as winston from "winston";

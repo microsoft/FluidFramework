@@ -13,7 +13,7 @@ import {
     ITenantManager,
     IWebSocketServer,
 } from "@microsoft/fluid-server-services-core";
-import { IDocumentMessage, IServiceConfiguration } from "@prague/protocol-definitions";
+import { IDocumentMessage, IServiceConfiguration } from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import * as _ from "lodash";

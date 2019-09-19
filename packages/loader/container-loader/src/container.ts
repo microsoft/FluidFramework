@@ -7,7 +7,7 @@ import {
     IComponentQueryableLegacy,
     IRequest,
     IResponse,
-} from "@prague/component-core-interfaces";
+} from "@microsoft/fluid-component-core-interfaces";
 import {
     ConnectionState,
     ICodeLoader,
@@ -24,7 +24,7 @@ import {
     ITelemetryBaseLogger,
     ITelemetryLogger,
     TelemetryEventRaisedOnContainer,
-} from "@prague/container-definitions";
+} from "@microsoft/fluid-container-definitions";
 import {
     FileMode,
     IClient,
@@ -43,7 +43,7 @@ import {
     IVersion,
     MessageType,
     TreeEntry,
-} from "@prague/protocol-definitions";
+} from "@microsoft/fluid-protocol-definitions";
 import {
     buildHierarchy,
     ChildLogger,
@@ -53,7 +53,7 @@ import {
     PerformanceEvent,
     raiseConnectedEvent,
     readAndParse,
-} from "@prague/utils";
+} from "@microsoft/fluid-core-utils";
 import * as assert from "assert";
 import * as jwtDecode from "jwt-decode";
 import { BlobCacheStorageService } from "./blobCacheStorageService";

@@ -5,8 +5,8 @@
 
 import { IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
 import { SharedObject } from "@microsoft/fluid-shared-object-base";
-import { FileMode, ISequencedDocumentMessage, ITree, MessageType, TreeEntry } from "@prague/protocol-definitions";
-import { fromBase64ToUtf8 } from "@prague/utils";
+import { FileMode, ISequencedDocumentMessage, ITree, MessageType, TreeEntry } from "@microsoft/fluid-protocol-definitions";
+import { fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
 // tslint:disable-next-line:no-submodule-imports
 import * as uuid from "uuid/v4";
 import { InkFactory } from "./inkFactory";

@@ -4,8 +4,8 @@
  */
 
 import { generateToken } from "@microsoft/fluid-server-services-core";
-import { IRequest } from "@prague/component-core-interfaces";
-import { IFluidResolvedUrl, IResolvedUrl, IUrlResolver, ScopeType } from "@prague/protocol-definitions";
+import { IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { IFluidResolvedUrl, IResolvedUrl, IUrlResolver, ScopeType } from "@microsoft/fluid-protocol-definitions";
 
 /**
  * Resolves URLs by providing fake URLs which succeed with the other

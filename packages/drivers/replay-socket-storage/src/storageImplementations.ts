@@ -15,8 +15,8 @@ import {
     ISnapshotTree,
     ITree,
     IVersion,
-} from "@prague/protocol-definitions";
-import { buildHierarchy, flatten } from "@prague/utils";
+} from "@microsoft/fluid-protocol-definitions";
+import { buildHierarchy, flatten } from "@microsoft/fluid-core-utils";
 import * as assert from "assert";
 import { EmptyDeltaStorageService } from "./emptyDeltaStorageService";
 import { ReadDocumentStorageServiceBase } from "./replayController";

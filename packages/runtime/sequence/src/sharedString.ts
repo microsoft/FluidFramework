@@ -5,12 +5,12 @@
 
 import * as MergeTree from "@microsoft/fluid-merge-tree";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
-import {} from "@prague/component-core-interfaces";
+import {} from "@microsoft/fluid-component-core-interfaces";
 import { EventEmitter } from "events";
 import { SharedSegmentSequence } from "./sequence";
 import { SharedStringFactory } from "./sequenceFactory";
 
-declare module "@prague/component-core-interfaces" {
+declare module "@microsoft/fluid-component-core-interfaces" {
     export interface IComponent extends Readonly<Partial<IProvideSharedString>> {
     }
 }

@@ -11,7 +11,7 @@ import {
     IDocumentSystemMessage,
     IServiceConfiguration,
     MessageType,
-} from "@prague/protocol-definitions";
+} from "@microsoft/fluid-protocol-definitions";
 import * as _ from "lodash";
 
 export class KafkaOrdererConnection implements core.IOrdererConnection {

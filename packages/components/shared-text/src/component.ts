@@ -21,7 +21,7 @@ import {
     SharedObjectSequence,
     SharedString,
 } from "@microsoft/fluid-sequence";
-import * as API from "@prague/client-api";
+import * as API from "@fluid-internal/client-api";
 import {
     IComponent,
     IComponentHandle,
@@ -29,7 +29,7 @@ import {
     IComponentLoadable,
     IRequest,
     IResponse,
-} from "@prague/component-core-interfaces";
+} from "@microsoft/fluid-component-core-interfaces";
 import { EventEmitter } from "events";
 import { parse } from "querystring";
 import * as url from "url";

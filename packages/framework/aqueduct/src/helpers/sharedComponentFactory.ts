@@ -6,7 +6,7 @@
 import { ComponentRuntime, ISharedObjectRegistry } from "@microsoft/fluid-component-runtime";
 import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
-import { IRequest } from "@prague/component-core-interfaces";
+import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { SharedComponent } from "../components/sharedComponent";
 
 export class SharedComponentFactory implements IComponentFactory {

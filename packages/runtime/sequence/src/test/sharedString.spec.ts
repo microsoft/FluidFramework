@@ -5,7 +5,7 @@
 
 import { ISharedObjectServices } from "@microsoft/fluid-runtime-definitions";
 import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@microsoft/fluid-test-runtime-utils";
-import { ITree } from "@prague/protocol-definitions";
+import { ITree } from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
 import { SharedString } from "../sharedString";
 

@@ -12,8 +12,8 @@ import {
     IServiceConfiguration,
     ISignalMessage,
     ITokenClaims,
-} from "@prague/protocol-definitions";
-import { Deferred } from "@prague/utils";
+} from "@microsoft/fluid-protocol-definitions";
+import { Deferred } from "@microsoft/fluid-core-utils";
 import * as Comlink from "comlink";
 import { EventEmitter } from "events";
 import { IConnected } from "./messages";

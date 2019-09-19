@@ -9,10 +9,10 @@ import {
     IObjectStorageService,
     ISharedObjectServices,
 } from "@microsoft/fluid-runtime-definitions";
-import { IComponentHandle } from "@prague/component-core-interfaces";
-import { ConnectionState, ITelemetryErrorEvent, ITelemetryLogger } from "@prague/container-definitions";
-import { ISequencedDocumentMessage, ITree, MessageType } from "@prague/protocol-definitions";
-import { ChildLogger, EventEmitterWithErrorHandling } from "@prague/utils";
+import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
+import { ConnectionState, ITelemetryErrorEvent, ITelemetryLogger } from "@microsoft/fluid-container-definitions";
+import { ISequencedDocumentMessage, ITree, MessageType } from "@microsoft/fluid-protocol-definitions";
+import { ChildLogger, EventEmitterWithErrorHandling } from "@microsoft/fluid-core-utils";
 import * as assert from "assert";
 import * as Deque from "double-ended-queue";
 // tslint:disable-next-line:no-submodule-imports

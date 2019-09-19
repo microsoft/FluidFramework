@@ -5,7 +5,7 @@
 
 import { IComponentRuntime, IObjectStorageService, ISharedObjectServices } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObject, ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
-import { ITree } from "@prague/protocol-definitions";
+import { ITree } from "@microsoft/fluid-protocol-definitions";
 
 /**
  * Consensus Ordered Collection channel factory interface

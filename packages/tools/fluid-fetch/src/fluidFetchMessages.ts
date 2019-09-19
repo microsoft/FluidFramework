@@ -11,7 +11,7 @@ import {
     ISequencedDocumentMessage,
     MessageType,
     ScopeType,
-} from "@prague/protocol-definitions";
+} from "@microsoft/fluid-protocol-definitions";
 import * as fs from "fs";
 import * as util from "util";
 import {

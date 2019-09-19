@@ -11,7 +11,7 @@ import {
     IScribe,
     ITenantManager,
 } from "@microsoft/fluid-server-services-core";
-import { ICommit, ICommitDetails } from "@prague/gitresources";
+import { ICommit, ICommitDetails } from "@microsoft/fluid-gitresources";
 
 const StartingSequenceNumber = 0;
 

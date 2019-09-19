@@ -5,7 +5,7 @@
 
 import { IClientConfig, IODSPTokens } from "@microsoft/fluid-odsp-utils";
 import { generateToken, IAlfredTenant } from "@microsoft/fluid-server-services-core";
-import { IFluidResolvedUrl, IUser, ScopeType } from "@prague/protocol-definitions";
+import { IFluidResolvedUrl, IUser, ScopeType } from "@microsoft/fluid-protocol-definitions";
 import { parse } from "url";
 import { getSpoServer, isSpoTenant, spoJoinSession } from "./odspUtils";
 

@@ -4,7 +4,7 @@
  */
 
 import { IHistorian } from "@microsoft/fluid-server-services-client";
-import * as git from "@prague/gitresources";
+import * as git from "@microsoft/fluid-gitresources";
 
 export class TestHistorian implements IHistorian {
     public endpoint = "http://test";

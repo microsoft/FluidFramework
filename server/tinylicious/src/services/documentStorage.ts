@@ -5,7 +5,7 @@
 
 import { IGitCache } from "@microsoft/fluid-server-services-client";
 import { IDocumentDetails, IDocumentStorage } from "@microsoft/fluid-server-services-core";
-import { ICommit, ICommitDetails } from "@prague/gitresources";
+import { ICommit, ICommitDetails } from "@microsoft/fluid-gitresources";
 
 export class DocumentStorage implements IDocumentStorage {
     public getDocument(tenantId: string, documentId: string): Promise<any> {

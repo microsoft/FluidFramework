@@ -13,10 +13,10 @@ import {
     IDocumentServiceFactory,
     IFluidResolvedUrl,
     IResolvedUrl,
-} from "@prague/protocol-definitions";
-import { ContainerUrlResolver } from "@prague/routerlicious-host";
-import * as socketStorage from "@prague/routerlicious-socket-storage";
-import { Deferred } from "@prague/utils";
+} from "@microsoft/fluid-protocol-definitions";
+import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
+import * as socketStorage from "@microsoft/fluid-routerlicious-driver";
+import { Deferred } from "@microsoft/fluid-core-utils";
 import * as fs from "fs";
 import * as jwt from "jsonwebtoken";
 import { Provider } from "nconf";

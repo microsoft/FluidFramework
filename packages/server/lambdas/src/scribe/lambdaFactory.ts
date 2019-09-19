@@ -15,8 +15,8 @@ import {
     ISequencedOperationMessage,
     MongoManager,
 } from "@microsoft/fluid-server-services-core";
-import { ProtocolOpHandler } from "@prague/container-loader";
-import { IDocumentAttributes } from "@prague/protocol-definitions";
+import { ProtocolOpHandler } from "@microsoft/fluid-container-loader";
+import { IDocumentAttributes } from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
 import { Provider } from "nconf";
 import * as winston from "winston";

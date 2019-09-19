@@ -4,7 +4,7 @@
  */
 
 import { IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
-import { IDocumentStorageService, ISnapshotTree } from "@prague/protocol-definitions";
+import { IDocumentStorageService, ISnapshotTree } from "@microsoft/fluid-protocol-definitions";
 
 export class ChannelStorageService implements IObjectStorageService {
     private static flattenTree(base: string, tree: ISnapshotTree, results: { [path: string]: string }) {

@@ -4,7 +4,7 @@
  */
 
 import { IConsumer } from "@microsoft/fluid-server-services-core";
-import { Deferred } from "@prague/utils";
+import { Deferred } from "@microsoft/fluid-core-utils";
 import * as assert from "assert";
 
 export class CheckpointManager {

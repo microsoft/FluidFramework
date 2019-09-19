@@ -16,8 +16,8 @@ import {
     IComponentRouter,
     IRequest,
     IResponse,
-} from "@prague/component-core-interfaces";
-import { IComponentCollection } from "@prague/framework-definitions";
+} from "@microsoft/fluid-component-core-interfaces";
+import { IComponentCollection } from "@microsoft/fluid-framework-interfaces";
 import { EventEmitter } from "events";
 
 // tslint:disable-next-line:no-var-requires no-submodule-imports

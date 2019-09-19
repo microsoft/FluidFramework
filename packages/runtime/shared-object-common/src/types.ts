@@ -4,9 +4,9 @@
  */
 
 import { IChannel, ISharedObjectServices } from "@microsoft/fluid-runtime-definitions";
-import { ITree } from "@prague/protocol-definitions";
+import { ITree } from "@microsoft/fluid-protocol-definitions";
 
-declare module "@prague/container-definitions" {
+declare module "@microsoft/fluid-container-definitions" {
     interface IComponent extends Readonly<Partial<IProvideSharedObject>> { }
 }
 

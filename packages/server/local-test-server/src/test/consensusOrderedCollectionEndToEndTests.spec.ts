@@ -6,8 +6,8 @@
 import { ISharedMap } from "@microsoft/fluid-map";
 import { ConsensusQueue, ConsensusStack, IConsensusOrderedCollection } from "@microsoft/fluid-ordered-collection";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
-import * as api from "@prague/client-api";
-import { IComponentHandle } from "@prague/component-core-interfaces";
+import * as api from "@fluid-internal/client-api";
+import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import * as assert from "assert";
 import {
     DocumentDeltaEventManager,

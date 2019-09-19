@@ -12,8 +12,8 @@ import {
     SparseMatrix,
     UnboxedOper,
 } from "@microsoft/fluid-sequence";
-import { PrimedComponent, PrimedComponentFactory } from "@prague/aqueduct";
-import { IComponentHandle } from "@prague/component-core-interfaces";
+import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
+import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import * as assert from "assert";
 import { CellRange } from "./cellrange";
 import { TableSliceType } from "./ComponentTypes";

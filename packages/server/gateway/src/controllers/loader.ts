@@ -4,13 +4,13 @@
  */
 
 import { IGitCache } from "@microsoft/fluid-server-services-client";
-import { createWebLoader, IHostConfig, initializeChaincode, registerAttach } from "@prague/base-host";
-import { IResolvedPackage } from "@prague/loader-web";
-import { OdspDocumentServiceFactory } from "@prague/odsp-socket-storage";
-import { IDocumentServiceFactory, IResolvedUrl } from "@prague/protocol-definitions";
-import { ContainerUrlResolver } from "@prague/routerlicious-host";
-import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
-import { BaseTelemetryNullLogger } from "@prague/utils";
+import { createWebLoader, IHostConfig, initializeChaincode, registerAttach } from "@microsoft/fluid-base-host";
+import { IResolvedPackage } from "@microsoft/fluid-web-code-loader";
+import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
+import { IDocumentServiceFactory, IResolvedUrl } from "@microsoft/fluid-protocol-definitions";
+import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
+import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
+import { BaseTelemetryNullLogger } from "@microsoft/fluid-core-utils";
 import { DocumentFactory } from "./documentFactory";
 import { MicrosoftGraph } from "./graph";
 import { PackageManager } from "./packageManager";

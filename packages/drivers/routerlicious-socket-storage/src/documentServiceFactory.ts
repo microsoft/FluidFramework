@@ -10,7 +10,7 @@ import {
     IErrorTrackingService,
     IFluidResolvedUrl,
     IResolvedUrl,
-} from "@prague/protocol-definitions";
+} from "@microsoft/fluid-protocol-definitions";
 import { parse } from "url";
 import { DocumentService } from "./documentService";
 import { DocumentService2 } from "./documentService2";

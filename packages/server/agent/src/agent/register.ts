@@ -4,10 +4,10 @@
  */
 
 import { IHelpMessage } from "@microsoft/fluid-runtime-definitions";
-import * as api from "@prague/client-api";
-import { IHost } from "@prague/container-definitions";
-import { IClient } from "@prague/protocol-definitions";
-import { RateLimiter } from "@prague/utils";
+import * as api from "@fluid-internal/client-api";
+import { IHost } from "@microsoft/fluid-container-definitions";
+import { IClient } from "@microsoft/fluid-protocol-definitions";
+import { RateLimiter } from "@microsoft/fluid-core-utils";
 import { debug } from "./debug";
 import { loadDictionary } from "./dictionaryLoader";
 import { IntelWork } from "./intelWork";

@@ -4,7 +4,7 @@
  */
 
 import { IAlfredTenant, ICache } from "@microsoft/fluid-server-services-core";
-import { IFluidResolvedUrl, ScopeType } from "@prague/protocol-definitions";
+import { IFluidResolvedUrl, ScopeType } from "@microsoft/fluid-protocol-definitions";
 import { Router } from "express";
 import * as safeStringify from "json-stringify-safe";
 import * as jwt from "jsonwebtoken";

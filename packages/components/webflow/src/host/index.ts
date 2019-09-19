@@ -4,13 +4,13 @@
  */
 
 import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
-import { PrimedComponent, PrimedComponentFactory } from "@prague/aqueduct";
+import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import {
     IComponent,
     IComponentHTMLOptions,
     IComponentHTMLView,
     IComponentHTMLVisual,
-} from "@prague/component-core-interfaces";
+} from "@microsoft/fluid-component-core-interfaces";
 import { FlowDocument } from "../document";
 import { FlowDocumentType } from "../runtime";
 import { WebflowView } from "./host";

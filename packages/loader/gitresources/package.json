@@ -1,5 +1,5 @@
 {
-  "name": "@prague/gitresources",
+  "name": "@microsoft/fluid-gitresources",
   "version": "0.10.0",
   "description": "Git resource definitions",
   "main": "dist/index.js",

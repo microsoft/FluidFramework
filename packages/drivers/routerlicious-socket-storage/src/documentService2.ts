@@ -4,7 +4,7 @@
  */
 
 import { ICredentials } from "@microsoft/fluid-server-services-client";
-import * as api from "@prague/protocol-definitions";
+import * as api from "@microsoft/fluid-protocol-definitions";
 import { DocumentService } from "./documentService";
 import { TokenProvider } from "./tokens";
 import { WSDeltaConnection } from "./wsDeltaConnection";

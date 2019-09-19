@@ -15,8 +15,8 @@ import {
     IComponentRouter,
     IRequest,
     IResponse,
-} from "@prague/component-core-interfaces";
-import { IComponentCollection, IComponentLayout } from "@prague/framework-definitions";
+} from "@microsoft/fluid-component-core-interfaces";
+import { IComponentCollection, IComponentLayout } from "@microsoft/fluid-framework-interfaces";
 import { EventEmitter } from "events";
 
 declare global {

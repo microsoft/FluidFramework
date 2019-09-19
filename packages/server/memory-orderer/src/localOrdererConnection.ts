@@ -19,7 +19,7 @@ import {
     IDocumentSystemMessage,
     IServiceConfiguration,
     MessageType,
-} from "@prague/protocol-definitions";
+} from "@microsoft/fluid-protocol-definitions";
 import { IPubSub, ISubscriber } from "./";
 
 // tslint:disable-next-line:no-var-requires

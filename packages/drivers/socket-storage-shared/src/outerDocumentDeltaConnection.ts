@@ -12,7 +12,7 @@ import {
     IServiceConfiguration,
     ISignalMessage,
     ITokenClaims,
-} from "@prague/protocol-definitions";
+} from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
 import { IConnected } from "./messages";
 

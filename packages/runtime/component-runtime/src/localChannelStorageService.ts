@@ -4,8 +4,8 @@
  */
 
 import { IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
-import { IBlob, ITree, TreeEntry } from "@prague/protocol-definitions";
-import { fromUtf8ToBase64 } from "@prague/utils";
+import { IBlob, ITree, TreeEntry } from "@microsoft/fluid-protocol-definitions";
+import { fromUtf8ToBase64 } from "@microsoft/fluid-core-utils";
 
 export class LocalChannelStorageService implements IObjectStorageService {
     constructor(private readonly tree: ITree) {

@@ -12,8 +12,8 @@ import {
     IServiceConfiguration,
     ISignalMessage,
     ITokenClaims,
-} from "@prague/protocol-definitions";
-import * as messages from "@prague/socket-storage-shared";
+} from "@microsoft/fluid-protocol-definitions";
+import * as messages from "@microsoft/fluid-driver-base";
 import { EventEmitter } from "events";
 import { debug } from "./debug";
 import { FileDeltaStorageService } from "./fileDeltaStorageService";

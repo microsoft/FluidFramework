@@ -36,7 +36,7 @@
     }
   },
   "dependencies": {
-    "@prague/component-core-interfaces": "^0.10.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.10.0",
     "@microsoft/fluid-merge-tree": "^0.10.0",
     "@types/node": "^10.12.12"
   },

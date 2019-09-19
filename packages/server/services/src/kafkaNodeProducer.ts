@@ -4,7 +4,7 @@
  */
 
 import { BoxcarType, IBoxcarMessage, IPendingBoxcar, IProducer } from "@microsoft/fluid-server-services-core";
-import * as utils from "@prague/utils";
+import * as utils from "@microsoft/fluid-core-utils";
 import * as kafkaNode from "kafka-node";
 import * as util from "util";
 import { debug } from "./debug";

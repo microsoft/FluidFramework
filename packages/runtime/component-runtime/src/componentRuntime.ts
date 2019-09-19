@@ -12,7 +12,7 @@ import {
     IInboundSignalMessage,
 } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
-import { IComponentHandle, IComponentHandleContext, IRequest, IResponse } from "@prague/component-core-interfaces";
+import { IComponentHandle, IComponentHandleContext, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import {
     ConnectionState,
     IBlobManager,
@@ -21,7 +21,7 @@ import {
     ILoader,
     IQuorum,
     ITelemetryLogger,
-} from "@prague/container-definitions";
+} from "@microsoft/fluid-container-definitions";
 import {
     FileMode,
     IDocumentMessage,
@@ -29,8 +29,8 @@ import {
     ITreeEntry,
     MessageType,
     TreeEntry,
-} from "@prague/protocol-definitions";
-import { buildHierarchy, ChildLogger, Deferred, flatten, raiseConnectedEvent } from "@prague/utils";
+} from "@microsoft/fluid-protocol-definitions";
+import { buildHierarchy, ChildLogger, Deferred, flatten, raiseConnectedEvent } from "@microsoft/fluid-core-utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { IChannelContext } from "./channelContext";

@@ -4,7 +4,7 @@
  */
 
 import { Ink } from "@microsoft/fluid-ink";
-import { PrimedComponentFactory, SimpleModuleInstantiationFactory } from "@prague/aqueduct";
+import { PrimedComponentFactory, SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 import { Canvas } from "./canvas";
 
 // tslint:disable-next-line: no-var-requires no-require-imports

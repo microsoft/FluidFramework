@@ -21,9 +21,9 @@ import {
     ISequencedDocumentSystemMessage,
     MessageType,
     ScopeType,
-} from "@prague/protocol-definitions";
-import { IConnect, IConnected } from "@prague/socket-storage-shared";
-import { Deferred } from "@prague/utils";
+} from "@microsoft/fluid-protocol-definitions";
+import { IConnect, IConnected } from "@microsoft/fluid-driver-base";
+import { Deferred } from "@microsoft/fluid-core-utils";
 import * as assert from "assert";
 import * as io from "../../alfred/io";
 import { OrdererManager } from "../../alfred/runnerFactory";

@@ -16,7 +16,7 @@ import {
     MongoManager,
 } from "@microsoft/fluid-server-services-core";
 import * as utils from "@microsoft/fluid-server-services-utils";
-import { Deferred } from "@prague/utils";
+import { Deferred } from "@microsoft/fluid-core-utils";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import * as app from "./app";

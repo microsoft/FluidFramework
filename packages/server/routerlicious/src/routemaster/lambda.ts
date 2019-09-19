@@ -5,7 +5,7 @@
 
 import { SequencedLambda } from "@microsoft/fluid-server-lambdas";
 import * as core from "@microsoft/fluid-server-services-core";
-import { IDocumentSystemMessage, ISequencedDocumentSystemMessage, MessageType } from "@prague/protocol-definitions";
+import { IDocumentSystemMessage, ISequencedDocumentSystemMessage, MessageType } from "@microsoft/fluid-protocol-definitions";
 import { DocumentManager } from "./documentManager";
 
 export class RouteMasterLambda extends SequencedLambda {

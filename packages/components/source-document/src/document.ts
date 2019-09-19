@@ -6,8 +6,8 @@
 import { ISegment, LocalReference, PropertySet, ReferenceType } from "@microsoft/fluid-merge-tree";
 import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SequenceDeltaEvent, SequenceMaintenanceEvent, SharedString } from "@microsoft/fluid-sequence";
-import { PrimedComponent } from "@prague/aqueduct";
-import { IComponentHandle } from "@prague/component-core-interfaces";
+import { PrimedComponent } from "@microsoft/fluid-aqueduct";
+import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { debug } from "./debug";
 import { clamp } from "./util/clamp";
 

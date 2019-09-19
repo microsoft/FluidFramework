@@ -4,7 +4,7 @@
  */
 
 import { getODSPFluidResolvedUrl, IClientConfig, IODSPTokens } from "@microsoft/fluid-odsp-utils";
-import { IFluidResolvedUrl } from "@prague/protocol-definitions";
+import { IFluidResolvedUrl } from "@microsoft/fluid-protocol-definitions";
 import { URL } from "url";
 
 const spoTenants = new Map<string, string>([

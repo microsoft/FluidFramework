@@ -5,7 +5,7 @@
 
 import * as MergeTree from "@microsoft/fluid-merge-tree";
 import * as Sequence from "@microsoft/fluid-sequence";
-import { ISequencedDocumentMessage } from "@prague/protocol-definitions";
+import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 
 export interface IPgMarker {
     tile: MergeTree.Marker | undefined;

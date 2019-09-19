@@ -16,7 +16,7 @@ import {
     IComponentHandleContext,
     IComponentSerializer,
     ISerializedHandle,
-} from "@prague/component-core-interfaces";
+} from "@microsoft/fluid-component-core-interfaces";
 import { CounterValueType } from "./counter";
 import { ISerializableValue, IValueOpEmitter, IValueOperation, IValueType } from "./interfaces";
 

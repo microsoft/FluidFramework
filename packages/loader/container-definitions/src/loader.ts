@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, IResponse } from "@prague/component-core-interfaces";
-import { IDocumentMessage, ISequencedDocumentMessage, IUrlResolver } from "@prague/protocol-definitions";
+import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
+import { IDocumentMessage, ISequencedDocumentMessage, IUrlResolver } from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
 import { IFluidCodeDetails } from "./chaincode";
 import { IQuorum } from "./consensus";

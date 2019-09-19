@@ -12,8 +12,8 @@ import { ConsensusQueue, ConsensusStack } from "@microsoft/fluid-ordered-collect
 import { ConsensusRegisterCollection } from "@microsoft/fluid-register-collection";
 import { IComponentContext, IComponentFactory, IComponentRegistry } from "@microsoft/fluid-runtime-definitions";
 import * as sequence from "@microsoft/fluid-sequence";
-import { IRequest } from "@prague/component-core-interfaces";
-import { ICodeLoader, IContainerContext, IRuntime, IRuntimeFactory } from "@prague/container-definitions";
+import { IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { ICodeLoader, IContainerContext, IRuntime, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
 import { Document } from "./document";
 
 const rootMapId = "root";
@@ -111,7 +111,7 @@ export class ChaincodeFactory implements IRuntimeFactory {
 
         // On first boot create the base component
         if (!runtime.existing) {
-            runtime.createComponent("root", "@prague/client-api")
+            runtime.createComponent("root", "@fluid-internal/client-api")
                 .then((componentRuntime) => {
                     componentRuntime.attach();
                 })

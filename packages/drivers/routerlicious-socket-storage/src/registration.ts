@@ -4,7 +4,7 @@
  */
 
 import { IGitCache } from "@microsoft/fluid-server-services-client";
-import { IDocumentService, IErrorTrackingService } from "@prague/protocol-definitions";
+import { IDocumentService, IErrorTrackingService } from "@microsoft/fluid-protocol-definitions";
 import { DocumentService } from "./documentService";
 import { DefaultErrorTracking } from "./errorTracking";
 import { TokenProvider } from "./tokens";

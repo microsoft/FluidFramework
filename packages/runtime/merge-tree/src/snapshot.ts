@@ -4,10 +4,10 @@
  */
 
 import { IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
-import { IComponentHandle, IComponentHandleContext, IComponentSerializer } from "@prague/component-core-interfaces";
-import { ITelemetryLogger } from "@prague/container-definitions";
-import { FileMode, ISequencedDocumentMessage, ITree, TreeEntry } from "@prague/protocol-definitions";
-import { ChildLogger, fromBase64ToUtf8 } from "@prague/utils";
+import { IComponentHandle, IComponentHandleContext, IComponentSerializer } from "@microsoft/fluid-component-core-interfaces";
+import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
+import { FileMode, ISequencedDocumentMessage, ITree, TreeEntry } from "@microsoft/fluid-protocol-definitions";
+import { ChildLogger, fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
 import { NonCollabClient, UnassignedSequenceNumber } from "./constants";
 import * as MergeTree from "./mergeTree";
 import * as ops from "./ops";

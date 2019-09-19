@@ -13,8 +13,8 @@ import {
     SharedStringFactory,
     SparseMatrixFactory,
 } from "@microsoft/fluid-sequence";
-import { FileDeltaStorageService } from "@prague/file-socket-storage";
-import { IBlob, ISequencedDocumentMessage, ITree, ITreeEntry, MessageType } from "@prague/protocol-definitions";
+import { FileDeltaStorageService } from "@microsoft/fluid-file-driver";
+import { IBlob, ISequencedDocumentMessage, ITree, ITreeEntry, MessageType } from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
 import * as fs from "fs";
 import { ReplayArgs } from "./replayArgs";

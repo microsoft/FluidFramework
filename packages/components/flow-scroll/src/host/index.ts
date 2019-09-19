@@ -14,15 +14,15 @@ import {
     ITask,
     ITaskManager,
 } from "@microsoft/fluid-runtime-definitions";
-import { PrimedComponent, PrimedComponentFactory } from "@prague/aqueduct";
+import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import {
     IComponent,
     IComponentHandle,
     IComponentHTMLOptions,
     IComponentHTMLView,
     IComponentHTMLVisual,
-} from "@prague/component-core-interfaces";
-import { IComponentCollection } from "@prague/framework-definitions";
+} from "@microsoft/fluid-component-core-interfaces";
+import { IComponentCollection } from "@microsoft/fluid-framework-interfaces";
 import { HostView } from "./host";
 import { importDoc } from "./template";
 

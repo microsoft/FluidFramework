@@ -9,16 +9,16 @@ import { createWebLoader,
     initializeChaincode,
     IPrivateSessionInfo,
     registerAttach,
-} from "@prague/base-host";
-import { IComponent } from "@prague/component-core-interfaces";
-import { createProtocolToFactoryMapping, selectDocumentServiceFactoryForProtocol } from "@prague/container-loader";
+} from "@microsoft/fluid-base-host";
+import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+import { createProtocolToFactoryMapping, selectDocumentServiceFactoryForProtocol } from "@microsoft/fluid-container-loader";
 import { InnerDocumentServiceFactory, InnerUrlResolver, OuterDocumentServiceFactory } from "@prague/iframe-socket-storage";
-import { IResolvedPackage } from "@prague/loader-web";
-import { OdspDocumentServiceFactory } from "@prague/odsp-socket-storage";
-import { IDocumentServiceFactory, IFluidResolvedUrl, IResolvedUrl } from "@prague/protocol-definitions";
-import { ContainerUrlResolver } from "@prague/routerlicious-host";
-import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
-import { BaseTelemetryNullLogger } from "@prague/utils";
+import { IResolvedPackage } from "@microsoft/fluid-web-code-loader";
+import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
+import { IDocumentServiceFactory, IFluidResolvedUrl, IResolvedUrl } from "@microsoft/fluid-protocol-definitions";
+import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
+import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
+import { BaseTelemetryNullLogger } from "@microsoft/fluid-core-utils";
 import Axios from "axios";
 import { DocumentFactory } from "./documentFactory";
 import { IHostServices } from "./services";

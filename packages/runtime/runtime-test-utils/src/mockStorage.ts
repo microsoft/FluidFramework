@@ -4,7 +4,7 @@
  */
 
 import { IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
-import { IBlob, ITree } from "@prague/protocol-definitions";
+import { IBlob, ITree } from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
 
 /**
