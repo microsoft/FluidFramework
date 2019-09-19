@@ -12,6 +12,7 @@ import {
     ITelemetryBaseLogger,
 } from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
+import { ChildLogger, TelemetryLogger } from "@microsoft/fluid-core-utils";
 import {
     FileDeltaStorageService,
     FileDocumentServiceFactory,
@@ -36,7 +37,6 @@ import {
     FileSnapshotReader,
     IFileSnapshot,
 } from "@microsoft/fluid-replay-driver";
-import { ChildLogger, TelemetryLogger } from "@microsoft/fluid-core-utils";
 import * as assert from "assert";
 import * as child_process from "child_process";
 import * as fs from "fs";

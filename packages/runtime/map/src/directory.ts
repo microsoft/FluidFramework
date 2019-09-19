@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
+import { FileMode, ISequencedDocumentMessage, ITree, MessageType, TreeEntry } from "@microsoft/fluid-protocol-definitions";
 import {
     IChannelAttributes,
     IComponentRuntime,
@@ -10,8 +12,6 @@ import {
     ISharedObjectServices,
 } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObjectFactory, SharedObject, ValueType } from "@microsoft/fluid-shared-object-base";
-import { FileMode, ISequencedDocumentMessage, ITree, MessageType, TreeEntry } from "@microsoft/fluid-protocol-definitions";
-import { fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
 import * as assert from "assert";
 import * as path from "path";
 import { debug } from "./debug";

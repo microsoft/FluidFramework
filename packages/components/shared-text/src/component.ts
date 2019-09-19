@@ -5,7 +5,16 @@
 
 import { controls, ui } from "@fluid-example/client-ui-lib";
 import { TextAnalyzer } from "@fluid-example/intelligence-runner-agent";
+import * as API from "@fluid-internal/client-api";
 import { SharedCell } from "@microsoft/fluid-cell";
+import {
+    IComponent,
+    IComponentHandle,
+    IComponentHTMLVisual,
+    IComponentLoadable,
+    IRequest,
+    IResponse,
+} from "@microsoft/fluid-component-core-interfaces";
 import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
 import { IInk, Ink } from "@microsoft/fluid-ink";
 import * as DistributedMap from "@microsoft/fluid-map";
@@ -21,15 +30,6 @@ import {
     SharedObjectSequence,
     SharedString,
 } from "@microsoft/fluid-sequence";
-import * as API from "@fluid-internal/client-api";
-import {
-    IComponent,
-    IComponentHandle,
-    IComponentHTMLVisual,
-    IComponentLoadable,
-    IRequest,
-    IResponse,
-} from "@microsoft/fluid-component-core-interfaces";
 import { EventEmitter } from "events";
 import { parse } from "querystring";
 import * as url from "url";

@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { BatchManager } from "@microsoft/fluid-core-utils";
+import { IConnect, IConnected } from "@microsoft/fluid-driver-base";
 import {
     ConnectionMode,
     IClient,
@@ -14,8 +16,6 @@ import {
     ISignalMessage,
     ITokenClaims,
 } from "@microsoft/fluid-protocol-definitions";
-import { IConnect, IConnected } from "@microsoft/fluid-driver-base";
-import { BatchManager } from "@microsoft/fluid-core-utils";
 import { EventEmitter } from "events";
 import * as ws from "isomorphic-ws";
 import * as url from "url";

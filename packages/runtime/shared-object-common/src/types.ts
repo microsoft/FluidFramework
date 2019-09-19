@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IChannel, ISharedObjectServices } from "@microsoft/fluid-runtime-definitions";
 import { ITree } from "@microsoft/fluid-protocol-definitions";
+import { IChannel, ISharedObjectServices } from "@microsoft/fluid-runtime-definitions";
 
 declare module "@microsoft/fluid-container-definitions" {
     interface IComponent extends Readonly<Partial<IProvideSharedObject>> { }

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as gitStorage from "@microsoft/fluid-server-services-client";
+import { buildHierarchy } from "@microsoft/fluid-core-utils";
 import * as resources from "@microsoft/fluid-gitresources";
 import {
     FileMode,
@@ -17,7 +17,7 @@ import {
     SummaryObject,
     SummaryType,
 } from "@microsoft/fluid-protocol-definitions";
-import { buildHierarchy } from "@microsoft/fluid-core-utils";
+import * as gitStorage from "@microsoft/fluid-server-services-client";
 
 /**
  * Document access to underlying storage for routerlicious driver.

@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { RateLimiter } from "@microsoft/fluid-core-utils";
+import { ISequencedDocumentSystemMessage, MessageType, ScopeType } from "@microsoft/fluid-protocol-definitions";
 import { IHelpMessage, IQueueMessage } from "@microsoft/fluid-runtime-definitions";
 import * as core from "@microsoft/fluid-server-services-core";
-import { ISequencedDocumentSystemMessage, MessageType, ScopeType } from "@microsoft/fluid-protocol-definitions";
-import { RateLimiter } from "@microsoft/fluid-core-utils";
 import * as winston from "winston";
 import { SequencedLambda } from "../sequencedLambda";
 

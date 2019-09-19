@@ -3,10 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { ComponentHandle, ComponentRuntime } from "@microsoft/fluid-component-runtime";
-import { ISharedMap, MapFactory } from "@microsoft/fluid-map";
-import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
-import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import {
     IComponent,
     IComponentHandleContext,
@@ -17,7 +13,11 @@ import {
     IRequest,
     IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
+import { ComponentHandle, ComponentRuntime } from "@microsoft/fluid-component-runtime";
 import { IComponentCollection, IComponentLayout } from "@microsoft/fluid-framework-interfaces";
+import { ISharedMap, MapFactory } from "@microsoft/fluid-map";
+import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { EventEmitter } from "events";
 
 export class ImageComponent implements

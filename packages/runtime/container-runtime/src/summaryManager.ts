@@ -5,8 +5,8 @@
 
 import { IComponent, IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IContainerContext } from "@microsoft/fluid-container-definitions";
-import { ISequencedClient } from "@microsoft/fluid-protocol-definitions";
 import { Heap, IComparer, IHeapNode } from "@microsoft/fluid-core-utils";
+import { ISequencedClient } from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
 import { debug } from "./debug";
 import { ISummarizer } from "./summarizer";

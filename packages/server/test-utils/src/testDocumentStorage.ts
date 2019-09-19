@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ICommit, ICommitDetails } from "@microsoft/fluid-gitresources";
 import { IGitCache } from "@microsoft/fluid-server-services-client";
 import {
     IDatabaseManager,
@@ -11,7 +12,6 @@ import {
     IScribe,
     ITenantManager,
 } from "@microsoft/fluid-server-services-core";
-import { ICommit, ICommitDetails } from "@microsoft/fluid-gitresources";
 
 const StartingSequenceNumber = 0;
 

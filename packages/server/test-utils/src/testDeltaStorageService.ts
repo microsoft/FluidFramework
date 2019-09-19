@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IDatabaseManager } from "@microsoft/fluid-server-services-core";
 import * as api from "@microsoft/fluid-protocol-definitions";
+import { IDatabaseManager } from "@microsoft/fluid-server-services-core";
 
 export class TestDeltaStorageService implements api.IDocumentDeltaStorageService {
     constructor(

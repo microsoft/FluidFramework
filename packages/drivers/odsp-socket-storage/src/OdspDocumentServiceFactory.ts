@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 import { ITelemetryBaseLogger } from "@microsoft/fluid-container-definitions";
-import { IDocumentService, IDocumentServiceFactory } from "@microsoft/fluid-protocol-definitions";
 import { ChildLogger } from "@microsoft/fluid-core-utils";
+import { IDocumentService, IDocumentServiceFactory } from "@microsoft/fluid-protocol-definitions";
 import { IOdspResolvedUrl } from "./contracts";
 import { FetchWrapper, IFetchWrapper } from "./fetchWrapper";
 import { getSocketIo } from "./getSocketIo";

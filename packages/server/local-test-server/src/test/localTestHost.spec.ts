@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import { Counter, CounterValueType } from "@microsoft/fluid-map";
 import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SharedString, SharedStringFactory } from "@microsoft/fluid-sequence";
-import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import * as assert from "assert";
 import { DocumentDeltaEventManager, TestHost } from "../";
 

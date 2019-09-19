@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
-import { ComponentRegistryTypes, IHostRuntime } from "@microsoft/fluid-runtime-definitions";
 import { IComponent, IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IContainerContext } from "@microsoft/fluid-container-definitions";
+import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
+import { ComponentRegistryTypes, IHostRuntime } from "@microsoft/fluid-runtime-definitions";
 
 export class SimpleContainerRuntimeFactory {
     public static readonly defaultComponentId = "default";

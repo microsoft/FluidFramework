@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { Deferred, readAndParse } from "@microsoft/fluid-core-utils";
 import {
     IDocumentAttributes,
     IDocumentStorageService,
@@ -18,7 +19,6 @@ import {
     ReplayController,
     SnapshotStorage,
 } from "@microsoft/fluid-replay-driver";
-import { Deferred, readAndParse } from "@microsoft/fluid-core-utils";
 import * as assert from "assert";
 import { IDebuggerController, IDebuggerUI } from "./fluidDebuggerUI";
 

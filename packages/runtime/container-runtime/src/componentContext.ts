@@ -3,14 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import {
-    IAttachMessage,
-    IComponentContext,
-    IComponentRuntime,
-    IEnvelope,
-    IHostRuntime,
-    IInboundSignalMessage,
-} from "@microsoft/fluid-runtime-definitions";
 import { IComponent, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import {
     ConnectionState,
@@ -20,6 +12,7 @@ import {
     ILoader,
     IQuorum,
 } from "@microsoft/fluid-container-definitions";
+import { Deferred, raiseConnectedEvent, readAndParse } from "@microsoft/fluid-core-utils";
 import {
     FileMode,
     IDocumentMessage,
@@ -30,7 +23,14 @@ import {
     MessageType,
     TreeEntry,
 } from "@microsoft/fluid-protocol-definitions";
-import { Deferred, raiseConnectedEvent, readAndParse } from "@microsoft/fluid-core-utils";
+import {
+    IAttachMessage,
+    IComponentContext,
+    IComponentRuntime,
+    IEnvelope,
+    IHostRuntime,
+    IInboundSignalMessage,
+} from "@microsoft/fluid-runtime-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { ContainerRuntime } from "./containerRuntime";

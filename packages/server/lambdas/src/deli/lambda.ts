@@ -3,6 +3,17 @@
  * Licensed under the MIT License.
  */
 
+import { Heap, IComparer, IHeapNode, isSystemType, RangeTracker } from "@microsoft/fluid-core-utils";
+import {
+    IBranchOrigin,
+    IClientJoin,
+    IDocumentMessage,
+    IDocumentSystemMessage,
+    ISequencedDocumentMessage,
+    ISequencedDocumentSystemMessage,
+    ITrace,
+    MessageType,
+} from "@microsoft/fluid-protocol-definitions";
 import { canSummarize } from "@microsoft/fluid-server-services-client";
 import {
     extractBoxcar,
@@ -21,17 +32,6 @@ import {
     RawOperationType,
     SequencedOperationType,
 } from "@microsoft/fluid-server-services-core";
-import {
-    IBranchOrigin,
-    IClientJoin,
-    IDocumentMessage,
-    IDocumentSystemMessage,
-    ISequencedDocumentMessage,
-    ISequencedDocumentSystemMessage,
-    ITrace,
-    MessageType,
-} from "@microsoft/fluid-protocol-definitions";
-import { Heap, IComparer, IHeapNode, isSystemType, RangeTracker } from "@microsoft/fluid-core-utils";
 import * as assert from "assert";
 import * as _ from "lodash";
 import * as winston from "winston";

@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+import { ILoader } from "@microsoft/fluid-container-definitions";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import * as MergeTree from "@microsoft/fluid-merge-tree";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { ISharedString } from "@microsoft/fluid-sequence";
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
-import { ILoader } from "@microsoft/fluid-container-definitions";
 import * as childProcess from "child_process";
 import * as path from "path";
 import * as author from "./author";

@@ -4,9 +4,6 @@
  */
 
 import { controls, ui } from "@fluid-example/client-ui-lib";
-import { IInk, Ink } from "@microsoft/fluid-ink";
-import { ISharedMap } from "@microsoft/fluid-map";
-import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { PrimedComponent } from "@microsoft/fluid-aqueduct";
 import {
     IComponentHandle,
@@ -14,6 +11,9 @@ import {
     IComponentHTMLView,
     IComponentHTMLVisual,
 } from "@microsoft/fluid-component-core-interfaces";
+import { IInk, Ink } from "@microsoft/fluid-ink";
+import { ISharedMap } from "@microsoft/fluid-map";
+import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import "./style.less";
 
 // tslint:disable:no-console

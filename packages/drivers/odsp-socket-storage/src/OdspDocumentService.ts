@@ -4,6 +4,8 @@
  */
 
 import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
+import { SinglePromise } from "@microsoft/fluid-core-utils";
+import { DocumentDeltaConnection } from "@microsoft/fluid-driver-base";
 import {
     ConnectionMode,
     IClient,
@@ -13,8 +15,6 @@ import {
     IDocumentStorageService,
     IErrorTrackingService,
 } from "@microsoft/fluid-protocol-definitions";
-import { DocumentDeltaConnection } from "@microsoft/fluid-driver-base";
-import { SinglePromise } from "@microsoft/fluid-core-utils";
 import { ISocketStorageDiscovery } from "./contracts";
 import { IFetchWrapper } from "./fetchWrapper";
 import { OdspDeltaStorageService } from "./OdspDeltaStorageService";

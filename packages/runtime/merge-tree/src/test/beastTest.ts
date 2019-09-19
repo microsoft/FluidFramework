@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { DebugLogger } from "@microsoft/fluid-core-utils";
+import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
 // tslint:disable-next-line:no-implicit-dependencies
 import * as JsDiff from "diff";

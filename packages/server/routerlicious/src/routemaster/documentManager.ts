@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as core from "@microsoft/fluid-server-services-core";
 import { Deferred } from "@microsoft/fluid-core-utils";
+import * as core from "@microsoft/fluid-server-services-core";
 
 export class DocumentManager {
     public static async create(

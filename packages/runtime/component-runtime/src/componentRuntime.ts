@@ -3,15 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import {
-    IAttachMessage,
-    IChannel,
-    IComponentContext,
-    IComponentRuntime,
-    IEnvelope,
-    IInboundSignalMessage,
-} from "@microsoft/fluid-runtime-definitions";
-import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { IComponentHandle, IComponentHandleContext, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import {
     ConnectionState,
@@ -22,6 +13,7 @@ import {
     IQuorum,
     ITelemetryLogger,
 } from "@microsoft/fluid-container-definitions";
+import { buildHierarchy, ChildLogger, Deferred, flatten, raiseConnectedEvent } from "@microsoft/fluid-core-utils";
 import {
     FileMode,
     IDocumentMessage,
@@ -30,7 +22,15 @@ import {
     MessageType,
     TreeEntry,
 } from "@microsoft/fluid-protocol-definitions";
-import { buildHierarchy, ChildLogger, Deferred, flatten, raiseConnectedEvent } from "@microsoft/fluid-core-utils";
+import {
+    IAttachMessage,
+    IChannel,
+    IComponentContext,
+    IComponentRuntime,
+    IEnvelope,
+    IInboundSignalMessage,
+} from "@microsoft/fluid-runtime-definitions";
+import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { IChannelContext } from "./channelContext";

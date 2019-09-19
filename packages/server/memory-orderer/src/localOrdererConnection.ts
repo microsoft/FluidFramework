@@ -4,6 +4,14 @@
  */
 
 import {
+    IClient,
+    IClientJoin,
+    IDocumentMessage,
+    IDocumentSystemMessage,
+    IServiceConfiguration,
+    MessageType,
+} from "@microsoft/fluid-protocol-definitions";
+import {
     BoxcarType,
     IBoxcarMessage,
     IDocument,
@@ -12,14 +20,6 @@ import {
     IRawOperationMessage,
     RawOperationType,
 } from "@microsoft/fluid-server-services-core";
-import {
-    IClient,
-    IClientJoin,
-    IDocumentMessage,
-    IDocumentSystemMessage,
-    IServiceConfiguration,
-    MessageType,
-} from "@microsoft/fluid-protocol-definitions";
 import { IPubSub, ISubscriber } from "./";
 
 // tslint:disable-next-line:no-var-requires

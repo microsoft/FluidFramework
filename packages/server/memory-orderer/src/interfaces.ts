@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IClient, IDocumentMessage, IServiceConfiguration } from "@microsoft/fluid-protocol-definitions";
 import {
     ICollection,
     IContext,
@@ -12,7 +13,6 @@ import {
     IOrderer,
     ISequencedOperationMessage,
 } from "@microsoft/fluid-server-services-core";
-import { IClient, IDocumentMessage, IServiceConfiguration } from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
 
 export interface IConcreteNode extends EventEmitter {

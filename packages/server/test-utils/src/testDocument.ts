@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ISnapshotDocument } from "@microsoft/fluid-server-agent";
 import { IConnectionDetails, IDeltaHandlerStrategy, IDeltaManager, IDeltaQueue } from "@microsoft/fluid-container-definitions";
+import * as utils from "@microsoft/fluid-core-utils";
 import {
     IDocumentMessage,
     ISequencedDocumentMessage,
@@ -12,7 +12,7 @@ import {
     ISignalMessage,
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
-import * as utils from "@microsoft/fluid-core-utils";
+import { ISnapshotDocument } from "@microsoft/fluid-server-agent";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 

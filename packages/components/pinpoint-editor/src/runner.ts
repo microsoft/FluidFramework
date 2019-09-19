@@ -4,8 +4,6 @@
  */
 
 import { Pinpoint } from "@kurtb/pinpoint";
-import { ISharedMap } from "@microsoft/fluid-map";
-import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import {
     IComponent,
     IComponentHTMLOptions,
@@ -13,6 +11,8 @@ import {
     IComponentLoadable,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentLayout } from "@microsoft/fluid-framework-interfaces";
+import { ISharedMap } from "@microsoft/fluid-map";
+import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import * as angular from "angular";
 import * as angularRoute from "angular-route";
 // tslint:disable-next-line:no-submodule-imports

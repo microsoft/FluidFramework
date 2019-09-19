@@ -4,13 +4,13 @@
  */
 
 import { ClickerName } from "@fluid-example/clicker";
-import { ISharedCell, SharedCell } from "@microsoft/fluid-cell";
-import { Counter, CounterValueType } from "@microsoft/fluid-map";
-import { SharedString } from "@microsoft/fluid-sequence";
 import { PrimedComponent } from "@microsoft/fluid-aqueduct";
 import { EmbeddedReactComponentFactory, IComponentReactViewable } from "@microsoft/fluid-aqueduct-react";
+import { ISharedCell, SharedCell } from "@microsoft/fluid-cell";
 import { IComponentHandle, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentForge } from "@microsoft/fluid-framework-interfaces";
+import { Counter, CounterValueType } from "@microsoft/fluid-map";
+import { SharedString } from "@microsoft/fluid-sequence";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { TextBoxName } from "../TextBox";

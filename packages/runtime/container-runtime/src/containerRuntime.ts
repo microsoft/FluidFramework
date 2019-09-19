@@ -4,18 +4,6 @@
  */
 
 import { AgentSchedulerFactory } from "@microsoft/fluid-agent-scheduler";
-import {
-    ComponentFactoryTypes,
-    ComponentRegistryTypes,
-    FlushMode,
-    IAttachMessage,
-    IComponentRegistry,
-    IComponentRuntime,
-    IEnvelope,
-    IHelpMessage,
-    IHostRuntime,
-    IInboundSignalMessage,
-} from "@microsoft/fluid-runtime-definitions";
 import { IComponentHandleContext, IComponentSerializer, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import {
     ConnectionState,
@@ -30,6 +18,15 @@ import {
     IRuntime,
     ITelemetryLogger,
 } from "@microsoft/fluid-container-definitions";
+import {
+    buildHierarchy,
+    ComponentSerializer,
+    Deferred,
+    flatten,
+    isSystemType,
+    raiseConnectedEvent,
+    readAndParse,
+} from "@microsoft/fluid-core-utils";
 import {
     Browser,
     FileMode,
@@ -51,14 +48,17 @@ import {
     TreeEntry,
 } from "@microsoft/fluid-protocol-definitions";
 import {
-    buildHierarchy,
-    ComponentSerializer,
-    Deferred,
-    flatten,
-    isSystemType,
-    raiseConnectedEvent,
-    readAndParse,
-} from "@microsoft/fluid-core-utils";
+    ComponentFactoryTypes,
+    ComponentRegistryTypes,
+    FlushMode,
+    IAttachMessage,
+    IComponentRegistry,
+    IComponentRuntime,
+    IEnvelope,
+    IHelpMessage,
+    IHostRuntime,
+    IInboundSignalMessage,
+} from "@microsoft/fluid-runtime-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 // tslint:disable-next-line:no-submodule-imports

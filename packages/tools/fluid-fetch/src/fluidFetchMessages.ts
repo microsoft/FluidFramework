@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { IAttachMessage, IEnvelope } from "@microsoft/fluid-runtime-definitions";
 import {
     ConnectionMode,
     IClient,
@@ -12,6 +11,7 @@ import {
     MessageType,
     ScopeType,
 } from "@microsoft/fluid-protocol-definitions";
+import { IAttachMessage, IEnvelope } from "@microsoft/fluid-runtime-definitions";
 import * as fs from "fs";
 import * as util from "util";
 import {

@@ -4,8 +4,8 @@
  */
 
 import { IComponentLoadable } from "@microsoft/fluid-component-core-interfaces";
-import { ISequencedDocumentMessage, ISummaryConfiguration, MessageType } from "@microsoft/fluid-protocol-definitions";
 import { Deferred } from "@microsoft/fluid-core-utils";
+import { ISequencedDocumentMessage, ISummaryConfiguration, MessageType } from "@microsoft/fluid-protocol-definitions";
 import { ContainerRuntime } from "./containerRuntime";
 import { debug } from "./debug";
 

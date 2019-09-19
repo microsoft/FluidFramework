@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IGitCache } from "@microsoft/fluid-server-services-client";
-import { ITenantManager } from "@microsoft/fluid-server-services-core";
 import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
 import { ICommit, ICommitDetails } from "@microsoft/fluid-gitresources";
+import { IGitCache } from "@microsoft/fluid-server-services-client";
+import { ITenantManager } from "@microsoft/fluid-server-services-core";
 
 export interface IAlfred {
     createFork(tenantId: string, id: string): Promise<string>;

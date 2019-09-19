@@ -4,10 +4,10 @@
  */
 
 import { IHostConfig, start } from "@microsoft/fluid-base-host";
-import { IResolvedPackage } from "@microsoft/fluid-web-code-loader";
 import { IDocumentServiceFactory, IResolvedUrl } from "@microsoft/fluid-protocol-definitions";
-import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
+import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
+import { IResolvedPackage } from "@microsoft/fluid-web-code-loader";
 import * as UrlParse from "url-parse";
 import { resolveUrl } from "./urlResolver";
 

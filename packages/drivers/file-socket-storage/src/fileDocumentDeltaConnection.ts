@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as messages from "@microsoft/fluid-driver-base";
 import {
     ConnectionMode,
     IContentMessage,
@@ -13,7 +14,6 @@ import {
     ISignalMessage,
     ITokenClaims,
 } from "@microsoft/fluid-protocol-definitions";
-import * as messages from "@microsoft/fluid-driver-base";
 import { EventEmitter } from "events";
 import { debug } from "./debug";
 import { FileDeltaStorageService } from "./fileDeltaStorageService";

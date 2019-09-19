@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as api from "@microsoft/fluid-protocol-definitions";
 import { fromUtf8ToBase64 } from "@microsoft/fluid-core-utils";
+import * as api from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
 import Axios from "axios";
 import * as querystring from "querystring";

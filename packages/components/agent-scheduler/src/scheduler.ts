@@ -3,7 +3,16 @@
  * Licensed under the MIT License.
  */
 
+import {
+    IComponent,
+    IComponentHandle,
+    IComponentRouter,
+    IComponentRunnable,
+    IRequest,
+    IResponse,
+} from "@microsoft/fluid-component-core-interfaces";
 import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
+import { ConnectionState } from "@microsoft/fluid-container-definitions";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import { ConsensusRegisterCollection } from "@microsoft/fluid-register-collection";
 import {
@@ -15,15 +24,6 @@ import {
     ITaskManager,
 } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
-import {
-    IComponent,
-    IComponentHandle,
-    IComponentRouter,
-    IComponentRunnable,
-    IRequest,
-    IResponse,
-} from "@microsoft/fluid-component-core-interfaces";
-import { ConnectionState } from "@microsoft/fluid-container-definitions";
 import * as assert from "assert";
 import * as debug from "debug";
 import { EventEmitter } from "events";

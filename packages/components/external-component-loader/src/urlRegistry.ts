@@ -5,10 +5,10 @@
 
 // tslint:disable: no-console
 
-import { ComponentFactoryTypes, ComponentRegistryTypes, IComponentFactory, IComponentRegistry } from "@microsoft/fluid-runtime-definitions";
 import { IComponent, IComponentQueryableLegacy } from "@microsoft/fluid-component-core-interfaces";
 import { IFluidPackage, IPraguePackage } from "@microsoft/fluid-container-definitions";
 import { Deferred } from "@microsoft/fluid-core-utils";
+import { ComponentFactoryTypes, ComponentRegistryTypes, IComponentFactory, IComponentRegistry } from "@microsoft/fluid-runtime-definitions";
 
 /**
  * A component registry that can load component via their url

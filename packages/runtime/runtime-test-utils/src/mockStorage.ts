@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
 import { IBlob, ITree } from "@microsoft/fluid-protocol-definitions";
+import { IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
 import * as assert from "assert";
 
 /**

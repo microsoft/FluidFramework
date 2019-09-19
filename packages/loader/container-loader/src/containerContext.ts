@@ -20,6 +20,7 @@ import {
     IRuntimeFactory,
     ITelemetryLogger,
 } from "@microsoft/fluid-container-definitions";
+import { raiseConnectedEvent } from "@microsoft/fluid-core-utils";
 import {
     IDocumentAttributes,
     IDocumentMessage,
@@ -31,7 +32,6 @@ import {
     ITree,
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
-import { raiseConnectedEvent } from "@microsoft/fluid-core-utils";
 import { EventEmitter } from "events";
 import { BlobManager } from "./blobManager";
 import { Container } from "./container";

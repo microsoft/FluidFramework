@@ -2,16 +2,16 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { NodeCodeLoader } from "@microsoft/fluid-server-services";
-import { promiseTimeout } from "@microsoft/fluid-server-services-client";
 import { createLoader, IHostConfig } from "@microsoft/fluid-base-host";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
+import { BaseTelemetryNullLogger, Deferred } from "@microsoft/fluid-core-utils";
 import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
 import { IDocumentServiceFactory, IResolvedUrl, ScopeType } from "@microsoft/fluid-protocol-definitions";
-import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
-import { BaseTelemetryNullLogger, Deferred } from "@microsoft/fluid-core-utils";
+import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
+import { NodeCodeLoader } from "@microsoft/fluid-server-services";
+import { promiseTimeout } from "@microsoft/fluid-server-services-client";
 import Axios from "axios";
 import * as jwt from "jsonwebtoken";
 import { parse } from "url";

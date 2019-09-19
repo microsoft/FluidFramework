@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { RoundTrip } from "@fluid-internal/client-api";
+import { IConnect, IConnected } from "@microsoft/fluid-driver-base";
+import { ConnectionMode, IClient, IContentMessage, IDocumentMessage, ISignalMessage, ITokenClaims } from "@microsoft/fluid-protocol-definitions";
 import {
     LocalNodeFactory,
     LocalOrderer,
@@ -31,9 +34,6 @@ import {
     TestTenantManager,
     TestWebSocketServer,
 } from "@microsoft/fluid-server-test-utils";
-import { RoundTrip } from "@fluid-internal/client-api";
-import { ConnectionMode, IClient, IContentMessage, IDocumentMessage, ISignalMessage, ITokenClaims } from "@microsoft/fluid-protocol-definitions";
-import { IConnect, IConnected } from "@microsoft/fluid-driver-base";
 import * as jwt from "jsonwebtoken";
 import * as randomName from "random-name";
 import * as semver from "semver";

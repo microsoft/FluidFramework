@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedMap } from "@microsoft/fluid-map";
-import * as Sequence from "@microsoft/fluid-sequence";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
+import { ISharedMap } from "@microsoft/fluid-map";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
+import * as Sequence from "@microsoft/fluid-sequence";
 import { IIntelligentService } from "./analytics";
 import { RateLimiter } from "./rateLimiter";
 

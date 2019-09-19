@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { InnerDocumentDeltaConnection } from "@microsoft/fluid-driver-base";
 import {
     ConnectionMode,
     IClient,
@@ -11,7 +12,6 @@ import {
     IDocumentService,
     IDocumentStorageService,
 } from "@microsoft/fluid-protocol-definitions";
-import { InnerDocumentDeltaConnection } from "@microsoft/fluid-driver-base";
 import * as Comlink from "comlink";
 import { InnerDocumentStorageService } from "./innerDocumentStorageService";
 import { IOuterProxy } from "./outerDocumentService";

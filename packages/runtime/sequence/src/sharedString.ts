@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import {} from "@microsoft/fluid-component-core-interfaces";
 import * as MergeTree from "@microsoft/fluid-merge-tree";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
-import {} from "@microsoft/fluid-component-core-interfaces";
 import { EventEmitter } from "events";
 import { SharedSegmentSequence } from "./sequence";
 import { SharedStringFactory } from "./sequenceFactory";

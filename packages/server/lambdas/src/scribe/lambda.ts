@@ -3,20 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { IGitManager } from "@microsoft/fluid-server-services-client";
-import {
-    extractBoxcar,
-    ICollection,
-    IContext,
-    IDocument,
-    IKafkaMessage,
-    IProducer,
-    IRawOperationMessage,
-    IScribe,
-    ISequencedOperationMessage,
-    RawOperationType,
-    SequencedOperationType,
-} from "@microsoft/fluid-server-services-core";
 import { IQuorumSnapshot, ProtocolOpHandler } from "@microsoft/fluid-container-loader";
 import { ICreateCommitParams, ICreateTreeEntry } from "@microsoft/fluid-gitresources";
 import {
@@ -31,6 +17,20 @@ import {
     MessageType,
     TreeEntry,
 } from "@microsoft/fluid-protocol-definitions";
+import { IGitManager } from "@microsoft/fluid-server-services-client";
+import {
+    extractBoxcar,
+    ICollection,
+    IContext,
+    IDocument,
+    IKafkaMessage,
+    IProducer,
+    IRawOperationMessage,
+    IScribe,
+    ISequencedOperationMessage,
+    RawOperationType,
+    SequencedOperationType,
+} from "@microsoft/fluid-server-services-core";
 import * as Deque from "double-ended-queue";
 import * as _ from "lodash";
 import { SequencedLambda } from "../sequencedLambda";

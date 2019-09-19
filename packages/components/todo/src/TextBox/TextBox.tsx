@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { SharedString } from "@microsoft/fluid-sequence";
 import { PrimedComponent } from "@microsoft/fluid-aqueduct";
 import { CollaborativeTextArea, IComponentReactViewable } from "@microsoft/fluid-aqueduct-react";
 import { IComponentHandle, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentForge } from "@microsoft/fluid-framework-interfaces";
+import { SharedString } from "@microsoft/fluid-sequence";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 

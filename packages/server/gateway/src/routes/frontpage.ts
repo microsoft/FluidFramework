@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IAlfredTenant } from "@microsoft/fluid-server-services-core";
 import { ScopeType } from "@microsoft/fluid-protocol-definitions";
+import { IAlfredTenant } from "@microsoft/fluid-server-services-core";
 import { Router } from "express";
 import * as safeStringify from "json-stringify-safe";
 import * as jwt from "jsonwebtoken";

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedMap } from "@microsoft/fluid-map";
 import { IComponent, IComponentHTMLView, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
+import { ISharedMap } from "@microsoft/fluid-map";
 
 export class FlowIntelViewer implements IComponentHTMLVisual {
     public get IComponentHTMLVisual() { return this; }

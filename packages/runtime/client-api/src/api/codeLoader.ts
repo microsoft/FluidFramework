@@ -4,7 +4,9 @@
  */
 
 import * as cell from "@microsoft/fluid-cell";
+import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
+import { ICodeLoader, IContainerContext, IRuntime, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@microsoft/fluid-container-runtime";
 import * as ink from "@microsoft/fluid-ink";
 import * as map from "@microsoft/fluid-map";
@@ -12,8 +14,6 @@ import { ConsensusQueue, ConsensusStack } from "@microsoft/fluid-ordered-collect
 import { ConsensusRegisterCollection } from "@microsoft/fluid-register-collection";
 import { IComponentContext, IComponentFactory, IComponentRegistry } from "@microsoft/fluid-runtime-definitions";
 import * as sequence from "@microsoft/fluid-sequence";
-import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { ICodeLoader, IContainerContext, IRuntime, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
 import { Document } from "./document";
 
 const rootMapId = "root";

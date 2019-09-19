@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IAlfredTenant } from "@microsoft/fluid-server-services-core";
 import { IPraguePackage } from "@microsoft/fluid-container-definitions";
-import { extractDetails, WebCodeLoader } from "@microsoft/fluid-web-code-loader";
 import { ScopeType } from "@microsoft/fluid-protocol-definitions";
+import { IAlfredTenant } from "@microsoft/fluid-server-services-core";
+import { extractDetails, WebCodeLoader } from "@microsoft/fluid-web-code-loader";
 import { Router } from "express";
 import * as safeStringify from "json-stringify-safe";
 import * as jwt from "jsonwebtoken";

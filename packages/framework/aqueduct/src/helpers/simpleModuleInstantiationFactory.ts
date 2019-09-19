@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ComponentFactoryTypes, ComponentRegistryTypes, IComponentContext, IComponentFactory, IComponentRegistry } from "@microsoft/fluid-runtime-definitions";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { IContainerContext, IRuntime, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
+import { ComponentFactoryTypes, ComponentRegistryTypes, IComponentContext, IComponentFactory, IComponentRegistry } from "@microsoft/fluid-runtime-definitions";
 import { SimpleContainerRuntimeFactory } from "./simpleContainerRuntimeFactory";
 
 /**

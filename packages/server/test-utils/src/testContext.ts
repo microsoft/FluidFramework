@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IContext } from "@microsoft/fluid-server-services-core";
 import * as utils from "@microsoft/fluid-core-utils";
+import { IContext } from "@microsoft/fluid-server-services-core";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 

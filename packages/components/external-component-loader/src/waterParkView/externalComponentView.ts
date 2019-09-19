@@ -3,8 +3,6 @@
 * Licensed under the MIT License.
 */
 
-import { MergeTreeDeltaType } from "@microsoft/fluid-merge-tree";
-import { SharedObjectSequence, SubSequence } from "@microsoft/fluid-sequence";
 import { PrimedComponent } from "@microsoft/fluid-aqueduct";
 import {
     IComponent,
@@ -15,6 +13,8 @@ import {
 } from "@microsoft/fluid-component-core-interfaces";
 import { IPraguePackage } from "@microsoft/fluid-container-definitions";
 import { IComponentCollection } from "@microsoft/fluid-framework-interfaces";
+import { MergeTreeDeltaType } from "@microsoft/fluid-merge-tree";
+import { SharedObjectSequence, SubSequence } from "@microsoft/fluid-sequence";
 
 // tslint:disable-next-line: no-var-requires no-require-imports
 const pkg = require("../../package.json") as IPraguePackage;

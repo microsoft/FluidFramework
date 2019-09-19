@@ -14,6 +14,7 @@ import {
     ILoader,
     ITelemetryBaseLogger,
 } from "@microsoft/fluid-container-definitions";
+import { Deferred } from "@microsoft/fluid-core-utils";
 import {
     IDocumentService,
     IDocumentServiceFactory,
@@ -21,7 +22,6 @@ import {
     IResolvedUrl,
     ISequencedDocumentMessage,
 } from "@microsoft/fluid-protocol-definitions";
-import { Deferred } from "@microsoft/fluid-core-utils";
 import { EventEmitter } from "events";
 // tslint:disable-next-line:no-var-requires
 const now = require("performance-now") as () => number;

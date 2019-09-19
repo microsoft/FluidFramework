@@ -4,8 +4,8 @@
  */
 
 import { IClientConfig } from "@microsoft/fluid-odsp-utils";
-import { chooseCelaName, IAlfredTenant } from "@microsoft/fluid-server-services-core";
 import { IFluidResolvedUrl, ScopeType } from "@microsoft/fluid-protocol-definitions";
+import { chooseCelaName, IAlfredTenant } from "@microsoft/fluid-server-services-core";
 import { Request } from "express";
 import { Provider } from "nconf";
 import { parse } from "url";

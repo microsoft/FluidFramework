@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as core from "@microsoft/fluid-server-services-core";
+import { BatchManager } from "@microsoft/fluid-core-utils";
+import { debug, IConnect, IConnected } from "@microsoft/fluid-driver-base";
 import {
     ConnectionMode,
     IClient,
@@ -15,8 +16,7 @@ import {
     ISignalMessage,
     ITokenClaims,
 } from "@microsoft/fluid-protocol-definitions";
-import { debug, IConnect, IConnected } from "@microsoft/fluid-driver-base";
-import { BatchManager } from "@microsoft/fluid-core-utils";
+import * as core from "@microsoft/fluid-server-services-core";
 import { EventEmitter } from "events";
 import { TestWebSocketServer } from "./testWebServer";
 

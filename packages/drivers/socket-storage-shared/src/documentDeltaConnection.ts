@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { BatchManager } from "@microsoft/fluid-core-utils";
 import {
     ConnectionMode,
     IClient,
@@ -14,7 +15,6 @@ import {
     ISignalMessage,
     ITokenClaims,
 } from "@microsoft/fluid-protocol-definitions";
-import { BatchManager } from "@microsoft/fluid-core-utils";
 import { EventEmitter } from "events";
 import { debug } from "./debug";
 import { IConnect, IConnected } from "./messages";

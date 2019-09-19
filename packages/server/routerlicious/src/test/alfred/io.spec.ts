@@ -3,6 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import { Deferred } from "@microsoft/fluid-core-utils";
+import { IConnect, IConnected } from "@microsoft/fluid-driver-base";
+import {
+    IClientJoin,
+    IDocumentMessage,
+    ISequencedDocumentSystemMessage,
+    MessageType,
+    ScopeType,
+} from "@microsoft/fluid-protocol-definitions";
 import { KafkaOrdererFactory } from "@microsoft/fluid-server-kafka-orderer";
 import * as services from "@microsoft/fluid-server-services";
 import * as core from "@microsoft/fluid-server-services-core";
@@ -15,15 +24,6 @@ import {
     TestWebSocket,
     TestWebSocketServer,
 } from "@microsoft/fluid-server-test-utils";
-import {
-    IClientJoin,
-    IDocumentMessage,
-    ISequencedDocumentSystemMessage,
-    MessageType,
-    ScopeType,
-} from "@microsoft/fluid-protocol-definitions";
-import { IConnect, IConnected } from "@microsoft/fluid-driver-base";
-import { Deferred } from "@microsoft/fluid-core-utils";
 import * as assert from "assert";
 import * as io from "../../alfred/io";
 import { OrdererManager } from "../../alfred/runnerFactory";

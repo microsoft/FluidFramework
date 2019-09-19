@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { buildHierarchy, flatten } from "@microsoft/fluid-core-utils";
 import {
     ConnectionMode,
     IClient,
@@ -16,7 +17,6 @@ import {
     ITree,
     IVersion,
 } from "@microsoft/fluid-protocol-definitions";
-import { buildHierarchy, flatten } from "@microsoft/fluid-core-utils";
 import * as assert from "assert";
 import { EmptyDeltaStorageService } from "./emptyDeltaStorageService";
 import { ReadDocumentStorageServiceBase } from "./replayController";

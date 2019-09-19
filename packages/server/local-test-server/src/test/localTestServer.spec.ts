@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { SharedString } from "@microsoft/fluid-sequence";
 import * as api from "@fluid-internal/client-api";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { MessageType } from "@microsoft/fluid-protocol-definitions";
+import { SharedString } from "@microsoft/fluid-sequence";
 import * as assert from "assert";
 import {
     DocumentDeltaEventManager,

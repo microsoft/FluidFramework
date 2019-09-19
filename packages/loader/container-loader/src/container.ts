@@ -26,6 +26,16 @@ import {
     TelemetryEventRaisedOnContainer,
 } from "@microsoft/fluid-container-definitions";
 import {
+    buildHierarchy,
+    ChildLogger,
+    DebugLogger,
+    EventEmitterWithErrorHandling,
+    flatten,
+    PerformanceEvent,
+    raiseConnectedEvent,
+    readAndParse,
+} from "@microsoft/fluid-core-utils";
+import {
     FileMode,
     IClient,
     IDocumentAttributes,
@@ -44,16 +54,6 @@ import {
     MessageType,
     TreeEntry,
 } from "@microsoft/fluid-protocol-definitions";
-import {
-    buildHierarchy,
-    ChildLogger,
-    DebugLogger,
-    EventEmitterWithErrorHandling,
-    flatten,
-    PerformanceEvent,
-    raiseConnectedEvent,
-    readAndParse,
-} from "@microsoft/fluid-core-utils";
 import * as assert from "assert";
 import * as jwtDecode from "jwt-decode";
 import { BlobCacheStorageService } from "./blobCacheStorageService";

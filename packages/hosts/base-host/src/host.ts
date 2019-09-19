@@ -11,11 +11,11 @@ import {
 } from "@microsoft/fluid-component-core-interfaces";
 import { ICodeLoader } from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
-import { IResolvedPackage, WebCodeLoader } from "@microsoft/fluid-web-code-loader";
 import {
     IFluidResolvedUrl,
     IResolvedUrl,
 } from "@microsoft/fluid-protocol-definitions";
+import { IResolvedPackage, WebCodeLoader } from "@microsoft/fluid-web-code-loader";
 import { IHostConfig } from "./hostConfig";
 
 export interface IPrivateSessionInfo {
