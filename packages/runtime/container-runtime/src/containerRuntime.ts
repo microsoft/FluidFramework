@@ -24,23 +24,17 @@ import {
 } from "@prague/container-definitions";
 import {
     Browser,
-    FileMode,
-    IBlob,
     IChunkedOp,
     IDocumentMessage,
     IDocumentStorageService,
     ISequencedDocumentMessage,
     ISignalMessage,
     ISnapshotTree,
-    ISummaryBlob,
     ISummaryConfiguration,
     ISummaryTree,
     ITree,
     MessageType,
-    SummaryObject,
-    SummaryTree,
     SummaryType,
-    TreeEntry,
 } from "@prague/protocol-definitions";
 import {
     ComponentFactoryTypes,
@@ -72,9 +66,10 @@ import { ComponentHandleContext } from "./componentHandleContext";
 import { debug } from "./debug";
 import { DocumentStorageServiceProxy } from "./documentStorageServiceProxy";
 import { LeaderElector } from "./leaderElection";
-import { Summarizer } from "./summarizer";
+import { IGeneratedSummaryData, Summarizer } from "./summarizer";
 import { SummaryManager } from "./summaryManager";
 import { analyzeTasks } from "./taskAnalyzer";
+import { BlobTreeEntry, CommitTreeEntry, convertToSummaryTree } from "./utils";
 
 declare module "@prague/component-core-interfaces" {
     export interface IComponent extends Readonly<Partial<IProvideComponentRegistry>> {}
@@ -675,12 +670,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
 
         let gitModules = "";
         for (const componentVersion of componentVersions) {
-            root.entries.push({
-                mode: FileMode.Commit,
-                path: componentVersion.id,
-                type: TreeEntry[TreeEntry.Commit],
-                value: componentVersion.version,
-            });
+            root.entries.push(new CommitTreeEntry(componentVersion.id, componentVersion.version));
 
             const repoUrl = "https://github.com/kurtb/praguedocs.git"; // this.storageService.repositoryUrl
             // tslint:disable-next-line: max-line-length
@@ -688,27 +678,11 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         }
 
         if (this.chunkMap.size > 0) {
-            root.entries.push({
-                mode: FileMode.File,
-                path: ".chunks",
-                type: TreeEntry[TreeEntry.Blob],
-                value: {
-                    contents: JSON.stringify([...this.chunkMap]),
-                    encoding: "utf-8",
-                },
-            });
+            root.entries.push(new BlobTreeEntry(".chunks", JSON.stringify([...this.chunkMap])));
         }
 
         // Write the module lookup details
-        root.entries.push({
-            mode: FileMode.File,
-            path: ".gitmodules",
-            type: TreeEntry[TreeEntry.Blob],
-            value: {
-                contents: gitModules,
-                encoding: "utf-8",
-            },
-        });
+        root.entries.push(new BlobTreeEntry(".gitmodules", gitModules));
 
         return root;
     }
@@ -931,7 +905,10 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
     /**
      * Returns a summary of the runtime at the current sequence number.
      */
-    private async summarize(generateFullTreeNoOptimizations?: boolean): Promise<ISummaryTree> {
+    private async summarize(
+        summaryData: IGeneratedSummaryData,
+        generateFullTreeNoOptimizations?: boolean,
+    ): Promise<ISummaryTree> {
         const result: ISummaryTree = {
             tree: {},
             type: SummaryType.Tree,
@@ -940,7 +917,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         // Iterate over each component and ask it to snapshot
         await Promise.all(Array.from(this.contexts).map(async ([key, value]) => {
             const snapshot = await value.snapshot();
-            const tree = this.convertToSummaryTree(snapshot, generateFullTreeNoOptimizations);
+            const tree = convertToSummaryTree(snapshot, summaryData, generateFullTreeNoOptimizations);
             result.tree[key] = tree;
         }));
 
@@ -951,6 +928,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
             };
         }
 
+        summaryData.treeNodeCount++;
         return result;
     }
 
@@ -1053,7 +1031,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         deferred.resolve(context);
     }
 
-    private async generateSummary(generateFullTreeNoOptimizations?: boolean): Promise<void> {
+    private async generateSummary(generateFullTreeNoOptimizations?: boolean): Promise<IGeneratedSummaryData> {
         const message =
             `Summary @${this.deltaManager.referenceSequenceNumber}:${this.deltaManager.minimumSequenceNumber}`;
 
@@ -1078,17 +1056,17 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
             // after loading from the beginning of the snapshot
             const versions = await this.context.storage.getVersions(this.id, 1);
             const parents = versions.map((version) => version.id);
-            const entries: { [path: string]: SummaryObject } = {};
 
-            const componentEntries = await this.summarize(generateFullTreeNoOptimizations);
-
-            // And then combine
-            const root: ISummaryTree = {
-                tree: { ...entries, ...componentEntries.tree },
-                type: SummaryType.Tree,
+            const summaryData = {
+                sequenceNumber: this.deltaManager.referenceSequenceNumber,
+                treeNodeCount: 0,
+                blobNodeCount: 0,
+                handleNodeCount: 0,
+                totalBlobSize: 0,
             };
+            const summaryTree = await this.summarize(summaryData, generateFullTreeNoOptimizations);
 
-            const handle = await this.context.storage.uploadSummary(root);
+            const handle = await this.context.storage.uploadSummary(summaryTree);
             const summary = {
                 handle: handle.handle,
                 head: parents[0],
@@ -1097,6 +1075,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
             };
 
             this.submit(MessageType.Summarize, summary);
+
+            return summaryData;
         } catch (ex) {
             this.logger.logException({ eventName: "GenerateSummaryExceptionError" }, ex);
             throw ex;
@@ -1150,50 +1130,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
 
         this.dirtyDocument = dirty;
         this.emit(dirty ? "dirtyDocument" : "savedDocument");
-    }
-
-    private convertToSummaryTree(snapshot: ITree, generateFullTreeNoOptimizations?: boolean): SummaryTree {
-        if (snapshot.id && !generateFullTreeNoOptimizations) {
-            return {
-                handle: snapshot.id,
-                handleType: SummaryType.Tree,
-                type: SummaryType.Handle,
-            };
-        } else {
-            const summaryTree: ISummaryTree = {
-                tree: {},
-                type: SummaryType.Tree,
-            };
-
-            for (const entry of snapshot.entries) {
-                let value: SummaryObject;
-
-                switch (entry.type) {
-                    case TreeEntry[TreeEntry.Blob]:
-                        const blob = entry.value as IBlob;
-                        value = {
-                            content: blob.encoding === "base64" ? Buffer.from(blob.contents, "base64") : blob.contents,
-                            type: SummaryType.Blob,
-                        } as ISummaryBlob;
-                        break;
-
-                    case TreeEntry[TreeEntry.Tree]:
-                        value = this.convertToSummaryTree(entry.value as ITree, generateFullTreeNoOptimizations);
-                        break;
-
-                    case TreeEntry[TreeEntry.Commit]:
-                        value = this.convertToSummaryTree(entry.value as ITree, generateFullTreeNoOptimizations);
-                        break;
-
-                    default:
-                        throw new Error();
-                }
-
-                summaryTree.tree[entry.path] = value;
-            }
-
-            return summaryTree;
-        }
     }
 
     private submit(type: MessageType, content: any): number {

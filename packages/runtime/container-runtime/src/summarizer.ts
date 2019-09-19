@@ -6,12 +6,13 @@
 import {
     IComponentLoadable,
 } from "@prague/component-core-interfaces";
+import { ITelemetryLogger } from "@prague/container-definitions";
 import {
     ISequencedDocumentMessage,
     ISummaryConfiguration,
     MessageType,
 } from "@prague/protocol-definitions";
-import { Deferred } from "@prague/utils";
+import { ChildLogger, Deferred } from "@prague/utils";
 import * as assert from "assert";
 import { ContainerRuntime } from "./containerRuntime";
 import { debug } from "./debug";
@@ -28,6 +29,14 @@ interface IOpSummaryDetails {
 
     // The message to include with the summarize
     message: string;
+}
+
+export interface IGeneratedSummaryData {
+    sequenceNumber: number;
+    treeNodeCount: number;
+    blobNodeCount: number;
+    handleNodeCount: number;
+    totalBlobSize: number;
 }
 
 declare module "@prague/component-core-interfaces" {
@@ -57,16 +66,17 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
     private summarizing = false;
     private summaryPending = false;
     private idleTimer: NodeJS.Timeout | null = null;
-    private lastOp: ISequencedDocumentMessage | null = null;
-    private lastOpSummaryDetails: IOpSummaryDetails | null = null;
     private readonly runDeferred = new Deferred<void>();
+    private readonly logger: ITelemetryLogger;
 
     constructor(
         public readonly url: string,
         private readonly runtime: ContainerRuntime,
         private readonly configuration: ISummaryConfiguration,
-        private readonly generateSummary: () => Promise<void>,
+        private readonly generateSummary: () => Promise<IGeneratedSummaryData>,
     ) {
+        this.logger = ChildLogger.create(this.runtime.logger, "Summarizer");
+
         this.runtime.on("disconnected", () => {
             this.runDeferred.resolve();
         });
@@ -100,21 +110,19 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
             if (this.summaryPending) {
                 const pendingTime = Date.now() - this.lastSummaryTime;
                 if (pendingTime > this.configuration.maxAckWaitTime) {
-                    this.runtime.logger.sendTelemetryEvent({ eventName: "SummaryAckWaitTimeout" });
-                    debug("Summarizer timed out while waiting for SummaryAck/SummaryNack from server.");
+                    this.logger.sendTelemetryEvent({ eventName: "SummaryAckWaitTimeout" });
                     this.summaryPending = false;
                 }
             }
 
             // Get the summary details for the given op
-            this.lastOp = op;
-            this.lastOpSummaryDetails = this.getOpSummaryDetails(op);
+            const lastOpSummaryDetails = this.getOpSummaryDetails(op);
 
-            if (this.lastOpSummaryDetails.shouldSummarize) {
+            if (lastOpSummaryDetails.shouldSummarize) {
                 // Summarize immediately if requested
                 // tslint:disable-next-line: no-floating-promises
-                this.summarize(this.lastOpSummaryDetails.message);
-            } else if (this.lastOpSummaryDetails.canStartIdleTimer) {
+                this.summarize(lastOpSummaryDetails.message);
+            } else if (lastOpSummaryDetails.canStartIdleTimer) {
                 // Otherwise detect when we idle to trigger the snapshot
                 this.resetIdleTimer();
             }
@@ -140,17 +148,30 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
             // mark that we are currently summarizing to prevent concurrent summarizing
             this.summarizing = true;
 
-            debug(`Summarizing: ${message}`);
-
-            const summarySequenceNumber = this.lastOp ? this.lastOp.sequenceNumber : 1;
+            this.logger.sendTelemetryEvent({
+                eventName: "Summarizing",
+                message,
+            });
 
             this.summaryPending = true;
-            await this.generateSummary();
+            const summaryStartTime = Date.now();
+            const summaryData = await this.generateSummary();
+            const summaryEndTime = Date.now();
+
+            this.logger.sendTelemetryEvent({
+                ...summaryData,
+                ...{
+                    eventName: "SummaryGenerated",
+                    summarizeDuration: summaryEndTime - summaryStartTime,
+                    opsSinceLastSummary: summaryData.sequenceNumber - this.lastSummarySeqNumber,
+                    timeSinceLastSummary: summaryStartTime - this.lastSummaryTime,
+                },
+            });
 
             // On success note the time of the snapshot and op sequence number.
             // Skip on error to cause us to attempt the snapshot again.
-            this.lastSummaryTime = Date.now();
-            this.lastSummarySeqNumber = summarySequenceNumber;
+            this.lastSummaryTime = summaryEndTime;
+            this.lastSummarySeqNumber = summaryData.sequenceNumber;
         } catch (ex) {
             debug(`Summarize error ${this.runtime.id}`, ex);
             this.summaryPending = false;
