@@ -35,8 +35,13 @@ class WorkerDocumentServiceFactory implements IDocumentServiceFactory {
     public readonly protocolName = "fluid-worker:";
     public createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
 
-        if (resolvedUrl.type !== "prague") {
-            return Promise.reject("only fluid type urls can be resolved.");
+        if (resolvedUrl.type !== "fluid") {
+              if (resolvedUrl.type === "prague") {
+                // tslint:disable-next-line:max-line-length
+                console.warn("IFluidResolvedUrl type === 'prague' has been deprecated. Please create IFluidResolvedUrls of type 'fluid' in the future.");
+            } else {
+                return Promise.reject("only fluid type urls can be resolved.");
+            }
         }
 
         const urlAsFluidUrl = resolvedUrl as IFluidResolvedUrl;
@@ -198,7 +203,7 @@ export class PaparazziRunner implements utils.IRunner {
                     storageUrl,
                 },
                 tokens: { jwt: requestMsg.token },
-                type: "prague",
+                type: "fluid",
                 url: documentUrl,
             };
 

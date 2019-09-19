@@ -3,26 +3,21 @@
  * Licensed under the MIT License.
  */
 
-// tslint:disable no-var-requires no-unsafe-any non-literal-fs-path
 import * as express from "express";
-import * as fs from "fs";
 import * as moniker from "moniker";
 import * as path from "path";
 import WebpackDevServer from "webpack-dev-server";
+import { IRouteOptions } from "./loader";
 
-export interface IRouteOptions {
-    local?: boolean;
-    live?: boolean;
-    fluidHost?: string;
-    tenantId?: string;
-    tenantSecret?: string;
-    component?: string;
-}
+export const before = (app: express.Application, server: WebpackDevServer) => {
+    // tslint:disable-next-line no-unsafe-any
+    app.get("/", (req, res) => res.redirect(`/${moniker.choose()}`));
+};
 
-export const before = (app: express.Application, server: WebpackDevServer, baseDir: string, env: IRouteOptions) => {
+export const after = (app: express.Application, server: WebpackDevServer, baseDir: string, env: IRouteOptions) => {
     let options: IRouteOptions;
     if (!env) {
-        options = { local: false };
+        options = { mode: "live" };
     } else if (env.fluidHost && !(env.tenantId && env.tenantSecret)) {
         throw new Error("If you provide a host, you must provide a tenantId and tenantSecret");
     } else if ((env.tenantId || env.tenantSecret) && !(env.tenantId && env.tenantSecret)) {
@@ -31,9 +26,7 @@ export const before = (app: express.Application, server: WebpackDevServer, baseD
         options = env;
     }
 
-    app.get("/", (req, res) => res.redirect(`/${moniker.choose()}`));
-    app.get("/fluid-loader.js", (req, res) => loader(req, res, baseDir));
-    app.get(/(.*(?<!\.js(\.map)?))$/i, (req, res) => fluid(req, res, baseDir, options));
+    app.get("/*", (req, res) => fluid(req, res, baseDir, options));
 };
 
 const fluid = (req: express.Request, res: express.Response,  baseDir: string, options: IRouteOptions) => {
@@ -45,30 +38,6 @@ const fluid = (req: express.Request, res: express.Response,  baseDir: string, op
     );
     // tslint:disable-next-line: non-literal-require
     const packageJson = require(path.join(baseDir, "./package.json"));
-    const bearerSecret = "VBQyoGpEYrTn3XQPtXW3K8fFDd";
-
-    let host;
-    let routerlicious;
-    let historian;
-    let tenantId;
-    let secret;
-    let npm;
-
-    if (options.local) {
-        host = "http://localhost:3000";
-        routerlicious = "http://localhost:3003";
-        historian = "http://localhost:3001";
-        tenantId = "prague";
-        secret = "43cfc3fbf04a97c0921fd23ff10f9e4b";
-        npm = "http://localhost:3002";
-    } else {
-        host = options.fluidHost ? options.fluidHost : "https://www.wu2.prague.office-int.com";
-        tenantId = options.tenantId ? options.tenantId : "stoic-gates";
-        secret = options.tenantSecret ? options.tenantSecret : "1a7f744b3c05ddc525965f17a1b58aa0";
-        routerlicious = host.replace("www", "alfred");
-        historian = host.replace("www", "historian");
-        npm = "https://pragueauspkn-3873244262.azureedge.net";
-    }
 
     const html =
 `<!DOCTYPE html>
@@ -79,24 +48,18 @@ const fluid = (req: express.Request, res: express.Response,  baseDir: string, op
     <title>${documentId}</title>
 </head>
 <body>
-    <div style="width: 100vw; height: 100vh;">
+    <div style="width: 100%; height: 100%;">
         <div id="content"></div>
     </div>
 
-    <script src="/fluid-loader.js"></script>
+    <script src="node_modules/@microsoft/fluid-webpack-component-loader/dist/fluid-loader.bundle.js"></script>
     <script>
         var pkgJson = ${JSON.stringify(packageJson)};
+        var options = ${JSON.stringify(options)};
         FluidLoader.start(
             pkgJson,
-            "${host}",
-            "${routerlicious}",
-            "${historian}",
-            "${npm}",
-            "${tenantId}",
-            "${secret}",
-            FluidLoader.getUserToken("${bearerSecret}"),
-            document.getElementById("content"),
-            ${!!options.component})
+            options,
+            document.getElementById("content"))
         .catch((error) => console.error(error));
     </script>
 </body>
@@ -104,12 +67,4 @@ const fluid = (req: express.Request, res: express.Response,  baseDir: string, op
 
     res.setHeader("Content-Type", "text/html");
     res.end(html);
-};
-
-const loader = (req: express.Request, res: express.Response,  baseDir: string) => {
-    res.setHeader("Content-Type", "application/javascript");
-
-    fs.createReadStream(
-        path.join(baseDir, "node_modules", "@microsoft", "fluid-webpack-component-loader", "dist", "fluid-loader.bundle.js")
-    ).pipe(res);
 };

@@ -95,7 +95,7 @@ async function getInternalComponent(
             storageUrl,
         },
         tokens: { jwt: token },
-        type: "prague",
+        type: "fluid",
         url: fluidUrl,
     } as IFluidResolvedUrl;
 }

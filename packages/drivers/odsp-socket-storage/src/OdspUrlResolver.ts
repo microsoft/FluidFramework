@@ -58,7 +58,7 @@ export class OdspUrlResolver implements IUrlResolver {
     const response: IOdspResolvedUrl = {
       endpoints: { snapshotStorageUrl: getSnapshotUrl(siteUrl, driveId, itemId) },
       tokens: {},
-      type: "prague",
+      type: "fluid",
       url: documentUrl,
       hashedDocumentId,
       siteUrl,

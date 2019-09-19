@@ -29,7 +29,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLVisual {
      * is created. Anything that happens in componentInitializingFirstTime will happen before any other user will see the component.
      */
     protected async componentInitializingFirstTime() {
-        this.root.set("clicks", 0, CounterValueType.Name);
+        this.root.createValueType("clicks", CounterValueType.Name, 0);
 
         // Uncomment the line below to add a title to your data schema!
         /*

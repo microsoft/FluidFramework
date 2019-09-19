@@ -90,17 +90,18 @@ export async function registerAttach(loader: Loader, container: Container, uri: 
 
 export function createLoader(
     resolved: IResolvedUrl,
-    config: any,
+    options: any,
     scope: IComponent,
     codeLoader: ICodeLoader,
     hostConf: IHostConfig,
 ): Loader {
 
-    const options = {
-        blockUpdateMarkers: true,
-        config,
-        tokens: (resolved as IFluidResolvedUrl).tokens,
-    };
+    // we need to extend options, otherwise we nest properties, like client, too deeply
+    //
+    // tslint:disable-next-line: no-unsafe-any
+    options.blockUpdateMarkers = true;
+    // tslint:disable-next-line: no-unsafe-any
+    options.tokens = (resolved as IFluidResolvedUrl).tokens;
 
     return new Loader(
         { resolver: hostConf.urlResolver },

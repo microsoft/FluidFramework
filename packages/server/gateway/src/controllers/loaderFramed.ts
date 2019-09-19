@@ -147,7 +147,7 @@ function createIFrameHTML(resolved: IResolvedUrl,
     const url = window.location.href.split("&privateSession")[0];
     let santizedResolved: IFluidResolvedUrl;
 
-    if (resolved.type === "prague") {
+    if (resolved.type === "prague" || resolved.type === "fluid") {
         santizedResolved = {
             type: resolved.type,
             endpoints: resolved.endpoints,

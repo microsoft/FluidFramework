@@ -65,7 +65,8 @@ module.exports = env => ({
     },
     devServer: {
         publicPath: '/dist',
-        before: (app, server) => fluidRoute.before(app, server, __dirname, env),
+        before: (app, server) => fluidRoute.before(app, server),
+        after: (app, server) => fluidRoute.after(app, server, __dirname, env),
     },
     plugins: [
         // new BundleAnalyzerPlugin(),

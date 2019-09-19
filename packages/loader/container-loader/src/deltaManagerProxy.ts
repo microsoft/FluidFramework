@@ -118,6 +118,10 @@ export class DeltaManagerProxy
         return this.deltaManager.serviceConfiguration;
     }
 
+    public get active(): boolean {
+        return this.deltaManager.active;
+    }
+
     constructor(private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>) {
         super(deltaManager);
 
@@ -131,14 +135,6 @@ export class DeltaManagerProxy
         this.outbound.dispose();
         this.inboundSignal.dispose();
         super.dispose();
-    }
-
-    public enableReadonlyMode(): void {
-        return this.deltaManager.enableReadonlyMode();
-    }
-
-    public disableReadonlyMode(): void {
-        return this.deltaManager.disableReadonlyMode();
     }
 
     public close(): void {

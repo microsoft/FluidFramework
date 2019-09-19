@@ -163,7 +163,7 @@ a component.
 `componentInitializingFirstTime()` will be called only the first time the `initialize()` is called. In here we perform setup operations that we only
 want to happen once. `await super.componentInitializingFirstTime()` calls the `componentInitializingFirstTime()` function on the `PrimedComponent`.
 In here we create and set the `root` SharedDirectory. We need to call this first to ensure the root is available later. Next we create a new counter,
-called `"clicks"` on our root directory `this.root.set("clicks", 0, CounterValueType.Name);`
+called `"clicks"` on our root directory `this.root.createValueType("clicks", CounterValueType.Name, 0);`
 
 ```typescript
 private static readonly supportedInterfaces = ["IComponentHTMLVisual"];
@@ -175,7 +175,7 @@ private static readonly supportedInterfaces = ["IComponentHTMLVisual"];
 protected async componentInitializingFirstTime() {
   // Calling super.componentInitializingFirstTime() creates a root SharedDirectory that you can work off.
   await super.componentInitializingFirstTime();
-  this.root.set("clicks", 0, CounterValueType.Name);
+  this.root.createValueType("clicks", CounterValueType.Name, 0);
 }
 
 /**

@@ -34,7 +34,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLVisual {
    * Do setup work here
    */
   protected async componentInitializingFirstTime() {
-    this.root.set("clicks", 0, CounterValueType.Name);
+    this.root.createValueType("clicks", CounterValueType.Name, 0);
   }
 
   // #region IComponentHTMLVisual

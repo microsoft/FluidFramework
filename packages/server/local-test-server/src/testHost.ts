@@ -5,8 +5,8 @@
 
 import { PrimedComponent, PrimedComponentFactory, SimpleContainerRuntimeFactory } from "@prague/aqueduct";
 import { IComponentHandle, IComponentLoadable } from "@prague/component-core-interfaces";
-import { IComponentRegistry, WrappedComponentRegistry } from "@prague/container-runtime";
-import { IComponentContext, IComponentFactory, IComponentRuntime } from "@prague/runtime-definitions";
+import { WrappedComponentRegistry } from "@prague/container-runtime";
+import { IComponentContext, IComponentFactory, IComponentRegistry, IComponentRuntime } from "@prague/runtime-definitions";
 import { SharedString, SparseMatrix } from "@prague/sequence";
 import { ISharedObject } from "@prague/shared-object-common";
 import {
