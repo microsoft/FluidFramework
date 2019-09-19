@@ -76,6 +76,7 @@ export function register(
     storage: core.IDocumentStorage,
     contentCollection: core.ICollection<any>) {
 
+    // TODO register should take the metric client as a param
     const metricLogger = agent.createMetricClient(metricClientConfig);
 
     webSocketServer.on("connection", (socket: core.IWebSocket) => {

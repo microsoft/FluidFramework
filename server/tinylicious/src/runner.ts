@@ -4,12 +4,9 @@
  */
 
 import {
-    IAlfredTenant,
-    ICache,
     ICollection,
     IDocumentStorage,
     IOrdererManager,
-    IProducer,
     ITenantManager,
     IWebServer,
     IWebServerFactory,
@@ -33,12 +30,9 @@ export class TinyliciousRunner implements utils.IRunner {
         private orderManager: IOrdererManager,
         private tenantManager: ITenantManager,
         private storage: IDocumentStorage,
-        private cache: ICache,
-        private appTenants: IAlfredTenant[],
         private mongoManager: MongoManager,
-        private producer: IProducer,
-        private metricClientConfig: any,
-        private contentCollection: ICollection<any>) {
+        private contentCollection: ICollection<any>,
+    ) {
     }
 
     public start(): Promise<void> {
@@ -47,12 +41,8 @@ export class TinyliciousRunner implements utils.IRunner {
         // Create the HTTP server and attach alfred to it
         const alfred = app.create(
             this.config,
-            this.tenantManager,
             this.storage,
-            this.appTenants,
-            this.mongoManager,
-            this.cache,
-            this.producer);
+            this.mongoManager);
         alfred.set("port", this.port);
 
         this.server = this.serverFactory.create(alfred);
@@ -62,9 +52,9 @@ export class TinyliciousRunner implements utils.IRunner {
         // Register all the socket.io stuff
         io.register(
             this.server.webSocketServer,
-            this.metricClientConfig,
             this.orderManager,
             this.tenantManager,
+            this.storage,
             this.contentCollection);
 
         // Listen on provided port, on all network interfaces.

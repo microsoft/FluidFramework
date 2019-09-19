@@ -7,10 +7,12 @@ import { canSummarize, canWrite } from "@microsoft/fluid-server-services-client"
 import * as core from "@microsoft/fluid-server-services-core";
 import { generateClientId, getRandomInt } from "@microsoft/fluid-server-services-utils";
 import {
+    ConnectionMode,
     IClient,
     IContentMessage,
     IDocumentMessage,
     IDocumentSystemMessage,
+    INack,
     ISignalMessage,
     ITokenClaims,
 } from "@prague/protocol-definitions";
@@ -66,9 +68,9 @@ function selectProtocolVersion(connectVersions: string[]): string {
 
 export function register(
     webSocketServer: core.IWebSocketServer,
-    metricClientConfig: any,
     orderManager: core.IOrdererManager,
     tenantManager: core.ITenantManager,
+    storage: core.IDocumentStorage,
     contentCollection: core.ICollection<any>,
 ) {
     webSocketServer.on("connection", (socket: core.IWebSocket) => {
@@ -76,6 +78,29 @@ export function register(
         const connectionsMap = new Map<string, core.IOrdererConnection>();
         // Map from client IDs to room.
         const roomMap = new Map<string, string>();
+
+        function isWriter(scopes: string[], existing: boolean, mode: ConnectionMode): boolean {
+            if (canWrite(scopes) || canSummarize(scopes)) {
+                // New document needs a writer to boot.
+                if (!existing) {
+                    return true;
+                } else {
+                    // back-compat for old client and new server.
+                    return mode === undefined ? true : mode === "write";
+                }
+            } else {
+                return false;
+            }
+        }
+
+        // For easy transition, we are reusing the same nack format sent by broadcaster.
+        // TODO: Create a separate nack format.
+        function createNackMessage(): INack {
+            return {
+                operation: undefined,
+                sequenceNumber: -1,
+            };
+        }
 
         async function connectDocument(message: IConnect): Promise<IConnected> {
             if (!message.token) {
@@ -116,16 +141,19 @@ export function register(
                     `Client: ${JSON.stringify(connectVersions)}`);
             }
 
-            if (canWrite(messageClient.scopes) || canSummarize(messageClient.scopes)) {
+            const details = await storage.getOrCreateDocument(claims.tenantId, claims.documentId);
+
+            if (isWriter(messageClient.scopes, details.existing, message.mode)) {
                 const orderer = await orderManager.getOrderer(claims.tenantId, claims.documentId);
-                const connection = await orderer.connect(socket, clientId, messageClient as IClient);
+                const connection = await orderer.connect(socket, clientId, messageClient as IClient, details);
                 connectionsMap.set(clientId, connection);
 
                 const connectedMessage: IConnected = {
                     claims,
                     clientId,
-                    existing: connection.existing,
+                    existing: details.existing,
                     maxMessageSize: connection.maxMessageSize,
+                    mode: "write",
                     parentBranch: connection.parentBranch,
                     serviceConfiguration: connection.serviceConfiguration,
                     supportedVersions: protocolVersions,
@@ -134,12 +162,12 @@ export function register(
 
                 return connectedMessage;
             } else {
-                // TODO: We should split storage stuff from orderer to get the following fields right.
                 const connectedMessage: IConnected = {
                     claims,
                     clientId,
-                    existing: true, // Readonly client can only open an existing document.
+                    existing: details.existing,
                     maxMessageSize: 1024, // Readonly client can't send ops.
+                    mode: "read",
                     parentBranch: null, // Does not matter for now.
                     serviceConfiguration: DefaultServiceConfiguration,
                     supportedVersions: protocolVersions,
@@ -166,72 +194,65 @@ export function register(
         socket.on(
             "submitOp",
             (clientId: string, messageBatches: (IDocumentMessage | IDocumentMessage[])[], response) => {
-                // TODO validate message size within bounds
-
-                // Verify the user has an orderer connection.
+                // Verify the client ID is associated with the connection
                 if (!connectionsMap.has(clientId)) {
-                    return response("Invalid client ID or readonly client", null);
+                    return socket.emit("nack", "", [createNackMessage()]);
                 }
 
                 const connection = connectionsMap.get(clientId);
-
                 messageBatches.forEach((messageBatch) => {
                     const messages = Array.isArray(messageBatch) ? messageBatch : [messageBatch];
-                    const sanitized = messages.map((message) => sanitizeMessage(message));
+                    const sanitized = messages.map(sanitizeMessage);
 
                     if (sanitized.length > 0) {
                         connection.order(sanitized);
                     }
                 });
-
-                // A response callback used to be used to verify the send. Newer drivers do not use this. Will be
-                // removed in 0.9
-                if (response) {
-                    response(null);
-                }
             });
 
         // Message sent when a new splitted operation is submitted to the router
-        socket.on("submitContent", (clientId: string, message: IDocumentMessage, response) => {
-            // Verify the user has an orderer connection.
-            if (!connectionsMap.has(clientId)) {
-                return response("Invalid client ID or readonly client", null);
-            }
+        socket.on(
+            "submitContent",
+            (clientId: string, message: IDocumentMessage, response) => {
+                // Verify the client ID is associated with the connection
+                if (!connectionsMap.has(clientId)) {
+                    return socket.emit("nack", "", [createNackMessage()]);
+                }
 
-            const broadCastMessage: IContentMessage = {
-                clientId,
-                clientSequenceNumber: message.clientSequenceNumber,
-                contents: message.contents,
-            };
+                const broadCastMessage: IContentMessage = {
+                    clientId,
+                    clientSequenceNumber: message.clientSequenceNumber,
+                    contents: message.contents,
+                };
 
-            const connection = connectionsMap.get(clientId);
+                const connection = connectionsMap.get(clientId);
 
-            const dbMessage = {
-                clientId,
-                documentId: connection.documentId,
-                op: broadCastMessage,
-                tenantId: connection.tenantId,
-            };
+                const dbMessage = {
+                    clientId,
+                    documentId: connection.documentId,
+                    op: broadCastMessage,
+                    tenantId: connection.tenantId,
+                };
 
-            contentCollection.insertOne(dbMessage).then(
-                () => {
-                    socket.broadcastToRoom(roomMap.get(clientId), "op-content", broadCastMessage);
-                    return response(null);
-                }, (error) => {
-                    if (error.code !== 11000) {
-                        // Needs to be a full rejection here
-                        return response("Could not write to DB", null);
-                    }
-                });
-        });
+                contentCollection.insertOne(dbMessage).then(
+                    () => {
+                        socket.broadcastToRoom(roomMap.get(clientId), "op-content", broadCastMessage);
+                        return response(null);
+                    }, (error) => {
+                        if (error.code !== 11000) {
+                            // Needs to be a full rejection here
+                            return response("Could not write to DB", null);
+                        }
+                    });
+            });
 
         // Message sent when a new signal is submitted to the router
         socket.on(
             "submitSignal",
             (clientId: string, contentBatches: (IDocumentMessage | IDocumentMessage[])[], response) => {
-                // Verify the user has an orderer connection and subscription to the room.
-                if (!connectionsMap.has(clientId) || !roomMap.has(clientId)) {
-                    return response("Invalid client ID or readonly client", null);
+                // Verify the user has subscription to the room.
+                if (!roomMap.has(clientId)) {
+                    return response("Invalid client ID", null);
                 }
 
                 const roomId = roomMap.get(clientId);
@@ -248,20 +269,16 @@ export function register(
                         socket.emitToRoom(roomId, "signal", signalMessage);
                     }
                 });
-
-                // A response callback used to be used to verify the send. Newer drivers do not use this.
-                // Will be removed in 0.9
-                if (response) {
-                    response(null);
-                }
             });
 
-        socket.on("disconnect", () => {
-            // Send notification messages for all client IDs in the connection map
-            for (const [clientId, connection] of connectionsMap) {
-                winston.info(`Disconnect of ${clientId}`);
-                connection.disconnect();
-            }
-        });
+        socket.on(
+            "disconnect",
+            () => {
+                // Send notification messages for all client IDs in the connection map
+                for (const [clientId, connection] of connectionsMap) {
+                    winston.info(`Disconnect of ${clientId}`);
+                    connection.disconnect();
+                }
+            });
     });
 }

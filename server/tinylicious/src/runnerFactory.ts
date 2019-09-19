@@ -4,8 +4,8 @@
  */
 
 import * as utils from "@microsoft/fluid-server-services-utils";
-import { TinyliciousRunner } from "./runner";
 import { TinyliciousResources } from "./resources";
+import { TinyliciousRunner } from "./runner";
 
 export class TinyliciousRunnerFactory implements utils.IRunnerFactory<TinyliciousResources> {
     public async create(resources: TinyliciousResources): Promise<utils.IRunner> {
@@ -16,11 +16,7 @@ export class TinyliciousRunnerFactory implements utils.IRunnerFactory<Tinyliciou
             resources.orderManager,
             resources.tenantManager,
             resources.storage,
-            resources.cache,
-            resources.appTenants,
             resources.mongoManager,
-            resources.producer,
-            resources.metricClientConfig,
             resources.contentCollection);
     }
 }

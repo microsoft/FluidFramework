@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IAlfredTenant, MongoManager } from "@microsoft/fluid-server-services-core";
+import { MongoManager } from "@microsoft/fluid-server-services-core";
 import { ISequencedDocumentMessage } from "@prague/protocol-definitions";
 import { Router } from "express";
 import { Provider } from "nconf";
@@ -71,7 +71,7 @@ export async function getDeltas(
     return dbDeltas.map((delta) => delta.operation);
 }
 
-export function create(config: Provider, mongoManager: MongoManager, appTenants: IAlfredTenant[]): Router {
+export function create(config: Provider, mongoManager: MongoManager): Router {
     const deltasCollectionName = config.get("mongo:collectionNames:deltas");
     const router: Router = Router();
 
@@ -83,10 +83,10 @@ export function create(config: Provider, mongoManager: MongoManager, appTenants:
     /**
      * Retrieves deltas for the given document. With an optional from and to range (both exclusive) specified
      */
-    router.get("/:tenantId?/:id", (request, response, next) => {
+    router.get("/:tenantId/:id", (request, response, next) => {
         const from = stringToSequenceNumber(request.query.from);
         const to = stringToSequenceNumber(request.query.to);
-        const tenantId = getParam(request.params, "tenantId") || appTenants[0].id;
+        const tenantId = getParam(request.params, "tenantId");
 
         // Query for the deltas and return a filtered version of just the operations field
         const deltasP = getDeltas(
@@ -110,10 +110,10 @@ export function create(config: Provider, mongoManager: MongoManager, appTenants:
      * Retrieves delta contents for the given document. With an optional from and to range (both exclusive) specified
      * @deprecated path "/content:tenantId?/:id" currently kept for backwards compatibility
      */
-    router.get(["/content/:tenantId?/:id", "/:tenantId?/:id/content"], (request, response, next) => {
+    router.get(["/content/:tenantId/:id", "/:tenantId?/:id/content"], (request, response, next) => {
         const from = stringToSequenceNumber(request.query.from);
         const to = stringToSequenceNumber(request.query.to);
-        const tenantId = getParam(request.params, "tenantId") || appTenants[0].id;
+        const tenantId = getParam(request.params, "tenantId");
 
         // Query for the deltas and return a filtered version of just the operations field
         const deltasP = getDeltaContents(
