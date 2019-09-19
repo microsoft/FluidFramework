@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { BaseSegment, ISegment, LocalReference, PropertySet, ReferenceType } from "@microsoft/fluid-merge-tree";
+import { ISegment, LocalReference, PropertySet, ReferenceType } from "@microsoft/fluid-merge-tree";
 import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SequenceDeltaEvent, SequenceMaintenanceEvent, SharedString } from "@microsoft/fluid-sequence";
 import { PrimedComponent } from "@prague/aqueduct";
@@ -70,12 +70,12 @@ export class SourceDocument extends PrimedComponent {
     public addLocalRef(position: number) {
         // Special case for LocalReference to end of document.  (See comments on 'endOfTextSegment').
         if (position >= this.length) {
-            return Object.freeze(new LocalReference(this.sharedString.client, endOfTextSegment));
+            return this.sharedString.createPositionReference(endOfTextSegment, 0, ReferenceType.Transient);
         }
 
         const { segment, offset } = this.getSegmentAndOffset(position);
-        const localRef = new LocalReference(this.sharedString.client, segment as BaseSegment, offset, ReferenceType.SlideOnRemove);
-        this.sharedString.addLocalReference(localRef);
+        const localRef = this.sharedString.createPositionReference(segment, offset, ReferenceType.SlideOnRemove);
+
         return localRef;
     }
 

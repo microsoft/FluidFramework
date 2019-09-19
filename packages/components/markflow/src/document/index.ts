@@ -4,7 +4,6 @@
  */
 
 import {
-    BaseSegment,
     createInsertSegmentOp,
     createRemoveRangeOp,
     IMergeTreeRemoveMsg,
@@ -26,6 +25,7 @@ import {
     SequenceMaintenanceEvent,
     SharedString,
     SharedStringFactory,
+    SharedStringSegment,
 } from "@microsoft/fluid-sequence";
 import { PrimedComponent, PrimedComponentFactory } from "@prague/aqueduct";
 import { IComponent, IComponentHandle, IComponentHTMLOptions } from "@prague/component-core-interfaces";
@@ -128,7 +128,7 @@ const accumAsLeafAction = (
 //       to undefined segments.)
 //
 //       See: https://github.com/microsoft/Prague/issues/2408
-const endOfTextSegment = undefined as unknown as BaseSegment;
+const endOfTextSegment = undefined as unknown as SharedStringSegment;
 
 export class FlowDocument extends PrimedComponent {
     private get sharedString() { return this.maybeSharedString; }
@@ -179,12 +179,11 @@ export class FlowDocument extends PrimedComponent {
     public addLocalRef(position: number) {
         // Special case for LocalReference to end of document.  (See comments on 'endOfTextSegment').
         if (position >= this.length) {
-            return new LocalReference(this.sharedString.client, endOfTextSegment);
+            return this.sharedString.createPositionReference(endOfTextSegment, 0, ReferenceType.Transient);
         }
 
         const { segment, offset } = this.getSegmentAndOffset(position);
-        const localRef = new LocalReference(this.sharedString.client, segment as BaseSegment, offset, ReferenceType.SlideOnRemove);
-        this.sharedString.addLocalReference(localRef);
+        const localRef = this.sharedString.createPositionReference(segment, offset, ReferenceType.SlideOnRemove);
         return localRef;
     }
 

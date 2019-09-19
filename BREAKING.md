@@ -5,7 +5,9 @@
 - [DistributedSet removed](#distributedset-removed)
 - [`Stream` renamed to `Ink`](#stream-renamed-to-ink)
 - [`insertSiblingSegment` change to `insertAtReferencePosition`](#insertAtReferencePosition)
+- [MergeTree Client No Longer Public on Sequence](#MergeTree-Client-No-Longer-Public-on-Sequence)
 - [`.createValueType` replaces third argument to `.set`](#.createValueType-replaces-third-argument-to-.set)
+
 
 ## `@prague/tiny-web-host` prague -> fluid changes
 `loadPragueComponent`, `loadIFramedPragueComponent`, and `isPragueUrl` from `@prague/tiny-web-host` have been renamed to `loadFluidComponent`, `loadIFramedFluidComponent`, and `isFluidUrl`, respectively.
@@ -36,6 +38,8 @@ After:
             this.sequence.createPositionReference(sg, 0, ReferenceType.Transient),
             insertSegment);
 ```
+## MergeTree Client No Longer Public on Sequence
+The client property is not longer public on sequence. All existing and supported functionality should be used off sequence itself.
 
 ## `.createValueType` replaces third argument to `.set`
 Previously, to create a value type on an ISharedMap or IDirectory you would pass a third type argument to `.set`.  This functionality has been moved to a separate API, `.createValueType`.
