@@ -111,16 +111,25 @@ export class ScribeLambda extends SequencedLambda {
 
                 if (value.operation.type === MessageType.Summarize) {
                     const content = JSON.parse(value.operation.contents) as ISummaryContent;
+                    const summarySequenceNumber = value.operation.sequenceNumber;
 
                     // Process up to the summary op value to get the protocol state at the summary op.
                     // TODO: We should vaidate that we can actually make a summary prior to this call.
                     this.processFromPending(value.operation.referenceSequenceNumber);
-                    await this.summarize(
-                        content,
-                        this.protocolHandler.minimumSequenceNumber,
-                        this.protocolHandler.sequenceNumber,
-                        this.protocolHandler.quorum.snapshot(),
-                        value.operation.sequenceNumber);
+
+                    try {
+                        await this.summarize(
+                            content,
+                            this.protocolHandler.minimumSequenceNumber,
+                            this.protocolHandler.sequenceNumber,
+                            this.protocolHandler.quorum.snapshot(),
+                            summarySequenceNumber);
+                    } catch {
+                        await this.sendSummaryNack(
+                            summarySequenceNumber,
+                            `Failed to summarize the document.`,
+                        );
+                    }
                 }
             }
         }
