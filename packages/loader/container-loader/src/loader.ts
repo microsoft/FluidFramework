@@ -231,8 +231,8 @@ export class Loader extends EventEmitter implements ILoader {
 
         let canCache = true;
         let canReconnect = true;
-        let connection = !parsed!.version ? "open" : "close";
-        let version = parsed!.version;
+        let connection = !parsed.version ? "open" : "close";
+        let version = parsed.version;
         let fromSequenceNumber = -1;
 
         if (request.headers) {
@@ -254,8 +254,6 @@ export class Loader extends EventEmitter implements ILoader {
             if (request.headers["fluid-sequence-number"]) {
                 fromSequenceNumber = request.headers["fluid-sequence-number"] as number;
             }
-
-            version = version || request.headers.version as string;
         }
 
         debug(`${canCache} ${connection} ${version}`);

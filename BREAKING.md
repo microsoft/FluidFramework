@@ -6,6 +6,7 @@
 - [`Stream` renamed to `Ink`](#stream-renamed-to-ink)
 - [`insertSiblingSegment` change to `insertAtReferencePosition`](#insertAtReferencePosition)
 - [`.createValueType` replaces third argument to `.set`](#.createValueType-replaces-third-argument-to-.set)
+- [Version can no longer be sent as a request header](#version-cannot-be-sent-as-request-header)
 
 ## `@prague/tiny-web-host` prague -> fluid changes
 `loadPragueComponent`, `loadIFramedPragueComponent`, and `isPragueUrl` from `@prague/tiny-web-host` have been renamed to `loadFluidComponent`, `loadIFramedFluidComponent`, and `isFluidUrl`, respectively.
@@ -47,6 +48,9 @@ After:
 ```typescript
 myMap.createValueType("myKey", CounterValueType.Name, 0);
 ```
+
+## version cannot be sent as request header
+When loading a container, there was support for setting the version using either a query parameter or request.header.version as arguments to `loader.request`. Going forward we will only respect the version argument in the query string and the request.header.version argument will be ignored.
 
 # 0.9 Breaking Changes (August 26, 2019)
 
