@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ISharedMap } from "@microsoft/fluid-map";
 import { SharedString } from "@microsoft/fluid-sequence";
 import { IComponentHTMLVisual } from "@prague/component-core-interfaces";
 import { EventEmitter } from "events";
@@ -10,7 +11,6 @@ import * as GraphiQL from "graphiql";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { GraphQLService } from "./database";
-import { ISharedMap } from "@microsoft/fluid-map";
 
 // Note on defining components - snapshotting does not seem like it should be part of an IChaincodeComponent given
 // these synthetic components don't need it. We may want this to just be "attach"
