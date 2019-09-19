@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { MapLike } from "@prague/merge-tree";
+import { MapLike } from "@microsoft/fluid-merge-tree";
 // import { strict as assert } from "assert";
 import * as remark from "remark";
 import { debug } from "./debug";

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { LocalReference } from "@microsoft/fluid-merge-tree";
 import { CaretEventType, Direction, Dom, getDeltaX, getDeltaY, ICaretEvent } from "@prague/flow-util";
-import { LocalReference } from "@prague/merge-tree";
 import { clamp } from "../util";
 import { updateRef } from "../util/localref";
 import { eotSegment, Layout } from "../view/layout";

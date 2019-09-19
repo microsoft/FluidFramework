@@ -5,7 +5,7 @@
 
 const api = require("@prague/client-api");
 const socketStorage = require("@prague/socket-storage");
-const MergeTree = require("@prague/merge-tree");
+const MergeTree = require("@microsoft/fluid-merge-tree");
 const jwt = require('jsonwebtoken');
 const sharedString = require("@prague/shared-string")
 const uuidv4 = require('uuid/v4');

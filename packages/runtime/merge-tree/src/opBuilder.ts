@@ -12,7 +12,7 @@ import {
     IMergeTreeOp,
     IMergeTreeRemoveMsg,
     MergeTreeDeltaType,
- } from "./ops";
+} from "./ops";
 import { PropertySet } from "./properties";
 
 /**

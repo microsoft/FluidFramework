@@ -2,21 +2,11 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import {
-    CollaborativeInput,
-} from "@prague/aqueduct-react";
-import {
-    IComponentHandle,
-} from "@prague/component-core-interfaces";
-import {
-    IDirectory,
-    IDirectoryValueChanged,
-    ISharedDirectory,
-} from "@prague/map";
-import {
-    SharedString,
-} from "@prague/sequence";
 
+import { IDirectory, IDirectoryValueChanged, ISharedDirectory } from "@microsoft/fluid-map";
+import { SharedString } from "@microsoft/fluid-sequence";
+import { CollaborativeInput } from "@prague/aqueduct-react";
+import { IComponentHandle } from "@prague/component-core-interfaces";
 import React, { useEffect, useRef, useState } from "react";
 import ReactList from "react-list";
 

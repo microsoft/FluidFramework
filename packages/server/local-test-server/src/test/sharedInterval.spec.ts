@@ -3,18 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import * as api from "@prague/client-api";
-import { IComponentHandle } from "@prague/component-core-interfaces";
-import { ISharedMap, SharedMap } from "@prague/map";
-import { IntervalType, LocalReference } from "@prague/merge-tree";
-import { IBlob } from "@prague/protocol-definitions";
+import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
+import { IntervalType, LocalReference } from "@microsoft/fluid-merge-tree";
 import {
     ISerializedInterval,
     SharedIntervalCollectionView,
     SharedString,
     SharedStringFactory,
     SharedStringInterval,
-} from "@prague/sequence";
+} from "@microsoft/fluid-sequence";
+import * as api from "@prague/client-api";
+import { IComponentHandle } from "@prague/component-core-interfaces";
+import { IBlob } from "@prague/protocol-definitions";
 import * as assert from "assert";
 import {
     DocumentDeltaEventManager,
@@ -23,7 +23,7 @@ import {
     TestDocumentServiceFactory,
     TestHost,
     TestResolver,
-} from "..";
+} from "../";
 
 const assertIntervalsHelper = (
     sharedString: SharedString,

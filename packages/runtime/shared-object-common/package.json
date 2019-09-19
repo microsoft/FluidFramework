@@ -1,5 +1,5 @@
 {
-  "name": "@prague/shared-object-common",
+  "name": "@microsoft/fluid-shared-object-base",
   "version": "0.10.0",
   "description": "Prague document loader",
   "main": "dist/index.js",
@@ -33,7 +33,7 @@
     "@prague/component-core-interfaces": "^0.10.0",
     "@prague/container-definitions": "^0.10.0",
     "@prague/protocol-definitions": "^0.10.0",
-    "@prague/runtime-definitions": "^0.10.0",
+    "@microsoft/fluid-runtime-definitions": "^0.10.0",
     "@prague/utils": "^0.10.0",
     "@types/debug": "^0.0.31",
     "@types/double-ended-queue": "^2.1.0",

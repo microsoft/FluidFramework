@@ -5,7 +5,7 @@
 
 import { IHost } from "@prague/container-definitions";
 import { IDocumentServiceFactory, ISequencedDocumentMessage } from "@prague/protocol-definitions";
-import { BaseWork} from "./baseWork";
+import { BaseWork } from "./baseWork";
 import { IWork } from "./definitions";
 import { Serializer } from "./serializer";
 

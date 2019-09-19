@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedMap } from "@prague/map";
+import { ISharedMap } from "@microsoft/fluid-map";
 import * as ui from "../ui";
 import { getProposedPlaybackTime, PlayerState, YouTubeWrapper } from "../utils/youtubeHelper";
 

@@ -3,16 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { ISegment, LocalReference, PropertySet, ReferenceType } from "@microsoft/fluid-merge-tree";
+import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { SequenceDeltaEvent, SequenceMaintenanceEvent, SharedString } from "@microsoft/fluid-sequence";
 import { PrimedComponent } from "@prague/aqueduct";
 import { IComponentHandle } from "@prague/component-core-interfaces";
-import {
-    ISegment,
-    LocalReference,
-    PropertySet,
-    ReferenceType,
-} from "@prague/merge-tree";
-import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
-import { SequenceDeltaEvent, SequenceMaintenanceEvent, SharedString } from "@prague/sequence";
 import { debug } from "./debug";
 import { clamp } from "./util/clamp";
 

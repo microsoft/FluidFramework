@@ -27,7 +27,7 @@ Prerequisites: [Node (with npm)](https://nodejs.org) installed
 
 4. Start installing Fluid packages into your package
 
-    `npm i @prague/container-runtime`
+    `npm i @microsoft/fluid-container-runtime`
 
 
 NOTE:

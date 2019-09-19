@@ -3,9 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent, PrimedComponentFactory } from "@prague/aqueduct";
-import { IComponent, IComponentHandle, IComponentHTMLOptions } from "@prague/component-core-interfaces";
-import { randomId, TokenList } from "@prague/flow-util";
 import {
     createInsertSegmentOp,
     createRemoveRangeOp,
@@ -21,9 +18,18 @@ import {
     reservedRangeLabelsKey,
     reservedTileLabelsKey,
     TextSegment,
-} from "@prague/merge-tree";
-import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
-import { SequenceDeltaEvent, SequenceMaintenanceEvent, SharedString, SharedStringFactory, SharedStringSegment } from "@prague/sequence";
+} from "@microsoft/fluid-merge-tree";
+import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import {
+    SequenceDeltaEvent,
+    SequenceMaintenanceEvent,
+    SharedString,
+    SharedStringFactory,
+    SharedStringSegment,
+} from "@microsoft/fluid-sequence";
+import { PrimedComponent, PrimedComponentFactory } from "@prague/aqueduct";
+import { IComponent, IComponentHandle, IComponentHTMLOptions } from "@prague/component-core-interfaces";
+import { randomId, TokenList } from "@prague/flow-util";
 import * as assert from "assert";
 import { clamp, emptyArray } from "../util";
 import { IHTMLAttributes } from "../util/attr";

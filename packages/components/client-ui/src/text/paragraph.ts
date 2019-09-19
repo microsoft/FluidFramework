@@ -4,8 +4,8 @@
  */
 
 // tslint:disable
-import * as MergeTree from "@prague/merge-tree";
-import * as Sequence from "@prague/sequence";
+import * as MergeTree from "@microsoft/fluid-merge-tree";
+import * as Sequence from "@microsoft/fluid-sequence";
 import { CharacterCodes } from "./characterCodes";
 
 type SharedString = Sequence.SharedString;

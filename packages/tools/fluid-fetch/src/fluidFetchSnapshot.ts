@@ -3,12 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-    IDocumentService,
-    IDocumentStorageService,
-    ISnapshotTree,
-    IVersion,
-} from "@prague/protocol-definitions";
+import { IDocumentService, IDocumentStorageService, ISnapshotTree, IVersion } from "@prague/protocol-definitions";
 import { fromBase64ToUtf8 } from "@prague/utils";
 import * as fs from "fs";
 import * as util from "util";
@@ -22,7 +17,6 @@ import {
     paramSave,
     paramSnapshotVersionIndex,
 } from "./fluidFetchArgs";
-
 import { latestVersionsId } from "./fluidFetchInit";
 
 async function fetchSnapshotTreeBlobs(

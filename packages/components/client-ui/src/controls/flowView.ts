@@ -6,6 +6,10 @@
 // tslint:disable:no-bitwise whitespace align switch-default no-string-literal ban-types
 // tslint:disable:no-angle-bracket-type-assertion arrow-parens
 import * as SearchMenu from "@chaincode/search-menu";
+import * as types from "@microsoft/fluid-map";
+import * as MergeTree from "@microsoft/fluid-merge-tree";
+import { IInboundSignalMessage } from "@microsoft/fluid-runtime-definitions";
+import * as Sequence from "@microsoft/fluid-sequence";
 import * as api from "@prague/client-api";
 import {
     IComponent,
@@ -13,9 +17,7 @@ import {
     IComponentHTMLVisual,
     IComponentLoadable,
 } from "@prague/component-core-interfaces";
-import {
-    IGenericBlob,
-} from "@prague/container-definitions";
+import { IGenericBlob } from "@prague/container-definitions";
 import {
     ComponentCursorDirection,
     IComponentCollection,
@@ -23,24 +25,9 @@ import {
     IComponentKeyHandlers,
     IComponentLayout,
 } from "@prague/framework-definitions";
-import * as types from "@prague/map";
-import * as MergeTree from "@prague/merge-tree";
-import {
-    ISequencedDocumentMessage,
-    IUser,
-} from "@prague/protocol-definitions";
-import {
-    IInboundSignalMessage,
-} from "@prague/runtime-definitions";
-import * as Sequence from "@prague/sequence";
-// tslint:disable-next-line:no-var-requires
-const performanceNow = require("performance-now");
+import { ISequencedDocumentMessage, IUser } from "@prague/protocol-definitions";
 import { blobUploadHandler } from "../blob";
-import {
-    CharacterCodes,
-    Paragraph,
-    Table,
-} from "../text";
+import { CharacterCodes, Paragraph, Table } from "../text";
 import * as ui from "../ui";
 import { Cursor, IRange } from "./cursor";
 import * as domutils from "./domutils";
@@ -49,6 +36,8 @@ import { PresenceSignal } from "./presenceSignal";
 import { Status } from "./status";
 import { UndoRedoStackManager } from "./undoRedo";
 
+// tslint:disable-next-line:no-var-requires
+const performanceNow = require("performance-now");
 interface IPersistentElement extends HTMLDivElement {
     component: IComponent;
 }
@@ -2782,7 +2771,8 @@ export class FlowCursor extends Cursor {
         // this would allow a user ID to be put on the wire which can then be mapped
         // back to an email, name, etc...
         const name = user.name;
-        const nameParts = name.split(" ");
+        // Name usually contains " ". Otherwise it's a clientId with "-".
+        const nameParts = name.indexOf(" ") !== -1 ? name.split(" ") : name.split("-");
         let initials = "";
         for (const part of nameParts) {
             initials += part.substring(0, 1);
@@ -5208,31 +5198,29 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
 
         if (segoff.segment) {
             const docClient = this.collabDocument.getClient(clientId);
-            if (docClient && docClient.client.type === "browser") {
-                const localPresenceInfo = {
-                    clientId,
-                    fresh: true,
-                    localRef: this.sharedString.createPositionReference(segoff.segment, segoff.offset,
-                        MergeTree.ReferenceType.SlideOnRemove),
-                    presenceColor: this.presenceVector.has(clientId) ?
-                        this.presenceVector.get(clientId).presenceColor :
-                        presenceColors[this.presenceVector.size % presenceColors.length],
-                    shouldShowCursor: () => {
-                        return this.collabDocument.clientId !== clientId &&
-                            Array.from(this.collabDocument.getClients().keys()).indexOf(clientId) !== -1;
-                    },
-                    user: docClient.client.user,
-                } as ILocalPresenceInfo;
-                if (remotePresenceInfo.origMark >= 0) {
-                    const markSegoff = this.sharedString.getContainingSegment(remotePresenceInfo.origMark);
-                    if (markSegoff.segment) {
-                        localPresenceInfo.markLocalRef =
-                            this.sharedString.createPositionReference(markSegoff.segment,
-                                markSegoff.offset, MergeTree.ReferenceType.SlideOnRemove);
-                    }
+            const localPresenceInfo = {
+                clientId,
+                fresh: true,
+                localRef: this.sharedString.createPositionReference(
+                    segoff.segment, segoff.offset, MergeTree.ReferenceType.SlideOnRemove),
+                presenceColor: this.presenceVector.has(clientId) ?
+                    this.presenceVector.get(clientId).presenceColor :
+                    presenceColors[this.presenceVector.size % presenceColors.length],
+                shouldShowCursor: () => {
+                    return this.collabDocument.clientId !== clientId;
+                },
+                // Temporary: Use the clientId as name if the user is not a part of the quorum.
+                user: docClient ? docClient.client.user : { name : clientId },
+            } as ILocalPresenceInfo;
+            if (remotePresenceInfo.origMark >= 0) {
+                const markSegoff = this.sharedString.getContainingSegment(remotePresenceInfo.origMark);
+                if (markSegoff.segment) {
+                    localPresenceInfo.markLocalRef =
+                    this.sharedString.createPositionReference(markSegoff.segment,
+                            markSegoff.offset, MergeTree.ReferenceType.SlideOnRemove);
                 }
-                this.updatePresenceVector(localPresenceInfo);
             }
+            this.updatePresenceVector(localPresenceInfo);
         }
     }
 

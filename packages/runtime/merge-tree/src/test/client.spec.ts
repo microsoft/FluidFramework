@@ -4,7 +4,7 @@
  */
 
 import * as assert from "assert";
-import * as MergeTree from "..";
+import * as MergeTree from "../";
 import { UniversalSequenceNumber } from "../constants";
 import { TextSegment } from "../textSegment";
 import { TestClient } from "./testClient";

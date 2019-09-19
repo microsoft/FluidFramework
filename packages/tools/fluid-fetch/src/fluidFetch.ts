@@ -7,12 +7,7 @@
 import * as fs from "fs";
 import * as util from "util";
 import { paramSave, parseArguments } from "./fluidFetchArgs";
-import {
-    connectionInfo,
-    fluidFetchInit,
-    paramDocumentService,
-} from "./fluidFetchInit";
-
+import { connectionInfo, fluidFetchInit, paramDocumentService } from "./fluidFetchInit";
 import { fluidFetchMessages } from "./fluidFetchMessages";
 import { fluidFetchSnapshot } from "./fluidFetchSnapshot";
 

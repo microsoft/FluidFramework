@@ -4,14 +4,9 @@
  */
 
 /* tslint:disable:no-unsafe-any*/
-import { ISharedMap, SharedMap } from "@prague/map";
-import {
-    FileMode,
-    ISequencedDocumentMessage,
-    ITree,
-    TreeEntry,
-} from "@prague/protocol-definitions";
-import { IComponentRuntime, IObjectStorageService } from "@prague/runtime-definitions";
+import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
+import { IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
+import { FileMode, ISequencedDocumentMessage, ITree, TreeEntry } from "@prague/protocol-definitions";
 import { fromBase64ToUtf8 } from "@prague/utils";
 import { debug } from "./debug";
 import { OwnedMapFactory } from "./ownedMapFactory";
