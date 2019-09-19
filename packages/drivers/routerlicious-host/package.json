@@ -1,5 +1,5 @@
 {
-  "name": "@prague/routerlicious-host",
+  "name": "@microsoft/fluid-routerlicious-host",
   "version": "0.10.0",
   "description": "Routerlicious host interfaces",
   "main": "dist/index.js",
@@ -29,8 +29,8 @@
     "typescript": "~3.4.5"
   },
   "dependencies": {
-    "@prague/component-core-interfaces": "^0.10.0",
-    "@prague/protocol-definitions": "^0.10.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.10.0",
+    "@microsoft/fluid-protocol-definitions": "^0.10.0",
     "@types/debug": "^0.0.31",
     "axios": "^0.18.0",
     "debug": "^4.1.1"

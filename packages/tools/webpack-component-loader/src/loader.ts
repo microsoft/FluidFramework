@@ -6,21 +6,21 @@
 import { getRandomName } from "@microsoft/fluid-server-services-core";
 
 // tslint:disable no-string-literal trailing-comma no-shadowed-variable no-submodule-imports no-floating-promises
-import { SimpleModuleInstantiationFactory } from "@prague/aqueduct";
-import { IHostConfig, start as startCore } from "@prague/base-host";
+import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
+import { IHostConfig, start as startCore } from "@microsoft/fluid-base-host";
 import {
     IRequest,
-} from "@prague/component-core-interfaces";
+} from "@microsoft/fluid-component-core-interfaces";
 import {
     IFluidModule,
     IFluidPackage,
     IPackage,
     IPraguePackage,
-} from "@prague/container-definitions";
-import { extractDetails, IResolvedPackage } from "@prague/loader-web";
+} from "@microsoft/fluid-container-definitions";
+import { IDocumentServiceFactory, IUrlResolver, IUser } from "@microsoft/fluid-protocol-definitions";
+import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
+import { extractDetails, IResolvedPackage } from "@microsoft/fluid-web-code-loader";
 import {TestDeltaConnectionServer, TestDocumentServiceFactory, TestResolver} from "@prague/local-test-server";
-import { IDocumentServiceFactory, IUrlResolver, IUser } from "@prague/protocol-definitions";
-import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
 import * as jwt from "jsonwebtoken";
 import * as uuid from "uuid/v4";
 import { InsecureUrlResolver } from "./insecureUrlResolver";
@@ -81,7 +81,7 @@ async function getPkg(packageJson: IPackage, scriptIds: string[], component = fa
 
     // Add script to page, rather than load bundle directly
     const scriptLoadP: Promise<void>[] = [];
-    const scriptIdPrefix = "pragueDevServerScriptToLoad";
+    const scriptIdPrefix = "fluidDevServerScriptToLoad";
     let scriptIndex = 0;
     fluidPackage.fluid.browser.umd.files.forEach((file) => {
         const script = document.createElement("script");
@@ -171,19 +171,6 @@ export async function start(
     let urlResolver: IUrlResolver;
     let npm: string;
     switch (options.mode) {
-        case "live":
-            npm = "https://pragueauspkn-3873244262.azureedge.net";
-            const host = options.fluidHost ? options.fluidHost : "https://www.wu2.prague.office-int.com";
-            urlResolver = new InsecureUrlResolver(
-                host,
-                host.replace("www", "alfred"),
-                host.replace("www", "historian"),
-                options.tenantId ? options.tenantId : "stoic-gates",
-                options.tenantSecret ? options.tenantSecret : "1a7f744b3c05ddc525965f17a1b58aa0",
-                getUser(),
-                bearerSecret);
-            break;
-
         case "localhost":
             npm = "http://localhost:3002";
             const localHost = "http://localhost:3000";
@@ -199,7 +186,19 @@ export async function start(
 
         case "local":
             urlResolver = new TestResolver();
-        default:
+            break;
+
+        default: // live
+            npm = "https://pragueauspkn-3873244262.azureedge.net";
+            const host = options.fluidHost ? options.fluidHost : "https://www.wu2.prague.office-int.com";
+            urlResolver = new InsecureUrlResolver(
+                host,
+                host.replace("www", "alfred"),
+                host.replace("www", "historian"),
+                options.tenantId ? options.tenantId : "stoic-gates",
+                options.tenantSecret ? options.tenantSecret : "1a7f744b3c05ddc525965f17a1b58aa0",
+                getUser(),
+                bearerSecret);
     }
 
     let documentServiceFactory: IDocumentServiceFactory;

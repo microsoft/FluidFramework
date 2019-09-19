@@ -3,21 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { ConnectionState } from "@prague/container-definitions";
+import { ConnectionState } from "@microsoft/fluid-container-definitions";
+import { readAndParse } from "@microsoft/fluid-core-utils";
 import {
     IDocumentStorageService,
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITree,
     MessageType,
-} from "@prague/protocol-definitions";
+} from "@microsoft/fluid-protocol-definitions";
 import {
     IChannel,
     IChannelAttributes,
     IComponentContext,
     IComponentRuntime,
-} from "@prague/runtime-definitions";
-import { readAndParse } from "@prague/utils";
+} from "@microsoft/fluid-runtime-definitions";
 import * as assert from "assert";
 import { createServiceEndpoints, IChannelContext, snapshotChannel } from "./channelContext";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";

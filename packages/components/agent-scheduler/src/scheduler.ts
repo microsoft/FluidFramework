@@ -10,11 +10,11 @@ import {
     IComponentRunnable,
     IRequest,
     IResponse,
-} from "@prague/component-core-interfaces";
-import { ComponentRuntime } from "@prague/component-runtime";
-import { ConsensusRegisterCollection } from "@prague/consensus-register-collection";
-import { ConnectionState } from "@prague/container-definitions";
-import { ISharedMap, SharedMap } from "@prague/map";
+} from "@microsoft/fluid-component-core-interfaces";
+import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
+import { ConnectionState } from "@microsoft/fluid-container-definitions";
+import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
+import { ConsensusRegisterCollection } from "@microsoft/fluid-register-collection";
 import {
     IAgentScheduler,
     IComponentContext,
@@ -22,8 +22,8 @@ import {
     IComponentRuntime,
     ITask,
     ITaskManager,
-} from "@prague/runtime-definitions";
-import { ISharedObjectFactory } from "@prague/shared-object-common";
+} from "@microsoft/fluid-runtime-definitions";
+import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import * as assert from "assert";
 import * as debug from "debug";
 import { EventEmitter } from "events";

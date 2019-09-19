@@ -21,7 +21,7 @@
   "author": "Microsoft",
   "repository": "microsoft/FluidFramework",
   "dependencies": {
-    "@prague/protocol-definitions": "^0.10.0",
+    "@microsoft/fluid-protocol-definitions": "^0.10.0",
     "@microsoft/fluid-replay-tool": "^0.10.0"
   },
   "devDependencies": {

@@ -1,5 +1,5 @@
 {
-  "name": "@prague/protocol-definitions",
+  "name": "@microsoft/fluid-protocol-definitions",
   "version": "0.10.0",
   "description": "Prague protocol definitions",
   "main": "dist/index.js",
@@ -21,7 +21,7 @@
   "author": "Microsoft",
   "repository": "microsoft/FluidFramework",
   "dependencies": {
-    "@prague/component-core-interfaces": "^0.10.0"
+    "@microsoft/fluid-component-core-interfaces": "^0.10.0"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.3.11",

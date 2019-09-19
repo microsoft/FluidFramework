@@ -1,5 +1,5 @@
 {
-  "name": "@prague/sequence",
+  "name": "@microsoft/fluid-sequence",
   "version": "0.10.0",
   "description": "Distributed map",
   "main": "dist/index.js",
@@ -46,9 +46,9 @@
   "devDependencies": {
     "@microsoft/api-extractor": "^7.3.11",
     "@microsoft/fluid-build-common": "^0.10.0",
-    "@prague/component-core-interfaces": "^0.10.0",
-    "@prague/gitresources": "^0.10.0",
-    "@prague/runtime-test-utils": "^0.10.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.10.0",
+    "@microsoft/fluid-gitresources": "^0.10.0",
+    "@microsoft/fluid-test-runtime-utils": "^0.10.0",
     "@microsoft/fluid-server-services-client": "^0.10.0",
     "@types/debug": "^0.0.31",
     "@types/diff": "^3.5.1",
@@ -67,12 +67,12 @@
     "xmldoc": "^1.1.2"
   },
   "dependencies": {
-    "@prague/map": "^0.10.0",
-    "@prague/merge-tree": "^0.10.0",
-    "@prague/protocol-definitions": "^0.10.0",
-    "@prague/runtime-definitions": "^0.10.0",
-    "@prague/shared-object-common": "^0.10.0",
-    "@prague/utils": "^0.10.0",
+    "@microsoft/fluid-map": "^0.10.0",
+    "@microsoft/fluid-merge-tree": "^0.10.0",
+    "@microsoft/fluid-protocol-definitions": "^0.10.0",
+    "@microsoft/fluid-runtime-definitions": "^0.10.0",
+    "@microsoft/fluid-shared-object-base": "^0.10.0",
+    "@microsoft/fluid-core-utils": "^0.10.0",
     "debug": "^4.1.1",
     "lodash": "^4.17.11"
   },

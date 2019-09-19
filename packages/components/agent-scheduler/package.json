@@ -1,5 +1,5 @@
 {
-  "name": "@component/agent-scheduler",
+  "name": "@microsoft/fluid-agent-scheduler",
   "description": "Component in charge of distributing agents across instances of a component",
   "version": "0.10.0",
   "author": "Microsoft",
@@ -63,13 +63,13 @@
     }
   },
   "dependencies": {
-    "@prague/component-core-interfaces": "^0.10.0",
-    "@prague/component-runtime": "^0.10.0",
-    "@prague/consensus-register-collection": "^0.10.0",
-    "@prague/container-definitions": "^0.10.0",
-    "@prague/map": "^0.10.0",
-    "@prague/runtime-definitions": "^0.10.0",
-    "@prague/shared-object-common": "^0.10.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.10.0",
+    "@microsoft/fluid-component-runtime": "^0.10.0",
+    "@microsoft/fluid-register-collection": "^0.10.0",
+    "@microsoft/fluid-map": "^0.10.0",
+    "@microsoft/fluid-runtime-definitions": "^0.10.0",
+    "@microsoft/fluid-shared-object-base": "^0.10.0",
+    "@microsoft/fluid-container-definitions": "^0.10.0",
     "debug": "^4.1.1"
   },
   "devDependencies": {

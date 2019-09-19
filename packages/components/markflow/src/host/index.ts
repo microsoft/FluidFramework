@@ -3,9 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent, PrimedComponentFactory } from "@prague/aqueduct";
-import { IComponent, IComponentHTMLOptions, IComponentHTMLView, IComponentHTMLVisual } from "@prague/component-core-interfaces";
-import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
+import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
+import {
+    IComponent,
+    IComponentHTMLOptions,
+    IComponentHTMLView,
+    IComponentHTMLVisual,
+} from "@microsoft/fluid-component-core-interfaces";
+import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { FlowDocument } from "../document";
 import { FlowDocumentType } from "../runtime";
 import { WebflowView } from "./host";

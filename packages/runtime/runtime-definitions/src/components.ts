@@ -11,7 +11,7 @@ import {
     IProvideComponentSerializer,
     IRequest,
     IResponse,
-} from "@prague/component-core-interfaces";
+} from "@microsoft/fluid-component-core-interfaces";
 import {
     ConnectionState,
     IBlobManager,
@@ -20,7 +20,7 @@ import {
     ILoader,
     IQuorum,
     ITelemetryLogger,
-} from "@prague/container-definitions";
+} from "@microsoft/fluid-container-definitions";
 import {
     IDocumentMessage,
     IDocumentStorageService,
@@ -28,10 +28,11 @@ import {
     ISnapshotTree,
     ITreeEntry,
     MessageType,
-} from "@prague/protocol-definitions";
+} from "@microsoft/fluid-protocol-definitions";
 
 import { EventEmitter } from "events";
-import { ComponentFactoryTypes, IChannel } from ".";
+import { IChannel } from ".";
+import { IProvideComponentRegistry } from "./componentRegistry";
 
 /**
  * Represents the runtime for the component. Contains helper functions/state of the component.
@@ -286,7 +287,11 @@ export enum FlushMode {
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
  */
-export interface IHostRuntime extends EventEmitter, IProvideComponentSerializer, IProvideComponentHandleContext {
+export interface IHostRuntime extends
+    EventEmitter,
+    IProvideComponentSerializer,
+    IProvideComponentHandleContext,
+    IProvideComponentRegistry {
     readonly id: string;
     readonly existing: boolean;
     readonly options: any;
@@ -326,12 +331,6 @@ export interface IHostRuntime extends EventEmitter, IProvideComponentSerializer,
      * Returns the current quorum.
      */
     getQuorum(): IQuorum;
-
-    /**
-     * Returns the component factory for a particular package.
-     * @param name - Name of the package.
-     */
-    getPackage(name: string): Promise<ComponentFactoryTypes>;
 
     /**
      * Used to raise an unrecoverable error on the runtime.

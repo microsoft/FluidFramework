@@ -3,6 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export const TableDocumentType = "@chaincode/table-document/TableDocument";
+export const TableDocumentType = "@fluid-example/table-document/TableDocument";
 
-export const TableSliceType = "@chaincode/table-document/TableSlice";
+export const TableSliceType = "@fluid-example/table-document/TableSlice";

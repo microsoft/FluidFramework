@@ -1,5 +1,5 @@
 {
-  "name": "@prague/component-runtime",
+  "name": "@microsoft/fluid-component-runtime",
   "version": "0.10.0",
   "description": "Prague component API",
   "main": "dist/index.js",
@@ -36,12 +36,12 @@
     "typescript": "~3.4.5"
   },
   "dependencies": {
-    "@prague/component-core-interfaces": "^0.10.0",
-    "@prague/container-definitions": "^0.10.0",
-    "@prague/protocol-definitions": "^0.10.0",
-    "@prague/runtime-definitions": "^0.10.0",
-    "@prague/shared-object-common": "^0.10.0",
-    "@prague/utils": "^0.10.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.10.0",
+    "@microsoft/fluid-container-definitions": "^0.10.0",
+    "@microsoft/fluid-protocol-definitions": "^0.10.0",
+    "@microsoft/fluid-runtime-definitions": "^0.10.0",
+    "@microsoft/fluid-shared-object-base": "^0.10.0",
+    "@microsoft/fluid-core-utils": "^0.10.0",
     "debug": "^4.1.1"
   },
   "license": "MIT"

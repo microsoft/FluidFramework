@@ -3,13 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import {
-    IComponentHandle,
-    IComponentHandleContext,
-    IRequest,
-    IResponse,
-} from "@prague/component-core-interfaces";
-import { IRuntime } from "@prague/container-definitions";
+import { IComponentHandle, IComponentHandleContext, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
+import { IRuntime } from "@microsoft/fluid-container-definitions";
 
 export class ComponentHandleContext implements IComponentHandleContext {
     public get IComponentRouter() { return this; }

@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage } from "@prague/protocol-definitions";
+import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
-import { SegmentGroup } from "..";
+import { SegmentGroup } from "../";
 import { UnassignedSequenceNumber } from "../constants";
 import { TestClient } from "./testClient";
 import { TestClientLogger } from "./testClientLogger";

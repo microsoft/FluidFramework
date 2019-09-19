@@ -1,5 +1,5 @@
 {
-  "name": "@chaincode/flow-intel-viewer",
+  "name": "@fluid-example/flow-intel-viewer",
   "description": "Chaincode for viewing insights in flow-scroll",
   "version": "0.10.0",
   "author": "Microsoft",
@@ -40,8 +40,8 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@prague/component-core-interfaces": "^0.10.0",
-    "@prague/map": "^0.10.0"
+    "@microsoft/fluid-component-core-interfaces": "^0.10.0",
+    "@microsoft/fluid-map": "^0.10.0"
   },
   "devDependencies": {
     "@microsoft/fluid-build-common": "^0.10.0",

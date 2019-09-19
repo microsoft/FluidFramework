@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as resources from "@prague/gitresources";
+import * as resources from "@microsoft/fluid-gitresources";
 import { Router } from "express";
 import * as nconf from "nconf";
 import * as git from "nodegit";

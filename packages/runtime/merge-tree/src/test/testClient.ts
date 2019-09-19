@@ -3,20 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage, ITree, MessageType } from "@prague/protocol-definitions";
-import { IComponentRuntime } from "@prague/runtime-definitions";
-import { MockStorage } from "@prague/runtime-test-utils";
-import { DebugLogger } from "@prague/utils";
+import { DebugLogger } from "@microsoft/fluid-core-utils";
+import { ISequencedDocumentMessage, ITree, MessageType } from "@microsoft/fluid-protocol-definitions";
+import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { MockStorage } from "@microsoft/fluid-test-runtime-utils";
 import * as assert from "assert";
 import * as random from "random-js";
 import { Client } from "../client";
 import * as Collections from "../collections";
 import { UnassignedSequenceNumber } from "../constants";
-import {
-    ISegment,
-    Marker,
-    MergeTree,
-} from "../mergeTree";
+import { ISegment, Marker, MergeTree } from "../mergeTree";
 import { createInsertSegmentOp } from "../opBuilder";
 import { IJSONSegment, IMarkerDef, IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops";
 import { PropertySet } from "../properties";

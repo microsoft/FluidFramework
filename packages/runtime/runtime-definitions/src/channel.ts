@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentLoadable } from "@prague/component-core-interfaces";
-import { ConnectionState } from "@prague/container-definitions";
-import { ISequencedDocumentMessage, ITree } from "@prague/protocol-definitions";
+import { IComponentLoadable } from "@microsoft/fluid-component-core-interfaces";
+import { ConnectionState } from "@microsoft/fluid-container-definitions";
+import { ISequencedDocumentMessage, ITree } from "@microsoft/fluid-protocol-definitions";
 import { IChannelAttributes } from "./storage";
 
-declare module "@prague/container-definitions" {
+declare module "@microsoft/fluid-container-definitions" {
     interface IComponent extends Readonly<Partial<IProvideChannel>> {
     }
 }

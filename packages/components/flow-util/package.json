@@ -1,5 +1,5 @@
 {
-  "name": "@prague/flow-util",
+  "name": "@fluid-example/flow-util-lib",
   "version": "0.10.0",
   "description": "Shared utility code for Flow-* packages.",
   "main": "dist/index.js",

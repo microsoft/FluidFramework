@@ -9,8 +9,16 @@ require("jsdom-global")("", { url: "http://localhost" });
 window.performance.mark = window.performance.mark || (() => {});
 window.performance.measure = window.performance.measure || (() => {});
 
+// tslint:enable:mocha-no-side-effect-code
+// tslint:disable:binary-expression-operand-order
+import { TestHost } from "@prague/local-test-server";
+import { strict as assert } from "assert";
 // tslint:disable-next-line:no-import-side-effect
 import "mocha";
+import { FlowDocument, flowDocumentFactory } from "../src/document";
+import { markdownFormatter } from "../src/markdown/formatters";
+import { flowDocumentType } from "../src/runtime";
+import { Layout } from "../src/view/layout";
 
 // import * as debug from "debug";
 // debug.enable("flow:*");
@@ -34,16 +42,6 @@ function processTests(tests: { markdown: string, html: string, section: string }
 
     return result;
 }
-
-// tslint:enable:mocha-no-side-effect-code
-
-// tslint:disable:binary-expression-operand-order
-import { TestHost } from "@prague/local-test-server";
-import { strict as assert } from "assert";
-import { FlowDocument, flowDocumentFactory } from "../src/document";
-import { markdownFormatter } from "../src/markdown/formatters";
-import { flowDocumentType } from "../src/runtime";
-import { Layout } from "../src/view/layout";
 
 // interface ISnapshotNode {
 //     node: Node;

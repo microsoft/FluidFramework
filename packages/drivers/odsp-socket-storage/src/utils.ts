@@ -118,7 +118,11 @@ export function whitelist(retriableCodes: number[]): RetryFilter {
 export function getWithRetryForTokenRefresh<T>(get: (refresh: boolean) => Promise<T>) {
     return get(false).catch(async (e) => {
         // if the error is 401 or 403 refresh the token and try once more.
-        if (e === 401 || e === 403) {
+        let statusCode = e;
+        if (typeof e === "object" && e !== null && e.statusCode !== undefined) {
+            statusCode = e.statusCode;
+        }
+        if (statusCode === 401 || statusCode === 403) {
             return get(true);
         }
 

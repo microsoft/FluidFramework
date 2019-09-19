@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IPackage } from "@prague/container-definitions";
+import { IPackage } from "@microsoft/fluid-container-definitions";
 
 export interface IPackument {
     _attachments: any;
@@ -84,7 +84,7 @@ export interface IPackageManager extends IProvidePackageManager {
     search(params: ISearchParams): Promise<ISearchResult>;
 }
 
-declare module "@prague/component-core-interfaces" {
+declare module "@microsoft/fluid-component-core-interfaces" {
     export interface IComponent extends Readonly<Partial<IProvidePackageManager>> {
     }
 }

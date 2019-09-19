@@ -7,21 +7,21 @@ import {
     IComponent,
     IRequest,
     IResponse,
-} from "@prague/component-core-interfaces";
+} from "@microsoft/fluid-component-core-interfaces";
 import {
     ICodeLoader,
     IHost,
     ILoader,
     ITelemetryBaseLogger,
-} from "@prague/container-definitions";
+} from "@microsoft/fluid-container-definitions";
+import { Deferred } from "@microsoft/fluid-core-utils";
 import {
     IDocumentService,
     IDocumentServiceFactory,
     IFluidResolvedUrl,
     IResolvedUrl,
     ISequencedDocumentMessage,
-} from "@prague/protocol-definitions";
-import { Deferred } from "@prague/utils";
+} from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
 // tslint:disable-next-line:no-var-requires
 const now = require("performance-now") as () => number;

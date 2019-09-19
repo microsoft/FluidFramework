@@ -25,12 +25,12 @@
     "typescript": "~3.4.5"
   },
   "dependencies": {
-    "@prague/container-loader": "^0.10.0",
+    "@microsoft/fluid-container-loader": "^0.10.0",
     "@microsoft/fluid-server-lambdas": "^0.10.0",
     "@microsoft/fluid-server-services-client": "^0.10.0",
-    "@prague/protocol-definitions": "^0.10.0",
+    "@microsoft/fluid-protocol-definitions": "^0.10.0",
     "@microsoft/fluid-server-services-core": "^0.10.0",
-    "@prague/utils": "^0.10.0",
+    "@microsoft/fluid-core-utils": "^0.10.0",
     "@types/debug": "^0.0.31",
     "@types/double-ended-queue": "^2.1.0",
     "@types/lodash": "^4.14.118",

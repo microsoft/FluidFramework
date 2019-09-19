@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ISegment } from "@prague/merge-tree";
-import { SequenceEvent } from "@prague/sequence";
+import { ISegment } from "@microsoft/fluid-merge-tree";
+import { SequenceEvent } from "@microsoft/fluid-sequence";
 import { Caret } from "../editor/caret";
 import { emptyObject } from "../util";
 import { debug } from "./debug";

@@ -20,8 +20,8 @@
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "dependencies": {
-    "@prague/container-definitions": "^0.10.0",
-    "@prague/protocol-definitions": "^0.10.0",
+    "@microsoft/fluid-container-definitions": "^0.10.0",
+    "@microsoft/fluid-protocol-definitions": "^0.10.0",
     "request": "^2.88.0"
   },
   "devDependencies": {

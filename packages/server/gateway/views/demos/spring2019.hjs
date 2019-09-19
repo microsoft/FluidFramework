@@ -14,7 +14,7 @@
         Type "insert monaco" and "insert chart" to add Monaco and Charts respectively.
     </p>
     <li class="list-unstyled">
-        <a href="/loader/prague/{{chartMonacoMoniker}}?chaincode=@chaincode/shared-text@{{version}}" target="_blank">Data + Code Bindings</a>
+        <a href="/loader/prague/{{chartMonacoMoniker}}?chaincode=@fluid-example/shared-text@{{version}}" target="_blank">Data + Code Bindings</a>
     </li>
     <p>
         For a coding example start by pasting in the code to the Monaco editor. This sample comes with two errors:
@@ -107,7 +107,7 @@ function getRandomValues(length: number): number[] {
     <ul class="list-unstyled">
         <li><a href="https://docs.google.com/document/d/1Ed3_Bgmfj4L1tvjjh8geSHNZMbh_X6SaRd1uZGSQSio/edit"
                 target="_blank">Google Docs Pride and Prejudice</a></li>
-        <li><a href="/loader/prague/{{sharedTextMoniker}}?chaincode=@chaincode/shared-text@{{version}}&template=pp.txt" target="_blank">Fluid Pride and Prejudice</a></li>
+        <li><a href="/loader/prague/{{sharedTextMoniker}}?chaincode=@fluid-example/shared-text@{{version}}&template=pp.txt" target="_blank">Fluid Pride and Prejudice</a></li>
     </ul>
 
 

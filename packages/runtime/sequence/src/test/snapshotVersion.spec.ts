@@ -4,7 +4,7 @@
  */
 
 import { GitManager } from "@microsoft/fluid-server-services-client";
-import * as mocks from "@prague/runtime-test-utils";
+import * as mocks from "@microsoft/fluid-test-runtime-utils";
 import * as assert from "assert";
 import * as fs from "fs";
 import * as path from "path";

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IDeltaQueue } from "@prague/container-definitions";
-import { Deferred } from "@prague/utils";
+import { IDeltaQueue } from "@microsoft/fluid-container-definitions";
+import { Deferred } from "@microsoft/fluid-core-utils";
 import * as assert from "assert";
 import * as Deque from "double-ended-queue";
 import { EventEmitter } from "events";

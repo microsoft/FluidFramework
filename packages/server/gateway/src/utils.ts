@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { IUser, ScopeType } from "@microsoft/fluid-protocol-definitions";
 import { generateToken, IAlfredTenant } from "@microsoft/fluid-server-services-core";
-import { IUser, ScopeType } from "@prague/protocol-definitions";
 import { Request } from "express";
 // In this case we want @types/express-serve-static-core, not express-serve-static-core, and so disable the lint rule
 // tslint:disable-next-line:no-implicit-dependencies

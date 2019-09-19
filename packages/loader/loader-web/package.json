@@ -1,5 +1,5 @@
 {
-  "name": "@prague/loader-web",
+  "name": "@microsoft/fluid-web-code-loader",
   "version": "0.10.0",
   "description": "Loader client app",
   "main": "dist/index.js",
@@ -30,7 +30,7 @@
     "typescript": "~3.4.5"
   },
   "dependencies": {
-    "@prague/container-definitions": "^0.10.0",
+    "@microsoft/fluid-container-definitions": "^0.10.0",
     "@types/node": "^10.12.12",
     "isomorphic-fetch": "^2.2.1"
   },

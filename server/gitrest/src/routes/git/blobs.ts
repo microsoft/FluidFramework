@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IBlob, ICreateBlobParams, ICreateBlobResponse } from "@prague/gitresources";
+import { IBlob, ICreateBlobParams, ICreateBlobResponse } from "@microsoft/fluid-gitresources";
 import { Router } from "express";
 import * as nconf from "nconf";
 import * as utils from "../../utils";

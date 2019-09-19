@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@prague/component-core-interfaces";
-import { ComponentRuntime } from "@prague/component-runtime";
-import { IBlobManager, IGenericBlob } from "@prague/container-definitions";
-import { MapFactory } from "@prague/map";
-import { IDocumentStorageService } from "@prague/protocol-definitions";
-import { IComponentContext } from "@prague/runtime-definitions";
+import { IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
+import { IBlobManager, IGenericBlob } from "@microsoft/fluid-container-definitions";
+import { MapFactory } from "@microsoft/fluid-map";
+import { IDocumentStorageService } from "@microsoft/fluid-protocol-definitions";
+import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
 
 // const blobMetaData = this.blobManager!.getBlobMetadata();
 // entries[".blobs"] = {

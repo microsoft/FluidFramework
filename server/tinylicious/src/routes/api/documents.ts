@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { IAlfredTenant, IDocumentStorage } from "@microsoft/fluid-server-services-core";
+import { IDocumentStorage } from "@microsoft/fluid-server-services-core";
 import { Router } from "express";
 import { getParam } from "../../utils";
 
-export function create(storage: IDocumentStorage, appTenants: IAlfredTenant[]): Router {
+export function create(storage: IDocumentStorage): Router {
 
     const router: Router = Router();
 
-    router.get("/:tenantId?/:id", (request, response, next) => {
+    router.get("/:tenantId?/:id", (request, response) => {
         const documentP = storage.getDocument(
-            getParam(request.params, "tenantId") || appTenants[0].id,
+            getParam(request.params, "tenantId"),
             getParam(request.params, "id"));
         documentP.then(
             (document) => {
@@ -27,9 +27,9 @@ export function create(storage: IDocumentStorage, appTenants: IAlfredTenant[]): 
     /**
      * Lists all forks of the specified document
      */
-    router.get("/:tenantId?/:id/forks", (request, response, next) => {
+    router.get("/:tenantId?/:id/forks", (request, response) => {
         const forksP = storage.getForks(
-            getParam(request.params, "tenantId") || appTenants[0].id,
+            getParam(request.params, "tenantId"),
             getParam(request.params, "id"));
         forksP.then(
             (forks) => {
@@ -43,9 +43,9 @@ export function create(storage: IDocumentStorage, appTenants: IAlfredTenant[]): 
     /**
      * Creates a new fork for the specified document
      */
-    router.post("/:tenantId?/:id/forks", (request, response, next) => {
+    router.post("/:tenantId?/:id/forks", (request, response) => {
         const forkIdP = storage.createFork(
-            getParam(request.params, "tenantId") || appTenants[0].id,
+            getParam(request.params, "tenantId"),
             getParam(request.params, "id"));
         forkIdP.then(
             (forkId) => {

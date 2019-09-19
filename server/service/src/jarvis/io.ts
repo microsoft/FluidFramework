@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentMessage, ITokenClaims } from "@prague/runtime-definitions";
+import { IDocumentMessage, ITokenClaims } from "@microsoft/fluid-runtime-definitions";
 import * as core from "@microsoft/fluid-server-services-core";
 import * as socketStorage from "@prague/socket-storage";
 import * as http from "http";

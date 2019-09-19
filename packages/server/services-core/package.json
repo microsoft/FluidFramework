@@ -25,11 +25,11 @@
     "typescript": "~3.4.5"
   },
   "dependencies": {
-    "@prague/container-definitions": "^0.10.0",
-    "@prague/gitresources": "^0.10.0",
-    "@prague/protocol-definitions": "^0.10.0",
+    "@microsoft/fluid-container-definitions": "^0.10.0",
+    "@microsoft/fluid-gitresources": "^0.10.0",
+    "@microsoft/fluid-protocol-definitions": "^0.10.0",
     "@microsoft/fluid-server-services-client": "^0.10.0",
-    "@prague/utils": "^0.10.0",
+    "@microsoft/fluid-core-utils": "^0.10.0",
     "@types/jsonwebtoken": "^8.3.0",
     "@types/nconf": "^0.0.37",
     "@types/node": "^10.12.12",

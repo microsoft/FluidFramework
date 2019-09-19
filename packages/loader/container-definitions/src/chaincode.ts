@@ -8,7 +8,7 @@ import {
     IComponentConfiguration,
     IRequest,
     IResponse,
-} from "@prague/component-core-interfaces";
+} from "@microsoft/fluid-component-core-interfaces";
 import {
     IDocumentMessage,
     IDocumentStorageService,
@@ -17,7 +17,7 @@ import {
     ISnapshotTree,
     ITree,
     MessageType,
-} from "@prague/protocol-definitions";
+} from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
 import { IBlobManager } from "./blobs";
 import { IQuorum } from "./consensus";
@@ -255,7 +255,7 @@ export interface IRuntimeFactory extends IProvideRuntimeFactory {
     instantiateRuntime(context: IContainerContext): Promise<IRuntime>;
 }
 
-declare module "@prague/component-core-interfaces" {
+declare module "@microsoft/fluid-component-core-interfaces" {
     export interface IComponent extends Readonly<Partial<
         IProvideRuntimeFactory &
         IProvideComponentTokenProvider &
