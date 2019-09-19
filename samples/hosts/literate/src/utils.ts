@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IPlatform } from "@prague/container-definitions";
+import { IComponent } from "@prague/component-core-interfaces";
+import { IFluidCodeDetails } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
 import { parse } from "querystring";
 
@@ -11,7 +12,7 @@ import { parse } from "querystring";
  * The initializeChaincode method takes in a document and a desired NPM package and establishes a code quorum
  * on this package.
  */
-export async function initializeChaincode(document: Container, pkg: string): Promise<void> {
+export async function initializeChaincode(document: Container, pkg: IFluidCodeDetails): Promise<void> {
     if (!pkg) {
         return;
     }
@@ -24,30 +25,33 @@ export async function initializeChaincode(document: Container, pkg: string): Pro
     }
 
     // And then make the proposal if a code proposal has not yet been made
-    if (!quorum.has("code2")) {
-        await quorum.propose("code2", pkg);
+    if (!quorum.has("code")) {
+        await quorum.propose("code", pkg);
     }
 
-    console.log(`Code is ${quorum.get("code2")}`);
+    console.log(`Code is ${quorum.get("code")}`);
 }
 
 /**
  * attachCore is used to make a request against the loader to load a prague component. And then attaches to it once
  * found.
  */
-async function attachCore(loader: Loader, url: string, platform: IPlatform) {
+async function attachCore(loader: Loader, url: string, div: HTMLDivElement) {
     const response = await loader.request({ url });
 
-    if (response.status !== 200) {
+    if (response.status !== 200 || response.mimeType === "fluid/component") {
         return;
     }
 
-    switch (response.mimeType) {
-        case "fluid/component":
-            const component = response.value;
-            component.attach(platform);
-            break;
+    // Check if the component is viewable
+    const component = response.value as IComponent;
+    const viewable = component.IComponentHTMLVisual;
+    if (!viewable) {
+        return;
     }
+
+    const renderable = viewable.addView ? viewable.addView() : viewable;
+    renderable.render(div, { display: "block" });
 }
 
 /**
@@ -55,10 +59,10 @@ async function attachCore(loader: Loader, url: string, platform: IPlatform) {
  * on the document it listens for the "contextChanged" event which fires when a new code value is quorumed on. In this
  * case it simply runs the attach method again.
  */
-export async function attach(loader: Loader, container: Container, url: string, platform: IPlatform) {
-    attachCore(loader, url, platform);
+export async function attach(loader: Loader, container: Container, url: string, div: HTMLDivElement) {
+    attachCore(loader, url, div);
     container.on("contextChanged", () => {
-        attachCore(loader, url, platform);
+        attachCore(loader, url, div);
     });
 }
 
