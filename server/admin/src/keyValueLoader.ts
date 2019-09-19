@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { getLoader } from "@prague/base-host";
-import { IComponent } from "@prague/component-core-interfaces";
-import { Container, Loader } from "@prague/container-loader";
-import { IResolvedUrl, ScopeType } from "@prague/protocol-definitions";
+import { getLoader } from "@microsoft/fluid-base-host";
+import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+import { Container, Loader } from "@microsoft/fluid-container-loader";
+import { IResolvedUrl, ScopeType } from "@microsoft/fluid-protocol-definitions";
 import { NodeCodeLoader } from "@microsoft/fluid-server-services";
-import { Deferred } from "@prague/utils";
+import { Deferred } from "@microsoft/fluid-core-utils";
 import Axios from "axios";
 import * as jwt from "jsonwebtoken";
 import { Provider } from "nconf";

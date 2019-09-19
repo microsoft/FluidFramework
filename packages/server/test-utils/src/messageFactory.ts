@@ -4,6 +4,14 @@
  */
 
 import {
+    IClientJoin,
+    IDocumentMessage,
+    IDocumentSystemMessage,
+    ISequencedDocumentMessage,
+    MessageType,
+    ScopeType,
+} from "@microsoft/fluid-protocol-definitions";
+import {
     BoxcarType,
     IBoxcarMessage,
     IKafkaMessage,
@@ -12,14 +20,6 @@ import {
     RawOperationType,
     SequencedOperationType,
 } from "@microsoft/fluid-server-services-core";
-import {
-    IClientJoin,
-    IDocumentMessage,
-    IDocumentSystemMessage,
-    ISequencedDocumentMessage,
-    MessageType,
-    ScopeType,
-} from "@prague/protocol-definitions";
 
 import hash = require("string-hash");
 

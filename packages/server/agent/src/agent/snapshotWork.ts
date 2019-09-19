@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IHost } from "@prague/container-definitions";
-import { IDocumentServiceFactory, ISequencedDocumentMessage } from "@prague/protocol-definitions";
+import { IHost } from "@microsoft/fluid-container-definitions";
+import { IDocumentServiceFactory, ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { BaseWork } from "./baseWork";
 import { IWork } from "./definitions";
 import { Serializer } from "./serializer";

@@ -3,8 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { TableDocument, TableDocumentType, TableSlice, TableSliceType } from "@chaincode/table-document";
 import { TestHost } from "@prague/local-test-server";
+import {
+    TableDocument,
+    TableDocumentType,
+    TableSliceType,
+    TableSlice,
+} from "@fluid-example/table-document";
 import * as assert from "assert";
 import "mocha";
 
@@ -13,9 +18,9 @@ describe("TableDocument", () => {
 
     before(() => {
         host = new TestHost([
-            [TableDocumentType, import("@chaincode/table-document").then(
+            [TableDocumentType, import("@fluid-example/table-document").then(
                 (m) => m.TableDocument.getFactory())],
-            [TableSliceType, import("@chaincode/table-document").then(
+            [TableSliceType, import("@fluid-example/table-document").then(
                 (m) => m.TableSlice.getFactory())],
         ]);
     });

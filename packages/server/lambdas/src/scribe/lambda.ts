@@ -3,6 +3,20 @@
  * Licensed under the MIT License.
  */
 
+import { IQuorumSnapshot, ProtocolOpHandler } from "@microsoft/fluid-container-loader";
+import { ICreateCommitParams, ICreateTreeEntry } from "@microsoft/fluid-gitresources";
+import {
+    FileMode,
+    IDocumentAttributes,
+    IDocumentMessage,
+    ISequencedDocumentMessage,
+    ISummaryAck,
+    ISummaryContent,
+    ISummaryNack,
+    ITreeEntry,
+    MessageType,
+    TreeEntry,
+} from "@microsoft/fluid-protocol-definitions";
 import { IGitManager } from "@microsoft/fluid-server-services-client";
 import {
     extractBoxcar,
@@ -17,20 +31,6 @@ import {
     RawOperationType,
     SequencedOperationType,
 } from "@microsoft/fluid-server-services-core";
-import { IQuorumSnapshot, ProtocolOpHandler } from "@prague/container-loader";
-import { ICreateCommitParams, ICreateTreeEntry } from "@prague/gitresources";
-import {
-    FileMode,
-    IDocumentAttributes,
-    IDocumentMessage,
-    ISequencedDocumentMessage,
-    ISummaryAck,
-    ISummaryContent,
-    ISummaryNack,
-    ITreeEntry,
-    MessageType,
-    TreeEntry,
-} from "@prague/protocol-definitions";
 import * as Deque from "double-ended-queue";
 import * as _ from "lodash";
 import { SequencedLambda } from "../sequencedLambda";

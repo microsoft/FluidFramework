@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ICreateTreeParams, ITree, ITreeEntry } from "@prague/gitresources";
+import { ICreateTreeParams, ITree, ITreeEntry } from "@microsoft/fluid-gitresources";
 import { Router } from "express";
 import * as nconf from "nconf";
 import * as git from "nodegit";

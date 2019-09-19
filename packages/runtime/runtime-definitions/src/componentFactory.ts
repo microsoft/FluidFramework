@@ -5,7 +5,7 @@
 
 import { IComponentContext } from "./components";
 
-declare module "@prague/component-core-interfaces" {
+declare module "@microsoft/fluid-component-core-interfaces" {
     export interface IComponent extends Readonly<Partial<IProvideComponentFactory>> {
     }
 }

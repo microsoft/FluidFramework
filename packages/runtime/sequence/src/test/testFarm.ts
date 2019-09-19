@@ -14,7 +14,7 @@ import {
 } from "@microsoft/fluid-merge-tree/dist/constants";
 import { insertOverlayNode, onodeTypeKey, OverlayNodePosition } from "@microsoft/fluid-merge-tree/dist/overlayTree";
 import { loadTextFromFile, TestClient, TestServer } from "@microsoft/fluid-merge-tree/dist/test/";
-import { ISequencedDocumentMessage } from "@prague/protocol-definitions";
+import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import * as JsDiff from "diff";
 import * as fs from "fs";
 import * as path from "path";

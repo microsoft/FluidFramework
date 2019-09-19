@@ -3,9 +3,17 @@
  * Licensed under the MIT License.
  */
 
+import { FileDeltaStorageService } from "@microsoft/fluid-file-driver";
 import { createGroupOp, IJSONSegment, IMergeTreeOp, ISegment, MergeTreeDeltaType } from "@microsoft/fluid-merge-tree";
 // tslint:disable-next-line: no-submodule-imports
 import { TestClient } from "@microsoft/fluid-merge-tree/dist/test/testClient";
+import {
+    IBlob,
+    ISequencedDocumentMessage,
+    ITree,
+    ITreeEntry,
+    MessageType,
+} from "@microsoft/fluid-protocol-definitions";
 import { IAttachMessage } from "@microsoft/fluid-runtime-definitions";
 import {
     SharedNumberSequenceFactory,
@@ -13,8 +21,6 @@ import {
     SharedStringFactory,
     SparseMatrixFactory,
 } from "@microsoft/fluid-sequence";
-import { FileDeltaStorageService } from "@prague/file-socket-storage";
-import { IBlob, ISequencedDocumentMessage, ITree, ITreeEntry, MessageType } from "@prague/protocol-definitions";
 import * as assert from "assert";
 import * as fs from "fs";
 import { ReplayArgs } from "./replayArgs";

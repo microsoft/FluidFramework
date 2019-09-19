@@ -4,7 +4,7 @@
  */
 
 // set the base path for all dynamic imports first
-import { IContainerContext, IRuntime, IRuntimeFactory } from "@prague/container-definitions";
+import { IContainerContext, IRuntime, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
 // tslint:disable-next-line:no-import-side-effect
 import "./publicpath";
 

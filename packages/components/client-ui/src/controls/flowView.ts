@@ -5,27 +5,27 @@
 
 // tslint:disable:no-bitwise whitespace align switch-default no-string-literal ban-types
 // tslint:disable:no-angle-bracket-type-assertion arrow-parens
-import * as SearchMenu from "@chaincode/search-menu";
-import * as types from "@microsoft/fluid-map";
-import * as MergeTree from "@microsoft/fluid-merge-tree";
-import { IInboundSignalMessage } from "@microsoft/fluid-runtime-definitions";
-import * as Sequence from "@microsoft/fluid-sequence";
-import * as api from "@prague/client-api";
+import * as SearchMenu from "@fluid-example/search-menu";
+import * as api from "@fluid-internal/client-api";
 import {
     IComponent,
     IComponentHandle,
     IComponentHTMLVisual,
     IComponentLoadable,
-} from "@prague/component-core-interfaces";
-import { IGenericBlob } from "@prague/container-definitions";
+} from "@microsoft/fluid-component-core-interfaces";
+import { IGenericBlob } from "@microsoft/fluid-container-definitions";
 import {
     ComponentCursorDirection,
     IComponentCollection,
     IComponentCursor,
     IComponentKeyHandlers,
     IComponentLayout,
-} from "@prague/framework-definitions";
-import { ISequencedDocumentMessage, IUser } from "@prague/protocol-definitions";
+} from "@microsoft/fluid-framework-interfaces";
+import * as types from "@microsoft/fluid-map";
+import * as MergeTree from "@microsoft/fluid-merge-tree";
+import { ISequencedDocumentMessage, IUser } from "@microsoft/fluid-protocol-definitions";
+import { IInboundSignalMessage } from "@microsoft/fluid-runtime-definitions";
+import * as Sequence from "@microsoft/fluid-sequence";
 import { blobUploadHandler } from "../blob";
 import { CharacterCodes, Paragraph, Table } from "../text";
 import * as ui from "../ui";
@@ -2387,9 +2387,6 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
             if (curPGMarker.listCache) {
                 indentSymbol = Paragraph.getIndentSymbol(curPGMarker);
             }
-            if (flowView.historyClient) {
-                Paragraph.clearContentCaches(curPGMarker);
-            }
             if (!curPGMarker.itemCache) {
                 itemsContext.itemInfo = { items: [], minWidth: 0 };
                 sharedString.walkSegments(Paragraph.segmentToItems, currentPos, curPGMarkerPos + 1, itemsContext);
@@ -3027,8 +3024,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     public componentCursor: IComponentCursor;
     public viewportDiv: HTMLDivElement;
     public viewportRect: ui.Rectangle;
-    public client: MergeTree.Client;
-    public historyClient: MergeTree.Client;
     public historyWidget: HTMLDivElement;
     public historyBubble: HTMLDivElement;
     public historyVersion: HTMLSpanElement;
@@ -3113,8 +3108,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         for (const command of commands) {
             this.cmdTree.put(command.key.toLowerCase(), command);
         }
-
-        this.client = sharedString.client;
 
         this.viewportDiv = document.createElement("div");
         this.element.appendChild(this.viewportDiv);
@@ -3241,12 +3234,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         this.sharedString.insertMarker(this.cursor.pos, MergeTree.ReferenceType.Simple, refProps);
     }
 
-    public measureClone() {
-        const clock = Date.now();
-        this.client.cloneFromSegments();
-        console.log(`clone took ${Date.now() - clock}ms`);
-    }
-
     /* tslint:disable:insecure-random */
     public createBookmarks(k: number) {
         const len = this.sharedString.getLength();
@@ -3264,113 +3251,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             if (presenceInfo && presenceInfo.cursor) {
                 presenceInfo.cursor.refresh();
             }
-        }
-    }
-
-    public xUpdateHistoryBubble(x: number) {
-        const widgetDivBounds = this.historyWidget.getBoundingClientRect();
-        const w = widgetDivBounds.width - 14;
-        let diffX = x - (widgetDivBounds.left + 7);
-        if (diffX <= 0) {
-            diffX = 0;
-        }
-        const pct = diffX / w;
-        const l = 7 + Math.floor(pct * w);
-        const seq = this.client.historyToPct(pct);
-        this.historyVersion.innerText = `Version @${seq}`;
-        this.historyBubble.style.left = `${l}px`;
-        this.cursor.pos = FlowView.docStartPosition;
-        this.hostSearchMenu(FlowView.docStartPosition);
-    }
-
-    public updateHistoryBubble(seq: number) {
-        const widgetDivBounds = this.historyWidget.getBoundingClientRect();
-        const w = widgetDivBounds.width - 14;
-        const count = this.client.undoSegments.length + this.client.redoSegments.length;
-        const pct = this.client.undoSegments.length / count;
-        const l = 7 + Math.floor(pct * w);
-        this.historyBubble.style.left = `${l}px`;
-        this.historyVersion.innerText = `Version @${seq}`;
-    }
-
-    public makeHistoryWidget() {
-        const bounds = ui.Rectangle.fromClientRect(this.status.element.getBoundingClientRect());
-        const x = Math.floor(bounds.width / 2);
-        const y = 2;
-        const widgetRect = new ui.Rectangle(x, y, Math.floor(bounds.width * 0.4),
-            (bounds.height - 4));
-        const widgetDiv = document.createElement("div");
-        widgetRect.conformElement(widgetDiv);
-        widgetDiv.style.zIndex = "3";
-        const bubble = document.createElement("div");
-        widgetDiv.style.borderRadius = "6px";
-        bubble.style.position = "absolute";
-        bubble.style.width = "8px";
-        bubble.style.height = `${bounds.height - 6}px`;
-        bubble.style.borderRadius = "5px";
-        bubble.style.top = "1px";
-        bubble.style.left = `${widgetRect.width - 7}px`;
-        bubble.style.backgroundColor = "pink";
-        widgetDiv.style.backgroundColor = "rgba(179,179,179,0.3)";
-        widgetDiv.appendChild(bubble);
-        const versionSpan = document.createElement("span");
-        widgetDiv.appendChild(versionSpan);
-        versionSpan.innerText = "History";
-        versionSpan.style.padding = "3px";
-        this.historyVersion = versionSpan;
-        this.historyWidget = widgetDiv;
-        this.historyBubble = bubble;
-        const clickHistory = (ev: MouseEvent) => {
-            this.xUpdateHistoryBubble(ev.clientX);
-        };
-        const mouseDownBubble = (ev: MouseEvent) => {
-            widgetDiv.onmousemove = clickHistory;
-        };
-        const cancelHistory = (ev: MouseEvent) => {
-            widgetDiv.onmousemove = preventD;
-        };
-        bubble.onmousedown = mouseDownBubble;
-        widgetDiv.onmouseup = cancelHistory;
-        widgetDiv.onmousemove = preventD;
-        bubble.onmouseup = cancelHistory;
-        this.status.addSlider(this.historyWidget);
-    }
-    public goHistorical() {
-        if (!this.historyClient) {
-            this.historyClient = this.client.cloneFromSegments();
-            this.savedClient = this.client;
-            this.client = this.historyClient;
-            this.makeHistoryWidget();
-        }
-    }
-
-    public backToTheFuture() {
-        if (this.historyClient) {
-            this.client = this.savedClient;
-            this.historyClient = undefined;
-            this.status.removeSlider();
-            this.topChar = 0;
-            this.hostSearchMenu(0);
-        }
-    }
-
-    public historyBack() {
-        this.goHistorical();
-        if (this.client.undoSegments.length > 0) {
-            const seq = this.client.undo();
-            this.updateHistoryBubble(seq);
-            this.cursor.pos = FlowView.docStartPosition;
-            this.hostSearchMenu(FlowView.docStartPosition);
-        }
-    }
-
-    public historyForward() {
-        this.goHistorical();
-        if (this.client.redoSegments.length > 0) {
-            const seq = this.client.redo();
-            this.updateHistoryBubble(seq);
-            this.cursor.pos = FlowView.docStartPosition;
-            this.hostSearchMenu(FlowView.docStartPosition);
         }
     }
 
@@ -3446,10 +3326,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             this.sharedString.removeLocalReference(presentPresence.localRef);
             tempXformPos = presentPresence.xformPos;
             tempMarkXformPos = presentPresence.markXformPos;
-        }
-        this.sharedString.addLocalReference(localPresenceInfo.localRef);
-        if (localPresenceInfo.markLocalRef) {
-            this.sharedString.addLocalReference(localPresenceInfo.localRef);
         }
         this.presenceVector.set(localPresenceInfo.clientId, localPresenceInfo);
         if ((localPresenceInfo.xformPos !== tempXformPos) ||
@@ -4975,15 +4851,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             case CharacterCodes.V:
                 this.paste();
                 break;
-            case CharacterCodes.K:
-                this.historyBack();
-                break;
-            case CharacterCodes.J:
-                this.historyForward();
-                break;
-            case CharacterCodes.Q:
-                this.backToTheFuture();
-                break;
             case CharacterCodes.R: {
                 this.updatePGInfo(this.cursor.pos - 1);
                 Table.createTable(this.cursor.pos, this.sharedString, this.collabDocument.clientId);
@@ -5334,8 +5201,8 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             const localPresenceInfo = {
                 clientId,
                 fresh: true,
-                localRef: new MergeTree.LocalReference(this.client, segoff.segment as MergeTree.BaseSegment, segoff.offset,
-                    MergeTree.ReferenceType.SlideOnRemove),
+                localRef: this.sharedString.createPositionReference(
+                    segoff.segment, segoff.offset, MergeTree.ReferenceType.SlideOnRemove),
                 presenceColor: this.presenceVector.has(clientId) ?
                     this.presenceVector.get(clientId).presenceColor :
                     presenceColors[this.presenceVector.size % presenceColors.length],
@@ -5349,7 +5216,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                 const markSegoff = this.sharedString.getContainingSegment(remotePresenceInfo.origMark);
                 if (markSegoff.segment) {
                     localPresenceInfo.markLocalRef =
-                        new MergeTree.LocalReference(this.client, markSegoff.segment as MergeTree.BaseSegment,
+                    this.sharedString.createPositionReference(markSegoff.segment,
                             markSegoff.offset, MergeTree.ReferenceType.SlideOnRemove);
                 }
             }

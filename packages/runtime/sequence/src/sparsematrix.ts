@@ -227,7 +227,7 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
             return undefined;
         }
 
-        throw new Error(`Unrecognized Segment type: ${segment.constructor}`);
+        throw new Error(`Unrecognized Segment type`);
     }
 
     public getTag(row: number, col: number) {

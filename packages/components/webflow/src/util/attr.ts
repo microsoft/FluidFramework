@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { areStringsEquivalent } from "@fluid-example/flow-util-lib";
 import { ISegment } from "@microsoft/fluid-merge-tree";
-import { areStringsEquivalent } from "@prague/flow-util";
 import { emptyObject } from "./";
 
 export interface IHTMLAttributes {

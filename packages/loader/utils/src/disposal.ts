@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable } from "@prague/container-definitions";
+import { IDisposable } from "@microsoft/fluid-container-definitions";
 
 export function doIfNotDisposed<T>(
     disposable: IDisposable,

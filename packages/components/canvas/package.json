@@ -1,5 +1,5 @@
 {
-  "name": "@chaincode/canvas",
+  "name": "@fluid-example/canvas",
   "description": "Prague ink canvas",
   "version": "0.10.0",
   "author": "Microsoft",
@@ -43,9 +43,9 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@prague/aqueduct": "^0.10.0",
-    "@prague/client-ui": "^0.10.0",
-    "@prague/component-core-interfaces": "^0.10.0",
+    "@microsoft/fluid-aqueduct": "^0.10.0",
+    "@fluid-example/client-ui-lib": "^0.10.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.10.0",
     "@microsoft/fluid-ink": "^0.10.0",
     "@microsoft/fluid-map": "^0.10.0",
     "@microsoft/fluid-runtime-definitions": "^0.10.0"

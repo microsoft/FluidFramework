@@ -3,6 +3,26 @@
  * Licensed under the MIT License.
  */
 
+import { IComponent, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
+import {
+    ConnectionState,
+    IBlobManager,
+    IDeltaManager,
+    IGenericBlob,
+    ILoader,
+    IQuorum,
+} from "@microsoft/fluid-container-definitions";
+import { Deferred, raiseConnectedEvent, readAndParse } from "@microsoft/fluid-core-utils";
+import {
+    FileMode,
+    IDocumentMessage,
+    IDocumentStorageService,
+    ISequencedDocumentMessage,
+    ISnapshotTree,
+    ITree,
+    MessageType,
+    TreeEntry,
+} from "@microsoft/fluid-protocol-definitions";
 import {
     ComponentFactoryTypes,
     IAttachMessage,
@@ -13,26 +33,6 @@ import {
     IHostRuntime,
     IInboundSignalMessage,
 } from "@microsoft/fluid-runtime-definitions";
-import { IComponent, IRequest, IResponse } from "@prague/component-core-interfaces";
-import {
-    ConnectionState,
-    IBlobManager,
-    IDeltaManager,
-    IGenericBlob,
-    ILoader,
-    IQuorum,
-} from "@prague/container-definitions";
-import {
-    FileMode,
-    IDocumentMessage,
-    IDocumentStorageService,
-    ISequencedDocumentMessage,
-    ISnapshotTree,
-    ITree,
-    MessageType,
-    TreeEntry,
-} from "@prague/protocol-definitions";
-import { Deferred, raiseConnectedEvent, readAndParse } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { ContainerRuntime } from "./containerRuntime";

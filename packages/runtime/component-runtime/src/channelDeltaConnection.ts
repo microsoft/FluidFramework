@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { ConnectionState } from "@microsoft/fluid-container-definitions";
+import { IDocumentMessage, ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { IDeltaConnection, IDeltaHandler } from "@microsoft/fluid-runtime-definitions";
-import { ConnectionState } from "@prague/container-definitions";
-import { IDocumentMessage, ISequencedDocumentMessage } from "@prague/protocol-definitions";
 import * as assert from "assert";
 
 export class ChannelDeltaConnection implements IDeltaConnection {

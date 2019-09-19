@@ -30,10 +30,10 @@
     "typescript": "~3.4.5"
   },
   "dependencies": {
-    "@prague/protocol-definitions": "^0.10.0",
+    "@microsoft/fluid-protocol-definitions": "^0.10.0",
     "@microsoft/fluid-runtime-definitions": "^0.10.0",
     "@microsoft/fluid-shared-object-base": "^0.10.0",
-    "@prague/utils": "^0.10.0",
+    "@microsoft/fluid-core-utils": "^0.10.0",
     "@types/debug": "^0.0.31",
     "debug": "^4.1.1",
     "uuid": "^3.3.2"

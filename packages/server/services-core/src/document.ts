@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { IProtocolState } from "@microsoft/fluid-container-definitions";
+import { IRangeTrackerSnapshot } from "@microsoft/fluid-core-utils";
+import { ICommit, ICommitDetails } from "@microsoft/fluid-gitresources";
 import { IGitCache } from "@microsoft/fluid-server-services-client";
-import { IProtocolState } from "@prague/container-definitions";
-import { ICommit, ICommitDetails } from "@prague/gitresources";
-import { IRangeTrackerSnapshot } from "@prague/utils";
 
 export interface IDocumentDetails {
     existing: boolean;
