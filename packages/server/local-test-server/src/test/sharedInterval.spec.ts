@@ -254,10 +254,9 @@ describe("SharedInterval", () => {
 
             outerString1.insertText(0, "outer string");
 
-            outerString1.getIntervalCollection("comments");
+            const intervalCollection1 = outerString1.getIntervalCollection("comments");
             await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
 
-            const intervalCollection1 = outerString1.getIntervalCollection("comments");
             const intervalCollection2 = outerString2.getIntervalCollection("comments");
             const intervalCollection3 = outerString3.getIntervalCollection("comments");
             assert.ok(intervalCollection1);
@@ -296,7 +295,7 @@ describe("SharedInterval", () => {
             // LocalIntervalCollection serializes as an array of ISerializedInterval, let's get the first comment
             const serializedInterval1FromSnapshot =
                 // tslint:disable-next-line: no-unsafe-any
-                (parsedSnapshot["intervalCollections/comments"].value as ISerializedInterval[])[0];
+                (parsedSnapshot.comments.value as ISerializedInterval[])[0];
             // The "story" is the ILocalValue of the handle pointing to the SharedString
             const handleLocalValueFromSnapshot = serializedInterval1FromSnapshot.properties.story as { type: string };
             assert.equal(handleLocalValueFromSnapshot.type, "__fluid_handle__");
