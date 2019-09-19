@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { ISegment, MapLike, TextSegment } from "@microsoft/fluid-merge-tree";
 import { Char, KeyCode, randomId } from "@prague/flow-util";
-import { ISegment, MapLike, TextSegment } from "@prague/merge-tree";
 import { strict as assert } from "assert";
 import { FlowDocument, getDocSegmentKind } from "../document";
 import { Caret } from "../editor/caret";

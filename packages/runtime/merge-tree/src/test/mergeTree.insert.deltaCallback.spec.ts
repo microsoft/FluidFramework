@@ -4,13 +4,7 @@
  */
 
 import * as assert from "assert";
-import {
-    MergeTree,
-    MergeTreeDeltaType,
-    MergeTreeMaintenanceType,
-    ReferenceType,
-    TextSegment,
-} from "..";
+import { MergeTree, MergeTreeDeltaType, MergeTreeMaintenanceType, ReferenceType, TextSegment } from "../";
 import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants";
 import { countOperations, insertMarker, insertText } from "./testUtils";
 

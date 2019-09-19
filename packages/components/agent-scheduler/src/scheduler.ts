@@ -3,6 +3,18 @@
  * Licensed under the MIT License.
  */
 
+import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
+import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
+import { ConsensusRegisterCollection } from "@microsoft/fluid-register-collection";
+import {
+    IAgentScheduler,
+    IComponentContext,
+    IComponentFactory,
+    IComponentRuntime,
+    ITask,
+    ITaskManager,
+} from "@microsoft/fluid-runtime-definitions";
+import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import {
     IComponent,
     IComponentHandle,
@@ -11,19 +23,7 @@ import {
     IRequest,
     IResponse,
 } from "@prague/component-core-interfaces";
-import { ComponentRuntime } from "@prague/component-runtime";
-import { ConsensusRegisterCollection } from "@prague/consensus-register-collection";
 import { ConnectionState } from "@prague/container-definitions";
-import { ISharedMap, SharedMap } from "@prague/map";
-import {
-    IAgentScheduler,
-    IComponentContext,
-    IComponentFactory,
-    IComponentRuntime,
-    ITask,
-    ITaskManager,
-} from "@prague/runtime-definitions";
-import { ISharedObjectFactory } from "@prague/shared-object-common";
 import * as assert from "assert";
 import * as debug from "debug";
 import { EventEmitter } from "events";

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IClient, IClientJoin, IDocumentMessage, IUser, MessageType } from "@prague/runtime-definitions";
+import { IClient, IClientJoin, IDocumentMessage, IUser, MessageType } from "@microsoft/fluid-runtime-definitions";
 import * as core from "@microsoft/fluid-server-services-core";
 import * as moniker from "moniker";
 

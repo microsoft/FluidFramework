@@ -4,7 +4,7 @@
  */
 
 import { ISequencedDocumentMessage } from "@prague/protocol-definitions";
-import { IMergeTreeOp, ISegment, MergeTreeDeltaType } from ".";
+import { IMergeTreeOp, ISegment, MergeTreeDeltaType } from "./";
 import { MergeTree } from "./mergeTree";
 import { IMergeTreeGroupMsg } from "./ops";
 import { PropertySet } from "./properties";

@@ -3,18 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { IChannel, IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { ConnectionState } from "@prague/container-definitions";
-import {
-    IDocumentStorageService,
-    ISequencedDocumentMessage,
-    ITree,
-    MessageType,
-} from "@prague/protocol-definitions";
-import {
-    IChannel,
-    IComponentContext,
-    IComponentRuntime,
-} from "@prague/runtime-definitions";
+import { IDocumentStorageService, ISequencedDocumentMessage, ITree, MessageType } from "@prague/protocol-definitions";
 import * as assert from "assert";
 import { createServiceEndpoints, IChannelContext, snapshotChannel } from "./channelContext";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";

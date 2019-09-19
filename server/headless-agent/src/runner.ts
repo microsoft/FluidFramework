@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IQueueMessage } from "@prague/runtime-definitions";
+import { IQueueMessage } from "@microsoft/fluid-runtime-definitions";
 import * as core from "@microsoft/fluid-server-services-core";
 import * as utils from "@microsoft/fluid-server-services-utils";
 import { Deferred } from "@prague/utils";

@@ -4,13 +4,7 @@
  */
 
 import { IIntegerRange } from "./base";
-import {
-    BaseSegment,
-    glc,
-    ISegment,
-    Marker,
-    MergeTree,
- } from "./mergeTree";
+import { BaseSegment, glc, ISegment, Marker, MergeTree } from "./mergeTree";
 import * as ops from "./ops";
 import * as Properties from "./properties";
 

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import {
     IComponent,
     IComponentLoadable,
@@ -11,10 +12,6 @@ import {
     IResponse,
 } from "@prague/component-core-interfaces";
 import { IComponentForge } from "@prague/framework-definitions";
-import {
-    IComponentContext,
-    IComponentRuntime,
-} from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
 
 /**

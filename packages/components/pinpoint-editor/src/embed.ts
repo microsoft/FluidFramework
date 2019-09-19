@@ -4,7 +4,7 @@
  */
 
 import { IPinpointOptions, Pinpoint } from "@kurtb/pinpoint";
-import { ISharedMap } from "@prague/map";
+import { ISharedMap } from "@microsoft/fluid-map";
 import { Document } from "./document";
 
 export class PinpointEmbed {

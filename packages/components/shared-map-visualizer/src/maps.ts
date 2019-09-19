@@ -3,6 +3,16 @@
  * Licensed under the MIT License.
  */
 
+import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
+import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
+import { Counter, CounterValueType, ISharedMap, IValueChanged, SharedMap } from "@microsoft/fluid-map";
+import {
+    FlushMode,
+    IComponentContext,
+    IComponentFactory,
+    IComponentRuntime,
+} from "@microsoft/fluid-runtime-definitions";
+import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import {
     IComponent,
     IComponentHTMLOptions,
@@ -12,23 +22,7 @@ import {
     IRequest,
     IResponse,
 } from "@prague/component-core-interfaces";
-import { ComponentRuntime } from "@prague/component-runtime";
 import { IContainerContext, IRuntime, IRuntimeFactory } from "@prague/container-definitions";
-import { ContainerRuntime } from "@prague/container-runtime";
-import {
-    Counter,
-    CounterValueType,
-    ISharedMap,
-    IValueChanged,
-    SharedMap,
-} from "@prague/map";
-import {
-    FlushMode,
-    IComponentContext,
-    IComponentFactory,
-    IComponentRuntime,
-} from "@prague/runtime-definitions";
-import { ISharedObjectFactory } from "@prague/shared-object-common";
 import { EventEmitter } from "events";
 import * as $ from "jquery";
 
