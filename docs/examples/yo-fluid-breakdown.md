@@ -82,7 +82,7 @@ First we will declare all our imports. Here is a quick description and use cases
 
 `PrimedComponent` and `PrimedComponentFactory` from <xref:@prague/aqueduct!> provides helper functionality.
 `IComponentHTMLVisual` from <xref:@prague/component-core-interfaces!> provides the interface for enabling rendering.
-`CounterValueType` from <xref:@prague/map!> is a Value Type we'll use in our root Distributed Data Structure (more on that later).
+`CounterValueType` from <xref:@microsoft/fluid-map!> is a Value Type we'll use in our root Distributed Data Structure (more on that later).
 `IComponentContext` and `IComponentRuntime` are the interfaces for important fluid objects passed to our Component.
 `React` and `ReactDOM` are *only for React* and enable React use.
 
@@ -96,11 +96,11 @@ import {
 } from "@prague/component-core-interfaces";
 import {
   CounterValueType,
-} from "@prague/map";
+} from "@microsoft/fluid-map";
 import {
   IComponentContext,
   IComponentRuntime,
-} from "@prague/runtime-definitions";
+} from "@microsoft/fluid-runtime-definitions";
 
 import * as React from "react"; // only used with react
 import * as ReactDOM from "react-dom"; // only used with react
@@ -163,7 +163,7 @@ a component.
 `componentInitializingFirstTime()` will be called only the first time the `initialize()` is called. In here we perform setup operations that we only
 want to happen once. `await super.componentInitializingFirstTime()` calls the `componentInitializingFirstTime()` function on the `PrimedComponent`.
 In here we create and set the `root` SharedDirectory. We need to call this first to ensure the root is available later. Next we create a new counter,
-called `"clicks"` on our root directory `this.root.set("clicks", 0, CounterValueType.Name);`
+called `"clicks"` on our root directory `this.root.createValueType("clicks", CounterValueType.Name, 0);`
 
 ```typescript
 private static readonly supportedInterfaces = ["IComponentHTMLVisual"];
@@ -175,7 +175,7 @@ private static readonly supportedInterfaces = ["IComponentHTMLVisual"];
 protected async componentInitializingFirstTime() {
   // Calling super.componentInitializingFirstTime() creates a root SharedDirectory that you can work off.
   await super.componentInitializingFirstTime();
-  this.root.set("clicks", 0, CounterValueType.Name);
+  this.root.createValueType("clicks", CounterValueType.Name, 0);
 }
 
 /**

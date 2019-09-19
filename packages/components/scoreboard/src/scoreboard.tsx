@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentHTMLOptions, IComponentHTMLVisual } from '@prague/component-core-interfaces';
-import { PrimedComponent, SimpleModuleInstantiationFactory, PrimedComponentFactory } from '@prague/aqueduct';
-import { CounterValueType } from '@prague/map';
-import * as React from 'react';
-import * as ReactDOM from 'react-dom';
-import { TeamScore } from './teamScore';
-import { WinnerText } from './winnerText';
+import { CounterValueType } from "@microsoft/fluid-map";
+import { PrimedComponent, PrimedComponentFactory, SimpleModuleInstantiationFactory } from "@prague/aqueduct";
+import { IComponentHTMLOptions, IComponentHTMLVisual } from "@prague/component-core-interfaces";
+import * as React from "react";
+import * as ReactDOM from "react-dom";
+import { TeamScore } from "./teamScore";
+import { WinnerText } from "./winnerText";
 
 export class Scoreboard extends PrimedComponent implements IComponentHTMLVisual {
   public static readonly componentName = "Scoreboard";
@@ -20,8 +20,8 @@ export class Scoreboard extends PrimedComponent implements IComponentHTMLVisual 
   * Setup the distributed data structures; called once when the component is created (NOT initialized)
   */
   protected async componentInitializingFirstTime() {
-    this.root.set('Hardcoders', 0, CounterValueType.Name);
-    this.root.set('Chaincoders', 0, CounterValueType.Name);
+    this.root.createValueType('Hardcoders', CounterValueType.Name, 0);
+    this.root.createValueType('Chaincoders', CounterValueType.Name, 0);
   }
 
   render(hostingElement: HTMLElement, options?: IComponentHTMLOptions): void {

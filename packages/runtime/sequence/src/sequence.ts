@@ -3,26 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import {
-    IValueChanged,
-    IValueType,
-    SharedMap,
-} from "@prague/map";
-import * as MergeTree from "@prague/merge-tree";
-import {
-    ISequencedDocumentMessage,
-    ITree,
-} from "@prague/protocol-definitions";
-import {
-    IChannelAttributes,
-    IComponentRuntime,
-    IObjectStorageService,
-} from "@prague/runtime-definitions";
-import { parseHandles, serializeHandles } from "@prague/shared-object-common";
+import { IValueChanged, IValueType, SharedMap } from "@microsoft/fluid-map";
+import * as MergeTree from "@microsoft/fluid-merge-tree";
+import { IChannelAttributes, IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
+import { parseHandles, serializeHandles } from "@microsoft/fluid-shared-object-base";
+import { ISequencedDocumentMessage, ITree } from "@prague/protocol-definitions";
 import { ChildLogger, Deferred } from "@prague/utils";
 import * as assert from "assert";
-// tslint:disable-next-line:no-submodule-imports no-var-requires no-require-imports
-const cloneDeep = require("lodash/cloneDeep") as <T>(value: T) => T;
 import {
     ISerializableInterval,
     SharedIntervalCollection,
@@ -32,6 +19,8 @@ import {
 } from "./intervalCollection";
 import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent";
 
+// tslint:disable-next-line:no-submodule-imports no-var-requires no-require-imports
+const cloneDeep = require("lodash/cloneDeep") as <T>(value: T) => T;
 const valueTypes: IValueType<any>[] = [
     new SharedStringIntervalCollectionValueType(),
     new SharedIntervalCollectionValueType(),
@@ -512,10 +501,10 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
         const translatedLabel = getIntervalCollectionPath(label);
 
         if (!this.has(translatedLabel)) {
-            this.set(
+            this.createValueType(
                 translatedLabel,
-                undefined,
-                type);
+                type,
+                undefined);
         }
 
         const sharedCollection = this.get<SharedIntervalCollection<TInterval>>(translatedLabel);

@@ -4,7 +4,7 @@
  */
 
 import { Char, randomId } from "@fluid-example/flow-util-lib";
-import { MapLike, TextSegment } from "@prague/merge-tree";
+import { MapLike, TextSegment } from "@microsoft/fluid-merge-tree";
 import { strict as assert } from "assert";
 import { FlowDocument, getDocSegmentKind } from "../document";
 import { PlainTextFormatter } from "../plaintext/formatter";

@@ -27,10 +27,10 @@
   },
   "dependencies": {
     "@prague/component-core-interfaces": "^0.10.0",
-    "@prague/map": "^0.10.0",
-    "@prague/merge-tree": "^0.10.0",
+    "@microsoft/fluid-map": "^0.10.0",
+    "@microsoft/fluid-merge-tree": "^0.10.0",
     "@prague/protocol-definitions": "^0.10.0",
-    "@prague/sequence": "^0.10.0",
+    "@microsoft/fluid-sequence": "^0.10.0",
     "request": "^2.88.0"
   },
   "license": "MIT"

@@ -3,19 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import {
-    DirectoryFactory,
-    MapFactory,
-    SharedDirectory,
-    SharedMap,
-} from "@prague/map";
-import {
-    IComponentContext,
-    IComponentRuntime,
-} from "@prague/runtime-definitions";
-import {
-    ISharedObjectFactory,
-} from "@prague/shared-object-common";
+import { DirectoryFactory, MapFactory, SharedDirectory, SharedMap } from "@microsoft/fluid-map";
+import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { SharedComponent } from "../components/sharedComponent";
 import { SharedComponentFactory } from "./sharedComponentFactory";
 

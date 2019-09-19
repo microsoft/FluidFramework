@@ -1,5 +1,5 @@
 {
-  "name": "@prague/container-runtime",
+  "name": "@microsoft/fluid-container-runtime",
   "version": "0.10.0",
   "description": "Prague runtime API",
   "main": "dist/index.js",
@@ -38,7 +38,7 @@
     "@prague/component-core-interfaces": "^0.10.0",
     "@prague/container-definitions": "^0.10.0",
     "@prague/protocol-definitions": "^0.10.0",
-    "@prague/runtime-definitions": "^0.10.0",
+    "@microsoft/fluid-runtime-definitions": "^0.10.0",
     "@prague/utils": "^0.10.0",
     "@types/debug": "^0.0.31",
     "@types/node": "^10.12.12",

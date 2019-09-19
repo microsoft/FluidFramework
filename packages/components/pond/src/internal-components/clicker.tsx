@@ -3,19 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { Counter, CounterValueType, ISharedDirectory, ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import { PrimedComponent, PrimedComponentFactory } from "@prague/aqueduct";
-import {
-    IComponentHandle,
-    IComponentHTMLVisual,
-} from "@prague/component-core-interfaces";
-import {
-    Counter,
-    CounterValueType,
-    ISharedDirectory,
-    ISharedMap,
-    SharedMap,
-} from "@prague/map";
-
+import { IComponentHandle, IComponentHTMLVisual } from "@prague/component-core-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
@@ -37,7 +27,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLVisual {
      * Do setup work here
      */
     protected async componentInitializingFirstTime() {
-        this.root.set("clicks", 0, CounterValueType.Name);
+        this.root.createValueType("clicks", CounterValueType.Name, 0);
 
         const clicks = this.root.get<Counter>("clicks");
         clicks.increment(5);
@@ -47,7 +37,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLVisual {
         this.root.set("storedMap", storedMap.handle);
 
         // Add another clicker to the map
-        storedMap.set("clicks2", 0, CounterValueType.Name);
+        storedMap.createValueType("clicks2", CounterValueType.Name, 0);
     }
 
     protected async componentHasInitialized() {

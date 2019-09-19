@@ -5,6 +5,7 @@
 - [DistributedSet removed](#distributedset-removed)
 - [`Stream` renamed to `Ink`](#stream-renamed-to-ink)
 - [`insertSiblingSegment` change to `insertAtReferencePosition`](#insertAtReferencePosition)
+- [`.createValueType` replaces third argument to `.set`](#.createValueType-replaces-third-argument-to-.set)
 
 ## `@prague/tiny-web-host` prague -> fluid changes
 `loadPragueComponent`, `loadIFramedPragueComponent`, and `isPragueUrl` from `@prague/tiny-web-host` have been renamed to `loadFluidComponent`, `loadIFramedFluidComponent`, and `isFluidUrl`, respectively.
@@ -16,7 +17,7 @@
 The DistributedSet value type has been removed.
 
 ## `Stream` renamed to `Ink`
-The `Stream` data structure (and associated interfaces and classes like `IStream`, `StreamFactory`, etc.) have been renamed to `Ink` (`IInk`, `InkFactory`, etc.).  They are available in `@prague/ink`.
+The `Stream` data structure (and associated interfaces and classes like `IStream`, `StreamFactory`, etc.) have been renamed to `Ink` (`IInk`, `InkFactory`, etc.).  They are available in `@microsoft/fluid-ink`.
 
 ## insertAtReferencePosition
 insertSiblingSegment has been removed and insertAtReferencePosition has been added.
@@ -34,6 +35,17 @@ After:
     this.sequence.insertAtReferencePosition(
             this.sequence.createPositionReference(sg, 0, ReferenceType.Transient),
             insertSegment);
+```
+
+## `.createValueType` replaces third argument to `.set`
+Previously, to create a value type on an ISharedMap or IDirectory you would pass a third type argument to `.set`.  This functionality has been moved to a separate API, `.createValueType`.
+Before:
+```typescript
+myMap.set("myKey", 0, CounterValueType.Name);
+```
+After:
+```typescript
+myMap.createValueType("myKey", CounterValueType.Name, 0);
 ```
 
 # 0.9 Breaking Changes (August 26, 2019)

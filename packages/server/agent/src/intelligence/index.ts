@@ -5,17 +5,18 @@
 
 export * from "./api";
 
+import * as ImageAnalytics from "./imageAnalytics";
+import * as nativeTextAnalytics from "./nativeTextAnalytics";
+import * as resume from "./resume";
 import * as resumeAnalytics from "./resumeAnalytics";
+import * as textAnalytics from "./textAnalytics";
+
 export { resumeAnalytics };
 
-import * as textAnalytics from "./textAnalytics";
 export { textAnalytics };
 
-import * as nativeTextAnalytics from "./nativeTextAnalytics";
 export { nativeTextAnalytics };
 
-import * as ImageAnalytics from "./imageAnalytics";
 export { ImageAnalytics };
 
-import * as resume from "./resume";
 export { resume };

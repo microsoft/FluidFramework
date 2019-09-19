@@ -4,11 +4,7 @@
 */
 
 import { PrimedComponent } from "@prague/aqueduct";
-import {
-  IComponent,
-  IComponentHTMLVisual,
-  IComponentLoadable,
-} from "@prague/component-core-interfaces";
+import { IComponent, IComponentHTMLVisual, IComponentLoadable } from "@prague/component-core-interfaces";
 import { IPraguePackage } from "@prague/container-definitions";
 import * as uuid from "uuid";
 

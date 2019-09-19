@@ -4,6 +4,7 @@
  */
 
 import {
+    ConnectionMode,
     IContentMessage,
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
@@ -195,6 +196,7 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
             initialMessages: [],
             initialSignals: [],
             maxMessageSize: ReplayDocumentDeltaConnection.ReplayMaxMessageSize,
+            mode: "write",
             parentBranch: null,
             serviceConfiguration: {
                 blockSize: 64436,
@@ -230,6 +232,10 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
 
     public get clientId(): string {
         return this.details.clientId;
+    }
+
+    public get mode(): ConnectionMode {
+        return this.details.mode;
     }
 
     public get claims(): ITokenClaims {

@@ -5,7 +5,22 @@
 
 import { controls, ui } from "@fluid-example/client-ui-lib";
 import { TextAnalyzer } from "@fluid-example/intelligence-runner-agent";
-import { SharedCell } from "@prague/cell";
+import { SharedCell } from "@microsoft/fluid-cell";
+import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
+import { IInk, Ink } from "@microsoft/fluid-ink";
+import * as DistributedMap from "@microsoft/fluid-map";
+import {
+    ISharedMap,
+    SharedMap,
+} from "@microsoft/fluid-map";
+import * as MergeTree from "@microsoft/fluid-merge-tree";
+import { IComponentContext, IComponentRuntime, ITask, ITaskManager } from "@microsoft/fluid-runtime-definitions";
+import {
+    IProvideSharedString,
+    SharedNumberSequence,
+    SharedObjectSequence,
+    SharedString,
+} from "@microsoft/fluid-sequence";
 import * as API from "@prague/client-api";
 import {
     IComponent,
@@ -15,16 +30,8 @@ import {
     IRequest,
     IResponse,
 } from "@prague/component-core-interfaces";
-import { ComponentRuntime } from "@prague/component-runtime";
-import { IInk, Ink } from "@prague/ink";
-import * as DistributedMap from "@prague/map";
-import { ISharedMap, SharedMap } from "@prague/map";
-import * as MergeTree from "@prague/merge-tree";
-import { IComponentContext, IComponentRuntime, ITask, ITaskManager } from "@prague/runtime-definitions";
-import { IProvideSharedString, SharedNumberSequence, SharedObjectSequence, SharedString } from "@prague/sequence";
 import { EventEmitter } from "events";
 import { parse } from "querystring";
-// tslint:enable:no-var-requires
 import * as url from "url";
 import { Document } from "./document";
 import { downloadRawText, getInsights, setTranslation } from "./utils";
@@ -32,6 +39,8 @@ import { downloadRawText, getInsights, setTranslation } from "./utils";
 // tslint:disable:no-var-requires
 const performanceNow = require("performance-now");
 const debug = require("debug")("fluid:shared-text");
+// tslint:enable:no-var-requires
+
 /**
  * Helper function to retrieve the handle for the default component route
  */

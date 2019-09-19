@@ -18,7 +18,8 @@
     "webpack": "webpack --env.production",
     "webpack:dev": "webpack --env.development",
     "start": "webpack-dev-server --config webpack.config.js --package package.json",
-    "start:local": "webpack-dev-server --config webpack.config.js --package package.json --env.local",
+    "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode  localhost",
+    "start:local": "webpack-dev-server --config webpack.config.js --package package.json --env.mode  local",
     "verdaccio": "npm publish --registry https://packages.wu2.prague.office-int.com",
     "deploy": "npm run build && npm version patch && npm run verdaccio"
   },
@@ -42,12 +43,12 @@
   },
   "dependencies": {
     "@prague/component-core-interfaces": "^0.10.0",
-    "@prague/component-runtime": "^0.10.0",
+    "@microsoft/fluid-component-runtime": "^0.10.0",
     "@prague/container-definitions": "^0.10.0",
-    "@prague/container-runtime": "^0.10.0",
-    "@prague/map": "^0.10.0",
-    "@prague/runtime-definitions": "^0.10.0",
-    "@prague/shared-object-common": "^0.10.0",
+    "@microsoft/fluid-container-runtime": "^0.10.0",
+    "@microsoft/fluid-map": "^0.10.0",
+    "@microsoft/fluid-runtime-definitions": "^0.10.0",
+    "@microsoft/fluid-shared-object-base": "^0.10.0",
     "debug": "^4.1.1"
   },
   "devDependencies": {

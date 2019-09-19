@@ -4,8 +4,8 @@
  */
 
 import { Caret as CaretUtil, Direction, Rect } from "@fluid-example/flow-util-lib";
+import { Marker, TextSegment } from "@microsoft/fluid-merge-tree";
 import { IComponent, IComponentHTMLView } from "@prague/component-core-interfaces";
-import { Marker, TextSegment } from "@prague/merge-tree";
 import * as assert from "assert";
 import { DocSegmentKind, getComponentOptions, getCss, getDocSegmentKind } from "../document";
 import * as styles from "../editor/index.css";

@@ -4,9 +4,9 @@
 */
 
 import { randomId } from "@fluid-example/flow-util-lib";
+import { Marker, ReferenceType } from "@microsoft/fluid-merge-tree";
 // tslint:disable:binary-expression-operand-order
 import { TestHost } from "@prague/local-test-server";
-import { Marker, ReferenceType } from "@prague/merge-tree";
 import * as assert from "assert";
 // tslint:disable-next-line:no-import-side-effect
 import "mocha";

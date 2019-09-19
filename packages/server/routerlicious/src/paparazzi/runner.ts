@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IQueueMessage } from "@microsoft/fluid-runtime-definitions";
 import * as agent from "@microsoft/fluid-server-agent";
 import { NodeCodeLoader } from "@microsoft/fluid-server-services";
 import * as core from "@microsoft/fluid-server-services-core";
@@ -15,7 +16,6 @@ import {
 } from "@prague/protocol-definitions";
 import { ContainerUrlResolver } from "@prague/routerlicious-host";
 import * as socketStorage from "@prague/routerlicious-socket-storage";
-import { IQueueMessage } from "@prague/runtime-definitions";
 import { Deferred } from "@prague/utils";
 import * as fs from "fs";
 import * as jwt from "jsonwebtoken";
@@ -35,8 +35,13 @@ class WorkerDocumentServiceFactory implements IDocumentServiceFactory {
     public readonly protocolName = "fluid-worker:";
     public createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
 
-        if (resolvedUrl.type !== "prague") {
-            return Promise.reject("only fluid type urls can be resolved.");
+        if (resolvedUrl.type !== "fluid") {
+              if (resolvedUrl.type === "prague") {
+                // tslint:disable-next-line:max-line-length
+                console.warn("IFluidResolvedUrl type === 'prague' has been deprecated. Please create IFluidResolvedUrls of type 'fluid' in the future.");
+            } else {
+                return Promise.reject("only fluid type urls can be resolved.");
+            }
         }
 
         const urlAsFluidUrl = resolvedUrl as IFluidResolvedUrl;
@@ -198,7 +203,7 @@ export class PaparazziRunner implements utils.IRunner {
                     storageUrl,
                 },
                 tokens: { jwt: requestMsg.token },
-                type: "prague",
+                type: "fluid",
                 url: documentUrl,
             };
 

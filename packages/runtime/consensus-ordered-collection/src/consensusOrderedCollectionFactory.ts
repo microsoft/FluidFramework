@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IChannelAttributes, IComponentRuntime, ISharedObjectServices } from "@prague/runtime-definitions";
+import { IChannelAttributes, IComponentRuntime, ISharedObjectServices } from "@microsoft/fluid-runtime-definitions";
 import { ConsensusQueue } from "./consensusQueue";
 import { ConsensusStack } from "./consensusStack";
 import { IConsensusOrderedCollection, IConsensusOrderedCollectionFactory } from "./interfaces";

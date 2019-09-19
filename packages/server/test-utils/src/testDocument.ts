@@ -92,18 +92,11 @@ export class TestDeltaManager
 
     public serviceConfiguration: IServiceConfiguration;
 
+    public active = true;
     public get IDeltaSender() { return this; }
 
     public dispose() {
         this.disposed = true;
-    }
-
-    public enableReadonlyMode() {
-        return;
-    }
-
-    public disableReadonlyMode(): void {
-        return;
     }
 
     public close(): void {

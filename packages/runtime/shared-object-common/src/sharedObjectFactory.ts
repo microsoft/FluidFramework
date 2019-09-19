@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IChannel, IChannelAttributes, IComponentRuntime, ISharedObjectServices } from "@prague/runtime-definitions";
+import {
+    IChannel,
+    IChannelAttributes,
+    IComponentRuntime,
+    ISharedObjectServices,
+} from "@microsoft/fluid-runtime-definitions";
 
 /**
  * Definitions of a shared factories. Factories follow a common model but enable custom behavior.

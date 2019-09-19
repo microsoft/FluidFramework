@@ -3,18 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { Counter, CounterValueType } from "@microsoft/fluid-map";
 // tslint:disable:no-console
-import {
-  PrimedComponent,
-  PrimedComponentFactory,
-  SimpleModuleInstantiationFactory,
-} from "@prague/aqueduct";
-import {
-  IComponentHandle,
-  IComponentHTMLOptions,
-  IComponentHTMLVisual,
-} from "@prague/component-core-interfaces";
-import { Counter, CounterValueType } from "@prague/map";
+import { PrimedComponent, PrimedComponentFactory, SimpleModuleInstantiationFactory } from "@prague/aqueduct";
+import { IComponentHandle, IComponentHTMLOptions, IComponentHTMLVisual } from "@prague/component-core-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { OwnedSharedMap } from "./ownedMap";
@@ -64,7 +56,7 @@ export class OwnedMap extends PrimedComponent implements IComponentHTMLVisual {
    * (only called when document is initially created).
    */
   protected async componentInitializingFirstTime() {
-    this.root.set("clicks", 0, CounterValueType.Name);
+    this.root.createValueType("clicks", CounterValueType.Name, 0);
     this.counter = await this.root.wait<Counter>("clicks");
     this.root.set("ownedMap", OwnedSharedMap.create(this.runtime).handle);
     const ownedMapHandle = await this.root.wait<IComponentHandle>("ownedMap");

@@ -4,7 +4,6 @@
  */
 
 import { TestHost } from "@prague/local-test-server";
-import "mocha";
 import {
     TableDocument,
     TableDocumentType,
@@ -12,6 +11,7 @@ import {
     TableSlice,
 } from "@fluid-example/table-document";
 import * as assert from "assert";
+import "mocha";
 
 describe("TableDocument", () => {
     let host: TestHost;

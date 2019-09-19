@@ -15,7 +15,8 @@
     "build:full:compile": "npm run build:compile",
     "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
     "start": "webpack-dev-server --config webpack.config.js --package package.json",
-    "start:local": "webpack-dev-server --config webpack.config.js --package package.json --env.local",
+    "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode  localhost",
+    "start:local": "webpack-dev-server --config webpack.config.js --package package.json --env.mode  local",
     "deploy": "npm publish --registry https://packages.wu2.prague.office-int.com",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose",
@@ -45,9 +46,9 @@
     "@prague/aqueduct": "^0.10.0",
     "@fluid-example/client-ui-lib": "^0.10.0",
     "@prague/component-core-interfaces": "^0.10.0",
-    "@prague/ink": "^0.10.0",
-    "@prague/map": "^0.10.0",
-    "@prague/runtime-definitions": "^0.10.0"
+    "@microsoft/fluid-ink": "^0.10.0",
+    "@microsoft/fluid-map": "^0.10.0",
+    "@microsoft/fluid-runtime-definitions": "^0.10.0"
   },
   "devDependencies": {
     "@microsoft/fluid-webpack-component-loader": "^0.10.0",

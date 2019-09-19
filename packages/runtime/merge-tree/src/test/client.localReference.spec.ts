@@ -4,9 +4,9 @@
  */
 
 import * as assert from "assert";
-import { TestClient } from ".";
 import { LocalReference } from "../localReference";
 import { ReferenceType } from "../ops";
+import { TestClient } from "./";
 
 describe("MergeTree.Client", () => {
 

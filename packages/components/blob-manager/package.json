@@ -23,11 +23,11 @@
   },
   "dependencies": {
     "@prague/component-core-interfaces": "^0.10.0",
-    "@prague/component-runtime": "^0.10.0",
+    "@microsoft/fluid-component-runtime": "^0.10.0",
     "@prague/container-definitions": "^0.10.0",
-    "@prague/map": "^0.10.0",
+    "@microsoft/fluid-map": "^0.10.0",
     "@prague/protocol-definitions": "^0.10.0",
-    "@prague/runtime-definitions": "^0.10.0",
+    "@microsoft/fluid-runtime-definitions": "^0.10.0",
     "@types/node": "^10.12.12"
   },
   "devDependencies": {

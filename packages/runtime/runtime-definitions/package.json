@@ -1,5 +1,5 @@
 {
-  "name": "@prague/runtime-definitions",
+  "name": "@microsoft/fluid-runtime-definitions",
   "version": "0.10.0",
   "description": "Prague Runtime definitions",
   "main": "dist/index.js",

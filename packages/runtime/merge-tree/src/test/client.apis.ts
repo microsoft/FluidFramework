@@ -4,7 +4,7 @@
  */
 
 import * as assert from "assert";
-import * as MergeTree from "..";
+import * as MergeTree from "../";
 import * as Properties from "../properties";
 import { TestClient } from "./testClient";
 

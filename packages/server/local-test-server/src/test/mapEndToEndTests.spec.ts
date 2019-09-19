@@ -4,9 +4,9 @@
  */
 
 /* tslint:disable:no-unsafe-any */
+import { ISharedMap } from "@microsoft/fluid-map";
 /* tslint:disable:no-backbone-get-set-outside-model  */
 import * as api from "@prague/client-api";
-import { ISharedMap } from "@prague/map";
 import { MessageType } from "@prague/protocol-definitions";
 import * as assert from "assert";
 import {

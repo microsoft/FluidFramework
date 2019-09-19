@@ -65,6 +65,7 @@ export class AlfredRunner implements utils.IRunner {
             this.metricClientConfig,
             this.orderManager,
             this.tenantManager,
+            this.storage,
             this.contentCollection);
 
         // Listen on provided port, on all network interfaces.

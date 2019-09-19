@@ -4,11 +4,11 @@
  */
 
 import { Translator } from "@fluid-example/translator-agent";
+import { ISharedMap } from "@microsoft/fluid-map";
+import * as Sequence from "@microsoft/fluid-sequence";
 import { IComponentHandle } from "@prague/component-core-interfaces";
 import { IHost } from "@prague/container-definitions";
-import { ISharedMap } from "@prague/map";
 import { IDocumentServiceFactory } from "@prague/protocol-definitions";
-import * as Sequence from "@prague/sequence";
 import { Provider } from "nconf";
 import { BaseWork } from "./baseWork";
 import { IWork } from "./definitions";

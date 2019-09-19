@@ -32,7 +32,9 @@ export class FileDocumentService implements api.IDocumentService {
      * @param client - Client that connects to socket.
      * @returns returns the delta stream service.
      */
-    public async connectToDeltaStream(client: api.IClient): Promise<api.IDocumentDeltaConnection> {
+    public async connectToDeltaStream(
+        client: api.IClient,
+        mode: api.ConnectionMode): Promise<api.IDocumentDeltaConnection> {
         return this.deltaConnection;
     }
 

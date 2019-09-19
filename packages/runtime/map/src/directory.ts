@@ -4,19 +4,13 @@
  */
 
 import {
-    FileMode,
-    ISequencedDocumentMessage,
-    ITree,
-    MessageType,
-    TreeEntry,
-} from "@prague/protocol-definitions";
-import {
     IChannelAttributes,
     IComponentRuntime,
     IObjectStorageService,
     ISharedObjectServices,
-} from "@prague/runtime-definitions";
-import { ISharedObjectFactory, SharedObject, ValueType } from "@prague/shared-object-common";
+} from "@microsoft/fluid-runtime-definitions";
+import { ISharedObjectFactory, SharedObject, ValueType } from "@microsoft/fluid-shared-object-base";
+import { FileMode, ISequencedDocumentMessage, ITree, MessageType, TreeEntry } from "@prague/protocol-definitions";
 import { fromBase64ToUtf8 } from "@prague/utils";
 import * as assert from "assert";
 import * as path from "path";
@@ -242,8 +236,16 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
     /**
      * {@inheritDoc IDirectory.set}
      */
-    public set<T = any>(key: string, value: T, type?: string): this {
-        this.root.set(key, value, type);
+    public set<T = any>(key: string, value: T): this {
+        this.root.set(key, value);
+        return this;
+    }
+
+    /**
+     * {@inheritDoc IValueTypeCreator.createValueType}
+     */
+    public createValueType(key: string, type: string, params: any): this {
+        this.root.createValueType(key, type, params);
         return this;
     }
 
@@ -369,7 +371,7 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
     }
 
     /**
-     * {@inheritDoc @prague/shared-object-common#SharedObject.snapshot}
+     * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.snapshot}
      */
     public snapshot(): ITree {
         const tree: ITree = {
@@ -793,38 +795,53 @@ class SubDirectory implements IDirectory {
     /**
      * {@inheritDoc IDirectory.set}
      */
-    public set<T = any>(key: string, value: T, type?: string): this {
-        let localValue: ILocalValue;
-        let serializableValue: ISerializableValue;
+    public set<T = any>(key: string, value: T): this {
+        const localValue = this.directory.localValueMaker.fromInMemory(value);
+        const serializableValue = localValue.makeSerializable(
+            this.runtime.IComponentSerializer,
+            this.runtime.IComponentHandleContext,
+            this.directory.handle);
 
-        if (type && type !== ValueType[ValueType.Plain] && type !== ValueType[ValueType.Shared]) {
-            // value is actually initialization params in the value type case
-            localValue = this.directory.localValueMaker.makeValueType(
-                type,
-                this.directory.makeDirectoryValueOpEmitter(key, this.absolutePath),
-                value,
-            );
+        this.setCore(
+            key,
+            localValue,
+            true,
+            null,
+        );
 
-            // TODO ideally we could use makeSerializable in this case as well. But the interval
-            // collection has assumptions of attach being called prior. Given the IComponentSerializer it
-            // may be possible to remove custom value type serialization entirely.
-            const transformedValue = value
-                ? JSON.parse(this.runtime.IComponentSerializer.stringify(
-                    value,
-                    this.runtime.IComponentHandleContext,
-                    this.directory.handle))
-                : value;
+        const op: IDirectorySetOperation = {
+            key,
+            path: this.absolutePath,
+            type: "set",
+            value: serializableValue,
+        };
+        this.submitKeyMessage(op);
+        return this;
+    }
 
-            // This is a special form of serialized valuetype only used for set, containing info for initialization.
-            // After initialization, the serialized form will need to come from the .store of the value type's factory.
-            serializableValue = { type, value: transformedValue };
-        } else {
-            localValue = this.directory.localValueMaker.fromInMemory(value);
-            serializableValue = localValue.makeSerializable(
-                this.runtime.IComponentSerializer,
+    /**
+     * {@inheritDoc IValueTypeCreator.createValueType}
+     */
+    public createValueType(key: string, type: string, params: any): this {
+        const localValue = this.directory.localValueMaker.makeValueType(
+            type,
+            this.directory.makeDirectoryValueOpEmitter(key, this.absolutePath),
+            params,
+        );
+
+        // TODO ideally we could use makeSerializable in this case as well. But the interval
+        // collection has assumptions of attach being called prior. Given the IComponentSerializer it
+        // may be possible to remove custom value type serialization entirely.
+        const transformedValue = params
+            ? JSON.parse(this.runtime.IComponentSerializer.stringify(
+                params,
                 this.runtime.IComponentHandleContext,
-                this.directory.handle);
-        }
+                this.directory.handle))
+            : params;
+
+        // This is a special form of serialized valuetype only used for set, containing info for initialization.
+        // After initialization, the serialized form will need to come from the .store of the value type's factory.
+        const serializableValue = { type, value: transformedValue };
 
         this.setCore(
             key,

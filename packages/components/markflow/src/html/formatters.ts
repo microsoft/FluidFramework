@@ -10,7 +10,7 @@ export const htmlFormatter: Readonly<RootFormatter<IFormatterState>> = plainText
 
 // import { IComponent, IComponentHTMLView } from "@prague/component-core-interfaces";
 // import { Caret as CaretUtil, Direction, Rect } from "@fluid-example/flow-util-lib";
-// import { Marker } from "@prague/merge-tree";
+// import { Marker } from "@microsoft/fluid-merge-tree";
 // import * as assert from "assert";
 // import { DocSegmentKind, getComponentOptions, getCss, getDocSegmentKind } from "../document";
 // import * as styles from "../editor/index.css";

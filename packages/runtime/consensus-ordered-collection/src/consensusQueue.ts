@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentRuntime } from "@prague/runtime-definitions";
-import { ISharedObjectFactory } from "@prague/shared-object-common";
+import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { ConsensusOrderedCollection } from "./consensusOrderedCollection";
 import { ConsensusQueueFactory } from "./consensusOrderedCollectionFactory";
 import { IOrderedCollection } from "./interfaces";

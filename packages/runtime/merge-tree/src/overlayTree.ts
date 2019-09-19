@@ -9,6 +9,7 @@
 // tslint:disable:switch-final-break
 
 import * as MergeLib from "./index";
+
 export enum OverlayNodePosition {
     Above,
     Left,

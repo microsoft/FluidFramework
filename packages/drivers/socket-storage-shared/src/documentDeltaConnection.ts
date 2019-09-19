@@ -4,6 +4,7 @@
  */
 
 import {
+    ConnectionMode,
     IClient,
     IContentMessage,
     IDocumentDeltaConnection,
@@ -57,7 +58,8 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         token: string | null,
         io: SocketIOClientStatic,
         client: IClient,
-        url: string): Promise<IDocumentDeltaConnection> {
+        url: string,
+        mode: ConnectionMode): Promise<IDocumentDeltaConnection> {
 
         // Note on multiplex = false:
         // Temp fix to address issues on SPO. Scriptor hits same URL for Prague & Notifications.
@@ -78,6 +80,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         const connectMessage: IConnect = {
             client,
             id,
+            mode,
             tenantId,
             token,  // token is going to indicate tenant level information, etc...
             versions: protocolVersions,
@@ -196,6 +199,15 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
      */
     public get clientId(): string {
         return this.details.clientId;
+    }
+
+    /**
+     * Get the mode of the client
+     *
+     * @returns the client mode
+     */
+    public get mode(): ConnectionMode {
+        return this.details.mode;
     }
 
     /**

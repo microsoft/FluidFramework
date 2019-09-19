@@ -5,6 +5,7 @@
 
 import * as core from "@microsoft/fluid-server-services-core";
 import {
+    ConnectionMode,
     IClient,
     IContentMessage,
     IDocumentDeltaConnection,
@@ -28,12 +29,13 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
         token: string,
         client: IClient,
         webSocketServer: core.IWebSocketServer,
-    ): Promise<IDocumentDeltaConnection> {
+        mode: ConnectionMode): Promise<IDocumentDeltaConnection> {
         const socket = (webSocketServer as TestWebSocketServer).createConnection();
 
         const connectMessage: IConnect = {
             client,
             id,
+            mode,
             tenantId,
             token,  // token is going to indicate tenant level information, etc...
             versions: [testProtocolVersion],
@@ -126,6 +128,10 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
 
     public get clientId(): string {
         return this.details.clientId;
+    }
+
+    public get mode(): ConnectionMode {
+        return this.details.mode;
     }
 
     public get claims(): ITokenClaims {

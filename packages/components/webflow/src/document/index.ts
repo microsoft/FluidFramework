@@ -4,8 +4,6 @@
  */
 
 import { randomId, TokenList } from "@fluid-example/flow-util-lib";
-import { PrimedComponent, PrimedComponentFactory } from "@prague/aqueduct";
-import { IComponent, IComponentHandle, IComponentHTMLOptions } from "@prague/component-core-interfaces";
 import {
     BaseSegment,
     createInsertSegmentOp,
@@ -22,9 +20,16 @@ import {
     reservedRangeLabelsKey,
     reservedTileLabelsKey,
     TextSegment,
-} from "@prague/merge-tree";
-import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
-import { SequenceDeltaEvent, SequenceMaintenanceEvent, SharedString, SharedStringFactory } from "@prague/sequence";
+} from "@microsoft/fluid-merge-tree";
+import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import {
+    SequenceDeltaEvent,
+    SequenceMaintenanceEvent,
+    SharedString,
+    SharedStringFactory,
+} from "@microsoft/fluid-sequence";
+import { PrimedComponent, PrimedComponentFactory } from "@prague/aqueduct";
+import { IComponent, IComponentHandle, IComponentHTMLOptions } from "@prague/component-core-interfaces";
 import * as assert from "assert";
 import { clamp, emptyArray } from "../util";
 import { IHTMLAttributes } from "../util/attr";

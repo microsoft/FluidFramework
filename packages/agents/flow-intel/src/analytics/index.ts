@@ -6,7 +6,8 @@
 export * from "./api";
 
 import * as resumeAnalytics from "./resumeAnalytics";
+import * as textAnalytics from "./textAnalytics";
+
 export { resumeAnalytics };
 
-import * as textAnalytics from "./textAnalytics";
 export { textAnalytics };

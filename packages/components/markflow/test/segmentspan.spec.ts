@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { TextSegment } from "@microsoft/fluid-merge-tree";
 // tslint:disable:binary-expression-operand-order
 import { TestHost } from "@prague/local-test-server";
-import { TextSegment } from "@prague/merge-tree";
 import * as assert from "assert";
 // tslint:disable-next-line:no-import-side-effect
 import "mocha";

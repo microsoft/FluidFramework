@@ -3,10 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { ComponentHandle, ComponentRuntime } from "@microsoft/fluid-component-runtime";
+import { ISharedMap, MapFactory } from "@microsoft/fluid-map";
+import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import {
     IComponent,
     IComponentHandleContext,
-
     IComponentHTMLOptions,
     IComponentHTMLVisual,
     IComponentLoadable,
@@ -14,18 +17,7 @@ import {
     IRequest,
     IResponse,
 } from "@prague/component-core-interfaces";
-import { ComponentHandle, ComponentRuntime } from "@prague/component-runtime";
-import {
-    IComponentCollection,
-    IComponentLayout,
-} from "@prague/framework-definitions";
-import { ISharedMap, MapFactory } from "@prague/map";
-import {
-    IComponentContext,
-    IComponentFactory,
-    IComponentRuntime,
-} from "@prague/runtime-definitions";
-import { ISharedObjectFactory } from "@prague/shared-object-common";
+import { IComponentCollection, IComponentLayout } from "@prague/framework-definitions";
 import { EventEmitter } from "events";
 
 export class ImageComponent implements
