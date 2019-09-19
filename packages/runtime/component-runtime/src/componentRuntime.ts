@@ -4,11 +4,15 @@
  */
 
 import {
-    IComponentHandle,
-    IComponentHandleContext,
-    IRequest,
-    IResponse,
-} from "@prague/component-core-interfaces";
+    IAttachMessage,
+    IChannel,
+    IComponentContext,
+    IComponentRuntime,
+    IEnvelope,
+    IInboundSignalMessage,
+} from "@microsoft/fluid-runtime-definitions";
+import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
+import { IComponentHandle, IComponentHandleContext, IRequest, IResponse } from "@prague/component-core-interfaces";
 import {
     ConnectionState,
     IBlobManager,
@@ -26,15 +30,6 @@ import {
     MessageType,
     TreeEntry,
 } from "@prague/protocol-definitions";
-import {
-    IAttachMessage,
-    IChannel,
-    IComponentContext,
-    IComponentRuntime,
-    IEnvelope,
-    IInboundSignalMessage,
-} from "@prague/runtime-definitions";
-import { ISharedObjectFactory } from "@prague/shared-object-common";
 import { buildHierarchy, ChildLogger, Deferred, flatten, raiseConnectedEvent } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";

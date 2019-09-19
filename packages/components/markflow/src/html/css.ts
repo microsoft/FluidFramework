@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { ISegment } from "@microsoft/fluid-merge-tree";
 import { areStringsEquivalent } from "@prague/flow-util";
-import { ISegment } from "@prague/merge-tree";
 import { getCss } from "../document";
 
 // Note: Similar to TokenList.set(..), but elides the search for duplicate tokens.

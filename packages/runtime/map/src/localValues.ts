@@ -3,20 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import {
-    IComponentHandle,
-    IComponentHandleContext,
-    IComponentSerializer,
-    ISerializedHandle,
-} from "@prague/component-core-interfaces";
-import { IComponentRuntime } from "@prague/runtime-definitions";
+import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import {
     ISharedObject,
     parseHandles,
     serializeHandles,
     SharedObject,
     ValueType,
-} from "@prague/shared-object-common";
+} from "@microsoft/fluid-shared-object-base";
+import {
+    IComponentHandle,
+    IComponentHandleContext,
+    IComponentSerializer,
+    ISerializedHandle,
+} from "@prague/component-core-interfaces";
 import { CounterValueType } from "./counter";
 import { ISerializableValue, IValueOpEmitter, IValueOperation, IValueType } from "./interfaces";
 

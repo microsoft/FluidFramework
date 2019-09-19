@@ -17,7 +17,7 @@
 The DistributedSet value type has been removed.
 
 ## `Stream` renamed to `Ink`
-The `Stream` data structure (and associated interfaces and classes like `IStream`, `StreamFactory`, etc.) have been renamed to `Ink` (`IInk`, `InkFactory`, etc.).  They are available in `@prague/ink`.
+The `Stream` data structure (and associated interfaces and classes like `IStream`, `StreamFactory`, etc.) have been renamed to `Ink` (`IInk`, `InkFactory`, etc.).  They are available in `@microsoft/fluid-ink`.
 
 ## insertAtReferencePosition
 insertSiblingSegment has been removed and insertAtReferencePosition has been added.

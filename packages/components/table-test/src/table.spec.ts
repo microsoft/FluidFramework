@@ -3,15 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { TableDocument, TableDocumentType, TableSlice, TableSliceType } from "@chaincode/table-document";
 import { TestHost } from "@prague/local-test-server";
-import "mocha";
-import {
-    TableDocument,
-    TableDocumentType,
-    TableSliceType,
-    TableSlice,
-} from "@chaincode/table-document";
 import * as assert from "assert";
+import "mocha";
 
 describe("TableDocument", () => {
     let host: TestHost;

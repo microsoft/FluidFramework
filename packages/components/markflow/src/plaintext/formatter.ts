@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { ISegment, TextSegment } from "@microsoft/fluid-merge-tree";
 import { Char, Direction, getDeltaX, KeyCode } from "@prague/flow-util";
-import { ISegment, TextSegment } from "@prague/merge-tree";
-import { FlowDocument } from "..";
+import { FlowDocument } from "../";
 import { ClipboardFormat } from "../clipboard/paste";
 import { Caret } from "../editor/caret";
 import { Tag } from "../util/tag";

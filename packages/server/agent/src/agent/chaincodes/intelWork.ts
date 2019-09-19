@@ -5,7 +5,7 @@
 
 import { ICodeLoader, IHost } from "@prague/container-definitions";
 import { IDocumentServiceFactory } from "@prague/protocol-definitions";
-import { IWork} from "../definitions";
+import { IWork } from "../definitions";
 import { ChaincodeWork } from "./chaincodeWork";
 
 export class IntelWork extends ChaincodeWork implements IWork {

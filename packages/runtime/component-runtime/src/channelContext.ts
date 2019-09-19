@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IChannel, IEnvelope } from "@microsoft/fluid-runtime-definitions";
 import { ConnectionState } from "@prague/container-definitions";
 import {
     FileMode,
@@ -13,7 +14,6 @@ import {
     MessageType,
     TreeEntry,
 } from "@prague/protocol-definitions";
-import { IChannel, IEnvelope } from "@prague/runtime-definitions";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ChannelStorageService } from "./channelStorageService";
 

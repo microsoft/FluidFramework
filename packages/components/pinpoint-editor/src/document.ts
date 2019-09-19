@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedMap, SharedMap } from "@prague/map";
-import { IComponentRuntime } from "@prague/runtime-definitions";
+import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
+import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 
 const rootMapId = "root";
 

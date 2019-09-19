@@ -4,7 +4,7 @@
  */
 
 import * as assert from "assert";
-import { TextSegment } from "..";
+import { TextSegment } from "../";
 import { createInsertSegmentOp, createRemoveRangeOp } from "../opBuilder";
 import { TestClient } from "./testClient";
 

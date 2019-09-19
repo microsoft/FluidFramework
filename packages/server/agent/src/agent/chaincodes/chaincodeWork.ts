@@ -3,15 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import {
-    ICodeLoader,
-    IHost,
-} from "@prague/container-definitions";
+import { ICodeLoader, IHost } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
-import {
-    Browser,
-    IDocumentServiceFactory,
-} from "@prague/protocol-definitions";
+import { Browser, IDocumentServiceFactory } from "@prague/protocol-definitions";
 import { EventEmitter } from "events";
 import { parse } from "url";
 import { debug } from "../debug";

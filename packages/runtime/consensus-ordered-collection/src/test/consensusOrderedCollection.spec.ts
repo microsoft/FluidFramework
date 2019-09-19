@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { MockRuntime } from "@prague/runtime-test-utils";
+import { MockRuntime } from "@microsoft/fluid-test-runtime-utils";
 import * as assert from "assert";
 import { ConsensusQueueFactory, ConsensusStackFactory } from "../consensusOrderedCollectionFactory";
 import { IConsensusOrderedCollection, IConsensusOrderedCollectionFactory } from "../interfaces";

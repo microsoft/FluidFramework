@@ -15,11 +15,9 @@ import * as odsp from "@prague/odsp-socket-storage";
 import { IDocumentService } from "@prague/protocol-definitions";
 import * as r11s from "@prague/routerlicious-socket-storage";
 import { BaseTelemetryNullLogger, fromBase64ToUtf8 } from "@prague/utils";
-
 import * as child_process from "child_process";
 import * as http from "http";
 import { URL } from "url";
-
 import { paramForceRefreshToken, paramJWT, paramURL } from "./fluidFetchArgs";
 import { loadRC, saveRC } from "./fluidToolRC";
 

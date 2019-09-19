@@ -4,7 +4,7 @@
  */
 
 // tslint:disable:align
-import * as MergeTree from "@prague/merge-tree";
+import * as MergeTree from "@microsoft/fluid-merge-tree";
 import { CharacterCodes } from "./characterCodes";
 import { Cursor } from "./cursor";
 import * as domutils from "./domutils";

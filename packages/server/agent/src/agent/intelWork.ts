@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
+import * as Sequence from "@microsoft/fluid-sequence";
 import { IComponentHandle } from "@prague/component-core-interfaces";
 import { IHost } from "@prague/container-definitions";
 import { TextAnalyzer } from "@prague/intelligence-runner";
-import { ISharedMap, SharedMap } from "@prague/map";
 import { IDocumentServiceFactory } from "@prague/protocol-definitions";
-import * as Sequence from "@prague/sequence";
-import { BaseWork} from "./baseWork";
-import { IWork} from "./definitions";
+import { BaseWork } from "./baseWork";
+import { IWork } from "./definitions";
 
 export class IntelWork extends BaseWork implements IWork {
 

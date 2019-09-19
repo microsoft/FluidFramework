@@ -5,12 +5,12 @@
 
 // tslint:disable
 
-import { LocalReference } from "../localReference";
-import { TestClient } from "./testClient";
-import * as Properties from "../properties";
-import * as ops from "../ops";
 import * as path from "path";
 import * as random from "random-js";
+import { LocalReference } from "../localReference";
+import * as ops from "../ops";
+import * as Properties from "../properties";
+import { TestClient } from "./testClient";
 import { loadTextFromFileWithMarkers } from "./testUtils";
 
 function clock() {

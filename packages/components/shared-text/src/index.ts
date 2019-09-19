@@ -7,10 +7,10 @@
 // tslint:disable-next-line:no-import-side-effect
 import "./publicpath";
 
+import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
+import { IComponentContext, IComponentFactory, IComponentRegistry } from "@microsoft/fluid-runtime-definitions";
 import { IRequest } from "@prague/component-core-interfaces";
 import { IContainerContext, IRuntime, IRuntimeFactory } from "@prague/container-definitions";
-import { ContainerRuntime } from "@prague/container-runtime";
-import { IComponentContext, IComponentFactory, IComponentRegistry } from "@prague/runtime-definitions";
 // import { SharedString } from "@prague/sequence";
 import * as Snapshotter from "@prague/snapshotter";
 import * as sharedTextComponent from "./component";

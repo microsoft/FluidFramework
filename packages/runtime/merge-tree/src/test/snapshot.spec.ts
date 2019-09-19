@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentRuntime } from "@prague/runtime-definitions";
-import { MockStorage } from "@prague/runtime-test-utils";
+import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { MockStorage } from "@microsoft/fluid-test-runtime-utils";
 import * as assert from "assert";
-import { TestClient } from ".";
 import { Snapshot } from "../snapshot";
+import { TestClient } from "./";
 
 describe("snapshot", () => {
     it("header only", async () => {

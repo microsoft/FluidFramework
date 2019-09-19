@@ -39,10 +39,10 @@
   "dependencies": {
     "@prague/aqueduct": "^0.10.0",
     "@prague/component-core-interfaces": "^0.10.0",
-    "@prague/map": "^0.10.0",
-    "@prague/merge-tree": "^0.10.0",
-    "@prague/runtime-definitions": "^0.10.0",
-    "@prague/sequence": "^0.10.0",
+    "@microsoft/fluid-map": "^0.10.0",
+    "@microsoft/fluid-merge-tree": "^0.10.0",
+    "@microsoft/fluid-runtime-definitions": "^0.10.0",
+    "@microsoft/fluid-sequence": "^0.10.0",
     "@tiny-calc/nano": "^0.0.8199",
     "debug": "^4.1.1"
   },

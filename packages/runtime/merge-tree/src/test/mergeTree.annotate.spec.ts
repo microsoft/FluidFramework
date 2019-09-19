@@ -6,13 +6,9 @@
 // tslint:disable: no-object-literal-type-assertion max-func-body-length
 import { ISequencedDocumentMessage } from "@prague/protocol-definitions";
 import * as assert from "assert";
-import { TextSegment } from "..";
+import { TextSegment } from "../";
 import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants";
-import {
-    BaseSegment,
-    Marker,
-    MergeTree,
-} from "../mergeTree";
+import { BaseSegment, Marker, MergeTree } from "../mergeTree";
 import { ICombiningOp, MergeTreeDeltaType, ReferenceType } from "../ops";
 
 describe("MergeTree", () => {

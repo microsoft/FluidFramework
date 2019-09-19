@@ -3,16 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import {
-    IRequest,
-    IResponse,
- } from "@prague/component-core-interfaces";
-import {
-    ISharedDirectory,
-    MapFactory,
-    SharedDirectory,
-} from "@prague/map";
-import { ITaskManager } from "@prague/runtime-definitions";
+import { ISharedDirectory, MapFactory, SharedDirectory } from "@microsoft/fluid-map";
+import { ITaskManager } from "@microsoft/fluid-runtime-definitions";
+import { IRequest, IResponse } from "@prague/component-core-interfaces";
 import { SharedComponent } from "./sharedComponent";
 
 /**

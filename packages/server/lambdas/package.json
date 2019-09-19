@@ -41,7 +41,7 @@
     "@prague/container-loader": "^0.10.0",
     "@prague/gitresources": "^0.10.0",
     "@prague/protocol-definitions": "^0.10.0",
-    "@prague/runtime-definitions": "^0.10.0",
+    "@microsoft/fluid-runtime-definitions": "^0.10.0",
     "@microsoft/fluid-server-services": "^0.10.0",
     "@microsoft/fluid-server-services-client": "^0.10.0",
     "@microsoft/fluid-server-services-core": "^0.10.0",

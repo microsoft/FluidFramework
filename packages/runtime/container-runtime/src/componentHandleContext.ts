@@ -3,12 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-    IComponentHandle,
-    IComponentHandleContext,
-    IRequest,
-    IResponse,
-} from "@prague/component-core-interfaces";
+import { IComponentHandle, IComponentHandleContext, IRequest, IResponse } from "@prague/component-core-interfaces";
 import { IRuntime } from "@prague/container-definitions";
 
 export class ComponentHandleContext implements IComponentHandleContext {

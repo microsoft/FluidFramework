@@ -3,13 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import {
-    FileMode,
-    ITree,
-    TreeEntry,
-} from "@prague/protocol-definitions";
-import { IComponentRuntime, IObjectStorageService } from "@prague/runtime-definitions";
-import { SharedObject, ValueType } from "@prague/shared-object-common";
+import { IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
+import { SharedObject, ValueType } from "@microsoft/fluid-shared-object-base";
+import { FileMode, ITree, TreeEntry } from "@prague/protocol-definitions";
 import { fromBase64ToUtf8 } from "@prague/utils";
 import * as assert from "assert";
 import { IConsensusOrderedCollectionValue } from "./values";
