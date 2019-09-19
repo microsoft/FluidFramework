@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
+import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
+import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
+import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import * as scribe from "@microsoft/fluid-server-tools-core";
+import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import {
     IComponentHTMLOptions,
     IComponentHTMLVisual,
@@ -12,25 +17,8 @@ import {
     IRequest,
     IResponse,
 } from "@prague/component-core-interfaces";
-import { ComponentRuntime } from "@prague/component-runtime";
-import {
-    IContainerContext,
-    IFluidCodeDetails,
-    IRuntime,
-    IRuntimeFactory,
-} from "@prague/container-definitions";
-import { ContainerRuntime } from "@prague/container-runtime";
+import { IContainerContext, IFluidCodeDetails, IRuntime, IRuntimeFactory } from "@prague/container-definitions";
 import { IDocumentFactory } from "@prague/host-service-interfaces";
-import {
-    ISharedMap,
-    SharedMap,
-} from "@prague/map";
-import {
-    IComponentContext,
-    IComponentFactory,
-    IComponentRuntime,
-} from "@prague/runtime-definitions";
-import { ISharedObjectFactory } from "@prague/shared-object-common";
 import Axios from "axios";
 import { EventEmitter } from "events";
 import { resolve } from "url";
@@ -223,7 +211,7 @@ function initialize(
             config: {
                 "@chaincode:cdn": "https://pragueauspkn-3873244262.azureedge.net",
             },
-            package: `@chaincode/shared-text@${version}`,
+            package: `@fluid-example/shared-text@${version}`,
         };
         const createP = documentFactory.create(details);
         createP.then(
@@ -445,11 +433,11 @@ class ScribeFactory implements IComponentFactory, IRuntimeFactory {
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
         const registry = new Map<string, Promise<IComponentFactory>>([
-            ["@chaincode/scribe", Promise.resolve(this)],
+            ["@fluid-example/scribe", Promise.resolve(this)],
         ]);
 
         const defaultComponentId = "default";
-        const defaultComponent = "@chaincode/scribe";
+        const defaultComponent = "@fluid-example/scribe";
 
         const runtime = await ContainerRuntime.load(
             context,

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as MergeTree from "@prague/merge-tree";
+import * as MergeTree from "@microsoft/fluid-merge-tree";
 import * as request from "request";
 import * as url from "url";
 

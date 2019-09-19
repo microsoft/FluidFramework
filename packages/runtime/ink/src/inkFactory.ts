@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IChannelAttributes, IComponentRuntime, ISharedObjectServices } from "@prague/runtime-definitions";
-import { ISharedObject, ISharedObjectFactory } from "@prague/shared-object-common";
+import { IChannelAttributes, IComponentRuntime, ISharedObjectServices } from "@microsoft/fluid-runtime-definitions";
+import { ISharedObject, ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { Ink } from "./ink";
 import { pkgVersion } from "./packageVersion";
 

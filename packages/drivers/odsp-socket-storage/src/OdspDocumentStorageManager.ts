@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger } from "@prague/container-definitions";
+import { ITelemetryLogger } from "@prague/container-definitions";
 import * as resources from "@prague/gitresources";
 import * as api from "@prague/protocol-definitions";
-import { buildHierarchy, fromBase64ToUtf8, fromUtf8ToBase64 } from "@prague/utils";
+import { buildHierarchy, fromBase64ToUtf8, fromUtf8ToBase64, PerformanceEvent } from "@prague/utils";
 import * as assert from "assert";
 import {
     IDocumentStorageGetVersionsResponse,
@@ -59,7 +59,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         private latestSha: string | null | undefined,
         private readonly fetchWrapper: IFetchWrapper,
         private readonly getStorageToken: (refresh: boolean) => Promise<string | null>,
-        private readonly logger: ITelemetryBaseLogger,
+        private readonly logger: ITelemetryLogger,
         private readonly fetchFullSnapshot: boolean,
     ) {
         this.queryString = getQueryString(queryParams);
@@ -226,13 +226,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             if (this.firstVersionCall && count === 1 && (blobid === null || blobid === this.documentId)) {
                 this.firstVersionCall = false;
 
-                const treesLatestStartTime = performance.now();
-                this.logger.send({
-                    category: "performance",
-                    eventName: "treesLatestStart",
-                    perfType: "start",
-                    tick: treesLatestStartTime,
-                });
+                const event = PerformanceEvent.start(this.logger, { eventName: "treesLatest" });
 
                 // TODO: This snapshot will return deltas, which we currently aren't using. We need to enable this flag to go down the "optimized"
                 // snapshot code path. We should leverage the fact that these deltas are returned to speed up the deltas fetch.
@@ -240,14 +234,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
                 const { trees, blobs, ops, sha } = await this.fetchWrapper.get<IOdspSnapshot>(url, this.documentId, headers);
 
-                const treesLatestEndTime = performance.now();
-                this.logger.send({
-                    category: "performance",
-                    eventName: "treesLatestEnd",
-                    perfType: "end",
-                    duration: treesLatestEndTime - treesLatestStartTime,
-                    tick: treesLatestEndTime,
-                });
+                event.end();
 
                 if (trees) {
                     this.initTreesCache(trees);

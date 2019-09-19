@@ -201,6 +201,29 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
 }
 
 /**
+ * Null logger
+ * It can be used in places where logger instance is required, but events should be not send over.
+ */
+export class TelemetryNullLogger implements ITelemetryLogger {
+    public send(event: ITelemetryBaseEvent): void {
+    }
+    public sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any) {
+    }
+    public sendErrorEvent(event: ITelemetryErrorEvent, error?: any) {
+    }
+    public sendPerformanceEvent(event: ITelemetryPerformanceEvent): void {
+    }
+    public logGenericError(eventName: string, error: any) {
+    }
+    public logException(event: ITelemetryErrorEvent, exception: any): void {
+    }
+    public debugAssert(condition: boolean, event?: ITelemetryErrorEvent): void {
+    }
+    public shipAssert(condition: boolean, event?: ITelemetryErrorEvent): void {
+    }
+}
+
+/**
  * ChildLogger class contains various helper telemetry methods,
  * encoding in one place schemas for various types of Fluid telemetry events.
  * Creates sub-logger that appends properties to all events

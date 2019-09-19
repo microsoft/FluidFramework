@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as MergeTree from "@prague/merge-tree";
-import { SharedString } from "@prague/sequence";
+import * as MergeTree from "@microsoft/fluid-merge-tree";
+import { SharedString } from "@microsoft/fluid-sequence";
 import { EventEmitter } from "events";
 import {
     ExecutionResult,

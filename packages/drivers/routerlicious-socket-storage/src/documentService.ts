@@ -100,14 +100,17 @@ export class DocumentService implements api.IDocumentService {
      *
      * @returns returns the document delta stream service for routerlicious driver.
      */
-    public async connectToDeltaStream(client: api.IClient): Promise<api.IDocumentDeltaConnection> {
+    public async connectToDeltaStream(
+        client: api.IClient,
+        mode: api.ConnectionMode): Promise<api.IDocumentDeltaConnection> {
         return DocumentDeltaConnection.create(
             this.tenantId,
             this.documentId,
             this.tokenProvider.token,
             io,
             client,
-            this.ordererUrl);
+            this.ordererUrl,
+            mode);
     }
 
     public async branch(): Promise<string> {

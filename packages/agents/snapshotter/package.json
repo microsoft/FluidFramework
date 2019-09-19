@@ -1,5 +1,5 @@
 {
-  "name": "@prague/snapshotter",
+  "name": "@fluid-example/snapshotter-agent",
   "version": "0.10.0",
   "description": "Snapshotter for Prague container",
   "main": "dist/index.js",
@@ -25,7 +25,7 @@
     "typescript": "~3.4.5"
   },
   "dependencies": {
-    "@prague/container-runtime": "^0.10.0",
+    "@microsoft/fluid-container-runtime": "^0.10.0",
     "@prague/protocol-definitions": "^0.10.0"
   },
   "license": "MIT"

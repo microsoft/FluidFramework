@@ -6,8 +6,10 @@
 import { IUser } from "./users";
 
 export const Browser = "browser";
+export type ConnectionMode = "write" | "read";
 
 export interface IClient {
+    mode?: ConnectionMode;
     type: string;
     permission: string[];
     user: IUser;

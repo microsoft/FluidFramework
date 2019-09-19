@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedCell } from "@prague/cell";
+import { ISharedCell } from "@microsoft/fluid-cell";
+import { ISharedMap } from "@microsoft/fluid-map";
 import * as api from "@prague/client-api";
 import { IComponentHandle } from "@prague/component-core-interfaces";
-import { ISharedMap } from "@prague/map";
 import * as assert from "assert";
 import {
     DocumentDeltaEventManager,

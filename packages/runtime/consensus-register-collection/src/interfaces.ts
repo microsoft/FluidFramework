@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentRuntime, ISharedObjectServices } from "@prague/runtime-definitions";
-import { ISharedObject, ISharedObjectFactory } from "@prague/shared-object-common";
+import { IComponentRuntime, ISharedObjectServices } from "@microsoft/fluid-runtime-definitions";
+import { ISharedObject, ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 
 /**
  * Consensus Register Collection channel factory interface

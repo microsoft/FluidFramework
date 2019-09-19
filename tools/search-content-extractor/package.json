@@ -13,7 +13,7 @@
     "@prague/odsp-socket-storage": "^0.5.0",
     "@microsoft/fluid-odsp-utils": "^0.5.0",
     "@prague/routerlicious-socket-storage": "^0.5.0",
-    "@prague/runtime-definitions": "^0.5.0",
+    "@microsoft/fluid-runtime-definitions": "^0.5.0",
     "request": "^2.88.0"
   },
   "devDependencies": {

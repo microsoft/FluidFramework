@@ -7,7 +7,7 @@ import { Browser, IPragueResolvedUrl } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
 import { ContainerUrlResolver } from "@prague/routerlicious-host";
 import { RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
-import { IComponentRuntime } from "@prague/runtime-definitions";
+import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import * as jwt from "jsonwebtoken";
 import * as url from "url";
 import { LocalPlatform } from "./localPlatform";

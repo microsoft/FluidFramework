@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
 import { IBlob, ITree, TreeEntry } from "@prague/protocol-definitions";
-import { IObjectStorageService } from "@prague/runtime-definitions";
 import { fromUtf8ToBase64 } from "@prague/utils";
 
 export class LocalChannelStorageService implements IObjectStorageService {

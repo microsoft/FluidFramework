@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { colIndexToName, TableDocument } from "@chaincode/table-document";
-import { KeyCode, Scheduler, Template } from "@prague/flow-util";
+import { KeyCode, Scheduler, Template } from "@fluid-example/flow-util-lib";
+import { colIndexToName, TableDocument } from "@fluid-example/table-document";
 import { BorderRect } from "./borderstyle";
 import * as styles from "./index.css";
 

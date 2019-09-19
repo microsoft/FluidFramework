@@ -2,14 +2,19 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import * as SearchMenu from "@chaincode/search-menu";
 
-import { tableViewType } from "@chaincode/table-view";
-import { Editor, FlowDocument, htmlFormatter, Tag } from "@chaincode/webflow";
-import { IComponent, IComponentHTMLView, IComponentHTMLVisual, IComponentLoadable } from "@prague/component-core-interfaces";
-import { KeyCode, randomId, Template } from "@prague/flow-util";
+import { KeyCode, randomId, Template } from "@fluid-example/flow-util-lib";
+import * as SearchMenu from "@fluid-example/search-menu";
+import { tableViewType } from "@fluid-example/table-view";
+import { Editor, FlowDocument, htmlFormatter, Tag } from "@fluid-example/webflow";
+import { TST } from "@microsoft/fluid-merge-tree";
+import {
+    IComponent,
+    IComponentHTMLView,
+    IComponentHTMLVisual,
+    IComponentLoadable,
+} from "@prague/component-core-interfaces";
 import { IComponentCollection } from "@prague/framework-definitions";
-import { TST } from "@prague/merge-tree";
 import * as styles from "./index.css";
 
 const template = new Template(

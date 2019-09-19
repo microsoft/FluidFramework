@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import * as MergeTree from "@prague/merge-tree";
-import { IChannelAttributes, IComponentRuntime, ISharedObjectServices } from "@prague/runtime-definitions";
-import { ISharedObject, ISharedObjectFactory } from "@prague/shared-object-common";
+import * as MergeTree from "@microsoft/fluid-merge-tree";
+import { IChannelAttributes, IComponentRuntime, ISharedObjectServices } from "@microsoft/fluid-runtime-definitions";
+import { ISharedObject, ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { pkgVersion } from "./packageVersion";
 import { SharedNumberSequence } from "./sharedNumberSequence";
 import { SharedObjectSequence } from "./sharedObjectSequence";

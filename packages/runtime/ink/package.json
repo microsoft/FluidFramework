@@ -1,5 +1,5 @@
 {
-  "name": "@prague/ink",
+  "name": "@microsoft/fluid-ink",
   "version": "0.10.0",
   "description": "Ink DDS",
   "main": "dist/index.js",
@@ -31,8 +31,8 @@
   },
   "dependencies": {
     "@prague/protocol-definitions": "^0.10.0",
-    "@prague/runtime-definitions": "^0.10.0",
-    "@prague/shared-object-common": "^0.10.0",
+    "@microsoft/fluid-runtime-definitions": "^0.10.0",
+    "@microsoft/fluid-shared-object-base": "^0.10.0",
     "@prague/utils": "^0.10.0",
     "@types/debug": "^0.0.31",
     "debug": "^4.1.1",

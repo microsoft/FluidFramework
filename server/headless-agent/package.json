@@ -17,7 +17,7 @@
     "@prague/container-loader": "^0.3.6078",
     "@prague/routerlicious-host": "^0.3.6078",
     "@prague/routerlicious-socket-storage": "^0.3.6078",
-    "@prague/runtime-definitions": "^0.3.6078",
+    "@microsoft/fluid-runtime-definitions": "^0.3.6078",
     "@microsoft/fluid-server-services": "^0.3.6078",
     "@microsoft/fluid-server-services-core": "^0.3.6078",
     "@microsoft/fluid-server-services-utils": "^0.3.6078",

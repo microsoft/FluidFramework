@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { ICommand, KeyCode, Template } from "@fluid-example/flow-util-lib";
 import { IComponentHTMLOptions, IComponentHTMLView } from "@prague/component-core-interfaces";
-import { ICommand, KeyCode, Template } from "@prague/flow-util";
 import { FlowDocument } from "../document";
 import { Editor } from "../editor";
 import { htmlFormatter } from "../html/formatters";

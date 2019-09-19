@@ -46,8 +46,8 @@
     "@prague/aqueduct": "^0.10.0",
     "@prague/component-core-interfaces": "^0.10.0",
     "@prague/container-definitions": "^0.10.0",
-    "@prague/map": "^0.10.0",
-    "@prague/runtime-definitions": "^0.10.0",
+    "@microsoft/fluid-map": "^0.10.0",
+    "@microsoft/fluid-runtime-definitions": "^0.10.0",
     "react": "^16.8.3",
     "react-dom": "^16.8.3"
   },

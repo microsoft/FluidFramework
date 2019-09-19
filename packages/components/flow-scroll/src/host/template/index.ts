@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { FlowDocument } from "@chaincode/webflow";
+import { FlowDocument } from "@fluid-example/webflow";
 
 export async function importDoc(docP: Promise<FlowDocument>, file: string) {
     const response = await fetch(`https://www.wu2.prague.office-int.com/public/literature/${file}`);

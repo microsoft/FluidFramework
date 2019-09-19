@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { FlowDocument } from "@chaincode/webflow";
-import { ISharedMap } from "@prague/map";
+import { FlowDocument } from "@fluid-example/webflow";
+import { ISharedMap } from "@microsoft/fluid-map";
 import { IIntelligentService } from "./analytics";
 import { RateLimiter } from "./rateLimiter";
 

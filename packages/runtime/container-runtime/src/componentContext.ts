@@ -4,10 +4,14 @@
  */
 
 import {
-    IComponent,
-    IRequest,
-    IResponse,
-} from "@prague/component-core-interfaces";
+    IAttachMessage,
+    IComponentContext,
+    IComponentRuntime,
+    IEnvelope,
+    IHostRuntime,
+    IInboundSignalMessage,
+} from "@microsoft/fluid-runtime-definitions";
+import { IComponent, IRequest, IResponse } from "@prague/component-core-interfaces";
 import {
     ConnectionState,
     IBlobManager,
@@ -26,14 +30,6 @@ import {
     MessageType,
     TreeEntry,
 } from "@prague/protocol-definitions";
-import {
-    IAttachMessage,
-    IComponentContext,
-    IComponentRuntime,
-    IEnvelope,
-    IHostRuntime,
-    IInboundSignalMessage,
-} from "@prague/runtime-definitions";
 import { Deferred, raiseConnectedEvent, readAndParse } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
@@ -152,7 +148,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
             const details = await this.getSnapshotDetails();
             this._baseSnapshot = details.snapshot;
             this.baseId = details.snapshot ? details.snapshot.id : null;
-            const factory = await this._hostRuntime.getPackage(details.pkg);
+            const factory = await this._hostRuntime.IComponentRegistry.get(details.pkg);
 
             // During this call we will invoke the instantiate method - which will call back into us
             // via the bindRuntime call to resolve componentRuntimeDeferred

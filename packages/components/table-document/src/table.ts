@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ICombiningOp, PropertySet } from "@prague/merge-tree";
-import { UnboxedOper } from "@prague/sequence";
+import { ICombiningOp, PropertySet } from "@microsoft/fluid-merge-tree";
+import { UnboxedOper } from "@microsoft/fluid-sequence";
 
 export interface ITable {
     readonly numRows: number;
