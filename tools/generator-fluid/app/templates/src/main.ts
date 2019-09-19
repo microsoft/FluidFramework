@@ -12,11 +12,11 @@ import {
 import {
     Counter,
     CounterValueType,
-} from "@prague/map";
+} from "@microsoft/fluid-map";
 import {
     IComponentContext,
     IComponentRuntime,
-} from "@prague/runtime-definitions";
+} from "@microsoft/fluid-runtime-definitions";
 
 /**
  * Clicker example using view interfaces and stock component classes.

@@ -3,6 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import {
+    IChannel,
+    IComponentRuntime,
+    IDeltaConnection,
+    IDeltaHandler,
+    ISharedObjectServices,
+} from "@microsoft/fluid-runtime-definitions";
 import { IHistorian } from "@microsoft/fluid-server-services-client";
 import { IComponentHandle, IComponentHandleContext, IRequest, IResponse } from "@prague/component-core-interfaces";
 import {
@@ -15,13 +22,6 @@ import {
 } from "@prague/container-definitions";
 import * as git from "@prague/gitresources";
 import { IDocumentMessage, ISequencedDocumentMessage, ITreeEntry, MessageType } from "@prague/protocol-definitions";
-import {
-    IChannel,
-    IComponentRuntime,
-    IDeltaConnection,
-    IDeltaHandler,
-    ISharedObjectServices,
-} from "@prague/runtime-definitions";
 import { ComponentSerializer, DebugLogger, Deferred, fromUtf8ToBase64 } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";

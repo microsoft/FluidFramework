@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { ISharedMap } from "@microsoft/fluid-map";
 import { IComponentHandle } from "@prague/component-core-interfaces";
-import { ISharedMap } from "@prague/map";
 import { default as axios } from "axios";
 
 export async function downloadRawText(textUrl: string): Promise<string> {

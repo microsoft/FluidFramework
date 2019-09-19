@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { LocalReference } from "@prague/merge-tree";
-import { SequenceInterval } from "@prague/sequence";
+import { LocalReference } from "@microsoft/fluid-merge-tree";
+import { SequenceInterval } from "@microsoft/fluid-sequence";
 import * as assert from "assert";
 
 const rangeExpr = /([a-zA-Z]+)(\d+):([a-zA-Z]+)(\d+)/;

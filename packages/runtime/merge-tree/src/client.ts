@@ -3,14 +3,19 @@
  * Licensed under the MIT License.
  */
 
+import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { ITelemetryLogger } from "@prague/container-definitions";
 import { ISequencedDocumentMessage, MessageType } from "@prague/protocol-definitions";
-import { IComponentRuntime } from "@prague/runtime-definitions";
 import * as assert from "assert";
 import { IIntegerRange } from "./base";
 import * as Collections from "./collections";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
-import { IMergeTreeClientSequenceArgs, IMergeTreeDeltaOpArgs, MergeTreeMaintenanceCallback, ReferencePosition } from "./index";
+import {
+    IMergeTreeClientSequenceArgs,
+    IMergeTreeDeltaOpArgs,
+    MergeTreeMaintenanceCallback,
+    ReferencePosition,
+} from "./index";
 import { LocalReference } from "./localReference";
 import {
     ClientIds,
@@ -945,9 +950,9 @@ export class Client {
         }
     }
 
-    getContainingSegment(pos: number) {
+    getContainingSegment<T extends ISegment>(pos: number) {
         const segWindow = this.mergeTree.getCollabWindow();
-        return this.mergeTree.getContainingSegment(pos, segWindow.currentSeq, segWindow.clientId);
+        return this.mergeTree.getContainingSegment<T>(pos, segWindow.currentSeq, segWindow.clientId);
     }
 
     getPropertiesAtPosition(pos: number) {

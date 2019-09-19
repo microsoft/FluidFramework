@@ -5,7 +5,7 @@
 
 import { SimpleModuleInstantiationFactory } from "@prague/aqueduct";
 
-export const webflowType = "@chaincode/webflow";
+export const webflowType = "@fluid-example/webflow";
 export const FlowDocumentType = "@chaincode/flow-document";
 
 export const fluidExport = new SimpleModuleInstantiationFactory(

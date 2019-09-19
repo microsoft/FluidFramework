@@ -3,18 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import * as api from "@prague/client-api";
-import { IComponentHandle } from "@prague/component-core-interfaces";
-import { ISerializableValue, ISharedMap, SharedMap } from "@prague/map";
-import { IntervalType, LocalReference } from "@prague/merge-tree";
-import { IBlob } from "@prague/protocol-definitions";
+import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
+import { IntervalType, LocalReference } from "@microsoft/fluid-merge-tree";
 import {
     IntervalCollectionView,
     ISerializedInterval,
     SequenceInterval,
     SharedString,
     SharedStringFactory,
-} from "@prague/sequence";
+} from "@microsoft/fluid-sequence";
+import * as api from "@prague/client-api";
+import { IComponentHandle } from "@prague/component-core-interfaces";
+import { IBlob } from "@prague/protocol-definitions";
 import * as assert from "assert";
 import {
     DocumentDeltaEventManager,
@@ -23,7 +23,7 @@ import {
     TestDocumentServiceFactory,
     TestHost,
     TestResolver,
-} from "..";
+} from "../";
 
 const assertIntervalsHelper = (
     sharedString: SharedString,
@@ -292,9 +292,11 @@ describe("SharedInterval", () => {
             // SharedString snapshots as a blob
             const snapshotBlob = outerString2.snapshot().entries[0].value as IBlob;
             // Since it's a SharedMap, its contents parse as an IMapDataObject with the "comments" member we set
-            const parsedSnapshot = JSON.parse(snapshotBlob.contents) as { comments: ISerializableValue };
+            const parsedSnapshot = JSON.parse(snapshotBlob.contents);
             // LocalIntervalCollection serializes as an array of ISerializedInterval, let's get the first comment
-            const serializedInterval1FromSnapshot = (parsedSnapshot.comments.value as ISerializedInterval[])[0];
+            const serializedInterval1FromSnapshot =
+                // tslint:disable-next-line: no-unsafe-any
+                (parsedSnapshot["intervalCollections/comments"].value as ISerializedInterval[])[0];
             // The "story" is the ILocalValue of the handle pointing to the SharedString
             const handleLocalValueFromSnapshot = serializedInterval1FromSnapshot.properties.story as { type: string };
             assert.equal(handleLocalValueFromSnapshot.type, "__fluid_handle__");

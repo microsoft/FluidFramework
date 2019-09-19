@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentRuntime, IInboundSignalMessage } from "@prague/runtime-definitions";
+import { IComponentRuntime, IInboundSignalMessage } from "@microsoft/fluid-runtime-definitions";
 import { EventEmitter } from "events";
 
 const presenceKey = "presence";

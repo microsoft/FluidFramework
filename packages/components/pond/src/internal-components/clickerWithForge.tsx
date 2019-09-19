@@ -3,16 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { Counter, CounterValueType, ISharedDirectory } from "@microsoft/fluid-map";
 import { PrimedComponent, PrimedComponentFactory } from "@prague/aqueduct";
-import {
-    IComponentHTMLVisual,
-} from "@prague/component-core-interfaces";
-import {
-    Counter,
-    CounterValueType,
-    ISharedDirectory,
-} from "@prague/map";
-
+import { IComponentHTMLVisual } from "@prague/component-core-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 

@@ -3,18 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { parseHandles, serializeHandles, ValueType } from "@microsoft/fluid-shared-object-base";
 import { IComponentHandle } from "@prague/component-core-interfaces";
 import {
     ISequencedDocumentMessage,
 } from "@prague/protocol-definitions";
-import {
-    IComponentRuntime,
-} from "@prague/runtime-definitions";
-import {
-    parseHandles,
-    serializeHandles,
-    ValueType,
-} from "@prague/shared-object-common";
 import { safelyParseJSON } from "@prague/utils";
 import { EventEmitter } from "events";
 import {

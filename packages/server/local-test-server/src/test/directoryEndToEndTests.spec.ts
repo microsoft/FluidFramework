@@ -4,10 +4,10 @@
  */
 
 /* tslint:disable:no-unsafe-any */
+import { ISharedDirectory, ISharedMap, SharedDirectory, SharedMap } from "@microsoft/fluid-map";
 /* tslint:disable:no-backbone-get-set-outside-model  */
 import * as api from "@prague/client-api";
 import { IComponentHandle } from "@prague/component-core-interfaces";
-import { ISharedDirectory, ISharedMap, SharedDirectory, SharedMap } from "@prague/map";
 import { MessageType } from "@prague/protocol-definitions";
 import * as assert from "assert";
 import {

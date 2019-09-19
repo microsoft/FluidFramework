@@ -4,22 +4,16 @@
  */
 
 import {
-    FileMode,
-    ISequencedDocumentMessage,
-    ITree,
-    MessageType,
-    TreeEntry,
-} from "@prague/protocol-definitions";
-import {
     IChannelAttributes,
     IComponentRuntime,
     IObjectStorageService,
     ISharedObjectServices,
-} from "@prague/runtime-definitions";
+} from "@microsoft/fluid-runtime-definitions";
 import {
     ISharedObjectFactory,
     SharedObject,
-} from "@prague/shared-object-common";
+} from "@microsoft/fluid-shared-object-base";
+import { FileMode, ISequencedDocumentMessage, ITree, MessageType, TreeEntry } from "@prague/protocol-definitions";
 import { fromBase64ToUtf8 } from "@prague/utils";
 import { debug } from "./debug";
 import {

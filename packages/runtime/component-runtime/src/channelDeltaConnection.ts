@@ -3,12 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { IDeltaConnection, IDeltaHandler } from "@microsoft/fluid-runtime-definitions";
 import { ConnectionState } from "@prague/container-definitions";
 import { IDocumentMessage, ISequencedDocumentMessage } from "@prague/protocol-definitions";
-import {
-    IDeltaConnection,
-    IDeltaHandler,
-} from "@prague/runtime-definitions";
 import * as assert from "assert";
 
 export class ChannelDeltaConnection implements IDeltaConnection {

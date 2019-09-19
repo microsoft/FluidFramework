@@ -3,23 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentHandle } from "@prague/component-core-interfaces";
-import {
-    ConnectionState,
-    ITelemetryErrorEvent,
-    ITelemetryLogger,
-} from "@prague/container-definitions";
-import {
-    ISequencedDocumentMessage,
-    ITree,
-    MessageType,
-} from "@prague/protocol-definitions";
 import {
     IChannelAttributes,
     IComponentRuntime,
     IObjectStorageService,
     ISharedObjectServices,
-} from "@prague/runtime-definitions";
+} from "@microsoft/fluid-runtime-definitions";
+import { IComponentHandle } from "@prague/component-core-interfaces";
+import { ConnectionState, ITelemetryErrorEvent, ITelemetryLogger } from "@prague/container-definitions";
+import { ISequencedDocumentMessage, ITree, MessageType } from "@prague/protocol-definitions";
 import { ChildLogger, EventEmitterWithErrorHandling } from "@prague/utils";
 import * as assert from "assert";
 import * as Deque from "double-ended-queue";

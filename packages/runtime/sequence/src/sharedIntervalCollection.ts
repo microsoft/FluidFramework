@@ -3,7 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { ContentObjectStorage, IValueType, MapKernel } from "@prague/map";
+import {
+    ContentObjectStorage, IValueType, MapKernel,
+} from "@microsoft/fluid-map";
+import {
+    IChannelAttributes,
+    IComponentRuntime,
+    IObjectStorageService,
+    ISharedObjectServices,
+} from "@microsoft/fluid-runtime-definitions";
+import {
+    ISharedObjectFactory, SharedObject,
+} from "@microsoft/fluid-shared-object-base";
 import {
     FileMode,
     ISequencedDocumentMessage,
@@ -11,16 +22,6 @@ import {
     MessageType,
     TreeEntry,
 } from "@prague/protocol-definitions";
-import {
-    IChannelAttributes,
-    IComponentRuntime,
-    IObjectStorageService,
-    ISharedObjectServices,
-} from "@prague/runtime-definitions";
-import {
-    ISharedObjectFactory,
-    SharedObject,
-} from "@prague/shared-object-common";
 import { fromBase64ToUtf8 } from "@prague/utils";
 import { debug } from "./debug";
 import {

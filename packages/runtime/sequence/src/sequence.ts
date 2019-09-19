@@ -3,31 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import {
-    IValueChanged,
-} from "@prague/map";
-import * as MergeTree from "@prague/merge-tree";
-import {
-    ISequencedDocumentMessage,
-    ITree,
-} from "@prague/protocol-definitions";
-import {
-    IChannelAttributes,
-    IComponentRuntime,
-    IObjectStorageService,
-} from "@prague/runtime-definitions";
-import { parseHandles, serializeHandles } from "@prague/shared-object-common";
+import { IValueChanged } from "@microsoft/fluid-map";
+import * as MergeTree from "@microsoft/fluid-merge-tree";
+import { IChannelAttributes, IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
+import { parseHandles, serializeHandles } from "@microsoft/fluid-shared-object-base";
+import { ISequencedDocumentMessage, ITree } from "@prague/protocol-definitions";
 import { ChildLogger, Deferred } from "@prague/utils";
 import * as assert from "assert";
-// tslint:disable-next-line:no-submodule-imports no-var-requires no-require-imports
-const cloneDeep = require("lodash/cloneDeep") as <T>(value: T) => T;
 import {
     IntervalCollection,
     SequenceInterval,
     SequenceIntervalCollectionValueType,
 } from "./intervalCollection";
 import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent";
-import { SharedIntervalCollection} from "./sharedIntervalCollection";
+import { SharedIntervalCollection } from "./sharedIntervalCollection";
+// tslint:disable-next-line: no-var-requires no-require-imports no-submodule-imports
+const cloneDeep = require("lodash/cloneDeep");
 
 export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
 extends SharedIntervalCollection<SequenceInterval> {
@@ -81,7 +72,7 @@ extends SharedIntervalCollection<SequenceInterval> {
         return ops;
     }
 
-    public client: MergeTree.Client;
+    protected client: MergeTree.Client;
     protected isLoaded = false;
     // Deferred that triggers once the object is loaded
     protected loadedDeferred = new Deferred<void>();
@@ -216,7 +207,7 @@ extends SharedIntervalCollection<SequenceInterval> {
     }
 
     public getContainingSegment(pos: number) {
-        return this.client.getContainingSegment(pos);
+        return this.client.getContainingSegment<T>(pos);
     }
 
     /**

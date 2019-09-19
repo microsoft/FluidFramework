@@ -6,7 +6,8 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
-    "tsc": "tsc"
+    "tsc": "tsc",
+    "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "repository": {
     "type": "git",
@@ -15,18 +16,22 @@
   "author": "Microsoft",
   "license": "MIT",
   "devDependencies": {
-    "@microsoft/fluid-build-common": "^0.10.13593",
+    "@microsoft/fluid-build-common": "^0.10.13634",
     "@types/node": "^12.7.5",
     "tslint": "^5.20.0",
+    "tslint-microsoft-contrib": "^6.2.0",
     "typescript": "^3.6.3"
   },
   "dependencies": {
-    "@microsoft/fluid-server-memory-orderer": "^0.10.13593",
-    "@microsoft/fluid-server-services": "^0.10.13593",
-    "@microsoft/fluid-server-services-client": "^0.10.13593",
-    "@microsoft/fluid-server-services-core": "^0.10.13593",
-    "@microsoft/fluid-server-services-utils": "^0.10.13593",
-    "@prague/socket-storage-shared": "^0.10.13593",
+    "@microsoft/fluid-server-memory-orderer": "^0.10.13634",
+    "@microsoft/fluid-server-services": "^0.10.13634",
+    "@microsoft/fluid-server-services-client": "^0.10.13634",
+    "@microsoft/fluid-server-services-core": "^0.10.13634",
+    "@microsoft/fluid-server-services-utils": "^0.10.13634",
+    "@prague/gitresources": "^0.10.13634",
+    "@prague/protocol-definitions": "^0.10.13634",
+    "@prague/socket-storage-shared": "^0.10.13634",
+    "@prague/utils": "^0.10.13634",
     "@types/bytes": "^3.0.0",
     "@types/compression": "0.0.33",
     "@types/cookie-parser": "^1.4.1",
@@ -49,11 +54,19 @@
     "@types/supertest": "^2.0.5",
     "@types/ws": "^6.0.1",
     "body-parser": "^1.17.1",
-    "bytes": "^3.0.0",
+    "bytes": "^3.1.0",
     "compression": "^1.7.2",
     "cookie-parser": "^1.4.3",
     "cors": "^2.8.4",
+    "express": "^4.17.1",
+    "json-stringify-safe": "^5.0.1",
+    "jsonwebtoken": "^8.5.1",
     "lodash": "^4.17.15",
-    "socket.io": "^2.2.0"
+    "morgan": "^1.9.1",
+    "nconf": "^0.10.0",
+    "semver": "^6.3.0",
+    "socket.io": "^2.2.0",
+    "split": "^1.0.1",
+    "winston": "^3.2.1"
   }
 }

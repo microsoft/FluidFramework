@@ -4,11 +4,7 @@
  */
 
 import {
-    IAlfredTenant,
-    ICache,
     IDocumentStorage,
-    IProducer,
-    ITenantManager,
     MongoManager,
 } from "@microsoft/fluid-server-services-core";
 import * as bodyParser from "body-parser";
@@ -36,13 +32,9 @@ const stream = split().on("data", (message) => {
 
 export function create(
     config: Provider,
-    tenantManager: ITenantManager,
     storage: IDocumentStorage,
-    appTenants: IAlfredTenant[],
     mongoManager: MongoManager,
-    cache: ICache,
-    producer: IProducer) {
-
+) {
     // Maximum REST request size
     const requestSize = config.get("alfred:restJsonSize");
 
@@ -62,15 +54,11 @@ export function create(
     // bind routes
     const routes = alfredRoutes.create(
         config,
-        tenantManager,
         mongoManager,
-        storage,
-        producer,
-        appTenants);
+        storage);
 
     app.use("/public", cors(), express.static(path.join(__dirname, "../../public")));
     app.use(routes.api);
-    app.use("/", (request, response) => response.redirect(config.get("gateway:url")));
 
     // catch 404 and forward to error handler
     app.use((req, res, next) => {

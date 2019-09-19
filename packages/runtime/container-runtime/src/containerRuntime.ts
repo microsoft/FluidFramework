@@ -3,13 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { AgentSchedulerFactory } from "@component/agent-scheduler";
+import { AgentSchedulerFactory } from "@microsoft/fluid-agent-scheduler";
 import {
-    IComponentHandleContext,
-    IComponentSerializer,
-    IRequest,
-    IResponse,
-} from "@prague/component-core-interfaces";
+    ComponentFactoryTypes,
+    ComponentRegistryTypes,
+    FlushMode,
+    IAttachMessage,
+    IComponentRegistry,
+    IComponentRuntime,
+    IEnvelope,
+    IHelpMessage,
+    IHostRuntime,
+    IInboundSignalMessage,
+} from "@microsoft/fluid-runtime-definitions";
+import { IComponentHandleContext, IComponentSerializer, IRequest, IResponse } from "@prague/component-core-interfaces";
 import {
     ConnectionState,
     IBlobManager,
@@ -44,18 +51,6 @@ import {
     TreeEntry,
 } from "@prague/protocol-definitions";
 import {
-    ComponentFactoryTypes,
-    ComponentRegistryTypes,
-    FlushMode,
-    IAttachMessage,
-    IComponentRegistry,
-    IComponentRuntime,
-    IEnvelope,
-    IHelpMessage,
-    IHostRuntime,
-    IInboundSignalMessage,
-} from "@prague/runtime-definitions";
-import {
     buildHierarchy,
     ComponentSerializer,
     Deferred,
@@ -68,11 +63,7 @@ import * as assert from "assert";
 import { EventEmitter } from "events";
 // tslint:disable-next-line:no-submodule-imports
 import * as uuid from "uuid/v4";
-import {
-    ComponentContext,
-    LocalComponentContext,
-    RemotedComponentContext,
-} from "./componentContext";
+import { ComponentContext, LocalComponentContext, RemotedComponentContext } from "./componentContext";
 import { ComponentHandleContext } from "./componentHandleContext";
 import { debug } from "./debug";
 import { DocumentStorageServiceProxy } from "./documentStorageServiceProxy";

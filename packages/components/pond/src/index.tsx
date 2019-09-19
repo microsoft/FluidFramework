@@ -3,21 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import {
-  SharedComponent,
-  SharedComponentFactory,
-  SimpleModuleInstantiationFactory,
-} from "@prague/aqueduct";
-import {
-  IComponent,
-  IComponentHTMLVisual,
-} from "@prague/component-core-interfaces";
-import {
-  Clicker,
-  ClickerName,
-  ClickerWithInitialValue,
-  ClickerWithInitialValueName,
-} from "./internal-components";
+import { SharedComponent, SharedComponentFactory, SimpleModuleInstantiationFactory } from "@prague/aqueduct";
+import { IComponent, IComponentHTMLVisual } from "@prague/component-core-interfaces";
+import { Clicker, ClickerName, ClickerWithInitialValue, ClickerWithInitialValueName } from "./internal-components";
 
 // tslint:disable-next-line: no-var-requires no-require-imports
 const pkg = require("../package.json");

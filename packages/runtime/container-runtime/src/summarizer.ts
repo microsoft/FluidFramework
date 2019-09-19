@@ -3,14 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import {
-    IComponentLoadable,
-} from "@prague/component-core-interfaces";
-import {
-    ISequencedDocumentMessage,
-    ISummaryConfiguration,
-    MessageType,
-} from "@prague/protocol-definitions";
+import { IComponentLoadable } from "@prague/component-core-interfaces";
+import { ISequencedDocumentMessage, ISummaryConfiguration, MessageType } from "@prague/protocol-definitions";
 import { Deferred } from "@prague/utils";
 import { ContainerRuntime } from "./containerRuntime";
 import { debug } from "./debug";
