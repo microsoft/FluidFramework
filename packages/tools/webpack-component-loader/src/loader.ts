@@ -20,7 +20,7 @@ import {
 import { IDocumentServiceFactory, IUrlResolver, IUser } from "@microsoft/fluid-protocol-definitions";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
 import { extractDetails, IResolvedPackage } from "@microsoft/fluid-web-code-loader";
-import {TestDeltaConnectionServer, TestDocumentServiceFactory, TestResolver} from "@prague/local-test-server";
+import {TestDeltaConnectionServer, TestDocumentServiceFactory, TestResolver} from "@microsoft/fluid-local-test-server";
 import * as jwt from "jsonwebtoken";
 import * as uuid from "uuid/v4";
 import { InsecureUrlResolver } from "./insecureUrlResolver";

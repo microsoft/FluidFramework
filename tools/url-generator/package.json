@@ -1,5 +1,5 @@
 {
-  "name": "@prague/url-generator",
+  "name": "@fluid-internal/url-generator",
   "version": "1.0.4",
   "description": "Get a URL for your component",
   "main": "index.js",

@@ -18,7 +18,7 @@ import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@micr
 import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
 import { IGitCache } from "@microsoft/fluid-server-services-client";
 import { IResolvedPackage } from "@microsoft/fluid-web-code-loader";
-import { InnerDocumentServiceFactory, InnerUrlResolver, OuterDocumentServiceFactory } from "@prague/iframe-socket-storage";
+import { InnerDocumentServiceFactory, InnerUrlResolver, OuterDocumentServiceFactory } from "@microsoft/fluid-iframe-driver";
 import Axios from "axios";
 import { DocumentFactory } from "./documentFactory";
 import { IHostServices } from "./services";

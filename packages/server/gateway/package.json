@@ -64,7 +64,7 @@
     "@microsoft/fluid-map": "^0.10.0",
     "@microsoft/fluid-merge-tree": "^0.10.0",
     "@microsoft/fluid-odsp-driver": "^0.10.0",
-    "@prague/iframe-socket-storage": "^0.10.0",
+    "@microsoft/fluid-iframe-driver": "^0.10.0",
     "@microsoft/fluid-odsp-utils": "^0.10.0",
     "@microsoft/fluid-protocol-definitions": "^0.10.0",
     "@microsoft/fluid-replay-driver": "^0.10.0",
