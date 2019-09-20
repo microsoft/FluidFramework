@@ -1,7 +1,7 @@
 {
   "name": "@prague/service",
   "version": "0.1.0",
-  "description": "Prague rdkafka and ws based services",
+  "description": "Fluid rdkafka and ws based services",
   "main": "dist/index.js",
   "scripts": {
     "build": "npm run tsc && npm run tslint",

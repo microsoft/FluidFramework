@@ -1,7 +1,7 @@
 {
   "name": "@microsoft/fluid-core-utils",
   "version": "0.10.0",
-  "description": "Collection of utility functions for Prague",
+  "description": "Collection of utility functions for Fluid",
   "main": "dist/index.js",
   "module": "lib/index.js",
   "types": "dist/index.d.ts",

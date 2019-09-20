@@ -73,7 +73,7 @@ export async function spoJoinSession(
     if (tokens === undefined) {
         return Promise.reject(`Missing tokens for ${server}`);
     }
-    // Only .b items can be prague
+    // Only .b items can be fluid
     const encoded = encodeURIComponent(`${id}.b`);
     return getODSPFluidResolvedUrl(server, `drive/root:/r11s/${encoded}:`, tokens, clientConfig, true);
 }

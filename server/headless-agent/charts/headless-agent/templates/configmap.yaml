@@ -46,7 +46,7 @@ data:
             "serverUrl": "{{ .Values.endpoints.alfredUrl }}",
             "packageUrl": "{{ .Values.endpoints.packageUrl }}",
             "blobStorageUrl": "{{ .Values.endpoints.historianUrl }}",
-            "repository": "prague",
+            "repository": "FluidFramework",
             "permission": ["chain-snapshot", "chain-spell", "chain-intel", "chain-translation", "chain-cache"],
             "key": "VBQyoGpEYrTn3XQPtXW3K8fFDd"
         },

@@ -1,7 +1,7 @@
 {
   "name": "@microsoft/fluid-container-definitions",
   "version": "0.10.0",
-  "description": "Prague container definitions",
+  "description": "Fluid container definitions",
   "main": "dist/index.js",
   "module": "lib/index.js",
   "types": "dist/index.d.ts",

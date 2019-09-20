@@ -1,7 +1,7 @@
 {
   "name": "@microsoft/fluid-iframe-driver",
   "version": "0.10.0",
-  "description": "Connection Prague service API that crosses iframe boundary",
+  "description": "Connection Fluid service API that crosses iframe boundary",
   "main": "dist/index.js",
   "module": "lib/index.js",
   "types": "dist/index.d.ts",

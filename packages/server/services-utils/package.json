@@ -1,7 +1,7 @@
 {
   "name": "@microsoft/fluid-server-services-utils",
   "version": "0.10.0",
-  "description": "Prague service lambdas",
+  "description": "Fluid service lambdas",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "sideEffects": false,

@@ -1,7 +1,7 @@
 {
   "name": "@microsoft/fluid-component-core-interfaces",
   "version": "0.10.0",
-  "description": "Prague component interfaces",
+  "description": "Fluid component interfaces",
   "main": "dist/index.js",
   "module": "lib/index.js",
   "types": "dist/index.d.ts",

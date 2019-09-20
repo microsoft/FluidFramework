@@ -1,7 +1,7 @@
 {
   "name": "adminportal",
   "version": "0.0.1",
-  "description": "Admin portal for prague",
+  "description": "Admin portal for Fluid",
   "main": "dist/www.js",
   "scripts": {
     "build": "concurrently \"npm run tslint\" \"npm run tsc && npm run webpack\" \"npm run less\"",

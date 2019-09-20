@@ -21,9 +21,11 @@
     "webpack-dev-server": "^3.3.1"
   },
   "dependencies": {
-    "@prague/container-definitions": "^0.2.6121",
-    "@prague/container-loader": "^0.2.6121",
-    "@prague/routerlicious-socket-storage": "^0.2.6121",
+    "@prague/container-definitions": "^0.10.13676",
+    "@prague/container-loader": "^0.10.13676",
+    "@prague/loader-web": "^0.10.13676",
+    "@prague/protocol-definitions": "^0.10.13676",
+    "@prague/routerlicious-socket-storage": "^0.10.13676",
     "@types/jsonwebtoken": "^8.3.2",
     "jsonwebtoken": "^8.5.1"
   },
