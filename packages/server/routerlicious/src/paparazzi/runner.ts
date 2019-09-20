@@ -3,20 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import * as agent from "@microsoft/fluid-server-agent";
-import { NodeCodeLoader } from "@microsoft/fluid-server-services";
-import * as core from "@microsoft/fluid-server-services-core";
-import * as utils from "@microsoft/fluid-server-services-utils";
+import { Deferred } from "@microsoft/fluid-core-utils";
 import {
     IDocumentService,
     IDocumentServiceFactory,
     IFluidResolvedUrl,
     IResolvedUrl,
-} from "@prague/protocol-definitions";
-import { ContainerUrlResolver } from "@prague/routerlicious-host";
-import * as socketStorage from "@prague/routerlicious-socket-storage";
-import { IQueueMessage } from "@prague/runtime-definitions";
-import { Deferred } from "@prague/utils";
+} from "@microsoft/fluid-protocol-definitions";
+import * as socketStorage from "@microsoft/fluid-routerlicious-driver";
+import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
+import { IQueueMessage } from "@microsoft/fluid-runtime-definitions";
+import * as agent from "@microsoft/fluid-server-agent";
+import { NodeCodeLoader } from "@microsoft/fluid-server-services";
+import * as core from "@microsoft/fluid-server-services-core";
+import * as utils from "@microsoft/fluid-server-services-utils";
 import * as fs from "fs";
 import * as jwt from "jsonwebtoken";
 import { Provider } from "nconf";

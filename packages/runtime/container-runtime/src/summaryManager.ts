@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent, IRequest } from "@prague/component-core-interfaces";
-import { IContainerContext } from "@prague/container-definitions";
-import { ISequencedClient } from "@prague/protocol-definitions";
-import { Heap, IComparer, IHeapNode } from "@prague/utils";
+import { IComponent, IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { IContainerContext } from "@microsoft/fluid-container-definitions";
+import { Heap, IComparer, IHeapNode } from "@microsoft/fluid-core-utils";
+import { ISequencedClient } from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
 import { debug } from "./debug";
 import { ISummarizer } from "./summarizer";

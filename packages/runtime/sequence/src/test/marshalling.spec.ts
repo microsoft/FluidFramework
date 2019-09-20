@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-    Marker,
-    ReferenceType,
-    TextSegment,
-} from "@prague/merge-tree";
+import { Marker, ReferenceType, TextSegment } from "@microsoft/fluid-merge-tree";
 import * as assert from "assert";
 import { SubSequence } from "../sharedSequence";
 

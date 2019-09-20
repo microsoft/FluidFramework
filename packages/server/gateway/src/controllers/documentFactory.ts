@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidCodeDetails, ILoader } from "@prague/container-definitions";
-import { IDocumentFactory } from "@prague/host-service-interfaces";
-import { Deferred } from "@prague/utils";
+import { IFluidCodeDetails, ILoader } from "@microsoft/fluid-container-definitions";
+import { Deferred } from "@microsoft/fluid-core-utils";
+import { IDocumentFactory } from "@microsoft/fluid-host-service-interfaces";
 import Axios from "axios";
 
 export class DocumentFactory implements IDocumentFactory {

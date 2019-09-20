@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage } from "@prague/protocol-definitions";
-import { DebugLogger } from "@prague/utils";
+import { DebugLogger } from "@microsoft/fluid-core-utils";
+import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
 // tslint:disable-next-line:no-implicit-dependencies
 import * as JsDiff from "diff";
@@ -12,18 +12,14 @@ import * as fs from "fs";
 import * as path from "path";
 // tslint:disable-next-line:no-implicit-dependencies
 import * as random from "random-js";
-import * as MergeTree from "..";
+import * as MergeTree from "../";
 import * as Base from "../base";
 import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants";
 import { createRemoveRangeOp } from "../opBuilder";
 import { TextSegment } from "../textSegment";
 import { specToSegment, TestClient } from "./testClient";
 import { TestServer } from "./testServer";
-import {
-    insertText,
-    loadTextFromFile,
-    nodeOrdinalsHaveIntegrity,
-} from "./testUtils";
+import { insertText, loadTextFromFile, nodeOrdinalsHaveIntegrity } from "./testUtils";
 
 // tslint:disable
 let logLines: string[];

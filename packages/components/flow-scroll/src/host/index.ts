@@ -3,35 +3,33 @@
  * Licensed under the MIT License.
  */
 
-import { TextAnalyzer } from "@chaincode/flow-intel";
-import { FlowIntelViewer } from "@chaincode/flow-intel-viewer";
-import { FlowDocument, FlowDocumentType } from "@chaincode/webflow";
-import { PrimedComponent, PrimedComponentFactory } from "@prague/aqueduct";
+import { TextAnalyzer } from "@fluid-example/flow-intel";
+import { FlowIntelViewer } from "@fluid-example/flow-intel-viewer";
+import { FlowDocument, FlowDocumentType } from "@fluid-example/webflow";
+import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import {
     IComponent,
     IComponentHandle,
     IComponentHTMLOptions,
     IComponentHTMLView,
     IComponentHTMLVisual,
-} from "@prague/component-core-interfaces";
-import {
-    IComponentCollection,
-} from "@prague/framework-definitions";
-import { SharedMap } from "@prague/map";
+} from "@microsoft/fluid-component-core-interfaces";
+import { IComponentCollection } from "@microsoft/fluid-framework-interfaces";
+import { SharedMap } from "@microsoft/fluid-map";
 import {
     FlushMode,
     IComponentContext,
     IComponentRuntime,
     ITask,
     ITaskManager,
-} from "@prague/runtime-definitions";
-import { HostView  } from "./host";
+} from "@microsoft/fluid-runtime-definitions";
+import { HostView } from "./host";
 import { importDoc } from "./template";
 
 const insightsMapId = "insights";
 
 export class WebFlowHost extends PrimedComponent implements IComponentHTMLVisual {
-    public static readonly type = "@chaincode/webflow-host";
+    public static readonly type = "@fluid-example/webflow-host";
 
     private intelViewer: FlowIntelViewer;
     constructor(runtime: IComponentRuntime, context: IComponentContext) {

@@ -11,7 +11,7 @@ import {
     ISignalMessage,
     ITokenClaims,
     MessageType,
-} from "@prague/protocol-definitions";
+} from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
 import { IDisposable } from "./disposable";
 
@@ -45,7 +45,7 @@ export interface IDeltaHandlerStrategy {
     processSignal: (message: ISignalMessage) => void;
 }
 
-declare module "@prague/component-core-interfaces" {
+declare module "@microsoft/fluid-component-core-interfaces" {
     interface IComponent extends Readonly<Partial<IProvideDeltaSender>> { }
 }
 

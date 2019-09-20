@@ -8,12 +8,12 @@
 // tslint:disable no-import-side-effect
 // tslint:disable no-empty
 import { Component } from "@prague/app-component";
-import { TestHost } from "@prague/local-test-server";
+import { TestHost } from "@microsoft/fluid-local-test-server";
 import * as assert from "assert";
 import "mocha";
 import { AgentScheduler } from "../";
 
-const AgentSchedulerType = "@component/agent-scheduler";
+const AgentSchedulerType = "@microsoft/fluid-agent-scheduler";
 
 describe("AgentScheduler", () => {
     const createEmptyTask = (id: string) => {

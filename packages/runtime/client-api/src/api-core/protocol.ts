@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITrace } from "@prague/protocol-definitions";
+import { ITrace } from "@microsoft/fluid-protocol-definitions";
 
 // Message to indicate successful round trip.
 export const RoundTrip = "tripComplete";

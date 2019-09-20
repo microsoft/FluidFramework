@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ContainerRuntime } from "@prague/container-runtime";
-import { ISequencedDocumentMessage, MessageType } from "@prague/protocol-definitions";
+import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
+import { ISequencedDocumentMessage, MessageType } from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
 
 /**

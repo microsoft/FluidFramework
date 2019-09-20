@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ConnectionState, IPendingProposal, IQuorum } from "@prague/container-definitions";
+import { ConnectionState, IPendingProposal, IQuorum } from "@microsoft/fluid-container-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { debug } from "./debug";

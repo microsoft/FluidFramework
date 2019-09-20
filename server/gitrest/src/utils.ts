@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as resources from "@prague/gitresources";
+import * as resources from "@microsoft/fluid-gitresources";
 import * as fs from "fs";
 import * as git from "nodegit";
 import * as path from "path";

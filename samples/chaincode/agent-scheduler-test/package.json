@@ -3,7 +3,7 @@
   "version": "0.4.14",
   "description": "Chaincode wrapping agent-scheduler component",
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {

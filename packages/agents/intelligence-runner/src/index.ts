@@ -3,14 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import {
-    IComponentRouter,
-    IComponentRunnable,
-    IRequest,
-    IResponse,
-} from "@prague/component-core-interfaces";
-import { ISharedMap } from "@prague/map";
-import * as Sequence from "@prague/sequence";
+import { IComponentRouter, IComponentRunnable, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
+import { ISharedMap } from "@microsoft/fluid-map";
+import * as Sequence from "@microsoft/fluid-sequence";
 import { IntelRunner, ITokenConfig } from "./intelRunner";
 
 export class TextAnalyzer implements IComponentRouter, IComponentRunnable {

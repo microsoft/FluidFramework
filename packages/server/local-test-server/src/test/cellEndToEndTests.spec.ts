@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedCell } from "@prague/cell";
-import * as api from "@prague/client-api";
-import { IComponentHandle } from "@prague/component-core-interfaces";
-import { ISharedMap } from "@prague/map";
+import * as api from "@fluid-internal/client-api";
+import { ISharedCell } from "@microsoft/fluid-cell";
+import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
+import { ISharedMap } from "@microsoft/fluid-map";
 import * as assert from "assert";
 import {
     DocumentDeltaEventManager,

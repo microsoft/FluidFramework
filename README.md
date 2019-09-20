@@ -12,14 +12,14 @@ tooling, and IoT.
 
 ## Build with Fluid
 
-Use [Yo Fluid](./tools/generator-fluid/README.md) to get set up quickly after cloning the Prague repo.
+Use [Yo Fluid](./tools/generator-fluid/README.md) to get set up quickly after cloning the Fluid Framework repo.
 
 First, do these one time steps:
 
 ````bash
 npm install -g yo
 
-cd .../Prague/tools/generator-fluid
+cd .../FluidFramework/tools/generator-fluid
 
 npm install
 npm link
@@ -48,7 +48,7 @@ Update  [rush](./rush.json) with a reference to your package name.
 ## Stack Overflow
 
 The Fluid team answers questions on the [Microsoft internal StackOverflow](https://stackoverflow.microsoft.com/) using
-the [Prague](https://stackoverflow.microsoft.com/questions/tagged/prague) and [Fluid](https://stackoverflow.microsoft.com/questions/tagged/fluid) tags.
+the [Fluid](https://stackoverflow.microsoft.com/questions/tagged/fluid) tag.
 
 
 ## FAQ
