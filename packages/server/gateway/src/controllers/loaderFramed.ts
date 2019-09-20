@@ -3,22 +3,30 @@
  * Licensed under the MIT License.
  */
 
-import { createWebLoader,
+import {
+    createWebLoader,
     IHostConfig,
     initializeChaincode,
     IPrivateSessionInfo,
     registerAttach,
 } from "@microsoft/fluid-base-host";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
-import { createProtocolToFactoryMapping, selectDocumentServiceFactoryForProtocol } from "@microsoft/fluid-container-loader";
+import {
+    createProtocolToFactoryMapping,
+    selectDocumentServiceFactoryForProtocol,
+} from "@microsoft/fluid-container-loader";
 import { BaseTelemetryNullLogger } from "@microsoft/fluid-core-utils";
+import {
+    InnerDocumentServiceFactory,
+    InnerUrlResolver,
+    OuterDocumentServiceFactory,
+} from "@microsoft/fluid-iframe-driver";
 import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
 import { IDocumentServiceFactory, IFluidResolvedUrl, IResolvedUrl } from "@microsoft/fluid-protocol-definitions";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
 import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
 import { IGitCache } from "@microsoft/fluid-server-services-client";
 import { IResolvedPackage } from "@microsoft/fluid-web-code-loader";
-import { InnerDocumentServiceFactory, InnerUrlResolver, OuterDocumentServiceFactory } from "@prague/iframe-socket-storage";
 import Axios from "axios";
 import { DocumentFactory } from "./documentFactory";
 import { IHostServices } from "./services";

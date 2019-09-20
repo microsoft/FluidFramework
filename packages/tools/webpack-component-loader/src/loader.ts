@@ -3,28 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import { getRandomName } from "@microsoft/fluid-server-services-core";
-
 // tslint:disable no-string-literal trailing-comma no-shadowed-variable no-submodule-imports no-floating-promises
+
 import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 import { IHostConfig, start as startCore } from "@microsoft/fluid-base-host";
+import { IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { IFluidModule, IFluidPackage, IPackage, IPraguePackage } from "@microsoft/fluid-container-definitions";
 import {
-    IRequest,
-} from "@microsoft/fluid-component-core-interfaces";
-import {
-    IFluidModule,
-    IFluidPackage,
-    IPackage,
-    IPraguePackage,
-} from "@microsoft/fluid-container-definitions";
+    TestDeltaConnectionServer,
+    TestDocumentServiceFactory,
+    TestResolver,
+} from "@microsoft/fluid-local-test-server";
 import { IDocumentServiceFactory, IUrlResolver, IUser } from "@microsoft/fluid-protocol-definitions";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
+import { getRandomName } from "@microsoft/fluid-server-services-core";
 import { extractDetails, IResolvedPackage } from "@microsoft/fluid-web-code-loader";
-import {TestDeltaConnectionServer, TestDocumentServiceFactory, TestResolver} from "@prague/local-test-server";
 import * as jwt from "jsonwebtoken";
 import * as uuid from "uuid/v4";
 import { InsecureUrlResolver } from "./insecureUrlResolver";
-// import * as fetch from "isomorphic-fetch";
+
 export interface IDevServerUser extends IUser {
     name: string;
 }

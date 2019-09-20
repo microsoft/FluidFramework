@@ -38,7 +38,7 @@
     "@microsoft/fluid-component-runtime": "^0.10.0",
     "@microsoft/fluid-container-definitions": "^0.10.0",
     "@microsoft/fluid-container-runtime": "^0.10.0",
-    "@prague/host-service-interfaces": "^0.10.0",
+    "@microsoft/fluid-host-service-interfaces": "^0.10.0",
     "@microsoft/fluid-map": "^0.10.0",
     "@microsoft/fluid-runtime-definitions": "^0.10.0",
     "@microsoft/fluid-shared-object-base": "^0.10.0",
