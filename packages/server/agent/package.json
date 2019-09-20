@@ -1,7 +1,7 @@
 {
   "name": "@microsoft/fluid-server-agent",
   "version": "0.10.0",
-  "description": "Prague intelligent agents",
+  "description": "Fluid intelligent agents",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "sideEffects": false,

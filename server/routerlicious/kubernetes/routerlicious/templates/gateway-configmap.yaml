@@ -79,7 +79,7 @@ data:
             "gatewayUrl": "http://{{ template "gateway.fullname" . }}",
             "serverUrl": "{{ .Values.alfred.externalUrl }}",
             "blobStorageUrl": "{{ .Values.historian.externalUrl }}",
-            "repository": "prague",
+            "repository": "FluidFramework",
             "clusterNpm": "{{ .Values.worker.clusterNpm }}",
             "npm": "{{ .Values.worker.npm }}",
             "packageManager": {

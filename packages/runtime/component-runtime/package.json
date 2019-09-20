@@ -1,7 +1,7 @@
 {
   "name": "@microsoft/fluid-component-runtime",
   "version": "0.10.0",
-  "description": "Prague component API",
+  "description": "Fluid component API",
   "main": "dist/index.js",
   "module": "lib/index.js",
   "types": "dist/index.d.ts",

@@ -1,7 +1,7 @@
 {
   "name": "@microsoft/fluid-runtime-definitions",
   "version": "0.10.0",
-  "description": "Prague Runtime definitions",
+  "description": "Fluid Runtime definitions",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "sideEffects": "false",

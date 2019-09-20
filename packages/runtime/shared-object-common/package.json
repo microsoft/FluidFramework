@@ -1,7 +1,7 @@
 {
   "name": "@microsoft/fluid-shared-object-base",
   "version": "0.10.0",
-  "description": "Prague document loader",
+  "description": "Fluid document loader",
   "main": "dist/index.js",
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
