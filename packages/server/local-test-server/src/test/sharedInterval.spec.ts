@@ -290,7 +290,8 @@ describe("SharedInterval", () => {
 
             // SharedString snapshots as a blob
             const snapshotBlob = outerString2.snapshot().entries[0].value as IBlob;
-            // Since it's a SharedMap, its contents parse as an IMapDataObject with the "comments" member we set
+            // Since it's based on a map kernel, its contents parse as
+            // an IMapDataObject with the "comments" member we set
             const parsedSnapshot = JSON.parse(snapshotBlob.contents);
             // LocalIntervalCollection serializes as an array of ISerializedInterval, let's get the first comment
             const serializedInterval1FromSnapshot =

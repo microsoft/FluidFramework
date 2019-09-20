@@ -208,7 +208,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
                     path: snapshotFileName,
                     type: TreeEntry[TreeEntry.Blob],
                     value: {
-                        contents: this.kernel.serialize(),
+                        contents: this.serialize(),
                         encoding: "utf-8",
                     },
                 },

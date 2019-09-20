@@ -125,7 +125,6 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
             this.intervalMapKernel.get<IntervalCollection<TInterval>>(label);
         return sharedCollection;
     }
-
     public snapshot(): ITree {
         const tree: ITree = {
             entries: [
@@ -134,7 +133,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
                     path: snapshotFileName,
                     type: TreeEntry[TreeEntry.Blob],
                     value: {
-                        contents: this.intervalMapKernel.serialize(),
+                        contents: this.serialize(),
                         encoding: "utf-8",
                     },
                 },
