@@ -28,7 +28,7 @@ npm link
 Yo Fluid is now ready. Try it!
 
 ````bash
-yo @prague/fluid
+yo @microsoft/fluid
 ````
 
 [Chaincode](./samples/chaincode/README.md) has additional examples of building components with Fluid.
