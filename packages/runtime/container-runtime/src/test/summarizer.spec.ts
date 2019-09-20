@@ -53,7 +53,16 @@ describe("Runtime", () => {
                             } as ITelemetryLogger,
                         } as ContainerRuntime,
                         summaryConfig,
-                        async () => { emitter.emit(generateSummaryEvent); },
+                        async () => {
+                            emitter.emit(generateSummaryEvent);
+                            return {
+                                sequenceNumber: lastSeq,
+                                treeNodeCount: 0,
+                                blobNodeCount: 0,
+                                handleNodeCount: 0,
+                                totalBlobSize: 0,
+                            };
+                        },
                     );
                 });
 
