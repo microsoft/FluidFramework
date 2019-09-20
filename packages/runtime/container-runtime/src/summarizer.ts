@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentLoadable } from "@prague/component-core-interfaces";
-import { ISequencedDocumentMessage, ISummaryConfiguration, MessageType } from "@prague/protocol-definitions";
-import { Deferred } from "@prague/utils";
+import { IComponentLoadable } from "@microsoft/fluid-component-core-interfaces";
+import { Deferred } from "@microsoft/fluid-core-utils";
+import { ISequencedDocumentMessage, ISummaryConfiguration, MessageType } from "@microsoft/fluid-protocol-definitions";
 import { ContainerRuntime } from "./containerRuntime";
 import { debug } from "./debug";
 
@@ -20,7 +20,7 @@ interface IOpSummaryDetails {
     message: string;
 }
 
-declare module "@prague/component-core-interfaces" {
+declare module "@microsoft/fluid-component-core-interfaces" {
     export interface IComponent extends Readonly<Partial<IProvideSummarizer>> { }
 }
 

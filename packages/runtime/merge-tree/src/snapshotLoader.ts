@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
+import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
-import { ISequencedDocumentMessage } from "@prague/protocol-definitions";
-import { fromBase64ToUtf8 } from "@prague/utils";
 import * as assert from "assert";
 import { Client } from "./client";
 import { NonCollabClient, UniversalSequenceNumber } from "./constants";

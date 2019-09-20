@@ -19,7 +19,7 @@
         After linking your accounts you should be added to the
         <a href="https://github.com/orgs/Microsoft/teams/everyone">https://github.com/orgs/Microsoft/teams/everyone</a>
         group
-        which will grant you access to the Prague repo. If for some reason you are not automatically added
+        which will grant you access to the Fluid Framework repo. If for some reason you are not automatically added
         to that group request to join at
         <a
             href="https://repos.opensource.microsoft.com/Microsoft/teams/pragueread">https://repos.opensource.microsoft.com/Microsoft/teams/pragueread</a>
@@ -35,7 +35,7 @@
 
             </p>
             <p>
-                cd /Prague/tools/generator-fluid
+                cd /FluidFramework/tools/generator-fluid
 
             </p>
             <p>
@@ -68,7 +68,7 @@
         Technical questions can be directed to
         <a href="https://stackoverflow.microsoft.com/">StackOverflow</a>
         and can specifically be directed to the
-        <a href="https://stackoverflow.microsoft.com/questions/tagged/prague">Prague tag.</a>
+        <a href="https://stackoverflow.microsoft.com/questions/tagged/fluid">Fluid tag.</a>
         <br>
         Bugs, suggestions, and issues should be directed to our
         <a href="https://github.com/Microsoft/FluidFramework/issues">issues page.</a>

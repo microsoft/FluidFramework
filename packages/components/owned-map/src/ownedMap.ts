@@ -4,10 +4,10 @@
  */
 
 /* tslint:disable:no-unsafe-any*/
+import { fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
+import { FileMode, ISequencedDocumentMessage, ITree, TreeEntry } from "@microsoft/fluid-protocol-definitions";
 import { IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
-import { FileMode, ISequencedDocumentMessage, ITree, TreeEntry } from "@prague/protocol-definitions";
-import { fromBase64ToUtf8 } from "@prague/utils";
 import { debug } from "./debug";
 import { OwnedMapFactory } from "./ownedMapFactory";
 

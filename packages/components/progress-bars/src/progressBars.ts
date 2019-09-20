@@ -3,10 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { ComponentHandle, ComponentRuntime } from "@microsoft/fluid-component-runtime";
-import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
-import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
-import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import {
     IComponent,
     IComponentHandleContext,
@@ -16,8 +12,12 @@ import {
     IComponentRouter,
     IRequest,
     IResponse,
-} from "@prague/component-core-interfaces";
-import { IComponentCollection } from "@prague/framework-definitions";
+} from "@microsoft/fluid-component-core-interfaces";
+import { ComponentHandle, ComponentRuntime } from "@microsoft/fluid-component-runtime";
+import { IComponentCollection } from "@microsoft/fluid-framework-interfaces";
+import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
+import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { EventEmitter } from "events";
 
 // tslint:disable-next-line:no-var-requires no-submodule-imports

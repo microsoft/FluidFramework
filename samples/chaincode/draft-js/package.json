@@ -3,7 +3,7 @@
   "description": "An example of integrating the Fluid Framework with Draft.js",
   "version": "0.8.4",
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "main": "dist/index.js",
   "module": "lib/index.js",
   "types": "dist/index.d.ts",

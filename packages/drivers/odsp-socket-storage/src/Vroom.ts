@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@prague/container-definitions";
-import { PerformanceEvent } from "@prague/utils";
+import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
+import { PerformanceEvent } from "@microsoft/fluid-core-utils";
 import { ISocketStorageDiscovery } from "./contracts";
 import {
   fetchWithRetry,

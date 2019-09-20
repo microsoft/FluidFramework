@@ -4,7 +4,7 @@
  */
 
 import { Caret as CaretUtil, Direction, getDeltaX, getDeltaY, KeyCode, Scheduler } from "@fluid-example/flow-util-lib";
-import { IComponent } from "@prague/component-core-interfaces";
+import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { DocSegmentKind, FlowDocument, getDocSegmentKind } from "../document";
 import { Formatter, IFormatterState, RootFormatter } from "../view/formatter";
 import { eotSegment, Layout } from "../view/layout";

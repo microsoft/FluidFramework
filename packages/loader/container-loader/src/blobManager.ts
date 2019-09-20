@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IBlobManager, IGenericBlob } from "@prague/container-definitions";
-import { IDocumentStorageService } from "@prague/protocol-definitions";
+import { IBlobManager, IGenericBlob } from "@microsoft/fluid-container-definitions";
+import { IDocumentStorageService } from "@microsoft/fluid-protocol-definitions";
 
 export class BlobManager implements IBlobManager {
     private readonly blobs: Map<string, IGenericBlob>;

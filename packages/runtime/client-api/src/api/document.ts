@@ -5,21 +5,21 @@
 
 import * as cell from "@microsoft/fluid-cell";
 import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
+import { IDeltaManager, IGenericBlob, IHost } from "@microsoft/fluid-container-definitions";
+import { Container, Loader } from "@microsoft/fluid-container-loader";
 import { IContainerRuntimeOptions } from "@microsoft/fluid-container-runtime";
+import { Deferred } from "@microsoft/fluid-core-utils";
 import * as ink from "@microsoft/fluid-ink";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
-import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
-import * as sequence from "@microsoft/fluid-sequence";
-import { ISharedObject } from "@microsoft/fluid-shared-object-base";
-import { IDeltaManager, IGenericBlob, IHost } from "@prague/container-definitions";
-import { Container, Loader } from "@prague/container-loader";
 import {
     IDocumentMessage,
     IDocumentServiceFactory,
     ISequencedClient,
     ISequencedDocumentMessage,
-} from "@prague/protocol-definitions";
-import { Deferred } from "@prague/utils";
+} from "@microsoft/fluid-protocol-definitions";
+import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
+import * as sequence from "@microsoft/fluid-sequence";
+import { ISharedObject } from "@microsoft/fluid-shared-object-base";
 import { EventEmitter } from "events";
 import { CodeLoader } from "./codeLoader";
 import { debug } from "./debug";
@@ -269,7 +269,7 @@ export async function load(
     const container = await loader.resolve({ url });
 
     if (!container.existing) {
-        await initializeChaincode(container, `@prague/client-api@${apiVersion}`);
+        await initializeChaincode(container, `@fluid-internal/client-api@${apiVersion}`);
     }
 
     return requestDocument(loader, container, url);

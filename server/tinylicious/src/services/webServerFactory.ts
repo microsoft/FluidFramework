@@ -13,7 +13,7 @@ import {
 } from "@microsoft/fluid-server-services-core";
 import { EventEmitter } from "events";
 import * as http from "http";
-import * as socketIo from "socket.io";
+import { Socket } from "socket.io";
 import { WebServer } from "./webServer";
 
 class SocketIoSocket implements IWebSocket {
@@ -48,15 +48,12 @@ class SocketIoSocket implements IWebSocket {
 }
 
 class SocketIoServer extends EventEmitter implements IWebSocketServer {
-    private io: SocketIO.Server;
-
-    constructor(server: http.Server) {
+    constructor(server: http.Server, private io: SocketIO.Server) {
         super();
 
-        this.io = socketIo();
         this.io.attach(server);
 
-        this.io.on("connection", (socket: SocketIO.Socket) => {
+        this.io.on("connection", (socket: Socket) => {
             const webSocket = new SocketIoSocket(socket);
             this.emit("connection", webSocket);
         });
@@ -68,12 +65,15 @@ class SocketIoServer extends EventEmitter implements IWebSocketServer {
 }
 
 export class WebServerFactory implements IWebServerFactory {
+    constructor(private io: SocketIO.Server) {
+    }
+
     public create(requestListener: RequestListener): IWebServer {
         // Create the base HTTP server and register the provided request listener
         const server = http.createServer(requestListener);
         const httpServer = new HttpServer(server);
 
-        const socketIoServer = new SocketIoServer(server);
+        const socketIoServer = new SocketIoServer(server, this.io);
 
         return new WebServer(httpServer, socketIoServer);
     }

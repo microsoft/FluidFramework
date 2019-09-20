@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ISerializedHandle } from "@prague/component-core-interfaces";
-import { ConnectionState } from "@prague/container-definitions";
-import { MessageType } from "@prague/protocol-definitions";
+import { ISerializedHandle } from "@microsoft/fluid-component-core-interfaces";
+import { ConnectionState } from "@microsoft/fluid-container-definitions";
+import { MessageType } from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
 
 /**

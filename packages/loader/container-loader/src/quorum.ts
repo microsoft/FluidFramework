@@ -10,12 +10,12 @@ import {
     IQuorum,
     ISequencedProposal,
     ITelemetryLogger,
-} from "@prague/container-definitions";
+} from "@microsoft/fluid-container-definitions";
+import { Deferred, doIfNotDisposed, EventForwarder } from "@microsoft/fluid-core-utils";
 import {
     ISequencedClient,
     ISequencedDocumentMessage,
-} from "@prague/protocol-definitions";
-import { Deferred, doIfNotDisposed, EventForwarder } from "@prague/utils";
+} from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { debug } from "./debug";

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ICodeLoader } from "@prague/container-definitions";
+import { ICodeLoader } from "@microsoft/fluid-container-definitions";
 import { exec } from "child_process";
 import * as fs from "fs";
 import { promisify } from "util";

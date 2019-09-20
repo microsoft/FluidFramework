@@ -66,26 +66,26 @@
             if (!framedoc && rawframe.contentWindow) {
                 framedoc = rawframe.contentWindow.document;
             }
-            var loadPragueScript = document.createElement('script');
-            loadPragueScript.type = "text/javascript";
-            loadPragueScript.src = "dist/main.bundle.js";
-            loadPragueScript.onload = () => {
+            var loadFluidScript = document.createElement('script');
+            loadFluidScript.type = "text/javascript";
+            loadFluidScript.src = "dist/main.bundle.js";
+            loadFluidScript.onload = () => {
                 const runScript = document.createElement('script');
                 if (useIframe) {
                     runScript.text = `
-            tinyWebLoader.loadIFramedPragueComponent(
+            tinyWebLoader.loadIFramedFluidComponent(
                     "${document.getElementById('link').value}",
                     () => {"${document.getElementById('token').value}"},
-                    document.getElementById('prague-component'),
+                    document.getElementById('fluid-component'),
                     "${document.getElementById('clientId').value}",
                     "${document.getElementById('clientSecret').value}",
                     );`;
                 } else {
                     runScript.text = `
-            tinyWebLoader.loadPragueComponent(
+            tinyWebLoader.loadFluidComponent(
                     "${document.getElementById('link').value}",
                     () => {"${document.getElementById('token').value}"},
-                    document.getElementById('prague-component'),
+                    document.getElementById('fluid-component'),
                     "${document.getElementById('clientId').value}",
                     "${document.getElementById('clientSecret').value}",
                     );`;
@@ -94,7 +94,7 @@
             }
 
             framedoc.body.style.margin = '0';
-            framedoc.body.appendChild(loadPragueScript);
+            framedoc.body.appendChild(loadFluidScript);
 
             const newdiv = document.createElement('div');
             newdiv.id = 'content';

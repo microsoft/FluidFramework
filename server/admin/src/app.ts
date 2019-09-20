@@ -79,7 +79,7 @@ const stream = split().on("data", (message) => {
 
 export function create(config: Provider, mongoManager: core.MongoManager, keyValueManager: KeyValueManager) {
 
-    // We are loading a Prague document that might lead to assertion errors.
+    // We are loading a Fluid document that might lead to assertion errors.
     // Handling this so that the whole process is not terminated.
     winston.info(`Attaching error handlers`);
     process.on("uncaughtException", handleAsserionError);

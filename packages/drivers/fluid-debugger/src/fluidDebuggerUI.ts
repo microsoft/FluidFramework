@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage, IVersion } from "@prague/protocol-definitions";
+import { ISequencedDocumentMessage, IVersion } from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
 
 export interface IDebuggerUI {

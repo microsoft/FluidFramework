@@ -3,12 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
-import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
-import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
-import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
-import * as scribe from "@microsoft/fluid-server-tools-core";
-import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import {
     IComponentHTMLOptions,
     IComponentHTMLVisual,
@@ -16,9 +10,20 @@ import {
     IComponentRouter,
     IRequest,
     IResponse,
-} from "@prague/component-core-interfaces";
-import { IContainerContext, IFluidCodeDetails, IRuntime, IRuntimeFactory } from "@prague/container-definitions";
-import { IDocumentFactory } from "@prague/host-service-interfaces";
+} from "@microsoft/fluid-component-core-interfaces";
+import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
+import {
+    IContainerContext,
+    IFluidCodeDetails,
+    IRuntime,
+    IRuntimeFactory,
+} from "@microsoft/fluid-container-definitions";
+import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
+import { IDocumentFactory } from "@microsoft/fluid-host-service-interfaces";
+import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
+import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import * as scribe from "@microsoft/fluid-server-tools-core";
+import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import Axios from "axios";
 import { EventEmitter } from "events";
 import { resolve } from "url";
