@@ -53,18 +53,13 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
             // WARNING: Exceptions can contain PII!
             // For example, XHR will throw object derived from Error that contains config information
             // for failed request, including all the headers, and thus - user tokens!
-            const errorAsObject = error as { stack?: string; message?: string };
+            const errorAsObject = error as { stack?: string; message?: string, statusCode?: number };
 
             // Extract call stack from exception if available
             // Same for message if there is one (see Error object).
             event.stack = errorAsObject.stack;
             event.error = errorAsObject.message;
-
-            // We likely would need to stop logging error in production builds to avoid potential of recording PII.
-            const error2 = {...errorAsObject};
-            error2.stack = undefined;
-            error2.message = undefined;
-            event.error = error2;
+            event.statusCode = errorAsObject.statusCode;
         }
 
         // Collect stack if we were not able to extract it from error

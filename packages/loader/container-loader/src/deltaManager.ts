@@ -48,6 +48,16 @@ const ImmediateNoOpResponse = "";
 
 const DefaultContentBufferSize = 10;
 
+// Test if we deal with INetworkError / NetworkError object and if it has enough information to make a call.
+// If in doubt, allow retries.
+// Note: We can deal with Error object with canRetry property, but not INetworkError / NetworkError type of object
+// This is true for any websocket protocol errors, and some of them are not retriable.
+function canRetryOnError(error: any) {
+    // Always retry unless told otherwise.
+    // tslint:disable-next-line:no-unsafe-any
+    return error === null || typeof error !== "object" || error.canRetry === undefined || error.canRetry;
+}
+
 /**
  * Manages the flow of both inbound and outbound messages. This class ensures that shared objects receive delta
  * messages in order regardless of possible network conditions or timings causing out of order delivery.
@@ -287,6 +297,8 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     }
 
     public async connect(reason: string): Promise<IConnectionDetails> {
+        assert(!this.closed);
+
         if (this.connecting) {
             assert(!this.connection);
             return this.connecting.promise;
@@ -374,23 +386,20 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             const maxFetchTo = from + MaxBatchDeltas;
             const fetchTo = to === undefined ? maxFetchTo : Math.min(maxFetchTo, to);
 
-            // Connect to the delta storage endpoint
-            if (!this.deltaStorageP) {
-                this.deltaStorageP = this.service.connectToDeltaStorage().catch(
-                    (error) => {
-                        this.emit("error", error);
-                        throw error;
-                    });
-            }
-
-            // Let exceptions here propagate through, without hitting retry logic below
-            const deltaStorage = await this.deltaStorageP!;
-
             let deltasRetrievedLast = 0;
             let success = true;
+            let canRetry = false;
 
             try {
+                // Connect to the delta storage endpoint
+                if (!this.deltaStorageP) {
+                    this.deltaStorageP = this.service.connectToDeltaStorage();
+                }
+
+                const deltaStorage = await this.deltaStorageP!;
+
                 // Grab a chunk of deltas - limit the number fetched to MaxBatchDeltas
+                canRetry = true;
                 const deltas = await deltaStorage.get(from, fetchTo);
 
                 // Note that server (or driver code) can push here something unexpected, like undefined
@@ -412,7 +421,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 // count since something prevented us from seeing those deltas
                 from = lastFetch;
             } catch (error) {
-                // There was an error fetching the deltas. Up the retry counter
                 logNetworkFailure(
                     this.logger,
                     {
@@ -422,6 +430,12 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                         retry: retry + 1,
                     },
                     error);
+
+                if (!canRetry || !canRetryOnError(error)) {
+                    // It's game over scenario.
+                    this.closeOnConnectionError(error);
+                    return [];
+                }
                 success = false;
             }
 
@@ -467,7 +481,26 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this._inbound.clear();
         this._outbound.clear();
         this._inboundSignal.clear();
+
+        this._inbound.systemPause();
+        this._inboundSignal.systemPause();
+
+        // Drop pending messages - this will ensure catchUp() does not go into infinite loop
+        this.pending = [];
+
         this.removeAllListeners();
+    }
+
+    private closeOnConnectionError(error: any) {
+        if (this.connecting) {
+            this.connecting.reject(error);
+            this.connecting = undefined;
+        }
+        // Note: "disconnect" & "nack" do not have error object
+        if (error) {
+            this.emit("error", error);
+        }
+        this.close();
     }
 
     private recordPingTime(latency: number) {
@@ -511,6 +544,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     }
 
     private connectCore(reason: string, delay: number, mode: ConnectionMode): void {
+        if (this.closed) {
+            return;
+        }
         if (this.connectRepeatCount === 0) {
             this.connectStartTime = performanceNow();
         }
@@ -589,7 +625,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                     // This happens only in Firefox.
                     logNetworkFailure(this.logger, {eventName: "DeltaConnectionError"}, error);
                     const reconnectionMode = this.systemConnectionMode === "write" ? "write" : "read";
-                    this.reconnectOnError("Reconnecting on error", connection, reconnectionMode);
+                    this.reconnectOnError("Reconnecting on error", connection, reconnectionMode, error);
                 });
 
                 connection.on("pong", (latency: number) => {
@@ -610,12 +646,8 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             },
             (error) => {
                 // Socket.io error when we connect to wrong socket, or hit some multiplexing bug
-                if (typeof error === "object" && error !== null && error.critical) {
-                    this.emit("error", error);
-                    if (this.connecting) {
-                        this.connecting.reject(error);
-                        this.connecting = undefined;
-                    }
+                if (!canRetryOnError(error)) {
+                    this.closeOnConnectionError(error);
                     return;
                 }
 
@@ -636,7 +668,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             });
     }
 
-    private reconnectOnError(reason: string, connection: DeltaConnection, mode: ConnectionMode) {
+    private reconnectOnError(reason: string, connection: DeltaConnection, mode: ConnectionMode, error?: any) {
         // we quite often get protocol errors before / after observing nack/disconnect
         // we do not want to run through same sequence twice.
         if (connection !== this.connection) {
@@ -655,11 +687,8 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         connection.close();
 
         // Reconnection is only enabled for browser clients.
-        if (this.clientType !== Browser || !this.reconnect || this.closed) {
-            this._inbound.systemPause();
-            this._inbound.clear();
-            this._inboundSignal.systemPause();
-            this._inboundSignal.clear();
+        if (this.clientType !== Browser || !this.reconnect || this.closed || !canRetryOnError(error)) {
+            this.closeOnConnectionError(error);
         } else {
             this.logger.sendTelemetryEvent({eventName: "DeltaConnectionReconnect", reason});
             this.connectCore(reason, InitialReconnectDelay, mode);

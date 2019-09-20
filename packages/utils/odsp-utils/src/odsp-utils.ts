@@ -86,7 +86,7 @@ async function requestWithRefresh(
     requestCallback: (token: string) => Promise<any>): Promise<any> {
 
     const result = await requestCallback(tokens.accessToken);
-    if (result.status !== 401) {
+    if (result.status !== 401 && result.status !== 403) {
         return result;
     }
     // Unauthorized, try to refresh the token

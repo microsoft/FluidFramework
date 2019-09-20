@@ -15,11 +15,12 @@ import {
     IDocumentStorageService,
     IErrorTrackingService,
 } from "@microsoft/fluid-protocol-definitions";
-import { ISocketStorageDiscovery } from "./contracts";
+import { IOdspSocketError, ISocketStorageDiscovery } from "./contracts";
 import { IFetchWrapper } from "./fetchWrapper";
 import { OdspDeltaStorageService } from "./OdspDeltaStorageService";
 import { OdspDocumentStorageManager } from "./OdspDocumentStorageManager";
 import { OdspDocumentStorageService } from "./OdspDocumentStorageService";
+import { NetworkError } from "./OdspUtils";
 import { getSocketStorageDiscovery } from "./Vroom";
 
 /**
@@ -150,7 +151,21 @@ export class OdspDocumentService implements IDocumentService {
             io,
             client,
             websocketEndpoint.deltaStreamSocketUrl,
-            mode);
+            mode,
+        ).catch((error) => {
+            // Test if it's IOdspSocketError.
+            if (typeof error === "object" && error !== null && typeof error.socketError === "object" && error.socketError !== null) {
+                const socketError: IOdspSocketError = error.socketError;
+                throw new NetworkError(
+                socketError.code,
+                socketError.message,
+                [408, 409, 429, 500, 503].includes(socketError.code), // canRetry
+                socketError.retryAfter);
+            }
+
+            // Note: Error object here can still have canRetry property - as result of web socket protocol errors
+            throw error;
+        });
     }
 
     public async branch(): Promise<string> {

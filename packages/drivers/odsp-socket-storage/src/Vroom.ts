@@ -6,27 +6,10 @@
 import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
 import { PerformanceEvent } from "@microsoft/fluid-core-utils";
 import { ISocketStorageDiscovery } from "./contracts";
-import {
-  fetchWithRetry,
-  getWithRetryForTokenRefresh,
-  IRetryPolicy,
-  linearBackoff,
-  whitelist,
-} from "./utils";
+import { fetchHelper, getWithRetryForTokenRefresh, throwNetworkError } from "./OdspUtils";
 
 function getOrigin(url: string) {
   return new URL(url).origin;
-}
-
-/**
- * A custom error thrown with the error code returned from a join session call
- */
-export class JoinSessionError extends Error {
-  public readonly statusCode: number;
-  constructor(statusCode: number, errorMessage?: string) {
-    super(errorMessage);
-    this.statusCode = statusCode;
-  }
 }
 
 /**
@@ -43,7 +26,7 @@ export class JoinSessionError extends Error {
  * @param logger - A logger to use for this request
  * @param getVroomToken - A function that is able to provide the vroom token for this request
  */
-export async function fetchOpStream(
+export async function fetchJoinSession(
   appId: string,
   driveId: string,
   itemId: string,
@@ -51,13 +34,12 @@ export async function fetchOpStream(
   path: string,
   additionalParams: string,
   method: string,
-  retryPolicy: IRetryPolicy,
   getVroomToken: (siteUrl: string, refresh: boolean) => Promise<string | undefined | null>,
-): Promise<any> {
+): Promise<ISocketStorageDiscovery> {
   return getWithRetryForTokenRefresh(async (refresh: boolean) => {
     const token = await getVroomToken(siteUrl, refresh);
     if (!token) {
-      throw new Error("Failed to acquire Vroom token");
+      throwNetworkError(400, "Failed to acquire Vroom token");
     }
 
     const siteOrigin = getOrigin(siteUrl);
@@ -69,17 +51,11 @@ export async function fetchOpStream(
       queryParams = `app_id=${appId}${additionalParams ? "&" + additionalParams : ""}`;
       headers = { Authorization: `Bearer ${token}` };
     }
-    const joinSessionResponse = await fetchWithRetry(
+
+    return fetchHelper(
       `${siteOrigin}/_api/v2.1/drives/${driveId}/items/${itemId}/${path}?${queryParams}`,
       { method, headers },
-      retryPolicy,
     );
-
-    if (joinSessionResponse.response.status !== 200) {
-      throw new JoinSessionError(joinSessionResponse.response.status);
-    }
-
-    return joinSessionResponse.response.json();
   });
 }
 
@@ -104,7 +80,7 @@ export async function getSocketStorageDiscovery(
 ): Promise<ISocketStorageDiscovery> {
   const event = PerformanceEvent.start(logger, { eventName: "joinSession" });
 
-  const socketStorageDiscovery: ISocketStorageDiscovery = await fetchOpStream(
+  const socketStorageDiscovery: ISocketStorageDiscovery = await fetchJoinSession(
     appId,
     driveId,
     itemId,
@@ -112,11 +88,6 @@ export async function getSocketStorageDiscovery(
     "opStream/joinSession",
     "",
     "POST",
-    {
-      maxRetries: 3,
-      backoffFn: linearBackoff(500),
-      filter: whitelist([408, 409, 429, 500, 503]),
-    },
     getVroomToken,
   );
 
