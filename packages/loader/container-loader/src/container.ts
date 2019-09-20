@@ -110,6 +110,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         const containerP = new Promise<Container>(async (res, rej) => {
             container.once("error", (error) => {
+                container.close();
                 rej(error);
             });
             await container.load(version, connection)
