@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedClient } from "@prague/protocol-definitions";
+import { ISequencedClient } from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
 import { IDisposable } from "./disposable";
 

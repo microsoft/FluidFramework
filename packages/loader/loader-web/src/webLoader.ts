@@ -10,7 +10,7 @@ import {
     IPackage,
     IPackageConfig,
     IPraguePackage,
-} from "@prague/container-definitions";
+} from "@microsoft/fluid-container-definitions";
 import * as fetch from "isomorphic-fetch";
 
 export interface IParsedPackage {

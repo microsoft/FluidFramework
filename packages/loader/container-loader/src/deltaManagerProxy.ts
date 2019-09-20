@@ -9,15 +9,15 @@ import {
     IDeltaManager,
     IDeltaQueue,
     IDeltaSender,
-} from "@prague/container-definitions";
+} from "@microsoft/fluid-container-definitions";
+import { EventForwarder } from "@microsoft/fluid-core-utils";
 import {
     IDocumentMessage,
     ISequencedDocumentMessage,
     IServiceConfiguration,
     ISignalMessage,
     MessageType,
-} from "@prague/protocol-definitions";
-import { EventForwarder } from "@prague/utils";
+} from "@microsoft/fluid-protocol-definitions";
 
 /**
  * Proxy to the real IDeltaQueue - used to restrict access

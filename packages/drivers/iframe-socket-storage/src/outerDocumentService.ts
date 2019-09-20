@@ -2,6 +2,13 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
+import { Deferred } from "@microsoft/fluid-core-utils";
+import {
+    IConnected,
+    IInnerDocumentDeltaConnectionProxy,
+    IOuterDocumentDeltaConnection,
+    OuterDocumentDeltaConnection,
+} from "@microsoft/fluid-driver-base";
 import {
     ConnectionMode,
     IClient,
@@ -10,15 +17,8 @@ import {
     IDocumentService,
     IDocumentStorageService,
     ScopeType,
-} from "@prague/protocol-definitions";
-import { DocumentStorageService } from "@prague/routerlicious-socket-storage";
-import {
-    IConnected,
-    IInnerDocumentDeltaConnectionProxy,
-    IOuterDocumentDeltaConnection,
-    OuterDocumentDeltaConnection,
-} from "@prague/socket-storage-shared";
-import { Deferred } from "@prague/utils";
+} from "@microsoft/fluid-protocol-definitions";
+import { DocumentStorageService } from "@microsoft/fluid-routerlicious-driver";
 import * as assert from "assert";
 import * as Comlink from "comlink";
 import { OuterDeltaStorageService } from "./outerDeltaStorageService";

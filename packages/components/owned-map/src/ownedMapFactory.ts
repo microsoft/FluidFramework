@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedMap } from "@prague/map";
-import { IChannelAttributes, IComponentRuntime, ISharedObjectServices } from "@prague/runtime-definitions";
-import { ISharedObjectFactory } from "@prague/shared-object-common";
+import { ISharedMap } from "@microsoft/fluid-map";
+import { IChannelAttributes, IComponentRuntime, ISharedObjectServices } from "@microsoft/fluid-runtime-definitions";
+import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { OwnedSharedMap } from "./ownedMap";
 
 /**

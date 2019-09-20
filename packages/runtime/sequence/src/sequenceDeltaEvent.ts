@@ -13,7 +13,7 @@ import {
     MergeTreeMaintenanceType,
     PropertySet,
     SortedSegmentSet,
-} from "@prague/merge-tree";
+} from "@microsoft/fluid-merge-tree";
 
 /**
  * Base class for SequenceDeltaEvent and SequenceMaintenanceEvent.

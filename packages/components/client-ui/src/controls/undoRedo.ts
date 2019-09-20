@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedMap, IValueChanged, SharedMap } from "@prague/map";
+import { ISharedMap, IValueChanged, SharedMap } from "@microsoft/fluid-map";
 import {
     ISegment,
     matchProperties,
@@ -12,8 +12,8 @@ import {
     ReferenceType,
     Stack,
     TrackingGroup,
-} from "@prague/merge-tree";
-import { SequenceDeltaEvent, SharedSegmentSequence} from "@prague/sequence";
+} from "@microsoft/fluid-merge-tree";
+import { SequenceDeltaEvent, SharedSegmentSequence } from "@microsoft/fluid-sequence";
 
 enum UndoRedoMode {None, Redo, Undo}
 

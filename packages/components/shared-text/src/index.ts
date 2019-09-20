@@ -7,12 +7,12 @@
 // tslint:disable-next-line:no-import-side-effect
 import "./publicpath";
 
-import { IRequest } from "@prague/component-core-interfaces";
-import { IContainerContext, IRuntime, IRuntimeFactory } from "@prague/container-definitions";
-import { ContainerRuntime } from "@prague/container-runtime";
-import { IComponentContext, IComponentFactory, IComponentRegistry } from "@prague/runtime-definitions";
 // import { SharedString } from "@prague/sequence";
-import * as Snapshotter from "@prague/snapshotter";
+import * as Snapshotter from "@fluid-example/snapshotter-agent";
+import { IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { IContainerContext, IRuntime, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
+import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
+import { IComponentContext, IComponentFactory, IComponentRegistry } from "@microsoft/fluid-runtime-definitions";
 import * as sharedTextComponent from "./component";
 // import { GraphIQLView } from "./graphql";
 import { waitForFullConnection } from "./utils";
@@ -52,7 +52,7 @@ class MyRegistry implements IComponentRegistry {
     public get IComponentRegistry() {return this; }
 
     public async get(name: string): Promise<IComponentFactory> {
-        if (name === "@chaincode/shared-text") {
+        if (name === "@fluid-example/shared-text") {
             return this.sharedTextFactory;
         } else if (name === "@fluid-example/math") {
             return math.then((m) => m.fluidExport);
@@ -99,7 +99,7 @@ class SharedTextFactoryComponent implements IComponentFactory, IRuntimeFactory {
             waitForFullConnection(runtime).then(() => {
                 // Call snapshot directly from runtime.
                 if (runtime.clientType === "snapshot") {
-                    console.log(`@chaincode/shared-text running ${runtime.clientType}`);
+                    console.log(`@fluid-example/shared-text running ${runtime.clientType}`);
                     Snapshotter.run(runtime);
                 }
             });
@@ -108,7 +108,7 @@ class SharedTextFactoryComponent implements IComponentFactory, IRuntimeFactory {
         // On first boot create the base component
         if (!runtime.existing) {
             await Promise.all([
-                runtime.createComponent(DefaultComponentName, "@chaincode/shared-text")
+                runtime.createComponent(DefaultComponentName, "@fluid-example/shared-text")
                     .then((componentRuntime) => componentRuntime.attach()),
             ])
             .catch((error) => {

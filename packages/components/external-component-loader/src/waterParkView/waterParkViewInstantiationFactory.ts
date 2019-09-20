@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponentFactory } from "@prague/aqueduct";
-import { IComponentFactory } from "@prague/runtime-definitions";
-import { SharedObjectSequence } from "@prague/sequence";
+import { PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
+import { IComponentFactory } from "@microsoft/fluid-runtime-definitions";
+import { SharedObjectSequence } from "@microsoft/fluid-sequence";
 import { ExternalComponentView } from "./externalComponentView";
 
 export const WaterParkViewInstantiationFactory: IComponentFactory = new PrimedComponentFactory(

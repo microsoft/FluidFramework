@@ -1,5 +1,5 @@
 {
-  "name": "@prague/consensus-ordered-collection",
+  "name": "@microsoft/fluid-ordered-collection",
   "version": "0.10.0",
   "description": "Consensus Collection",
   "main": "dist/index.js",
@@ -21,7 +21,7 @@
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "nyc": {
     "all": true,
     "exclude": [
@@ -42,16 +42,16 @@
     "report-dir": "nyc/report"
   },
   "dependencies": {
-    "@prague/protocol-definitions": "^0.10.0",
-    "@prague/runtime-definitions": "^0.10.0",
-    "@prague/shared-object-common": "^0.10.0",
-    "@prague/utils": "^0.10.0",
+    "@microsoft/fluid-protocol-definitions": "^0.10.0",
+    "@microsoft/fluid-runtime-definitions": "^0.10.0",
+    "@microsoft/fluid-shared-object-base": "^0.10.0",
+    "@microsoft/fluid-core-utils": "^0.10.0",
     "debug": "^4.1.1"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.3.11",
     "@microsoft/fluid-build-common": "^0.10.0",
-    "@prague/runtime-test-utils": "^0.10.0",
+    "@microsoft/fluid-test-runtime-utils": "^0.10.0",
     "@types/debug": "^0.0.31",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.12.12",

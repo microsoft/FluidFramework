@@ -3,18 +3,18 @@
 * Licensed under the MIT License.
 */
 
-import { PrimedComponent } from "@prague/aqueduct";
+import { PrimedComponent } from "@microsoft/fluid-aqueduct";
 import {
-  IComponent,
-  IComponentHandle,
-  IComponentHTMLVisual,
-  IComponentLoadable,
-  IComponentQueryableLegacy,
-} from "@prague/component-core-interfaces";
-import { IPraguePackage } from "@prague/container-definitions";
-import { IComponentCollection } from "@prague/framework-definitions";
-import { MergeTreeDeltaType } from "@prague/merge-tree";
-import { SharedObjectSequence, SubSequence } from "@prague/sequence";
+    IComponent,
+    IComponentHandle,
+    IComponentHTMLVisual,
+    IComponentLoadable,
+    IComponentQueryableLegacy,
+} from "@microsoft/fluid-component-core-interfaces";
+import { IPraguePackage } from "@microsoft/fluid-container-definitions";
+import { IComponentCollection } from "@microsoft/fluid-framework-interfaces";
+import { MergeTreeDeltaType } from "@microsoft/fluid-merge-tree";
+import { SharedObjectSequence, SubSequence } from "@microsoft/fluid-sequence";
 
 // tslint:disable-next-line: no-var-requires no-require-imports
 const pkg = require("../../package.json") as IPraguePackage;

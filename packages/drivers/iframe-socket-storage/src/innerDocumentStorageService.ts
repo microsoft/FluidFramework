@@ -11,7 +11,7 @@ import {
     ISummaryTree,
     ITree,
     IVersion,
-} from "@prague/protocol-definitions";
+} from "@microsoft/fluid-protocol-definitions";
 
 /**
  * Document access to underlying storage for routerlicious driver.

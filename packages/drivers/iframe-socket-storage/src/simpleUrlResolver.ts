@@ -5,11 +5,11 @@
 
 import {
     IRequest,
-} from "@prague/component-core-interfaces";
+} from "@microsoft/fluid-component-core-interfaces";
 import {
     IResolvedUrl,
     IUrlResolver,
-} from "@prague/protocol-definitions";
+} from "@microsoft/fluid-protocol-definitions";
 
 /**
  * A UrlResolver that just returns what's given.

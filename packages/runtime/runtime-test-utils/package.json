@@ -1,5 +1,5 @@
 {
-  "name": "@prague/runtime-test-utils",
+  "name": "@microsoft/fluid-test-runtime-utils",
   "version": "0.10.0",
   "description": "Distributed map",
   "main": "dist/index.js",
@@ -16,15 +16,15 @@
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "dependencies": {
-    "@prague/component-core-interfaces": "^0.10.0",
-    "@prague/container-definitions": "^0.10.0",
-    "@prague/gitresources": "^0.10.0",
-    "@prague/protocol-definitions": "^0.10.0",
-    "@prague/runtime-definitions": "^0.10.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.10.0",
+    "@microsoft/fluid-container-definitions": "^0.10.0",
+    "@microsoft/fluid-gitresources": "^0.10.0",
+    "@microsoft/fluid-protocol-definitions": "^0.10.0",
+    "@microsoft/fluid-runtime-definitions": "^0.10.0",
     "@microsoft/fluid-server-services-client": "^0.10.0",
-    "@prague/utils": "^0.10.0",
+    "@microsoft/fluid-core-utils": "^0.10.0",
     "uuid": "^3.3.2"
   },
   "devDependencies": {

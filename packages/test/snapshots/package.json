@@ -19,9 +19,9 @@
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "dependencies": {
-    "@prague/protocol-definitions": "^0.10.0",
+    "@microsoft/fluid-protocol-definitions": "^0.10.0",
     "@microsoft/fluid-replay-tool": "^0.10.0"
   },
   "devDependencies": {

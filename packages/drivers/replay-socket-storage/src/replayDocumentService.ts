@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as api from "@prague/protocol-definitions";
+import * as api from "@microsoft/fluid-protocol-definitions";
 import { EmptyDeltaStorageService } from "./emptyDeltaStorageService";
 import { ReplayController } from "./replayController";
 import { ReplayDocumentDeltaConnection } from "./replayDocumentDeltaConnection";

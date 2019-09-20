@@ -5,8 +5,8 @@
 
 import { runService } from "@microsoft/fluid-server-services-utils";
 import * as path from "path";
-import { TinyliciousRunnerFactory } from "./runnerFactory";
 import { TinyliciousResourcesFactory } from "./resourcesFactory";
+import { TinyliciousRunnerFactory } from "./runnerFactory";
 
 runService(
     new TinyliciousResourcesFactory(),

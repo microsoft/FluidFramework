@@ -5,9 +5,9 @@
 
 // tslint:disable:no-console
 
-import { MockRuntime } from "@prague/runtime-test-utils";
+import { MockRuntime } from "@microsoft/fluid-test-runtime-utils";
 import * as assert from "assert";
-import * as map from "..";
+import * as map from "../";
 import { IDirectoryDataObject, SharedDirectory } from "../directory";
 
 describe("Routerlicious", () => {

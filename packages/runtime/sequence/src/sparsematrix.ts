@@ -3,19 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import {
-    BaseSegment,
-    createGroupOp,
-    IJSONSegment,
-    ISegment,
-    PropertySet,
-} from "@prague/merge-tree";
-import { IChannelAttributes, IComponentRuntime, ISharedObjectServices } from "@prague/runtime-definitions";
-import { ISharedObject, ISharedObjectFactory } from "@prague/shared-object-common";
-import {
-    SharedSegmentSequence,
-    SubSequence,
-} from ".";
+import { BaseSegment, createGroupOp, IJSONSegment, ISegment, PropertySet } from "@microsoft/fluid-merge-tree";
+import { IChannelAttributes, IComponentRuntime, ISharedObjectServices } from "@microsoft/fluid-runtime-definitions";
+import { ISharedObject, ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
+import { SharedSegmentSequence, SubSequence } from "./";
 import { pkgVersion } from "./packageVersion";
 
 export type UnboxedOper = undefined | boolean | number | string;
@@ -236,7 +227,7 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
             return undefined;
         }
 
-        throw new Error(`Unrecognized Segment type: ${segment.constructor}`);
+        throw new Error(`Unrecognized Segment type`);
     }
 
     public getTag(row: number, col: number) {

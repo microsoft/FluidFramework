@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { Deferred } from "@microsoft/fluid-core-utils";
 import {
     ConnectionMode,
     IContentMessage,
@@ -12,8 +13,7 @@ import {
     IServiceConfiguration,
     ISignalMessage,
     ITokenClaims,
-} from "@prague/protocol-definitions";
-import { Deferred } from "@prague/utils";
+} from "@microsoft/fluid-protocol-definitions";
 import * as Comlink from "comlink";
 import { EventEmitter } from "events";
 import { IConnected } from "./messages";

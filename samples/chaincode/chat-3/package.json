@@ -3,7 +3,7 @@
   "description": "Prague Chat with minimal runtime",
   "version": "0.0.40",
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {

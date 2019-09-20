@@ -4,8 +4,8 @@
  */
 
 // TODO: Is there a better way to get fontawesome on to the page?
-import '@fortawesome/fontawesome-free/js/all.min.js';
-import './styles.scss';
+import "@fortawesome/fontawesome-free/js/all.min.js";
+import "./styles.scss";
 
 export * from "./scoreboard";
 export * from "./teamScore";
