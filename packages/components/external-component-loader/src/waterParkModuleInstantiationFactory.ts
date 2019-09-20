@@ -3,11 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { SimpleContainerRuntimeFactory, SimpleModuleInstantiationFactory } from "@prague/aqueduct";
-import {
-    IContainerContext, IRuntime,
-} from "@prague/container-definitions";
-import { ComponentRegistryTypes } from "@prague/container-runtime";
+import { SimpleContainerRuntimeFactory, SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
+import { IContainerContext, IRuntime } from "@microsoft/fluid-container-definitions";
+import { ComponentRegistryTypes } from "@microsoft/fluid-runtime-definitions";
 import * as uuid from "uuid";
 import { ExternalComponentLoader, WaterParkLoaderName } from "./waterParkLoader";
 import { ExternalComponentView, WaterParkViewName } from "./waterParkView";

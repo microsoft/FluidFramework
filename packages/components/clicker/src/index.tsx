@@ -3,19 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import {
-  PrimedComponent,
-  PrimedComponentFactory,
-  SimpleModuleInstantiationFactory,
-} from "@prague/aqueduct";
-import {
-  IComponentHTMLVisual,
-} from "@prague/component-core-interfaces";
-import {
-  Counter,
-  CounterValueType,
-} from "@prague/map";
-
+import { PrimedComponent, PrimedComponentFactory, SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
+import { IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
+import { Counter, CounterValueType } from "@microsoft/fluid-map";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
@@ -34,7 +24,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLVisual {
    * Do setup work here
    */
   protected async componentInitializingFirstTime() {
-    this.root.set("clicks", 0, CounterValueType.Name);
+    this.root.createValueType("clicks", CounterValueType.Name, 0);
   }
 
   // #region IComponentHTMLVisual

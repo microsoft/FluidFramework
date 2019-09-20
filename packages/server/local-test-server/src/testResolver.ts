@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { IFluidResolvedUrl, IResolvedUrl, IUrlResolver, ScopeType } from "@microsoft/fluid-protocol-definitions";
 import { generateToken } from "@microsoft/fluid-server-services-core";
-import { IRequest } from "@prague/component-core-interfaces";
-import { IFluidResolvedUrl, IResolvedUrl, IUrlResolver, ScopeType } from "@prague/protocol-definitions";
 
 /**
  * Resolves URLs by providing fake URLs which succeed with the other
@@ -31,7 +31,7 @@ export class TestResolver implements IUrlResolver {
                 storageUrl: "test.com",
             },
             tokens: { jwt: generateToken(this.tenantId, this.id, this.tokenKey, scopes) },
-            type: "prague",
+            type: "fluid",
             url: `fluid-test://test.com/${this.tenantId}/${this.id}`,
         };
 

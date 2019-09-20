@@ -110,6 +110,10 @@
             "group": "scriptorium",
             "topic": "deltas"
         },
+        "copier": {
+            "group": "copier",
+            "topic": "rawdeltas"
+        },
         "broadcaster": {
             "group": "broadcaster",
             "topic": "deltas"
@@ -131,6 +135,13 @@
         "topic": "deltas",
         "kafkaClientId": "scriptorium",
         "groupId": "scriptorium",
+        "checkpointBatchSize": 1,
+        "checkpointTimeIntervalMsec": 1000
+    },
+    "copier": {
+        "topic": "rawdeltas",
+        "kafkaClientId": "copier",
+        "groupId": "copier",
         "checkpointBatchSize": 1,
         "checkpointTimeIntervalMsec": 1000
     },

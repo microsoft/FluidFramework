@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IChaincodeFactory, ICodeLoader, IPraguePackage } from "@prague/container-definitions";
+import { IChaincodeFactory, ICodeLoader, IPraguePackage } from "@microsoft/fluid-container-definitions";
 
 export class WebLoader implements ICodeLoader {
     constructor(private baseUrl: string) {

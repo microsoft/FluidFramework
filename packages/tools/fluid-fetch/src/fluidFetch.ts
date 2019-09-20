@@ -7,12 +7,7 @@
 import * as fs from "fs";
 import * as util from "util";
 import { paramSave, parseArguments } from "./fluidFetchArgs";
-import {
-    connectionInfo,
-    fluidFetchInit,
-    paramDocumentService,
-} from "./fluidFetchInit";
-
+import { connectionInfo, fluidFetchInit, paramDocumentService } from "./fluidFetchInit";
 import { fluidFetchMessages } from "./fluidFetchMessages";
 import { fluidFetchSnapshot } from "./fluidFetchSnapshot";
 
@@ -38,10 +33,14 @@ parseArguments();
 fluidFetchMain()
     .catch((error: Error) => {
         if (error instanceof Error) {
-            const data = (error as any).requestResult;
             let extraMsg = "";
+            const data = (error as any).requestResult;
             if (data) {
                 extraMsg = "\nRequest Result: JSON.stringify(data, undefined, 2)";
+            }
+            const statusCode = (error as any).statusCode;
+            if (statusCode !== undefined) {
+                extraMsg = `${extraMsg}\nStatus Code: ${statusCode}`;
             }
             console.log(`ERROR: ${error.stack}${extraMsg}`);
         } else if (typeof error === "object") {

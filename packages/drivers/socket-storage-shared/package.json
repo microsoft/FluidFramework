@@ -1,5 +1,5 @@
 {
-  "name": "@prague/socket-storage-shared",
+  "name": "@microsoft/fluid-driver-base",
   "version": "0.10.0",
   "description": "Shared package across different socket-storage implementation",
   "main": "dist/index.js",
@@ -19,19 +19,19 @@
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "dependencies": {
-    "@prague/protocol-definitions": "^0.10.0",
-    "@prague/utils": "^0.10.0",
+    "@microsoft/fluid-protocol-definitions": "^0.10.0",
+    "@microsoft/fluid-core-utils": "^0.10.0",
+    "@types/debug": "^0.0.31",
+    "@types/node": "^10.12.12",
+    "@types/socket.io-client": "^1.4.32",
     "debug": "^4.1.1",
     "comlink": "^4.0.2"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.3.11",
     "@microsoft/fluid-build-common": "^0.10.0",
-    "@types/debug": "^0.0.31",
-    "@types/node": "^10.12.12",
-    "@types/socket.io-client": "^1.4.32",
     "concurrently": "^4.1.0",
     "rimraf": "^2.6.2",
     "tslint": "^5.11.0",

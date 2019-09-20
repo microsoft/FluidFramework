@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ConnectionState } from "@prague/container-definitions";
+import { ConnectionState } from "@microsoft/fluid-container-definitions";
 import {
     FileMode,
     IDocumentStorageService,
@@ -12,8 +12,8 @@ import {
     ITree,
     MessageType,
     TreeEntry,
-} from "@prague/protocol-definitions";
-import { IChannel, IEnvelope } from "@prague/runtime-definitions";
+} from "@microsoft/fluid-protocol-definitions";
+import { IChannel, IEnvelope } from "@microsoft/fluid-runtime-definitions";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ChannelStorageService } from "./channelStorageService";
 

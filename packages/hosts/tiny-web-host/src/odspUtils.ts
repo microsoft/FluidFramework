@@ -4,7 +4,7 @@
  */
 
 import { getODSPFluidResolvedUrl, IClientConfig, IODSPTokens } from "@microsoft/fluid-odsp-utils";
-import { IFluidResolvedUrl } from "@prague/protocol-definitions";
+import { IFluidResolvedUrl } from "@microsoft/fluid-protocol-definitions";
 
 const spoTenants = new Map<string, string>([
     ["spo", "microsoft-my.sharepoint.com"],

@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent, IRequest } from "@prague/component-core-interfaces";
-import { IContainerContext } from "@prague/container-definitions";
-import { ISequencedClient } from "@prague/protocol-definitions";
-import { Heap, IComparer, IHeapNode } from "@prague/utils";
+import { IComponent, IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { IContainerContext } from "@microsoft/fluid-container-definitions";
+import { Heap, IComparer, IHeapNode } from "@microsoft/fluid-core-utils";
+import { ISequencedClient } from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
 import { debug } from "./debug";
 import { ISummarizer } from "./summarizer";
@@ -115,22 +115,26 @@ export class SummaryManager extends EventEmitter {
             return;
         }
 
-        // Create and run the new summarizer. On disconnect if we should still summarize launch another instance.
-        const doneP = this.createSummarizer()
-            .then((summarizer) => {
-                if (this.shouldSummarize) {
-                    return summarizer.run(this.clientId);
-                }
-            });
-        doneP.then(
-            () => {
-                // In the future we will respawn the summarizer - for now we simply stop
-                // this.computeSummarizer(this.connected)
-                debug("summary generation complete");
-            },
-            (error) => {
-                debug("summary generation error", error);
-            });
+        // Make sure that the summarizer client does not load another summarizer.
+        if (this.context.configuration === undefined || this.context.configuration.canReconnect) {
+            // Create and run the new summarizer. On disconnect if we should still summarize launch another instance.
+            const doneP = this.createSummarizer()
+                .then((summarizer) => {
+                    if (this.shouldSummarize) {
+                        return summarizer.run(this.clientId);
+                    }
+                });
+            doneP.then(
+                () => {
+                    // In the future we will respawn the summarizer - for now we simply stop
+                    // this.computeSummarizer(this.connected)
+                    debug("summary generation complete");
+                },
+                (error) => {
+                    debug("summary generation error", error);
+                });
+        }
+
     }
 
     private async createSummarizer() {

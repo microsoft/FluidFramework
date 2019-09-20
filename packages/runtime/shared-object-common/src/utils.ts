@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-    IComponentHandle,
-    IComponentHandleContext,
-    IComponentSerializer,
-} from "@prague/component-core-interfaces";
+import { IComponentHandle, IComponentHandleContext, IComponentSerializer } from "@microsoft/fluid-component-core-interfaces";
 
 export function serializeHandles(
     value: any,

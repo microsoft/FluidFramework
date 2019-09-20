@@ -12,7 +12,7 @@ import {
     ITelemetryPerformanceEvent,
     TelemetryEventPropertyType,
     TelemetryPerfType,
-} from "@prague/container-definitions";
+} from "@microsoft/fluid-container-definitions";
 import * as registerDebug from "debug";
 import { pkgName, pkgVersion } from "./packageVersion";
 // tslint:disable-next-line:no-var-requires
@@ -197,6 +197,29 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
         }
 
         return newEvent;
+    }
+}
+
+/**
+ * Null logger
+ * It can be used in places where logger instance is required, but events should be not send over.
+ */
+export class TelemetryNullLogger implements ITelemetryLogger {
+    public send(event: ITelemetryBaseEvent): void {
+    }
+    public sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any) {
+    }
+    public sendErrorEvent(event: ITelemetryErrorEvent, error?: any) {
+    }
+    public sendPerformanceEvent(event: ITelemetryPerformanceEvent): void {
+    }
+    public logGenericError(eventName: string, error: any) {
+    }
+    public logException(event: ITelemetryErrorEvent, exception: any): void {
+    }
+    public debugAssert(condition: boolean, event?: ITelemetryErrorEvent): void {
+    }
+    public shipAssert(condition: boolean, event?: ITelemetryErrorEvent): void {
     }
 }
 

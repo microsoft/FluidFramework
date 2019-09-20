@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as git from "@prague/gitresources";
+import * as git from "@microsoft/fluid-gitresources";
 import * as querystring from "querystring";
 import * as request from "request";
 import * as winston from "winston";

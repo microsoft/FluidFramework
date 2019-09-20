@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IHistorian } from "@microsoft/fluid-server-services-client";
-import { IComponentHandle, IComponentHandleContext, IRequest, IResponse } from "@prague/component-core-interfaces";
+import { IComponentHandle, IComponentHandleContext, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import {
     ConnectionState,
     IDeltaManager,
@@ -12,17 +11,18 @@ import {
     ILoader,
     IQuorum,
     ITelemetryLogger,
-} from "@prague/container-definitions";
-import * as git from "@prague/gitresources";
-import { IDocumentMessage, ISequencedDocumentMessage, ITreeEntry, MessageType } from "@prague/protocol-definitions";
+} from "@microsoft/fluid-container-definitions";
+import { ComponentSerializer, DebugLogger, Deferred, fromUtf8ToBase64 } from "@microsoft/fluid-core-utils";
+import * as git from "@microsoft/fluid-gitresources";
+import { IDocumentMessage, ISequencedDocumentMessage, ITreeEntry, MessageType } from "@microsoft/fluid-protocol-definitions";
 import {
     IChannel,
     IComponentRuntime,
     IDeltaConnection,
     IDeltaHandler,
     ISharedObjectServices,
-} from "@prague/runtime-definitions";
-import { ComponentSerializer, DebugLogger, Deferred, fromUtf8ToBase64 } from "@prague/utils";
+} from "@microsoft/fluid-runtime-definitions";
+import { IHistorian } from "@microsoft/fluid-server-services-client";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 // tslint:disable-next-line: no-submodule-imports

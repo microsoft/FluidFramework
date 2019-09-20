@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import * as api from "@prague/client-api";
-import { getFileBlobType, IGenericBlob, IImageBlob, IVideoBlob } from "@prague/container-definitions";
-import { gitHashFile } from "@prague/utils";
+import * as api from "@fluid-internal/client-api";
+import { getFileBlobType, IGenericBlob, IImageBlob, IVideoBlob } from "@microsoft/fluid-container-definitions";
+import { gitHashFile } from "@microsoft/fluid-core-utils";
 
 export async function blobUploadHandler(
     dragZone: HTMLDivElement,

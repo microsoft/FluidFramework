@@ -3,7 +3,7 @@
   "description": "Chaincode starter project",
   "version": "0.0.10",
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "main": "dist/index.js",
   "module": "lib/index.js",
   "types": "dist/index.d.ts",

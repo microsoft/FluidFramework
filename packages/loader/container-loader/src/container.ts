@@ -7,7 +7,7 @@ import {
     IComponentQueryableLegacy,
     IRequest,
     IResponse,
-} from "@prague/component-core-interfaces";
+} from "@microsoft/fluid-component-core-interfaces";
 import {
     ConnectionState,
     ICodeLoader,
@@ -25,7 +25,17 @@ import {
     ITelemetryBaseLogger,
     ITelemetryLogger,
     TelemetryEventRaisedOnContainer,
-} from "@prague/container-definitions";
+} from "@microsoft/fluid-container-definitions";
+import {
+    buildHierarchy,
+    ChildLogger,
+    DebugLogger,
+    EventEmitterWithErrorHandling,
+    flatten,
+    PerformanceEvent,
+    raiseConnectedEvent,
+    readAndParse,
+} from "@microsoft/fluid-core-utils";
 import {
     FileMode,
     IClient,
@@ -44,17 +54,7 @@ import {
     IVersion,
     MessageType,
     TreeEntry,
-} from "@prague/protocol-definitions";
-import {
-    buildHierarchy,
-    ChildLogger,
-    DebugLogger,
-    EventEmitterWithErrorHandling,
-    flatten,
-    PerformanceEvent,
-    raiseConnectedEvent,
-    readAndParse,
-} from "@prague/utils";
+} from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
 import * as jwtDecode from "jwt-decode";
 import { BlobCacheStorageService } from "./blobCacheStorageService";
@@ -634,6 +634,12 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             }
         });
 
+        protocol.quorum.on("removeMember", (clientId) => {
+            if (clientId === this._clientId) {
+                this._deltaManager!.updateQuorumLeave();
+            }
+        });
+
         protocol.quorum.on(
             "approveProposal",
             (sequenceNumber, key, value) => {
@@ -752,6 +758,16 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                     details.version,
                     details.claims.scopes,
                     details.serviceConfiguration);
+
+                if (this._deltaManager!.connectionMode === "read") {
+                    this.setConnectionState(
+                        ConnectionState.Connected,
+                        `joined as readonly`,
+                        details.clientId,
+                        this._deltaManager!.version,
+                        details.claims.scopes,
+                        this._deltaManager!.serviceConfiguration);
+                }
             });
 
             this._deltaManager.on("disconnect", (reason: string) => {
@@ -851,8 +867,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         if (value === ConnectionState.Connecting) {
             this.pendingClientId = context;
         } else if (value === ConnectionState.Connected) {
-            this._deltaManager!.disableReadonlyMode();
             this._clientId = this.pendingClientId;
+            this._deltaManager!.updateQuorumJoin();
         } else if (value === ConnectionState.Disconnected) {
             // Important as we process our own joinSession message through delta request
             this.pendingClientId = undefined;

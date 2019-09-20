@@ -4,8 +4,8 @@
  */
 
 import { IClientConfig, IODSPTokens } from "@microsoft/fluid-odsp-utils";
+import { IFluidResolvedUrl, IUser, ScopeType } from "@microsoft/fluid-protocol-definitions";
 import { generateToken, IAlfredTenant } from "@microsoft/fluid-server-services-core";
-import { IFluidResolvedUrl, IUser, ScopeType } from "@prague/protocol-definitions";
 import { parse } from "url";
 import { getSpoServer, isSpoTenant, spoJoinSession } from "./odspUtils";
 
@@ -74,7 +74,7 @@ function r11sResolveUrl(
             storageUrl,
         },
         tokens: { jwt: token },
-        type: "prague",
+        type: "fluid",
         url: fluidUrl,
     };
     const resolvedP = Promise.resolve(resolvedUrl);

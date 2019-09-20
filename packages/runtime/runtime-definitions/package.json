@@ -1,7 +1,7 @@
 {
-  "name": "@prague/runtime-definitions",
+  "name": "@microsoft/fluid-runtime-definitions",
   "version": "0.10.0",
-  "description": "Prague Runtime definitions",
+  "description": "Fluid Runtime definitions",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "sideEffects": "false",
@@ -16,7 +16,7 @@
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "devDependencies": {
     "@microsoft/api-extractor": "^7.3.11",
     "@microsoft/fluid-build-common": "^0.10.0",
@@ -26,9 +26,9 @@
     "typescript": "~3.4.5"
   },
   "dependencies": {
-    "@prague/component-core-interfaces": "^0.10.0",
-    "@prague/container-definitions": "^0.10.0",
-    "@prague/protocol-definitions": "^0.10.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.10.0",
+    "@microsoft/fluid-container-definitions": "^0.10.0",
+    "@microsoft/fluid-protocol-definitions": "^0.10.0",
     "@types/node": "^10.12.12"
   },
   "license": "MIT"

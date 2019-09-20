@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@prague/component-core-interfaces";
+import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 
 export type IResolvedUrl = IWebResolvedUrl | IFluidResolvedUrl;
 
@@ -17,7 +17,7 @@ export interface IWebResolvedUrl extends IResolvedUrlBase {
 }
 
 export interface IFluidResolvedUrl extends IResolvedUrlBase {
-    type: "prague";
+    type: "fluid" | "prague";
     url: string;
     tokens: { [name: string]: string };
     endpoints: { [name: string]: string };

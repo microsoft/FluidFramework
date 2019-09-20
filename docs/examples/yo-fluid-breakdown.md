@@ -80,9 +80,9 @@ The `src/main.ts*` file is where the component logic lives. Below we will walk t
 
 First we will declare all our imports. Here is a quick description and use cases for each is discussed further below.
 
-`PrimedComponent` and `PrimedComponentFactory` from <xref:@prague/aqueduct!> provides helper functionality.
-`IComponentHTMLVisual` from <xref:@prague/component-core-interfaces!> provides the interface for enabling rendering.
-`CounterValueType` from <xref:@prague/map!> is a Value Type we'll use in our root Distributed Data Structure (more on that later).
+`PrimedComponent` and `PrimedComponentFactory` from <xref:@microsoft/fluid-aqueduct!> provides helper functionality.
+`IComponentHTMLVisual` from <xref:@microsoft/fluid-component-core-interfaces!> provides the interface for enabling rendering.
+`CounterValueType` from <xref:@microsoft/fluid-map!> is a Value Type we'll use in our root Distributed Data Structure (more on that later).
 `IComponentContext` and `IComponentRuntime` are the interfaces for important fluid objects passed to our Component.
 `React` and `ReactDOM` are *only for React* and enable React use.
 
@@ -90,17 +90,17 @@ First we will declare all our imports. Here is a quick description and use cases
 import {
   PrimedComponent,
   PrimedComponentFactory,
-} from "@prague/aqueduct";
+} from "@microsoft/fluid-aqueduct";
 import {
   IComponentHTMLVisual,
-} from "@prague/component-core-interfaces";
+} from "@microsoft/fluid-component-core-interfaces";
 import {
   CounterValueType,
-} from "@prague/map";
+} from "@microsoft/fluid-map";
 import {
   IComponentContext,
   IComponentRuntime,
-} from "@prague/runtime-definitions";
+} from "@microsoft/fluid-runtime-definitions";
 
 import * as React from "react"; // only used with react
 import * as ReactDOM from "react-dom"; // only used with react
@@ -110,9 +110,9 @@ import * as ReactDOM from "react-dom"; // only used with react
 
 Below we define our component class `ExampleFluidComponent`.
 
-#### <xref:@prague/aqueduct!PrimedComponent:class>
+#### <xref:@microsoft/fluid-aqueduct!PrimedComponent:class>
 
-Extending <xref:@prague/aqueduct!PrimedComponent:class> set up our component with required default behavior as well as additional
+Extending <xref:@microsoft/fluid-aqueduct!PrimedComponent:class> set up our component with required default behavior as well as additional
 helpers to make development easier.
 
 #### Key Benefits
@@ -126,9 +126,9 @@ to other components.
     - `existing()` - called every time except the first time a component is initialized
     - `opened()` - called every time a component is initialized. After `create` and `existing`.
 
-#### <xref:@prague/component-core-interfaces!IComponentHTMLVisual:interface>
+#### <xref:@microsoft/fluid-component-core-interfaces!IComponentHTMLVisual:interface>
 
-Implementing <xref:@prague/component-core-interfaces!IComponentHTMLVisual:interface> denotes that our component can
+Implementing <xref:@microsoft/fluid-component-core-interfaces!IComponentHTMLVisual:interface> denotes that our component can
 render a view. Throughout the Fluid Framework we define interfaces as a way to state our behavior. Whoever is attempting
 to use this component can can know we support this interface and therefor we will have a `render(...)` function. View
 rendering is explained more below.
@@ -156,14 +156,14 @@ We also pass through our `supportedInterface`. As described above our component 
 can discover that we implement `IComponentHTMLViewable`.
 
 Next we call, and `await`, `initialize()` on our newly created component instance. `initialize()` is a method on the
-<xref:@prague/aqueduct!SharedComponent:class> that properly calls the three override methods discussed above, `componentInitializingFirstTime()`, `existing()`,
+<xref:@microsoft/fluid-aqueduct!SharedComponent:class> that properly calls the three override methods discussed above, `componentInitializingFirstTime()`, `existing()`,
 and `opened()`. We want to `await` this call because it could perform asynchronous operations such as creating and/or getting
 a component.
 
 `componentInitializingFirstTime()` will be called only the first time the `initialize()` is called. In here we perform setup operations that we only
 want to happen once. `await super.componentInitializingFirstTime()` calls the `componentInitializingFirstTime()` function on the `PrimedComponent`.
 In here we create and set the `root` SharedDirectory. We need to call this first to ensure the root is available later. Next we create a new counter,
-called `"clicks"` on our root directory `this.root.set("clicks", 0, CounterValueType.Name);`
+called `"clicks"` on our root directory `this.root.createValueType("clicks", CounterValueType.Name, 0);`
 
 ```typescript
 private static readonly supportedInterfaces = ["IComponentHTMLVisual"];
@@ -175,7 +175,7 @@ private static readonly supportedInterfaces = ["IComponentHTMLVisual"];
 protected async componentInitializingFirstTime() {
   // Calling super.componentInitializingFirstTime() creates a root SharedDirectory that you can work off.
   await super.componentInitializingFirstTime();
-  this.root.set("clicks", 0, CounterValueType.Name);
+  this.root.createValueType("clicks", CounterValueType.Name, 0);
 }
 
 /**
@@ -359,7 +359,7 @@ new instance. We require having an instantiation factory because it's required t
 distributed data structures up from. Defining all the DDSs up front allows for the Fluid Framework to load
 from a snapshot without worrying that something might exist in the snapshot that the framework can't understand.
 
-In the example below we use the <xref:@prague/aqueduct!PrimedComponentFactory:class> as a helper to create our
+In the example below we use the <xref:@microsoft/fluid-aqueduct!PrimedComponentFactory:class> as a helper to create our
 instantiation factory. As properties we pass in our supported distributed data structures.
 In this scenario we don't use any additional distributed data structures, so we pass an empty array.
 
@@ -426,7 +426,7 @@ All together the code looks like this:
 ```typescript
 import {
   SimpleModuleInstantiationFactory
-} from "@prague/aqueduct";
+} from "@microsoft/fluid-aqueduct";
 
 import {
     ExampleFluidComponentInstantiationFactory,

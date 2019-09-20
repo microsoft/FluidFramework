@@ -8,14 +8,14 @@ import {
     IComponentHTMLVisual,
     IComponentQueryableLegacy,
     IRequest,
-} from "@prague/component-core-interfaces";
-import { ICodeLoader } from "@prague/container-definitions";
-import { Container, Loader } from "@prague/container-loader";
-import { IResolvedPackage, WebCodeLoader } from "@prague/loader-web";
+} from "@microsoft/fluid-component-core-interfaces";
+import { ICodeLoader } from "@microsoft/fluid-container-definitions";
+import { Container, Loader } from "@microsoft/fluid-container-loader";
 import {
     IFluidResolvedUrl,
     IResolvedUrl,
-} from "@prague/protocol-definitions";
+} from "@microsoft/fluid-protocol-definitions";
+import { IResolvedPackage, WebCodeLoader } from "@microsoft/fluid-web-code-loader";
 import { IHostConfig } from "./hostConfig";
 
 export interface IPrivateSessionInfo {
@@ -90,17 +90,18 @@ export async function registerAttach(loader: Loader, container: Container, uri: 
 
 export function createLoader(
     resolved: IResolvedUrl,
-    config: any,
+    options: any,
     scope: IComponent,
     codeLoader: ICodeLoader,
     hostConf: IHostConfig,
 ): Loader {
 
-    const options = {
-        blockUpdateMarkers: true,
-        config,
-        tokens: (resolved as IFluidResolvedUrl).tokens,
-    };
+    // we need to extend options, otherwise we nest properties, like client, too deeply
+    //
+    // tslint:disable-next-line: no-unsafe-any
+    options.blockUpdateMarkers = true;
+    // tslint:disable-next-line: no-unsafe-any
+    options.tokens = (resolved as IFluidResolvedUrl).tokens;
 
     return new Loader(
         { resolver: hostConf.urlResolver },

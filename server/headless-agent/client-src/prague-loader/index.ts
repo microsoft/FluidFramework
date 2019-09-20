@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { Browser, IPragueResolvedUrl } from "@prague/container-definitions";
-import { Container, Loader } from "@prague/container-loader";
-import { ContainerUrlResolver } from "@prague/routerlicious-host";
-import { RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
-import { IComponentRuntime } from "@prague/runtime-definitions";
+import { Browser, IPragueResolvedUrl } from "@microsoft/fluid-container-definitions";
+import { Container, Loader } from "@microsoft/fluid-container-loader";
+import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
+import { RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
+import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import * as jwt from "jsonwebtoken";
 import * as url from "url";
 import { LocalPlatform } from "./localPlatform";
@@ -82,7 +82,7 @@ export async function startLoading(
             storageUrl,
         },
         tokens: { jwt: token },
-        type: "prague",
+        type: "fluid",
         url: documentUrl,
     };
 

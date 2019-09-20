@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { BatchManager } from "@microsoft/fluid-core-utils";
 import {
+    ConnectionMode,
     IClient,
     IContentMessage,
     IDocumentDeltaConnection,
@@ -12,8 +14,7 @@ import {
     IServiceConfiguration,
     ISignalMessage,
     ITokenClaims,
-} from "@prague/protocol-definitions";
-import { BatchManager } from "@prague/utils";
+} from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
 import { debug } from "./debug";
 import { IConnect, IConnected } from "./messages";
@@ -57,10 +58,11 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         token: string | null,
         io: SocketIOClientStatic,
         client: IClient,
-        url: string): Promise<IDocumentDeltaConnection> {
+        url: string,
+        mode: ConnectionMode): Promise<IDocumentDeltaConnection> {
 
         // Note on multiplex = false:
-        // Temp fix to address issues on SPO. Scriptor hits same URL for Prague & Notifications.
+        // Temp fix to address issues on SPO. Scriptor hits same URL for Fluid & Notifications.
         // As result Socket.io reuses socket (as there is no collision on namespaces).
         // ODSP does not currently supports multiple namespaces on same socket :(
         const socket = io(
@@ -78,6 +80,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         const connectMessage: IConnect = {
             client,
             id,
+            mode,
             tenantId,
             token,  // token is going to indicate tenant level information, etc...
             versions: protocolVersions,
@@ -196,6 +199,15 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
      */
     public get clientId(): string {
         return this.details.clientId;
+    }
+
+    /**
+     * Get the mode of the client
+     *
+     * @returns the client mode
+     */
+    public get mode(): ConnectionMode {
+        return this.details.mode;
     }
 
     /**

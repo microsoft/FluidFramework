@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent, PrimedComponentFactory } from "@prague/aqueduct";
-import { ICombiningOp, PropertySet } from "@prague/merge-tree";
-import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
-import { UnboxedOper } from "@prague/sequence";
+import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
+import { ICombiningOp, PropertySet } from "@microsoft/fluid-merge-tree";
+import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { UnboxedOper } from "@microsoft/fluid-sequence";
 import { CellRange } from "./cellrange";
 import { ConfigKey } from "./configKey";
 import { TableDocument } from "./document";

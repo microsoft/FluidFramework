@@ -9,15 +9,15 @@ import {
     IDeltaManager,
     IDeltaQueue,
     IDeltaSender,
-} from "@prague/container-definitions";
+} from "@microsoft/fluid-container-definitions";
+import { EventForwarder } from "@microsoft/fluid-core-utils";
 import {
     IDocumentMessage,
     ISequencedDocumentMessage,
     IServiceConfiguration,
     ISignalMessage,
     MessageType,
-} from "@prague/protocol-definitions";
-import { EventForwarder } from "@prague/utils";
+} from "@microsoft/fluid-protocol-definitions";
 
 /**
  * Proxy to the real IDeltaQueue - used to restrict access
@@ -118,6 +118,10 @@ export class DeltaManagerProxy
         return this.deltaManager.serviceConfiguration;
     }
 
+    public get active(): boolean {
+        return this.deltaManager.active;
+    }
+
     constructor(private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>) {
         super(deltaManager);
 
@@ -131,14 +135,6 @@ export class DeltaManagerProxy
         this.outbound.dispose();
         this.inboundSignal.dispose();
         super.dispose();
-    }
-
-    public enableReadonlyMode(): void {
-        return this.deltaManager.enableReadonlyMode();
-    }
-
-    public disableReadonlyMode(): void {
-        return this.deltaManager.disableReadonlyMode();
     }
 
     public close(): void {

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { Deferred } from "@microsoft/fluid-core-utils";
 import {
     IAlfredTenant,
     ICache,
@@ -16,7 +17,6 @@ import {
     MongoManager,
 } from "@microsoft/fluid-server-services-core";
 import * as utils from "@microsoft/fluid-server-services-utils";
-import { Deferred } from "@prague/utils";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import * as app from "./app";
@@ -65,6 +65,7 @@ export class AlfredRunner implements utils.IRunner {
             this.metricClientConfig,
             this.orderManager,
             this.tenantManager,
+            this.storage,
             this.contentCollection);
 
         // Listen on provided port, on all network interfaces.

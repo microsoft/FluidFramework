@@ -4,28 +4,37 @@
  */
 
 import { getRandomName } from "@microsoft/fluid-server-services-core";
+
 // tslint:disable no-string-literal trailing-comma no-shadowed-variable no-submodule-imports no-floating-promises
-import { SimpleModuleInstantiationFactory } from "@prague/aqueduct";
-import { IHostConfig, start as startCore } from "@prague/base-host";
+import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
+import { IHostConfig, start as startCore } from "@microsoft/fluid-base-host";
 import {
     IRequest,
-} from "@prague/component-core-interfaces";
+} from "@microsoft/fluid-component-core-interfaces";
 import {
     IFluidModule,
     IFluidPackage,
     IPackage,
     IPraguePackage,
-} from "@prague/container-definitions";
-import { extractDetails, IResolvedPackage } from "@prague/loader-web";
-import { IDocumentServiceFactory, IUser } from "@prague/protocol-definitions";
-import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
+} from "@microsoft/fluid-container-definitions";
+import { IDocumentServiceFactory, IUrlResolver, IUser } from "@microsoft/fluid-protocol-definitions";
+import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
+import { extractDetails, IResolvedPackage } from "@microsoft/fluid-web-code-loader";
+import {TestDeltaConnectionServer, TestDocumentServiceFactory, TestResolver} from "@prague/local-test-server";
 import * as jwt from "jsonwebtoken";
 import * as uuid from "uuid/v4";
 import { InsecureUrlResolver } from "./insecureUrlResolver";
 // import * as fetch from "isomorphic-fetch";
-
 export interface IDevServerUser extends IUser {
     name: string;
+}
+
+export interface IRouteOptions {
+    mode: "local" | "localhost" | "live";
+    fluidHost?: string;
+    tenantId?: string;
+    tenantSecret?: string;
+    component?: string;
 }
 
 function getUser(): IDevServerUser {
@@ -59,7 +68,7 @@ function modifyFluidPackage(packageJson: IPackage): IFluidPackage {
     return fluidPackage;
 }
 
-async function getPkg(packageJson: IPackage, scriptId: string, component = false): Promise<IResolvedPackage> {
+async function getPkg(packageJson: IPackage, scriptIds: string[], component = false): Promise<IResolvedPackage> {
 
     // Start the creation of pkg.
     if (!packageJson) {
@@ -71,89 +80,79 @@ async function getPkg(packageJson: IPackage, scriptId: string, component = false
     const legacyPackage = `${fluidPackage.name}@${fluidPackage.version}`;
 
     // Add script to page, rather than load bundle directly
-    const script = document.createElement("script");
-    script.src = `${window.location.origin}/dist/main.bundle.js`;
-    script.id = scriptId;
+    const scriptLoadP: Promise<void>[] = [];
+    const scriptIdPrefix = "fluidDevServerScriptToLoad";
+    let scriptIndex = 0;
+    fluidPackage.fluid.browser.umd.files.forEach((file) => {
+        const script = document.createElement("script");
+        script.src = file;
+        const scriptId = `${scriptIdPrefix}_${scriptIndex++}`;
+        script.id = scriptId;
+        scriptIds.push(scriptId);
 
-    const onloadP = new Promise((resolve) => {
-        script.onload = () => {
-            resolve();
-        };
-    });
-
-    document.body.appendChild(script);
-
-    return onloadP.then(() => {
-
-        if (component) {
-            // Wrap the core component in a runtime
-            const loadedComponentRaw = window["main"];
-            const fluidModule = loadedComponentRaw as IFluidModule;
-            const componentFactory = fluidModule.fluidExport.IComponentFactory;
-
-            const runtimeFactory = new SimpleModuleInstantiationFactory(
-                legacyPackage,
-                new Map([
-                    [legacyPackage, Promise.resolve(componentFactory)],
-                ]),
-            );
-            window["componentMain"] = {
-                fluidExport: runtimeFactory,
+        scriptLoadP.push(new Promise((resolve) => {
+            script.onload = () => {
+                resolve();
             };
+        }));
 
-            fluidPackage.fluid.browser.umd.library = "componentMain";
-            fluidPackage.name = `${fluidPackage.name}-dev-server`;
-
-        }
-
-        return {
-            pkg: fluidPackage,
-            details: {
-                config: {
-                    [`@${details.scope}:cdn`]: window.location.origin,
-                },
-                package: fluidPackage,
-            },
-            parsed: {
-                full: legacyPackage,
-                pkg: "NA",
-                name: "NA",
-                version: "NA",
-                scope: "NA"
-            },
-            packageUrl: "NA"
-        };
+        document.body.appendChild(script);
     });
+    await Promise.all(scriptLoadP);
+
+    if (component) {
+        // Wrap the core component in a runtime
+        const loadedComponentRaw = window["main"];
+        const fluidModule = loadedComponentRaw as IFluidModule;
+        const componentFactory = fluidModule.fluidExport.IComponentFactory;
+
+        const runtimeFactory = new SimpleModuleInstantiationFactory(
+            legacyPackage,
+            new Map([
+                [legacyPackage, Promise.resolve(componentFactory)],
+            ]),
+        );
+        window["componentMain"] = {
+            fluidExport: runtimeFactory,
+        };
+
+        fluidPackage.fluid.browser.umd.library = "componentMain";
+        fluidPackage.name = `${fluidPackage.name}-dev-server`;
+
+    }
+
+    return {
+        pkg: fluidPackage,
+        details: {
+            config: {
+                [`@${details.scope}:cdn`]: window.location.origin,
+            },
+            package: fluidPackage,
+        },
+        parsed: {
+            full: legacyPackage,
+            pkg: "NA",
+            name: "NA",
+            version: "NA",
+            scope: "NA"
+        },
+        packageUrl: "NA"
+    };
 }
 
+const bearerSecret = "VBQyoGpEYrTn3XQPtXW3K8fFDd";
+
+// tslint:disable-next-line: max-func-body-length
 export async function start(
     packageJson: IPackage,
-    host: string,
-    routerlicious: string,
-    historian: string,
-    npm: string,
-    tenantId: string,
-    secret: string,
-    jwt: string,
-    div: HTMLDivElement,
-    component: boolean
+    options: IRouteOptions,
+    div: HTMLDivElement
 ): Promise<void> {
     const url = window.location.href;
 
     // Create Package
-    const scriptId = "pragueDevServerScriptToLoad";
-    const scriptIds = [scriptId];
-    const pkg = await getPkg(packageJson, scriptId, component);
-
-    // Get endpoints
-    const urlResolver = new InsecureUrlResolver(
-        host,
-        routerlicious,
-        historian,
-        tenantId,
-        secret,
-        getUser(),
-        jwt);
+    const scriptIds: string[] = [];
+    const pkg = await getPkg(packageJson, scriptIds, !!options.component);
 
     // Construct a request
     const req: IRequest = {
@@ -169,28 +168,78 @@ export async function start(
             type: "browser",
         },
     };
+    let urlResolver: IUrlResolver;
+    let npm: string;
+    switch (options.mode) {
+        case "localhost":
+            npm = "http://localhost:3002";
+            const localHost = "http://localhost:3000";
+            urlResolver = new InsecureUrlResolver(
+                localHost,
+                localHost,
+                localHost,
+                "prague",
+                "43cfc3fbf04a97c0921fd23ff10f9e4b",
+                getUser(),
+                bearerSecret);
+            break;
 
-    const documentServiceFactory: IDocumentServiceFactory = new RouterliciousDocumentServiceFactory(
+        case "local":
+            urlResolver = new TestResolver();
+            break;
+
+        default: // live
+            npm = "https://pragueauspkn-3873244262.azureedge.net";
+            const host = options.fluidHost ? options.fluidHost : "https://www.wu2.prague.office-int.com";
+            urlResolver = new InsecureUrlResolver(
+                host,
+                host.replace("www", "alfred"),
+                host.replace("www", "historian"),
+                options.tenantId ? options.tenantId : "stoic-gates",
+                options.tenantSecret ? options.tenantSecret : "1a7f744b3c05ddc525965f17a1b58aa0",
+                getUser(),
+                bearerSecret);
+    }
+
+    let documentServiceFactory: IDocumentServiceFactory;
+    if (options.mode !== "local") {
+        documentServiceFactory = new RouterliciousDocumentServiceFactory(
             false,
             new DefaultErrorTracking(),
             false,
             true,
             undefined,
         );
+        const hostConf: IHostConfig = { documentServiceFactory, urlResolver };
 
-    const hostConf: IHostConfig = { documentServiceFactory, urlResolver };
+        startCore(
+            url,
+            await urlResolver.resolve(req),
+            pkg,
+            scriptIds,
+            npm,
+            config,
+            {},
+            div,
+            hostConf,
+        );
+    } else {
 
-    startCore(
-        url,
-        await urlResolver.resolve(req),
-        pkg,
-        scriptIds,
-        npm,
-        config,
-        {},
-        div,
-        hostConf,
-    );
+        const deltaConn = TestDeltaConnectionServer.create();
+        documentServiceFactory = new TestDocumentServiceFactory(deltaConn);
+        const hostConf: IHostConfig = { documentServiceFactory, urlResolver };
+        startCore(
+            url,
+            await urlResolver.resolve(req),
+            pkg,
+            scriptIds,
+            npm,
+            config,
+            {},
+            div,
+            hostConf,
+        );
+    }
 }
 
 export function getUserToken(bearerSecret: string) {

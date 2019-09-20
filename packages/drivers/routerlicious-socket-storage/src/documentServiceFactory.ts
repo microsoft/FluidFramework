@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { ICredentials, IGitCache } from "@microsoft/fluid-server-services-client";
 import {
     IDocumentService,
     IDocumentServiceFactory,
     IErrorTrackingService,
     IFluidResolvedUrl,
     IResolvedUrl,
-} from "@prague/protocol-definitions";
+} from "@microsoft/fluid-protocol-definitions";
+import { ICredentials, IGitCache } from "@microsoft/fluid-server-services-client";
 import { parse } from "url";
 import { DocumentService } from "./documentService";
 import { DocumentService2 } from "./documentService2";
@@ -40,9 +40,14 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
      * @returns Routerlicious document service.
      */
     public createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
-        if (resolvedUrl.type !== "prague") {
-            // tslint:disable-next-line:max-line-length
-            return Promise.reject("Only Fluid components currently supported in the RouterliciousDocumentServiceFactory");
+        if (resolvedUrl.type !== "fluid") {
+            if (resolvedUrl.type === "prague") {
+                // tslint:disable-next-line:max-line-length
+                console.warn("IFluidResolvedUrl type === 'prague' has been deprecated. Please create IFluidResolvedUrls of type 'fluid' in the future.");
+            } else {
+                // tslint:disable-next-line:max-line-length
+                return Promise.reject("Only Fluid components currently supported in the RouterliciousDocumentServiceFactory");
+            }
         }
 
         const fluidResolvedUrl = resolvedUrl as IFluidResolvedUrl;

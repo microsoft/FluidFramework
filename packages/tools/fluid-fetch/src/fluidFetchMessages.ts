@@ -4,13 +4,14 @@
  */
 
 import {
+    ConnectionMode,
     IClient,
     IDocumentService,
     ISequencedDocumentMessage,
     MessageType,
     ScopeType,
-} from "@prague/protocol-definitions";
-import { IAttachMessage, IEnvelope } from "@prague/runtime-definitions";
+} from "@microsoft/fluid-protocol-definitions";
+import { IAttachMessage, IEnvelope } from "@microsoft/fluid-runtime-definitions";
 import * as fs from "fs";
 import * as util from "util";
 import {
@@ -52,7 +53,8 @@ async function loadAllSequencedMessages(
      };
     console.log("Retrieving messages from web socket");
     timeStart = Date.now();
-    const deltaStream = await documentService.connectToDeltaStream(client);
+    const mode: ConnectionMode = "write";
+    const deltaStream = await documentService.connectToDeltaStream(client, mode);
     const initialMessages = deltaStream.initialMessages;
     deltaStream.disconnect();
     console.log(`${Math.floor((Date.now() - timeStart) / 1000)} seconds to connect to web socket`);

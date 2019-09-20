@@ -24,7 +24,7 @@
     "start": "node dist/www.js"
   },
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "browser": {
     "request": "xhr"
   },

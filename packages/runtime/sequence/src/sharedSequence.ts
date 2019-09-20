@@ -3,13 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import {
-    BaseSegment,
-    IJSONSegment,
-    ISegment,
-    PropertySet,
-} from "@prague/merge-tree";
-import { IChannelAttributes, IComponentRuntime } from "@prague/runtime-definitions";
+import { BaseSegment, IJSONSegment, ISegment, PropertySet } from "@microsoft/fluid-merge-tree";
+import { IChannelAttributes, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SharedSegmentSequence } from "./sequence";
 
 const MaxRun = 128;

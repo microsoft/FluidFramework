@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { IFluidResolvedUrl, IResolvedUrl, IWebResolvedUrl, ScopeType } from "@microsoft/fluid-protocol-definitions";
 import * as core from "@microsoft/fluid-server-services-core";
-import { IFluidResolvedUrl, IResolvedUrl, IWebResolvedUrl, ScopeType } from "@prague/protocol-definitions";
 import Axios from "axios";
 import { Request, Router } from "express";
 import * as safeStringify from "json-stringify-safe";
@@ -95,7 +95,7 @@ async function getInternalComponent(
             storageUrl,
         },
         tokens: { jwt: token },
-        type: "prague",
+        type: "fluid",
         url: fluidUrl,
     } as IFluidResolvedUrl;
 }

@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import * as messages from "@microsoft/fluid-driver-base";
 import {
+    ConnectionMode,
     IContentMessage,
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
@@ -14,8 +16,7 @@ import {
     ISignalMessage,
     ITokenClaims,
     IVersion,
-} from "@prague/protocol-definitions";
-import * as messages from "@prague/socket-storage-shared";
+} from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
 import { debug } from "./debug";
 import { ReplayController } from "./replayController";
@@ -195,6 +196,7 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
             initialMessages: [],
             initialSignals: [],
             maxMessageSize: ReplayDocumentDeltaConnection.ReplayMaxMessageSize,
+            mode: "write",
             parentBranch: null,
             serviceConfiguration: {
                 blockSize: 64436,
@@ -230,6 +232,10 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
 
     public get clientId(): string {
         return this.details.clientId;
+    }
+
+    public get mode(): ConnectionMode {
+        return this.details.mode;
     }
 
     public get claims(): ITokenClaims {

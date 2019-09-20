@@ -4,8 +4,8 @@
  */
 
 import { IClientConfig } from "@microsoft/fluid-odsp-utils";
+import { IFluidResolvedUrl, ScopeType } from "@microsoft/fluid-protocol-definitions";
 import { chooseCelaName, IAlfredTenant } from "@microsoft/fluid-server-services-core";
-import { IFluidResolvedUrl, ScopeType } from "@prague/protocol-definitions";
 import { Request } from "express";
 import { Provider } from "nconf";
 import { parse } from "url";
@@ -77,7 +77,7 @@ function r11sResolveUrl(
             storageUrl,
         },
         tokens: { jwt: token },
-        type: "prague",
+        type: "fluid",
         url: fluidUrl,
     };
     const resolvedP = Promise.resolve(resolvedUrl);

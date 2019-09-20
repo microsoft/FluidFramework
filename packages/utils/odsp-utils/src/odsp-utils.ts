@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidResolvedUrl } from "@prague/protocol-definitions";
+import { IFluidResolvedUrl } from "@microsoft/fluid-protocol-definitions";
 import * as request from "request";
 
 export interface IODSPTokens {
@@ -192,7 +192,7 @@ export async function getODSPFluidResolvedUrl(
             storageUrl: parsedBody.snapshotStorageUrl,
         },
         tokens: { storageToken: parsedBody.storageToken, socketToken: parsedBody.socketToken },
-        type: "prague",
+        type: "fluid",
         url: `fluid-odsp://${server}/` +
             `${encodeURIComponent(parsedBody.runtimeTenantId)}/${encodeURIComponent(parsedBody.id)}`,
     };

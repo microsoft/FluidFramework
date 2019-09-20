@@ -11,24 +11,18 @@ import {
     IComponentRouter,
     IRequest,
     IResponse,
-} from "@prague/component-core-interfaces";
-import { ComponentRuntime } from "@prague/component-runtime";
-import { IContainerContext, IRuntime, IRuntimeFactory } from "@prague/container-definitions";
-import { ContainerRuntime } from "@prague/container-runtime";
-import {
-    Counter,
-    CounterValueType,
-    ISharedMap,
-    IValueChanged,
-    SharedMap,
-} from "@prague/map";
+} from "@microsoft/fluid-component-core-interfaces";
+import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
+import { IContainerContext, IRuntime, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
+import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
+import { Counter, CounterValueType, ISharedMap, IValueChanged, SharedMap } from "@microsoft/fluid-map";
 import {
     FlushMode,
     IComponentContext,
     IComponentFactory,
     IComponentRuntime,
-} from "@prague/runtime-definitions";
-import { ISharedObjectFactory } from "@prague/shared-object-common";
+} from "@microsoft/fluid-runtime-definitions";
+import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { EventEmitter } from "events";
 import * as $ from "jquery";
 
@@ -149,7 +143,7 @@ async function randomizeMap(map: ISharedMap) {
     const keys = ["foo", "bar", "baz", "binky", "winky", "twinkie"];
 
     const counter: Counter =
-        map.set("counter", undefined, CounterValueType.Name).
+        map.createValueType("counter", CounterValueType.Name, undefined).
             get("counter");
 
     setInterval(async () => {
@@ -224,11 +218,11 @@ class SharedMapVisualizerFactory implements IComponentFactory, IRuntimeFactory {
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
         const registry = new Map<string, Promise<IComponentFactory>>([
-            ["@chaincode/shared-map-visualizer", Promise.resolve(this)],
+            ["@fluid-example/shared-map-visualizer", Promise.resolve(this)],
         ]);
 
         const defaultComponentId = "default";
-        const defaultComponent = "@chaincode/shared-map-visualizer";
+        const defaultComponent = "@fluid-example/shared-map-visualizer";
 
         const runtime = await ContainerRuntime.load(
             context,

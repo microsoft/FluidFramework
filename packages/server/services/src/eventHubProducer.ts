@@ -4,8 +4,8 @@
  */
 
 import { EventData, EventHubClient } from "@azure/event-hubs";
+import * as utils from "@microsoft/fluid-core-utils";
 import { IPendingBoxcar, IProducer } from "@microsoft/fluid-server-services-core";
-import * as utils from "@prague/utils";
 
 // 1MB batch size / (16KB max message size + overhead)
 const MaxBatchSize = 32;

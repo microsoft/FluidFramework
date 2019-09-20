@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IClient, IDocumentMessage, IServiceConfiguration } from "@prague/protocol-definitions";
+import { IClient, IDocumentMessage, IServiceConfiguration } from "@microsoft/fluid-protocol-definitions";
+import { IDocumentDetails } from "./document";
 import { IWebSocket } from "./http";
 
 /**
@@ -51,7 +52,11 @@ export interface IOrdererConnection {
 }
 
 export interface IOrderer {
-    connect(socket: IWebSocket, clientId: string, client: IClient): Promise<IOrdererConnection>;
+    connect(
+        socket: IWebSocket,
+        clientId: string,
+        client: IClient,
+        details: IDocumentDetails): Promise<IOrdererConnection>;
 
     close(): Promise<void>;
 }

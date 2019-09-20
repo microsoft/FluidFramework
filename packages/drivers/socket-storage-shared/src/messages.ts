@@ -4,13 +4,14 @@
  */
 
 import {
+    ConnectionMode,
     IClient,
     IContentMessage,
     ISequencedDocumentMessage,
     IServiceConfiguration,
     ISignalMessage,
     ITokenClaims,
-} from "@prague/protocol-definitions";
+} from "@microsoft/fluid-protocol-definitions";
 
 /**
  * Message sent to connect to the given document
@@ -40,6 +41,11 @@ export interface IConnect {
      * Semver list of protocol versions supported by the client ordered in priority of use
      */
     versions: string[];
+
+    /**
+     * Connection mode of client.
+     */
+    mode: ConnectionMode;
 }
 
 /**
@@ -100,4 +106,9 @@ export interface IConnected {
      * Configuration details provided by the service
      */
     serviceConfiguration: IServiceConfiguration;
+
+    /**
+     * Connection mode of client.
+     */
+    mode: ConnectionMode;
 }

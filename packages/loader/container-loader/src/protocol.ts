@@ -9,7 +9,7 @@ import {
     IProposal,
     ISequencedProposal,
     ITelemetryLogger,
-} from "@prague/container-definitions";
+} from "@microsoft/fluid-container-definitions";
 import {
     IClientJoin,
     IDocumentAttributes,
@@ -22,7 +22,7 @@ import {
     ISummaryTree,
     MessageType,
     SummaryType,
-} from "@prague/protocol-definitions";
+} from "@microsoft/fluid-protocol-definitions";
 import { debug } from "./debug";
 import { Quorum } from "./quorum";
 

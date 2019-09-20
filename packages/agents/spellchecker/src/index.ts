@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentRouter, IRequest, IResponse } from "@prague/component-core-interfaces";
-import * as MergeTree from "@prague/merge-tree";
-import * as Sequence from "@prague/sequence";
+import { IComponentRouter, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
+import * as MergeTree from "@microsoft/fluid-merge-tree";
+import * as Sequence from "@microsoft/fluid-sequence";
 import { loadDictionary } from "./dictionaryLoader";
 import { Spellchecker } from "./spellchecker";
 
@@ -17,7 +17,7 @@ export interface ISpellChecker extends IProvideSpellChecker {
     run(sharedString: Sequence.SharedString, dictionary?: MergeTree.TST<number>): void;
 }
 
-declare module "@prague/component-core-interfaces" {
+declare module "@microsoft/fluid-component-core-interfaces" {
     export interface IComponent extends Readonly<Partial<IProvideSpellChecker>> {
     }
 }

@@ -8,7 +8,7 @@ import {
     IComponentConfiguration,
     IRequest,
     IResponse,
-} from "@prague/component-core-interfaces";
+} from "@microsoft/fluid-component-core-interfaces";
 import {
     ConnectionState,
     ICodeLoader,
@@ -19,7 +19,8 @@ import {
     IRuntime,
     IRuntimeFactory,
     ITelemetryLogger,
-} from "@prague/container-definitions";
+} from "@microsoft/fluid-container-definitions";
+import { raiseConnectedEvent } from "@microsoft/fluid-core-utils";
 import {
     IDocumentAttributes,
     IDocumentMessage,
@@ -30,8 +31,7 @@ import {
     ISnapshotTree,
     ITree,
     MessageType,
-} from "@prague/protocol-definitions";
-import { raiseConnectedEvent } from "@prague/utils";
+} from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
 import { BlobManager } from "./blobManager";
 import { Container } from "./container";

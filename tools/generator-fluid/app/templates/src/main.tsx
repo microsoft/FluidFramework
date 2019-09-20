@@ -6,17 +6,17 @@
 import {
     PrimedComponent,
     PrimedComponentFactory,
-} from "@prague/aqueduct";
+} from "@microsoft/fluid-aqueduct";
 import {
     IComponentHTMLVisual,
-} from "@prague/component-core-interfaces";
+} from "@microsoft/fluid-component-core-interfaces";
 import {
     CounterValueType,
-} from "@prague/map";
+} from "@microsoft/fluid-map";
 import {
     IComponentContext,
     IComponentRuntime,
-} from "@prague/runtime-definitions";
+} from "@microsoft/fluid-runtime-definitions";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -32,7 +32,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLVisual {
      * is created. Anything that happens in componentInitializingFirstTime will happen before any other user will see the component.
      */
     protected async componentInitializingFirstTime() {
-        this.root.set("clicks", 0, CounterValueType.Name);
+        this.root.createValueType("clicks", CounterValueType.Name, 0);
     }
 
     /**

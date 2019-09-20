@@ -7,21 +7,21 @@ import {
     IComponent,
     IRequest,
     IResponse,
-} from "@prague/component-core-interfaces";
+} from "@microsoft/fluid-component-core-interfaces";
 import {
     ICodeLoader,
     IHost,
     ILoader,
     ITelemetryBaseLogger,
-} from "@prague/container-definitions";
+} from "@microsoft/fluid-container-definitions";
+import { Deferred } from "@microsoft/fluid-core-utils";
 import {
     IDocumentService,
     IDocumentServiceFactory,
     IFluidResolvedUrl,
     IResolvedUrl,
     ISequencedDocumentMessage,
-} from "@prague/protocol-definitions";
-import { Deferred } from "@prague/utils";
+} from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
 // tslint:disable-next-line:no-var-requires
 const now = require("performance-now") as () => number;
@@ -208,8 +208,13 @@ export class Loader extends EventEmitter implements ILoader {
         // Check for an already resolved URL otherwise make a new request
         if (!this.resolveCache.has(request.url)) {
             const toCache = await this.containerHost.resolver.resolve(request);
-            if (toCache.type !== "prague") {
-                return Promise.reject("Only Fluid components currently supported");
+            if (toCache.type !== "fluid") {
+                if (toCache.type === "prague") {
+                    // tslint:disable-next-line:max-line-length
+                    console.warn("IFluidResolvedUrl type === 'prague' has been deprecated. Please create IFluidResolvedUrls of type 'fluid' in the future.");
+                } else {
+                    return Promise.reject("Only Fluid components currently supported");
+                }
             }
             this.resolveCache.set(request.url, toCache);
         }

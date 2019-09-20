@@ -3,8 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import * as core from "@microsoft/fluid-server-services-core";
+import { BatchManager } from "@microsoft/fluid-core-utils";
+import { debug, IConnect, IConnected } from "@microsoft/fluid-driver-base";
 import {
+    ConnectionMode,
     IClient,
     IContentMessage,
     IDocumentDeltaConnection,
@@ -13,9 +15,8 @@ import {
     IServiceConfiguration,
     ISignalMessage,
     ITokenClaims,
-} from "@prague/protocol-definitions";
-import { debug, IConnect, IConnected } from "@prague/socket-storage-shared";
-import { BatchManager } from "@prague/utils";
+} from "@microsoft/fluid-protocol-definitions";
+import * as core from "@microsoft/fluid-server-services-core";
 import { EventEmitter } from "events";
 import { TestWebSocketServer } from "./testWebServer";
 
@@ -28,12 +29,13 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
         token: string,
         client: IClient,
         webSocketServer: core.IWebSocketServer,
-    ): Promise<IDocumentDeltaConnection> {
+        mode: ConnectionMode): Promise<IDocumentDeltaConnection> {
         const socket = (webSocketServer as TestWebSocketServer).createConnection();
 
         const connectMessage: IConnect = {
             client,
             id,
+            mode,
             tenantId,
             token,  // token is going to indicate tenant level information, etc...
             versions: [testProtocolVersion],
@@ -126,6 +128,10 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
 
     public get clientId(): string {
         return this.details.clientId;
+    }
+
+    public get mode(): ConnectionMode {
+        return this.details.mode;
     }
 
     public get claims(): ITokenClaims {

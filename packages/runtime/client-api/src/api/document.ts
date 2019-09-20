@@ -3,27 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import * as cell from "@prague/cell";
-import { ComponentRuntime } from "@prague/component-runtime";
-import {
-    IDeltaManager,
-    IGenericBlob,
-    IHost,
-} from "@prague/container-definitions";
-import { Container, Loader } from "@prague/container-loader";
-import { IContainerRuntimeOptions } from "@prague/container-runtime";
-import * as ink from "@prague/ink";
-import { ISharedMap, SharedMap } from "@prague/map";
+import * as cell from "@microsoft/fluid-cell";
+import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
+import { IDeltaManager, IGenericBlob, IHost } from "@microsoft/fluid-container-definitions";
+import { Container, Loader } from "@microsoft/fluid-container-loader";
+import { IContainerRuntimeOptions } from "@microsoft/fluid-container-runtime";
+import { Deferred } from "@microsoft/fluid-core-utils";
+import * as ink from "@microsoft/fluid-ink";
+import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import {
     IDocumentMessage,
     IDocumentServiceFactory,
     ISequencedClient,
     ISequencedDocumentMessage,
-} from "@prague/protocol-definitions";
-import { IComponentContext } from "@prague/runtime-definitions";
-import * as sequence from "@prague/sequence";
-import { ISharedObject } from "@prague/shared-object-common";
-import { Deferred } from "@prague/utils";
+} from "@microsoft/fluid-protocol-definitions";
+import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
+import * as sequence from "@microsoft/fluid-sequence";
+import { ISharedObject } from "@microsoft/fluid-shared-object-base";
 import { EventEmitter } from "events";
 import { CodeLoader } from "./codeLoader";
 import { debug } from "./debug";
@@ -109,13 +105,6 @@ export class Document extends EventEmitter {
         private readonly root: ISharedMap,
     ) {
         super();
-
-        this.runtime.getQuorum().on("removeMember", (leftClientId) => {
-            // Switch to read only mode if a client receives it's own leave message.
-            if (this.clientId === leftClientId) {
-                this.runtime.deltaManager.enableReadonlyMode();
-            }
-        });
     }
 
     public on(event: string | symbol, listener: (...args: any[]) => void): this {
@@ -280,7 +269,7 @@ export async function load(
     const container = await loader.resolve({ url });
 
     if (!container.existing) {
-        await initializeChaincode(container, `@prague/client-api@${apiVersion}`);
+        await initializeChaincode(container, `@fluid-internal/client-api@${apiVersion}`);
     }
 
     return requestDocument(loader, container, url);

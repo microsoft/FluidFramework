@@ -1,5 +1,5 @@
 ## Generated from a tool - do not edit directly
-## Prague image version
+## Fluid image version
 image: prague.azurecr.io/jarvis:4316
 
 ## Specify a imagePullPolicy
