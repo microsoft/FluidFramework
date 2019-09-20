@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { MockRuntime } from "@microsoft/fluid-test-runtime-utils";
-import { IComponentHandle } from "@prague/component-core-interfaces";
 import * as assert from "assert";
 import * as map from "../";
 import { SharedMap } from "../map";

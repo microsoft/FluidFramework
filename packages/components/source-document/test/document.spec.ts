@@ -4,7 +4,7 @@
 */
 
 import { SharedStringFactory } from "@microsoft/fluid-sequence";
-import { PrimedComponentFactory } from "@prague/aqueduct";
+import { PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 // tslint:disable:binary-expression-operand-order
 import { TestHost } from "@prague/local-test-server";
 import * as assert from "assert";

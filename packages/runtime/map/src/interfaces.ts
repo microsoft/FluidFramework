@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { ISharedObject } from "@microsoft/fluid-shared-object-base";
-import { ISequencedDocumentMessage } from "@prague/protocol-definitions";
 
 export interface ISet<T> {
     add(value: T): ISet<T>;

@@ -14,7 +14,7 @@
     "start": "prague-dev-server --config webpack.config.js --package package.json"
   },
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "devDependencies": {
     "@prague/prague-dev-server": "^3.1.13",
     "source-map-loader": "^0.2.3",

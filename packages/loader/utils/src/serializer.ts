@@ -9,7 +9,7 @@ import {
     IComponentHandleContext,
     IComponentSerializer,
     ISerializedHandle,
-} from "@prague/component-core-interfaces";
+} from "@microsoft/fluid-component-core-interfaces";
 import { ComponentHandle } from "./componentHandle";
 import { isSerializedHandle } from "./utils";
 

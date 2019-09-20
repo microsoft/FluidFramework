@@ -3,7 +3,7 @@
   "description": "Image Gallery with pretty layout",
   "version": "0.3.0",
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "main": "dist/main.bundle.js",
   "types": "dist/index.d.ts",
   "scripts": {

@@ -4,7 +4,7 @@
  */
 
 // tslint:disable
-import { ISequencedDocumentMessage } from "@prague/protocol-definitions";
+import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { IIntegerRange } from "../";
 import * as Collections from "../collections";
 import {

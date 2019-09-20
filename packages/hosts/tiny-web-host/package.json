@@ -1,5 +1,5 @@
 {
-  "name": "@prague/tiny-web-host",
+  "name": "@fluid-example/tiny-web-host",
   "version": "0.10.0",
   "description": "Loader client app",
   "main": "dist/index.js",
@@ -21,15 +21,15 @@
     "webpack": "webpack  --env build"
   },
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "dependencies": {
-    "@prague/base-host": "^0.10.0",
-    "@prague/loader-web": "^0.10.0",
+    "@microsoft/fluid-base-host": "^0.10.0",
+    "@microsoft/fluid-web-code-loader": "^0.10.0",
     "@microsoft/fluid-odsp-utils": "^0.10.0",
-    "@prague/protocol-definitions": "^0.10.0",
-    "@prague/routerlicious-host": "^0.10.0",
-    "@prague/routerlicious-socket-storage": "^0.10.0",
+    "@microsoft/fluid-protocol-definitions": "^0.10.0",
+    "@microsoft/fluid-routerlicious-host": "^0.10.0",
+    "@microsoft/fluid-routerlicious-driver": "^0.10.0",
     "@microsoft/fluid-server-services-core": "^0.10.0",
     "jsonwebtoken": "^8.4.0",
     "url-parse": "^1.4.3"

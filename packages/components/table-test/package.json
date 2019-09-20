@@ -3,7 +3,7 @@
   "description": "Test application that loads TableDocument component in node environment",
   "version": "0.10.0",
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "main": "dist/index.js",
   "module": "lib/index.js",
   "sideEffects": false,

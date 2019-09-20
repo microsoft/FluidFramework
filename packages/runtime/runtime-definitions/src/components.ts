@@ -11,7 +11,7 @@ import {
     IProvideComponentSerializer,
     IRequest,
     IResponse,
-} from "@prague/component-core-interfaces";
+} from "@microsoft/fluid-component-core-interfaces";
 import {
     ConnectionState,
     IBlobManager,
@@ -20,7 +20,7 @@ import {
     ILoader,
     IQuorum,
     ITelemetryLogger,
-} from "@prague/container-definitions";
+} from "@microsoft/fluid-container-definitions";
 import {
     IDocumentMessage,
     IDocumentStorageService,
@@ -28,7 +28,7 @@ import {
     ISnapshotTree,
     ITreeEntry,
     MessageType,
-} from "@prague/protocol-definitions";
+} from "@microsoft/fluid-protocol-definitions";
 
 import { EventEmitter } from "events";
 import { IChannel } from ".";

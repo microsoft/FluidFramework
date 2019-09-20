@@ -4,7 +4,7 @@
  */
 
 import { TableDocumentType } from "@fluid-example/table-document";
-import { SimpleModuleInstantiationFactory } from "@prague/aqueduct";
+import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 
 export const tableViewType = "@fluid-example/table-view";
 

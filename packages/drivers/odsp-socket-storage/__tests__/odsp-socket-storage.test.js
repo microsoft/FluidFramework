@@ -7,6 +7,6 @@
 
 const standardSocketStorage = require('..');
 
-describe('@prague/odsp-socket-storage', () => {
+describe('@microsoft/fluid-odsp-driver', () => {
     it('needs tests');
 });

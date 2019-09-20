@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { ProtocolOpHandler } from "@microsoft/fluid-container-loader";
+import { IClient, IServiceConfiguration } from "@microsoft/fluid-protocol-definitions";
 import {
     ActivityCheckingTimeout,
     BroadcasterLambda,
@@ -28,8 +30,6 @@ import {
     ITopic,
     IWebSocket,
 } from "@microsoft/fluid-server-services-core";
-import { ProtocolOpHandler } from "@prague/container-loader";
-import { IClient, IServiceConfiguration } from "@prague/protocol-definitions";
 import * as assert from "assert";
 import { ILocalOrdererSetup } from "./interfaces";
 import { LocalKafka } from "./localKafka";

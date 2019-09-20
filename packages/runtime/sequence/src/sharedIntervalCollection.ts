@@ -3,9 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
 import {
     ContentObjectStorage, IValueType, MapKernel,
 } from "@microsoft/fluid-map";
+import {
+    FileMode, ISequencedDocumentMessage, ITree, MessageType, TreeEntry,
+} from "@microsoft/fluid-protocol-definitions";
 import {
     IChannelAttributes,
     IComponentRuntime,
@@ -15,14 +19,6 @@ import {
 import {
     ISharedObjectFactory, SharedObject,
 } from "@microsoft/fluid-shared-object-base";
-import {
-    FileMode,
-    ISequencedDocumentMessage,
-    ITree,
-    MessageType,
-    TreeEntry,
-} from "@prague/protocol-definitions";
-import { fromBase64ToUtf8 } from "@prague/utils";
 import { debug } from "./debug";
 import {
     Interval,

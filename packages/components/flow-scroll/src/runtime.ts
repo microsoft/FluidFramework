@@ -5,7 +5,7 @@
 
 import { TableDocumentType, TableSliceType } from "@fluid-example/table-document";
 import { flowDocumentFactory, FlowDocumentType } from "@fluid-example/webflow";
-import { SimpleModuleInstantiationFactory } from "@prague/aqueduct";
+import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 import { WebFlowHost, webFlowHostFactory } from "./host";
 
 export const fluidExport = new SimpleModuleInstantiationFactory(

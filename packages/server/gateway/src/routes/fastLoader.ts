@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { IFluidResolvedUrl, ScopeType } from "@microsoft/fluid-protocol-definitions";
 import { IAlfredTenant, ICache } from "@microsoft/fluid-server-services-core";
-import { IFluidResolvedUrl, ScopeType } from "@prague/protocol-definitions";
 import { Router } from "express";
 import * as safeStringify from "json-stringify-safe";
 import * as jwt from "jsonwebtoken";
@@ -136,7 +136,6 @@ export function create(
                         packageUrl,
                         jwtToken,
                         );
-                    // response.send(page.replace(`placeholder_for_prague_script`, scriptCode));
                     const pageWithCode = page.concat(scriptCode);
                     response.send(pageWithCode);
                 } else {
