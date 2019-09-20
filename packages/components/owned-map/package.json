@@ -1,5 +1,5 @@
 {
-  "name": "@chaincode/owned-map",
+  "name": "@fluid-example/owned-map",
   "description": "Chaincode starter project",
   "version": "0.10.0",
   "author": "Microsoft",
