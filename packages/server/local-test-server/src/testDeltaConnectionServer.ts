@@ -122,7 +122,7 @@ export class TestDeltaConnectionServer implements ITestDeltaConnectionServer {
             "http://localhost:4000", // unused placeholder url
             testStorage,
             databaseManager,
-            Number.MAX_SAFE_INTEGER,
+            60000,
             () => webSocketServer,
             new TestTaskMessageSender(),
             testTenantManager,

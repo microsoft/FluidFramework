@@ -6,21 +6,9 @@
 import { IHistorian } from "@microsoft/fluid-server-services-client";
 import { ICollection, IDb } from "@microsoft/fluid-server-services-core";
 import * as git from "@prague/gitresources";
+import * as utils from "@prague/utils";
 import * as uuid from "uuid";
 import { TestDb } from "./testCollection";
-
-function getHash(str: string) {
-    if (str.length === 0) { return "0"; }
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      const chr   = str.charCodeAt(i);
-      // tslint:disable-next-line: no-bitwise
-      hash = ((hash << 5) - hash) + chr;
-      // tslint:disable-next-line: no-bitwise
-      hash |= 0; // Convert to 32bit integer
-    }
-    return hash.toString();
-  }
 
 export class TestHistorian implements IHistorian {
     public readonly endpoint = "";
@@ -71,7 +59,7 @@ export class TestHistorian implements IHistorian {
     }
 
     public async createBlob(blob: git.ICreateBlobParams): Promise<git.ICreateBlobResponse> {
-        const _id = getHash(blob.content);
+        const _id = utils.gitHashFile(Buffer.from(blob.content, blob.encoding));
         await this.blobs.insertOne({
             _id,
             value: blob,
@@ -112,7 +100,7 @@ export class TestHistorian implements IHistorian {
                 parents: commit.value.parents.map<git.ICommitHash>((p) => ({sha: p, url: ""})),
                 sha: commit._id,
                 tree: {
-                    sha: getHash(commit.value.tree),
+                    sha: utils.gitHashFile(Buffer.from(commit.value.tree)),
                     url: "",
                 } ,
                 url: "",
@@ -121,7 +109,7 @@ export class TestHistorian implements IHistorian {
     }
 
     public async createCommit(commit: git.ICreateCommitParams): Promise<git.ICommit> {
-        const _id = getHash(commit.tree);
+        const _id = utils.gitHashFile(Buffer.from(commit.tree));
         await this.commits.insertOne({ _id, value: commit });
         return this.getCommit(_id);
     }
