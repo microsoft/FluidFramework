@@ -63,6 +63,7 @@ export class ScribeLambda extends SequencedLambda {
         private protocolHandler: ProtocolOpHandler,
         private protocolHead: number,
         messages: ISequencedOperationMessage[],
+        private nackOnSummarizeException?: boolean,
     ) {
         super(context);
 
@@ -124,11 +125,18 @@ export class ScribeLambda extends SequencedLambda {
                             this.protocolHandler.sequenceNumber,
                             this.protocolHandler.quorum.snapshot(),
                             summarySequenceNumber);
-                    } catch {
-                        await this.sendSummaryNack(
-                            summarySequenceNumber,
-                            `Failed to summarize the document.`,
-                        );
+                    } catch (ex) {
+                        if (this.nackOnSummarizeException) {
+                            // SPO wants to nack when summarize fails
+                            // In SPOs implementation of gitManager, we have built in retry logic for retryable errors.
+                            // So when it does throw, we should really nack the summary.
+                            await this.sendSummaryNack(
+                                summarySequenceNumber,
+                                `Failed to summarize the document.`,
+                            );
+                        } else {
+                            throw ex;
+                        }
                     }
                 }
             }
