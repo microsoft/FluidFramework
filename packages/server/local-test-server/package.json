@@ -1,5 +1,5 @@
 {
-  "name": "@prague/local-test-server",
+  "name": "@microsoft/fluid-local-test-server",
   "version": "0.10.0",
   "description": "Local test server implementation",
   "main": "dist/index.js",

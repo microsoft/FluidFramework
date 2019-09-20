@@ -1,5 +1,5 @@
 {
-  "name": "@prague/host-service-interfaces",
+  "name": "@microsoft/fluid-host-service-interfaces",
   "version": "0.10.0",
   "description": "Host component service interfaces",
   "main": "dist/index.js",

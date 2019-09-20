@@ -10,7 +10,7 @@ import {
     IPackument,
     ISearchParams,
     ISearchResult,
-} from "@prague/host-service-interfaces";
+} from "@microsoft/fluid-host-service-interfaces";
 import Axios from "axios";
 import * as query from "querystring";
 

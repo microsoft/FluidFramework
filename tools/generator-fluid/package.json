@@ -1,5 +1,5 @@
 {
-  "name": "@prague/generator-fluid",
+  "name": "@microsoft/fluid-template-generator",
   "version": "0.10.0",
   "description": "A yeoman project generator for fluid chaincode",
   "main": "app/index.js",
