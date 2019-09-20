@@ -10,8 +10,8 @@ export class TenantManager implements ITenantManager {
         throw new Error("Method not implemented.");
     }
 
-    public verifyToken(tenantId: string, token: string): Promise<void> {
-        throw new Error("Method not implemented.");
+    public async verifyToken(tenantId: string, token: string): Promise<void> {
+        return;
     }
 
     public getKey(tenantId: string): Promise<string> {
