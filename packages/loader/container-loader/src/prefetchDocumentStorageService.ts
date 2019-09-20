@@ -11,7 +11,7 @@ import {
     ISummaryTree,
     ITree,
     IVersion,
-} from "@prague/protocol-definitions";
+} from "@microsoft/fluid-protocol-definitions";
 import { debug } from "./debug";
 
 export class PrefetchDocumentStorageService implements IDocumentStorageService {

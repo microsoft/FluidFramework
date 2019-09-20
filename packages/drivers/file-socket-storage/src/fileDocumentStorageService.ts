@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import * as api from "@prague/protocol-definitions";
-import { IFileSnapshot, ReadDocumentStorageServiceBase } from "@prague/replay-socket-storage";
-import { buildHierarchy, flatten, fromBase64ToUtf8 } from "@prague/utils";
+import { buildHierarchy, flatten, fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
+import * as api from "@microsoft/fluid-protocol-definitions";
+import { IFileSnapshot, ReadDocumentStorageServiceBase } from "@microsoft/fluid-replay-driver";
 import * as assert from "assert";
 import * as fs from "fs";
 

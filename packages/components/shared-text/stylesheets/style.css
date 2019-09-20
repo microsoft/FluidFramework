@@ -92,7 +92,7 @@ body {
 .navbar-shared-text ul.list-inline {
   margin-bottom: 0px;
 }
-.navbar-prague {
+.navbar-fluid {
   background-color: #222;
 }
 .btn-flat {
@@ -112,7 +112,7 @@ body {
 .btn-palette:hover {
   background-color: orangered;
 }
-.prague-icon {
+.fluid-icon {
   background-size: 50%;
   background-repeat: no-repeat;
   background-position: center center;
@@ -126,7 +126,7 @@ body {
   background-color: inherit;
   background-image: inherit;
 }
-.dropdown-menu-prague {
+.dropdown-menu-fluid {
   padding: 0 0;
 }
 .navbar-nav.navbar-palette {

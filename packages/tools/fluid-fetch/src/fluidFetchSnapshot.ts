@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentService, IDocumentStorageService, ISnapshotTree, IVersion } from "@prague/protocol-definitions";
-import { fromBase64ToUtf8 } from "@prague/utils";
+import { fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
+import { IDocumentService, IDocumentStorageService, ISnapshotTree, IVersion } from "@microsoft/fluid-protocol-definitions";
 import * as fs from "fs";
 import * as util from "util";
 import {

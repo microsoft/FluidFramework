@@ -7,7 +7,7 @@
     "build": "echo Skipping @microsoft/fluid-build-common: No build steps necessary."
   },
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "devDependencies": {
     "tslint": "^5.11.0",
     "tslint-microsoft-contrib": "^6.0.0",

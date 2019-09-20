@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import * as resources from "@prague/gitresources";
-import * as api from "@prague/protocol-definitions";
-import { buildHierarchy } from "@prague/utils";
+import { buildHierarchy } from "@microsoft/fluid-core-utils";
+import * as resources from "@microsoft/fluid-gitresources";
+import * as api from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
 import { debug } from "./debug";
 import { IGitManager, IHistorian } from "./storage";

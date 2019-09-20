@@ -28,7 +28,7 @@ home: https://github.com/microsoft/prague
 
 const values =
 `## Generated from a tool - do not edit directly
-## Prague image version
+## Fluid image version
 image: prague.azurecr.io/prague:${imageVersion}
 
 ## Specify a imagePullPolicy

@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 import { Dom, Scheduler } from "@fluid-example/flow-util-lib";
+// tslint:disable:align
+import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { ISegment, LocalReference, MergeTreeMaintenanceType } from "@microsoft/fluid-merge-tree";
 import { SequenceEvent } from "@microsoft/fluid-sequence";
-// tslint:disable:align
-import { IComponent } from "@prague/component-core-interfaces";
 import * as assert from "assert";
 import { Tag } from "../";
 import { FlowDocument } from "../document";

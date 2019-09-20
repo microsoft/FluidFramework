@@ -1,7 +1,7 @@
 {
-  "name": "prague-health-monitor",
+  "name": "fluid-health-monitor",
   "version": "0.0.1",
-  "description": "Checks Prague service health using a script",
+  "description": "Checks Fluid service health using a script",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc && tslint 'src/**/*.ts'",
@@ -10,10 +10,10 @@
     "docker:start": "docker run --rm -t monitoring"
   },
   "dependencies": {
-    "@prague/container-definitions": "^0.3.6760",
-    "@prague/container-loader": "^0.3.6760",
-    "@prague/routerlicious-host": "^0.3.6760",
-    "@prague/routerlicious-socket-storage": "^0.3.6760",
+    "@microsoft/fluid-container-definitions": "^0.3.6760",
+    "@microsoft/fluid-container-loader": "^0.3.6760",
+    "@microsoft/fluid-routerlicious-host": "^0.3.6760",
+    "@microsoft/fluid-routerlicious-driver": "^0.3.6760",
     "@sentry/node": "^5.6.2",
     "debug": "^4.1.1",
     "jsonwebtoken": "^8.5.1",

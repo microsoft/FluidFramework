@@ -7,14 +7,14 @@ import { KeyCode, randomId, Template } from "@fluid-example/flow-util-lib";
 import * as SearchMenu from "@fluid-example/search-menu";
 import { tableViewType } from "@fluid-example/table-view";
 import { Editor, FlowDocument, htmlFormatter, Tag } from "@fluid-example/webflow";
-import { TST } from "@microsoft/fluid-merge-tree";
 import {
     IComponent,
     IComponentHTMLView,
     IComponentHTMLVisual,
     IComponentLoadable,
-} from "@prague/component-core-interfaces";
-import { IComponentCollection } from "@prague/framework-definitions";
+} from "@microsoft/fluid-component-core-interfaces";
+import { IComponentCollection } from "@microsoft/fluid-framework-interfaces";
+import { TST } from "@microsoft/fluid-merge-tree";
 import * as styles from "./index.css";
 
 const template = new Template(

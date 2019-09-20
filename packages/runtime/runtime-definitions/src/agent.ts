@@ -7,7 +7,7 @@ import {
     IComponentLoadable,
     IComponentRouter,
     IComponentRunnable,
-} from "@prague/component-core-interfaces";
+} from "@microsoft/fluid-component-core-interfaces";
 
 export interface ITask {
     id: string;
@@ -73,7 +73,7 @@ export interface IAgentScheduler extends IProvideAgentScheduler, IComponentRoute
     on(event: "leader" | "picked" | "running", listener: (...args: any[]) => void): this;
 }
 
-declare module "@prague/component-core-interfaces" {
+declare module "@microsoft/fluid-component-core-interfaces" {
     export interface IComponent extends
         Readonly<Partial<IProvideTaskManager & IProvideAgentScheduler>> { }
 }

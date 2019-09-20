@@ -50,7 +50,7 @@ The repository is located at <https://github.com/Microsoft/FluidFramework/>. To 
 and Microsoft accounts. To do so follow the instructions at <https://repos.opensource.microsoft.com/link>.
 
 After linking your accounts you should be added to the <https://github.com/orgs/Microsoft/teams/everyone> group which
-will grant you access to the Prague repo. If for some reason you are not automatically added to that group request to
+will grant you access to the Fluid Framework repo. If for some reason you are not automatically added to that group request to
 join at <https://repos.opensource.microsoft.com/Microsoft/teams/pragueread>.
 
 
@@ -59,8 +59,7 @@ join at <https://repos.opensource.microsoft.com/Microsoft/teams/pragueread>.
 ### Stack Overflow
 
 The Fluid team answers **questions** on the [Microsoft Stack Overflow](https://stackoverflow.microsoft.com/) using
-the [Prague](https://stackoverflow.microsoft.com/questions/tagged/prague) and
-[Fluid](https://stackoverflow.microsoft.com/questions/tagged/fluid) tags.
+the [Fluid](https://stackoverflow.microsoft.com/questions/tagged/fluid) tag.
 
 Bugs, suggestions, and issues should be directed to our [issues page](https://github.com/Microsoft/FluidFramework/issues).
 

@@ -4,7 +4,7 @@
  */
 
 import { MongoManager } from "@microsoft/fluid-server-services-core";
-import { ISequencedDocumentMessage } from "@prague/protocol-definitions";
+import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { Router } from "express";
 import { Provider } from "nconf";
 import { getParam } from "../../utils";

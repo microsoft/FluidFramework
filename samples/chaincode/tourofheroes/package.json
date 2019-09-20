@@ -3,7 +3,7 @@
   "description": "Angular 2 Tour of Heroes tutorial as a chaincode package",
   "version": "0.0.4",
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "main": "dist/main.bundle.js",
   "types": "dist/index.d.ts",
   "scripts": {

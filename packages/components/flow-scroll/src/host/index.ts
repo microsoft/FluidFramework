@@ -6,6 +6,15 @@
 import { TextAnalyzer } from "@fluid-example/flow-intel";
 import { FlowIntelViewer } from "@fluid-example/flow-intel-viewer";
 import { FlowDocument, FlowDocumentType } from "@fluid-example/webflow";
+import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
+import {
+    IComponent,
+    IComponentHandle,
+    IComponentHTMLOptions,
+    IComponentHTMLView,
+    IComponentHTMLVisual,
+} from "@microsoft/fluid-component-core-interfaces";
+import { IComponentCollection } from "@microsoft/fluid-framework-interfaces";
 import { SharedMap } from "@microsoft/fluid-map";
 import {
     FlushMode,
@@ -14,15 +23,6 @@ import {
     ITask,
     ITaskManager,
 } from "@microsoft/fluid-runtime-definitions";
-import { PrimedComponent, PrimedComponentFactory } from "@prague/aqueduct";
-import {
-    IComponent,
-    IComponentHandle,
-    IComponentHTMLOptions,
-    IComponentHTMLView,
-    IComponentHTMLVisual,
-} from "@prague/component-core-interfaces";
-import { IComponentCollection } from "@prague/framework-definitions";
 import { HostView } from "./host";
 import { importDoc } from "./template";
 

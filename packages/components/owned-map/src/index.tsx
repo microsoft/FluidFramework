@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { Counter, CounterValueType } from "@microsoft/fluid-map";
 // tslint:disable:no-console
-import { PrimedComponent, PrimedComponentFactory, SimpleModuleInstantiationFactory } from "@prague/aqueduct";
-import { IComponentHandle, IComponentHTMLOptions, IComponentHTMLVisual } from "@prague/component-core-interfaces";
+import { PrimedComponent, PrimedComponentFactory, SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
+import { IComponentHandle, IComponentHTMLOptions, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
+import { Counter, CounterValueType } from "@microsoft/fluid-map";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { OwnedSharedMap } from "./ownedMap";
@@ -105,8 +105,8 @@ export class OwnedMap extends PrimedComponent implements IComponentHTMLVisual {
 }
 
 export const fluidExport = new SimpleModuleInstantiationFactory(
-  "@chaincode/owned-map",
+  "@fluid-example/owned-map",
   new Map([
-    ["@chaincode/owned-map", Promise.resolve(OwnedMap.getFactory())],
+    ["@fluid-example/owned-map", Promise.resolve(OwnedMap.getFactory())],
   ]),
 );

@@ -3,7 +3,7 @@
   "description": "Component in charge of distributing agents across instances of a component",
   "version": "0.10.0",
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "main": "dist/index.js",
   "module": "lib/index.js",
   "sideEffects": false,
@@ -63,13 +63,13 @@
     }
   },
   "dependencies": {
-    "@prague/component-core-interfaces": "^0.10.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.10.0",
     "@microsoft/fluid-component-runtime": "^0.10.0",
     "@microsoft/fluid-register-collection": "^0.10.0",
     "@microsoft/fluid-map": "^0.10.0",
     "@microsoft/fluid-runtime-definitions": "^0.10.0",
     "@microsoft/fluid-shared-object-base": "^0.10.0",
-    "@prague/container-definitions": "^0.10.0",
+    "@microsoft/fluid-container-definitions": "^0.10.0",
     "debug": "^4.1.1"
   },
   "devDependencies": {

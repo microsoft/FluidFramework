@@ -188,7 +188,7 @@ data:
             "alfredUrl": "http://{{ template "alfred.fullname" . }}",
             "serverUrl": "{{ .Values.alfred.externalUrl }}",
             "blobStorageUrl": "{{ .Values.historian.externalUrl }}",
-            "repository": "prague",
+            "repository": "FluidFramework",
             "clusterNpm": "{{ .Values.worker.clusterNpm }}",
             "npm": "{{ .Values.worker.npm }}",
             "permission": ["snapshot", "spell", "intel", "translation", "chain-snapshot", "chain-spell", "chain-intel", "chain-translation"]
