@@ -497,6 +497,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     }
 
     private connectCore(reason: string, delay: number): void {
+        if (this.closed) {
+            return;
+        }
         if (this.connectRepeatCount === 0) {
             this.connectStartTime = performanceNow();
         }
