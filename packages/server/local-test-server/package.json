@@ -64,6 +64,7 @@
     "@microsoft/fluid-shared-object-base": "^0.10.0",
     "@prague/socket-storage-shared": "^0.10.0",
     "@microsoft/fluid-server-test-utils": "^0.10.0",
+    "@microsoft/fluid-server-services-client": "^0.10.0",
     "@types/jsonwebtoken": "^8.3.0",
     "@types/semver": "^6.0.0",
     "debug": "^4.1.1",

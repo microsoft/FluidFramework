@@ -3,24 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import { IConcreteNode, IConcreteNodeFactory, IReservation, IReservationManager } from "@microsoft/fluid-server-memory-orderer";
 import { ICollection, MongoManager } from "@microsoft/fluid-server-services-core";
 import { EventEmitter } from "events";
-import { IConcreteNode, IReservationManager } from "./interfaces";
-import { NodeManager } from "./nodeManager";
 
-/**
- * Reservation for the given id within the system. The reservation is considered held for as long as the node
- * maintains the given epoch
- */
-export interface IReservation {
-    _id: string;
-
-    node: string;
-}
-
-export class ReservationManager extends EventEmitter implements IReservationManager {
+// tslint:disable-next-line: completed-docs
+export class TestReservationManager extends EventEmitter implements IReservationManager {
     constructor(
-        private nodeTracker: NodeManager,
+        private nodeFactory: IConcreteNodeFactory,
         private mongoManager: MongoManager,
         private reservationColletionName: string) {
         super();
@@ -35,7 +25,7 @@ export class ReservationManager extends EventEmitter implements IReservationMana
             await this.makeReservation(node, key, null, reservations);
             return node;
         } else {
-            const remoteNode = await this.nodeTracker.loadRemote(reservation.node);
+            const remoteNode = await this.nodeFactory.create();
             if (remoteNode.valid) {
                 return remoteNode;
             } else {

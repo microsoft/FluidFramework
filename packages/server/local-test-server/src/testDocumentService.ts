@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { GitManager } from "@microsoft/fluid-server-services-client";
 import {
     TestDeltaStorageService,
     TestDocumentDeltaConnection,
-    TestDocumentStorageService,
+    TestHistorian,
 } from "@microsoft/fluid-server-test-utils";
 import * as api from "@prague/protocol-definitions";
 import * as socketStorage from "@prague/routerlicious-socket-storage";
@@ -48,7 +49,8 @@ export class TestDocumentService implements api.IDocumentService {
      * Creates and returns a document storage service for testing.
      */
     public async connectToStorage(): Promise<api.IDocumentStorageService> {
-        return new TestDocumentStorageService();
+        return new socketStorage.DocumentStorageService(this.documentId,
+            new GitManager(new TestHistorian(this.testDeltaConnectionServer.testDbFactory.testDatabase)));
     }
 
     /**

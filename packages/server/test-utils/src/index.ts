@@ -10,7 +10,6 @@ export * from "./testDeltaStorageService";
 export * from "./testDocumentDeltaConnection";
 export * from "./testDocument";
 export * from "./testDocumentStorage";
-export * from "./testDocumentStorageService";
 export * from "./testHistorian";
 export * from "./testKafka";
 export * from "./testPublisher";
