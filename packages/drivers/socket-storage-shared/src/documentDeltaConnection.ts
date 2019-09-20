@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { BatchManager } from "@microsoft/fluid-core-utils";
 import {
     ConnectionMode,
     IClient,
@@ -13,8 +14,7 @@ import {
     IServiceConfiguration,
     ISignalMessage,
     ITokenClaims,
-} from "@prague/protocol-definitions";
-import { BatchManager } from "@prague/utils";
+} from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
 import { debug } from "./debug";
 import { IConnect, IConnected } from "./messages";
@@ -62,7 +62,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         mode: ConnectionMode): Promise<IDocumentDeltaConnection> {
 
         // Note on multiplex = false:
-        // Temp fix to address issues on SPO. Scriptor hits same URL for Prague & Notifications.
+        // Temp fix to address issues on SPO. Scriptor hits same URL for Fluid & Notifications.
         // As result Socket.io reuses socket (as there is no collision on namespaces).
         // ODSP does not currently supports multiple namespaces on same socket :(
         const socket = io(

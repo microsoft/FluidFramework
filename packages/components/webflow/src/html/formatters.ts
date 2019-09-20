@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { Caret as CaretUtil, Direction, Rect } from "@fluid-example/flow-util-lib";
+import { IComponent, IComponentHTMLView } from "@microsoft/fluid-component-core-interfaces";
 import { Marker, TextSegment } from "@microsoft/fluid-merge-tree";
-import { IComponent, IComponentHTMLView } from "@prague/component-core-interfaces";
-import { Caret as CaretUtil, Direction, Rect } from "@prague/flow-util";
 import * as assert from "assert";
 import { DocSegmentKind, getComponentOptions, getCss, getDocSegmentKind } from "../document";
 import * as styles from "../editor/index.css";

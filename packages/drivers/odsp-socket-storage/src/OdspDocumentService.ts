@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger } from "@prague/container-definitions";
+import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
+import { SinglePromise } from "@microsoft/fluid-core-utils";
+import { DocumentDeltaConnection } from "@microsoft/fluid-driver-base";
 import {
     ConnectionMode,
     IClient,
@@ -12,10 +14,8 @@ import {
     IDocumentService,
     IDocumentStorageService,
     IErrorTrackingService,
-} from "@prague/protocol-definitions";
-import { DocumentDeltaConnection } from "@prague/socket-storage-shared";
-import { SinglePromise } from "@prague/utils";
-import { IWebsocketEndpoint } from "./contracts";
+} from "@microsoft/fluid-protocol-definitions";
+import { ISocketStorageDiscovery } from "./contracts";
 import { IFetchWrapper } from "./fetchWrapper";
 import { OdspDeltaStorageService } from "./OdspDeltaStorageService";
 import { OdspDocumentStorageManager } from "./OdspDocumentStorageManager";
@@ -28,11 +28,11 @@ import { getSocketStorageDiscovery } from "./Vroom";
  */
 export class OdspDocumentService implements IDocumentService {
     // This should be used to make web socket endpoint requests, it ensures we only have one active join session call at a time.
-    private readonly websocketEndpointRequestThrottler: SinglePromise<IWebsocketEndpoint>;
+    private readonly websocketEndpointRequestThrottler: SinglePromise<ISocketStorageDiscovery>;
 
     // This is the result of a call to websocketEndpointSingleP, it is used to make sure that we don't make two join session
     // calls to handle connecting to delta storage and delta stream.
-    private websocketEndpointP: Promise<IWebsocketEndpoint> | undefined;
+    private websocketEndpointP: Promise<ISocketStorageDiscovery> | undefined;
 
     private storageManager?: OdspDocumentStorageManager;
 
@@ -60,9 +60,9 @@ export class OdspDocumentService implements IDocumentService {
         driveId: string,
         itemId: string,
         private readonly snapshotStorageUrl: string,
-        readonly getStorageToken: (siteUrl: string) => Promise<string | null>,
+        readonly getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
         readonly getWebsocketToken: () => Promise<string | null>,
-        private readonly logger: ITelemetryBaseLogger,
+        private readonly logger: ITelemetryLogger,
         private readonly storageFetchWrapper: IFetchWrapper,
         private readonly deltasFetchWrapper: IFetchWrapper,
         private readonly socketIOClientP: Promise<SocketIOClientStatic>,
@@ -75,7 +75,6 @@ export class OdspDocumentService implements IDocumentService {
                 siteUrl,
                 logger,
                 getStorageToken,
-                getWebsocketToken,
             ),
         );
     }
@@ -94,7 +93,7 @@ export class OdspDocumentService implements IDocumentService {
             this.snapshotStorageUrl,
             latestSha,
             this.storageFetchWrapper,
-            () => this.getStorageToken(this.siteUrl),
+            (refresh: boolean) => this.getStorageToken(this.siteUrl, refresh),
             this.logger,
             true,
         );
@@ -114,7 +113,8 @@ export class OdspDocumentService implements IDocumentService {
               // the very first (proactive) call to fetch ops should be serviced from latest snapshot, resulting in no opStream call
               // any other requests are result of catching up on missing ops and are coming after websocket is established (or reconnected),
               // and thus we already have fresh join session call.
-              this.logger.send({category: "error", eventName: "OdspOpStreamPerf" });
+              // That said, tools like Fluid-fetcher will hit it, so that's valid code path.
+              this.logger.sendErrorEvent({ eventName: "OdspOpStreamPerf" });
 
               this.websocketEndpointP = this.websocketEndpointRequestThrottler.response;
             }
@@ -127,7 +127,7 @@ export class OdspDocumentService implements IDocumentService {
             urlProvider,
             this.deltasFetchWrapper,
             this.storageManager ? this.storageManager.ops : undefined,
-            () => this.getStorageToken(this.siteUrl),
+            (refresh: boolean) => this.getStorageToken(this.siteUrl, refresh),
         );
     }
 
@@ -145,7 +145,8 @@ export class OdspDocumentService implements IDocumentService {
         return DocumentDeltaConnection.create(
             websocketEndpoint.tenantId,
             websocketEndpoint.id,
-            webSocketToken,
+            // This is workaround for fluid-fetcher. Need to have better long term solution
+            webSocketToken ? webSocketToken : websocketEndpoint.socketToken,
             io,
             client,
             websocketEndpoint.deltaStreamSocketUrl,

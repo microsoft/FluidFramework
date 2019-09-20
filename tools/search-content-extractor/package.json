@@ -9,10 +9,10 @@
   "author": "Microsoft",
   "license": "MIT",
   "dependencies": {
-    "@prague/container-definitions": "^0.5.0",
-    "@prague/odsp-socket-storage": "^0.5.0",
+    "@microsoft/fluid-container-definitions": "^0.5.0",
+    "@microsoft/fluid-odsp-driver": "^0.5.0",
     "@microsoft/fluid-odsp-utils": "^0.5.0",
-    "@prague/routerlicious-socket-storage": "^0.5.0",
+    "@microsoft/fluid-routerlicious-driver": "^0.5.0",
     "@microsoft/fluid-runtime-definitions": "^0.5.0",
     "request": "^2.88.0"
   },

@@ -3,20 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { AgentSchedulerFactory } from "@component/agent-scheduler";
-import {
-    ComponentFactoryTypes,
-    ComponentRegistryTypes,
-    FlushMode,
-    IAttachMessage,
-    IComponentRegistry,
-    IComponentRuntime,
-    IEnvelope,
-    IHelpMessage,
-    IHostRuntime,
-    IInboundSignalMessage,
-} from "@microsoft/fluid-runtime-definitions";
-import { IComponentHandleContext, IComponentSerializer, IRequest, IResponse } from "@prague/component-core-interfaces";
+import { AgentSchedulerFactory } from "@microsoft/fluid-agent-scheduler";
+import { IComponentHandleContext, IComponentSerializer, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import {
     ConnectionState,
     IBlobManager,
@@ -29,7 +17,16 @@ import {
     IQuorum,
     IRuntime,
     ITelemetryLogger,
-} from "@prague/container-definitions";
+} from "@microsoft/fluid-container-definitions";
+import {
+    buildHierarchy,
+    ComponentSerializer,
+    Deferred,
+    flatten,
+    isSystemType,
+    raiseConnectedEvent,
+    readAndParse,
+} from "@microsoft/fluid-core-utils";
 import {
     Browser,
     FileMode,
@@ -49,16 +46,19 @@ import {
     SummaryTree,
     SummaryType,
     TreeEntry,
-} from "@prague/protocol-definitions";
+} from "@microsoft/fluid-protocol-definitions";
 import {
-    buildHierarchy,
-    ComponentSerializer,
-    Deferred,
-    flatten,
-    isSystemType,
-    raiseConnectedEvent,
-    readAndParse,
-} from "@prague/utils";
+    ComponentFactoryTypes,
+    ComponentRegistryTypes,
+    FlushMode,
+    IAttachMessage,
+    IComponentRegistry,
+    IComponentRuntime,
+    IEnvelope,
+    IHelpMessage,
+    IHostRuntime,
+    IInboundSignalMessage,
+} from "@microsoft/fluid-runtime-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 // tslint:disable-next-line:no-submodule-imports

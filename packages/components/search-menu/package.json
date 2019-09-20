@@ -1,9 +1,9 @@
 {
-  "name": "@chaincode/search-menu",
+  "name": "@fluid-example/search-menu",
   "description": "Search menu",
   "version": "0.10.0",
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "main": "dist/index.js",
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
@@ -36,7 +36,7 @@
     }
   },
   "dependencies": {
-    "@prague/component-core-interfaces": "^0.10.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.10.0",
     "@microsoft/fluid-merge-tree": "^0.10.0",
     "@types/node": "^10.12.12"
   },

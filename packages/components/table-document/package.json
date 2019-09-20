@@ -1,9 +1,9 @@
 {
-  "name": "@chaincode/table-document",
+  "name": "@fluid-example/table-document",
   "description": "Chaincode component containing a table's data",
   "version": "0.10.0",
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "main": "dist/index.js",
   "module": "lib/index.js",
   "sideEffects": false,
@@ -37,8 +37,8 @@
     }
   },
   "dependencies": {
-    "@prague/aqueduct": "^0.10.0",
-    "@prague/component-core-interfaces": "^0.10.0",
+    "@microsoft/fluid-aqueduct": "^0.10.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.10.0",
     "@microsoft/fluid-map": "^0.10.0",
     "@microsoft/fluid-merge-tree": "^0.10.0",
     "@microsoft/fluid-runtime-definitions": "^0.10.0",

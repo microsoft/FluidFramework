@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { IInk, Ink } from "@microsoft/fluid-ink";
-import { ISharedMap } from "@microsoft/fluid-map";
-import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
-import { PrimedComponent } from "@prague/aqueduct";
-import { controls, ui } from "@prague/client-ui";
+import { controls, ui } from "@fluid-example/client-ui-lib";
+import { PrimedComponent } from "@microsoft/fluid-aqueduct";
 import {
     IComponentHandle,
     IComponentHTMLOptions,
     IComponentHTMLView,
     IComponentHTMLVisual,
-} from "@prague/component-core-interfaces";
+} from "@microsoft/fluid-component-core-interfaces";
+import { IInk, Ink } from "@microsoft/fluid-ink";
+import { ISharedMap } from "@microsoft/fluid-map";
+import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import "./style.less";
 
 // tslint:disable:no-console

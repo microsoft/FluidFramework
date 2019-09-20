@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IPragueResolvedUrl } from "@prague/container-definitions";
-import { Container, Loader } from "@prague/container-loader";
-import { ContainerUrlResolver } from "@prague/routerlicious-host";
-import { RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
+import { IPragueResolvedUrl } from "@microsoft/fluid-container-definitions";
+import { Container, Loader } from "@microsoft/fluid-container-loader";
+import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
+import { RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
 import * as jwt from "jsonwebtoken";
 import { Provider } from "nconf";
 import * as url from "url";

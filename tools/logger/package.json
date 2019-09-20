@@ -9,7 +9,7 @@
     "start:full": "npm run build:full && npm run start"
   },
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "dependencies": {
     "aria-nodejs-sdk": "https://praguenpm.blob.core.windows.net/packages/aria-nodejs-sdk-1.1.1.tgz",
     "commander": "^2.15.1"

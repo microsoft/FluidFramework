@@ -4,7 +4,7 @@
  */
 
 import { ClickerInstantiationFactory, ClickerName } from "@fluid-example/clicker";
-import { SimpleModuleInstantiationFactory } from "@prague/aqueduct";
+import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 import { TextBoxInstantiationFactory, TextBoxName } from "./TextBox";
 import { TextListInstantiationFactory, TextListName } from "./TextList";
 import { TodoInstantiationFactory, TodoName } from "./Todo";

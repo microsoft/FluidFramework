@@ -1,7 +1,7 @@
 {
-  "name": "@prague/snapshotter",
+  "name": "@fluid-example/snapshotter-agent",
   "version": "0.10.0",
-  "description": "Snapshotter for Prague container",
+  "description": "Snapshotter for Fluid container",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "sideEffects": false,
@@ -15,7 +15,7 @@
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "devDependencies": {
     "@microsoft/fluid-build-common": "^0.10.0",
     "@types/node": "^10.12.12",
@@ -26,7 +26,7 @@
   },
   "dependencies": {
     "@microsoft/fluid-container-runtime": "^0.10.0",
-    "@prague/protocol-definitions": "^0.10.0"
+    "@microsoft/fluid-protocol-definitions": "^0.10.0"
   },
   "license": "MIT"
 }

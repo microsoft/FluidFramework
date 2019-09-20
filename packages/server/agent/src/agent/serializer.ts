@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IDeltaManager } from "@prague/container-definitions";
-import { IDocumentMessage, ISequencedDocumentMessage, MessageType } from "@prague/protocol-definitions";
+import { IDeltaManager } from "@microsoft/fluid-container-definitions";
+import { IDocumentMessage, ISequencedDocumentMessage, MessageType } from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { debug } from "./debug";

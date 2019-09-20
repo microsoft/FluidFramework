@@ -1,9 +1,9 @@
 {
-  "name": "@chaincode/key-value",
+  "name": "@fluid-example/key-value",
   "version": "0.10.0",
   "description": "Chaincode representing a key-value pair",
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
@@ -42,9 +42,9 @@
     }
   },
   "dependencies": {
-    "@prague/component-core-interfaces": "^0.10.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.10.0",
     "@microsoft/fluid-component-runtime": "^0.10.0",
-    "@prague/container-definitions": "^0.10.0",
+    "@microsoft/fluid-container-definitions": "^0.10.0",
     "@microsoft/fluid-container-runtime": "^0.10.0",
     "@microsoft/fluid-map": "^0.10.0",
     "@microsoft/fluid-runtime-definitions": "^0.10.0",

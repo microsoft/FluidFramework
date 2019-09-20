@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Browser, ISequencedClient } from "@prague/protocol-definitions";
+import { Browser, ISequencedClient } from "@microsoft/fluid-protocol-definitions";
 
 export interface IHelpTasks {
     robot: string[];

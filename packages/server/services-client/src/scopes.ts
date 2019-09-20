@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ScopeType } from "@prague/protocol-definitions";
+import { ScopeType } from "@microsoft/fluid-protocol-definitions";
 
 interface IScope {
     read: boolean;

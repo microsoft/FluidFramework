@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { Char, randomId } from "@fluid-example/flow-util-lib";
 import { MapLike, TextSegment } from "@microsoft/fluid-merge-tree";
-import { Char, randomId } from "@prague/flow-util";
 import { strict as assert } from "assert";
 import { FlowDocument, getDocSegmentKind } from "../document";
 import { PlainTextFormatter } from "../plaintext/formatter";

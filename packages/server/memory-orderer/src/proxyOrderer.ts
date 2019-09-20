@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { IClient } from "@microsoft/fluid-protocol-definitions";
 import { IOrderer, IOrdererConnection, IWebSocket } from "@microsoft/fluid-server-services-core";
-import { IClient } from "@prague/protocol-definitions";
 
 export interface IOrdererConnectionFactory {
     connect(socket: IWebSocket, client: IClient): Promise<IOrdererConnection>;

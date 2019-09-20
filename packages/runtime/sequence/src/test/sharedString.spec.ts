@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { ITree } from "@microsoft/fluid-protocol-definitions";
 import { ISharedObjectServices } from "@microsoft/fluid-runtime-definitions";
 import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@microsoft/fluid-test-runtime-utils";
-import { ITree } from "@prague/protocol-definitions";
 import * as assert from "assert";
 import { SharedString } from "../sharedString";
 

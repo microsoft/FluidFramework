@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { ChildLogger, Deferred } from "@microsoft/fluid-core-utils";
 import { IValueChanged, IValueType, SharedMap } from "@microsoft/fluid-map";
 import * as MergeTree from "@microsoft/fluid-merge-tree";
+import { ISequencedDocumentMessage, ITree } from "@microsoft/fluid-protocol-definitions";
 import { IChannelAttributes, IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
 import { parseHandles, serializeHandles } from "@microsoft/fluid-shared-object-base";
-import { ISequencedDocumentMessage, ITree } from "@prague/protocol-definitions";
-import { ChildLogger, Deferred } from "@prague/utils";
 import * as assert from "assert";
 import {
     ISerializableInterval,
@@ -83,7 +83,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
         return ops;
     }
 
-    public client: MergeTree.Client;
+    protected client: MergeTree.Client;
     protected isLoaded = false;
     // Deferred that triggers once the object is loaded
     protected loadedDeferred = new Deferred<void>();
@@ -222,7 +222,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
     }
 
     public getContainingSegment(pos: number) {
-        return this.client.getContainingSegment(pos);
+        return this.client.getContainingSegment<T>(pos);
     }
 
     /**

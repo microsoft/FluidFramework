@@ -3,7 +3,7 @@
   "description": "Play music collaboratively",
   "version": "0.0.5",
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "main": "dist/main.bundle.js",
   "types": "dist/index.d.ts",
   "scripts": {

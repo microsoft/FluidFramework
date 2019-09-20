@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ICodeLoader, IHost } from "@prague/container-definitions";
-import { IDocumentServiceFactory } from "@prague/protocol-definitions";
+import { ICodeLoader, IHost } from "@microsoft/fluid-container-definitions";
+import { IDocumentServiceFactory } from "@microsoft/fluid-protocol-definitions";
 import { IWork } from "../definitions";
 import { ChaincodeWork } from "./chaincodeWork";
 

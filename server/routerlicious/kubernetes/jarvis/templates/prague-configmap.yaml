@@ -140,7 +140,7 @@ data:
             "alfredUrl": "http://{{ template "jarvis.fullname" . }}",
             "serverUrl": "{{ .Values.jarvis.externalUrl }}",
             "blobStorageUrl": "{{ .Values.historian.externalUrl }}",
-            "repository": "prague",
+            "repository": "FluidFramework",
             "npm": "",
             "permission": ["snapshot", "spell", "intel", "translation", "chain-snapshot", "chain-spell", "chain-intel", "chain-translation"]
         },

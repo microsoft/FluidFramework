@@ -1,9 +1,9 @@
 {
-  "name": "@prague/table-test",
+  "name": "@fluid-example/table-test-lib",
   "description": "Test application that loads TableDocument component in node environment",
   "version": "0.10.0",
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "main": "dist/index.js",
   "module": "lib/index.js",
   "sideEffects": false,
@@ -36,7 +36,7 @@
     "report-dir": "nyc/report"
   },
   "dependencies": {
-    "@chaincode/table-document": "^0.10.0",
+    "@fluid-example/table-document": "^0.10.0",
     "@prague/local-test-server": "^0.10.0",
     "@microsoft/fluid-sequence": "^0.10.0",
     "mocha": "^5.2.0"

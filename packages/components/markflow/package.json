@@ -1,5 +1,5 @@
 {
-  "name": "@chaincode/markflow",
+  "name": "@fluid-example/markflow",
   "version": "0.10.0",
   "description": "Collaborative markdown editor.",
   "main": "dist/index.js",
@@ -44,13 +44,13 @@
     "webpack:dev": "webpack --env.development"
   },
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "dependencies": {
-    "@prague/aqueduct": "^0.10.0",
-    "@prague/component-core-interfaces": "^0.10.0",
-    "@prague/container-definitions": "^0.10.0",
-    "@prague/flow-util": "^0.10.0",
+    "@microsoft/fluid-aqueduct": "^0.10.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.10.0",
+    "@microsoft/fluid-container-definitions": "^0.10.0",
+    "@fluid-example/flow-util-lib": "^0.10.0",
     "@microsoft/fluid-map": "^0.10.0",
     "@microsoft/fluid-merge-tree": "^0.10.0",
     "@microsoft/fluid-runtime-definitions": "^0.10.0",
