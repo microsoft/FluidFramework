@@ -19,7 +19,7 @@
   "license": "MIT",
   "repository": "microsoft/prague",
   "dependencies": {
-    "@prague/protocol-definitions": "^0.10.0"
+    "@microsoft/fluid-protocol-definitions": "^0.10.0"
   },
   "devDependencies": {
     "@microsoft/fluid-build-common": "^0.10.0",

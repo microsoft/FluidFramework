@@ -6,7 +6,7 @@
 import {
     IDocumentDeltaStorageService,
     ISequencedDocumentMessage,
-} from "@prague/protocol-definitions";
+} from "@microsoft/fluid-protocol-definitions";
 
 /**
  * Mock Document Delta Storage Service for testing

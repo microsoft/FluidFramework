@@ -11,7 +11,7 @@ import {
     IDocumentStorageService,
     IErrorTrackingService,
     ISequencedDocumentMessage,
-} from "@prague/protocol-definitions";
+} from "@microsoft/fluid-protocol-definitions";
 import {
     MockDocumentDeltaStorageService,
 } from "./mockDeltaStorage";

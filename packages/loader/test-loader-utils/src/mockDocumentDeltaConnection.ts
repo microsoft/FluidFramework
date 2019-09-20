@@ -4,6 +4,7 @@
  */
 
 import {
+    ConnectionMode,
     IContentMessage,
     IDocumentDeltaConnection,
     IDocumentMessage,
@@ -12,7 +13,7 @@ import {
     IServiceConfiguration,
     ISignalMessage,
     ITokenClaims,
-} from "@prague/protocol-definitions";
+} from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
 
 /**
@@ -20,6 +21,7 @@ import { EventEmitter } from "events";
  */
 export class MockDocumentDeltaConnection extends EventEmitter implements IDocumentDeltaConnection {
     public claims: ITokenClaims;
+    public mode: ConnectionMode;
     public existing: boolean;
     public parentBranch: string;
     public maxMessageSize: number;

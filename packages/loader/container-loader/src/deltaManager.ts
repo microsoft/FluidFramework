@@ -925,7 +925,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
      */
     private updateSequenceNumber(immediateNoOp: boolean): void {
         // Exit early for readonly clients. They don't take part in the minimum sequence number calculation.
-        if (this.readonly) {
+        if (!this.active) {
             return;
         }
 

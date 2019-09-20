@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { IProcessMessageResult, ITelemetryLogger } from "@microsoft/fluid-container-definitions";
+import { DebugLogger } from "@microsoft/fluid-core-utils";
+import { IDocumentMessage, MessageType } from "@microsoft/fluid-protocol-definitions";
 import { MockDocumentDeltaConnection, MockDocumentService } from "@microsoft/fluid-test-loader-utils";
-import { IProcessMessageResult, ITelemetryLogger } from "@prague/container-definitions";
-import { IDocumentMessage, MessageType } from "@prague/protocol-definitions";
-import { DebugLogger } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
@@ -25,14 +25,12 @@ describe("Loader", () => {
             const docId = "docId";
             const submitEvent = "test-submit";
 
-            async function startDeltaManager(readonly: boolean = false) {
+            async function startDeltaManager() {
                 await deltaManager.connect("test");
                 await deltaManager.inbound.resume();
                 await deltaManager.outbound.resume();
                 await deltaManager.inboundSignal.resume();
-                if (!readonly) {
-                    deltaManager.disableReadonlyMode();
-                }
+                deltaManager.updateQuorumJoin();
             }
 
             function emitSequentialOp(type: MessageType = MessageType.Operation) {
