@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { IClient, ISignalClient } from "@microsoft/fluid-protocol-definitions";
 import { IClientManager } from "@microsoft/fluid-server-services-core";
-import { IClient, ISignalClient } from "@prague/protocol-definitions";
 import { RedisClient } from "redis";
 import * as util from "util";
 
