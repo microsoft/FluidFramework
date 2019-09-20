@@ -76,6 +76,8 @@ import {
     SummaryTreeConverter,
  } from "./utils";
 
+export { ISummaryStats } from "./utils";
+
 declare module "@prague/component-core-interfaces" {
     export interface IComponent extends Readonly<Partial<IProvideComponentRegistry>> {}
 }
