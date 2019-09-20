@@ -58,7 +58,7 @@
     "@microsoft/fluid-container-definitions": "^0.10.0",
     "@microsoft/fluid-container-loader": "^0.10.0",
     "@microsoft/fluid-gitresources": "^0.10.0",
-    "@prague/host-service-interfaces": "^0.10.0",
+    "@microsoft/fluid-host-service-interfaces": "^0.10.0",
     "@microsoft/fluid-ink": "^0.10.0",
     "@microsoft/fluid-web-code-loader": "^0.10.0",
     "@microsoft/fluid-map": "^0.10.0",
