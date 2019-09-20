@@ -39,7 +39,7 @@ export async function initializeChaincode(document: Container, pkg: IFluidCodeDe
 async function attachCore(loader: Loader, url: string, div: HTMLDivElement) {
     const response = await loader.request({ url });
 
-    if (response.status !== 200 || response.mimeType === "fluid/component") {
+    if (response.status !== 200 || response.mimeType !== "fluid/component") {
         return;
     }
 

@@ -17,12 +17,12 @@ export function create(store: nconf.Provider): Router {
         sha: string,
         count: number,
     ): Promise<git.ICommitDetails[]> {
-        throw new Error("Not implemented");
+        return [];
     }
 
     router.get(
         "/repos/:ignored?/:tenantId/commits",
-        (request, response, next) => {
+        (request, response) => {
             const commitsP = getCommits(
                 request.params.tenantId,
                 request.get("Authorization"),

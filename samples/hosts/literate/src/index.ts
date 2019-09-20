@@ -79,7 +79,7 @@ export async function start(url: string, code: string): Promise<void> {
     // package name on the code quorum. We only perform this check for new documents.
     if (!pragueDocument.existing) {
         // normalize is a helper method which converts from a package name to the JSON object we will quorum on
-        const details = normalize(code);
+        const details = normalize(code, npm);
         await initializeChaincode(pragueDocument, details)
             .catch((error) => console.error("chaincode error", error));
     }
