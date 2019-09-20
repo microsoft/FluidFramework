@@ -4,7 +4,7 @@
  */
 
 import { LocalReference } from "@microsoft/fluid-merge-tree";
-import { SharedStringInterval } from "@microsoft/fluid-sequence";
+import { SequenceInterval } from "@microsoft/fluid-sequence";
 import * as assert from "assert";
 
 const rangeExpr = /([a-zA-Z]+)(\d+):([a-zA-Z]+)(\d+)/;
@@ -41,7 +41,7 @@ export function parseRange(range: string) {
 
 export class CellRange {
     constructor(
-        private readonly interval: SharedStringInterval,
+        private readonly interval: SequenceInterval,
         private readonly resolve: (localRef: LocalReference) => { row: number, col: number },
     ) {
         // Ensure CellInterval was not created with a null/undefined interval.

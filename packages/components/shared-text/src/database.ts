@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ISharedMap } from "@microsoft/fluid-map";
 import * as MergeTree from "@microsoft/fluid-merge-tree";
 import { SharedString } from "@microsoft/fluid-sequence";
 import { EventEmitter } from "events";
@@ -34,7 +35,7 @@ export class GraphQLService {
     private heroEmitter = new EventEmitter();
     private heroPubSub = new PubSub({ eventEmitter: this.heroEmitter });
 
-    constructor(private root: SharedString) {
+    constructor(private map: ISharedMap, sharedString: SharedString) {
         // type Hero {
         //     id: Int!
         //     name: String!
@@ -88,7 +89,7 @@ export class GraphQLService {
                         ) {
                             if (MergeTree.Marker.is(segment)) {
                                 if (segment.refType === MergeTree.ReferenceType.Tile && segment.hasTileLabel("pg")) {
-                                    pgs.push({ text: root.getText(lastStart, pos) });
+                                    pgs.push({ text: sharedString.getText(lastStart, pos) });
                                     lastStart = pos + 1;
                                 }
                             }
@@ -96,7 +97,7 @@ export class GraphQLService {
                             return true;
                         }
 
-                        root.walkSegments(leaf);
+                        sharedString.walkSegments(leaf);
                         return pgs;
                     },
                     type: GraphQLList(paragraphType),
@@ -120,11 +121,11 @@ export class GraphQLService {
                     },
                     resolve: (obj, { id, name }) => {
                         const key = `${prefix}${id}`;
-                        if (!this.root.has(key)) {
+                        if (!this.map.has(key)) {
                             return Promise.reject("Hero not found");
                         }
 
-                        this.root.set(key, name);
+                        this.map.set(key, name);
                         return Promise.resolve({ id, name });
                     },
                     type: heroType,
@@ -163,7 +164,7 @@ export class GraphQLService {
                             {
                                 key,
                                 local: false,
-                                value: this.root.get(key),
+                                value: this.map.get(key),
                             });
 
                         return iterator;
@@ -192,14 +193,14 @@ export class GraphQLService {
             subscription,
         });
 
-        this.root.on("valueChanged", (changed, local) => {
+        this.map.on("valueChanged", (changed, local) => {
             this.heroEmitter.emit("valueChanged", { local });
             this.heroEmitter.emit(
                 changed.key,
                 {
                     key: changed.key,
                     local,
-                    value: this.root.get(changed.key),
+                    value: this.map.get(changed.key),
                 });
         });
     }
@@ -306,11 +307,11 @@ export class GraphQLService {
 
     private getAllHeroes(): Hero[] {
         const heroes: Hero[] = [];
-        for (const key of this.root.keys()) {
+        for (const key of this.map.keys()) {
             if (key.indexOf(prefix) === 0) {
                 heroes.push({
                     id: parseInt(key.substr(prefix.length), 10),
-                    name: this.root.get(key),
+                    name: this.map.get(key),
                 });
             }
         }
