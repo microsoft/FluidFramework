@@ -107,7 +107,7 @@ class SessionStorageCollection<T> implements ICollection<T> {
     public async update(filter: any, set: any, addToSet: any): Promise<void> {
         const value = this.findOneInternal(filter);
         if (!value) {
-            return Promise.reject("Not found");
+            throw new Error("Not found");
         } else {
             for (const key of Object.keys(set)) {
                 value[key] = set[key];
@@ -130,7 +130,7 @@ class SessionStorageCollection<T> implements ICollection<T> {
 
     public async insertOne(value: any): Promise<any> {
         if (this.findOneInternal(value)) {
-            return Promise.resolve("existing object");
+            throw new Error("existing object");
         }
 
         return this.insertInternal(value);
@@ -184,19 +184,26 @@ class SessionStorageCollection<T> implements ICollection<T> {
     }
 
     private findOneInternal(query: any): any  {
-        const queryKeys = Object.keys(query);
-        for (let i = 0; i < sessionStorage.length; i++) {
-            const ssKey = sessionStorage.key(i);
-            if (!ssKey.startsWith(this.collectionName)) {
-                continue;
+        if (query._id) {
+            const json = sessionStorage.getItem(`${this.collectionName}-${query._id}`);
+            if (json) {
+                return JSON.parse(json);
             }
-            const value = JSON.parse(sessionStorage.getItem(ssKey));
-            for (const qk of queryKeys) {
-                if (value[qk] !== query[qk]) {
+        } else {
+            const queryKeys = Object.keys(query);
+            for (let i = 0; i < sessionStorage.length; i++) {
+                const ssKey = sessionStorage.key(i);
+                if (!ssKey.startsWith(this.collectionName)) {
                     continue;
                 }
+                const value = JSON.parse(sessionStorage.getItem(ssKey));
+                for (const qk of queryKeys) {
+                    if (value[qk] !== query[qk]) {
+                        continue;
+                    }
+                }
+                return value;
             }
-            return value;
         }
         // tslint:disable-next-line: no-null-keyword
         return null;
