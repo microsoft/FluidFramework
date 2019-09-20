@@ -37,9 +37,13 @@ import * as assert from "assert";
 import { EventEmitter } from "events";
 import { ContainerRuntime } from "./containerRuntime";
 
-enum SnapshotPkgType {
+export enum SnapshotPkgType {
     STRING,
     JSON,
+}
+
+export interface IComponentAttributes {
+    pkg: string | string[];
 }
 
 interface ISnapshotDetails {
@@ -157,7 +161,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
             this._baseSnapshot = details.snapshot;
             this.baseId = details.snapshot ? details.snapshot.id : null;
             const packages = details.pkgType !== undefined && details.pkgType === SnapshotPkgType.JSON
-                ? JSON.parse(details.pkg) as string[] : [details.pkg];
+                ? (JSON.parse(details.pkg) as IComponentAttributes).pkg : [details.pkg];
             let registry = this._hostRuntime.IComponentRegistry;
             let factory: ComponentFactoryTypes & Partial<IComponentRegistry>;
             for (const pkg of packages) {
@@ -255,9 +259,15 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
     public async snapshot(): Promise<ITree> {
         await this.realize();
 
-        const { pkg } = await this.getSnapshotDetails();
+        const { pkg, pkgType } = await this.getSnapshotDetails();
 
-        const componentAttributes = { pkg };
+        let componentAttributes: IComponentAttributes;
+
+        if (pkgType === undefined || pkgType === SnapshotPkgType.STRING) {
+            componentAttributes = { pkg };
+        } else {
+            componentAttributes = JSON.parse(pkg) as IComponentAttributes;
+        }
 
         const entries = await this.componentRuntime.snapshotInternal();
         const snapshot = { entries, id: undefined };
@@ -408,19 +418,19 @@ export class RemotedComponentContext extends ComponentContext {
 
             if (tree === null || tree.blobs[".component"] === undefined) {
                 this.details = {
-                    pkg: JSON.stringify(this.pkg),
+                    pkg: JSON.stringify({ pkg: this.pkg }),
                     pkgType: SnapshotPkgType.JSON,
                     snapshot: tree,
                 };
             } else {
                 // Need to rip through snapshot and use that to populate extraBlobs
-                const { pkg } = await readAndParse<{ pkg: string }>(
+                const { pkg } = await readAndParse<{ pkg: string | string[] }>(
                     this.storage,
                     tree.blobs[".component"]);
 
                 this.details = {
-                    pkg,
-                    pkgType: pkg.charAt(0) === "[" ? SnapshotPkgType.JSON : SnapshotPkgType.STRING,
+                    pkg: Array.isArray(pkg) ? JSON.stringify({ pkg }) : pkg,
+                    pkgType: Array.isArray(pkg) ? SnapshotPkgType.JSON : SnapshotPkgType.STRING,
                     snapshot: tree,
                 };
             }
@@ -443,7 +453,7 @@ export class LocalComponentContext extends ComponentContext {
     }
 
     public generateAttachMessage(): IAttachMessage {
-        const componentAttributes = { pkg: this.pkg };
+        const componentAttributes: IComponentAttributes = { pkg: this.pkg };
 
         const entries = this.componentRuntime.getAttachSnapshot();
         const snapshot = { entries, id: undefined };
@@ -466,7 +476,7 @@ export class LocalComponentContext extends ComponentContext {
         const message: IAttachMessage = {
             id: this.id,
             snapshot,
-            type: JSON.stringify(this.pkg),
+            type: JSON.stringify(componentAttributes),
         };
 
         return message;
@@ -474,7 +484,7 @@ export class LocalComponentContext extends ComponentContext {
 
     protected async getSnapshotDetails(): Promise<ISnapshotDetails> {
         return {
-            pkg: JSON.stringify(this.pkg),
+            pkg: JSON.stringify({ pkg: this.pkg } as IComponentAttributes),
             snapshot: undefined,
             pkgType: SnapshotPkgType.JSON,
         };

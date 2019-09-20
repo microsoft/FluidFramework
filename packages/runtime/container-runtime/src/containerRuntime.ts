@@ -63,7 +63,7 @@ import * as assert from "assert";
 import { EventEmitter } from "events";
 // tslint:disable-next-line:no-submodule-imports
 import * as uuid from "uuid/v4";
-import { ComponentContext, LocalComponentContext, RemotedComponentContext } from "./componentContext";
+import { ComponentContext, IComponentAttributes, LocalComponentContext, RemotedComponentContext } from "./componentContext";
 import { ComponentHandleContext } from "./componentHandleContext";
 import { debug } from "./debug";
 import { DocumentStorageServiceProxy } from "./documentStorageServiceProxy";
@@ -979,8 +979,9 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                     this,
                     new DocumentStorageServiceProxy(this.storage, flatBlobs),
                     this.context.scope,
-                    attachMessage.type.charAt(0) === "[" ?
-                        JSON.parse(attachMessage.type) as string[] : [attachMessage.type]);
+                    attachMessage.type.charAt(0) === "{" ?
+                        (JSON.parse(attachMessage.type) as IComponentAttributes).pkg as string[] :
+                            [attachMessage.type]);
 
                 break;
 
