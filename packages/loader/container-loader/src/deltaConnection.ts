@@ -5,7 +5,7 @@
 
 import {
     IConnectionDetails,
-} from "@prague/container-definitions";
+} from "@microsoft/fluid-container-definitions";
 import {
     ConnectionMode,
     IClient,
@@ -16,7 +16,7 @@ import {
     INack,
     ISequencedDocumentMessage,
     ISignalMessage,
-} from "@prague/protocol-definitions";
+} from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
 
 export class DeltaConnection extends EventEmitter {

@@ -15,9 +15,9 @@ import {
     INack,
     ISignalMessage,
     ITokenClaims,
-} from "@prague/protocol-definitions";
-import { IConnect, IConnected } from "@prague/socket-storage-shared";
-import { isSystemType } from "@prague/utils";
+} from "@microsoft/fluid-protocol-definitions";
+import { IConnect, IConnected } from "@microsoft/fluid-driver-base";
+import { isSystemType } from "@microsoft/fluid-core-utils";
 import * as jwt from "jsonwebtoken";
 import * as semver from "semver";
 import * as winston from "winston";

@@ -9,7 +9,8 @@ import {
     IDeltaManager,
     IDeltaQueue,
     ITelemetryLogger,
-} from "@prague/container-definitions";
+} from "@microsoft/fluid-container-definitions";
+import { Deferred, isSystemType, PerformanceEvent } from "@microsoft/fluid-core-utils";
 import {
     Browser,
     ConnectionMode,
@@ -24,8 +25,7 @@ import {
     ISignalMessage,
     ITrace,
     MessageType,
-} from "@prague/protocol-definitions";
-import { Deferred, isSystemType, PerformanceEvent } from "@prague/utils";
+} from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { ContentCache } from "./contentCache";

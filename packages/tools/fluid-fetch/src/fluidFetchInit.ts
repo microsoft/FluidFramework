@@ -4,16 +4,16 @@
  */
 
 // tslint:disable:object-literal-sort-keys
+import { BaseTelemetryNullLogger, fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
+import * as odsp from "@microsoft/fluid-odsp-driver";
 import {
     getDriveItemByFileId,
     IClientConfig,
     IODSPTokens,
     postTokenRequest,
 } from "@microsoft/fluid-odsp-utils";
-import * as odsp from "@prague/odsp-socket-storage";
-import { IDocumentService } from "@prague/protocol-definitions";
-import * as r11s from "@prague/routerlicious-socket-storage";
-import { BaseTelemetryNullLogger, fromBase64ToUtf8 } from "@prague/utils";
+import { IDocumentService } from "@microsoft/fluid-protocol-definitions";
+import * as r11s from "@microsoft/fluid-routerlicious-driver";
 import * as child_process from "child_process";
 import * as http from "http";
 import { URL } from "url";

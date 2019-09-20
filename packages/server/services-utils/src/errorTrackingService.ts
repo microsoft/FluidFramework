@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IErrorTrackingService } from "@prague/protocol-definitions";
+import { IErrorTrackingService } from "@microsoft/fluid-protocol-definitions";
 import * as Sentry from "@sentry/node";
 
 export class NodeErrorTrackingService implements IErrorTrackingService {

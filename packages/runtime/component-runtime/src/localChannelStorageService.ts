@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { fromUtf8ToBase64 } from "@microsoft/fluid-core-utils";
+import { IBlob, ITree, TreeEntry } from "@microsoft/fluid-protocol-definitions";
 import { IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
-import { IBlob, ITree, TreeEntry } from "@prague/protocol-definitions";
-import { fromUtf8ToBase64 } from "@prague/utils";
 
 export class LocalChannelStorageService implements IObjectStorageService {
     constructor(private readonly tree: ITree) {

@@ -42,7 +42,7 @@
     "webpack": "webpack --env.production"
   },
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "dependencies": {
     "@fluid-example/flow-intel": "^0.10.0",
@@ -56,14 +56,14 @@
     "@fluid-example/pinpoint-editor": "^0.10.0",
     "@fluid-example/progress-bars": "^0.10.0",
     "@fluid-example/video-players": "^0.10.0",
-    "@prague/aqueduct": "^0.10.0",
-    "@prague/component-core-interfaces": "^0.10.0",
-    "@prague/container-definitions": "^0.10.0",
+    "@microsoft/fluid-aqueduct": "^0.10.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.10.0",
+    "@microsoft/fluid-container-definitions": "^0.10.0",
     "@fluid-example/flow-util-lib": "^0.10.0",
     "@microsoft/fluid-map": "^0.10.0",
     "@microsoft/fluid-merge-tree": "^0.10.0",
     "@microsoft/fluid-runtime-definitions": "^0.10.0",
-    "@prague/framework-definitions": "^0.10.0",
+    "@microsoft/fluid-framework-interfaces": "^0.10.0",
     "debug": "^4.1.1"
   },
   "devDependencies": {

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITokenClaims, IUser, ScopeType } from "@prague/protocol-definitions";
+import { ITokenClaims, IUser, ScopeType } from "@microsoft/fluid-protocol-definitions";
 import * as jwt from "jsonwebtoken";
 import { debug } from "util";
 // tslint:disable-next-line:no-submodule-imports

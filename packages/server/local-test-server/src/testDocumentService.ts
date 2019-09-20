@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import * as api from "@microsoft/fluid-protocol-definitions";
+import * as socketStorage from "@microsoft/fluid-routerlicious-driver";
 import { GitManager } from "@microsoft/fluid-server-services-client";
 import {
     TestDeltaStorageService,
     TestDocumentDeltaConnection,
     TestHistorian,
 } from "@microsoft/fluid-server-test-utils";
-import * as api from "@prague/protocol-definitions";
-import * as socketStorage from "@prague/routerlicious-socket-storage";
 import { ITestDeltaConnectionServer } from "./testDeltaConnectionServer";
 
 /**

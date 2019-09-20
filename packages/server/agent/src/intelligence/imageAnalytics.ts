@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IImageBlob } from "@prague/container-definitions";
+import { IImageBlob } from "@microsoft/fluid-container-definitions";
 import * as request from "request";
 import { IIntelligentService, IIntelligentServiceFactory } from "./api";
 

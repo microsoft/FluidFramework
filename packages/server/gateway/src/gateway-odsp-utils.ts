@@ -4,7 +4,7 @@
  */
 
 import { getODSPFluidResolvedUrl, IClientConfig, IODSPTokens } from "@microsoft/fluid-odsp-utils";
-import { IFluidResolvedUrl } from "@prague/protocol-definitions";
+import { IFluidResolvedUrl } from "@microsoft/fluid-protocol-definitions";
 import { URL } from "url";
 
 const spoTenants = new Map<string, string>([
@@ -73,7 +73,7 @@ export async function spoJoinSession(
     if (tokens === undefined) {
         return Promise.reject(`Missing tokens for ${server}`);
     }
-    // Only .b items can be prague
+    // Only .b items can be fluid
     const encoded = encodeURIComponent(`${id}.b`);
     return getODSPFluidResolvedUrl(server, `drive/root:/r11s/${encoded}:`, tokens, clientConfig, true);
 }

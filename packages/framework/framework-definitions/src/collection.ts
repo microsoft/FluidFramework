@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent } from "@prague/component-core-interfaces";
+import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 
-declare module "@prague/component-core-interfaces" {
+declare module "@microsoft/fluid-component-core-interfaces" {
     export interface IComponent extends Readonly<Partial<IProvideComponentCollection>> {
     }
 }

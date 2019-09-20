@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { gitHashFile } from "@microsoft/fluid-core-utils";
+import * as git from "@microsoft/fluid-gitresources";
 import { IHistorian } from "@microsoft/fluid-server-services-client";
 import { ICollection, IDb } from "@microsoft/fluid-server-services-core";
-import * as git from "@prague/gitresources";
-import * as utils from "@prague/utils";
 import * as uuid from "uuid";
 import { TestDb } from "./testCollection";
 
@@ -59,7 +59,7 @@ export class TestHistorian implements IHistorian {
     }
 
     public async createBlob(blob: git.ICreateBlobParams): Promise<git.ICreateBlobResponse> {
-        const _id = utils.gitHashFile(Buffer.from(blob.content, blob.encoding));
+        const _id = gitHashFile(Buffer.from(blob.content, blob.encoding));
         await this.blobs.insertOne({
             _id,
             value: blob,
@@ -100,7 +100,7 @@ export class TestHistorian implements IHistorian {
                 parents: commit.value.parents.map<git.ICommitHash>((p) => ({sha: p, url: ""})),
                 sha: commit._id,
                 tree: {
-                    sha: utils.gitHashFile(Buffer.from(commit.value.tree)),
+                    sha: gitHashFile(Buffer.from(commit.value.tree)),
                     url: "",
                 } ,
                 url: "",
@@ -109,7 +109,7 @@ export class TestHistorian implements IHistorian {
     }
 
     public async createCommit(commit: git.ICreateCommitParams): Promise<git.ICommit> {
-        const _id = utils.gitHashFile(Buffer.from(commit.tree));
+        const _id = gitHashFile(Buffer.from(commit.tree));
         await this.commits.insertOne({ _id, value: commit });
         return this.getCommit(_id);
     }

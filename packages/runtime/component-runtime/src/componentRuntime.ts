@@ -3,6 +3,25 @@
  * Licensed under the MIT License.
  */
 
+import { IComponentHandle, IComponentHandleContext, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
+import {
+    ConnectionState,
+    IBlobManager,
+    IDeltaManager,
+    IGenericBlob,
+    ILoader,
+    IQuorum,
+    ITelemetryLogger,
+} from "@microsoft/fluid-container-definitions";
+import { buildHierarchy, ChildLogger, Deferred, flatten, raiseConnectedEvent } from "@microsoft/fluid-core-utils";
+import {
+    FileMode,
+    IDocumentMessage,
+    ISequencedDocumentMessage,
+    ITreeEntry,
+    MessageType,
+    TreeEntry,
+} from "@microsoft/fluid-protocol-definitions";
 import {
     IAttachMessage,
     IChannel,
@@ -12,25 +31,6 @@ import {
     IInboundSignalMessage,
 } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
-import { IComponentHandle, IComponentHandleContext, IRequest, IResponse } from "@prague/component-core-interfaces";
-import {
-    ConnectionState,
-    IBlobManager,
-    IDeltaManager,
-    IGenericBlob,
-    ILoader,
-    IQuorum,
-    ITelemetryLogger,
-} from "@prague/container-definitions";
-import {
-    FileMode,
-    IDocumentMessage,
-    ISequencedDocumentMessage,
-    ITreeEntry,
-    MessageType,
-    TreeEntry,
-} from "@prague/protocol-definitions";
-import { buildHierarchy, ChildLogger, Deferred, flatten, raiseConnectedEvent } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { IChannelContext } from "./channelContext";

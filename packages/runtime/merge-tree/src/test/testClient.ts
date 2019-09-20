@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { DebugLogger } from "@microsoft/fluid-core-utils";
+import { ISequencedDocumentMessage, ITree, MessageType } from "@microsoft/fluid-protocol-definitions";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { MockStorage } from "@microsoft/fluid-test-runtime-utils";
-import { ISequencedDocumentMessage, ITree, MessageType } from "@prague/protocol-definitions";
-import { DebugLogger } from "@prague/utils";
 import * as assert from "assert";
 import * as random from "random-js";
 import { Client } from "../client";

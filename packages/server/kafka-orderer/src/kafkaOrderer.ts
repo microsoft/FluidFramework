@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import * as core from "@microsoft/fluid-server-services-core";
 import {
     IClient,
     IClientJoin,
@@ -11,7 +10,8 @@ import {
     IDocumentSystemMessage,
     IServiceConfiguration,
     MessageType,
-} from "@prague/protocol-definitions";
+} from "@microsoft/fluid-protocol-definitions";
+import * as core from "@microsoft/fluid-server-services-core";
 import * as _ from "lodash";
 
 export class KafkaOrdererConnection implements core.IOrdererConnection {

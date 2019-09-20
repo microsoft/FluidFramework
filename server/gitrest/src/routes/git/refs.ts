@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ICreateRefParams, IPatchRefParams, IRef } from "@prague/gitresources";
+import { ICreateRefParams, IPatchRefParams, IRef } from "@microsoft/fluid-gitresources";
 import { Response, Router } from "express";
 import * as nconf from "nconf";
 import * as git from "nodegit";

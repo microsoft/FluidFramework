@@ -6,7 +6,7 @@
 import {
     ITelemetryErrorEvent,
     ITelemetryLogger,
-} from "@prague/container-definitions";
+} from "@microsoft/fluid-container-definitions";
 
 export enum OnlineStatus {
     Offline,
