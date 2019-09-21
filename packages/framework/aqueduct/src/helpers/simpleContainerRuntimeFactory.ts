@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent, IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IContainerContext } from "@microsoft/fluid-container-definitions";
 import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
 import { ComponentRegistryTypes, IHostRuntime } from "@microsoft/fluid-runtime-definitions";
@@ -44,30 +44,24 @@ export class SimpleContainerRuntimeFactory {
     public static async createAndAttachComponent<T>(
         runtime: IHostRuntime,
         id: string,
-        pkg: string): Promise<T> {
-            let component: IComponent;
-            try {
-                const componentRuntime = await runtime.createComponent(id, pkg);
+        pkg: string,
+    ): Promise<T> {
+        try {
+            const componentRuntime = await runtime.createComponent(id, pkg);
 
-                // If the component supports forging we need to forge it.
-                const result = await componentRuntime.request({ url: "/" });
-                if (result.status !== 200 || result.mimeType !== "fluid/component") {
-                    return Promise.reject("Default component is not a component.");
-                }
-
-                component = result.value as IComponent;
-                // We call forge the component if it supports it. Forging is the opportunity to pass props in on creation.
-                const forge = component.IComponentForge;
-                if (forge) {
-                    await forge.forge();
-                }
-
-                componentRuntime.attach();
-            } catch (error) {
-                runtime.error(error);
-                throw error;
+            // If the component supports forging we need to forge it.
+            const result = await componentRuntime.request({ url: "/" });
+            if (result.status !== 200 || result.mimeType !== "fluid/component") {
+                return Promise.reject("Default component is not a component.");
             }
-            return component as T;
+
+            componentRuntime.attach();
+
+            return result.value as T;
+        } catch (error) {
+            runtime.error(error);
+            throw error;
+        }
     }
 
     /**
@@ -95,7 +89,7 @@ export class SimpleContainerRuntimeFactory {
             const pathForComponent = trailingSlash !== -1 ? requestUrl.substr(trailingSlash) : requestUrl;
 
             let wait = true;
-            if (request.headers && (typeof request.headers.wait) === "boolean")  {
+            if (request.headers && (typeof request.headers.wait) === "boolean") {
                 wait = request.headers.wait as boolean;
             }
 
