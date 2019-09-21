@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc && tslint 'src/**/*.ts'",
-    "build:prague": "webpack --color --config client-src/prague-loader/webpack.config.js",
-    "build:full": "npm run build:prague && npm run build",
+    "build:fluid": "webpack --color --config client-src/fluid-loader/webpack.config.js",
+    "build:full": "npm run build:fluid && npm run build",
     "docker:build": "docker build --build-arg NPM_TOKEN=$(echo $NPM_TOKEN) -t headless-agent .",
     "docker:start": "docker run --rm -t --cap-add=SYS_ADMIN --network routerlicious_default headless-agent",
     "start": "docker-compose up",

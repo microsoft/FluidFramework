@@ -58,7 +58,7 @@ export class PuppetMaster extends EventEmitter {
 
         await this.attachEndOfLife();
 
-        await this.page.addScriptTag({path: "client/prague-loader.bundle.js"});
+        await this.page.addScriptTag({path: "client/fluid-loader.bundle.js"});
         const htmlToRender = generateLoaderHTML(
             this.documentId,
             this.routerlicious,
