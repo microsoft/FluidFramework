@@ -3,21 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { Browser, IPragueResolvedUrl } from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
-import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
+import { Browser, IFluidResolvedUrl } from "@microsoft/fluid-protocol-definitions";
 import { RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
+import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { WebCodeLoader } from "@microsoft/fluid-web-code-loader";
 import * as jwt from "jsonwebtoken";
 import * as url from "url";
-import { LocalPlatform } from "./localPlatform";
-import { WebLoader } from "./webLoader";
 
 interface IWindow extends Window {
     closeContainer(): void;
 }
 
-async function attach(loader: Loader, baseUrl: string, platform: LocalPlatform) {
+async function attach(loader: Loader, baseUrl: string) {
     console.log(baseUrl);
     const response = await loader.request({ url: baseUrl });
 
@@ -29,19 +28,18 @@ async function attach(loader: Loader, baseUrl: string, platform: LocalPlatform) 
     switch (response.mimeType) {
         case "fluid/component":
             const component = response.value as IComponentRuntime;
-            component.attach(platform);
             console.log(component.id);
             break;
     }
 }
 
-export async function registerAttach(loader: Loader, container: Container, uri: string, platform: LocalPlatform) {
+export async function registerAttach(loader: Loader, container: Container, uri: string) {
     console.log(`Attaching a web platform`);
-    attach(loader, uri, platform).catch((err) => {
+    attach(loader, uri).catch((err) => {
         console.log(err);
     });
     container.on("contextChanged", (value) => {
-        attach(loader, uri, platform);
+        attach(loader, uri);
     });
 }
 
@@ -75,7 +73,7 @@ export async function startLoading(
     "/repos" +
     `/${encodeURIComponent(tenantId)}`;
 
-    const resolved: IPragueResolvedUrl = {
+    const resolved: IFluidResolvedUrl = {
         endpoints: {
             deltaStorageUrl,
             ordererUrl: routerlicious,
@@ -90,13 +88,14 @@ export async function startLoading(
         routerlicious,
         hostToken,
         new Map([[documentUrl, resolved]]));
-    const codeLoader = new WebLoader(packageUrl);
+    const codeLoader = new WebCodeLoader(packageUrl);
 
     const loader = new Loader(
         { resolver },
         new RouterliciousDocumentServiceFactory(),
         codeLoader,
-        { encrypted: undefined, blockUpdateMarkers: true, client: { type: loaderType } });
+        { encrypted: undefined, blockUpdateMarkers: true, client: { type: loaderType } },
+        null);
 
     const container = await loader.resolve({ url: documentUrl });
     console.log(`Resolved ${documentUrl}`);
@@ -110,8 +109,7 @@ export async function startLoading(
 
     checkContainerActivity(container);
 
-    const platform = new LocalPlatform(document.getElementById("content"));
-    registerAttach(loader, container, documentUrl, platform);
+    registerAttach(loader, container, documentUrl);
 }
 
 // Checks container quorum for connected clients. Once all client leaves,
