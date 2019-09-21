@@ -4,7 +4,13 @@
  */
 
 import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
-import { buildHierarchy, fromBase64ToUtf8, fromUtf8ToBase64, PerformanceEvent } from "@microsoft/fluid-core-utils";
+import {
+    buildHierarchy,
+    fromBase64ToUtf8,
+    fromUtf8ToBase64,
+    PerformanceEvent,
+    throwNetworkError,
+} from "@microsoft/fluid-core-utils";
 import * as resources from "@microsoft/fluid-gitresources";
 import * as api from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
@@ -25,7 +31,7 @@ import { fetchSnapshot } from "./fetchSnapshot";
 import { IFetchWrapper } from "./fetchWrapper";
 import { getQueryString } from "./getQueryString";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
-import { getWithRetryForTokenRefresh, throwNetworkError } from "./OdspUtils";
+import { getWithRetryForTokenRefresh } from "./OdspUtils";
 
 export class OdspDocumentStorageManager implements IDocumentStorageManager {
     private readonly blobCache: Map<string, resources.IBlob> = new Map();
@@ -251,10 +257,10 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                 const versionsResponse = await this.fetchWrapper
                     .get<IDocumentStorageGetVersionsResponse>(url, this.documentId, headers);
                 if (!versionsResponse) {
-                    throwNetworkError(400, "getVersions returned no response");
+                    throwNetworkError("getVersions returned no response", 400);
                 }
                 if (!Array.isArray(versionsResponse.value)) {
-                    throwNetworkError(400, "getVersions returned non-array response");
+                    throwNetworkError("getVersions returned non-array response", 400);
                 }
                 return versionsResponse.value.map((version) => {
                     // Parse the date from the message
@@ -324,7 +330,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
     private checkSnapshotUrl() {
         if (!this.snapshotUrl) {
-            throwNetworkError(400, "Method not supported because no snapshotUrl was provided");
+            throwNetworkError("Method not supported because no snapshotUrl was provided", 400);
         }
     }
 

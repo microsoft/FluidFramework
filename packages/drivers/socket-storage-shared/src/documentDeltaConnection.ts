@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { BatchManager } from "@microsoft/fluid-core-utils";
+import { BatchManager, NetworkError } from "@microsoft/fluid-core-utils";
 import {
     ConnectionMode,
     IClient,
@@ -29,12 +29,13 @@ function createErrorObject(handler: string, error: any, canRetry = true) {
     // If it's not (and it's an object), we would not get its content.
     // That is likely Ok, as it may contain PII that will get logged to telemetry,
     // so we do not want it there.
-    const errorObj = new Error(`socket.io error: ${handler}: ${error}`);
+    const errorObj = new NetworkError(
+        `socket.io error: ${handler}: ${error}`,
+        undefined,
+        canRetry,
+    );
 
-    // Can't use spread here because the error object's properties are not enumerable.
-    // Just add the "critical" property in.
-    (errorObj as any).canRetry = canRetry;
-
+    // Add actual error object, for driver to be able to parse it and reason over it.
     (errorObj as any).socketError = error;
 
     return errorObj;

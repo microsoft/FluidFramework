@@ -50,8 +50,6 @@ const DefaultContentBufferSize = 10;
 
 // Test if we deal with INetworkError / NetworkError object and if it has enough information to make a call.
 // If in doubt, allow retries.
-// Note: We can deal with Error object with canRetry property, but not INetworkError / NetworkError type of object
-// This is true for any websocket protocol errors, and some of them are not retriable.
 function canRetryOnError(error: any) {
     // Always retry unless told otherwise.
     // tslint:disable-next-line:no-unsafe-any

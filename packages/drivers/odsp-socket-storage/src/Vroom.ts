@@ -4,9 +4,9 @@
  */
 
 import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
-import { PerformanceEvent } from "@microsoft/fluid-core-utils";
+import { PerformanceEvent, throwNetworkError } from "@microsoft/fluid-core-utils";
 import { ISocketStorageDiscovery } from "./contracts";
-import { fetchHelper, getWithRetryForTokenRefresh, throwNetworkError } from "./OdspUtils";
+import { fetchHelper, getWithRetryForTokenRefresh } from "./OdspUtils";
 
 function getOrigin(url: string) {
   return new URL(url).origin;
@@ -39,7 +39,7 @@ export async function fetchJoinSession(
   return getWithRetryForTokenRefresh(async (refresh: boolean) => {
     const token = await getVroomToken(siteUrl, refresh);
     if (!token) {
-      throwNetworkError(400, "Failed to acquire Vroom token");
+      throwNetworkError("Failed to acquire Vroom token", 400);
     }
 
     const siteOrigin = getOrigin(siteUrl);

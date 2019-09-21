@@ -3,23 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { INetworkError } from "@prague/fluid-protocol-definitions";
+import { NetworkError, throwNetworkError } from "@microsoft/fluid-core-utils";
 import { default as fetch } from "node-fetch";
-
-/** Determines how long to wait before retrying
- * retriesAttempted n where the last retry done was the n-th retry, initial request not included.
- * first retry is 0, second is 1 etc.
- */
-export type BackoffFunction = (retriesAttempted: number) => number;
-
-/**
- * returns a promise that resolves after timeMs
- * @param timeMs - time for delay
- */
-export async function delay(timeMs: number): Promise<void> {
-    // tslint:disable-next-line: no-string-based-set-timeout
-    return new Promise((resolve) => setTimeout(resolve, timeMs));
-}
 
 /**
  * returns true when the request should/can be retried
@@ -31,25 +16,14 @@ export function noRetry(): RetryFilter {
 }
 
 /**
- * Network error error class - used to communicate all  network errors
+ * Creates a filter that will allow retries for the whitelisted status codes
+ * @param retriableCodes - Cannot be null/undefined
  */
-export class NetworkError extends Error implements INetworkError {
-    constructor(
-            readonly statusCode: number,
-            errorMessage: string,
-            readonly canRetry: boolean,
-            readonly retryAfterSeconds?: number) {
-      super(errorMessage);
-    }
+export function whitelist(retriableCodes: number[]): RetryFilter {
+    return (response: Response) => retriableCodes.includes(response.status);
 }
 
-export function throwNetworkError(statusCode: number, errorMessage: string, canRetry: boolean = false, response?: Response) {
-    let message = errorMessage;
-    if (response) {
-        message = `${message}, msg = ${response.statusText}, type = ${response.type}`;
-    }
-    throw new NetworkError(statusCode, message, canRetry);
-}
+export const defaultRetryFilter = whitelist([408, 409, 429, 500, 503]);
 
 /**
  * A utility function to do fetch with support for retries
@@ -60,30 +34,22 @@ export function throwNetworkError(statusCode: number, errorMessage: string, canR
 export function fetchHelper(
     requestInfo: RequestInfo,
     requestInit: RequestInit | undefined,
-    filter: RetryFilter = whitelist([408, 409, 429, 500, 503]),
+    filter: RetryFilter = defaultRetryFilter,
     tries: Response[] = [],
 ): Promise<any> {
     return fetch(requestInfo, requestInit).then((response: Response) => {
         // Let's assume we can retry.
         if (!response) {
-            throwNetworkError(400, `No response from the server`, true, response);
+            throwNetworkError(`No response from the server`, 400, true, response);
         }
         if (!response.ok || response.status < 200 || response.status >= 300) {
-            throwNetworkError(response.status, `Error ${response.status} from the server`, filter(response), response);
+            throwNetworkError(`Error ${response.status} from the server`, response.status, filter(response), response);
         }
         return response.json() as any;
     },
     (error) => {
-        throwNetworkError(709, "fetch error, likely due to networking / DNS error or no server", true); // can retry?
+        throwNetworkError(`fetch error, likely due to networking / DNS error or no server: ${error}`, 709, true); // can retry?
     });
-}
-
-/**
- * Creates a filter that will allow retries for the whitelisted status codes
- * @param retriableCodes - Cannot be null/undefined
- */
-export function whitelist(retriableCodes: number[]): RetryFilter {
-    return (response: Response) => retriableCodes.includes(response.status);
 }
 
 export function getWithRetryForTokenRefresh<T>(get: (refresh: boolean) => Promise<T>) {
