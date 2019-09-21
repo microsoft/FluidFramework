@@ -52,6 +52,7 @@ import {
     PerformanceEvent,
     raiseConnectedEvent,
     readAndParse,
+    TelemetryLogger,
 } from "@prague/utils";
 import * as assert from "assert";
 import * as jwtDecode from "jwt-decode";
@@ -228,7 +229,13 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         // create logger for components to use
         this.subLogger = DebugLogger.mixinDebugLogger(
             "fluid:telemetry",
-            { documentId: this.id, [pkgName]: pkgVersion },
+            {
+                documentId: this.id,
+                package: {
+                    name: TelemetryLogger.sanitizePkgName(pkgName),
+                    version: pkgVersion,
+                },
+            },
             logger);
 
         // Prefix all events in this file with container-loader
