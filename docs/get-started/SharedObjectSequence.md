@@ -4,8 +4,8 @@ uid: SharedObjectSequence
 
 # SharedObjectSequence
 
-* Package: <xref:@prague/sequence!>
-* API documentation: <xref:@prague/sequence!SharedObjectSequence:class>
+- Package: <xref:@prague/sequence!>
+- API documentation: <xref:@prague/sequence!SharedObjectSequence:class>
 
 The SharedObjectSequence distributed data structure can be used to store sequences of objects.
 
@@ -27,8 +27,8 @@ Like all SharedSequences, you can use the <xref:@prague/sequence!SharedSequence%
 
 ## Eventing
 
-* [valueChanged](xref:@prague/sequence!SharedSegmentSequence%23on:member(3))
+- [valueChanged](<xref:@prague/sequence!SharedSegmentSequence%23on:member(3)>)
 
 ## Related distributed data structures
 
-* <xref:SharedNumberSequence>
+- <xref:SharedNumberSequence>
