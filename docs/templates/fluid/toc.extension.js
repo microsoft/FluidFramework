@@ -39,7 +39,7 @@ var packageMapping = {
 
 var groupNames = {
   framework: "Framework",
-  dds: "Distributed Data Structure",
+  dds: "Distributed Data Structures",
   runtime: "Runtime",
   loader: "Loader",
   driver: "Driver",
@@ -61,7 +61,7 @@ exports.preTransform = function (model) {
       for (var group in groupNames) {
         groupedPackages[group] = [];
       }
-      children.forEach(function(element) {
+      children.forEach(function (element) {
         var group = packageMapping[element.name];
         if (group === undefined || groupedPackages[group] === undefined) {
           group = "unknown";
@@ -69,7 +69,7 @@ exports.preTransform = function (model) {
         groupedPackages[group].push(element);
       });
 
-      model.items = [ overview ];
+      model.items = [overview];
       for (var group in groupedPackages) {
         model.items.push(
           { name: groupNames[group], items: groupedPackages[group] }
