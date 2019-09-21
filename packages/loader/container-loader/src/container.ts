@@ -23,7 +23,6 @@ import {
     ITelemetryBaseLogger,
     ITelemetryLogger,
     TelemetryEventRaisedOnContainer,
-    TelemetryLogger,
 } from "@prague/container-definitions";
 import {
     FileMode,
@@ -53,6 +52,7 @@ import {
     PerformanceEvent,
     raiseConnectedEvent,
     readAndParse,
+    TelemetryLogger,
 } from "@prague/utils";
 import * as assert from "assert";
 import * as jwtDecode from "jwt-decode";
