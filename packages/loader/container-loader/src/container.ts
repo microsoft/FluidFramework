@@ -23,6 +23,7 @@ import {
     ITelemetryBaseLogger,
     ITelemetryLogger,
     TelemetryEventRaisedOnContainer,
+    TelemetryLogger,
 } from "@prague/container-definitions";
 import {
     FileMode,
@@ -228,7 +229,13 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         // create logger for components to use
         this.subLogger = DebugLogger.mixinDebugLogger(
             "fluid:telemetry",
-            { documentId: this.id, [pkgName]: pkgVersion },
+            {
+                documentId: this.id,
+                package: {
+                    name: TelemetryLogger.sanitizePkgName(pkgName),
+                    version: pkgVersion,
+                },
+            },
             logger);
 
         // Prefix all events in this file with container-loader
