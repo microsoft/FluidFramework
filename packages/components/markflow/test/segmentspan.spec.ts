@@ -3,15 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import { TextSegment } from "@microsoft/fluid-merge-tree";
 // tslint:disable:binary-expression-operand-order
-import { TestHost } from "@prague/local-test-server";
-import { TextSegment } from "@prague/merge-tree";
+import { TestHost } from "@microsoft/fluid-local-test-server";
 import * as assert from "assert";
-import { FlowDocument, flowDocumentFactory, SegmentSpan } from "../src/document";
-import { FlowDocumentType } from "../src/runtime";
-
 // tslint:disable-next-line:no-import-side-effect
 import "mocha";
+import { FlowDocument, flowDocumentFactory, SegmentSpan } from "../src/document";
+import { FlowDocumentType } from "../src/runtime";
 
 describe("SegmentSpan", () => {
     let host: TestHost;

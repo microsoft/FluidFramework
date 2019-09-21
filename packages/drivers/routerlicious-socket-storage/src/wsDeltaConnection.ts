@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { BatchManager } from "@microsoft/fluid-core-utils";
+import { IConnect, IConnected } from "@microsoft/fluid-driver-base";
 import {
+    ConnectionMode,
     IClient,
     IContentMessage,
     IDocumentDeltaConnection,
@@ -12,9 +15,7 @@ import {
     IServiceConfiguration,
     ISignalMessage,
     ITokenClaims,
-} from "@prague/protocol-definitions";
-import { IConnect, IConnected } from "@prague/socket-storage-shared";
-import { BatchManager } from "@prague/utils";
+} from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
 import * as ws from "isomorphic-ws";
 import * as url from "url";
@@ -41,10 +42,11 @@ export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaCon
         id: string,
         token: string,
         client: IClient,
-        urlStr: string): Promise<IDocumentDeltaConnection> {
+        urlStr: string,
+        mode: ConnectionMode): Promise<IDocumentDeltaConnection> {
 
         return new Promise<IDocumentDeltaConnection>((resolve, reject) => {
-            const connection = new WSDeltaConnection(tenantId, id, token, client, urlStr);
+            const connection = new WSDeltaConnection(tenantId, id, token, client, urlStr, mode);
 
             const resolveHandler = () => {
                 resolve(connection);
@@ -67,6 +69,10 @@ export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaCon
 
     public get clientId(): string {
         return this.details!.clientId;
+    }
+
+    public get mode(): ConnectionMode {
+        return this.details!.mode;
     }
 
     public get claims(): ITokenClaims {
@@ -105,7 +111,13 @@ export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaCon
         return this.details!.serviceConfiguration;
     }
 
-    constructor(tenantId: string, public documentId: string, token: string, client: IClient, urlStr: string) {
+    constructor(
+        tenantId: string,
+        public documentId: string,
+        token: string,
+        client: IClient,
+        urlStr: string,
+        mode: ConnectionMode) {
         super();
 
         const p = url.parse(urlStr);
@@ -119,6 +131,7 @@ export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaCon
             const connectMessage: IConnect = {
                 client,
                 id: documentId,
+                mode,
                 tenantId,
                 token,
                 versions: [protocolVersion],

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@prague/component-core-interfaces";
-import { IResolvedUrl, IUrlResolver } from "@prague/protocol-definitions";
+import { IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { IResolvedUrl, IUrlResolver } from "@microsoft/fluid-protocol-definitions";
 import * as sha from "sha.js";
 import { IOdspResolvedUrl } from "./contracts";
 

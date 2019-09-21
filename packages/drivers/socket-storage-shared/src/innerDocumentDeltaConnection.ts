@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { Deferred } from "@microsoft/fluid-core-utils";
 import {
+    ConnectionMode,
     IContentMessage,
     IDocumentDeltaConnection,
     IDocumentMessage,
@@ -11,8 +13,7 @@ import {
     IServiceConfiguration,
     ISignalMessage,
     ITokenClaims,
-} from "@prague/protocol-definitions";
-import { Deferred } from "@prague/utils";
+} from "@microsoft/fluid-protocol-definitions";
 import * as Comlink from "comlink";
 import { EventEmitter } from "events";
 import { IConnected } from "./messages";
@@ -53,6 +54,15 @@ export class InnerDocumentDeltaConnection extends EventEmitter implements IDocum
      */
     public get clientId(): string {
         return this.details.clientId;
+    }
+
+    /**
+     * Get the mode of the client
+     *
+     * @returns the client mode
+     */
+    public get mode(): ConnectionMode {
+        return this.details.mode;
     }
 
     /**

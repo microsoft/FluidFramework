@@ -3,17 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ConnectionState } from "@prague/container-definitions";
-import {
-    FileMode,
-    ISequencedDocumentMessage,
-    ITree,
-    MessageType,
-    TreeEntry,
-} from "@prague/protocol-definitions";
-import { IChannelAttributes, IComponentRuntime, IObjectStorageService } from "@prague/runtime-definitions";
-import { ISharedObject, SharedObject, ValueType } from "@prague/shared-object-common";
-import { fromBase64ToUtf8 } from "@prague/utils";
+import { ConnectionState } from "@microsoft/fluid-container-definitions";
+import { fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
+import { FileMode, ISequencedDocumentMessage, ITree, MessageType, TreeEntry } from "@microsoft/fluid-protocol-definitions";
+import { IChannelAttributes, IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
+import { ISharedObject, SharedObject, ValueType } from "@microsoft/fluid-shared-object-base";
 import * as assert from "assert";
 import { ConsensusRegisterCollectionFactory } from "./consensusRegisterCollectionFactory";
 import { debug } from "./debug";
@@ -126,9 +120,6 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
      * The correct answer for this should become more clear as we build more scenarios on top of this.
      */
     public async write(key: string, value: T): Promise<void> {
-        if (this.isLocal()) {
-            return Promise.reject(`Local changes are not allowed`);
-        }
         if (this.state !== ConnectionState.Connected) {
             return Promise.reject(`Client is not connected`);
         }
@@ -339,8 +330,6 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
     }
 
     private async submit(message: IRegisterOperation): Promise<void> {
-        assert(!this.isLocal());
-
         const clientSequenceNumber = this.submitLocalMessage(message);
         // False positive - tslint couldn't track that the promise is stored in promiseResolveQueue and resolved later
         // tslint:disable:promise-must-complete

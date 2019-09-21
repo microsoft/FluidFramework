@@ -27,7 +27,7 @@ export interface IMicrosoftGraph extends IProvideMicrosoftGraph {
     me(): Promise<IGraphUser>;
 }
 
-declare module "@prague/component-core-interfaces" {
+declare module "@microsoft/fluid-component-core-interfaces" {
     export interface IComponent extends Readonly<Partial<IProvideMicrosoftGraph>> {
     }
 }

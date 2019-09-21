@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as resources from "@prague/gitresources";
+import * as resources from "@microsoft/fluid-gitresources";
 import "gitgraph.js";
 import * as $ from "jquery";
 

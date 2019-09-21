@@ -3,20 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import * as api from "@prague/client-api";
-import { IComponentHandle } from "@prague/component-core-interfaces";
-import { ISerializableValue, ISharedMap, SharedMap } from "@prague/map";
-import { IntervalType, LocalReference } from "@prague/merge-tree";
-import { IBlob } from "@prague/protocol-definitions";
+import * as api from "@fluid-internal/client-api";
+import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
+import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
+import { IntervalType, LocalReference } from "@microsoft/fluid-merge-tree";
+import { IBlob } from "@microsoft/fluid-protocol-definitions";
 import {
+    IntervalCollectionView,
     ISerializedInterval,
-    SharedIntervalCollection,
-    SharedIntervalCollectionView,
+    SequenceInterval,
     SharedString,
     SharedStringFactory,
-    SharedStringInterval,
-    SharedStringIntervalCollectionValueType,
-} from "@prague/sequence";
+} from "@microsoft/fluid-sequence";
 import * as assert from "assert";
 import {
     DocumentDeltaEventManager,
@@ -25,11 +23,11 @@ import {
     TestDocumentServiceFactory,
     TestHost,
     TestResolver,
-} from "..";
+} from "../";
 
 const assertIntervalsHelper = (
     sharedString: SharedString,
-    intervals: SharedIntervalCollectionView<SharedStringInterval>,
+    intervals: IntervalCollectionView<SequenceInterval>,
     expected: ReadonlyArray<{start: number; end: number}>,
 ) => {
     const actual = intervals.findOverlappingIntervals(0, sharedString.getLength() - 1);
@@ -58,7 +56,7 @@ describe("SharedInterval", () => {
     describe("one client", () => {
         let host: TestHost;
         let sharedString: SharedString;
-        let intervals: SharedIntervalCollectionView<SharedStringInterval>;
+        let intervals: IntervalCollectionView<SequenceInterval>;
 
         const assertIntervals = (expected: ReadonlyArray<{start: number; end: number}>) => {
             assertIntervalsHelper(sharedString, intervals, expected);
@@ -68,7 +66,7 @@ describe("SharedInterval", () => {
             host = new TestHost([]);
             sharedString = await host.createType("text", SharedStringFactory.Type);
             sharedString.insertText(0, "012");
-            intervals = await sharedString.getSharedIntervalCollection("intervals").getView();
+            intervals = await sharedString.getIntervalCollection("intervals").getView();
         });
 
         afterEach(async () => {
@@ -186,7 +184,7 @@ describe("SharedInterval", () => {
             const host1 = new TestHost([]);
             const sharedString1 = await host1.createType<SharedString>("text", SharedStringFactory.Type);
             sharedString1.insertText(0, "0123456789");
-            const intervals1 = await sharedString1.getSharedIntervalCollection("intervals").getView();
+            const intervals1 = await sharedString1.getIntervalCollection("intervals").getView();
             intervals1.add(1, 7, IntervalType.SlideOnRemove);
             assertIntervalsHelper(sharedString1, intervals1, [{ start: 1, end: 7 }]);
 
@@ -194,7 +192,7 @@ describe("SharedInterval", () => {
             await TestHost.sync(host1, host2);
 
             const sharedString2 = await host2.getType<SharedString>("text");
-            const intervals2 = await sharedString2.getSharedIntervalCollection("intervals").getView();
+            const intervals2 = await sharedString2.getIntervalCollection("intervals").getView();
             assertIntervalsHelper(sharedString2, intervals2, [{ start: 1, end: 7 }]);
 
             sharedString2.removeRange(4, 5);
@@ -256,19 +254,14 @@ describe("SharedInterval", () => {
 
             outerString1.insertText(0, "outer string");
 
-            outerString1.createValueType("comments", SharedStringIntervalCollectionValueType.Name, undefined);
+            const intervalCollection1 = outerString1.getIntervalCollection("comments");
             await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
 
-            const intervalCollection1 = outerString1.get<SharedIntervalCollection<SharedStringInterval>>("comments");
-            const intervalCollection2 = outerString2.get<SharedIntervalCollection<SharedStringInterval>>("comments");
-            const intervalCollection3 = outerString3.get<SharedIntervalCollection<SharedStringInterval>>("comments");
+            const intervalCollection2 = outerString2.getIntervalCollection("comments");
+            const intervalCollection3 = outerString3.getIntervalCollection("comments");
             assert.ok(intervalCollection1);
             assert.ok(intervalCollection2);
             assert.ok(intervalCollection3);
-
-            intervalCollection1.attach(outerString1.client, "comments");
-            intervalCollection2.attach(outerString2.client, "comments");
-            intervalCollection3.attach(outerString3.client, "comments");
 
             const comment1Text = user1Document.createString();
             comment1Text.insertText(0, "a comment...");
@@ -297,10 +290,13 @@ describe("SharedInterval", () => {
 
             // SharedString snapshots as a blob
             const snapshotBlob = outerString2.snapshot().entries[0].value as IBlob;
-            // Since it's a SharedMap, its contents parse as an IMapDataObject with the "comments" member we set
-            const parsedSnapshot = JSON.parse(snapshotBlob.contents) as { comments: ISerializableValue };
+            // Since it's based on a map kernel, its contents parse as
+            // an IMapDataObject with the "comments" member we set
+            const parsedSnapshot = JSON.parse(snapshotBlob.contents);
             // LocalIntervalCollection serializes as an array of ISerializedInterval, let's get the first comment
-            const serializedInterval1FromSnapshot = (parsedSnapshot.comments.value as ISerializedInterval[])[0];
+            const serializedInterval1FromSnapshot =
+                // tslint:disable-next-line: no-unsafe-any
+                (parsedSnapshot.comments.value as ISerializedInterval[])[0];
             // The "story" is the ILocalValue of the handle pointing to the SharedString
             const handleLocalValueFromSnapshot = serializedInterval1FromSnapshot.properties.story as { type: string };
             assert.equal(handleLocalValueFromSnapshot.type, "__fluid_handle__");

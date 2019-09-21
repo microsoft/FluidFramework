@@ -8,8 +8,8 @@ import {
     IDocumentServiceFactory,
     IFluidResolvedUrl,
     IResolvedUrl,
-} from "@prague/protocol-definitions";
-import { TokenProvider } from "@prague/routerlicious-socket-storage";
+} from "@microsoft/fluid-protocol-definitions";
+import { TokenProvider } from "@microsoft/fluid-routerlicious-driver";
 import { parse } from "url";
 import { ITestDeltaConnectionServer } from "./testDeltaConnectionServer";
 import { createTestDocumentService } from "./testDocumentService";

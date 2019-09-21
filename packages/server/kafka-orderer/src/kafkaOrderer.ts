@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import * as core from "@microsoft/fluid-server-services-core";
 import {
     IClient,
     IClientJoin,
@@ -11,7 +10,8 @@ import {
     IDocumentSystemMessage,
     IServiceConfiguration,
     MessageType,
-} from "@prague/protocol-definitions";
+} from "@microsoft/fluid-protocol-definitions";
+import * as core from "@microsoft/fluid-server-services-core";
 import * as _ from "lodash";
 
 export class KafkaOrdererConnection implements core.IOrdererConnection {
@@ -144,38 +144,36 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
 
 export class KafkaOrderer implements core.IOrderer {
     public static async create(
-        storage: core.IDocumentStorage,
         producer: core.IProducer,
         tenantId: string,
         documentId: string,
         maxMessageSize: number,
         serviceConfiguration: IServiceConfiguration,
     ): Promise<KafkaOrderer> {
-        const details = await storage.getOrCreateDocument(tenantId, documentId);
-        return new KafkaOrderer(details, producer, tenantId, documentId, maxMessageSize, serviceConfiguration);
+        return new KafkaOrderer(producer, tenantId, documentId, maxMessageSize, serviceConfiguration);
     }
 
     private existing: boolean;
 
     constructor(
-        private details: core.IDocumentDetails,
         private producer: core.IProducer,
         private tenantId: string,
         private documentId: string,
         private maxMessageSize: number,
         private serviceConfiguration: IServiceConfiguration,
     ) {
-        this.existing = details.existing;
     }
 
     public async connect(
         socket: core.IWebSocket,
         clientId: string,
-        client: IClient): Promise<core.IOrdererConnection> {
+        client: IClient,
+        details: core.IDocumentDetails): Promise<core.IOrdererConnection> {
 
+        this.existing = details.existing;
         const connection = KafkaOrdererConnection.create(
             this.existing,
-            this.details.value,
+            details.value,
             this.producer,
             this.tenantId,
             this.documentId,
@@ -200,7 +198,6 @@ export class KafkaOrdererFactory {
 
     constructor(
         private producer: core.IProducer,
-        private storage: core.IDocumentStorage,
         private maxMessageSize: number,
         private serviceConfiguration: IServiceConfiguration,
     ) {
@@ -210,7 +207,6 @@ export class KafkaOrdererFactory {
         const fullId = `${tenantId}/${documentId}`;
         if (!this.ordererMap.has(fullId)) {
             const orderer = KafkaOrderer.create(
-                this.storage,
                 this.producer,
                 tenantId,
                 documentId,

@@ -3,14 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { FlowDocument } from "@chaincode/webflow";
-import {
-    IComponentRouter,
-    IComponentRunnable,
-    IRequest,
-    IResponse,
-} from "@prague/component-core-interfaces";
-import { ISharedMap } from "@prague/map";
+import { FlowDocument } from "@fluid-example/webflow";
+import { IComponentRouter, IComponentRunnable, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
+import { ISharedMap } from "@microsoft/fluid-map";
 import { IntelRunner, ITokenConfig } from "./intelRunner";
 
 export class TextAnalyzer implements IComponentRouter, IComponentRunnable {

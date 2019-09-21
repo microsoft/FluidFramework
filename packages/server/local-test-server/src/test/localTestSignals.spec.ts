@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { Document, load } from "@prague/client-api";
-import { IInboundSignalMessage } from "@prague/runtime-definitions";
+import { Document, load } from "@fluid-internal/client-api";
+import { IInboundSignalMessage } from "@microsoft/fluid-runtime-definitions";
 import * as assert from "assert";
 import {
     DocumentDeltaEventManager,

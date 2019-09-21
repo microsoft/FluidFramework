@@ -3,19 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { IUser } from "@prague/container-definitions";
 import { Loader } from "@prague/container-loader";
+import { normalize, WebCodeLoader } from "@prague/loader-web";
+import { IUser } from "@prague/protocol-definitions";
 import { RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
-import { CodeLoader } from "./codeLoader";
-import { HostPlatform } from "./hostPlatform";
 import { InsecureUrlResolver } from "./urlResolver";
 import { attach, initializeChaincode, parsePackageName } from "./utils";
 
 // Base service configuration.
-const ordererUrl = "https://alfred.wu2.prague.office-int.com";
-const storageUrl = "https://historian.wu2.prague.office-int.com";
+const ordererUrl = "http://localhost:3000";
+const storageUrl = "http://localhost:3000";
 const npm = "https://pragueauspkn-3873244262.azureedge.net";
-const defaultPackage = "@chaincode/shared-text@0.3.5692";
+const defaultPackage = "@chaincode/smde@0.10.13378";
+
 // You'll likely want to create your own tenant at https://admin.wu2.prague.office-int.com and then change the
 // tenantId and tenantKey values.
 const tenantId = "determined-bassi";
@@ -47,36 +47,40 @@ export async function start(url: string, code: string): Promise<void> {
     const documentServicesFactory = new RouterliciousDocumentServiceFactory();
 
     // The code loader provides the ability to load NPM packages that have been quorumed on and that represent
-    // the code for the document.
-    const codeLoader = new CodeLoader(npm);
+    // the code for the document. The base WebCodeLoader supports both code on a CDN as well as those defined
+    // within an NPM repository. Future work plans to extend this to allow for tarballs, git repos, and files stored
+    // directly within the document (or another Fluid document).
+    //
+    // When in a node environment any NPM package will be installed directly. But when int he browser the loader
+    // looks at the package's package.json for a special 'fluid' entry which defines the code designed to be run in
+    // the browser as well as the name of the entry point module. It then script includes these files on the page and
+    // once loaded makes use of the module entry point name to get access to the module.
+    const codeLoader = new WebCodeLoader(npm);
 
     // Finally with all the above objects created we can fully construct the loader
     const loader = new Loader(
         { resolver: insecureResolver },
         documentServicesFactory,
         codeLoader,
-        { blockUpdateMarkers: true });
+        { blockUpdateMarkers: true },
+        null);
 
     // We start by resolving the URL to its underlying Prague document. This gives low-level access which will enable
     // us to quorum on code later or detect when the code quorum has changed. In many cases you may not need this
     // behavior and can instead just directly make requests against the document.
     const pragueDocument = await loader.resolve({ url });
 
-    // The HostPlatform establishes the capabilities we will provide to our loaded component. In this case we expose
-    // access to the div with the id of "content" inside of index.html. The loaded component will then render
-    // to this div.
-    const platform = new HostPlatform(document.getElementById("content"));
-
     // The attach helper method performs the actual attachment of the above platform to the component identified
-    // by the URL in the browser. Once the attach is complete the component will render to the div we provided
-    // to the HostPlatform.
-    attach(loader, pragueDocument, url, platform);
+    // by the URL in the browser. Once the attach is complete the component will render to the provided div.
+    attach(loader, pragueDocument, url, document.getElementById("content") as HTMLDivElement);
 
     // This step is used when creating a new document. In the case that your host is only loading existing documents
     // then this is not necessary. But should you wish to create new ones this step goes and proposes the passed in
     // package name on the code quorum. We only perform this check for new documents.
     if (!pragueDocument.existing) {
-        await initializeChaincode(pragueDocument, code)
+        // normalize is a helper method which converts from a package name to the JSON object we will quorum on
+        const details = normalize(code, npm);
+        await initializeChaincode(pragueDocument, details)
             .catch((error) => console.error("chaincode error", error));
     }
 }

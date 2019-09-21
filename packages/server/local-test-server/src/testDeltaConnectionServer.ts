@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { RoundTrip } from "@fluid-internal/client-api";
+import { IConnect, IConnected } from "@microsoft/fluid-driver-base";
+import { ConnectionMode, IClient, IContentMessage, IDocumentMessage, ISignalMessage, ITokenClaims } from "@microsoft/fluid-protocol-definitions";
 import {
     LocalNodeFactory,
     LocalOrderer,
@@ -13,6 +16,7 @@ import {
 import {
     ICollection,
     IDatabaseManager,
+    IDocumentStorage,
     IOrderer,
     IOrdererConnection,
     IOrdererManager,
@@ -30,9 +34,6 @@ import {
     TestTenantManager,
     TestWebSocketServer,
 } from "@microsoft/fluid-server-test-utils";
-import { RoundTrip } from "@prague/client-api";
-import { IClient, IContentMessage, IDocumentMessage, ISignalMessage, ITokenClaims } from "@prague/protocol-definitions";
-import { IConnect, IConnected } from "@prague/socket-storage-shared";
 import * as jwt from "jsonwebtoken";
 import * as randomName from "random-name";
 import * as semver from "semver";
@@ -145,6 +146,7 @@ export class TestDeltaConnectionServer implements ITestDeltaConnectionServer {
             webSocketServer,
             testOrderer,
             testTenantManager,
+            testStorage,
             testCollection);
 
         return new TestDeltaConnectionServer(webSocketServer, databaseManager, testOrderer);
@@ -178,6 +180,7 @@ export function register(
     webSocketServer: IWebSocketServer,
     orderManager: IOrdererManager,
     tenantManager: ITenantManager,
+    storage: IDocumentStorage,
     contentCollection: ICollection<any>) {
 
     const socketList: IWebSocket[] = [];
@@ -186,6 +189,11 @@ export function register(
         const connectionsMap = new Map<string, IOrdererConnection>();
         // Map from client IDs to room.
         const roomMap = new Map<string, string>();
+
+        function isWriter(scopes: string[], existing: boolean, mode: ConnectionMode): boolean {
+            return true;
+        }
+
         socketList.push(socket);
         async function connectDocument(message: IConnect): Promise<IConnected> {
             // Validate token signature and claims
@@ -222,16 +230,18 @@ export function register(
                     `Client: ${JSON.stringify(connectVersions)}`);
             }
 
-            if (canWrite(messageClient.scopes)) {
+            const details = await storage.getOrCreateDocument(claims.tenantId, claims.documentId);
+            if (isWriter(messageClient.scopes, details.existing, message.mode)) {
                 const orderer = await orderManager.getOrderer(claims.tenantId, claims.documentId);
-                const connection = await orderer.connect(socket, clientId, messageClient as IClient);
+                const connection = await orderer.connect(socket, clientId, messageClient as IClient, details);
                 connectionsMap.set(clientId, connection);
 
                 const connectedMessage: IConnected = {
                     claims,
                     clientId,
-                    existing: connection.existing,
+                    existing: details.existing,
                     maxMessageSize: connection.maxMessageSize,
+                    mode: "write",
                     parentBranch: connection.parentBranch,
                     serviceConfiguration: connection.serviceConfiguration,
                     supportedVersions: [protocolVersion],
@@ -240,12 +250,12 @@ export function register(
 
                 return connectedMessage;
             } else {
-                // Todo (mdaumi): We should split storage stuff from orderer to get the following fields right.
                 const connectedMessage: IConnected = {
                     claims,
                     clientId,
-                    existing: true, // Readonly client can only open an existing document.
+                    existing: details.existing,
                     maxMessageSize: 1024, // Readonly client can't send ops.
+                    mode: "read",
                     parentBranch: null, // Does not matter for now.
                     serviceConfiguration: {
                         blockSize: 64436,
@@ -262,10 +272,6 @@ export function register(
 
                 return connectedMessage;
             }
-        }
-
-        function canWrite(scopes: string[]): boolean {
-            return true;
         }
 
         // Note connect is a reserved socket.io word so we use connect_document to represent the connect request

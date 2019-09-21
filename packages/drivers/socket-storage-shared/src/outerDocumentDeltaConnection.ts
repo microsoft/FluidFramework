@@ -4,6 +4,7 @@
  */
 
 import {
+    ConnectionMode,
     IContentMessage,
     IDocumentDeltaConnection,
     IDocumentMessage,
@@ -11,7 +12,7 @@ import {
     IServiceConfiguration,
     ISignalMessage,
     ITokenClaims,
-} from "@prague/protocol-definitions";
+} from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
 import { IConnected } from "./messages";
 
@@ -38,18 +39,16 @@ export class OuterDocumentDeltaConnection extends EventEmitter implements IDocum
      *
      * @param id - document ID
      */
-    public static async create(
+    public static create(
         documentDeltaConnection: IDocumentDeltaConnection,
         connection: IConnected,
         proxiedFunctionsFromInnerFrameP: Promise<IInnerDocumentDeltaConnectionProxy>,
-        proxyCallback: (IOuterDocumentDeltaConnection) => any,
-    ): Promise<IDocumentDeltaConnection> {
+    ): IDocumentDeltaConnection {
 
         const deltaConnection = new OuterDocumentDeltaConnection(
             connection,
             documentDeltaConnection,
             proxiedFunctionsFromInnerFrameP,
-            proxyCallback,
         );
 
         return deltaConnection;
@@ -62,6 +61,15 @@ export class OuterDocumentDeltaConnection extends EventEmitter implements IDocum
      */
     public get clientId(): string {
         return this.details.clientId;
+    }
+
+    /**
+     * Get the mode of the client
+     *
+     * @returns the client mode
+     */
+    public get mode(): ConnectionMode {
+        return this.details.mode;
     }
 
     /**
@@ -150,37 +158,8 @@ export class OuterDocumentDeltaConnection extends EventEmitter implements IDocum
         public details: IConnected,
         private readonly connection: IDocumentDeltaConnection,
         private readonly proxiedFunctionsFromInnerFrameP: Promise<IInnerDocumentDeltaConnectionProxy>,
-        proxyCallback: (IOuterDocumentDeltaConnection) => any) {
+        ) {
         super();
-
-        // Test
-        async function add(a: number, b: number): Promise<number> {
-            return a + b;
-        }
-
-        // function getDetails(): IConnected {
-        //     return details;
-        // }
-        const getDetails = async () => details;
-
-        const submit = async (messages: IDocumentMessage[]) => {
-            this.connection.submit(messages);
-        };
-
-        const submitSignal = async (message: IDocumentMessage) => {
-            this.connection.submitSignal(message);
-        };
-
-        const outerMethodsToProxy: IOuterDocumentDeltaConnection = {
-            add,
-            getDetails,
-            submit,
-            submitSignal,
-        };
-
-        // this has to happen before the innerProxyP resolution
-        // tslint:disable-next-line: no-unsafe-any
-        proxyCallback(outerMethodsToProxy);
 
         // This cannot be an await, must be a then
         // Or else it causes a deadlock
@@ -227,6 +206,33 @@ export class OuterDocumentDeltaConnection extends EventEmitter implements IDocum
             .catch((err) => {
                 console.error(err);
             });
+    }
+
+    public getOuterDocumentDeltaConnection(): IOuterDocumentDeltaConnection {
+
+        // Test
+        async function add(a: number, b: number): Promise<number> {
+            return a + b;
+        }
+
+        const getDetails = async () => this.details;
+
+        const submit = async (messages: IDocumentMessage[]) => {
+            this.connection.submit(messages);
+        };
+
+        const submitSignal = async (message: IDocumentMessage) => {
+            this.connection.submitSignal(message);
+        };
+
+        const outerMethodsToProxy: IOuterDocumentDeltaConnection = {
+            add,
+            getDetails,
+            submit,
+            submitSignal,
+        };
+
+        return outerMethodsToProxy;
     }
 
     /**

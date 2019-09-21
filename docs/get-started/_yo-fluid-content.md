@@ -6,7 +6,7 @@ Once you've cloned the repo, you can set up the `yo fluid` bootstrapper:
 
 ```text
 npm install -g yo
-cd /Prague/tools/generator-fluid
+cd /FluidFramework/tools/generator-fluid
 npm install
 npm link
 ```

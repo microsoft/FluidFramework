@@ -9,12 +9,11 @@ require("jsdom-global")("", { url: "http://localhost" });
 window.performance.mark = window.performance.mark || (() => {});
 window.performance.measure = window.performance.measure || (() => {});
 
+// tslint:disable:binary-expression-operand-order
+import { TestHost } from "@microsoft/fluid-local-test-server";
+import * as assert from "assert";
 // tslint:disable-next-line:no-import-side-effect
 import "mocha";
-
-// tslint:disable:binary-expression-operand-order
-import { TestHost } from "@prague/local-test-server";
-import * as assert from "assert";
 import { htmlFormatter } from "../src";
 import { FlowDocument, flowDocumentFactory } from "../src/document";
 import { FlowDocumentType } from "../src/runtime";

@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import * as Table from "./table";
-export { Table };
-import * as Paragraph from "./paragraph";
-export { Paragraph };
 import { CharacterCodes } from "./characterCodes";
+import * as Paragraph from "./paragraph";
+import * as Table from "./table";
+
+export { Table };
+export { Paragraph };
 export { CharacterCodes };

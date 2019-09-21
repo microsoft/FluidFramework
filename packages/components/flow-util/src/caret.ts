@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Direction } from ".";
+import { Direction } from "./";
 import { getTabDirection } from "./direction";
 import { IRect } from "./rect";
 

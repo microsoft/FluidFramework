@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { buildHierarchy, flatten } from "@microsoft/fluid-core-utils";
 import {
+    ConnectionMode,
     IClient,
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
@@ -14,8 +16,7 @@ import {
     ISnapshotTree,
     ITree,
     IVersion,
-} from "@prague/protocol-definitions";
-import { buildHierarchy, flatten } from "@prague/utils";
+} from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
 import { EmptyDeltaStorageService } from "./emptyDeltaStorageService";
 import { ReadDocumentStorageServiceBase } from "./replayController";
@@ -145,7 +146,7 @@ export class StaticStorageDocumentService implements IDocumentService {
         return new EmptyDeltaStorageService();
     }
 
-    public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
+    public async connectToDeltaStream(client: IClient, mode: ConnectionMode): Promise<IDocumentDeltaConnection> {
         // We have no delta stream, so make it not return forever...
         // tslint:disable-next-line:promise-must-complete
         return new Promise(() => {});

@@ -10,10 +10,11 @@ import {
     IComponentRunnable,
     IRequest,
     IResponse,
-} from "@prague/component-core-interfaces";
-import { ComponentRuntime } from "@prague/component-runtime";
-import { ConsensusRegisterCollection, IConsensusRegisterCollection } from "@prague/consensus-register-collection";
-import { ISharedMap, SharedMap } from "@prague/map";
+} from "@microsoft/fluid-component-core-interfaces";
+import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
+import { ConnectionState } from "@microsoft/fluid-container-definitions";
+import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
+import { ConsensusRegisterCollection } from "@microsoft/fluid-register-collection";
 import {
     IAgentScheduler,
     IComponentContext,
@@ -21,8 +22,8 @@ import {
     IComponentRuntime,
     ITask,
     ITaskManager,
-} from "@prague/runtime-definitions";
-import { ISharedObjectFactory } from "@prague/shared-object-common";
+} from "@microsoft/fluid-runtime-definitions";
+import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import * as assert from "assert";
 import * as debug from "debug";
 import { EventEmitter } from "events";
@@ -35,9 +36,9 @@ const LeaderTaskId = "leader";
 
 class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent, IComponentRouter {
 
-    public static async load(runtime: IComponentRuntime) {
+    public static async load(runtime: IComponentRuntime, context: IComponentContext) {
         let root: ISharedMap;
-        let scheduler: IConsensusRegisterCollection<string | null>;
+        let scheduler: ConsensusRegisterCollection<string | null>;
         if (!runtime.existing) {
             root = SharedMap.create(runtime, "root");
             root.register();
@@ -49,7 +50,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
             const handle = await root.wait<IComponentHandle>("scheduler");
             scheduler = await handle.get<ConsensusRegisterCollection<string | null>>();
         }
-        const agentScheduler = new AgentScheduler(runtime, scheduler);
+        const agentScheduler = new AgentScheduler(runtime, context, scheduler);
         agentScheduler.initialize().catch((err) => {
             debug(err as string);
         });
@@ -71,7 +72,8 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
 
     constructor(
         private readonly runtime: IComponentRuntime,
-        private readonly scheduler: IConsensusRegisterCollection<string | null>) {
+        private readonly context: IComponentContext,
+        private readonly scheduler: ConsensusRegisterCollection<string | null>) {
 
         super();
     }
@@ -275,62 +277,92 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
     }
 
     private async initialize() {
+        const configuration = (this.context.hostRuntime as IComponent).IComponentConfiguration;
+        if (configuration === undefined || configuration.canReconnect) {
+            await this.waitForFullConnection();
+
+            const quorum = this.runtime.getQuorum();
+            // A client left the quorum. Iterate and clear tasks held by that client.
+            // Ideally a leader should do this cleanup. But it's complicated when a leader itself leaves.
+            // Probably okay for now to have every client try to do this.
+            quorum.on("removeMember", async (clientId: string) => {
+                if (this.context.hostRuntime.deltaManager.active) {
+                    const leftTasks: string[] = [];
+                    for (const taskUrl of this.scheduler.keys()) {
+                        if (this.getTaskClientId(taskUrl) === clientId) {
+                            leftTasks.push(taskUrl);
+                        }
+                    }
+                    await this.clearTasks(leftTasks);
+                }
+            });
+
+            // Listeners for new/released tasks. All clients will try to grab at the same time.
+            // May be we want a randomized timer (Something like raft) to reduce chattiness?
+            this.scheduler.on("atomicChanged", async (changed: IChanged) => {
+                if (this.context.hostRuntime.deltaManager.active) {
+                    const currentClient = this.getTaskClientId(changed.key);
+                    // Either a client registered for a new task or released a running task.
+                    if (currentClient === null) {
+                        await this.pickNewTasks([changed.key]);
+                    }
+                    // A new leader was picked. set leadership info.
+                    if (changed.key === LeaderTaskId && currentClient === this.runtime.clientId) {
+                        this._leader = true;
+                        this.emit("leader");
+                    }
+                }
+            });
+
+            await this.initializeCore();
+            this.handleReconnection();
+        }
+    }
+
+    // Ensures that runtime and scheduler is connected.
+    private async waitForFullConnection(): Promise<void> {
         if (!this.runtime.connected) {
             // tslint:disable-next-line
             await new Promise<void>((resolve) => this.runtime.on("connected", () => resolve()));
         }
+        if (this.scheduler.state !== ConnectionState.Connected) {
+            // tslint:disable-next-line
+            await new Promise<void>((resolve) => this.scheduler.on("connected", () => resolve()));
+        }
+    }
 
-        const quorum = this.runtime.getQuorum();
-        // A client left the quorum. Iterate and clear tasks held by that client.
-        // Ideally a leader should do this cleanup. But it's complicated when a leader itself leaves.
-        // Probably okay for now to have every client try to do this.
-        quorum.on("removeMember", async (clientId: string) => {
-            const leftTasks: string[] = [];
+    private async initializeCore() {
+        if (this.context.hostRuntime.deltaManager.active) {
+            // Nobody released the tasks held by last client in previous session.
+            // Check to see if this client needs to do this.
+            const clearCandidates: string[] = [];
             for (const taskUrl of this.scheduler.keys()) {
-                if (this.getTaskClientId(taskUrl) === clientId) {
-                    leftTasks.push(taskUrl);
+                // tslint:disable-next-line: no-non-null-assertion
+                if (!this.runtime.getQuorum().getMembers().has(this.getTaskClientId(taskUrl)!)) {
+                    clearCandidates.push(taskUrl);
                 }
             }
-            await this.clearTasks(leftTasks);
-        });
+            await this.clearTasks(clearCandidates);
 
-        // Listeners for new/released tasks. All clients will try to grab at the same time.
-        // May be we want a randomized timer (Something like raft) to reduce chattiness?
-        this.scheduler.on("atomicChanged", async (changed: IChanged) => {
-            const currentClient = this.getTaskClientId(changed.key);
-            // Either a client registered for a new task or released a running task.
-            if (currentClient === null) {
-                await this.pickNewTasks([changed.key]);
-            }
-            // A new leader was picked. set leadership info.
-            if (changed.key === LeaderTaskId && currentClient === this.runtime.clientId) {
-                this._leader = true;
-                this.emit("leader");
-            }
-        });
+            // Each client expresses interest to be a leader.
+            try {
+                await this.pick(LeaderTaskId);
 
-        // Nobody released the tasks held by last client in previous session.
-        // Check to see if this client needs to do this.
-        const clearCandidates: string[] = [];
-        for (const taskUrl of this.scheduler.keys()) {
-            // tslint:disable-next-line: no-non-null-assertion
-            if (!quorum.getMembers().has(this.getTaskClientId(taskUrl)!)) {
-                clearCandidates.push(taskUrl);
+                // There must be a leader now.
+                const leaderClientId = this.getTaskClientId(LeaderTaskId);
+                assert(leaderClientId, "No leader present");
+                this._leader = leaderClientId === this.runtime.clientId;
+            } catch (err) {
+                debug(err as string);
             }
         }
-        await this.clearTasks(clearCandidates);
+    }
 
-        // Each client expresses interest to be a leader.
-        try {
-            await this.pick(LeaderTaskId);
-
-            // There must be a leader now.
-            const leaderClientId = this.getTaskClientId(LeaderTaskId);
-            assert(leaderClientId, "No leader present");
-            this._leader = leaderClientId === this.runtime.clientId;
-        } catch (err) {
-            debug(err as string);
-        }
+    private handleReconnection() {
+        this.runtime.on("connected", async () => {
+            await this.waitForFullConnection();
+            await this.initializeCore();
+        });
     }
 
     private async runTask(url: string) {
@@ -361,7 +393,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
 export class TaskManager implements ITaskManager {
 
     public static async load(runtime: IComponentRuntime, context: IComponentContext): Promise<TaskManager> {
-        const agentScheduler = await AgentScheduler.load(runtime);
+        const agentScheduler = await AgentScheduler.load(runtime, context);
         return new TaskManager(agentScheduler, context);
     }
 
@@ -397,24 +429,22 @@ export class TaskManager implements ITaskManager {
     }
 
     public async pick(componentUrl: string, ...tasks: ITask[]): Promise<void> {
-        const urlWithSlash = componentUrl.startsWith("/") ? componentUrl : `/${componentUrl}`;
-        const runtimeAsComponent = this.context.hostRuntime as IComponent;
-        const configuration = runtimeAsComponent.IComponentConfiguration;
-
+        const configuration = (this.context.hostRuntime as IComponent).IComponentConfiguration;
         if (configuration && !configuration.canReconnect) {
-            return Promise.reject("Picking now allowed on secondary copy");
+            return Promise.reject("Picking not allowed on secondary copy");
+        } else {
+            const urlWithSlash = componentUrl.startsWith("/") ? componentUrl : `/${componentUrl}`;
+            const registersP: Promise<void>[] = [];
+            for (const task of tasks) {
+                this.taskMap.set(task.id, task.instance);
+                registersP.push(this.scheduler.pick(`${urlWithSlash}${this.url}/${task.id}`));
+            }
+            try {
+                await Promise.all(registersP);
+            } catch (err) {
+                debug(err as string); // Just log the error. It will be attempted again.
+            }
         }
-        const registersP: Promise<void>[] = [];
-        for (const task of tasks) {
-            this.taskMap.set(task.id, task.instance);
-            registersP.push(this.scheduler.pick(`${urlWithSlash}${this.url}/${task.id}`));
-        }
-        try {
-            await Promise.all(registersP);
-        } catch (err) {
-            debug(err as string); // Just log the error. It will be attempted again.
-        }
-
     }
 }
 

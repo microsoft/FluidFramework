@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { IClient } from "./clients";
+import { ConnectionMode, IClient } from "./clients";
 import { IServiceConfiguration } from "./config";
 import {
     IContentMessage,
@@ -208,9 +208,14 @@ export interface IDocumentDeltaConnection extends EventEmitter {
     clientId: string;
 
     /**
-     * claims for the connection
+     * claims for the client
      */
     claims: ITokenClaims;
+
+    /**
+     * mode of the client
+     */
+    mode: ConnectionMode;
 
     /**
      * Whether the connection was made to a new or existing document
@@ -288,7 +293,7 @@ export interface IDocumentService {
     /**
      * Subscribes to the document delta stream
      */
-    connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection>;
+    connectToDeltaStream(client: IClient, mode: ConnectionMode): Promise<IDocumentDeltaConnection>;
 
     /**
      * Creates a branch of the document with the given ID. Returns the new ID.

@@ -23,13 +23,13 @@ const chart =
 apiVersion: v1
 name: admin
 version: 0.1.${patch}
-description: A Helm chart for Prague admin portal.
-home: https://github.com/microsoft/prague
+description: A Helm chart for Fluid admin portal.
+home: https://github.com/microsoft/FluidFramework
 `;
 
 const values =
 `## Generated from a tool - do not edit directly
-## Prague image version
+## Fluid image version
 replicaCount: 1
 image: prague.azurecr.io/admin:${imageVersion}
 

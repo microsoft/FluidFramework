@@ -10,11 +10,11 @@ import {
     IMergeTreeDeltaCallbackArgs,
     PropertySet,
     TextSegment,
-} from "@prague/merge-tree";
+} from "@microsoft/fluid-merge-tree";
 import {
     TestClient,
 // tslint:disable-next-line:no-submodule-imports
-} from "@prague/merge-tree/dist/test/";
+} from "@microsoft/fluid-merge-tree/dist/test/";
 import * as assert from "assert";
 import { isNullOrUndefined } from "util";
 import { SequenceDeltaEvent } from "../sequenceDeltaEvent";

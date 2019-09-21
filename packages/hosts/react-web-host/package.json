@@ -1,12 +1,12 @@
 {
-  "name": "@prague/react-web-host",
+  "name": "@fluid-example/react-web-host",
   "version": "0.10.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "dependencies": {
-    "@prague/tiny-web-host": "^0.10.0",
+    "@fluid-example/tiny-web-host": "^0.10.0",
     "react": "^16.8.3"
   },
   "devDependencies": {
