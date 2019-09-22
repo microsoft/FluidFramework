@@ -6,6 +6,7 @@
 import { IComponent, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import {
     ConnectionState,
+    IAudience,
     IBlobManager,
     IDeltaManager,
     IGenericBlob,
@@ -213,6 +214,11 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
     public getQuorum(): IQuorum {
         this.verifyNotClosed();
         return this._hostRuntime.getQuorum();
+    }
+
+    public getAudience(): IAudience {
+        this.verifyNotClosed();
+        return this._hostRuntime.getAudience();
     }
 
     public async getBlobMetadata(): Promise<IGenericBlob[]> {

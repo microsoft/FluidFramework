@@ -4,6 +4,7 @@
  */
 
 export * from "./messageFactory";
+export * from "./testClientManager";
 export * from "./testCollection";
 export * from "./testContext";
 export * from "./testDeltaStorageService";

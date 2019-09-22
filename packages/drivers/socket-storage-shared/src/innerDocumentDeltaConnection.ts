@@ -11,6 +11,7 @@ import {
     IDocumentMessage,
     ISequencedDocumentMessage,
     IServiceConfiguration,
+    ISignalClient,
     ISignalMessage,
     ITokenClaims,
 } from "@microsoft/fluid-protocol-definitions";
@@ -140,6 +141,15 @@ export class InnerDocumentDeltaConnection extends EventEmitter implements IDocum
      */
     public get initialSignals(): ISignalMessage[] | undefined {
         return this.details.initialSignals;
+    }
+
+    /**
+     * Get initial client list
+     *
+     * @returns initial client list sent during the connection
+     */
+    public get initialClients(): ISignalClient[] | undefined {
+        return this.details.initialClients;
     }
 
     private readonly tempEmitter: EventEmitter;

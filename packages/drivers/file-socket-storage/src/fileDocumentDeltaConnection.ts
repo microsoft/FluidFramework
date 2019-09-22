@@ -11,6 +11,7 @@ import {
     IDocumentMessage,
     ISequencedDocumentMessage,
     IServiceConfiguration,
+    ISignalClient,
     ISignalMessage,
     ITokenClaims,
 } from "@microsoft/fluid-protocol-definitions";
@@ -111,6 +112,7 @@ export class ReplayFileDeltaConnection extends EventEmitter implements IDocument
             initialContents: [],
             initialMessages: [],
             initialSignals: [],
+            initialClients: [],
             maxMessageSize: ReplayMaxMessageSize,
             mode,
             parentBranch: null,
@@ -179,6 +181,10 @@ export class ReplayFileDeltaConnection extends EventEmitter implements IDocument
 
     public get initialSignals(): ISignalMessage[] | undefined {
         return this.details.initialSignals;
+    }
+
+    public get initialClients(): ISignalClient[] | undefined {
+        return this.details.initialClients;
     }
 
     public get serviceConfiguration(): IServiceConfiguration {

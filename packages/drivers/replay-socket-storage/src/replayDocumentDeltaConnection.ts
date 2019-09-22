@@ -13,6 +13,7 @@ import {
     IDocumentStorageService,
     ISequencedDocumentMessage,
     IServiceConfiguration,
+    ISignalClient,
     ISignalMessage,
     ITokenClaims,
     IVersion,
@@ -195,6 +196,7 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
             initialContents: [],
             initialMessages: [],
             initialSignals: [],
+            initialClients: [],
             maxMessageSize: ReplayDocumentDeltaConnection.ReplayMaxMessageSize,
             mode: "write",
             parentBranch: null,
@@ -264,6 +266,10 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
 
     public get initialSignals(): ISignalMessage[] | undefined {
         return this.details.initialSignals;
+    }
+
+    public get initialClients(): ISignalClient[] | undefined {
+        return this.details.initialClients;
     }
 
     public get serviceConfiguration(): IServiceConfiguration {

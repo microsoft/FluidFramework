@@ -7,6 +7,7 @@ import { AgentSchedulerFactory } from "@microsoft/fluid-agent-scheduler";
 import { IComponentHandleContext, IComponentSerializer, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import {
     ConnectionState,
+    IAudience,
     IBlobManager,
     IComponentTokenProvider,
     IContainerContext,
@@ -874,6 +875,10 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
     public getQuorum(): IQuorum {
         return this.context.quorum;
+    }
+
+    public getAudience(): IAudience {
+        return this.context.audience;
     }
 
     public error(error: any) {

@@ -11,6 +11,7 @@ import {
 } from "@microsoft/fluid-component-core-interfaces";
 import {
     ConnectionState,
+    IAudience,
     ICodeLoader,
     IContainerContext,
     IDeltaManager,
@@ -119,6 +120,10 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
 
     public get serviceConfiguration(): IServiceConfiguration | undefined {
         return this.container.serviceConfiguration;
+    }
+
+    public get audience(): IAudience | undefined {
+        return this.container.audience;
     }
 
     // tslint:disable-next-line:no-unsafe-any

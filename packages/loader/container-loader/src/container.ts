@@ -45,6 +45,7 @@ import {
     ISequencedClient,
     ISequencedDocumentMessage,
     IServiceConfiguration,
+    ISignalClient,
     ISignalMessage,
     ISnapshotTree,
     ITokenClaims,
@@ -56,6 +57,7 @@ import {
 } from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
 import * as jwtDecode from "jwt-decode";
+import { Audience } from "./audience";
 import { BlobCacheStorageService } from "./blobCacheStorageService";
 import { BlobManager } from "./blobManager";
 import { ContainerContext } from "./containerContext";
@@ -142,6 +144,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private _parentBranch: string | undefined | null;
     private _connectionState = ConnectionState.Disconnected;
     private _serviceConfiguration: IServiceConfiguration | undefined;
+    private _audience: Audience | undefined;
 
     private context: ContainerContext | undefined;
     private pkg: string | IFluidCodeDetails | undefined;
@@ -202,6 +205,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
      */
     public get existing(): boolean | undefined {
         return this._existing;
+    }
+
+    public get audience(): Audience | undefined {
+        return this._audience;
     }
 
     /**
@@ -767,6 +774,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                         details.claims.scopes,
                         this._deltaManager!.serviceConfiguration);
                 }
+
+                // back-compat for new client and old server.
+                const priorClients = details.initialClients ? details.initialClients : [];
+                this._audience = new Audience(priorClients);
             });
 
             this._deltaManager.on("disconnect", (reason: string) => {
@@ -955,8 +966,20 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     }
 
     private processSignal(message: ISignalMessage) {
-        const local = this._clientId === message.clientId;
-        this.context!.processSignal(message, local);
+        // No clientId indicates a system signal message.
+        if (message.clientId === null && this._audience) {
+            const innerContent = message.content as { content: any, type: string };
+            if (innerContent.type === MessageType.ClientJoin) {
+                const newClient = innerContent.content as ISignalClient;
+                this._audience.addMember(newClient.clientId, newClient.client);
+            } else if (innerContent.type === MessageType.ClientLeave) {
+                const leftClientId = innerContent.content as string;
+                this._audience.removeMember(leftClientId);
+            }
+        } else {
+            const local = this._clientId === message.clientId;
+            this.context!.processSignal(message, local);
+        }
     }
 
     // tslint:disable no-unsafe-any

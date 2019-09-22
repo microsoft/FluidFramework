@@ -12,6 +12,7 @@ import {
     IDocumentMessage,
     ISequencedDocumentMessage,
     IServiceConfiguration,
+    ISignalClient,
     ISignalMessage,
     ITokenClaims,
 } from "@microsoft/fluid-protocol-definitions";
@@ -19,7 +20,7 @@ import { EventEmitter } from "events";
 import { debug } from "./debug";
 import { IConnect, IConnected } from "./messages";
 
-const protocolVersions = ["^0.2.0", "^0.1.0"];
+const protocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
 
 /**
  * Error raising for socket.io issues
@@ -285,6 +286,15 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
      */
     public get initialSignals(): ISignalMessage[] | undefined {
         return this.details.initialSignals;
+    }
+
+    /**
+     * Get initial client list
+     *
+     * @returns initial client list sent during the connection
+     */
+    public get initialClients(): ISignalClient[] | undefined {
+        return this.details.initialClients;
     }
 
     /**

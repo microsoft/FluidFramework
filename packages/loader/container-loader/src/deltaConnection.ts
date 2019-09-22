@@ -51,6 +51,7 @@ export class DeltaConnection extends EventEmitter {
             claims: connection.claims,
             clientId: connection.clientId,
             existing: connection.existing,
+            initialClients: connection.initialClients,
             initialContents: connection.initialContents,
             initialMessages: connection.initialMessages,
             initialSignals: connection.initialSignals,
