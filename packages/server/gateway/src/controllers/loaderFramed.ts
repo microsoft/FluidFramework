@@ -33,13 +33,14 @@ import { IHostServices } from "./services";
 
 export async function initialize(
     url: string,
-    resolved: IResolvedUrl,
+    resolved: IFluidResolvedUrl,
     cache: IGitCache,
     pkg: IResolvedPackage,
     scriptIds: string[],
     npm: string,
     jwt: string,
     config: any,
+    clientId: string,
     scope: IComponent,
     innerSession: boolean = false,
     outerSession: boolean = true,
@@ -89,10 +90,11 @@ export async function initialize(
         }
     } else {
         const documentServiceFactories: IDocumentServiceFactory[] = [];
+        // TODO: need to be support refresh token
         documentServiceFactories.push(new OdspDocumentServiceFactory(
-            "Server-Gateway",
-            (siteUrl: string) => Promise.resolve("fake token"),
-            () => Promise.resolve("fake token"),
+            clientId,
+            (siteUrl: string) => Promise.resolve(resolved.tokens.storageToken) ,
+            () => Promise.resolve(resolved.tokens.socketToken),
             new BaseTelemetryNullLogger()));
 
         documentServiceFactories.push(new RouterliciousDocumentServiceFactory(
