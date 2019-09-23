@@ -3,11 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import {
+    IComponent,
+    IComponentHTMLVisual,
+    IComponentQueryableLegacy,
+} from "@microsoft/fluid-component-core-interfaces";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
 import { Browser, IFluidResolvedUrl } from "@microsoft/fluid-protocol-definitions";
 import { RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
 import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
-import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { WebCodeLoader } from "@microsoft/fluid-web-code-loader";
 import * as jwt from "jsonwebtoken";
 import * as url from "url";
@@ -16,30 +20,40 @@ interface IWindow extends Window {
     closeContainer(): void;
 }
 
-async function attach(loader: Loader, baseUrl: string) {
-    console.log(baseUrl);
+async function attach(loader: Loader, baseUrl: string, div: HTMLDivElement) {
     const response = await loader.request({ url: baseUrl });
 
-    if (response.status !== 200) {
+    if (response.status !== 200 ||
+        !(
+            response.mimeType === "fluid/component" ||
+            response.mimeType === "prague/component"
+        )) {
         return;
     }
-    console.log(response.mimeType);
-    console.log(response.status);
-    switch (response.mimeType) {
-        case "fluid/component":
-            const component = response.value as IComponentRuntime;
-            console.log(component.id);
-            break;
+
+    // Check if the component is viewable
+    const component = response.value as IComponent;
+    const queryable = component as IComponentQueryableLegacy;
+    let viewable = component.IComponentHTMLVisual;
+    if (!viewable && queryable.query) {
+        viewable = queryable.query<IComponentHTMLVisual>("IComponentHTMLVisual");
+    }
+    if (viewable) {
+        const renderable =
+            viewable.addView ? viewable.addView() : viewable;
+
+        renderable.render(div, { display: "block" });
+        return;
     }
 }
 
-export async function registerAttach(loader: Loader, container: Container, uri: string) {
+export async function registerAttach(loader: Loader, container: Container, uri: string, div: HTMLDivElement) {
     console.log(`Attaching a web platform`);
-    attach(loader, uri).catch((err) => {
+    attach(loader, uri, div).catch((err) => {
         console.log(err);
     });
     container.on("contextChanged", (value) => {
-        attach(loader, uri);
+        attach(loader, uri, div);
     });
 }
 
@@ -51,7 +65,8 @@ export async function startLoading(
     token: string,
     jwtKey: string,
     packageUrl: string,
-    loaderType: string): Promise<void> {
+    loaderType: string,
+    div: HTMLDivElement): Promise<void> {
     console.log(`Loading ${id} as ${loaderType}`);
 
     const hostToken = jwt.sign(
@@ -109,7 +124,7 @@ export async function startLoading(
 
     checkContainerActivity(container);
 
-    registerAttach(loader, container, documentUrl);
+    registerAttach(loader, container, documentUrl, div);
 }
 
 // Checks container quorum for connected clients. Once all client leaves,
