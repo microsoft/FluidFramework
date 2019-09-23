@@ -42,14 +42,6 @@
     "html-loader": "^0.5.5",
     "url-loader": "^2.1.0"
   },
-  "prague": {
-    "browser": {
-      "entrypoint": "main",
-      "bundle": [
-        "dist/main.bundle.js"
-      ]
-    }
-  },
   "dependencies": {
     "@chaincode/textarea-noreact": "^0.10.2",
     "@prague/aqueduct": "^0.9.0",

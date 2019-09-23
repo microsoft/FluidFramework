@@ -25,14 +25,6 @@
   },
   "author": "Microsoft",
   "repository": "microsoft/FluidFramework",
-  "prague": {
-    "browser": {
-      "entrypoint": "main",
-      "bundle": [
-        "dist/main.bundle.js"
-      ]
-    }
-  },
   "fluid": {
     "browser": {
       "umd": {

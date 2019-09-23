@@ -29,14 +29,6 @@
     "webpack-cli": "3.1.0",
     "webpack-merge": "4.1.4"
   },
-  "prague": {
-    "browser": {
-      "entrypoint": "main",
-      "bundle": [
-        "dist/main.bundle.js"
-      ]
-    }
-  },
   "dependencies": {
     "@prague/app-component": "^0.3.0",
     "@prague/container-definitions": "^0.3.0",

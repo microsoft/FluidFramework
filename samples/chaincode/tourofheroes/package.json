@@ -31,14 +31,6 @@
     "webpack-cli": "^3.1.0",
     "webpack-merge": "^4.1.4"
   },
-  "prague": {
-    "browser": {
-      "entrypoint": "main",
-      "bundle": [
-        "dist/polyfills.bundle.js",
-        "dist/vendor.bundle.js",
-        "dist/main.bundle.js"
-      ]
     }
   },
   "dependencies": {

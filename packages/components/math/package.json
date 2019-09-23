@@ -6,14 +6,6 @@
   "module": "lib/mathComponent.js",
   "sideEffects": false,
   "types": "dist/mathComponent.d.ts",
-  "prague": {
-    "browser": {
-      "entrypoint": "main",
-      "bundle": [
-        "dist/main.bundle.js"
-      ]
-    }
-  },
   "fluid": {
     "browser": {
       "umd": {
