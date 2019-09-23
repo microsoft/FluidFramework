@@ -31,8 +31,6 @@
     "webpack-cli": "^3.1.0",
     "webpack-merge": "^4.1.4"
   },
-    }
-  },
   "dependencies": {
     "@angular/animations": "^7.2.7",
     "@angular/common": "^7.2.7",
