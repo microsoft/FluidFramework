@@ -3,7 +3,7 @@
   "description": "Minimal @chaincode sample to implement a collaborative counter.",
   "version": "0.10.0",
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "main": "dist/index.js",
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
@@ -21,7 +21,7 @@
     "webpack:dev": "npm run dev"
   },
   "devDependencies": {
-    "@prague/url-generator": "^1.0.4",
+    "@fluid-internal/url-generator": "^1.0.4",
     "@microsoft/fluid-webpack-component-loader": "^0.10.0",
     "@types/node": "^10.14.6",
     "@types/react-dom": "^16.0.11",

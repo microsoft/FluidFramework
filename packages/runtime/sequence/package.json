@@ -23,7 +23,7 @@
     "test:newsnapfiles": "node dist/test/createSnapshotFiles.js"
   },
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "nyc": {
     "all": true,
     "exclude": [

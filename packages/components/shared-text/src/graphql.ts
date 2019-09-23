@@ -4,6 +4,7 @@
  */
 
 import { IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
+import { ISharedMap } from "@microsoft/fluid-map";
 import { SharedString } from "@microsoft/fluid-sequence";
 import { EventEmitter } from "events";
 import * as GraphiQL from "graphiql";
@@ -18,7 +19,7 @@ export class GraphIQLView extends EventEmitter implements IComponentHTMLVisual {
 
     public get IComponentHTMLVisual() { return this; }
 
-    constructor(private sharedString: SharedString) {
+    constructor(private map: ISharedMap, private sharedString: SharedString) {
         super();
     }
 
@@ -35,7 +36,9 @@ export class GraphIQLView extends EventEmitter implements IComponentHTMLVisual {
         styleTag.innerText = css;
         document.head.appendChild(styleTag);
 
-        const graphQLServer = new GraphQLService(this.sharedString);
+        const graphQLServer = new GraphQLService(
+            this.map,
+            this.sharedString);
 
         function graphQLFetcher(graphQLParams) {
             return graphQLServer.runQuery(graphQLParams.query, graphQLParams.variables);

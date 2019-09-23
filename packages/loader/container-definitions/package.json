@@ -1,7 +1,7 @@
 {
   "name": "@microsoft/fluid-container-definitions",
   "version": "0.10.0",
-  "description": "Prague container definitions",
+  "description": "Fluid container definitions",
   "main": "dist/index.js",
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
@@ -19,7 +19,7 @@
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "dependencies": {
     "@microsoft/fluid-component-core-interfaces": "^0.10.0",
     "@microsoft/fluid-protocol-definitions": "^0.10.0"

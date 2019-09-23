@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TestHost } from "@prague/local-test-server";
+import { TestHost } from "@microsoft/fluid-local-test-server";
 import {
     TableDocument,
     TableDocumentType,

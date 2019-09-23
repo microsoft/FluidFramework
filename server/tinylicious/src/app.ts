@@ -16,9 +16,8 @@ import { Express } from "express";
 import * as safeStringify from "json-stringify-safe";
 import * as morgan from "morgan";
 import { Provider } from "nconf";
-import * as path from "path";
 import * as winston from "winston";
-import * as alfredRoutes from "./routes";
+import { create as createRoutes } from "./routes";
 
 // tslint:disable-next-line:no-var-requires
 const split = require("split");
@@ -52,13 +51,14 @@ export function create(
     app.use(bodyParser.urlencoded({ limit: requestSize, extended: false }));
 
     // bind routes
-    const routes = alfredRoutes.create(
+    const routes = createRoutes(
         config,
         mongoManager,
         storage);
 
-    app.use("/public", cors(), express.static(path.join(__dirname, "../../public")));
-    app.use(routes.api);
+    app.use(cors());
+    app.use(routes.storage);
+    app.use(routes.ordering);
 
     // catch 404 and forward to error handler
     app.use((req, res, next) => {

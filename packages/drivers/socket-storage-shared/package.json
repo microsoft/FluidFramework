@@ -19,7 +19,7 @@
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "dependencies": {
     "@microsoft/fluid-protocol-definitions": "^0.10.0",
     "@microsoft/fluid-core-utils": "^0.10.0",

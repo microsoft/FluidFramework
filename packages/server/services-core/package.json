@@ -1,7 +1,7 @@
 {
   "name": "@microsoft/fluid-server-services-core",
   "version": "0.10.0",
-  "description": "Prague services core definitions",
+  "description": "Fluid services core definitions",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
@@ -15,7 +15,7 @@
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "devDependencies": {
     "@microsoft/fluid-build-common": "^0.10.0",
     "concurrently": "^4.1.0",

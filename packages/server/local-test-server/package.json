@@ -1,5 +1,5 @@
 {
-  "name": "@prague/local-test-server",
+  "name": "@microsoft/fluid-local-test-server",
   "version": "0.10.0",
   "description": "Local test server implementation",
   "main": "dist/index.js",
@@ -40,7 +40,7 @@
     "cache-dir": "nyc/.cache",
     "report-dir": "nyc/report"
   },
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "dependencies": {
     "@microsoft/fluid-aqueduct": "^0.10.0",

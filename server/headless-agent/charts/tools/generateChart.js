@@ -24,12 +24,12 @@ apiVersion: v1
 name: headless-agent
 version: 0.1.${patch}
 description: A Helm chart for Headless Chrome Deployment.
-home: https://github.com/microsoft/prague
+home: https://github.com/microsoft/FluidFramework
 `;
 
 const values =
 `## Generated from a tool - do not edit directly
-## Prague image version
+## Fluid image version
 replicaCount: 4
 image: prague.azurecr.io/headless-agent:${imageVersion}
 

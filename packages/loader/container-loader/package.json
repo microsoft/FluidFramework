@@ -1,7 +1,7 @@
 {
   "name": "@microsoft/fluid-container-loader",
   "version": "0.10.0",
-  "description": "Prague container loader",
+  "description": "Fluid container loader",
   "main": "dist/index.js",
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
@@ -41,7 +41,7 @@
     "report-dir": "nyc/report"
   },
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "dependencies": {
     "@microsoft/fluid-component-core-interfaces": "^0.10.0",
     "@microsoft/fluid-container-definitions": "^0.10.0",

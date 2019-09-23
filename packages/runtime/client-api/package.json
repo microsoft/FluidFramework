@@ -1,7 +1,7 @@
 {
   "name": "@fluid-internal/client-api",
   "version": "0.10.0",
-  "description": "Prague client API",
+  "description": "Fluid client API",
   "main": "dist/index.js",
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
@@ -18,7 +18,7 @@
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "nyc": {
     "all": true,
     "exclude": [

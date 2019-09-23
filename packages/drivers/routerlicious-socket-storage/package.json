@@ -1,7 +1,7 @@
 {
   "name": "@microsoft/fluid-routerlicious-driver",
   "version": "0.10.0",
-  "description": "Socket.IO + Git implementation of Prague service API",
+  "description": "Socket.IO + Git implementation of Fluid service API",
   "main": "dist/index.js",
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
@@ -19,7 +19,7 @@
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "devDependencies": {
     "@microsoft/api-extractor": "^7.3.11",
     "@microsoft/fluid-build-common": "^0.10.0",

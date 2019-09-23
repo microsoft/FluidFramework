@@ -19,6 +19,7 @@ import {
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
+import { IAudience } from "./audience";
 import { IBlobManager } from "./blobs";
 import { IQuorum } from "./consensus";
 import { IDeltaManager } from "./deltas";
@@ -214,6 +215,7 @@ export interface IContainerContext extends EventEmitter, IMessageScheduler, IPro
     readonly snapshotFn: (message: string) => Promise<void>;
     readonly closeFn: () => void;
     readonly quorum: IQuorum;
+    readonly audience: IAudience | undefined;
     readonly loader: ILoader;
     readonly codeLoader: ICodeLoader;
     readonly logger: ITelemetryLogger;

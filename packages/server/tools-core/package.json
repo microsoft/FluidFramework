@@ -1,7 +1,7 @@
 {
   "name": "@microsoft/fluid-server-tools-core",
   "version": "0.10.0",
-  "description": "Prague service lambdas",
+  "description": "Fluid service lambdas",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "sideEffects": false,
@@ -16,7 +16,7 @@
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "devDependencies": {
     "@microsoft/fluid-build-common": "^0.10.0",
     "@types/async": "^2.0.50",

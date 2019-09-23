@@ -1,5 +1,5 @@
 {
-  "name": "@prague/host-service-interfaces",
+  "name": "@microsoft/fluid-host-service-interfaces",
   "version": "0.10.0",
   "description": "Host component service interfaces",
   "main": "dist/index.js",
@@ -19,7 +19,7 @@
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "dependencies": {
     "@microsoft/fluid-component-core-interfaces": "^0.10.0",
     "@microsoft/fluid-container-definitions": "^0.10.0"

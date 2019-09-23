@@ -1,7 +1,7 @@
 {
   "name": "@microsoft/fluid-server-services-client",
   "version": "0.10.0",
-  "description": "Isomorphic services for communicating with Prague",
+  "description": "Isomorphic services for communicating with Fluid",
   "main": "dist/index.js",
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
@@ -39,7 +39,7 @@
     "report-dir": "nyc/report"
   },
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "devDependencies": {
     "@microsoft/fluid-build-common": "^0.10.0",
     "@types/debug": "^0.0.31",

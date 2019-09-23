@@ -4,7 +4,7 @@
  */
 
 import { SparseMatrix, SparseMatrixFactory } from "@microsoft/fluid-sequence";
-import { TestHost } from "@prague/local-test-server";
+import { TestHost } from "@microsoft/fluid-local-test-server";
 import * as assert from "assert";
 import "mocha";
 

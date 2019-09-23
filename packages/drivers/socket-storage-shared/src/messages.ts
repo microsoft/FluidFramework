@@ -9,6 +9,7 @@ import {
     IContentMessage,
     ISequencedDocumentMessage,
     IServiceConfiguration,
+    ISignalClient,
     ISignalMessage,
     ITokenClaims,
 } from "@microsoft/fluid-protocol-definitions";
@@ -91,6 +92,11 @@ export interface IConnected {
      * Signals sent during the connection
      */
     initialSignals?: ISignalMessage[];
+
+    /**
+     * Prior clients already connected.
+     */
+    initialClients?: ISignalClient[];
 
     /**
      * Protocol version selected by the server to communicate with the client

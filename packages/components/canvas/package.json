@@ -1,9 +1,9 @@
 {
   "name": "@fluid-example/canvas",
-  "description": "Prague ink canvas",
+  "description": "Fluid ink canvas",
   "version": "0.10.0",
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "main": "dist/index.js",
   "module": "lib/index.js",
   "types": "dist/index.d.ts",

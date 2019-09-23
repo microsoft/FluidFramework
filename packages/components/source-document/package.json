@@ -38,7 +38,7 @@
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "dependencies": {
     "@microsoft/fluid-aqueduct": "^0.10.0",
@@ -52,7 +52,7 @@
   },
   "devDependencies": {
     "@microsoft/fluid-build-common": "^0.10.0",
-    "@prague/local-test-server": "^0.10.0",
+    "@microsoft/fluid-local-test-server": "^0.10.0",
     "@types/debug": "^0.0.31",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.12.12",

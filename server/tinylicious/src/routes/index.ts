@@ -9,19 +9,21 @@ import {
 } from "@microsoft/fluid-server-services-core";
 import { Router } from "express";
 import { Provider } from "nconf";
-import * as api from "./api";
+import * as ordering from "./ordering";
+import * as storage from "./storage";
 
 export interface IRoutes {
-    agent: Router;
-    api: Router;
+    ordering: Router;
+    storage: Router;
 }
 
 export function create(
     config: Provider,
     mongoManager: MongoManager,
-    storage: IDocumentStorage,
+    documentStorage: IDocumentStorage,
 ) {
     return {
-        api: api.create(config, storage, mongoManager),
+        ordering: ordering.create(config, documentStorage, mongoManager),
+        storage: storage.create(config),
     };
 }

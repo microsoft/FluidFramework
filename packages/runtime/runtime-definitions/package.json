@@ -1,7 +1,7 @@
 {
   "name": "@microsoft/fluid-runtime-definitions",
   "version": "0.10.0",
-  "description": "Prague Runtime definitions",
+  "description": "Fluid Runtime definitions",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "sideEffects": "false",
@@ -16,7 +16,7 @@
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "devDependencies": {
     "@microsoft/api-extractor": "^7.3.11",
     "@microsoft/fluid-build-common": "^0.10.0",

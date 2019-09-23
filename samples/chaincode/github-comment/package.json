@@ -3,7 +3,7 @@
   "description": "A GitHub-style textarea that extends the CollaborativeTextAreaNoReact component",
   "version": "0.10.1",
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "main": "dist/index.js",
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
