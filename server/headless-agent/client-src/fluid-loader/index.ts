@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-    IComponent,
-    IComponentHTMLVisual,
-    IComponentQueryableLegacy,
-} from "@microsoft/fluid-component-core-interfaces";
+import { registerAttach } from "@microsoft/fluid-base-host";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
 import { Browser, IFluidResolvedUrl } from "@microsoft/fluid-protocol-definitions";
 import { RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
@@ -18,43 +14,6 @@ import * as url from "url";
 
 interface IWindow extends Window {
     closeContainer(): void;
-}
-
-async function attach(loader: Loader, baseUrl: string, div: HTMLDivElement) {
-    const response = await loader.request({ url: baseUrl });
-
-    if (response.status !== 200 ||
-        !(
-            response.mimeType === "fluid/component" ||
-            response.mimeType === "prague/component"
-        )) {
-        return;
-    }
-
-    // Check if the component is viewable
-    const component = response.value as IComponent;
-    const queryable = component as IComponentQueryableLegacy;
-    let viewable = component.IComponentHTMLVisual;
-    if (!viewable && queryable.query) {
-        viewable = queryable.query<IComponentHTMLVisual>("IComponentHTMLVisual");
-    }
-    if (viewable) {
-        const renderable =
-            viewable.addView ? viewable.addView() : viewable;
-
-        renderable.render(div, { display: "block" });
-        return;
-    }
-}
-
-export async function registerAttach(loader: Loader, container: Container, uri: string, div: HTMLDivElement) {
-    console.log(`Attaching a web platform`);
-    attach(loader, uri, div).catch((err) => {
-        console.log(err);
-    });
-    container.on("contextChanged", (value) => {
-        attach(loader, uri, div);
-    });
 }
 
 export async function startLoading(
