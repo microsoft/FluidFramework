@@ -19,11 +19,11 @@ import {
     IRuntimeFactory,
 } from "@microsoft/fluid-container-definitions";
 import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
+import { IDocumentFactory } from "@microsoft/fluid-host-service-interfaces";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import * as scribe from "@microsoft/fluid-server-tools-core";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
-import { IDocumentFactory } from "@prague/host-service-interfaces";
 import Axios from "axios";
 import { EventEmitter } from "events";
 import { resolve } from "url";

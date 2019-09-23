@@ -34,6 +34,7 @@ import {
     PerformanceEvent,
     raiseConnectedEvent,
     readAndParse,
+    TelemetryLogger,
 } from "@microsoft/fluid-core-utils";
 import {
     FileMode,
@@ -109,6 +110,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         const containerP = new Promise<Container>(async (res, rej) => {
             container.once("error", (error) => {
+                container.close();
                 rej(error);
             });
             await container.load(version, connection)
@@ -231,7 +233,13 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         // create logger for components to use
         this.subLogger = DebugLogger.mixinDebugLogger(
             "fluid:telemetry",
-            { documentId: this.id, [pkgName]: pkgVersion },
+            {
+                documentId: this.id,
+                package: {
+                    name: TelemetryLogger.sanitizePkgName(pkgName),
+                    version: pkgVersion,
+                },
+            },
             logger);
 
         // Prefix all events in this file with container-loader
@@ -453,13 +461,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return root;
     }
 
-    private async getVersion(version: string): Promise<IVersion[]> {
-        try {
-            return await this.storageService!.getVersions(version, 1);
-        } catch (error) {
-            this.logger.logException({ eventName: "GetVersionsFailed" }, error);
-            return [];
-        }
+    private getVersion(version: string): Promise<IVersion[]> {
+        return this.storageService!.getVersions(version, 1);
     }
 
     private connectToDeltaStream() {

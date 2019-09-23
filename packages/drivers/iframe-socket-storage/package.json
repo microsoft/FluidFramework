@@ -1,5 +1,5 @@
 {
-  "name": "@prague/iframe-socket-storage",
+  "name": "@microsoft/fluid-iframe-driver",
   "version": "0.10.0",
   "description": "Connection Fluid service API that crosses iframe boundary",
   "main": "dist/index.js",

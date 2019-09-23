@@ -21,7 +21,7 @@
     "webpack:dev": "npm run dev"
   },
   "devDependencies": {
-    "@prague/url-generator": "^1.0.4",
+    "@fluid-internal/url-generator": "^1.0.4",
     "@microsoft/fluid-webpack-component-loader": "^0.10.0",
     "@types/node": "^10.14.6",
     "@types/react-dom": "^16.0.11",

@@ -105,8 +105,8 @@ export class OwnedMap extends PrimedComponent implements IComponentHTMLVisual {
 }
 
 export const fluidExport = new SimpleModuleInstantiationFactory(
-  "@chaincode/owned-map",
+  "@fluid-example/owned-map",
   new Map([
-    ["@chaincode/owned-map", Promise.resolve(OwnedMap.getFactory())],
+    ["@fluid-example/owned-map", Promise.resolve(OwnedMap.getFactory())],
   ]),
 );
