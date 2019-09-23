@@ -332,14 +332,14 @@ export interface IHostRuntime extends
      * Creates a new component with props
      * @param pkg - Package name of the component
      * @param props - properties to be passed to the instantiateComponent thru the context
-     * @param id - Optional id of the component.
+     * @param id - id of the component.
      *
      * @remarks
      * Only used by aqueduct PrimedComponent to pass param to the instantiateComponent function thru the context.
      * Further change to the component create flow to split the local create vs remote instantiate make this deprecated.
      * @internal
      */
-    _createComponentWithProps(pkg: string, props: any, id?: string): Promise<IComponentRuntime>;
+    _createComponentWithProps(pkg: string, props: any, id: string): Promise<IComponentRuntime>;
 
     /**
      * Returns the current quorum.

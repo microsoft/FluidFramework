@@ -858,7 +858,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     }
 
     // tslint:disable-next-line: function-name
-    public async _createComponentWithProps(pkg: string, props: any, id?: string): Promise<IComponentRuntime> {
+    public async _createComponentWithProps(pkg: string, props: any, id: string): Promise<IComponentRuntime> {
         this.verifyNotClosed();
 
         const context = new LocalComponentContext(
