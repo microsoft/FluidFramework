@@ -67,8 +67,6 @@ import { SummaryManager } from "./summaryManager";
 import { analyzeTasks } from "./taskAnalyzer";
 import { BlobTreeEntry, CommitTreeEntry, ISummaryStats, SummaryTreeConverter } from "./utils";
 
-export { ISummaryStats } from "./utils";
-
 export interface IGeneratedSummaryData extends ISummaryStats {
     sequenceNumber: number;
 }
