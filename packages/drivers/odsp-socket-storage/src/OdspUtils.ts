@@ -45,7 +45,16 @@ export function fetchHelper(
         if (!response.ok || response.status < 200 || response.status >= 300) {
             throwNetworkError(`Error ${response.status} from the server`, response.status, filter(response), response);
         }
-        return response.json() as any;
+
+        // .json() can fail and message (that goes into telemetry) would container full request URI, including tokens...
+        // It tails for me with "Unexpected end of JSON input" quite often - an attempt to download big file (many ops) almost
+        // always ends up with this error - I'd guess 1% of op request end up here...
+        // It always succeeds on retry.
+        try {
+            return response.json() as any;
+        } catch (e) {
+            throwNetworkError(400, `Error while parsing fetch response`, true, response);
+        }
     },
     (error) => {
         throwNetworkError(`fetch error, likely due to networking / DNS error or no server: ${error}`, 709, true); // can retry?
