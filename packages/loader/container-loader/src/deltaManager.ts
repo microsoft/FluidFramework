@@ -403,7 +403,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 // If we have no upper bound and fetched less than the max deltas - meaning we got as many as exit -
                 // then we can resolve the promise. We also resolve if we fetched up to the expected to. Otherwise
                 // we will look to try again
-                if ((to === undefined && maxFetchTo !== lastFetch + 1) || to === lastFetch + 1) {
+                if (to === undefined ? maxFetchTo > lastFetch + 1 : to <= lastFetch + 1) {
                     telemetryEvent.end({lastFetch, totalDeltas: allDeltas.length, retries: retry});
                     return allDeltas;
                 }
@@ -673,23 +673,8 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             messages: ISequencedDocumentMessage[] | undefined,
             contents: IContentMessage[] | undefined,
             signals: ISignalMessage[] | undefined): void {
-        // confirm the status of the handler and inbound queue
-        if (!this.handler || this._inbound.paused) {
-            // process them once the queue is ready
-            this._inbound.once("resume", () => {
-                this.enqueInitalOps(messages, contents);
-            });
-        } else {
-            this.enqueInitalOps(messages, contents);
-        }
-        if (!this.handler || this._inboundSignal.paused) {
-            // process them once the queue is ready
-            this._inboundSignal.once("resume", () => {
-                this.enqueInitalSignals(signals);
-            });
-        } else {
-            this.enqueInitalSignals(signals);
-        }
+        this.enqueInitalOps(messages, contents);
+        this.enqueInitalSignals(signals);
     }
 
     private enqueInitalOps(
