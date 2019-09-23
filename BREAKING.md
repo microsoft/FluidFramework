@@ -144,7 +144,7 @@ old name | new name
 @prague/replay-tool | @microsoft/fluid-replay-tool
 @prague/build-common | @microsoft/fluid-build-common
 @prague/odsp-utils | @microsoft/fluid-odsp-utils
-@prague/generator-fluid	| @microsoft/fluid-template-generator
+@prague/generator-fluid	| @microsoft/generator-fluid
 @prague/url-generator	| @fluid-internal/url-generator
 @prague/iframe-socket-storage	| @microsoft/fluid-iframe-driver
 @prague/host-service-interfaces	| @microsoft/fluid-host-service-interfaces
