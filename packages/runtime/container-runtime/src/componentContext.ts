@@ -418,6 +418,7 @@ export class LocalComponentContext extends ComponentContext {
         storage: IDocumentStorageService,
         scope: IComponent,
         attachCb: (componentRuntime: IComponentRuntime) => void,
+        public readonly createProps?: any,
     ) {
         super(runtime, id, false, storage, scope, attachCb);
     }

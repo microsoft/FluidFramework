@@ -209,6 +209,7 @@ export interface IComponentContext extends EventEmitter {
     readonly hostRuntime: IHostRuntime;
     readonly snapshotFn: (message: string) => Promise<void>;
     readonly closeFn: () => void;
+    readonly createProps?: any;
 
     /**
      * Ambient services provided with the context
@@ -326,6 +327,19 @@ export interface IHostRuntime extends
      * @param pkg - Package name of the component. Optional and only required if specifying an explicit ID.
      */
     createComponent(pkgOrId: string, pkg?: string): Promise<IComponentRuntime>;
+
+    /**
+     * Creates a new component with props
+     * @param pkg - Package name of the component
+     * @param props - properties to be passed to the instantiateComponent thru the context
+     * @param id - id of the component.
+     *
+     * @remarks
+     * Only used by aqueduct PrimedComponent to pass param to the instantiateComponent function thru the context.
+     * Further change to the component create flow to split the local create vs remote instantiate make this deprecated.
+     * @internal
+     */
+    _createComponentWithProps(pkg: string, props: any, id: string): Promise<IComponentRuntime>;
 
     /**
      * Returns the current quorum.

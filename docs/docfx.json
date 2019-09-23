@@ -15,7 +15,7 @@
       {
         "src": "../",
         "files": [
-          "samples/hosts/README.md",
+          "samples/hosts/literate/README.md",
           "packages/drivers/fluid-debugger/README.md",
           "packages/tools/fluid-fetch/README.md",
           "packages/tools/replay-tool/README.md"

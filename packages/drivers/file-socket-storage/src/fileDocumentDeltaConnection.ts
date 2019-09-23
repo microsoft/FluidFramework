@@ -121,6 +121,7 @@ export class ReplayFileDeltaConnection extends EventEmitter implements IDocument
                     idleTime: 5000,
                     maxOps: 1000,
                     maxTime: 5000 * 12,
+                    maxAckWaitTime: 600000,
                 },
             },
             supportedVersions: [fileProtocolVersion],
