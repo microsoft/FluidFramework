@@ -52,7 +52,7 @@ const fluid = (req: express.Request, res: express.Response,  baseDir: string, op
         <div id="content"></div>
     </div>
 
-    <script src="node_modules/@microsoft/fluid-webpack-component-loader/dist/fluid-loader.bundle.js"></script>
+    <script src="/node_modules/@microsoft/fluid-webpack-component-loader/dist/fluid-loader.bundle.js"></script>
     <script>
         var pkgJson = ${JSON.stringify(packageJson)};
         var options = ${JSON.stringify(options)};
