@@ -4,10 +4,11 @@
  */
 
 import { IComponentLoadable } from "@microsoft/fluid-component-core-interfaces";
-import { Deferred } from "@microsoft/fluid-core-utils";
-import { ISequencedDocumentMessage, ISummaryConfiguration, MessageType } from "@microsoft/fluid-protocol-definitions";
-import { ContainerRuntime } from "./containerRuntime";
-import { debug } from "./debug";
+import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
+import { ChildLogger, Deferred, PerformanceEvent } from "@microsoft/fluid-core-utils";
+import { ISequencedDocumentMessage, ISummaryAck, ISummaryConfiguration, ISummaryNack, MessageType } from "@microsoft/fluid-protocol-definitions";
+import * as assert from "assert";
+import { ContainerRuntime, IGeneratedSummaryData } from "./containerRuntime";
 
 /**
  * Wrapper interface holding summary details for a given op
@@ -15,6 +16,9 @@ import { debug } from "./debug";
 interface IOpSummaryDetails {
     // Whether we should summarize at the given op
     shouldSummarize: boolean;
+
+    // Whether we can start idle timer
+    canStartIdleTimer: boolean;
 
     // The message to include with the summarize
     message: string;
@@ -41,28 +45,29 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
     public get ISummarizer() { return this; }
     public get IComponentLoadable() { return this; }
 
-    // Use the current time on initialization since we will be loading off a summary
-    private lastSummaryTime: number = Date.now();
-    private lastSummarySeqNumber: number = 0;
+    private lastSummaryTime: number;
+    private lastSummarySeqNumber: number;
     private summarizing = false;
+    private summaryPending = false;
     private idleTimer: NodeJS.Timeout | null = null;
-    private lastOp: ISequencedDocumentMessage | null = null;
-    private lastOpSummaryDetails: IOpSummaryDetails | null = null;
     private readonly runDeferred = new Deferred<void>();
+    private readonly logger: ITelemetryLogger;
 
     constructor(
         public readonly url: string,
         private readonly runtime: ContainerRuntime,
         private readonly configuration: ISummaryConfiguration,
-        private readonly generateSummary: () => Promise<void>,
+        private readonly generateSummary: () => Promise<IGeneratedSummaryData>,
     ) {
+        this.logger = ChildLogger.create(this.runtime.logger, "Summarizer");
+
         this.runtime.on("disconnected", () => {
             this.runDeferred.resolve();
         });
     }
 
     public async run(onBehalfOf: string): Promise<void> {
-        debug(`Summarizing on behalf of ${onBehalfOf}`);
+        this.logger.sendTelemetryEvent({ eventName: "RunningSummarizer", onBehalfOf });
 
         if (!this.runtime.connected) {
             await new Promise((resolve) => this.runtime.once("connected", resolve));
@@ -72,8 +77,15 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
             return;
         }
 
+        // initialize values (not exact)
+        this.lastSummarySeqNumber = this.runtime.deltaManager.referenceSequenceNumber;
+        this.lastSummaryTime = Date.now();
+
         // start the timer after connecting to the document
         this.resetIdleTimer();
+
+        // listen for summary ops
+        this.runtime.deltaManager.inbound.on("op", (op) => this.handleSummaryOp(op as ISequencedDocumentMessage));
 
         this.runtime.on("batchEnd", (error: any, op: ISequencedDocumentMessage) => {
             if (error) {
@@ -82,15 +94,25 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
 
             this.clearIdleTimer();
 
-            // Get the summary details for the given op
-            this.lastOp = op;
-            this.lastOpSummaryDetails = this.getOpSummaryDetails(op);
+            // clear pending if timeout waiting for server ack
+            if (this.summaryPending) {
+                const pendingTime = Date.now() - this.lastSummaryTime;
+                if (pendingTime > this.configuration.maxAckWaitTime) {
+                    this.runtime.logger.sendTelemetryEvent({
+                        eventName: "SummaryAckWaitTimeout",
+                        maxAckWaitTime: this.configuration.maxAckWaitTime,
+                    });
+                    this.summaryPending = false;
+                }
+            }
 
-            if (this.lastOpSummaryDetails.shouldSummarize) {
+            // Get the summary details for the given op
+            const lastOpSummaryDetails = this.getOpSummaryDetails(op);
+
+            if (lastOpSummaryDetails.shouldSummarize) {
                 // Summarize immediately if requested
-                // tslint:disable-next-line: no-floating-promises
-                this.summarize(this.lastOpSummaryDetails.message);
-            } else {
+                this.summarize(lastOpSummaryDetails.message);
+            } else if (lastOpSummaryDetails.canStartIdleTimer) {
                 // Otherwise detect when we idle to trigger the snapshot
                 this.resetIdleTimer();
             }
@@ -99,43 +121,72 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
         return this.runDeferred.promise;
     }
 
-    private async summarize(message: string) {
-        try {
-            // generateSummary could take some time
-            // mark that we are currently summarizing to prevent concurrent summarizing
-            this.summarizing = true;
-
-            debug(`Summarizing: ${message}`);
-
-            const summarySequenceNumber = this.lastOp ? this.lastOp.sequenceNumber : 1;
-
-            await this.generateSummary();
-
-            // On success note the time of the snapshot and op sequence number.
-            // Skip on error to cause us to attempt the snapshot again.
-            this.lastSummaryTime = Date.now();
-            this.lastSummarySeqNumber = summarySequenceNumber;
-
-        } catch (ex) {
-            debug(`Summarize error ${this.runtime.id}`, ex);
-
-        } finally {
-            this.summarizing = false;
+    private handleSummaryOp(op: ISequencedDocumentMessage) {
+        if (op.type === MessageType.SummaryAck || op.type === MessageType.SummaryNack) {
+            if (this.summaryPending) {
+                const ack = op.contents as ISummaryAck | ISummaryNack;
+                this.logger.sendTelemetryEvent({
+                    eventName: "PendingSummaryAck",
+                    type: op.type,
+                    timePending: Date.now() - this.lastSummaryTime,
+                    summarySequenceNumber: ack.summaryProposal.summarySequenceNumber,
+                });
+                this.summaryPending = false;
+            }
         }
     }
 
+    private summarize(message: string) {
+        // it shouldn't be possible to enter here if already summarizing or pending
+        assert(!this.summarizing && !this.summaryPending);
+
+        // generateSummary could take some time
+        // mark that we are currently summarizing to prevent concurrent summarizing
+        this.summarizing = true;
+        this.summaryPending = true;
+
+        this.summarizeCore(message).finally(() => {
+            this.summarizing = false;
+        }).catch((error) => {
+            this.summaryPending = false;
+            this.logger.sendErrorEvent({ eventName: "SummarizeError" }, error);
+        });
+    }
+
+    private async summarizeCore(message: string) {
+        const summarizingEvent = PerformanceEvent.start(this.logger,
+            { eventName: "Summarizing", stage: "start", message });
+
+        const summaryData = await this.generateSummary();
+
+        const summaryEndTime = Date.now();
+        summarizingEvent.end({
+            stage: "end",
+            ...summaryData,
+            opsSinceLastSummary: summaryData.sequenceNumber - this.lastSummarySeqNumber,
+            timeSinceLastSummary: summaryEndTime - this.lastSummaryTime,
+        });
+
+        // On success note the time of the snapshot and op sequence number.
+        // Skip on error to cause us to attempt the snapshot again.
+        this.lastSummaryTime = summaryEndTime;
+        this.lastSummarySeqNumber = summaryData.sequenceNumber;
+    }
+
     private getOpSummaryDetails(op: ISequencedDocumentMessage): IOpSummaryDetails {
-        if (this.summarizing) {
+        if (this.summarizing || this.summaryPending) {
             // We are currently summarizing. Don't summarize again.
             return {
                 message: "",
                 shouldSummarize: false,
+                canStartIdleTimer: false,
             };
         } else if (op.type === MessageType.Save) {
             // Forced summary.
             return {
                 message: `;${op.clientId}: ${op.contents}`,
                 shouldSummarize: true,
+                canStartIdleTimer: true,
             };
         } else {
             // Summarize if it has been above the max time between summaries.
@@ -145,6 +196,7 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
                 message: "",
                 shouldSummarize: (timeSinceLastSummary > this.configuration.maxTime) ||
                     (opCountSinceLastSummary > this.configuration.maxOps),
+                canStartIdleTimer: true,
             };
         }
     }
@@ -161,11 +213,7 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
         this.clearIdleTimer();
 
         this.idleTimer = setTimeout(
-            () => {
-                debug("Summarizing due to being idle");
-                // tslint:disable-next-line: no-floating-promises
-                this.summarize("idle");
-            },
+            () => this.summarize("idle"),
             this.configuration.idleTime);
     }
 }
