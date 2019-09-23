@@ -10,6 +10,7 @@ import {
     IDocumentMessage,
     ISequencedDocumentMessage,
     IServiceConfiguration,
+    ISignalClient,
     ISignalMessage,
     ITokenClaims,
 } from "@microsoft/fluid-protocol-definitions";
@@ -147,6 +148,15 @@ export class OuterDocumentDeltaConnection extends EventEmitter implements IDocum
      */
     public get initialSignals(): ISignalMessage[] | undefined {
         return this.details.initialSignals;
+    }
+
+    /**
+     * Get initial client list
+     *
+     * @returns initial client list sent during the connection
+     */
+    public get initialClients(): ISignalClient[] {
+        return this.details.initialClients ? this.details.initialClients : [];
     }
 
     /**

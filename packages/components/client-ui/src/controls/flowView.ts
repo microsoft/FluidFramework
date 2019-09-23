@@ -23,7 +23,7 @@ import {
 } from "@microsoft/fluid-framework-interfaces";
 import * as types from "@microsoft/fluid-map";
 import * as MergeTree from "@microsoft/fluid-merge-tree";
-import { ISequencedDocumentMessage, IUser } from "@microsoft/fluid-protocol-definitions";
+import { IClient, ISequencedDocumentMessage, IUser } from "@microsoft/fluid-protocol-definitions";
 import { IInboundSignalMessage } from "@microsoft/fluid-runtime-definitions";
 import * as Sequence from "@microsoft/fluid-sequence";
 import { blobUploadHandler } from "../blob";
@@ -2771,8 +2771,7 @@ export class FlowCursor extends Cursor {
         // this would allow a user ID to be put on the wire which can then be mapped
         // back to an email, name, etc...
         const name = user.name;
-        // Name usually contains " ". Otherwise it's a clientId with "-".
-        const nameParts = name.indexOf(" ") !== -1 ? name.split(" ") : name.split("-");
+        const nameParts = name.split(" ");
         let initials = "";
         for (const part of nameParts) {
             initials += part.substring(0, 1);
@@ -3139,6 +3138,13 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             this.broadcastPresence();
         });
         collabDocument.runtime.getQuorum().on("removeMember", () => {
+            this.updatePresenceCursors();
+        });
+        collabDocument.runtime.getAudience().on("addMember", () => {
+            this.updatePresenceCursors();
+            this.broadcastPresence();
+        });
+        collabDocument.runtime.getAudience().on("removeMember", () => {
             this.updatePresenceCursors();
         });
 
@@ -5189,7 +5195,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     }
 
     private remotePresenceToLocal(clientId: string, remotePresenceInfo: IRemotePresenceInfo, posAdjust = 0) {
-
         const rempos = this.sharedString.resolveRemoteClientPosition(
             remotePresenceInfo.origPos,
             remotePresenceInfo.refseq,
@@ -5197,30 +5202,44 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         const segoff = this.sharedString.getContainingSegment(rempos);
 
         if (segoff.segment) {
-            const docClient = this.collabDocument.getClient(clientId);
-            const localPresenceInfo = {
-                clientId,
-                fresh: true,
-                localRef: this.sharedString.createPositionReference(
-                    segoff.segment, segoff.offset, MergeTree.ReferenceType.SlideOnRemove),
-                presenceColor: this.presenceVector.has(clientId) ?
-                    this.presenceVector.get(clientId).presenceColor :
-                    presenceColors[this.presenceVector.size % presenceColors.length],
-                shouldShowCursor: () => {
-                    return this.collabDocument.clientId !== clientId;
-                },
-                // Temporary: Use the clientId as name if the user is not a part of the quorum.
-                user: docClient ? docClient.client.user : { name : clientId },
-            } as ILocalPresenceInfo;
-            if (remotePresenceInfo.origMark >= 0) {
-                const markSegoff = this.sharedString.getContainingSegment(remotePresenceInfo.origMark);
-                if (markSegoff.segment) {
-                    localPresenceInfo.markLocalRef =
-                    this.sharedString.createPositionReference(markSegoff.segment,
-                            markSegoff.offset, MergeTree.ReferenceType.SlideOnRemove);
+            const clientInfo = this.getRemoteClientInfo(clientId);
+            if (clientInfo) {
+                const localPresenceInfo = {
+                    clientId,
+                    fresh: true,
+                    localRef: this.sharedString.createPositionReference(
+                        segoff.segment, segoff.offset, MergeTree.ReferenceType.SlideOnRemove),
+                    presenceColor: this.presenceVector.has(clientId) ?
+                        this.presenceVector.get(clientId).presenceColor :
+                        presenceColors[this.presenceVector.size % presenceColors.length],
+                    shouldShowCursor: () => {
+                        return this.collabDocument.clientId !== clientId &&
+                            this.getRemoteClientInfo(clientId) !== undefined;
+                    },
+                    user: clientInfo.user,
+                } as ILocalPresenceInfo;
+                if (remotePresenceInfo.origMark >= 0) {
+                    const markSegoff = this.sharedString.getContainingSegment(remotePresenceInfo.origMark);
+                    if (markSegoff.segment) {
+                        localPresenceInfo.markLocalRef =
+                        this.sharedString.createPositionReference(markSegoff.segment,
+                                markSegoff.offset, MergeTree.ReferenceType.SlideOnRemove);
+                    }
                 }
+                this.updatePresenceVector(localPresenceInfo);
             }
-            this.updatePresenceVector(localPresenceInfo);
+        }
+    }
+
+    private getRemoteClientInfo(clientId: string): IClient {
+        const quorumClient = this.collabDocument.getClient(clientId);
+        if (quorumClient) {
+            return quorumClient.client;
+        } else {
+            const audience = this.collabDocument.runtime.getAudience().getMembers();
+            if (audience.has(clientId)) {
+                return audience.get(clientId);
+            }
         }
     }
 

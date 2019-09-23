@@ -24,7 +24,7 @@ import * as Comlink from "comlink";
 import { OuterDeltaStorageService } from "./outerDeltaStorageService";
 import { OuterDocumentStorageService } from "./outerDocumentStorageService";
 
-const protocolVersions = ["^0.2.0", "^0.1.0"];
+const protocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
 
 // tslint:disable-next-line: no-empty-interface
 interface IInnerProxy extends IInnerDocumentDeltaConnectionProxy {
@@ -159,6 +159,7 @@ export class OuterDocumentService implements IDocumentService {
                 initialContents: this.deltaConnection.initialContents,
                 initialMessages: this.deltaConnection.initialMessages,
                 initialSignals: this.deltaConnection.initialSignals,
+                initialClients: this.deltaConnection.initialClients,
                 maxMessageSize: this.deltaConnection.maxMessageSize,
                 mode: this.deltaConnection.mode,
                 parentBranch: this.deltaConnection.parentBranch,

@@ -23,6 +23,13 @@ export interface ISequencedClient {
     sequenceNumber: number;
 }
 
+export interface ISignalClient {
+
+    clientId: string;
+
+    client: IClient;
+}
+
 /**
  * Contents sent with a ClientJoin message
  */

@@ -6,6 +6,7 @@
 import { IComponentHandle, IComponentHandleContext, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import {
     ConnectionState,
+    IAudience,
     IDeltaManager,
     IGenericBlob,
     ILoader,
@@ -209,24 +210,35 @@ export class MockRuntime extends EventEmitter
     public getQuorum(): IQuorum {
         return null;
     }
+
+    public getAudience(): IAudience {
+        return null;
+    }
+
     public async snapshot(message: string): Promise<void> {
         return null;
     }
+
     public save(message: string) {
         return;
     }
+
     public async close(): Promise<void> {
         return null;
     }
+
     public async uploadBlob(file: IGenericBlob): Promise<IGenericBlob> {
         return null;
     }
+
     public async getBlob(blobId: string): Promise<IGenericBlob> {
         return null;
     }
+
     public async getBlobMetadata(): Promise<IGenericBlob[]> {
         return null;
     }
+
     public submitMessage(type: MessageType, content: any) {
         return null;
     }

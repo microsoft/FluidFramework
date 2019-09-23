@@ -34,6 +34,7 @@ import {
     PerformanceEvent,
     raiseConnectedEvent,
     readAndParse,
+    TelemetryLogger,
 } from "@microsoft/fluid-core-utils";
 import {
     FileMode,
@@ -45,6 +46,7 @@ import {
     ISequencedClient,
     ISequencedDocumentMessage,
     IServiceConfiguration,
+    ISignalClient,
     ISignalMessage,
     ISnapshotTree,
     ITokenClaims,
@@ -56,6 +58,7 @@ import {
 } from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
 import * as jwtDecode from "jwt-decode";
+import { Audience } from "./audience";
 import { BlobCacheStorageService } from "./blobCacheStorageService";
 import { BlobManager } from "./blobManager";
 import { ContainerContext } from "./containerContext";
@@ -109,6 +112,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         const containerP = new Promise<Container>(async (res, rej) => {
             container.once("error", (error) => {
+                container.close();
                 rej(error);
             });
             await container.load(version, connection)
@@ -142,6 +146,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private _parentBranch: string | undefined | null;
     private _connectionState = ConnectionState.Disconnected;
     private _serviceConfiguration: IServiceConfiguration | undefined;
+    private _audience: Audience | undefined;
 
     private context: ContainerContext | undefined;
     private pkg: string | IFluidCodeDetails | undefined;
@@ -204,6 +209,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return this._existing;
     }
 
+    public get audience(): Audience | undefined {
+        return this._audience;
+    }
+
     /**
      * Returns the parent branch for this document
      */
@@ -231,7 +240,13 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         // create logger for components to use
         this.subLogger = DebugLogger.mixinDebugLogger(
             "fluid:telemetry",
-            { documentId: this.id, [pkgName]: pkgVersion },
+            {
+                documentId: this.id,
+                package: {
+                    name: TelemetryLogger.sanitizePkgName(pkgName),
+                    version: pkgVersion,
+                },
+            },
             logger);
 
         // Prefix all events in this file with container-loader
@@ -453,13 +468,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return root;
     }
 
-    private async getVersion(version: string): Promise<IVersion[]> {
-        try {
-            return await this.storageService!.getVersions(version, 1);
-        } catch (error) {
-            this.logger.logException({ eventName: "GetVersionsFailed" }, error);
-            return [];
-        }
+    private getVersion(version: string): Promise<IVersion[]> {
+        return this.storageService!.getVersions(version, 1);
     }
 
     private connectToDeltaStream() {
@@ -767,6 +777,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                         details.claims.scopes,
                         this._deltaManager!.serviceConfiguration);
                 }
+
+                // back-compat for new client and old server.
+                const priorClients = details.initialClients ? details.initialClients : [];
+                this._audience = new Audience(priorClients);
             });
 
             this._deltaManager.on("disconnect", (reason: string) => {
@@ -955,8 +969,20 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     }
 
     private processSignal(message: ISignalMessage) {
-        const local = this._clientId === message.clientId;
-        this.context!.processSignal(message, local);
+        // No clientId indicates a system signal message.
+        if (message.clientId === null && this._audience) {
+            const innerContent = message.content as { content: any, type: string };
+            if (innerContent.type === MessageType.ClientJoin) {
+                const newClient = innerContent.content as ISignalClient;
+                this._audience.addMember(newClient.clientId, newClient.client);
+            } else if (innerContent.type === MessageType.ClientLeave) {
+                const leftClientId = innerContent.content as string;
+                this._audience.removeMember(leftClientId);
+            }
+        } else {
+            const local = this._clientId === message.clientId;
+            this.context!.processSignal(message, local);
+        }
     }
 
     // tslint:disable no-unsafe-any
