@@ -49,6 +49,7 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
     private lastSummarySeqNumber: number;
     private summarizing = false;
     private summaryPending = false;
+    private pendingSummarySequenceNumber?: number;
     private idleTimer: NodeJS.Timeout | null = null;
     private readonly runDeferred = new Deferred<void>();
     private readonly logger: ITelemetryLogger;
@@ -87,52 +88,69 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
         // listen for summary ops
         this.runtime.deltaManager.inbound.on("op", (op) => this.handleSummaryOp(op as ISequencedDocumentMessage));
 
-        this.runtime.on("batchEnd", (error: any, op: ISequencedDocumentMessage) => {
-            if (error) {
-                return;
-            }
-
-            this.clearIdleTimer();
-
-            // clear pending if timeout waiting for server ack
-            if (this.summaryPending) {
-                const pendingTime = Date.now() - this.lastSummaryTime;
-                if (pendingTime > this.configuration.maxAckWaitTime) {
-                    this.runtime.logger.sendTelemetryEvent({
-                        eventName: "SummaryAckWaitTimeout",
-                        maxAckWaitTime: this.configuration.maxAckWaitTime,
-                    });
-                    this.summaryPending = false;
-                }
-            }
-
-            // Get the summary details for the given op
-            const lastOpSummaryDetails = this.getOpSummaryDetails(op);
-
-            if (lastOpSummaryDetails.shouldSummarize) {
-                // Summarize immediately if requested
-                this.summarize(lastOpSummaryDetails.message);
-            } else if (lastOpSummaryDetails.canStartIdleTimer) {
-                // Otherwise detect when we idle to trigger the snapshot
-                this.resetIdleTimer();
-            }
-        });
+        this.runtime.on("batchEnd", (error: any, op: ISequencedDocumentMessage) => this.handleOp(error, op));
 
         return this.runDeferred.promise;
     }
 
     private handleSummaryOp(op: ISequencedDocumentMessage) {
+        if (!this.summaryPending) {
+            return;
+        }
+        // listen for the broadcast of this summary op
+        if (op.type === MessageType.Summarize) {
+            if (!this.pendingSummarySequenceNumber) {
+                // should only be 1 summary op per client with same ref seq number
+                if (op.clientId === this.runtime.clientId && op.referenceSequenceNumber === this.lastSummarySeqNumber) {
+                    this.pendingSummarySequenceNumber = op.sequenceNumber;
+                }
+            }
+        }
+        // listen for the ack/nack of this summary op
         if (op.type === MessageType.SummaryAck || op.type === MessageType.SummaryNack) {
-            if (this.summaryPending) {
+            if (this.pendingSummarySequenceNumber) {
                 const ack = op.contents as ISummaryAck | ISummaryNack;
-                this.logger.sendTelemetryEvent({
-                    eventName: "PendingSummaryAck",
-                    type: op.type,
-                    timePending: Date.now() - this.lastSummaryTime,
-                    summarySequenceNumber: ack.summaryProposal.summarySequenceNumber,
+                if (ack.summaryProposal.summarySequenceNumber === this.pendingSummarySequenceNumber) {
+                    this.logger.sendTelemetryEvent({
+                        eventName: "PendingSummaryAck",
+                        type: op.type,
+                        timePending: Date.now() - this.lastSummaryTime,
+                        summarySequenceNumber: ack.summaryProposal.summarySequenceNumber,
+                    });
+                    this.summaryPending = false;
+                }
+            }
+        }
+    }
+
+    private handleOp(error: any, op: ISequencedDocumentMessage) {
+        if (error) {
+            return;
+        }
+
+        this.clearIdleTimer();
+
+        // clear pending if timeout waiting for server ack
+        if (this.summaryPending) {
+            const pendingTime = Date.now() - this.lastSummaryTime;
+            if (pendingTime > this.configuration.maxAckWaitTime) {
+                this.runtime.logger.sendTelemetryEvent({
+                    eventName: "SummaryAckWaitTimeout",
+                    maxAckWaitTime: this.configuration.maxAckWaitTime,
                 });
                 this.summaryPending = false;
             }
+        }
+
+        // Get the summary details for the given op
+        const lastOpSummaryDetails = this.getOpSummaryDetails(op);
+
+        if (lastOpSummaryDetails.shouldSummarize) {
+            // Summarize immediately if requested
+            this.summarize(lastOpSummaryDetails.message);
+        } else if (lastOpSummaryDetails.canStartIdleTimer) {
+            // Otherwise detect when we idle to trigger the snapshot
+            this.resetIdleTimer();
         }
     }
 
@@ -143,7 +161,7 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
         // generateSummary could take some time
         // mark that we are currently summarizing to prevent concurrent summarizing
         this.summarizing = true;
-        this.summaryPending = true;
+        this.startPending();
 
         this.summarizeCore(message).finally(() => {
             this.summarizing = false;
@@ -199,6 +217,11 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
                 canStartIdleTimer: true,
             };
         }
+    }
+
+    private startPending() {
+        this.summaryPending = true;
+        this.pendingSummarySequenceNumber = undefined;
     }
 
     private clearIdleTimer() {
