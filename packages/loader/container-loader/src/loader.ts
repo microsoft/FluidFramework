@@ -41,9 +41,6 @@ interface IParsedUrl {
     version: string | null;
 }
 
-// Protocol version supported by the loader
-// const protocolVersions = ["^0.2.0", "^0.1.0"];
-
 export class RelativeLoader extends EventEmitter implements ILoader {
 
     // Because the loader is passed to the container during construction we need to resolve the target container

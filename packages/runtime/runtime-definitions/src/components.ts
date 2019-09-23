@@ -14,6 +14,7 @@ import {
 } from "@microsoft/fluid-component-core-interfaces";
 import {
     ConnectionState,
+    IAudience,
     IBlobManager,
     IDeltaManager,
     IGenericBlob,
@@ -170,6 +171,11 @@ export interface IComponentRuntime extends EventEmitter, IComponentRouter {
     getQuorum(): IQuorum;
 
     /**
+     * Returns the current audience.
+     */
+    getAudience(): IAudience;
+
+    /**
      * Called by distributed data structures in disconnected state to notify about pending local changes.
      * All pending changes are automatically flushed by shared objects on connection.
      */
@@ -220,6 +226,11 @@ export interface IComponentContext extends EventEmitter {
      * Returns the current quorum.
      */
     getQuorum(): IQuorum;
+
+    /**
+     * Returns the current audience.
+     */
+    getAudience(): IAudience;
 
     error(err: any): void;
 
@@ -345,6 +356,11 @@ export interface IHostRuntime extends
      * Returns the current quorum.
      */
     getQuorum(): IQuorum;
+
+    /**
+     * Returns the current audience.
+     */
+    getAudience(): IAudience;
 
     /**
      * Used to raise an unrecoverable error on the runtime.
