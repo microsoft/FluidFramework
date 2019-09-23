@@ -36,15 +36,17 @@ export class ClientManager implements IClientManager {
     public async getClients(tenantId: string, documentId: string): Promise<ISignalClient[]> {
         const dbClients = await this.findAllAsync(this.getKey(tenantId, documentId));
         const clients: ISignalClient[] = [];
-        for (const clientId of Object.keys(dbClients)) {
-            clients.push(
-                {
-                    clientId,
-                    client: JSON.parse(dbClients[clientId]),
-                },
-            );
+        if (dbClients) {
+            for (const clientId of Object.keys(dbClients)) {
+                clients.push(
+                    {
+                        clientId,
+                        client: JSON.parse(dbClients[clientId]),
+                    },
+                );
+            }
+            return clients;
         }
-        return clients;
     }
 
     private getKey(tenantId: string, documentId: string): string {
