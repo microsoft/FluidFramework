@@ -63,7 +63,7 @@ export abstract class PrimedComponent extends SharedComponent {
         // Initialize task manager.
         this.internalTaskManager = await this.getComponent<ITaskManager>("_scheduler");
 
-        if (this.canForge) {
+        if (!this.runtime.existing) {
             // Create a root directory and register it before calling componentInitializingFirstTime
             this.internalRoot = SharedDirectory.create(this.runtime, this.rootDirectoryId);
             this.internalRoot.register();

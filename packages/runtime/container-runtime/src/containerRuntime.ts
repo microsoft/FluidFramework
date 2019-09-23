@@ -851,11 +851,15 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         }
     }
 
-    public async createComponent(idOrPkg: string, maybePkg?: string): Promise<IComponentRuntime> {
-        this.verifyNotClosed();
-
+    public async createComponent(idOrPkg: string, maybePkg?: string) {
         const id = maybePkg === undefined ? uuid() : idOrPkg;
         const pkg = maybePkg === undefined ? idOrPkg : maybePkg;
+        return this._createComponentWithProps(pkg, undefined, id);
+    }
+
+    // tslint:disable-next-line: function-name
+    public async _createComponentWithProps(pkg: string, props: any, id: string): Promise<IComponentRuntime> {
+        this.verifyNotClosed();
 
         const context = new LocalComponentContext(
             id,
@@ -863,7 +867,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             this,
             this.storage,
             this.context.scope,
-            (cr: IComponentRuntime) => this.attachComponent(cr));
+            (cr: IComponentRuntime) => this.attachComponent(cr),
+            props);
 
         const deferred = new Deferred<ComponentContext>();
         this.contextsDeferred.set(id, deferred);
