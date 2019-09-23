@@ -5236,7 +5236,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         if (quorumClient) {
             return quorumClient.client;
         } else {
-            const audience = this.collabDocument.getAudience();
+            const audience = this.collabDocument.runtime.getAudience().getMembers();
             if (audience.has(clientId)) {
                 return audience.get(clientId);
             }

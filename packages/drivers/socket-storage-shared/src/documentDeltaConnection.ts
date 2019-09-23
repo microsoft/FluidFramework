@@ -293,8 +293,8 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
      *
      * @returns initial client list sent during the connection
      */
-    public get initialClients(): ISignalClient[] | undefined {
-        return this.details.initialClients;
+    public get initialClients(): ISignalClient[] {
+        return this.details.initialClients ? this.details.initialClients : [];
     }
 
     /**

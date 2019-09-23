@@ -12,7 +12,6 @@ import { Deferred } from "@microsoft/fluid-core-utils";
 import * as ink from "@microsoft/fluid-ink";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import {
-    IClient,
     IDocumentMessage,
     IDocumentServiceFactory,
     ISequencedClient,
@@ -164,11 +163,6 @@ export class Document extends EventEmitter {
     public getClients(): Map<string, ISequencedClient> {
         const quorum = this.runtime.getQuorum();
         return quorum.getMembers();
-    }
-
-    public getAudience(): Map<string, IClient> {
-        const audience = this.runtime.getAudience();
-        return audience.getMembers();
     }
 
     public getClient(clientId: string): ISequencedClient {

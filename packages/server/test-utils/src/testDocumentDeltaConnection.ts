@@ -162,12 +162,12 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
         return this.details.initialSignals;
     }
 
-    public get initialClients(): ISignalClient[] | undefined {
-        return this.details.initialClients;
+    public get initialClients(): ISignalClient[] {
+        return this.details.initialClients ? this.details.initialClients : [];
     }
 
     public get version(): string {
-        return "^0.3.0";
+        return testProtocolVersions[0];
     }
 
     public get serviceConfiguration(): IServiceConfiguration {

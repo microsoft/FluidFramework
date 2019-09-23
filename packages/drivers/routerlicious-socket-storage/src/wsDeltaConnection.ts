@@ -108,8 +108,8 @@ export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaCon
         return this.details!.initialSignals;
     }
 
-    public get initialClients(): ISignalClient[] | undefined {
-        return this.details!.initialClients;
+    public get initialClients(): ISignalClient[] {
+        return this.details!.initialClients ? this.details!.initialClients : [];
     }
 
     public get serviceConfiguration(): IServiceConfiguration {
