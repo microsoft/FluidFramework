@@ -13,6 +13,7 @@ import {
     IHost,
     ILoader,
     ITelemetryBaseLogger,
+    IWhiteList,
 } from "@microsoft/fluid-container-definitions";
 import { Deferred } from "@microsoft/fluid-core-utils";
 import {
@@ -22,6 +23,7 @@ import {
     IResolvedUrl,
     ISequencedDocumentMessage,
 } from "@microsoft/fluid-protocol-definitions";
+import { WebCodeLoader } from "@microsoft/fluid-web-code-loader";
 import { EventEmitter } from "events";
 // tslint:disable-next-line:no-var-requires
 const now = require("performance-now") as () => number;
@@ -137,6 +139,28 @@ export function createProtocolToFactoryMapping(
  * Manages Fluid resource loading
  */
 export class Loader extends EventEmitter implements ILoader {
+
+    public static create(
+        containerHost: IHost,
+        documentServiceFactories: IDocumentServiceFactory | IDocumentServiceFactory[],
+        whiteList: IWhiteList,
+        options: any,
+        scope: IComponent,
+        logger?: ITelemetryBaseLogger,
+    ) {
+
+        const codeLoader = new WebCodeLoader("", whiteList);
+
+        return new Loader(
+            containerHost,
+            documentServiceFactories,
+            codeLoader,
+            options,
+            scope,
+            logger,
+        );
+    }
+
     private readonly containers = new Map<string, Promise<Container>>();
     private readonly resolveCache = new Map<string, IResolvedUrl>();
     private readonly protocolToDocumentFactoryMap: Map<string, IDocumentServiceFactory>;

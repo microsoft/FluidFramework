@@ -15,7 +15,7 @@ import {
     IFluidResolvedUrl,
     IResolvedUrl,
 } from "@microsoft/fluid-protocol-definitions";
-import { IResolvedPackage, WebCodeLoader } from "@microsoft/fluid-web-code-loader";
+import { IResolvedPackage, WebCodeLoader, WhiteList } from "@microsoft/fluid-web-code-loader";
 import { IHostConfig } from "./hostConfig";
 
 export interface IPrivateSessionInfo {
@@ -109,6 +109,30 @@ export function createLoader(
         codeLoader,
         options,
         scope);
+}
+
+export function createWebLoader_WhiteList(
+    resolved: IResolvedUrl,
+    pkg: IResolvedPackage,
+    scriptIds: string[],
+    npm: string,
+    config: any,
+    scope: IComponent,
+    hostConf: IHostConfig,
+): Loader {
+
+    // tslint:disable: no-unsafe-any
+    config.blockUpdateMarkers = true;
+    config.tokens = (resolved as IFluidResolvedUrl).tokens;
+    // tslint:enable: no-unsafe-any
+
+    return Loader.create(
+        {resolver: hostConf.urlResolver},
+        hostConf.documentServiceFactory,
+        new WhiteList(() => Promise.resolve(true)),
+        config,
+        scope,
+    );
 }
 
 export function createWebLoader(

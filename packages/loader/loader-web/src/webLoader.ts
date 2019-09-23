@@ -10,8 +10,10 @@ import {
     IPackage,
     IPackageConfig,
     IPraguePackage,
+    IWhiteList,
 } from "@microsoft/fluid-container-definitions";
 import * as fetch from "isomorphic-fetch";
+import { WhiteList } from "./whiteList";
 
 export interface IParsedPackage {
     full: string;
@@ -274,8 +276,10 @@ export class WebCodeLoader implements ICodeLoader {
     // Cache goes CDN -> package -> entrypoint
     private readonly resolvedCache = new Map<string, FluidPackage>();
     private readonly scriptManager = new ScriptManager();
+    private readonly whiteList: IWhiteList;
 
-    constructor(private readonly baseUrl: string) {
+    constructor(private readonly baseUrl: string, whiteList?: IWhiteList) {
+        this.whiteList = whiteList ? whiteList : new WhiteList(() => Promise.resolve(true));
     }
 
     public seed(pkg: IFluidPackage, config: IPackageConfig, scriptIds: string[]) {
@@ -287,8 +291,12 @@ export class WebCodeLoader implements ICodeLoader {
      * Resolves the input data structures to the resolved details
      */
     // tslint:disable-next-line:promise-function-async disabled to verify function sets cache synchronously
-    public resolve(input: string | IFluidCodeDetails): Promise<IResolvedPackage> {
+    public async resolve(input: string | IFluidCodeDetails): Promise<IResolvedPackage> {
         const fluidPackage = this.getFluidPackage(input);
+
+        if (await this.whiteList.test(input)) {
+            throw new Error("Attempted to load invalid package");
+        }
         return fluidPackage.resolve();
     }
 

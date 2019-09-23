@@ -25,6 +25,13 @@ export interface ICodeLoader {
 }
 
 /**
+ * Code WhiteListing Interface
+ */
+export interface IWhiteList {
+    test(source: string | IFluidCodeDetails): Promise<boolean>;
+}
+
+/**
  * Host provider interfaces
  */
 export interface IHost {
