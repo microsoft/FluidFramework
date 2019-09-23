@@ -45,8 +45,8 @@ export class ClientManager implements IClientManager {
                     },
                 );
             }
-            return clients;
         }
+        return clients;
     }
 
     private getKey(tenantId: string, documentId: string): string {
