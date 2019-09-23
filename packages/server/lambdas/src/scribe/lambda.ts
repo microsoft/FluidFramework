@@ -64,6 +64,7 @@ export class ScribeLambda extends SequencedLambda {
         private protocolHandler: ProtocolOpHandler,
         private protocolHead: number,
         messages: ISequencedOperationMessage[],
+        private nackOnSummarizeException?: boolean,
     ) {
         super(context);
 
@@ -102,15 +103,31 @@ export class ScribeLambda extends SequencedLambda {
 
                 if (value.operation.type === MessageType.Summarize) {
                     const content = JSON.parse(value.operation.contents) as ISummaryContent;
+                    const summarySequenceNumber = value.operation.sequenceNumber;
 
                     // Process up to the summary op value to get the protocol state at the summary op
                     this.processFromPending(value.operation.referenceSequenceNumber);
-                    await this.summarize(
-                        content,
-                        this.protocolHandler.minimumSequenceNumber,
-                        this.protocolHandler.sequenceNumber,
-                        this.protocolHandler.quorum.snapshot(),
-                        value.operation.sequenceNumber);
+
+                    try {
+                        await this.summarize(
+                            content,
+                            this.protocolHandler.minimumSequenceNumber,
+                            this.protocolHandler.sequenceNumber,
+                            this.protocolHandler.quorum.snapshot(),
+                            summarySequenceNumber);
+                    } catch (ex) {
+                        if (this.nackOnSummarizeException) {
+                            // SPO wants to nack when summarize fails
+                            // In SPOs implementation of gitManager, we have built in retry logic for retryable errors.
+                            // So when it does throw, we should really nack the summary.
+                            await this.sendSummaryNack(
+                                summarySequenceNumber,
+                                `Failed to summarize the document.`,
+                            );
+                        } else {
+                            throw ex;
+                        }
+                    }
                 }
             }
         }
