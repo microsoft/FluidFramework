@@ -49,7 +49,6 @@ export class SimpleContainerRuntimeFactory {
         try {
             const componentRuntime = await runtime.createComponent(id, pkg);
 
-            // If the component supports forging we need to forge it.
             const result = await componentRuntime.request({ url: "/" });
             if (result.status !== 200 || result.mimeType !== "fluid/component") {
                 return Promise.reject("Default component is not a component.");
