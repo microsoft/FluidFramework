@@ -14,7 +14,7 @@ export class EmbeddedReactComponentFactory {
     constructor(private readonly getComponent: (id: string) => Promise<IComponent>) { }
 
     public create(id: string): JSX.Element {
-        return <EmbeddedComponent getComponent={this.getComponent} id={id} />;
+        return <EmbeddedComponent getComponent={this.getComponent} id={id} key={id} />;
     }
 }
 
@@ -45,7 +45,7 @@ export class EmbeddedComponent extends React.Component<IProps, IState> {
         };
     }
 
-    public async componentWillMount() {
+    public async componentDidMount() {
         const component = await this.props.getComponent(this.props.id);
         if (!component) {
             return;

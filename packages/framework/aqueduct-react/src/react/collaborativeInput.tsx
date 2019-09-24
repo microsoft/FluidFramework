@@ -41,7 +41,7 @@ export class CollaborativeInput extends React.Component<IProps, IState> {
         this.updateSelection = this.updateSelection.bind(this);
     }
 
-    public componentWillMount() {
+    public componentDidMount() {
         // Sets an event listener so we can update our state as the value changes
         this.props.sharedString.on("op", () => {
             // We'll only update the text on a new op if the text is different.

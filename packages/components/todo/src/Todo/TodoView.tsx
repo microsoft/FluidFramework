@@ -8,11 +8,10 @@ import { ISharedCell } from "@microsoft/fluid-cell";
 import { ISharedMap } from "@microsoft/fluid-map";
 import { SharedString } from "@microsoft/fluid-sequence";
 import * as React from "react";
-import ReactList from "react-list";
 
 interface p {
     createComponent(props?: any): Promise<void>;
-    getComponentView(id: string): JSX.Element;
+    createComponentView(id: string): JSX.Element;
     map: ISharedMap;
     textCell: ISharedCell;
     textSharedString: SharedString;
@@ -68,17 +67,17 @@ export class TodoView extends React.Component<p, s> {
 
     renderItem(index) {
         const id = this.state.ids[index];
-        return <div key={id}>{this.props.getComponentView(id)}</div>;
+        return <div key={id}>{this.props.createComponentView(id)}</div>;
     }
 
     render(): JSX.Element {
         const todoItemComponents = [];
         this.state.ids.forEach((id) => {
-            todoItemComponents.push(this.props.getComponentView(id));
+            todoItemComponents.push(this.props.createComponentView(id));
         });
 
         return (
-            <div style={{padding: "5px"}}>
+            <div className="todoView">
                 <CollaborativeInput
                     sharedString={this.props.textSharedString}
                     style={{
@@ -91,22 +90,17 @@ export class TodoView extends React.Component<p, s> {
                         width: "inherit",
                     }}
                 />
-                <span>
-                    <form onSubmit={this.handleSubmit}>
+                <form onSubmit={this.handleSubmit}>
                     <input
                         type="text"
                         value={this.state.inputValue}
                         onChange={this.updateInputValue}
                         ref={(input) => { this.newTextInput = input; }}/>
                     <button type="submit">+</button>
-                    </form>
-                </span>
-                <ReactList
-                    itemRenderer={this.renderItem}
-                    length={this.state.ids.length}
-                    type="uniform"
-                    minSize={this.state.ids.length}
-                    />
+                </form>
+                <div className="todoItemList">
+                    {todoItemComponents}
+                </div>
             </div>
         );
     }

@@ -22,6 +22,7 @@ interface p {
 interface s {
     contentVisible: boolean;
     innerId: string;
+    checkedState: boolean;
 }
 
 export class TodoItemView extends React.Component<p, s> {
@@ -47,9 +48,12 @@ export class TodoItemView extends React.Component<p, s> {
         this.state = {
             contentVisible: false,
             innerId: this.props.innerIdCell.get(),
+            checkedState: this.isChecked(),
         };
 
         this.createComponent = this.createComponent.bind(this);
+        this.handleCheckedChange = this.handleCheckedChange.bind(this);
+        this.isChecked = this.isChecked.bind(this);
     }
 
     async createComponent(type: TodoItemSupportedComponents) {
@@ -62,13 +66,23 @@ export class TodoItemView extends React.Component<p, s> {
         });
     }
 
+    private handleCheckedChange(newState: boolean): void {
+        this.props.checkedCounter.increment(1);
+        this.setState({checkedState: this.isChecked()});
+    }
+
+    private isChecked(): boolean {
+        return this.props.checkedCounter.value % 2 !== 0;
+    }
+
     render() {
         // tslint:disable:strict-boolean-expressions
         return (
-            <div>
+            <div className="todoItem">
                 <h2>
                     <CollaborativeCheckbox
-                        counter={this.props.checkedCounter}
+                        checked={this.isChecked()}
+                        onCheckedChange={this.handleCheckedChange}
                         id={this.props.id}/>
                     <CollaborativeInput
                         sharedString={this.props.sharedString}
@@ -81,34 +95,32 @@ export class TodoItemView extends React.Component<p, s> {
                             outline: "none",
                             width: "inherit",
                         }}/>
-                    <span>
-                        <button
-                            style={this.buttonStyle}
-                            onClick={() => {this.setState({contentVisible: !this.state.contentVisible}); }}>
-                            {this.state.contentVisible ? "▲" : "▼"}
-                        </button>
-                        <button
-                            style={this.buttonStyle}
-                            onClick={() => window.open(`${this.baseUrl}/${this.props.id}`, "_blank")}>↗</button>
-                        <button
-                            style={this.buttonStyle}
-                            onClick={() => alert("Implement Delete")}>X</button>
-                    </span>
+                    <button
+                        style={this.buttonStyle}
+                        onClick={() => {this.setState({contentVisible: !this.state.contentVisible}); }}>
+                        {this.state.contentVisible ? "▲" : "▼"}
+                    </button>
+                    <button
+                        style={this.buttonStyle}
+                        onClick={() => window.open(`${this.baseUrl}/${this.props.id}`, "_blank")}>↗</button>
+                    <button
+                        style={this.buttonStyle}
+                        onClick={() => alert("Implement Delete")}>X</button>
                 </h2>
                 {
                     // If the content is visible we will show a button or a component
                     this.state.contentVisible &&
-                    <div style={{paddingLeft: 30}}>
+                    <div className="todoItemDetails">
                         {
-                            this.state.innerId === "" &&
-                            <span>
+                            this.state.innerId === "" ?
+                            <>
                                 <button onClick={async () => this.createComponent("todo")}>todo</button>
                                 <button onClick={async () => this.createComponent("clicker")}>clicker</button>
                                 <button onClick={async () => this.createComponent("textBox")}>textBox</button>
                                 <button onClick={async () => this.createComponent("textList")}>textList</button>
-                            </span>
+                            </> :
+                            this.props.getComponentView(this.state.innerId)
                         }
-                        {this.state.innerId !== "" && this.props.getComponentView(this.state.innerId)}
                     </div>
                 }
             </div>

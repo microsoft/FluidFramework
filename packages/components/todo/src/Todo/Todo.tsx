@@ -128,7 +128,7 @@ export class Todo extends PrimedComponent implements IComponentHTMLVisual, IComp
     const factory = new EmbeddedReactComponentFactory(this.getComponent.bind(this));
     return(
       <TodoView
-          getComponentView = {(id: string) => factory.create(id)}
+          createComponentView = {(id: string) => factory.create(id)}
           createComponent={createComponent.bind(this)}
           map={this.innerCellIdsMap}
           textSharedString={this.titleTextSharedString}
