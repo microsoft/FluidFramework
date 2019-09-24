@@ -126,10 +126,20 @@ export function createWebLoader_WhiteList(
     config.tokens = (resolved as IFluidResolvedUrl).tokens;
     // tslint:enable: no-unsafe-any
 
+    const whiteList = new WhiteList(() => Promise.resolve(true));
+    if (pkg) {
+        if (pkg.pkg) { // this is an IFluidPackage
+            whiteList.seed(pkg.pkg, pkg.details.config, scriptIds);
+            if (pkg.details.package === pkg.pkg.name) {
+                pkg.details.package = `${pkg.pkg.name}@${pkg.pkg.version}`;
+            }
+        }
+    }
+
     return Loader.create(
         {resolver: hostConf.urlResolver},
         hostConf.documentServiceFactory,
-        new WhiteList(() => Promise.resolve(true)),
+        whiteList,
         config,
         scope,
     );

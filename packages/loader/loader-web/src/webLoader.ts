@@ -4,13 +4,13 @@
  */
 
 import {
+    IChaincodeWhiteList,
     ICodeLoader,
     IFluidCodeDetails,
     IFluidPackage,
     IPackage,
     IPackageConfig,
     IPraguePackage,
-    IWhiteList,
 } from "@microsoft/fluid-container-definitions";
 import * as fetch from "isomorphic-fetch";
 import { WhiteList } from "./whiteList";
@@ -276,9 +276,9 @@ export class WebCodeLoader implements ICodeLoader {
     // Cache goes CDN -> package -> entrypoint
     private readonly resolvedCache = new Map<string, FluidPackage>();
     private readonly scriptManager = new ScriptManager();
-    private readonly whiteList: IWhiteList;
+    private readonly whiteList: IChaincodeWhiteList;
 
-    constructor(private readonly baseUrl: string, whiteList?: IWhiteList) {
+    constructor(private readonly baseUrl: string, whiteList?: IChaincodeWhiteList) {
         console.log("WebCodeLoader.constructor");
         this.whiteList = whiteList ? whiteList : new WhiteList(() => Promise.resolve(true));
     }
@@ -296,9 +296,6 @@ export class WebCodeLoader implements ICodeLoader {
     public resolve(input: string | IFluidCodeDetails): Promise<IResolvedPackage> {
         console.log("WebCodeLoader.resolve");
         const fluidPackage = this.getFluidPackage(input);
-        // if (await this.whiteList.test(input)) {
-        //     throw new Error("Attempted to load invalid package");
-        // }
         return fluidPackage.resolve();
     }
 
@@ -315,7 +312,7 @@ export class WebCodeLoader implements ICodeLoader {
 
         const input = details ? details : source;
         const fluidPackage = this.getFluidPackage(input);
-        if (!(await this.whiteList.test(input))) {
+        if (!(await this.whiteList.testSource(input))) {
             throw new Error("Attempted to load invalid package");
         }
         console.log(this.whiteList);

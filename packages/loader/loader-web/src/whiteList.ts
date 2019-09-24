@@ -4,21 +4,35 @@
  */
 
 import {
-    IFluidCodeDetails, IWhiteList,
+    IChaincodeWhiteList, IFluidCodeDetails, IFluidPackage, IPackageConfig,
 } from "@microsoft/fluid-container-definitions";
 
 /**
  * Class used by hosts to allow specific containers and endpoint.
  */
-export class WhiteList implements IWhiteList {
-    constructor(private readonly testHandler: (source: string | IFluidCodeDetails) => Promise<boolean>) { }
+export class WhiteList implements IChaincodeWhiteList {
+    public pkg?: IFluidPackage;
+    public config?: IPackageConfig;
+    public scriptIds?: string[];
+    constructor(
+        private readonly testHandler: (source: IFluidCodeDetails) => Promise<boolean>,
+    ) { }
 
-    public async test(source: string | IFluidCodeDetails): Promise<boolean> {
+    public async testSource(source: IFluidCodeDetails): Promise<boolean> {
         console.log("WhiteList.test");
         console.log(source);
         return this.testHandler(source);
-        // return true;
     }
 
-    // Should the white list handle the seeding as well?
+    public async seed(pkg: IFluidPackage, config: IPackageConfig, scriptIds: string[]) {
+        this.pkg = pkg;
+        this.config = config;
+        this.scriptIds = scriptIds;
+    }
+
+    public canSeed(): boolean {
+        return (this.pkg !== undefined &&
+            this.config !== undefined &&
+            this.scriptIds !== undefined);
+    }
 }

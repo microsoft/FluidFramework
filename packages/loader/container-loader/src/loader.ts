@@ -9,11 +9,11 @@ import {
     IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
 import {
+    IChaincodeWhiteList,
     ICodeLoader,
     IHost,
     ILoader,
     ITelemetryBaseLogger,
-    IWhiteList,
 } from "@microsoft/fluid-container-definitions";
 import { Deferred } from "@microsoft/fluid-core-utils";
 import {
@@ -143,7 +143,7 @@ export class Loader extends EventEmitter implements ILoader {
     public static create(
         containerHost: IHost,
         documentServiceFactories: IDocumentServiceFactory | IDocumentServiceFactory[],
-        whiteList: IWhiteList,
+        whiteList: IChaincodeWhiteList,
         options: any,
         scope: IComponent,
         logger?: ITelemetryBaseLogger,
