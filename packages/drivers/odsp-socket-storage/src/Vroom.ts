@@ -13,7 +13,7 @@ function getOrigin(url: string) {
 }
 
 /**
- * Makes a call to the opstream VRoom API on SPO
+ * Makes join session call on SPO
  * @param appId - The identifier for the application
  * @param driveId - The SPO drive id that this request should be made against
  * @param itemId -The SPO item id that this request should be made against
