@@ -107,7 +107,7 @@ export async function initialize(
 
         config.moniker = (await Axios.get("/api/v1/moniker")).data;
         config.url = url;
-        privateSession.frameP = createFrame(div, createIFrameHTML(resolved, pkg, scriptIds, scope, config));
+        privateSession.frameP = createFrame(div, createIFrameHTML(resolved, pkg, scriptIds, scope, config, clientId));
         const resolver = new ContainerUrlResolver(
             document.location.origin,
             jwt,
@@ -153,7 +153,8 @@ function createIFrameHTML(resolved: IResolvedUrl,
                           pkg: IResolvedPackage,
                           scriptIds: string[],
                           scope: IComponent,
-                          config: any): string {
+                          config: any,
+                          clientId: string): string {
     const url = window.location.href.split("&privateSession")[0];
     let santizedResolved: IFluidResolvedUrl;
 
@@ -185,6 +186,7 @@ function createIFrameHTML(resolved: IResolvedUrl,
                 undefined, // npm
                 undefined, // jwt
                 ${JSON.stringify(config)}, // config
+                ${JSON.stringify(clientId)}, // clientId
                 ${JSON.stringify(scope)}, // scope
                 true, // innerSession
                 false, // outerSession
