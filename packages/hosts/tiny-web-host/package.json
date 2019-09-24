@@ -26,6 +26,7 @@
   "dependencies": {
     "@microsoft/fluid-base-host": "^0.10.0",
     "@microsoft/fluid-web-code-loader": "^0.10.0",
+    "@microsoft/fluid-odsp-driver": "^0.10.0",
     "@microsoft/fluid-odsp-utils": "^0.10.0",
     "@microsoft/fluid-protocol-definitions": "^0.10.0",
     "@microsoft/fluid-routerlicious-host": "^0.10.0",

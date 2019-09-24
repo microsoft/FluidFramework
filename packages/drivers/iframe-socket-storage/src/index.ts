@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+export * from "./innerDocumentDeltaConnection";
+export * from "./outerDocumentDeltaConnection";
 export * from "./innerDocumentService";
 export * from "./outerDocumentService";
 export * from "./innerDocumentStorageService";

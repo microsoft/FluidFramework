@@ -25,6 +25,7 @@
         var jwt = "{{ jwt }}";
         var npm = "{{ npm }}";
         var config = {{{ config }}};
+        var clientId = "{{ clientId }}";
 
         {{#scripts}}
         var scriptIds = [
@@ -45,7 +46,8 @@
             scriptIds,
             npm,
             jwt,
-            config);
+            config,
+            clientId);
     </script>
 {{/scripts}}
 
