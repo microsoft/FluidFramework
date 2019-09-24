@@ -70,7 +70,7 @@ endpoints:
   cobaltUrl: http://smelly-wolf-cobalt
   alfredUrl: https://alfred.wu2.prague.office-int.com
   jarvisUrl: https://jarvis.wu2.prague.office-int.com
-  keyValueUrl: https://www.wu2.prague.office-int.com/loader/fluid/kv-cache-00015
+  keyValueUrl: https://www.wu2.prague.office-int.com/loader/prague/kv-cache-00015
 `;
 
 const writeFileAsync = util.promisify(fs.writeFile);
