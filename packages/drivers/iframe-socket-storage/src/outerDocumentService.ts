@@ -5,9 +5,6 @@
 import { Deferred } from "@microsoft/fluid-core-utils";
 import {
     IConnected,
-    IInnerDocumentDeltaConnectionProxy,
-    IOuterDocumentDeltaConnection,
-    OuterDocumentDeltaConnection,
 } from "@microsoft/fluid-driver-base";
 import {
     ConnectionMode,
@@ -22,6 +19,11 @@ import { DocumentStorageService } from "@microsoft/fluid-routerlicious-driver";
 import * as assert from "assert";
 import * as Comlink from "comlink";
 import { OuterDeltaStorageService } from "./outerDeltaStorageService";
+import {
+    IInnerDocumentDeltaConnectionProxy,
+    IOuterDocumentDeltaConnection,
+    OuterDocumentDeltaConnection,
+} from "./outerDocumentDeltaConnection";
 import { OuterDocumentStorageService } from "./outerDocumentStorageService";
 
 const protocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
@@ -32,8 +34,8 @@ interface IInnerProxy extends IInnerDocumentDeltaConnectionProxy {
 }
 
 export interface IOuterProxy extends IOuterDocumentDeltaConnection,
-                                    IDocumentStorageService,
-                                    IDocumentDeltaStorageService {
+    IDocumentStorageService,
+    IDocumentDeltaStorageService {
     handshake: any;
     connected(): Promise<boolean>;
 }
@@ -75,10 +77,11 @@ export class OuterDocumentService implements IDocumentService {
     private outerDeltaStorageService: IDocumentDeltaStorageService;
     private outerDocumentDeltaConnection: IDocumentDeltaConnection;
 
-    constructor(private readonly storageService: DocumentStorageService,
-                private readonly deltaStorage: IDocumentDeltaStorageService,
-                private readonly deltaConnection: IDocumentDeltaConnection,
-                frame: HTMLIFrameElement,
+    constructor(
+        private readonly storageService: DocumentStorageService,
+        private readonly deltaStorage: IDocumentDeltaStorageService,
+        private readonly deltaConnection: IDocumentDeltaConnection,
+        frame: HTMLIFrameElement,
     ) {
         this.handshake = new Deferred<IInnerProxy>();
 

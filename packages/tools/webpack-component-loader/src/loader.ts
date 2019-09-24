@@ -164,7 +164,7 @@ export async function start(
                 localHost,
                 localHost,
                 localHost,
-                "prague",
+                "fluid",
                 "43cfc3fbf04a97c0921fd23ff10f9e4b",
                 getUser(),
                 bearerSecret);
