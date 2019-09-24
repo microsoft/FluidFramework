@@ -112,7 +112,7 @@ export class Todo extends PrimedComponent implements IComponentHTMLVisual, IComp
    */
   public createJSXElement(): JSX.Element {
     // callback that allows for creation of new Todo Items
-    const createComponent = async (props?: any) => {
+    const createTodoItemComponent = async (props?: any) => {
       // create a new ID for our component
       const id = `item${Date.now().toString()}`;
 
@@ -129,7 +129,7 @@ export class Todo extends PrimedComponent implements IComponentHTMLVisual, IComp
     return(
       <TodoView
           createComponentView = {(id: string) => factory.create(id)}
-          createComponent={createComponent.bind(this)}
+          createTodoItemComponent={createTodoItemComponent.bind(this)}
           map={this.innerCellIdsMap}
           textSharedString={this.titleTextSharedString}
           textCell={this.titleTextCell}/>

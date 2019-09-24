@@ -8,7 +8,6 @@ import { PrimedComponent } from "@microsoft/fluid-aqueduct";
 import { EmbeddedReactComponentFactory, IComponentReactViewable } from "@microsoft/fluid-aqueduct-react";
 import { ISharedCell, SharedCell } from "@microsoft/fluid-cell";
 import { IComponentHandle, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
-import { Counter, CounterValueType } from "@microsoft/fluid-map";
 import { SharedString } from "@microsoft/fluid-sequence";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -58,10 +57,8 @@ export class TodoItem extends PrimedComponent
     // create a cell that will be use for the text entry
     this.root.set("text", text.handle);
 
-    // create a counter that will be used for the checkbox
-    // we use a counter so if both users press the button at the same time it will result
-    // in the button being the same value.
-    this.root.createValueType("checked", CounterValueType.Name, 0);
+    // track the state of the checkbox
+    this.root.set("checked", false);
 
     // Each Todo Item has one inner component that it can have. This value is originally empty since we let the
     // user choose the component they want to embed. We store it in a cell for easier event handling.
@@ -73,6 +70,8 @@ export class TodoItem extends PrimedComponent
   protected async componentHasInitialized() {
     const text = this.root.get<IComponentHandle>("text").get<SharedString>();
     const innerIdCell = this.root.get<IComponentHandle>("innerId").get<ISharedCell>();
+
+    this.handleCheckedChange = this.handleCheckedChange.bind(this);
 
     [
       this.text,
@@ -101,17 +100,22 @@ export class TodoItem extends PrimedComponent
    * Since this returns a JSX.Element it allows for an easier model.
    */
   public createJSXElement(): JSX.Element {
-      const checkedCounter = this.root.get<Counter>("checked");
+      const checkedState = this.root.get<boolean>("checked");
       const factory = new EmbeddedReactComponentFactory(this.getComponent.bind(this));
       return (
         <TodoItemView
           sharedString={this.text}
           id={this.url}
           innerIdCell={this.innerIdCell}
-          checkedCounter={checkedCounter}
+          checked={checkedState}
+          handleCheckedChange={this.handleCheckedChange}
           getComponentView={(id) => factory.create(id)}
-          createComponent={this.createComponent.bind(this)}/>
+          createInnerComponent={this.createInnerComponent.bind(this)}/>
       );
+  }
+
+  private handleCheckedChange(newState: boolean): void {
+    this.root.set("checked", newState);
   }
 
   // end IComponentReactViewable
@@ -121,7 +125,7 @@ export class TodoItem extends PrimedComponent
    * @param type - component to be created
    * @param props - props to be passed into component creation
    */
-  private async createComponent(type: TodoItemSupportedComponents, props?: any): Promise<void> {
+  private async createInnerComponent(type: TodoItemSupportedComponents, props?: any): Promise<void> {
     const id = `item${Date.now().toString()}`;
 
     switch (type) {

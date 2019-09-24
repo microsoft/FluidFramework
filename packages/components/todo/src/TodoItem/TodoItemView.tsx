@@ -5,24 +5,23 @@
 
 import { CollaborativeCheckbox, CollaborativeInput } from "@microsoft/fluid-aqueduct-react";
 import { ISharedCell } from "@microsoft/fluid-cell";
-import { Counter } from "@microsoft/fluid-map";
 import { SharedString } from "@microsoft/fluid-sequence";
 import * as React from "react";
 import { TodoItemSupportedComponents } from "./supportedComponent";
 
 interface p {
     sharedString: SharedString;
-    checkedCounter: Counter;
+    checked: boolean;
     id: string;
     innerIdCell: ISharedCell;
+    handleCheckedChange(newState: boolean): void;
     getComponentView(id: string): JSX.Element;
-    createComponent(types: TodoItemSupportedComponents, props?: any): Promise<void>;
+    createInnerComponent(types: TodoItemSupportedComponents, props?: any): Promise<void>;
 }
 
 interface s {
     contentVisible: boolean;
     innerId: string;
-    checkedState: boolean;
 }
 
 export class TodoItemView extends React.Component<p, s> {
@@ -48,16 +47,14 @@ export class TodoItemView extends React.Component<p, s> {
         this.state = {
             contentVisible: false,
             innerId: this.props.innerIdCell.get(),
-            checkedState: this.isChecked(),
         };
 
-        this.createComponent = this.createComponent.bind(this);
+        this.createInnerComponent = this.createInnerComponent.bind(this);
         this.handleCheckedChange = this.handleCheckedChange.bind(this);
-        this.isChecked = this.isChecked.bind(this);
     }
 
-    async createComponent(type: TodoItemSupportedComponents) {
-        await this.props.createComponent(type, { startingText: type});
+    async createInnerComponent(type: TodoItemSupportedComponents) {
+        await this.props.createInnerComponent(type, { startingText: type});
     }
 
     componentDidMount() {
@@ -67,12 +64,8 @@ export class TodoItemView extends React.Component<p, s> {
     }
 
     private handleCheckedChange(newState: boolean): void {
-        this.props.checkedCounter.increment(1);
-        this.setState({checkedState: this.isChecked()});
-    }
-
-    private isChecked(): boolean {
-        return this.props.checkedCounter.value % 2 !== 0;
+        this.props.handleCheckedChange(newState);
+        this.forceUpdate();
     }
 
     render() {
@@ -81,7 +74,7 @@ export class TodoItemView extends React.Component<p, s> {
             <div className="todoItem">
                 <h2>
                     <CollaborativeCheckbox
-                        checked={this.isChecked()}
+                        checked={this.props.checked}
                         onCheckedChange={this.handleCheckedChange}
                         id={this.props.id}/>
                     <CollaborativeInput
@@ -114,10 +107,10 @@ export class TodoItemView extends React.Component<p, s> {
                         {
                             this.state.innerId === "" ?
                             <>
-                                <button onClick={async () => this.createComponent("todo")}>todo</button>
-                                <button onClick={async () => this.createComponent("clicker")}>clicker</button>
-                                <button onClick={async () => this.createComponent("textBox")}>textBox</button>
-                                <button onClick={async () => this.createComponent("textList")}>textList</button>
+                                <button onClick={async () => this.createInnerComponent("todo")}>todo</button>
+                                <button onClick={async () => this.createInnerComponent("clicker")}>clicker</button>
+                                <button onClick={async () => this.createInnerComponent("textBox")}>textBox</button>
+                                <button onClick={async () => this.createInnerComponent("textList")}>textList</button>
                             </> :
                             this.props.getComponentView(this.state.innerId)
                         }

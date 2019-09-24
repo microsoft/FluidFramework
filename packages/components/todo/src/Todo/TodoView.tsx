@@ -10,7 +10,7 @@ import { SharedString } from "@microsoft/fluid-sequence";
 import * as React from "react";
 
 interface p {
-    createComponent(props?: any): Promise<void>;
+    createTodoItemComponent(props?: any): Promise<void>;
     createComponentView(id: string): JSX.Element;
     map: ISharedMap;
     textCell: ISharedCell;
@@ -49,7 +49,7 @@ export class TodoView extends React.Component<p, s> {
     }
 
     async createComponent(): Promise<void>  {
-        await this.props.createComponent({ startingText: this.state.inputValue});
+        await this.props.createTodoItemComponent({ startingText: this.state.inputValue});
     }
 
     /**
