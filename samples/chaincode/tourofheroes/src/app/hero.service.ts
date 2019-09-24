@@ -19,7 +19,7 @@ import { catchError, tap } from 'rxjs/operators';
 import { Hero } from './hero';
 import { MessageService } from './message.service';
 import { PRAGUE_ROOT } from './tokens';
-import { ISharedMap } from '@prague/map';
+import { ISharedMap } from '@microsoft/fluid-map';
 import { EventEmitter } from 'events';
 
 // Example of how to manually build a GraphQL Schema at https://github.com/graphql/graphql-js/ including 

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IConnected } from "@microsoft/fluid-driver-base";
 import {
     ConnectionMode,
     IContentMessage,
@@ -10,11 +11,11 @@ import {
     IDocumentMessage,
     ISequencedDocumentMessage,
     IServiceConfiguration,
+    ISignalClient,
     ISignalMessage,
     ITokenClaims,
 } from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
-import { IConnected } from "./messages";
 
 // tslint:disable: no-non-null-assertion no-console
 
@@ -147,6 +148,15 @@ export class OuterDocumentDeltaConnection extends EventEmitter implements IDocum
      */
     public get initialSignals(): ISignalMessage[] | undefined {
         return this.details.initialSignals;
+    }
+
+    /**
+     * Get initial client list
+     *
+     * @returns initial client list sent during the connection
+     */
+    public get initialClients(): ISignalClient[] {
+        return this.details.initialClients ? this.details.initialClients : [];
     }
 
     /**
