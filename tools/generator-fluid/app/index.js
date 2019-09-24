@@ -48,7 +48,7 @@ module.exports = class extends Generator {
         type: "input",
         name: "description",
         message: "Component Description",
-        default: "Chaincode starter project"
+        default: "Fluid starter project"
       },
       {
         type: "input",
@@ -98,7 +98,7 @@ module.exports = class extends Generator {
    */
   _copyPackageFile() {
     var packageJson = this.fs.readJSON(this.templatePath("package.json"));
-    packageJson.name = "@chaincode/" + this.answers.name.toLowerCase();
+    packageJson.name = "@fluid-example/" + this.answers.name.toLowerCase();
     packageJson.description = this.answers.description;
 
     packageJson = this._cleanDependencies(packageJson);
