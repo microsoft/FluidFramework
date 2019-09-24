@@ -11,7 +11,7 @@ const pkg = require("./package.json");
 const chaincodeName = pkg.name.slice(1);
 
 module.exports = env => {
-    const isProduction = env === "production";
+    const isProduction = env && env.production;
 
     return merge({
         entry: {
