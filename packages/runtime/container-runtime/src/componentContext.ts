@@ -40,7 +40,7 @@ import { ContainerRuntime } from "./containerRuntime";
 
 const currentSnapshotFormatVersion = "0.1";
 
-export interface IComponentAttributes {
+interface IComponentAttributes {
     pkg: string;
     readonly snapshotFormatVersion?: string;
 }
