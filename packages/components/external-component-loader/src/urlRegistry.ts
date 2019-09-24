@@ -6,7 +6,7 @@
 // tslint:disable: no-console
 
 import { IComponent, IComponentQueryableLegacy } from "@microsoft/fluid-component-core-interfaces";
-import { IFluidPackage, IPraguePackage } from "@microsoft/fluid-container-definitions";
+import { IFluidPackage } from "@microsoft/fluid-container-definitions";
 import { Deferred } from "@microsoft/fluid-core-utils";
 import { ComponentFactoryTypes, ComponentRegistryTypes, IComponentFactory, IComponentRegistry } from "@microsoft/fluid-runtime-definitions";
 
@@ -130,7 +130,6 @@ export class UrlRegistry implements IComponentRegistry {
         } else {
             const responseText = await response.text();
             const packageJson = JSON.parse(responseText);
-            const praguePackage = packageJson as IPraguePackage;
             const fluidPackage = packageJson as IFluidPackage;
 
             let entrypointName: string;
@@ -138,9 +137,6 @@ export class UrlRegistry implements IComponentRegistry {
             if (fluidPackage.fluid && fluidPackage.fluid.browser && fluidPackage.fluid.browser.umd) {
                 entrypointName = fluidPackage.fluid.browser.umd.library;
                 scripts = fluidPackage.fluid.browser.umd.files;
-            } else if (praguePackage.prague !== undefined) {
-                entrypointName = packageJson.prague.browser.entrypoint;
-                scripts = packageJson.prague.browser.bundle;
             } else {
                 throw new Error(`UrlRegistry: ${name}: Package json not deserializable as IFluidPackage`);
             }

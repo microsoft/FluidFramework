@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
+const fluidRoute = require("@microsoft/fluid-webpack-component-loader");
 const path = require("path");
 const merge = require("webpack-merge");
 
 module.exports = env => {
-    const isProduction = env === "production";
+    const isProduction = env && env.production;
 
     return merge({
         entry: {
@@ -62,12 +63,15 @@ module.exports = env => {
             path: path.resolve(__dirname, "dist"),
             library: "[name]",
             // https://github.com/webpack/webpack/issues/5767
-            // https://github.com/webpack/webpack/issues/7939            
+            // https://github.com/webpack/webpack/issues/7939
             devtoolNamespace: "chaincode/tourofheroes",
             libraryTarget: "umd"
         },
         devServer: {
-            publicPath: '/dist'
+            publicPath: '/dist',
+            stats: "minimal",
+            before: fluidRoute.before,
+            after: (app, server) => fluidRoute.after(app, server, __dirname, env),
         }
     }, isProduction
         ? require("./webpack.prod")

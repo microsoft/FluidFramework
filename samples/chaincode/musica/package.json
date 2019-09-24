@@ -30,14 +30,6 @@
     "webpack-cli": "3.1.0",
     "webpack-merge": "4.1.4"
   },
-  "prague": {
-    "browser": {
-      "entrypoint": "main",
-      "bundle": [
-        "dist/main.bundle.js"
-      ]
-    }
-  },
   "dependencies": {
     "@babel/core": "^7.4.4",
     "@prague/app-component": "^0.3.0",

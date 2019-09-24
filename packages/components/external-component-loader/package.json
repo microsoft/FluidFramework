@@ -37,14 +37,6 @@
     "webpack-dev-server": "^3.8.0",
     "webpack-merge": "^4.1.2"
   },
-  "prague": {
-    "browser": {
-      "entrypoint": "main",
-      "bundle": [
-        "dist/main.bundle.js"
-      ]
-    }
-  },
   "fluid": {
     "browser": {
       "umd": {

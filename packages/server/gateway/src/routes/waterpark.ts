@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IPraguePackage } from "@microsoft/fluid-container-definitions";
+import { IPackage } from "@microsoft/fluid-container-definitions";
 import { ScopeType } from "@microsoft/fluid-protocol-definitions";
 import { IAlfredTenant } from "@microsoft/fluid-server-services-core";
 import { extractDetails, WebCodeLoader } from "@microsoft/fluid-web-code-loader";
@@ -21,7 +21,7 @@ import { getConfig, getParam, getUserDetails } from "../utils";
 import { defaultPartials } from "./partials";
 
 // tslint:disable-next-line: no-var-requires no-require-imports
-const pkgJson = require("../../package.json") as IPraguePackage;
+const pkgJson = require("../../package.json") as IPackage;
 const defaultChaincode =
     `@microsoft/fluid-external-component-loader@${pkgJson.version.endsWith(".0") ? "^" : ""}${pkgJson.version}`;
 

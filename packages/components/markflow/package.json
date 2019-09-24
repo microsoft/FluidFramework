@@ -6,14 +6,6 @@
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
   "sideEffects": false,
-  "prague": {
-    "browser": {
-      "entrypoint": "main",
-      "bundle": [
-        "dist/main.bundle.js"
-      ]
-    }
-  },
   "fluid": {
     "browser": {
       "umd": {

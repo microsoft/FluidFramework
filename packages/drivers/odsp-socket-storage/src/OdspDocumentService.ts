@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
-import { SinglePromise } from "@microsoft/fluid-core-utils";
+import { NetworkError, SinglePromise } from "@microsoft/fluid-core-utils";
 import { DocumentDeltaConnection } from "@microsoft/fluid-driver-base";
 import {
     ConnectionMode,
@@ -15,11 +15,12 @@ import {
     IDocumentStorageService,
     IErrorTrackingService,
 } from "@microsoft/fluid-protocol-definitions";
-import { ISocketStorageDiscovery } from "./contracts";
+import { IOdspSocketError, ISocketStorageDiscovery } from "./contracts";
 import { IFetchWrapper } from "./fetchWrapper";
 import { OdspDeltaStorageService } from "./OdspDeltaStorageService";
 import { OdspDocumentStorageManager } from "./OdspDocumentStorageManager";
 import { OdspDocumentStorageService } from "./OdspDocumentStorageService";
+import { defaultRetryFilter } from "./OdspUtils";
 import { getSocketStorageDiscovery } from "./Vroom";
 
 /**
@@ -150,7 +151,24 @@ export class OdspDocumentService implements IDocumentService {
             io,
             client,
             websocketEndpoint.deltaStreamSocketUrl,
-            mode);
+            mode,
+        ).catch((error) => {
+            // Test if it's NetworkError with IOdspSocketError.
+            // Note that there might be no IOdspSocketError on it in case we hit socket.io protocol errors!
+            // So we test canRetry property first - if it false, that means protocol is broken and reconnecting will not help.
+            if (error instanceof NetworkError && error.canRetry) {
+                const socketError: IOdspSocketError = (error as any).socketError;
+                if (typeof socketError === "object" && socketError !== null) {
+                    throw new NetworkError(
+                        socketError.message,
+                        socketError.code,
+                        defaultRetryFilter(socketError.code), // canRetry
+                        socketError.retryAfter);
+                }
+            }
+
+            throw error;
+        });
     }
 
     public async branch(): Promise<string> {

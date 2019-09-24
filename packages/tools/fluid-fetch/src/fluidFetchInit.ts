@@ -319,7 +319,7 @@ async function initializeR11sLocalhost(pathname: string) {
         tenantId = path[2];
         documentId = path[3];
     } else {
-        tenantId = "prague";
+        tenantId = "fluid";
         documentId = path[2];
     }
 
