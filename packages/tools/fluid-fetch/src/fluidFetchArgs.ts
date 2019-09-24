@@ -7,8 +7,6 @@ import { URL } from "url";
 
 export let dumpMessages = false;
 export let dumpMessageStats = false;
-export let dumpChannelStats = false;
-export let dumpDataTypeStats = false;
 export let dumpSnapshotStats = false;
 export let dumpSnapshotTrees = false;
 export let dumpSnapshotBlobs = false;
@@ -32,10 +30,8 @@ const optionsArray =
         ["--dump:snapshotTree", "dump the snapshot trees"],
         ["--dump:snapshotBlob", "dump the contents of snapshot blobs"],
         ["--forceRefreshToken", "Force refresh token (SPO only)"],
-        ["--stat:message", "show a table of message type counts and size"],
+        ["--stat:message", "show message type, channel type, data type statistics"],
         ["--stat:snapshot", "show a table of snapshot path and blob size"],
-        ["--stat:dataType", "show a table of data type"],
-        ["--stat:channel", "show a table of channel"],
         ["--filter:messageType <type>", "filter message by <type>"],
         ["--jwt <token>", "token to be used for routerlicious URLs"],
         ["--numSnapshotVersions <number>", "Number of versions to load (default:10)"],
@@ -61,12 +57,6 @@ export function parseArguments() {
                 break;
             case "--stat:message":
                 dumpMessageStats = true;
-                break;
-            case "--stat:channel":
-                dumpChannelStats = true;
-                break;
-            case "--stat:dataType":
-                dumpDataTypeStats = true;
                 break;
             case "--stat":
                 dumpTotalStats = true;
