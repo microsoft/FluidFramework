@@ -6,7 +6,13 @@
 import { IComponentLoadable } from "@microsoft/fluid-component-core-interfaces";
 import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
 import { ChildLogger, Deferred, PerformanceEvent } from "@microsoft/fluid-core-utils";
-import { ISequencedDocumentMessage, ISummaryAck, ISummaryConfiguration, ISummaryNack, MessageType } from "@microsoft/fluid-protocol-definitions";
+import {
+    ISequencedDocumentMessage,
+    ISummaryAck,
+    ISummaryConfiguration,
+    ISummaryNack,
+    MessageType,
+} from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
 import { ContainerRuntime, IGeneratedSummaryData } from "./containerRuntime";
 
@@ -54,6 +60,9 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
     private readonly runDeferred = new Deferred<void>();
     private readonly logger: ITelemetryLogger;
 
+    private deferBroadcast: Deferred<void>;
+    private deferAck: Deferred<void>;
+
     constructor(
         public readonly url: string,
         private readonly runtime: ContainerRuntime,
@@ -93,21 +102,30 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
         return this.runDeferred.promise;
     }
 
-    private handleSummaryOp(op: ISequencedDocumentMessage) {
+    private async handleSummaryOp(op: ISequencedDocumentMessage) {
+        // ignore all ops if not pending
         if (!this.summaryPending) {
             return;
         }
         // listen for the broadcast of this summary op
         if (op.type === MessageType.Summarize) {
+            await this.deferBroadcast.promise;
             if (!this.pendingSummarySequenceNumber) {
                 // should only be 1 summary op per client with same ref seq number
                 if (op.clientId === this.runtime.clientId && op.referenceSequenceNumber === this.lastSummarySeqNumber) {
+                    this.logger.sendTelemetryEvent({
+                        eventName: "PendingSummaryBroadcast",
+                        timeWaitingForBroadcast: Date.now() - this.lastSummaryTime,
+                        pendingSummarySequenceNumber: op.sequenceNumber,
+                    });
                     this.pendingSummarySequenceNumber = op.sequenceNumber;
+                    this.deferAck.resolve();
                 }
             }
         }
         // listen for the ack/nack of this summary op
         if (op.type === MessageType.SummaryAck || op.type === MessageType.SummaryNack) {
+            await this.deferAck.promise;
             if (this.pendingSummarySequenceNumber) {
                 const ack = op.contents as ISummaryAck | ISummaryNack;
                 if (ack.summaryProposal.summarySequenceNumber === this.pendingSummarySequenceNumber) {
@@ -138,7 +156,7 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
                     eventName: "SummaryAckWaitTimeout",
                     maxAckWaitTime: this.configuration.maxAckWaitTime,
                 });
-                this.summaryPending = false;
+                this.cancelPending();
             }
         }
 
@@ -166,7 +184,7 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
         this.summarizeCore(message).finally(() => {
             this.summarizing = false;
         }).catch((error) => {
-            this.summaryPending = false;
+            this.cancelPending();
             this.logger.sendErrorEvent({ eventName: "SummarizeError" }, error);
         });
     }
@@ -178,6 +196,7 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
         const summaryData = await this.generateSummary();
 
         const summaryEndTime = Date.now();
+
         summarizingEvent.end({
             stage: "end",
             ...summaryData,
@@ -185,10 +204,11 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
             timeSinceLastSummary: summaryEndTime - this.lastSummaryTime,
         });
 
-        // On success note the time of the snapshot and op sequence number.
-        // Skip on error to cause us to attempt the snapshot again.
         this.lastSummaryTime = summaryEndTime;
         this.lastSummarySeqNumber = summaryData.sequenceNumber;
+
+        // now allow summary op listener to listen
+        this.deferBroadcast.resolve();
     }
 
     private getOpSummaryDetails(op: ISequencedDocumentMessage): IOpSummaryDetails {
@@ -222,6 +242,14 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
     private startPending() {
         this.summaryPending = true;
         this.pendingSummarySequenceNumber = undefined;
+        this.deferBroadcast = new Deferred();
+        this.deferAck = new Deferred();
+    }
+
+    private cancelPending() {
+        this.summaryPending = false;
+        this.deferBroadcast.resolve();
+        this.deferAck.resolve();
     }
 
     private clearIdleTimer() {
