@@ -155,7 +155,7 @@ export function createWebLoader(
     hostConf: IHostConfig,
 ): Loader {
     // Create the web loader and prefetch the chaincode we will need
-    const codeLoader = new WebCodeLoader(npm);
+    const codeLoader = new WebCodeLoader();
     if (pkg) {
         if (pkg.pkg) { // this is an IFluidPackage
             codeLoader.seed(pkg.pkg, pkg.details.config, scriptIds);

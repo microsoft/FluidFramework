@@ -31,7 +31,7 @@ export function create(
 
     const router: Router = Router();
     const jwtKey = config.get("gateway:key");
-    const webLoader = new WebCodeLoader(config.get(config.get("worker:npm")));
+    const webLoader = new WebCodeLoader();
 
     /**
      * Looks up the version of a chaincode in the cache.

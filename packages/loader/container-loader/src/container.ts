@@ -692,14 +692,14 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
     private async loadCodeFromQuorum(
         quorum: Quorum,
-    ): Promise<{ pkg: string | IFluidCodeDetails | undefined, chaincode: IRuntimeFactory }> {
+    ): Promise<{ pkg: IFluidCodeDetails | undefined, chaincode: IRuntimeFactory }> {
         // back compat - can remove in 0.7
         const codeQuorumKey = quorum.has("code")
             ? "code"
             : quorum.has("code2") ? "code2" : undefined;
         this.codeQuorumKey = codeQuorumKey;
 
-        const pkg = codeQuorumKey ? quorum.get(codeQuorumKey) as string | IFluidCodeDetails : undefined;
+        const pkg = codeQuorumKey ? quorum.get(codeQuorumKey) as IFluidCodeDetails : undefined;
         const chaincode = await this.loadCode(pkg);
 
         return { chaincode, pkg };
@@ -708,21 +708,12 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     /**
      * Loads the code for the provided package
      */
-    private async loadCode(pkg: string | IFluidCodeDetails | undefined): Promise<IRuntimeFactory> {
+    private async loadCode(pkg: IFluidCodeDetails | undefined): Promise<IRuntimeFactory> {
         if (!pkg) {
             return new NullChaincode();
         }
 
-        let componentP: Promise<IRuntimeFactory | IFluidModule>;
-        if (typeof pkg === "string") {
-            componentP = this.codeLoader.load<IRuntimeFactory | IFluidModule>(pkg);
-        } else {
-            componentP = typeof pkg.package === "string"
-                ? this.codeLoader.load<IRuntimeFactory | IFluidModule>(pkg.package, pkg)
-                : this.codeLoader.load<IRuntimeFactory | IFluidModule>(
-                    `${pkg.package.name}@${pkg.package.version}`, pkg);
-        }
-        const component = await componentP;
+        const component = await this.codeLoader.load<IRuntimeFactory | IFluidModule>(pkg);
 
         if ("fluidExport" in component) {
             let factory: IRuntimeFactory | undefined;

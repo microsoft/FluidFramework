@@ -51,7 +51,7 @@ class MyRegistry implements IComponentRegistry {
 
     public get IComponentRegistry() {return this; }
 
-    public async get(name: string): Promise<IComponentFactory> {
+    public async get(name: string, cdn?: string): Promise<IComponentFactory> {
         if (name === "@fluid-example/shared-text") {
             return this.sharedTextFactory;
         } else if (name === "@fluid-example/math") {
@@ -67,7 +67,15 @@ class MyRegistry implements IComponentRegistry {
         } else if (name === "@fluid-example/pinpoint-editor") {
             return pinpoint.then((m) => m.fluidExport);
         } else {
-            return this.context.codeLoader.load<IComponentFactory>(name);
+            const scope = `${name.split("/")[0]}:cdn`;
+            const config = {};
+            config[scope] = cdn ? cdn : "https://pragueauspkn-3873244262.azureedge.net";
+
+            const codeDetails = {
+                package: name,
+                config,
+            };
+            return this.context.codeLoader.load<IComponentFactory>(codeDetails);
         }
     }
 }

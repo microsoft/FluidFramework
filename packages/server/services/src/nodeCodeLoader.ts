@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ICodeLoader } from "@microsoft/fluid-container-definitions";
+import { ICodeLoader, IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
 import { exec } from "child_process";
 import * as fs from "fs";
 import { promisify } from "util";
@@ -21,8 +21,14 @@ export class NodeCodeLoader implements ICodeLoader {
         private packageDirectory: string,
         private waitTimeoutMSec: number) {
     }
-    public async load<T>(pkg: string): Promise<T> {
-        const codeEntrypoint = await this.installOrWaitForPackages(pkg);
+    public async load<T>(pkg: IFluidCodeDetails): Promise<T> {
+        let packageName = "";
+        if (typeof pkg.package === "string") {
+            packageName = pkg.package;
+        } else {
+            packageName = `${pkg.package.name}@${pkg.package.version}`;
+        }
+        const codeEntrypoint = await this.installOrWaitForPackages(packageName);
         const entry = import(codeEntrypoint);
         // tslint:disable:no-unsafe-any
         return entry;

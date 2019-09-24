@@ -149,7 +149,7 @@ export class Loader extends EventEmitter implements ILoader {
         logger?: ITelemetryBaseLogger,
     ) {
 
-        const codeLoader = new WebCodeLoader("", whiteList);
+        const codeLoader = new WebCodeLoader(whiteList);
 
         return new Loader(
             containerHost,

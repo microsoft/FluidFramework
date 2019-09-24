@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ICodeLoader, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
+import { ICodeLoader, IFluidCodeDetails, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
 
 /**
  * Implementation of the code loader for the local-test-server.  This expects that
@@ -26,7 +26,13 @@ export class TestCodeLoader implements ICodeLoader {
      * if the key does not exist.
      * @param source - key of code to load
      */
-    public load<T>(source: string): Promise<T> {
+    public load<T>(pkg: IFluidCodeDetails): Promise<T> {
+        let source: string;
+        if (typeof pkg.package === "string") {
+            source = pkg.package;
+        } else {
+            source = `${pkg.package.name}@${pkg.package.version}`;
+        }
         const factory = this.typeToFactory.get(source);
 
         if (factory === undefined) {

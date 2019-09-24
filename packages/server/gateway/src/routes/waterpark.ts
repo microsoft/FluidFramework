@@ -33,7 +33,7 @@ export function create(
 
     const router: Router = Router();
     const jwtKey = config.get("gateway:key");
-    const webLoader = new WebCodeLoader(config.get(config.get("worker:npm")));
+    const webLoader = new WebCodeLoader();
 
     router.get("/", spoEnsureLoggedIn(), ensureLoggedIn(), (request, response, next) => {
         let redirect = `${request.baseUrl}/${moniker.choose()}`;

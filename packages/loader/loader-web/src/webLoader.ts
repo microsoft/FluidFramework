@@ -278,13 +278,11 @@ export class WebCodeLoader implements ICodeLoader {
     private readonly scriptManager = new ScriptManager();
     private readonly whiteList: IChaincodeWhiteList;
 
-    constructor(private readonly baseUrl: string, whiteList?: IChaincodeWhiteList) {
-        console.log("WebCodeLoader.constructor");
+    constructor(whiteList?: IChaincodeWhiteList) {
         this.whiteList = whiteList ? whiteList : new WhiteList(() => Promise.resolve(true));
     }
 
     public async seed(pkg: IFluidPackage, config: IPackageConfig, scriptIds: string[]) {
-        console.log("WebCodeLoader.seed");
         const fluidPackage = this.getFluidPackage({ config, package: pkg });
         fluidPackage.seed(scriptIds);
     }
@@ -293,33 +291,27 @@ export class WebCodeLoader implements ICodeLoader {
      * Resolves the input data structures to the resolved details
      */
     // tslint:disable-next-line:promise-function-async disabled to verify function sets cache synchronously
-    public resolve(input: string | IFluidCodeDetails): Promise<IResolvedPackage> {
-        console.log("WebCodeLoader.resolve");
+    public resolve(input: IFluidCodeDetails): Promise<IResolvedPackage> {
         const fluidPackage = this.getFluidPackage(input);
         return fluidPackage.resolve();
     }
 
     /**
-     * @param source - New: Details of where to find chaincode
-     *                  Old: a string of packageName[at]versionNumber to be looked up
-     * @param details - Duplicate, Details of where to find chaincode
+     * @param source - Details of where to find chaincode
      */
     public async load<T>(
-        source: string | IFluidCodeDetails,
-        details?: IFluidCodeDetails,
+        source: IFluidCodeDetails,
     ): Promise<T> {
-        console.log("WebCodeLoader.load");
 
-        const input = details ? details : source;
-        const fluidPackage = this.getFluidPackage(input);
-        if (!(await this.whiteList.testSource(input))) {
+        const fluidPackage = this.getFluidPackage(source);
+        if (!(await this.whiteList.testSource(source))) {
             throw new Error("Attempted to load invalid package");
         }
         console.log(this.whiteList);
         return fluidPackage.load();
     }
 
-    private getFluidPackage(input: string | IFluidCodeDetails): FluidPackage {
+    private getFluidPackage(input: IFluidCodeDetails): FluidPackage {
         const details = this.getPackageDetails(input);
 
         if (!this.resolvedCache.has(details.packageUrl)) {
@@ -331,9 +323,9 @@ export class WebCodeLoader implements ICodeLoader {
         return this.resolvedCache.get(details.packageUrl)!;
     }
 
-    private getPackageDetails(input: string | IFluidCodeDetails): IPackageDetails {
+    private getPackageDetails(input: IFluidCodeDetails): IPackageDetails {
         // Only need input the code details, baseURl is for old input format only
-        const details = normalize(input, (typeof input === "string" ? this.baseUrl : undefined));
+        const details = normalize(input);
 
         const fullPkg = typeof details.package === "string"
             ? details.package // just return it if it's a string e.g. "@fluid-example/clicker@0.1.1"
