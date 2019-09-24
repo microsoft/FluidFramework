@@ -12,7 +12,7 @@ import {
     IODSPTokens,
     postTokenRequest,
 } from "@microsoft/fluid-odsp-utils";
-import { IDocumentService } from "@microsoft/fluid-protocol-definitions";
+import { IDocumentService, IOdspResolvedUrl } from "@microsoft/fluid-protocol-definitions";
 import * as r11s from "@microsoft/fluid-routerlicious-driver";
 import * as child_process from "child_process";
 import * as http from "http";
@@ -152,7 +152,7 @@ async function initializeODSPCore(
     console.log(`Connecting to ODSP:\n  server: ${server}\n  drive:  ${drive}\n  item:   ${item}`);
 
     const resolver = new odsp.OdspUrlResolver();
-    const odspResolvedUrl = await resolver.resolve({ url: odspUrl }) as odsp.IOdspResolvedUrl;
+    const odspResolvedUrl = await resolver.resolve({ url: odspUrl }) as IOdspResolvedUrl;
 
     const getStorageTokenStub = async (siteUrl: string, refresh: boolean) => {
         const tokens = await getODSPTokens(server, clientConfig, refresh);

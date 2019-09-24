@@ -5,7 +5,7 @@
 
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 
-export type IResolvedUrl = IWebResolvedUrl | IFluidResolvedUrl;
+export type IResolvedUrl = IWebResolvedUrl | IFluidResolvedUrl | IOdspResolvedUrl;
 
 export interface IResolvedUrlBase {
     type: string;
@@ -21,6 +21,29 @@ export interface IFluidResolvedUrl extends IResolvedUrlBase {
     url: string;
     tokens: { [name: string]: string };
     endpoints: { [name: string]: string };
+}
+
+export interface IOdspResolvedUrl extends IResolvedUrlBase {
+    type: "fluid" | "prague";
+
+    // URL to send to fluid, contains the documentId and the path
+    url: string;
+
+    // A hashed identifier that is unique to this document
+    hashedDocumentId: string;
+
+    siteUrl: string;
+
+    driveId: string;
+
+    itemId: string;
+
+    endpoints: {
+      snapshotStorageUrl: string;
+    };
+
+    // Tokens are not obtained by the ODSP driver using the resolve flow, the app must provide them.
+    tokens: {};
 }
 
 export interface IUrlResolver {
