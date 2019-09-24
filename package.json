@@ -46,8 +46,8 @@
     "bump-version": "lerna version minor --no-push --no-git-tag-version && npm run build:genver"
   },
   "devDependencies": {
-    "@microsoft/api-documenter": "^7.4.0",
-    "@microsoft/api-extractor": "^7.3.11",
+    "@microsoft/api-documenter": "^7.4.6",
+    "@microsoft/api-extractor": "^7.4.4",
     "concurrently": "^4.1.0",
     "copyfiles": "^2.1.0",
     "lerna": "^3.14.1",
