@@ -1,5 +1,5 @@
 {
-  "name": "@microsoft/fluid-end-to-end-tests",
+  "name": "@fluid-internal/end-to-end-tests",
   "version": "0.10.0",
   "description": "End to end tests",
   "main": "dist/index.js",
