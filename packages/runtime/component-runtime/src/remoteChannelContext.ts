@@ -44,7 +44,6 @@ export class RemoteChannelContext implements IChannelContext {
         private readonly registry: ISharedObjectRegistry,
         private readonly extraBlobs: Map<string, string>,
         private readonly branch: string,
-        private readonly attributes: RequiredIChannelAttributes | undefined,
     ) {
     }
 
@@ -93,9 +92,7 @@ export class RemoteChannelContext implements IChannelContext {
         assert(!this.isLoaded);
 
         // Create the channel if it hasn't already been passed in the constructor
-        const { type, snapshotFormatVersion, packageVersion } = this.attributes
-            ? this.attributes
-            : await readAndParse<RequiredIChannelAttributes>(
+        const { type, snapshotFormatVersion, packageVersion } = await readAndParse<RequiredIChannelAttributes>(
                 this.storageService,
                 this.tree.blobs[".attributes"]);
 

@@ -159,8 +159,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
                     tree.trees[path],
                     this.registry,
                     new Map(),
-                    componentContext.branch,
-                    undefined);
+                    componentContext.branch);
                 const deferred = new Deferred<IChannelContext>();
                 deferred.resolve(channelContext);
 
@@ -418,8 +417,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
                         snapshotTree,
                         this.registry,
                         flatBlobs,
-                        origin,
-                        { type: attachMessage.type });
+                        origin);
 
                     this.contexts.set(attachMessage.id, remoteChannelContext);
                     if (this.contextsDeferred.has(attachMessage.id)) {
@@ -529,20 +527,20 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         // tslint:disable-next-line: no-non-null-assertion
         channel.handle!.attach();
 
+        const context = this.contexts.get(channel.id) as LocalChannelContext;
+
         // Get the object snapshot and include it in the initial attach
-        const snapshot = channel.snapshot();
+        const snapshot = context.getAttachSnapshot();
 
         const message: IAttachMessage = {
             id: channel.id,
             snapshot,
-            type: channel.attributes.type,
         };
         this.pendingAttach.set(channel.id, message);
         if (this.connected) {
             this.submit(MessageType.Attach, message);
         }
 
-        const context = this.contexts.get(channel.id) as LocalChannelContext;
         context.attach();
     }
 
