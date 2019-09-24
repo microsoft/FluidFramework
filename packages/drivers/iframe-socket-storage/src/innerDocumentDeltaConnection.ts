@@ -4,6 +4,7 @@
  */
 
 import { Deferred } from "@microsoft/fluid-core-utils";
+import { IConnected } from "@microsoft/fluid-driver-base";
 import {
     ConnectionMode,
     IContentMessage,
@@ -17,7 +18,6 @@ import {
 } from "@microsoft/fluid-protocol-definitions";
 import * as Comlink from "comlink";
 import { EventEmitter } from "events";
-import { IConnected } from "./messages";
 
 // tslint:disable: no-non-null-assertion no-console
 

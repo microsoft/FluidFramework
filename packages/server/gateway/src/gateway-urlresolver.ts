@@ -11,7 +11,7 @@ import { Provider } from "nconf";
 import { parse } from "url";
 // tslint:disable-next-line:no-submodule-imports
 import * as uuid from "uuid/v4";
-import { isSpoTenant, spoJoinSession } from "./gateway-odsp-utils";
+import { isSpoTenant, spoGetResolvedUrl } from "./gateway-odsp-utils";
 import { IAlfred } from "./interfaces";
 import { getToken, IAlfredUser } from "./utils";
 
@@ -26,7 +26,7 @@ function spoResolveUrl(
         clientId: microsoftConfiguration.clientId,
         clientSecret: microsoftConfiguration.secret,
     };
-    const resolvedP = spoJoinSession(tenantId, documentId,
+    const resolvedP = spoGetResolvedUrl(tenantId, documentId,
         request.session.tokens, clientConfig);
     const fullTreeP = Promise.resolve(undefined);
     return [resolvedP, fullTreeP];
