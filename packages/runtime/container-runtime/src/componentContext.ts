@@ -38,19 +38,16 @@ import * as assert from "assert";
 import { EventEmitter } from "events";
 import { ContainerRuntime } from "./containerRuntime";
 
-export enum ComponentPkgEncoding {
-    STRING,
-    JSON,
-}
+const currentSnapshotFormatVersion = "0.1";
 
 export interface IComponentAttributes {
-    pkg: string | string[];
+    pkg: string;
+    readonly snapshotFormatVersion?: string;
 }
 
 interface ISnapshotDetails {
-    pkg: string;
+    pkg: string[];
     snapshot: ISnapshotTree;
-    pkgEncoding?: ComponentPkgEncoding;
 }
 
 /**
@@ -161,8 +158,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
             const details = await this.getSnapshotDetails();
             this._baseSnapshot = details.snapshot;
             this.baseId = details.snapshot ? details.snapshot.id : null;
-            const packages = details.pkgEncoding !== undefined && details.pkgEncoding === ComponentPkgEncoding.JSON
-                ? (JSON.parse(details.pkg) as IComponentAttributes).pkg : [details.pkg];
+            const packages = details.pkg;
             let registry = this._hostRuntime.IComponentRegistry;
             let factory: ComponentFactoryTypes & Partial<IComponentRegistry>;
             for (const pkg of packages) {
@@ -265,15 +261,10 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
     public async snapshot(): Promise<ITree> {
         await this.realize();
 
-        const { pkg, pkgEncoding } = await this.getSnapshotDetails();
+        const { pkg } = await this.getSnapshotDetails();
 
-        let componentAttributes: IComponentAttributes;
-
-        if (pkgEncoding === undefined || pkgEncoding === ComponentPkgEncoding.STRING) {
-            componentAttributes = { pkg };
-        } else {
-            componentAttributes = JSON.parse(pkg) as IComponentAttributes;
-        }
+        const componentAttributes: IComponentAttributes = { pkg: JSON.stringify(pkg),
+            snapshotFormatVersion: currentSnapshotFormatVersion };
 
         const entries = await this.componentRuntime.snapshotInternal();
         const snapshot = { entries, id: undefined };
@@ -424,19 +415,19 @@ export class RemotedComponentContext extends ComponentContext {
 
             if (tree === null || tree.blobs[".component"] === undefined) {
                 this.details = {
-                    pkg: JSON.stringify({ pkg: this.pkg }),
-                    pkgEncoding: ComponentPkgEncoding.JSON,
+                    pkg: this.pkg,
                     snapshot: tree,
                 };
             } else {
                 // Need to rip through snapshot and use that to populate extraBlobs
-                const { pkg } = await readAndParse<{ pkg: string | string[] }>(
+                const { pkg, snapshotFormatVersion } =
+                    await readAndParse<{ pkg: string, snapshotFormatVersion?: string }>(
                     this.storage,
                     tree.blobs[".component"]);
 
                 this.details = {
-                    pkg: Array.isArray(pkg) ? JSON.stringify({ pkg }) : pkg,
-                    pkgEncoding: Array.isArray(pkg) ? ComponentPkgEncoding.JSON : ComponentPkgEncoding.STRING,
+                    pkg: snapshotFormatVersion !== undefined && snapshotFormatVersion === currentSnapshotFormatVersion ?
+                        JSON.parse(pkg) as string[] : [pkg],
                     snapshot: tree,
                 };
             }
@@ -460,7 +451,8 @@ export class LocalComponentContext extends ComponentContext {
     }
 
     public generateAttachMessage(): IAttachMessage {
-        const componentAttributes: IComponentAttributes = { pkg: this.pkg };
+        const componentAttributes: IComponentAttributes = {
+            pkg: JSON.stringify(this.pkg), snapshotFormatVersion: currentSnapshotFormatVersion };
 
         const entries = this.componentRuntime.getAttachSnapshot();
         const snapshot = { entries, id: undefined };
@@ -491,9 +483,8 @@ export class LocalComponentContext extends ComponentContext {
 
     protected async getSnapshotDetails(): Promise<ISnapshotDetails> {
         return {
-            pkg: JSON.stringify({ pkg: this.pkg }),
+            pkg: this.pkg,
             snapshot: undefined,
-            pkgEncoding: ComponentPkgEncoding.JSON,
         };
     }
 }
