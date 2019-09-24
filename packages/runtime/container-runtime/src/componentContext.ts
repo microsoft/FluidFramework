@@ -119,7 +119,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
 
     // Tracks the base snapshot ID. If no ops effect this component then the id value can be returned on a
     // snapshot call
-    protected baseId = null;
+    protected baseId: string | null = null;
     protected componentRuntime: IComponentRuntime;
     private closed = false;
     private loaded = false;
@@ -246,17 +246,16 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
 
         const componentAttributes = { pkg };
 
-        const entries = await this.componentRuntime.snapshotInternal();
-        const snapshot = { entries, id: undefined };
-
-        snapshot.entries.push(new BlobTreeEntry(".component", JSON.stringify(componentAttributes)));
-
         // base ID still being set means previous snapshot is still valid
         if (this.baseId) {
-            snapshot.id = this.baseId;
+            return { id: this.baseId, entries: [] };
         }
 
-        return snapshot;
+        const entries = await this.componentRuntime.snapshotInternal();
+
+        entries.push(new BlobTreeEntry(".component", JSON.stringify(componentAttributes)));
+
+        return { entries, id: undefined };
     }
 
     public async request(request: IRequest): Promise<IResponse> {

@@ -85,6 +85,9 @@ export class RemoteChannelContext implements IChannelContext {
     }
 
     public async snapshot(): Promise<ITree> {
+        if (this.baseId !== null && this.baseId !== undefined) {
+            return { id: this.baseId, entries: [] };
+        }
         const channel = await this.getChannel();
         return snapshotChannel(channel, this.baseId);
     }

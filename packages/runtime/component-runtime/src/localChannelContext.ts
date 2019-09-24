@@ -65,6 +65,9 @@ export class LocalChannelContext implements IChannelContext {
     }
 
     public async snapshot(): Promise<ITree> {
+        if (this.baseId !== null && this.baseId !== undefined) {
+            return { id: this.baseId, entries: [] };
+        }
         return this.getAttachSnapshot();
     }
 
