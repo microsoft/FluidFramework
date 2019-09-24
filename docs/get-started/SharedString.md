@@ -4,5 +4,5 @@ uid: SharedString
 
 # SharedString
 
-* Package: <xref:@prague/sequence!>
-* API documentation: <xref:@prague/sequence!SharedString:class>
+- Package: <xref:@microsoft/fluid-sequence!>
+- API documentation: <xref:@microsoft/fluid-sequence!SharedString:class>

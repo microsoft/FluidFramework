@@ -45,6 +45,10 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
         return tick.toFixed(0);
     }
 
+    public static sanitizePkgName(name: string) {
+        return name.replace("@", "").replace("/", "-");
+    }
+
     protected static prepareErrorObject(event: ITelemetryBaseEvent, error: any) {
         if (error === null || typeof error !== "object") {
             // tslint:disable-next-line:no-unsafe-any
@@ -183,9 +187,12 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
     }
 
     protected prepareEvent(event: ITelemetryBaseEvent): ITelemetryBaseEvent {
-        const newEvent = { ...this.properties, ...event };
-        if (newEvent[pkgName] === undefined) {
-            newEvent[pkgName] = pkgVersion;
+        const newEvent: ITelemetryBaseEvent = { ...this.properties, ...event };
+        if (newEvent.package === undefined) {
+            newEvent.package = {
+                name: TelemetryLogger.sanitizePkgName(pkgName),
+                version: pkgVersion,
+            };
         }
         if (this.namespace !== undefined) {
             newEvent.eventName = `${this.namespace}${TelemetryLogger.eventNamespaceSeparator}${newEvent.eventName}`;

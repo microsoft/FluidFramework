@@ -12,18 +12,43 @@ import {
     IContentMessage,
     IDocumentMessage,
     IDocumentSystemMessage,
-    INack,
     ISignalMessage,
     ITokenClaims,
 } from "@microsoft/fluid-protocol-definitions";
 import * as agent from "@microsoft/fluid-server-agent";
 import { canSummarize, canWrite } from "@microsoft/fluid-server-services-client";
 import * as core from "@microsoft/fluid-server-services-core";
-import { generateClientId, getRandomInt } from "@microsoft/fluid-server-services-utils";
+import {
+    createNackMessage,
+    createRoomJoinMessage,
+    createRoomLeaveMessage,
+    generateClientId,
+    getRandomInt,
+} from "@microsoft/fluid-server-services-utils";
 import * as jwt from "jsonwebtoken";
 import * as semver from "semver";
 import * as winston from "winston";
 import { DefaultServiceConfiguration } from "./utils";
+
+interface IRoom {
+
+    tenantId: string;
+
+    documentId: string;
+}
+
+interface IConnectedClient {
+
+    connection: IConnected;
+
+    details: IClient;
+
+    connectVersions: string[];
+}
+
+function getRoomId(room: IRoom) {
+    return `${room.tenantId}/${room.documentId}`;
+}
 
 // Sanitize the receeived op before sending.
 function sanitizeMessage(message: any): IDocumentMessage {
@@ -54,7 +79,7 @@ function sanitizeMessage(message: any): IDocumentMessage {
     }
 }
 
-const protocolVersions = ["^0.2.0", "^0.1.0"];
+const protocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
 
 function selectProtocolVersion(connectVersions: string[]): string {
     let version: string = null;
@@ -74,7 +99,8 @@ export function register(
     orderManager: core.IOrdererManager,
     tenantManager: core.ITenantManager,
     storage: core.IDocumentStorage,
-    contentCollection: core.ICollection<any>) {
+    contentCollection: core.ICollection<any>,
+    clientManager: core.IClientManager) {
 
     // TODO register should take the metric client as a param
     const metricLogger = agent.createMetricClient(metricClientConfig);
@@ -83,7 +109,10 @@ export function register(
         // Map from client IDs on this connection to the object ID and user info.
         const connectionsMap = new Map<string, core.IOrdererConnection>();
         // Map from client IDs to room.
-        const roomMap = new Map<string, string>();
+        const roomMap = new Map<string, IRoom>();
+
+        // back-compat map for storing clientIds with latest protocol versions.
+        const versionMap = new Set<string>();
 
         function isWriter(scopes: string[], existing: boolean, mode: ConnectionMode): boolean {
             if (canWrite(scopes) || canSummarize(scopes)) {
@@ -103,16 +132,12 @@ export function register(
             }
         }
 
-        // For easy transition, we are reusing the same nack format sent by broadcaster.
-        // TODO: Create a separate nack format.
-        function createNackMessage(): INack {
-            return {
-                operation: undefined,
-                sequenceNumber: -1,
-            };
+        // back-compat for old clients not having protocol version ^0.3.0
+        function canSendMessage(connectVersions: string[]) {
+            return connectVersions.indexOf("^0.3.0") !== -1;
         }
 
-        async function connectDocument(message: IConnect): Promise<IConnected> {
+        async function connectDocument(message: IConnect): Promise<IConnectedClient> {
             if (!message.token) {
                 return Promise.reject("Must provide an authorization token");
             }
@@ -126,10 +151,14 @@ export function register(
             await tenantManager.verifyToken(claims.tenantId, token);
 
             const clientId = generateClientId();
+            const room: IRoom = {
+                tenantId: claims.tenantId,
+                documentId: claims.documentId,
+            };
 
             // Subscribe to channels.
             await Promise.all([
-                socket.join(`${claims.tenantId}/${claims.documentId}`),
+                socket.join(getRoomId(room)),
                 socket.join(`client#${clientId}`)]);
 
             // todo: should all the client details come from the claims???
@@ -139,8 +168,7 @@ export function register(
             messageClient.scopes = claims.scopes;
 
             // Join the room to receive signals.
-            roomMap.set(clientId, `${claims.tenantId}/${claims.documentId}`);
-
+            roomMap.set(clientId, room);
             // Iterate over the version ranges provided by the client and select the best one that works
             const connectVersions = message.versions ? message.versions : ["^0.1.0"];
             const version = selectProtocolVersion(connectVersions);
@@ -151,14 +179,23 @@ export function register(
                     `Client: ${JSON.stringify(connectVersions)}`);
             }
 
-            const details = await storage.getOrCreateDocument(claims.tenantId, claims.documentId);
+            const detailsP = storage.getOrCreateDocument(claims.tenantId, claims.documentId);
+            const clientsP = clientManager.getClients(claims.tenantId, claims.documentId);
+            const addP = clientManager.addClient(
+                claims.tenantId,
+                claims.documentId,
+                clientId,
+                messageClient as IClient);
 
+            const [details, , clients] = await Promise.all([detailsP, addP, clientsP]);
+
+            let connectedMessage: IConnected;
             if (isWriter(messageClient.scopes, details.existing, message.mode)) {
                 const orderer = await orderManager.getOrderer(claims.tenantId, claims.documentId);
                 const connection = await orderer.connect(socket, clientId, messageClient as IClient, details);
                 connectionsMap.set(clientId, connection);
 
-                const connectedMessage: IConnected = {
+                connectedMessage = {
                     claims,
                     clientId,
                     existing: details.existing,
@@ -166,13 +203,12 @@ export function register(
                     mode: "write",
                     parentBranch: connection.parentBranch,
                     serviceConfiguration: connection.serviceConfiguration,
+                    initialClients: clients,
                     supportedVersions: protocolVersions,
                     version,
                 };
-
-                return connectedMessage;
             } else {
-                const connectedMessage: IConnected = {
+                connectedMessage = {
                     claims,
                     clientId,
                     existing: details.existing,
@@ -180,19 +216,32 @@ export function register(
                     mode: "read",
                     parentBranch: null, // Does not matter for now.
                     serviceConfiguration: DefaultServiceConfiguration,
+                    initialClients: clients,
                     supportedVersions: protocolVersions,
                     version,
                 };
-
-                return connectedMessage;
             }
+
+            return {
+                connection: connectedMessage,
+                connectVersions,
+                details: messageClient as IClient,
+            };
         }
 
         // Note connect is a reserved socket.io word so we use connect_document to represent the connect request
-        socket.on("connect_document", async (message: IConnect) => {
-            connectDocument(message).then(
-                (connectedMessage) => {
-                    socket.emit("connect_document_success", connectedMessage);
+        socket.on("connect_document", async (connectionMessage: IConnect) => {
+            connectDocument(connectionMessage).then(
+                (message) => {
+                    socket.emit("connect_document_success", message.connection);
+                    // back-compat for old clients.
+                    if (canSendMessage(message.connectVersions)) {
+                        versionMap.add(message.connection.clientId);
+                        socket.emitToRoom(
+                            getRoomId(roomMap.get(message.connection.clientId)),
+                            "signal",
+                            createRoomJoinMessage(message.connection.clientId, message.details));
+                    }
                 },
                 (error) => {
                     winston.info(`connectDocument error`, error);
@@ -263,7 +312,7 @@ export function register(
 
                 contentCollection.insertOne(dbMessage).then(
                     () => {
-                        socket.broadcastToRoom(roomMap.get(clientId), "op-content", broadCastMessage);
+                        socket.broadcastToRoom(getRoomId(roomMap.get(clientId)), "op-content", broadCastMessage);
                         return response(null);
                     }, (error) => {
                         if (error.code !== 11000) {
@@ -283,8 +332,6 @@ export function register(
                     return response("Invalid client ID", null);
                 }
 
-                const roomId = roomMap.get(clientId);
-
                 contentBatches.forEach((contentBatche) => {
                     const contents = Array.isArray(contentBatche) ? contentBatche : [contentBatche];
 
@@ -294,7 +341,7 @@ export function register(
                             content,
                         };
 
-                        socket.emitToRoom(roomId, "signal", signalMessage);
+                        socket.emitToRoom(getRoomId(roomMap.get(clientId)), "signal", signalMessage);
                     }
                 });
 
@@ -305,12 +352,22 @@ export function register(
                 }
             });
 
-        socket.on("disconnect", () => {
+        socket.on("disconnect", async () => {
+            const removeP = [];
             // Send notification messages for all client IDs in the connection map
             for (const [clientId, connection] of connectionsMap) {
                 winston.info(`Disconnect of ${clientId}`);
                 connection.disconnect();
+                const room = roomMap.get(clientId);
+                if (room) {
+                    removeP.push(clientManager.removeClient(room.tenantId, room.documentId, clientId));
+                    // back-compat check for older clients.
+                    if (versionMap.has(clientId)) {
+                        socket.emitToRoom(getRoomId(room), "signal", createRoomLeaveMessage(clientId));
+                    }
+                }
             }
+            await Promise.all(removeP);
         });
     });
 }

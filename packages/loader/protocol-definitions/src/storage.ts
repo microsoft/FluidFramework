@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { ConnectionMode, IClient } from "./clients";
+import { ConnectionMode, IClient, ISignalClient } from "./clients";
 import { IServiceConfiguration } from "./config";
 import {
     IContentMessage,
@@ -251,6 +251,11 @@ export interface IDocumentDeltaConnection extends EventEmitter {
      * Signals sent during the connection
      */
     initialSignals?: ISignalMessage[];
+
+    /**
+     * Prior clients already connected.
+     */
+    initialClients?: ISignalClient[];
 
     /**
      * Configuration details provided by the service

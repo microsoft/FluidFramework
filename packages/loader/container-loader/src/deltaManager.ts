@@ -410,8 +410,13 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 // If we have no upper bound and fetched less than the max deltas - meaning we got as many as exit -
                 // then we can resolve the promise. We also resolve if we fetched up to the expected to. Otherwise
                 // we will look to try again
-                if ((to === undefined && maxFetchTo !== lastFetch + 1) || to === lastFetch + 1) {
-                    telemetryEvent.end({lastFetch, totalDeltas: allDeltas.length, retries: retry});
+                // Note #1: we can get more ops than what we asked for - need to account for that!
+                // Note #2: from & to are exclusive! I.e. we actually expect [from + 1, to - 1] range of ops back!
+                // 1) to === undefined case: if last op  is below what we expect, then storage does not have
+                //    any more, thus it's time to leave
+                // 2) else case: if we got what we asked (to - 1) or more, then time to leave.
+                if (to === undefined ? lastFetch < maxFetchTo - 1 : to - 1 <= lastFetch) {
+                    telemetryEvent.end({ lastFetch, totalDeltas: allDeltas.length, retries: retry });
                     return allDeltas;
                 }
 
@@ -697,23 +702,8 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             messages: ISequencedDocumentMessage[] | undefined,
             contents: IContentMessage[] | undefined,
             signals: ISignalMessage[] | undefined): void {
-        // confirm the status of the handler and inbound queue
-        if (!this.handler || this._inbound.paused) {
-            // process them once the queue is ready
-            this._inbound.once("resume", () => {
-                this.enqueInitalOps(messages, contents);
-            });
-        } else {
-            this.enqueInitalOps(messages, contents);
-        }
-        if (!this.handler || this._inboundSignal.paused) {
-            // process them once the queue is ready
-            this._inboundSignal.once("resume", () => {
-                this.enqueInitalSignals(signals);
-            });
-        } else {
-            this.enqueInitalSignals(signals);
-        }
+        this.enqueInitalOps(messages, contents);
+        this.enqueInitalSignals(signals);
     }
 
     private enqueInitalOps(
