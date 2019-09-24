@@ -1,7 +1,7 @@
 {
   "name": "@fluid-example/search-menu",
   "description": "Search menu",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "author": "Microsoft",
   "repository": "microsoft/FluidFramework",
   "main": "dist/index.js",
@@ -36,12 +36,12 @@
     }
   },
   "dependencies": {
-    "@microsoft/fluid-component-core-interfaces": "^0.10.0",
-    "@microsoft/fluid-merge-tree": "^0.10.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.11.0",
+    "@microsoft/fluid-merge-tree": "^0.11.0",
     "@types/node": "^10.12.12"
   },
   "devDependencies": {
-    "@microsoft/fluid-build-common": "^0.10.0",
+    "@microsoft/fluid-build-common": "^0.11.0",
     "rimraf": "^2.6.2",
     "tslint": "^5.11.0",
     "typescript": "~3.4.5"

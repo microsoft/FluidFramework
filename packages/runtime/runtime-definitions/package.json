@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-runtime-definitions",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "description": "Fluid Runtime definitions",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -19,16 +19,16 @@
   "repository": "microsoft/FluidFramework",
   "devDependencies": {
     "@microsoft/api-extractor": "^7.3.11",
-    "@microsoft/fluid-build-common": "^0.10.0",
+    "@microsoft/fluid-build-common": "^0.11.0",
     "concurrently": "^4.1.0",
     "rimraf": "^2.6.2",
     "tslint": "^5.11.0",
     "typescript": "~3.4.5"
   },
   "dependencies": {
-    "@microsoft/fluid-component-core-interfaces": "^0.10.0",
-    "@microsoft/fluid-container-definitions": "^0.10.0",
-    "@microsoft/fluid-protocol-definitions": "^0.10.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.11.0",
+    "@microsoft/fluid-container-definitions": "^0.11.0",
+    "@microsoft/fluid-protocol-definitions": "^0.11.0",
     "@types/node": "^10.12.12"
   },
   "license": "MIT"

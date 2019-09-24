@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-aqueduct-react",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "description": "React support for the Aqueduct framework.",
   "main": "dist/index.js",
   "module": "lib/index.js",
@@ -21,14 +21,14 @@
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "dependencies": {
-    "@microsoft/fluid-component-core-interfaces": "^0.10.0",
-    "@microsoft/fluid-map": "^0.10.0",
-    "@microsoft/fluid-sequence": "^0.10.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.11.0",
+    "@microsoft/fluid-map": "^0.11.0",
+    "@microsoft/fluid-sequence": "^0.11.0",
     "react": "^16.8.3"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.3.11",
-    "@microsoft/fluid-build-common": "^0.10.0",
+    "@microsoft/fluid-build-common": "^0.11.0",
     "@types/node": "^10.12.12",
     "@types/react": "^16.7.7",
     "concurrently": "^4.1.0",

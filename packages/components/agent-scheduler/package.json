@@ -1,7 +1,7 @@
 {
   "name": "@microsoft/fluid-agent-scheduler",
   "description": "Component in charge of distributing agents across instances of a component",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "author": "Microsoft",
   "repository": "microsoft/FluidFramework",
   "main": "dist/index.js",
@@ -63,17 +63,17 @@
     }
   },
   "dependencies": {
-    "@microsoft/fluid-component-core-interfaces": "^0.10.0",
-    "@microsoft/fluid-component-runtime": "^0.10.0",
-    "@microsoft/fluid-register-collection": "^0.10.0",
-    "@microsoft/fluid-map": "^0.10.0",
-    "@microsoft/fluid-runtime-definitions": "^0.10.0",
-    "@microsoft/fluid-shared-object-base": "^0.10.0",
-    "@microsoft/fluid-container-definitions": "^0.10.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.11.0",
+    "@microsoft/fluid-component-runtime": "^0.11.0",
+    "@microsoft/fluid-container-definitions": "^0.11.0",
+    "@microsoft/fluid-map": "^0.11.0",
+    "@microsoft/fluid-register-collection": "^0.11.0",
+    "@microsoft/fluid-runtime-definitions": "^0.11.0",
+    "@microsoft/fluid-shared-object-base": "^0.11.0",
     "debug": "^4.1.1"
   },
   "devDependencies": {
-    "@microsoft/fluid-build-common": "^0.10.0",
+    "@microsoft/fluid-build-common": "^0.11.0",
     "@types/debug": "^0.0.31",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.12.12",

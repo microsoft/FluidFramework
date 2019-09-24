@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-file-driver",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "description": "A driver that reads/write from/to local file storage.",
   "main": "dist/index.js",
   "module": "lib/index.js",
@@ -20,16 +20,16 @@
   "author": "Microsoft",
   "repository": "microsoft/FluidFramework",
   "dependencies": {
-    "@microsoft/fluid-protocol-definitions": "^0.10.0",
-    "@microsoft/fluid-replay-driver": "^0.10.0",
-    "@microsoft/fluid-driver-base": "^0.10.0",
-    "@microsoft/fluid-core-utils": "^0.10.0",
+    "@microsoft/fluid-core-utils": "^0.11.0",
+    "@microsoft/fluid-driver-base": "^0.11.0",
+    "@microsoft/fluid-protocol-definitions": "^0.11.0",
+    "@microsoft/fluid-replay-driver": "^0.11.0",
     "debug": "^4.1.1",
     "lodash": "^4.17.11"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.3.11",
-    "@microsoft/fluid-build-common": "^0.10.0",
+    "@microsoft/fluid-build-common": "^0.11.0",
     "@types/debug": "^0.0.31",
     "@types/node": "^10.12.12",
     "concurrently": "^4.1.0",
