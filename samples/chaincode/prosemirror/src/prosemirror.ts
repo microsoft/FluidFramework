@@ -14,7 +14,7 @@ import {
 } from "@prague/component-core-interfaces";
 import { ComponentRuntime } from "@prague/component-runtime";
 import { ISharedMap, SharedMap } from "@prague/map";
-import { ReferenceType, reservedTileLabelsKey } from "@prague/merge-tree";
+import { ReferenceType, reservedRangeLabelsKey } from "@prague/merge-tree";
 import { IComponentContext, IComponentFactory, IComponentRuntime } from "@prague/runtime-definitions";
 import { SharedString } from "@prague/sequence";
 import { ISharedObjectFactory } from "@prague/shared-object-common";
@@ -76,10 +76,21 @@ export class ProseMirror extends EventEmitter implements IComponentLoadable, ICo
             const text = SharedString.create(this.runtime);
 
             // initial paragraph marker
-            text.insertMarker(
-                0,
-                ReferenceType.Tile,
-                { [reservedTileLabelsKey]: ["pg"] });
+            // text.insertMarker(
+            //     0,
+            //     ReferenceType.Tile,
+            //     { [reservedTileLabelsKey]: ["pg"] });
+            const hello = "Hello, world!";
+            text.insertMarker(0, ReferenceType.NestEnd, { [reservedRangeLabelsKey]: ["paragraph"], type: "basic" });
+            text.insertMarker(0, ReferenceType.NestBegin, { [reservedRangeLabelsKey]: ["paragraph"], type: "basic" });
+            text.insertText(1, hello);
+
+
+            text.insertMarker(3, ReferenceType.NestBegin, { [reservedRangeLabelsKey]: ["paragraph"], type: "cat" });
+            text.insertMarker(7, ReferenceType.NestEnd, { [reservedRangeLabelsKey]: ["paragraph"], type: "cat" });
+
+            text.annotateRange(4, 6, { bold: true });
+            text.annotateRange(5, 6, { yellow: "mello" });
 
             this.root.set("text", text.handle);
             this.root.register();
@@ -87,6 +98,8 @@ export class ProseMirror extends EventEmitter implements IComponentLoadable, ICo
 
         this.root = await this.runtime.getChannel("root") as ISharedMap;
         this.text = await this.root.get<IComponentHandle>("text").get<SharedString>();
+
+        window["easyText"] = this.text;
     }
 
     public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
