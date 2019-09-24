@@ -10,7 +10,6 @@ path. The following is a list of good examples to start with.
 
 Also see <xref:yo-fluid-details>.
 
-
 ## Clicker
 
 [Source code](https://github.com/Microsoft/FluidFramework/tree/release/0.6/packages/components/clicker)
@@ -21,11 +20,10 @@ Also see <xref:yo-fluid-details>.
 
 **Distributed data structures:**
 
-* SharedMap
-* Counter
+- SharedMap
+- Counter
 
 Clicker is a simple example to familiarize yourself with Fluid's component scaffolding. It uses React for rendering.
-
 
 ## Todo
 
@@ -37,9 +35,9 @@ Clicker is a simple example to familiarize yourself with Fluid's component scaff
 
 **Distributed data structures:**
 
-* SharedMap
-* SharedString
-* SharedCell
+- SharedMap
+- SharedString
+- SharedCell
 
 Todo demonstrates subcomponents and using Fluid's routing capabilities to enable an individual todo item to be embedded
 in a different canvas.
@@ -48,16 +46,13 @@ in a different canvas.
 
 [Source code](https://github.com/Microsoft/FluidFramework/tree/release/0.6/packages/components/todo)
 
-
 ## ImageGallery
 
 [Source code](https://github.com/Microsoft/FluidFramework/tree/release/0.6/packages/components/image-gallery)
 
-
 ## Pond
 
 [Source code](https://github.com/Microsoft/FluidFramework/tree/release/0.6/packages/components/pond)
-
 
 ## Pinpoint editor
 

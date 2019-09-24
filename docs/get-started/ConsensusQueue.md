@@ -4,5 +4,5 @@ uid: ConsensusQueue
 
 # ConsensusQueue
 
-- Package: <xref:@prague/consensus-ordered-collection!>
-- API documentation: <xref:@prague/consensus-ordered-collection!ConsensusQueue:class>
+- Package: <xref:@microsoft/fluid-ordered-collection!>
+- API documentation: <xref:@microsoft/fluid-ordered-collection!ConsensusQueue:class>

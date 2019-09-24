@@ -18,7 +18,7 @@
   "author": "Microsoft",
   "repository": "microsoft/FluidFramework",
   "devDependencies": {
-    "@microsoft/api-extractor": "^7.3.11",
+    "@microsoft/api-extractor": "^7.4.4",
     "@microsoft/fluid-build-common": "^0.10.0",
     "concurrently": "^4.1.0",
     "rimraf": "^2.6.2",

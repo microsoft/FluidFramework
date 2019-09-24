@@ -8,7 +8,7 @@
 import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 import { IHostConfig, start as startCore } from "@microsoft/fluid-base-host";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { IFluidModule, IFluidPackage, IPackage, IPraguePackage } from "@microsoft/fluid-container-definitions";
+import { IFluidModule, IFluidPackage, IPackage } from "@microsoft/fluid-container-definitions";
 import {
     TestDeltaConnectionServer,
     TestDocumentServiceFactory,
@@ -44,17 +44,6 @@ function getUser(): IDevServerUser {
 
 function modifyFluidPackage(packageJson: IPackage): IFluidPackage {
     const fluidPackage = packageJson as IFluidPackage;
-    if (!("fluid" in packageJson)) {
-        const praguePackage = packageJson as IPraguePackage;
-        fluidPackage.fluid = {
-            browser: {
-                umd: {
-                    files: praguePackage.prague.browser.bundle,
-                    library: praguePackage.prague.browser.entrypoint,
-                },
-            },
-        };
-    }
 
     // Start by translating the input package to be webpack-dev-server relative URLs
     for (let i = 0; i < fluidPackage.fluid.browser.umd.files.length; i++) {
@@ -176,7 +165,7 @@ export async function start(
                 localHost,
                 localHost,
                 localHost,
-                "prague",
+                "fluid",
                 "43cfc3fbf04a97c0921fd23ff10f9e4b",
                 getUser(),
                 bearerSecret);

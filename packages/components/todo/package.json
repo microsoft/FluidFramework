@@ -24,14 +24,6 @@
     "webpack": "webpack --env.production",
     "webpack:dev": "webpack --env.development"
   },
-  "prague": {
-    "browser": {
-      "entrypoint": "main",
-      "bundle": [
-        "dist/main.bundle.js"
-      ]
-    }
-  },
   "fluid": {
     "browser": {
       "umd": {
