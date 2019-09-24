@@ -44,12 +44,12 @@
     "report-dir": "nyc/report"
   },
   "devDependencies": {
-    "@microsoft/api-extractor": "^7.3.11",
+    "@microsoft/api-extractor": "^7.4.4",
     "@microsoft/fluid-build-common": "^0.11.0",
     "@microsoft/fluid-component-core-interfaces": "^0.11.0",
     "@microsoft/fluid-gitresources": "^0.11.0",
-    "@microsoft/fluid-server-services-client": "^0.11.0",
     "@microsoft/fluid-test-runtime-utils": "^0.11.0",
+    "@microsoft/fluid-server-services-client": "^0.11.0",
     "@types/debug": "^0.0.31",
     "@types/diff": "^3.5.1",
     "@types/mocha": "^5.2.5",

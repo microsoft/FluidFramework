@@ -42,9 +42,9 @@
     "report-dir": "nyc/report"
   },
   "devDependencies": {
-    "@microsoft/api-extractor": "^7.3.11",
+    "@microsoft/api-extractor": "^7.4.4",
     "@microsoft/fluid-build-common": "^0.11.0",
-    "@microsoft/fluid-core-utils": "^0.10.0",
+    "@microsoft/fluid-core-utils": "^0.11.0",
     "@types/debug": "^0.0.31",
     "@types/mocha": "^5.2.5",
     "@types/sha.js": "^2.4.0",

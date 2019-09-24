@@ -49,7 +49,7 @@
     "debug": "^4.1.1"
   },
   "devDependencies": {
-    "@microsoft/api-extractor": "^7.3.11",
+    "@microsoft/api-extractor": "^7.4.4",
     "@microsoft/fluid-build-common": "^0.11.0",
     "@microsoft/fluid-test-runtime-utils": "^0.11.0",
     "@types/debug": "^0.0.31",
