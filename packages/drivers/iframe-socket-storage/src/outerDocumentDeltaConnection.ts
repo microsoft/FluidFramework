@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IConnected } from "@microsoft/fluid-driver-base";
 import {
     ConnectionMode,
     IContentMessage,
@@ -15,7 +16,6 @@ import {
     ITokenClaims,
 } from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
-import { IConnected } from "./messages";
 
 // tslint:disable: no-non-null-assertion no-console
 
