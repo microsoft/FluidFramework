@@ -4,8 +4,8 @@ uid: SharedCell
 
 # SharedCell
 
-- Package: <xref:@prague/cell!>
-- API documentation: <xref:@prague/cell!SharedCell:class>
+- Package: <xref:@microsoft/fluid-cell!>
+- API documentation: <xref:@microsoft/fluid-cell!SharedCell:class>
 
 The SharedCell distributed data structure can be used to wrap an Object so that it can be used like a distributed data
 structure.
