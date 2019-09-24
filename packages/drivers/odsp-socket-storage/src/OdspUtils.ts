@@ -58,7 +58,7 @@ export function fetchHelper(
         try {
             return response.json() as any;
         } catch (e) {
-            throwNetworkError(400, `Error while parsing fetch response`, true, response);
+            throwNetworkError(`Error while parsing fetch response`, 400, true, response);
         }
     },
     (error) => {
