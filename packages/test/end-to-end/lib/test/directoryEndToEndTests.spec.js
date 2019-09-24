@@ -2,69 +2,50 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-
 /* tslint:disable:no-unsafe-any */
 /* tslint:disable:no-backbone-get-set-outside-model  */
 import * as api from "@fluid-internal/client-api";
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { ISharedDirectory, ISharedMap, SharedDirectory, SharedMap } from "@microsoft/fluid-map";
+import { SharedDirectory, SharedMap } from "@microsoft/fluid-map";
 import { MessageType } from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
-import {
-    DocumentDeltaEventManager,
-    ITestDeltaConnectionServer,
-    TestDeltaConnectionServer,
-    TestDocumentServiceFactory,
-    TestResolver,
-} from "../";
-
+import { DocumentDeltaEventManager, TestDeltaConnectionServer, TestDocumentServiceFactory, TestResolver, } from "@microsoft/fluid-local-test-server";
 describe("Directory", () => {
     const id = "fluid://test.com/test/test";
     const directoryId = "testDirectory";
-
-    let testDeltaConnectionServer: ITestDeltaConnectionServer;
-    let documentDeltaEventManager: DocumentDeltaEventManager;
-    let user1Document: api.Document;
-    let user2Document: api.Document;
-    let user3Document: api.Document;
-    let root1Directory: ISharedDirectory;
-    let root2Directory: ISharedDirectory;
-    let root3Directory: ISharedDirectory;
-
+    let testDeltaConnectionServer;
+    let documentDeltaEventManager;
+    let user1Document;
+    let user2Document;
+    let user3Document;
+    let root1Directory;
+    let root2Directory;
+    let root3Directory;
     beforeEach(async () => {
         testDeltaConnectionServer = TestDeltaConnectionServer.create();
         documentDeltaEventManager = new DocumentDeltaEventManager(testDeltaConnectionServer);
         const serviceFactory = new TestDocumentServiceFactory(testDeltaConnectionServer);
         const resolver = new TestResolver();
-        user1Document = await api.load(
-            id, { resolver }, {}, serviceFactory);
+        user1Document = await api.load(id, { resolver }, {}, serviceFactory);
         documentDeltaEventManager.registerDocuments(user1Document);
-
-        user2Document = await api.load(
-            id, { resolver }, {}, serviceFactory);
+        user2Document = await api.load(id, { resolver }, {}, serviceFactory);
         documentDeltaEventManager.registerDocuments(user2Document);
-
-        user3Document = await api.load(
-            id, { resolver }, {}, serviceFactory);
+        user3Document = await api.load(id, { resolver }, {}, serviceFactory);
         documentDeltaEventManager.registerDocuments(user3Document);
         await documentDeltaEventManager.pauseProcessing();
-
         // Create a directory on the root and propagate it to other documents
         const directory = SharedDirectory.create(user1Document.runtime);
         user1Document.getRoot().set(directoryId, directory.handle);
         await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
-
-        root1Directory = await user1Document.getRoot().get<IComponentHandle>(directoryId).get<ISharedDirectory>();
-        root2Directory = await user2Document.getRoot().get<IComponentHandle>(directoryId).get<ISharedDirectory>();
-        root3Directory = await user3Document.getRoot().get<IComponentHandle>(directoryId).get<ISharedDirectory>();
+        root1Directory = await user1Document.getRoot().get(directoryId).get();
+        root2Directory = await user2Document.getRoot().get(directoryId).get();
+        root3Directory = await user3Document.getRoot().get(directoryId).get();
     });
-
     function expectAllValues(msg, key, path, value1, value2, value3) {
-        const user1Value = root1Directory.getWorkingDirectory(path).get(key) as string;
+        const user1Value = root1Directory.getWorkingDirectory(path).get(key);
         assert.equal(user1Value, value1, `Incorrect value for ${key} in document 1 ${msg}`);
-        const user2Value = root2Directory.getWorkingDirectory(path).get(key) as string;
+        const user2Value = root2Directory.getWorkingDirectory(path).get(key);
         assert.equal(user2Value, value2, `Incorrect value for ${key} in document 2 ${msg}`);
-        const user3Value = root3Directory.getWorkingDirectory(path).get(key) as string;
+        const user3Value = root3Directory.getWorkingDirectory(path).get(key);
         assert.equal(user3Value, value3, `Incorrect value for ${key} in document 3 ${msg}`);
     }
     function expectAllBeforeValues(key, path, value1, value2, value3) {
@@ -73,24 +54,20 @@ describe("Directory", () => {
     function expectAllAfterValues(key, path, value) {
         expectAllValues("after process", key, path, value, value, value);
     }
-
-    function expectAllSize(size: number, path?: string) {
+    function expectAllSize(size, path) {
         const dir1 = path ? root1Directory.getWorkingDirectory(path) : root1Directory;
         const dir2 = path ? root2Directory.getWorkingDirectory(path) : root2Directory;
         const dir3 = path ? root3Directory.getWorkingDirectory(path) : root3Directory;
-
         const keys1 = Array.from(dir1.keys());
         assert.equal(keys1.length, size, "Incorrect number of Keys in document1");
         const keys2 = Array.from(dir2.keys());
         assert.equal(keys2.length, size, "Incorrect number of Keys in document2");
         const keys3 = Array.from(dir3.keys());
         assert.equal(keys3.length, size, "Incorrect number of Keys in document3");
-
         assert.equal(dir1.size, size, "Incorrect map size in document1");
         assert.equal(dir2.size, size, "Incorrect map size in document2");
         assert.equal(dir3.size, size, "Incorrect map size in document3");
     }
-
     describe("Smoke test", () => {
         it("should create the directory in 3 documents correctly", async () => {
             // Directory was created in beforeEach
@@ -98,43 +75,34 @@ describe("Directory", () => {
             assert.ok(root2Directory, `Couldn't find the directory in root2, instead got ${root2Directory}`);
             assert.ok(root3Directory, `Couldn't find the directory in root3, instead got ${root3Directory}`);
         });
-
         it("should set a key in the directory in three documents correctly", async () => {
             root1Directory.set("testKey1", "testValue1");
             await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
             expectAllAfterValues("testKey1", "/", "testValue1");
         });
     });
-
     describe("Root operations", () => {
         beforeEach("Populate with a value under the root", async () => {
             root1Directory.set("testKey1", "testValue1");
             await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
             expectAllAfterValues("testKey1", "/", "testValue1");
         });
-
         it("should delete a value in 3 documents correctly", async () => {
             root2Directory.delete("testKey1");
             await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
-
             const hasKey1 = root1Directory.has("testKey1");
             assert.equal(hasKey1, false, "testKey1 not deleted in document 1");
-
             const hasKey2 = root2Directory.has("testKey1");
             assert.equal(hasKey2, false, "testKey1 not deleted in document 1");
-
             const hasKey3 = root3Directory.has("testKey1");
             assert.equal(hasKey3, false, "testKey1 not deleted in document 1");
         });
-
         it("should have the correct size in three documents", async () => {
             root3Directory.set("testKey3", true);
             await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
-
             // check the number of keys in the map (2 keys set)
             expectAllSize(2);
         });
-
         it("should set key value to undefined in three documents correctly", async () => {
             root2Directory.set("testKey1", undefined);
             root2Directory.set("testKey2", undefined);
@@ -142,11 +110,10 @@ describe("Directory", () => {
             expectAllAfterValues("testKey1", "/", undefined);
             expectAllAfterValues("testKey2", "/", undefined);
         });
-
         it("should update value and trigger onValueChanged on other two documents", async () => {
-            let user1ValueChangedCount: number = 0;
-            let user2ValueChangedCount: number = 0;
-            let user3ValueChangedCount: number = 0;
+            let user1ValueChangedCount = 0;
+            let user2ValueChangedCount = 0;
+            let user3ValueChangedCount = 0;
             root1Directory.on("valueChanged", (changed, local, msg) => {
                 if (!local) {
                     if (msg.type === MessageType.Operation) {
@@ -171,41 +138,32 @@ describe("Directory", () => {
                     }
                 }
             });
-
             root1Directory.set("testKey1", "updatedValue");
-
             await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
-
             assert.equal(user1ValueChangedCount, 0, "Incorrect number of valueChanged op received in document 1");
             assert.equal(user2ValueChangedCount, 1, "Incorrect number of valueChanged op received in document 2");
             assert.equal(user3ValueChangedCount, 1, "Incorrect number of valueChanged op received in document 3");
-
             expectAllAfterValues("testKey1", "/", "updatedValue");
         });
-
         describe("Eventual consistency after simultaneous operations", () => {
             it("set/set", async () => {
                 root1Directory.set("testKey1", "value1");
                 root2Directory.set("testKey1", "value2");
                 root3Directory.set("testKey1", "value0");
                 root3Directory.set("testKey1", "value3");
-
                 expectAllBeforeValues("testKey1", "/", "value1", "value2", "value3");
                 await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
                 expectAllAfterValues("testKey1", "/", "value3");
             });
-
             it("delete/set", async () => {
                 // set after delete
                 root1Directory.set("testKey1", "value1.1");
                 root2Directory.delete("testKey1");
                 root3Directory.set("testKey1", "value1.3");
-
                 expectAllBeforeValues("testKey1", "/", "value1.1", undefined, "value1.3");
                 await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
                 expectAllAfterValues("testKey1", "/", "value1.3");
             });
-
             it("delete/set from the same document", async () => {
                 // delete and then set on the same document
                 root1Directory.set("testKey2", "value2.1");
@@ -214,23 +172,19 @@ describe("Directory", () => {
                 // drain the outgoing so that the next set will come after
                 await documentDeltaEventManager.processOutgoing(user1Document, user2Document, user3Document);
                 root2Directory.set("testKey2", "value2.2");
-
                 expectAllBeforeValues("testKey2", "/", "value2.1", "value2.2", "value2.3");
                 await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
                 expectAllAfterValues("testKey2", "/", "value2.2");
             });
-
             it("set/delete", async () => {
                 // delete after set
                 root1Directory.set("testKey3", "value3.1");
                 root2Directory.set("testKey3", "value3.2");
                 root3Directory.delete("testKey3");
-
                 expectAllBeforeValues("testKey3", "/", "value3.1", "value3.2", undefined);
                 await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
                 expectAllAfterValues("testKey3", "/", undefined);
             });
-
             it("set/clear", async () => {
                 // clear after set
                 root1Directory.set("testKey1", "value1.1");
@@ -242,7 +196,6 @@ describe("Directory", () => {
                 expectAllAfterValues("testKey1", "/", undefined);
                 expectAllSize(0);
             });
-
             it("clear/set on the same document", async () => {
                 // set after clear on the same map
                 root1Directory.set("testKey2", "value2.1");
@@ -256,7 +209,6 @@ describe("Directory", () => {
                 expectAllAfterValues("testKey2", "/", "value2.2");
                 expectAllSize(1);
             });
-
             it("clear/set", async () => {
                 // set after clear
                 root1Directory.set("testKey3", "value3.1");
@@ -268,36 +220,31 @@ describe("Directory", () => {
                 expectAllSize(1);
             });
         });
-
         describe("Nested map support", () => {
             it("supports setting a map as a value", async () => {
                 const newMap = SharedMap.create(user1Document.runtime);
                 root1Directory.set("mapKey", newMap.handle);
                 await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
                 const [root1Map, root2Map, root3Map] = await Promise.all([
-                    root1Directory.get<IComponentHandle>("mapKey").get<ISharedMap>(),
-                    root2Directory.get<IComponentHandle>("mapKey").get<ISharedMap>(),
-                    root3Directory.get<IComponentHandle>("mapKey").get<ISharedMap>(),
+                    root1Directory.get("mapKey").get(),
+                    root2Directory.get("mapKey").get(),
+                    root3Directory.get("mapKey").get(),
                 ]);
-
                 assert.ok(root1Map);
                 assert.ok(root2Map);
                 assert.ok(root3Map);
-
                 root2Map.set("testMapKey", "testMapValue");
                 await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
                 assert.equal(root3Map.get("testMapKey"), "testMapValue", "Wrong values in map in document 3");
             });
         });
     });
-
     describe("SubDirectory operations", () => {
         it("should set a key in a SubDirectory in three documents correctly", async () => {
             root1Directory.createSubDirectory("testSubDir1").set("testKey1", "testValue1");
             await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
             expectAllAfterValues("testKey1", "testSubDir1", "testValue1");
         });
-
         it("should delete a key in a SubDirectory in three documents correctly", async () => {
             root2Directory.createSubDirectory("testSubDir1").set("testKey1", "testValue1");
             await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
@@ -307,7 +254,6 @@ describe("Directory", () => {
             await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
             expectAllAfterValues("testKey1", "testSubDir1", undefined);
         });
-
         it("should delete a child SubDirectory in a SubDirectory in three documents correctly", async () => {
             root2Directory.createSubDirectory("testSubDir1").set("testKey1", "testValue1");
             await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
@@ -318,7 +264,6 @@ describe("Directory", () => {
             assert.equal(root2Directory.getWorkingDirectory("testSubDir1"), undefined);
             assert.equal(root3Directory.getWorkingDirectory("testSubDir1"), undefined);
         });
-
         it("should have the correct size in three documents", async () => {
             root1Directory.createSubDirectory("testSubDir1").set("testKey1", "testValue1");
             root2Directory.createSubDirectory("testSubDir1").set("testKey2", "testValue2");
@@ -329,11 +274,10 @@ describe("Directory", () => {
             await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
             expectAllSize(0, "testSubDir1");
         });
-
         it("should update value and trigger onValueChanged on other two documents", async () => {
-            let user1ValueChangedCount: number = 0;
-            let user2ValueChangedCount: number = 0;
-            let user3ValueChangedCount: number = 0;
+            let user1ValueChangedCount = 0;
+            let user2ValueChangedCount = 0;
+            let user3ValueChangedCount = 0;
             root1Directory.on("valueChanged", (changed, local, msg) => {
                 if (!local) {
                     if (msg.type === MessageType.Operation) {
@@ -361,18 +305,13 @@ describe("Directory", () => {
                     }
                 }
             });
-
             root1Directory.createSubDirectory("testSubDir1").set("testKey1", "updatedValue");
-
             await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
-
             assert.equal(user1ValueChangedCount, 0, "Incorrect number of valueChanged op received in document 1");
             assert.equal(user2ValueChangedCount, 1, "Incorrect number of valueChanged op received in document 2");
             assert.equal(user3ValueChangedCount, 1, "Incorrect number of valueChanged op received in document 3");
-
             expectAllAfterValues("testKey1", "/testSubDir1", "updatedValue");
         });
-
         describe("Eventual consistency after simultaneous operations", () => {
             let root1SubDir;
             let root2SubDir;
@@ -384,29 +323,24 @@ describe("Directory", () => {
                 root2SubDir = root2Directory.getWorkingDirectory("testSubDir");
                 root3SubDir = root3Directory.getWorkingDirectory("testSubDir");
             });
-
             it("set/set", async () => {
                 root1SubDir.set("testKey1", "value1");
                 root2SubDir.set("testKey1", "value2");
                 root3SubDir.set("testKey1", "value0");
                 root3SubDir.set("testKey1", "value3");
-
                 expectAllBeforeValues("testKey1", "/testSubDir", "value1", "value2", "value3");
                 await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
                 expectAllAfterValues("testKey1", "/testSubDir", "value3");
             });
-
             it("delete/set", async () => {
                 // set after delete
                 root1SubDir.set("testKey1", "value1.1");
                 root2SubDir.delete("testKey1");
                 root3SubDir.set("testKey1", "value1.3");
-
                 expectAllBeforeValues("testKey1", "/testSubDir", "value1.1", undefined, "value1.3");
                 await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
                 expectAllAfterValues("testKey1", "/testSubDir", "value1.3");
             });
-
             it("delete/set from the same document", async () => {
                 // delete and then set on the same document
                 root1SubDir.set("testKey2", "value2.1");
@@ -415,23 +349,19 @@ describe("Directory", () => {
                 // drain the outgoing so that the next set will come after
                 await documentDeltaEventManager.processOutgoing(user1Document, user2Document, user3Document);
                 root2SubDir.set("testKey2", "value2.2");
-
                 expectAllBeforeValues("testKey2", "/testSubDir", "value2.1", "value2.2", "value2.3");
                 await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
                 expectAllAfterValues("testKey2", "/testSubDir", "value2.2");
             });
-
             it("set/delete", async () => {
                 // delete after set
                 root1SubDir.set("testKey3", "value3.1");
                 root2SubDir.set("testKey3", "value3.2");
                 root3SubDir.delete("testKey3");
-
                 expectAllBeforeValues("testKey3", "/testSubDir", "value3.1", "value3.2", undefined);
                 await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
                 expectAllAfterValues("testKey3", "/testSubDir", undefined);
             });
-
             it("set/clear", async () => {
                 // clear after set
                 root1SubDir.set("testKey1", "value1.1");
@@ -443,7 +373,6 @@ describe("Directory", () => {
                 expectAllAfterValues("testKey1", "/testSubDir", undefined);
                 expectAllSize(0, "/testSubDir");
             });
-
             it("clear/set on the same document", async () => {
                 // set after clear on the same map
                 root1SubDir.set("testKey2", "value2.1");
@@ -457,7 +386,6 @@ describe("Directory", () => {
                 expectAllAfterValues("testKey2", "/testSubDir", "value2.2");
                 expectAllSize(1, "/testSubDir");
             });
-
             it("clear/set", async () => {
                 // set after clear
                 root1SubDir.set("testKey3", "value3.1");
@@ -470,7 +398,6 @@ describe("Directory", () => {
             });
         });
     });
-
     afterEach(async () => {
         await Promise.all([
             user1Document.close(),
@@ -480,3 +407,4 @@ describe("Directory", () => {
         await testDeltaConnectionServer.webSocketServer.close();
     });
 });
+//# sourceMappingURL=directoryEndToEndTests.spec.js.map
