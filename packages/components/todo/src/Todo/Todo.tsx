@@ -27,11 +27,11 @@ export const TodoName = `${pkg.name as string}-todo`;
 export class Todo extends PrimedComponent implements IComponentHTMLVisual, IComponentReactViewable {
 
   // DDS ids stored as variables to minimize simple string mistakes
-  private readonly innerCellIds = "innerCellIds";
-  private readonly sharedStringTitleId = "sharedString-title";
+  private readonly todoItemsMapKey = "innerCellIds";
+  private readonly sharedStringTitleKey = "sharedString-title";
 
   // tslint:disable:prefer-readonly
-  private innerCellIdsMap: ISharedMap;
+  private todoItemsMap: ISharedMap;
   private titleTextSharedString: SharedString;
   // tslint:enable:prefer-readonly
 
@@ -45,16 +45,16 @@ export class Todo extends PrimedComponent implements IComponentHTMLVisual, IComp
     // create a list for of all inner todo item components
     // we will use this to know what components to load.
     const map = SharedMap.create(this.runtime);
-    this.root.set(this.innerCellIds, map.handle);
+    this.root.set(this.todoItemsMapKey, map.handle);
 
     const text = SharedString.create(this.runtime);
     text.insertText(0, "Title");
-    this.root.set(this.sharedStringTitleId, text.handle);
+    this.root.set(this.sharedStringTitleKey, text.handle);
   }
 
   protected async componentHasInitialized() {
-    const innerCellIdsMap = this.root.get<IComponentHandle>(this.innerCellIds).get<ISharedMap>();
-    const titleTextSharedString = this.root.get<IComponentHandle>(this.sharedStringTitleId).get<SharedString>();
+    const todoItemsMap = this.root.get<IComponentHandle>(this.todoItemsMapKey).get<ISharedMap>();
+    const titleTextSharedString = this.root.get<IComponentHandle>(this.sharedStringTitleKey).get<SharedString>();
 
     // tslint:disable-next-line: no-console
     console.log("here");
@@ -65,10 +65,10 @@ export class Todo extends PrimedComponent implements IComponentHTMLVisual, IComp
     });
 
     [
-      this.innerCellIdsMap,
+      this.todoItemsMap,
       this.titleTextSharedString,
     ] = await Promise.all([
-      innerCellIdsMap,
+      todoItemsMap,
       titleTextSharedString,
     ]);
   }
@@ -79,6 +79,8 @@ export class Todo extends PrimedComponent implements IComponentHTMLVisual, IComp
    * Creates a new view for a caller that doesn't directly support React
    */
   public render(div: HTMLElement) {
+    // tslint:disable-next-line:no-console
+    console.log("Todo render()");
     // Because we are using React and our caller is not we will use the
     // ReactDOM to render our JSX.Element directly into the provided div.
     // Because we support IComponentReactViewable and createViewElement returns a JSX.Element
@@ -98,29 +100,29 @@ export class Todo extends PrimedComponent implements IComponentHTMLVisual, IComp
    * Since this returns a JSX.Element it allows for an easier model.
    */
   public createJSXElement(): JSX.Element {
-    // callback that allows for creation of new Todo Items
-    const createTodoItemComponent = async (props?: any) => {
-      // create a new ID for our component
-      const id = `item${Date.now().toString()}`;
-
-      // create a new todo item
-      await this.createAndAttachComponent(id, TodoItemName, props);
-
-      // Store the id of the component in our ids map so we can reference it later
-      this.innerCellIdsMap.set(id, "");
-    };
-
     // The factory allows us to create new embedded component without having to pipe the
     // getComponent call throughout the app.
     const factory = new EmbeddedReactComponentFactory(this.getComponent.bind(this));
     return(
       <TodoView
+          todoModel={this}
           createComponentView = {(id: string) => factory.create(id)}
-          createTodoItemComponent={createTodoItemComponent.bind(this)}
-          map={this.innerCellIdsMap}
+          todoItemsMap={this.todoItemsMap}
           textSharedString={this.titleTextSharedString}/>
     );
   }
 
   // end IComponentReactViewable
+
+  // API for creating new Todo Items
+  public async addTodoItemComponent(props?: any) {
+    // create a new ID for our component
+    const id = `item${Date.now().toString()}`;
+
+    // create a new todo item
+    await this.createAndAttachComponent(id, TodoItemName, props);
+
+    // Store the id of the component in our ids map so we can reference it later
+    this.todoItemsMap.set(id, "");
+  }
 }

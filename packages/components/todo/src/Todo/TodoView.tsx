@@ -7,16 +7,17 @@ import { CollaborativeInput } from "@microsoft/fluid-aqueduct-react";
 import { ISharedMap } from "@microsoft/fluid-map";
 import { SharedString } from "@microsoft/fluid-sequence";
 import * as React from "react";
+import { Todo } from "./Todo";
 
 interface p {
-    createTodoItemComponent(props?: any): Promise<void>;
+    todoModel: Todo;
     createComponentView(id: string): JSX.Element;
-    map: ISharedMap;
+    todoItemsMap: ISharedMap;
     textSharedString: SharedString;
 }
 
 interface s {
-    ids: string[];
+    todoItemIds: string[];
     inputValue: string;
 }
 
@@ -27,7 +28,7 @@ export class TodoView extends React.Component<p, s> {
         super(props);
 
         this.state = {
-            ids: [...this.props.map.keys()],
+            todoItemIds: [...this.props.todoItemsMap.keys()],
             inputValue: "",
         };
 
@@ -36,8 +37,8 @@ export class TodoView extends React.Component<p, s> {
     }
 
     componentDidMount(): void {
-        this.props.map.on("op", () => {
-            this.setState({ids: [...this.props.map.keys()]});
+        this.props.todoItemsMap.on("op", () => {
+            this.setState({todoItemIds: [...this.props.todoItemsMap.keys()]});
         });
 
         // Set focus on the new text input
@@ -49,7 +50,7 @@ export class TodoView extends React.Component<p, s> {
      */
     async handleSubmit(ev: React.FormEvent<HTMLFormElement>): Promise<void> {
         ev.preventDefault();
-        await this.props.createTodoItemComponent({ startingText: this.state.inputValue});
+        await this.props.todoModel.addTodoItemComponent({ startingText: this.state.inputValue });
         this.setState({inputValue: ""});
     }
 
@@ -59,7 +60,12 @@ export class TodoView extends React.Component<p, s> {
 
     render(): JSX.Element {
         const todoItemComponents = [];
-        this.state.ids.forEach((id) => {
+        this.state.todoItemIds.forEach((id) => {
+            // createComponentView internally uses an EmbeddedReactComponentFactory which
+            // has stashed Todo's getComponent.  Using that getComponent against each of the
+            // TodoItem IDs allows this loop to grab the TodoItems and get back ReactEmbeddedComponents.
+            // Those ReactEmbeddedComponents will then call TodoItem's createJSXElement, which
+            // gets at the TodoItemView.
             todoItemComponents.push(this.props.createComponentView(id));
         });
 
