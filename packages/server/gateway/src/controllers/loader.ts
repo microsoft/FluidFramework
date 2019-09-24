@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { createWebLoader, IHostConfig, initializeChaincode, registerAttach } from "@microsoft/fluid-base-host";
+import {
+    createWebLoader_WhiteList,
+    IHostConfig,
+    initializeChaincode,
+    registerAttach,
+} from "@microsoft/fluid-base-host";
 import { BaseTelemetryNullLogger } from "@microsoft/fluid-core-utils";
 import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
 import { IDocumentServiceFactory, IResolvedUrl } from "@microsoft/fluid-protocol-definitions";
@@ -66,7 +71,7 @@ export async function initialize(
     window["allServices"] = services;
 
     console.log(`Loading ${url}`);
-    const loader = createWebLoader(
+    const loader = createWebLoader_WhiteList(
         resolved,
         pkg,
         scriptIds,

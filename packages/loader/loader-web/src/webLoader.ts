@@ -279,10 +279,12 @@ export class WebCodeLoader implements ICodeLoader {
     private readonly whiteList: IWhiteList;
 
     constructor(private readonly baseUrl: string, whiteList?: IWhiteList) {
+        console.log("WebCodeLoader.constructor");
         this.whiteList = whiteList ? whiteList : new WhiteList(() => Promise.resolve(true));
     }
 
-    public seed(pkg: IFluidPackage, config: IPackageConfig, scriptIds: string[]) {
+    public async seed(pkg: IFluidPackage, config: IPackageConfig, scriptIds: string[]) {
+        console.log("WebCodeLoader.seed");
         const fluidPackage = this.getFluidPackage({ config, package: pkg });
         fluidPackage.seed(scriptIds);
     }
@@ -291,12 +293,12 @@ export class WebCodeLoader implements ICodeLoader {
      * Resolves the input data structures to the resolved details
      */
     // tslint:disable-next-line:promise-function-async disabled to verify function sets cache synchronously
-    public async resolve(input: string | IFluidCodeDetails): Promise<IResolvedPackage> {
+    public resolve(input: string | IFluidCodeDetails): Promise<IResolvedPackage> {
+        console.log("WebCodeLoader.resolve");
         const fluidPackage = this.getFluidPackage(input);
-
-        if (await this.whiteList.test(input)) {
-            throw new Error("Attempted to load invalid package");
-        }
+        // if (await this.whiteList.test(input)) {
+        //     throw new Error("Attempted to load invalid package");
+        // }
         return fluidPackage.resolve();
     }
 
@@ -309,8 +311,14 @@ export class WebCodeLoader implements ICodeLoader {
         source: string | IFluidCodeDetails,
         details?: IFluidCodeDetails,
     ): Promise<T> {
+        console.log("WebCodeLoader.load");
+
         const input = details ? details : source;
         const fluidPackage = this.getFluidPackage(input);
+        if (!(await this.whiteList.test(input))) {
+            throw new Error("Attempted to load invalid package");
+        }
+        console.log(this.whiteList);
         return fluidPackage.load();
     }
 

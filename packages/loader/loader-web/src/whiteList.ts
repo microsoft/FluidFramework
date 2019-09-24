@@ -19,4 +19,6 @@ export class WhiteList implements IWhiteList {
         return this.testHandler(source);
         // return true;
     }
+
+    // Should the white list handle the seeding as well?
 }
