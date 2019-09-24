@@ -22,7 +22,6 @@
     "@microsoft/fluid-protocol-definitions": "^0.10.0",
     "@microsoft/fluid-routerlicious-driver": "^0.10.0",
     "@microsoft/fluid-runtime-definitions": "^0.10.0",
-    "@microsoft/fluid-container-runtime": "^0.10.0",
     "@microsoft/fluid-core-utils": "^0.10.0"
   },
   "devDependencies": {

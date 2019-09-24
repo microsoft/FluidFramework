@@ -9,7 +9,6 @@ import { ReplayArgs } from "./replayArgs";
 const optionsArray = [
     "Location:",
         ["--indir <directory>", "Name of the directory containing the output of the fluid-fetch tool"],
-        ["--version --indir/<version>", "Name of the directory containing the snapshot to be used"],
     "Misc:",
         ["--testReconnect", "Simulates reconnect and rebuilding of pending changes"],
         ["--quiet", "Reduces amount of output"],
@@ -37,10 +36,6 @@ class ReplayProcessArgs extends ReplayArgs {
                 case "--indir":
                     i += 1;
                     this.inDirName = this.parseStrArg(i);
-                    break;
-                case "--version":
-                    i += 1;
-                    this.snapshotVersion = this.parseStrArg(i);
                     break;
                 case "--to":
                     i += 1;

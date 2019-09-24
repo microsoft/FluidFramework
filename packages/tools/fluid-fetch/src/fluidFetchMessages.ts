@@ -3,19 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentAttributes } from "@microsoft/fluid-container-runtime";
-import { buildHierarchy, flatten, readAndParse } from "@microsoft/fluid-core-utils";
 import {
     ConnectionMode,
     IClient,
     IDocumentService,
-    IDocumentStorageService,
     ISequencedDocumentMessage,
-    ISnapshotTree,
     MessageType,
     ScopeType,
 } from "@microsoft/fluid-protocol-definitions";
-import { IAttachMessage, IChannelAttributes, IEnvelope } from "@microsoft/fluid-runtime-definitions";
+import { IAttachMessage, IEnvelope } from "@microsoft/fluid-runtime-definitions";
 import * as fs from "fs";
 import * as util from "util";
 import {
@@ -106,7 +102,6 @@ function getObjectId(componentId: string, id: string) {
     return `[${componentId}]/${id}`;
 }
 
-// tslint:disable-next-line: max-func-body-length
 export async function fluidFetchMessages(documentService: IDocumentService) {
 
     const messageStats = dumpMessageStats || dumpChannelStats || dumpDataTypeStats || dumpTotalStats;
@@ -129,7 +124,6 @@ export async function fluidFetchMessages(documentService: IDocumentService) {
         }
 
         if (messageStats) {
-            const storageService: IDocumentStorageService = await documentService.connectToStorage();
             const messageTypeStats = new Map<string, [number, number]>();
             const dataType = new Map<string, string>();
             const dataTypeStats = new Map<string, [number, number]>();
@@ -157,23 +151,7 @@ export async function fluidFetchMessages(documentService: IDocumentService) {
 
                         if (innerContent.type === MessageType.Attach) {
                             const attachMessage = innerContent.content as IAttachMessage;
-                            const flatBlobs = new Map<string, string>();
-                            const flattened = flatten(attachMessage.snapshot.entries, flatBlobs);
-                            const snapshotTree: ISnapshotTree = buildHierarchy(flattened);
-                            let objectType: string;
-                            if (snapshotTree.blobs[".component"]) {
-                                const { pkg: componentPkg } = await readAndParse<IComponentAttributes>(
-                                    storageService,
-                                    snapshotTree.blobs[".component"]);
-                                objectType = componentPkg;
-                            } else if (snapshotTree.blobs[".attributes"]) {
-                                const { type: channelType } = await readAndParse<IChannelAttributes>(
-                                    storageService,
-                                    snapshotTree.blobs[".attributes"]);
-                                objectType = channelType;
-                            } else {
-                                objectType = (attachMessage as any).type;
-                            }
+                            let objectType = attachMessage.type;
                             if (objectType.startsWith("https://graph.microsoft.com/types/")) {
                                 objectType = objectType.substring("https://graph.microsoft.com/types/".length);
                             }

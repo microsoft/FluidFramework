@@ -3,20 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { buildHierarchy, flatten, readAndParse } from "@microsoft/fluid-core-utils";
-import { FileDeltaStorageService, FluidFetchReader } from "@microsoft/fluid-file-driver";
+import { FileDeltaStorageService } from "@microsoft/fluid-file-driver";
 import { createGroupOp, IJSONSegment, IMergeTreeOp, ISegment, MergeTreeDeltaType } from "@microsoft/fluid-merge-tree";
 // tslint:disable-next-line: no-submodule-imports
 import { TestClient } from "@microsoft/fluid-merge-tree/dist/test/testClient";
 import {
     IBlob,
     ISequencedDocumentMessage,
-    ISnapshotTree,
     ITree,
     ITreeEntry,
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
-import { IAttachMessage, IChannelAttributes } from "@microsoft/fluid-runtime-definitions";
+import { IAttachMessage } from "@microsoft/fluid-runtime-definitions";
 import {
     SharedNumberSequenceFactory,
     SharedObjectSequenceFactory,
@@ -51,7 +49,6 @@ interface IMessageContents {
 export class ClientReplayTool {
     private errorCount = 0;
     private deltaStorageService: FileDeltaStorageService;
-    private storage: FluidFetchReader;
     public constructor(private readonly args: ReplayArgs) {}
 
     public async Go(): Promise<boolean> {
@@ -107,7 +104,6 @@ export class ClientReplayTool {
             return Promise.reject("File does not exist");
         }
 
-        this.storage = new FluidFetchReader(this.args.inDirName, this.args.snapshotVersion);
         this.deltaStorageService = new FileDeltaStorageService(this.args.inDirName);
     }
 
@@ -133,7 +129,7 @@ export class ClientReplayTool {
                         if (contents.type && contents.type === "attach") {
                             const legacyAttachMessage = contents.content as IAttachMessage;
                             legacyAttachMessage.id = [...messagePathParts, legacyAttachMessage.id].join("/");
-                            await this.processAttachMessage(legacyAttachMessage, mergeTreeAttachTrees);
+                            this.processAttachMessage(legacyAttachMessage, mergeTreeAttachTrees);
                         } else {
                             const content = contents.content as IMessageContents;
                             const messagePath = [...messagePathParts, content.address].join("/");
@@ -161,7 +157,7 @@ export class ClientReplayTool {
                     break;
 
                 case MessageType.Attach:
-                    await this.processAttachMessage(
+                    this.processAttachMessage(
                         message.contents as IAttachMessage,
                         mergeTreeAttachTrees);
                     break;
@@ -263,10 +259,10 @@ export class ClientReplayTool {
         }
     }
 
-    private async processAttachMessage(
+    private processAttachMessage(
         attachMessage: IAttachMessage,
         mergeTreeAttachTrees: Map<string, { tree: ITree, specToSeg(segment: IJSONSegment): ISegment }>) {
-        const ddsTrees = await this.getDssTreesFromAttach(attachMessage);
+        const ddsTrees = this.getDssTreesFromAttach(attachMessage);
         const mergeTreeTypes = [
             {
                 type: SharedStringFactory.Type,
@@ -309,27 +305,17 @@ export class ClientReplayTool {
         }
     }
 
-    private async getDssTreesFromAttach(attachMessage: IAttachMessage) {
+    private getDssTreesFromAttach(attachMessage: IAttachMessage) {
         const ddsTrees = new Map<string, IFullPathTreeEntry[]>();
         if (attachMessage.snapshot) {
-            const flatBlobs = new Map<string, string>();
-            const flattened = flatten(attachMessage.snapshot.entries, flatBlobs);
-            const snapshotTree: ISnapshotTree = buildHierarchy(flattened);
-            let { type } = await readAndParse<IChannelAttributes>(
-                this.storage,
-                snapshotTree.blobs[".attributes"]);
-            if (!type) {
-                // tslint:disable-next-line: no-unsafe-any
-                type = (attachMessage as any).type;
-            }
             const snapshotTreeEntry: IFullPathTreeEntry = {
                 value: attachMessage.snapshot,
-                type,
+                type: attachMessage.type,
                 fullPath: attachMessage.id,
                 path: undefined,
                 mode: undefined,
             };
-            ddsTrees.set(type, [snapshotTreeEntry]);
+            ddsTrees.set(attachMessage.type, [snapshotTreeEntry]);
             const trees: IFullPathTreeEntry[] = [snapshotTreeEntry];
             while (trees.length > 0) {
                 const tree = trees.shift();
