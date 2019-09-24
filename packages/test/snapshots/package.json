@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-test-snapshots",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "description": "Comprehensive test of snapshot logic.",
   "main": "dist/generateSnapshotFiles.js",
   "sideEffects": "false",
@@ -21,11 +21,11 @@
   "author": "Microsoft",
   "repository": "microsoft/FluidFramework",
   "dependencies": {
-    "@microsoft/fluid-protocol-definitions": "^0.10.0",
-    "@microsoft/fluid-replay-tool": "^0.10.0"
+    "@microsoft/fluid-protocol-definitions": "^0.11.0",
+    "@microsoft/fluid-replay-tool": "^0.11.0"
   },
   "devDependencies": {
-    "@microsoft/fluid-build-common": "^0.10.0",
+    "@microsoft/fluid-build-common": "^0.11.0",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.12.12",
     "concurrently": "^4.1.0",

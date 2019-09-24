@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-aqueduct",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "description": "A set of implementations for fluid framework interfaces.",
   "main": "dist/index.js",
   "module": "lib/index.js",
@@ -21,18 +21,18 @@
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "dependencies": {
-    "@microsoft/fluid-component-core-interfaces": "^0.10.0",
-    "@microsoft/fluid-component-runtime": "^0.10.0",
-    "@microsoft/fluid-container-definitions": "^0.10.0",
-    "@microsoft/fluid-container-runtime": "^0.10.0",
-    "@microsoft/fluid-framework-interfaces": "^0.10.0",
-    "@microsoft/fluid-map": "^0.10.0",
-    "@microsoft/fluid-runtime-definitions": "^0.10.0",
-    "@microsoft/fluid-shared-object-base": "^0.10.0"
+    "@microsoft/fluid-component-core-interfaces": "^0.11.0",
+    "@microsoft/fluid-component-runtime": "^0.11.0",
+    "@microsoft/fluid-container-definitions": "^0.11.0",
+    "@microsoft/fluid-container-runtime": "^0.11.0",
+    "@microsoft/fluid-framework-interfaces": "^0.11.0",
+    "@microsoft/fluid-map": "^0.11.0",
+    "@microsoft/fluid-runtime-definitions": "^0.11.0",
+    "@microsoft/fluid-shared-object-base": "^0.11.0"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.4.4",
-    "@microsoft/fluid-build-common": "^0.10.0",
+    "@microsoft/fluid-build-common": "^0.11.0",
     "@types/node": "^10.12.12",
     "concurrently": "^4.1.0",
     "rimraf": "^2.6.2",
