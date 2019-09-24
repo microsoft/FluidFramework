@@ -31,7 +31,7 @@ export function initialize() {
 
         const sioresults = await run(
             getRandomName(),
-            "prague",
+            "fluid",
             "43cfc3fbf04a97c0921fd23ff10f9e4b",
             "http://localhost:3000",
             "http://localhost:3001",
@@ -53,7 +53,7 @@ export function initialize() {
 
         // const wsresults = await run(
         //     getRandomName(),
-        //     "prague",
+        //     "fluid",
         //     "43cfc3fbf04a97c0921fd23ff10f9e4b",
         //     "http://localhost:3030",
         //     "http://localhost:3001",

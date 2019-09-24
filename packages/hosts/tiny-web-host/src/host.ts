@@ -19,7 +19,7 @@ const npm = "https://pragueauspkn-3873244262.azureedge.net";
 // This is insecure, but is being used for the time being for ease of use during the hackathon.
 const appTenants = [
     {
-        id: "prague",
+        id: "fluid",
         key: "43cfc3fbf04a97c0921fd23ff10f9e4b",
     },
 ];

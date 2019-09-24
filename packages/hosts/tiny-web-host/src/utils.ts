@@ -9,14 +9,15 @@ import * as jwt from "jsonwebtoken";
 // This is insecure, but is being used for the time being for ease of use during the hackathon.
 async function fetchSecret(tenant: string, getToken: () => Promise<string>): Promise<string> {
     switch (tenant) {
-        case "prague": {
+        case "fluid": {
             return "43cfc3fbf04a97c0921fd23ff10f9e4b";
         }
+        case "prague":
         case "stupefied-kilby":
         case "elastic-dijkstra":
         case "github":
             throw new Error("In preparation for Fluid going open source, these tenants have been deprecated. " +
-                "Please use the \"prague\" tenant, or provide your own tenant");
+                "Please use the \"fluid\" tenant, or provide your own tenant");
         default: {
             if (!getToken) {
                 throw new Error("Tenant Not Recognized. No getToken function provided.");

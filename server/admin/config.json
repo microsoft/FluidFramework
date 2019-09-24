@@ -50,7 +50,7 @@
         "port": 6379
     },
     "keyValue": {
-        "documentUrl": "https://www.wu2.prague.office-int.com/loader/prague/kv-cache-local-00015",
+        "documentUrl": "https://www.wu2.prague.office-int.com/loader/fluid/kv-cache-local-00015",
         "jwtKey": "VBQyoGpEYrTn3XQPtXW3K8fFDd",
         "gatewayUrl": "http://gateway:3000"
     },

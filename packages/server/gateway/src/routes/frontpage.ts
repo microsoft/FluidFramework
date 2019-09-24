@@ -52,7 +52,7 @@ export function create(
         if (docId === undefined) {
             response.status(500).end("No document found");
         } else {
-            const tenantId = "prague";
+            const tenantId = "fluid";
             const jwtToken = jwt.sign(
                 {
                     user: request.user,
