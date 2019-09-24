@@ -15,14 +15,12 @@ import {
 } from "@microsoft/fluid-container-definitions";
 import { Deferred, raiseConnectedEvent, readAndParse } from "@microsoft/fluid-core-utils";
 import {
-    FileMode,
     IDocumentMessage,
     IDocumentStorageService,
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITree,
     MessageType,
-    TreeEntry,
 } from "@microsoft/fluid-protocol-definitions";
 import {
     IAttachMessage,
@@ -35,6 +33,7 @@ import {
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { ContainerRuntime } from "./containerRuntime";
+import { BlobTreeEntry } from "./utils";
 
 interface ISnapshotDetails {
     pkg: string;
@@ -120,7 +119,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
 
     // Tracks the base snapshot ID. If no ops effect this component then the id value can be returned on a
     // snapshot call
-    protected baseId = null;
+    protected baseId: string | null = null;
     protected componentRuntime: IComponentRuntime;
     private closed = false;
     private loaded = false;
@@ -247,25 +246,16 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
 
         const componentAttributes = { pkg };
 
-        const entries = await this.componentRuntime.snapshotInternal();
-        const snapshot = { entries, id: undefined };
-
-        snapshot.entries.push({
-            mode: FileMode.File,
-            path: ".component",
-            type: TreeEntry[TreeEntry.Blob],
-            value: {
-                contents: JSON.stringify(componentAttributes),
-                encoding: "utf-8",
-            },
-        });
-
         // base ID still being set means previous snapshot is still valid
         if (this.baseId) {
-            snapshot.id = this.baseId;
+            return { id: this.baseId, entries: [] };
         }
 
-        return snapshot;
+        const entries = await this.componentRuntime.snapshotInternal();
+
+        entries.push(new BlobTreeEntry(".component", JSON.stringify(componentAttributes)));
+
+        return { entries, id: undefined };
     }
 
     public async request(request: IRequest): Promise<IResponse> {
@@ -435,15 +425,7 @@ export class LocalComponentContext extends ComponentContext {
         const entries = this.componentRuntime.getAttachSnapshot();
         const snapshot = { entries, id: undefined };
 
-        snapshot.entries.push({
-            mode: FileMode.File,
-            path: ".component",
-            type: TreeEntry[TreeEntry.Blob],
-            value: {
-                contents: JSON.stringify(componentAttributes),
-                encoding: "utf-8",
-            },
-        });
+        snapshot.entries.push(new BlobTreeEntry(".component", JSON.stringify(componentAttributes)));
 
         // base ID still being set means previous snapshot is still valid
         if (this.baseId) {
