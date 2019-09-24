@@ -13,6 +13,7 @@ import {
     IDocumentMessage,
     ISequencedDocumentMessage,
     IServiceConfiguration,
+    ISignalClient,
     ISignalMessage,
     ITokenClaims,
 } from "@microsoft/fluid-protocol-definitions";
@@ -105,6 +106,10 @@ export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaCon
 
     public get initialSignals(): ISignalMessage[] | undefined {
         return this.details!.initialSignals;
+    }
+
+    public get initialClients(): ISignalClient[] {
+        return this.details!.initialClients ? this.details!.initialClients : [];
     }
 
     public get serviceConfiguration(): IServiceConfiguration {

@@ -10,10 +10,10 @@ docker build --build-arg NPM_TOKEN=$(echo $NPM_TOKEN) -t headless-agent .
 
 And to run
 ```
-`docker run --rm -t --cap-add=SYS_ADMIN --network routerlicious_default headless-agent`
+docker run --rm -t --cap-add=SYS_ADMIN --network routerlicious_default headless-agent
 ```
 
 To run locally using cli (defaults to PPE endpoint)
 ```
-`node dist/puppeteer/cli.js -d <documentId> -t <agentType>`
+node dist/puppeteer/cli.js -d <documentId> -t <agentType>
 ```

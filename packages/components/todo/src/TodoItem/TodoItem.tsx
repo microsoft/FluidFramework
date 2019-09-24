@@ -8,7 +8,6 @@ import { PrimedComponent } from "@microsoft/fluid-aqueduct";
 import { EmbeddedReactComponentFactory, IComponentReactViewable } from "@microsoft/fluid-aqueduct-react";
 import { ISharedCell, SharedCell } from "@microsoft/fluid-cell";
 import { IComponentHandle, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
-import { IComponentForge } from "@microsoft/fluid-framework-interfaces";
 import { Counter, CounterValueType } from "@microsoft/fluid-map";
 import { SharedString } from "@microsoft/fluid-sequence";
 import * as React from "react";
@@ -33,8 +32,7 @@ export const TodoItemName = `${pkg.name as string}-item`;
 export class TodoItem extends PrimedComponent
   implements
     IComponentHTMLVisual,
-    IComponentReactViewable,
-    IComponentForge {
+    IComponentReactViewable {
 
   // tslint:disable:prefer-readonly
   private text: SharedString;

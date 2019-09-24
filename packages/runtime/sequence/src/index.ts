@@ -9,11 +9,11 @@ export {
     Interval,
     ISerializableInterval,
     ISerializedInterval,
-    SharedIntervalCollection,
-    SharedIntervalCollectionValueType,
-    SharedIntervalCollectionView,
-    SharedStringInterval,
-    SharedStringIntervalCollectionValueType,
+    IntervalCollection,
+    IntervalCollectionValueType,
+    IntervalCollectionView,
+    SequenceInterval,
+    SequenceIntervalCollectionValueType,
 } from "./intervalCollection";
 export * from "./sharedString";
 export * from "./sequence";
@@ -23,3 +23,4 @@ export * from "./sharedSequence";
 export * from "./sharedObjectSequence";
 export * from "./sharedNumberSequence";
 export * from "./sparsematrix";
+export * from "./sharedIntervalCollection";
