@@ -6,5 +6,3 @@
 export * from "./debug";
 export * from "./messages";
 export * from "./documentDeltaConnection";
-export * from "./outerDocumentDeltaConnection";
-export * from "./innerDocumentDeltaConnection";
