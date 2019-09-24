@@ -116,6 +116,7 @@ COPY packages/tools/fluid-fetch/package*.json packages/tools/fluid-fetch/
 COPY packages/tools/replay-tool/package*.json packages/tools/replay-tool/
 COPY packages/tools/webpack-component-loader/package*.json packages/tools/webpack-component-loader/
 COPY packages/tools/merge-tree-client-replay/package*.json packages/tools/merge-tree-client-replay/
+COPY packages/test/end-to-end-tests/package*.json packages/test/end-to-end-tests
 
 # Copy over chaincode npmrc and package.json to dynamically install packages.
 COPY server/routerlicious/chaincode/* /tmp/chaincode/
