@@ -4,10 +4,10 @@ uid: SharedDirectory
 
 # SharedDirectory and IDirectory
 
-* Package: <xref:@prague/map!>
-* API documentation:
-  * <xref:@prague/map!SharedDirectory:class>
-  * <xref:@prague/map!IDirectory:interface>
+- Package: <xref:@microsoft/fluid-map!>
+- API documentation:
+  - <xref:@microsoft/fluid-map!SharedDirectory:class>
+  - <xref:@microsoft/fluid-map!IDirectory:interface>
 
 The SharedDirectory distributed data structure is similar to a <xref:SharedMap> and can be used to store key-value
 pairs. In addition to the typical Map functionality for getting, setting, and iterating over values, SharedDirectory
@@ -17,7 +17,11 @@ working directories. This subdirectory tree can be used to give hierarchical str
 storing them on a flat map. Both the `SharedDirectory` and any subdirectories are `IDirectories`.For example:
 
 ```ts
-mySharedDirectory.createSubDirectory("a").createSubDirectory("b").createSubDirectory("c").set("foo", val1);
+mySharedDirectory
+  .createSubDirectory("a")
+  .createSubDirectory("b")
+  .createSubDirectory("c")
+  .set("foo", val1);
 const mySubDir = mySharedDirectory.getWorkingDirectory("/a/b/c");
 mySubDir.get("foo"); // returns val1
 ```
@@ -40,23 +44,23 @@ The map operations on an `IDirectory` refer to the key/value pairs stored in tha
 <xref:SharedMap> including the same restrictions on keys and values. To operate on the subdirectory structure, use the
 corresponding subdirectory methods.
 
-<xref:@prague/map!IDirectory%23getWorkingDirectory:member(1)>
+<xref:@microsoft/fluid-map!IDirectory%23getWorkingDirectory:member(1)>
 
 To "navigate" the subdirectory structure, `IDirectory` provides a
-<xref:@prague/map!IDirectory%23getWorkingDirectory:member(1)> method which takes a relative path and returns the
+<xref:@microsoft/fluid-map!IDirectory%23getWorkingDirectory:member(1)> method which takes a relative path and returns the
 `IDirectory` located at that path if it exists.
 
 [!INCLUDE [object-serialization](../includes/object-serialization.md)]
 
-SharedDirectory keys are *last write wins*; this behavior works well with few infrequent writers and many readers. In cases
+SharedDirectory keys are _last write wins_; this behavior works well with few infrequent writers and many readers. In cases
 with many frequent writers it's best to design your use of the directory such that each writer writes to its own keys so
 they don't overwrite each other.
 
 ## Eventing
 
-[valueChanged](xref:@prague/map!SharedDirectory%23on:member(2)) events additionally provide the absolute path to the
-subdirectory storing the value that changed.
+[valueChanged](<xref:@microsoft/fluid-map!SharedDirectory%23on:member(2)>) events additionally provide the absolute path
+to the subdirectory storing the value that changed.
 
 ## Related distributed data structures
 
-* <xref:SharedMap>
+- <xref:SharedMap>
