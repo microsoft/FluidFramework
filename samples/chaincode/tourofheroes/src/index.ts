@@ -25,7 +25,6 @@ export class TourOfHeroes extends PrimedComponent implements IComponentHTMLVisua
     // Create the component's schema and perform other initialization tasks
     // (only called when document is initially created).
     protected async componentInitializingFirstTime() {
-        await super.componentInitializingFirstTime();
         const defaultHeroes = [
             { id: 11, name: 'Mr. Nice' },
             { id: 12, name: 'Narco' },
