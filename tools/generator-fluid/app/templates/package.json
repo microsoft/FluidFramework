@@ -1,6 +1,6 @@
 {
-  "name": "@chaincode/bootstrap-counter",
-  "description": "Minimal @chaincode sample to implement a collaborative counter.",
+  "name": "@yo-fluid/bootstrap-counter",
+  "description": "Minimal Fluid example to implement a collaborative counter.",
   "version": "0.10.0",
   "author": "Microsoft",
   "repository": "microsoft/FluidFramework",
