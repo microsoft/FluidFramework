@@ -98,7 +98,7 @@ module.exports = class extends Generator {
    */
   _copyPackageFile() {
     var packageJson = this.fs.readJSON(this.templatePath("package.json"));
-    packageJson.name = "@fluid-example/" + this.answers.name.toLowerCase();
+    packageJson.name = "@yo-fluid/" + this.answers.name.toLowerCase();
     packageJson.description = this.answers.description;
 
     packageJson = this._cleanDependencies(packageJson);
