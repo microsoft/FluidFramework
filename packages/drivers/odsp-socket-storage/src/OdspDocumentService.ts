@@ -20,6 +20,7 @@ import { IFetchWrapper } from "./fetchWrapper";
 import { OdspDeltaStorageService } from "./OdspDeltaStorageService";
 import { OdspDocumentStorageManager } from "./OdspDocumentStorageManager";
 import { OdspDocumentStorageService } from "./OdspDocumentStorageService";
+import { defaultRetryFilter } from "./OdspUtils";
 import { getSocketStorageDiscovery } from "./Vroom";
 
 /**
@@ -161,7 +162,7 @@ export class OdspDocumentService implements IDocumentService {
                     throw new NetworkError(
                         socketError.message,
                         socketError.code,
-                        [408, 409, 429, 500, 503].includes(socketError.code), // canRetry
+                        defaultRetryFilter(socketError.code), // canRetry
                         socketError.retryAfter);
                 }
             }

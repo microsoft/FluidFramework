@@ -9,7 +9,7 @@ import { default as fetch } from "node-fetch";
 /**
  * returns true when the request should/can be retried
  */
-export type RetryFilter = (response: Response) => boolean;
+export type RetryFilter = (code: number) => boolean;
 
 export function noRetry(): RetryFilter {
     return () => false;
@@ -19,11 +19,17 @@ export function noRetry(): RetryFilter {
  * Creates a filter that will allow retries for the whitelisted status codes
  * @param retriableCodes - Cannot be null/undefined
  */
-export function whitelist(retriableCodes: number[]): RetryFilter {
-    return (response: Response) => retriableCodes.includes(response.status);
+export function allowList(retriableCodes: number[]): RetryFilter {
+    return (code: number) => retriableCodes.includes(code);
 }
 
-export const defaultRetryFilter = whitelist([408, 409, 429, 500, 503]);
+export function blockList(nonRetriableCodes: number[]): RetryFilter {
+    return (code: number) => !nonRetriableCodes.includes(code);
+}
+
+// Going safe - only exclude specific codes
+// export const defaultRetryFilter = allowList([408, 409, 429, 500, 503]);
+export const defaultRetryFilter = blockList([400, 404]);
 
 /**
  * A utility function to do fetch with support for retries
@@ -34,8 +40,7 @@ export const defaultRetryFilter = whitelist([408, 409, 429, 500, 503]);
 export function fetchHelper(
     requestInfo: RequestInfo,
     requestInit: RequestInit | undefined,
-    filter: RetryFilter = defaultRetryFilter,
-    tries: Response[] = [],
+    retryFilter: RetryFilter = defaultRetryFilter,
 ): Promise<any> {
     return fetch(requestInfo, requestInit).then((response: Response) => {
         // Let's assume we can retry.
@@ -43,7 +48,7 @@ export function fetchHelper(
             throwNetworkError(`No response from the server`, 400, true, response);
         }
         if (!response.ok || response.status < 200 || response.status >= 300) {
-            throwNetworkError(`Error ${response.status} from the server`, response.status, filter(response), response);
+            throwNetworkError(`Error ${response.status} from the server`, response.status, retryFilter(response.status), response);
         }
 
         // .json() can fail and message (that goes into telemetry) would container full request URI, including tokens...
