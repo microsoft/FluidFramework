@@ -108,7 +108,8 @@ export class Todo extends PrimedComponent implements IComponentHTMLVisual, IComp
           todoModel={this}
           createComponentView = {(id: string) => factory.create(id)}
           todoItemsMap={this.todoItemsMap}
-          textSharedString={this.titleTextSharedString}/>
+          textSharedString={this.titleTextSharedString}
+          getComponent={this.getComponent.bind(this)}/>
     );
   }
 

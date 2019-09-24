@@ -4,20 +4,24 @@
  */
 
 import { CollaborativeInput } from "@microsoft/fluid-aqueduct-react";
+import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { ISharedMap } from "@microsoft/fluid-map";
 import { SharedString } from "@microsoft/fluid-sequence";
 import * as React from "react";
 import { Todo } from "./Todo";
+import { TodoItem } from "../TodoItem/TodoItem";
+import { TodoItemView } from "../TodoItem/TodoItemView";
 
 interface p {
     todoModel: Todo;
     createComponentView(id: string): JSX.Element;
     todoItemsMap: ISharedMap;
     textSharedString: SharedString;
+    getComponent(id: string): Promise<IComponent>;
 }
 
 interface s {
-    todoItemIds: string[];
+    todoItemComponents: TodoItem[];
     inputValue: string;
 }
 
@@ -28,7 +32,7 @@ export class TodoView extends React.Component<p, s> {
         super(props);
 
         this.state = {
-            todoItemIds: [...this.props.todoItemsMap.keys()],
+            todoItemComponents: [],
             inputValue: "",
         };
 
@@ -37,12 +41,23 @@ export class TodoView extends React.Component<p, s> {
     }
 
     componentDidMount(): void {
+        this.revalidateTodoItems();
+
         this.props.todoItemsMap.on("op", () => {
-            this.setState({todoItemIds: [...this.props.todoItemsMap.keys()]});
+            this.revalidateTodoItems();
         });
 
         // Set focus on the new text input
         this.newTextInput.focus();
+    }
+
+    revalidateTodoItems(): void {
+        const todoItemComponentPromises = []
+        for(const key of this.props.todoItemsMap.keys()) {
+            todoItemComponentPromises.push(this.props.getComponent(key));
+        }
+
+        Promise.all(todoItemComponentPromises).then(todoItemComponents => this.setState({todoItemComponents}));
     }
 
     /**
@@ -51,6 +66,7 @@ export class TodoView extends React.Component<p, s> {
     async handleSubmit(ev: React.FormEvent<HTMLFormElement>): Promise<void> {
         ev.preventDefault();
         await this.props.todoModel.addTodoItemComponent({ startingText: this.state.inputValue });
+        this.revalidateTodoItems();
         this.setState({inputValue: ""});
     }
 
@@ -60,13 +76,16 @@ export class TodoView extends React.Component<p, s> {
 
     render(): JSX.Element {
         const todoItemComponents = [];
-        this.state.todoItemIds.forEach((id) => {
-            // createComponentView internally uses an EmbeddedReactComponentFactory which
-            // has stashed Todo's getComponent.  Using that getComponent against each of the
-            // TodoItem IDs allows this loop to grab the TodoItems and get back ReactEmbeddedComponents.
-            // Those ReactEmbeddedComponents will then call TodoItem's createJSXElement, which
-            // gets at the TodoItemView.
-            todoItemComponents.push(this.props.createComponentView(id));
+
+        this.state.todoItemComponents.forEach((todoItemComponent) => {
+            const todoItemView = (
+                <TodoItemView
+                    todoItemModel={todoItemComponent}
+                    createComponentView={this.props.createComponentView}
+                    key={todoItemComponent.url}
+                />
+            );
+            todoItemComponents.push(todoItemView);
         });
 
         return (

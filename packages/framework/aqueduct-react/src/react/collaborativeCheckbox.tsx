@@ -21,6 +21,7 @@ export class CollaborativeCheckbox extends React.Component<ICollaborativeCheckbo
     }
 
     public render() {
+        console.log(this.props.checked);
         // tslint:disable:react-a11y-input-elements
         return(
             <input

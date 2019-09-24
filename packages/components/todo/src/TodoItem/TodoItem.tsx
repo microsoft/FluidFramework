@@ -34,8 +34,8 @@ export class TodoItem extends PrimedComponent
     IComponentReactViewable {
 
   // tslint:disable:prefer-readonly
-  private text: SharedString;
-  private innerIdCell: ISharedCell;
+  public text: SharedString;
+  public innerIdCell: ISharedCell;
   // tslint:enable:prefer-readonly
 
   public get IComponentHTMLVisual() { return this; }
@@ -71,7 +71,7 @@ export class TodoItem extends PrimedComponent
     const text = this.root.get<IComponentHandle>("text").get<SharedString>();
     const innerIdCell = this.root.get<IComponentHandle>("innerId").get<ISharedCell>();
 
-    this.handleCheckedChange = this.handleCheckedChange.bind(this);
+    this.setCheckedState = this.setCheckedState.bind(this);
 
     [
       this.text,
@@ -102,32 +102,31 @@ export class TodoItem extends PrimedComponent
    * Since this returns a JSX.Element it allows for an easier model.
    */
   public createJSXElement(): JSX.Element {
-      const checkedState = this.root.get<boolean>("checked");
       const factory = new EmbeddedReactComponentFactory(this.getComponent.bind(this));
       return (
         <TodoItemView
-          sharedString={this.text}
-          id={this.url}
-          innerIdCell={this.innerIdCell}
-          checked={checkedState}
-          handleCheckedChange={this.handleCheckedChange}
-          getComponentView={(id) => factory.create(id)}
-          createInnerComponent={this.createInnerComponent.bind(this)}/>
+          todoItemModel={this}
+          createComponentView={(id) => factory.create(id)}
+        />
       );
   }
 
-  private handleCheckedChange(newState: boolean): void {
+  public setCheckedState(newState: boolean): void {
     this.root.set("checked", newState);
   }
 
   // end IComponentReactViewable
+
+  public getCheckedState(): boolean {
+    return this.root.get("checked");
+  }
 
   /**
    * The Todo Item can embed multiple types of components. This is where these components are defined.
    * @param type - component to be created
    * @param props - props to be passed into component creation
    */
-  private async createInnerComponent(type: TodoItemSupportedComponents, props?: any): Promise<void> {
+  public async createInnerComponent(type: TodoItemSupportedComponents, props?: any): Promise<void> {
     const id = `item${Date.now().toString()}`;
 
     switch (type) {

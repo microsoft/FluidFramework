@@ -4,19 +4,13 @@
  */
 
 import { CollaborativeCheckbox, CollaborativeInput } from "@microsoft/fluid-aqueduct-react";
-import { ISharedCell } from "@microsoft/fluid-cell";
-import { SharedString } from "@microsoft/fluid-sequence";
 import * as React from "react";
 import { TodoItemSupportedComponents } from "./supportedComponent";
+import { TodoItem } from "./TodoItem";
 
 interface p {
-    sharedString: SharedString;
-    checked: boolean;
-    id: string;
-    innerIdCell: ISharedCell;
-    handleCheckedChange(newState: boolean): void;
-    getComponentView(id: string): JSX.Element;
-    createInnerComponent(types: TodoItemSupportedComponents, props?: any): Promise<void>;
+    todoItemModel: TodoItem;
+    createComponentView(id: string): JSX.Element;
 }
 
 interface s {
@@ -46,7 +40,7 @@ export class TodoItemView extends React.Component<p, s> {
         this.baseUrl += `${path.join("/")}${window.location.search}`;
         this.state = {
             contentVisible: false,
-            innerId: this.props.innerIdCell.get(),
+            innerId: this.props.todoItemModel.innerIdCell.get(),
         };
 
         this.createInnerComponent = this.createInnerComponent.bind(this);
@@ -54,18 +48,17 @@ export class TodoItemView extends React.Component<p, s> {
     }
 
     async createInnerComponent(type: TodoItemSupportedComponents) {
-        await this.props.createInnerComponent(type, { startingText: type});
+        await this.props.todoItemModel.createInnerComponent(type, { startingText: type});
     }
 
     componentDidMount() {
-        this.props.innerIdCell.on("op", () => {
-            this.setState({innerId: this.props.innerIdCell.get()});
+        this.props.todoItemModel.innerIdCell.on("op", () => {
+            this.setState({innerId: this.props.todoItemModel.innerIdCell.get()});
         });
     }
 
     private handleCheckedChange(newState: boolean): void {
-        this.props.handleCheckedChange(newState);
-        this.forceUpdate();
+        this.props.todoItemModel.setCheckedState(newState);
     }
 
     render() {
@@ -74,11 +67,11 @@ export class TodoItemView extends React.Component<p, s> {
             <div className="todoItem">
                 <h2>
                     <CollaborativeCheckbox
-                        checked={this.props.checked}
+                        checked={this.props.todoItemModel.getCheckedState()}
                         onCheckedChange={this.handleCheckedChange}
-                        id={this.props.id}/>
+                        id={this.props.todoItemModel.url}/>
                     <CollaborativeInput
-                        sharedString={this.props.sharedString}
+                        sharedString={this.props.todoItemModel.text}
                         style={{
                             border: "none",
                             fontFamily: "inherit",
@@ -95,7 +88,7 @@ export class TodoItemView extends React.Component<p, s> {
                     </button>
                     <button
                         style={this.buttonStyle}
-                        onClick={() => window.open(`${this.baseUrl}/${this.props.id}`, "_blank")}>↗</button>
+                        onClick={() => window.open(`${this.baseUrl}/${this.props.todoItemModel.url}`, "_blank")}>↗</button>
                     <button
                         style={this.buttonStyle}
                         onClick={() => alert("Implement Delete")}>X</button>
@@ -112,7 +105,7 @@ export class TodoItemView extends React.Component<p, s> {
                                 <button onClick={async () => this.createInnerComponent("textBox")}>textBox</button>
                                 <button onClick={async () => this.createInnerComponent("textList")}>textList</button>
                             </> :
-                            this.props.getComponentView(this.state.innerId)
+                            this.props.createComponentView(this.state.innerId)
                         }
                     </div>
                 }
