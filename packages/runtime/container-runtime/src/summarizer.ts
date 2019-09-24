@@ -6,7 +6,13 @@
 import { IComponentLoadable } from "@microsoft/fluid-component-core-interfaces";
 import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
 import { ChildLogger, Deferred, PerformanceEvent } from "@microsoft/fluid-core-utils";
-import { ISequencedDocumentMessage, ISummaryAck, ISummaryConfiguration, ISummaryNack, MessageType } from "@microsoft/fluid-protocol-definitions";
+import {
+    ISequencedDocumentMessage,
+    ISummaryAck,
+    ISummaryConfiguration,
+    ISummaryNack,
+    MessageType,
+} from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
 import { ContainerRuntime, IGeneratedSummaryData } from "./containerRuntime";
 

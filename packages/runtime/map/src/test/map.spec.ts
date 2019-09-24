@@ -196,6 +196,7 @@ describe("Routerlicious", () => {
                     sharedMap.set("object", containingObject);
 
                     const serialized = (sharedMap as SharedMap).serialize();
+                    // tslint:disable-next-line: max-line-length
                     assert.equal(serialized, `{"object":{"type":"Plain","value":{"subMapHandle":{"type":"__fluid_handle__","url":"subMap"},"nestedObj":{"subMap2Handle":{"type":"__fluid_handle__","url":"subMap2"}}}}}`);
                 });
             });

@@ -4,7 +4,12 @@
  */
 
 import { ConnectionState } from "@microsoft/fluid-container-definitions";
-import { IDocumentStorageService, ISequencedDocumentMessage, ITree, MessageType } from "@microsoft/fluid-protocol-definitions";
+import {
+    IDocumentStorageService,
+    ISequencedDocumentMessage,
+    ITree,
+    MessageType,
+} from "@microsoft/fluid-protocol-definitions";
 import { IChannel, IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import * as assert from "assert";
 import { createServiceEndpoints, IChannelContext, snapshotChannel } from "./channelContext";

@@ -4,7 +4,12 @@
  */
 
 import { fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
-import { IDocumentService, IDocumentStorageService, ISnapshotTree, IVersion } from "@microsoft/fluid-protocol-definitions";
+import {
+    IDocumentService,
+    IDocumentStorageService,
+    ISnapshotTree,
+    IVersion,
+} from "@microsoft/fluid-protocol-definitions";
 import * as fs from "fs";
 import * as util from "util";
 import {

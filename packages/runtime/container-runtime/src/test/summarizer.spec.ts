@@ -4,7 +4,12 @@
  */
 
 import { IDeltaManager, IDeltaQueue, ITelemetryLogger } from "@microsoft/fluid-container-definitions";
-import { IDocumentMessage, ISequencedDocumentMessage, ISummaryConfiguration, MessageType } from "@microsoft/fluid-protocol-definitions";
+import {
+    IDocumentMessage,
+    ISequencedDocumentMessage,
+    ISummaryConfiguration,
+    MessageType,
+} from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import * as sinon from "sinon";

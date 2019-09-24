@@ -5,7 +5,14 @@
 
 import { RoundTrip } from "@fluid-internal/client-api";
 import { IConnect, IConnected } from "@microsoft/fluid-driver-base";
-import { ConnectionMode, IClient, IContentMessage, IDocumentMessage, ISignalMessage, ITokenClaims } from "@microsoft/fluid-protocol-definitions";
+import {
+    ConnectionMode,
+    IClient,
+    IContentMessage,
+    IDocumentMessage,
+    ISignalMessage,
+    ITokenClaims,
+} from "@microsoft/fluid-protocol-definitions";
 import {
     LocalNodeFactory,
     LocalOrderer,

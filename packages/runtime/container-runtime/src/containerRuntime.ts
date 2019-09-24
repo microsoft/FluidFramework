@@ -4,7 +4,12 @@
  */
 
 import { AgentSchedulerFactory } from "@microsoft/fluid-agent-scheduler";
-import { IComponentHandleContext, IComponentSerializer, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
+import {
+    IComponentHandleContext,
+    IComponentSerializer,
+    IRequest,
+    IResponse,
+} from "@microsoft/fluid-component-core-interfaces";
 import {
     ConnectionState,
     IBlobManager,
