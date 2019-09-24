@@ -5,7 +5,6 @@
 
 import { PrimedComponent } from "@microsoft/fluid-aqueduct";
 import { EmbeddedReactComponentFactory, IComponentReactViewable } from "@microsoft/fluid-aqueduct-react";
-import { ISharedCell, SharedCell } from "@microsoft/fluid-cell";
 import { IComponentHandle, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import { SharedString } from "@microsoft/fluid-sequence";
@@ -29,12 +28,10 @@ export class Todo extends PrimedComponent implements IComponentHTMLVisual, IComp
 
   // DDS ids stored as variables to minimize simple string mistakes
   private readonly innerCellIds = "innerCellIds";
-  private readonly titleId = "title";
   private readonly sharedStringTitleId = "sharedString-title";
 
   // tslint:disable:prefer-readonly
   private innerCellIdsMap: ISharedMap;
-  private titleTextCell: ISharedCell;
   private titleTextSharedString: SharedString;
   // tslint:enable:prefer-readonly
 
@@ -50,13 +47,6 @@ export class Todo extends PrimedComponent implements IComponentHTMLVisual, IComp
     const map = SharedMap.create(this.runtime);
     this.root.set(this.innerCellIds, map.handle);
 
-    // create a cell that we will use for the title
-    // we use a cell because we pass it directly to the contentEditable
-    const cell = SharedCell.create(this.runtime);
-    // Set the default title
-    cell.set("My New Todo");
-    this.root.set(this.titleId, cell.handle);
-
     const text = SharedString.create(this.runtime);
     text.insertText(0, "Title");
     this.root.set(this.sharedStringTitleId, text.handle);
@@ -64,7 +54,6 @@ export class Todo extends PrimedComponent implements IComponentHTMLVisual, IComp
 
   protected async componentHasInitialized() {
     const innerCellIdsMap = this.root.get<IComponentHandle>(this.innerCellIds).get<ISharedMap>();
-    const titleTextCell = this.root.get<IComponentHandle>(this.titleId).get<ISharedCell>();
     const titleTextSharedString = this.root.get<IComponentHandle>(this.sharedStringTitleId).get<SharedString>();
 
     // tslint:disable-next-line: no-console
@@ -77,11 +66,9 @@ export class Todo extends PrimedComponent implements IComponentHTMLVisual, IComp
 
     [
       this.innerCellIdsMap,
-      this.titleTextCell,
       this.titleTextSharedString,
     ] = await Promise.all([
       innerCellIdsMap,
-      titleTextCell,
       titleTextSharedString,
     ]);
   }
@@ -131,8 +118,7 @@ export class Todo extends PrimedComponent implements IComponentHTMLVisual, IComp
           createComponentView = {(id: string) => factory.create(id)}
           createTodoItemComponent={createTodoItemComponent.bind(this)}
           map={this.innerCellIdsMap}
-          textSharedString={this.titleTextSharedString}
-          textCell={this.titleTextCell}/>
+          textSharedString={this.titleTextSharedString}/>
     );
   }
 

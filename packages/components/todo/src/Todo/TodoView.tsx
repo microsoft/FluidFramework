@@ -4,7 +4,6 @@
  */
 
 import { CollaborativeInput } from "@microsoft/fluid-aqueduct-react";
-import { ISharedCell } from "@microsoft/fluid-cell";
 import { ISharedMap } from "@microsoft/fluid-map";
 import { SharedString } from "@microsoft/fluid-sequence";
 import * as React from "react";
@@ -13,7 +12,6 @@ interface p {
     createTodoItemComponent(props?: any): Promise<void>;
     createComponentView(id: string): JSX.Element;
     map: ISharedMap;
-    textCell: ISharedCell;
     textSharedString: SharedString;
 }
 
@@ -33,10 +31,8 @@ export class TodoView extends React.Component<p, s> {
             inputValue: "",
         };
 
-        this.createComponent = this.createComponent.bind(this);
         this.handleSubmit = this.handleSubmit.bind(this);
         this.updateInputValue = this.updateInputValue.bind(this);
-        this.renderItem = this.renderItem.bind(this);
     }
 
     componentDidMount(): void {
@@ -48,26 +44,17 @@ export class TodoView extends React.Component<p, s> {
         this.newTextInput.focus();
     }
 
-    async createComponent(): Promise<void>  {
-        await this.props.createTodoItemComponent({ startingText: this.state.inputValue});
-    }
-
     /**
      * This allows us to prevent default form behavior while getting all the benefits
      */
     async handleSubmit(ev: React.FormEvent<HTMLFormElement>): Promise<void> {
         ev.preventDefault();
-        await this.createComponent();
+        await this.props.createTodoItemComponent({ startingText: this.state.inputValue});
         this.setState({inputValue: ""});
     }
 
     updateInputValue(ev: React.ChangeEvent<HTMLInputElement>): void {
         this.setState({inputValue: ev.target.value});
-    }
-
-    renderItem(index) {
-        const id = this.state.ids[index];
-        return <div key={id}>{this.props.createComponentView(id)}</div>;
     }
 
     render(): JSX.Element {
