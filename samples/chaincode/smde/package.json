@@ -1,5 +1,5 @@
 {
-  "name": "@chaincode/smde",
+  "name": "@fluid-example/smde",
   "description": "Simple markdown editor",
   "version": "0.10.0",
   "author": "Microsoft",
