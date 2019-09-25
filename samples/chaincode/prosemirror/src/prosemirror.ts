@@ -78,6 +78,7 @@ interface IProseMirrorNode {
     [key: string]: any;
     type: string,
     content?: IProseMirrorNode[],
+    marks?: any[],
 }
 
 export class ProseMirror extends EventEmitter implements IComponentLoadable, IComponentRouter, IComponentHTMLVisual {
@@ -184,8 +185,25 @@ export class ProseMirror extends EventEmitter implements IComponentLoadable, ICo
             let top = nodeStack[nodeStack.length - 1];
 
             if (TextSegment.is(segment)) {
-                top.content.push({ type: "text", text: segment.text });
+                const nodeJson: IProseMirrorNode = {
+                    type: "text",
+                    text: segment.text,
+                };
+
+                if (segment.properties) {
+                    nodeJson.marks = [];
+                    for (const propertyKey of Object.keys(segment.properties)) {
+                        nodeJson.marks.push({
+                            type: propertyKey,
+                            value: segment.properties[propertyKey],
+                        })
+                    }
+                }
+
+                top.content.push(nodeJson);
             } else if (Marker.is(segment)) {
+                // TODO are marks applied to the structural nodes as well? Or just inner text?
+
                 const nodeType = segment.properties[nodeTypeKey];
                 switch (segment.refType) {
                     case ReferenceType.NestBegin:
