@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ICodeLoader, IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
+import { IChaincodeWhiteList, ICodeLoader, IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
 import { exec } from "child_process";
 import * as fs from "fs";
 import { promisify } from "util";
@@ -14,24 +14,40 @@ const asyncExec = promisify(exec);
 // A sentinel file to indicate install completion.
 const signalFileName = "dummy";
 
+export class NodeWhiteList implements IChaincodeWhiteList {
+    constructor() {
+
+    }
+
+    public async testSource(source: IFluidCodeDetails) {
+        return Promise.resolve(true);
+    }
+}
+
 // tslint:disable non-literal-fs-path
 export class NodeCodeLoader implements ICodeLoader {
     constructor(
         private registry: string,
         private packageDirectory: string,
-        private waitTimeoutMSec: number) {
-    }
-    public async load<T>(pkg: IFluidCodeDetails): Promise<T> {
-        let packageName = "";
-        if (typeof pkg.package === "string") {
-            packageName = pkg.package;
-        } else {
-            packageName = `${pkg.package.name}@${pkg.package.version}`;
+        private waitTimeoutMSec: number,
+        private whiteList: IChaincodeWhiteList) {
         }
-        const codeEntrypoint = await this.installOrWaitForPackages(packageName);
-        const entry = import(codeEntrypoint);
-        // tslint:disable:no-unsafe-any
-        return entry;
+
+    public async load<T>(pkg: IFluidCodeDetails): Promise<T> {
+        if (await this.whiteList.testSource(pkg)) {
+            let packageName = "";
+            if (typeof pkg.package === "string") {
+                packageName = pkg.package;
+            } else {
+                packageName = `${pkg.package.name}@${pkg.package.version}`;
+            }
+            const codeEntrypoint = await this.installOrWaitForPackages(packageName);
+            const entry = import(codeEntrypoint);
+            // tslint:disable:no-unsafe-any
+            return entry;
+        } else {
+            Promise.reject("Invalid Package");
+        }
     }
 
     private async installOrWaitForPackages(pkg: string): Promise<string> {

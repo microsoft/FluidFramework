@@ -13,7 +13,6 @@ import {
     IPraguePackage,
 } from "@microsoft/fluid-container-definitions";
 import * as fetch from "isomorphic-fetch";
-import { WhiteList } from "./whiteList";
 
 export interface IParsedPackage {
     full: string;
@@ -21,6 +20,12 @@ export interface IParsedPackage {
     name: string;
     version: string | undefined;
     scope: string;
+}
+
+export interface ISeedable {
+    scriptIds: string[];
+    package: IFluidPackage;
+    config: IPackageConfig;
 }
 
 export interface IResolvedPackage {
@@ -276,15 +281,12 @@ export class WebCodeLoader implements ICodeLoader {
     // Cache goes CDN -> package -> entrypoint
     private readonly resolvedCache = new Map<string, FluidPackage>();
     private readonly scriptManager = new ScriptManager();
-    private readonly whiteList: IChaincodeWhiteList;
 
-    constructor(whiteList?: IChaincodeWhiteList) {
-        this.whiteList = whiteList ? whiteList : new WhiteList(() => Promise.resolve(true));
-    }
+    constructor(private readonly whiteList: IChaincodeWhiteList) { }
 
-    public async seed(pkg: IFluidPackage, config: IPackageConfig, scriptIds: string[]) {
-        const fluidPackage = this.getFluidPackage({ config, package: pkg });
-        fluidPackage.seed(scriptIds);
+    public async seed(seedable: ISeedable) {
+        const fluidPackage = this.getFluidPackage({ config: seedable.config, package: seedable.package });
+        fluidPackage.seed(seedable.scriptIds);
     }
 
     /**
@@ -302,12 +304,10 @@ export class WebCodeLoader implements ICodeLoader {
     public async load<T>(
         source: IFluidCodeDetails,
     ): Promise<T> {
-
-        const fluidPackage = this.getFluidPackage(source);
         if (!(await this.whiteList.testSource(source))) {
             throw new Error("Attempted to load invalid package");
         }
-        console.log(this.whiteList);
+        const fluidPackage = this.getFluidPackage(source);
         return fluidPackage.load();
     }
 

@@ -143,9 +143,9 @@ export class Loader extends EventEmitter implements ILoader {
     public static create(
         containerHost: IHost,
         documentServiceFactories: IDocumentServiceFactory | IDocumentServiceFactory[],
-        whiteList: IChaincodeWhiteList,
         options: any,
         scope: IComponent,
+        whiteList: IChaincodeWhiteList,
         logger?: ITelemetryBaseLogger,
     ) {
 

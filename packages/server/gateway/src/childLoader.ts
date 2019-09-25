@@ -2,15 +2,15 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { createLoader, IHostConfig } from "@microsoft/fluid-base-host";
+import { IHostConfig } from "@microsoft/fluid-base-host";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
 import { BaseTelemetryNullLogger, Deferred } from "@microsoft/fluid-core-utils";
 import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
-import { IDocumentServiceFactory, IResolvedUrl, ScopeType } from "@microsoft/fluid-protocol-definitions";
+import { IDocumentServiceFactory, IFluidResolvedUrl, IResolvedUrl, ScopeType } from "@microsoft/fluid-protocol-definitions";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
 import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
-import { NodeCodeLoader } from "@microsoft/fluid-server-services";
+import { NodeCodeLoader, NodeWhiteList } from "@microsoft/fluid-server-services";
 import { promiseTimeout } from "@microsoft/fluid-server-services-client";
 import Axios from "axios";
 import * as jwt from "jsonwebtoken";
@@ -90,12 +90,15 @@ class KeyValueLoader {
             new Map<string, IResolvedUrl>([[documentUrl, result.data]]));
 
         const hostConf: IHostConfig = { documentServiceFactory: documentServiceFactories, urlResolver: resolver };
-        const loader = createLoader(
-            result.data,
+        config.blockUpdateMarkers = true;
+        config.tokens = (result.data as IFluidResolvedUrl).tokens;
+
+        const loader = new Loader(
+            { resolver: hostConf.urlResolver },
+            hostConf.documentServiceFactory,
+            new NodeCodeLoader(packageUrl, installLocation, waitTimeoutMS, new NodeWhiteList()),
             config,
             {},
-            new NodeCodeLoader(packageUrl, installLocation, waitTimeoutMS),
-            hostConf,
         );
 
         const container = await loader.resolve({ url: documentUrl });

@@ -14,6 +14,7 @@ export class WhiteList implements IChaincodeWhiteList {
     public pkg?: IFluidPackage;
     public config?: IPackageConfig;
     public scriptIds?: string[];
+
     constructor(
         private readonly testHandler: (source: IFluidCodeDetails) => Promise<boolean>,
     ) { }
@@ -22,17 +23,5 @@ export class WhiteList implements IChaincodeWhiteList {
         console.log("WhiteList.test");
         console.log(source);
         return this.testHandler(source);
-    }
-
-    public async seed(pkg: IFluidPackage, config: IPackageConfig, scriptIds: string[]) {
-        this.pkg = pkg;
-        this.config = config;
-        this.scriptIds = scriptIds;
-    }
-
-    public canSeed(): boolean {
-        return (this.pkg !== undefined &&
-            this.config !== undefined &&
-            this.scriptIds !== undefined);
     }
 }

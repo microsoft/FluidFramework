@@ -9,7 +9,7 @@ import {
     IComponentQueryableLegacy,
     IRequest,
 } from "@microsoft/fluid-component-core-interfaces";
-import { ICodeLoader } from "@microsoft/fluid-container-definitions";
+import { IChaincodeWhiteList } from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
 import {
     IFluidResolvedUrl,
@@ -88,77 +88,25 @@ export async function registerAttach(loader: Loader, container: Container, uri: 
     });
 }
 
-export function createLoader(
-    resolved: IResolvedUrl,
-    options: any,
-    scope: IComponent,
-    codeLoader: ICodeLoader,
-    hostConf: IHostConfig,
-): Loader {
-
-    // we need to extend options, otherwise we nest properties, like client, too deeply
-    //
-    // tslint:disable-next-line: no-unsafe-any
-    options.blockUpdateMarkers = true;
-    // tslint:disable-next-line: no-unsafe-any
-    options.tokens = (resolved as IFluidResolvedUrl).tokens;
-
-    return new Loader(
-        { resolver: hostConf.urlResolver },
-        hostConf.documentServiceFactory,
-        codeLoader,
-        options,
-        scope);
-}
-
-export function createWebLoader_WhiteList(
-    resolved: IResolvedUrl,
-    pkg: IResolvedPackage,
-    scriptIds: string[],
-    npm: string,
-    config: any,
-    scope: IComponent,
-    hostConf: IHostConfig,
-): Loader {
-
-    // tslint:disable: no-unsafe-any
-    config.blockUpdateMarkers = true;
-    config.tokens = (resolved as IFluidResolvedUrl).tokens;
-    // tslint:enable: no-unsafe-any
-
-    const whiteList = new WhiteList(() => Promise.resolve(true));
-    if (pkg) {
-        if (pkg.pkg) { // this is an IFluidPackage
-            whiteList.seed(pkg.pkg, pkg.details.config, scriptIds);
-            if (pkg.details.package === pkg.pkg.name) {
-                pkg.details.package = `${pkg.pkg.name}@${pkg.pkg.version}`;
-            }
-        }
-    }
-
-    return Loader.create(
-        {resolver: hostConf.urlResolver},
-        hostConf.documentServiceFactory,
-        whiteList,
-        config,
-        scope,
-    );
-}
-
 export function createWebLoader(
     resolved: IResolvedUrl,
+    whiteList: IChaincodeWhiteList,
     pkg: IResolvedPackage,
     scriptIds: string[],
-    npm: string,
     config: any,
     scope: IComponent,
     hostConf: IHostConfig,
 ): Loader {
+
     // Create the web loader and prefetch the chaincode we will need
-    const codeLoader = new WebCodeLoader();
+    const codeLoader = new WebCodeLoader(whiteList);
     if (pkg) {
         if (pkg.pkg) { // this is an IFluidPackage
-            codeLoader.seed(pkg.pkg, pkg.details.config, scriptIds);
+            codeLoader.seed({
+                package: pkg.pkg,
+                config: pkg.details.config,
+                scriptIds,
+            });
             if (pkg.details.package === pkg.pkg.name) {
                 pkg.details.package = `${pkg.pkg.name}@${pkg.pkg.version}`;
             }
@@ -167,14 +115,19 @@ export function createWebLoader(
         // The load takes in an IFluidCodeDetails
         codeLoader.load(pkg.details).catch((error) => console.error("script load error", error));
     }
+    // we need to extend options, otherwise we nest properties, like client, too deeply
+    //
+    // tslint:disable-next-line: no-unsafe-any
+    config.blockUpdateMarkers = true;
+    // tslint:disable-next-line: no-unsafe-any
+    config.tokens = (resolved as IFluidResolvedUrl).tokens;
 
-    const loader = createLoader(
-        resolved,
-        config,
-        scope,
+    return new Loader(
+        { resolver: hostConf.urlResolver },
+        hostConf.documentServiceFactory,
         codeLoader,
-        hostConf);
-    return loader;
+        config,
+        scope);
 }
 
 export async function start(
@@ -188,7 +141,14 @@ export async function start(
     div: HTMLDivElement,
     hostConf: IHostConfig,
 ): Promise<Container> {
-    const loader = createWebLoader(resolved, pkg, scriptIds, npm, config, scope, hostConf);
+    const loader = createWebLoader(
+        resolved,
+        new WhiteList(() => Promise.resolve(true)),
+        pkg,
+        scriptIds,
+        config,
+        scope,
+        hostConf);
 
     const container = await loader.resolve({ url });
     registerAttach(

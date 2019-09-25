@@ -4,7 +4,7 @@
  */
 
 import {
-    createWebLoader_WhiteList,
+    createWebLoader,
     IHostConfig,
     initializeChaincode,
     registerAttach,
@@ -15,7 +15,7 @@ import { IDocumentServiceFactory, IResolvedUrl } from "@microsoft/fluid-protocol
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
 import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
 import { IGitCache } from "@microsoft/fluid-server-services-client";
-import { IResolvedPackage } from "@microsoft/fluid-web-code-loader";
+import { IResolvedPackage, WhiteList } from "@microsoft/fluid-web-code-loader";
 import { DocumentFactory } from "./documentFactory";
 import { MicrosoftGraph } from "./graph";
 import { PackageManager } from "./packageManager";
@@ -71,11 +71,11 @@ export async function initialize(
     window["allServices"] = services;
 
     console.log(`Loading ${url}`);
-    const loader = createWebLoader_WhiteList(
+    const loader = createWebLoader(
         resolved,
+        new WhiteList(() => Promise.resolve(true)),
         pkg,
         scriptIds,
-        npm,
         config,
         services,
         hostConf);

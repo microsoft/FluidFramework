@@ -6,7 +6,7 @@
 import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import { IDocumentMessage, ISequencedDocumentMessage, IUrlResolver } from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
-import { IFluidCodeDetails, IFluidPackage, IPackageConfig } from "./chaincode";
+import { IFluidCodeDetails } from "./chaincode";
 import { IQuorum } from "./consensus";
 import { IDeltaManager } from "./deltas";
 
@@ -25,10 +25,6 @@ export interface ICodeLoader {
  */
 export interface IChaincodeWhiteList {
     testSource(source: IFluidCodeDetails): Promise<boolean>;
-
-    seed(pkg: IFluidPackage, config: IPackageConfig, scriptIds: string[]);
-
-    canSeed(): boolean;
 }
 
 /**
