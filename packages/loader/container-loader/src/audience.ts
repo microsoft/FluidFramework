@@ -41,4 +41,14 @@ export class Audience extends EventEmitter implements IAudience {
     public getMember(clientId: string): IClient | undefined {
         return this.members.get(clientId);
     }
+
+    /**
+     * Clears the audience
+     */
+    public clear(): void {
+        const clientIds = this.members.keys();
+        for (const clientId of clientIds) {
+            this.removeMember(clientId);
+        }
+    }
 }
