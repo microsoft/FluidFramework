@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-ink",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "description": "Ink DDS",
   "main": "dist/index.js",
   "module": "lib/index.js",
@@ -22,7 +22,7 @@
   "repository": "microsoft/FluidFramework",
   "devDependencies": {
     "@microsoft/api-extractor": "^7.4.4",
-    "@microsoft/fluid-build-common": "^0.10.0",
+    "@microsoft/fluid-build-common": "^0.11.0",
     "@types/uuid": "^3.4.4",
     "concurrently": "^4.1.0",
     "rimraf": "^2.6.2",
@@ -30,10 +30,10 @@
     "typescript": "~3.4.5"
   },
   "dependencies": {
-    "@microsoft/fluid-protocol-definitions": "^0.10.0",
-    "@microsoft/fluid-runtime-definitions": "^0.10.0",
-    "@microsoft/fluid-shared-object-base": "^0.10.0",
-    "@microsoft/fluid-core-utils": "^0.10.0",
+    "@microsoft/fluid-core-utils": "^0.11.0",
+    "@microsoft/fluid-protocol-definitions": "^0.11.0",
+    "@microsoft/fluid-runtime-definitions": "^0.11.0",
+    "@microsoft/fluid-shared-object-base": "^0.11.0",
     "@types/debug": "^0.0.31",
     "debug": "^4.1.1",
     "uuid": "^3.3.2"

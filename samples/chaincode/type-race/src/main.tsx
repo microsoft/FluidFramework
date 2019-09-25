@@ -6,13 +6,13 @@
 import {
   PrimedComponent,
   PrimedComponentFactory,
-} from "@prague/aqueduct";
+} from "@microsoft/fluid-aqueduct";
 import {
   IComponentHTMLVisual,
-} from "@prague/component-core-interfaces";
+} from "@microsoft/fluid-component-core-interfaces";
 import {
   SharedMap,
-} from "@prague/map";
+} from "@microsoft/fluid-map";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";

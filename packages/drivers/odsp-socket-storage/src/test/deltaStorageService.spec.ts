@@ -4,9 +4,8 @@
  */
 
 import * as assert from "assert";
-import { FetchWrapper } from "../fetchWrapper";
+import { FetchWrapper, IFetchWrapper } from "../fetchWrapper";
 import { OdspDeltaStorageService } from "../OdspDeltaStorageService";
-import { exponentialBackoff, IFetchWithRetryResponse, whitelist } from "../utils";
 
 describe("DeltaStorageService", () => {
     /*
@@ -64,7 +63,7 @@ describe("DeltaStorageService", () => {
 
         let deltaStorageService: OdspDeltaStorageService;
         before(() => {
-            const fetchWrapperMock: FetchWrapper = {
+            const fetchWrapperMock: IFetchWrapper = {
                 get: (url: string, _: string, headers: HeadersInit) => new Promise(
                     (resolve, reject) => {
                         resolve(expectedDeltaFeedResponse);
@@ -73,8 +72,6 @@ describe("DeltaStorageService", () => {
                     (resolve, reject) => {
                         reject("not implemented");
                     }),
-                retryPolicy: { maxRetries: 5, backoffFn: exponentialBackoff(500), filter: whitelist([503, 500, 408, 409, 429]) },
-                processResponse: (response: IFetchWithRetryResponse) => {},
             };
             deltaStorageService = new OdspDeltaStorageService({}, async () => testDeltaStorageUrl, fetchWrapperMock, undefined, async (refresh) => "");
         });
@@ -123,7 +120,7 @@ describe("DeltaStorageService", () => {
 
         let deltaStorageService: OdspDeltaStorageService;
         before(() => {
-            const fetchWrapperMock: FetchWrapper = {
+            const fetchWrapperMock: IFetchWrapper = {
                 get: (url: string, _: string, headers: HeadersInit) => new Promise(
                     (resolve, reject) => {
                         resolve(expectedDeltaFeedResponse);
@@ -132,8 +129,6 @@ describe("DeltaStorageService", () => {
                     (resolve, reject) => {
                         reject("not implemented");
                     }),
-                retryPolicy: { maxRetries: 5, backoffFn: exponentialBackoff(500), filter: whitelist([503, 500, 408, 409, 429]) },
-                processResponse: (response: IFetchWithRetryResponse) => {},
             };
             deltaStorageService = new OdspDeltaStorageService({}, async () => testDeltaStorageUrl, fetchWrapperMock, undefined, async (refresh) => "");
         });
