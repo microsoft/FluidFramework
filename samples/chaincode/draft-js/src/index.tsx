@@ -24,8 +24,6 @@ export const DraftJsName = pkg.name as string;
 
 export class DraftJsExample extends PrimedComponent implements IComponentHTMLVisual {
   public get IComponentHTMLVisual() { return this; }
-  public get IComponentRouter() { return this; }
-
 
   /**
    * Do setup work here
@@ -44,9 +42,7 @@ export class DraftJsExample extends PrimedComponent implements IComponentHTMLVis
    * Will return a new view
    */
   public async render(div: HTMLElement) {
-    const text = await this.root.get("text").get();
-    const authors = await this.root.get("authors").get();
-    // Get our counter object that we set in initialize and pass it in to the view.
+    const [text, authors] = await Promise.all([this.root.get("text").get(), this.root.get("authors").get()]);
     ReactDOM.render(
       <div style={{ margin: "20px auto", maxWidth: 800 }}>
         <MemberList quorum={this.runtime.getQuorum()} dds={authors} style={{ textAlign: "right" }} />
