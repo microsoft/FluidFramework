@@ -1254,6 +1254,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             this.context.quorum.on("removeMember", (clientId: string) => {
                 if (clientId === this.clientId && this._leader) {
                     this.updateLeader(false);
+                } else if (this.leader) {
+                    this.runTaskAnalyzer();
                 }
             });
         }
@@ -1277,7 +1279,9 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         for (const [, context] of this.contexts) {
             context.updateLeader(this._leader);
         }
-        this.runTaskAnalyzer();
+        if (this.leader) {
+            this.runTaskAnalyzer();
+        }
     }
 
     /**
