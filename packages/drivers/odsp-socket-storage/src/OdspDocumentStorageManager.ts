@@ -221,23 +221,21 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             return [];
         }
 
-        return getWithRetryForTokenRefresh(async (refresh) => {
-            const storageToken = await this.getStorageToken(refresh);
+        // If count is one, we can use the trees/latest API, which returns the latest version and trees in a single request for better performance
+        // Do it only once - we might get more here due to summarizer - it needs only container tree, not full snapshot.
+        if (this.firstVersionCall && count === 1 && (blobid === null || blobid === this.documentId)) {
+            this.firstVersionCall = false;
 
-            // If count is one, we can use the trees/latest API, which returns the latest version and trees in a single request for better performance
-            // Do it only once - we might get more here due to summarizer - it needs only container tree, not full snapshot.
-            if (this.firstVersionCall && count === 1 && (blobid === null || blobid === this.documentId)) {
-                this.firstVersionCall = false;
+            const event = PerformanceEvent.start(this.logger, { eventName: "TreesLatest" });
 
-                const event = PerformanceEvent.start(this.logger, { eventName: "treesLatest" });
+            const result = await getWithRetryForTokenRefresh(async (refresh) => {
+                const storageToken = await this.getStorageToken(refresh);
 
                 // TODO: This snapshot will return deltas, which we currently aren't using. We need to enable this flag to go down the "optimized"
                 // snapshot code path. We should leverage the fact that these deltas are returned to speed up the deltas fetch.
                 const { headers, url } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/trees/latest?deltas=1&channels=1&blobs=2`, storageToken);
 
                 const { trees, blobs, ops, sha } = await this.fetchWrapper.get<IOdspSnapshot>(url, this.documentId, headers);
-
-                event.end();
 
                 if (trees) {
                     this.initTreesCache(trees);
@@ -249,38 +247,47 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
                 this.ops = ops;
 
-                return sha ? [{ id: sha, treeId: undefined! }] : [];
-            } else {
-                const { url, headers } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/versions?count=${count}`, storageToken);
-
-                // fetch the latest snapshot versions for the document
-                const versionsResponse = await this.fetchWrapper
-                    .get<IDocumentStorageGetVersionsResponse>(url, this.documentId, headers);
-                if (!versionsResponse) {
-                    throwNetworkError("getVersions returned no response", 400);
-                }
-                if (!Array.isArray(versionsResponse.value)) {
-                    throwNetworkError("getVersions returned non-array response", 400);
-                }
-                return versionsResponse.value.map((version) => {
-                    // Parse the date from the message
-                    let date: string|undefined;
-                    for (const rec of version.message.split("\n")) {
-                        const index = rec.indexOf(":");
-                        if (index !== -1 && rec.substr(0, index) === "Date") {
-                            date = rec.substr(index + 1).trim();
-                            break;
-                        }
-                    }
-                    return {
-                        date,
-                        id: version.sha,
-                        treeId: undefined!,
-                    };
+                event.end({
+                    trees: trees ? trees.length : 0,
+                    blobs: blobs ? blobs.length : 0,
+                    ops: ops.length,
                 });
-            }
 
-            return [];
+                return sha ? [{ id: sha, treeId: undefined! }] : [];
+            });
+
+            return result;
+        }
+
+        return getWithRetryForTokenRefresh(async (refresh) => {
+            const storageToken = await this.getStorageToken(refresh);
+            const { url, headers } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/versions?count=${count}`, storageToken);
+
+            // fetch the latest snapshot versions for the document
+            const versionsResponse = await this.fetchWrapper
+                .get<IDocumentStorageGetVersionsResponse>(url, this.documentId, headers);
+            if (!versionsResponse) {
+                throwNetworkError("getVersions returned no response", 400);
+            }
+            if (!Array.isArray(versionsResponse.value)) {
+                throwNetworkError("getVersions returned non-array response", 400);
+            }
+            return versionsResponse.value.map((version) => {
+                // Parse the date from the message
+                let date: string|undefined;
+                for (const rec of version.message.split("\n")) {
+                    const index = rec.indexOf(":");
+                    if (index !== -1 && rec.substr(0, index) === "Date") {
+                        date = rec.substr(index + 1).trim();
+                        break;
+                    }
+                }
+                return {
+                    date,
+                    id: version.sha,
+                    treeId: undefined!,
+                };
+            });
         });
     }
 

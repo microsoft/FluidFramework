@@ -11,7 +11,6 @@ import {
     ITelemetryLogger,
     ITelemetryPerformanceEvent,
     TelemetryEventPropertyType,
-    TelemetryPerfType,
 } from "@microsoft/fluid-container-definitions";
 import * as registerDebug from "debug";
 import { pkgName, pkgVersion } from "./packageVersion";
@@ -49,7 +48,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
         return name.replace("@", "").replace("/", "-");
     }
 
-    protected static prepareErrorObject(event: ITelemetryBaseEvent, error: any) {
+    public static prepareErrorObject(event: ITelemetryBaseEvent, error: any) {
         if (error === null || typeof error !== "object") {
             // tslint:disable-next-line:no-unsafe-any
             event.error = error;
@@ -128,8 +127,9 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      * Send error telemetry event
      * @param event - Event to send
      */
-    public sendPerformanceEvent(event: ITelemetryPerformanceEvent): void {
+    public sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void {
         const perfEvent: ITelemetryBaseEvent = { ...event, category: "performance" };
+        TelemetryLogger.prepareErrorObject(perfEvent, error);
 
         if (event.duration) {
             perfEvent.duration = TelemetryLogger.formatTick(event.duration);
@@ -213,7 +213,7 @@ export class TelemetryNullLogger implements ITelemetryLogger {
     }
     public sendErrorEvent(event: ITelemetryErrorEvent, error?: any) {
     }
-    public sendPerformanceEvent(event: ITelemetryPerformanceEvent): void {
+    public sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void {
     }
     public logGenericError(eventName: string, error: any) {
     }
@@ -428,15 +428,15 @@ export class PerformanceEvent {
         }
     }
 
-    public reportProgress(props?: object): void {
-        this.reportEvent("progress", props);
+    public reportProgress(props?: object, eventNameSuffix: string = "update"): void {
+        this.reportEvent(eventNameSuffix, props);
     }
 
-    public end(props?: object): void {
-        this.reportEvent("end", props);
+    public end(props?: object, eventNameSuffix = "end"): void {
+        this.reportEvent(eventNameSuffix, props);
 
         if (this.startMark) {
-            const endMark = `${this.event!.eventName}-end`;
+            const endMark = `${this.event!.eventName}-${eventNameSuffix}`;
             window.performance.mark(endMark);
             window.performance.measure(`${this.event!.eventName}`, this.startMark, endMark);
             this.startMark = undefined;
@@ -445,27 +445,28 @@ export class PerformanceEvent {
         this.event = undefined;
     }
 
-    public cancel(props?: object): void {
-        this.reportEvent("cancel", props);
+    public cancel(props?: object, error?: any): void {
+        this.reportEvent("cancel", props, error);
         this.event = undefined;
     }
 
-    public reportEvent(perfType: TelemetryPerfType, props?: object): void {
+    public reportEvent(eventNameSuffix: string, props?: object, error?: any): void {
         if (!this.event) {
             this.logger.sendErrorEvent({
                 eventName: "PerformanceEventAfterStop",
                 perfEventName: this.event!.eventName,
-                perfType,
+                eventNameSuffix,
             });
             return;
         }
 
         const tick = performanceNow();
-        const event: ITelemetryPerformanceEvent = {...this.event, ...props, perfType, tick};
-        if (perfType !== "start") {
+        const event: ITelemetryPerformanceEvent = {...this.event, ...props, tick};
+        event.eventName = `${event.eventName}_${eventNameSuffix}`;
+        if (eventNameSuffix !== "start") {
             event.duration = tick - this.startTime;
         }
 
-        this.logger.sendPerformanceEvent(event);
+        this.logger.sendPerformanceEvent(event, error);
     }
 }

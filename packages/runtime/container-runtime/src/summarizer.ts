@@ -98,7 +98,7 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
             if (this.summaryPending) {
                 const pendingTime = Date.now() - this.lastSummaryTime;
                 if (pendingTime > this.configuration.maxAckWaitTime) {
-                    this.runtime.logger.sendTelemetryEvent({
+                    this.logger.sendErrorEvent({
                         eventName: "SummaryAckWaitTimeout",
                         maxAckWaitTime: this.configuration.maxAckWaitTime,
                     });
@@ -125,8 +125,9 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
         if (op.type === MessageType.SummaryAck || op.type === MessageType.SummaryNack) {
             if (this.summaryPending) {
                 const ack = op.contents as ISummaryAck | ISummaryNack;
-                this.logger.sendTelemetryEvent({
-                    eventName: "PendingSummaryAck",
+                this.logger.send({
+                    category: op.type === MessageType.SummaryAck ? "generic" : "error",
+                    eventName: op.type === MessageType.SummaryAck ? "SummaryAck" : "SummaryNack",
                     type: op.type,
                     timePending: Date.now() - this.lastSummaryTime,
                     summarySequenceNumber: ack.summaryProposal.summarySequenceNumber,
@@ -155,13 +156,18 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
 
     private async summarizeCore(message: string) {
         const summarizingEvent = PerformanceEvent.start(this.logger,
-            { eventName: "Summarizing", stage: "start", message });
+            { eventName: "Summarize", message });
 
-        const summaryData = await this.generateSummary();
+        let summaryData: IGeneratedSummaryData;
+        try {
+            summaryData = await this.generateSummary();
+        } catch (error) {
+            summarizingEvent.cancel({}, error);
+            throw error;
+        }
 
         const summaryEndTime = Date.now();
         summarizingEvent.end({
-            stage: "end",
             ...summaryData,
             opsSinceLastSummary: summaryData.sequenceNumber - this.lastSummarySeqNumber,
             timeSinceLastSummary: summaryEndTime - this.lastSummaryTime,
