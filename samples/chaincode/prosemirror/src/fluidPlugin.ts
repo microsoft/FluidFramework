@@ -58,20 +58,21 @@ export class FluidCollabPlugin {
                         const segment = range.segment as TextSegment;
 
                         for (const prop of Object.keys(range.propertyDeltas)) {
-                            const value = range.propertyDeltas[prop];
-                            const set = value !== undefined;
+                            const value = range.segment.properties[prop];
 
                             // TODO I think I need to query the sequence for *all* marks and then set them here
                             // for PM it's an all or nothing set. Not anything additive
 
-                            if (set) {
+                            if (value) {
                                 transaction.addMark(
                                     range.position,
-                                    range.position + segment.text.length);
+                                    range.position + segment.text.length,
+                                    this.schema.marks[prop].create(value));
                             } else {
                                 transaction.removeMark(
                                     range.position,
-                                    range.position + segment.text.length);
+                                    range.position + segment.text.length,
+                                    this.schema.marks[prop]);
                             }
                         }
                     }
@@ -82,15 +83,6 @@ export class FluidCollabPlugin {
                 editorView.dispatch(transaction);
             });
     }
-
-//     {
-//     "stepType": "addMark",
-//         "mark": {
-//         "type": "strong"
-//     },
-//     "from": 29,
-//         "to": 36
-// }
 
     private applyTransaction(tr: Transaction<any>) {
         if (tr.getMeta("fluid-local")) {
@@ -117,11 +109,20 @@ export class FluidCollabPlugin {
                     break;
 
                 case "addMark":
-                    this.sharedString.annotateRange(stepAsJson.from, stepAsJson.to, { strong: true });
+                    const attrs = stepAsJson.mark.attrs || true;
+
+                    this.sharedString.annotateRange(
+                        stepAsJson.from,
+                        stepAsJson.to,
+                        { [stepAsJson.mark.type]: attrs });
                     break;
 
                 case "removeMark":
-                    this.sharedString.annotateRange(stepAsJson.from, stepAsJson.to, { strong: undefined });
+                    // Is there a way to actually clear an annotation?
+                    this.sharedString.annotateRange(
+                        stepAsJson.from,
+                        stepAsJson.to,
+                        { [stepAsJson.mark.type]: false });
                     break;
 
                 default:
