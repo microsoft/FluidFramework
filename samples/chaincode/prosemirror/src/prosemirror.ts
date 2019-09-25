@@ -222,7 +222,7 @@ export class ProseMirror extends EventEmitter implements IComponentLoadable, ICo
         // initialize the prosemirror schema from the sequence
         console.log(JSON.stringify(fluidDoc.toJSON(), null, 2));
 
-        const fluidPlugin = new FluidCollabPlugin(this.text);
+        const fluidPlugin = new FluidCollabPlugin(this.text, fluidSchema);
 
         const state = EditorState.create({
             doc: fluidDoc,
