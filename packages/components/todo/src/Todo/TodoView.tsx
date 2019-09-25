@@ -1,0 +1,135 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import { CollaborativeInput } from "@microsoft/fluid-aqueduct-react";
+import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+import { ISharedMap } from "@microsoft/fluid-map";
+import { SharedString } from "@microsoft/fluid-sequence";
+import * as React from "react";
+import { TodoItem } from "../TodoItem/TodoItem";
+import { TodoItemView } from "../TodoItem/TodoItemView";
+import { Todo } from "./Todo";
+
+interface p {
+    todoModel: Todo;
+    getComponent(id: string): Promise<IComponent>;
+}
+
+interface s {
+    todoItemComponents: TodoItem[];
+    inputValue: string;
+    modelLoaded: boolean;
+}
+
+// tslint:disable:react-a11y-input-elements
+export class TodoView extends React.Component<p, s> {
+    private newTextInput: HTMLInputElement;
+    private todoItemsMap: ISharedMap;
+    private titleString: SharedString;
+    constructor(props: p) {
+        super(props);
+
+        this.state = {
+            todoItemComponents: [],
+            inputValue: "",
+            modelLoaded: false,
+        };
+
+        this.handleSubmit = this.handleSubmit.bind(this);
+        this.updateInputValue = this.updateInputValue.bind(this);
+        this.pullTodoItems = this.pullTodoItems.bind(this);
+    }
+
+    componentDidMount() {
+        Promise.all([
+            // Get the shared data structures off the model
+            this.props.todoModel.getTodoItemsMapPromise().then((todoItemsMap) => { this.todoItemsMap = todoItemsMap; }),
+            this.props.todoModel.getTodoTitleStringPromise().then((titleString) => { this.titleString = titleString; }),
+        ]).then(async () => {
+            // Perform setup on the now-realized data structures
+            this.todoItemsMap.on("op", async () => {
+                await this.pullTodoItems();
+            });
+            return this.pullTodoItems();
+        }).then(() => {
+            this.setState({modelLoaded: true});
+            this.newTextInput.focus();
+        }).catch(/* Could enter an error state here */);
+    }
+
+    async pullTodoItems(): Promise<void> {
+        const todoItemComponentPromises = [];
+        for (const key of this.todoItemsMap.keys()) {
+            todoItemComponentPromises.push(this.props.getComponent(key));
+        }
+
+        return Promise.all(todoItemComponentPromises).then((todoItemComponents) => this.setState({todoItemComponents}));
+    }
+
+    /**
+     * This allows us to prevent default form behavior while getting all the benefits
+     */
+    async handleSubmit(ev: React.FormEvent<HTMLFormElement>): Promise<void> {
+        ev.preventDefault();
+        await this.props.todoModel.addTodoItemComponent({ startingText: this.state.inputValue });
+        this.setState({inputValue: ""});
+    }
+
+    updateInputValue(ev: React.ChangeEvent<HTMLInputElement>): void {
+        this.setState({inputValue: ev.target.value});
+    }
+
+    render(): JSX.Element {
+        if (!this.state.modelLoaded) {
+            return <div>Loading...</div>;
+        }
+
+        const todoItemComponents = [];
+
+        this.state.todoItemComponents.forEach((todoItemComponent) => {
+            const todoItemView = (
+                <TodoItemView
+                    todoItemModel={todoItemComponent}
+                    getComponent={this.props.getComponent}
+                    key={todoItemComponent.url}
+                />
+            );
+            todoItemComponents.push(todoItemView);
+        });
+
+        return (
+            <div className="todo-view">
+                {
+                    this.titleString ?
+                    <CollaborativeInput
+                        className="todo-title"
+                        sharedString={this.titleString}
+                        style={{
+                            border: "none",
+                            fontFamily: "inherit",
+                            fontSize: 30,
+                            marginBottom: 5,
+                            marginTop: 5,
+                            outline: "none",
+                            width: "inherit",
+                        }}
+                    /> :
+                    <h1>Loading...</h1>
+                }
+                <form onSubmit={this.handleSubmit}>
+                    <input
+                        type="text"
+                        value={this.state.inputValue}
+                        onChange={this.updateInputValue}
+                        ref={(input) => { this.newTextInput = input; }}/>
+                    <button type="submit">+</button>
+                </form>
+                <div className="todo-item-list">
+                    {todoItemComponents}
+                </div>
+            </div>
+        );
+    }
+}
