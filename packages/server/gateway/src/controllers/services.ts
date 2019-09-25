@@ -7,7 +7,7 @@ import {
     IProvideDocumentFactory,
     IProvideMicrosoftGraph,
     IProvidePackageManager,
-} from "@prague/host-service-interfaces";
+} from "@microsoft/fluid-host-service-interfaces";
 
 /**
  * Host services provides a collection of intefaces exposed by a gateway host

@@ -34,7 +34,7 @@ module.exports = {
         extensions: [ '.tsx', '.ts', '.js' ]
     },
     output: {
-        filename: 'prague-loader.bundle.js',
+        filename: 'fluid-loader.bundle.js',
         path: path.resolve(__dirname, '../../client'),
         library: 'loader',
         libraryTarget: 'var'

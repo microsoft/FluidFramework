@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import { IRequest } from "@prague/component-core-interfaces";
 import {
     IFluidResolvedUrl,
-    IRequest,
     IResolvedUrl,
     ITokenClaims,
     IUrlResolver,
     IUser,
-} from "@prague/container-definitions";
+} from "@prague/protocol-definitions";
 import * as jwt from "jsonwebtoken";
 
 /**

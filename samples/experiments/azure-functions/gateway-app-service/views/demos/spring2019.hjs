@@ -18,7 +18,7 @@
 
     <h3>Data, Code, Components Bindings</h3>
     <p>Open the link below and add in a Monaco and Chart Component</p>
-    <li class="list-unstyled"><a href="/loader/prague/{{chartMonacoMoniker}}?chaincode=@chaincode/shared-text@0.3.5429" target="_blank">Data +
+    <li class="list-unstyled"><a href="/loader/fluid/{{chartMonacoMoniker}}?chaincode=@chaincode/shared-text@0.3.5429" target="_blank">Data +
             Code Bindings</a></li>
 
     <h3>Yo Fluid - Bootstrapper</h3>
@@ -85,9 +85,9 @@
     <p>
         Open a copy of each link and load each on refresh.
         <ul class="list-unstyled">
-            <li><a href="https://www.wu2-ppe.prague.office-int.com/loader/prague/ste-0314-002?chaincode=@chaincode/shared-text-2@0.3.91"
+            <li><a href="https://www.wu2-ppe.prague.office-int.com/loader/fluid/ste-0314-002?chaincode=@chaincode/shared-text-2@0.3.91"
                     target="_blank">Loader</a></li>
-            <li><a href="https://www.wu2-ppe.prague.office-int.com/fastloader/prague/ste-0314-002?chaincode=@chaincode/shared-text-2@0.3.91"
+            <li><a href="https://www.wu2-ppe.prague.office-int.com/fastloader/fluid/ste-0314-002?chaincode=@chaincode/shared-text-2@0.3.91"
                     target="_blank">Augmented Loader</a></li>
         </ul>
     </p>

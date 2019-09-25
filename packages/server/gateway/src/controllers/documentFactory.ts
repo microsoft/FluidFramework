@@ -5,7 +5,7 @@
 
 import { IFluidCodeDetails, ILoader } from "@microsoft/fluid-container-definitions";
 import { Deferred } from "@microsoft/fluid-core-utils";
-import { IDocumentFactory } from "@prague/host-service-interfaces";
+import { IDocumentFactory } from "@microsoft/fluid-host-service-interfaces";
 import Axios from "axios";
 
 export class DocumentFactory implements IDocumentFactory {

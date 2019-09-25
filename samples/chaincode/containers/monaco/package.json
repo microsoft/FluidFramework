@@ -39,13 +39,5 @@
     "webpack": "^4.7.0",
     "webpack-cli": "^3.1.2"
   },
-  "prague": {
-    "browser": {
-      "entrypoint": "monacocontainer",
-      "bundle": [
-        "dist/main.bundle.js"
-      ]
-    }
-  },
   "license": "MIT"
 }

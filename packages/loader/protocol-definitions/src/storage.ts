@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { ConnectionMode, IClient } from "./clients";
+import { ConnectionMode, IClient, ISignalClient } from "./clients";
 import { IServiceConfiguration } from "./config";
 import {
     IContentMessage,
@@ -253,6 +253,11 @@ export interface IDocumentDeltaConnection extends EventEmitter {
     initialSignals?: ISignalMessage[];
 
     /**
+     * Prior clients already connected.
+     */
+    initialClients?: ISignalClient[];
+
+    /**
      * Configuration details provided by the service
      */
     serviceConfiguration: IServiceConfiguration;
@@ -316,4 +321,14 @@ export interface IDocumentServiceFactory {
      * returns an instance of IDocumentService
      */
     createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService>;
+}
+
+/**
+ * Network errors are communicated from the driver to runtime by throwing object implementing INetworkError interface
+ */
+export interface INetworkError {
+    readonly statusCode?: number;
+    readonly canRetry?: boolean;
+    readonly retryAfterSeconds?: number;
+    readonly message: string;
 }

@@ -1,5 +1,5 @@
 {
-  "name": "@prague/service",
+  "name": "@fluid-internal/server-service",
   "version": "0.1.0",
   "description": "Fluid rdkafka and ws based services",
   "main": "dist/index.js",

@@ -126,11 +126,11 @@ commander
     .option(
         "-d, --document [document]",
         "Document to open",
-        "http://localhost:3000/loader/prague/testtesttest8?chaincode=@fluid-example/shared-text2@0.2.13")
+        "http://localhost:3000/loader/fluid/testtesttest8?chaincode=@fluid-example/shared-text2@0.2.13")
     .option(
         "-e, --document2 [document2]",
         "Document to open",
-        "http://localhost:3000/loader/prague/testtesttest7?chaincode=@fluid-example/shared-text2@0.2.13")
+        "http://localhost:3000/loader/fluid/testtesttest7?chaincode=@fluid-example/shared-text2@0.2.13")
     .option("-u, --username [username]", "Username", "test")
     .option("-p, --password [password]", "Password", "mRTvhfDTE3FYbVc")
     .parse(process.argv);

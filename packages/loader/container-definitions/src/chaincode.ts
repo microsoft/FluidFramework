@@ -19,6 +19,7 @@ import {
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
+import { IAudience } from "./audience";
 import { IBlobManager } from "./blobs";
 import { IQuorum } from "./consensus";
 import { IDeltaManager } from "./deltas";
@@ -69,20 +70,8 @@ export interface IPackage {
     private?: boolean;
 }
 
-export interface IPraguePackage extends IPackage {
-    // https://stackoverflow.com/questions/10065564/add-custom-metadata-or-config-to-package-json-is-it-valid
-    prague: {
-        browser: {
-            // List of bundled JS files - both local files and ones on a CDN
-            bundle: string[];
-
-            // Global for the entrypoint to the root package
-            entrypoint: string;
-        };
-    };
-}
-
 export interface IFluidPackage extends IPackage {
+    // https://stackoverflow.com/questions/10065564/add-custom-metadata-or-config-to-package-json-is-it-valid
     fluid: {
         browser: {
             [libraryTarget: string]: {
@@ -214,6 +203,7 @@ export interface IContainerContext extends EventEmitter, IMessageScheduler, IPro
     readonly snapshotFn: (message: string) => Promise<void>;
     readonly closeFn: () => void;
     readonly quorum: IQuorum;
+    readonly audience: IAudience | undefined;
     readonly loader: ILoader;
     readonly codeLoader: ICodeLoader;
     readonly logger: ITelemetryLogger;

@@ -12,7 +12,7 @@ import { NodeManager } from "./nodeManager";
  * Reservation for the given id within the system. The reservation is considered held for as long as the node
  * maintains the given epoch
  */
-interface IReservation {
+export interface IReservation {
     _id: string;
 
     node: string;

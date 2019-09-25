@@ -151,11 +151,17 @@ export class TestDb implements IDb {
     }
 }
 
-export class TestDbFactory implements IDbFactory {
-    constructor(private collections: { [key: string]: any[] }) {
+export interface ITestDbFactory extends IDbFactory {
+    readonly testDatabase: IDb;
+}
+
+export class TestDbFactory implements ITestDbFactory {
+    public readonly testDatabase: IDb;
+    constructor(collections: { [key: string]: any[] }) {
+        this.testDatabase = new TestDb(collections);
     }
 
     public connect(): Promise<IDb> {
-        return Promise.resolve(new TestDb(this.collections));
+        return Promise.resolve(this.testDatabase);
     }
 }

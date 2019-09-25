@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-container-loader",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "description": "Fluid container loader",
   "main": "dist/index.js",
   "module": "lib/index.js",
@@ -43,10 +43,10 @@
   "author": "Microsoft",
   "repository": "microsoft/FluidFramework",
   "dependencies": {
-    "@microsoft/fluid-component-core-interfaces": "^0.10.0",
-    "@microsoft/fluid-container-definitions": "^0.10.0",
-    "@microsoft/fluid-protocol-definitions": "^0.10.0",
-    "@microsoft/fluid-core-utils": "^0.10.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.11.0",
+    "@microsoft/fluid-container-definitions": "^0.11.0",
+    "@microsoft/fluid-core-utils": "^0.11.0",
+    "@microsoft/fluid-protocol-definitions": "^0.11.0",
     "@types/double-ended-queue": "^2.1.0",
     "debug": "^4.1.1",
     "double-ended-queue": "^2.1.0-0",
@@ -55,9 +55,9 @@
     "performance-now": "^2.1.0"
   },
   "devDependencies": {
-    "@microsoft/api-extractor": "^7.3.11",
-    "@microsoft/fluid-build-common": "^0.10.0",
-    "@microsoft/fluid-test-loader-utils": "^0.10.0",
+    "@microsoft/api-extractor": "^7.4.4",
+    "@microsoft/fluid-build-common": "^0.11.0",
+    "@microsoft/fluid-test-loader-utils": "^0.11.0",
     "@types/debug": "^0.0.31",
     "@types/jwt-decode": "^2.2.1",
     "@types/lodash": "^4.14.118",
