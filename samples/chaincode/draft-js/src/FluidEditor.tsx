@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedMap } from "@microsoft/fluid-map";
+import { SharedMap } from "@microsoft/fluid-map";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SequenceDeltaEvent, SharedString } from "@microsoft/fluid-sequence";
 import { ContentState, Editor, EditorProps, EditorState, RichUtils } from "draft-js";
@@ -27,7 +27,7 @@ import "./css/RichEditor.css";
 
 interface IProps extends Partial<EditorProps> {
   sharedString: SharedString;
-  authors: ISharedMap;
+  authors: SharedMap;
   runtime: IComponentRuntime;
 }
 
