@@ -44,11 +44,10 @@ export class FluidCollabPlugin {
                         }
                     } else if (range.operation === MergeTreeDeltaType.REMOVE) {
                         if (TextSegment.is(segment)) {
-                            // doc.replaceRange(
-                            //     "",
-                            //     doc.posFromIndex(range.position),
-                            //     doc.posFromIndex(range.position + textSegment.text.length));
+                            transaction.replace(range.position, range.position + segment.text.length);
                         } else if (Marker.is(segment)) {
+                            // TODO need to modify the tree at this point - and probably remove the matching
+                            // segment
                             // doc.replaceRange(
                             //     "",
                             //     doc.posFromIndex(range.position),
@@ -96,6 +95,17 @@ export class FluidCollabPlugin {
             const stepAsJson = step.toJSON();
             switch (stepAsJson.stepType) {
                 case "replace":
+                    const from = stepAsJson.from;
+                    const to = stepAsJson.to;
+
+                    if (from !== to) {
+                        this.sharedString.removeText(from, to);
+                    }
+
+                    if (!stepAsJson.slice) {
+                        break;
+                    }
+
                     // TODO flatten content
                     // type: hard_break is a shift+enter
                     // type: text is text
