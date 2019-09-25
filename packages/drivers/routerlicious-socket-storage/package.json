@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-routerlicious-driver",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "description": "Socket.IO + Git implementation of Fluid service API",
   "main": "dist/index.js",
   "module": "lib/index.js",
@@ -22,7 +22,7 @@
   "repository": "microsoft/FluidFramework",
   "devDependencies": {
     "@microsoft/api-extractor": "^7.4.4",
-    "@microsoft/fluid-build-common": "^0.10.0",
+    "@microsoft/fluid-build-common": "^0.11.0",
     "@types/debug": "^0.0.31",
     "@types/jwt-decode": "^2.2.1",
     "@types/mocha": "^5.2.5",
@@ -36,11 +36,11 @@
     "typescript": "~3.4.5"
   },
   "dependencies": {
-    "@microsoft/fluid-gitresources": "^0.10.0",
-    "@microsoft/fluid-protocol-definitions": "^0.10.0",
-    "@microsoft/fluid-server-services-client": "^0.10.0",
-    "@microsoft/fluid-driver-base": "^0.10.0",
-    "@microsoft/fluid-core-utils": "^0.10.0",
+    "@microsoft/fluid-core-utils": "^0.11.0",
+    "@microsoft/fluid-driver-base": "^0.11.0",
+    "@microsoft/fluid-gitresources": "^0.11.0",
+    "@microsoft/fluid-protocol-definitions": "^0.11.0",
+    "@microsoft/fluid-server-services-client": "^0.11.0",
     "axios": "^0.18.0",
     "comlink": "^4.0.2",
     "debug": "^4.1.1",

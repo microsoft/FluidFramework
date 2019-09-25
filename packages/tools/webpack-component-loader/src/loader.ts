@@ -21,7 +21,8 @@ import { extractDetails, IResolvedPackage } from "@microsoft/fluid-web-code-load
 import * as jwt from "jsonwebtoken";
 import * as uuid from "uuid/v4";
 import { InsecureUrlResolver } from "./insecureUrlResolver";
-
+import { SessionStorageDbFactory } from "./sessionStorageTestDb";
+// import * as fetch from "isomorphic-fetch";
 export interface IDevServerUser extends IUser {
     name: string;
 }
@@ -211,7 +212,7 @@ export async function start(
         );
     } else {
 
-        const deltaConn = TestDeltaConnectionServer.create();
+        const deltaConn = TestDeltaConnectionServer.create(new SessionStorageDbFactory(url));
         documentServiceFactory = new TestDocumentServiceFactory(deltaConn);
         const hostConf: IHostConfig = { documentServiceFactory, urlResolver };
         startCore(

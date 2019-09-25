@@ -11,7 +11,7 @@ export * from "./OdspDocumentStorageManager";
 export * from "./contracts";
 export * from "./OdspUrlResolver";
 export * from "./fetchSnapshot";
-export * from "./utils";
+export * from "./OdspUtils";
 export * from "./Vroom";
 export * from "./OdspDocumentServiceFactory";
 export * from "./OdspDocumentServiceFactoryWithCodeSplit";
