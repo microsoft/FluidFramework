@@ -1,7 +1,7 @@
 {
-  "name": "@microsoft/fluid-office-odsp-urlresolver",
+  "name": "@microsoft/fluid-spo-odsp-urlresolver",
   "version": "0.10.0",
-  "description": "Routerlicious host interfaces",
+  "description": "Url Resolver for spo urls.",
   "main": "dist/index.js",
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
@@ -31,6 +31,7 @@
   "dependencies": {
     "@microsoft/fluid-component-core-interfaces": "^0.10.0",
     "@microsoft/fluid-protocol-definitions": "^0.10.0",
+    "@microsoft/fluid-odsp-utils": "^0.10.0",
     "@types/debug": "^0.0.31",
     "sha.js": "^2.4.11"
   },
