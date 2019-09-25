@@ -5,8 +5,8 @@
 
 import { CollaborativeCheckbox, CollaborativeInput } from "@microsoft/fluid-aqueduct-react";
 import * as React from "react";
-import { TodoItemSupportedComponents } from "./supportedComponent";
 import { TodoItem } from "./TodoItem";
+import { TodoItemDetailsView } from "./TodoItemDetailsView";
 
 interface p {
     todoItemModel: TodoItem;
@@ -14,8 +14,8 @@ interface p {
 }
 
 interface s {
+    checkedState: boolean;
     contentVisible: boolean;
-    innerId: string;
 }
 
 export class TodoItemView extends React.Component<p, s> {
@@ -39,26 +39,16 @@ export class TodoItemView extends React.Component<p, s> {
         }
         this.baseUrl += `${path.join("/")}${window.location.search}`;
         this.state = {
+            checkedState: this.props.todoItemModel.getCheckedState(),
             contentVisible: false,
-            innerId: this.props.todoItemModel.innerIdCell.get(),
         };
 
-        this.createInnerComponent = this.createInnerComponent.bind(this);
         this.handleCheckedChange = this.handleCheckedChange.bind(this);
-    }
-
-    async createInnerComponent(type: TodoItemSupportedComponents) {
-        await this.props.todoItemModel.createInnerComponent(type, { startingText: type});
-    }
-
-    componentDidMount() {
-        this.props.todoItemModel.innerIdCell.on("op", () => {
-            this.setState({innerId: this.props.todoItemModel.innerIdCell.get()});
-        });
     }
 
     private handleCheckedChange(newState: boolean): void {
         this.props.todoItemModel.setCheckedState(newState);
+        this.setState({checkedState: this.props.todoItemModel.getCheckedState()});
     }
 
     render() {
@@ -96,18 +86,10 @@ export class TodoItemView extends React.Component<p, s> {
                 {
                     // If the content is visible we will show a button or a component
                     this.state.contentVisible &&
-                    <div className="todoItemDetails">
-                        {
-                            this.state.innerId === "" ?
-                            <>
-                                <button onClick={async () => this.createInnerComponent("todo")}>todo</button>
-                                <button onClick={async () => this.createInnerComponent("clicker")}>clicker</button>
-                                <button onClick={async () => this.createInnerComponent("textBox")}>textBox</button>
-                                <button onClick={async () => this.createInnerComponent("textList")}>textList</button>
-                            </> :
-                            this.props.createComponentView(this.state.innerId)
-                        }
-                    </div>
+                    <TodoItemDetailsView
+                        todoItemModel={this.props.todoItemModel}
+                        createComponentView={this.props.createComponentView}
+                    />
                 }
             </div>
         );
