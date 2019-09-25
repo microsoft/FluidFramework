@@ -115,9 +115,7 @@ export class SequenceDeltaEvent extends SequenceEvent {
         mergeTreeClient: Client,
     ) {
         super(deltaArgs, mergeTreeClient);
-        this.isLocal =
-            deltaArgs.mergeTreeClientId ===
-            deltaArgs.mergeTree.collabWindow.clientId;
+        this.isLocal = opArgs.sequencedMessage === undefined;
     }
 }
 
