@@ -1,5 +1,5 @@
 {
-  "name": "@chaincode/badge",
+  "name": "@fluid-example/badge",
   "description": "Chaincode starter project",
   "version": "0.0.10",
   "author": "Microsoft",
