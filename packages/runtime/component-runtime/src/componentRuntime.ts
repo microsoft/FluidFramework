@@ -584,6 +584,9 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         this.componentContext.on("leader", (clientId: string) => {
             this.emit("leader", clientId);
         });
+        this.componentContext.on("notleader", (clientId: string) => {
+            this.emit("notleader", clientId);
+        });
     }
 
     private verifyNotClosed() {

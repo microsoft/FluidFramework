@@ -2135,9 +2135,7 @@ export class MergeTree {
             this.mergeTreeDeltaCallback(
                 opArgs,
                 {
-                    mergeTreeClientId: clientId,
                     operation: ops.MergeTreeDeltaType.INSERT,
-                    mergeTree: this,
                     deltaSegments: segments.map((segment) => ({ segment })),
                 });
         }
@@ -2243,9 +2241,7 @@ export class MergeTree {
                 opArgs,
                 {
                     deltaSegments: [{ segment: insertSegment }],
-                    mergeTreeClientId: clientId,
                     operation: ops.MergeTreeDeltaType.INSERT,
-                    mergeTree: this,
                 });
         }
 
@@ -2749,9 +2745,7 @@ export class MergeTree {
             this.mergeTreeDeltaCallback(
                 opArgs,
                 {
-                    mergeTreeClientId: clientId,
                     operation: ops.MergeTreeDeltaType.ANNOTATE,
-                    mergeTree: this,
                     deltaSegments,
                 });
         }
@@ -2852,9 +2846,7 @@ export class MergeTree {
             this.mergeTreeDeltaCallback(
                 opArgs,
                 {
-                    mergeTreeClientId: clientId,
                     operation: ops.MergeTreeDeltaType.REMOVE,
-                    mergeTree: this,
                     deltaSegments: removedSegments,
                 });
         }

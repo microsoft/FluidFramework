@@ -71,8 +71,9 @@ class KeyValueLoader {
             });
 
         const documentServiceFactories: IDocumentServiceFactory[] = [];
+        // TODO: figure out how to pass clientId and token here
         documentServiceFactories.push(new OdspDocumentServiceFactory(
-            "Server-Gateway",
+            "Fake app-id",
             (siteUrl: string) => Promise.resolve("fake token"),
             () => Promise.resolve("fake token"),
             new BaseTelemetryNullLogger()));

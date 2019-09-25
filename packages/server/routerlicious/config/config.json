@@ -38,7 +38,7 @@
         "key": "VBQyoGpEYrTn3XQPtXW3K8fFDd",
         "tenants": [
             {
-                "id": "prague",
+                "id": "fluid",
                 "key": "43cfc3fbf04a97c0921fd23ff10f9e4b"
             },
             {
@@ -190,12 +190,12 @@
     },
     "tenantConfig": [
         {
-            "_id": "prague",
+            "_id": "fluid",
             "key": "43cfc3fbf04a97c0921fd23ff10f9e4b",
             "storage": {
                 "url": "http://gitrest:3000",
-                "owner": "prague",
-                "repository": "prague"
+                "owner": "fluid",
+                "repository": "fluid"
             }
         },
         {

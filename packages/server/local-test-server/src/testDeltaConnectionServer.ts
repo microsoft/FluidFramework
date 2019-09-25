@@ -2,19 +2,14 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import { RoundTrip } from "@fluid-internal/client-api";
 import { IConnect, IConnected } from "@microsoft/fluid-driver-base";
-import { ConnectionMode, IClient, IContentMessage, IDocumentMessage, ISignalMessage, ITokenClaims } from "@microsoft/fluid-protocol-definitions";
+import { ConnectionMode, IClient, IContentMessage, IDocumentMessage, ISignalMessage, ITokenClaims, MessageType } from "@microsoft/fluid-protocol-definitions";
 import {
     LocalNodeFactory,
     LocalOrderer,
     LocalOrderManager,
-    NodeManager,
-    ReservationManager,
 } from "@microsoft/fluid-server-memory-orderer";
 import {
-    ICollection,
     IDatabaseManager,
     IDocumentStorage,
     IOrderer,
@@ -27,7 +22,7 @@ import {
     MongoManager,
 } from "@microsoft/fluid-server-services-core";
 import {
-    TestCollection,
+    ITestDbFactory,
     TestDbFactory,
     TestDocumentStorage,
     TestTaskMessageSender,
@@ -37,6 +32,7 @@ import {
 import * as jwt from "jsonwebtoken";
 import * as randomName from "random-name";
 import * as semver from "semver";
+import { TestReservationManager } from "./testReserverationManger";
 
 const protocolVersion = "^0.1.0";
 
@@ -46,7 +42,7 @@ const protocolVersion = "^0.1.0";
 export interface ITestDeltaConnectionServer {
     webSocketServer: IWebSocketServer;
     databaseManager: IDatabaseManager;
-
+    testDbFactory: ITestDbFactory;
     hasPendingWork(): Promise<boolean>;
 }
 
@@ -97,16 +93,14 @@ export class TestDeltaConnectionServer implements ITestDeltaConnectionServer {
     /**
      * Creates and returns a delta connection server for testing.
      */
-    public static create(): ITestDeltaConnectionServer {
+    public static create(testDbFactory: ITestDbFactory = new TestDbFactory({})): ITestDeltaConnectionServer {
         const nodesCollectionName = "nodes";
         const documentsCollectionName = "documents";
         const deltasCollectionName = "deltas";
         const reservationsCollectionName = "reservations";
         const scribeDeltasCollectionName = "scribeDeltas";
-        const testData: { [key: string]: any[] } = {};
 
         const webSocketServer = new TestWebSocketServer();
-        const testDbFactory = new TestDbFactory(testData);
         const mongoManager = new MongoManager(testDbFactory);
         const testTenantManager = new TestTenantManager();
 
@@ -121,12 +115,6 @@ export class TestDeltaConnectionServer implements ITestDeltaConnectionServer {
             databaseManager,
             testTenantManager);
 
-        const nodeManager = new NodeManager(mongoManager, nodesCollectionName);
-        const reservationManager = new ReservationManager(
-            nodeManager,
-            mongoManager,
-            reservationsCollectionName);
-
         const nodeFactory = new LocalNodeFactory(
             "os",
             "http://localhost:4000", // unused placeholder url
@@ -138,24 +126,30 @@ export class TestDeltaConnectionServer implements ITestDeltaConnectionServer {
             testTenantManager,
             {},
             16 * 1024);
+
+        const reservationManager = new TestReservationManager(
+            nodeFactory,
+            mongoManager,
+            reservationsCollectionName);
+
         const localOrderManager = new LocalOrderManager(nodeFactory, reservationManager);
         const testOrderer = new TestOrderManager(localOrderManager);
-        const testCollection = new TestCollection([]);
 
         register(
             webSocketServer,
             testOrderer,
             testTenantManager,
             testStorage,
-            testCollection);
+            testDbFactory);
 
-        return new TestDeltaConnectionServer(webSocketServer, databaseManager, testOrderer);
+        return new TestDeltaConnectionServer(webSocketServer, databaseManager, testOrderer, testDbFactory);
     }
 
     private constructor(
         public webSocketServer: IWebSocketServer,
         public databaseManager: IDatabaseManager,
-        private testOrdererManager: TestOrderManager) { }
+        private testOrdererManager: TestOrderManager,
+        public testDbFactory: ITestDbFactory) { }
 
     /**
      * Returns true if there are any received ops that are not yet ordered.
@@ -181,8 +175,9 @@ export function register(
     orderManager: IOrdererManager,
     tenantManager: ITenantManager,
     storage: IDocumentStorage,
-    contentCollection: ICollection<any>) {
+    dbFactory: ITestDbFactory) {
 
+    const contentCollection = dbFactory.testDatabase.collection("ops");
     const socketList: IWebSocket[] = [];
     webSocketServer.on("connection", (socket: IWebSocket) => {
         // Map from client IDs on this connection to the object ID and user info.
@@ -300,7 +295,7 @@ export function register(
                 messageBatches.forEach((messageBatch) => {
                     const messages = Array.isArray(messageBatch) ? messageBatch : [messageBatch];
                     const filtered = messages
-                        .filter((message) => message.type !== RoundTrip);
+                        .filter((message) => message.type !== MessageType.RoundTrip);
 
                     if (filtered.length > 0) {
                         connection.order(filtered);

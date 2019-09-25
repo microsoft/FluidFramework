@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SimpleModuleInstantiationFactory } from "@prague/aqueduct";
+import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 import { BadgeInstantiationFactory as ComponentInstantiationFactory } from "./Badge";
 
 // tslint:disable-next-line: no-var-requires no-require-imports

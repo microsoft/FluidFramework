@@ -16,7 +16,7 @@ import {
     TestDeltaConnectionServer,
     TestDocumentServiceFactory,
     TestResolver,
-} from "../";
+} from "@microsoft/fluid-local-test-server";
 
 describe("Directory", () => {
     const id = "fluid://test.com/test/test";
