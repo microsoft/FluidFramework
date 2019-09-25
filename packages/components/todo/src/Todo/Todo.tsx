@@ -27,16 +27,23 @@ export const TodoName = `${pkg.name as string}-todo`;
 export class Todo extends PrimedComponent implements IComponentHTMLVisual, IComponentReactViewable {
 
   // DDS ids stored as variables to minimize simple string mistakes
-  private readonly todoItemsMapKey = "innerCellIds";
-  private readonly sharedStringTitleKey = "sharedString-title";
+  private readonly todoItemsKey = "todo-items";
+  private readonly todoTitleKey = "todo-title";
 
   // tslint:disable:prefer-readonly
   private todoItemsMap: ISharedMap;
-  private titleTextSharedString: SharedString;
   // tslint:enable:prefer-readonly
 
   public get IComponentHTMLVisual() { return this; }
   public get IComponentReactViewable() { return this; }
+
+  public async getTodoItemsMapPromise() {
+    return this.root.get<IComponentHandle>(this.todoItemsKey).get<ISharedMap>();
+  }
+
+  public async getTodoTitleStringPromise() {
+    return this.root.get<IComponentHandle>(this.todoTitleKey).get<SharedString>();
+  }
 
   /**
    * Do setup work here
@@ -45,32 +52,15 @@ export class Todo extends PrimedComponent implements IComponentHTMLVisual, IComp
     // create a list for of all inner todo item components
     // we will use this to know what components to load.
     const map = SharedMap.create(this.runtime);
-    this.root.set(this.todoItemsMapKey, map.handle);
+    this.root.set(this.todoItemsKey, map.handle);
 
     const text = SharedString.create(this.runtime);
     text.insertText(0, "Title");
-    this.root.set(this.sharedStringTitleKey, text.handle);
+    this.root.set(this.todoTitleKey, text.handle);
   }
 
   protected async componentHasInitialized() {
-    const todoItemsMap = this.root.get<IComponentHandle>(this.todoItemsMapKey).get<ISharedMap>();
-    const titleTextSharedString = this.root.get<IComponentHandle>(this.sharedStringTitleKey).get<SharedString>();
-
-    // tslint:disable-next-line: no-console
-    console.log("here");
-    this.context.on("op", (e) => {
-      alert("hello");
-      // tslint:disable-next-line: no-console
-      console.log(JSON.stringify(e));
-    });
-
-    [
-      this.todoItemsMap,
-      this.titleTextSharedString,
-    ] = await Promise.all([
-      todoItemsMap,
-      titleTextSharedString,
-    ]);
+    this.todoItemsMap = await this.getTodoItemsMapPromise();
   }
 
   // start IComponentHTMLVisual
@@ -103,8 +93,6 @@ export class Todo extends PrimedComponent implements IComponentHTMLVisual, IComp
     return(
       <TodoView
           todoModel={this}
-          todoItemsMap={this.todoItemsMap}
-          textSharedString={this.titleTextSharedString}
           getComponent={this.getComponent.bind(this)}/>
     );
   }
