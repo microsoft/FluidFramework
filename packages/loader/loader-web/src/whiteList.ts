@@ -20,8 +20,6 @@ export class WhiteList implements IChaincodeWhiteList {
     ) { }
 
     public async testSource(source: IFluidCodeDetails): Promise<boolean> {
-        console.log("WhiteList.test");
-        console.log(source);
         return this.testHandler(source);
     }
 }
