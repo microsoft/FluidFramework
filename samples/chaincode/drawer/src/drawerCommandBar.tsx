@@ -7,10 +7,10 @@ import * as React from 'react';
 
 import { CommandBar, ICommandBarItemProps } from 'office-ui-fabric-react/lib/CommandBar';
 import { ContextualMenuItemType, IContextualMenuItem } from 'office-ui-fabric-react/lib/ContextualMenu';
-import { IDocumentFactory } from '@prague/host-service-interfaces';
-import { IFluidCodeDetails } from '@prague/container-definitions';
-import { ISharedMap } from '@prague/map';
-import { IComponentContext } from '@prague/runtime-definitions';
+import { IDocumentFactory } from '@microsoft/fluid-host-service-interfaces';
+import { IFluidCodeDetails } from '@microsoft/fluid-container-definitions';
+import { ISharedMap } from '@microsoft/fluid-map';
+import { IComponentContext } from '@microsoft/fluid-runtime-definitions';
 
 interface IDrawerCommandBarProps {
     context: IComponentContext,
@@ -37,6 +37,7 @@ export class DrawerCommandBar extends React.Component<IDrawerCommandBarProps, {}
         const chaincode: IFluidCodeDetails = {
             config: {
                 "@chaincode:cdn": "https://pragueauspkn-3873244262.azureedge.net",
+                "@fluid-example:cdn": "https://pragueauspkn-3873244262.azureedge.net",
             },
             package: `${details.pkg}@${details.version}`,
         };
