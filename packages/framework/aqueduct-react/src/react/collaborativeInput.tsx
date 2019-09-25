@@ -9,6 +9,7 @@ interface IProps {
     sharedString: SharedString;
     style?: React.CSSProperties;
     spellCheck?: boolean;
+    className?: string;
 }
 
 interface IState {
@@ -70,6 +71,7 @@ export class CollaborativeInput extends React.Component<IProps, IState> {
             // the correct selection before we modify the shared string we need to make sure
             // this.updateSelection is being called for multiple cases.
             <input
+                className={this.props.className}
                 style={this.props.style}
                 spellCheck={this.props.spellCheck ? this.props.spellCheck : true}
                 ref={this.ref}

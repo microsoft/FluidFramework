@@ -4,13 +4,14 @@
  */
 
 import { CollaborativeCheckbox, CollaborativeInput } from "@microsoft/fluid-aqueduct-react";
+import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import * as React from "react";
 import { TodoItem } from "./TodoItem";
 import { TodoItemDetailsView } from "./TodoItemDetailsView";
 
 interface p {
     todoItemModel: TodoItem;
-    createComponentView(id: string): JSX.Element;
+    getComponent(id: string): Promise<IComponent>;
 }
 
 interface s {
@@ -54,7 +55,7 @@ export class TodoItemView extends React.Component<p, s> {
     render() {
         // tslint:disable:strict-boolean-expressions
         return (
-            <div className="todoItem">
+            <div className="todo-item">
                 <h2>
                     <CollaborativeCheckbox
                         checked={this.props.todoItemModel.getCheckedState()}
@@ -88,7 +89,7 @@ export class TodoItemView extends React.Component<p, s> {
                     this.state.contentVisible &&
                     <TodoItemDetailsView
                         todoItemModel={this.props.todoItemModel}
-                        createComponentView={this.props.createComponentView}
+                        getComponent={this.props.getComponent}
                     />
                 }
             </div>

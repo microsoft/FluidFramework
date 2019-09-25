@@ -5,7 +5,7 @@
 
 import { ClickerName } from "@fluid-example/clicker";
 import { PrimedComponent } from "@microsoft/fluid-aqueduct";
-import { EmbeddedReactComponentFactory, IComponentReactViewable } from "@microsoft/fluid-aqueduct-react";
+import { IComponentReactViewable } from "@microsoft/fluid-aqueduct-react";
 import { ISharedCell, SharedCell } from "@microsoft/fluid-cell";
 import { IComponentHandle, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
 import { SharedString } from "@microsoft/fluid-sequence";
@@ -102,11 +102,10 @@ export class TodoItem extends PrimedComponent
    * Since this returns a JSX.Element it allows for an easier model.
    */
   public createJSXElement(): JSX.Element {
-      const factory = new EmbeddedReactComponentFactory(this.getComponent.bind(this));
       return (
         <TodoItemView
           todoItemModel={this}
-          createComponentView={(id) => factory.create(id)}
+          getComponent={this.getComponent.bind(this)}
         />
       );
   }

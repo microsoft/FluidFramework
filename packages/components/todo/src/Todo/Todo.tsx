@@ -4,7 +4,7 @@
  */
 
 import { PrimedComponent } from "@microsoft/fluid-aqueduct";
-import { EmbeddedReactComponentFactory, IComponentReactViewable } from "@microsoft/fluid-aqueduct-react";
+import { IComponentReactViewable } from "@microsoft/fluid-aqueduct-react";
 import { IComponentHandle, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import { SharedString } from "@microsoft/fluid-sequence";
@@ -100,13 +100,9 @@ export class Todo extends PrimedComponent implements IComponentHTMLVisual, IComp
    * Since this returns a JSX.Element it allows for an easier model.
    */
   public createJSXElement(): JSX.Element {
-    // The factory allows us to create new embedded component without having to pipe the
-    // getComponent call throughout the app.
-    const factory = new EmbeddedReactComponentFactory(this.getComponent.bind(this));
     return(
       <TodoView
           todoModel={this}
-          createComponentView = {(id: string) => factory.create(id)}
           todoItemsMap={this.todoItemsMap}
           textSharedString={this.titleTextSharedString}
           getComponent={this.getComponent.bind(this)}/>

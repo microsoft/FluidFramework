@@ -78,7 +78,7 @@ interface IHTMLProps {
 /**
  * Embeds a Fluid Component that supports IComponentHTMLVisual
  */
-class HTMLEmbeddedComponent extends React.Component<IHTMLProps, { }> {
+export class HTMLEmbeddedComponent extends React.Component<IHTMLProps, { }> {
     private readonly ref: React.RefObject<HTMLDivElement>;
 
     constructor(props: IHTMLProps) {
