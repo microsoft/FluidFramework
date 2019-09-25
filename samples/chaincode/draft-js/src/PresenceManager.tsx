@@ -5,9 +5,9 @@
 
 import * as React from "react";
 
-import { ISequencedDocumentMessage } from "@prague/container-definitions";
-import { SharedMap } from "@prague/map";
-import { IComponentRuntime } from "@prague/runtime-definitions";
+import { ISharedMap } from "@microsoft/fluid-map";
+import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
+import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { CharacterMetadata, CompositeDecorator, ContentBlock } from "draft-js";
 import { List } from "immutable";
 
@@ -33,7 +33,7 @@ const placeholderChar = "\u200B"; // zero width space
 export class PresenceManager {
   private readonly coauthorPositions: Map<string, Author> = new Map<string, Author>();
 
-  public constructor(private readonly authorMap: SharedMap, private readonly runtime: IComponentRuntime) {}
+  public constructor(private readonly authorMap: ISharedMap, private readonly runtime: IComponentRuntime) {}
 
   public subscribe(renderCallback: (textRangeUpdater: (range: TextRange) => TextRange) => void) {
     this.authorMap.on("op", (op: ISequencedDocumentMessage, local: boolean) => {
