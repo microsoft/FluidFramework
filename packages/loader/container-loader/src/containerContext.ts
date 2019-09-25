@@ -122,7 +122,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         return this.container.serviceConfiguration;
     }
 
-    public get audience(): IAudience | undefined {
+    public get audience(): IAudience {
         return this.container.audience;
     }
 
