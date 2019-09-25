@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-sequence",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "description": "Distributed map",
   "main": "dist/index.js",
   "module": "lib/index.js",
@@ -45,11 +45,11 @@
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.4.4",
-    "@microsoft/fluid-build-common": "^0.10.0",
-    "@microsoft/fluid-component-core-interfaces": "^0.10.0",
-    "@microsoft/fluid-gitresources": "^0.10.0",
-    "@microsoft/fluid-test-runtime-utils": "^0.10.0",
-    "@microsoft/fluid-server-services-client": "^0.10.0",
+    "@microsoft/fluid-build-common": "^0.11.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.11.0",
+    "@microsoft/fluid-gitresources": "^0.11.0",
+    "@microsoft/fluid-test-runtime-utils": "^0.11.0",
+    "@microsoft/fluid-server-services-client": "^0.11.0",
     "@types/debug": "^0.0.31",
     "@types/diff": "^3.5.1",
     "@types/mocha": "^5.2.5",
@@ -67,12 +67,12 @@
     "xmldoc": "^1.1.2"
   },
   "dependencies": {
-    "@microsoft/fluid-map": "^0.10.0",
-    "@microsoft/fluid-merge-tree": "^0.10.0",
-    "@microsoft/fluid-protocol-definitions": "^0.10.0",
-    "@microsoft/fluid-runtime-definitions": "^0.10.0",
-    "@microsoft/fluid-shared-object-base": "^0.10.0",
-    "@microsoft/fluid-core-utils": "^0.10.0",
+    "@microsoft/fluid-core-utils": "^0.11.0",
+    "@microsoft/fluid-map": "^0.11.0",
+    "@microsoft/fluid-merge-tree": "^0.11.0",
+    "@microsoft/fluid-protocol-definitions": "^0.11.0",
+    "@microsoft/fluid-runtime-definitions": "^0.11.0",
+    "@microsoft/fluid-shared-object-base": "^0.11.0",
     "debug": "^4.1.1",
     "lodash": "^4.17.11"
   },

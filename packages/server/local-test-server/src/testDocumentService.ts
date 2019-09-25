@@ -5,10 +5,11 @@
 
 import * as api from "@microsoft/fluid-protocol-definitions";
 import * as socketStorage from "@microsoft/fluid-routerlicious-driver";
+import { GitManager } from "@microsoft/fluid-server-services-client";
 import {
     TestDeltaStorageService,
     TestDocumentDeltaConnection,
-    TestDocumentStorageService,
+    TestHistorian,
 } from "@microsoft/fluid-server-test-utils";
 import { ITestDeltaConnectionServer } from "./testDeltaConnectionServer";
 
@@ -48,7 +49,8 @@ export class TestDocumentService implements api.IDocumentService {
      * Creates and returns a document storage service for testing.
      */
     public async connectToStorage(): Promise<api.IDocumentStorageService> {
-        return new TestDocumentStorageService();
+        return new socketStorage.DocumentStorageService(this.documentId,
+            new GitManager(new TestHistorian(this.testDeltaConnectionServer.testDbFactory.testDatabase)));
     }
 
     /**

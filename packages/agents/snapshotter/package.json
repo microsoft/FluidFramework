@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/snapshotter-agent",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "description": "Snapshotter for Fluid container",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -17,7 +17,7 @@
   "author": "Microsoft",
   "repository": "microsoft/FluidFramework",
   "devDependencies": {
-    "@microsoft/fluid-build-common": "^0.10.0",
+    "@microsoft/fluid-build-common": "^0.11.0",
     "@types/node": "^10.12.12",
     "concurrently": "^4.1.0",
     "rimraf": "^2.6.2",
@@ -25,8 +25,8 @@
     "typescript": "~3.4.5"
   },
   "dependencies": {
-    "@microsoft/fluid-container-runtime": "^0.10.0",
-    "@microsoft/fluid-protocol-definitions": "^0.10.0"
+    "@microsoft/fluid-container-runtime": "^0.11.0",
+    "@microsoft/fluid-protocol-definitions": "^0.11.0"
   },
   "license": "MIT"
 }
