@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedCell } from "@prague/cell";
-import { ISharedMap } from "@prague/map";
-import { SharedObjectSequence } from "@prague/sequence";
+import { ISharedCell } from "@microsoft/fluid-cell";
+import { ISharedMap } from "@microsoft/fluid-map";
+import { SharedObjectSequence } from "@microsoft/fluid-sequence";
 import {
   ActivityItem,
   DefaultButton,

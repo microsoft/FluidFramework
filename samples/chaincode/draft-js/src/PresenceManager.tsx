@@ -5,9 +5,9 @@
 
 import * as React from "react";
 
-import { ISequencedDocumentMessage } from "@prague/container-definitions";
-import { SharedMap } from "@prague/map";
-import { IComponentRuntime } from "@prague/runtime-definitions";
+import { SharedMap } from "@microsoft/fluid-map";
+import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
+import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { CharacterMetadata, CompositeDecorator, ContentBlock } from "draft-js";
 import { List } from "immutable";
 

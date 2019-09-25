@@ -4,7 +4,13 @@
  */
 
 import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
-import { buildHierarchy, fromBase64ToUtf8, fromUtf8ToBase64, PerformanceEvent } from "@microsoft/fluid-core-utils";
+import {
+    buildHierarchy,
+    fromBase64ToUtf8,
+    fromUtf8ToBase64,
+    PerformanceEvent,
+    throwNetworkError,
+} from "@microsoft/fluid-core-utils";
 import * as resources from "@microsoft/fluid-gitresources";
 import * as api from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
@@ -25,11 +31,9 @@ import { fetchSnapshot } from "./fetchSnapshot";
 import { IFetchWrapper } from "./fetchWrapper";
 import { getQueryString } from "./getQueryString";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
-import { getWithRetryForTokenRefresh } from "./utils";
+import { getWithRetryForTokenRefresh } from "./OdspUtils";
 
 export class OdspDocumentStorageManager implements IDocumentStorageManager {
-    private static readonly errorMessage = "Method not supported because no snapshotUrl was provided";
-
     private readonly blobCache: Map<string, resources.IBlob> = new Map();
     private readonly treesCache: Map<string, resources.ITree> = new Map();
 
@@ -69,9 +73,8 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
     public createBlob(file: Buffer): Promise<api.ICreateBlobResponse> {
         this.checkSnapshotUrl();
 
-        return getWithRetryForTokenRefresh(async (refresh: boolean) => {
-            return Promise.reject(new Error("StandardDocumentStorageManager.createBlob() not implemented"));
-        });
+        // Need to wrap implementation with getWithRetryForTokenRefresh()
+        return Promise.reject(new Error("StandardDocumentStorageManager.createBlob() not implemented"));
     }
 
     public async getBlob(blobid: string): Promise<resources.IBlob> {
@@ -252,35 +255,29 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
                 // fetch the latest snapshot versions for the document
                 const versionsResponse = await this.fetchWrapper
-                    .get<IDocumentStorageGetVersionsResponse>(url, this.documentId, headers)
-                    .catch<IDocumentStorageGetVersionsResponse>((error) => (error === 400 || error === 404) ? error : Promise.reject(error));
-                if (versionsResponse) {
-                    if (Array.isArray(versionsResponse.value)) {
-                        return versionsResponse.value.map((version) => {
-                            // Parse the date from the message
-                            let date: string|undefined;
-                            for (const rec of version.message.split("\n")) {
-                                const index = rec.indexOf(":");
-                                if (index !== -1 && rec.substr(0, index) === "Date") {
-                                    date = rec.substr(index + 1).trim();
-                                    break;
-                                }
-                            }
-                            return {
-                                date,
-                                id: version.sha,
-                                treeId: undefined!,
-                            };
-                        });
-                    }
-
-                    if ((versionsResponse as any).error) {
-                        // If the URL have error, the server might not response with an error code, but an error object
-                        const e = new Error("getVersions fetch error");
-                        (e as any).data = versionsResponse;
-                        return Promise.reject(JSON.stringify(versionsResponse));
-                    }
+                    .get<IDocumentStorageGetVersionsResponse>(url, this.documentId, headers);
+                if (!versionsResponse) {
+                    throwNetworkError("getVersions returned no response", 400);
                 }
+                if (!Array.isArray(versionsResponse.value)) {
+                    throwNetworkError("getVersions returned non-array response", 400);
+                }
+                return versionsResponse.value.map((version) => {
+                    // Parse the date from the message
+                    let date: string|undefined;
+                    for (const rec of version.message.split("\n")) {
+                        const index = rec.indexOf(":");
+                        if (index !== -1 && rec.substr(0, index) === "Date") {
+                            date = rec.substr(index + 1).trim();
+                            break;
+                        }
+                    }
+                    return {
+                        date,
+                        id: version.sha,
+                        treeId: undefined!,
+                    };
+                });
             }
 
             return [];
@@ -290,10 +287,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
     public write(tree: api.ITree, parents: string[], message: string): Promise<api.IVersion> {
         this.checkSnapshotUrl();
 
-        return getWithRetryForTokenRefresh(async (refresh: boolean) => {
-            // TODO: Implement, Issue #2269 [https://github.com/microsoft/Prague/issues/2269]
-            return Promise.reject("Not implemented");
-        });
+        return Promise.reject("Not supported");
     }
 
     public async uploadSummary(tree: api.ISummaryTree): Promise<api.ISummaryHandle> {
@@ -336,7 +330,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
     private checkSnapshotUrl() {
         if (!this.snapshotUrl) {
-            throw new Error(OdspDocumentStorageManager.errorMessage);
+            throwNetworkError("Method not supported because no snapshotUrl was provided", 400);
         }
     }
 

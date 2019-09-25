@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-server-lambdas-driver",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "description": "Driver components for the Fluid service lambdas.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -38,10 +38,10 @@
     "report-dir": "nyc/report"
   },
   "dependencies": {
-    "@microsoft/fluid-server-services": "^0.10.0",
-    "@microsoft/fluid-server-services-core": "^0.10.0",
-    "@microsoft/fluid-server-services-utils": "^0.10.0",
-    "@microsoft/fluid-core-utils": "^0.10.0",
+    "@microsoft/fluid-core-utils": "^0.11.0",
+    "@microsoft/fluid-server-services": "^0.11.0",
+    "@microsoft/fluid-server-services-core": "^0.11.0",
+    "@microsoft/fluid-server-services-utils": "^0.11.0",
     "async": "^2.6.1",
     "lodash": "^4.17.11",
     "moniker": "^0.1.2",
@@ -49,8 +49,8 @@
     "winston": "^3.1.0"
   },
   "devDependencies": {
-    "@microsoft/fluid-build-common": "^0.10.0",
-    "@microsoft/fluid-server-test-utils": "^0.10.0",
+    "@microsoft/fluid-build-common": "^0.11.0",
+    "@microsoft/fluid-server-test-utils": "^0.11.0",
     "@types/async": "^2.0.50",
     "@types/lodash": "^4.14.118",
     "@types/mocha": "^5.2.5",
