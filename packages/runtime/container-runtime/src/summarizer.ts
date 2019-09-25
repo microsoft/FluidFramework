@@ -109,6 +109,9 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
         }
         // listen for the broadcast of this summary op
         if (op.type === MessageType.Summarize) {
+            // When pending, we need to wait until the lastSummarySeqNumber is set before
+            // trying to find our broadcast summary op.  So we will essentially defer all
+            // Summarize op handling here until deferBroadcast is resolved.
             await this.deferBroadcast.promise;
             if (!this.pendingSummarySequenceNumber) {
                 // should only be 1 summary op per client with same ref seq number
@@ -119,12 +122,18 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
                         pendingSummarySequenceNumber: op.sequenceNumber,
                     });
                     this.pendingSummarySequenceNumber = op.sequenceNumber;
+                    // Now we indicate that we are okay to start listening for the summary ack/nack
+                    // of this summary op, because we have set the pendingSummarySequenceNumber.
                     this.deferAck.resolve();
                 }
             }
         }
         // listen for the ack/nack of this summary op
         if (op.type === MessageType.SummaryAck || op.type === MessageType.SummaryNack) {
+            // Since this handler is async, we need to wait until the pendingSummarySequenceNumber is
+            // set from the broadcast summary op before handling summary acks/nacks.  We use
+            // this deferred object to ensure that our broadcast summary op is handled before our
+            // summary ack/nack is handled.
             await this.deferAck.promise;
             if (this.pendingSummarySequenceNumber) {
                 const ack = op.contents as ISummaryAck | ISummaryNack;
@@ -207,7 +216,10 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
         this.lastSummaryTime = summaryEndTime;
         this.lastSummarySeqNumber = summaryData.sequenceNumber;
 
-        // now allow summary op listener to listen
+        // Because summarizing is async, the incoming op stream will be resumed before
+        // we update our lastSummarySeqNumber.  We use this to defer the broadcast listeners
+        // until we are sure that no summary ops are handled before lastSummarySeqNumber is
+        // set here.
         this.deferBroadcast.resolve();
     }
 
@@ -248,6 +260,7 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
 
     private cancelPending() {
         this.summaryPending = false;
+        // release all deferred summary op/ack/nack handlers
         this.deferBroadcast.resolve();
         this.deferAck.resolve();
     }
