@@ -255,7 +255,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
 
         entries.push(new BlobTreeEntry(".component", JSON.stringify(componentAttributes)));
 
-        return { entries, id: this.baseId };
+        return { entries, id: undefined };
     }
 
     public async request(request: IRequest): Promise<IResponse> {
