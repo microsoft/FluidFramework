@@ -219,7 +219,7 @@ const rerender = () => {
       <span>{counter.value}</span>
       <button onClick={() => counter.increment(1)}>+</button>
     </div>,
-    div,
+    div
   );
 };
 
@@ -378,7 +378,7 @@ Finally we export this so we can use it in the [index.ts](#index.ts) below for o
  */
 export const ExampleFluidComponentInstantiationFactory = new SharedComponentFactory(
   ExampleFluidComponent,
-  [],
+  []
 );
 ```
 
@@ -412,7 +412,7 @@ export const fluidExport = new SimpleModuleInstantiationFactory(
   chaincodeName,
   new Map([
     [chaincodeName, Promise.resolve(ExampleFluidComponentInstantiationFactory)],
-  ]),
+  ])
 );
 ```
 
@@ -439,6 +439,6 @@ export const fluidExport = new SimpleModuleInstantiationFactory(
   chaincodeName,
   new Map([
     [chaincodeName, Promise.resolve(ExampleFluidComponentInstantiationFactory)],
-  ]),
+  ])
 );
 ```

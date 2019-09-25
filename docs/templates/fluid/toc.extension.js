@@ -31,8 +31,8 @@ var packageMapping = {
   "fluid-replay-driver": "driver",
 
   "fluid-base-host": "host",
-  "fluid-tiny-web-host": "host",
-  "fluid-react-web-host": "host",
+  "tiny-web-host": "host",
+  "react-web-host": "host",
 
   "fluid-core-utils": "misc",
 }
