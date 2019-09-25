@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { IAudience } from "@microsoft/fluid-container-definitions";
-import { IClient, ISignalClient } from "@microsoft/fluid-protocol-definitions";
+import { IClient } from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
 
 /**
@@ -11,13 +11,6 @@ import { EventEmitter } from "events";
  */
 export class Audience extends EventEmitter implements IAudience {
     private readonly members = new Map<string, IClient>();
-
-    constructor(clients: ISignalClient[]) {
-        super();
-        for (const client of clients) {
-            this.members.set(client.clientId, client.client);
-        }
-    }
 
     /**
      * Adds a new client to the audience

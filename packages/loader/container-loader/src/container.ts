@@ -220,6 +220,9 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return this._existing;
     }
 
+    /**
+     * Retrieves the audience associated with the document
+     */
     public get audience(): Audience | undefined {
         return this._audience;
     }
@@ -585,6 +588,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
                 this.protocolHandler = protocolHandler;
                 this.blobManager = blobManager;
+                this._audience = new Audience();
 
                 perfEvent.reportProgress({ stage: "BeforeContextLoad" });
 
@@ -806,7 +810,9 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
                 // back-compat for new client and old server.
                 const priorClients = details.initialClients ? details.initialClients : [];
-                this._audience = new Audience(priorClients);
+                for (const client of priorClients) {
+                    this._audience!.addMember(client.clientId, client.client);
+                }
             });
 
             this._deltaManager.on("disconnect", (reason: string) => {
