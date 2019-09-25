@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IChaincodeWhiteList, ICodeLoader, IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
+import { ICodeLoader, ICodeWhiteList, IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
 import { exec } from "child_process";
 import * as fs from "fs";
 import { promisify } from "util";
@@ -14,7 +14,7 @@ const asyncExec = promisify(exec);
 // A sentinel file to indicate install completion.
 const signalFileName = "dummy";
 
-export class NodeWhiteList implements IChaincodeWhiteList {
+export class NodeWhiteList implements ICodeWhiteList {
     constructor() {
 
     }
@@ -30,7 +30,7 @@ export class NodeCodeLoader implements ICodeLoader {
         private registry: string,
         private packageDirectory: string,
         private waitTimeoutMSec: number,
-        private whiteList: IChaincodeWhiteList) {
+        private whiteList: ICodeWhiteList) {
         }
 
     public async load<T>(pkg: IFluidCodeDetails): Promise<T> {

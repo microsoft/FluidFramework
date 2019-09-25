@@ -4,8 +4,8 @@
  */
 
 import {
-    IChaincodeWhiteList,
     ICodeLoader,
+    ICodeWhiteList,
     IFluidCodeDetails,
     IFluidPackage,
     IPackage,
@@ -51,7 +51,7 @@ export function extractDetails(value: string): IParsedPackage {
     if (value.indexOf("@") !== value.lastIndexOf("@")) {
         const componentsWithVersion = value.match(/(@(.*)\/)?((.*)@(.*))/);
         if ((!componentsWithVersion || componentsWithVersion.length !== 6)) {
-            throw new Error("Invalid package");
+            throw new Error("Invalid package"); 
         }
         [full, , scope, pkg, name, version] = componentsWithVersion;
     } else {
@@ -61,6 +61,7 @@ export function extractDetails(value: string): IParsedPackage {
         }
         [full, , scope, pkg, name] = componentsWithoutVersion;
     }
+
     return {
         full,
         name,
@@ -269,7 +270,7 @@ export class WebCodeLoader implements ICodeLoader {
     private readonly resolvedCache = new Map<string, FluidPackage>();
     private readonly scriptManager = new ScriptManager();
 
-    constructor(private readonly whiteList: IChaincodeWhiteList) { }
+    constructor(private readonly whiteList: ICodeWhiteList) { }
 
     public async seed(seedable: ISeedable) {
         const fluidPackage = this.getFluidPackage({ config: seedable.config, package: seedable.package });

@@ -4,13 +4,13 @@
  */
 
 import {
-    IChaincodeWhiteList, IFluidCodeDetails, IFluidPackage, IPackageConfig,
+    ICodeWhiteList, IFluidCodeDetails, IFluidPackage, IPackageConfig,
 } from "@microsoft/fluid-container-definitions";
 
 /**
  * Class used by hosts to allow specific containers and endpoint.
  */
-export class WhiteList implements IChaincodeWhiteList {
+export class WhiteList implements ICodeWhiteList {
     public pkg?: IFluidPackage;
     public config?: IPackageConfig;
     public scriptIds?: string[];

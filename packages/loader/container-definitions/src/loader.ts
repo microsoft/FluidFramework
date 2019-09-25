@@ -23,7 +23,7 @@ export interface ICodeLoader {
 /**
  * Code WhiteListing Interface
  */
-export interface IChaincodeWhiteList {
+export interface ICodeWhiteList {
     testSource(source: IFluidCodeDetails): Promise<boolean>;
 }
 

@@ -9,7 +9,7 @@ import {
     IComponentQueryableLegacy,
     IRequest,
 } from "@microsoft/fluid-component-core-interfaces";
-import { IChaincodeWhiteList } from "@microsoft/fluid-container-definitions";
+import { ICodeWhiteList } from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
 import {
     IFluidResolvedUrl,
@@ -90,7 +90,7 @@ export async function registerAttach(loader: Loader, container: Container, uri: 
 
 export function createWebLoader(
     resolved: IResolvedUrl,
-    whiteList: IChaincodeWhiteList,
+    whiteList: ICodeWhiteList,
     pkg: IResolvedPackage,
     scriptIds: string[],
     config: any,

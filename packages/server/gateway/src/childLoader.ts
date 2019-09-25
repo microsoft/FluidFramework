@@ -91,7 +91,6 @@ class KeyValueLoader {
             new Map<string, IResolvedUrl>([[documentUrl, result.data]]));
 
         const hostConf: IHostConfig = { documentServiceFactory: documentServiceFactories, urlResolver: resolver };
-        config.blockUpdateMarkers = true;
         config.tokens = (result.data as IFluidResolvedUrl).tokens;
 
         const loader = new Loader(
