@@ -169,6 +169,7 @@ export function create(
                         {
                             cache: fullTree ? JSON.stringify(fullTree.cache) : undefined,
                             chaincode: JSON.stringify(pkg),
+                            clientId: config.get("login:microsoft").clientId,
                             config: workerConfig,
                             jwt: jwtToken,
                             npm: config.get("worker:npm"),
@@ -180,9 +181,9 @@ export function create(
                             user: getUserDetails(request),
                         });
                 }, (error) => {
-                    response.status(400).end(safeStringify(error, undefined, 2));
+                    response.status(400).end(`ERROR: ${error.stack}\n${safeStringify(error, undefined, 2)}`);
                 }).catch((error) => {
-                    response.status(500).end(safeStringify(error, undefined, 2));
+                    response.status(500).end(`ERROR: ${error.stack}\n${safeStringify(error, undefined, 2)}`);
                 });
             }
         });

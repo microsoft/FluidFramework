@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-odsp-utils",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "description": "ODSP utilities",
   "module": "lib/index.js",
   "main": "dist/index.js",
@@ -20,12 +20,10 @@
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "dependencies": {
-    "@microsoft/fluid-container-definitions": "^0.10.0",
-    "@microsoft/fluid-protocol-definitions": "^0.10.0",
     "request": "^2.88.0"
   },
   "devDependencies": {
-    "@microsoft/fluid-build-common": "^0.10.0",
+    "@microsoft/fluid-build-common": "^0.11.0",
     "@types/request": "^2.47.1",
     "concurrently": "^4.1.0",
     "rimraf": "^2.6.2",

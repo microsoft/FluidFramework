@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponentFactory } from "@prague/aqueduct";
-import { SharedCell } from "@prague/cell";
-import { SharedMap } from "@prague/map";
-import { SharedObjectSequence } from "@prague/sequence";
+import { PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
+import { SharedCell } from "@microsoft/fluid-cell";
+import { SharedMap } from "@microsoft/fluid-map";
+import { SharedObjectSequence } from "@microsoft/fluid-sequence";
 import { Badge } from "./index";
 
 /**

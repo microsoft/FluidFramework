@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent } from "@prague/aqueduct";
-import { IComponentReactViewable } from "@prague/aqueduct-react";
-import { SharedCell } from "@prague/cell";
-import { IComponentHandle, IComponentHTMLVisual } from "@prague/component-core-interfaces";
-import { SharedMap } from "@prague/map";
-import { SharedObjectSequence } from "@prague/sequence";
+import { PrimedComponent } from "@microsoft/fluid-aqueduct";
+import { IComponentReactViewable } from "@microsoft/fluid-aqueduct-react";
+import { SharedCell } from "@microsoft/fluid-cell";
+import { IComponentHandle, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
+import { SharedMap } from "@microsoft/fluid-map";
+import { SharedObjectSequence } from "@microsoft/fluid-sequence";
 import { SharedColors } from '@uifabric/fluent-theme/lib/fluent/FluentColors';
 import { IIconProps } from 'office-ui-fabric-react/lib/Icon';
 import * as React from "react";

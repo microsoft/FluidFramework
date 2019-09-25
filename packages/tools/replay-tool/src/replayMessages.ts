@@ -264,7 +264,7 @@ class Document {
             },
             tokens: {},
             type: "fluid",
-            url: `fluid-file://localhost:6000/prague/${FileStorageDocumentName}`,
+            url: `fluid-file://localhost:6000/fluid/${FileStorageDocumentName}`,
         };
 
         const resolver = new ContainerUrlResolver(

@@ -20,14 +20,6 @@
     "webpack": "npm run build",
     "webpack:dev": "npm run dev"
   },
-  "prague": {
-    "browser": {
-      "entrypoint": "main",
-      "bundle": [
-        "dist/main.bundle.js"
-      ]
-    }
-  },
   "fluid": {
     "browser": {
       "umd": {
