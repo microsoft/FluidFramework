@@ -4,8 +4,24 @@
  */
 
 import * as agent from "@microsoft/fluid-server-agent";
-import { MessageFactory, TestDocument } from "@microsoft/fluid-server-test-utils";
+import { MessageFactory, TestDeltaManager } from "@microsoft/fluid-server-test-utils";
 import * as assert from "assert";
+
+export class TestDocument implements agent.ISnapshotDocument {
+    public deltaManager = new TestDeltaManager();
+    public snapshotRequests = 0;
+
+    constructor(public id: string, public clientId: string) {
+    }
+
+    public snapshot(message: string): Promise<void> {
+        this.snapshotRequests++;
+        return this.snapshotCore(message);
+    }
+
+    // Allow derived classes to override the snapshot processing
+    public snapshotCore = (message: string) => Promise.resolve();
+}
 
 describe("Routerlicious", () => {
     describe("Agent", () => {
