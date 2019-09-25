@@ -5,13 +5,12 @@
 
 import {
   PrimedComponent,
-  SimpleComponentInstantiationFactory,
+  PrimedComponentFactory,
   SimpleModuleInstantiationFactory,
-} from "@prague/aqueduct";
-import { IComponentHTMLVisual, IContainerContext, IRuntime } from "@prague/container-definitions";
-import { CounterValueType, SharedMap } from "@prague/map";
-import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
-import { SharedString } from "@prague/sequence";
+} from "@microsoft/fluid-aqueduct";
+import { IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces"
+import { SharedMap } from "@microsoft/fluid-map";
+import { SharedString } from "@microsoft/fluid-sequence";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -24,42 +23,26 @@ const pkg = require("../package.json");
 export const DraftJsName = pkg.name as string;
 
 export class DraftJsExample extends PrimedComponent implements IComponentHTMLVisual {
-  private static readonly supportedInterfaces = ["IComponentHTMLVisual", "IComponentHTMLRender", "IComponentRouter"];
+  public get IComponentHTMLVisual() { return this; }
 
   /**
    * Do setup work here
    */
-  protected async create() {
-    // This allows the PrimedComponent to create the root map
-    await super.create();
-
+  protected async componentInitializingFirstTime() {
     const text = SharedString.create(this.runtime);
     insertBlockStart(text, 0);
-    text.insertText("starting text", text.getLength());
-    this.root.set("text", text);
+    text.insertText(text.getLength(), "starting text");
+    this.root.set("text", text.handle);
 
     const authors = SharedMap.create(this.runtime);
-    this.root.set("authors", authors);
-  }
-
-  /**
-   * Static load function that allows us to make async calls while creating our object.
-   * This becomes the standard practice for creating components in the new world.
-   * Using a static allows us to have async calls in class creation that you can't have in a constructor
-   */
-  public static async load(runtime: IComponentRuntime, context: IComponentContext): Promise<DraftJsExample> {
-    const draftJs = new DraftJsExample(runtime, context, DraftJsExample.supportedInterfaces);
-    await draftJs.initialize();
-    return draftJs;
+    this.root.set("authors", authors.handle);
   }
 
   /**
    * Will return a new view
    */
-  public render(div: HTMLElement) {
-    const text = this.root.get("text");
-    const authors = this.root.get("authors");
-    // Get our counter object that we set in initialize and pass it in to the view.
+  public async render(div: HTMLElement) {
+    const [text, authors] = await Promise.all([this.root.get("text").get(), this.root.get("authors").get()]);
     ReactDOM.render(
       <div style={{ margin: "20px auto", maxWidth: 800 }}>
         <MemberList quorum={this.runtime.getQuorum()} dds={authors} style={{ textAlign: "right" }} />
@@ -72,22 +55,12 @@ export class DraftJsExample extends PrimedComponent implements IComponentHTMLVis
 }
 
 // ----- COMPONENT SETUP STUFF -----
-export const ClickerInstantiationFactory = new SimpleComponentInstantiationFactory(
+export const DraftInstantiationFactory = new PrimedComponentFactory(
+  DraftJsExample,
   [SharedMap.getFactory(), SharedString.getFactory()],
-  DraftJsExample.load,
 );
 
 export const fluidExport = new SimpleModuleInstantiationFactory(
   DraftJsName,
-  new Map([[DraftJsName, Promise.resolve(ClickerInstantiationFactory)]]),
+  new Map([[DraftJsName, Promise.resolve(DraftInstantiationFactory)]]),
 );
-
-// Included for back compat - can remove in 0.7 once fluidExport is default
-export async function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-  return fluidExport.instantiateRuntime(context);
-}
-
-// Included for back compat - can remove in 0.7 once fluidExport is default
-export async function instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
-  return fluidExport.instantiateComponent(context);
-}
