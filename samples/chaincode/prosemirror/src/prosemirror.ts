@@ -14,18 +14,27 @@ import {
 } from "@prague/component-core-interfaces";
 import { ComponentRuntime } from "@prague/component-runtime";
 import { ISharedMap, SharedMap } from "@prague/map";
-import { ReferenceType, reservedRangeLabelsKey } from "@prague/merge-tree";
+import {
+    IMergeTreeInsertMsg,
+    ReferenceType,
+    reservedRangeLabelsKey,
+    MergeTreeDeltaType,
+    createMap,
+    TextSegment,
+    Marker,
+} from "@prague/merge-tree";
 import { IComponentContext, IComponentFactory, IComponentRuntime } from "@prague/runtime-definitions";
 import { SharedString } from "@prague/sequence";
 import { ISharedObjectFactory } from "@prague/shared-object-common";
+import * as assert from "assert";
 import { EventEmitter } from "events";
 import { EditorState } from "prosemirror-state";
 import { EditorView } from "prosemirror-view";
-import { Schema, DOMParser, NodeSpec } from "prosemirror-model";
-import { schema } from "prosemirror-schema-basic";
+import { Schema, NodeSpec } from "prosemirror-model";
 import { addListNodes } from "prosemirror-schema-list";
 import { exampleSetup } from "prosemirror-example-setup";
-import { fluidPlugin } from "./fluidPlugin";
+import { FluidCollabPlugin } from "./fluidPlugin";
+import { schema } from "./fluidSchema";
 
 require("prosemirror-view/style/prosemirror.css");
 require("prosemirror-menu/style/menu.css");
@@ -33,6 +42,43 @@ require("prosemirror-example-setup/style/style.css");
 require("./style.css");
 
 import OrderedMap = require('orderedmap');
+
+const nodeTypeKey = "nodeType";
+
+function createTreeMarkerOps(
+    treeRangeLabel: string,
+    beginMarkerPos: number,
+    endMarkerPos: number,
+    nodeType: string,
+): IMergeTreeInsertMsg[] {
+
+    const endMarkerProps = createMap<any>();
+    endMarkerProps[reservedRangeLabelsKey] = [treeRangeLabel];
+    endMarkerProps[nodeTypeKey] = nodeType;
+
+    const beginMarkerProps = createMap<any>();
+    beginMarkerProps[reservedRangeLabelsKey] = [treeRangeLabel];
+    beginMarkerProps[nodeTypeKey] = nodeType;
+
+    return [
+        {
+            seg: { marker: { refType: ReferenceType.NestBegin }, props: beginMarkerProps },
+            pos1: beginMarkerPos,
+            type: MergeTreeDeltaType.INSERT,
+        },
+        {
+            seg: { marker: { refType: ReferenceType.NestEnd }, props: endMarkerProps },
+            pos1: endMarkerPos,
+            type: MergeTreeDeltaType.INSERT,
+        },
+    ];
+}
+
+interface IProseMirrorNode {
+    [key: string]: any;
+    type: string,
+    content?: IProseMirrorNode[],
+}
 
 export class ProseMirror extends EventEmitter implements IComponentLoadable, IComponentRouter, IComponentHTMLVisual {
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
@@ -71,26 +117,29 @@ export class ProseMirror extends EventEmitter implements IComponentLoadable, ICo
     }
 
     private async initialize() {
+        // {
+        //     "type": "doc",
+        //     "content": [
+        //         {
+        //             "type": "paragraph",
+        //             "content": [
+        //             {
+        //                 "type": "text",
+        //                 "text": "HELLO!"
+        //             }]
+        //         }]
+        // }
+
         if (!this.runtime.existing) {
             this.root = SharedMap.create(this.runtime, "root");
             const text = SharedString.create(this.runtime);
 
-            // initial paragraph marker
-            // text.insertMarker(
-            //     0,
-            //     ReferenceType.Tile,
-            //     { [reservedTileLabelsKey]: ["pg"] });
-            const hello = "Hello, world!";
-            text.insertMarker(0, ReferenceType.NestEnd, { [reservedRangeLabelsKey]: ["paragraph"], type: "basic" });
-            text.insertMarker(0, ReferenceType.NestBegin, { [reservedRangeLabelsKey]: ["paragraph"], type: "basic" });
-            text.insertText(1, hello);
+            const ops = createTreeMarkerOps("prosemirror", 0, 1, "paragraph");
+            text.groupOperation({ ops, type: MergeTreeDeltaType.GROUP });
+            text.insertText(1, "Hello, world!");
 
-
-            text.insertMarker(3, ReferenceType.NestBegin, { [reservedRangeLabelsKey]: ["paragraph"], type: "cat" });
-            text.insertMarker(7, ReferenceType.NestEnd, { [reservedRangeLabelsKey]: ["paragraph"], type: "cat" });
-
-            text.annotateRange(4, 6, { bold: true });
-            text.annotateRange(5, 6, { yellow: "mello" });
+            // text.annotateRange(4, 6, { bold: true });
+            // text.annotateRange(5, 6, { yellow: "mello" });
 
             this.root.set("text", text.handle);
             this.root.register();
@@ -99,6 +148,7 @@ export class ProseMirror extends EventEmitter implements IComponentLoadable, ICo
         this.root = await this.runtime.getChannel("root") as ISharedMap;
         this.text = await this.root.get<IComponentHandle>("text").get<SharedString>();
 
+        // access for debugging
         window["easyText"] = this.text;
     }
 
@@ -109,9 +159,7 @@ export class ProseMirror extends EventEmitter implements IComponentLoadable, ICo
             this.textArea.classList.add("editor");
             this.content = document.createElement("div");
             this.content.style.display = "none";
-            this.content.innerHTML =
-            `
-            `;
+            this.content.innerHTML = "";
         }
 
         // reparent if needed
@@ -128,21 +176,67 @@ export class ProseMirror extends EventEmitter implements IComponentLoadable, ICo
     }
 
     private setupEditor() {
-        // Mix the nodes from prosemirror-schema-list into the basic schema to
-        // create a schema with list support.
-        const mySchema = new Schema({
+        // Initialize the base ProseMirror JSON data structure
+        const nodeStack = new Array<IProseMirrorNode>();
+        nodeStack.push({ type: "doc", content: [] });
+
+        this.text.walkSegments((segment) => {
+            let top = nodeStack[nodeStack.length - 1];
+
+            if (TextSegment.is(segment)) {
+                top.content.push({ type: "text", text: segment.text });
+            } else if (Marker.is(segment)) {
+                const nodeType = segment.properties[nodeTypeKey];
+                switch (segment.refType) {
+                    case ReferenceType.NestBegin:
+                        // Create the new node, add it to the top's content, and push it on the stack
+                        const newNode = { type: nodeType, content: [] };
+                        top.content.push(newNode);
+                        nodeStack.push(newNode);
+                        break;
+
+                    case ReferenceType.NestEnd:
+                        const popped = nodeStack.pop();
+                        assert(popped.type === nodeType);
+                        break;
+
+                    default:
+                        // throw for now when encountering something unknown
+                        throw new Error("Unknown marker");
+                }
+            }
+
+            return true;
+        });
+
+        const doc = nodeStack.pop();
+        console.log(JSON.stringify(doc, null, 2));
+
+        const fluidSchema = new Schema({
             nodes: addListNodes(schema.spec.nodes as OrderedMap<NodeSpec>, "paragraph block*", "block"),
             marks: schema.spec.marks
         });
-        
+
+        const fluidDoc = fluidSchema.nodeFromJSON(doc);
+
+        // initialize the prosemirror schema from the sequence
+        console.log(JSON.stringify(fluidDoc.toJSON(), null, 2));
+
+        const fluidPlugin = new FluidCollabPlugin(this.text);
+
+        const state = EditorState.create({
+            doc: fluidDoc,
+            plugins: exampleSetup({ schema: fluidSchema }).concat(fluidPlugin.plugin),
+        });
+
         this.editorView = new EditorView(
             this.textArea,
             {
-                state: EditorState.create({
-                    doc: DOMParser.fromSchema(mySchema).parse(this.content),
-                    plugins: exampleSetup({schema: mySchema}).concat(fluidPlugin),
-                })
-        })
+                state,
+            });
+        fluidPlugin.attachView(this.editorView);
+
+        window["easyView"] = this.editorView;
     }
 }
 
