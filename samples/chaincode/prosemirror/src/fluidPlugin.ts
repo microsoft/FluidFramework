@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { Plugin, Transaction } from "prosemirror-state";
 import { SharedString } from "@prague/sequence";
 import { EditorView } from "prosemirror-view";
