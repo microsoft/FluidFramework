@@ -68,12 +68,6 @@ import { SummaryManager } from "./summaryManager";
 import { analyzeTasks } from "./taskAnalyzer";
 import { BlobTreeEntry, CommitTreeEntry, ISummaryStats, SummaryTreeConverter } from "./utils";
 
-export { ISummaryStats } from "./utils";
-
-export interface IGeneratedSummaryData extends ISummaryStats {
-    sequenceNumber: number;
-}
-
 interface ISummaryTreeWithStats {
     summaryStats: ISummaryStats;
     summaryTree: ISummaryTree;
@@ -83,6 +77,10 @@ interface IBufferedChunk {
     type: MessageType;
 
     content: string;
+}
+
+export interface IGeneratedSummaryData extends ISummaryStats {
+    sequenceNumber: number;
 }
 
 // Consider idle 5s of no activity. And snapshot if a minute has gone by with no snapshot.
@@ -1084,7 +1082,11 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
             this.submit(MessageType.Summarize, summary);
 
-            return { sequenceNumber, ...treeWithStats.summaryStats };
+            // notify summarizer while still paused
+            return {
+                sequenceNumber,
+                ...treeWithStats.summaryStats,
+            };
         } catch (ex) {
             this.logger.logException({ eventName: "Summarizer:GenerateSummaryExceptionError" }, ex);
             throw ex;

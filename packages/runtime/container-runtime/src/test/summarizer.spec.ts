@@ -4,7 +4,13 @@
  */
 
 import { IDeltaManager, IDeltaQueue, ITelemetryLogger } from "@microsoft/fluid-container-definitions";
-import { IDocumentMessage, ISequencedDocumentMessage, ISummaryConfiguration, MessageType } from "@microsoft/fluid-protocol-definitions";
+import {
+    IDocumentMessage,
+    ISequencedDocumentMessage,
+    ISummaryConfiguration,
+    ISummaryProposal,
+    MessageType,
+} from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import * as sinon from "sinon";
@@ -15,6 +21,7 @@ describe("Runtime", () => {
     describe("Container Runtime", () => {
         describe("Summarizer", () => {
             describe("Summary Schedule", () => {
+                let runCount: number;
                 let clock: sinon.SinonFakeTimers;
                 let emitter: EventEmitter;
                 let summarizer: Summarizer;
@@ -29,6 +36,7 @@ describe("Runtime", () => {
                     maxOps: 1000, // 1k ops (active)
                     maxAckWaitTime: 600000, // 10 min
                 };
+                const testSummaryOpSeqNum = -13;
 
                 before(() => {
                     clock = sinon.useFakeTimers();
@@ -36,6 +44,7 @@ describe("Runtime", () => {
 
                 beforeEach(() => {
                     clock.reset();
+                    runCount = 0;
                     lastSeq = 0;
                     emitter = new EventEmitter();
                     summarizer = new Summarizer(
@@ -46,9 +55,11 @@ describe("Runtime", () => {
                             connected: true,
                             summarizerClientId,
                             deltaManager: {
+                                referenceSequenceNumber: 0,
                                 inbound: emitter as IDeltaQueue<ISequencedDocumentMessage>,
                             } as IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
                             logger: {
+                                send: (event) => {},
                                 sendTelemetryEvent: (event) => {},
                             } as ITelemetryLogger,
                         } as ContainerRuntime,
@@ -64,6 +75,9 @@ describe("Runtime", () => {
                             };
                         },
                     );
+
+                    summarizer.run(summarizerClientId).catch((reason) => assert.fail(JSON.stringify(reason)));
+                    listenWithBroadcast();
                 });
 
                 after(() => {
@@ -82,10 +96,32 @@ describe("Runtime", () => {
                     await Promise.resolve();
                 }
 
+                function listenWithBroadcast(action?: () => void) {
+                    emitter.on(generateSummaryEvent, () => {
+                        if (action) {
+                            action();
+                        }
+                        runCount++;
+                        emitBroadcast();
+                    });
+                }
+
+                function emitBroadcast() {
+                    emitter.emit(summaryOpEvent, {
+                        type: MessageType.Summarize,
+                        referenceSequenceNumber: lastSeq,
+                        sequenceNumber: testSummaryOpSeqNum,
+                    });
+                }
+
+                async function emitAck(type: MessageType = MessageType.SummaryAck) {
+                    const summaryProposal: ISummaryProposal = {
+                        summarySequenceNumber: testSummaryOpSeqNum,
+                    };
+                    emitter.emit(summaryOpEvent, { contents: { summaryProposal }, type });
+                }
+
                 it("Should summarize after configured number of ops when not pending", async () => {
-                    let runCount = 0;
-                    summarizer.run(summarizerClientId).catch((reason) => assert.fail(JSON.stringify(reason)));
-                    emitter.on(generateSummaryEvent, () => runCount++);
                     await emitNextOp();
 
                     // too early, should not run yet
@@ -101,15 +137,12 @@ describe("Runtime", () => {
                     assert.strictEqual(runCount, 1);
 
                     // should run, because another op has come in, and our summary has been acked
-                    emitter.emit(summaryOpEvent, { type: MessageType.SummaryAck });
+                    await emitAck();
                     await emitNextOp();
                     assert.strictEqual(runCount, 2);
                 });
 
                 it("Should summarize after configured idle time when not pending", async () => {
-                    let runCount = 0;
-                    summarizer.run(summarizerClientId).catch((reason) => assert.fail(JSON.stringify(reason)));
-                    emitter.on(generateSummaryEvent, () => runCount++);
                     await emitNextOp();
 
                     // too early, should not run yet
@@ -129,19 +162,15 @@ describe("Runtime", () => {
                     assert.strictEqual(runCount, 1);
 
                     // should run, because another op has come in, and our summary has been acked
-                    emitter.emit(summaryOpEvent, { type: MessageType.SummaryAck });
+                    await emitAck();
                     await emitNextOp();
-                    clock.tick(summaryConfig.idleTime + 1);
-                    await Promise.resolve();
+                    clock.tick(summaryConfig.idleTime);
                     assert.strictEqual(runCount, 2);
                 });
 
                 it("Should summarize after configured active time when not pending", async () => {
-                    let runCount = 0;
                     const idlesPerActive = Math.floor((summaryConfig.maxTime + 1) / (summaryConfig.idleTime - 1));
                     const remainingTime = (summaryConfig.maxTime + 1) % (summaryConfig.idleTime - 1);
-                    summarizer.run(summarizerClientId).catch((reason) => assert.fail(JSON.stringify(reason)));
-                    emitter.on(generateSummaryEvent, () => runCount++);
                     await emitNextOp();
 
                     // too early should not run yet
@@ -170,16 +199,12 @@ describe("Runtime", () => {
                     assert.strictEqual(runCount, 1);
 
                     // should run, because another op has come in, and our summary has been acked
-                    emitter.emit(summaryOpEvent, { type: MessageType.SummaryAck });
+                    await emitAck();
                     await emitNextOp();
                     assert.strictEqual(runCount, 2);
                 });
 
                 it("Should summarize after pending timeout", async () => {
-                    let runCount = 0;
-                    summarizer.run(summarizerClientId).catch((reason) => assert.fail(JSON.stringify(reason)));
-                    emitter.on(generateSummaryEvent, () => runCount++);
-
                     // first run to start pending
                     await emitNextOp(summaryConfig.maxOps + 1);
                     assert.strictEqual(runCount, 1);
@@ -193,6 +218,13 @@ describe("Runtime", () => {
                     clock.tick(1);
                     await emitNextOp();
                     assert.strictEqual(runCount, 2);
+
+                    // verify subsequent ack works
+                    await emitNextOp(summaryConfig.maxOps + 1);
+                    assert.strictEqual(runCount, 2);
+                    await emitAck();
+                    await emitNextOp();
+                    assert.strictEqual(runCount, 3);
                 });
             });
         });
