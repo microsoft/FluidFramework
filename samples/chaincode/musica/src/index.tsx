@@ -88,7 +88,7 @@ export class Musica extends PrimedComponent implements IComponentHTMLVisual {
   }
 }
 
-export const ImageGalleryInstantiationFactory = new PrimedComponentFactory(
+export const MusicaInstantiationFactory = new PrimedComponentFactory(
   Musica,
   [],
 );
@@ -96,6 +96,6 @@ export const ImageGalleryInstantiationFactory = new PrimedComponentFactory(
 export const fluidExport = new SimpleModuleInstantiationFactory(
   "@fluid-example/musica",
   new Map([
-    ["@fluid-example/musica", Promise.resolve(ImageGalleryInstantiationFactory)],
+    ["@fluid-example/musica", Promise.resolve(MusicaInstantiationFactory)],
   ]),
 );
