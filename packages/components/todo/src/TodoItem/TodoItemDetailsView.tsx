@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { HTMLEmbeddedComponent, IComponentReactViewable } from "@microsoft/fluid-aqueduct-react";
+import { HTMLEmbeddedComponent } from "@microsoft/fluid-aqueduct-react";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import * as React from "react";
 import { TodoItemSupportedComponents } from "./supportedComponent";
@@ -73,7 +73,7 @@ export class TodoItemDetailsView extends React.Component<TodoItemDetailsViewProp
             // view component out of it (for now).  Preferably, we would instead take the returned model and feed it
             // into our own view component of our choosing.
             if (this.state.innerComponent.IComponentReactViewable) {
-                return (this.state.innerComponent as IComponentReactViewable).createJSXElement();
+                return this.state.innerComponent.IComponentReactViewable.createJSXElement();
             } else if (this.state.innerComponent.IComponentHTMLVisual) {
                 return (<HTMLEmbeddedComponent component={this.state.innerComponent.IComponentHTMLVisual} />);
             }
