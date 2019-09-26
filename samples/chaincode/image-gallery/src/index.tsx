@@ -47,23 +47,12 @@ export class ImageGalleryComponent extends PrimedComponent implements IComponent
 
   imageGallery: ImageGallery;
   images: ISharedMap;
-  ignoreSlide: boolean = false;
 
-  protected async componentInitializingFirstTime() {
-    this.root.set("position", 0);
+  private onSlide = (index) => {
+    this.root.set("position", index);
   }
 
-  public render(div: HTMLDivElement) {
-    div.className = "app-sandbox";
-
-    const onSlide = (index) => {
-      if (this.ignoreSlide) {
-        this.ignoreSlide = false;
-      } else {
-        this.root.set("position", index);
-      }
-    }
-
+  private reactRender = (div, onSlide = this.onSlide) => {
     ReactDOM.render(
       <ImageGallery
         ref={gallery => (this.imageGallery = gallery)}
@@ -73,7 +62,15 @@ export class ImageGalleryComponent extends PrimedComponent implements IComponent
       />,
       div
     );
+}
+  protected async componentInitializingFirstTime() {
+    this.root.set("position", 0);
+  }
 
+  public render(div: HTMLDivElement) {
+    div.className = "app-sandbox";
+
+    this.reactRender(div);
     this.imageGallery.slideToIndex(this.root.get("position"));
 
     this.root.on("valueChanged", (_, local) => {
@@ -82,8 +79,9 @@ export class ImageGalleryComponent extends PrimedComponent implements IComponent
       }
       const position = this.root.get<number>("position");
       if (this.imageGallery) {
+        // this is a result of a remote slide, don't trigger onSlide for this slide
+        this.reactRender(div, () => this.reactRender(div));
         this.imageGallery.slideToIndex(position);
-        this.ignoreSlide = true;
       }
     });
   };
