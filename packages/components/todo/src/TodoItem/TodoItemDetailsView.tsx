@@ -9,21 +9,21 @@ import * as React from "react";
 import { TodoItemSupportedComponents } from "./supportedComponent";
 import { TodoItem } from "./TodoItem";
 
-interface p {
+interface TodoItemDetailsProperties {
     todoItemModel: TodoItem;
 }
 
-interface s {
-    innerId: string;
+interface TodoItemDetailsState {
+    hasInnerComponent: boolean;
     innerComponent: IComponent;
 }
 
-export class TodoItemDetailsView extends React.Component<p, s> {
-    constructor(props: p) {
+export class TodoItemDetailsView extends React.Component<TodoItemDetailsProperties, TodoItemDetailsState> {
+    constructor(props: TodoItemDetailsProperties) {
         super(props);
 
         this.state = {
-            innerId: this.props.todoItemModel.innerIdCell.get(),
+            hasInnerComponent: this.props.todoItemModel.hasInnerComponent(),
             innerComponent: undefined,
         };
 
@@ -34,25 +34,24 @@ export class TodoItemDetailsView extends React.Component<p, s> {
         await this.props.todoItemModel.createInnerComponent(type, { startingText: type });
     }
 
-    async pullInnerComponent(): Promise<void> {
+    async refreshInnerComponentFromModel(): Promise<void> {
         const innerComponent = await this.props.todoItemModel.getInnerComponent();
         this.setState({innerComponent});
     }
 
     async componentDidMount() {
-        this.props.todoItemModel.innerIdCell.on("op", async () => {
+        this.props.todoItemModel.on("innerComponentChanged", async () => {
             this.setState({
-                innerId: this.props.todoItemModel.innerIdCell.get(),
-                innerComponent: undefined,
+                hasInnerComponent: this.props.todoItemModel.hasInnerComponent(),
             });
-            await this.pullInnerComponent();
+            await this.refreshInnerComponentFromModel();
         });
 
-        await this.pullInnerComponent();
+        await this.refreshInnerComponentFromModel();
     }
 
     render() {
-        if (this.state.innerId === "") {
+        if (!this.state.hasInnerComponent) {
             // No one has created a detailed item yet
             return (
                 <>

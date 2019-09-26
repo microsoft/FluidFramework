@@ -35,7 +35,7 @@ export class TodoItem extends PrimedComponent
 
   // tslint:disable:prefer-readonly
   public text: SharedString;
-  public innerIdCell: ISharedCell;
+  private innerIdCell: ISharedCell;
   // tslint:enable:prefer-readonly
 
   public get IComponentHTMLVisual() { return this; }
@@ -80,6 +80,12 @@ export class TodoItem extends PrimedComponent
       text,
       innerIdCell,
     ]);
+
+    this.innerIdCell.on("op", (op, local) => {
+      if (!local) {
+        this.emit("innerComponentChanged");
+      }
+    });
   }
 
   // start IComponentHTMLVisual
@@ -117,6 +123,10 @@ export class TodoItem extends PrimedComponent
     return this.root.get("checked");
   }
 
+  public hasInnerComponent(): boolean {
+    return this.innerIdCell.get() !== "";
+  }
+
   /**
    * The Todo Item can embed multiple types of components. This is where these components are defined.
    * @param type - component to be created
@@ -143,6 +153,8 @@ export class TodoItem extends PrimedComponent
 
     // Update the inner component id
     this.innerIdCell.set(id);
+
+    this.emit("innerComponentChanged");
   }
 
   public async getInnerComponent() {
