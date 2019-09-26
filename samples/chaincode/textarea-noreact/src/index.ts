@@ -5,7 +5,7 @@
 
 import {
   SimpleModuleInstantiationFactory,
-} from "@prague/aqueduct";
+} from "@microsoft/fluid-aqueduct";
 
 import { TextareaNoReactInstantiationFactory } from "./main";
 
