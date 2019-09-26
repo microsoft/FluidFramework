@@ -10,7 +10,7 @@ import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import { SharedString } from "@microsoft/fluid-sequence";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import { TodoItemName } from "../TodoItem/index";
+import { TodoItem, TodoItemName } from "../TodoItem/index";
 import { TodoView } from "./TodoView";
 
 // tslint:disable-next-line: no-var-requires no-require-imports
@@ -30,9 +30,7 @@ export class Todo extends PrimedComponent implements IComponentHTMLVisual, IComp
   private readonly todoItemsKey = "todo-items";
   private readonly todoTitleKey = "todo-title";
 
-  // tslint:disable:prefer-readonly
   private todoItemsMap: ISharedMap;
-  // tslint:enable:prefer-readonly
 
   public get IComponentHTMLVisual() { return this; }
   public get IComponentReactViewable() { return this; }
@@ -109,5 +107,14 @@ export class Todo extends PrimedComponent implements IComponentHTMLVisual, IComp
 
     // Store the id of the component in our ids map so we can reference it later
     this.todoItemsMap.set(id, "");
+  }
+
+  public async getTodoItemComponents() {
+    const todoItemComponentPromises: Promise<TodoItem>[] = [];
+    for (const id of this.todoItemsMap.keys()) {
+      todoItemComponentPromises.push(this.getComponent<TodoItem>(id));
+    }
+
+    return Promise.all(todoItemComponentPromises);
   }
 }

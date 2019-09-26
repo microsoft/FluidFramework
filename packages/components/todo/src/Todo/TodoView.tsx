@@ -47,6 +47,8 @@ export class TodoView extends React.Component<TodoViewProps, TodoViewState> {
         ]);
 
         // Map is now realized, register for events on it
+        // Would prefer for the model to register for these events, and then emit events of its own
+        // (e.g. maybe "componentListUpdate")
         this.todoItemsMap.on("op", async () => {
             // Ideally should not be listening to op - this will be redundant for ACK on ops we submitted
             await this.refreshTodoItemListFromModel();
@@ -61,15 +63,8 @@ export class TodoView extends React.Component<TodoViewProps, TodoViewState> {
     }
 
     async refreshTodoItemListFromModel(): Promise<void> {
-        // The map only stores keys, so we need to go retrieve the component using getComponent.  Ultimately we'd probably prefer
-        // to be storing handles in the values so we can get them out without passing in the getComponent.  Alternatively, maybe
-        // move a "getComponentList" method to the model
-        const todoItemComponentPromises = [];
-        for (const id of this.todoItemsMap.keys()) {
-            todoItemComponentPromises.push(this.props.getComponent(id));
-        }
-
-        return Promise.all(todoItemComponentPromises).then((todoItemComponents) => this.setState({todoItemComponents}));
+        return this.props.todoModel.getTodoItemComponents()
+                .then((todoItemComponents) => this.setState({todoItemComponents}));
     }
 
     /**
