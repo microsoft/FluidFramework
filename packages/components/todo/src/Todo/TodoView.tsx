@@ -36,7 +36,7 @@ export class TodoView extends React.Component<TodoViewProps, TodoViewState> {
         };
 
         this.handleSubmit = this.handleSubmit.bind(this);
-        this.pullTodoItems = this.pullTodoItems.bind(this);
+        this.refreshTodoItemListFromModel = this.refreshTodoItemListFromModel.bind(this);
     }
 
     async componentDidMount() {
@@ -49,18 +49,18 @@ export class TodoView extends React.Component<TodoViewProps, TodoViewState> {
         // Map is now realized, register for events on it
         this.todoItemsMap.on("op", async () => {
             // Ideally should not be listening to op - this will be redundant for ACK on ops we submitted
-            await this.pullTodoItems();
+            await this.refreshTodoItemListFromModel();
         });
 
         // Wait for all the todo items to load, then declare the model loaded so we can render later
-        await this.pullTodoItems();
+        await this.refreshTodoItemListFromModel();
         this.setState({modelLoaded: true});
 
         // Set focus to the text input
         this.newTextInput.focus();
     }
 
-    async pullTodoItems(): Promise<void> {
+    async refreshTodoItemListFromModel(): Promise<void> {
         const todoItemComponentPromises = [];
         for (const key of this.todoItemsMap.keys()) {
             todoItemComponentPromises.push(this.props.getComponent(key));
@@ -75,7 +75,7 @@ export class TodoView extends React.Component<TodoViewProps, TodoViewState> {
     async handleSubmit(ev: React.FormEvent<HTMLFormElement>): Promise<void> {
         ev.preventDefault();
         await this.props.todoModel.addTodoItemComponent({ startingText: this.newTextInput.value });
-        await this.pullTodoItems();
+        await this.refreshTodoItemListFromModel();
         this.newTextInput.value = "";
     }
 
