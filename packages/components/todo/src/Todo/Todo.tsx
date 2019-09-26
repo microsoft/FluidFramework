@@ -70,8 +70,6 @@ export class Todo extends PrimedComponent implements IComponentHTMLVisual, IComp
    * Creates a new view for a caller that doesn't directly support React
    */
   public render(div: HTMLElement) {
-    // tslint:disable-next-line:no-console
-    console.log("Todo render()");
     // Because we are using React and our caller is not we will use the
     // ReactDOM to render our JSX.Element directly into the provided div.
     // Because we support IComponentReactViewable and createViewElement returns a JSX.Element
@@ -98,7 +96,7 @@ export class Todo extends PrimedComponent implements IComponentHTMLVisual, IComp
 
   // end IComponentReactViewable
 
-  // API for creating new Todo Items
+  // addTodoItemComponent and getTodoItemComponent are the public API surface for the Todo model, used by the view
   public async addTodoItemComponent(props?: any) {
     // create a new ID for our component
     const id = `item${Date.now().toString()}`;

@@ -85,8 +85,6 @@ export class TodoItem extends PrimedComponent
   // start IComponentHTMLVisual
 
   public render(div: HTMLElement) {
-    // tslint:disable-next-line:no-console
-    console.log("TodoItem render()");
     ReactDOM.render(
         this.createJSXElement(),
         div,

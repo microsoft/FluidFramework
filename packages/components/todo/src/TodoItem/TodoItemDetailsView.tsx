@@ -52,8 +52,6 @@ export class TodoItemDetailsView extends React.Component<p, s> {
     }
 
     render() {
-        // tslint:disable-next-line:no-console
-        console.log(this.state.innerId, this.state.innerComponent);
         if (this.state.innerId === "") {
             // No one has created a detailed item yet
             return (
