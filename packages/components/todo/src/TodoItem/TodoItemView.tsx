@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { CollaborativeCheckbox, CollaborativeInput } from "@microsoft/fluid-aqueduct-react";
+import { CollaborativeInput } from "@microsoft/fluid-aqueduct-react";
+import { SharedString } from "@microsoft/fluid-sequence";
 import * as React from "react";
 import { TodoItem } from "./TodoItem";
 import { TodoItemDetailsView } from "./TodoItemDetailsView";
@@ -18,6 +19,7 @@ interface TodoItemViewState {
 }
 
 export class TodoItemView extends React.Component<TodoItemViewProps, TodoItemViewState> {
+    private readonly itemText: SharedString;
     private readonly baseUrl = `${window.location.origin}`;
     private readonly buttonStyle = {
         height: "25px",
@@ -28,6 +30,8 @@ export class TodoItemView extends React.Component<TodoItemViewProps, TodoItemVie
 
     constructor(props: TodoItemViewProps) {
         super(props);
+
+        this.itemText = this.props.todoItemModel.getTodoItemText();
 
         const pathName = window.location.pathname.split("/");
         const path: string[] = [];
@@ -42,7 +46,7 @@ export class TodoItemView extends React.Component<TodoItemViewProps, TodoItemVie
             innerComponentVisible: false,
         };
 
-        this.handleCheckedChange = this.handleCheckedChange.bind(this);
+        this.setCheckedState = this.setCheckedState.bind(this);
     }
 
     componentDidMount() {
@@ -51,8 +55,8 @@ export class TodoItemView extends React.Component<TodoItemViewProps, TodoItemVie
         });
     }
 
-    private handleCheckedChange(newState: boolean): void {
-        this.props.todoItemModel.setCheckedState(newState);
+    private setCheckedState(e: React.ChangeEvent<HTMLInputElement>): void {
+        this.props.todoItemModel.setCheckedState(e.target.checked);
     }
 
     render() {
@@ -60,12 +64,14 @@ export class TodoItemView extends React.Component<TodoItemViewProps, TodoItemVie
         return (
             <div className="todo-item">
                 <h2>
-                    <CollaborativeCheckbox
+                    <input
+                        type="checkbox"
+                        aria-checked={this.state.checked}
+                        name={this.props.todoItemModel.url}
                         checked={this.state.checked}
-                        onCheckedChange={this.handleCheckedChange}
-                        id={this.props.todoItemModel.url}/>
+                        onChange={this.setCheckedState} />
                     <CollaborativeInput
-                        sharedString={this.props.todoItemModel.text}
+                        sharedString={this.itemText}
                         style={{
                             border: "none",
                             fontFamily: "inherit",

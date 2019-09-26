@@ -96,7 +96,8 @@ export class Todo extends PrimedComponent implements IComponentHTMLVisual, IComp
 
   // end IComponentReactViewable
 
-  // addTodoItemComponent and getTodoItemComponent are the public API surface for the Todo model, used by the view
+  // start public API surface for the Todo model, used by the view
+
   public async addTodoItemComponent(props?: any) {
     // create a new ID for our component
     const id = `item${Date.now().toString()}`;
@@ -118,4 +119,6 @@ export class Todo extends PrimedComponent implements IComponentHTMLVisual, IComp
 
     return Promise.all(todoItemComponentPromises);
   }
+
+  // end public API surface for the Todo model, used by the view
 }

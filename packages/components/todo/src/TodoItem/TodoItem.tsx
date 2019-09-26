@@ -38,7 +38,7 @@ export class TodoItem extends PrimedComponent
     IComponentReactViewable {
 
   // tslint:disable:prefer-readonly
-  public text: SharedString;
+  private text: SharedString;
   private innerIdCell: ISharedCell;
   // tslint:enable:prefer-readonly
 
@@ -127,6 +127,13 @@ export class TodoItem extends PrimedComponent
 
   // end IComponentReactViewable
 
+  // start public API surface for the TodoItem model, used by the view
+
+  // Would prefer not to hand this out, and instead give back a component?
+  public getTodoItemText() {
+    return this.text;
+  }
+
   public setCheckedState(newState: boolean): void {
     this.root.set(checkedKey, newState);
     this.emit("checkedStateChanged");
@@ -173,4 +180,6 @@ export class TodoItem extends PrimedComponent
 
     this.emit("innerComponentChanged");
   }
+
+  // end public API surface for the TodoItem model, used by the view
 }

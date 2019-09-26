@@ -68,6 +68,10 @@ export class TodoItemDetailsView extends React.Component<TodoItemDetailsViewProp
             );
         } else {
             // Fully loaded
+
+            // createInnerComponent will create the model component for the chosen option.  We then need to get the
+            // view component out of it (for now).  Preferably, we would instead take the returned model and feed it
+            // into our own view component of our choosing.
             if (this.state.innerComponent.IComponentReactViewable) {
                 return (this.state.innerComponent as IComponentReactViewable).createJSXElement();
             } else if (this.state.innerComponent.IComponentHTMLVisual) {
