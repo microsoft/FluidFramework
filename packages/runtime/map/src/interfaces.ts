@@ -155,6 +155,18 @@ export interface IDirectory extends Map<string, any>, IValueTypeCreator {
  * Interface describing a shared directory.
  */
 export interface ISharedDirectory extends ISharedObject, IDirectory {
+    /**
+     * Registers a listener on the specified events
+     */
+    on(event: string | symbol, listener: (...args: any[]) => void): this;
+    on(
+        event: "pre-op" | "op",
+        listener: (op: ISequencedDocumentMessage, local: boolean, target: this) => void): this;
+    on(event: "valueChanged", listener: (
+        changed: IDirectoryValueChanged,
+        local: boolean,
+        op: ISequencedDocumentMessage,
+        target: this) => void): this;
 }
 
 /**
