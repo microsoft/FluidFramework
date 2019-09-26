@@ -79,7 +79,8 @@ export class TodoItemView extends React.Component<p, s> {
                     </button>
                     <button
                         style={this.buttonStyle}
-                        onClick={() => window.open(`${this.baseUrl}/${this.props.todoItemModel.url}`, "_blank")}>↗</button>
+                        onClick={() => window.open(`${this.baseUrl}/${this.props.todoItemModel.url}`, "_blank")}>↗
+                    </button>
                     <button
                         style={this.buttonStyle}
                         onClick={() => alert("Implement Delete")}>X</button>
