@@ -195,5 +195,51 @@ describe("SparseMatrix", () => {
                 [">", 1, "<", undefined]
             ]);
         });
+
+        it("marshalls JSON", async () => {
+            // The nesting is mostly a test of the recursive Json<T> type declaration.
+            const json = {
+                z: null,
+                b: true,
+                n: 0,
+                s: "s0",
+                a: [null, false, 1, "s1", {
+                    b: true,
+                    n: 1,
+                    s: "s2",
+                    a: [{
+                        b: false,
+                        n: 2,
+                        s: "s2",
+                        a: [],
+                        o: {}
+                    }], o: {}}],
+                o: {
+                    b: false,
+                    n: 3,
+                    s: "s3", a: [null, false, 1, "s1", {
+                        b: false,
+                        n: -1,
+                        s: "s2",
+                        a: [{ 
+                            b: false,
+                            n: -1,
+                            s: "s2",
+                            a: [],
+                            o: {}
+                        }],o: {}
+                    }],
+                    o: {}
+                },
+            }
+
+            const items = [null, true, -1, "s", [null, true, -1, "s"], json];
+
+            matrix1.insertRows(0, 1);
+            matrix1.insertCols(0, items.length);
+            matrix1.setItems(0, 0, items);
+
+            await assertMatrices([items]);
+        });
     });
 });

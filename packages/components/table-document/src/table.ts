@@ -4,16 +4,16 @@
  */
 
 import { ICombiningOp, PropertySet } from "@microsoft/fluid-merge-tree";
-import { UnboxedOper } from "@microsoft/fluid-sequence";
+import { JsonPrimitive } from "@microsoft/fluid-runtime-definitions";
 
 export interface ITable {
     readonly numRows: number;
     readonly numCols: number;
 
-    getCellValue(row: number, col: number): UnboxedOper;
-    setCellValue(row: number, col: number, value: UnboxedOper);
-    evaluateFormula(formula: string): UnboxedOper;
-    evaluateCell(row: number, col: number): UnboxedOper;
+    getCellValue(row: number, col: number): JsonPrimitive;
+    setCellValue(row: number, col: number, value: JsonPrimitive);
+    evaluateFormula(formula: string): JsonPrimitive;
+    evaluateCell(row: number, col: number): JsonPrimitive;
     annotateRows(startRow: number, endRow: number, properties: PropertySet, op?: ICombiningOp);
     getRowProperties(row: number): PropertySet;
     annotateCols(startCol: number, endCol: number, properties: PropertySet, op?: ICombiningOp);
