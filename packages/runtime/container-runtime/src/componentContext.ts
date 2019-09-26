@@ -289,15 +289,19 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
 
     /**
      * Updates the leader.
-     * @param clientId - Client id of the new leader.
+     * @param leadership - Whether this client is the new leader or not.
      */
-    public updateLeader(clientId: string) {
+    public updateLeader(leadership: boolean) {
         // Leader events are ignored if the component is not yet loaded
         if (!this.loaded) {
             return;
         }
+        if (leadership) {
+            this.emit("leader", this.clientId);
+        } else {
+            this.emit("notleader", this.clientId);
+        }
 
-        this.emit("leader", clientId);
     }
 
     public bindRuntime(componentRuntime: IComponentRuntime): void {

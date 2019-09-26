@@ -64,7 +64,8 @@ data:
         "keyValue": {
             "documentUrl": "{{ .Values.endpoints.keyValueUrl }}",
             "jwtKey": "VBQyoGpEYrTn3XQPtXW3K8fFDd",
-            "gatewayUrl": "{{ .Values.endpoints.gatewayUrl }}"
+            "gatewayUrl": "{{ .Values.endpoints.gatewayUrl }}",
+            "load": true
         },
         "express": {
             "session": {
