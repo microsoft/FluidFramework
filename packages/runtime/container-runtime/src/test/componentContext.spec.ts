@@ -5,7 +5,7 @@
 // tslint:disable: prefer-const
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { IDocumentStorageService, ISnapshotTree } from "@microsoft/fluid-protocol-definitions";
-import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { ComponentFactoryTypes, IComponentContext, IComponentFactory, IComponentRegistry, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { MockRuntime } from "@microsoft/fluid-test-runtime-utils";
 import * as assert from "assert";
 import { BlobTreeEntry } from "..";
@@ -24,13 +24,13 @@ describe("Component Context Tests", () => {
         beforeEach(async () => {
 
             containerRuntime = {
-                IComponentRegistry: {get: (id: string) => {
+                IComponentRegistry: { get: (id: string) => {
                     const factory = {
                         IComponentFactory: {
                             instantiateComponent: (context: IComponentContext) => undefined,
                         },
                         instantiateComponent: (context: IComponentContext) =>  undefined,
-                    } as IComponentFactory;
+                    } as ComponentFactoryTypes & Partial<IComponentRegistry>;
                     return Promise.resolve(factory);
                 }},
             } as ContainerRuntime;
@@ -38,7 +38,7 @@ describe("Component Context Tests", () => {
 
         it("Check LocalComponent Attributes", () => {
             localComponentContext =
-            new LocalComponentContext("Test1", ["TestComponent1"], containerRuntime, storage, scope, attachCb);
+                new LocalComponentContext("Test1", ["TestComponent1"], containerRuntime, storage, scope, attachCb);
 
             // tslint:disable-next-line: no-floating-promises
             localComponentContext.realize();
@@ -55,7 +55,54 @@ describe("Component Context Tests", () => {
 
             assert.equal(contents.pkg, componentAttributes.pkg, "Local Component package does not match.");
             assert.equal(contents.snapshotFormatVersion, componentAttributes.snapshotFormatVersion, "Local Component snapshot version does not match.");
-            assert.equal(attachMessage.type, "TestComponent1");
+            assert.equal(attachMessage.type, "TestComponent1", "Attach message type does not match.");
+        });
+
+        it("Supplying array of packages in LocalComponentContext should create exception", async () => {
+            let exception = false;
+            localComponentContext =
+                new LocalComponentContext("Test1", ["TestComp", "SubComp"], containerRuntime, storage, scope, attachCb);
+
+            await localComponentContext.realize()
+            .catch((error) => {
+                exception = true;
+            });
+            assert.equal(exception, true, "Exception did not occured.");
+        });
+
+        it("Supplying array of packages in LocalComponentContext should not create exception", async () => {
+            containerRuntime = {
+                IComponentRegistry: { get: (id: string) => {
+                    const factory = {
+                        IComponentFactory: {
+                            instantiateComponent: (context: IComponentContext) => undefined,
+                        },
+                        instantiateComponent: (context: IComponentContext) =>  undefined,
+                    } as ComponentFactoryTypes & Partial<IComponentRegistry>;
+                    factory.IComponentRegistry = { get: (name: string) => {
+                        return Promise.resolve(factory);
+                    }} as IComponentRegistry;
+                    return Promise.resolve(factory);
+                }},
+            } as ContainerRuntime;
+            localComponentContext =
+                new LocalComponentContext("Test1", ["TestComp", "SubComp"], containerRuntime, storage, scope, attachCb);
+
+            // tslint:disable-next-line: no-floating-promises
+            localComponentContext.realize();
+            localComponentContext.bindRuntime(new MockRuntime());
+
+            const attachMessage = localComponentContext.generateAttachMessage();
+            const blob = attachMessage.snapshot.entries[0] as BlobTreeEntry;
+            const contents = JSON.parse(blob.value.contents) as IComponentAttributes;
+            const componentAttributes: IComponentAttributes = {
+                pkg: JSON.stringify(["TestComp", "SubComp"]),
+                snapshotFormatVersion: "0.1",
+            };
+
+            assert.equal(contents.pkg, componentAttributes.pkg, "Local Component package does not match.");
+            assert.equal(contents.snapshotFormatVersion, componentAttributes.snapshotFormatVersion, "Local Component snapshot version does not match.");
+            assert.equal(attachMessage.type, "SubComp", "Attach message type does not match.");
         });
     });
 
