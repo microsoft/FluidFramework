@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent } from "@prague/component-core-interfaces";
+import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 
 /**
  * The interfaces in this file are related to component interface discovery. The idea
@@ -23,7 +23,7 @@ import { IComponent } from "@prague/component-core-interfaces";
  * Disclaimer: These interfaces are experimental and are subject to change.
  */
 
-declare module "@prague/component-core-interfaces" {
+declare module "@microsoft/fluid-component-core-interfaces" {
     export interface IComponent extends Readonly<Partial<
         IProvideComponentDiscoverableInterfaces
         & IProvideComponentDiscoverInterfaces
