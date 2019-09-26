@@ -35,6 +35,7 @@ import { addListNodes } from "prosemirror-schema-list";
 import { exampleSetup } from "prosemirror-example-setup";
 import { FluidCollabPlugin } from "./fluidPlugin";
 import { schema } from "./fluidSchema";
+import { create as createSelection } from "./selection";
 
 require("prosemirror-view/style/prosemirror.css");
 require("prosemirror-menu/style/menu.css");
@@ -253,7 +254,9 @@ export class ProseMirror extends EventEmitter implements IComponentLoadable, ICo
 
         const state = EditorState.create({
             doc: fluidDoc,
-            plugins: exampleSetup({ schema: fluidSchema }).concat(fluidPlugin.plugin),
+            plugins: exampleSetup({ schema: fluidSchema })
+                .concat(fluidPlugin.plugin)
+                .concat(createSelection()),
         });
 
         this.editorView = new EditorView(

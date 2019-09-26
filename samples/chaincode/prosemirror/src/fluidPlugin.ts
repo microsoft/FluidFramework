@@ -120,6 +120,28 @@ export class FluidCollabPlugin {
                         break;
                     }
 
+                    // TODO a replace should be an entire group
+                    // iterate over all elements and create a new fragment
+
+                    // {
+                    //     "stepType": "replace",
+                    //     "from": 14,
+                    //     "to": 14,
+                    //     "slice": {
+                    //         "content": [
+                    //         {
+                    //             "type": "paragraph"
+                    //         },
+                    //         {
+                    //             "type": "paragraph"
+                    //         }
+                    //         ],
+                    //         "openStart": 1,
+                    //         "openEnd": 1
+                    //     },
+                    //     "structure": true
+                    // }
+
                     for (const content of stepAsJson.slice.content) {
                         let props: any = undefined;
 
