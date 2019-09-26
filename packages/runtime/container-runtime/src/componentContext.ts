@@ -37,9 +37,15 @@ import { EventEmitter } from "events";
 import { ContainerRuntime } from "./containerRuntime";
 import { BlobTreeEntry } from "./utils";
 
+// Snapshot Format Version to be used in component attributes.
 const currentSnapshotFormatVersion = "0.1";
 
-interface IComponentAttributes {
+/**
+ * Added IComponentAttributes similar to IChannelAttributues which will tell
+ * the attributes of a component like the package, snapshotFormatVersion to
+ * take different decisions based on a particular snapshotForamtVersion.
+ */
+export interface IComponentAttributes {
     pkg: string;
     readonly snapshotFormatVersion?: string;
 }
@@ -262,8 +268,10 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
 
         const { pkg } = await this.getSnapshotDetails();
 
-        const componentAttributes: IComponentAttributes = { pkg: JSON.stringify(pkg),
-            snapshotFormatVersion: currentSnapshotFormatVersion };
+        const componentAttributes: IComponentAttributes = {
+            pkg: JSON.stringify(pkg),
+            snapshotFormatVersion: currentSnapshotFormatVersion,
+        };
 
         const entries = await this.componentRuntime.snapshotInternal();
         const snapshot = { entries, id: undefined };
@@ -416,13 +424,21 @@ export class RemotedComponentContext extends ComponentContext {
             } else {
                 // Need to rip through snapshot and use that to populate extraBlobs
                 const { pkg, snapshotFormatVersion } =
-                    await readAndParse<{ pkg: string, snapshotFormatVersion?: string }>(
+                    await readAndParse<IComponentAttributes>(
                     this.storage,
                     tree.blobs[".component"]);
 
+                let pkgFromSnapshot: string[];
+                // Use the snapshotFormatVersion to determine how the pkg is encoded in the snapshot.
+                // For snapshotFormatVersion = "0.1", pkg is jsonified, otherwise it is just a string.
+                if (snapshotFormatVersion && snapshotFormatVersion === currentSnapshotFormatVersion) {
+                    pkgFromSnapshot = JSON.parse(pkg) as string[];
+                } else {
+                    pkgFromSnapshot = [pkg];
+                }
+
                 this.details = {
-                    pkg: snapshotFormatVersion !== undefined && snapshotFormatVersion === currentSnapshotFormatVersion ?
-                        JSON.parse(pkg) as string[] : [pkg],
+                    pkg: pkgFromSnapshot,
                     snapshot: tree,
                 };
             }
@@ -447,7 +463,9 @@ export class LocalComponentContext extends ComponentContext {
 
     public generateAttachMessage(): IAttachMessage {
         const componentAttributes: IComponentAttributes = {
-            pkg: JSON.stringify(this.pkg), snapshotFormatVersion: currentSnapshotFormatVersion };
+            pkg: JSON.stringify(this.pkg),
+            snapshotFormatVersion: currentSnapshotFormatVersion,
+        };
 
         const entries = this.componentRuntime.getAttachSnapshot();
         const snapshot = { entries, id: undefined };
@@ -462,7 +480,7 @@ export class LocalComponentContext extends ComponentContext {
         const message: IAttachMessage = {
             id: this.id,
             snapshot,
-            type: JSON.stringify(componentAttributes),
+            type: this.pkg[this.pkg.length - 1],
         };
 
         return message;
