@@ -61,9 +61,12 @@ export class TodoView extends React.Component<TodoViewProps, TodoViewState> {
     }
 
     async refreshTodoItemListFromModel(): Promise<void> {
+        // The map only stores keys, so we need to go retrieve the component using getComponent.  Ultimately we'd probably prefer
+        // to be storing handles in the values so we can get them out without passing in the getComponent.  Alternatively, maybe
+        // move a "getComponentList" method to the model
         const todoItemComponentPromises = [];
-        for (const key of this.todoItemsMap.keys()) {
-            todoItemComponentPromises.push(this.props.getComponent(key));
+        for (const id of this.todoItemsMap.keys()) {
+            todoItemComponentPromises.push(this.props.getComponent(id));
         }
 
         return Promise.all(todoItemComponentPromises).then((todoItemComponents) => this.setState({todoItemComponents}));
