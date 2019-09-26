@@ -15,6 +15,7 @@ import * as assert from "assert";
 import * as fs from "fs";
 import { printMessageStats } from "./fluidAnalyzeMessages";
 import {
+    connectToWebSocket,
     dumpMessages,
     dumpMessageStats,
     messageTypeFilter,
@@ -88,9 +89,8 @@ async function *loadAllSequencedMessages(
         console.log(`\n${Math.floor((Date.now() - timeStart) / 1000)} seconds to retrieve ${opsStorage} ops in ${requests} requests`);
     }
 
-    let logMsg = "";
-    const connectToWebSocket = false;
     if (connectToWebSocket) {
+        let logMsg = "";
         const client: IClient = {
             permission: [],
             scopes: [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],

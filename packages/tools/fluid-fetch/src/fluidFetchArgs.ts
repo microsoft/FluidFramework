@@ -23,6 +23,8 @@ export const messageTypeFilter = new Set<string>();
 export let paramURL: string | undefined;
 export let paramJWT: string;
 
+export let connectToWebSocket = false;
+
 const optionsArray =
     [
         ["--dump:rawmessage", "dump all messages"],
@@ -37,6 +39,7 @@ const optionsArray =
         ["--numSnapshotVersions <number>", "Number of versions to load (default:10)"],
         ["--snapshotVersionIndex <number>", "Index of the version to dump"],
         ["--saveDir <outdir>", "Save data of the snapshots and messages"],
+        ["--websocket", "Connect to web socket to download initial messages"],
     ];
 
 export function printUsage() {
@@ -93,6 +96,9 @@ export function parseArguments() {
                 break;
             case "--saveDir":
                 paramSave = parseStrArg(i++, "save data path");
+                break;
+            case "--websocket":
+                connectToWebSocket = true;
                 break;
             default:
                 try {
