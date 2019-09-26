@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentHandle } from "@prague/component-core-interfaces";
-import { IHost } from "@prague/container-definitions";
-import * as MergeTree from "@prague/merge-tree";
-import { IDocumentServiceFactory } from "@prague/protocol-definitions";
-import * as Sequence from "@prague/sequence";
-import {SpellChecker} from "@prague/spellchecker";
+import { SpellChecker } from "@fluid-example/spellchecker-agent";
+import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
+import { IHost } from "@microsoft/fluid-container-definitions";
+import * as MergeTree from "@microsoft/fluid-merge-tree";
+import { IDocumentServiceFactory } from "@microsoft/fluid-protocol-definitions";
+import * as Sequence from "@microsoft/fluid-sequence";
 import { BaseWork } from "./baseWork";
 import { IWork } from "./definitions";
 

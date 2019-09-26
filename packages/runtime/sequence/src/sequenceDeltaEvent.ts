@@ -13,7 +13,7 @@ import {
     MergeTreeMaintenanceType,
     PropertySet,
     SortedSegmentSet,
-} from "@prague/merge-tree";
+} from "@microsoft/fluid-merge-tree";
 
 /**
  * Base class for SequenceDeltaEvent and SequenceMaintenanceEvent.
@@ -115,9 +115,7 @@ export class SequenceDeltaEvent extends SequenceEvent {
         mergeTreeClient: Client,
     ) {
         super(deltaArgs, mergeTreeClient);
-        this.isLocal =
-            deltaArgs.mergeTreeClientId ===
-            deltaArgs.mergeTree.collabWindow.clientId;
+        this.isLocal = opArgs.sequencedMessage === undefined;
     }
 }
 

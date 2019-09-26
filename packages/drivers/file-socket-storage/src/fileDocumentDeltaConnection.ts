@@ -3,16 +3,18 @@
  * Licensed under the MIT License.
  */
 
+import * as messages from "@microsoft/fluid-driver-base";
 import {
+    ConnectionMode,
     IContentMessage,
     IDocumentDeltaConnection,
     IDocumentMessage,
     ISequencedDocumentMessage,
     IServiceConfiguration,
+    ISignalClient,
     ISignalMessage,
     ITokenClaims,
-} from "@prague/protocol-definitions";
-import * as messages from "@prague/socket-storage-shared";
+} from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
 import { debug } from "./debug";
 import { FileDeltaStorageService } from "./fileDeltaStorageService";
@@ -102,6 +104,7 @@ export class ReplayFileDeltaConnection extends EventEmitter implements IDocument
      */
     public static async create(
             documentDeltaStorageService: FileDeltaStorageService): Promise<ReplayFileDeltaConnection> {
+        const mode: ConnectionMode = "write";
         const connection = {
             claims: Claims,
             clientId: "",
@@ -109,7 +112,9 @@ export class ReplayFileDeltaConnection extends EventEmitter implements IDocument
             initialContents: [],
             initialMessages: [],
             initialSignals: [],
+            initialClients: [],
             maxMessageSize: ReplayMaxMessageSize,
+            mode,
             parentBranch: null,
             serviceConfiguration: {
                 blockSize: 64436,
@@ -118,6 +123,7 @@ export class ReplayFileDeltaConnection extends EventEmitter implements IDocument
                     idleTime: 5000,
                     maxOps: 1000,
                     maxTime: 5000 * 12,
+                    maxAckWaitTime: 600000,
                 },
             },
             supportedVersions: [fileProtocolVersion],
@@ -146,6 +152,10 @@ export class ReplayFileDeltaConnection extends EventEmitter implements IDocument
         return this.details.clientId;
     }
 
+    public get mode(): ConnectionMode {
+        return this.details.mode;
+    }
+
     public get claims(): ITokenClaims {
         return this.details.claims;
     }
@@ -172,6 +182,10 @@ export class ReplayFileDeltaConnection extends EventEmitter implements IDocument
 
     public get initialSignals(): ISignalMessage[] | undefined {
         return this.details.initialSignals;
+    }
+
+    public get initialClients(): ISignalClient[] {
+        return this.details.initialClients ? this.details.initialClients : [];
     }
 
     public get serviceConfiguration(): IServiceConfiguration {

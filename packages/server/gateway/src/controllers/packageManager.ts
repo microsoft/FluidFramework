@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { IPackage } from "@prague/container-definitions";
+import { IPackage } from "@microsoft/fluid-container-definitions";
 import {
     IPackageList,
     IPackageManager,
     IPackument,
     ISearchParams,
     ISearchResult,
-} from "@prague/host-service-interfaces";
+} from "@microsoft/fluid-host-service-interfaces";
 import Axios from "axios";
 import * as query from "querystring";
 

@@ -3,17 +3,13 @@
 * Licensed under the MIT License.
 */
 
-import { PrimedComponent } from "@prague/aqueduct";
-import {
-  IComponent,
-  IComponentHTMLVisual,
-  IComponentLoadable,
-} from "@prague/component-core-interfaces";
-import { IPraguePackage } from "@prague/container-definitions";
+import { PrimedComponent } from "@microsoft/fluid-aqueduct";
+import { IComponent, IComponentHTMLVisual, IComponentLoadable } from "@microsoft/fluid-component-core-interfaces";
+import { IPackage } from "@microsoft/fluid-container-definitions";
 import * as uuid from "uuid";
 
 // tslint:disable-next-line: no-var-requires no-require-imports
-const pkg = require("../../package.json") as IPraguePackage;
+const pkg = require("../../package.json") as IPackage;
 export const WaterParkLoaderName = `${pkg.name}-loader`;
 
 /**

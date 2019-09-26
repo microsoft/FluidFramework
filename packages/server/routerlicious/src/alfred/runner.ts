@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { Deferred } from "@microsoft/fluid-core-utils";
 import {
     IAlfredTenant,
-    ICache,
+    IClientManager,
     ICollection,
     IDocumentStorage,
     IOrdererManager,
@@ -16,7 +17,6 @@ import {
     MongoManager,
 } from "@microsoft/fluid-server-services-core";
 import * as utils from "@microsoft/fluid-server-services-utils";
-import { Deferred } from "@prague/utils";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import * as app from "./app";
@@ -33,7 +33,7 @@ export class AlfredRunner implements utils.IRunner {
         private orderManager: IOrdererManager,
         private tenantManager: ITenantManager,
         private storage: IDocumentStorage,
-        private cache: ICache,
+        private clientManager: IClientManager,
         private appTenants: IAlfredTenant[],
         private mongoManager: MongoManager,
         private producer: IProducer,
@@ -51,7 +51,6 @@ export class AlfredRunner implements utils.IRunner {
             this.storage,
             this.appTenants,
             this.mongoManager,
-            this.cache,
             this.producer);
         alfred.set("port", this.port);
 
@@ -65,7 +64,9 @@ export class AlfredRunner implements utils.IRunner {
             this.metricClientConfig,
             this.orderManager,
             this.tenantManager,
-            this.contentCollection);
+            this.storage,
+            this.contentCollection,
+            this.clientManager);
 
         // Listen on provided port, on all network interfaces.
         httpServer.listen(this.port);

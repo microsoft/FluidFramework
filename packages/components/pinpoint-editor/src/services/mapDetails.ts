@@ -4,7 +4,7 @@
  */
 
 import { IMarker, IPinpointOptions } from "@kurtb/pinpoint";
-import { ISharedMap } from "@prague/map";
+import { ISharedMap } from "@microsoft/fluid-map";
 import * as angular from "angular";
 
 export class MapDetailsService {

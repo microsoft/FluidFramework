@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { loadFluidComponent, loadIFramedFluidComponent } from "@prague/tiny-web-host";
+import { loadFluidComponent, loadIFramedFluidComponent } from "@fluid-example/tiny-web-host";
 import * as React from "react";
 
-export { isFluidURL, isSpoUrl, loadFluidComponent } from "@prague/tiny-web-host";
+export { isFluidURL, isSpoUrl, loadFluidComponent } from "@fluid-example/tiny-web-host";
 
 export interface ILoaderProps {
 

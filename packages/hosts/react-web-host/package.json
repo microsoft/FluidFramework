@@ -1,17 +1,17 @@
 {
-  "name": "@prague/react-web-host",
-  "version": "0.10.0",
+  "name": "@fluid-example/react-web-host",
+  "version": "0.11.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "dependencies": {
-    "@prague/tiny-web-host": "^0.10.0",
+    "@fluid-example/tiny-web-host": "^0.11.0",
     "react": "^16.8.3"
   },
   "devDependencies": {
-    "@microsoft/api-extractor": "^7.3.11",
-    "@microsoft/fluid-build-common": "^0.10.0",
+    "@microsoft/api-extractor": "^7.4.4",
+    "@microsoft/fluid-build-common": "^0.11.0",
     "@types/node": "^10.12.12",
     "@types/react": "^16.7.7",
     "concurrently": "^4.1.0",

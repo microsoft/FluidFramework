@@ -3,11 +3,21 @@
  * Licensed under the MIT License.
  */
 
+import { Deferred } from "@microsoft/fluid-core-utils";
+import { IConnect, IConnected } from "@microsoft/fluid-driver-base";
+import {
+    IClientJoin,
+    IDocumentMessage,
+    ISequencedDocumentSystemMessage,
+    MessageType,
+    ScopeType,
+} from "@microsoft/fluid-protocol-definitions";
 import { KafkaOrdererFactory } from "@microsoft/fluid-server-kafka-orderer";
 import * as services from "@microsoft/fluid-server-services";
 import * as core from "@microsoft/fluid-server-services-core";
 import {
     MessageFactory,
+    TestClientManager,
     TestCollection,
     TestDbFactory,
     TestKafka,
@@ -15,15 +25,6 @@ import {
     TestWebSocket,
     TestWebSocketServer,
 } from "@microsoft/fluid-server-test-utils";
-import {
-    IClientJoin,
-    IDocumentMessage,
-    ISequencedDocumentSystemMessage,
-    MessageType,
-    ScopeType,
-} from "@prague/protocol-definitions";
-import { IConnect, IConnected } from "@prague/socket-storage-shared";
-import { Deferred } from "@prague/utils";
 import * as assert from "assert";
 import * as io from "../../alfred/io";
 import { OrdererManager } from "../../alfred/runnerFactory";
@@ -42,6 +43,7 @@ describe("Routerlicious", () => {
                 let deliKafka: TestKafka;
                 let testOrderer: core.IOrdererManager;
                 let testTenantManager: TestTenantManager;
+                let testClientManager: core.IClientManager;
                 let contentCollection: TestCollection;
 
                 beforeEach(() => {
@@ -52,6 +54,7 @@ describe("Routerlicious", () => {
                     deliKafka = new TestKafka();
                     const producer = deliKafka.createProducer();
                     testTenantManager = new TestTenantManager(url);
+                    testClientManager = new TestClientManager();
                     const testDbFactory = new TestDbFactory(testData);
                     const mongoManager = new core.MongoManager(testDbFactory);
                     const databaseManager = new core.MongoDatabaseManager(
@@ -66,7 +69,6 @@ describe("Routerlicious", () => {
                         producer);
                     const kafkaOrderer = new KafkaOrdererFactory(
                         producer,
-                        testStorage,
                         1024 * 1024,
                         DefaultServiceConfiguration);
                     testOrderer = new OrdererManager(url, testTenantManager, null, kafkaOrderer, null);
@@ -79,7 +81,9 @@ describe("Routerlicious", () => {
                         metricClientConfig,
                         testOrderer,
                         testTenantManager,
-                        contentCollection);
+                        testStorage,
+                        contentCollection,
+                        testClientManager);
                 });
 
                 function connectToServer(
@@ -93,9 +97,10 @@ describe("Routerlicious", () => {
                     const connectMessage: IConnect = {
                         client: undefined,
                         id,
+                        mode: "read",
                         tenantId,
                         token,
-                        versions: ["^0.1.0"],
+                        versions: ["^0.3.0", "^0.2.0", "^0.1.0"],
                     };
 
                     const deferred = new Deferred<IConnected>();
@@ -180,7 +185,7 @@ describe("Routerlicious", () => {
                         // There is no ack for the disconnect, but the message will be ordered with future messages.
                         await connectToServer(testId, testTenantId, testSecret, webSocketServer.createConnection());
 
-                        assert.equal(deliKafka.getRawMessages().length, 3);
+                        assert.equal(deliKafka.getRawMessages().length, 2);
                         const message = deliKafka.getMessage(1);
                         assert.equal(message.documentId, testId);
                         const systemLeaveMessage = message.operation as ISequencedDocumentSystemMessage;

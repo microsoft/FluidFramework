@@ -4,10 +4,10 @@
  */
 
 import { IClientConfig, IODSPTokens } from "@microsoft/fluid-odsp-utils";
+import { IFluidResolvedUrl, IUser, ScopeType } from "@microsoft/fluid-protocol-definitions";
 import { generateToken, IAlfredTenant } from "@microsoft/fluid-server-services-core";
-import { IFluidResolvedUrl, IUser, ScopeType } from "@prague/protocol-definitions";
 import { parse } from "url";
-import { getSpoServer, isSpoTenant, spoJoinSession } from "./odspUtils";
+import { getSpoServer, isSpoTenant, spoGetResolvedUrl } from "./odspUtils";
 
 // tslint:disable: restrict-plus-operands prefer-template no-unsafe-any
 
@@ -38,7 +38,7 @@ async function spoResolveUrl(
     const tokens: { [server: string]: IODSPTokens } = {};
     tokens[server] = odspToken;
 
-    const resolvedP = spoJoinSession(tenantId, documentId,
+    const resolvedP = spoGetResolvedUrl(tenantId, documentId,
         tokens, clientConfig);
     const fullTreeP = Promise.resolve(undefined);
     return [resolvedP, fullTreeP];

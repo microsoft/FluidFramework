@@ -3,24 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import * as core from "@microsoft/fluid-server-services-core";
+import { BatchManager } from "@microsoft/fluid-core-utils";
+import { debug, IConnect, IConnected } from "@microsoft/fluid-driver-base";
 import {
+    ConnectionMode,
     IClient,
     IContentMessage,
     IDocumentDeltaConnection,
     IDocumentMessage,
     ISequencedDocumentMessage,
     IServiceConfiguration,
+    ISignalClient,
     ISignalMessage,
     ITokenClaims,
-} from "@prague/protocol-definitions";
-import { debug, IConnect, IConnected } from "@prague/socket-storage-shared";
-import { BatchManager } from "@prague/utils";
+} from "@microsoft/fluid-protocol-definitions";
+import * as core from "@microsoft/fluid-server-services-core";
 import { EventEmitter } from "events";
 import { TestWebSocketServer } from "./testWebServer";
 
-const testProtocolVersion = "^0.1.0";
-
+const testProtocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
 export class TestDocumentDeltaConnection extends EventEmitter implements IDocumentDeltaConnection {
     public static async create(
         tenantId: string,
@@ -28,15 +29,16 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
         token: string,
         client: IClient,
         webSocketServer: core.IWebSocketServer,
-    ): Promise<IDocumentDeltaConnection> {
+        mode: ConnectionMode): Promise<IDocumentDeltaConnection> {
         const socket = (webSocketServer as TestWebSocketServer).createConnection();
 
         const connectMessage: IConnect = {
             client,
             id,
+            mode,
             tenantId,
             token,  // token is going to indicate tenant level information, etc...
-            versions: [testProtocolVersion],
+            versions: testProtocolVersions,
         };
 
         const connection = await new Promise<IConnected>((resolve, reject) => {
@@ -128,6 +130,10 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
         return this.details.clientId;
     }
 
+    public get mode(): ConnectionMode {
+        return this.details.mode;
+    }
+
     public get claims(): ITokenClaims {
         return this.details.claims;
     }
@@ -156,8 +162,12 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
         return this.details.initialSignals;
     }
 
+    public get initialClients(): ISignalClient[] {
+        return this.details.initialClients ? this.details.initialClients : [];
+    }
+
     public get version(): string {
-        return testProtocolVersion;
+        return testProtocolVersions[0];
     }
 
     public get serviceConfiguration(): IServiceConfiguration {

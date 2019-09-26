@@ -3,27 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger } from "@prague/container-definitions";
+import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
+import { PerformanceEvent, throwNetworkError } from "@microsoft/fluid-core-utils";
 import { ISocketStorageDiscovery } from "./contracts";
-import { fetchWithRetry, IFetchWithRetryResponse, IRetryPolicy, linearBackoff, whitelist } from "./utils";
+import { fetchHelper, getWithRetryForTokenRefresh } from "./OdspUtils";
 
 function getOrigin(url: string) {
   return new URL(url).origin;
 }
 
 /**
- * A custom error thrown with the error code returned from a join session call
- */
-export class JoinSessionError extends Error {
-  public readonly statusCode: number;
-  constructor(statusCode: number, errorMessage?: string) {
-    super(errorMessage);
-    this.statusCode = statusCode;
-  }
-}
-
-/**
- * Makes a call to the opstream VRoom API on SPO
+ * Makes join session call on SPO
  * @param appId - The identifier for the application
  * @param driveId - The SPO drive id that this request should be made against
  * @param itemId -The SPO item id that this request should be made against
@@ -36,7 +26,7 @@ export class JoinSessionError extends Error {
  * @param logger - A logger to use for this request
  * @param getVroomToken - A function that is able to provide the vroom token for this request
  */
-export async function fetchOpStream(
+export async function fetchJoinSession(
   appId: string,
   driveId: string,
   itemId: string,
@@ -44,28 +34,29 @@ export async function fetchOpStream(
   path: string,
   additionalParams: string,
   method: string,
-  retryPolicy: IRetryPolicy,
-  getVroomToken: (siteUrl: string) => Promise<string | undefined | null>,
-): Promise<IFetchWithRetryResponse> {
-  const token = await getVroomToken(siteUrl);
-  if (!token) {
-    throw new Error("Failed to acquire Vroom token");
-  }
+  getVroomToken: (siteUrl: string, refresh: boolean) => Promise<string | undefined | null>,
+): Promise<ISocketStorageDiscovery> {
+  return getWithRetryForTokenRefresh(async (refresh: boolean) => {
+    const token = await getVroomToken(siteUrl, refresh);
+    if (!token) {
+      throwNetworkError("Failed to acquire Vroom token", 400);
+    }
 
-  const siteOrigin = getOrigin(siteUrl);
-  // tslint:disable-next-line: prefer-template
-  let queryParams = `app_id=${appId}&access_token=${token}${additionalParams ? "&" + additionalParams : ""}`;
-  let headers = {};
-  if (queryParams.length > 2048) {
+    const siteOrigin = getOrigin(siteUrl);
     // tslint:disable-next-line: prefer-template
-    queryParams = `app_id=${appId}${additionalParams ? "&" + additionalParams : ""}`;
-    headers = { Authorization: `Bearer ${token}` };
-  }
-  return fetchWithRetry(
-    `${siteOrigin}/_api/v2.1/drives/${driveId}/items/${itemId}/${path}?${queryParams}`,
-    { method, headers },
-    retryPolicy,
-  );
+    let queryParams = `app_id=${appId}&access_token=${token}${additionalParams ? "&" + additionalParams : ""}`;
+    let headers = {};
+    if (queryParams.length > 2048) {
+      // tslint:disable-next-line: prefer-template
+      queryParams = `app_id=${appId}${additionalParams ? "&" + additionalParams : ""}`;
+      headers = { Authorization: `Bearer ${token}` };
+    }
+
+    return fetchHelper(
+      `${siteOrigin}/_api/v2.1/drives/${driveId}/items/${itemId}/${path}?${queryParams}`,
+      { method, headers },
+    );
+  });
 }
 
 /**
@@ -84,21 +75,12 @@ export async function getSocketStorageDiscovery(
   driveId: string,
   itemId: string,
   siteUrl: string,
-  logger: ITelemetryBaseLogger,
-  getVroomToken: (siteUrl: string) => Promise<string | undefined | null>,
-  getPushToken: () => Promise<string | undefined | null>,
+  logger: ITelemetryLogger,
+  getVroomToken: (siteUrl: string, refresh: boolean) => Promise<string | undefined | null>,
 ): Promise<ISocketStorageDiscovery> {
-  const joinSessionStartTime = performance.now();
-  logger.send({
-    category: "performance",
-    eventName: "joinSessionStart",
-    perfType: "start",
-    tick: joinSessionStartTime,
-  });
+  const event = PerformanceEvent.start(logger, { eventName: "joinSession" });
 
-  const pushTokenPromise = getPushToken();
-
-  const joinSessionPromise = fetchOpStream(
+  const socketStorageDiscovery: ISocketStorageDiscovery = await fetchJoinSession(
     appId,
     driveId,
     itemId,
@@ -106,41 +88,14 @@ export async function getSocketStorageDiscovery(
     "opStream/joinSession",
     "",
     "POST",
-    {
-      maxRetries: 3,
-      backoffFn: linearBackoff(500),
-      filter: whitelist([408, 409, 429, 500, 503]),
-    },
     getVroomToken,
   );
 
-  const [pushToken, joinSessionResponse] = await Promise.all([pushTokenPromise, joinSessionPromise]);
-
-  if (!pushToken) {
-    throw new Error("Failed to acquire Push token");
+  if (socketStorageDiscovery.runtimeTenantId && !socketStorageDiscovery.tenantId) {
+    socketStorageDiscovery.tenantId = socketStorageDiscovery.runtimeTenantId;
   }
 
-  if (joinSessionResponse.response.status !== 200) {
-    throw new JoinSessionError(joinSessionResponse.response.status);
-  }
-
-  const responseJson = await joinSessionResponse.response.json();
-  if (responseJson.runtimeTenantId && !responseJson.tenantId) {
-    responseJson.tenantId = responseJson.runtimeTenantId;
-  }
-
-  const socketStorageDiscovery = responseJson as ISocketStorageDiscovery;
-  // tslint:disable-next-line: no-non-null-assertion
-  socketStorageDiscovery.socketToken = pushToken!;
-
-  const joinSessionEndTime = performance.now();
-  logger.send({
-    category: "performance",
-    eventName: "joinSessionEnd",
-    perfType: "end",
-    tick: joinSessionEndTime,
-    duration: joinSessionEndTime - joinSessionStartTime,
-  });
+  event.end();
 
   return socketStorageDiscovery;
 }

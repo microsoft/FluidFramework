@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import "mocha";
+import { SparseMatrix, SparseMatrixFactory } from "@microsoft/fluid-sequence";
+import { TestHost } from "@microsoft/fluid-local-test-server";
 import * as assert from "assert";
-import { SparseMatrix, SparseMatrixFactory } from "@prague/sequence"
-import { TestHost } from "@prague/local-test-server";
+import "mocha";
 
 describe("SparseMatrix", () => {
     const extract = (matrix: SparseMatrix, numCols: number) => {

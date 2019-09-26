@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import * as messages from "@microsoft/fluid-driver-base";
 import {
+    ConnectionMode,
     IContentMessage,
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
@@ -11,11 +13,11 @@ import {
     IDocumentStorageService,
     ISequencedDocumentMessage,
     IServiceConfiguration,
+    ISignalClient,
     ISignalMessage,
     ITokenClaims,
     IVersion,
-} from "@prague/protocol-definitions";
-import * as messages from "@prague/socket-storage-shared";
+} from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
 import { debug } from "./debug";
 import { ReplayController } from "./replayController";
@@ -194,7 +196,9 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
             initialContents: [],
             initialMessages: [],
             initialSignals: [],
+            initialClients: [],
             maxMessageSize: ReplayDocumentDeltaConnection.ReplayMaxMessageSize,
+            mode: "write",
             parentBranch: null,
             serviceConfiguration: {
                 blockSize: 64436,
@@ -203,6 +207,7 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
                     idleTime: 5000,
                     maxOps: 1000,
                     maxTime: 5000 * 12,
+                    maxAckWaitTime: 600000,
                 },
             },
             supportedVersions: [ReplayDocumentDeltaConnection.replayProtocolVersion],
@@ -232,6 +237,10 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
         return this.details.clientId;
     }
 
+    public get mode(): ConnectionMode {
+        return this.details.mode;
+    }
+
     public get claims(): ITokenClaims {
         return this.details.claims;
     }
@@ -258,6 +267,10 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
 
     public get initialSignals(): ISignalMessage[] | undefined {
         return this.details.initialSignals;
+    }
+
+    public get initialClients(): ISignalClient[] {
+        return this.details.initialClients ? this.details.initialClients : [];
     }
 
     public get serviceConfiguration(): IServiceConfiguration {

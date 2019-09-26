@@ -75,7 +75,7 @@ export class AlfredResources implements utils.IResources {
         public config: Provider,
         public producer: core.IProducer,
         public redisConfig: any,
-        public cache: core.ICache,
+        public clientManager: core.IClientManager,
         public webSocketLibrary: string,
         public orderManager: core.IOrdererManager,
         public tenantManager: core.ITenantManager,
@@ -118,7 +118,7 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
 
         // Redis connection
         const redisClient = redis.createClient(redisConfig.port, redisConfig.host);
-        const redisCache = new services.RedisCache(redisClient);
+        const clientManager = new services.ClientManager(redisClient);
 
         // Database connection
         const mongoUrl = config.get("mongo:endpoint") as string;
@@ -189,7 +189,6 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
         const localOrderManager = new LocalOrderManager(nodeFactory, reservationManager);
         const kafkaOrdererFactory = new KafkaOrdererFactory(
             producer,
-            storage,
             maxSendMessageSize,
             DefaultServiceConfiguration);
         const serverUrl = config.get("worker:serverUrl");
@@ -199,7 +198,6 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             const eventHubProducer = new services.EventHubProducer(config.get("eventHub:endpoint"), topic);
             eventHubOrdererFactory = new KafkaOrdererFactory(
                 eventHubProducer,
-                storage,
                 maxSendMessageSize,
                 DefaultServiceConfiguration);
         }
@@ -221,7 +219,7 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             config,
             producer,
             redisConfig,
-            redisCache,
+            clientManager,
             webSocketLibrary,
             orderManager,
             tenantManager,
@@ -244,7 +242,7 @@ export class AlfredRunnerFactory implements utils.IRunnerFactory<AlfredResources
             resources.orderManager,
             resources.tenantManager,
             resources.storage,
-            resources.cache,
+            resources.clientManager,
             resources.appTenants,
             resources.mongoManager,
             resources.producer,

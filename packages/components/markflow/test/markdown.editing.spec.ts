@@ -9,23 +9,20 @@ require("jsdom-global")("", { url: "http://localhost" });
 window.performance.mark = window.performance.mark || (() => {});
 window.performance.measure = window.performance.measure || (() => {});
 
-// tslint:disable-next-line:no-import-side-effect
-import "mocha";
-
 // import * as debug from "debug";
 // debug.enable("flow:*");
-
 // tslint:enable:mocha-no-side-effect-code
-
 // tslint:disable:binary-expression-operand-order
-import { TestHost } from "@prague/local-test-server";
+import { TestHost } from "@microsoft/fluid-local-test-server";
 import { strict as assert } from "assert";
+// tslint:disable-next-line:no-import-side-effect
+import "mocha";
 import { FlowDocument, flowDocumentFactory } from "../src/document";
+import { Caret } from "../src/editor/caret";
 import { markdownFormatter } from "../src/markdown/formatters";
 import { flowDocumentType } from "../src/runtime";
-import { Layout } from "../src/view/layout";
-import { Caret } from "../src/editor/caret";
 import { noop } from "../src/util";
+import { Layout } from "../src/view/layout";
 
 // interface ISnapshotNode {
 //     node: Node;

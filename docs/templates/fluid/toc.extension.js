@@ -1,45 +1,45 @@
 // Copyright (c) Microsoft. All rights reserved. Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 var packageMapping = {
-  "container-runtime": "runtime",
-  "component-runtime": "runtime",
-  "runtime-definitions": "runtime",
+  "fluid-container-runtime": "runtime",
+  "fluid-component-runtime": "runtime",
+  "fluid-runtime-definitions": "runtime",
 
-  "cell": "dds",
-  "map": "dds",
-  "merge-tree": "dds",
-  "sequence": "dds",
-  "stream": "dds",
-  "consensus-ordered-collection": "dds",
-  "consensus-register-collection": "dds",
-  "shared-object-common": "dds",
+  "fluid-cell": "dds",
+  "fluid-map": "dds",
+  "fluid-merge-tree": "dds",
+  "fluid-sequence": "dds",
+  "fluid-stream": "dds",
+  "fluid-ordered-collection": "dds",
+  "fluid-register-collection": "dds",
+  "fluid-shared-object-base": "dds",
 
-  "component-core-interfaces": "framework",
-  "aqueduct": "framework",
-  "aqueduct-react": "framework",
-  "framework-definitions": "framework",
+  "fluid-component-core-interfaces": "framework",
+  "fluid-aqueduct": "framework",
+  "fluid-aqueduct-react": "framework",
+  "fluid-framework-definitions": "framework",
 
-  "container-definitions": "loader",
-  "container-loader": "loader",
-  "loader-web": "loader",
-  "protocol-definitions": "loader",
+  "fluid-container-definitions": "loader",
+  "fluid-container-loader": "loader",
+  "fluid-web-code-loader": "loader",
+  "fluid-protocol-definitions": "loader",
 
-  "routerlicious-socket-storage": "driver",
-  "socket-storage-shared": "driver",
-  "odsp-socket-storage": "driver",
-  "file-socket-storage": "driver",
-  "replay-socket-storage": "driver",
+  "fluid-routerlicious-driver": "driver",
+  "fluid-driver-base": "driver",
+  "fluid-odsp-driver": "driver",
+  "fluid-file-driver": "driver",
+  "fluid-replay-driver": "driver",
 
-  "base-host": "host",
-  "tiny-web-host": "host",
-  "react-web-host": "host",
+  "fluid-base-host": "host",
+  "fluid-tiny-web-host": "host",
+  "fluid-react-web-host": "host",
 
-  "utils": "misc",
+  "fluid-core-utils": "misc",
 }
 
 var groupNames = {
   framework: "Framework",
-  dds: "Distributed Data Structure",
+  dds: "Distributed Data Structures",
   runtime: "Runtime",
   loader: "Loader",
   driver: "Driver",
@@ -61,7 +61,7 @@ exports.preTransform = function (model) {
       for (var group in groupNames) {
         groupedPackages[group] = [];
       }
-      children.forEach(function(element) {
+      children.forEach(function (element) {
         var group = packageMapping[element.name];
         if (group === undefined || groupedPackages[group] === undefined) {
           group = "unknown";
@@ -69,7 +69,7 @@ exports.preTransform = function (model) {
         groupedPackages[group].push(element);
       });
 
-      model.items = [ overview ];
+      model.items = [overview];
       for (var group in groupedPackages) {
         model.items.push(
           { name: groupNames[group], items: groupedPackages[group] }

@@ -3,27 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import { getRandomName } from "@microsoft/fluid-server-services-core";
-
 // tslint:disable no-string-literal trailing-comma no-shadowed-variable no-submodule-imports no-floating-promises
-import { SimpleModuleInstantiationFactory } from "@prague/aqueduct";
-import { IHostConfig, start as startCore } from "@prague/base-host";
+
+import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
+import { IHostConfig, start as startCore } from "@microsoft/fluid-base-host";
+import { IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { IFluidModule, IFluidPackage, IPackage } from "@microsoft/fluid-container-definitions";
 import {
-    IRequest,
-} from "@prague/component-core-interfaces";
-import {
-    IFluidModule,
-    IFluidPackage,
-    IPackage,
-    IPraguePackage,
-} from "@prague/container-definitions";
-import { extractDetails, IResolvedPackage } from "@prague/loader-web";
-import {TestDeltaConnectionServer, TestDocumentServiceFactory, TestResolver} from "@prague/local-test-server";
-import { IDocumentServiceFactory, IUrlResolver, IUser } from "@prague/protocol-definitions";
-import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
+    TestDeltaConnectionServer,
+    TestDocumentServiceFactory,
+    TestResolver,
+} from "@microsoft/fluid-local-test-server";
+import { IDocumentServiceFactory, IUrlResolver, IUser } from "@microsoft/fluid-protocol-definitions";
+import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
+import { getRandomName } from "@microsoft/fluid-server-services-core";
+import { extractDetails, IResolvedPackage } from "@microsoft/fluid-web-code-loader";
 import * as jwt from "jsonwebtoken";
 import * as uuid from "uuid/v4";
 import { InsecureUrlResolver } from "./insecureUrlResolver";
+import { SessionStorageDbFactory } from "./sessionStorageTestDb";
 // import * as fetch from "isomorphic-fetch";
 export interface IDevServerUser extends IUser {
     name: string;
@@ -46,17 +44,6 @@ function getUser(): IDevServerUser {
 
 function modifyFluidPackage(packageJson: IPackage): IFluidPackage {
     const fluidPackage = packageJson as IFluidPackage;
-    if (!("fluid" in packageJson)) {
-        const praguePackage = packageJson as IPraguePackage;
-        fluidPackage.fluid = {
-            browser: {
-                umd: {
-                    files: praguePackage.prague.browser.bundle,
-                    library: praguePackage.prague.browser.entrypoint,
-                },
-            },
-        };
-    }
 
     // Start by translating the input package to be webpack-dev-server relative URLs
     for (let i = 0; i < fluidPackage.fluid.browser.umd.files.length; i++) {
@@ -81,7 +68,7 @@ async function getPkg(packageJson: IPackage, scriptIds: string[], component = fa
 
     // Add script to page, rather than load bundle directly
     const scriptLoadP: Promise<void>[] = [];
-    const scriptIdPrefix = "pragueDevServerScriptToLoad";
+    const scriptIdPrefix = "fluidDevServerScriptToLoad";
     let scriptIndex = 0;
     fluidPackage.fluid.browser.umd.files.forEach((file) => {
         const script = document.createElement("script");
@@ -171,7 +158,23 @@ export async function start(
     let urlResolver: IUrlResolver;
     let npm: string;
     switch (options.mode) {
-        case "live":
+        case "localhost":
+            npm = "http://localhost:3002";
+            urlResolver = new InsecureUrlResolver(
+                "http://localhost:3000",
+                "http://localhost:3003",
+                "http://localhost:3001",
+                "fluid",
+                "43cfc3fbf04a97c0921fd23ff10f9e4b",
+                getUser(),
+                bearerSecret);
+            break;
+
+        case "local":
+            urlResolver = new TestResolver();
+            break;
+
+        default: // live
             npm = "https://pragueauspkn-3873244262.azureedge.net";
             const host = options.fluidHost ? options.fluidHost : "https://www.wu2.prague.office-int.com";
             urlResolver = new InsecureUrlResolver(
@@ -182,24 +185,6 @@ export async function start(
                 options.tenantSecret ? options.tenantSecret : "1a7f744b3c05ddc525965f17a1b58aa0",
                 getUser(),
                 bearerSecret);
-            break;
-
-        case "localhost":
-            npm = "http://localhost:3002";
-            const localHost = "http://localhost:3000";
-            urlResolver = new InsecureUrlResolver(
-                localHost,
-                localHost,
-                localHost,
-                "prague",
-                "43cfc3fbf04a97c0921fd23ff10f9e4b",
-                getUser(),
-                bearerSecret);
-            break;
-
-        case "local":
-            urlResolver = new TestResolver();
-        default:
     }
 
     let documentServiceFactory: IDocumentServiceFactory;
@@ -226,7 +211,7 @@ export async function start(
         );
     } else {
 
-        const deltaConn = TestDeltaConnectionServer.create();
+        const deltaConn = TestDeltaConnectionServer.create(new SessionStorageDbFactory(url));
         documentServiceFactory = new TestDocumentServiceFactory(deltaConn);
         const hostConf: IHostConfig = { documentServiceFactory, urlResolver };
         startCore(

@@ -14,20 +14,20 @@
 
             <h3>Routerlicious</h3>
             <ul class="list-unstyled">
-                <li><a href="/loader/prague/{{sharedTextMoniker}}?chaincode=@chaincode/shared-text@{{version}}&spellchecking=disabled&template=pp.txt">Pride and Prejudice</a></li>
-                <li><a href="/loader/prague/{{sharedTextPageInkMoniker}}?chaincode=@chaincode/shared-text@{{version}}&pageInk=true&template=pp.txt">Pride and Prejudice (page ink)</a></li>
+                <li><a href="/loader/fluid/{{sharedTextMoniker}}?chaincode=@chaincode/shared-text@{{version}}&spellchecking=disabled&template=pp.txt">Pride and Prejudice</a></li>
+                <li><a href="/loader/fluid/{{sharedTextPageInkMoniker}}?chaincode=@chaincode/shared-text@{{version}}&pageInk=true&template=pp.txt">Pride and Prejudice (page ink)</a></li>
                 <li><a href="http://prague-grafana.westus2.cloudapp.azure.com/dashboard/db/latency-summary">Performance Metrics</a></li>
-                <li><a href="/loader/prague/{{canvasMoniker}}?chaincode=@chaincode/canvas@{{version}}">Ink</a></li>
+                <li><a href="/loader/fluid/{{canvasMoniker}}?chaincode=@chaincode/canvas@{{version}}">Ink</a></li>
             </ul>
 
             <h3>Intelligent Services</h3>
             <ul class="list-unstyled">
-                <li><a href="/loader/prague/{{scribeMoniker}}?chaincode=@chaincode/scribe@{{version}}">Scribe</a></li>
+                <li><a href="/loader/fluid/{{scribeMoniker}}?chaincode=@chaincode/scribe@{{version}}">Scribe</a></li>
             </ul>
 
             <h3>Versioning and Branching</h3>
             <ul class="list-unstyled">
-                <li><a href="/loader/prague/{{emptyMoniker}}?chaincode=@chaincode/shared-text@{{version}}">Starter Document</a></li>
+                <li><a href="/loader/fluid/{{emptyMoniker}}?chaincode=@chaincode/shared-text@{{version}}">Starter Document</a></li>
             </ul>
 
             <h3>Distributed Data Type Apps (DEPRECATED)</h3>

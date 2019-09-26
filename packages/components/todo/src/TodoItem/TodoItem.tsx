@@ -4,41 +4,18 @@
  */
 
 import { ClickerName } from "@fluid-example/clicker";
-
-import {
-  PrimedComponent,
-} from "@prague/aqueduct";
-import {
-  EmbeddedReactComponentFactory,
-  IComponentReactViewable,
-} from "@prague/aqueduct-react";
-import {
-  ISharedCell,
-  SharedCell,
-} from "@prague/cell";
-import {
-  IComponentHandle,
-  IComponentHTMLVisual,
-} from "@prague/component-core-interfaces";
-import {
-  IComponentForge,
-} from "@prague/framework-definitions";
-import {
-  Counter,
-  CounterValueType,
-} from "@prague/map";
-import {
-  SharedString,
-} from "@prague/sequence";
-
+import { PrimedComponent } from "@microsoft/fluid-aqueduct";
+import { EmbeddedReactComponentFactory, IComponentReactViewable } from "@microsoft/fluid-aqueduct-react";
+import { ISharedCell, SharedCell } from "@microsoft/fluid-cell";
+import { IComponentHandle, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
+import { Counter, CounterValueType } from "@microsoft/fluid-map";
+import { SharedString } from "@microsoft/fluid-sequence";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-
-import { TodoItemSupportedComponents } from "./supportedComponent";
-import { TodoItemView } from "./TodoItemView";
-
 import { TextBoxName } from "../TextBox";
 import { TextListName } from "../TextList";
+import { TodoItemSupportedComponents } from "./supportedComponent";
+import { TodoItemView } from "./TodoItemView";
 
 // tslint:disable-next-line: no-var-requires no-require-imports
 const pkg = require("../../package.json");
@@ -55,8 +32,7 @@ export const TodoItemName = `${pkg.name as string}-item`;
 export class TodoItem extends PrimedComponent
   implements
     IComponentHTMLVisual,
-    IComponentReactViewable,
-    IComponentForge {
+    IComponentReactViewable {
 
   // tslint:disable:prefer-readonly
   private text: SharedString;

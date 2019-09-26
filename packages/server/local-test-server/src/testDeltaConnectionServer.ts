@@ -2,17 +2,16 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-
+import { IConnect, IConnected } from "@microsoft/fluid-driver-base";
+import { ConnectionMode, IClient, IContentMessage, IDocumentMessage, ISignalMessage, ITokenClaims, MessageType } from "@microsoft/fluid-protocol-definitions";
 import {
     LocalNodeFactory,
     LocalOrderer,
     LocalOrderManager,
-    NodeManager,
-    ReservationManager,
 } from "@microsoft/fluid-server-memory-orderer";
 import {
-    ICollection,
     IDatabaseManager,
+    IDocumentStorage,
     IOrderer,
     IOrdererConnection,
     IOrdererManager,
@@ -23,19 +22,17 @@ import {
     MongoManager,
 } from "@microsoft/fluid-server-services-core";
 import {
-    TestCollection,
+    ITestDbFactory,
     TestDbFactory,
     TestDocumentStorage,
     TestTaskMessageSender,
     TestTenantManager,
     TestWebSocketServer,
 } from "@microsoft/fluid-server-test-utils";
-import { RoundTrip } from "@prague/client-api";
-import { IClient, IContentMessage, IDocumentMessage, ISignalMessage, ITokenClaims } from "@prague/protocol-definitions";
-import { IConnect, IConnected } from "@prague/socket-storage-shared";
 import * as jwt from "jsonwebtoken";
 import * as randomName from "random-name";
 import * as semver from "semver";
+import { TestReservationManager } from "./testReserverationManger";
 
 const protocolVersion = "^0.1.0";
 
@@ -45,7 +42,7 @@ const protocolVersion = "^0.1.0";
 export interface ITestDeltaConnectionServer {
     webSocketServer: IWebSocketServer;
     databaseManager: IDatabaseManager;
-
+    testDbFactory: ITestDbFactory;
     hasPendingWork(): Promise<boolean>;
 }
 
@@ -96,16 +93,14 @@ export class TestDeltaConnectionServer implements ITestDeltaConnectionServer {
     /**
      * Creates and returns a delta connection server for testing.
      */
-    public static create(): ITestDeltaConnectionServer {
+    public static create(testDbFactory: ITestDbFactory = new TestDbFactory({})): ITestDeltaConnectionServer {
         const nodesCollectionName = "nodes";
         const documentsCollectionName = "documents";
         const deltasCollectionName = "deltas";
         const reservationsCollectionName = "reservations";
         const scribeDeltasCollectionName = "scribeDeltas";
-        const testData: { [key: string]: any[] } = {};
 
         const webSocketServer = new TestWebSocketServer();
-        const testDbFactory = new TestDbFactory(testData);
         const mongoManager = new MongoManager(testDbFactory);
         const testTenantManager = new TestTenantManager();
 
@@ -120,12 +115,6 @@ export class TestDeltaConnectionServer implements ITestDeltaConnectionServer {
             databaseManager,
             testTenantManager);
 
-        const nodeManager = new NodeManager(mongoManager, nodesCollectionName);
-        const reservationManager = new ReservationManager(
-            nodeManager,
-            mongoManager,
-            reservationsCollectionName);
-
         const nodeFactory = new LocalNodeFactory(
             "os",
             "http://localhost:4000", // unused placeholder url
@@ -137,23 +126,30 @@ export class TestDeltaConnectionServer implements ITestDeltaConnectionServer {
             testTenantManager,
             {},
             16 * 1024);
+
+        const reservationManager = new TestReservationManager(
+            nodeFactory,
+            mongoManager,
+            reservationsCollectionName);
+
         const localOrderManager = new LocalOrderManager(nodeFactory, reservationManager);
         const testOrderer = new TestOrderManager(localOrderManager);
-        const testCollection = new TestCollection([]);
 
         register(
             webSocketServer,
             testOrderer,
             testTenantManager,
-            testCollection);
+            testStorage,
+            testDbFactory);
 
-        return new TestDeltaConnectionServer(webSocketServer, databaseManager, testOrderer);
+        return new TestDeltaConnectionServer(webSocketServer, databaseManager, testOrderer, testDbFactory);
     }
 
     private constructor(
         public webSocketServer: IWebSocketServer,
         public databaseManager: IDatabaseManager,
-        private testOrdererManager: TestOrderManager) { }
+        private testOrdererManager: TestOrderManager,
+        public testDbFactory: ITestDbFactory) { }
 
     /**
      * Returns true if there are any received ops that are not yet ordered.
@@ -178,14 +174,21 @@ export function register(
     webSocketServer: IWebSocketServer,
     orderManager: IOrdererManager,
     tenantManager: ITenantManager,
-    contentCollection: ICollection<any>) {
+    storage: IDocumentStorage,
+    dbFactory: ITestDbFactory) {
 
+    const contentCollection = dbFactory.testDatabase.collection("ops");
     const socketList: IWebSocket[] = [];
     webSocketServer.on("connection", (socket: IWebSocket) => {
         // Map from client IDs on this connection to the object ID and user info.
         const connectionsMap = new Map<string, IOrdererConnection>();
         // Map from client IDs to room.
         const roomMap = new Map<string, string>();
+
+        function isWriter(scopes: string[], existing: boolean, mode: ConnectionMode): boolean {
+            return true;
+        }
+
         socketList.push(socket);
         async function connectDocument(message: IConnect): Promise<IConnected> {
             // Validate token signature and claims
@@ -222,16 +225,18 @@ export function register(
                     `Client: ${JSON.stringify(connectVersions)}`);
             }
 
-            if (canWrite(messageClient.scopes)) {
+            const details = await storage.getOrCreateDocument(claims.tenantId, claims.documentId);
+            if (isWriter(messageClient.scopes, details.existing, message.mode)) {
                 const orderer = await orderManager.getOrderer(claims.tenantId, claims.documentId);
-                const connection = await orderer.connect(socket, clientId, messageClient as IClient);
+                const connection = await orderer.connect(socket, clientId, messageClient as IClient, details);
                 connectionsMap.set(clientId, connection);
 
                 const connectedMessage: IConnected = {
                     claims,
                     clientId,
-                    existing: connection.existing,
+                    existing: details.existing,
                     maxMessageSize: connection.maxMessageSize,
+                    mode: "write",
                     parentBranch: connection.parentBranch,
                     serviceConfiguration: connection.serviceConfiguration,
                     supportedVersions: [protocolVersion],
@@ -240,12 +245,12 @@ export function register(
 
                 return connectedMessage;
             } else {
-                // Todo (mdaumi): We should split storage stuff from orderer to get the following fields right.
                 const connectedMessage: IConnected = {
                     claims,
                     clientId,
-                    existing: true, // Readonly client can only open an existing document.
+                    existing: details.existing,
                     maxMessageSize: 1024, // Readonly client can't send ops.
+                    mode: "read",
                     parentBranch: null, // Does not matter for now.
                     serviceConfiguration: {
                         blockSize: 64436,
@@ -254,6 +259,7 @@ export function register(
                             idleTime: 5000,
                             maxOps: 1000,
                             maxTime: 5000 * 12,
+                            maxAckWaitTime: 600000,
                         },
                     },
                     supportedVersions: [protocolVersion],
@@ -262,10 +268,6 @@ export function register(
 
                 return connectedMessage;
             }
-        }
-
-        function canWrite(scopes: string[]): boolean {
-            return true;
         }
 
         // Note connect is a reserved socket.io word so we use connect_document to represent the connect request
@@ -293,7 +295,7 @@ export function register(
                 messageBatches.forEach((messageBatch) => {
                     const messages = Array.isArray(messageBatch) ? messageBatch : [messageBatch];
                     const filtered = messages
-                        .filter((message) => message.type !== RoundTrip);
+                        .filter((message) => message.type !== MessageType.RoundTrip);
 
                     if (filtered.length > 0) {
                         connection.order(filtered);

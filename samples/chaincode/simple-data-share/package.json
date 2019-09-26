@@ -3,7 +3,7 @@
   "description": "Simple Data Sharing Example",
   "version": "0.0.1",
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "main": "dist/main.bundle.js",
   "types": "dist/index.d.ts",
   "scripts": {
@@ -25,14 +25,6 @@
     "webpack": "4.16.5",
     "webpack-cli": "3.1.0",
     "webpack-merge": "4.1.4"
-  },
-  "prague": {
-    "browser": {
-      "entrypoint": "main",
-      "bundle": [
-        "dist/main.bundle.js"
-      ]
-    }
   },
   "dependencies": {
     "@prague/app-component": "^0.3.0",

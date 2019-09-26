@@ -1,6 +1,6 @@
 {
-  "name": "@prague/loader-web",
-  "version": "0.10.0",
+  "name": "@microsoft/fluid-web-code-loader",
+  "version": "0.11.0",
   "description": "Loader client app",
   "main": "dist/index.js",
   "module": "lib/index.js",
@@ -18,10 +18,10 @@
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "devDependencies": {
-    "@microsoft/api-extractor": "^7.3.11",
-    "@microsoft/fluid-build-common": "^0.10.0",
+    "@microsoft/api-extractor": "^7.4.4",
+    "@microsoft/fluid-build-common": "^0.11.0",
     "@types/isomorphic-fetch": "^0.0.35",
     "concurrently": "^4.1.0",
     "rimraf": "^2.6.2",
@@ -30,7 +30,7 @@
     "typescript": "~3.4.5"
   },
   "dependencies": {
-    "@prague/container-definitions": "^0.10.0",
+    "@microsoft/fluid-container-definitions": "^0.11.0",
     "@types/node": "^10.12.12",
     "isomorphic-fetch": "^2.2.1"
   },

@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidResolvedUrl } from "@prague/protocol-definitions";
 import * as request from "request";
 
 export interface IODSPTokens {
@@ -22,6 +21,7 @@ export interface IODSPDriveItem {
 }
 
 interface IRequestResult {
+    href: string;
     status: number;
     data: any;
 }
@@ -29,7 +29,7 @@ interface IRequestResult {
 function createRequestResult(response: request.Response, body: any): IRequestResult {
     // console.log(JSON.stringify(response, undefined, 2));
     // console.log(JSON.stringify(body, undefined, 2));
-    return { status: response.statusCode, data: body };
+    return { href: response.request.uri.href, status: response.statusCode, data: body };
 }
 
 function createRequestError(msg: string, requestResult: IRequestResult) {
@@ -39,7 +39,7 @@ function createRequestError(msg: string, requestResult: IRequestResult) {
 }
 
 function getRefreshAccessTokenBody(server: string, clientConfig: IClientConfig, lastRefreshToken: string) {
-    return `scope=offline_access https://${server}/AllSite.Write`
+    return `scope=offline_access https://${server}/AllSites.Write`
         + `&client_id=${clientConfig.clientId}`
         + `&client_secret=${clientConfig.clientSecret}`
         + `&grant_type=refresh_token`
@@ -73,6 +73,7 @@ export async function postTokenRequest(postBody: string): Promise<IODSPTokens> {
 
 async function refreshAccessToken(server: string, clientConfig: IClientConfig, tokens: IODSPTokens) {
     console.log("Refreshing access token");
+    tokens.accessToken = "";
     const odspTokens = await postTokenRequest(getRefreshAccessTokenBody(server, clientConfig, tokens.refreshToken));
     tokens.accessToken = odspTokens.accessToken;
     tokens.refreshToken = odspTokens.refreshToken;
@@ -86,7 +87,7 @@ async function requestWithRefresh(
     requestCallback: (token: string) => Promise<any>): Promise<any> {
 
     const result = await requestCallback(tokens.accessToken);
-    if (result.status !== 401) {
+    if (result.status !== 401 && result.status !== 403) {
         return result;
     }
     // Unauthorized, try to refresh the token
@@ -120,7 +121,7 @@ async function getAsync(
     });
 }
 
-async function postAsync(
+async function putAsync(
     server: string,
     clientConfig: IClientConfig,
     tokens: IODSPTokens,
@@ -129,73 +130,10 @@ async function postAsync(
 
     return requestWithRefresh(server, clientConfig, tokens, async (token: string) => {
         return new Promise((resolve, reject) => {
-            // console.log(`GET: ${url}`);
-            request.post({ url, headers, auth: { bearer: token } }, getRequestHandler(resolve, reject));
-        });
-    });
-}
-
-async function putAsync(
-    server: string,
-    clientConfig:
-        IClientConfig,
-    tokens: IODSPTokens,
-    url: string,
-    headers?: any): Promise<IRequestResult> {
-
-    return requestWithRefresh(server, clientConfig, tokens, async (token: string) => {
-        return new Promise((resolve, reject) => {
-            // console.log(`GET: ${url}`);
+            // console.log(`PUT: ${url}`);
             request.put({ url, headers, auth: { bearer: token } }, getRequestHandler(resolve, reject));
         });
     });
-}
-
-export async function getODSPFluidResolvedUrl(
-    server: string,
-    path: string,
-    tokens: IODSPTokens,
-    clientConfig: IClientConfig,
-    create: boolean = false): Promise<IFluidResolvedUrl> {
-
-    const baseUri = `https://${server}/_api/v2.1/${path}`;
-    const joinSessionUri = `${baseUri}/opStream/joinSession`;
-
-    let joinSessionResult = await postAsync(server, clientConfig, tokens, joinSessionUri);
-
-    if (joinSessionResult.status === 308) {
-        // Redirects
-        // TODO: reject for now
-        return Promise.reject(createRequestError("Redirect not supported", joinSessionResult));
-    }
-    if (joinSessionResult.status !== 200) {
-        if (!create) {
-            return Promise.reject(createRequestError("Failed to joinSession", joinSessionResult));
-        }
-        // Try to create it
-        const contentUri = `${baseUri}/content`;
-        const createResult = await putAsync(server, clientConfig, tokens, contentUri);
-        if (createResult.status !== 201) {
-            return Promise.reject(createRequestError("Failed to create file", createResult));
-        }
-
-        joinSessionResult = await postAsync(server, clientConfig, tokens, joinSessionUri);
-        if (joinSessionResult.status !== 200) {
-            return Promise.reject(createRequestError("Failed to joinSession", joinSessionResult));
-        }
-    }
-    const parsedBody = JSON.parse(joinSessionResult.data);
-    return {
-        endpoints: {
-            deltaStorageUrl: parsedBody.deltaStorageUrl,
-            ordererUrl: parsedBody.deltaStreamSocketUrl,
-            storageUrl: parsedBody.snapshotStorageUrl,
-        },
-        tokens: { storageToken: parsedBody.storageToken, socketToken: parsedBody.socketToken },
-        type: "fluid",
-        url: `fluid-odsp://${server}/` +
-            `${encodeURIComponent(parsedBody.runtimeTenantId)}/${encodeURIComponent(parsedBody.id)}`,
-    };
 }
 
 export async function getDriveItemByFileId(
@@ -203,8 +141,8 @@ export async function getDriveItemByFileId(
     account: string,
     uid: string,
     clientConfig: IClientConfig,
-    tokens: IODSPTokens): Promise<IODSPDriveItem> {
-
+    tokens: IODSPTokens,
+): Promise<IODSPDriveItem> {
     const getFileByIdUrl = `https://${server}/${account}/_api/web/GetFileById('${uid}')`;
     const getFileByIdResult = await getAsync(server, clientConfig, tokens,
         getFileByIdUrl, { accept: "application/json" });
@@ -229,10 +167,35 @@ export async function getDriveItemByFileId(
         return Promise.reject(createRequestError("Filename missing from URL from file Id", getFileByIdResult));
     }
 
-    const getDriveItemUrl = `https://${server}/${account}/_api/v2.1/drive/root:/${fileName}`;
-    const getDriveItemResult = await getAsync(server, clientConfig, tokens, getDriveItemUrl);
+    return getDriveItemByFileName(server, account, `/${fileName}`, clientConfig, tokens, false);
+}
+
+export async function getDriveItemByFileName(
+    server: string,
+    account: string,
+    path: string,
+    clientConfig: IClientConfig,
+    tokens: IODSPTokens,
+    create: boolean = false,
+): Promise<IODSPDriveItem> {
+    const accountPath = account ? `/${account}` : "";
+    const getDriveItemUrl = `https://${server}${accountPath}/_api/v2.1/drive/root:${path}`;
+    let getDriveItemResult = await getAsync(server, clientConfig, tokens, getDriveItemUrl);
     if (getDriveItemResult.status !== 200) {
-        return Promise.reject(createRequestError("Unable to get drive/item id from path", getDriveItemResult));
+        if (!create) {
+            return Promise.reject(createRequestError("Unable to get drive/item id from path", getDriveItemResult));
+        }
+        // try createing the file
+        const contentUri = `${getDriveItemUrl}:/content`;
+        const createResult = await putAsync(server, clientConfig, tokens, contentUri);
+        if (createResult.status !== 201) {
+            return Promise.reject(createRequestError("Failed to create file", createResult));
+        }
+
+        getDriveItemResult = await getAsync(server, clientConfig, tokens, getDriveItemUrl);
+        if (getDriveItemResult.status !== 200) {
+            return Promise.reject(createRequestError("Unable to get drive/item id from path", getDriveItemResult));
+        }
     }
     const parsedDriveItemBody = JSON.parse(getDriveItemResult.data);
     return { drive: parsedDriveItemBody.parentReference.driveId, item: parsedDriveItemBody.id };

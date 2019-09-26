@@ -4,14 +4,15 @@
  */
 
 import {
+    ConnectionMode,
     IClient,
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
     IDocumentService,
     IDocumentStorageService,
-} from "@prague/protocol-definitions";
-import { InnerDocumentDeltaConnection } from "@prague/socket-storage-shared";
+} from "@microsoft/fluid-protocol-definitions";
 import * as Comlink from "comlink";
+import { InnerDocumentDeltaConnection } from "./innerDocumentDeltaConnection";
 import { InnerDocumentStorageService } from "./innerDocumentStorageService";
 import { IOuterProxy } from "./outerDocumentService";
 
@@ -70,7 +71,7 @@ export class InnerDocumentService implements IDocumentService {
      *
      * @returns returns the document delta stream service for routerlicious driver.
      */
-    public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
+    public async connectToDeltaStream(client: IClient, mode: ConnectionMode): Promise<IDocumentDeltaConnection> {
         const connection = await this.outerProxy.getDetails();
         return InnerDocumentDeltaConnection.create(connection, this.outerProxy);
     }

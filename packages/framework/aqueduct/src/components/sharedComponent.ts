@@ -9,29 +9,19 @@ import {
     IComponentRouter,
     IRequest,
     IResponse,
-} from "@prague/component-core-interfaces";
-import { IComponentForge } from "@prague/framework-definitions";
-import {
-    IComponentContext,
-    IComponentRuntime,
-} from "@prague/runtime-definitions";
+} from "@microsoft/fluid-component-core-interfaces";
+import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { EventEmitter } from "events";
 
 /**
  * This is as bare-bones base class that does basic setup and enables for factory on an initialize call.
  * You probably don't want to inherit from this component directly unless you are creating another base component class
  */
-export abstract class SharedComponent extends EventEmitter implements IComponentLoadable, IComponentForge, IComponentRouter {
+export abstract class SharedComponent extends EventEmitter implements IComponentLoadable, IComponentRouter {
     private initializeP: Promise<void> | undefined;
-    private hasForgedInternal: boolean;
-
-    protected get canForge(): boolean {
-        return !this.hasForgedInternal && !this.runtime.isAttached;
-    }
 
     public get id() { return this.runtime.id; }
     public get IComponentRouter() { return this; }
-    public get IComponentForge() { return this; }
     public get IComponentLoadable() { return this; }
 
     public constructor(
@@ -39,8 +29,6 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
         protected readonly context: IComponentContext,
     ) {
         super();
-
-        this.hasForgedInternal = false;
     }
 
     /**
@@ -50,41 +38,11 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
     public async initialize(): Promise<void> {
         // We want to ensure if this gets called more than once it only executes the initialize code once.
         if (!this.initializeP) {
-            // If the runtime is existing we will execute the internal initialize. Otherwise the initialize
-            // happens during the forge
-            if (this.runtime.existing) {
-                this.initializeP = this.initializeInternal();
-            } else {
-                this.initializeP = Promise.resolve();
-            }
+            this.initializeP = this.initializeInternal(this.context.createProps);
         }
 
         await this.initializeP;
     }
-
-    // #region IComponentForge
-
-    /**
-     * This should only be called before the component has attached. It allows to pass in props to do setup.
-     *
-     * Overwriting forge will change the way setup happens and is not recommended.
-     */
-    public async forge(props?: any) {
-        // forge should only be called once and before we attach
-        if (!this.canForge) {
-            return;
-        }
-
-        // Set the initializeP incase someone else is calling initialize()
-        this.initializeP = this.initializeInternal(props);
-        await this.initializeP;
-
-        // We only allow forge to be called once
-        this.hasForgedInternal = true;
-    }
-
-    // #endregion IComponentForge
-
     // #region IComponentRouter
 
     /**
@@ -122,7 +80,7 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
      * Caller is responsible for ensuring this is only invoked once.
      */
     protected async initializeInternal(props?: any): Promise<void> {
-        if (this.canForge) {
+        if (!this.runtime.existing) {
             // If it's the first time through
             await this.componentInitializingFirstTime(props);
         } else {
@@ -140,18 +98,11 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
      *
      * @param id - unique component id for the new component
      * @param pkg - package name for the new component
-     * @param props - optional props to be passed in if the new component supports IComponentForge and you want to pass props to the forge.
+     * @param props - optional props to be passed in
      */
     protected async createAndAttachComponent<T>(id: string, pkg: string, props?: any): Promise<T> {
-        const componentRuntime = await this.context.createComponent(id, pkg);
+        const componentRuntime = await this.context.hostRuntime._createComponentWithProps(pkg, props, id);
         const component = await this.asComponent<IComponent>(componentRuntime.request({ url: "/" }));
-
-        // We call forge the component if it supports it. Forging is the opportunity to pass props in on creation.
-        const forge = component.IComponentForge;
-        if (forge) {
-            await forge.forge(props);
-        }
-
         componentRuntime.attach();
 
         return component as T;

@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import * as api from "@prague/protocol-definitions";
+import * as api from "@microsoft/fluid-protocol-definitions";
 import { IDeltaStorageGetResponse, ISequencedDeltaOpMessage } from "./contracts";
 import { IFetchWrapper } from "./fetchWrapper";
 import { getQueryString } from "./getQueryString";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
-import { getWithRetryForTokenRefresh } from "./utils";
+import { getWithRetryForTokenRefresh } from "./OdspUtils";
 
 /**
  * Provides access to the underlying delta storage on the server for sharepoint driver.
@@ -39,9 +39,13 @@ export class OdspDeltaStorageService implements api.IDocumentDeltaStorageService
         this.ops = undefined;
 
         return getWithRetryForTokenRefresh(async (refresh: boolean) => {
+            // Note - this call ends up in getSocketStorageDiscovery() and can refresh token
+            // Thus it needs to be done before we call getStorageToken() to reduce extra calls
+            const baseUrl = await this.buildUrl(from, to);
+
             const storageToken = await this.getStorageToken(refresh);
 
-            const { url, headers } = getUrlAndHeadersWithAuth(await this.buildUrl(from, to), storageToken);
+            const { url, headers } = getUrlAndHeadersWithAuth(baseUrl, storageToken);
 
             const response = await this.fetchWrapper.get<IDeltaStorageGetResponse>(url, url, headers);
 

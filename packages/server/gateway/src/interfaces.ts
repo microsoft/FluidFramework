@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
+import { ICommit, ICommitDetails } from "@microsoft/fluid-gitresources";
 import { IGitCache } from "@microsoft/fluid-server-services-client";
 import { ITenantManager } from "@microsoft/fluid-server-services-core";
-import { IFluidCodeDetails } from "@prague/container-definitions";
-import { ICommit, ICommitDetails } from "@prague/gitresources";
 
 export interface IAlfred {
     createFork(tenantId: string, id: string): Promise<string>;
@@ -26,4 +26,8 @@ export interface IKeyValue {
     key: string;
 
     value: string;
+}
+
+export interface IKeyValueWrapper {
+    get(key: string): Promise<any>;
 }

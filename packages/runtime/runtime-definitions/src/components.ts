@@ -11,16 +11,17 @@ import {
     IProvideComponentSerializer,
     IRequest,
     IResponse,
-} from "@prague/component-core-interfaces";
+} from "@microsoft/fluid-component-core-interfaces";
 import {
     ConnectionState,
+    IAudience,
     IBlobManager,
     IDeltaManager,
     IGenericBlob,
     ILoader,
     IQuorum,
     ITelemetryLogger,
-} from "@prague/container-definitions";
+} from "@microsoft/fluid-container-definitions";
 import {
     IDocumentMessage,
     IDocumentStorageService,
@@ -28,10 +29,11 @@ import {
     ISnapshotTree,
     ITreeEntry,
     MessageType,
-} from "@prague/protocol-definitions";
+} from "@microsoft/fluid-protocol-definitions";
 
 import { EventEmitter } from "events";
-import { ComponentFactoryTypes, IChannel } from ".";
+import { IChannel } from ".";
+import { IProvideComponentRegistry } from "./componentRegistry";
 
 /**
  * Represents the runtime for the component. Contains helper functions/state of the component.
@@ -169,6 +171,11 @@ export interface IComponentRuntime extends EventEmitter, IComponentRouter {
     getQuorum(): IQuorum;
 
     /**
+     * Returns the current audience.
+     */
+    getAudience(): IAudience;
+
+    /**
      * Called by distributed data structures in disconnected state to notify about pending local changes.
      * All pending changes are automatically flushed by shared objects on connection.
      */
@@ -208,6 +215,7 @@ export interface IComponentContext extends EventEmitter {
     readonly hostRuntime: IHostRuntime;
     readonly snapshotFn: (message: string) => Promise<void>;
     readonly closeFn: () => void;
+    readonly createProps?: any;
 
     /**
      * Ambient services provided with the context
@@ -218,6 +226,11 @@ export interface IComponentContext extends EventEmitter {
      * Returns the current quorum.
      */
     getQuorum(): IQuorum;
+
+    /**
+     * Returns the current audience.
+     */
+    getAudience(): IAudience;
 
     error(err: any): void;
 
@@ -286,7 +299,11 @@ export enum FlushMode {
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
  */
-export interface IHostRuntime extends EventEmitter, IProvideComponentSerializer, IProvideComponentHandleContext {
+export interface IHostRuntime extends
+    EventEmitter,
+    IProvideComponentSerializer,
+    IProvideComponentHandleContext,
+    IProvideComponentRegistry {
     readonly id: string;
     readonly existing: boolean;
     readonly options: any;
@@ -323,15 +340,27 @@ export interface IHostRuntime extends EventEmitter, IProvideComponentSerializer,
     createComponent(pkgOrId: string, pkg?: string): Promise<IComponentRuntime>;
 
     /**
+     * Creates a new component with props
+     * @param pkg - Package name of the component
+     * @param props - properties to be passed to the instantiateComponent thru the context
+     * @param id - id of the component.
+     *
+     * @remarks
+     * Only used by aqueduct PrimedComponent to pass param to the instantiateComponent function thru the context.
+     * Further change to the component create flow to split the local create vs remote instantiate make this deprecated.
+     * @internal
+     */
+    _createComponentWithProps(pkg: string, props: any, id: string): Promise<IComponentRuntime>;
+
+    /**
      * Returns the current quorum.
      */
     getQuorum(): IQuorum;
 
     /**
-     * Returns the component factory for a particular package.
-     * @param name - Name of the package.
+     * Returns the current audience.
      */
-    getPackage(name: string): Promise<ComponentFactoryTypes>;
+    getAudience(): IAudience;
 
     /**
      * Used to raise an unrecoverable error on the runtime.

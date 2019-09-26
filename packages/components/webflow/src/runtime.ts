@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { SimpleModuleInstantiationFactory } from "@prague/aqueduct";
+import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 
-export const WebFlowType = "@chaincode/webflow";
+export const WebFlowType = "@fluid-example/webflow";
 export const FlowDocumentType = "@chaincode/flow-document";
 
 export const fluidExport = new SimpleModuleInstantiationFactory(

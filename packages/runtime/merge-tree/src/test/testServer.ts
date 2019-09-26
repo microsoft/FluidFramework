@@ -4,13 +4,21 @@
  */
 
 // tslint:disable
-import { ISequencedDocumentMessage } from "@prague/protocol-definitions";
-import { ClientSeq, compareNumbers, clientSeqComparer, IncrementalMapState, ISegment, MergeTree, IncrementalExecOp } from "../mergeTree";
+import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
+import { IIntegerRange } from "../";
 import * as Collections from "../collections";
+import {
+    ClientSeq,
+    clientSeqComparer,
+    compareNumbers,
+    IncrementalExecOp,
+    IncrementalMapState,
+    ISegment,
+    MergeTree,
+} from "../mergeTree";
 import * as Properties from "../properties";
-import { TestClient } from "./testClient";
 import { MergeTreeTextHelper, TextSegment } from "../textSegment";
-import { IIntegerRange } from "..";
+import { TestClient } from "./testClient";
 
 /**
  * Server for tests.  Simulates client communication by directing placing

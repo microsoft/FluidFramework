@@ -3,15 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import * as API from "@prague/client-api";
+import * as API from "@fluid-internal/client-api";
 import {
     IRequest,
-} from "@prague/component-core-interfaces";
+} from "@microsoft/fluid-component-core-interfaces";
 import {
     ITelemetryBaseEvent,
     ITelemetryBaseLogger,
-} from "@prague/container-definitions";
-import { Container, Loader } from "@prague/container-loader";
+} from "@microsoft/fluid-container-definitions";
+import { Container, Loader } from "@microsoft/fluid-container-loader";
+import { ChildLogger, TelemetryLogger } from "@microsoft/fluid-core-utils";
 import {
     FileDeltaStorageService,
     FileDocumentServiceFactory,
@@ -21,7 +22,7 @@ import {
     ISnapshotWriterStorage,
     Replayer,
     ReplayFileDeltaConnection,
-} from "@prague/file-socket-storage";
+} from "@microsoft/fluid-file-driver";
 import {
     IBlob,
     IDocumentServiceFactory,
@@ -31,12 +32,11 @@ import {
     ITree,
     IUrlResolver,
     TreeEntry,
-} from "@prague/protocol-definitions";
+} from "@microsoft/fluid-protocol-definitions";
 import {
     FileSnapshotReader,
     IFileSnapshot,
-} from "@prague/replay-socket-storage";
-import { ChildLogger, TelemetryLogger } from "@prague/utils";
+} from "@microsoft/fluid-replay-driver";
 import * as assert from "assert";
 import * as child_process from "child_process";
 import * as fs from "fs";
@@ -264,7 +264,7 @@ class Document {
             },
             tokens: {},
             type: "fluid",
-            url: `fluid-file://localhost:6000/prague/${FileStorageDocumentName}`,
+            url: `fluid-file://localhost:6000/fluid/${FileStorageDocumentName}`,
         };
 
         const resolver = new ContainerUrlResolver(

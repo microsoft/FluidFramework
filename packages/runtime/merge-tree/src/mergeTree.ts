@@ -1450,17 +1450,17 @@ export class MergeTree {
                 const segment = childNode;
                 if (segment.segmentGroups.empty) {
                     if (segment.removedSeq !== undefined) {
-                        if (segment.trackingCollection.empty) {
-                            const createBrid = this.getBranchId(segment.clientId);
-                            const removeBrid = this.getBranchId(segment.removedClientId);
-                            if ((removeBrid !== createBrid) || (segment.removedSeq > this.collabWindow.minSeq)) {
-                                holdNodes.push(segment);
-                            } else {
-                                if (MergeTree.traceZRemove) {
-                                    console.log(`${this.getLongClientId(this.collabWindow.clientId)}: Zremove ${segment["text"]}; cli ${this.getLongClientId(segment.clientId)}`);
-                                }
-                                segment.parent = undefined;
+                        const createBrid = this.getBranchId(segment.clientId);
+                        const removeBrid = this.getBranchId(segment.removedClientId);
+                        if ((removeBrid !== createBrid) || (segment.removedSeq > this.collabWindow.minSeq)) {
+                            holdNodes.push(segment);
+                        } else if (!segment.trackingCollection.empty) {
+                            holdNodes.push(segment);
+                        } else {
+                            if (MergeTree.traceZRemove) {
+                                console.log(`${this.getLongClientId(this.collabWindow.clientId)}: Zremove ${segment["text"]}; cli ${this.getLongClientId(segment.clientId)}`);
                             }
+                            segment.parent = undefined;
                         }
                         prevSegment = undefined;
                     } else {
@@ -1756,12 +1756,12 @@ export class MergeTree {
         return accum.segments;
     }
 
-    getContainingSegment(pos: number, refSeq: number, clientId: number) {
-        let segment: ISegment | undefined;
+    getContainingSegment<T extends ISegment>(pos: number, refSeq: number, clientId: number) {
+        let segment: T | undefined;
         let offset: number | undefined;
 
         const leaf = (leafSeg: ISegment, segpos: number, refSeq: number, clientId: number, start: number) => {
-            segment = leafSeg;
+            segment = leafSeg as T;
             offset = start;
             return false;
         };
@@ -2135,9 +2135,7 @@ export class MergeTree {
             this.mergeTreeDeltaCallback(
                 opArgs,
                 {
-                    mergeTreeClientId: clientId,
                     operation: ops.MergeTreeDeltaType.INSERT,
-                    mergeTree: this,
                     deltaSegments: segments.map((segment) => ({ segment })),
                 });
         }
@@ -2170,8 +2168,8 @@ export class MergeTree {
             // then we need to walk up the chain of parents
             // and split the blocks until we find a block with
             // room
-            let ordinalUpdateNode: IMergeBlock;
             let block = segment.parent;
+            let ordinalUpdateNode = block;
             while (block !== undefined) {
                 if (block.childCount >= MaxNodesInBlock) {
                     const splitNode = this.split(block);
@@ -2181,7 +2179,7 @@ export class MergeTree {
                         ordinalUpdateNode = undefined;
                     } else {
                         this.insertChildNode(block.parent, splitNode, block.index + 1);
-                        ordinalUpdateNode = splitNode;
+                        ordinalUpdateNode = splitNode.parent;
                         this.blockUpdateLength(block.parent, UnassignedSequenceNumber, clientId);
                     }
                 } else {
@@ -2243,9 +2241,7 @@ export class MergeTree {
                 opArgs,
                 {
                     deltaSegments: [{ segment: insertSegment }],
-                    mergeTreeClientId: clientId,
                     operation: ops.MergeTreeDeltaType.INSERT,
-                    mergeTree: this,
                 });
         }
 
@@ -2295,7 +2291,7 @@ export class MergeTree {
         }
 
         block.childCount++;
-        block.assignChild(child, childIndex, true);
+        block.assignChild(child, childIndex, false);
     }
 
     private blockInsert<T extends ISegment>(pos: number, refSeq: number, clientId: number, seq: number, newSegments: T[]) {
@@ -2749,9 +2745,7 @@ export class MergeTree {
             this.mergeTreeDeltaCallback(
                 opArgs,
                 {
-                    mergeTreeClientId: clientId,
                     operation: ops.MergeTreeDeltaType.ANNOTATE,
-                    mergeTree: this,
                     deltaSegments,
                 });
         }
@@ -2852,9 +2846,7 @@ export class MergeTree {
             this.mergeTreeDeltaCallback(
                 opArgs,
                 {
-                    mergeTreeClientId: clientId,
                     operation: ops.MergeTreeDeltaType.REMOVE,
-                    mergeTree: this,
                     deltaSegments: removedSegments,
                 });
         }

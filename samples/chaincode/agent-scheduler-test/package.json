@@ -3,7 +3,7 @@
   "version": "0.4.14",
   "description": "Chaincode wrapping agent-scheduler component",
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
@@ -21,14 +21,6 @@
     "start:local": "node ../../../common/tools/node_modules/@prague/prague-dev-server/bin/prague-dev-server.js --config webpack.config.js --package package.json",
     "verdaccio": "npm publish --registry https://packages.wu2.prague.office-int.com",
     "deploy": "npm run build && npm version patch && npm run verdaccio"
-  },
-  "prague": {
-    "browser": {
-      "entrypoint": "main",
-      "bundle": [
-        "dist/main.bundle.js"
-      ]
-    }
   },
   "dependencies": {
     "@prague/app-component": "^0.4.7702",

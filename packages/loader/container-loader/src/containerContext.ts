@@ -8,9 +8,10 @@ import {
     IComponentConfiguration,
     IRequest,
     IResponse,
-} from "@prague/component-core-interfaces";
+} from "@microsoft/fluid-component-core-interfaces";
 import {
     ConnectionState,
+    IAudience,
     ICodeLoader,
     IContainerContext,
     IDeltaManager,
@@ -19,7 +20,8 @@ import {
     IRuntime,
     IRuntimeFactory,
     ITelemetryLogger,
-} from "@prague/container-definitions";
+} from "@microsoft/fluid-container-definitions";
+import { raiseConnectedEvent } from "@microsoft/fluid-core-utils";
 import {
     IDocumentAttributes,
     IDocumentMessage,
@@ -30,8 +32,7 @@ import {
     ISnapshotTree,
     ITree,
     MessageType,
-} from "@prague/protocol-definitions";
-import { raiseConnectedEvent } from "@prague/utils";
+} from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
 import { BlobManager } from "./blobManager";
 import { Container } from "./container";
@@ -119,6 +120,10 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
 
     public get serviceConfiguration(): IServiceConfiguration | undefined {
         return this.container.serviceConfiguration;
+    }
+
+    public get audience(): IAudience {
+        return this.container.audience;
     }
 
     // tslint:disable-next-line:no-unsafe-any

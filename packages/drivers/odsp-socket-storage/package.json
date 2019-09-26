@@ -1,6 +1,6 @@
 {
-  "name": "@prague/odsp-socket-storage",
-  "version": "0.10.0",
+  "name": "@microsoft/fluid-odsp-driver",
+  "version": "0.11.0",
   "description": "Socket storage implementation for SPO and ODC",
   "main": "dist/index.js",
   "module": "lib/index.js",
@@ -21,7 +21,7 @@
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "nyc": {
     "all": true,
     "exclude": [
@@ -42,8 +42,9 @@
     "report-dir": "nyc/report"
   },
   "devDependencies": {
-    "@microsoft/api-extractor": "^7.3.11",
-    "@microsoft/fluid-build-common": "^0.10.0",
+    "@microsoft/api-extractor": "^7.4.4",
+    "@microsoft/fluid-build-common": "^0.11.0",
+    "@microsoft/fluid-core-utils": "^0.11.0",
     "@types/debug": "^0.0.31",
     "@types/mocha": "^5.2.5",
     "@types/sha.js": "^2.4.0",
@@ -56,12 +57,12 @@
     "typescript": "~3.4.5"
   },
   "dependencies": {
-    "@prague/component-core-interfaces": "^0.10.0",
-    "@prague/gitresources": "^0.10.0",
-    "@prague/container-definitions": "^0.10.0",
-    "@prague/protocol-definitions": "^0.10.0",
-    "@prague/socket-storage-shared": "^0.10.0",
-    "@prague/utils": "^0.10.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.11.0",
+    "@microsoft/fluid-container-definitions": "^0.11.0",
+    "@microsoft/fluid-core-utils": "^0.11.0",
+    "@microsoft/fluid-driver-base": "^0.11.0",
+    "@microsoft/fluid-gitresources": "^0.11.0",
+    "@microsoft/fluid-protocol-definitions": "^0.11.0",
     "debug": "^4.1.1",
     "node-fetch": "^2.2.1",
     "sha.js": "^2.4.11",

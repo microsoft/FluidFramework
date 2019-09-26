@@ -3,13 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ITree } from "@prague/protocol-definitions";
-import {
-    IComponentRuntime,
-    IObjectStorageService,
-    ISharedObjectServices,
-} from "@prague/runtime-definitions";
-import { ISharedObject, ISharedObjectFactory } from "@prague/shared-object-common";
+import { ITree } from "@microsoft/fluid-protocol-definitions";
+import { IComponentRuntime, IObjectStorageService, ISharedObjectServices } from "@microsoft/fluid-runtime-definitions";
+import { ISharedObject, ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 
 /**
  * Consensus Ordered Collection channel factory interface

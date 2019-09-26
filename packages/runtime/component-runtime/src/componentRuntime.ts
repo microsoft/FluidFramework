@@ -3,21 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import {
-    IComponentHandle,
-    IComponentHandleContext,
-    IRequest,
-    IResponse,
-} from "@prague/component-core-interfaces";
+import { IComponentHandle, IComponentHandleContext, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import {
     ConnectionState,
+    IAudience,
     IBlobManager,
     IDeltaManager,
     IGenericBlob,
     ILoader,
     IQuorum,
     ITelemetryLogger,
-} from "@prague/container-definitions";
+} from "@microsoft/fluid-container-definitions";
+import { buildHierarchy, ChildLogger, Deferred, flatten, raiseConnectedEvent } from "@microsoft/fluid-core-utils";
 import {
     FileMode,
     IDocumentMessage,
@@ -25,7 +22,7 @@ import {
     ITreeEntry,
     MessageType,
     TreeEntry,
-} from "@prague/protocol-definitions";
+} from "@microsoft/fluid-protocol-definitions";
 import {
     IAttachMessage,
     IChannel,
@@ -33,9 +30,8 @@ import {
     IComponentRuntime,
     IEnvelope,
     IInboundSignalMessage,
-} from "@prague/runtime-definitions";
-import { ISharedObjectFactory } from "@prague/shared-object-common";
-import { buildHierarchy, ChildLogger, Deferred, flatten, raiseConnectedEvent } from "@prague/utils";
+} from "@microsoft/fluid-runtime-definitions";
+import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { IChannelContext } from "./channelContext";
@@ -68,6 +64,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
             context.blobManager,
             context.deltaManager,
             context.getQuorum(),
+            context.getAudience(),
             context.snapshotFn,
             context.closeFn,
             registry,
@@ -139,6 +136,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         private readonly blobManager: IBlobManager,
         public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         private readonly quorum: IQuorum,
+        private readonly audience: IAudience,
         private readonly snapshotFn: (message: string) => Promise<void>,
         private readonly closeFn: () => void,
         private readonly registry: ISharedObjectRegistry,
@@ -341,6 +339,12 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         this.verifyNotClosed();
 
         return this.quorum;
+    }
+
+    public getAudience(): IAudience {
+        this.verifyNotClosed();
+
+        return this.audience;
     }
 
     public snapshot(message: string): Promise<void> {
@@ -579,6 +583,9 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
     private attachListener() {
         this.componentContext.on("leader", (clientId: string) => {
             this.emit("leader", clientId);
+        });
+        this.componentContext.on("notleader", (clientId: string) => {
+            this.emit("notleader", clientId);
         });
     }
 

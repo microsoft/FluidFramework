@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import { createWebLoader, IHostConfig, initializeChaincode, registerAttach } from "@microsoft/fluid-base-host";
+import { BaseTelemetryNullLogger } from "@microsoft/fluid-core-utils";
+import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
+import { IDocumentServiceFactory, IFluidResolvedUrl } from "@microsoft/fluid-protocol-definitions";
+import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
+import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
 import { IGitCache } from "@microsoft/fluid-server-services-client";
-import { createWebLoader, IHostConfig, initializeChaincode, registerAttach } from "@prague/base-host";
-import { IResolvedPackage } from "@prague/loader-web";
-import { OdspDocumentServiceFactory } from "@prague/odsp-socket-storage";
-import { IDocumentServiceFactory, IResolvedUrl } from "@prague/protocol-definitions";
-import { ContainerUrlResolver } from "@prague/routerlicious-host";
-import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
-import { BaseTelemetryNullLogger } from "@prague/utils";
+import { IResolvedPackage } from "@microsoft/fluid-web-code-loader";
 import { DocumentFactory } from "./documentFactory";
 import { MicrosoftGraph } from "./graph";
 import { PackageManager } from "./packageManager";
@@ -18,13 +18,14 @@ import { IHostServices } from "./services";
 
 export async function initialize(
     url: string,
-    resolved: IResolvedUrl,
+    resolved: IFluidResolvedUrl,
     cache: IGitCache,
     pkg: IResolvedPackage,
     scriptIds: string[],
     npm: string,
     jwt: string,
     config: any,
+    clientId: string,
     graphAccessToken: string,
 ) {
     const documentFactory = new DocumentFactory(config.tenantId);
@@ -41,10 +42,11 @@ export async function initialize(
     };
 
     const documentServiceFactories: IDocumentServiceFactory[] = [];
+    // TODO: need to be support refresh token
     documentServiceFactories.push(new OdspDocumentServiceFactory(
-        "Server-Gateway",
-        (siteUrl: string) => Promise.resolve("fake token"),
-        () => Promise.resolve("fake token"),
+        clientId,
+        (siteUrl: string) => Promise.resolve(resolved.tokens.storageToken),
+        () => Promise.resolve(resolved.tokens.socketToken),
         new BaseTelemetryNullLogger()));
 
     documentServiceFactories.push(new RouterliciousDocumentServiceFactory(
@@ -57,7 +59,7 @@ export async function initialize(
     const resolver = new ContainerUrlResolver(
         document.location.origin,
         jwt,
-        new Map<string, IResolvedUrl>([[url, resolved]]));
+        new Map<string, IFluidResolvedUrl>([[url, resolved]]));
 
     const hostConf: IHostConfig = { documentServiceFactory: documentServiceFactories, urlResolver: resolver };
 
@@ -78,6 +80,10 @@ export async function initialize(
 
     const div = document.getElementById("content") as HTMLDivElement;
     const container = await loader.resolve({ url });
+
+    container.on("error", (error) => {
+        console.error(error);
+    });
 
     registerAttach(loader, container, url, div);
 

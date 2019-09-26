@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { IClient } from "./clients";
+import { ConnectionMode, IClient, ISignalClient } from "./clients";
 import { IServiceConfiguration } from "./config";
 import {
     IContentMessage,
@@ -208,9 +208,14 @@ export interface IDocumentDeltaConnection extends EventEmitter {
     clientId: string;
 
     /**
-     * claims for the connection
+     * claims for the client
      */
     claims: ITokenClaims;
+
+    /**
+     * mode of the client
+     */
+    mode: ConnectionMode;
 
     /**
      * Whether the connection was made to a new or existing document
@@ -246,6 +251,11 @@ export interface IDocumentDeltaConnection extends EventEmitter {
      * Signals sent during the connection
      */
     initialSignals?: ISignalMessage[];
+
+    /**
+     * Prior clients already connected.
+     */
+    initialClients?: ISignalClient[];
 
     /**
      * Configuration details provided by the service
@@ -288,7 +298,7 @@ export interface IDocumentService {
     /**
      * Subscribes to the document delta stream
      */
-    connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection>;
+    connectToDeltaStream(client: IClient, mode: ConnectionMode): Promise<IDocumentDeltaConnection>;
 
     /**
      * Creates a branch of the document with the given ID. Returns the new ID.
@@ -311,4 +321,14 @@ export interface IDocumentServiceFactory {
      * returns an instance of IDocumentService
      */
     createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService>;
+}
+
+/**
+ * Network errors are communicated from the driver to runtime by throwing object implementing INetworkError interface
+ */
+export interface INetworkError {
+    readonly statusCode?: number;
+    readonly canRetry?: boolean;
+    readonly retryAfterSeconds?: number;
+    readonly message: string;
 }

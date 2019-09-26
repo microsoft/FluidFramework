@@ -4,13 +4,15 @@
  */
 
 import {
+    ConnectionMode,
     IContentMessage,
     ISequencedDocumentMessage,
     IServiceConfiguration,
+    ISignalClient,
     ISignalMessage,
     ITokenClaims,
     MessageType,
-} from "@prague/protocol-definitions";
+} from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
 import { IDisposable } from "./disposable";
 
@@ -18,8 +20,10 @@ export interface IConnectionDetails {
     clientId: string;
     claims: ITokenClaims;
     existing: boolean;
+    mode: ConnectionMode;
     parentBranch: string | null;
     version: string;
+    initialClients?: ISignalClient[];
     initialMessages?: ISequencedDocumentMessage[];
     initialContents?: IContentMessage[];
     initialSignals?: ISignalMessage[];
@@ -43,7 +47,7 @@ export interface IDeltaHandlerStrategy {
     processSignal: (message: ISignalMessage) => void;
 }
 
-declare module "@prague/component-core-interfaces" {
+declare module "@microsoft/fluid-component-core-interfaces" {
     interface IComponent extends Readonly<Partial<IProvideDeltaSender>> { }
 }
 
@@ -93,12 +97,8 @@ export interface IDeltaManager<T, U> extends EventEmitter, IDeltaSender, IDispos
     // Service configuration provided by the service.
     serviceConfiguration: IServiceConfiguration;
 
-    /**
-     * Puts the delta manager in read only mode
-     */
-    enableReadonlyMode(): void;
-
-    disableReadonlyMode(): void;
+    // Flag to indicate whether the client can write or not.
+    active: boolean;
 
     close(): void;
 

@@ -3,25 +3,52 @@
  * Licensed under the MIT License.
  */
 
-import * as agent from "@microsoft/fluid-server-agent";
-import { canSummarize, canWrite } from "@microsoft/fluid-server-services-client";
-import * as core from "@microsoft/fluid-server-services-core";
-import { generateClientId, getRandomInt } from "@microsoft/fluid-server-services-utils";
-import * as api from "@prague/client-api";
+import { isSystemType } from "@microsoft/fluid-core-utils";
+import { IConnect, IConnected } from "@microsoft/fluid-driver-base";
 import {
+    ConnectionMode,
     IClient,
     IContentMessage,
     IDocumentMessage,
     IDocumentSystemMessage,
     ISignalMessage,
     ITokenClaims,
-} from "@prague/protocol-definitions";
-import { IConnect, IConnected } from "@prague/socket-storage-shared";
-import { isSystemType } from "@prague/utils";
+    MessageType,
+} from "@microsoft/fluid-protocol-definitions";
+import * as agent from "@microsoft/fluid-server-agent";
+import { canSummarize, canWrite } from "@microsoft/fluid-server-services-client";
+import * as core from "@microsoft/fluid-server-services-core";
+import {
+    createNackMessage,
+    createRoomJoinMessage,
+    createRoomLeaveMessage,
+    generateClientId,
+    getRandomInt,
+} from "@microsoft/fluid-server-services-utils";
 import * as jwt from "jsonwebtoken";
 import * as semver from "semver";
 import * as winston from "winston";
 import { DefaultServiceConfiguration } from "./utils";
+
+interface IRoom {
+
+    tenantId: string;
+
+    documentId: string;
+}
+
+interface IConnectedClient {
+
+    connection: IConnected;
+
+    details: IClient;
+
+    connectVersions: string[];
+}
+
+function getRoomId(room: IRoom) {
+    return `${room.tenantId}/${room.documentId}`;
+}
 
 // Sanitize the receeived op before sending.
 function sanitizeMessage(message: any): IDocumentMessage {
@@ -52,7 +79,7 @@ function sanitizeMessage(message: any): IDocumentMessage {
     }
 }
 
-const protocolVersions = ["^0.2.0", "^0.1.0"];
+const protocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
 
 function selectProtocolVersion(connectVersions: string[]): string {
     let version: string = null;
@@ -71,17 +98,46 @@ export function register(
     metricClientConfig: any,
     orderManager: core.IOrdererManager,
     tenantManager: core.ITenantManager,
-    contentCollection: core.ICollection<any>) {
+    storage: core.IDocumentStorage,
+    contentCollection: core.ICollection<any>,
+    clientManager: core.IClientManager) {
 
+    // TODO register should take the metric client as a param
     const metricLogger = agent.createMetricClient(metricClientConfig);
 
     webSocketServer.on("connection", (socket: core.IWebSocket) => {
         // Map from client IDs on this connection to the object ID and user info.
         const connectionsMap = new Map<string, core.IOrdererConnection>();
         // Map from client IDs to room.
-        const roomMap = new Map<string, string>();
+        const roomMap = new Map<string, IRoom>();
 
-        async function connectDocument(message: IConnect): Promise<IConnected> {
+        // back-compat map for storing clientIds with latest protocol versions.
+        const versionMap = new Set<string>();
+
+        function isWriter(scopes: string[], existing: boolean, mode: ConnectionMode): boolean {
+            if (canWrite(scopes) || canSummarize(scopes)) {
+                // New document needs a writer to boot.
+                if (!existing) {
+                    return true;
+                } else {
+                    // back-compat for old client and new server.
+                    if (mode === undefined) {
+                        return true;
+                    } else {
+                        return mode === "write";
+                    }
+                }
+            } else {
+                return false;
+            }
+        }
+
+        // back-compat for old clients not having protocol version ^0.3.0
+        function canSendMessage(connectVersions: string[]) {
+            return connectVersions.indexOf("^0.3.0") !== -1;
+        }
+
+        async function connectDocument(message: IConnect): Promise<IConnectedClient> {
             if (!message.token) {
                 return Promise.reject("Must provide an authorization token");
             }
@@ -95,10 +151,14 @@ export function register(
             await tenantManager.verifyToken(claims.tenantId, token);
 
             const clientId = generateClientId();
+            const room: IRoom = {
+                tenantId: claims.tenantId,
+                documentId: claims.documentId,
+            };
 
             // Subscribe to channels.
             await Promise.all([
-                socket.join(`${claims.tenantId}/${claims.documentId}`),
+                socket.join(getRoomId(room)),
                 socket.join(`client#${clientId}`)]);
 
             // todo: should all the client details come from the claims???
@@ -108,8 +168,7 @@ export function register(
             messageClient.scopes = claims.scopes;
 
             // Join the room to receive signals.
-            roomMap.set(clientId, `${claims.tenantId}/${claims.documentId}`);
-
+            roomMap.set(clientId, room);
             // Iterate over the version ranges provided by the client and select the best one that works
             const connectVersions = message.versions ? message.versions : ["^0.1.0"];
             const version = selectProtocolVersion(connectVersions);
@@ -120,45 +179,69 @@ export function register(
                     `Client: ${JSON.stringify(connectVersions)}`);
             }
 
-            if (canWrite(messageClient.scopes) || canSummarize(messageClient.scopes)) {
+            const detailsP = storage.getOrCreateDocument(claims.tenantId, claims.documentId);
+            const clientsP = clientManager.getClients(claims.tenantId, claims.documentId);
+            const addP = clientManager.addClient(
+                claims.tenantId,
+                claims.documentId,
+                clientId,
+                messageClient as IClient);
+
+            const [details, , clients] = await Promise.all([detailsP, addP, clientsP]);
+
+            let connectedMessage: IConnected;
+            if (isWriter(messageClient.scopes, details.existing, message.mode)) {
                 const orderer = await orderManager.getOrderer(claims.tenantId, claims.documentId);
-                const connection = await orderer.connect(socket, clientId, messageClient as IClient);
+                const connection = await orderer.connect(socket, clientId, messageClient as IClient, details);
                 connectionsMap.set(clientId, connection);
 
-                const connectedMessage: IConnected = {
+                connectedMessage = {
                     claims,
                     clientId,
-                    existing: connection.existing,
+                    existing: details.existing,
                     maxMessageSize: connection.maxMessageSize,
+                    mode: "write",
                     parentBranch: connection.parentBranch,
                     serviceConfiguration: connection.serviceConfiguration,
+                    initialClients: clients,
                     supportedVersions: protocolVersions,
                     version,
                 };
-
-                return connectedMessage;
             } else {
-                // TODO: We should split storage stuff from orderer to get the following fields right.
-                const connectedMessage: IConnected = {
+                connectedMessage = {
                     claims,
                     clientId,
-                    existing: true, // Readonly client can only open an existing document.
+                    existing: details.existing,
                     maxMessageSize: 1024, // Readonly client can't send ops.
+                    mode: "read",
                     parentBranch: null, // Does not matter for now.
                     serviceConfiguration: DefaultServiceConfiguration,
+                    initialClients: clients,
                     supportedVersions: protocolVersions,
                     version,
                 };
-
-                return connectedMessage;
             }
+
+            return {
+                connection: connectedMessage,
+                connectVersions,
+                details: messageClient as IClient,
+            };
         }
 
         // Note connect is a reserved socket.io word so we use connect_document to represent the connect request
-        socket.on("connect_document", async (message: IConnect) => {
-            connectDocument(message).then(
-                (connectedMessage) => {
-                    socket.emit("connect_document_success", connectedMessage);
+        socket.on("connect_document", async (connectionMessage: IConnect) => {
+            connectDocument(connectionMessage).then(
+                (message) => {
+                    socket.emit("connect_document_success", message.connection);
+                    // back-compat for old clients.
+                    if (canSendMessage(message.connectVersions)) {
+                        versionMap.add(message.connection.clientId);
+                        socket.emitToRoom(
+                            getRoomId(roomMap.get(message.connection.clientId)),
+                            "signal",
+                            createRoomJoinMessage(message.connection.clientId, message.details));
+                    }
                 },
                 (error) => {
                     winston.info(`connectDocument error`, error);
@@ -170,41 +253,39 @@ export function register(
         socket.on(
             "submitOp",
             (clientId: string, messageBatches: (IDocumentMessage | IDocumentMessage[])[], response) => {
-                // TODO validate message size within bounds
-
                 // Verify the user has an orderer connection.
                 if (!connectionsMap.has(clientId)) {
-                    return response("Invalid client ID or readonly client", null);
-                }
+                    socket.emit("nack", "", [createNackMessage()]);
+                } else {
+                    const connection = connectionsMap.get(clientId);
 
-                const connection = connectionsMap.get(clientId);
+                    messageBatches.forEach((messageBatch) => {
+                        const messages = Array.isArray(messageBatch) ? messageBatch : [messageBatch];
+                        const sanitized = messages
+                            .filter((message) => {
+                                if (message.type === MessageType.RoundTrip) {
+                                    // End of tracking. Write traces.
+                                    metricLogger.writeLatencyMetric("latency", message.traces).catch(
+                                        (error) => {
+                                            winston.error(error.stack);
+                                        });
+                                    return false;
+                                } else {
+                                    return true;
+                                }
+                            })
+                            .map((message) => sanitizeMessage(message));
 
-                messageBatches.forEach((messageBatch) => {
-                    const messages = Array.isArray(messageBatch) ? messageBatch : [messageBatch];
-                    const sanitized = messages
-                        .filter((message) => {
-                            if (message.type === api.RoundTrip) {
-                                // End of tracking. Write traces.
-                                metricLogger.writeLatencyMetric("latency", message.traces).catch(
-                                    (error) => {
-                                        winston.error(error.stack);
-                                    });
-                                return false;
-                            } else {
-                                return true;
-                            }
-                        })
-                        .map((message) => sanitizeMessage(message));
+                        if (sanitized.length > 0) {
+                            connection.order(sanitized);
+                        }
+                    });
 
-                    if (sanitized.length > 0) {
-                        connection.order(sanitized);
+                    // A response callback used to be used to verify the send. Newer drivers do not use this. Will be
+                    // removed in 0.9
+                    if (response) {
+                        response(null);
                     }
-                });
-
-                // A response callback used to be used to verify the send. Newer drivers do not use this. Will be
-                // removed in 0.9
-                if (response) {
-                    response(null);
                 }
             });
 
@@ -212,46 +293,44 @@ export function register(
         socket.on("submitContent", (clientId: string, message: IDocumentMessage, response) => {
             // Verify the user has an orderer connection.
             if (!connectionsMap.has(clientId)) {
-                return response("Invalid client ID or readonly client", null);
+                socket.emit("nack", "", [createNackMessage()]);
+            } else {
+                const broadCastMessage: IContentMessage = {
+                    clientId,
+                    clientSequenceNumber: message.clientSequenceNumber,
+                    contents: message.contents,
+                };
+
+                const connection = connectionsMap.get(clientId);
+
+                const dbMessage = {
+                    clientId,
+                    documentId: connection.documentId,
+                    op: broadCastMessage,
+                    tenantId: connection.tenantId,
+                };
+
+                contentCollection.insertOne(dbMessage).then(
+                    () => {
+                        socket.broadcastToRoom(getRoomId(roomMap.get(clientId)), "op-content", broadCastMessage);
+                        return response(null);
+                    }, (error) => {
+                        if (error.code !== 11000) {
+                            // Needs to be a full rejection here
+                            return response("Could not write to DB", null);
+                        }
+                    });
             }
-
-            const broadCastMessage: IContentMessage = {
-                clientId,
-                clientSequenceNumber: message.clientSequenceNumber,
-                contents: message.contents,
-            };
-
-            const connection = connectionsMap.get(clientId);
-
-            const dbMessage = {
-                clientId,
-                documentId: connection.documentId,
-                op: broadCastMessage,
-                tenantId: connection.tenantId,
-            };
-
-            contentCollection.insertOne(dbMessage).then(
-                () => {
-                    socket.broadcastToRoom(roomMap.get(clientId), "op-content", broadCastMessage);
-                    return response(null);
-                }, (error) => {
-                    if (error.code !== 11000) {
-                        // Needs to be a full rejection here
-                        return response("Could not write to DB", null);
-                    }
-                });
         });
 
         // Message sent when a new signal is submitted to the router
         socket.on(
             "submitSignal",
             (clientId: string, contentBatches: (IDocumentMessage | IDocumentMessage[])[], response) => {
-                // Verify the user has an orderer connection and subscription to the room.
-                if (!connectionsMap.has(clientId) || !roomMap.has(clientId)) {
-                    return response("Invalid client ID or readonly client", null);
+                // Verify the user has subscription to the room.
+                if (!roomMap.has(clientId)) {
+                    return response("Invalid client ID", null);
                 }
-
-                const roomId = roomMap.get(clientId);
 
                 contentBatches.forEach((contentBatche) => {
                     const contents = Array.isArray(contentBatche) ? contentBatche : [contentBatche];
@@ -262,7 +341,7 @@ export function register(
                             content,
                         };
 
-                        socket.emitToRoom(roomId, "signal", signalMessage);
+                        socket.emitToRoom(getRoomId(roomMap.get(clientId)), "signal", signalMessage);
                     }
                 });
 
@@ -273,12 +352,22 @@ export function register(
                 }
             });
 
-        socket.on("disconnect", () => {
+        socket.on("disconnect", async () => {
+            const removeP = [];
             // Send notification messages for all client IDs in the connection map
             for (const [clientId, connection] of connectionsMap) {
                 winston.info(`Disconnect of ${clientId}`);
                 connection.disconnect();
+                const room = roomMap.get(clientId);
+                if (room) {
+                    removeP.push(clientManager.removeClient(room.tenantId, room.documentId, clientId));
+                    // back-compat check for older clients.
+                    if (versionMap.has(clientId)) {
+                        socket.emitToRoom(getRoomId(room), "signal", createRoomLeaveMessage(clientId));
+                    }
+                }
             }
+            await Promise.all(removeP);
         });
     });
 }

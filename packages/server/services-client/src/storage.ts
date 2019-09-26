@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as git from "@prague/gitresources";
-import * as api from "@prague/protocol-definitions";
+import * as git from "@microsoft/fluid-gitresources";
+import * as api from "@microsoft/fluid-protocol-definitions";
 
 /**
  * Git cache data

@@ -6,8 +6,10 @@
 import { IUser } from "./users";
 
 export const Browser = "browser";
+export type ConnectionMode = "write" | "read";
 
 export interface IClient {
+    mode?: ConnectionMode;
     type: string;
     permission: string[];
     user: IUser;
@@ -19,6 +21,13 @@ export interface ISequencedClient {
     client: IClient;
 
     sequenceNumber: number;
+}
+
+export interface ISignalClient {
+
+    clientId: string;
+
+    client: IClient;
 }
 
 /**

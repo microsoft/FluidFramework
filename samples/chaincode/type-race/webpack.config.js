@@ -11,7 +11,7 @@ const pkg = require("./package.json");
 const chaincodeName = pkg.name.slice(1);
 
 module.exports = env => {
-    const isProduction = env === "production";
+    const isProduction = env && env.production;
 
     return merge({
         entry: {
@@ -51,7 +51,8 @@ module.exports = env => {
         devServer: {
             publicPath: '/dist',
             stats: "minimal",
-            before: (app, server) => fluidRoute.before(app, server, __dirname, env),
+            before: (app, server) => fluidRoute.before(app, server),
+            after: (app, server) => fluidRoute.after(app, server, __dirname, env),
         }
     }, isProduction
         ? require("./webpack.prod")

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { ScopeType } from "@microsoft/fluid-protocol-definitions";
 import { IAlfredTenant } from "@microsoft/fluid-server-services-core";
-import { ScopeType } from "@prague/protocol-definitions";
 import { Router } from "express";
 import * as safeStringify from "json-stringify-safe";
 import * as jwt from "jsonwebtoken";
@@ -13,8 +13,7 @@ import { Provider } from "nconf";
 import * as winston from "winston";
 import { spoEnsureLoggedIn } from "../gateway-odsp-utils";
 import { resolveUrl } from "../gateway-urlresolver";
-import { IAlfred } from "../interfaces";
-import { KeyValueWrapper } from "../keyValueWrapper";
+import { IAlfred, IKeyValueWrapper } from "../interfaces";
 import { getConfig, getParam, getUserDetails } from "../utils";
 import { defaultPartials } from "./partials";
 
@@ -23,7 +22,7 @@ export function create(
     alfred: IAlfred,
     appTenants: IAlfredTenant[],
     ensureLoggedIn: any,
-    cache: KeyValueWrapper): Router {
+    cache: IKeyValueWrapper): Router {
 
     const router: Router = Router();
     const jwtKey = config.get("gateway:key");

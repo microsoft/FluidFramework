@@ -3,7 +3,7 @@
   "description": "Play music collaboratively",
   "version": "0.0.5",
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "main": "dist/main.bundle.js",
   "types": "dist/index.d.ts",
   "scripts": {
@@ -29,14 +29,6 @@
     "webpack": "4.16.5",
     "webpack-cli": "3.1.0",
     "webpack-merge": "4.1.4"
-  },
-  "prague": {
-    "browser": {
-      "entrypoint": "main",
-      "bundle": [
-        "dist/main.bundle.js"
-      ]
-    }
   },
   "dependencies": {
     "@babel/core": "^7.4.4",

@@ -3,16 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import {
-    IRequest,
-    IResponse,
- } from "@prague/component-core-interfaces";
-import {
-    ISharedDirectory,
-    MapFactory,
-    SharedDirectory,
-} from "@prague/map";
-import { ITaskManager } from "@prague/runtime-definitions";
+import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
+import { ISharedDirectory, MapFactory, SharedDirectory } from "@microsoft/fluid-map";
+import { ITaskManager } from "@microsoft/fluid-runtime-definitions";
 import { SharedComponent } from "./sharedComponent";
 
 /**
@@ -70,7 +63,7 @@ export abstract class PrimedComponent extends SharedComponent {
         // Initialize task manager.
         this.internalTaskManager = await this.getComponent<ITaskManager>("_scheduler");
 
-        if (this.canForge) {
+        if (!this.runtime.existing) {
             // Create a root directory and register it before calling componentInitializingFirstTime
             this.internalRoot = SharedDirectory.create(this.runtime, this.rootDirectoryId);
             this.internalRoot.register();

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentServiceFactory, IUrlResolver } from "@prague/protocol-definitions";
+import { IDocumentServiceFactory, IUrlResolver } from "@microsoft/fluid-protocol-definitions";
 
 export interface IHostConfig {
     documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[];

@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-FROM node:10.16.3-slim AS base
+FROM node:10.16.3-slim
 
 # node-gyp dependencies
 RUN apt-get update && apt-get install -y \
@@ -37,7 +37,7 @@ EXPOSE 3000
 COPY . .
 
 # And build
-RUN npm run build
+RUN npm run tsc
 
 # Don't run as root user
 USER node

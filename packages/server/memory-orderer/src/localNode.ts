@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IDocumentMessage, IServiceConfiguration } from "@microsoft/fluid-protocol-definitions";
 import {
     IDatabaseManager,
     IDocumentStorage,
@@ -13,7 +14,6 @@ import {
     ITenantManager,
     IWebSocketServer,
 } from "@microsoft/fluid-server-services-core";
-import { IDocumentMessage, IServiceConfiguration } from "@prague/protocol-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import * as _ from "lodash";
@@ -35,6 +35,7 @@ const DefaultServiceConfiguration: IServiceConfiguration = {
         idleTime: 5000,
         maxOps: 1000,
         maxTime: 5000 * 12,
+        maxAckWaitTime: 600000,
     },
 };
 
