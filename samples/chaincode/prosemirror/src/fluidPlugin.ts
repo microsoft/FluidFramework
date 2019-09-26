@@ -42,6 +42,16 @@ export class FluidCollabPlugin {
                     if (range.operation === MergeTreeDeltaType.INSERT) {
                         if (TextSegment.is(segment)) {
                             transaction.insertText(segment.text, range.position);
+
+                            if (segment.properties) {
+                                for (const prop of Object.keys(segment.properties)) {
+                                    const value = range.segment.properties[prop];
+                                    transaction.addMark(
+                                        range.position,
+                                        range.position + segment.text.length,
+                                        this.schema.marks[prop].create(value));
+                                }
+                            }
                         } else if (Marker.is(segment)) {
                             if (segment.refType === ReferenceType.Simple) {
                                 const nodeType = segment.properties["type"];
@@ -58,23 +68,23 @@ export class FluidCollabPlugin {
                             }
                         }
                     } else if (range.operation === MergeTreeDeltaType.ANNOTATE) {
-                        const segment = range.segment as TextSegment;
-
                         for (const prop of Object.keys(range.propertyDeltas)) {
                             const value = range.segment.properties[prop];
 
                             // TODO I think I need to query the sequence for *all* marks and then set them here
                             // for PM it's an all or nothing set. Not anything additive
 
+                            const length = TextSegment.is(segment) ? segment.text.length : 1;
+
                             if (value) {
                                 transaction.addMark(
                                     range.position,
-                                    range.position + segment.text.length,
+                                    range.position + length,
                                     this.schema.marks[prop].create(value));
                             } else {
                                 transaction.removeMark(
                                     range.position,
-                                    range.position + segment.text.length,
+                                    range.position + length,
                                     this.schema.marks[prop]);
                             }
                         }
@@ -111,19 +121,29 @@ export class FluidCollabPlugin {
                     }
 
                     for (const content of stepAsJson.slice.content) {
+                        let props: any = undefined;
+
+                        if (content.marks) {
+                            props = {};
+                            for (const mark of content.marks) {
+                                props[mark.type] = mark.attrs || true;
+                            }
+                        }
+
                         // TODO can probably better use the schema to parse properties. Right now just distinguishing
                         // between the required text node and then the other types
                         if (content.type === "text") {
-                            this.sharedString.insertText(stepAsJson.from, content.text);
+                            this.sharedString.insertText(stepAsJson.from, content.text, props);
                             from += content.text.length;
                         } else {
-                            this.sharedString.insertMarker(
-                                from,
-                                ReferenceType.Simple,
-                                {
-                                    type: content.type,
-                                    attrs: content.attrs,
-                                });
+                            if (!props) {
+                                props = {};
+                            }
+
+                            props.type = content.type;
+                            props.attrs = content.attrs;
+
+                            this.sharedString.insertMarker(from, ReferenceType.Simple, props);
                             from++;
                         }
                     }

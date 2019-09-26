@@ -205,6 +205,28 @@ export class ProseMirror extends EventEmitter implements IComponentLoadable, ICo
                         assert(popped.type === nodeType);
                         break;
 
+                    case ReferenceType.Simple:
+                        // TODO consolidate the text segment and simple references
+                        const nodeJson: IProseMirrorNode = {
+                            type: segment.properties["type"],
+                            attrs: segment.properties["attrs"],
+                        };
+
+                        if (segment.properties) {
+                            nodeJson.marks = [];
+                            for (const propertyKey of Object.keys(segment.properties)) {
+                                if (propertyKey !== "type" && propertyKey !== "attrs") {
+                                    nodeJson.marks.push({
+                                        type: propertyKey,
+                                        value: segment.properties[propertyKey],
+                                    });
+                                }
+                            }
+                        }
+
+                        top.content.push(nodeJson);
+                        break;
+
                     default:
                         // throw for now when encountering something unknown
                         throw new Error("Unknown marker");
