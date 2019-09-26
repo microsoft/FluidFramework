@@ -23,4 +23,4 @@ export * from "./sharedSequence";
 export * from "./sharedObjectSequence";
 export * from "./sharedNumberSequence";
 export * from "./sparsematrix";
-export * from "./sharedIntervalCollection";
+export {SharedIntervalCollectionFactory, SharedIntervalCollection} from "./sharedIntervalCollection";

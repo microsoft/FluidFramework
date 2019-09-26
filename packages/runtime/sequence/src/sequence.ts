@@ -16,12 +16,13 @@ import {
     SequenceIntervalCollectionValueType,
 } from "./intervalCollection";
 import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent";
-import { SharedIntervalCollection } from "./sharedIntervalCollection";
+import { ASharedIntervalCollection } from "./sharedIntervalCollection";
 // tslint:disable-next-line: no-var-requires no-require-imports no-submodule-imports
 const cloneDeep = require("lodash/cloneDeep");
 
 export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
-extends SharedIntervalCollection<SequenceInterval> {
+    extends ASharedIntervalCollection<SequenceInterval> {
+
     get loaded(): Promise<void> {
         return this.loadedDeferred.promise;
     }
