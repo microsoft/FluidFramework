@@ -60,13 +60,20 @@ export class TodoItemView extends React.Component<TodoItemViewProps, TodoItemVie
     }
 
     render() {
-        // tslint:disable:strict-boolean-expressions
+        // tslint:disable:react-a11y-input-elements
+        // react-a11y-input-elements incorrectly thinks checkboxes need placeholder text
+        // Issue fixed in tslint-microsoft-contrib 6.1.0:
+        // https://github.com/microsoft/tslint-microsoft-contrib/issues/749
+
+        // tslint:disable:react-a11y-role-has-required-aria-props
+        // react-a11y-role-has-required-aria-props incorrectly thinks native checkboxes need aria-checked
+        // Known open issue (9/26/2019):
+        // https://github.com/microsoft/tslint-microsoft-contrib/issues/409
         return (
             <div className="todo-item">
                 <h2>
                     <input
                         type="checkbox"
-                        aria-checked={this.state.checked}
                         name={this.props.todoItemModel.url}
                         checked={this.state.checked}
                         onChange={this.setCheckedState} />
@@ -103,5 +110,7 @@ export class TodoItemView extends React.Component<TodoItemViewProps, TodoItemVie
                 }
             </div>
         );
+        // tslint:enable:react-a11y-input-elements
+        // tslint:enable:react-a11y-role-has-required-aria-props
     }
 }
