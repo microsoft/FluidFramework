@@ -39,9 +39,6 @@ export class TodoView extends React.Component<TodoViewProps, TodoViewState> {
         // Get the shared string for the title off the model
         this.titleString = await this.props.todoModel.getTodoTitleString();
 
-        // Map is now realized, register for events on it
-        // Would prefer for the model to register for these events, and then emit events of its own
-        // (e.g. maybe "componentListUpdate")
         this.props.todoModel.on("todoItemsChanged", async () => {
             // Doesn't really matter if we await this?
             await this.refreshTodoItemListFromModel();
@@ -71,6 +68,7 @@ export class TodoView extends React.Component<TodoViewProps, TodoViewState> {
 
     render(): JSX.Element {
         // Getting the subcomponents and DDSs is async and happens after the first render in componentDidMount.
+        // Until those finish loading, we'll render a loading indicator.
         if (!this.state.modelLoaded) {
             return <div>Loading...</div>;
         }
