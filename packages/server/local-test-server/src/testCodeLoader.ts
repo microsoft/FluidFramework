@@ -28,6 +28,9 @@ export class TestCodeLoader implements ICodeLoader {
      */
     public load<T>(pkg: IFluidCodeDetails): Promise<T> {
         let source: string;
+        console.log(pkg);
+        console.log(JSON.stringify(pkg));
+        console.log(JSON.stringify(this.typeToFactory.keys));
         if (typeof pkg.package === "string") {
             source = pkg.package;
         } else {

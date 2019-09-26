@@ -5,6 +5,7 @@
 
 import { PrimedComponent, PrimedComponentFactory, SimpleContainerRuntimeFactory } from "@microsoft/fluid-aqueduct";
 import { IComponentHandle, IComponentLoadable } from "@microsoft/fluid-component-core-interfaces";
+import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
 import { WrappedComponentRegistry } from "@microsoft/fluid-container-runtime";
 import { IComponentContext, IComponentFactory, IComponentRegistry, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SharedString, SparseMatrix } from "@microsoft/fluid-sequence";
@@ -26,7 +27,10 @@ class TestRootComponent extends PrimedComponent {
     /**
      * Type name of the component for the IComponentRegistryLookup
      */
-    public static readonly type = "@chaincode/test-root-component";
+    public static readonly type: IFluidCodeDetails =  {
+        package: "@chaincode/test-root-component",
+        config: {},
+    };
 
     /**
      * Get the factory for the IComponentRegistry
@@ -155,25 +159,25 @@ export class TestHost {
         if (Array.isArray(componentRegistry)) {
             storeComponentRegistry = new Map(componentRegistry.concat([
                 [
-                    TestRootComponent.type,
+                    TestRootComponent.type.package as string,
                     Promise.resolve(TestRootComponent.getFactory()),
                 ],
             ]));
         } else {
             const extraRegistryMap: Map<string, Promise<IComponentFactory>> =
-                new Map([[TestRootComponent.type, Promise.resolve(TestRootComponent.getFactory())]]);
+                new Map([[TestRootComponent.type.package as string, Promise.resolve(TestRootComponent.getFactory())]]);
             storeComponentRegistry =
                 new WrappedComponentRegistry(componentRegistry as IComponentRegistry, extraRegistryMap);
         }
 
         const store = new TestDataStore(
             new TestCodeLoader([
-                [TestRootComponent.type,
+                [TestRootComponent.type.package as string,
                     {
                     IRuntimeFactory: undefined,
                     instantiateRuntime: (context) => SimpleContainerRuntimeFactory.instantiateRuntime(
                         context,
-                        TestRootComponent.type,
+                        TestRootComponent.type.package as string,
                         storeComponentRegistry),
                 }],
             ]),
