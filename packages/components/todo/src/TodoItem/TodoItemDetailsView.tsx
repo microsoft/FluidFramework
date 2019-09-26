@@ -9,17 +9,17 @@ import * as React from "react";
 import { TodoItemSupportedComponents } from "./supportedComponent";
 import { TodoItem } from "./TodoItem";
 
-interface TodoItemDetailsProperties {
+interface TodoItemDetailsViewProperties {
     todoItemModel: TodoItem;
 }
 
-interface TodoItemDetailsState {
+interface TodoItemDetailsViewState {
     hasInnerComponent: boolean;
     innerComponent: IComponent;
 }
 
-export class TodoItemDetailsView extends React.Component<TodoItemDetailsProperties, TodoItemDetailsState> {
-    constructor(props: TodoItemDetailsProperties) {
+export class TodoItemDetailsView extends React.Component<TodoItemDetailsViewProperties, TodoItemDetailsViewState> {
+    constructor(props: TodoItemDetailsViewProperties) {
         super(props);
 
         this.state = {

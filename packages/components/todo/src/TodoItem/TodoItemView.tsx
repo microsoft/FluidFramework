@@ -8,16 +8,16 @@ import * as React from "react";
 import { TodoItem } from "./TodoItem";
 import { TodoItemDetailsView } from "./TodoItemDetailsView";
 
-interface p {
+interface TodoItemViewProps {
     todoItemModel: TodoItem;
 }
 
-interface s {
-    checkedState: boolean;
-    contentVisible: boolean;
+interface TodoItemViewState {
+    checked: boolean;
+    innerComponentVisible: boolean;
 }
 
-export class TodoItemView extends React.Component<p, s> {
+export class TodoItemView extends React.Component<TodoItemViewProps, TodoItemViewState> {
     private readonly baseUrl = `${window.location.origin}`;
     private readonly buttonStyle = {
         height: "25px",
@@ -26,7 +26,7 @@ export class TodoItemView extends React.Component<p, s> {
         width: "35px",
     };
 
-    constructor(props: p) {
+    constructor(props: TodoItemViewProps) {
         super(props);
 
         const pathName = window.location.pathname.split("/");
@@ -38,16 +38,21 @@ export class TodoItemView extends React.Component<p, s> {
         }
         this.baseUrl += `${path.join("/")}${window.location.search}`;
         this.state = {
-            checkedState: this.props.todoItemModel.getCheckedState(),
-            contentVisible: false,
+            checked: this.props.todoItemModel.getCheckedState(),
+            innerComponentVisible: false,
         };
 
         this.handleCheckedChange = this.handleCheckedChange.bind(this);
     }
 
+    componentDidMount() {
+        this.props.todoItemModel.on("checkedStateChanged", () => {
+            this.setState({ checked: this.props.todoItemModel.getCheckedState() });
+        });
+    }
+
     private handleCheckedChange(newState: boolean): void {
         this.props.todoItemModel.setCheckedState(newState);
-        this.setState({checkedState: this.props.todoItemModel.getCheckedState()});
     }
 
     render() {
@@ -56,7 +61,7 @@ export class TodoItemView extends React.Component<p, s> {
             <div className="todo-item">
                 <h2>
                     <CollaborativeCheckbox
-                        checked={this.props.todoItemModel.getCheckedState()}
+                        checked={this.state.checked}
                         onCheckedChange={this.handleCheckedChange}
                         id={this.props.todoItemModel.url}/>
                     <CollaborativeInput
@@ -72,8 +77,8 @@ export class TodoItemView extends React.Component<p, s> {
                         }}/>
                     <button
                         style={this.buttonStyle}
-                        onClick={() => {this.setState({contentVisible: !this.state.contentVisible}); }}>
-                        {this.state.contentVisible ? "▲" : "▼"}
+                        onClick={() => {this.setState({innerComponentVisible: !this.state.innerComponentVisible}); }}>
+                        {this.state.innerComponentVisible ? "▲" : "▼"}
                     </button>
                     <button
                         style={this.buttonStyle}
@@ -85,7 +90,7 @@ export class TodoItemView extends React.Component<p, s> {
                 </h2>
                 {
                     // If the content is visible we will show a button or a component
-                    this.state.contentVisible &&
+                    this.state.innerComponentVisible &&
                     <TodoItemDetailsView
                         todoItemModel={this.props.todoItemModel}
                     />

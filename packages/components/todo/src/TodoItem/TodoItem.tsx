@@ -20,6 +20,10 @@ import { TodoItemView } from "./TodoItemView";
 const pkg = require("../../package.json");
 export const TodoItemName = `${pkg.name as string}-item`;
 
+const checkedKey = "checked";
+const textKey = "text";
+const innerComponentKey = "innerId";
+
 /**
  * Todo Item is a singular todo entry consisting of:
  * - Checkbox
@@ -52,24 +56,24 @@ export class TodoItem extends PrimedComponent
       newItemText = props.startingText;
     }
 
+    // the text of the todo item
     const text = SharedString.create(this.runtime);
     text.insertText(0, newItemText);
-    // create a cell that will be use for the text entry
-    this.root.set("text", text.handle);
+    this.root.set(textKey, text.handle);
 
-    // track the state of the checkbox
-    this.root.set("checked", false);
+    // the state of the checkbox
+    this.root.set(checkedKey, false);
 
     // Each Todo Item has one inner component that it can have. This value is originally empty since we let the
     // user choose the component they want to embed. We store it in a cell for easier event handling.
     const innerIdCell = SharedCell.create(this.runtime);
     innerIdCell.set("");
-    this.root.set("innerId", innerIdCell.handle);
+    this.root.set(innerComponentKey, innerIdCell.handle);
   }
 
   protected async componentHasInitialized() {
-    const text = this.root.get<IComponentHandle>("text").get<SharedString>();
-    const innerIdCell = this.root.get<IComponentHandle>("innerId").get<ISharedCell>();
+    const text = this.root.get<IComponentHandle>(textKey).get<SharedString>();
+    const innerIdCell = this.root.get<IComponentHandle>(innerComponentKey).get<ISharedCell>();
 
     this.setCheckedState = this.setCheckedState.bind(this);
 
@@ -84,6 +88,14 @@ export class TodoItem extends PrimedComponent
     this.innerIdCell.on("op", (op, local) => {
       if (!local) {
         this.emit("innerComponentChanged");
+      }
+    });
+
+    this.root.on("valueChanged", (op, local) => {
+      if (!local) {
+        if (op.key === checkedKey) {
+          this.emit("checkedStateChanged");
+        }
       }
     });
   }
@@ -113,18 +125,23 @@ export class TodoItem extends PrimedComponent
       );
   }
 
-  public setCheckedState(newState: boolean): void {
-    this.root.set("checked", newState);
-  }
-
   // end IComponentReactViewable
 
+  public setCheckedState(newState: boolean): void {
+    this.root.set(checkedKey, newState);
+    this.emit("checkedStateChanged");
+  }
+
   public getCheckedState(): boolean {
-    return this.root.get("checked");
+    return this.root.get(checkedKey);
   }
 
   public hasInnerComponent(): boolean {
     return this.innerIdCell.get() !== "";
+  }
+
+  public async getInnerComponent() {
+    return this.getComponent(this.innerIdCell.get());
   }
 
   /**
@@ -155,9 +172,5 @@ export class TodoItem extends PrimedComponent
     this.innerIdCell.set(id);
 
     this.emit("innerComponentChanged");
-  }
-
-  public async getInnerComponent() {
-    return this.getComponent(this.innerIdCell.get());
   }
 }
