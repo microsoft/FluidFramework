@@ -101,10 +101,12 @@ export interface IComponentInterfacesRegistry extends IProvideComponentInterface
     /**
      * Invoked when a component is to be registered as a component with discoverable interfaces.
      */
-    registerComponentInterfaces(component: IProvideComponentDiscoverInterfaces | IProvideComponentDiscoverableInterfaces): void;
+    registerComponentInterfaces(
+        component: IProvideComponentDiscoverInterfaces | IProvideComponentDiscoverableInterfaces): void;
 
     /**
      * Invoked when a component is to be unregistered from the registry.
      */
-    unregisterComponentInterfaces(component: IProvideComponentDiscoverInterfaces | IProvideComponentDiscoverableInterfaces): void;
+    unregisterComponentInterfaces(
+        component: IProvideComponentDiscoverInterfaces | IProvideComponentDiscoverableInterfaces): void;
 }
