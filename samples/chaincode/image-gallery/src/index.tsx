@@ -3,16 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { Component, Document } from "@prague/app-component";
-import { IContainerContext, IRuntime } from "@prague/container-definitions";
+import { PrimedComponent, PrimedComponentFactory, SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
+import { IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import ImageGallery from "react-image-gallery";
 import "../node_modules/react-image-gallery/styles/css/image-gallery.css";
 import "./Styles.css";
-import { ISharedMap } from "@prague/map";
+import { ISharedMap } from "@microsoft/fluid-map";
 
-export class ImageGalleryComponent extends Document {
+export class ImageGalleryComponent extends PrimedComponent implements IComponentHTMLVisual {
+  public get IComponentHTMLVisual() { return this; }
   
   imageList = [
     {
@@ -46,38 +47,21 @@ export class ImageGalleryComponent extends Document {
 
   imageGallery: ImageGallery;
   images: ISharedMap;
+  ignoreSlide: boolean = false;
 
-  public async create() {
+  protected async componentInitializingFirstTime() {
     this.root.set("position", 0);
   }
 
-  /**
-   *  The component has been loaded. Render the component into the provided div
-   * */
-  public async opened() {
-    const maybeDiv = await this.platform.queryInterface<HTMLDivElement>("div");
-
-    if (maybeDiv) {
-      maybeDiv.className = "app-sandbox";
-
-      this.root.on("op", () => {
-        const position = this.root.get<number>("position");
-        if (this.imageGallery) {
-          this.imageGallery.slideToIndex(position);
-        }
-
-        this.render(maybeDiv);
-      });
-    } else {
-      return;
-    }
-  }
-
-
-  protected render(host: HTMLDivElement) {
+  public render(div: HTMLDivElement) {
+    div.className = "app-sandbox";
 
     const onSlide = (index) => {
-      this.root.set("position", index);
+      if (this.ignoreSlide) {
+        this.ignoreSlide = false;
+      } else {
+        this.root.set("position", index);
+      }
     }
 
     ReactDOM.render(
@@ -87,15 +71,32 @@ export class ImageGalleryComponent extends Document {
         onSlide={onSlide}
         slideDuration={10}
       />,
-      host
+      div
     );
-  }
+
+    this.imageGallery.slideToIndex(this.root.get("position"));
+
+    this.root.on("valueChanged", (_, local) => {
+      if (local) {
+        return;
+      }
+      const position = this.root.get<number>("position");
+      if (this.imageGallery) {
+        this.imageGallery.slideToIndex(position);
+        this.ignoreSlide = true;
+      }
+    });
+  };
 }
 
-export async function instantiateRuntime(
-  context: IContainerContext
-): Promise<IRuntime> {
-  return Component.instantiateRuntime(context, "@chaincode/image-gallery", new Map([
-    ["@chaincode/image-gallery", Promise.resolve(Component.createComponentFactory(ImageGalleryComponent))]
-  ]));
-}
+export const ImageGalleryInstantiationFactory = new PrimedComponentFactory(
+  ImageGalleryComponent,
+  [],
+);
+
+export const fluidExport = new SimpleModuleInstantiationFactory(
+  "@fluid-example/image-gallery",
+  new Map([
+    ["@fluid-example/image-gallery", Promise.resolve(ImageGalleryInstantiationFactory)],
+  ]),
+);
