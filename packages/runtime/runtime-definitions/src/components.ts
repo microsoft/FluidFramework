@@ -99,7 +99,7 @@ export interface IComponentRuntime extends EventEmitter, IComponentRouter {
     /**
      * Generates a snapshot of the given component
      */
-    snapshotInternal(): Promise<ITreeEntry[]>;
+    snapshotInternal(generateFullTreeNoOptimizations?: boolean): Promise<ITreeEntry[]>;
 
     /**
      * Retrieves the snapshot used as part of the initial snapshot message

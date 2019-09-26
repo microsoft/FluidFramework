@@ -119,7 +119,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
 
     // Tracks the base snapshot ID. If no ops effect this component then the id value can be returned on a
     // snapshot call
-    protected baseId: string | null = null;
+    protected baseId?: string;
     protected componentRuntime: IComponentRuntime;
     private closed = false;
     private loaded = false;
@@ -191,7 +191,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
 
         if (this.loaded) {
             // component has been modified and will need to regenerate its snapshot
-            this.baseId = null;
+            this.baseId = undefined;
             return this.componentRuntime.process(message, local);
         } else {
             assert(!local);
@@ -239,7 +239,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
     /**
      * Notifies the object to take snapshot of a component.
      */
-    public async snapshot(): Promise<ITree> {
+    public async snapshot(generateFullTreeNoOptimizations?: boolean): Promise<ITree> {
         await this.realize();
 
         const { pkg } = await this.getSnapshotDetails();
@@ -247,15 +247,15 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         const componentAttributes = { pkg };
 
         // base ID still being set means previous snapshot is still valid
-        if (this.baseId) {
+        if (this.baseId && !generateFullTreeNoOptimizations) {
             return { id: this.baseId, entries: [] };
         }
 
-        const entries = await this.componentRuntime.snapshotInternal();
+        const entries = await this.componentRuntime.snapshotInternal(generateFullTreeNoOptimizations);
 
         entries.push(new BlobTreeEntry(".component", JSON.stringify(componentAttributes)));
 
-        return { entries, id: undefined };
+        return { entries, id: this.baseId === undefined ? null : this.baseId };
     }
 
     public async request(request: IRequest): Promise<IResponse> {
@@ -306,7 +306,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
 
         if (this.pending.length > 0) {
             // component has been modified and will need to regenerate its snapshot
-            this.baseId = null;
+            this.baseId = undefined;
 
             // Apply all pending ops
             for (const op of this.pending) {
@@ -429,7 +429,7 @@ export class LocalComponentContext extends ComponentContext {
 
         // base ID still being set means previous snapshot is still valid
         if (this.baseId) {
-            snapshot.id = this.baseId;
+            snapshot.id = this.baseId === undefined ? null : this.baseId;
         }
 
         const message: IAttachMessage = {
