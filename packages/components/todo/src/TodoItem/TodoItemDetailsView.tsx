@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { HTMLEmbeddedComponent } from "@microsoft/fluid-aqueduct-react";
+import { EmbeddedComponent } from "@microsoft/fluid-aqueduct-react";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import * as React from "react";
 import { TodoItemSupportedComponents } from "./supportedComponent";
@@ -61,7 +61,7 @@ export class TodoItemDetailsView extends React.Component<TodoItemDetailsViewProp
                     <button onClick={async () => this.createInnerComponent("textList")}>textList</button>
                 </>
             );
-        } else if (this.state.innerComponent === undefined) {
+        } else if (!this.state.innerComponent) {
             // A detailed item has been created (we have the component id), but we haven't retrieved it yet
             return (
                 <div>Loading...</div>
@@ -72,11 +72,7 @@ export class TodoItemDetailsView extends React.Component<TodoItemDetailsViewProp
             // createInnerComponent will create the model component for the chosen option.  We then need to get the
             // view component out of it (for now).  Preferably, we would instead take the returned model and feed it
             // into our own view component of our choosing.
-            if (this.state.innerComponent.IComponentReactViewable) {
-                return this.state.innerComponent.IComponentReactViewable.createJSXElement();
-            } else if (this.state.innerComponent.IComponentHTMLVisual) {
-                return (<HTMLEmbeddedComponent component={this.state.innerComponent.IComponentHTMLVisual} />);
-            }
+            return <EmbeddedComponent component={this.state.innerComponent} />;
         }
     }
 }

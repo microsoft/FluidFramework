@@ -67,7 +67,7 @@ export class TodoItem extends PrimedComponent
     // Each Todo Item has one inner component that it can have. This value is originally empty since we let the
     // user choose the component they want to embed. We store it in a cell for easier event handling.
     const innerIdCell = SharedCell.create(this.runtime);
-    innerIdCell.set("");
+    innerIdCell.set(undefined);
     this.root.set(innerComponentKey, innerIdCell.handle);
   }
 
@@ -144,11 +144,16 @@ export class TodoItem extends PrimedComponent
   }
 
   public hasInnerComponent(): boolean {
-    return this.innerIdCell.get() !== "";
+    return !!this.innerIdCell.get();
   }
 
   public async getInnerComponent() {
-    return this.getComponent(this.innerIdCell.get());
+    const innerComponentId = this.innerIdCell.get();
+    if (innerComponentId) {
+      return this.getComponent(innerComponentId);
+    } else {
+      return undefined;
+    }
   }
 
   /**

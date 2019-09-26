@@ -7,67 +7,39 @@ import { IComponent, IComponentHTMLVisual } from "@microsoft/fluid-component-cor
 import * as React from "react";
 import { IComponentReactViewable } from "./interfaces";
 
-/**
- * Creates a new Embedded Component while allowing you to register the getComponent call upfront.
- */
-export class EmbeddedReactComponentFactory {
-    constructor(private readonly getComponent: (id: string) => Promise<IComponent>) { }
-
-    public create(id: string): JSX.Element {
-        return <EmbeddedComponent getComponent={this.getComponent} id={id} key={id} />;
-    }
+export interface IEmbeddedComponentProps {
+    component: IComponent;
 }
-
-interface IProps {
-    id: string;
-    getComponent(id: string): Promise<IComponent>;
-}
-
-interface IState {
-    element: JSX.Element;
-}
-
-export { IProps as IEmbeddedComponentProps };
-export { IState as IEmbeddedComponentState };
 
 /**
- * Given a way to get a component will render that component via react if the component supports IComponentReactViewable
+ * Will render a component via react if the component supports IComponentReactViewable
  * or standard HTML if the component supports IComponentHTMLVisual
  *
- * If the component doesn't exist or supports neither interfaces we render and empty <span/>
+ * If the component supports neither interface we render an empty <span />
  */
-export class EmbeddedComponent extends React.Component<IProps, IState> {
-    constructor(props: IProps) {
+export class EmbeddedComponent extends React.Component<IEmbeddedComponentProps> {
+    private readonly element: JSX.Element;
+
+    constructor(props: IEmbeddedComponentProps) {
         super(props);
 
-        this.state = {
-            element: <span/>,
-        };
-    }
-
-    public async componentDidMount() {
-        const component = await this.props.getComponent(this.props.id);
-        if (!component) {
-            return;
-        }
-
-        // Query to see if the component supports IComponentReactViewable
-        const reactViewable = component.IComponentReactViewable;
+        const reactViewable = this.props.component.IComponentReactViewable;
         if (reactViewable) {
-            this.setState({ element: <ReactEmbeddedComponent component={reactViewable}/>});
+            this.element = <ReactEmbeddedComponent component={reactViewable}/>;
             return;
         }
 
-        const htmlVisual = component.IComponentHTMLVisual;
-
+        const htmlVisual = this.props.component.IComponentHTMLVisual;
         if (htmlVisual) {
-            this.setState({ element: <HTMLEmbeddedComponent component={htmlVisual} />});
+            this.element = <HTMLEmbeddedComponent component={htmlVisual} />;
             return;
         }
+
+        this.element = <span />;
     }
 
     public render() {
-        return this.state.element;
+        return this.element;
     }
 }
 
