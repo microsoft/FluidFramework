@@ -118,19 +118,6 @@ export class ProseMirror extends EventEmitter implements IComponentLoadable, ICo
     }
 
     private async initialize() {
-        // {
-        //     "type": "doc",
-        //     "content": [
-        //         {
-        //             "type": "paragraph",
-        //             "content": [
-        //             {
-        //                 "type": "text",
-        //                 "text": "HELLO!"
-        //             }]
-        //         }]
-        // }
-
         if (!this.runtime.existing) {
             this.root = SharedMap.create(this.runtime, "root");
             const text = SharedString.create(this.runtime);

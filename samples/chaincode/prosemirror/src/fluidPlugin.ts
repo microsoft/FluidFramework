@@ -6,7 +6,7 @@
 import { Plugin, Transaction } from "prosemirror-state";
 import { SharedString } from "@prague/sequence";
 import { EditorView } from "prosemirror-view";
-import { MergeTreeDeltaType, TextSegment, Marker } from "@prague/merge-tree";
+import { MergeTreeDeltaType, TextSegment, Marker, ReferenceType } from "@prague/merge-tree";
 import { Schema } from "prosemirror-model";
 
 export class FluidCollabPlugin {
@@ -43,20 +43,19 @@ export class FluidCollabPlugin {
                         if (TextSegment.is(segment)) {
                             transaction.insertText(segment.text, range.position);
                         } else if (Marker.is(segment)) {
-                            // doc.replaceRange(
-                            //     "\n",
-                            //     doc.posFromIndex(range.position));
+                            if (segment.refType === ReferenceType.Simple) {
+                                const nodeType = segment.properties["type"];
+                                const node = this.schema.nodes[nodeType].create(segment.properties["attrs"]);
+                                transaction.insert(range.position, node);
+                            }
                         }
                     } else if (range.operation === MergeTreeDeltaType.REMOVE) {
                         if (TextSegment.is(segment)) {
                             transaction.replace(range.position, range.position + segment.text.length);
                         } else if (Marker.is(segment)) {
-                            // TODO need to modify the tree at this point - and probably remove the matching
-                            // segment
-                            // doc.replaceRange(
-                            //     "",
-                            //     doc.posFromIndex(range.position),
-                            //     doc.posFromIndex(range.position + 1));
+                            if (segment.refType === ReferenceType.Simple) {
+                                transaction.replace(range.position, range.position + 1);
+                            }
                         }
                     } else if (range.operation === MergeTreeDeltaType.ANNOTATE) {
                         const segment = range.segment as TextSegment;
@@ -100,7 +99,7 @@ export class FluidCollabPlugin {
             const stepAsJson = step.toJSON();
             switch (stepAsJson.stepType) {
                 case "replace":
-                    const from = stepAsJson.from;
+                    let from = stepAsJson.from;
                     const to = stepAsJson.to;
 
                     if (from !== to) {
@@ -111,16 +110,24 @@ export class FluidCollabPlugin {
                         break;
                     }
 
-                    // TODO flatten content
-                    // type: hard_break is a shift+enter
-                    // type: text is text
-                    const text = stepAsJson.slice.content[0].text;
-                    if (!text) {
-                        break;
+                    for (const content of stepAsJson.slice.content) {
+                        // TODO can probably better use the schema to parse properties. Right now just distinguishing
+                        // between the required text node and then the other types
+                        if (content.type === "text") {
+                            this.sharedString.insertText(stepAsJson.from, content.text);
+                            from += content.text.length;
+                        } else {
+                            this.sharedString.insertMarker(
+                                from,
+                                ReferenceType.Simple,
+                                {
+                                    type: content.type,
+                                    attrs: content.attrs,
+                                });
+                            from++;
+                        }
                     }
-
-                    this.sharedString.insertText(stepAsJson.from, text);
-
+                    
                     break;
 
                 case "addMark":
@@ -130,6 +137,7 @@ export class FluidCollabPlugin {
                         stepAsJson.from,
                         stepAsJson.to,
                         { [stepAsJson.mark.type]: attrs });
+
                     break;
 
                 case "removeMark":
@@ -138,6 +146,7 @@ export class FluidCollabPlugin {
                         stepAsJson.from,
                         stepAsJson.to,
                         { [stepAsJson.mark.type]: false });
+
                     break;
 
                 default:
