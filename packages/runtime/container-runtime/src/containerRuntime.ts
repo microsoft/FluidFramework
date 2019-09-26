@@ -925,7 +925,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
         // Iterate over each component and ask it to snapshot
         await Promise.all(Array.from(this.contexts).map(async ([key, value]) => {
-            const snapshot = await value.snapshot();
+            const snapshot = await value.snapshot(generateFullTreeNoOptimizations);
             const treeWithStats = this.summaryTreeConverter.convertToSummaryTree(
                 snapshot,
                 generateFullTreeNoOptimizations);

@@ -28,7 +28,7 @@ type RequiredIChannelAttributes = Pick<IChannelAttributes, "type"> & Partial<ICh
 
 export class RemoteChannelContext implements IChannelContext {
     private connection: ChannelDeltaConnection | undefined;
-    private baseId: string | null = null;
+    private baseId?: string;
     private isLoaded = false;
     private pending: ISequencedDocumentMessage[] | undefined = [];
     private channelP: Promise<IChannel> | undefined;
@@ -74,7 +74,7 @@ export class RemoteChannelContext implements IChannelContext {
     public processOp(message: ISequencedDocumentMessage, local: boolean): void {
         if (this.isLoaded) {
             // Clear base id since the channel is now dirty
-            this.baseId = null;
+            this.baseId = undefined;
             // tslint:disable-next-line: no-non-null-assertion
             this.connection!.process(message, local);
         } else {
@@ -84,8 +84,8 @@ export class RemoteChannelContext implements IChannelContext {
         }
     }
 
-    public async snapshot(): Promise<ITree> {
-        if (this.baseId !== null && this.baseId !== undefined) {
+    public async snapshot(generateFullTreeNoOptimizations: boolean = false): Promise<ITree> {
+        if (this.baseId !== undefined && !generateFullTreeNoOptimizations) {
             return { id: this.baseId, entries: [] };
         }
         const channel = await this.getChannel();

@@ -18,7 +18,7 @@ export class LocalChannelContext implements IChannelContext {
     public readonly channel: IChannel;
     private attached = false;
     private connection: ChannelDeltaConnection | undefined;
-    private baseId: string | null = null;
+    private baseId?: string;
 
     constructor(
         id: string,
@@ -59,13 +59,13 @@ export class LocalChannelContext implements IChannelContext {
         assert(this.attached);
 
         // Clear base id since the channel is now dirty
-        this.baseId = null;
+        this.baseId = undefined;
         // tslint:disable-next-line: no-non-null-assertion
         this.connection!.process(message, local);
     }
 
-    public async snapshot(): Promise<ITree> {
-        if (this.baseId !== null && this.baseId !== undefined) {
+    public async snapshot(generateFullTreeNoOptimizations: boolean = false): Promise<ITree> {
+        if (this.baseId !== undefined && !generateFullTreeNoOptimizations) {
             return { id: this.baseId, entries: [] };
         }
         return this.getAttachSnapshot();

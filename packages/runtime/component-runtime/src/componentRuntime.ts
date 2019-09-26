@@ -447,7 +447,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         this.emit("signal", message, local);
     }
 
-    public async snapshotInternal(): Promise<ITreeEntry[]> {
+    public async snapshotInternal(generateFullTreeNoOptimizations?: boolean): Promise<ITreeEntry[]> {
         // Craft the .attributes file for each shared object
         const entries = await Promise.all(Array.from(this.contexts)
             .filter(([key, value]) => {
@@ -456,7 +456,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
                 return value.isRegistered();
             })
             .map(async ([key, value]) => {
-                const snapshot = await value.snapshot();
+                const snapshot = await value.snapshot(generateFullTreeNoOptimizations);
 
                 // And then store the tree
                 return {
