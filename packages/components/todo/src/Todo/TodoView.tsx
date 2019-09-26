@@ -12,23 +12,23 @@ import { TodoItem } from "../TodoItem/TodoItem";
 import { TodoItemView } from "../TodoItem/TodoItemView";
 import { Todo } from "./Todo";
 
-interface p {
+interface TodoViewProps {
     todoModel: Todo;
     getComponent(id: string): Promise<IComponent>;
 }
 
-interface s {
+interface TodoViewState {
     todoItemComponents: TodoItem[];
     inputValue: string;
     modelLoaded: boolean;
 }
 
 // tslint:disable:react-a11y-input-elements
-export class TodoView extends React.Component<p, s> {
+export class TodoView extends React.Component<TodoViewProps, TodoViewState> {
     private newTextInput: HTMLInputElement;
     private todoItemsMap: ISharedMap;
     private titleString: SharedString;
-    constructor(props: p) {
+    constructor(props: TodoViewProps) {
         super(props);
 
         this.state = {
