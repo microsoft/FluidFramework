@@ -38,16 +38,14 @@ export class TodoView extends React.Component<TodoViewProps, TodoViewState> {
     }
 
     async componentDidMount() {
-        await Promise.all([
-            // Get the shared data structures off the model
-            this.props.todoModel.getTodoTitleStringPromise().then((titleString) => { this.titleString = titleString; }),
-        ]);
+        // Get the shared string for the title off the model
+        this.titleString = await this.props.todoModel.getTodoTitleString();
 
         // Map is now realized, register for events on it
         // Would prefer for the model to register for these events, and then emit events of its own
         // (e.g. maybe "componentListUpdate")
         this.props.todoModel.on("todoItemsChanged", async () => {
-            // Ideally should not be listening to op - this will be redundant for ACK on ops we submitted
+            // Doesn't really matter if we await this?
             await this.refreshTodoItemListFromModel();
         });
 
@@ -60,8 +58,8 @@ export class TodoView extends React.Component<TodoViewProps, TodoViewState> {
     }
 
     async refreshTodoItemListFromModel(): Promise<void> {
-        return this.props.todoModel.getTodoItemComponents()
-                .then((todoItemComponents) => this.setState({todoItemComponents}));
+        const todoItemComponents = await this.props.todoModel.getTodoItemComponents();
+        this.setState({todoItemComponents});
     }
 
     /**
@@ -70,7 +68,6 @@ export class TodoView extends React.Component<TodoViewProps, TodoViewState> {
     async createNewTodoItem(ev: React.FormEvent<HTMLFormElement>): Promise<void> {
         ev.preventDefault();
         await this.props.todoModel.addTodoItemComponent({ startingText: this.newTextInput.value });
-        await this.refreshTodoItemListFromModel();
         this.newTextInput.value = "";
     }
 

@@ -35,11 +35,8 @@ export class Todo extends PrimedComponent implements IComponentHTMLVisual, IComp
   public get IComponentHTMLVisual() { return this; }
   public get IComponentReactViewable() { return this; }
 
-  public async getTodoItemsMapPromise() {
-    return this.root.get<IComponentHandle>(this.todoItemsKey).get<ISharedMap>();
-  }
-
-  public async getTodoTitleStringPromise() {
+  // Would prefer not to hand this out, and instead give back a title component?
+  public async getTodoTitleString() {
     return this.root.get<IComponentHandle>(this.todoTitleKey).get<SharedString>();
   }
 
@@ -58,11 +55,13 @@ export class Todo extends PrimedComponent implements IComponentHTMLVisual, IComp
   }
 
   protected async componentHasInitialized() {
-    this.todoItemsMap = await this.getTodoItemsMapPromise();
+    this.todoItemsMap = await this.root.get<IComponentHandle>(this.todoItemsKey).get<ISharedMap>();
     // Hide the DDS eventing used by the model, expose a model-specific event interface.
-    this.todoItemsMap.on("op", () => {
-      this.emit("todoItemsChanged");
-    })
+    this.todoItemsMap.on("op", (op, local) => {
+      if (!local) {
+        this.emit("todoItemsChanged");
+      }
+    });
   }
 
   // start IComponentHTMLVisual
@@ -111,6 +110,8 @@ export class Todo extends PrimedComponent implements IComponentHTMLVisual, IComp
 
     // Store the id of the component in our ids map so we can reference it later
     this.todoItemsMap.set(id, "");
+
+    this.emit("todoItemsChanged");
   }
 
   public async getTodoItemComponents() {
