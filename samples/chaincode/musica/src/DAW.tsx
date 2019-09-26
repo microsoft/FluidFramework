@@ -20,7 +20,7 @@ import 'react-widgets/dist/css/react-widgets.css';
 import Slider from 'rc-slider';
 import 'rc-slider/assets/index.css';
 
-import { ISharedMap } from '@prague/map';
+import { ISharedMap } from '@microsoft/fluid-map';
 import { NoteProperties, Instrument, WaveProperties } from './Player';
 import { SongSelection, songLibrary } from './SongLibrary';
 import { Song, restNoteMidiNumber } from './Songs/Song';

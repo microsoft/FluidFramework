@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedMap } from '@prague/map';
+import { ISharedMap } from '@microsoft/fluid-map';
 import { Song } from './Songs';
 import { Note } from './Songs/Note';
 
