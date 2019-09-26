@@ -73,31 +73,33 @@ function dumpStats(
     const fieldSizes = [10, 14];
     const nameLength = 72;
     const fieldsLength = fieldSizes[0] + fieldSizes[1] + 1;
-    let header = props.headers;
+    let headers = props.headers;
     const recordsToShow = props.lines ? props.lines : 10;
 
     let sorted: [string, [number, number]][];
     if (props.orderByFirstColumn) {
         sorted = [...map.entries()].sort((a, b) => b[1][0] - a[1][0]);
-        header[0] = `${header[0]} (↓)`;
+        headers[0] = `${headers[0]} (↓)`;
     } else {
         sorted = [...map.entries()].sort((a, b) => b[1][1] - a[1][1]);
-        header[1] = `${header[1]} (↓)`;
+        headers[1] = `${headers[1]} (↓)`;
     }
 
     if (props.reverseColumnsInUI) {
-        header = [header[1], header[0]];
+        headers = [headers[1], headers[0]];
+        const sorted2: [string, [number, number]][] = [];
         for (const [name, [count, size]] of sorted) {
-            sorted[name] = [size, count];
+            sorted2.push([name, [size, count]]);
         }
+        sorted = sorted2;
     }
 
     let totalCount = 0;
     let sizeTotal = 0;
 
-    const header1 = header[0].padStart(fieldSizes[0]);
-    let overflow = header1.length - fieldSizes[0];
-    console.log(`\n\n${props.title.padEnd(nameLength)} │ ${header1} ${header[1].padStart(fieldSizes[1] - overflow)}`);
+    const header0 = headers[0].padStart(fieldSizes[0]);
+    let overflow = header0.length - fieldSizes[0];
+    console.log(`\n\n${props.title.padEnd(nameLength)} │ ${header0} ${headers[1].padStart(fieldSizes[1] - overflow)}`);
     console.log(`${"─".repeat(nameLength + 1)}┼${"─".repeat(fieldsLength + 1)}`);
     let index = 0;
     let allOtherCount = 0;
@@ -377,7 +379,7 @@ function reportOpenSessions(
             const sessionName = `${clientId} / ${sessionInfo.email}`;
             const sessionPayload: [number, number] = [sessionInfo.duration, sessionInfo.opCount];
             sessions.set(sessionName, sessionPayload);
-            activeSessions.set(sessionName,sessionPayload);
+            activeSessions.set(sessionName, sessionPayload);
         } else {
             sessions.set(`Full file lifespan (no client)`, [sessionInfo.duration, sessionInfo.opCount]);
         }

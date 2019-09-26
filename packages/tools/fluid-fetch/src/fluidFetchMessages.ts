@@ -42,10 +42,9 @@ async function loadChunk(from: number, to: number, deltaStorage: IDocumentDeltaS
 }
 
 async function *loadAllSequencedMessages(
-        documentService: IDocumentService,
+        documentService?: IDocumentService,
         dir?: string,
         files?: string[]) {
-    const deltaStorage = await documentService.connectToDeltaStorage();
     const batch = 2000;
     let lastSeq = 0;
 
@@ -70,6 +69,12 @@ async function *loadAllSequencedMessages(
             console.log(`Read ${lastSeq} ops from local files`);
         }
     }
+
+    if (!documentService) {
+        return;
+    }
+
+    const deltaStorage = await documentService.connectToDeltaStorage();
 
     let timeStart = Date.now();
     let requests = 0;
@@ -167,7 +172,7 @@ async function* saveOps(
     }
 }
 
-export async function fluidFetchMessages(documentService: IDocumentService) {
+export async function fluidFetchMessages(documentService?: IDocumentService) {
     const messageStats = dumpMessageStats || dumpMessages;
     if (!messageStats && paramSave === undefined) {
         return;
@@ -188,9 +193,10 @@ export async function fluidFetchMessages(documentService: IDocumentService) {
 
     let generator = loadAllSequencedMessages(documentService, paramSave, files);
 
-    if (paramSave && files !== undefined) {
+    if (paramSave && files !== undefined && documentService) {
         generator = saveOps(generator, paramSave, files);
     }
+
     if (messageStats) {
         return printMessageStats(
             generator,

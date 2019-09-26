@@ -18,12 +18,17 @@ export let paramNumSnapshotVersions = 10;
 export let paramForceRefreshToken = false;
 
 export let paramSave: string | undefined;
+export function setParamSave(url: string) {
+    paramURL = url;
+}
 export const messageTypeFilter = new Set<string>();
 
 export let paramURL: string | undefined;
 export let paramJWT: string;
 
 export let connectToWebSocket = false;
+
+export let localDataOnly = false;
 
 const optionsArray =
     [
@@ -40,6 +45,7 @@ const optionsArray =
         ["--snapshotVersionIndex <number>", "Index of the version to dump"],
         ["--saveDir <outdir>", "Save data of the snapshots and messages"],
         ["--websocket", "Connect to web socket to download initial messages"],
+        ["--local", "Do not connect to storage, use earlier downloaded data. Requires --saveDir."],
     ];
 
 export function printUsage() {
@@ -99,6 +105,9 @@ export function parseArguments() {
                 break;
             case "--websocket":
                 connectToWebSocket = true;
+                break;
+            case "--local":
+                localDataOnly = true;
                 break;
             default:
                 try {
