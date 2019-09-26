@@ -5,7 +5,6 @@
 
 import { CollaborativeInput } from "@microsoft/fluid-aqueduct-react";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
-import { ISharedMap } from "@microsoft/fluid-map";
 import { SharedString } from "@microsoft/fluid-sequence";
 import * as React from "react";
 import { TodoItem } from "../TodoItem/TodoItem";
@@ -25,7 +24,6 @@ interface TodoViewState {
 // tslint:disable:react-a11y-input-elements
 export class TodoView extends React.Component<TodoViewProps, TodoViewState> {
     private newTextInput: HTMLInputElement;
-    private todoItemsMap: ISharedMap;
     private titleString: SharedString;
     constructor(props: TodoViewProps) {
         super(props);
@@ -42,14 +40,13 @@ export class TodoView extends React.Component<TodoViewProps, TodoViewState> {
     async componentDidMount() {
         await Promise.all([
             // Get the shared data structures off the model
-            this.props.todoModel.getTodoItemsMapPromise().then((todoItemsMap) => { this.todoItemsMap = todoItemsMap; }),
             this.props.todoModel.getTodoTitleStringPromise().then((titleString) => { this.titleString = titleString; }),
         ]);
 
         // Map is now realized, register for events on it
         // Would prefer for the model to register for these events, and then emit events of its own
         // (e.g. maybe "componentListUpdate")
-        this.todoItemsMap.on("op", async () => {
+        this.props.todoModel.on("todoItemsChanged", async () => {
             // Ideally should not be listening to op - this will be redundant for ACK on ops we submitted
             await this.refreshTodoItemListFromModel();
         });

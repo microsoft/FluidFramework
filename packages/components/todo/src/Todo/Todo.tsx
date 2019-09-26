@@ -59,6 +59,10 @@ export class Todo extends PrimedComponent implements IComponentHTMLVisual, IComp
 
   protected async componentHasInitialized() {
     this.todoItemsMap = await this.getTodoItemsMapPromise();
+    // Hide the DDS eventing used by the model, expose a model-specific event interface.
+    this.todoItemsMap.on("op", () => {
+      this.emit("todoItemsChanged");
+    })
   }
 
   // start IComponentHTMLVisual
