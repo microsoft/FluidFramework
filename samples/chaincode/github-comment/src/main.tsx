@@ -6,24 +6,24 @@
 // Import Fluid Framework "goo":
 import {
   PrimedComponentFactory,
-} from "@prague/aqueduct";
+} from "@microsoft/fluid-aqueduct";
  import {
   IComponentHTMLVisual,
   IComponentHandle,
   IComponentHTMLRender,
-} from "@prague/component-core-interfaces";
+} from "@microsoft/fluid-component-core-interfaces";
 import {
   IComponentContext,
   IComponentRuntime,
-} from "@prague/runtime-definitions";
+} from "@microsoft/fluid-runtime-definitions";
 import {
   SharedString,
-} from "@prague/sequence";
+} from "@microsoft/fluid-sequence";
 
 // Import parent textarea component:
 import {
   TextareaNoReact
-} from "@chaincode/textarea-noreact";
+} from "@fluid-example/textarea-noreact";
 
 // Import HTML/CSS/Markdown-it:
 import * as tabSelector from "./utils/github-missing-js";
