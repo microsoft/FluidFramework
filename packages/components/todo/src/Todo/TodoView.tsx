@@ -42,21 +42,24 @@ export class TodoView extends React.Component<p, s> {
         this.pullTodoItems = this.pullTodoItems.bind(this);
     }
 
-    componentDidMount() {
-        Promise.all([
+    async componentDidMount() {
+        await Promise.all([
             // Get the shared data structures off the model
             this.props.todoModel.getTodoItemsMapPromise().then((todoItemsMap) => { this.todoItemsMap = todoItemsMap; }),
             this.props.todoModel.getTodoTitleStringPromise().then((titleString) => { this.titleString = titleString; }),
-        ]).then(async () => {
-            // Perform setup on the now-realized data structures
-            this.todoItemsMap.on("op", async () => {
-                await this.pullTodoItems();
-            });
-            return this.pullTodoItems();
-        }).then(() => {
-            this.setState({modelLoaded: true});
-            this.newTextInput.focus();
-        }).catch(/* Could enter an error state here */);
+        ]);
+
+        // Map is now realized, register for events on it
+        this.todoItemsMap.on("op", async () => {
+            await this.pullTodoItems();
+        });
+
+        // Wait for all the todo items to load, then declare the model loaded so we can render later
+        await this.pullTodoItems();
+        this.setState({modelLoaded: true});
+
+        // Set focus to the text input
+        this.newTextInput.focus();
     }
 
     async pullTodoItems(): Promise<void> {
