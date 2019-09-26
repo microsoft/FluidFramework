@@ -118,19 +118,6 @@ export class ProseMirror extends EventEmitter implements IComponentLoadable, ICo
     }
 
     private async initialize() {
-        // {
-        //     "type": "doc",
-        //     "content": [
-        //         {
-        //             "type": "paragraph",
-        //             "content": [
-        //             {
-        //                 "type": "text",
-        //                 "text": "HELLO!"
-        //             }]
-        //         }]
-        // }
-
         if (!this.runtime.existing) {
             this.root = SharedMap.create(this.runtime, "root");
             const text = SharedString.create(this.runtime);
@@ -216,6 +203,28 @@ export class ProseMirror extends EventEmitter implements IComponentLoadable, ICo
                     case ReferenceType.NestEnd:
                         const popped = nodeStack.pop();
                         assert(popped.type === nodeType);
+                        break;
+
+                    case ReferenceType.Simple:
+                        // TODO consolidate the text segment and simple references
+                        const nodeJson: IProseMirrorNode = {
+                            type: segment.properties["type"],
+                            attrs: segment.properties["attrs"],
+                        };
+
+                        if (segment.properties) {
+                            nodeJson.marks = [];
+                            for (const propertyKey of Object.keys(segment.properties)) {
+                                if (propertyKey !== "type" && propertyKey !== "attrs") {
+                                    nodeJson.marks.push({
+                                        type: propertyKey,
+                                        value: segment.properties[propertyKey],
+                                    });
+                                }
+                            }
+                        }
+
+                        top.content.push(nodeJson);
                         break;
 
                     default:

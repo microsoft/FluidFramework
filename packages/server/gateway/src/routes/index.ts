@@ -6,7 +6,7 @@ import { IAlfredTenant, ICache } from "@microsoft/fluid-server-services-core";
 import * as ensureAuth from "connect-ensure-login";
 import { Provider } from "nconf";
 import { IAlfred } from "../interfaces";
-import { KeyValueWrapper } from "../keyValueWrapper";
+import { KeyValueWrapper, LocalKeyValueWrapper } from "../keyValueWrapper";
 import * as api from "./api";
 import * as demoCreator from "./democreator";
 import * as fastloader from "./fastLoader";
@@ -33,7 +33,8 @@ export function create(
             return (req, res, next) => next();
         };
 
-    const keyValueWrapper = new KeyValueWrapper(config);
+    const loadKeyValue = config.get("keyValue:load") as boolean;
+    const keyValueWrapper = loadKeyValue ? new KeyValueWrapper(config) : new LocalKeyValueWrapper();
     return {
         api: api.create(config, appTenants),
         demoCreator: demoCreator.create(ensureLoggedIn),
