@@ -103,23 +103,19 @@ export class TodoView extends React.Component<p, s> {
 
         return (
             <div className="todo-view">
-                {
-                    this.titleString ?
-                    <CollaborativeInput
-                        className="todo-title"
-                        sharedString={this.titleString}
-                        style={{
-                            border: "none",
-                            fontFamily: "inherit",
-                            fontSize: 30,
-                            marginBottom: 5,
-                            marginTop: 5,
-                            outline: "none",
-                            width: "inherit",
-                        }}
-                    /> :
-                    <h1>Loading...</h1>
-                }
+                <CollaborativeInput
+                    className="todo-title"
+                    sharedString={this.titleString}
+                    style={{
+                        border: "none",
+                        fontFamily: "inherit",
+                        fontSize: 30,
+                        marginBottom: 5,
+                        marginTop: 5,
+                        outline: "none",
+                        width: "inherit",
+                    }}
+                />
                 <form onSubmit={this.handleSubmit}>
                     <input
                         type="text"
