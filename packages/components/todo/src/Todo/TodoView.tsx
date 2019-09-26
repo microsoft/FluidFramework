@@ -51,6 +51,7 @@ export class TodoView extends React.Component<p, s> {
 
         // Map is now realized, register for events on it
         this.todoItemsMap.on("op", async () => {
+            // Ideally should not be listening to op - this will be redundant for ACK on ops we submitted
             await this.pullTodoItems();
         });
 
@@ -77,6 +78,7 @@ export class TodoView extends React.Component<p, s> {
     async handleSubmit(ev: React.FormEvent<HTMLFormElement>): Promise<void> {
         ev.preventDefault();
         await this.props.todoModel.addTodoItemComponent({ startingText: this.state.inputValue });
+        await this.pullTodoItems();
         this.setState({inputValue: ""});
     }
 
@@ -89,17 +91,14 @@ export class TodoView extends React.Component<p, s> {
             return <div>Loading...</div>;
         }
 
-        const todoItemComponents = [];
-
-        this.state.todoItemComponents.forEach((todoItemComponent) => {
-            const todoItemView = (
+        const todoItemComponents = this.state.todoItemComponents.map((todoItemComponent) => {
+            return (
                 <TodoItemView
                     todoItemModel={todoItemComponent}
                     getComponent={this.props.getComponent}
                     key={todoItemComponent.url}
                 />
             );
-            todoItemComponents.push(todoItemView);
         });
 
         return (
