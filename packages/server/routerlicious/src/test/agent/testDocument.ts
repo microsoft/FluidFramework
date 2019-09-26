@@ -12,6 +12,7 @@ import {
     ISignalMessage,
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
+import { ISnapshotDocument } from "@microsoft/fluid-server-agent";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 
@@ -133,4 +134,20 @@ export class TestDeltaManager
     public submitSignal(contents: any): void {
         throw new Error("Method not implemented.");
     }
+}
+
+export class TestDocument implements ISnapshotDocument {
+    public deltaManager = new TestDeltaManager();
+    public snapshotRequests = 0;
+
+    constructor(public id: string, public clientId: string) {
+    }
+
+    public snapshot(message: string): Promise<void> {
+        this.snapshotRequests++;
+        return this.snapshotCore(message);
+    }
+
+    // Allow derived classes to override the snapshot processing
+    public snapshotCore = (message: string) => Promise.resolve();
 }
