@@ -51,7 +51,7 @@ export function extractDetails(value: string): IParsedPackage {
     if (value.indexOf("@") !== value.lastIndexOf("@")) {
         const componentsWithVersion = value.match(/(@(.*)\/)?((.*)@(.*))/);
         if ((!componentsWithVersion || componentsWithVersion.length !== 6)) {
-            throw new Error("Invalid package"); 
+            throw new Error("Invalid package");
         }
         [full, , scope, pkg, name, version] = componentsWithVersion;
     } else {

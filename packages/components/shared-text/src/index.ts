@@ -46,7 +46,9 @@ const DefaultComponentName = "text";
 // tslint:enable
 
 class MyRegistry implements IComponentRegistry {
-    constructor(private context: IContainerContext, private readonly sharedTextFactory: SharedTextFactoryComponent) {
+    constructor(private context: IContainerContext,
+                private readonly sharedTextFactory: SharedTextFactoryComponent,
+                private readonly defaultRegistry: string) {
     }
 
     public get IComponentRegistry() {return this; }
@@ -69,7 +71,7 @@ class MyRegistry implements IComponentRegistry {
         } else {
             const scope = `${name.split("/")[0]}:cdn`;
             const config = {};
-            config[scope] = cdn ? cdn : "https://pragueauspkn-3873244262.azureedge.net";
+            config[scope] = cdn ? cdn : this.defaultRegistry;
 
             const codeDetails = {
                 package: name,
@@ -97,7 +99,7 @@ class SharedTextFactoryComponent implements IComponentFactory, IRuntimeFactory {
 
         const runtime = await ContainerRuntime.load(
             context,
-            new MyRegistry(context, this),
+            new MyRegistry(context, this, "https://pragueauspkn-3873244262.azureedge.net"),
             this.createContainerRequestHandler,
             { generateSummaries });
 
