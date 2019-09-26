@@ -14,7 +14,7 @@ export interface JsonArray<T> extends Array<T | JsonObject<T> | JsonArray<T>> { 
 /**
  * Used to constrain a value to types that are serializable as JSON.  The `T` type parameter may be used to
  * customize the type of the leaves to support situations where a `replacer` is used to handle special values.
- * (e.g., Json<JsonPrimitive | IComponentHandle>)
+ * (e.g., Json&lt;JsonPrimitive | IComponentHandle&gt;)
  *
  * Note that the Json type does not protect against the following pitfalls when marshalling `undefined` and
  * non-finite numbers:
