@@ -6,6 +6,7 @@
 import { IComponent, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import {
     ConnectionState,
+    IAudience,
     IBlobManager,
     IDeltaManager,
     IGenericBlob,
@@ -14,14 +15,12 @@ import {
 } from "@microsoft/fluid-container-definitions";
 import { Deferred, raiseConnectedEvent, readAndParse } from "@microsoft/fluid-core-utils";
 import {
-    FileMode,
     IDocumentMessage,
     IDocumentStorageService,
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITree,
     MessageType,
-    TreeEntry,
 } from "@microsoft/fluid-protocol-definitions";
 import {
     IAttachMessage,
@@ -34,6 +33,7 @@ import {
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { ContainerRuntime } from "./containerRuntime";
+import { BlobTreeEntry } from "./utils";
 
 interface ISnapshotDetails {
     pkg: string;
@@ -215,6 +215,11 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this._hostRuntime.getQuorum();
     }
 
+    public getAudience(): IAudience {
+        this.verifyNotClosed();
+        return this._hostRuntime.getAudience();
+    }
+
     public async getBlobMetadata(): Promise<IGenericBlob[]> {
         return this.blobManager.getBlobMetadata();
     }
@@ -244,15 +249,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         const entries = await this.componentRuntime.snapshotInternal();
         const snapshot = { entries, id: undefined };
 
-        snapshot.entries.push({
-            mode: FileMode.File,
-            path: ".component",
-            type: TreeEntry[TreeEntry.Blob],
-            value: {
-                contents: JSON.stringify(componentAttributes),
-                encoding: "utf-8",
-            },
-        });
+        snapshot.entries.push(new BlobTreeEntry(".component", JSON.stringify(componentAttributes)));
 
         // base ID still being set means previous snapshot is still valid
         if (this.baseId) {
@@ -292,15 +289,19 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
 
     /**
      * Updates the leader.
-     * @param clientId - Client id of the new leader.
+     * @param leadership - Whether this client is the new leader or not.
      */
-    public updateLeader(clientId: string) {
+    public updateLeader(leadership: boolean) {
         // Leader events are ignored if the component is not yet loaded
         if (!this.loaded) {
             return;
         }
+        if (leadership) {
+            this.emit("leader", this.clientId);
+        } else {
+            this.emit("notleader", this.clientId);
+        }
 
-        this.emit("leader", clientId);
     }
 
     public bindRuntime(componentRuntime: IComponentRuntime): void {
@@ -418,6 +419,7 @@ export class LocalComponentContext extends ComponentContext {
         storage: IDocumentStorageService,
         scope: IComponent,
         attachCb: (componentRuntime: IComponentRuntime) => void,
+        public readonly createProps?: any,
     ) {
         super(runtime, id, false, storage, scope, attachCb);
     }
@@ -428,15 +430,7 @@ export class LocalComponentContext extends ComponentContext {
         const entries = this.componentRuntime.getAttachSnapshot();
         const snapshot = { entries, id: undefined };
 
-        snapshot.entries.push({
-            mode: FileMode.File,
-            path: ".component",
-            type: TreeEntry[TreeEntry.Blob],
-            value: {
-                contents: JSON.stringify(componentAttributes),
-                encoding: "utf-8",
-            },
-        });
+        snapshot.entries.push(new BlobTreeEntry(".component", JSON.stringify(componentAttributes)));
 
         // base ID still being set means previous snapshot is still valid
         if (this.baseId) {

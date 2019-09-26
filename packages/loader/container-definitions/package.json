@@ -1,7 +1,7 @@
 {
   "name": "@microsoft/fluid-container-definitions",
-  "version": "0.10.0",
-  "description": "Prague container definitions",
+  "version": "0.11.0",
+  "description": "Fluid container definitions",
   "main": "dist/index.js",
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
@@ -21,12 +21,12 @@
   "author": "Microsoft",
   "repository": "microsoft/FluidFramework",
   "dependencies": {
-    "@microsoft/fluid-component-core-interfaces": "^0.10.0",
-    "@microsoft/fluid-protocol-definitions": "^0.10.0"
+    "@microsoft/fluid-component-core-interfaces": "^0.11.0",
+    "@microsoft/fluid-protocol-definitions": "^0.11.0"
   },
   "devDependencies": {
-    "@microsoft/api-extractor": "^7.3.11",
-    "@microsoft/fluid-build-common": "^0.10.0",
+    "@microsoft/api-extractor": "^7.4.4",
+    "@microsoft/fluid-build-common": "^0.11.0",
     "@types/node": "^10.12.12",
     "concurrently": "^4.1.0",
     "rimraf": "^2.6.2",

@@ -57,6 +57,7 @@ const DefaultServiceConfiguration: IServiceConfiguration = {
         idleTime: 5000,
         maxOps: 1000,
         maxTime: 5000 * 12,
+        maxAckWaitTime: 600000,
     },
 };
 
@@ -182,6 +183,7 @@ export class LocalOrderer implements IOrderer {
         deliContext: IContext = new LocalContext(),
         clientTimeout: number = ClientSequenceTimeout,
         serviceConfiguration = DefaultServiceConfiguration,
+        scribeNackOnSummarizeException = false,
     ) {
         const documentDetails = await setup.documentP();
 
@@ -202,7 +204,8 @@ export class LocalOrderer implements IOrderer {
             scribeContext,
             deliContext,
             clientTimeout,
-            serviceConfiguration);
+            serviceConfiguration,
+            scribeNackOnSummarizeException);
     }
 
     public rawDeltasKafka: LocalKafka;
@@ -235,6 +238,7 @@ export class LocalOrderer implements IOrderer {
         private deliContext: IContext,
         private clientTimeout: number,
         private serviceConfiguration: IServiceConfiguration,
+        private scribeNackOnSummarizeException: boolean,
     ) {
         this.existing = details.existing;
         this.socketPublisher = new LocalSocketPublisher(this.pubSub);
@@ -294,10 +298,11 @@ export class LocalOrderer implements IOrderer {
     }
 
     private setupKafkas() {
-        this.rawDeltasKafka = new LocalKafka(this.existing ? this.details.value.sequenceNumber : 0);
+        this.rawDeltasKafka = new LocalKafka(this.existing ? this.details.value.logOffset : 0);
         this.deltasKafka = new LocalKafka();
     }
 
+    // tslint:disable-next-line: max-func-body-length
     private setupLambdas() {
         this.scriptoriumLambda = new LocalLambdaController(
             this.deltasKafka,
@@ -375,7 +380,8 @@ export class LocalOrderer implements IOrderer {
                         this.rawDeltasKafka,
                         protocolHandler,
                         protocolHead,
-                        scribeMessages);
+                        scribeMessages,
+                        this.scribeNackOnSummarizeException);
                 });
         }
 

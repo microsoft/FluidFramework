@@ -1,7 +1,7 @@
 {
   "name": "@microsoft/fluid-component-runtime",
-  "version": "0.10.0",
-  "description": "Prague component API",
+  "version": "0.11.0",
+  "description": "Fluid component API",
   "main": "dist/index.js",
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
@@ -22,8 +22,8 @@
   "author": "Microsoft",
   "repository": "microsoft/FluidFramework",
   "devDependencies": {
-    "@microsoft/api-extractor": "^7.3.11",
-    "@microsoft/fluid-build-common": "^0.10.0",
+    "@microsoft/api-extractor": "^7.4.4",
+    "@microsoft/fluid-build-common": "^0.11.0",
     "@types/debug": "^0.0.31",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.12.12",
@@ -36,12 +36,12 @@
     "typescript": "~3.4.5"
   },
   "dependencies": {
-    "@microsoft/fluid-component-core-interfaces": "^0.10.0",
-    "@microsoft/fluid-container-definitions": "^0.10.0",
-    "@microsoft/fluid-protocol-definitions": "^0.10.0",
-    "@microsoft/fluid-runtime-definitions": "^0.10.0",
-    "@microsoft/fluid-shared-object-base": "^0.10.0",
-    "@microsoft/fluid-core-utils": "^0.10.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.11.0",
+    "@microsoft/fluid-container-definitions": "^0.11.0",
+    "@microsoft/fluid-core-utils": "^0.11.0",
+    "@microsoft/fluid-protocol-definitions": "^0.11.0",
+    "@microsoft/fluid-runtime-definitions": "^0.11.0",
+    "@microsoft/fluid-shared-object-base": "^0.11.0",
     "debug": "^4.1.1"
   },
   "license": "MIT"

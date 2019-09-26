@@ -1,7 +1,7 @@
 {
-  "name": "@chaincode/bootstrap-counter",
-  "description": "Minimal @chaincode sample to implement a collaborative counter.",
-  "version": "0.10.0",
+  "name": "@yo-fluid/bootstrap-counter",
+  "description": "Minimal Fluid example to implement a collaborative counter.",
+  "version": "0.11.0",
   "author": "Microsoft",
   "repository": "microsoft/FluidFramework",
   "main": "dist/index.js",
@@ -21,8 +21,8 @@
     "webpack:dev": "npm run dev"
   },
   "devDependencies": {
-    "@prague/url-generator": "^1.0.4",
-    "@microsoft/fluid-webpack-component-loader": "^0.10.0",
+    "@fluid-internal/url-generator": "^1.0.4",
+    "@microsoft/fluid-webpack-component-loader": "^0.11.0",
     "@types/node": "^10.14.6",
     "@types/react-dom": "^16.0.11",
     "ts-loader": "^4.5.0",
@@ -31,14 +31,6 @@
     "webpack-cli": "3.1.0",
     "webpack-dev-server": "^3.8.0",
     "webpack-merge": "4.1.4"
-  },
-  "prague": {
-    "browser": {
-      "entrypoint": "main",
-      "bundle": [
-        "dist/main.bundle.js"
-      ]
-    }
   },
   "fluid": {
     "browser": {
@@ -51,14 +43,14 @@
     }
   },
   "dependencies": {
-    "@microsoft/fluid-aqueduct": "^0.10.0",
-    "@microsoft/fluid-build-common": "^0.10.0",
-    "@microsoft/fluid-component-core-interfaces": "^0.10.0",
-    "@microsoft/fluid-component-runtime": "^0.10.0",
-    "@microsoft/fluid-container-definitions": "^0.10.0",
-    "@microsoft/fluid-map": "^0.10.0",
-    "@microsoft/fluid-runtime-definitions": "^0.10.0",
-    "@microsoft/fluid-shared-object-base": "^0.10.0",
+    "@microsoft/fluid-aqueduct": "^0.11.0",
+    "@microsoft/fluid-build-common": "^0.11.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.11.0",
+    "@microsoft/fluid-component-runtime": "^0.11.0",
+    "@microsoft/fluid-container-definitions": "^0.11.0",
+    "@microsoft/fluid-map": "^0.11.0",
+    "@microsoft/fluid-runtime-definitions": "^0.11.0",
+    "@microsoft/fluid-shared-object-base": "^0.11.0",
     "react": "^16.8.3",
     "react-dom": "^16.8.3"
   },

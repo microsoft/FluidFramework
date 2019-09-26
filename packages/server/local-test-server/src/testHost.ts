@@ -45,11 +45,13 @@ class TestRootComponent extends PrimedComponent {
         super(runtime, context);
     }
 
+    // Make this function public so TestHost can use them
     // tslint:disable-next-line: no-unnecessary-override
     public async createAndAttachComponent<T>(id: string, type: string, props?: any): Promise<T> {
         return super.createAndAttachComponent<T>(id, type, props);
     }
 
+    // Make this function public so TestHost can use them
     // tslint:disable-next-line: no-unnecessary-override
     public async getComponent<T>(id: string): Promise<T> {
         return super.getComponent<T>(id);

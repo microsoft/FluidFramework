@@ -16,7 +16,7 @@
         "tenant": "frosty-proskuriakova",
         "secret": "25d17e1a692f8d0ae6effae515d8ce2b",
         "jwtKey": "VBQyoGpEYrTn3XQPtXW3K8fFDd",
-        "user": "prague-monitor",
+        "user": "fluid-monitor",
         "waitMSec": 20000
     }
 }

@@ -29,7 +29,8 @@ export function generateLoaderHTML(
         "${token}",
         "${key}",
         "${packageUrl}",
-        "${loaderType}")
+        "${loaderType}",
+        document.getElementById("content"))
     .catch((error) => console.error(error));
     </script>
     <body>

@@ -3,14 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import { DocumentStorage } from "@microsoft/fluid-server-services";
 import { MongoDatabaseManager, MongoManager } from "@microsoft/fluid-server-services-core";
 import * as utils from "@microsoft/fluid-server-services-utils";
 import * as bytes from "bytes";
 import { Provider } from "nconf";
+import * as socketIo from "socket.io";
 import { TinyliciousResources } from "./resources";
 import {
     DbFactory,
-    DocumentStorage,
     OrdererManager,
     TaskMessageSender,
     TenantManager,
@@ -25,7 +26,6 @@ export class TinyliciousResourcesFactory implements utils.IResourcesFactory<Tiny
         const collectionNames = config.get("mongo:collectionNames");
 
         const tenantManager = new TenantManager();
-        const storage = new DocumentStorage();
         const dbFactory = new DbFactory();
         const taskMessageSender = new TaskMessageSender();
         const mongoManager = new MongoManager(dbFactory);
@@ -35,20 +35,22 @@ export class TinyliciousResourcesFactory implements utils.IResourcesFactory<Tiny
             collectionNames.documents,
             collectionNames.deltas,
             collectionNames.scribeDeltas);
+        const storage = new DocumentStorage(databaseManager, tenantManager, null);
+        const io = socketIo();
+        const webServerFactory = new WebServerFactory(io);
 
         const orderManager = new OrdererManager(
             storage,
             databaseManager,
             tenantManager,
             taskMessageSender,
-            config.get("foreman"),
-            maxSendMessageSize);
+            config.get("foreman:permissions"),
+            maxSendMessageSize,
+            io);
 
         // TODO would be nicer to just pass the mongoManager down
         const db = await mongoManager.getDatabase();
         const contentCollection = db.collection(collectionNames.content);
-
-        const webServerFactory = new WebServerFactory();
 
         return new TinyliciousResources(
             config,

@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedClient, ISequencedDocumentMessage, IQuorum } from "@prague/container-definitions";
-import { ISharedObject } from "@prague/shared-object-common";
+import { IQuorum } from "@microsoft/fluid-container-definitions";
+import { ISequencedClient, ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
+import { ISharedObject } from "@microsoft/fluid-shared-object-base";
 import * as React from "react";
 
 import "./css/MemberList.css";
