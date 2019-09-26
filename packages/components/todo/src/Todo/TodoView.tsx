@@ -19,7 +19,6 @@ interface TodoViewProps {
 
 interface TodoViewState {
     todoItemComponents: TodoItem[];
-    inputValue: string;
     modelLoaded: boolean;
 }
 
@@ -33,12 +32,10 @@ export class TodoView extends React.Component<TodoViewProps, TodoViewState> {
 
         this.state = {
             todoItemComponents: [],
-            inputValue: "",
             modelLoaded: false,
         };
 
         this.handleSubmit = this.handleSubmit.bind(this);
-        this.updateInputValue = this.updateInputValue.bind(this);
         this.pullTodoItems = this.pullTodoItems.bind(this);
     }
 
@@ -77,13 +74,9 @@ export class TodoView extends React.Component<TodoViewProps, TodoViewState> {
      */
     async handleSubmit(ev: React.FormEvent<HTMLFormElement>): Promise<void> {
         ev.preventDefault();
-        await this.props.todoModel.addTodoItemComponent({ startingText: this.state.inputValue });
+        await this.props.todoModel.addTodoItemComponent({ startingText: this.newTextInput.value });
         await this.pullTodoItems();
-        this.setState({inputValue: ""});
-    }
-
-    updateInputValue(ev: React.ChangeEvent<HTMLInputElement>): void {
-        this.setState({inputValue: ev.target.value});
+        this.newTextInput.value = "";
     }
 
     render(): JSX.Element {
@@ -119,8 +112,6 @@ export class TodoView extends React.Component<TodoViewProps, TodoViewState> {
                 <form onSubmit={this.handleSubmit}>
                     <input
                         type="text"
-                        value={this.state.inputValue}
-                        onChange={this.updateInputValue}
                         ref={(input) => { this.newTextInput = input; }}/>
                     <button type="submit">+</button>
                 </form>
