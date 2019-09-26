@@ -67,16 +67,14 @@ export function TextListView(props: ITextListViewProps) {
         props.textDirectory.delete(id);
     };
 
-    const renderItem = (sharedString: { id: string, text: SharedString }) => {
+    const sharedStringItems = sharedStrings.map((sharedString) => {
         return (
             <div key={sharedString.id} className="text-item">
                 <CollaborativeInput sharedString={sharedString.text} />
                 <button onClick={() => deleteItem(sharedString.id)}>x</button>
             </div>
         );
-    };
-
-    const sharedStringItems = sharedStrings.map(renderItem);
+    });
 
     return (
         <div className="textList">
