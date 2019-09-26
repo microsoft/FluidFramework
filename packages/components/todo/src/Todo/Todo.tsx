@@ -92,9 +92,7 @@ export class Todo extends PrimedComponent implements IComponentHTMLVisual, IComp
    */
   public createJSXElement(): JSX.Element {
     return(
-      <TodoView
-          todoModel={this}
-          getComponent={this.getComponent.bind(this)}/>
+      <TodoView todoModel={this} />
     );
   }
 

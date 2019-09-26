@@ -69,7 +69,7 @@ export function TextListView(props: ITextListViewProps) {
 
     const renderItem = (sharedString: { id: string, text: SharedString }) => {
         return (
-            <div key={sharedString.id} className="textItem">
+            <div key={sharedString.id} className="text-item">
                 <CollaborativeInput sharedString={sharedString.text} />
                 <button onClick={() => deleteItem(sharedString.id)}>x</button>
             </div>

@@ -105,7 +105,6 @@ export class TodoItem extends PrimedComponent
       return (
         <TodoItemView
           todoItemModel={this}
-          getComponent={this.getComponent.bind(this)}
         />
       );
   }

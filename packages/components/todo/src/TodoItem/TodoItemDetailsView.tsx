@@ -11,7 +11,6 @@ import { TodoItem } from "./TodoItem";
 
 interface p {
     todoItemModel: TodoItem;
-    getComponent(id: string): Promise<IComponent>;
 }
 
 interface s {

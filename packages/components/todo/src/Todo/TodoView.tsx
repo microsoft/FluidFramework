@@ -4,7 +4,6 @@
  */
 
 import { CollaborativeInput } from "@microsoft/fluid-aqueduct-react";
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { SharedString } from "@microsoft/fluid-sequence";
 import * as React from "react";
 import { TodoItem } from "../TodoItem/TodoItem";
@@ -13,7 +12,6 @@ import { Todo } from "./Todo";
 
 interface TodoViewProps {
     todoModel: Todo;
-    getComponent(id: string): Promise<IComponent>;
 }
 
 interface TodoViewState {
@@ -83,7 +81,6 @@ export class TodoView extends React.Component<TodoViewProps, TodoViewState> {
             return (
                 <TodoItemView
                     todoItemModel={todoItemComponent}
-                    getComponent={this.props.getComponent}
                     key={todoItemComponent.url}
                 />
             );
