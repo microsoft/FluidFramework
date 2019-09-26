@@ -330,11 +330,11 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
      * Set split range to true to esure only segments within the
      * range are walked.
      *
-     * @param handler The function to handle each segment
-     * @param start Optional. The start of range walk.
-     * @param end Optional. The end of range walk
-     * @param accum Optional. An object that will be passed to the handler for accumulation
-     * @param splitRange Optional. Splits boundary segements on the range boundaries
+     * @param handler - The function to handle each segment
+     * @param start - Optional. The start of range walk.
+     * @param end - Optional. The end of range walk
+     * @param accum - Optional. An object that will be passed to the handler for accumulation
+     * @param splitRange - Optional. Splits boundary segements on the range boundaries
      */
     public walkSegments<TClientData>(
         handler: MergeTree.ISegmentAction<TClientData>,
