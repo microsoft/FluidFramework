@@ -35,7 +35,7 @@ export class TodoView extends React.Component<TodoViewProps, TodoViewState> {
             modelLoaded: false,
         };
 
-        this.handleSubmit = this.handleSubmit.bind(this);
+        this.createNewTodoItem = this.createNewTodoItem.bind(this);
         this.refreshTodoItemListFromModel = this.refreshTodoItemListFromModel.bind(this);
     }
 
@@ -72,7 +72,7 @@ export class TodoView extends React.Component<TodoViewProps, TodoViewState> {
     /**
      * This allows us to prevent default form behavior while getting all the benefits
      */
-    async handleSubmit(ev: React.FormEvent<HTMLFormElement>): Promise<void> {
+    async createNewTodoItem(ev: React.FormEvent<HTMLFormElement>): Promise<void> {
         ev.preventDefault();
         await this.props.todoModel.addTodoItemComponent({ startingText: this.newTextInput.value });
         await this.refreshTodoItemListFromModel();
@@ -80,10 +80,13 @@ export class TodoView extends React.Component<TodoViewProps, TodoViewState> {
     }
 
     render(): JSX.Element {
+        // Getting the subcomponents and DDSs is async and happens after the first render in componentDidMount.
         if (!this.state.modelLoaded) {
             return <div>Loading...</div>;
         }
 
+        // Using the list of TodoItem components, make a list of TodoItemViews.  We know they're available because
+        // this.state.modelLoaded is true.
         const todoItemComponents = this.state.todoItemComponents.map((todoItemComponent) => {
             return (
                 <TodoItemView
@@ -94,6 +97,8 @@ export class TodoView extends React.Component<TodoViewProps, TodoViewState> {
             );
         });
 
+        // TodoView is made up of an editable title input, an input/button for submitting new items, and the list
+        // of TodoItemViews.
         return (
             <div className="todo-view">
                 <CollaborativeInput
@@ -109,7 +114,7 @@ export class TodoView extends React.Component<TodoViewProps, TodoViewState> {
                         width: "inherit",
                     }}
                 />
-                <form onSubmit={this.handleSubmit}>
+                <form onSubmit={this.createNewTodoItem}>
                     <input
                         type="text"
                         ref={(input) => { this.newTextInput = input; }}/>
