@@ -147,4 +147,8 @@ export class TodoItem extends PrimedComponent
     // Update the inner component id
     this.innerIdCell.set(id);
   }
+
+  public async getInnerComponent() {
+    return this.getComponent(this.innerIdCell.get());
+  }
 }

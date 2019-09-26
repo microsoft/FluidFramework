@@ -36,7 +36,8 @@ export class TodoItemDetailsView extends React.Component<p, s> {
     }
 
     async pullInnerComponent(): Promise<void> {
-        return this.props.getComponent(this.state.innerId).then((innerComponent) => this.setState({innerComponent}));
+        const innerComponent = await this.props.todoItemModel.getInnerComponent();
+        this.setState({innerComponent});
     }
 
     async componentDidMount() {
