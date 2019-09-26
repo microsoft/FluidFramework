@@ -45,6 +45,9 @@ export class TodoView extends React.Component<TodoViewProps, TodoViewState> {
         });
 
         // Wait for all the todo items to load, then declare the model loaded so we can render later
+        // This approach waits for all todo items to load before rendering, but a more aggressive
+        // approach might declare the model loaded before loading the items (since they aren't strictly
+        // required in our render()) and allow the todo items to render as they come in.
         await this.refreshTodoItemListFromModel();
         this.setState({modelLoaded: true});
 
