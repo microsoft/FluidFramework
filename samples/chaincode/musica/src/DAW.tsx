@@ -20,7 +20,7 @@ import 'react-widgets/dist/css/react-widgets.css';
 import Slider from 'rc-slider';
 import 'rc-slider/assets/index.css';
 
-import { ISharedMap } from '@microsoft/fluid-map';
+import { ISharedDirectory } from '@microsoft/fluid-map';
 import { NoteProperties, Instrument, WaveProperties } from './Player';
 import { SongSelection, songLibrary } from './SongLibrary';
 import { Song, restNoteMidiNumber } from './Songs/Song';
@@ -112,7 +112,7 @@ export interface DAWState {
 }
 
 export interface DAWProps {
-  rootMap: ISharedMap;
+  rootDir: ISharedDirectory;
 }
 
 export class DAW extends React.Component<DAWProps, DAWState> {
@@ -136,7 +136,7 @@ export class DAW extends React.Component<DAWProps, DAWState> {
       stopSong: false
     };
 
-    this.recorder = new Recorder(props.rootMap);
+    this.recorder = new Recorder(props.rootDir);
   }
 
   private resetToDefault = () => {
@@ -209,7 +209,7 @@ export class DAW extends React.Component<DAWProps, DAWState> {
   public postPressKey(midiNumber: any) {
     this.recorder.postSaveNewNote(new Note(midiNumber, NoteType.quarter), this.state.tempo);
 
-    this.props.rootMap.set('playNote', {
+    this.props.rootDir.set('playNote', {
       length: 0.5,
       midiNumber,
       instrument: this.state.instrument,
@@ -223,7 +223,7 @@ export class DAW extends React.Component<DAWProps, DAWState> {
   }
 
   public postPlayNote(note: NoteProperties) {
-    this.props.rootMap.set('playNote', note);
+    this.props.rootDir.set('playNote', note);
   }
 
   public postSaveInstrument(event: any) {
@@ -242,12 +242,12 @@ export class DAW extends React.Component<DAWProps, DAWState> {
 
     savedInstruments.push(instrumentProperty);
 
-    this.props.rootMap.set('savedInstruments', savedInstruments);
+    this.props.rootDir.set('savedInstruments', savedInstruments);
     event.preventDefault();
   }
 
   public getSavedInstruments(): InstrumentProperties[] {
-    let savedInstruments = this.props.rootMap.get('savedInstruments');
+    let savedInstruments = this.props.rootDir.get('savedInstruments');
 
     if (savedInstruments === undefined) {
       return [];
@@ -257,7 +257,7 @@ export class DAW extends React.Component<DAWProps, DAWState> {
   }
 
   public postUnpressKey(midiNumber: any) {
-    this.props.rootMap.set('stopNote', midiNumber);
+    this.props.rootDir.set('stopNote', midiNumber);
   }
 
   private startPlaySong(loop: boolean) {

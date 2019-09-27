@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedMap } from '@microsoft/fluid-map';
+import { ISharedDirectory } from '@microsoft/fluid-map';
 import { Song } from './Songs';
 import { Note } from './Songs/Note';
 
@@ -12,7 +12,7 @@ export class Recorder {
   private isRecording = false;
   private lastNoteTime = new Date();
 
-  constructor(private rootMap: ISharedMap) {}
+  constructor(private rootDir: ISharedDirectory) {}
 
   // Save each new note into Prague as they come in
   public postSaveNewNote(note: Note, currentTempo: number) {
@@ -43,7 +43,7 @@ export class Recorder {
   }
 
   public getSavedSongs(): SongProperties[] {
-    let savedSongs = this.rootMap.get('savedSongs');
+    let savedSongs = this.rootDir.get('savedSongs');
 
     if (savedSongs === undefined) {
       return [];
@@ -53,7 +53,7 @@ export class Recorder {
   }
 
   public postSavedSongs(savedSongs: SongProperties[]) {
-    this.rootMap.set('savedSongs', savedSongs);
+    this.rootDir.set('savedSongs', savedSongs);
   }
 
   // for caching later

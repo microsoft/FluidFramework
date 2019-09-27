@@ -33,7 +33,7 @@ export class Musica extends PrimedComponent implements IComponentHTMLVisual {
     const reactRender = () => {
       // TODO: DAW and Recorder logic and visuals can be fully seperated and just both called here
       // I think their only tie together is tempo, which isn't DAW related either so tempo may have to be updated in here as a global
-      ReactDOM.render(<DAW rootMap={this.root} />, div);
+      ReactDOM.render(<DAW rootDir={this.root} />, div);
     }
 
     reactRender();
@@ -45,7 +45,7 @@ export class Musica extends PrimedComponent implements IComponentHTMLVisual {
   }
 
   /**
-   * Invoked anytime a value changes in the root map.
+   * Invoked anytime a value changes in the root directory.
    */
   private onOp(op: any) {
     const contents = op.contents;
