@@ -8,7 +8,7 @@ const path = require('path');
 const merge = require('webpack-merge');
 
 module.exports = env => {
-  const isProduction = env && production;
+  const isProduction = env && env.production;
 
   return merge(
     {

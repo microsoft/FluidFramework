@@ -24,18 +24,23 @@ export class Musica extends PrimedComponent implements IComponentHTMLVisual {
 
   protected async componentHasInitialized() {
     this.player = new Player(audioContext);
+
   }
 
   private player: Player;
 
   public render(div: HTMLDivElement) {
-    // TODO: DAW and Recorder logic and visuals can be fully seperated and just both called here
-    // I think their only tie together is tempo, which isn't DAW related either so tempo may have to be updated in here as a global
-    ReactDOM.render(<DAW rootMap={this.root} />, div);
+    const reactRender = () => {
+      // TODO: DAW and Recorder logic and visuals can be fully seperated and just both called here
+      // I think their only tie together is tempo, which isn't DAW related either so tempo may have to be updated in here as a global
+      ReactDOM.render(<DAW rootMap={this.root} />, div);
+    }
+
+    reactRender();
 
     this.root.on('op', (op) => {
       this.onOp(op);
-      this.render(div);
+      reactRender();
     });
   }
 
