@@ -39,6 +39,7 @@ const verifyNoFluidPackages = async (dir: string, visitedPkgDirs: string[] = [])
                 // only visit other folders once as these will either be packages
                 //  or things like src, and dist that are not relevant
                 visitedPkgDirs.push(entry);
+                console.log(entry);
                 searches.push(verifyNoFluidPackages(entryDir, visitedPkgDirs));
             }
         }
