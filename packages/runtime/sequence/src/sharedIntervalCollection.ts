@@ -255,7 +255,7 @@ export abstract class ASharedIntervalCollection<TInterval extends ISerializableI
 
     /**
      * Creates the full path of the intervalCollection label
-     * @param label the incoming lable
+     * @param label - the incoming lable
      */
     protected getIntervalCollectionPath(label: string): string {
         return label;
