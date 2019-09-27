@@ -129,6 +129,9 @@ mongodb:
 redis:
   url: winsome-wombat-redis
 
+redis2:
+  url: dining-maltese-redis
+
 kafka:
   topics:
     rawdeltas: rawdeltas
