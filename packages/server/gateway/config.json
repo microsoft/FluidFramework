@@ -14,7 +14,7 @@
         "url": "http://localhost:3000",
         "tenants": [
             {
-                "id": "prague",
+                "id": "fluid",
                 "key": "43cfc3fbf04a97c0921fd23ff10f9e4b"
             },
             {
@@ -88,7 +88,8 @@
         "permission": ["snapshot", "spell", "intel", "translation", "chain-snapshot", "chain-spell", "chain-intel", "chain-translation"]
     },
     "keyValue": {
-        "documentUrl": "https://www.wu2.prague.office-int.com/loader/prague/kv-cache-local-00016"
+        "documentUrl": "https://www.wu2.prague.office-int.com/loader/prague/kv-cache-local-00016",
+        "load": false
     },
     "express": {
         "session": {

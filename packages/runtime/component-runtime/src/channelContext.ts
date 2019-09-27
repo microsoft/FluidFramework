@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ConnectionState } from "@prague/container-definitions";
+import { ConnectionState } from "@microsoft/fluid-container-definitions";
 import {
     FileMode,
     IDocumentStorageService,
@@ -12,8 +12,8 @@ import {
     ITree,
     MessageType,
     TreeEntry,
-} from "@prague/protocol-definitions";
-import { IChannel, IEnvelope } from "@prague/runtime-definitions";
+} from "@microsoft/fluid-protocol-definitions";
+import { IChannel, IEnvelope } from "@microsoft/fluid-runtime-definitions";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ChannelStorageService } from "./channelStorageService";
 
@@ -24,7 +24,7 @@ export interface IChannelContext {
 
     processOp(message: ISequencedDocumentMessage, local: boolean): void;
 
-    snapshot(): Promise<ITree>;
+    snapshot(fullTree?: boolean): Promise<ITree>;
 
     isRegistered(): boolean;
 }
@@ -52,7 +52,7 @@ export function createServiceEndpoints(
     };
 }
 
-export function snapshotChannel(channel: IChannel, baseId: string | null) {
+export function snapshotChannel(channel: IChannel, baseId?: string) {
     const snapshot = channel.snapshot();
 
     // Add in the object attributes to the returned tree
@@ -68,7 +68,7 @@ export function snapshotChannel(channel: IChannel, baseId: string | null) {
     });
 
     // If baseId exists then the previous snapshot is still valid
-    snapshot.id = baseId;
+    snapshot.id = baseId === undefined ? null : baseId;
 
     return snapshot;
 }

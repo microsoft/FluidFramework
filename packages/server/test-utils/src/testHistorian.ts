@@ -3,77 +3,169 @@
  * Licensed under the MIT License.
  */
 
+import { gitHashFile } from "@microsoft/fluid-core-utils";
+import * as git from "@microsoft/fluid-gitresources";
 import { IHistorian } from "@microsoft/fluid-server-services-client";
-import * as git from "@prague/gitresources";
+import { ICollection, IDb } from "@microsoft/fluid-server-services-core";
+import * as uuid from "uuid";
+import { TestDb } from "./testCollection";
 
 export class TestHistorian implements IHistorian {
-    public endpoint = "http://test";
+    public readonly endpoint = "";
 
-    public getHeader(sha: string): Promise<any> {
-        throw new Error("Method not implemented.");
+    private readonly blobs: ICollection<{ _id: string; value: git.ICreateBlobParams }>;
+    private readonly commits: ICollection<{ _id: string; value: git.ICreateCommitParams }>;
+    private readonly trees: ICollection<{ _id: string; value: git.ICreateTreeParams }>;
+
+    constructor(db: IDb = new TestDb({})) {
+        this.blobs = db.collection("blobs");
+        this.commits = db.collection("commits");
+        this.trees = db.collection("trees");
+    }
+
+    public async getHeader(sha: string): Promise<any> {
+        const tree = await this.getTree(sha, true);
+
+        const includeBlobs = [".attributes", ".blobs", ".messages", "header"];
+
+        const blobsP: Promise<git.IBlob>[] = [];
+        for (const entry of tree.tree) {
+            if (entry.type === "blob" && includeBlobs.reduce((pv, cv) => pv || entry.path.endsWith(cv), false)) {
+                const blobP = this.getBlob(entry.sha);
+                blobsP.push(blobP);
+            }
+        }
+        const blobs = await Promise.all(blobsP);
+
+        return {
+            blobs,
+            tree,
+        };
     }
 
     public getFullTree(sha: string): Promise<any> {
-        throw new Error("Method not implemented.");
+        throw new Error("Not Supported");
     }
 
-    public getBlob(sha: string): Promise<git.IBlob> {
-        throw new Error("Method not implemented.");
+    public async getBlob(sha: string): Promise<git.IBlob> {
+        const blob = await this.blobs.findOne(sha);
+        return {
+            content: blob.value.content,
+            encoding: blob.value.encoding,
+            sha: blob._id,
+            size: blob.value.content.length,
+            url: "",
+        };
     }
 
-    public createBlob(blob: git.ICreateBlobParams): Promise<git.ICreateBlobResponse> {
-        throw new Error("Method not implemented.");
+    public async createBlob(blob: git.ICreateBlobParams): Promise<git.ICreateBlobResponse> {
+        const _id = gitHashFile(Buffer.from(blob.content, blob.encoding));
+        await this.blobs.insertOne({
+            _id,
+            value: blob,
+        });
+        return {
+            sha: _id,
+            url: "",
+        };
     }
 
     public getContent(path: string, ref: string): Promise<any> {
-        throw new Error("Method not implemented.");
+        throw new Error("Not Supported");
     }
 
     public async getCommits(sha: string, count: number): Promise<git.ICommitDetails[]> {
-        return [];
+        const commit = await this.getCommit(sha);
+        return commit ? [{
+            commit: {
+                author: commit.author,
+                committer: commit.committer,
+                message: commit.message,
+                tree: commit.tree,
+                url: commit.url,
+            },
+            parents: commit.parents,
+            sha: commit.sha,
+            url: commit.url,
+        }] : [];
     }
 
-    public getCommit(sha: string): Promise<git.ICommit> {
-        throw new Error("Method not implemented.");
+    public async getCommit(sha: string): Promise<git.ICommit> {
+        const commit = await this.commits.findOne({ _id: sha });
+        if (commit) {
+            return {
+                author: {} as Partial<git.IAuthor> as git.IAuthor,
+                committer: {} as Partial<git.ICommitter> as git.ICommitter,
+                message: commit.value.message,
+                parents: commit.value.parents.map<git.ICommitHash>((p) => ({sha: p, url: ""})),
+                sha: commit._id,
+                tree: {
+                    sha: gitHashFile(Buffer.from(commit.value.tree)),
+                    url: "",
+                } ,
+                url: "",
+            };
+        }
     }
 
-    public createCommit(commit: git.ICreateCommitParams): Promise<git.ICommit> {
-        throw new Error("Method not implemented.");
+    public async createCommit(commit: git.ICreateCommitParams): Promise<git.ICommit> {
+        const _id = gitHashFile(Buffer.from(commit.tree));
+        await this.commits.insertOne({ _id, value: commit });
+        return this.getCommit(_id);
     }
 
     public getRefs(): Promise<git.IRef[]> {
-        throw new Error("Method not implemented.");
+        throw new Error("Not Supported");
     }
 
     public getRef(ref: string): Promise<git.IRef> {
-        throw new Error("Method not implemented.");
+        throw new Error("Not Supported");
     }
 
     public createRef(params: git.ICreateRefParams): Promise<git.IRef> {
-        throw new Error("Method not implemented.");
+        throw new Error("Not Supported");
     }
 
     public updateRef(ref: string, params: git.IPatchRefParams): Promise<git.IRef> {
-        throw new Error("Method not implemented.");
+        throw new Error("Not Supported");
     }
 
-    public deleteRef(ref: string): Promise<void> {
-        throw new Error("Method not implemented.");
+    public async deleteRef(ref: string): Promise<void> {
+        throw new Error("Not Supported");
     }
 
     public createTag(tag: git.ICreateTagParams): Promise<git.ITag> {
-        throw new Error("Method not implemented.");
+        throw new Error("Not Supported");
     }
 
     public getTag(tag: string): Promise<git.ITag> {
-        throw new Error("Method not implemented.");
+        throw new Error("Not Supported");
     }
 
-    public createTree(tree: git.ICreateTreeParams): Promise<git.ITree> {
-        throw new Error("Method not implemented.");
+    public async createTree(tree: git.ICreateTreeParams): Promise<git.ITree> {
+        const _id = uuid();
+        await this.trees.insertOne({
+            _id,
+            value: tree,
+        });
+        return this.getTree(_id, false);
     }
 
-    public getTree(sha: string, recursive: boolean): Promise<git.ITree> {
-        throw new Error("Method not implemented.");
+    public async getTree(sha: string, recursive: boolean): Promise<git.ITree> {
+        const tree = await this.trees.findOne({ _id: sha });
+        if (tree) {
+            return {
+                sha: tree._id,
+                url: "",
+                tree: tree.value.tree.map<git.ITreeEntry>((t) => ({
+                    mode: t.mode,
+                    path: t.path,
+                    sha: t.sha,
+                    size: 0,
+                    type: t.type,
+                    url: "",
+                })),
+            };
+        }
     }
 }

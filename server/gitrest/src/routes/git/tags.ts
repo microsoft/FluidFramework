@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ICreateTagParams, ITag } from "@prague/gitresources";
+import { ICreateTagParams, ITag } from "@microsoft/fluid-gitresources";
 import { Router } from "express";
 import * as nconf from "nconf";
 import * as git from "nodegit";

@@ -1,6 +1,6 @@
 {
-  "name": "@prague/url-generator",
-  "version": "1.0.4",
+  "name": "@fluid-internal/url-generator",
+  "version": "1.0.5",
   "description": "Get a URL for your component",
   "main": "index.js",
   "scripts": {

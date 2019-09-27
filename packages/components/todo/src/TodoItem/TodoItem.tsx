@@ -4,45 +4,25 @@
  */
 
 import { ClickerName } from "@fluid-example/clicker";
-
-import {
-  PrimedComponent,
-} from "@prague/aqueduct";
-import {
-  EmbeddedReactComponentFactory,
-  IComponentReactViewable,
-} from "@prague/aqueduct-react";
-import {
-  ISharedCell,
-  SharedCell,
-} from "@prague/cell";
-import {
-  IComponentHandle,
-  IComponentHTMLVisual,
-} from "@prague/component-core-interfaces";
-import {
-  IComponentForge,
-} from "@prague/framework-definitions";
-import {
-  Counter,
-  CounterValueType,
-} from "@prague/map";
-import {
-  SharedString,
-} from "@prague/sequence";
-
+import { PrimedComponent } from "@microsoft/fluid-aqueduct";
+import { IComponentReactViewable } from "@microsoft/fluid-aqueduct-react";
+import { ISharedCell, SharedCell } from "@microsoft/fluid-cell";
+import { IComponentHandle, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
+import { SharedString } from "@microsoft/fluid-sequence";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-
-import { TodoItemSupportedComponents } from "./supportedComponent";
-import { TodoItemView } from "./TodoItemView";
-
 import { TextBoxName } from "../TextBox";
 import { TextListName } from "../TextList";
+import { TodoItemSupportedComponents } from "./supportedComponent";
+import { TodoItemView } from "./TodoItemView";
 
 // tslint:disable-next-line: no-var-requires no-require-imports
 const pkg = require("../../package.json");
 export const TodoItemName = `${pkg.name as string}-item`;
+
+const checkedKey = "checked";
+const textKey = "text";
+const innerComponentKey = "innerId";
 
 /**
  * Todo Item is a singular todo entry consisting of:
@@ -55,8 +35,7 @@ export const TodoItemName = `${pkg.name as string}-item`;
 export class TodoItem extends PrimedComponent
   implements
     IComponentHTMLVisual,
-    IComponentReactViewable,
-    IComponentForge {
+    IComponentReactViewable {
 
   // tslint:disable:prefer-readonly
   private text: SharedString;
@@ -77,26 +56,26 @@ export class TodoItem extends PrimedComponent
       newItemText = props.startingText;
     }
 
+    // the text of the todo item
     const text = SharedString.create(this.runtime);
     text.insertText(0, newItemText);
-    // create a cell that will be use for the text entry
-    this.root.set("text", text.handle);
+    this.root.set(textKey, text.handle);
 
-    // create a counter that will be used for the checkbox
-    // we use a counter so if both users press the button at the same time it will result
-    // in the button being the same value.
-    this.root.createValueType("checked", CounterValueType.Name, 0);
+    // the state of the checkbox
+    this.root.set(checkedKey, false);
 
     // Each Todo Item has one inner component that it can have. This value is originally empty since we let the
     // user choose the component they want to embed. We store it in a cell for easier event handling.
     const innerIdCell = SharedCell.create(this.runtime);
-    innerIdCell.set("");
-    this.root.set("innerId", innerIdCell.handle);
+    innerIdCell.set(undefined);
+    this.root.set(innerComponentKey, innerIdCell.handle);
   }
 
   protected async componentHasInitialized() {
-    const text = this.root.get<IComponentHandle>("text").get<SharedString>();
-    const innerIdCell = this.root.get<IComponentHandle>("innerId").get<ISharedCell>();
+    const text = this.root.get<IComponentHandle>(textKey).get<SharedString>();
+    const innerIdCell = this.root.get<IComponentHandle>(innerComponentKey).get<ISharedCell>();
+
+    this.setCheckedState = this.setCheckedState.bind(this);
 
     [
       this.text,
@@ -105,6 +84,20 @@ export class TodoItem extends PrimedComponent
       text,
       innerIdCell,
     ]);
+
+    this.innerIdCell.on("op", (op, local) => {
+      if (!local) {
+        this.emit("innerComponentChanged");
+      }
+    });
+
+    this.root.on("valueChanged", (op, local) => {
+      if (!local) {
+        if (op.key === checkedKey) {
+          this.emit("checkedStateChanged");
+        }
+      }
+    });
   }
 
   // start IComponentHTMLVisual
@@ -125,27 +118,50 @@ export class TodoItem extends PrimedComponent
    * Since this returns a JSX.Element it allows for an easier model.
    */
   public createJSXElement(): JSX.Element {
-      const checkedCounter = this.root.get<Counter>("checked");
-      const factory = new EmbeddedReactComponentFactory(this.getComponent.bind(this));
       return (
         <TodoItemView
-          sharedString={this.text}
-          id={this.url}
-          innerIdCell={this.innerIdCell}
-          checkedCounter={checkedCounter}
-          getComponentView={(id) => factory.create(id)}
-          createComponent={this.createComponent.bind(this)}/>
+          todoItemModel={this}
+        />
       );
   }
 
   // end IComponentReactViewable
+
+  // start public API surface for the TodoItem model, used by the view
+
+  // Would prefer not to hand this out, and instead give back a component?
+  public getTodoItemText() {
+    return this.text;
+  }
+
+  public setCheckedState(newState: boolean): void {
+    this.root.set(checkedKey, newState);
+    this.emit("checkedStateChanged");
+  }
+
+  public getCheckedState(): boolean {
+    return this.root.get(checkedKey);
+  }
+
+  public hasInnerComponent(): boolean {
+    return !!this.innerIdCell.get();
+  }
+
+  public async getInnerComponent() {
+    const innerComponentId = this.innerIdCell.get();
+    if (innerComponentId) {
+      return this.getComponent(innerComponentId);
+    } else {
+      return undefined;
+    }
+  }
 
   /**
    * The Todo Item can embed multiple types of components. This is where these components are defined.
    * @param type - component to be created
    * @param props - props to be passed into component creation
    */
-  private async createComponent(type: TodoItemSupportedComponents, props?: any): Promise<void> {
+  public async createInnerComponent(type: TodoItemSupportedComponents, props?: any): Promise<void> {
     const id = `item${Date.now().toString()}`;
 
     switch (type) {
@@ -166,5 +182,9 @@ export class TodoItem extends PrimedComponent
 
     // Update the inner component id
     this.innerIdCell.set(id);
+
+    this.emit("innerComponentChanged");
   }
+
+  // end public API surface for the TodoItem model, used by the view
 }

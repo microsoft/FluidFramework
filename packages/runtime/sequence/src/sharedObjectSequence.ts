@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentRuntime } from "@prague/runtime-definitions";
+import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SharedObjectSequenceFactory } from "./sequenceFactory";
 import { SharedSequence } from "./sharedSequence";
 

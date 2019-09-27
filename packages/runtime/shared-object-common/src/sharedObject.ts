@@ -3,24 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentHandle } from "@prague/component-core-interfaces";
-import {
-    ConnectionState,
-    ITelemetryErrorEvent,
-    ITelemetryLogger,
-} from "@prague/container-definitions";
-import {
-    ISequencedDocumentMessage,
-    ITree,
-    MessageType,
-} from "@prague/protocol-definitions";
+import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
+import { ConnectionState, ITelemetryErrorEvent, ITelemetryLogger } from "@microsoft/fluid-container-definitions";
+import { ChildLogger, EventEmitterWithErrorHandling } from "@microsoft/fluid-core-utils";
+import { ISequencedDocumentMessage, ITree, MessageType } from "@microsoft/fluid-protocol-definitions";
 import {
     IChannelAttributes,
     IComponentRuntime,
     IObjectStorageService,
     ISharedObjectServices,
-} from "@prague/runtime-definitions";
-import { ChildLogger, EventEmitterWithErrorHandling } from "@prague/utils";
+} from "@microsoft/fluid-runtime-definitions";
 import * as assert from "assert";
 import * as Deque from "double-ended-queue";
 // tslint:disable-next-line:no-submodule-imports

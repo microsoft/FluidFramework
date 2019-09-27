@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITrace } from "@prague/protocol-definitions";
-
-// Message to indicate successful round trip.
-export const RoundTrip = "tripComplete";
+import { ITrace } from "@microsoft/fluid-protocol-definitions";
 
 export interface ILatencyMessage {
     // Latency traces.

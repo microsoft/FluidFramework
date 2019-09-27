@@ -3,20 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ISerializedHandle } from "@prague/component-core-interfaces";
-import {
-    FileMode,
-    ISequencedDocumentMessage,
-    ITree,
-    MessageType,
-    TreeEntry,
-} from "@prague/protocol-definitions";
-import {
-    IComponentRuntime,
-    IObjectStorageService,
-} from "@prague/runtime-definitions";
-import { ISharedObjectFactory, SharedObject, ValueType } from "@prague/shared-object-common";
-import { fromBase64ToUtf8 } from "@prague/utils";
+import { ISerializedHandle } from "@microsoft/fluid-component-core-interfaces";
+import { fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
+import { FileMode, ISequencedDocumentMessage, ITree, MessageType, TreeEntry } from "@microsoft/fluid-protocol-definitions";
+import { IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
+import { ISharedObjectFactory, SharedObject, ValueType } from "@microsoft/fluid-shared-object-base";
 import { CellFactory } from "./cellFactory";
 import { debug } from "./debug";
 import { ISharedCell } from "./interfaces";

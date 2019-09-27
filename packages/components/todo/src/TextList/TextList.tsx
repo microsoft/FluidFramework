@@ -2,24 +2,13 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import {
-  PrimedComponent,
-} from "@prague/aqueduct";
-import {
-  IComponentReactViewable,
-} from "@prague/aqueduct-react";
-import {
-  IComponentHTMLVisual,
-} from "@prague/component-core-interfaces";
-import {
-  IComponentForge,
-} from "@prague/framework-definitions";
-import { IDirectory } from "@prague/map";
-import { SharedString } from "@prague/sequence";
-
+import { PrimedComponent } from "@microsoft/fluid-aqueduct";
+import { IComponentReactViewable } from "@microsoft/fluid-aqueduct-react";
+import { IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
+import { IDirectory } from "@microsoft/fluid-map";
+import { SharedString } from "@microsoft/fluid-sequence";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-
 import { TextListView } from "./TextListView";
 
 // tslint:disable-next-line: no-var-requires no-require-imports
@@ -33,8 +22,7 @@ export const TextListName = `${pkg.name as string}-textlist`;
 export class TextList extends PrimedComponent
   implements
   IComponentHTMLVisual,
-  IComponentReactViewable,
-  IComponentForge {
+  IComponentReactViewable {
 
   public get IComponentHTMLVisual() { return this; }
   public get IComponentReactViewable() { return this; }

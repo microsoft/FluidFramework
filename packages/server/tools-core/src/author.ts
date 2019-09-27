@@ -3,17 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import * as api from "@prague/client-api";
-import { IComponent } from "@prague/component-core-interfaces";
-import { ILoader } from "@prague/container-definitions";
-import { ISharedMap } from "@prague/map";
-import * as MergeTree from "@prague/merge-tree";
-import { ISequencedDocumentMessage } from "@prague/protocol-definitions";
-import Counter = api.RateCounter;
-import { IComponentRuntime } from "@prague/runtime-definitions";
-import { ISharedString } from "@prague/sequence";
+import * as api from "@fluid-internal/client-api";
+import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+import { ILoader } from "@microsoft/fluid-container-definitions";
+import { ISharedMap } from "@microsoft/fluid-map";
+import * as MergeTree from "@microsoft/fluid-merge-tree";
+import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
+import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { ISharedString } from "@microsoft/fluid-sequence";
 // tslint:disable-next-line:no-submodule-imports
 import * as queue from "async/queue";
+
+import Counter = api.RateCounter;
 // tslint:disable-next-line:no-submodule-imports
 import clone = require("lodash/clone");
 

@@ -5,7 +5,7 @@
 
 import {
     IDocumentDeltaStorageService, ISequencedDocumentMessage,
-} from "@prague/protocol-definitions";
+} from "@microsoft/fluid-protocol-definitions";
 
 /**
  * A simple class to return for the delta storage service

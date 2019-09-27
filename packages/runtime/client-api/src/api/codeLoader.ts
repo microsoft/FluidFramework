@@ -3,26 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import * as cell from "@prague/cell";
-import { IRequest } from "@prague/component-core-interfaces";
-import { ComponentRuntime } from "@prague/component-runtime";
-import { ConsensusQueue, ConsensusStack } from "@prague/consensus-ordered-collection";
-import { ConsensusRegisterCollection } from "@prague/consensus-register-collection";
-import {
-    ICodeLoader,
-    IContainerContext,
-    IRuntime,
-    IRuntimeFactory,
-} from "@prague/container-definitions";
-import { ContainerRuntime, IContainerRuntimeOptions } from "@prague/container-runtime";
-import * as ink from "@prague/ink";
-import * as map from "@prague/map";
-import {
-    IComponentContext,
-    IComponentFactory,
-    IComponentRegistry,
-} from "@prague/runtime-definitions";
-import * as sequence from "@prague/sequence";
+import * as cell from "@microsoft/fluid-cell";
+import { IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
+import { ICodeLoader, IContainerContext, IRuntime, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
+import { ContainerRuntime, IContainerRuntimeOptions } from "@microsoft/fluid-container-runtime";
+import * as ink from "@microsoft/fluid-ink";
+import * as map from "@microsoft/fluid-map";
+import { ConsensusQueue, ConsensusStack } from "@microsoft/fluid-ordered-collection";
+import { ConsensusRegisterCollection } from "@microsoft/fluid-register-collection";
+import { IComponentContext, IComponentFactory, IComponentRegistry } from "@microsoft/fluid-runtime-definitions";
+import * as sequence from "@microsoft/fluid-sequence";
 import { Document } from "./document";
 
 const rootMapId = "root";
@@ -44,6 +35,7 @@ class Chaincode implements IComponentFactory {
         const consensusRegisterCollectionFactory = ConsensusRegisterCollection.getFactory();
         const sparseMatrixFactory = sequence.SparseMatrix.getFactory();
         const directoryFactory = map.SharedDirectory.getFactory();
+        const sharedIntervalFactory = sequence.SharedIntervalCollection.getFactory();
 
         // Register channel factories
         const modules = new Map<string, any>();
@@ -58,6 +50,7 @@ class Chaincode implements IComponentFactory {
         modules.set(consensusRegisterCollectionFactory.type, consensusRegisterCollectionFactory);
         modules.set(sparseMatrixFactory.type, sparseMatrixFactory);
         modules.set(directoryFactory.type, directoryFactory);
+        modules.set(sharedIntervalFactory.type, sharedIntervalFactory);
 
         ComponentRuntime.load(
             context,
@@ -120,7 +113,7 @@ export class ChaincodeFactory implements IRuntimeFactory {
 
         // On first boot create the base component
         if (!runtime.existing) {
-            runtime.createComponent("root", "@prague/client-api")
+            runtime.createComponent("root", "@fluid-internal/client-api")
                 .then((componentRuntime) => {
                     componentRuntime.attach();
                 })

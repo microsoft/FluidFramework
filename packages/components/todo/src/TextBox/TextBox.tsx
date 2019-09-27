@@ -2,24 +2,10 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import {
-  PrimedComponent,
-} from "@prague/aqueduct";
-import {
-  CollaborativeTextArea,
-  IComponentReactViewable,
-} from "@prague/aqueduct-react";
-import {
-  IComponentHandle,
-  IComponentHTMLVisual,
-} from "@prague/component-core-interfaces";
-import {
-  IComponentForge,
-} from "@prague/framework-definitions";
-import {
-  SharedString,
-} from "@prague/sequence";
-
+import { PrimedComponent } from "@microsoft/fluid-aqueduct";
+import { CollaborativeTextArea, IComponentReactViewable } from "@microsoft/fluid-aqueduct-react";
+import { IComponentHandle, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
+import { SharedString } from "@microsoft/fluid-sequence";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
@@ -34,8 +20,7 @@ export const TextBoxName = `${pkg.name as string}-textbox`;
 export class TextBox extends PrimedComponent
   implements
     IComponentHTMLVisual,
-    IComponentReactViewable,
-    IComponentForge {
+    IComponentReactViewable {
 
   public get IComponentHTMLVisual() { return this; }
   public get IComponentReactViewable() { return this; }

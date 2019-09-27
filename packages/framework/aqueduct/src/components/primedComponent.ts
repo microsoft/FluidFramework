@@ -3,16 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import {
-    IRequest,
-    IResponse,
- } from "@prague/component-core-interfaces";
-import {
-    ISharedDirectory,
-    MapFactory,
-    SharedDirectory,
-} from "@prague/map";
-import { ITaskManager } from "@prague/runtime-definitions";
+import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
+import { ISharedDirectory, MapFactory, SharedDirectory } from "@microsoft/fluid-map";
+import { ITaskManager } from "@microsoft/fluid-runtime-definitions";
 import { SharedComponent } from "./sharedComponent";
 
 /**
@@ -40,9 +33,6 @@ export abstract class PrimedComponent extends SharedComponent {
     /**
      * The root directory will either be ready or will return an error. If an error is thrown
      * the root has not been correctly created/set.
-     *
-     * If you are overriding `componentInitializingFirstTime()` ensure you are calling `await super.componentInitializingFirstTime()` first.
-     * If you are overriding `componentInitializingFromExisting()` ensure you are calling `await super.componentInitializingFromExisting()` first.
      */
     public get root(): ISharedDirectory {
         if (!this.internalRoot) {
@@ -70,7 +60,7 @@ export abstract class PrimedComponent extends SharedComponent {
         // Initialize task manager.
         this.internalTaskManager = await this.getComponent<ITaskManager>("_scheduler");
 
-        if (this.canForge) {
+        if (!this.runtime.existing) {
             // Create a root directory and register it before calling componentInitializingFirstTime
             this.internalRoot = SharedDirectory.create(this.runtime, this.rootDirectoryId);
             this.internalRoot.register();
@@ -94,9 +84,6 @@ export abstract class PrimedComponent extends SharedComponent {
     }
 
     private getUninitializedErrorString(item: string) {
-        return `${item} must be initialized before being accessed.
-            Ensure you are calling await super.componentInitializingFirstTime()
-            and/or await super.componentInitializingFromExisting() if you are
-            overriding either.`;
+        return `${item} must be initialized before being accessed.`;
     }
 }

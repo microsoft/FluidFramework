@@ -9,9 +9,10 @@ import {
     IContentMessage,
     ISequencedDocumentMessage,
     IServiceConfiguration,
+    ISignalClient,
     ISignalMessage,
     ITokenClaims,
-} from "@prague/protocol-definitions";
+} from "@microsoft/fluid-protocol-definitions";
 
 /**
  * Interface for error responses for the WebSocket connection
@@ -114,6 +115,11 @@ export interface IConnected {
      * Signals sent during the connection
      */
     initialSignals?: ISignalMessage[];
+
+    /**
+     * Prior clients already connected.
+     */
+    initialClients?: ISignalClient[];
 
     /**
      * Protocol version selected by the server to communicate with the client

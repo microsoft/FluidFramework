@@ -12,21 +12,12 @@ import {
     IComponentRouter,
     IRequest,
     IResponse,
-} from "@prague/component-core-interfaces";
-import { ComponentHandle, ComponentRuntime } from "@prague/component-runtime";
-import {
-    IComponentCollection,
-} from "@prague/framework-definitions";
-import {
-    ISharedMap,
-    SharedMap,
-} from "@prague/map";
-import {
-    IComponentContext,
-    IComponentFactory,
-    IComponentRuntime,
-} from "@prague/runtime-definitions";
-import { ISharedObjectFactory } from "@prague/shared-object-common";
+} from "@microsoft/fluid-component-core-interfaces";
+import { ComponentHandle, ComponentRuntime } from "@microsoft/fluid-component-runtime";
+import { IComponentCollection } from "@microsoft/fluid-framework-interfaces";
+import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
+import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { EventEmitter } from "events";
 
 // tslint:disable-next-line:no-var-requires no-submodule-imports

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentService, IDocumentServiceFactory, IResolvedUrl } from "@prague/protocol-definitions";
+import { IDocumentService, IDocumentServiceFactory, IResolvedUrl } from "@microsoft/fluid-protocol-definitions";
 import { ReplayController } from "./replayController";
 import { ReplayControllerStatic } from "./replayDocumentDeltaConnection";
 import { ReplayDocumentService } from "./replayDocumentService";
@@ -20,11 +20,13 @@ export class ReplayDocumentServiceFactory implements IDocumentServiceFactory {
         );
     }
 
-    public readonly protocolName = "fluid-replay:";
+    public readonly protocolName;
 
     public constructor(
         private readonly documentServiceFactory: IDocumentServiceFactory,
-        private readonly controller: ReplayController) {}
+        private readonly controller: ReplayController) {
+            this.protocolName = documentServiceFactory.protocolName;
+        }
 
     /**
      * Creates a replay document service which uses the document service of provided

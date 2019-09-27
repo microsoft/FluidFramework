@@ -3,22 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent, PrimedComponentFactory } from "@prague/aqueduct";
-import { IComponentHandle } from "@prague/component-core-interfaces";
-import {
-    ICombiningOp,
-    IntervalType,
-    LocalReference,
-    PropertySet,
-} from "@prague/merge-tree";
-import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
+import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
+import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
+import { ICombiningOp, IntervalType, LocalReference, PropertySet } from "@microsoft/fluid-merge-tree";
+import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import {
     positionToRowCol,
     rowColToPosition,
     SharedNumberSequence,
     SparseMatrix,
     UnboxedOper,
-} from "@prague/sequence";
+} from "@microsoft/fluid-sequence";
 import * as assert from "assert";
 import { CellRange } from "./cellrange";
 import { TableSliceType } from "./ComponentTypes";
@@ -84,7 +79,7 @@ export class TableDocument extends PrimedComponent implements ITable {
     }
 
     public async getRange(label: string) {
-        const intervals = this.matrix.getSharedIntervalCollection(label);
+        const intervals = this.matrix.getIntervalCollection(label);
         const interval = (await intervals.getView()).nextInterval(0);
         return new CellRange(interval, this.localRefToRowCol);
     }
@@ -115,7 +110,7 @@ export class TableDocument extends PrimedComponent implements ITable {
         debug(`createInterval(${label}, ${minRow}:${minCol}..${maxRow}:${maxCol})`);
         const start = rowColToPosition(minRow, minCol);
         const end = rowColToPosition(maxRow, maxCol);
-        const intervals = this.matrix.getSharedIntervalCollection(label);
+        const intervals = this.matrix.getIntervalCollection(label);
         intervals.add(start, end, IntervalType.SlideOnRemove);
     }
 

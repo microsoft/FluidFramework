@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IHostConfig, start } from "@prague/base-host";
-import { IResolvedPackage } from "@prague/loader-web";
-import { IDocumentServiceFactory, IResolvedUrl } from "@prague/protocol-definitions";
-import { ContainerUrlResolver } from "@prague/routerlicious-host";
-import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
+import { IHostConfig, start } from "@microsoft/fluid-base-host";
+import { IDocumentServiceFactory, IResolvedUrl } from "@microsoft/fluid-protocol-definitions";
+import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
+import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
+import { IResolvedPackage } from "@microsoft/fluid-web-code-loader";
 import * as UrlParse from "url-parse";
 import { resolveUrl } from "./urlResolver";
 
@@ -19,7 +19,7 @@ const npm = "https://pragueauspkn-3873244262.azureedge.net";
 // This is insecure, but is being used for the time being for ease of use during the hackathon.
 const appTenants = [
     {
-        id: "prague",
+        id: "fluid",
         key: "43cfc3fbf04a97c0921fd23ff10f9e4b",
     },
 ];
@@ -189,7 +189,7 @@ export async function loadIFramedFluidComponent(
         scriptUrl = "dist/main.bundle.js";
     } else {
         // tslint:disable-next-line: max-line-length no-unsafe-any
-        scriptUrl = `https://pragueauspkn-3873244262.azureedge.net/@prague/tiny-web-host@${packageJson.version}/dist/main.bundle.js`;
+        scriptUrl = `https://pragueauspkn-3873244262.azureedge.net/@fluid-example/tiny-web-host@${packageJson.version}/dist/main.bundle.js`;
     }
 
     // As per IComponentHTMLVisual, if the div has a size already, the render is expected to fill the space

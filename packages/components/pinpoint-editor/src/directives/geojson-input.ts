@@ -4,6 +4,7 @@
  */
 
 import * as ng from "angular";
+
 // tslint:disable-next-line:no-var-requires
 const geojsonInput = require("../../partials/geojson-input.html");
 

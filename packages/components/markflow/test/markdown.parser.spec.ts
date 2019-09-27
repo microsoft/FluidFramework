@@ -3,11 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { CharCode } from "@fluid-example/flow-util-lib";
+import { strict as assert } from "assert";
 // tslint:disable-next-line:no-import-side-effect
 import "mocha";
-
-import { CharCode } from "@prague/flow-util";
-import { strict as assert } from "assert";
 
 // tslint:disable:no-bitwise
 const enum LineState {

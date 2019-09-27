@@ -1,6 +1,6 @@
 {
-  "name": "@component/blob-manager",
-  "version": "0.10.0",
+  "name": "@microsoft/fluid-blob-manager",
+  "version": "0.11.0",
   "description": "Blob management component",
   "main": "dist/index.js",
   "module": "lib/index.js",
@@ -22,16 +22,16 @@
     "webpack:dev": "webpack --env=\"development\""
   },
   "dependencies": {
-    "@prague/component-core-interfaces": "^0.10.0",
-    "@prague/component-runtime": "^0.10.0",
-    "@prague/container-definitions": "^0.10.0",
-    "@prague/map": "^0.10.0",
-    "@prague/protocol-definitions": "^0.10.0",
-    "@prague/runtime-definitions": "^0.10.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.11.0",
+    "@microsoft/fluid-component-runtime": "^0.11.0",
+    "@microsoft/fluid-container-definitions": "^0.11.0",
+    "@microsoft/fluid-map": "^0.11.0",
+    "@microsoft/fluid-protocol-definitions": "^0.11.0",
+    "@microsoft/fluid-runtime-definitions": "^0.11.0",
     "@types/node": "^10.12.12"
   },
   "devDependencies": {
-    "@microsoft/fluid-build-common": "^0.10.0",
+    "@microsoft/fluid-build-common": "^0.11.0",
     "concurrently": "^4.1.0",
     "rimraf": "^2.6.2",
     "tslint": "^5.11.0",
@@ -39,14 +39,6 @@
     "webpack": "^4.8.2",
     "webpack-cli": "^3.1.2",
     "webpack-merge": "^4.1.2"
-  },
-  "prague": {
-    "browser": {
-      "entrypoint": "main",
-      "bundle": [
-        "dist/main.bundle.js"
-      ]
-    }
   },
   "fluid": {
     "browser": {

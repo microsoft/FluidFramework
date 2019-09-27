@@ -6,197 +6,206 @@
 import {
     ConnectionMode,
     IClient,
+    IDocumentDeltaStorageService,
     IDocumentService,
     ISequencedDocumentMessage,
-    MessageType,
     ScopeType,
-} from "@prague/protocol-definitions";
-import { IAttachMessage, IEnvelope } from "@prague/runtime-definitions";
+} from "@microsoft/fluid-protocol-definitions";
+import * as assert from "assert";
 import * as fs from "fs";
-import * as util from "util";
+import { printMessageStats } from "./fluidAnalyzeMessages";
 import {
-    dumpChannelStats,
-    dumpDataTypeStats,
+    connectToWebSocket,
     dumpMessages,
     dumpMessageStats,
-    dumpTotalStats,
     messageTypeFilter,
     paramSave,
 } from "./fluidFetchArgs";
 
-async function loadAllSequencedMessages(
-    documentService: IDocumentService): Promise<ISequencedDocumentMessage[]> {
-    const deltaStorage = await documentService.connectToDeltaStorage();
-    const sequencedMessages: ISequencedDocumentMessage[] = [];
-    let curr = 0;
+// tslint:disable:non-literal-fs-path
+
+function filenameFromIndex(index: number): string {
+    return index === 0 ? "" : index.toString(); // support old tools...
+}
+
+async function loadChunk(from: number, to: number, deltaStorage: IDocumentDeltaStorageService) {
+    console.log(`Loading ops at ${from}`);
+    for (let iter = 0; iter < 3; iter++) {
+        try {
+            return await deltaStorage.get(from, to);
+        } catch (error) {
+            console.error("Hit error while downloading ops. Retrying");
+            console.error(error);
+        }
+    }
+    throw new Error("Giving up after 3 attempts to download chunk.");
+}
+
+async function *loadAllSequencedMessages(
+        documentService?: IDocumentService,
+        dir?: string,
+        files?: string[]) {
     const batch = 2000;
+    let lastSeq = 0;
+
+    // If we have local save, read ops from there first
+    if (files !== undefined) {
+        for (let i = 0; i < files.length; i++) {
+            const file = filenameFromIndex(i);
+            try {
+                console.log(`reading messages${file}.json`);
+                const fileContent = fs.readFileSync(`${dir}/messages${file}.json`, { encoding: "utf-8" });
+                const messages: ISequencedDocumentMessage[] = JSON.parse(fileContent);
+                assert(messages[0].sequenceNumber === lastSeq + 1);
+                yield messages;
+                lastSeq = messages[messages.length - 1].sequenceNumber;
+            } catch (e) {
+                console.error(`Error reading / parsing messages from ${file}`);
+                console.error(e);
+                return;
+            }
+        }
+        if (lastSeq !== 0) {
+            console.log(`Read ${lastSeq} ops from local files`);
+        }
+    }
+
+    if (!documentService) {
+        return;
+    }
+
+    const deltaStorage = await documentService.connectToDeltaStorage();
 
     let timeStart = Date.now();
+    let requests = 0;
+    let opsStorage = 0;
     while (true) {
-        console.log(`Loading ops at ${curr}`);
-        const messages = await deltaStorage.get(curr, curr + batch);
+        requests++;
+        const messages = await loadChunk(lastSeq, lastSeq + batch, deltaStorage);
         if (messages.length === 0) {
             break;
         }
-
-        sequencedMessages.push(...messages);
-        curr = messages[messages.length - 1].sequenceNumber;
+        yield messages;
+        opsStorage += messages.length;
+        lastSeq = messages[messages.length - 1].sequenceNumber;
     }
 
-    console.log(`${Math.floor((Date.now() - timeStart) / 1000)} seconds to retrieve ${sequencedMessages.length} ops`);
-
-    const client: IClient = {
-        permission: [],
-        scopes: [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
-        type: "browser",
-        user: { id: "blah" },
-     };
-    console.log("Retrieving messages from web socket");
-    timeStart = Date.now();
-    const mode: ConnectionMode = "write";
-    const deltaStream = await documentService.connectToDeltaStream(client, mode);
-    const initialMessages = deltaStream.initialMessages;
-    deltaStream.disconnect();
-    console.log(`${Math.floor((Date.now() - timeStart) / 1000)} seconds to connect to web socket`);
-
-    let logMsg = `)`;
-    let allMessages = sequencedMessages;
-    if (initialMessages) {
-        const lastSequenceNumber = sequencedMessages.length === 0 ?
-            0 : sequencedMessages[sequencedMessages.length - 1].sequenceNumber;
-        const filtered = initialMessages.filter((a) => a.sequenceNumber > lastSequenceNumber);
-        const sorted = filtered.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
-        logMsg = `, ${initialMessages.length} initial ws messages, ${initialMessages.length - sorted.length} dup)`;
-        allMessages = sequencedMessages.concat(sorted);
+    if (requests > 0) {
+        console.log(`\n${Math.floor((Date.now() - timeStart) / 1000)} seconds to retrieve ${opsStorage} ops in ${requests} requests`);
     }
-    console.log(`${allMessages.length} total messages (${sequencedMessages.length} delta storage${logMsg}`);
-    return allMessages;
+
+    if (connectToWebSocket) {
+        let logMsg = "";
+        const client: IClient = {
+            permission: [],
+            scopes: [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
+            type: "browser",
+            user: { id: "blah" },
+        };
+        console.log("Retrieving messages from web socket");
+        timeStart = Date.now();
+        const mode: ConnectionMode = "write";
+        const deltaStream = await documentService.connectToDeltaStream(client, mode);
+        const initialMessages = deltaStream.initialMessages;
+        deltaStream.disconnect();
+        console.log(`${Math.floor((Date.now() - timeStart) / 1000)} seconds to connect to web socket`);
+
+        if (initialMessages) {
+            const lastSequenceNumber = lastSeq;
+            const filtered = initialMessages.filter((a) => a.sequenceNumber > lastSequenceNumber);
+            const sorted = filtered.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
+            lastSeq = sorted[sorted.length - 1].sequenceNumber;
+            logMsg = ` (${opsStorage} delta storage, ${initialMessages.length} initial ws messages, ${initialMessages.length - sorted.length} dup)`;
+            yield sorted;
+        }
+        console.log(`${lastSeq} total messages${logMsg}`);
+    }
 }
 
-function incr(map: Map<string, [number, number]>, key: string, opSize: number) {
-    const value = map.get(key);
-    if (value === undefined) {
-        map.set(key, [1, opSize]);
+async function* saveOps(
+        gen, // AsyncGenerator<ISequencedDocumentMessage[]>,
+        dir: string,
+        files: string[]) {
+    // split into 100K ops
+    const chunk = 100 * 1000;
+
+    // figure out first file we want to write to
+    let index = 0;
+    if (files.length !== 0) {
+        index = (files.length - 1);
+    }
+    let curr = index * chunk + 1;
+
+    let sequencedMessages: ISequencedDocumentMessage[] = [];
+    while (true) {
+        const result: IteratorResult<ISequencedDocumentMessage[]> = await gen.next();
+        if (!result.done) {
+            let messages = result.value;
+            yield messages;
+            if (messages[messages.length - 1].sequenceNumber < curr) {
+                // Nothing interesting.
+                continue;
+            }
+            if (messages[0].sequenceNumber < curr) {
+                messages = messages.filter((msg) => msg.sequenceNumber >= curr);
+            }
+            sequencedMessages = sequencedMessages.concat(messages);
+            assert(sequencedMessages[0].sequenceNumber === curr);
+            assert(sequencedMessages[sequencedMessages.length - 1].sequenceNumber
+                === curr + sequencedMessages.length - 1);
+        }
+
+        // time to write it out?
+        while (sequencedMessages.length >= chunk || (result.done && sequencedMessages.length !== 0)) {
+            const name = filenameFromIndex(index);
+            const write = sequencedMessages.splice(0, chunk);
+            console.log(`writing messages${name}.json`);
+            fs.writeFileSync(`${dir}/messages${name}.json`, JSON.stringify(write, undefined, 2));
+            curr += chunk;
+            assert(sequencedMessages.length === 0 || sequencedMessages[0].sequenceNumber === curr);
+            index++;
+        }
+
+        if (result.done) {
+            break;
+        }
+    }
+}
+
+export async function fluidFetchMessages(documentService?: IDocumentService) {
+    const messageStats = dumpMessageStats || dumpMessages;
+    if (!messageStats && paramSave === undefined) {
+        return;
+    }
+
+    const files = !paramSave ?
+        undefined :
+        fs.readdirSync(paramSave)
+            .filter((file) => {
+                if (!file.startsWith("messages")) {
+                    return false;
+                }
+                return true;
+            })
+            .sort((a, b) => {
+                return a.localeCompare(b);
+            });
+
+    let generator = loadAllSequencedMessages(documentService, paramSave, files);
+
+    if (paramSave && files !== undefined && documentService) {
+        generator = saveOps(generator, paramSave, files);
+    }
+
+    if (messageStats) {
+        return printMessageStats(
+            generator,
+            dumpMessageStats,
+            dumpMessages,
+            messageTypeFilter);
     } else {
-        value[0]++;
-        value[1] += opSize;
-        map.set(key, value);
+        let item;
+        for await (item of generator) {}
     }
-}
 
-function dumpStats(title: string, map: Map<string, [number, number]>) {
-    let totalCount = 0;
-    let totalSize = 0;
-    console.log(`${title.padEnd(72)} | Count      Bytes`);
-    console.log("-".repeat(100));
-    for (const [name, [count, size]] of map) {
-        totalCount += count;
-        totalSize += size;
-        console.log(`${name.padEnd(72)} | ${count.toString().padStart(5)} ${size.toString().padStart(10)}`);
-    }
-    console.log("-".repeat(100));
-    console.log(`${"Total".padEnd(72)} | ${totalCount.toString().padStart(5)} ${totalSize.toString().padStart(10)}`);
-}
-
-function getObjectId(componentId: string, id: string) {
-    return `[${componentId}]/${id}`;
-}
-
-export async function fluidFetchMessages(documentService: IDocumentService) {
-
-    const messageStats = dumpMessageStats || dumpChannelStats || dumpDataTypeStats || dumpTotalStats;
-    if (dumpMessages || messageStats || paramSave !== undefined) {
-        const sequencedMessages = await loadAllSequencedMessages(documentService);
-
-        if (paramSave !== undefined) {
-            const writeFile = util.promisify(fs.writeFile);
-            console.log(`Saving messages`);
-            await writeFile(`${paramSave}/messages.json`, JSON.stringify(sequencedMessages, undefined, 2));
-        }
-        if (dumpMessages) {
-            for (const message of sequencedMessages) {
-                if (messageTypeFilter.size !== 0 && !messageTypeFilter.has(message.type)) {
-                    continue;
-                }
-                console.log(message);
-            }
-            return;
-        }
-
-        if (messageStats) {
-            const messageTypeStats = new Map<string, [number, number]>();
-            const dataType = new Map<string, string>();
-            const dataTypeStats = new Map<string, [number, number]>();
-            const objectStats = new Map<string, [number, number]>();
-            let totalSize = 0;
-            for (const message of sequencedMessages) {
-                if (messageTypeFilter.size !== 0 && !messageTypeFilter.has(message.type)) {
-                    continue;
-                }
-                const msgSize = JSON.stringify(message).length;
-                totalSize += msgSize;
-                incr(messageTypeStats, message.type, msgSize);
-
-                if (message.type === MessageType.Operation) {
-                    try {
-                        let envelop = message.contents as IEnvelope;
-
-                        // TODO: Legacy?
-                        if (envelop && typeof envelop === "string") {
-                            envelop = JSON.parse(envelop);
-                        }
-
-                        const innerContent = envelop.contents as { content: any, type: string };
-                        const address = envelop.address;
-
-                        if (innerContent.type === MessageType.Attach) {
-                            const attachMessage = innerContent.content as IAttachMessage;
-                            let objectType = attachMessage.type;
-                            if (objectType.startsWith("https://graph.microsoft.com/types/")) {
-                                objectType = objectType.substring("https://graph.microsoft.com/types/".length);
-                            }
-                            dataType.set(getObjectId(address, attachMessage.id), objectType);
-                        }
-                        if (innerContent.type === MessageType.Operation) {
-                            const innerEnvelop = innerContent.content as IEnvelope;
-                            const objectId = getObjectId(address, innerEnvelop.address);
-                            incr(objectStats, objectId, msgSize);
-
-                            const objectType = dataType.get(objectId);
-                            if (objectType === undefined) {
-                                console.log(`WARNING: op on object with unknown type ${objectId}`);
-                            } else {
-                                incr(dataTypeStats, objectType, msgSize);
-                            }
-                        }
-                    } catch (e) {
-                        console.error(`ERROR: Unable to process operation message ${e}`);
-                        console.error(message);
-                        throw e;
-                    }
-                }
-            }
-            if (dumpMessageStats) {
-                dumpStats(messageTypeFilter.size ? "Message Type (filtered)" : "Message Type (All)", messageTypeStats);
-            }
-            if (dumpDataTypeStats) {
-                dumpStats("Data Type (Operations only)", dataTypeStats);
-            }
-
-            if (dumpChannelStats) {
-                const channelStats = new Map<string, [number, number]>();
-                for (const [objectId, type] of dataType) {
-                    let value = objectStats.get(objectId);
-                    if (value === undefined) {
-                        value = [0, 0];
-                    }
-                    channelStats.set(`${objectId} (${type})`, value);
-                }
-                dumpStats("Channel name (Operations only)", channelStats);
-            }
-            if (dumpTotalStats) {
-                console.log(`Total message size: ${totalSize}`);
-            }
-        }
-    }
 }

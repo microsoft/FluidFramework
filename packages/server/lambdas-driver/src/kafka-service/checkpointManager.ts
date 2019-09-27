@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { Deferred } from "@microsoft/fluid-core-utils";
 import { IConsumer } from "@microsoft/fluid-server-services-core";
-import { Deferred } from "@prague/utils";
 import * as assert from "assert";
 
 export class CheckpointManager {

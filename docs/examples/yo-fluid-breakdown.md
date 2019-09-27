@@ -70,7 +70,7 @@ Upon creation your directory structure will look like this:
 └── webpack.prod.js
 ```
 
-*******
+---
 
 ## Main.tsx/Main.ts
 
@@ -80,27 +80,23 @@ The `src/main.ts*` file is where the component logic lives. Below we will walk t
 
 First we will declare all our imports. Here is a quick description and use cases for each is discussed further below.
 
-`PrimedComponent` and `PrimedComponentFactory` from <xref:@prague/aqueduct!> provides helper functionality.
-`IComponentHTMLVisual` from <xref:@prague/component-core-interfaces!> provides the interface for enabling rendering.
-`CounterValueType` from <xref:@prague/map!> is a Value Type we'll use in our root Distributed Data Structure (more on that later).
+`PrimedComponent` and `PrimedComponentFactory` from <xref:@microsoft/fluid-aqueduct!> provides helper functionality.
+`IComponentHTMLVisual` from <xref:@microsoft/fluid-component-core-interfaces!> provides the interface for enabling rendering.
+`CounterValueType` from <xref:@microsoft/fluid-map!> is a Value Type we'll use in our root Distributed Data Structure (more on that later).
 `IComponentContext` and `IComponentRuntime` are the interfaces for important fluid objects passed to our Component.
-`React` and `ReactDOM` are *only for React* and enable React use.
+`React` and `ReactDOM` are _only for React_ and enable React use.
 
 ```typescript
 import {
   PrimedComponent,
   PrimedComponentFactory,
-} from "@prague/aqueduct";
-import {
-  IComponentHTMLVisual,
-} from "@prague/component-core-interfaces";
-import {
-  CounterValueType,
-} from "@prague/map";
+} from "@microsoft/fluid-aqueduct";
+import { IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
+import { CounterValueType } from "@microsoft/fluid-map";
 import {
   IComponentContext,
   IComponentRuntime,
-} from "@prague/runtime-definitions";
+} from "@microsoft/fluid-runtime-definitions";
 
 import * as React from "react"; // only used with react
 import * as ReactDOM from "react-dom"; // only used with react
@@ -110,25 +106,25 @@ import * as ReactDOM from "react-dom"; // only used with react
 
 Below we define our component class `ExampleFluidComponent`.
 
-#### <xref:@prague/aqueduct!PrimedComponent:class>
+#### <xref:@microsoft/fluid-aqueduct!PrimedComponent:class>
 
-Extending <xref:@prague/aqueduct!PrimedComponent:class> set up our component with required default behavior as well as additional
+Extending <xref:@microsoft/fluid-aqueduct!PrimedComponent:class> set up our component with required default behavior as well as additional
 helpers to make development easier.
 
 #### Key Benefits
 
 1. Setup a `root` SharedDirectory (a Distributed Data Structure) that we can use to store collaborative content and other
-distributed data structures.
+   distributed data structures.
 2. Provide `this.createAndAttachComponent(...)` and `this.getComponent(...)` functions for easier creation and access
-to other components.
+   to other components.
 3. Provide the following setup overrides
-    - `componentInitializingFirstTime()` - only called the first time a component is initialized
-    - `existing()` - called every time except the first time a component is initialized
-    - `opened()` - called every time a component is initialized. After `create` and `existing`.
+   - `componentInitializingFirstTime()` - only called the first time a component is initialized
+   - `existing()` - called every time except the first time a component is initialized
+   - `opened()` - called every time a component is initialized. After `create` and `existing`.
 
-#### <xref:@prague/component-core-interfaces!IComponentHTMLVisual:interface>
+#### <xref:@microsoft/fluid-component-core-interfaces!IComponentHTMLVisual:interface>
 
-Implementing <xref:@prague/component-core-interfaces!IComponentHTMLVisual:interface> denotes that our component can
+Implementing <xref:@microsoft/fluid-component-core-interfaces!IComponentHTMLVisual:interface> denotes that our component can
 render a view. Throughout the Fluid Framework we define interfaces as a way to state our behavior. Whoever is attempting
 to use this component can can know we support this interface and therefor we will have a `render(...)` function. View
 rendering is explained more below.
@@ -136,8 +132,9 @@ rendering is explained more below.
 #### Code
 
 ```typescript
-export class ExampleFluidComponent extends PrimedComponent implements IComponentHTMLVisual {
-    // ...
+export class ExampleFluidComponent extends PrimedComponent
+  implements IComponentHTMLVisual {
+  // ...
 }
 ```
 
@@ -156,7 +153,7 @@ We also pass through our `supportedInterface`. As described above our component 
 can discover that we implement `IComponentHTMLViewable`.
 
 Next we call, and `await`, `initialize()` on our newly created component instance. `initialize()` is a method on the
-<xref:@prague/aqueduct!SharedComponent:class> that properly calls the three override methods discussed above, `componentInitializingFirstTime()`, `existing()`,
+<xref:@microsoft/fluid-aqueduct!SharedComponent:class> that properly calls the three override methods discussed above, `componentInitializingFirstTime()`, `existing()`,
 and `opened()`. We want to `await` this call because it could perform asynchronous operations such as creating and/or getting
 a component.
 
@@ -209,7 +206,7 @@ const counter = this.root.get("clicks");
 
 Next we create a function that will display our content into the provided `HTMLElement`.
 Because we are using React we will call `ReactDOM.render(...)` with a span displaying
-our `counter.value` and a button that increments our counter by 1  when clicked `counter.increment(1)`.
+our `counter.value` and a button that increments our counter by 1 when clicked `counter.increment(1)`.
 Finally we pass the provided `HTMLElement`(`div`) into our `ReactDOM.render(...)` to tell React
 what to render in.
 
@@ -217,13 +214,13 @@ Once we've created our function we call it once to render the first time.
 
 ```jsx
 const rerender = () => {
-    ReactDOM.render(
-        <div>
-        <span>{counter.value}</span>
-        <button onClick={() => counter.increment(1)}>+</button>
-        </div>,
-        div
-    );
+  ReactDOM.render(
+    <div>
+      <span>{counter.value}</span>
+      <button onClick={() => counter.increment(1)}>+</button>
+    </div>,
+    div,
+  );
 };
 
 rerender();
@@ -233,7 +230,7 @@ Finally we add a listener so when the value of the counter changes we will trigg
 
 ```typescript
 counter.on("incremented", () => {
-    rerender();
+  rerender();
 });
 return div;
 ```
@@ -280,10 +277,10 @@ const counter = this.root.get<Counter>("clicks");
 Next we create our `reRender` function we will call when the counter is incremented.
 
 ```typescript
-  const reRender = () => {
-    const counterSpan = document.getElementById("counterSpan");
-    counterSpan.textContent = counter.value.toString();
-  };
+const reRender = () => {
+  const counterSpan = document.getElementById("counterSpan");
+  counterSpan.textContent = counter.value.toString();
+};
 ```
 
 Next we call `this.createComponentDom(div);` which creates the span that holds our value
@@ -310,8 +307,8 @@ Finally we add a listener so when the value of the counter changes we will trigg
 
 ```typescript
 counter.on("incremented", () => {
-    reRender();
-  });
+  reRender();
+});
 ```
 
 Altogether the code looks like this:
@@ -350,7 +347,7 @@ protected createComponentDom(host: HTMLElement) {
 }
 ```
 
-*******
+---
 
 ### Component Instantiation
 
@@ -359,7 +356,7 @@ new instance. We require having an instantiation factory because it's required t
 distributed data structures up from. Defining all the DDSs up front allows for the Fluid Framework to load
 from a snapshot without worrying that something might exist in the snapshot that the framework can't understand.
 
-In the example below we use the <xref:@prague/aqueduct!PrimedComponentFactory:class> as a helper to create our
+In the example below we use the <xref:@microsoft/fluid-aqueduct!PrimedComponentFactory:class> as a helper to create our
 instantiation factory. As properties we pass in our supported distributed data structures.
 In this scenario we don't use any additional distributed data structures, so we pass an empty array.
 
@@ -370,7 +367,7 @@ In this scenario we don't use any additional distributed data structures, so we 
 The second property is an entry point into our component.
 
 ```typescript
-ExampleFluidComponent.load
+ExampleFluidComponent.load;
 ```
 
 Finally we export this so we can use it in the [index.ts](#index.ts) below for our component registry.
@@ -395,9 +392,7 @@ our scenario we only have one component and therefore one factory.
 We import our `ExampleFluidComponentInstantiationFactory` from our `./main`
 
 ```typescript
-import {
-    ExampleFluidComponentInstantiationFactory,
-} from "./main";
+import { ExampleFluidComponentInstantiationFactory } from "./main";
 ```
 
 We import the `package.json` and use the package name as our component name. It's required when creating a new component
@@ -416,7 +411,7 @@ our case just our one component. `[chaincodeName, Promise.resolve(ExampleFluidCo
 export const fluidExport = new SimpleModuleInstantiationFactory(
   chaincodeName,
   new Map([
-      [chaincodeName, Promise.resolve(ExampleFluidComponentInstantiationFactory)],
+    [chaincodeName, Promise.resolve(ExampleFluidComponentInstantiationFactory)],
   ]),
 );
 ```
@@ -424,13 +419,9 @@ export const fluidExport = new SimpleModuleInstantiationFactory(
 All together the code looks like this:
 
 ```typescript
-import {
-  SimpleModuleInstantiationFactory
-} from "@prague/aqueduct";
+import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 
-import {
-    ExampleFluidComponentInstantiationFactory,
-} from "./main";
+import { ExampleFluidComponentInstantiationFactory } from "./main";
 
 // tslint:disable-next-line: no-var-requires no-require-imports
 const pkg = require("../package.json");
@@ -447,8 +438,7 @@ const chaincodeName = pkg.name as string;
 export const fluidExport = new SimpleModuleInstantiationFactory(
   chaincodeName,
   new Map([
-      [chaincodeName, Promise.resolve(ExampleFluidComponentInstantiationFactory)],
+    [chaincodeName, Promise.resolve(ExampleFluidComponentInstantiationFactory)],
   ]),
 );
-
 ```

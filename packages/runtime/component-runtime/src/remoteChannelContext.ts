@@ -3,21 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { ConnectionState } from "@prague/container-definitions";
+import { ConnectionState } from "@microsoft/fluid-container-definitions";
+import { readAndParse } from "@microsoft/fluid-core-utils";
 import {
     IDocumentStorageService,
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITree,
     MessageType,
-} from "@prague/protocol-definitions";
+} from "@microsoft/fluid-protocol-definitions";
 import {
     IChannel,
     IChannelAttributes,
     IComponentContext,
     IComponentRuntime,
-} from "@prague/runtime-definitions";
-import { readAndParse } from "@prague/utils";
+} from "@microsoft/fluid-runtime-definitions";
 import * as assert from "assert";
 import { createServiceEndpoints, IChannelContext, snapshotChannel } from "./channelContext";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
@@ -28,7 +28,7 @@ type RequiredIChannelAttributes = Pick<IChannelAttributes, "type"> & Partial<ICh
 
 export class RemoteChannelContext implements IChannelContext {
     private connection: ChannelDeltaConnection | undefined;
-    private baseId: string | null = null;
+    private baseId?: string;
     private isLoaded = false;
     private pending: ISequencedDocumentMessage[] | undefined = [];
     private channelP: Promise<IChannel> | undefined;
@@ -72,9 +72,10 @@ export class RemoteChannelContext implements IChannelContext {
     }
 
     public processOp(message: ISequencedDocumentMessage, local: boolean): void {
+        // Clear base id since the channel is now dirty
+        this.baseId = undefined;
+
         if (this.isLoaded) {
-            // Clear base id since the channel is now dirty
-            this.baseId = null;
             // tslint:disable-next-line: no-non-null-assertion
             this.connection!.process(message, local);
         } else {
@@ -84,7 +85,10 @@ export class RemoteChannelContext implements IChannelContext {
         }
     }
 
-    public async snapshot(): Promise<ITree> {
+    public async snapshot(fullTree: boolean = false): Promise<ITree> {
+        if (this.baseId !== undefined && !fullTree) {
+            return { id: this.baseId, entries: [] };
+        }
         const channel = await this.getChannel();
         return snapshotChannel(channel, this.baseId);
     }

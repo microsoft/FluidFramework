@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+export * from "./audience";
 export * from "./blobs";
 export * from "./chaincode";
 export * from "./consensus";

@@ -12,7 +12,7 @@ import {
     ITelemetryPerformanceEvent,
     TelemetryEventPropertyType,
     TelemetryPerfType,
-} from "@prague/container-definitions";
+} from "@microsoft/fluid-container-definitions";
 import * as registerDebug from "debug";
 import { pkgName, pkgVersion } from "./packageVersion";
 // tslint:disable-next-line:no-var-requires
@@ -45,6 +45,10 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
         return tick.toFixed(0);
     }
 
+    public static sanitizePkgName(name: string) {
+        return name.replace("@", "").replace("/", "-");
+    }
+
     protected static prepareErrorObject(event: ITelemetryBaseEvent, error: any) {
         if (error === null || typeof error !== "object") {
             // tslint:disable-next-line:no-unsafe-any
@@ -53,18 +57,13 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
             // WARNING: Exceptions can contain PII!
             // For example, XHR will throw object derived from Error that contains config information
             // for failed request, including all the headers, and thus - user tokens!
-            const errorAsObject = error as { stack?: string; message?: string };
+            const errorAsObject = error as { stack?: string; message?: string, statusCode?: number };
 
             // Extract call stack from exception if available
             // Same for message if there is one (see Error object).
             event.stack = errorAsObject.stack;
             event.error = errorAsObject.message;
-
-            // We likely would need to stop logging error in production builds to avoid potential of recording PII.
-            const error2 = {...errorAsObject};
-            error2.stack = undefined;
-            error2.message = undefined;
-            event.error = error2;
+            event.statusCode = errorAsObject.statusCode;
         }
 
         // Collect stack if we were not able to extract it from error
@@ -188,15 +187,41 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
     }
 
     protected prepareEvent(event: ITelemetryBaseEvent): ITelemetryBaseEvent {
-        const newEvent = { ...this.properties, ...event };
-        if (newEvent[pkgName] === undefined) {
-            newEvent[pkgName] = pkgVersion;
+        const newEvent: ITelemetryBaseEvent = { ...this.properties, ...event };
+        if (newEvent.package === undefined) {
+            newEvent.package = {
+                name: TelemetryLogger.sanitizePkgName(pkgName),
+                version: pkgVersion,
+            };
         }
         if (this.namespace !== undefined) {
             newEvent.eventName = `${this.namespace}${TelemetryLogger.eventNamespaceSeparator}${newEvent.eventName}`;
         }
 
         return newEvent;
+    }
+}
+
+/**
+ * Null logger
+ * It can be used in places where logger instance is required, but events should be not send over.
+ */
+export class TelemetryNullLogger implements ITelemetryLogger {
+    public send(event: ITelemetryBaseEvent): void {
+    }
+    public sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any) {
+    }
+    public sendErrorEvent(event: ITelemetryErrorEvent, error?: any) {
+    }
+    public sendPerformanceEvent(event: ITelemetryPerformanceEvent): void {
+    }
+    public logGenericError(eventName: string, error: any) {
+    }
+    public logException(event: ITelemetryErrorEvent, exception: any): void {
+    }
+    public debugAssert(condition: boolean, event?: ITelemetryErrorEvent): void {
+    }
+    public shipAssert(condition: boolean, event?: ITelemetryErrorEvent): void {
     }
 }
 

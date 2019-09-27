@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { buildHierarchy } from "@microsoft/fluid-core-utils";
 import {
     ICreateBlobResponse,
     IDocumentStorageService,
@@ -11,9 +12,8 @@ import {
     ISummaryTree,
     ITree,
     IVersion,
-} from "@prague/protocol-definitions";
-import { DocumentStorageService } from "@prague/routerlicious-socket-storage";
-import { buildHierarchy } from "@prague/utils";
+} from "@microsoft/fluid-protocol-definitions";
+import { DocumentStorageService } from "@microsoft/fluid-routerlicious-driver";
 
 /**
  * Document access to underlying storage for routerlicious driver.

@@ -3,87 +3,97 @@
  * Licensed under the MIT License.
  */
 
-import {
-    CollaborativeInput,
-} from "@prague/aqueduct-react";
-import { ISharedCell } from "@prague/cell";
-import { ISharedMap } from "@prague/map";
-import { SharedString } from "@prague/sequence";
+import { CollaborativeInput } from "@microsoft/fluid-aqueduct-react";
+import { SharedString } from "@microsoft/fluid-sequence";
 import * as React from "react";
+import { TodoItem } from "../TodoItem/TodoItem";
+import { TodoItemView } from "../TodoItem/TodoItemView";
+import { Todo } from "./Todo";
 
-import ReactList from "react-list";
-
-interface p {
-    createComponent(props?: any): Promise<void>;
-    getComponentView(id: string): JSX.Element;
-    map: ISharedMap;
-    textCell: ISharedCell;
-    textSharedString: SharedString;
+interface TodoViewProps {
+    todoModel: Todo;
 }
 
-interface s {
-    ids: string[];
-    inputValue: string;
+interface TodoViewState {
+    todoItemComponents: TodoItem[];
+    modelLoaded: boolean;
 }
 
 // tslint:disable:react-a11y-input-elements
-export class TodoView extends React.Component<p, s> {
+export class TodoView extends React.Component<TodoViewProps, TodoViewState> {
     private newTextInput: HTMLInputElement;
-    constructor(props: p) {
+    private titleString: SharedString;
+    constructor(props: TodoViewProps) {
         super(props);
 
         this.state = {
-            ids: [...this.props.map.keys()],
-            inputValue: "",
+            todoItemComponents: [],
+            modelLoaded: false,
         };
 
-        this.createComponent = this.createComponent.bind(this);
-        this.handleSubmit = this.handleSubmit.bind(this);
-        this.updateInputValue = this.updateInputValue.bind(this);
-        this.renderItem = this.renderItem.bind(this);
+        this.createNewTodoItem = this.createNewTodoItem.bind(this);
+        this.refreshTodoItemListFromModel = this.refreshTodoItemListFromModel.bind(this);
     }
 
-    componentDidMount(): void {
-        this.props.map.on("op", () => {
-            this.setState({ids: [...this.props.map.keys()]});
+    public async componentDidMount() {
+        // Get the shared string for the title off the model
+        this.titleString = await this.props.todoModel.getTodoTitleString();
+
+        this.props.todoModel.on("todoItemsChanged", async () => {
+            // Doesn't really matter if we await this?
+            await this.refreshTodoItemListFromModel();
         });
 
-        // Set focus on the new text input
+        // Wait for all the todo items to load, then declare the model loaded so we can render later
+        // This approach waits for all todo items to load before rendering, but a more aggressive
+        // approach might declare the model loaded before loading the items (since they aren't strictly
+        // required in our render()) and allow the todo items to render as they come in.
+        await this.refreshTodoItemListFromModel();
+        this.setState({modelLoaded: true});
+
+        // Set focus to the text input
         this.newTextInput.focus();
     }
 
-    async createComponent(): Promise<void>  {
-        await this.props.createComponent({ startingText: this.state.inputValue});
+    private async refreshTodoItemListFromModel(): Promise<void> {
+        const todoItemComponents = await this.props.todoModel.getTodoItemComponents();
+        this.setState({todoItemComponents});
     }
 
     /**
      * This allows us to prevent default form behavior while getting all the benefits
      */
-    async handleSubmit(ev: React.FormEvent<HTMLFormElement>): Promise<void> {
+    public async createNewTodoItem(ev: React.FormEvent<HTMLFormElement>): Promise<void> {
         ev.preventDefault();
-        await this.createComponent();
-        this.setState({inputValue: ""});
+        await this.props.todoModel.addTodoItemComponent({ startingText: this.newTextInput.value });
+        this.newTextInput.value = "";
     }
 
-    updateInputValue(ev: React.ChangeEvent<HTMLInputElement>): void {
-        this.setState({inputValue: ev.target.value});
-    }
+    public render(): JSX.Element {
+        // Getting the subcomponents and DDSs is async and happens after the first render in componentDidMount.
+        // Until those finish loading, we'll render a loading indicator.
+        if (!this.state.modelLoaded) {
+            return <div>Loading...</div>;
+        }
 
-    renderItem(index) {
-        const id = this.state.ids[index];
-        return <div key={id}>{this.props.getComponentView(id)}</div>;
-    }
-
-    render(): JSX.Element {
-        const todoItemComponents = [];
-        this.state.ids.forEach((id) => {
-            todoItemComponents.push(this.props.getComponentView(id));
+        // Using the list of TodoItem components, make a list of TodoItemViews.  We know they're available because
+        // this.state.modelLoaded is true.
+        const todoItemComponents = this.state.todoItemComponents.map((todoItemComponent) => {
+            return (
+                <TodoItemView
+                    todoItemModel={todoItemComponent}
+                    key={todoItemComponent.url}
+                />
+            );
         });
 
+        // TodoView is made up of an editable title input, an input/button for submitting new items, and the list
+        // of TodoItemViews.
         return (
-            <div style={{padding: "5px"}}>
+            <div className="todo-view">
                 <CollaborativeInput
-                    sharedString={this.props.textSharedString}
+                    className="todo-title"
+                    sharedString={this.titleString}
                     style={{
                         border: "none",
                         fontFamily: "inherit",
@@ -94,22 +104,15 @@ export class TodoView extends React.Component<p, s> {
                         width: "inherit",
                     }}
                 />
-                <span>
-                    <form onSubmit={this.handleSubmit}>
+                <form onSubmit={this.createNewTodoItem}>
                     <input
                         type="text"
-                        value={this.state.inputValue}
-                        onChange={this.updateInputValue}
                         ref={(input) => { this.newTextInput = input; }}/>
                     <button type="submit">+</button>
-                    </form>
-                </span>
-                <ReactList
-                    itemRenderer={this.renderItem}
-                    length={this.state.ids.length}
-                    type="uniform"
-                    minSize={this.state.ids.length}
-                    />
+                </form>
+                <div className="todo-item-list">
+                    {todoItemComponents}
+                </div>
             </div>
         );
     }

@@ -1,9 +1,9 @@
 {
   "name": "@microsoft/fluid-webpack-component-loader",
   "description": "Component loader for webpack-dev-server",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "main": "dist/index.js",
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
@@ -16,37 +16,62 @@
     "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
     "deploy": "npm publish --registry https://packages.wu2.prague.office-int.com",
     "tsc": "tsc",
+    "test": "mocha --recursive dist/test --exit",
+    "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
     "tslint": "tslint --project tsconfig.json --format verbose",
     "webpack": "webpack --color --config webpack.config.js"
   },
+  "nyc": {
+    "all": true,
+    "exclude": [
+      "src/test/**/*.ts",
+      "dist/test/**/*.js"
+    ],
+    "include": [
+      "src/**/*.ts",
+      "dist/**/*.js"
+    ],
+    "reporter": [
+      "cobertura",
+      "html",
+      "text"
+    ],
+    "temp-directory": "nyc/.nyc_output",
+    "cache-dir": "nyc/.cache",
+    "report-dir": "nyc/report"
+  },
   "dependencies": {
-    "@prague/aqueduct": "^0.10.0",
-    "@prague/base-host": "^0.10.0",
-    "@prague/component-core-interfaces": "^0.10.0",
-    "@prague/container-definitions": "^0.10.0",
-    "@prague/loader-web": "^0.10.0",
-    "@prague/protocol-definitions": "^0.10.0",
-    "@prague/routerlicious-socket-storage": "^0.10.0",
-    "@microsoft/fluid-server-services-core": "^0.10.0",
-    "@prague/local-test-server": "^0.10.0",
-    "@microsoft/fluid-server-test-utils": "^0.10.0",
+    "@microsoft/fluid-aqueduct": "^0.11.0",
+    "@microsoft/fluid-base-host": "^0.11.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.11.0",
+    "@microsoft/fluid-container-definitions": "^0.11.0",
+    "@microsoft/fluid-local-test-server": "^0.11.0",
+    "@microsoft/fluid-protocol-definitions": "^0.11.0",
+    "@microsoft/fluid-routerlicious-driver": "^0.11.0",
+    "@microsoft/fluid-server-services-core": "^0.11.0",
+    "@microsoft/fluid-server-test-utils": "^0.11.0",
+    "@microsoft/fluid-web-code-loader": "^0.11.0",
     "axios": "^0.18.0",
+    "express": "^4.16.3",
     "jsonwebtoken": "^8.4.0",
     "moniker": "^0.1.2",
     "uuid": "^3.3.2",
-    "express": "^4.16.3",
     "webpack-dev-server": "^3.8.0"
   },
   "devDependencies": {
-    "@microsoft/fluid-build-common": "^0.10.0",
-    "@prague/url-generator": "^1.0.4",
+    "@fluid-internal/url-generator": "^1.0.4",
+    "@microsoft/fluid-build-common": "^0.11.0",
     "@types/node": "^10.12.12",
     "concurrently": "^4.1.0",
     "ts-loader": "^4.5.0",
     "tslint": "^5.11.0",
     "typescript": "~3.4.5",
     "webpack": "^4.8.2",
-    "webpack-cli": "^3.1.2"
+    "webpack-cli": "^3.1.2",
+    "@types/mocha": "^5.2.5",
+    "mocha": "^5.2.0",
+    "mocha-junit-reporter": "^1.18.0",
+    "nyc": "^14.1.1"
   },
   "license": "MIT"
 }

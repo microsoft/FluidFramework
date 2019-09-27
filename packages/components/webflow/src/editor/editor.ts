@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent } from "@prague/component-core-interfaces";
-import { Caret as CaretUtil, Direction, getDeltaX, getDeltaY, KeyCode, Scheduler } from "@prague/flow-util";
+import { Caret as CaretUtil, Direction, getDeltaX, getDeltaY, KeyCode, Scheduler } from "@fluid-example/flow-util-lib";
+import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { paste } from "../clipboard/paste";
 import { DocSegmentKind, FlowDocument, getDocSegmentKind } from "../document";
 import { IFormatterState, RootFormatter } from "../view/formatter";

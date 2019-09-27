@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage } from "@prague/protocol-definitions";
-import { IMergeTreeOp, ISegment, MergeTreeDeltaType } from ".";
+import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
+import { IMergeTreeOp, ISegment, MergeTreeDeltaType } from "./";
 import { MergeTree } from "./mergeTree";
 import { IMergeTreeGroupMsg } from "./ops";
 import { PropertySet } from "./properties";
@@ -13,8 +13,6 @@ export type MergeTreeDeltaOperationType =
     MergeTreeDeltaType.ANNOTATE | MergeTreeDeltaType.INSERT | MergeTreeDeltaType.REMOVE;
 
 export interface IMergeTreeDeltaCallbackArgs {
-    readonly mergeTreeClientId: number;
-    readonly mergeTree: MergeTree;
     readonly operation: MergeTreeDeltaOperationType;
     readonly deltaSegments: IMergeTreeSegmentDelta[];
 }

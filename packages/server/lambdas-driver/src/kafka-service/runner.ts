@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { Deferred } from "@microsoft/fluid-core-utils";
 import { IConsumer, IPartitionLambdaFactory } from "@microsoft/fluid-server-services-core";
 import { IRunner } from "@microsoft/fluid-server-services-utils";
-import { Deferred } from "@prague/utils";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import { PartitionManager } from "./partitionManager";

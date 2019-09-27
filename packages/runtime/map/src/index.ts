@@ -9,9 +9,9 @@
  * @remarks
  * The following distributed data structures are defined in this package:
  *
- * - {@link @prague/map#SharedMap}
+ * - {@link @microsoft/fluid-map#SharedMap}
  *
- * - {@link @prague/map#SharedDirectory}
+ * - {@link @microsoft/fluid-map#SharedDirectory}
  *
  * @packageDocumentation
  */
@@ -20,3 +20,4 @@ export * from "./counter";
 export * from "./interfaces";
 export * from "./map";
 export * from "./directory";
+export * from "./mapKernel";

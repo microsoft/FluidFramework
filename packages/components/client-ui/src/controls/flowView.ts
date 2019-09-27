@@ -5,42 +5,29 @@
 
 // tslint:disable:no-bitwise whitespace align switch-default no-string-literal ban-types
 // tslint:disable:no-angle-bracket-type-assertion arrow-parens
-import * as SearchMenu from "@chaincode/search-menu";
-import * as api from "@prague/client-api";
+import * as SearchMenu from "@fluid-example/search-menu";
+import * as api from "@fluid-internal/client-api";
 import {
     IComponent,
     IComponentHandle,
     IComponentHTMLVisual,
     IComponentLoadable,
-} from "@prague/component-core-interfaces";
-import {
-    IGenericBlob,
-} from "@prague/container-definitions";
+} from "@microsoft/fluid-component-core-interfaces";
+import { IGenericBlob } from "@microsoft/fluid-container-definitions";
 import {
     ComponentCursorDirection,
     IComponentCollection,
     IComponentCursor,
     IComponentKeyHandlers,
     IComponentLayout,
-} from "@prague/framework-definitions";
-import * as types from "@prague/map";
-import * as MergeTree from "@prague/merge-tree";
-import {
-    ISequencedDocumentMessage,
-    IUser,
-} from "@prague/protocol-definitions";
-import {
-    IInboundSignalMessage,
-} from "@prague/runtime-definitions";
-import * as Sequence from "@prague/sequence";
-// tslint:disable-next-line:no-var-requires
-const performanceNow = require("performance-now");
+} from "@microsoft/fluid-framework-interfaces";
+import * as types from "@microsoft/fluid-map";
+import * as MergeTree from "@microsoft/fluid-merge-tree";
+import { IClient, ISequencedDocumentMessage, IUser } from "@microsoft/fluid-protocol-definitions";
+import { IInboundSignalMessage } from "@microsoft/fluid-runtime-definitions";
+import * as Sequence from "@microsoft/fluid-sequence";
 import { blobUploadHandler } from "../blob";
-import {
-    CharacterCodes,
-    Paragraph,
-    Table,
-} from "../text";
+import { CharacterCodes, Paragraph, Table } from "../text";
 import * as ui from "../ui";
 import { Cursor, IRange } from "./cursor";
 import * as domutils from "./domutils";
@@ -49,6 +36,8 @@ import { PresenceSignal } from "./presenceSignal";
 import { Status } from "./status";
 import { UndoRedoStackManager } from "./undoRedo";
 
+// tslint:disable-next-line:no-var-requires
+const performanceNow = require("performance-now");
 interface IPersistentElement extends HTMLDivElement {
     component: IComponent;
 }
@@ -2398,9 +2387,6 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
             if (curPGMarker.listCache) {
                 indentSymbol = Paragraph.getIndentSymbol(curPGMarker);
             }
-            if (flowView.historyClient) {
-                Paragraph.clearContentCaches(curPGMarker);
-            }
             if (!curPGMarker.itemCache) {
                 itemsContext.itemInfo = { items: [], minWidth: 0 };
                 sharedString.walkSegments(Paragraph.segmentToItems, currentPos, curPGMarkerPos + 1, itemsContext);
@@ -2785,8 +2771,7 @@ export class FlowCursor extends Cursor {
         // this would allow a user ID to be put on the wire which can then be mapped
         // back to an email, name, etc...
         const name = user.name;
-        // Name usually contains " ". Otherwise it's a clientId with "-".
-        const nameParts = name.indexOf(" ") !== -1 ? name.split(" ") : name.split("-");
+        const nameParts = name.split(" ");
         let initials = "";
         for (const part of nameParts) {
             initials += part.substring(0, 1);
@@ -3038,8 +3023,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     public componentCursor: IComponentCursor;
     public viewportDiv: HTMLDivElement;
     public viewportRect: ui.Rectangle;
-    public client: MergeTree.Client;
-    public historyClient: MergeTree.Client;
     public historyWidget: HTMLDivElement;
     public historyBubble: HTMLDivElement;
     public historyVersion: HTMLSpanElement;
@@ -3048,10 +3031,10 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     public wheelTicking = false;
     public topChar = -1;
     public cursor: FlowCursor;
-    public bookmarks: Sequence.SharedIntervalCollectionView<Sequence.SharedStringInterval>;
-    public tempBookmarks: Sequence.SharedStringInterval[];
-    public comments: Sequence.SharedIntervalCollection<Sequence.SharedStringInterval>;
-    public commentsView: Sequence.SharedIntervalCollectionView<Sequence.SharedStringInterval>;
+    public bookmarks: Sequence.IntervalCollectionView<Sequence.SequenceInterval>;
+    public tempBookmarks: Sequence.SequenceInterval[];
+    public comments: Sequence.IntervalCollection<Sequence.SequenceInterval>;
+    public commentsView: Sequence.IntervalCollectionView<Sequence.SequenceInterval>;
     public sequenceTest: Sequence.SharedNumberSequence;
     public persistentComponents: Map<IComponent, PersistentComponent>;
     public sequenceObjTest: Sequence.SharedObjectSequence<ISeqTestItem>;
@@ -3125,8 +3108,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             this.cmdTree.put(command.key.toLowerCase(), command);
         }
 
-        this.client = sharedString.client;
-
         this.viewportDiv = document.createElement("div");
         this.element.appendChild(this.viewportDiv);
         const translationToLanguage = "translationToLanguage";
@@ -3157,6 +3138,13 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             this.broadcastPresence();
         });
         collabDocument.runtime.getQuorum().on("removeMember", () => {
+            this.updatePresenceCursors();
+        });
+        collabDocument.runtime.getAudience().on("addMember", () => {
+            this.updatePresenceCursors();
+            this.broadcastPresence();
+        });
+        collabDocument.runtime.getAudience().on("removeMember", () => {
             this.updatePresenceCursors();
         });
 
@@ -3252,12 +3240,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         this.sharedString.insertMarker(this.cursor.pos, MergeTree.ReferenceType.Simple, refProps);
     }
 
-    public measureClone() {
-        const clock = Date.now();
-        this.client.cloneFromSegments();
-        console.log(`clone took ${Date.now() - clock}ms`);
-    }
-
     /* tslint:disable:insecure-random */
     public createBookmarks(k: number) {
         const len = this.sharedString.getLength();
@@ -3275,113 +3257,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             if (presenceInfo && presenceInfo.cursor) {
                 presenceInfo.cursor.refresh();
             }
-        }
-    }
-
-    public xUpdateHistoryBubble(x: number) {
-        const widgetDivBounds = this.historyWidget.getBoundingClientRect();
-        const w = widgetDivBounds.width - 14;
-        let diffX = x - (widgetDivBounds.left + 7);
-        if (diffX <= 0) {
-            diffX = 0;
-        }
-        const pct = diffX / w;
-        const l = 7 + Math.floor(pct * w);
-        const seq = this.client.historyToPct(pct);
-        this.historyVersion.innerText = `Version @${seq}`;
-        this.historyBubble.style.left = `${l}px`;
-        this.cursor.pos = FlowView.docStartPosition;
-        this.hostSearchMenu(FlowView.docStartPosition);
-    }
-
-    public updateHistoryBubble(seq: number) {
-        const widgetDivBounds = this.historyWidget.getBoundingClientRect();
-        const w = widgetDivBounds.width - 14;
-        const count = this.client.undoSegments.length + this.client.redoSegments.length;
-        const pct = this.client.undoSegments.length / count;
-        const l = 7 + Math.floor(pct * w);
-        this.historyBubble.style.left = `${l}px`;
-        this.historyVersion.innerText = `Version @${seq}`;
-    }
-
-    public makeHistoryWidget() {
-        const bounds = ui.Rectangle.fromClientRect(this.status.element.getBoundingClientRect());
-        const x = Math.floor(bounds.width / 2);
-        const y = 2;
-        const widgetRect = new ui.Rectangle(x, y, Math.floor(bounds.width * 0.4),
-            (bounds.height - 4));
-        const widgetDiv = document.createElement("div");
-        widgetRect.conformElement(widgetDiv);
-        widgetDiv.style.zIndex = "3";
-        const bubble = document.createElement("div");
-        widgetDiv.style.borderRadius = "6px";
-        bubble.style.position = "absolute";
-        bubble.style.width = "8px";
-        bubble.style.height = `${bounds.height - 6}px`;
-        bubble.style.borderRadius = "5px";
-        bubble.style.top = "1px";
-        bubble.style.left = `${widgetRect.width - 7}px`;
-        bubble.style.backgroundColor = "pink";
-        widgetDiv.style.backgroundColor = "rgba(179,179,179,0.3)";
-        widgetDiv.appendChild(bubble);
-        const versionSpan = document.createElement("span");
-        widgetDiv.appendChild(versionSpan);
-        versionSpan.innerText = "History";
-        versionSpan.style.padding = "3px";
-        this.historyVersion = versionSpan;
-        this.historyWidget = widgetDiv;
-        this.historyBubble = bubble;
-        const clickHistory = (ev: MouseEvent) => {
-            this.xUpdateHistoryBubble(ev.clientX);
-        };
-        const mouseDownBubble = (ev: MouseEvent) => {
-            widgetDiv.onmousemove = clickHistory;
-        };
-        const cancelHistory = (ev: MouseEvent) => {
-            widgetDiv.onmousemove = preventD;
-        };
-        bubble.onmousedown = mouseDownBubble;
-        widgetDiv.onmouseup = cancelHistory;
-        widgetDiv.onmousemove = preventD;
-        bubble.onmouseup = cancelHistory;
-        this.status.addSlider(this.historyWidget);
-    }
-    public goHistorical() {
-        if (!this.historyClient) {
-            this.historyClient = this.client.cloneFromSegments();
-            this.savedClient = this.client;
-            this.client = this.historyClient;
-            this.makeHistoryWidget();
-        }
-    }
-
-    public backToTheFuture() {
-        if (this.historyClient) {
-            this.client = this.savedClient;
-            this.historyClient = undefined;
-            this.status.removeSlider();
-            this.topChar = 0;
-            this.hostSearchMenu(0);
-        }
-    }
-
-    public historyBack() {
-        this.goHistorical();
-        if (this.client.undoSegments.length > 0) {
-            const seq = this.client.undo();
-            this.updateHistoryBubble(seq);
-            this.cursor.pos = FlowView.docStartPosition;
-            this.hostSearchMenu(FlowView.docStartPosition);
-        }
-    }
-
-    public historyForward() {
-        this.goHistorical();
-        if (this.client.redoSegments.length > 0) {
-            const seq = this.client.redo();
-            this.updateHistoryBubble(seq);
-            this.cursor.pos = FlowView.docStartPosition;
-            this.hostSearchMenu(FlowView.docStartPosition);
         }
     }
 
@@ -3457,10 +3332,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             this.sharedString.removeLocalReference(presentPresence.localRef);
             tempXformPos = presentPresence.xformPos;
             tempMarkXformPos = presentPresence.markXformPos;
-        }
-        this.sharedString.addLocalReference(localPresenceInfo.localRef);
-        if (localPresenceInfo.markLocalRef) {
-            this.sharedString.addLocalReference(localPresenceInfo.localRef);
         }
         this.presenceVector.set(localPresenceInfo.clientId, localPresenceInfo);
         if ((localPresenceInfo.xformPos !== tempXformPos) ||
@@ -4558,7 +4429,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
 
     public showAdjacentBookmark(before = true) {
         if (this.bookmarks) {
-            let result: Sequence.SharedStringInterval;
+            let result: Sequence.SequenceInterval;
             if (before) {
                 result = this.bookmarks.previousInterval(this.cursor.pos);
             } else {
@@ -4986,15 +4857,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             case CharacterCodes.V:
                 this.paste();
                 break;
-            case CharacterCodes.K:
-                this.historyBack();
-                break;
-            case CharacterCodes.J:
-                this.historyForward();
-                break;
-            case CharacterCodes.Q:
-                this.backToTheFuture();
-                break;
             case CharacterCodes.R: {
                 this.updatePGInfo(this.cursor.pos - 1);
                 Table.createTable(this.cursor.pos, this.sharedString, this.collabDocument.clientId);
@@ -5175,17 +5037,17 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         // collections at the same time
         if (this.collabDocument.existing) {
             await Promise.all([
-                this.sharedString.waitSharedIntervalCollection("bookmarks"),
-                this.sharedString.waitSharedIntervalCollection("comments"),
+                this.sharedString.waitIntervalCollection("bookmarks"),
+                this.sharedString.waitIntervalCollection("comments"),
             ]);
         }
 
-        const bookmarksCollection = this.sharedString.getSharedIntervalCollection("bookmarks");
+        const bookmarksCollection = this.sharedString.getIntervalCollection("bookmarks");
         this.bookmarks = await bookmarksCollection.getView();
 
         // For examples of showing the API we do interval adds on the collection with comments. But use
         // the view when doing bookmarks.
-        this.comments = this.sharedString.getSharedIntervalCollection("comments");
+        this.comments = this.sharedString.getIntervalCollection("comments");
         this.commentsView = await this.comments.getView();
 
         this.sequenceTest = await this.docRoot
@@ -5333,7 +5195,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     }
 
     private remotePresenceToLocal(clientId: string, remotePresenceInfo: IRemotePresenceInfo, posAdjust = 0) {
-
         const rempos = this.sharedString.resolveRemoteClientPosition(
             remotePresenceInfo.origPos,
             remotePresenceInfo.refseq,
@@ -5341,30 +5202,44 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         const segoff = this.sharedString.getContainingSegment(rempos);
 
         if (segoff.segment) {
-            const docClient = this.collabDocument.getClient(clientId);
-            const localPresenceInfo = {
-                clientId,
-                fresh: true,
-                localRef: new MergeTree.LocalReference(this.client, segoff.segment as MergeTree.BaseSegment, segoff.offset,
-                    MergeTree.ReferenceType.SlideOnRemove),
-                presenceColor: this.presenceVector.has(clientId) ?
-                    this.presenceVector.get(clientId).presenceColor :
-                    presenceColors[this.presenceVector.size % presenceColors.length],
-                shouldShowCursor: () => {
-                    return this.collabDocument.clientId !== clientId;
-                },
-                // Temporary: Use the clientId as name if the user is not a part of the quorum.
-                user: docClient ? docClient.client.user : { name : clientId },
-            } as ILocalPresenceInfo;
-            if (remotePresenceInfo.origMark >= 0) {
-                const markSegoff = this.sharedString.getContainingSegment(remotePresenceInfo.origMark);
-                if (markSegoff.segment) {
-                    localPresenceInfo.markLocalRef =
-                        new MergeTree.LocalReference(this.client, markSegoff.segment as MergeTree.BaseSegment,
-                            markSegoff.offset, MergeTree.ReferenceType.SlideOnRemove);
+            const clientInfo = this.getRemoteClientInfo(clientId);
+            if (clientInfo) {
+                const localPresenceInfo = {
+                    clientId,
+                    fresh: true,
+                    localRef: this.sharedString.createPositionReference(
+                        segoff.segment, segoff.offset, MergeTree.ReferenceType.SlideOnRemove),
+                    presenceColor: this.presenceVector.has(clientId) ?
+                        this.presenceVector.get(clientId).presenceColor :
+                        presenceColors[this.presenceVector.size % presenceColors.length],
+                    shouldShowCursor: () => {
+                        return this.collabDocument.clientId !== clientId &&
+                            this.getRemoteClientInfo(clientId) !== undefined;
+                    },
+                    user: clientInfo.user,
+                } as ILocalPresenceInfo;
+                if (remotePresenceInfo.origMark >= 0) {
+                    const markSegoff = this.sharedString.getContainingSegment(remotePresenceInfo.origMark);
+                    if (markSegoff.segment) {
+                        localPresenceInfo.markLocalRef =
+                        this.sharedString.createPositionReference(markSegoff.segment,
+                                markSegoff.offset, MergeTree.ReferenceType.SlideOnRemove);
+                    }
                 }
+                this.updatePresenceVector(localPresenceInfo);
             }
-            this.updatePresenceVector(localPresenceInfo);
+        }
+    }
+
+    private getRemoteClientInfo(clientId: string): IClient {
+        const quorumClient = this.collabDocument.getClient(clientId);
+        if (quorumClient) {
+            return quorumClient.client;
+        } else {
+            const audience = this.collabDocument.runtime.getAudience().getMembers();
+            if (audience.has(clientId)) {
+                return audience.get(clientId);
+            }
         }
     }
 

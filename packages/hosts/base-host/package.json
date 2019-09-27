@@ -1,6 +1,6 @@
 {
-  "name": "@prague/base-host",
-  "version": "0.10.0",
+  "name": "@microsoft/fluid-base-host",
+  "version": "0.11.0",
   "description": "Loader client app",
   "main": "dist/index.js",
   "module": "lib/index.js",
@@ -18,10 +18,10 @@
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "author": "Microsoft",
-  "repository": "microsoft/prague",
+  "repository": "microsoft/FluidFramework",
   "devDependencies": {
-    "@microsoft/api-extractor": "^7.3.11",
-    "@microsoft/fluid-build-common": "^0.10.0",
+    "@microsoft/api-extractor": "^7.4.4",
+    "@microsoft/fluid-build-common": "^0.11.0",
     "@types/node": "^10.12.12",
     "concurrently": "^4.1.0",
     "rimraf": "^2.6.2",
@@ -30,12 +30,12 @@
     "typescript": "~3.4.5"
   },
   "dependencies": {
-    "@prague/component-core-interfaces": "^0.10.0",
-    "@prague/container-definitions": "^0.10.0",
-    "@prague/container-loader": "^0.10.0",
-    "@prague/loader-web": "^0.10.0",
-    "@prague/protocol-definitions": "^0.10.0",
-    "@prague/utils": "^0.10.0"
+    "@microsoft/fluid-component-core-interfaces": "^0.11.0",
+    "@microsoft/fluid-container-definitions": "^0.11.0",
+    "@microsoft/fluid-container-loader": "^0.11.0",
+    "@microsoft/fluid-core-utils": "^0.11.0",
+    "@microsoft/fluid-protocol-definitions": "^0.11.0",
+    "@microsoft/fluid-web-code-loader": "^0.11.0"
   },
   "license": "MIT"
 }

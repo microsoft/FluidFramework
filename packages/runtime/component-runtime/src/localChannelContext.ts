@@ -3,18 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ConnectionState } from "@prague/container-definitions";
-import {
-    IDocumentStorageService,
-    ISequencedDocumentMessage,
-    ITree,
-    MessageType,
-} from "@prague/protocol-definitions";
-import {
-    IChannel,
-    IComponentContext,
-    IComponentRuntime,
-} from "@prague/runtime-definitions";
+import { ConnectionState } from "@microsoft/fluid-container-definitions";
+import { IDocumentStorageService, ISequencedDocumentMessage, ITree, MessageType } from "@microsoft/fluid-protocol-definitions";
+import { IChannel, IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import * as assert from "assert";
 import { createServiceEndpoints, IChannelContext, snapshotChannel } from "./channelContext";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
@@ -27,7 +18,7 @@ export class LocalChannelContext implements IChannelContext {
     public readonly channel: IChannel;
     private attached = false;
     private connection: ChannelDeltaConnection | undefined;
-    private baseId: string | null = null;
+    private baseId?: string;
 
     constructor(
         id: string,
@@ -68,12 +59,15 @@ export class LocalChannelContext implements IChannelContext {
         assert(this.attached);
 
         // Clear base id since the channel is now dirty
-        this.baseId = null;
+        this.baseId = undefined;
         // tslint:disable-next-line: no-non-null-assertion
         this.connection!.process(message, local);
     }
 
-    public async snapshot(): Promise<ITree> {
+    public async snapshot(fullTree: boolean = false): Promise<ITree> {
+        if (this.baseId !== undefined && !fullTree) {
+            return { id: this.baseId, entries: [] };
+        }
         return this.getAttachSnapshot();
     }
 

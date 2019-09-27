@@ -8,19 +8,19 @@ import {
     IComponentSerializer,
     IRequest,
     IResponse,
-} from "@prague/component-core-interfaces";
+} from "@microsoft/fluid-component-core-interfaces";
 import {
     ConnectionState,
     IContainerContext,
     IRuntime,
     IRuntimeFactory,
-} from "@prague/container-definitions";
+} from "@microsoft/fluid-container-definitions";
 import {
     ISequencedDocumentMessage,
     ISummaryTree,
     ITree,
     SummaryType,
-} from "@prague/protocol-definitions";
+} from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
 
 class NullRuntime extends EventEmitter implements IRuntime {
@@ -42,7 +42,7 @@ class NullRuntime extends EventEmitter implements IRuntime {
         return Promise.resolve(null);
     }
 
-    public summarize(generateFullTreeNoOptimizations?: boolean): Promise<ISummaryTree> {
+    public summarize(fullTree: boolean = false): Promise<ISummaryTree> {
         return Promise.resolve({
             tree: {},
             type: SummaryType.Tree,

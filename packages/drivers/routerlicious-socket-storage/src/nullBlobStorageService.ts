@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as api from "@prague/protocol-definitions";
+import * as api from "@microsoft/fluid-protocol-definitions";
 
 /**
  * Document access to underlying storage. It is default implementation of a storage service.

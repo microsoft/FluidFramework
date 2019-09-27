@@ -3,19 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as resources from "@prague/gitresources";
-import * as api from "@prague/protocol-definitions";
-
-export interface IWebsocketEndpoint {
-  deltaStorageUrl: string;
-
-  deltaStreamSocketUrl: string;
-
-  // The id of the web socket
-  id: string;
-
-  tenantId: string;
-}
+import * as resources from "@microsoft/fluid-gitresources";
+import * as api from "@microsoft/fluid-protocol-definitions";
 
 export interface IOdspResolvedUrl extends api.IResolvedUrlBase {
   type: "fluid";
@@ -111,7 +100,12 @@ export interface IDocumentStorageManager {
  * Socket storage discovery api response
  */
 export interface ISocketStorageDiscovery {
+    // The id of the web socket
     id: string;
+
+    // SPO gives us runtimeTenantId, we remap it to tenantId
+    // See getSocketStorageDiscovery
+    runtimeTenantId?: string;
     tenantId: string;
 
     snapshotStorageUrl: string;
@@ -120,6 +114,29 @@ export interface ISocketStorageDiscovery {
 
     deltaStreamSocketUrl: string;
     socketToken: string;
+}
+
+/**
+ * Interface for error responses for the WebSocket connection
+ */
+export interface IOdspSocketError {
+    /**
+     * An error code number for the error that occurred
+     * It will be a valid HTTP status code
+     */
+    code: number;
+
+    /**
+     * A message about the error that occurred for debugging / logging purposes
+     * This should not be displayed to the user directly
+     */
+    message: string;
+
+    /**
+     * Optional Retry-After time in seconds
+     * The client should wait this many seconds before retrying its request
+     */
+    retryAfter?: number;
 }
 
 /**

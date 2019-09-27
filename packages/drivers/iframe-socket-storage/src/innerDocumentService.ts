@@ -10,9 +10,9 @@ import {
     IDocumentDeltaStorageService,
     IDocumentService,
     IDocumentStorageService,
-} from "@prague/protocol-definitions";
-import { InnerDocumentDeltaConnection } from "@prague/socket-storage-shared";
+} from "@microsoft/fluid-protocol-definitions";
 import * as Comlink from "comlink";
+import { InnerDocumentDeltaConnection } from "./innerDocumentDeltaConnection";
 import { InnerDocumentStorageService } from "./innerDocumentStorageService";
 import { IOuterProxy } from "./outerDocumentService";
 

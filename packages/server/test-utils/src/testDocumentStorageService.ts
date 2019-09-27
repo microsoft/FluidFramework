@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as api from "@prague/protocol-definitions";
+import * as api from "@microsoft/fluid-protocol-definitions";
 
 /**
  * Document storage service for the test driver...just does a default implementation for

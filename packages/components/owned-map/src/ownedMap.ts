@@ -4,21 +4,15 @@
  */
 
 /* tslint:disable:no-unsafe-any*/
-import { ISharedMap, SharedMap } from "@prague/map";
-import {
-    FileMode,
-    ISequencedDocumentMessage,
-    ITree,
-    TreeEntry,
-} from "@prague/protocol-definitions";
-import { IComponentRuntime, IObjectStorageService } from "@prague/runtime-definitions";
-import { fromBase64ToUtf8 } from "@prague/utils";
+import { fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
+import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
+import { FileMode, ISequencedDocumentMessage, ITree, TreeEntry } from "@microsoft/fluid-protocol-definitions";
+import { IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
 import { debug } from "./debug";
 import { OwnedMapFactory } from "./ownedMapFactory";
 
 const snapshotFileName = "header";
 const ownerPath = "owner";
-const contentPath = "content";
 
 /**
  * Implementation of a map shared object
@@ -78,17 +72,6 @@ export class OwnedSharedMap extends SharedMap implements ISharedMap {
             });
         }
 
-        // Add the snapshot of the content to the tree
-        const contentSnapshot = this.snapshotContent();
-        if (contentSnapshot) {
-            tree.entries.push({
-                mode: FileMode.Directory,
-                path: contentPath,
-                type: TreeEntry[TreeEntry.Tree],
-                value: contentSnapshot,
-            });
-        }
-
         return tree;
     }
 
@@ -101,17 +84,6 @@ export class OwnedSharedMap extends SharedMap implements ISharedMap {
         const member = quorum.getMember(clientId);
         return this.owner === member.client.user.id;
     }
-
-    // tslint:disable-next-line: no-suspicious-comment
-    // TODO: Add this as a base component of snapshotter
-    // protected ownerSnapshot() {
-    //     return {
-    //         mode: FileMode.file,
-    //         path: contentPath,
-    //         type: TreeEntry[TreeEntry.Tree],
-    //         value: contentSnapshot,
-    //     }
-    // }
 
     protected processCore(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
         if (this.getMessageOwner(message) !== this.owner) {
