@@ -11,9 +11,9 @@ import {
     IComponentHTMLOptions,
     IComponentHTMLVisual,
     IComponentHandle,
-} from "@prague/component-core-interfaces";
-import { ComponentRuntime } from "@prague/component-runtime";
-import { ISharedMap, SharedMap } from "@prague/map";
+} from "@microsoft/fluid-component-core-interfaces";
+import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
+import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import {
     IMergeTreeInsertMsg,
     ReferenceType,
@@ -22,10 +22,10 @@ import {
     createMap,
     TextSegment,
     Marker,
-} from "@prague/merge-tree";
-import { IComponentContext, IComponentFactory, IComponentRuntime } from "@prague/runtime-definitions";
-import { SharedString } from "@prague/sequence";
-import { ISharedObjectFactory } from "@prague/shared-object-common";
+} from "@microsoft/fluid-merge-tree";
+import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { SharedString } from "@microsoft/fluid-sequence";
+import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { EditorState } from "prosemirror-state";

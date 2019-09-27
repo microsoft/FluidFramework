@@ -4,9 +4,9 @@
  */
 
 import { Plugin, Transaction } from "prosemirror-state";
-import { SharedString } from "@prague/sequence";
+import { SharedString } from "@microsoft/fluid-sequence";
 import { EditorView } from "prosemirror-view";
-import { MergeTreeDeltaType, TextSegment, Marker, ReferenceType } from "@prague/merge-tree";
+import { MergeTreeDeltaType, TextSegment, Marker, ReferenceType } from "@microsoft/fluid-merge-tree";
 import { Schema } from "prosemirror-model";
 
 export class FluidCollabPlugin {
