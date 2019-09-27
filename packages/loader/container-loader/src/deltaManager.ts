@@ -10,7 +10,7 @@ import {
     IDeltaQueue,
     ITelemetryLogger,
 } from "@microsoft/fluid-container-definitions";
-import { Deferred, isSystemType, PerformanceEvent } from "@microsoft/fluid-core-utils";
+import { Deferred, isSystemType, NetworkError, PerformanceEvent } from "@microsoft/fluid-core-utils";
 import {
     Browser,
     ConnectionMode,
@@ -667,8 +667,13 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                         },
                         error);
                 }
+                this.connectRepeatCount++;
 
-                const delayNext = Math.min(delay * 2, MaxReconnectDelay);
+                let retryAfterSeconds: number = 0;
+                if (error instanceof NetworkError && error.retryAfterSeconds) {
+                    retryAfterSeconds = error.retryAfterSeconds;
+                }
+                const delayNext = Math.max(Math.min(delay * 2, MaxReconnectDelay), retryAfterSeconds);
                 waitForConnectedState(delayNext).then(() => this.connectCore(reason, delayNext, mode));
             });
     }
