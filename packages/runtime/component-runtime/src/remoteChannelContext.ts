@@ -72,9 +72,10 @@ export class RemoteChannelContext implements IChannelContext {
     }
 
     public processOp(message: ISequencedDocumentMessage, local: boolean): void {
+        // Clear base id since the channel is now dirty
+        this.baseId = undefined;
+
         if (this.isLoaded) {
-            // Clear base id since the channel is now dirty
-            this.baseId = undefined;
             // tslint:disable-next-line: no-non-null-assertion
             this.connection!.process(message, local);
         } else {
