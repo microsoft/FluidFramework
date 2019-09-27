@@ -10,7 +10,6 @@ import {
     Marker,
     ReferenceType,
     reservedRangeLabelsKey,
-    BaseSegment,
 } from "@prague/merge-tree";
 import { Schema, Slice } from "prosemirror-model";
 import { ISequenceDeltaRange, SharedString } from "@prague/sequence";
@@ -78,15 +77,17 @@ export function segmentsToSlice(text: SharedString, segments: ISequenceDeltaRang
         type: "doc",
     }
     while (!stack.empty()) {
-        const refPos = stack.pop();
-        const segment = refPos.getSegment();
+        const marker = stack.pop();
+        const type = marker.properties[nodeTypeKey];
+
+        const newNode = { type, content: [] };
+        root.content.push(newNode);
+        
+        root = newNode;
     }
 
-    // use the context to build the base tree
-    context.
-
     segments.forEach((segment) => {
-        segment.position
+        // TODO do stuff here
     });
 
     // Initialize the base ProseMirror JSON data structure
@@ -160,8 +161,6 @@ export function segmentsToSlice(text: SharedString, segments: ISequenceDeltaRang
 
     //     return true;
     // });
-
-    const doc = nodeStack.pop();
 
     const fragment = null;
     const openStart = 0;

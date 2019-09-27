@@ -4,7 +4,7 @@
  */
 
 import { Plugin, Transaction } from "prosemirror-state";
-import { SharedString, ISequenceDeltaRange } from "@prague/sequence";
+import { SharedString, ISequenceDeltaRange, SequenceDeltaEvent } from "@prague/sequence";
 import { EditorView } from "prosemirror-view";
 import {
     MergeTreeDeltaType,
@@ -14,9 +14,8 @@ import {
     createRemoveRangeOp,
     createGroupOp,
     IMergeTreeOp,
-    ISegment,
 } from "@prague/merge-tree";
-import { Schema, Slice } from "prosemirror-model";
+import { Schema } from "prosemirror-model";
 import { sliceToGroupOps, segmentsToSlice } from "./fluidBridge";
 
 export class FluidCollabPlugin {
@@ -37,6 +36,19 @@ export class FluidCollabPlugin {
     }
 
     public attachView(editorView: EditorView) {
+        let sequencedDeltas = new Array<SequenceDeltaEvent>();
+
+        // TODO given that the relative positions will be changing I believe I will need to apply these
+        // as they arrive
+
+        this.sharedString.on(
+            "pre-op",
+            (op, local) => {
+                if (local) {
+                    return;
+                }
+            });
+
         this.sharedString.on(
             "sequenceDelta",
             (ev) => {
@@ -44,60 +56,79 @@ export class FluidCollabPlugin {
                     return;
                 }
 
-                const transaction = editorView.state.tr;
+                sequencedDeltas.push(ev);
+            });
 
-                for (let i = 0; i < ev.ranges.length; i++) {
-                    const range = ev.ranges[i];
-                    const segment = range.segment;
-
-                    if (range.operation === MergeTreeDeltaType.INSERT) {
-                        const insertSegments = new Array<ISequenceDeltaRange>();
-                        while (i < ev.ranges.length) {
-                            if (ev.ranges[i].operation !== MergeTreeDeltaType.INSERT) {
-                                break;
-                            }
-
-                            insertSegments.push(ev.ranges[i]);
-                        }
-
-                        const slice = segmentsToSlice(insertSegments);
-                        transaction.replace(insertSegments[0].position, insertSegments[0].position, slice);
-                    } else if (range.operation === MergeTreeDeltaType.REMOVE) {
-                        if (TextSegment.is(segment)) {
-                            transaction.replace(range.position, range.position + segment.text.length);
-                        } else if (Marker.is(segment)) {
-                            if (segment.refType === ReferenceType.Simple) {
-                                transaction.replace(range.position, range.position + 1);
-                            }
-                        }
-                    } else if (range.operation === MergeTreeDeltaType.ANNOTATE) {
-                        for (const prop of Object.keys(range.propertyDeltas)) {
-                            const value = range.segment.properties[prop];
-
-                            // TODO I think I need to query the sequence for *all* marks and then set them here
-                            // for PM it's an all or nothing set. Not anything additive
-
-                            const length = TextSegment.is(segment) ? segment.text.length : 1;
-
-                            if (value) {
-                                transaction.addMark(
-                                    range.position,
-                                    range.position + length,
-                                    this.schema.marks[prop].create(value));
-                            } else {
-                                transaction.removeMark(
-                                    range.position,
-                                    range.position + length,
-                                    this.schema.marks[prop]);
-                            }
-                        }
-                    }
+        this.sharedString.on(
+            "op",
+            (op, local) => {
+                if (local) {
+                    return;
                 }
 
-                transaction.setMeta("fluid-local", true);
-
-                editorView.dispatch(transaction);
+                this.processSequencedDeltas(sequencedDeltas, editorView);
+                sequencedDeltas = new Array<SequenceDeltaEvent>();
             });
+    }
+
+    private processSequencedDeltas(sequencedDeltas: SequenceDeltaEvent[], editorView: EditorView) {
+        const transaction = editorView.state.tr;
+
+        let allRanges = new Array<ISequenceDeltaRange>();
+        sequencedDeltas.forEach((delta) => { allRanges = allRanges.concat(delta.ranges); });
+
+        for (let i = 0; i < allRanges.length; i++) {
+            const range = allRanges[i];
+            const segment = range.segment;
+
+            if (range.operation === MergeTreeDeltaType.INSERT) {
+                const insertSegments = new Array<ISequenceDeltaRange>();
+                while (i < allRanges.length) {
+                    if (allRanges[i].operation !== MergeTreeDeltaType.INSERT) {
+                        break;
+                    }
+
+                    insertSegments.push(allRanges[i]);
+                    i++;
+                }
+
+                const slice = segmentsToSlice(this.sharedString, insertSegments);
+                transaction.replace(insertSegments[0].position, insertSegments[0].position, slice);
+            } else if (range.operation === MergeTreeDeltaType.REMOVE) {
+                if (TextSegment.is(segment)) {
+                    transaction.replace(range.position, range.position + segment.text.length);
+                } else if (Marker.is(segment)) {
+                    if (segment.refType === ReferenceType.Simple) {
+                        transaction.replace(range.position, range.position + 1);
+                    }
+                }
+            } else if (range.operation === MergeTreeDeltaType.ANNOTATE) {
+                for (const prop of Object.keys(range.propertyDeltas)) {
+                    const value = range.segment.properties[prop];
+
+                    // TODO I think I need to query the sequence for *all* marks and then set them here
+                    // for PM it's an all or nothing set. Not anything additive
+
+                    const length = TextSegment.is(segment) ? segment.text.length : 1;
+
+                    if (value) {
+                        transaction.addMark(
+                            range.position,
+                            range.position + length,
+                            this.schema.marks[prop].create(value));
+                    } else {
+                        transaction.removeMark(
+                            range.position,
+                            range.position + length,
+                            this.schema.marks[prop]);
+                    }
+                }
+            }
+        }
+
+        transaction.setMeta("fluid-local", true);
+
+        editorView.dispatch(transaction);
     }
 
     private applyTransaction(tr: Transaction<any>) {
