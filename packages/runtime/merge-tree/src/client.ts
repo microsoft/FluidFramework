@@ -258,14 +258,14 @@ export class Client {
 
     public walkSegments<TClientData>(
         handler: ISegmentAction<TClientData>,
-        start?: number, end?: number, accum?: TClientData) {
+        start?: number, end?: number, accum?: TClientData, splitRange: boolean = false) {
 
         this.mergeTree.mapRange(
             {
                 leaf: handler,
             },
             this.getCurrentSeq(), this.getClientId(),
-            accum, start, end);
+            accum, start, end, splitRange);
     }
 
     public getCollabWindow() {
