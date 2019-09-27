@@ -542,6 +542,9 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             this.clearPartialChunks(clientId);
         });
 
+        this.context.on("refreshBaseSnapshot",
+            (snapshot: ISnapshotTree) => this.refreshBaseSnapshot(snapshot));
+
         const summaryConfiguration = context.serviceConfiguration
             ? { ...DefaultSummaryConfiguration, ...context.serviceConfiguration.summary }
             : DefaultSummaryConfiguration;
@@ -633,9 +636,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                     });
                 }
                 const parent = commit ? [commit] : [];
-                const version = await this.storage
-                    .write(snapshot, parent, `${componentId} commit ${tagMessage}`, componentId);
-                value.updateBaseId(version.treeId);
+                const version = await this.storage.write(
+                    snapshot, parent, `${componentId} commit ${tagMessage}`, componentId);
 
                 return {
                     id: componentId,
@@ -911,6 +913,16 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
      */
     public isDocumentDirty(): boolean {
         return this.dirtyDocument;
+    }
+
+    private refreshBaseSnapshot(snapshot: ISnapshotTree) {
+        // propogate updated tree to all components
+        for (const key of Object.keys(snapshot.trees)) {
+            if (this.contexts.has(key)) {
+                const component = this.contexts.get(key);
+                component.refreshBaseSnapshot(snapshot.trees[key]);
+            }
+        }
     }
 
     /**

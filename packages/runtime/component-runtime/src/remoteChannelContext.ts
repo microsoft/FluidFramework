@@ -40,7 +40,7 @@ export class RemoteChannelContext implements IChannelContext {
         private readonly storageService: IDocumentStorageService,
         private readonly submitFn: (type: MessageType, content: any) => number,
         private readonly id: string,
-        private readonly tree: ISnapshotTree,
+        private baseSnapshot: ISnapshotTree,
         private readonly registry: ISharedObjectRegistry,
         private readonly extraBlobs: Map<string, string>,
         private readonly branch: string,
@@ -93,6 +93,11 @@ export class RemoteChannelContext implements IChannelContext {
         return snapshotChannel(channel, this.baseId);
     }
 
+    public refreshBaseSnapshot(snapshot: ISnapshotTree) {
+        this.baseSnapshot = snapshot;
+        this.baseId = this.baseSnapshot.id === null ? undefined : this.baseSnapshot.id;
+    }
+
     private async loadChannel(): Promise<IChannel> {
         assert(!this.isLoaded);
 
@@ -101,7 +106,7 @@ export class RemoteChannelContext implements IChannelContext {
             ? this.attributes
             : await readAndParse<RequiredIChannelAttributes>(
                 this.storageService,
-                this.tree.blobs[".attributes"]);
+                this.baseSnapshot.blobs[".attributes"]);
 
         // Pass the transformedMessages - but the object really should be storing this
         const factory = this.registry.get(type);
@@ -123,7 +128,7 @@ export class RemoteChannelContext implements IChannelContext {
             this.componentContext.connectionState,
             this.submitFn,
             this.storageService,
-            this.tree,
+            this.baseSnapshot,
             this.extraBlobs);
         this.channel = await factory.load(
             this.runtime,

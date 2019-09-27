@@ -27,6 +27,8 @@ export interface IChannelContext {
     snapshot(fullTree?: boolean): Promise<ITree>;
 
     isRegistered(): boolean;
+
+    refreshBaseSnapshot(snapshot: ISnapshotTree);
 }
 
 export function createServiceEndpoints(

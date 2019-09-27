@@ -181,11 +181,6 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         raiseConnectedEvent(this, value, clientId);
     }
 
-    // Called after a snapshot to update the base ID
-    public updateBaseId(id: string) {
-        this.baseId = id;
-    }
-
     public process(message: ISequencedDocumentMessage, local: boolean): void {
         this.verifyNotClosed();
 
@@ -326,6 +321,13 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
     }
 
     public abstract generateAttachMessage(): IAttachMessage;
+
+    public refreshBaseSnapshot(snapshot: ISnapshotTree) {
+        this._baseSnapshot = snapshot;
+        this.baseId = this._baseSnapshot.id === null ? undefined : this._baseSnapshot.id;
+        // need to notify runtime of the update
+        this.emit("refreshBaseSnapshot", snapshot);
+    }
 
     protected abstract getSnapshotDetails(): Promise<ISnapshotDetails>;
 

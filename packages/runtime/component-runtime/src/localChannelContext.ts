@@ -4,7 +4,7 @@
  */
 
 import { ConnectionState } from "@microsoft/fluid-container-definitions";
-import { IDocumentStorageService, ISequencedDocumentMessage, ITree, MessageType } from "@microsoft/fluid-protocol-definitions";
+import { IDocumentStorageService, ISequencedDocumentMessage, ISnapshotTree, ITree, MessageType } from "@microsoft/fluid-protocol-definitions";
 import { IChannel, IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import * as assert from "assert";
 import { createServiceEndpoints, IChannelContext, snapshotChannel } from "./channelContext";
@@ -89,5 +89,9 @@ export class LocalChannelContext implements IChannelContext {
         this.channel.connect(services);
 
         this.attached = true;
+    }
+
+    public refreshBaseSnapshot(snapshot: ISnapshotTree) {
+        this.baseId = snapshot.id === null ? undefined : snapshot.id;
     }
 }
