@@ -353,18 +353,19 @@ export function register(
             });
 
         socket.on("disconnect", async () => {
-            const removeP = [];
             // Send notification messages for all client IDs in the connection map
             for (const [clientId, connection] of connectionsMap) {
                 winston.info(`Disconnect of ${clientId}`);
                 connection.disconnect();
-                const room = roomMap.get(clientId);
-                if (room) {
-                    removeP.push(clientManager.removeClient(room.tenantId, room.documentId, clientId));
-                    // back-compat check for older clients.
-                    if (versionMap.has(clientId)) {
-                        socket.emitToRoom(getRoomId(room), "signal", createRoomLeaveMessage(clientId));
-                    }
+            }
+            // Send notification messages for all client IDs in the room map
+            const removeP = [];
+            for (const [clientId, room] of roomMap) {
+                winston.info(`Disconnect of ${clientId} from room`);
+                removeP.push(clientManager.removeClient(room.tenantId, room.documentId, clientId));
+                // back-compat check for older clients.
+                if (versionMap.has(clientId)) {
+                    socket.emitToRoom(getRoomId(room), "signal", createRoomLeaveMessage(clientId));
                 }
             }
             await Promise.all(removeP);
