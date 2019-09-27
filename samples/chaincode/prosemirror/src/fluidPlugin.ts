@@ -6,8 +6,17 @@
 import { Plugin, Transaction } from "prosemirror-state";
 import { SharedString } from "@prague/sequence";
 import { EditorView } from "prosemirror-view";
-import { MergeTreeDeltaType, TextSegment, Marker, ReferenceType } from "@prague/merge-tree";
+import {
+    MergeTreeDeltaType,
+    TextSegment,
+    Marker,
+    ReferenceType,
+    createRemoveRangeOp,
+    createGroupOp,
+    IMergeTreeOp,
+} from "@prague/merge-tree";
 import { Schema } from "prosemirror-model";
+import { sliceToGroupOps } from "./fluidBridge";
 
 export class FluidCollabPlugin {
     public readonly plugin: Plugin;
@@ -15,10 +24,10 @@ export class FluidCollabPlugin {
     constructor(private readonly sharedString: SharedString, private readonly schema: Schema) {
         this.plugin = new Plugin({
             state: {
-                init: (config, instance) => {
+                init: () => {
                     return null;
                 },
-                apply: (tr, old) => {
+                apply: (tr) => {
                     this.applyTransaction(tr);
                     return null;
                 }
@@ -109,71 +118,26 @@ export class FluidCollabPlugin {
             const stepAsJson = step.toJSON();
             switch (stepAsJson.stepType) {
                 case "replace":
-                    let from = stepAsJson.from;
+                    const from = stepAsJson.from;
                     const to = stepAsJson.to;
 
+                    let operations = new Array<IMergeTreeOp>();
+
                     if (from !== to) {
-                        this.sharedString.removeText(from, to);
+                        const removeOp = createRemoveRangeOp(from, to);
+                        operations.push(removeOp);
                     }
 
-                    if (!stepAsJson.slice) {
-                        break;
+                    if (stepAsJson.slice) {
+                        const sliceOperations = sliceToGroupOps(
+                            from,
+                            stepAsJson.slice,
+                            this.schema);
+                        operations = operations.concat(sliceOperations);
                     }
 
-                    // TODO a replace should be an entire group
-                    // iterate over all elements and create a new fragment
-
-                    // {
-                    //     "stepType": "replace",
-                    //     "from": 14,
-                    //     "to": 14,
-                    //     "slice": {
-                    //         "content": [
-                    //         {
-                    //             "type": "paragraph"
-                    //         },
-                    //         {
-                    //             "type": "paragraph"
-                    //         }
-                    //         ],
-                    //         "openStart": 1,
-                    //         "openEnd": 1
-                    //     },
-                    //     "structure": true
-                    // }
-
-                    // When `structure` is true, the step will fail if the content between
-                    // from and to is not just a sequence of closing and then opening
-                    // tokens (this is to guard against rebased replace steps
-                    // overwriting something they weren't supposed to).
-
-                    for (const content of stepAsJson.slice.content) {
-                        let props: any = undefined;
-
-                        if (content.marks) {
-                            props = {};
-                            for (const mark of content.marks) {
-                                props[mark.type] = mark.attrs || true;
-                            }
-                        }
-
-                        // TODO can probably better use the schema to parse properties. Right now just distinguishing
-                        // between the required text node and then the other types
-                        if (content.type === "text") {
-                            this.sharedString.insertText(stepAsJson.from, content.text, props);
-                            from += content.text.length;
-                        } else {
-                            if (!props) {
-                                props = {};
-                            }
-
-                            props.type = content.type;
-                            props.attrs = content.attrs;
-
-                            this.sharedString.insertMarker(from, ReferenceType.Simple, props);
-                            from++;
-                        }
-                    }
+                    const groupOp = createGroupOp(...operations);
+                    this.sharedString.groupOperation(groupOp);
                     
                     break;
 

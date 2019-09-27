@@ -33,7 +33,7 @@ import { EditorView } from "prosemirror-view";
 import { Schema, NodeSpec } from "prosemirror-model";
 import { addListNodes } from "prosemirror-schema-list";
 import { exampleSetup } from "prosemirror-example-setup";
-import { IProseMirrorNode } from "./fluidBridge";
+import { IProseMirrorNode, nodeTypeKey } from "./fluidBridge";
 import { FluidCollabPlugin } from "./fluidPlugin";
 import { schema } from "./fluidSchema";
 import { create as createSelection } from "./selection";
@@ -44,8 +44,6 @@ require("prosemirror-example-setup/style/style.css");
 require("./style.css");
 
 import OrderedMap = require('orderedmap');
-
-const nodeTypeKey = "nodeType";
 
 function createTreeMarkerOps(
     treeRangeLabel: string,
