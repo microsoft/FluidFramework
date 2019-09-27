@@ -142,6 +142,11 @@ export class FluidCollabPlugin {
                     //     "structure": true
                     // }
 
+                    // When `structure` is true, the step will fail if the content between
+                    // from and to is not just a sequence of closing and then opening
+                    // tokens (this is to guard against rebased replace steps
+                    // overwriting something they weren't supposed to).
+
                     for (const content of stepAsJson.slice.content) {
                         let props: any = undefined;
 

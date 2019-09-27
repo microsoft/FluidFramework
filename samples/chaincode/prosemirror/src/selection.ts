@@ -6,10 +6,11 @@
 import { Plugin } from "prosemirror-state";
 import { DecorationSet, Decoration } from "prosemirror-view";
 
+// Sample from
 // https://github.com/PierBover/prosemirror-cookbook
 
 export function create() {
-    new Plugin({
+    return new Plugin({
         props: {
             decorations(state) {
                 const selection = state.selection;

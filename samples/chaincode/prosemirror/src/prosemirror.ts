@@ -33,6 +33,7 @@ import { EditorView } from "prosemirror-view";
 import { Schema, NodeSpec } from "prosemirror-model";
 import { addListNodes } from "prosemirror-schema-list";
 import { exampleSetup } from "prosemirror-example-setup";
+import { IProseMirrorNode } from "./fluidBridge";
 import { FluidCollabPlugin } from "./fluidPlugin";
 import { schema } from "./fluidSchema";
 import { create as createSelection } from "./selection";
@@ -73,13 +74,6 @@ function createTreeMarkerOps(
             type: MergeTreeDeltaType.INSERT,
         },
     ];
-}
-
-interface IProseMirrorNode {
-    [key: string]: any;
-    type: string,
-    content?: IProseMirrorNode[],
-    marks?: any[],
 }
 
 export class ProseMirror extends EventEmitter implements IComponentLoadable, IComponentRouter, IComponentHTMLVisual {
