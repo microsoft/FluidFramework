@@ -239,7 +239,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
     /**
      * Notifies the object to take snapshot of a component.
      */
-    public async snapshot(generateFullTreeNoOptimizations?: boolean): Promise<ITree> {
+    public async snapshot(fullTree: boolean = false): Promise<ITree> {
         await this.realize();
 
         const { pkg } = await this.getSnapshotDetails();
@@ -247,11 +247,11 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         const componentAttributes = { pkg };
 
         // base ID still being set means previous snapshot is still valid
-        if (this.baseId && !generateFullTreeNoOptimizations) {
+        if (this.baseId && !fullTree) {
             return { id: this.baseId, entries: [] };
         }
 
-        const entries = await this.componentRuntime.snapshotInternal(generateFullTreeNoOptimizations);
+        const entries = await this.componentRuntime.snapshotInternal(fullTree);
 
         entries.push(new BlobTreeEntry(".component", JSON.stringify(componentAttributes)));
 
