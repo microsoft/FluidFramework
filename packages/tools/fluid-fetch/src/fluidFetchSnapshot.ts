@@ -138,7 +138,13 @@ async function saveSnapshot(storage: IDocumentStorageService, version: IVersion,
     }));
 }
 
-export async function fluidFetchSnapshot(documentService: IDocumentService) {
+export async function fluidFetchSnapshot(documentService?: IDocumentService) {
+    // --local mode - do not connect to storage.
+    // For now, bail out early.
+    // In future, separate download from analyzes parts and allow offline analyzes
+    if (!documentService) {
+        return;
+    }
 
     const dumpTree = dumpSnapshotStats || dumpSnapshotTrees || dumpSnapshotBlobs || dumpTotalStats;
     if (dumpTree || dumpSnapshotVersions || paramSave !== undefined) {

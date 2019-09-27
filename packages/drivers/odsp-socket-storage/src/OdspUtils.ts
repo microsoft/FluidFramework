@@ -42,7 +42,7 @@ export function fetchHelper(
     requestInit: RequestInit | undefined,
     retryFilter: RetryFilter = defaultRetryFilter,
 ): Promise<any> {
-    return fetch(requestInfo, requestInit).then((response: Response) => {
+    return fetch(requestInfo, requestInit).then((response) => {
         // Let's assume we can retry.
         if (!response) {
             throwNetworkError(`No response from the server`, 400, true, response);
