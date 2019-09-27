@@ -669,11 +669,16 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 }
                 this.connectRepeatCount++;
 
-                let retryAfterSeconds: number = 0;
+                let delayNext: number = 0;
                 if (error instanceof NetworkError && error.retryAfterSeconds) {
-                    retryAfterSeconds = error.retryAfterSeconds;
+                    delayNext = error.retryAfterSeconds;
+                    if (delayNext > MaxReconnectDelay) {
+                        this.closeOnConnectionError(error);
+                        return;
+                    }
+                } else {
+                    delayNext = Math.min(delay * 2, MaxReconnectDelay);
                 }
-                const delayNext = Math.max(Math.min(delay * 2, MaxReconnectDelay), retryAfterSeconds);
                 waitForConnectedState(delayNext).then(() => this.connectCore(reason, delayNext, mode));
             });
     }
