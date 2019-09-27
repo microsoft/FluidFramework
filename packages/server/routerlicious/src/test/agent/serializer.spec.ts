@@ -4,8 +4,9 @@
  */
 
 import * as agent from "@microsoft/fluid-server-agent";
-import { MessageFactory, TestDocument } from "@microsoft/fluid-server-test-utils";
+import { MessageFactory } from "@microsoft/fluid-server-test-utils";
 import * as assert from "assert";
+import { TestDocument } from "./testDocument";
 
 describe("Routerlicious", () => {
     describe("Agent", () => {
