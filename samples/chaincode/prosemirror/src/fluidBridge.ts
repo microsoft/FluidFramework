@@ -11,7 +11,8 @@ import {
     ReferenceType,
     reservedRangeLabelsKey,
 } from "@prague/merge-tree";
-import { Schema } from "prosemirror-model";
+import { Schema, Slice } from "prosemirror-model";
+import { ISequenceDeltaRange } from "@prague/sequence";
 
 export interface IProseMirrorNode {
     [key: string]: any;
@@ -47,15 +48,117 @@ export function sliceToGroupOps(from: number, slice: IProseMirrorSlice, schema: 
     return ops;
 }
 
+// if (TextSegment.is(segment)) {
+//     transaction.insertText(segment.text, range.position);
+
+//     if (segment.properties) {
+//         for (const prop of Object.keys(segment.properties)) {
+//             const value = range.segment.properties[prop];
+//             transaction.addMark(
+//                 range.position,
+//                 range.position + segment.text.length,
+//                 this.schema.marks[prop].create(value));
+//         }
+//     }
+// } else if (Marker.is(segment)) {
+//     if (segment.refType === ReferenceType.Simple) {
+//         const nodeType = segment.properties["type"];
+//         const node = this.schema.nodes[nodeType].create(segment.properties["attrs"]);
+//         transaction.insert(range.position, node);
+//     }
+// }
+
+export function segmentsToSlice(segments: ISequenceDeltaRange[]): Slice {
+    // Initialize the base ProseMirror JSON data structure
+    const nodeStack = new Array<IProseMirrorNode>();
+    nodeStack.push({ type: "doc", content: [] });
+
+    this.text.walkSegments((segment) => {
+        let top = nodeStack[nodeStack.length - 1];
+
+        if (TextSegment.is(segment)) {
+            const nodeJson: IProseMirrorNode = {
+                type: "text",
+                text: segment.text,
+            };
+
+            if (segment.properties) {
+                nodeJson.marks = [];
+                for (const propertyKey of Object.keys(segment.properties)) {
+                    nodeJson.marks.push({
+                        type: propertyKey,
+                        value: segment.properties[propertyKey],
+                    })
+                }
+            }
+
+            top.content.push(nodeJson);
+        } else if (Marker.is(segment)) {
+            // TODO are marks applied to the structural nodes as well? Or just inner text?
+
+            const nodeType = segment.properties[nodeTypeKey];
+            switch (segment.refType) {
+                case ReferenceType.NestBegin:
+                    // Create the new node, add it to the top's content, and push it on the stack
+                    const newNode = { type: nodeType, content: [] };
+                    top.content.push(newNode);
+                    nodeStack.push(newNode);
+                    break;
+
+                case ReferenceType.NestEnd:
+                    const popped = nodeStack.pop();
+                    assert(popped.type === nodeType);
+                    break;
+
+                case ReferenceType.Simple:
+                    // TODO consolidate the text segment and simple references
+                    const nodeJson: IProseMirrorNode = {
+                        type: segment.properties["type"],
+                        attrs: segment.properties["attrs"],
+                    };
+
+                    if (segment.properties) {
+                        nodeJson.marks = [];
+                        for (const propertyKey of Object.keys(segment.properties)) {
+                            if (propertyKey !== "type" && propertyKey !== "attrs") {
+                                nodeJson.marks.push({
+                                    type: propertyKey,
+                                    value: segment.properties[propertyKey],
+                                });
+                            }
+                        }
+                    }
+
+                    top.content.push(nodeJson);
+                    break;
+
+                default:
+                    // throw for now when encountering something unknown
+                    throw new Error("Unknown marker");
+            }
+        }
+
+        return true;
+    });
+
+    const doc = nodeStack.pop();
+
+    const fragment = null;
+    const openStart = 0;
+    const openEnd = 0;
+
+    return new Slice(fragment, openStart, openEnd);
+}
+
 function sliceToGroupOpsInternal(
     value: IProseMirrorNode,
     schema: Schema,
     openStart: number,
     openEnd: number,
-    offset: number,
+    from: number,
     ops: IMergeTreeOp[],
 ) {
-    let from = offset;
+    let offset = 0;
 
     let props: any = undefined;
     if (value.marks) {
@@ -72,9 +175,9 @@ function sliceToGroupOpsInternal(
             if (props) {
                 segment.addProperties(props);
             }
-            ops.push(createInsertSegmentOp(from, segment));
+            ops.push(createInsertSegmentOp(from + offset, segment));
 
-            from += value.text.length;
+            offset += value.text.length;
         } else {
             const nodeProps = {
                 ...props,
@@ -86,9 +189,9 @@ function sliceToGroupOpsInternal(
 
             const marker = new Marker(ReferenceType.Simple);
             marker.addProperties(nodeProps);
-            ops.push(createInsertSegmentOp(from, marker));
+            ops.push(createInsertSegmentOp(from + offset, marker));
 
-            from++;
+            offset++;
         }
     } else {
         // negative open start indicates we have past the depth from which the opening began
@@ -103,19 +206,19 @@ function sliceToGroupOpsInternal(
 
             const marker = new Marker(ReferenceType.NestBegin);
             marker.addProperties(beginProps);
-            ops.push(createInsertSegmentOp(from, marker));
+            ops.push(createInsertSegmentOp(from + offset, marker));
 
-            from++;
+            offset++;
         }
 
         if (value.content) {
             value.content.forEach((content, index) => {
-                from += sliceToGroupOpsInternal(
+                offset += sliceToGroupOpsInternal(
                     content,
                     schema,
                     index === 0 ? openStart - 1 : -1,
                     index === value.content.length - 1 ? openEnd - 1 : -1,
-                    from,
+                    from + offset,
                     ops);
             });
         }
@@ -131,13 +234,13 @@ function sliceToGroupOpsInternal(
 
             const marker = new Marker(ReferenceType.NestEnd);
             marker.addProperties(endProps);
-            ops.push(createInsertSegmentOp(from, marker));
+            ops.push(createInsertSegmentOp(from + offset, marker));
 
-            from++;
+            offset++;
         }
     }
 
-    return from;
+    return offset;
 }
 
 // TODO a replace should be an entire group

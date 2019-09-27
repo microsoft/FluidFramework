@@ -4,7 +4,7 @@
  */
 
 import { Plugin, Transaction } from "prosemirror-state";
-import { SharedString } from "@prague/sequence";
+import { SharedString, ISequenceDeltaRange } from "@prague/sequence";
 import { EditorView } from "prosemirror-view";
 import {
     MergeTreeDeltaType,
@@ -14,9 +14,10 @@ import {
     createRemoveRangeOp,
     createGroupOp,
     IMergeTreeOp,
+    ISegment,
 } from "@prague/merge-tree";
-import { Schema } from "prosemirror-model";
-import { sliceToGroupOps } from "./fluidBridge";
+import { Schema, Slice } from "prosemirror-model";
+import { sliceToGroupOps, segmentsToSlice } from "./fluidBridge";
 
 export class FluidCollabPlugin {
     public readonly plugin: Plugin;
@@ -45,29 +46,22 @@ export class FluidCollabPlugin {
 
                 const transaction = editorView.state.tr;
 
-                for (const range of ev.ranges) {
+                for (let i = 0; i < ev.ranges.length; i++) {
+                    const range = ev.ranges[i];
                     const segment = range.segment;
 
                     if (range.operation === MergeTreeDeltaType.INSERT) {
-                        if (TextSegment.is(segment)) {
-                            transaction.insertText(segment.text, range.position);
+                        const insertSegments = new Array<ISequenceDeltaRange>();
+                        while (i < ev.ranges.length) {
+                            if (ev.ranges[i].operation !== MergeTreeDeltaType.INSERT) {
+                                break;
+                            }
 
-                            if (segment.properties) {
-                                for (const prop of Object.keys(segment.properties)) {
-                                    const value = range.segment.properties[prop];
-                                    transaction.addMark(
-                                        range.position,
-                                        range.position + segment.text.length,
-                                        this.schema.marks[prop].create(value));
-                                }
-                            }
-                        } else if (Marker.is(segment)) {
-                            if (segment.refType === ReferenceType.Simple) {
-                                const nodeType = segment.properties["type"];
-                                const node = this.schema.nodes[nodeType].create(segment.properties["attrs"]);
-                                transaction.insert(range.position, node);
-                            }
+                            insertSegments.push(ev.ranges[i]);
                         }
+
+                        const slice = segmentsToSlice(insertSegments);
+                        transaction.replace(insertSegments[0].position, insertSegments[0].position, slice);
                     } else if (range.operation === MergeTreeDeltaType.REMOVE) {
                         if (TextSegment.is(segment)) {
                             transaction.replace(range.position, range.position + segment.text.length);
