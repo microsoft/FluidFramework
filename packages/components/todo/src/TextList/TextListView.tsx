@@ -77,7 +77,7 @@ export function TextListView(props: ITextListViewProps) {
     });
 
     return (
-        <div className="textList">
+        <div className="text-list">
             <button onClick={props.createNewItem}>+</button>
             {sharedStringItems}
         </div>
