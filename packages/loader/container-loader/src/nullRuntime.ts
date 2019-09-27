@@ -42,7 +42,7 @@ class NullRuntime extends EventEmitter implements IRuntime {
         return Promise.resolve(null);
     }
 
-    public summarize(generateFullTreeNoOptimizations?: boolean): Promise<ISummaryTree> {
+    public summarize(fullTree: boolean = false): Promise<ISummaryTree> {
         return Promise.resolve({
             tree: {},
             type: SummaryType.Tree,
