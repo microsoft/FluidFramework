@@ -172,10 +172,15 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
             this.baseId = details.snapshot ? details.snapshot.id : null;
             const packages = details.pkg;
             let registry = this._hostRuntime.IComponentRegistry;
+            const mainRegistry = registry;
             let factory: ComponentFactoryTypes & Partial<IComponentRegistry>;
             for (const pkg of packages) {
                 if (!registry) {
-                    throw new Error("Factory does not supply the component Registry");
+                    factory = await mainRegistry.get(packages[packages.length - 1]);
+                    if (!factory) {
+                        throw new Error("Factory does not supply the component Registry");
+                    }
+                    break;
                 }
                 factory = await registry.get(pkg);
                 registry = factory.IComponentRegistry;

@@ -58,17 +58,19 @@ describe("Component Context Tests", () => {
             assert.equal(attachMessage.type, "TestComponent1", "Attach message type does not match.");
         });
 
-        it("Supplying array of packages in LocalComponentContext should create exception", async () => {
-            let exception = false;
-            localComponentContext =
-                new LocalComponentContext("Test1", ["TestComp", "SubComp"], containerRuntime, storage, scope, attachCb);
+        // Removing temporarily
+        // it("Supplying array of packages in LocalComponentContext should create exception", async () => {
+        //     let exception = false;
+        //     localComponentContext =
+        // tslint:disable-next-line: max-line-length
+        //         new LocalComponentContext("Test1", ["TestComp", "SubComp"], containerRuntime, storage, scope, attachCb);
 
-            await localComponentContext.realize()
-            .catch((error) => {
-                exception = true;
-            });
-            assert.equal(exception, true, "Exception did not occured.");
-        });
+        //     await localComponentContext.realize()
+        //     .catch((error) => {
+        //         exception = true;
+        //     });
+        //     assert.equal(exception, true, "Exception did not occured.");
+        // });
 
         it("Supplying array of packages in LocalComponentContext should not create exception", async () => {
             containerRuntime = {
