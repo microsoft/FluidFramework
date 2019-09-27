@@ -235,24 +235,10 @@ export class SharedMap extends SharedObject implements ISharedMap {
 
     protected onConnect(pending: any[]) {
         debug(`Map ${this.id} is now connected`);
-        // REVIEW: Does it matter that the map and content message get out of order?
 
-        // Filter the nonAck and pending messages into a map set and a content set.
-        const mapMessages = [];
-        const contentMessages: any[] = [];
         for (const message of pending) {
-            if (this.kernel.hasHandlerFor(message)) {
-                mapMessages.push(message);
-            } else {
-                contentMessages.push(message);
-            }
-        }
-
-        // Deal with the map messages - for the map it's always last one wins so we just resend
-        for (const message of mapMessages) {
             this.kernel.trySubmitMessage(message);
         }
-
     }
 
     protected async loadCore(
