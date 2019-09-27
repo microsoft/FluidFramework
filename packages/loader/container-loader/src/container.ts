@@ -622,7 +622,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                     this.resume();
                 }
 
-                perfEvent.end({}, tree ? "end" : "endNoSnapshot");
+                perfEvent.end({}, tree ? "end" : "end_NoSnapshot");
             });
     }
 
