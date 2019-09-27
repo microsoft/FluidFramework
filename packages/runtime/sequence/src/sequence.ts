@@ -472,6 +472,10 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         return;
     }
 
+    protected getIntervalCollectionPath(label: string) {
+        return `intervalCollections/${label}`;
+    }
+
     private processMinSequenceNumberChanged(minSeq: number) {
         let index = 0;
         for (; index < this.messagesSinceMSNChange.length; index++) {
