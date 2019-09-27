@@ -2135,9 +2135,7 @@ export class MergeTree {
             this.mergeTreeDeltaCallback(
                 opArgs,
                 {
-                    mergeTreeClientId: clientId,
                     operation: ops.MergeTreeDeltaType.INSERT,
-                    mergeTree: this,
                     deltaSegments: segments.map((segment) => ({ segment })),
                 });
         }
@@ -2243,9 +2241,7 @@ export class MergeTree {
                 opArgs,
                 {
                     deltaSegments: [{ segment: insertSegment }],
-                    mergeTreeClientId: clientId,
                     operation: ops.MergeTreeDeltaType.INSERT,
-                    mergeTree: this,
                 });
         }
 
@@ -2749,9 +2745,7 @@ export class MergeTree {
             this.mergeTreeDeltaCallback(
                 opArgs,
                 {
-                    mergeTreeClientId: clientId,
                     operation: ops.MergeTreeDeltaType.ANNOTATE,
-                    mergeTree: this,
                     deltaSegments,
                 });
         }
@@ -2852,9 +2846,7 @@ export class MergeTree {
             this.mergeTreeDeltaCallback(
                 opArgs,
                 {
-                    mergeTreeClientId: clientId,
                     operation: ops.MergeTreeDeltaType.REMOVE,
-                    mergeTree: this,
                     deltaSegments: removedSegments,
                 });
         }
@@ -3008,7 +3000,15 @@ export class MergeTree {
         this.nodeMap(this.root, actions, 0, refSeq, clientId, accum);
     }
 
-    mapRange<TClientData>(actions: SegmentActions<TClientData>, refSeq: number, clientId: number, accum?: TClientData, start?: number, end?: number) {
+    mapRange<TClientData>(actions: SegmentActions<TClientData>, refSeq: number, clientId: number, accum?: TClientData, start?: number, end?: number, splitRange: boolean = false) {
+        if (splitRange) {
+            if (start) {
+                this.ensureIntervalBoundary(start, refSeq, clientId);
+            }
+            if (end) {
+                this.ensureIntervalBoundary(end, refSeq, clientId);
+            }
+        }
         this.nodeMap(this.root, actions, 0, refSeq, clientId, accum, start, end);
     }
 

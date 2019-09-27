@@ -26,6 +26,7 @@
   "devDependencies": {
     "@microsoft/api-extractor": "^7.4.4",
     "@microsoft/fluid-build-common": "^0.11.0",
+    "@microsoft/fluid-test-runtime-utils": "^0.11.0",
     "@types/mocha": "^5.2.5",
     "@types/sinon": "^7.0.13",
     "concurrently": "^4.1.0",

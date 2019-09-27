@@ -169,6 +169,10 @@ data:
             "host": "{{ .Values.redis.url }}",
             "port": 6379
         },
+        "redis2": {
+            "host": "{{ .Values.redis2.url }}",
+            "port": 6379
+        },
         "error": {
             "track": {{ .Values.error.track }},
             "endpoint": "{{ .Values.error.endpoint }}"

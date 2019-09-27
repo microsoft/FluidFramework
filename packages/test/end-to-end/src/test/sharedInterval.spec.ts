@@ -23,7 +23,7 @@ import {
     TestDocumentServiceFactory,
     TestHost,
     TestResolver,
-} from "../";
+} from "@microsoft/fluid-local-test-server";
 
 const assertIntervalsHelper = (
     sharedString: SharedString,
