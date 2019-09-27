@@ -27,17 +27,6 @@ import { MapKernel } from "./mapKernel";
 import { pkgVersion } from "./packageVersion";
 
 const snapshotFileName = "header";
-const contentPath = "content";
-
-export class ContentObjectStorage implements IObjectStorageService {
-    constructor(private readonly storage: IObjectStorageService) {
-    }
-
-    /* tslint:disable:promise-function-async */
-    public read(path: string): Promise<string> {
-        return this.storage.read(`${contentPath}/${path}`);
-    }
-}
 
 /**
  * The factory that defines the map
@@ -215,18 +204,6 @@ export class SharedMap extends SharedObject implements ISharedMap {
             ],
             id: null,
         };
-
-        // Add the snapshot of the content to the tree
-        const contentSnapshot = this.snapshotContent();
-        if (contentSnapshot) {
-            tree.entries.push({
-                mode: FileMode.Directory,
-                path: contentPath,
-                type: TreeEntry[TreeEntry.Tree],
-                value: contentSnapshot,
-            });
-        }
-
         return tree;
     }
 
@@ -254,31 +231,14 @@ export class SharedMap extends SharedObject implements ISharedMap {
 
     protected onDisconnect() {
         debug(`Map ${this.id} is now disconnected`);
-        this.onDisconnectContent();
     }
 
     protected onConnect(pending: any[]) {
         debug(`Map ${this.id} is now connected`);
-        // REVIEW: Does it matter that the map and content message get out of order?
 
-        // Filter the nonAck and pending messages into a map set and a content set.
-        const mapMessages = [];
-        const contentMessages: any[] = [];
         for (const message of pending) {
-            if (this.kernel.hasHandlerFor(message)) {
-                mapMessages.push(message);
-            } else {
-                contentMessages.push(message);
-            }
-        }
-
-        // Deal with the map messages - for the map it's always last one wins so we just resend
-        for (const message of mapMessages) {
             this.kernel.trySubmitMessage(message);
         }
-
-        // Allow content to catch up
-        this.onConnectContent(contentMessages);
     }
 
     protected async loadCore(
@@ -289,27 +249,11 @@ export class SharedMap extends SharedObject implements ISharedMap {
 
         const data: string = header ? fromBase64ToUtf8(header) : undefined;
         this.kernel.populate(data);
-
-        const contentStorage = new ContentObjectStorage(storage);
-        await this.loadContent(
-            branchId,
-            contentStorage);
-    }
-
-    protected async loadContent(
-        branchId: string,
-        services: IObjectStorageService): Promise<void> {
-        return;
     }
 
     protected processCore(message: ISequencedDocumentMessage, local: boolean) {
-        let handled = false;
         if (message.type === MessageType.Operation) {
-            handled = this.kernel.tryProcessMessage(message, local);
-        }
-
-        if (!handled) {
-            this.processContent(message, local);
+            this.kernel.tryProcessMessage(message, local);
         }
     }
 
@@ -319,43 +263,5 @@ export class SharedMap extends SharedObject implements ISharedMap {
                 value.register();
             }
         }
-
-        this.registerContent();
-    }
-
-    // The following three methods enable derived classes to provide custom content that is stored
-    // with the map
-
-    protected registerContent() {
-        return;
-    }
-
-    /**
-     * Processes a content message
-     */
-    protected processContent(message: ISequencedDocumentMessage, local: boolean) {
-        return;
-    }
-
-    /**
-     * Message sent to notify derived content of disconnection
-     */
-    protected onDisconnectContent() {
-        return;
-    }
-
-    /**
-     * Message sent upon reconnecting to the delta stream
-     * Allows Sequence to overwrite nap's default behavior
-     */
-    protected onConnectContent(pending: any[]) {
-        super.onConnect(pending);
-    }
-
-    /**
-     * Snapshots the content
-     */
-    protected snapshotContent(): ITree {
-        return null;
     }
 }

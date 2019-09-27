@@ -31,7 +31,6 @@
     "@microsoft/fluid-driver-base": "^0.11.0",
     "@microsoft/fluid-gitresources": "^0.11.0",
     "@microsoft/fluid-protocol-definitions": "^0.11.0",
-    "@microsoft/fluid-server-agent": "^0.11.0",
     "@microsoft/fluid-server-services-client": "^0.11.0",
     "@microsoft/fluid-server-services-core": "^0.11.0",
     "lodash": "^4.17.11",
