@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import * as api from "@fluid-internal/client-api";
 import { isSystemType } from "@microsoft/fluid-core-utils";
 import { IConnect, IConnected } from "@microsoft/fluid-driver-base";
 import {
@@ -14,6 +13,7 @@ import {
     IDocumentSystemMessage,
     ISignalMessage,
     ITokenClaims,
+    MessageType,
 } from "@microsoft/fluid-protocol-definitions";
 import * as agent from "@microsoft/fluid-server-agent";
 import { canSummarize, canWrite } from "@microsoft/fluid-server-services-client";
@@ -263,7 +263,7 @@ export function register(
                         const messages = Array.isArray(messageBatch) ? messageBatch : [messageBatch];
                         const sanitized = messages
                             .filter((message) => {
-                                if (message.type === api.RoundTrip) {
+                                if (message.type === MessageType.RoundTrip) {
                                     // End of tracking. Write traces.
                                     metricLogger.writeLatencyMetric("latency", message.traces).catch(
                                         (error) => {
