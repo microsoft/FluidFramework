@@ -856,7 +856,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
         const context = new LocalComponentContext(
             id,
-            pkg,
+            [pkg],
             this,
             this.storage,
             this.context.scope,
@@ -997,8 +997,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                     snapshotTree,
                     this,
                     new DocumentStorageServiceProxy(this.storage, flatBlobs),
-                    this.context.scope,
-                    attachMessage.type);
+                    this.context.scope);
 
                 break;
 

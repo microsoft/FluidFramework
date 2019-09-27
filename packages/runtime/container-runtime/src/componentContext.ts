@@ -28,8 +28,10 @@ import {
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
 import {
+    ComponentFactoryTypes,
     IAttachMessage,
     IComponentContext,
+    IComponentRegistry,
     IComponentRuntime,
     IEnvelope,
     IHostRuntime,
@@ -40,8 +42,21 @@ import { EventEmitter } from "events";
 import { ContainerRuntime } from "./containerRuntime";
 import { BlobTreeEntry } from "./utils";
 
-interface ISnapshotDetails {
+// Snapshot Format Version to be used in component attributes.
+const currentSnapshotFormatVersion = "0.1";
+
+/**
+ * Added IComponentAttributes similar to IChannelAttributues which will tell
+ * the attributes of a component like the package, snapshotFormatVersion to
+ * take different decisions based on a particular snapshotForamtVersion.
+ */
+export interface IComponentAttributes {
     pkg: string;
+    readonly snapshotFormatVersion?: string;
+}
+
+interface ISnapshotDetails {
+    pkg: string[];
     snapshot: ISnapshotTree;
 }
 
@@ -149,7 +164,18 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
             this.componentRuntimeDeferred = new Deferred<IComponentRuntime>();
             const details = await this.getInitialSnapshotDetails();
             this.summaryTracker.setBaseTree(details.snapshot);
-            const factory = await this._hostRuntime.IComponentRegistry.get(details.pkg);
+            this._baseSnapshot = details.snapshot;
+            this.baseId = details.snapshot ? details.snapshot.id : null;
+            const packages = details.pkg;
+            let registry = this._hostRuntime.IComponentRegistry;
+            let factory: ComponentFactoryTypes & Partial<IComponentRegistry>;
+            for (const pkg of packages) {
+                if (!registry) {
+                    throw new Error("Factory does not supply the component Registry");
+                }
+                factory = await registry.get(pkg);
+                registry = factory.IComponentRegistry;
+            }
 
             // During this call we will invoke the instantiate method - which will call back into us
             // via the bindRuntime call to resolve componentRuntimeDeferred
@@ -241,7 +267,10 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
 
         const { pkg } = await this.getInitialSnapshotDetails();
 
-        const componentAttributes = { pkg };
+        const componentAttributes: IComponentAttributes = {
+            pkg: JSON.stringify(pkg),
+            snapshotFormatVersion: currentSnapshotFormatVersion,
+        };
 
         // base ID still being set means previous snapshot is still valid
         const baseId = this.summaryTracker.getBaseId();
@@ -361,7 +390,7 @@ export class RemotedComponentContext extends ComponentContext {
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
         scope: IComponent,
-        private readonly type?: string,
+        private readonly pkg?: string[],
     ) {
         super(
             runtime,
@@ -395,17 +424,27 @@ export class RemotedComponentContext extends ComponentContext {
 
             if (tree === null || tree.blobs[".component"] === undefined) {
                 this.details = {
-                    pkg: this.type,
+                    pkg: this.pkg,
                     snapshot: tree,
                 };
             } else {
                 // Need to rip through snapshot and use that to populate extraBlobs
-                const { pkg } = await readAndParse<{ pkg: string }>(
+                const { pkg, snapshotFormatVersion } =
+                    await readAndParse<IComponentAttributes>(
                     this.storage,
                     tree.blobs[".component"]);
 
+                let pkgFromSnapshot: string[];
+                // Use the snapshotFormatVersion to determine how the pkg is encoded in the snapshot.
+                // For snapshotFormatVersion = "0.1", pkg is jsonified, otherwise it is just a string.
+                if (snapshotFormatVersion && snapshotFormatVersion === currentSnapshotFormatVersion) {
+                    pkgFromSnapshot = JSON.parse(pkg) as string[];
+                } else {
+                    pkgFromSnapshot = [pkg];
+                }
+
                 this.details = {
-                    pkg,
+                    pkg: pkgFromSnapshot,
                     snapshot: tree,
                 };
             }
@@ -418,7 +457,7 @@ export class RemotedComponentContext extends ComponentContext {
 export class LocalComponentContext extends ComponentContext {
     constructor(
         id: string,
-        private readonly pkg: string,
+        private readonly pkg: string[],
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
         scope: IComponent,
@@ -429,7 +468,10 @@ export class LocalComponentContext extends ComponentContext {
     }
 
     public generateAttachMessage(): IAttachMessage {
-        const componentAttributes = { pkg: this.pkg };
+        const componentAttributes: IComponentAttributes = {
+            pkg: JSON.stringify(this.pkg),
+            snapshotFormatVersion: currentSnapshotFormatVersion,
+        };
 
         const entries = this.componentRuntime.getAttachSnapshot();
         const snapshot = { entries, id: undefined };
@@ -442,7 +484,7 @@ export class LocalComponentContext extends ComponentContext {
         const message: IAttachMessage = {
             id: this.id,
             snapshot,
-            type: this.pkg,
+            type: this.pkg[this.pkg.length - 1],
         };
 
         return message;
