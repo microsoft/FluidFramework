@@ -43,7 +43,7 @@ export class Yopollster extends PrimedComponent implements IComponentHTMLVisual 
 
 export const PollInstantiationFactory = new PrimedComponentFactory(
   Yopollster,
-  [],
+  [SharedMap.getFactory()],
 );
 
 export const fluidExport = new SimpleModuleInstantiationFactory(
