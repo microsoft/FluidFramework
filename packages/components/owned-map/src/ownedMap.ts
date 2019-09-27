@@ -13,7 +13,6 @@ import { OwnedMapFactory } from "./ownedMapFactory";
 
 const snapshotFileName = "header";
 const ownerPath = "owner";
-const contentPath = "content";
 
 /**
  * Implementation of a map shared object
@@ -70,17 +69,6 @@ export class OwnedSharedMap extends SharedMap implements ISharedMap {
                     contents: this.getOwner(),
                     encoding: "utf-8",
                 },
-            });
-        }
-
-        // Add the snapshot of the content to the tree
-        const contentSnapshot = this.snapshotContent();
-        if (contentSnapshot) {
-            tree.entries.push({
-                mode: FileMode.Directory,
-                path: contentPath,
-                type: TreeEntry[TreeEntry.Tree],
-                value: contentSnapshot,
             });
         }
 
