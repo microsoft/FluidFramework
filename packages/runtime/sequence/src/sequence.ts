@@ -3,25 +3,40 @@
  * Licensed under the MIT License.
  */
 
-import { ChildLogger, Deferred } from "@microsoft/fluid-core-utils";
-import { IValueChanged } from "@microsoft/fluid-map";
+import { ChildLogger, Deferred, fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
+import { IValueChanged, MapKernel } from "@microsoft/fluid-map";
 import * as MergeTree from "@microsoft/fluid-merge-tree";
-import { ISequencedDocumentMessage, ITree } from "@microsoft/fluid-protocol-definitions";
+import { FileMode, ISequencedDocumentMessage, ITree, MessageType, TreeEntry } from "@microsoft/fluid-protocol-definitions";
 import { IChannelAttributes, IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
-import { parseHandles, serializeHandles } from "@microsoft/fluid-shared-object-base";
+import { parseHandles, serializeHandles, SharedObject } from "@microsoft/fluid-shared-object-base";
 import * as assert from "assert";
+import { debug } from "./debug";
 import {
     IntervalCollection,
     SequenceInterval,
     SequenceIntervalCollectionValueType,
 } from "./intervalCollection";
 import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent";
-import { ASharedIntervalCollection } from "./sharedIntervalCollection";
+import { ISharedIntervalCollection } from "./sharedIntervalCollection";
 // tslint:disable-next-line: no-var-requires no-require-imports no-submodule-imports
 const cloneDeep = require("lodash/cloneDeep");
 
+const snapshotFileName = "header";
+const contentPath = "content";
+
+class ContentObjectStorage implements IObjectStorageService {
+    constructor(private readonly storage: IObjectStorageService) {
+    }
+
+    /* tslint:disable:promise-function-async */
+    public read(path: string): Promise<string> {
+        return this.storage.read(`${contentPath}/${path}`);
+    }
+}
+
 export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
-    extends ASharedIntervalCollection<SequenceInterval> {
+    extends SharedObject
+    implements ISharedIntervalCollection<SequenceInterval> {
 
     get loaded(): Promise<void> {
         return this.loadedDeferred.promise;
@@ -78,14 +93,14 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     // Deferred that triggers once the object is loaded
     protected loadedDeferred = new Deferred<void>();
     private messagesSinceMSNChange: ISequencedDocumentMessage[] = [];
-
+    private readonly intervalMapKernel: MapKernel;
     constructor(
         document: IComponentRuntime,
         public id: string,
         attributes: IChannelAttributes,
         public readonly segmentFromSpec: (spec: MergeTree.IJSONSegment) => MergeTree.ISegment,
     ) {
-        super(id, document, attributes, new SequenceIntervalCollectionValueType());
+        super(id, document, attributes);
 
         /* tslint:disable:no-unsafe-any */
         this.client = new MergeTree.Client(
@@ -127,6 +142,12 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
                 default:
             }
         });
+
+        this.intervalMapKernel = new MapKernel(
+            this.runtime,
+            this.handle,
+            (op) => this.submitLocalMessage(op),
+            [new SequenceIntervalCollectionValueType()]);
     }
 
     /**
@@ -136,10 +157,6 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     public on(
         event: "pre-op" | "op",
         listener: (op: ISequencedDocumentMessage, local: boolean, target: this) => void): this;
-    public on(event: "valueChanged", listener: (changed: IValueChanged,
-                                                local: boolean,
-                                                op: ISequencedDocumentMessage,
-                                                target: this) => void): this;
     public on(event: string | symbol, listener: (...args: any[]) => void): this;
     // tslint:disable-next-line:no-unnecessary-override
     public on(event: string | symbol, listener: (...args: any[]) => void): this {
@@ -290,13 +307,6 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
 
     }
 
-    public sendNACKed() {
-        const groupOp = this.client.resetPendingSegmentsToOp();
-        if (groupOp) {
-            this.submitSequenceMessage(groupOp);
-        }
-    }
-
     public submitSequenceMessage(message: MergeTree.IMergeTreeOp) {
         const translated = serializeHandles(
             message,
@@ -359,10 +369,55 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         }
     }
 
+    public async waitIntervalCollection(
+        label: string,
+    ): Promise<IntervalCollection<SequenceInterval>> {
+        return this.intervalMapKernel.wait<IntervalCollection<SequenceInterval>>(label);
+    }
+
+    // TODO: fix race condition on creation by putting type on every operation
+    public getIntervalCollection(label: string): IntervalCollection<SequenceInterval> {
+        if (!this.intervalMapKernel.has(label)) {
+            this.intervalMapKernel.createValueType(
+                label,
+                SequenceIntervalCollectionValueType.Name,
+                undefined);
+        }
+
+        const sharedCollection =
+            this.intervalMapKernel.get<IntervalCollection<SequenceInterval>>(label);
+        return sharedCollection;
+    }
+
+    public snapshot(): ITree {
+        const tree: ITree = {
+            entries: [
+                {
+                    mode: FileMode.File,
+                    path: snapshotFileName,
+                    type: TreeEntry[TreeEntry.Blob],
+                    value: {
+                        contents: this.intervalMapKernel.serialize(),
+                        encoding: "utf-8",
+                    },
+                },
+                {
+                    mode: FileMode.Directory,
+                    path: contentPath,
+                    type: TreeEntry[TreeEntry.Tree],
+                    value: this.snapshotMergeTree(),
+                },
+
+            ],
+            id: null,
+        };
+
+        return tree;
+    }
+
     protected replaceRange(start: number, end: number, segment: MergeTree.ISegment) {
         // insert first, so local references can slide to the inserted seg
         // if any
-
         const insert = this.client.insertSegmentLocal(end, segment);
         if (insert) {
             const remove = this.client.removeRangeLocal(start, end);
@@ -370,19 +425,69 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         }
     }
 
-    protected async loadContent(
+    protected onConnect(pending: any[]) {
+
+        for (const message of pending) {
+            if (this.intervalMapKernel.hasHandlerFor(message)) {
+                this.intervalMapKernel.trySubmitMessage(message);
+            }
+        }
+
+        // Update merge tree collaboration information with new client ID and then resend pending ops
+        if (this.client.getCollabWindow().collaborating) {
+            this.client.updateCollaboration(this.runtime.clientId);
+        }
+
+        const groupOp = this.client.resetPendingSegmentsToOp();
+        if (groupOp) {
+            this.submitSequenceMessage(groupOp);
+        }
+    }
+
+    protected onDisconnect() {
+        debug(`${this.id} is now disconnected`);
+    }
+
+    protected async loadCore(
         branchId: string,
-        storage: IObjectStorageService): Promise<void> {
+        storage: IObjectStorageService) {
+
+        const header = await storage.read(snapshotFileName);
+
+        const data: string = header ? fromBase64ToUtf8(header) : undefined;
+        this.intervalMapKernel.populate(data);
+
         const loader = this.client.createSnapshotLoader(this.runtime);
         try {
             const msgs = await loader.initialize(
                 branchId,
-                storage);
-            msgs.forEach((m) => this.processContent(m));
+                new ContentObjectStorage(storage));
+            msgs.forEach((m) => this.processMergeTreeMsg(m));
             this.loadFinished();
         } catch (error) {
             this.loadFinished(error);
         }
+    }
+
+    protected processCore(message: ISequencedDocumentMessage, local: boolean) {
+        let handled = false;
+        if (message.type === MessageType.Operation) {
+            handled = this.intervalMapKernel.tryProcessMessage(message, local);
+        }
+
+        if (!handled) {
+            this.processMergeTreeMsg(message);
+        }
+    }
+
+    protected registerCore() {
+        for (const value of this.intervalMapKernel.values()) {
+            if (SharedObject.is(value)) {
+                value.register();
+            }
+        }
+
+        this.client.startCollaboration(this.runtime.clientId, 0);
     }
 
     protected initializeLocalCore() {
@@ -391,7 +496,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         this.loadFinished();
     }
 
-    protected snapshotContent(): ITree {
+    private snapshotMergeTree(): ITree {
         // Are we fully loaded? If not, things will go south
         assert(this.isLoaded);
 
@@ -421,7 +526,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         return mtSnap;
     }
 
-    protected processContent(rawMessage: ISequencedDocumentMessage) {
+    private processMergeTreeMsg(rawMessage: ISequencedDocumentMessage) {
         const message = parseHandles(
             rawMessage,
             this.runtime.IComponentSerializer,
@@ -439,7 +544,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
             this.on("sequenceDelta", transfromOps);
         }
 
-        this.processMessage(message);
+        this.client.applyMsg(message);
 
         if (needsTransformation) {
             this.removeListener("sequenceDelta", transfromOps);
@@ -456,22 +561,6 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
 
     }
 
-    protected registerContent() {
-        this.client.startCollaboration(this.runtime.clientId, 0);
-    }
-
-    // Need some comment on why we are not using 'pending' content
-    protected onConnectContent(pending: any[]) {
-        // Update merge tree collaboration information with new client ID and then resend pending ops
-        if (this.client.getCollabWindow().collaborating) {
-            this.client.updateCollaboration(this.runtime.clientId);
-        }
-
-        this.sendNACKed();
-
-        return;
-    }
-
     private processMinSequenceNumberChanged(minSeq: number) {
         let index = 0;
         for (; index < this.messagesSinceMSNChange.length; index++) {
@@ -482,10 +571,6 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         if (index !== 0) {
             this.messagesSinceMSNChange = this.messagesSinceMSNChange.slice(index);
         }
-    }
-
-    private processMessage(message: ISequencedDocumentMessage) {
-        this.client.applyMsg(message);
     }
 
     private loadFinished(error?: any) {
