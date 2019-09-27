@@ -5,7 +5,7 @@
 
 import { fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
 import {
-    IValueType, MapKernel,
+    MapKernel,
 } from "@microsoft/fluid-map";
 import {
     FileMode, ISequencedDocumentMessage, ITree, MessageType, TreeEntry,
@@ -56,7 +56,7 @@ export class SharedIntervalCollectionFactory implements ISharedObjectFactory {
         services: ISharedObjectServices,
         branchId: string): Promise<SharedIntervalCollection> {
 
-        const map = new SharedIntervalCollection(id, runtime, this.attributes, new IntervalCollectionValueType());
+        const map = new SharedIntervalCollection(id, runtime, this.attributes);
         await map.load(branchId, services);
 
         return map;
@@ -66,8 +66,7 @@ export class SharedIntervalCollectionFactory implements ISharedObjectFactory {
         const map = new SharedIntervalCollection(
             id,
             runtime,
-            this.attributes,
-            new IntervalCollectionValueType());
+            this.attributes);
         map.initializeLocal();
 
         return map;
@@ -115,14 +114,13 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
         id: string,
         runtime: IComponentRuntime,
         attributes = SharedIntervalCollectionFactory.Attributes,
-        private readonly valueType: IValueType<IntervalCollection<TInterval>>,
     ) {
         super(id, runtime, attributes);
         this.intervalMapKernel = new MapKernel(
             runtime,
             this.handle,
             (op) => this.submitLocalMessage(op),
-            [valueType],
+            [new IntervalCollectionValueType()],
         );
     }
 
@@ -137,7 +135,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
         if (!this.intervalMapKernel.has(label)) {
             this.intervalMapKernel.createValueType(
                 label,
-                this.valueType.name,
+                IntervalCollectionValueType.Name,
                 undefined);
         }
 

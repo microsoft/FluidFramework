@@ -146,7 +146,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         this.intervalMapKernel = new MapKernel(
             this.runtime,
             this.handle,
-            this.submitLocalMessage,
+            (op) => this.submitLocalMessage(op),
             [new SequenceIntervalCollectionValueType()]);
     }
 
@@ -466,7 +466,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
             const msgs = await loader.initialize(
                 branchId,
                 new ContentObjectStorage(storage));
-            msgs.forEach((m) => this.processMergeTree(m));
+            msgs.forEach((m) => this.processMergeTreeMsg(m));
             this.loadFinished();
         } catch (error) {
             this.loadFinished(error);
@@ -480,7 +480,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         }
 
         if (!handled) {
-            this.processMergeTree(message);
+            this.processMergeTreeMsg(message);
         }
     }
 
@@ -530,7 +530,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         return mtSnap;
     }
 
-    protected processMergeTree(rawMessage: ISequencedDocumentMessage) {
+    protected processMergeTreeMsg(rawMessage: ISequencedDocumentMessage) {
         const message = parseHandles(
             rawMessage,
             this.runtime.IComponentSerializer,
