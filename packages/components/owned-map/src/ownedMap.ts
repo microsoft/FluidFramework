@@ -85,17 +85,6 @@ export class OwnedSharedMap extends SharedMap implements ISharedMap {
         return this.owner === member.client.user.id;
     }
 
-    // tslint:disable-next-line: no-suspicious-comment
-    // TODO: Add this as a base component of snapshotter
-    // protected ownerSnapshot() {
-    //     return {
-    //         mode: FileMode.file,
-    //         path: contentPath,
-    //         type: TreeEntry[TreeEntry.Tree],
-    //         value: contentSnapshot,
-    //     }
-    // }
-
     protected processCore(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
         if (this.getMessageOwner(message) !== this.owner) {
             debug("A non owner attempted to modify this object");
