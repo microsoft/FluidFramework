@@ -64,8 +64,8 @@ export class LocalChannelContext implements IChannelContext {
         this.connection!.process(message, local);
     }
 
-    public async snapshot(generateFullTreeNoOptimizations: boolean = false): Promise<ITree> {
-        if (this.baseId !== undefined && !generateFullTreeNoOptimizations) {
+    public async snapshot(fullTree: boolean = false): Promise<ITree> {
+        if (this.baseId !== undefined && !fullTree) {
             return { id: this.baseId, entries: [] };
         }
         return this.getAttachSnapshot();

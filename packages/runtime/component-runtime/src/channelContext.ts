@@ -24,7 +24,7 @@ export interface IChannelContext {
 
     processOp(message: ISequencedDocumentMessage, local: boolean): void;
 
-    snapshot(generateFullTreeNoOptimizations?: boolean): Promise<ITree>;
+    snapshot(fullTree?: boolean): Promise<ITree>;
 
     isRegistered(): boolean;
 }
