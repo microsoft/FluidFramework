@@ -152,6 +152,7 @@ export class OdspDocumentService implements IDocumentService {
             client,
             websocketEndpoint.deltaStreamSocketUrl,
             mode,
+            websocketEndpoint.deltaStreamSocketUrl2,
         ).catch((error) => {
             // Test if it's NetworkError with IOdspSocketError.
             // Note that there might be no IOdspSocketError on it in case we hit socket.io protocol errors!

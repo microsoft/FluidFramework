@@ -47,6 +47,64 @@ function createErrorObject(handler: string, error: any, canRetry = true) {
  */
 export class DocumentDeltaConnection extends EventEmitter implements IDocumentDeltaConnection {
     /**
+     * Create a DocumentDeltaConnection.
+     * If url #1 fails to connect, will try url #2 if applicable.
+     *
+     * @param tenantId - the ID of the tenant
+     * @param id - document ID
+     * @param token - authorization token for storage service
+     * @param io - websocket library
+     * @param client - information about the client
+     * @param url - websocket URL
+     * @param url2 - alternate websocket URL
+     */
+    // tslint:disable-next-line: max-func-body-length
+    public static async create(
+        tenantId: string,
+        id: string,
+        token: string | null,
+        io: SocketIOClientStatic,
+        client: IClient,
+        url: string,
+        mode: ConnectionMode,
+        url2?: string): Promise<IDocumentDeltaConnection> {
+            let canRetry = false;
+            // tslint:disable-next-line: strict-boolean-expressions
+            if (url2) {
+                canRetry = true;
+            }
+
+            return this.createImpl(
+                tenantId,
+                id,
+                token,
+                io,
+                client,
+                url,
+                mode,
+                canRetry,
+            // tslint:disable-next-line: promise-function-async
+            ).catch((error) => {
+                if (error instanceof NetworkError && error.canRetry && canRetry) {
+                    debug(`Socket connection error on non-AFD URL. Error was [${error}]. Retry on AFD URL: ${url}`);
+                    return this.createImpl(
+                        tenantId,
+                        id,
+                        token,
+                        io,
+                        client,
+                        // tslint:disable-next-line: no-non-null-assertion
+                        url2!,
+                        mode,
+                        false,
+                    );
+                }
+
+                throw error;
+            });
+    }
+
+    /**
      * Create a DocumentDeltaConnection
      *
      * @param tenantId - the ID of the tenant
@@ -57,14 +115,15 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
      * @param url - websocket URL
      */
     // tslint:disable-next-line: max-func-body-length
-    public static async create(
+    private static async createImpl(
         tenantId: string,
         id: string,
         token: string | null,
         io: SocketIOClientStatic,
         client: IClient,
         url: string,
-        mode: ConnectionMode): Promise<IDocumentDeltaConnection> {
+        mode: ConnectionMode,
+        canRetry: boolean): Promise<IDocumentDeltaConnection> {
 
         // Note on multiplex = false:
         // Temp fix to address issues on SPO. Scriptor hits same URL for Fluid & Notifications.
@@ -118,12 +177,12 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
             // Listen for connection issues
             socket.on("connect_error", (error) => {
                 debug(`Socket connection error: [${error}]`);
-                reject(createErrorObject("connect_error", error));
+                reject(createErrorObject("connect_error", error, canRetry));
             });
 
             // Listen for timeouts
             socket.on("connect_timeout", () => {
-                reject(createErrorObject("connect_timeout", "Socket connection timed out"));
+                reject(createErrorObject("connect_timeout", "Socket connection timed out", canRetry));
             });
 
             socket.on("connect_document_success", (response: IConnected) => {
