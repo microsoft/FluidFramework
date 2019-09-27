@@ -401,20 +401,16 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
                         encoding: "utf-8",
                     },
                 },
+                {
+                    mode: FileMode.Directory,
+                    path: contentPath,
+                    type: TreeEntry[TreeEntry.Tree],
+                    value: this.snapshotMergeTree(),
+                },
+
             ],
             id: null,
         };
-
-        // Add the snapshot of the content to the tree
-        const mergeTreeSnapshot = this.snapshotMergeTree();
-        if (mergeTreeSnapshot) {
-            tree.entries.push({
-                mode: FileMode.Directory,
-                path: contentPath,
-                type: TreeEntry[TreeEntry.Tree],
-                value: mergeTreeSnapshot,
-            });
-        }
 
         return tree;
     }
@@ -422,7 +418,6 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     protected replaceRange(start: number, end: number, segment: MergeTree.ISegment) {
         // insert first, so local references can slide to the inserted seg
         // if any
-
         const insert = this.client.insertSegmentLocal(end, segment);
         if (insert) {
             const remove = this.client.removeRangeLocal(start, end);
