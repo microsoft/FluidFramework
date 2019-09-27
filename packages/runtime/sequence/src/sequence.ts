@@ -431,15 +431,16 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     }
 
     protected onConnect(pending: any[]) {
-        // Update merge tree collaboration information with new client ID and then resend pending ops
-        if (this.client.getCollabWindow().collaborating) {
-            this.client.updateCollaboration(this.runtime.clientId);
-        }
 
         for (const message of pending) {
             if (this.intervalMapKernel.hasHandlerFor(message)) {
                 this.intervalMapKernel.trySubmitMessage(message);
             }
+        }
+
+        // Update merge tree collaboration information with new client ID and then resend pending ops
+        if (this.client.getCollabWindow().collaborating) {
+            this.client.updateCollaboration(this.runtime.clientId);
         }
 
         const groupOp = this.client.resetPendingSegmentsToOp();
@@ -500,7 +501,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         this.loadFinished();
     }
 
-    protected snapshotMergeTree(): ITree {
+    private snapshotMergeTree(): ITree {
         // Are we fully loaded? If not, things will go south
         assert(this.isLoaded);
 
@@ -530,7 +531,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         return mtSnap;
     }
 
-    protected processMergeTreeMsg(rawMessage: ISequencedDocumentMessage) {
+    private processMergeTreeMsg(rawMessage: ISequencedDocumentMessage) {
         const message = parseHandles(
             rawMessage,
             this.runtime.IComponentSerializer,
