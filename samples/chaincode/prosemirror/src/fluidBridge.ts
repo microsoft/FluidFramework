@@ -10,9 +10,10 @@ import {
     Marker,
     ReferenceType,
     reservedRangeLabelsKey,
+    BaseSegment,
 } from "@prague/merge-tree";
 import { Schema, Slice } from "prosemirror-model";
-import { ISequenceDeltaRange } from "@prague/sequence";
+import { ISequenceDeltaRange, SharedString } from "@prague/sequence";
 
 export interface IProseMirrorNode {
     [key: string]: any;
@@ -68,78 +69,97 @@ export function sliceToGroupOps(from: number, slice: IProseMirrorSlice, schema: 
 //     }
 // }
 
-export function segmentsToSlice(segments: ISequenceDeltaRange[]): Slice {
-    // Initialize the base ProseMirror JSON data structure
-    const nodeStack = new Array<IProseMirrorNode>();
-    nodeStack.push({ type: "doc", content: [] });
+export function segmentsToSlice(text: SharedString, segments: ISequenceDeltaRange[]): Slice {
+    const initialSegment = segments[0];
 
-    this.text.walkSegments((segment) => {
-        let top = nodeStack[nodeStack.length - 1];
+    const stack = text.getStackContext(initialSegment.position, [proseMirrorTreeLabel]).proseMirrorTreeLabel;
+    let root: IProseMirrorNode = {
+        content: [],
+        type: "doc",
+    }
+    while (!stack.empty()) {
+        const refPos = stack.pop();
+        const segment = refPos.getSegment();
+    }
 
-        if (TextSegment.is(segment)) {
-            const nodeJson: IProseMirrorNode = {
-                type: "text",
-                text: segment.text,
-            };
+    // use the context to build the base tree
+    context.
 
-            if (segment.properties) {
-                nodeJson.marks = [];
-                for (const propertyKey of Object.keys(segment.properties)) {
-                    nodeJson.marks.push({
-                        type: propertyKey,
-                        value: segment.properties[propertyKey],
-                    })
-                }
-            }
-
-            top.content.push(nodeJson);
-        } else if (Marker.is(segment)) {
-            // TODO are marks applied to the structural nodes as well? Or just inner text?
-
-            const nodeType = segment.properties[nodeTypeKey];
-            switch (segment.refType) {
-                case ReferenceType.NestBegin:
-                    // Create the new node, add it to the top's content, and push it on the stack
-                    const newNode = { type: nodeType, content: [] };
-                    top.content.push(newNode);
-                    nodeStack.push(newNode);
-                    break;
-
-                case ReferenceType.NestEnd:
-                    const popped = nodeStack.pop();
-                    assert(popped.type === nodeType);
-                    break;
-
-                case ReferenceType.Simple:
-                    // TODO consolidate the text segment and simple references
-                    const nodeJson: IProseMirrorNode = {
-                        type: segment.properties["type"],
-                        attrs: segment.properties["attrs"],
-                    };
-
-                    if (segment.properties) {
-                        nodeJson.marks = [];
-                        for (const propertyKey of Object.keys(segment.properties)) {
-                            if (propertyKey !== "type" && propertyKey !== "attrs") {
-                                nodeJson.marks.push({
-                                    type: propertyKey,
-                                    value: segment.properties[propertyKey],
-                                });
-                            }
-                        }
-                    }
-
-                    top.content.push(nodeJson);
-                    break;
-
-                default:
-                    // throw for now when encountering something unknown
-                    throw new Error("Unknown marker");
-            }
-        }
-
-        return true;
+    segments.forEach((segment) => {
+        segment.position
     });
+
+    // Initialize the base ProseMirror JSON data structure
+    // const nodeStack = new Array<IProseMirrorNode>();
+    // nodeStack.push({ type: "doc", content: [] });
+
+    // this.text.walkSegments((segment) => {
+    //     let top = nodeStack[nodeStack.length - 1];
+
+    //     if (TextSegment.is(segment)) {
+    //         const nodeJson: IProseMirrorNode = {
+    //             type: "text",
+    //             text: segment.text,
+    //         };
+
+    //         if (segment.properties) {
+    //             nodeJson.marks = [];
+    //             for (const propertyKey of Object.keys(segment.properties)) {
+    //                 nodeJson.marks.push({
+    //                     type: propertyKey,
+    //                     value: segment.properties[propertyKey],
+    //                 })
+    //             }
+    //         }
+
+    //         top.content.push(nodeJson);
+    //     } else if (Marker.is(segment)) {
+    //         // TODO are marks applied to the structural nodes as well? Or just inner text?
+
+    //         const nodeType = segment.properties[nodeTypeKey];
+    //         switch (segment.refType) {
+    //             case ReferenceType.NestBegin:
+    //                 // Create the new node, add it to the top's content, and push it on the stack
+    //                 const newNode = { type: nodeType, content: [] };
+    //                 top.content.push(newNode);
+    //                 nodeStack.push(newNode);
+    //                 break;
+
+    //             case ReferenceType.NestEnd:
+    //                 const popped = nodeStack.pop();
+    //                 assert(popped.type === nodeType);
+    //                 break;
+
+    //             case ReferenceType.Simple:
+    //                 // TODO consolidate the text segment and simple references
+    //                 const nodeJson: IProseMirrorNode = {
+    //                     type: segment.properties["type"],
+    //                     attrs: segment.properties["attrs"],
+    //                 };
+
+    //                 if (segment.properties) {
+    //                     nodeJson.marks = [];
+    //                     for (const propertyKey of Object.keys(segment.properties)) {
+    //                         if (propertyKey !== "type" && propertyKey !== "attrs") {
+    //                             nodeJson.marks.push({
+    //                                 type: propertyKey,
+    //                                 value: segment.properties[propertyKey],
+    //                             });
+    //                         }
+    //                     }
+    //                 }
+
+    //                 top.content.push(nodeJson);
+    //                 break;
+
+    //             default:
+    //                 // throw for now when encountering something unknown
+    //                 throw new Error("Unknown marker");
+    //         }
+    //     }
+
+    //     return true;
+    // });
 
     const doc = nodeStack.pop();
 
