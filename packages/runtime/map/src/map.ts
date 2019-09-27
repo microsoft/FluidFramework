@@ -27,17 +27,6 @@ import { MapKernel } from "./mapKernel";
 import { pkgVersion } from "./packageVersion";
 
 const snapshotFileName = "header";
-const contentPath = "content";
-
-export class ContentObjectStorage implements IObjectStorageService {
-    constructor(private readonly storage: IObjectStorageService) {
-    }
-
-    /* tslint:disable:promise-function-async */
-    public read(path: string): Promise<string> {
-        return this.storage.read(`${contentPath}/${path}`);
-    }
-}
 
 /**
  * The factory that defines the map
