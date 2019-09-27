@@ -75,10 +75,7 @@ export class SharedIntervalCollectionFactory implements ISharedObjectFactory {
     }
 }
 
-/**
- * A distributed data structure that stores intervals
- */
-export class SharedIntervalCollection<TInterval extends ISerializableInterval = Interval> extends SharedObject {
+export abstract class ASharedIntervalCollection<TInterval extends ISerializableInterval> extends SharedObject {
 
     public readonly [Symbol.toStringTag]: string = "SharedIntervalCollection";
     protected readonly intervalMapKernel: MapKernel;
@@ -252,5 +249,34 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
      */
     protected snapshotContent(): ITree {
         return null;
+    }
+}
+
+/**
+ * A distributed data structure that stores intervals
+ */
+export class SharedIntervalCollection<TInterval extends ISerializableInterval = Interval>
+    extends ASharedIntervalCollection<TInterval> {
+
+    /**
+     * Create a SharedIntervalCollection
+     *
+     * @param runtime - component runtime the new shared map belongs to
+     * @param id - optional name of the shared map
+     * @returns newly create shared map (but not attached yet)
+     */
+    public static create(runtime: IComponentRuntime, id?: string) {
+        return runtime.createChannel(
+            SharedObject.getIdForCreate(id),
+            SharedIntervalCollectionFactory.Type) as SharedIntervalCollection;
+    }
+
+    /**
+     * Get a factory for SharedIntervalCollection to register with the component.
+     *
+     * @returns a factory that creates and load SharedIntervalCollection
+     */
+    public static getFactory(): ISharedObjectFactory {
+        return new SharedIntervalCollectionFactory();
     }
 }
