@@ -49,7 +49,7 @@ export class TodoItemView extends React.Component<TodoItemViewProps, TodoItemVie
         this.setCheckedState = this.setCheckedState.bind(this);
     }
 
-    componentDidMount() {
+    public componentDidMount() {
         this.props.todoItemModel.on("checkedStateChanged", () => {
             this.setState({ checked: this.props.todoItemModel.getCheckedState() });
         });
@@ -59,7 +59,7 @@ export class TodoItemView extends React.Component<TodoItemViewProps, TodoItemVie
         this.props.todoItemModel.setCheckedState(e.target.checked);
     }
 
-    render() {
+    public render() {
         // tslint:disable:react-a11y-input-elements
         // react-a11y-input-elements incorrectly thinks checkboxes need placeholder text
         // Issue fixed in tslint-microsoft-contrib 6.1.0:

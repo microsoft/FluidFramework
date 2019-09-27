@@ -30,16 +30,16 @@ export class TodoItemDetailsView extends React.Component<TodoItemDetailsViewProp
         this.createInnerComponent = this.createInnerComponent.bind(this);
     }
 
-    async createInnerComponent(type: TodoItemSupportedComponents) {
+    private async createInnerComponent(type: TodoItemSupportedComponents) {
         await this.props.todoItemModel.createInnerComponent(type, { startingText: type });
     }
 
-    async refreshInnerComponentFromModel(): Promise<void> {
+    private async refreshInnerComponentFromModel(): Promise<void> {
         const innerComponent = await this.props.todoItemModel.getInnerComponent();
         this.setState({innerComponent});
     }
 
-    async componentDidMount() {
+    public async componentDidMount() {
         this.props.todoItemModel.on("innerComponentChanged", async () => {
             this.setState({
                 hasInnerComponent: this.props.todoItemModel.hasInnerComponent(),
@@ -50,7 +50,7 @@ export class TodoItemDetailsView extends React.Component<TodoItemDetailsViewProp
         await this.refreshInnerComponentFromModel();
     }
 
-    render() {
+    public render() {
         if (!this.state.hasInnerComponent) {
             // No one has created a detailed item yet
             return (

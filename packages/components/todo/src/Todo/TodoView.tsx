@@ -35,7 +35,7 @@ export class TodoView extends React.Component<TodoViewProps, TodoViewState> {
         this.refreshTodoItemListFromModel = this.refreshTodoItemListFromModel.bind(this);
     }
 
-    async componentDidMount() {
+    public async componentDidMount() {
         // Get the shared string for the title off the model
         this.titleString = await this.props.todoModel.getTodoTitleString();
 
@@ -55,7 +55,7 @@ export class TodoView extends React.Component<TodoViewProps, TodoViewState> {
         this.newTextInput.focus();
     }
 
-    async refreshTodoItemListFromModel(): Promise<void> {
+    private async refreshTodoItemListFromModel(): Promise<void> {
         const todoItemComponents = await this.props.todoModel.getTodoItemComponents();
         this.setState({todoItemComponents});
     }
@@ -63,13 +63,13 @@ export class TodoView extends React.Component<TodoViewProps, TodoViewState> {
     /**
      * This allows us to prevent default form behavior while getting all the benefits
      */
-    async createNewTodoItem(ev: React.FormEvent<HTMLFormElement>): Promise<void> {
+    public async createNewTodoItem(ev: React.FormEvent<HTMLFormElement>): Promise<void> {
         ev.preventDefault();
         await this.props.todoModel.addTodoItemComponent({ startingText: this.newTextInput.value });
         this.newTextInput.value = "";
     }
 
-    render(): JSX.Element {
+    public render(): JSX.Element {
         // Getting the subcomponents and DDSs is async and happens after the first render in componentDidMount.
         // Until those finish loading, we'll render a loading indicator.
         if (!this.state.modelLoaded) {
