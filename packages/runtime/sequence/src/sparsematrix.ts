@@ -10,8 +10,6 @@ import { ISharedObject, ISharedObjectFactory } from "@microsoft/fluid-shared-obj
 import { SharedSegmentSequence, SubSequence } from "./";
 import { pkgVersion } from "./packageVersion";
 
-type Cell = Json<JsonPrimitive | IComponentHandle>;
-
 // An empty segment that occupies 'cachedLength' positions.  SparseMatrix uses PaddingSegment
 // to "pad" a run of unoccupied cells.
 export class PaddingSegment extends BaseSegment {
@@ -81,7 +79,7 @@ export class PaddingSegment extends BaseSegment {
     }
 }
 
-export class RunSegment extends SubSequence<Cell> {
+export class RunSegment extends SubSequence<Json<JsonPrimitive | IComponentHandle>> {
     public static readonly typeString = "RunSegment";
     public static is(segment: ISegment): segment is RunSegment {
         return segment.type === RunSegment.typeString;
@@ -100,7 +98,7 @@ export class RunSegment extends SubSequence<Cell> {
 
     private tags: any[];
 
-    constructor(public items: Cell[]) {
+    constructor(public items: Json<JsonPrimitive | IComponentHandle>[]) {
         super(items);
         this.tags = new Array(items.length).fill(undefined);
     }
@@ -207,7 +205,7 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
         return positionToRowCol(this.getLength()).row;
     }
 
-    public setItems(row: number, col: number, values: Cell[], props?: PropertySet) {
+    public setItems(row: number, col: number, values: Json<JsonPrimitive | IComponentHandle>[], props?: PropertySet) {
         const start = rowColToPosition(row, col);
         const end = start + values.length;
         const segment = new RunSegment(values);
