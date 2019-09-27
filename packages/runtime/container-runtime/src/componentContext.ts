@@ -213,9 +213,10 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
     public process(message: ISequencedDocumentMessage, local: boolean): void {
         this.verifyNotClosed();
 
+        // component has been modified and will need to regenerate its snapshot
+        this.baseId = undefined;
+
         if (this.loaded) {
-            // component has been modified and will need to regenerate its snapshot
-            this.baseId = undefined;
             return this.componentRuntime.process(message, local);
         } else {
             assert(!local);
