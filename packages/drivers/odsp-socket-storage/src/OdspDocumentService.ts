@@ -72,8 +72,8 @@ export class OdspDocumentService implements IDocumentService {
     ) {
         this.getStorageToken = (refresh: boolean) => {
             if (refresh) {
-                // That's usually points to a perf bug:
-                // Hosting app should optimize and provide non-expired tokens on all critical paths.
+                // Potential perf issue:
+                // Host should optimize and provide non-expired tokens on all critical paths.
                 // Exceptions: race conditions around expiration, revoked tokens, host that does not care (fluid-fetcher)
                 this.logger.sendTelemetryEvent({eventName: "StorageTokenRefresh"});
             }
