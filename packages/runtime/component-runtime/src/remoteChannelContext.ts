@@ -45,8 +45,7 @@ export class RemoteChannelContext implements IChannelContext {
         private readonly extraBlobs: Map<string, string>,
         private readonly branch: string,
         private readonly attributes: RequiredIChannelAttributes | undefined,
-    ) {
-    }
+    ) {}
 
     public getChannel(): Promise<IChannel> {
         if (!this.channelP) {
@@ -146,6 +145,7 @@ export class RemoteChannelContext implements IChannelContext {
         }
         this.pending = undefined;
         this.isLoaded = true;
+        this.baseId = this.baseSnapshot.id == null ? undefined : this.baseSnapshot.id;
 
         // Because have some await between we created the service and here, the connection state might have changed
         // and we don't propagate the connection state when we are not loaded.  So we have to set it again here.

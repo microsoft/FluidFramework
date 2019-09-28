@@ -481,6 +481,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     // Local copy of sent but unacknowledged chunks.
     private readonly unackedChunkedMessages: Map<number, IBufferedChunk> = new Map<number, IBufferedChunk>();
 
+    private loadedFromSummary: boolean;
+
     private constructor(
         private readonly context: IContainerContext,
         private readonly registry: IComponentRegistry,
@@ -494,9 +496,9 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         this.IComponentHandleContext = new ComponentHandleContext("", this);
 
         // Extract components stored inside the snapshot
-        const loadedFromSummary = context.baseSnapshot.trees[".protocol"] ? true : false;
+        this.loadedFromSummary = context.baseSnapshot.trees[".protocol"] ? true : false;
         const components = new Map<string, ISnapshotTree | string>();
-        if (loadedFromSummary) {
+        if (this.loadedFromSummary) {
             Object.keys(context.baseSnapshot.trees).forEach((value) => {
                 if (value !== ".protocol") {
                     const tree = context.baseSnapshot.trees[value];
@@ -557,10 +559,12 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             "/_summarizer",
             this,
             summaryConfiguration,
-            () => this.generateSummary(!loadedFromSummary));
+            () => this.generateSummary(!this.loadedFromSummary),
+            (snapshot) => this.context.refreshBaseSnapshot(snapshot));
 
         // Create the SummaryManager and mark the initial state
-        this.summaryManager = new SummaryManager(context, this.runtimeOptions.generateSummaries || loadedFromSummary);
+        this.summaryManager = new SummaryManager(
+            context, this.runtimeOptions.generateSummaries || this.loadedFromSummary);
         if (this.context.connectionState === ConnectionState.Connected) {
             this.summaryManager.setConnected(this.context.clientId);
         }
@@ -916,6 +920,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     }
 
     private refreshBaseSnapshot(snapshot: ISnapshotTree) {
+        // currently only is called from summaries
+        this.loadedFromSummary = true;
         // propogate updated tree to all components
         for (const key of Object.keys(snapshot.trees)) {
             if (this.contexts.has(key)) {

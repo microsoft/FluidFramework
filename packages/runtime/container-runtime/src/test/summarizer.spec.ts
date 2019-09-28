@@ -74,6 +74,7 @@ describe("Runtime", () => {
                                 totalBlobSize: 0,
                             };
                         },
+                        () => {},
                     );
 
                     summarizer.run(summarizerClientId).catch((reason) => assert.fail(JSON.stringify(reason)));
