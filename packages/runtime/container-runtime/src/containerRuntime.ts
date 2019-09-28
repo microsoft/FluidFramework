@@ -608,9 +608,9 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
      * Notifies this object to take the snapshot of the container.
      * @param tagMessage - Message to supply to storage service for writing the snapshot.
      */
-    public async snapshot(tagMessage: string, generateFullTreeNoOptimizations?: boolean): Promise<ITree> {
+    public async snapshot(tagMessage: string, fullTree: boolean = false): Promise<ITree> {
         // Pull in the prior version and snapshot tree to store against
-        const lastVersion = generateFullTreeNoOptimizations ? [] : await this.storage.getVersions(this.id, 1);
+        const lastVersion = fullTree ? [] : await this.storage.getVersions(this.id, 1);
         const tree = lastVersion.length > 0
             ? await this.storage.getSnapshotTree(lastVersion[0])
             : { blobs: {}, commits: {}, trees: {} };
@@ -621,13 +621,13 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
             // If ID exists then previous commit is still valid
             const commit = tree.commits[componentId] as string;
-            if (snapshot.id && commit && !generateFullTreeNoOptimizations) {
+            if (snapshot.id && commit && !fullTree) {
                 return {
                     id: componentId,
                     version: commit,
                 };
             } else {
-                if (snapshot.id && !commit && !generateFullTreeNoOptimizations) {
+                if (snapshot.id && !commit && !fullTree) {
                     this.logger.sendErrorEvent({
                         componentId,
                         eventName: "MissingCommit",
@@ -652,7 +652,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         const componentVersions = await Promise.all(componentVersionsP);
 
         // Sort for better diffing of snapshots (in replay tool, used to find bugs in snapshotting logic)
-        if (generateFullTreeNoOptimizations) {
+        if (fullTree) {
             componentVersions.sort((a, b) => {
                 return a.id.localeCompare(b.id);
             });
@@ -848,7 +848,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
         const context = new LocalComponentContext(
             id,
-            pkg,
+            [pkg],
             this,
             this.storage,
             this.context.scope,
@@ -913,7 +913,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     /**
      * Returns a summary of the runtime at the current sequence number.
      */
-    private async summarize(generateFullTreeNoOptimizations?: boolean): Promise<ISummaryTreeWithStats> {
+    private async summarize(fullTree: boolean = false): Promise<ISummaryTreeWithStats> {
         const summaryTree: ISummaryTree = {
             tree: {},
             type: SummaryType.Tree,
@@ -922,10 +922,10 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
         // Iterate over each component and ask it to snapshot
         await Promise.all(Array.from(this.contexts).map(async ([key, value]) => {
-            const snapshot = await value.snapshot();
+            const snapshot = await value.snapshot(fullTree);
             const treeWithStats = this.summaryTreeConverter.convertToSummaryTree(
                 snapshot,
-                generateFullTreeNoOptimizations);
+                fullTree);
             summaryTree.tree[key] = treeWithStats.summaryTree;
             summaryStats = this.summaryTreeConverter.mergeStats(summaryStats, treeWithStats.summaryStats);
         }));
@@ -977,8 +977,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                     snapshotTree,
                     this,
                     new DocumentStorageServiceProxy(this.storage, flatBlobs),
-                    this.context.scope,
-                    attachMessage.type);
+                    this.context.scope);
 
                 break;
 
@@ -1041,7 +1040,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         deferred.resolve(context);
     }
 
-    private async generateSummary(generateFullTreeNoOptimizations?: boolean): Promise<IGeneratedSummaryData> {
+    private async generateSummary(fullTree: boolean = false): Promise<IGeneratedSummaryData> {
         const message =
             `Summary @${this.deltaManager.referenceSequenceNumber}:${this.deltaManager.minimumSequenceNumber}`;
 
@@ -1068,7 +1067,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             const parents = versions.map((version) => version.id);
 
             const sequenceNumber = this.deltaManager.referenceSequenceNumber;
-            const treeWithStats = await this.summarize(generateFullTreeNoOptimizations);
+            const treeWithStats = await this.summarize(fullTree);
 
             const handle = await this.context.storage.uploadSummary(treeWithStats.summaryTree);
             const summary = {
