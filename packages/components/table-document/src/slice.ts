@@ -5,7 +5,7 @@
 
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import { ICombiningOp, PropertySet } from "@microsoft/fluid-merge-tree";
-import { IComponentContext, IComponentRuntime, JsonPrimitive } from "@microsoft/fluid-runtime-definitions";
+import { IComponentContext, IComponentRuntime, JsonablePrimitive } from "@microsoft/fluid-runtime-definitions";
 import { CellRange } from "./cellrange";
 import { ConfigKey } from "./configKey";
 import { TableDocument } from "./document";
@@ -52,12 +52,12 @@ export class TableSlice extends PrimedComponent implements ITable {
         return this.doc.evaluateFormula(formula);
     }
 
-    public getCellValue(row: number, col: number): JsonPrimitive {
+    public getCellValue(row: number, col: number): JsonablePrimitive {
         this.validateInSlice(row, col);
         return this.doc.getCellValue(row, col);
     }
 
-    public setCellValue(row: number, col: number, value: JsonPrimitive) {
+    public setCellValue(row: number, col: number, value: JsonablePrimitive) {
         this.validateInSlice(row, col);
         this.doc.setCellValue(row, col, value);
     }

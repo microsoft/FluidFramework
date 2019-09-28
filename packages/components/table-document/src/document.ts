@@ -6,7 +6,7 @@
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { ICombiningOp, IntervalType, LocalReference, PropertySet } from "@microsoft/fluid-merge-tree";
-import { IComponentContext, IComponentRuntime, JsonPrimitive } from "@microsoft/fluid-runtime-definitions";
+import { IComponentContext, IComponentRuntime, JsonablePrimitive } from "@microsoft/fluid-runtime-definitions";
 import {
     positionToRowCol,
     rowColToPosition,
@@ -69,11 +69,11 @@ export class TableDocument extends PrimedComponent implements ITable {
         }
     }
 
-    public getCellValue(row: number, col: number): JsonPrimitive {
+    public getCellValue(row: number, col: number): JsonablePrimitive {
         return this[loadCellTextSym](row, col);
     }
 
-    public setCellValue(row: number, col: number, value: JsonPrimitive) {
+    public setCellValue(row: number, col: number, value: JsonablePrimitive) {
         this.workbook.setCellText(row, col, value);
     }
 
@@ -184,11 +184,11 @@ export class TableDocument extends PrimedComponent implements ITable {
         });
     }
 
-    private [loadCellTextSym](row: number, col: number): JsonPrimitive {
-        return this.matrix.getItem(row, col) as JsonPrimitive;
+    private [loadCellTextSym](row: number, col: number): JsonablePrimitive {
+        return this.matrix.getItem(row, col) as JsonablePrimitive;
     }
 
-    private [storeCellTextSym](row: number, col: number, value: JsonPrimitive) {
+    private [storeCellTextSym](row: number, col: number, value: JsonablePrimitive) {
         this.matrix.setItems(row, col, [value]);
     }
 

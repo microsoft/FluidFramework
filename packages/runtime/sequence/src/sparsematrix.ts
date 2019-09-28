@@ -5,7 +5,7 @@
 
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { BaseSegment, createGroupOp, IJSONSegment, ISegment, PropertySet } from "@microsoft/fluid-merge-tree";
-import { IChannelAttributes, IComponentRuntime, ISharedObjectServices, Json, JsonPrimitive } from "@microsoft/fluid-runtime-definitions";
+import { IChannelAttributes, IComponentRuntime, ISharedObjectServices, Jsonable, JsonablePrimitive } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObject, ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { SharedSegmentSequence, SubSequence } from "./";
 import { pkgVersion } from "./packageVersion";
@@ -79,7 +79,7 @@ export class PaddingSegment extends BaseSegment {
     }
 }
 
-export class RunSegment extends SubSequence<Json<JsonPrimitive | IComponentHandle>> {
+export class RunSegment extends SubSequence<Jsonable<JsonablePrimitive | IComponentHandle>> {
     public static readonly typeString = "RunSegment";
     public static is(segment: ISegment): segment is RunSegment {
         return segment.type === RunSegment.typeString;
@@ -98,7 +98,7 @@ export class RunSegment extends SubSequence<Json<JsonPrimitive | IComponentHandl
 
     private tags: any[];
 
-    constructor(public items: Json<JsonPrimitive | IComponentHandle>[]) {
+    constructor(public items: Jsonable<JsonablePrimitive | IComponentHandle>[]) {
         super(items);
         this.tags = new Array(items.length).fill(undefined);
     }
@@ -205,7 +205,7 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
         return positionToRowCol(this.getLength()).row;
     }
 
-    public setItems(row: number, col: number, values: Json<JsonPrimitive | IComponentHandle>[], props?: PropertySet) {
+    public setItems(row: number, col: number, values: Jsonable<JsonablePrimitive | IComponentHandle>[], props?: PropertySet) {
         const start = rowColToPosition(row, col);
         const end = start + values.length;
         const segment = new RunSegment(values);
