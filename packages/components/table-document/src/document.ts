@@ -14,11 +14,11 @@ import {
     SparseMatrix,
     UnboxedOper,
 } from "@microsoft/fluid-sequence";
+import { createSheetlet, ISheetlet } from "@tiny-calc/micro";
 import * as assert from "assert";
 import { CellRange } from "./cellrange";
 import { TableSliceType } from "./ComponentTypes";
 import { debug } from "./debug";
-import { createSheetlet, ISheetlet } from "./sheetlet";
 import { TableSlice } from "./slice";
 import { ITable } from "./table";
 
@@ -171,17 +171,15 @@ export class TableDocument extends PrimedComponent implements ITable {
         this.maybeCols.on("op", (...args: any[]) => this.emit("op", ...args));
         this.maybeRows.on("op", (...args: any[]) => this.emit("op", ...args));
 
+        // tslint:disable-next-line:no-this-assignment
+        const table = this;
         this.maybeWorkbook = createSheetlet({
-            rows: () => this.numRows,
-            columns: () => this.numCols,
-            loadCellText: (row, col) => this[loadCellTextSym](row, col),
-            storeCellText: (row, col, value) => {
-                this[storeCellTextSym](row, col, value);
-            },
-            loadCellData: (row, col) => this[loadCellSym](row, col),
-            storeCellData: (row, col, value) => {
-                this[storeCellSym](row, col, value);
-            },
+            get numRows() { return table.numRows; },
+            get numCols() { return table.numCols; },
+            loadCellText(row, col) { return table[loadCellTextSym](row, col); },
+            storeCellText(row, col, value) { table[storeCellTextSym](row, col, value); },
+            loadCellData(row, col) { return table[loadCellSym](row, col); },
+            storeCellData(row, col, value) { table[storeCellSym](row, col, value); },
         });
     }
 
