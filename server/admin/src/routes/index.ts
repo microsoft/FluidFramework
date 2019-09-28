@@ -7,7 +7,7 @@ import * as core from "@microsoft/fluid-server-services-core";
 import * as ensureAuth from "connect-ensure-login";
 import { Router } from "express";
 import { Provider } from "nconf";
-import { KeyValueManager } from "../keyValueManager";
+import { KeyValueWrapper } from "../keyValueWrapper";
 import { TenantManager } from "../tenantManager";
 import * as api from "./api";
 import * as home from "./home";
@@ -20,8 +20,7 @@ export interface IRoutes {
 export function create(
     config: Provider,
     mongoManager: core.MongoManager,
-    tenantManager: TenantManager,
-    keyValueManager: KeyValueManager): IRoutes {
+    tenantManager: TenantManager): IRoutes {
 
     const ensureLoggedIn = config.get("login:enabled")
     ? ensureAuth.ensureLoggedIn
@@ -29,8 +28,10 @@ export function create(
         return (req, res, next) => next();
     };
 
+    const keyValueWrapper = new KeyValueWrapper(config);
+
     return {
-        api: api.create(config, mongoManager, ensureLoggedIn, tenantManager, keyValueManager),
-        home: home.create(config, mongoManager, ensureLoggedIn, tenantManager, keyValueManager),
+        api: api.create(config, mongoManager, ensureLoggedIn, tenantManager, keyValueWrapper),
+        home: home.create(config, mongoManager, ensureLoggedIn, tenantManager, keyValueWrapper),
     };
 }
