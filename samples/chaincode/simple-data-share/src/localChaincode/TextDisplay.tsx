@@ -23,8 +23,7 @@ export class TextDisplay extends PrimedComponent implements IComponentHTMLVisual
   public counter: Counter;
 
   public render(div: HTMLDivElement) {
-    // Query against whoever is hosting us for a counter. This will be the reference we use to display the count.
-    // This will be the same counter provided in the services.
+    // this.counter should be set by the root component. If it isn't defined yet, just return
     if (this.counter) {
       ReactDOM.render(
         <TextDisplayView counter={this.counter} />,

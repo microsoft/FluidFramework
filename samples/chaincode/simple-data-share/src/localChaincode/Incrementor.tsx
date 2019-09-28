@@ -20,32 +20,25 @@ export class Incrementor extends PrimedComponent {
   public static readonly chaincodeName = chaincodeName + "/incrementor";
   public counter: Counter;
 
-  public setupTimer() {
+  protected async componentInitializingFirstTime() {
+    this.setupTimer();
+  }
 
+  private setupTimer() {
     // random number between 1-10
     const incrementCallback = () => {
       const randomNumber = Math.floor((Math.random() * 10) + 1);
-      this.counter.increment(randomNumber);
+      // this.counter should be set by the root component. If it isn't defined yet, just return
+      if (this.counter) {
+        this.counter.increment(randomNumber);
+      } else {
+        console.log('counter undefined; skipping this increment')
+      }
     }
 
     // Set a timer to call the above callback every 5 seconds
     setInterval(incrementCallback, 5000);
   }
-
-  /**
-   *  The component has been loaded.
-   */
-  /*
-  public async opened() {
-    // We only need the counter in this example
-    if (this.counter) {
-      await this.setupTimer(this.counter);
-    } else {
-      alert("Incrementor needs a Counter")
-      return;
-    }
-  }
-  */
 }
 
 export const IncrementorInstantiationFactory = new PrimedComponentFactory(
