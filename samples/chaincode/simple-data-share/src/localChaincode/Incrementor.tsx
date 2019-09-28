@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { Component } from "@prague/app-component";
-import { Counter } from "@prague/map";
+import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
+import { Counter } from "@microsoft/fluid-map";
 
 const pkg = require("../../package.json");
 const chaincodeName = pkg.name;
@@ -16,20 +16,16 @@ const chaincodeName = pkg.name;
  * You could imagine that a component like this could make background calls to populate data.
  * This logic is valuable as a component when you could imagining using it with multiple other components.
  */
-export class Incrementor extends Component {
-
+export class Incrementor extends PrimedComponent {
   public static readonly chaincodeName = chaincodeName + "/incrementor";
+  public counter: Counter;
 
-  protected async create() {
-    // create is not needed because we are using the state provided from out parent component
-  }
-
-  private setupTimer(counter: Counter) {
+  public setupTimer() {
 
     // random number between 1-10
     const incrementCallback = () => {
       const randomNumber = Math.floor((Math.random() * 10) + 1);
-      counter.increment(randomNumber);
+      this.counter.increment(randomNumber);
     }
 
     // Set a timer to call the above callback every 5 seconds
@@ -39,14 +35,20 @@ export class Incrementor extends Component {
   /**
    *  The component has been loaded.
    */
+  /*
   public async opened() {
     // We only need the counter in this example
-    const maybeCounter = await this.platform.queryInterface<Counter>("counter");
-    if (maybeCounter) {
-      await this.setupTimer(maybeCounter);
+    if (this.counter) {
+      await this.setupTimer(this.counter);
     } else {
       alert("Incrementor needs a Counter")
       return;
     }
   }
+  */
 }
+
+export const IncrementorInstantiationFactory = new PrimedComponentFactory(
+  Incrementor,
+  [],
+);

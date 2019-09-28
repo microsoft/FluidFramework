@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { Component, Document } from "@prague/app-component";
-import { IContainerContext, IRuntime } from "@prague/container-definitions";
-import { Counter, CounterValueType } from "@prague/map";
+import { PrimedComponent, PrimedComponentFactory, SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
+import { IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
+import { Counter, CounterValueType } from "@microsoft/fluid-map";
 
 // Import our local components
-import { Button } from "./localChaincode/Button";
-import { TextDisplay } from "./localChaincode/TextDisplay";
-import { Incrementor } from "./localChaincode/Incrementor";
+import { Button, ButtonInstantiationFactory } from "./localChaincode/Button";
+import { TextDisplay, TextDisplayInstantiationFactory } from "./localChaincode/TextDisplay";
+import { Incrementor, IncrementorInstantiationFactory } from "./localChaincode/Incrementor";
 
 const pkg = require("../package.json");
 const chaincodeName = pkg.name;
@@ -25,34 +25,59 @@ const chaincodeName = pkg.name;
  * 
  * There is also a Incrementor component which runs in the background and randomly increments the count value every 5 seconds.
  */
-export class SimpleDataSharing extends Document {
+export class SimpleDataSharing extends PrimedComponent implements IComponentHTMLVisual {
+  public get IComponentHTMLVisual() { return this; }
 
   // Id should be unique identifiers 
   private readonly buttonId = "button-12345";
   private readonly textDisplayId = "textDisplay-12345";
   private readonly incrementorId = "incrementor-12345";
 
-  protected async create() {
+  private button: Button;
+  private textDisplay: TextDisplay;
+  private incrementor: Incrementor;
+
+  protected async componentInitializingFirstTime() {
     // Create a counter that will live on the SimpleDataSharing component
-    this.root.set("clicks", 0, CounterValueType.Name);
-    
+    this.root.createValueType("clicks", CounterValueType.Name, 0);
+
     // Create a button and textDisplay component
-    this.runtime.createAndAttachComponent(this.buttonId, Button.chaincodeName);
-    this.runtime.createAndAttachComponent(this.textDisplayId, TextDisplay.chaincodeName);
-    this.runtime.createAndAttachComponent(this.incrementorId, Incrementor.chaincodeName);
+    this.createAndAttachComponent(this.buttonId, Button.chaincodeName);
+    this.createAndAttachComponent(this.textDisplayId, TextDisplay.chaincodeName);
+    this.createAndAttachComponent(this.incrementorId, Incrementor.chaincodeName);
   }
 
-  protected async render(host: HTMLDivElement) {
+  protected async componentHasInitialized() {
+    const buttonP = this.getComponent<Button>(this.buttonId, true);
+    const textDisplayP = this.getComponent<TextDisplay>(this.textDisplayId, true);
+    const incrementorP = this.getComponent<Incrementor>(this.incrementorId, true);
+
+    // This is just an optimization to load all the components in parallel.
+    [this.button, this.textDisplay, this.incrementor] = await Promise.all([buttonP, textDisplayP, incrementorP]);
+
+    console.log('qwerqwerqwrqwer');
+    console.log(this.button);
+    console.log(this.textDisplay);
+    console.log(this.incrementor);
 
     // Get the counter so we can pass it to our other components
-    const counter = await this.root.wait<Counter>("clicks");
-  
+    const counter = this.root.get<Counter>("clicks");
+    this.button.counter = counter;
+    this.textDisplay.counter = counter;
+    this.incrementor.counter = counter;
+  }
+  public render(div: HTMLDivElement) {
     // We will create and append a div for the button and the display
     const textDisplayDiv = document.createElement("div");
     const buttonDiv = document.createElement("div");
-    host.appendChild(textDisplayDiv);
-    host.appendChild(buttonDiv);
+    div.appendChild(textDisplayDiv);
+    div.appendChild(buttonDiv);
 
+    this.textDisplay.render(textDisplayDiv);
+    this.button.render(buttonDiv);
+    this.incrementor.setupTimer();
+
+    /*
     // We will open our textDisplay component and pass it the services below.
     // Note that we are passing a reference to the counter object from this component
     const textDisplayServices: [string, Promise<any>][] = [
@@ -80,22 +105,26 @@ export class SimpleDataSharing extends Document {
 
     // This is just an optimization to load all the components in parallel.
     await Promise.all([buttonP, textDisplayP, incrementorP]);
-  }
-
-  /**
-   *  The component has been loaded. Render the component into the provided div
-   */
-  public async opened() {
-    // This is a maybeDiv because we require the container to give us a div to render in.
-    const maybeDiv = await this.platform.queryInterface<HTMLDivElement>("div");
-    if (maybeDiv) {
-      await this.render(maybeDiv);
-    } else {
-      return;
-    }
+    */
   }
 }
 
+export const SimpleDataSharingInstantiationFactory = new PrimedComponentFactory(
+  SimpleDataSharing,
+  [],
+);
+
+export const fluidExport = new SimpleModuleInstantiationFactory(
+  chaincodeName,
+  new Map([
+    [chaincodeName, Promise.resolve(SimpleDataSharingInstantiationFactory)],
+    [Button.chaincodeName, Promise.resolve(ButtonInstantiationFactory)],
+    [TextDisplay.chaincodeName, Promise.resolve(TextDisplayInstantiationFactory)],
+    [Incrementor.chaincodeName, Promise.resolve(IncrementorInstantiationFactory)],
+  ]),
+);
+
+/*
 export async function instantiateRuntime(
   context: IContainerContext
 ): Promise<IRuntime> {
@@ -106,3 +135,4 @@ export async function instantiateRuntime(
     [Incrementor.chaincodeName, Promise.resolve(Component.createComponentFactory(Incrementor))],
   ]));
 }
+*/
