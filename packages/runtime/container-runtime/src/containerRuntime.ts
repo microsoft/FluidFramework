@@ -544,8 +544,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             this.clearPartialChunks(clientId);
         });
 
-        this.context.on("refreshBaseSnapshot",
-            (snapshot: ISnapshotTree) => this.refreshBaseSnapshot(snapshot));
+        this.context.on("refreshBaseSummary",
+            (snapshot: ISnapshotTree) => this.refreshBaseSummary(snapshot));
 
         const summaryConfiguration = context.serviceConfiguration
             ? { ...DefaultSummaryConfiguration, ...context.serviceConfiguration.summary }
@@ -560,7 +560,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             this,
             summaryConfiguration,
             () => this.generateSummary(!this.loadedFromSummary),
-            (snapshot) => this.context.refreshBaseSnapshot(snapshot));
+            (snapshot) => this.context.refreshBaseSummary(snapshot));
 
         // Create the SummaryManager and mark the initial state
         this.summaryManager = new SummaryManager(
@@ -919,14 +919,14 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this.dirtyDocument;
     }
 
-    private refreshBaseSnapshot(snapshot: ISnapshotTree) {
+    private refreshBaseSummary(snapshot: ISnapshotTree) {
         // currently only is called from summaries
         this.loadedFromSummary = true;
         // propogate updated tree to all components
         for (const key of Object.keys(snapshot.trees)) {
             if (this.contexts.has(key)) {
                 const component = this.contexts.get(key);
-                component.refreshBaseSnapshot(snapshot.trees[key]);
+                component.refreshBaseSummary(snapshot.trees[key]);
             }
         }
     }

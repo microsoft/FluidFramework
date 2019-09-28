@@ -91,7 +91,7 @@ export class LocalChannelContext implements IChannelContext {
         this.attached = true;
     }
 
-    public refreshBaseSnapshot(snapshot: ISnapshotTree) {
+    public refreshBaseSummary(snapshot: ISnapshotTree) {
         this.baseId = snapshot.id === null ? undefined : snapshot.id;
     }
 }

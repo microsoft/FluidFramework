@@ -586,16 +586,16 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
             this.emit("leader", clientId);
         });
 
-        this.componentContext.on("refreshBaseSnapshot",
-            (snapshot: ISnapshotTree) => this.refreshBaseSnapshot(snapshot));
+        this.componentContext.on("refreshBaseSummary",
+            (snapshot: ISnapshotTree) => this.refreshBaseSummary(snapshot));
     }
 
-    private refreshBaseSnapshot(snapshot: ISnapshotTree) {
+    private refreshBaseSummary(snapshot: ISnapshotTree) {
         // propogate updated tree to all channels
         for (const key of Object.keys(snapshot.trees)) {
             const channel = this.contexts.get(key);
             if (channel) {
-                channel.refreshBaseSnapshot(snapshot.trees[key]);
+                channel.refreshBaseSummary(snapshot.trees[key]);
             }
         }
     }

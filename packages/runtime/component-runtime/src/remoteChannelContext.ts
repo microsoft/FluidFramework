@@ -92,7 +92,7 @@ export class RemoteChannelContext implements IChannelContext {
         return snapshotChannel(channel, this.baseId);
     }
 
-    public refreshBaseSnapshot(snapshot: ISnapshotTree) {
+    public refreshBaseSummary(snapshot: ISnapshotTree) {
         this.baseSnapshot = snapshot;
         this.baseId = this.baseSnapshot.id === null ? undefined : this.baseSnapshot.id;
     }

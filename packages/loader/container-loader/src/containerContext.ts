@@ -177,10 +177,10 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         this.logger = container.subLogger;
     }
 
-    public refreshBaseSnapshot(snapshot: ISnapshotTree) {
+    public refreshBaseSummary(snapshot: ISnapshotTree) {
         this._baseSnapshot = snapshot;
         // need to notify runtime of the update
-        this.emit("refreshBaseSnapshot", snapshot);
+        this.emit("refreshBaseSummary", snapshot);
     }
 
     public async snapshot(tagMessage: string, fullTree: boolean = false): Promise<ITree | null> {

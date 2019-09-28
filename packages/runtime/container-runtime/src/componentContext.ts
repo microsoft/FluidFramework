@@ -322,11 +322,11 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
 
     public abstract generateAttachMessage(): IAttachMessage;
 
-    public refreshBaseSnapshot(snapshot: ISnapshotTree) {
+    public refreshBaseSummary(snapshot: ISnapshotTree) {
         this._baseSnapshot = snapshot;
         this.baseId = this._baseSnapshot.id === null ? undefined : this._baseSnapshot.id;
         // need to notify runtime of the update
-        this.emit("refreshBaseSnapshot", snapshot);
+        this.emit("refreshBaseSummary", snapshot);
     }
 
     protected abstract getSnapshotDetails(): Promise<ISnapshotDetails>;

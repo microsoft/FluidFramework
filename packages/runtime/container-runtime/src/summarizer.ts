@@ -69,7 +69,7 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
         private readonly runtime: ContainerRuntime,
         private readonly configuration: ISummaryConfiguration,
         private readonly generateSummary: () => Promise<IGeneratedSummaryData>,
-        private readonly refreshBaseSnapshot: (snapshot: ISnapshotTree) => void,
+        private readonly refreshBaseSummary: (snapshot: ISnapshotTree) => void,
     ) {
         this.logger = ChildLogger.create(this.runtime.logger, "Summarizer");
 
@@ -159,7 +159,7 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
                             this.logger.sendErrorEvent({ eventName: "SummarizerFailedToGetVersion" });
                         } else {
                             const snapshot = await this.runtime.storage.getSnapshotTree(versions[0]);
-                            this.refreshBaseSnapshot(snapshot);
+                            this.refreshBaseSummary(snapshot);
                         }
                     }
                     this.summaryPending = false;
