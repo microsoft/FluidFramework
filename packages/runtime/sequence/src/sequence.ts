@@ -372,20 +372,22 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     public async waitIntervalCollection(
         label: string,
     ): Promise<IntervalCollection<SequenceInterval>> {
-        return this.intervalMapKernel.wait<IntervalCollection<SequenceInterval>>(label);
+        return this.intervalMapKernel.wait<IntervalCollection<SequenceInterval>>(
+            this.getIntervalCollectionPath(label));
     }
 
     // TODO: fix race condition on creation by putting type on every operation
     public getIntervalCollection(label: string): IntervalCollection<SequenceInterval> {
-        if (!this.intervalMapKernel.has(label)) {
+        const labelPath = this.getIntervalCollectionPath(label);
+        if (!this.intervalMapKernel.has(labelPath)) {
             this.intervalMapKernel.createValueType(
-                label,
+                labelPath,
                 SequenceIntervalCollectionValueType.Name,
                 undefined);
         }
 
         const sharedCollection =
-            this.intervalMapKernel.get<IntervalCollection<SequenceInterval>>(label);
+            this.intervalMapKernel.get<IntervalCollection<SequenceInterval>>(labelPath);
         return sharedCollection;
     }
 
@@ -559,6 +561,10 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
             this.processMinSequenceNumberChanged(message.minimumSequenceNumber);
         }
 
+    }
+
+    private getIntervalCollectionPath(label: string) {
+        return `intervalCollections/${label}`;
     }
 
     private processMinSequenceNumberChanged(minSeq: number) {
