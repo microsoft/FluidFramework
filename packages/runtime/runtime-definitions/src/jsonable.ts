@@ -7,9 +7,9 @@
 // a workaround for lack of type recursion.
 // tslint:disable:interface-name
 
-export type JsonPrimitive = undefined | null | boolean | number | string;
-export interface JsonObject<T> extends Record<string, Json<T>> { }
-export interface JsonArray<T> extends Array<Json<T>> { }
+export type JsonablePrimitive = undefined | null | boolean | number | string;
+export interface JsonableObject<T> extends Record<string, Jsonable<T>> { }
+export interface JsonableArray<T> extends Array<Jsonable<T>> { }
 
 /**
  * Used to constrain a value to types that are serializable as JSON.  The `T` type parameter may be used to
@@ -24,4 +24,4 @@ export interface JsonArray<T> extends Array<Json<T>> { }
  *  - Non-finite numbers (`NaN`, `+/-Infinity`) are also coerced to `null`.
  *  - (`null` always serializes as `null`.)
  */
-export type Json<T = JsonPrimitive> = T | JsonArray<T> | JsonObject<T>;
+export type Jsonable<T = JsonablePrimitive> = T | JsonableArray<T> | JsonableObject<T>;
