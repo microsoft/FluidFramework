@@ -205,7 +205,12 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
         return positionToRowCol(this.getLength()).row;
     }
 
-    public setItems(row: number, col: number, values: Jsonable<JsonablePrimitive | IComponentHandle>[], props?: PropertySet) {
+    public setItems(
+        row: number,
+        col: number,
+        values: Jsonable<JsonablePrimitive | IComponentHandle>[],
+        props?: PropertySet,
+    ) {
         const start = rowColToPosition(row, col);
         const end = start + values.length;
         const segment = new RunSegment(values);
