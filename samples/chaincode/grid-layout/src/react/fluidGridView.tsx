@@ -18,14 +18,23 @@ export interface IFluidGridViewProps {
 
 export interface IGridViewState {
     layout: GridCellLayout[];
+    originalLayout: GridCellLayout[];
 }
 
-export class FluidGridView extends React.Component<IFluidGridViewProps, IGridViewState> {
-    constructor(props: Readonly<IFluidGridViewProps>) {
+export class FluidGridView extends React.PureComponent<IFluidGridViewProps, IGridViewState> {
+    public static defaultProps = {
+        className: "layout",
+        cols: 12,
+        rowHeight: 30,
+        onLayoutChange() {},
+    };
+
+    constructor(props: IFluidGridViewProps) {
         super(props);
 
         this.state = {
             layout: props.storage.get(),
+            originalLayout: props.storage.get(),
         };
 
         this.onLayoutChange = this.onLayoutChange.bind(this);
@@ -33,28 +42,25 @@ export class FluidGridView extends React.Component<IFluidGridViewProps, IGridVie
     }
 
     public async componentDidMount(): Promise<void> {
+        // this.props.storage.on("op", (item) => {
+        //     this.setState({innerId: this.props.innerIdCell.get()});
+        // });
+
         // Set local state when changes are made to the layout in storage
-        this.props.storage.on("valueChanged", (changed, local, op) => {
-            const prev = changed.previousValue as GridCellLayout[];
-            console.log(
-                `${local ? "Local" : "Remote"} valueChanged: ${changed.key} ==> ${JSON.stringify(
-                    changed
-                )} :: was ${JSON.stringify(prev)})`
-            );
+        this.props.storage.on("valueChanged", changed => {
+            console.log(`valueChanged: ${JSON.stringify(changed)}`);
 
             this.setState({ layout: this.props.storage.get() });
         });
     }
 
     public resetLayout() {
-        const layout = new Array<GridCellLayout>();
-        this.setState({
-            layout,
-        });
+        console.log(`resetLayout`);
+        this.props.storage.set([]);
     }
 
     public onLayoutChange(layout: GridCellLayout[]) {
-        console.log(`onLayoutChange called`);
+        console.log(`onLayoutChange`);
         this.props.storage.set(layout);
         // this.props.onLayoutChange(layout); // updates status display
     }
