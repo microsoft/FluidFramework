@@ -42,13 +42,6 @@ export class FluidGrid extends PrimedComponent implements IComponentHTMLVisual, 
 
     private layout: ISharedCell;
     private readonly layoutKey = "layout";
-
-    // private readonly defaultLayout: GridCellLayout[] = [
-    //     { i: "a", x: 0, y: 0, w: 1, h: 2, static: true },
-    //     { i: "b", x: 1, y: 0, w: 3, h: 2, minW: 2, maxW: 4 },
-    //     { i: "c", x: 4, y: 0, w: 1, h: 2 },
-    // ];
-
     private readonly defaultLayout: GridCellLayout[] = [
         { i: "a", x: 0, y: 0, w: 1, h: 2, static: true },
         { i: "b", x: 1, y: 0, w: 3, h: 2, minW: 2, maxW: 4 },
@@ -71,12 +64,6 @@ export class FluidGrid extends PrimedComponent implements IComponentHTMLVisual, 
      */
     protected async componentHasInitialized() {
         console.log("componentHasInitialized");
-        // this.root.on("op", e => {
-        //     alert("hello");
-        //     // tslint:disable-next-line: no-console
-        //     console.log(JSON.stringify(e));
-        // });
-
         // Shared objects that are stored within other Shared objects (e.g. a SharedMap within the root, which is a
         // SharedDirectory) must be retrieved asynchronously. We do that here, in this async function, then store a
         // local reference to the object so we can easily use it in synchronous code.
