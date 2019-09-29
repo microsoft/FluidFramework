@@ -14,7 +14,7 @@
         "noUnusedLocals": true,
         "outDir": "dist",
         "sourceMap": true,
-        "strictPropertyInitialization": true,
+        "strictPropertyInitialization": false,
         "target": "es6"
     },
     "include": [

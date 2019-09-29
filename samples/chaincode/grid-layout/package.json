@@ -1,7 +1,7 @@
 {
-  "name": "@fluid-example/sudoku",
-  "description": "Fluid Sudoku",
-  "version": "0.10.4",
+  "name": "@fluid-example/grid-layout",
+  "description": "Fluid grid-layout",
+  "version": "0.10.0",
   "author": "Microsoft",
   "repository": "microsoft/FluidFramework",
   "main": "dist/index.js",
@@ -56,6 +56,7 @@
   "dependencies": {
     "@microsoft/fluid-aqueduct": "^0.10.0",
     "@microsoft/fluid-aqueduct-react": "^0.10.0",
+    "@microsoft/fluid-cell": "^0.10.0",
     "@microsoft/fluid-component-core-interfaces": "^0.10.0",
     "@microsoft/fluid-component-runtime": "^0.10.0",
     "@microsoft/fluid-container-definitions": "^0.10.0",

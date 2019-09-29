@@ -4,7 +4,7 @@
  */
 
 import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
-import { FluidSudoku, FluidSudokuName } from "./FluidSudoku";
+import { FluidGrid, FluidGridName } from "./fluidGrid";
 
 /**
  * This does setup for the Container. The SimpleModuleInstantiationFactory also enables dynamic loading in the
@@ -15,8 +15,6 @@ import { FluidSudoku, FluidSudokuName } from "./FluidSudoku";
  * 2. Map of string to factory for all components
  */
 export const fluidExport = new SimpleModuleInstantiationFactory(
-    FluidSudokuName,
-    new Map([
-        [FluidSudokuName, Promise.resolve(FluidSudoku.getFactory())],
-    ]),
+    FluidGridName,
+    new Map([[FluidGridName, Promise.resolve(FluidGrid.getFactory())]])
 );
