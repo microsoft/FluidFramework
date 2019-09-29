@@ -89,7 +89,7 @@
     },
     "keyValue": {
         "documentUrl": "https://www.wu2.prague.office-int.com/loader/fluid/kv-cache-local-00018",
-        "load": true
+        "load": false
     },
     "express": {
         "session": {
