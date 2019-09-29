@@ -110,6 +110,7 @@ export class FluidGridView extends React.Component<IFluidGridViewProps, IGridVie
                     cols={12}
                     rowHeight={30}
                     width={1200}
+                    layout={this.state.layout}
                     onLayoutChange={this.onLayoutChange}
                 >
                     <div key="a" data-grid={{ x: 0, y: 0, w: 1, h: 2, static: true }}>
