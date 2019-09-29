@@ -21,7 +21,43 @@ export interface IGridViewState {
     originalLayout: GridCellLayout[];
 }
 
-export class FluidGridView extends React.PureComponent<IFluidGridViewProps, IGridViewState> {
+export const Hook = (Layout: FluidGridView) => {
+    class ExampleLayout extends React.Component {
+        public state = { layout: [] };
+
+        public onLayoutChange = (changedLayout: GridCellLayout[]) => {
+            this.setState({ layout: changedLayout });
+        };
+
+        public stringifyLayout() {
+            return this.state.layout.map((l: GridCellLayout) => {
+                return (
+                    <div className="layoutItem" key={l.i}>
+                        <b>{l.i}</b>: [{l.x}, {l.y}, {l.w}, {l.h}]
+                    </div>
+                );
+            });
+        }
+
+        public render() {
+            return (
+                <div>
+                    <div className="layoutJSON">
+                        Displayed as <code>[x, y, w, h]</code>:<div className="columns">{this.stringifyLayout()}</div>
+                    </div>
+                    <Layout onLayoutChange={this.onLayoutChange} />
+                </div>
+            );
+        }
+    }
+};
+// document.addEventListener("DOMContentLoaded", function() {
+//     const contentDiv = document.getElementById("content");
+//     const gridProps = window.gridProps || {};
+//     ReactDOM.render(React.createElement(ExampleLayout, gridProps), contentDiv);
+// });
+
+export class FluidGridView extends React.Component<IFluidGridViewProps, IGridViewState> {
     public static defaultProps = {
         className: "layout",
         cols: 12,
