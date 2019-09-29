@@ -1,7 +1,7 @@
 {
   "name": "@fluid-example/key-value-cache",
   "description": "Key-value cache that runs in the node.js service",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "author": "Microsoft",
   "repository": "microsoft/FluidFramework",
   "main": "dist/index.js",
@@ -20,8 +20,8 @@
     "webpack:dev": "npm run dev"
   },
   "devDependencies": {
-    "@microsoft/fluid-build-common": "^0.10.0",
-    "@microsoft/fluid-webpack-component-loader": "^0.10.0",
+    "@microsoft/fluid-build-common": "0.11.14243",
+    "@microsoft/fluid-webpack-component-loader": "0.11.14243",
     "@fluid-internal/url-generator": "^1.0.4",
     "@types/node": "^10.14.6",
     "ts-loader": "^4.5.0",
@@ -42,13 +42,13 @@
     }
   },
   "dependencies": {
-    "@microsoft/fluid-component-core-interfaces": "^0.10.0",
-    "@microsoft/fluid-component-runtime": "^0.10.0",
-    "@microsoft/fluid-container-definitions": "^0.10.0",
-    "@microsoft/fluid-container-runtime": "^0.10.0",
-    "@microsoft/fluid-map": "^0.10.0",
-    "@microsoft/fluid-runtime-definitions": "^0.10.0",
-    "@microsoft/fluid-shared-object-base": "^0.10.0",
+    "@microsoft/fluid-component-core-interfaces": "0.11.14243",
+    "@microsoft/fluid-component-runtime": "0.11.14243",
+    "@microsoft/fluid-container-definitions": "0.11.14243",
+    "@microsoft/fluid-container-runtime": "0.11.14243",
+    "@microsoft/fluid-map": "0.11.14243",
+    "@microsoft/fluid-runtime-definitions": "0.11.14243",
+    "@microsoft/fluid-shared-object-base": "0.11.14243",
     "debug": "^4.1.1"
   },
   "license": "MIT"
