@@ -10,7 +10,7 @@ import {
     IDeltaQueue,
     ITelemetryLogger,
 } from "@microsoft/fluid-container-definitions";
-import { Deferred, isSystemType, NetworkError, PerformanceEvent } from "@microsoft/fluid-core-utils";
+import { Deferred, isSystemType, PerformanceEvent } from "@microsoft/fluid-core-utils";
 import {
     Browser,
     ConnectionMode,
