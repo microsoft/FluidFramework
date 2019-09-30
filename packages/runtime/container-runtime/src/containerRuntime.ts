@@ -567,10 +567,10 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     public get IComponentTokenProvider() {
 
         // tslint:disable-next-line: no-unsafe-any
-        if (this.options && this.options.config && this.options.config.intelligence) {
+        if (this.options && this.options.intelligence) {
             return  {
                 // tslint:disable-next-line: no-unsafe-any
-                intelligence: this.options.config.intelligence,
+                intelligence: this.options.intelligence,
             } as IComponentTokenProvider;
         }
         return undefined;
