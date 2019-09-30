@@ -8,7 +8,6 @@ import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { IDirectory, IDirectoryValueChanged, ISharedDirectory } from "@microsoft/fluid-map";
 import { SharedString } from "@microsoft/fluid-sequence";
 import React, { useEffect, useRef, useState } from "react";
-import ReactList from "react-list";
 
 interface ITextListViewProps {
     textDirectory: IDirectory;
@@ -68,27 +67,19 @@ export function TextListView(props: ITextListViewProps) {
         props.textDirectory.delete(id);
     };
 
-    const renderItem = (index: number) => {
-        const sharedString = sharedStrings[index];
+    const sharedStringItems = sharedStrings.map((sharedString) => {
         return (
-            <div key={sharedString.id}>
+            <div key={sharedString.id} className="text-item">
                 <CollaborativeInput sharedString={sharedString.text} />
                 <button onClick={() => deleteItem(sharedString.id)}>x</button>
             </div>
         );
-    };
+    });
 
     return (
-        <div>
-            <div>
-                <button onClick={props.createNewItem}>+</button>
-                <ReactList
-                    itemRenderer={renderItem}
-                    length={sharedStrings.length}
-                    type="uniform"
-                    minSize={sharedStrings.length}
-                />
-            </div>
+        <div className="text-list">
+            <button onClick={props.createNewItem}>+</button>
+            {sharedStringItems}
         </div>
     );
 }
