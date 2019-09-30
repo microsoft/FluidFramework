@@ -155,7 +155,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         super();
     }
 
-    public async createComponent(pkgOrId: string, pkg?: string, props?: any): Promise<IComponentRuntime> {
+    public async createComponent(pkgOrId: string, pkg?: string): Promise<IComponentRuntime> {
         return this.hostRuntime.createComponent(pkgOrId, pkg);
     }
 
