@@ -10,6 +10,7 @@ import { pkgVersion } from "./packageVersion";
 
 /**
  * Factory for Ink.
+ * @sealed
  */
 export class InkFactory implements ISharedObjectFactory {
     /**

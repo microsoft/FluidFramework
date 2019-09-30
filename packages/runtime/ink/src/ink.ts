@@ -29,6 +29,7 @@ const snapshotFileName = "header";
 
 /**
  * Inking data structure.
+ * @sealed
  */
 export class Ink extends SharedObject implements IInk {
     /**
@@ -178,9 +179,7 @@ export class Ink extends SharedObject implements IInk {
     }
 
     /**
-     * Process an incoming operation.
-     * @param message - The message containing the op to process
-     * @param local - Whether the message is local
+     * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.processCore}
      */
     protected processCore(message: ISequencedDocumentMessage, local: boolean): void {
         if (message.type === MessageType.Operation && !local) {
