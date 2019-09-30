@@ -418,12 +418,6 @@ export class MapKernel {
         }
     }
 
-    // maybe not needed
-    public hasHandlerFor(op: any): boolean {
-        // tslint:disable-next-line:no-unsafe-any
-        return this.messageHandlers.has(op.type);
-    }
-
     /**
      * Submit the given op if a handler is registered.
      * @param op - The operation to attempt to submit
