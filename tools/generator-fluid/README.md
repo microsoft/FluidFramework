@@ -6,7 +6,7 @@ To set up, do these one time steps.
 ````bash
 npm install -g yo
 
-cd {path_to_cloned_repo}/Prague/tools/generator-fluid
+cd {path_to_cloned_repo}/tools/generator-fluid
 
 npm install
 npm link
