@@ -148,7 +148,7 @@ describe("Component Context Tests", () => {
                 containerRuntime,
                 new DocumentStorageServiceProxy(storage, blobCache),
                 scope);
-            const snapshot = await remotedComponentContext.snapshot();
+            const snapshot = await remotedComponentContext.snapshot(true);
             const blob = snapshot.entries[0] as BlobTreeEntry;
 
             const contents = JSON.parse(blob.value.contents) as IComponentAttributes;
@@ -175,7 +175,7 @@ describe("Component Context Tests", () => {
                 containerRuntime,
                 new DocumentStorageServiceProxy(storage, blobCache),
                 scope);
-            const snapshot = await remotedComponentContext.snapshot();
+            const snapshot = await remotedComponentContext.snapshot(true);
             const blob = snapshot.entries[0] as BlobTreeEntry;
 
             const contents = JSON.parse(blob.value.contents) as IComponentAttributes;

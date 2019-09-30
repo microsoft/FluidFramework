@@ -3,28 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import { CollaborativeCheckbox, CollaborativeInput } from "@microsoft/fluid-aqueduct-react";
-import { ISharedCell } from "@microsoft/fluid-cell";
-import { Counter } from "@microsoft/fluid-map";
+import { CollaborativeInput } from "@microsoft/fluid-aqueduct-react";
 import { SharedString } from "@microsoft/fluid-sequence";
 import * as React from "react";
-import { TodoItemSupportedComponents } from "./supportedComponent";
+import { TodoItem } from "./TodoItem";
+import { TodoItemDetailsView } from "./TodoItemDetailsView";
 
-interface p {
-    sharedString: SharedString;
-    checkedCounter: Counter;
-    id: string;
-    innerIdCell: ISharedCell;
-    getComponentView(id: string): JSX.Element;
-    createComponent(types: TodoItemSupportedComponents, props?: any): Promise<void>;
+interface TodoItemViewProps {
+    todoItemModel: TodoItem;
 }
 
-interface s {
-    contentVisible: boolean;
-    innerId: string;
+interface TodoItemViewState {
+    checked: boolean;
+    innerComponentVisible: boolean;
 }
 
-export class TodoItemView extends React.Component<p, s> {
+export class TodoItemView extends React.Component<TodoItemViewProps, TodoItemViewState> {
+    private readonly itemText: SharedString;
     private readonly baseUrl = `${window.location.origin}`;
     private readonly buttonStyle = {
         height: "25px",
@@ -33,8 +28,10 @@ export class TodoItemView extends React.Component<p, s> {
         width: "35px",
     };
 
-    constructor(props: p) {
+    constructor(props: TodoItemViewProps) {
         super(props);
+
+        this.itemText = this.props.todoItemModel.getTodoItemText();
 
         const pathName = window.location.pathname.split("/");
         const path: string[] = [];
@@ -45,33 +42,43 @@ export class TodoItemView extends React.Component<p, s> {
         }
         this.baseUrl += `${path.join("/")}${window.location.search}`;
         this.state = {
-            contentVisible: false,
-            innerId: this.props.innerIdCell.get(),
+            checked: this.props.todoItemModel.getCheckedState(),
+            innerComponentVisible: false,
         };
 
-        this.createComponent = this.createComponent.bind(this);
+        this.setCheckedState = this.setCheckedState.bind(this);
     }
 
-    async createComponent(type: TodoItemSupportedComponents) {
-        await this.props.createComponent(type, { startingText: type});
-    }
-
-    componentDidMount() {
-        this.props.innerIdCell.on("op", () => {
-            this.setState({innerId: this.props.innerIdCell.get()});
+    public componentDidMount() {
+        this.props.todoItemModel.on("checkedStateChanged", () => {
+            this.setState({ checked: this.props.todoItemModel.getCheckedState() });
         });
     }
 
-    render() {
-        // tslint:disable:strict-boolean-expressions
+    private setCheckedState(e: React.ChangeEvent<HTMLInputElement>): void {
+        this.props.todoItemModel.setCheckedState(e.target.checked);
+    }
+
+    public render() {
+        // tslint:disable:react-a11y-input-elements
+        // react-a11y-input-elements incorrectly thinks checkboxes need placeholder text
+        // Issue fixed in tslint-microsoft-contrib 6.1.0:
+        // https://github.com/microsoft/tslint-microsoft-contrib/issues/749
+
+        // tslint:disable:react-a11y-role-has-required-aria-props
+        // react-a11y-role-has-required-aria-props incorrectly thinks native checkboxes need aria-checked
+        // Known open issue (9/26/2019):
+        // https://github.com/microsoft/tslint-microsoft-contrib/issues/409
         return (
-            <div>
+            <div className="todo-item">
                 <h2>
-                    <CollaborativeCheckbox
-                        counter={this.props.checkedCounter}
-                        id={this.props.id}/>
+                    <input
+                        type="checkbox"
+                        name={this.props.todoItemModel.url}
+                        checked={this.state.checked}
+                        onChange={this.setCheckedState} />
                     <CollaborativeInput
-                        sharedString={this.props.sharedString}
+                        sharedString={this.itemText}
                         style={{
                             border: "none",
                             fontFamily: "inherit",
@@ -81,37 +88,29 @@ export class TodoItemView extends React.Component<p, s> {
                             outline: "none",
                             width: "inherit",
                         }}/>
-                    <span>
-                        <button
-                            style={this.buttonStyle}
-                            onClick={() => {this.setState({contentVisible: !this.state.contentVisible}); }}>
-                            {this.state.contentVisible ? "▲" : "▼"}
-                        </button>
-                        <button
-                            style={this.buttonStyle}
-                            onClick={() => window.open(`${this.baseUrl}/${this.props.id}`, "_blank")}>↗</button>
-                        <button
-                            style={this.buttonStyle}
-                            onClick={() => alert("Implement Delete")}>X</button>
-                    </span>
+                    <button
+                        style={this.buttonStyle}
+                        onClick={() => {this.setState({innerComponentVisible: !this.state.innerComponentVisible}); }}>
+                        {this.state.innerComponentVisible ? "▲" : "▼"}
+                    </button>
+                    <button
+                        style={this.buttonStyle}
+                        onClick={() => window.open(`${this.baseUrl}/${this.props.todoItemModel.url}`, "_blank")}>↗
+                    </button>
+                    <button
+                        style={this.buttonStyle}
+                        onClick={() => alert("Implement Delete")}>X</button>
                 </h2>
                 {
                     // If the content is visible we will show a button or a component
-                    this.state.contentVisible &&
-                    <div style={{paddingLeft: 30}}>
-                        {
-                            this.state.innerId === "" &&
-                            <span>
-                                <button onClick={async () => this.createComponent("todo")}>todo</button>
-                                <button onClick={async () => this.createComponent("clicker")}>clicker</button>
-                                <button onClick={async () => this.createComponent("textBox")}>textBox</button>
-                                <button onClick={async () => this.createComponent("textList")}>textList</button>
-                            </span>
-                        }
-                        {this.state.innerId !== "" && this.props.getComponentView(this.state.innerId)}
-                    </div>
+                    this.state.innerComponentVisible &&
+                    <TodoItemDetailsView
+                        todoItemModel={this.props.todoItemModel}
+                    />
                 }
             </div>
         );
+        // tslint:enable:react-a11y-input-elements
+        // tslint:enable:react-a11y-role-has-required-aria-props
     }
 }

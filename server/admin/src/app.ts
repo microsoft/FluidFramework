@@ -22,7 +22,6 @@ import * as redis from "redis";
 import split = require("split");
 import * as expiry from "static-expiry";
 import * as winston from "winston";
-import { KeyValueManager } from "./keyValueManager";
 import * as appRoutes from "./routes";
 import { TenantManager } from "./tenantManager";
 
@@ -77,7 +76,7 @@ const stream = split().on("data", (message) => {
     winston.info(message);
 });
 
-export function create(config: Provider, mongoManager: core.MongoManager, keyValueManager: KeyValueManager) {
+export function create(config: Provider, mongoManager: core.MongoManager) {
 
     // We are loading a Fluid document that might lead to assertion errors.
     // Handling this so that the whole process is not terminated.
@@ -193,9 +192,12 @@ export function create(config: Provider, mongoManager: core.MongoManager, keyVal
         }
     });
 
-    const routes = appRoutes.create(config, mongoManager, tenantManager, keyValueManager);
+    const routes = appRoutes.create(config, mongoManager, tenantManager);
     app.use("/api", routes.api);
     app.use("/", routes.home);
+
+    // No favicon is served.
+    app.get("/favicon.ico", (req, res) => res.status(204));
 
     // catch 404 and forward to error handler
     app.use((req, res, next) => {

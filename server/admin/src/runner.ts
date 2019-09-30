@@ -3,13 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { Deferred } from "@microsoft/fluid-core-utils";
 import * as core from "@microsoft/fluid-server-services-core";
 import * as utils from "@microsoft/fluid-server-services-utils";
-import { Deferred } from "@microsoft/fluid-core-utils";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import * as app from "./app";
-import { KeyValueManager } from "./keyValueManager";
 import { IWebServer, IWebServerFactory } from "./webServer";
 
 export class AdminRunner implements utils.IRunner {
@@ -20,8 +19,7 @@ export class AdminRunner implements utils.IRunner {
         private serverFactory: IWebServerFactory,
         private config: Provider,
         private port: string | number,
-        private mongoManager: core.MongoManager,
-        private keyValueManager: KeyValueManager) {
+        private mongoManager: core.MongoManager) {
     }
 
     public start(): Promise<void> {
@@ -29,8 +27,7 @@ export class AdminRunner implements utils.IRunner {
 
         const admin = app.create(
             this.config,
-            this.mongoManager,
-            this.keyValueManager);
+            this.mongoManager);
         admin.set("port", this.port);
 
         this.server = this.serverFactory.create(admin);
