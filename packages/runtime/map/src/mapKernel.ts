@@ -390,6 +390,7 @@ export class MapKernel {
 
     /**
      * Serializes the data stored in the shared map to a JSON string
+     * @returns A JSON string containing serialized map data
      */
     public serialize(): string {
         const serializableMapData: IMapDataObject = {};
@@ -674,6 +675,7 @@ export class MapKernel {
      * Create an emitter for a value type to emit ops from the given key.
      * @alpha
      * @param key - The key of the map that the value type will be stored on
+     * @returns A value op emitter for the given key
      */
     private makeMapValueOpEmitter(key: string): IValueOpEmitter {
         const emit = (opName: string, previousValue: any, params: any) => {
