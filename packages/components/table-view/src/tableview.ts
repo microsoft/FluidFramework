@@ -76,7 +76,9 @@ export class TableView extends PrimedComponent implements IComponentHTMLVisual {
     // #endregion IComponentHTMLVisual
 
     protected async componentInitializingFirstTime() {
-        await this.createAndAttachComponent(this.docId, TableDocumentType);
+        const doc = await this.createAndAttachComponent<TableDocument>(this.docId, TableDocumentType);
+        doc.insertRows(0, 5);
+        doc.insertCols(0, 8);
     }
 
     private get docId() { return `${this.id}-doc`; }
