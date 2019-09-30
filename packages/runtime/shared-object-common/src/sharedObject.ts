@@ -259,14 +259,14 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
         services: IObjectStorageService): Promise<void>;
 
     /**
-     * Allows the distributed data type to perform custom local loading
+     * Allows the distributed data type to perform custom local loading.
      */
     protected initializeLocalCore() {
         return;
     }
 
     /**
-     * Allows the distributed data type the ability to perform custom processing once an attach has happened
+     * Allows the distributed data type the ability to perform custom processing once an attach has happened.
      */
     protected abstract registerCore();
 
@@ -279,21 +279,20 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
     }
 
     /**
-     * Derived classes must override this to do custom processing on a remote message
+     * Derived classes must override this to do custom processing on a remote message.
      *
-     * @param message - the message to prepare
+     * @param message - the message to process
      * @param local - true if the shared object is local
-     * @param context - additional context for the message
      */
     protected abstract processCore(message: ISequencedDocumentMessage, local: boolean);
 
     /**
-     * Called when the object has disconnected from the delta stream
+     * Called when the object has disconnected from the delta stream.
      */
     protected abstract onDisconnect();
 
     /**
-     * Processes a message by the local client
+     * Processes a message by the local client.
      *
      * @param content - content of the message
      * @returns client sequence number

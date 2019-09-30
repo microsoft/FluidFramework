@@ -32,11 +32,10 @@ const snapshotFileName = "header";
  */
 export class Ink extends SharedObject implements IInk {
     /**
-     * Create a new shared ink
-     *
-     * @param runtime - component runtime the new shared ink belongs to
-     * @param id - optional name of the shared ink
-     * @returns newly create shared ink (but not attached yet)
+     * Create a new Ink.
+     * @param runtime - Component runtime the new Ink belongs to
+     * @param id - Optional name of the Ink, will be assigned a unique ID if not provided
+     * @returns Newly create Ink object (but not attached yet)
      */
     public static create(runtime: IComponentRuntime, id?: string) {
         return runtime.createChannel(SharedObject.getIdForCreate(id), InkFactory.Type) as Ink;
@@ -44,13 +43,17 @@ export class Ink extends SharedObject implements IInk {
 
     /**
      * Get a factory for Ink to register with the component.
-     *
-     * @returns a factory that creates and load Ink
+     * @returns A factory that creates and loads Ink
      */
     public static getFactory() {
         return new InkFactory();
     }
 
+    /**
+     * Generate a new create stroke operation.
+     * @param pen - Description of the pen used to create the stroke
+     * @returns The new create stroke operation
+     */
     public static makeCreateStrokeOperation(pen: IPen): ICreateStrokeOperation {
         const id: string = uuid();
         const time: number = new Date().getTime();
@@ -64,7 +67,8 @@ export class Ink extends SharedObject implements IInk {
     }
 
     /**
-     * @param time - Time, in milliseconds, that the operation occurred on the originating device
+     * Generate a new clear operation.
+     * @returns The new clear operation
      */
     public static makeClearOperation(): IClearOperation {
         const time: number = new Date().getTime();
@@ -76,9 +80,12 @@ export class Ink extends SharedObject implements IInk {
     }
 
     /**
-     * @param point - Location of the down
-     * @param pressure - The ink pressure applied
-     * @param id - Unique ID for the stroke
+     * Generate a new stylus operation.  These represent updates to an existing stroke.  To be valid, the id must
+     * match an already-existing stroke.
+     * @param point - Location of the stylus
+     * @param pressure - The pressure applied
+     * @param id - Unique ID of the stroke this operation is associated with
+     * @returns The new stylus operation
      */
     public static makeStylusOperation(
         point: IPoint,
@@ -103,41 +110,37 @@ export class Ink extends SharedObject implements IInk {
 
     /**
      * Create a new Ink.
-     *
-     * @param runtime - The runtime the Ink will attach to
-     * @param id - UUID for the ink
+     * @param runtime - The runtime the Ink will be associated with
+     * @param id - Unique ID for the Ink
      */
     constructor(runtime: IComponentRuntime, id: string) {
         super(id, runtime, InkFactory.Attributes);
     }
 
     /**
-     * Get the ink strokes from the snapshot.
+     * {@inheritDoc IInk.getStrokes}
      */
     public getStrokes(): IInkStroke[] {
         return this.inkData.getStrokes();
     }
 
     /**
-     * Get a specific stroke from the snapshot.
-     *
-     * @param key - The UUID for the stroke
+     * {@inheritDoc IInk.getStroke}
      */
     public getStroke(key: string): IInkStroke {
         return this.inkData.getStroke(key);
     }
 
     /**
-     * Send the op and process it
-     * @param operation - op to submit
+     * {@inheritDoc IInk.submitOperation}
      */
-    public submitOperation(operation: IInkOperation) {
+    public submitOperation(operation: IInkOperation): void {
         this.submitLocalMessage(operation);
         this.processOperation(operation);
     }
 
     /**
-     * Get a snapshot of the current content as an ITree.
+     * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.snapshot}
      */
     public snapshot(): ITree {
         const tree: ITree = {
@@ -159,14 +162,12 @@ export class Ink extends SharedObject implements IInk {
     }
 
     /**
-     * Initialize the ink with a snapshot from the given storage.
-     *
-     * @param branchId - Branch ID. Not used
-     * @param storage - Storage service to read from
+     * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.loadCore}
      */
     protected async loadCore(
         branchId: string,
-        storage: IObjectStorageService): Promise<void> {
+        storage: IObjectStorageService,
+    ): Promise<void> {
 
         const header = await storage.read(snapshotFileName);
         if (header) {
@@ -177,36 +178,35 @@ export class Ink extends SharedObject implements IInk {
     }
 
     /**
-     * Process a delta to the snapshot.
-     *
-     * @param message - The message containing the delta to process
+     * Process an incoming operation.
+     * @param message - The message containing the op to process
      * @param local - Whether the message is local
      */
-    protected processCore(message: ISequencedDocumentMessage, local: boolean) {
+    protected processCore(message: ISequencedDocumentMessage, local: boolean): void {
         if (message.type === MessageType.Operation && !local) {
             this.processOperation(message.contents as IInkOperation);
         }
     }
 
     /**
-     * Perform custom processing once an attach has happened.  Nothing for Ink
+     * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.registerCore}
      */
-    protected registerCore() {
+    protected registerCore(): void {
         return;
     }
 
     /**
-     * Nothing to do when the object has disconnected from the delta stream
+     * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.onDisconnect}
      */
-    protected onDisconnect() {
+    protected onDisconnect(): void {
         return;
     }
 
     /**
      * Check operation type and route appropriately.
-     * @param operation - operation to process (might be local or remote)
+     * @param operation - Operation to process (might be local or remote)
      */
-    private processOperation(operation: IInkOperation) {
+    private processOperation(operation: IInkOperation): void {
         if (operation.type === "clear") {
             this.processClearOp(operation);
         } else if (operation.type === "createStroke") {
@@ -216,11 +216,19 @@ export class Ink extends SharedObject implements IInk {
         }
     }
 
-    private processClearOp(operation: IClearOperation) {
+    /**
+     * Process a clear operation.
+     * @param operation - The operation object
+     */
+    private processClearOp(operation: IClearOperation): void {
         this.inkData.clear();
     }
 
-    private processCreateStrokeOp(operation: ICreateStrokeOperation) {
+    /**
+     * Process a create stroke operation.
+     * @param operation - The operation object
+     */
+    private processCreateStrokeOp(operation: ICreateStrokeOperation): void {
         const stroke: IInkStroke = {
             id: operation.id,
             operations: [],
@@ -229,7 +237,11 @@ export class Ink extends SharedObject implements IInk {
         this.inkData.addStroke(stroke);
     }
 
-    private processStylusOp(operation: IStylusOperation) {
+    /**
+     * Process a stylus operation.  These represent updates to an existing stroke.
+     * @param operation - The operation object
+     */
+    private processStylusOp(operation: IStylusOperation): void {
         // Need to make sure the stroke is still there (hasn't been cleared) before appending the down/move/up.
         const stroke = this.getStroke(operation.id);
         if (stroke !== undefined) {

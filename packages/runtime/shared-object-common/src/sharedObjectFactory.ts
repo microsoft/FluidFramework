@@ -11,7 +11,7 @@ import {
 } from "@microsoft/fluid-runtime-definitions";
 
 /**
- * Definitions of a shared factories. Factories follow a common model but enable custom behavior.
+ * Definitions of a shared object factory. Factories follow a common model but enable custom behavior.
  */
 export interface ISharedObjectFactory {
     /**
@@ -20,7 +20,7 @@ export interface ISharedObjectFactory {
     readonly type: string;
 
     /**
-     * Attributes of the shared object
+     * Attributes of the shared object.
      */
     readonly attributes: IChannelAttributes;
 
@@ -33,7 +33,9 @@ export interface ISharedObjectFactory {
      * @param id - ID of the shared object.
      * @param services - Services to read objects at a given path using the delta connection.
      * @param branchId - The branch ID.
+     * @returns The loaded object
      *
+     * @privateRemarks
      * Thought: should the storage object include the version information and limit access to just files
      * for the given object? The latter seems good in general. But both are probably good things. We then just
      * need a way to allow the document to provide later storage for the object.
@@ -42,12 +44,19 @@ export interface ISharedObjectFactory {
         runtime: IComponentRuntime,
         id: string,
         services: ISharedObjectServices,
-        branchId: string): Promise<IChannel>;
+        branchId: string,
+    ): Promise<IChannel>;
 
     /**
      * Creates a local version of the shared object.
      *
-     * Calling attach on the object later will insert it into object stream.
+     * Calling attach on the object later will insert it into the object stream.
+     *
+     * @param runtime - The runtime the new object will be associated with
+     * @param id - The unique ID of the new object
+     * @returns The newly created object.
+     *
+     * @privateRemarks
      * NOTE here - When we attach we need to submit all the pending ops prior to actually doing the attach
      * for consistency.
      */
