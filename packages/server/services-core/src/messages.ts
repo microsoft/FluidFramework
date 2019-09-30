@@ -78,6 +78,15 @@ export interface IRawOperationMessage extends IObjectMessage {
     operation: IDocumentMessage;
 }
 
+/**
+ * Wrapper for a raw operation received in a Kafka batch that is identified
+ * by a combination of batch offset and relative batch order.
+ */
+export interface IRawSingleKafkaMessage extends IRawOperationMessage {
+    // This number: `{Kafka batch offset}:{1-indexed position in batch}`.
+    extendedSequenceNumber: string;
+}
+
 // Need to change this name - it isn't necessarily ticketed
 export interface ITicketedMessage extends IMessage {
     // The tenant the message is intended for

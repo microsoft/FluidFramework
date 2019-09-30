@@ -10,30 +10,19 @@ import { Provider } from "nconf";
 
 export async function create(config: Provider): Promise<IPartitionLambdaFactory> {
     const mongoUrl = config.get("mongo:endpoint") as string;
-    const deltasCollectionName = config.get("mongo:collectionNames:deltas");
+    const rawDeltasCollectionName = config.get("mongo:collectionNames:rawdeltas");
     const mongoFactory = new services.MongoDbFactory(mongoUrl);
     const mongoManager = new MongoManager(mongoFactory, false);
 
     const db = await mongoManager.getDatabase();
-    const opCollection = db.collection(deltasCollectionName);
-    await opCollection.createIndex(
+    const rawOpCollection = db.collection(rawDeltasCollectionName);
+    await rawOpCollection.createIndex(
         {
-            "documentId": 1,
-            "operation.sequenceNumber": 1,
-            "tenantId": 1,
+            documentId: 1,
+            extendedSequenceNumber: 1,
+            tenantId: 1,
         },
         true);
 
-    const contentCollection = db.collection("content");
-    await contentCollection.createIndex(
-        {
-            documentId: 1,
-            sequenceNumber: 1,
-            tenantId: 1,
-        },
-        false);
-
-    console.log("copier created!");
-
-    return new CopierLambdaFactory(mongoManager, opCollection, contentCollection);
+    return new CopierLambdaFactory(mongoManager, rawOpCollection);
 }

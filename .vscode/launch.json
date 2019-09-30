@@ -291,6 +291,20 @@
         {
             "type": "node",
             "request": "attach",
+            "name": "Attach to copier",
+            "address": "localhost",
+            "port": 5867,
+            "restart": true,
+            "sourceMaps": true,
+            "localRoot": "${workspaceFolder}",
+            "remoteRoot": "/usr/src/server",
+            "outFiles": [ "${workspaceFolder}/dist/**/*.js" ],
+            "protocol":"inspector",
+            "trace": "sm"
+        },
+        {
+            "type": "node",
+            "request": "attach",
             "name": "Attach to foreman",
             "address": "localhost",
             "port": 5862,

@@ -5,139 +5,130 @@
 
 import {
     extractBoxcar,
-    // ICollection,
+    ICollection,
     IContext,
     IKafkaMessage,
     IPartitionLambda,
-    // ISequencedOperationMessage,
-    // SequencedOperationType,
+    IRawOperationMessage,
+    IRawSingleKafkaMessage,
+    RawOperationType,
 } from "@microsoft/fluid-server-services-core";
-// import * as winston from "winston";
+// tslint:disable-next-line
+import winston = require("winston");
 
 export class CopierLambda implements IPartitionLambda {
-    // private pending = new Map<string, ISequencedOperationMessage[]>();
-    // private pendingOffset: number;
-    // private current = new Map<string, ISequencedOperationMessage[]>();
+    private pending = new Map<string, IRawOperationMessage[]>();
+    private pendingOffset: number;
+    private current = new Map<string, IRawOperationMessage[]>();
 
     constructor(
-        // private opCollection: ICollection<any>,
-        // private contentCollection: ICollection<any>,
+        private rawOpCollection: ICollection<any>,
         protected context: IContext) {
-        console.log("lambda constructor");
     }
 
     public handler(message: IKafkaMessage): void {
+        // Extract list of raw ops from Kafka message:
         const boxcar = extractBoxcar(message);
-        // tslint:disable-next-line: prefer-template
-        console.log("copier got a message! at doc id: " + boxcar.documentId);
 
-        // for (const baseMessage of boxcar.contents) {
-        //     if (baseMessage.type === SequencedOperationType) {
-        //         const value = baseMessage as ISequencedOperationMessage;
+        for (const baseMessage of boxcar.contents) {
+            // If a particular message is a raw op then push it to a `pending`
+            // for eventual addition to Mongo:
+            if (baseMessage.type === RawOperationType) {
+                const value = baseMessage as IRawOperationMessage;
+                console.log("A NEW BASEMESSAGE");
+                console.log(value.documentId);
+                console.log(value.operation.clientSequenceNumber);
+                console.log(value.operation.metadata);
+                console.log(value.operation.contents);
+                console.log("))))))))))))))))))");
 
-        //         // Remove traces and serialize content before writing to mongo.
-        //         value.operation.traces = [];
+                // Remove traces and serialize content before writing to mongo.
+                value.operation.traces = [];
 
-        //         const topic = `${value.tenantId}/${value.documentId}`;
-        //         if (!this.pending.has(topic)) {
-        //             this.pending.set(topic, []);
-        //         }
+                const topic = `${value.tenantId}/${value.documentId}`;
+                if (!this.pending.has(topic)) {
+                    this.pending.set(topic, []);
+                }
 
-        //         this.pending.get(topic).push(value);
-        //     }
-        // }
+                this.pending.get(topic).push(value);
+            }
+        }
 
-        // this.pendingOffset = message.offset;
-        // this.sendPending();
+        // Update current offset (will be tied to this batch):
+        this.pendingOffset = message.offset;
+        this.sendPending();
     }
 
     public close() {
-        // this.pending.clear();
-        // this.current.clear();
+        this.pending.clear();
+        this.current.clear();
 
         return;
     }
 
-    // private sendPending() {
+    private sendPending() {
         // If there is work currently being sent or we have no pending work return early
-        // if (this.current.size > 0 || this.pending.size === 0) {
-        //     return;
-        // }
+        if (this.current.size > 0 || this.pending.size === 0) {
+            return;
+        }
 
-        // // Swap current and pending
-        // const temp = this.current;
-        // this.current = this.pending;
-        // this.pending = temp;
-        // const batchOffset = this.pendingOffset;
+        // Swap current and pending
+        const temp = this.current;
+        this.current = this.pending;
+        this.pending = temp;
+        const batchOffset = this.pendingOffset;
 
-        // const allProcessed = [];
+        const allProcessed = [];
 
-        // // Process all the batches + checkpoint
-        // for (const [, messages] of this.current) {
-        //     const processP = this.processMongoCore(messages);
-        //     allProcessed.push(processP);
-        // }
+        // Process all the batches + checkpoint
+        for (const [, messages] of this.current) {
 
-        // Promise.all(allProcessed).then(
-        //     () => {
-        //         this.current.clear();
-        //         this.context.checkpoint(batchOffset);
-        //         this.sendPending();
-        //     },
-        //     (error) => {
-        //         winston.error(error);
-        //         this.context.error(error, true);
-        //     });
-    // }
+            // Add a custom seq. number to each individual message:
+            const orderedMessages = [];
+            // tslint:disable-next-line
+            for (let i = 0; i < messages.length; i++) {
+                const tmp = messages[i] as IRawSingleKafkaMessage;
+                tmp.extendedSequenceNumber = `${batchOffset}::${i}`;
+                orderedMessages.push(tmp);
+            }
 
-    // private async processMongoCore(messages: ISequencedOperationMessage[]): Promise<void> {
-    //     const insertP = this.insertOp(messages);
-    //     const updateP = this.updateSequenceNumber(messages);
-    //     await Promise.all([insertP, updateP]);
-    // }
+            winston.info("COPIER TEST : ***********************************");
+            winston.info(orderedMessages);
+            winston.info(orderedMessages[0]);
+            const processP = this.processMongoCore(orderedMessages);
+            allProcessed.push(processP);
+        }
 
-    // private async insertOp(messages: ISequencedOperationMessage[]) {
-    //     return this.opCollection
-    //         .insertMany(messages, false)
-    //         .catch((error) => {
-    //             // Duplicate key errors are ignored since a replay may cause us to insert twice into Mongo.
-    //             // All other errors result in a rejected promise.
-    //             if (error.code !== 11000) {
-    //                 // Needs to be a full rejection here
-    //                 return Promise.reject(error);
-    //             }
-    //         });
-    // }
+        Promise.all(allProcessed).then(
+            () => {
+                this.current.clear();
+                this.context.checkpoint(batchOffset);
+                this.sendPending();
+            },
+            (error) => {
+                this.context.error(error, true);
+            });
 
-    // private async updateSequenceNumber(messages: ISequencedOperationMessage[]) {
-    //     // TODO: Temporary to back compat with local orderer.
-    //     if (this.contentCollection === undefined) {
-    //         return;
-    //     }
+        console.log("sent Pending!");
+    }
 
-    //     const allUpdates = [];
-    //     for (const message of messages) {
-    //         if (message.operation.contents === undefined) {
-    //             const updateP = this.contentCollection.update(
-    //                 {
-    //                     "clientId": message.operation.clientId,
-    //                     "documentId": message.documentId,
-    //                     "op.clientSequenceNumber": message.operation.clientSequenceNumber,
-    //                     "tenantId": message.tenantId,
-    //                 },
-    //                 {
-    //                     sequenceNumber: message.operation.sequenceNumber,
-    //                 },
-    //                 null).catch((error) => {
-    //                     // Same reason as insertOp.
-    //                     if (error.code !== 11000) {
-    //                         return Promise.reject(error);
-    //                     }
-    //                 });
-    //             allUpdates.push(updateP);
-    //         }
-    //     }
+    private async processMongoCore(kafkaOrderedMessages: IRawSingleKafkaMessage[]): Promise<void> {
+        const insertP = this.insertOp(kafkaOrderedMessages);
+        await Promise.all([insertP]);
+    }
 
-    //     await Promise.all(allUpdates);
-    // }
+    private async insertOp(kafkaOrderedMessages: IRawSingleKafkaMessage[]) {
+        return this.rawOpCollection
+            .insertMany(kafkaOrderedMessages, false)
+            .catch((error) => {
+                console.log("MONGO ERROR!");
+                console.log(error);
+                // Duplicate key errors are ignored since a replay may cause us to insert twice into Mongo.
+                // All other errors result in a rejected promise.
+                if (error.code !== 11000) {
+                    // Needs to be a full rejection here
+                    return Promise.reject(error);
+                }
+            });
+    }
 }
