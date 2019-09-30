@@ -20,27 +20,62 @@ import {
 import { CounterValueType } from "./counter";
 import { ISerializableValue, IValueOpEmitter, IValueOperation, IValueType } from "./interfaces";
 
+/**
+ * A local value to be stored in a container type DDS.
+ */
 export interface ILocalValue {
+    /**
+     * Type indicator of the value stored within.
+     */
     readonly type: string;
+
+    /**
+     * The in-memory value stored within.
+     */
     readonly value: any;
+
+    /**
+     * Retrieve the serialized form of the value stored within.
+     * @param serializer - Component runtime's serializer
+     * @param context - Component runtime's handle context
+     * @param bind - Container type's handle
+     * @returns The serialized form of the contained value
+     */
     makeSerializable(
         serializer: IComponentSerializer,
         context: IComponentHandleContext,
-        bind: IComponentHandle): ISerializableValue;
+        bind: IComponentHandle,
+    ): ISerializableValue;
 }
 
+/**
+ * Supported value types.
+ */
 export const valueTypes: ReadonlyArray<IValueType<any>> = [
     new CounterValueType(),
 ];
 
+/**
+ * Manages a contained plain value.  May also contain shared object handles.
+ */
 export class PlainLocalValue implements ILocalValue {
+    /**
+     * Create a new PlainLocalValue.
+     * @param value - The value to store, which may contain shared object handles
+     */
     constructor(public readonly value: any) {
     }
 
+    /**
+     * {@inheritDoc ILocalValue."type"}
+     */
     public get type(): string {
         return ValueType[ValueType.Plain];
     }
 
+    /**
+     * {@inheritDoc ILocalValue.makeSerializable}
+     */
     public makeSerializable(
         serializer: IComponentSerializer,
         context: IComponentHandleContext,
@@ -57,14 +92,31 @@ export class PlainLocalValue implements ILocalValue {
     }
 }
 
+/**
+ * SharedLocalValue exists for supporting older documents and is now deprecated.
+ * @deprecated
+ */
 export class SharedLocalValue implements ILocalValue {
+    /**
+     * Create a new SharedLocalValue.
+     * @param value - The shared object to store
+     * @deprecated
+     */
     constructor(public readonly value: ISharedObject) {
     }
 
+    /**
+     * {@inheritDoc ILocalValue."type"}
+     * @deprecated
+     */
     public get type(): string {
         return ValueType[ValueType.Shared];
     }
 
+    /**
+     * {@inheritDoc ILocalValue.makeSerializable}
+     * @deprecated
+     */
     public makeSerializable(): ISerializableValue {
         return {
             type: this.type,
@@ -73,15 +125,31 @@ export class SharedLocalValue implements ILocalValue {
     }
 }
 
-// TODO: Should maybe be a generic
+/**
+ * Manages a contained value type.
+ * @alpha
+ * @privateRemarks
+ * TODO: Should maybe be a generic
+ */
 export class ValueTypeLocalValue implements ILocalValue {
+    /**
+     * Create a new ValueTypeLocalValue.
+     * @param value - The instance of the value type stored within
+     * @param valueType - The type object of the value type stored within
+     */
     constructor(public readonly value: any, private readonly valueType: IValueType<any>) {
     }
 
+    /**
+     * {@inheritDoc ILocalValue."type"}
+     */
     public get type(): string {
         return this.valueType.name;
     }
 
+    /**
+     * {@inheritDoc ILocalValue.makeSerializable}
+     */
     public makeSerializable(
         serializer: IComponentSerializer,
         context: IComponentHandleContext,
@@ -96,6 +164,11 @@ export class ValueTypeLocalValue implements ILocalValue {
         };
     }
 
+    /**
+     * Get the handler for a given op of this value type.
+     * @param opName - The name of the operation that needs processing
+     * @returns The object which can process the given op
+     */
     public getOpHandler(opName: string): IValueOperation<any> {
         const handler = this.valueType.ops.get(opName);
         if (!handler) {
@@ -106,16 +179,37 @@ export class ValueTypeLocalValue implements ILocalValue {
     }
 }
 
+/**
+ * A LocalValueMaker enables a container type DDS to produce and store local values with minimal awareness of how
+ * those objects are stored, serialized, and deserialized.
+ */
 export class LocalValueMaker {
+    /**
+     * The value types this maker is able to produce.
+     */
     private readonly valueTypes = new Map<string, IValueType<any>>();
 
+    /**
+     * Create a new LocalValueMaker.
+     * @param runtime - The runtime this maker will be associated with
+     */
     constructor(private readonly runtime: IComponentRuntime) {
     }
 
+    /**
+     * Register a value type this maker will be able to produce.
+     * @alpha
+     * @param type - The value type to register
+     */
     public registerValueType<T>(type: IValueType<T>) {
         this.valueTypes.set(type.name, type);
     }
 
+    /**
+     * Create a new local value from an incoming serialized value.
+     * @param serializable - The serializable value to make local
+     * @param emitter - The value op emitter, if the serializable is a value type
+     */
     public fromSerializable(serializable: ISerializableValue, emitter?: IValueOpEmitter): ILocalValue {
         if (serializable.type === ValueType[ValueType.Plain] || serializable.type === ValueType[ValueType.Shared]) {
             // migrate from old shared value to handles
@@ -149,7 +243,12 @@ export class LocalValueMaker {
         }
     }
 
-    public fromInMemory(value: any) {
+    /**
+     * Create a new local value containing a given plain object.
+     * @param value - The value to store
+     * @returns an ILocalValue containing the value
+     */
+    public fromInMemory(value: any): ILocalValue {
         if (SharedObject.is(value)) {
             throw new Error("SharedObject sets are no longer supported. Instead set the SharedObject handle.");
         }
@@ -157,19 +256,35 @@ export class LocalValueMaker {
         return new PlainLocalValue(value);
     }
 
-    public makeValueType(type: string, emitter: IValueOpEmitter, params: any) {
+    /**
+     * Create a new local value containing a value type.
+     * @alpha
+     * @param type - The type of the value type to create
+     * @param emitter - The IValueOpEmitter object that the new value type will use to emit ops
+     * @param params - The initialization arguments for the value type
+     * @returns an ILocalValue containing the new value type
+     */
+    public makeValueType(type: string, emitter: IValueOpEmitter, params: any): ILocalValue {
         // params is the initialization information for the value type, e.g. initial count on a counter
         // type is the value type Name to initialize, e.g. "counter"
         const valueType = this.loadValueType(params, type, emitter);
         return new ValueTypeLocalValue(valueType, this.valueTypes.get(type));
     }
 
-    private loadValueType(value: any, type: string, emitter: IValueOpEmitter) {
+    /**
+     * Create a new value type.
+     * @alpha
+     * @param params - The initialization arguments for the value type
+     * @param type - The type of value type to create
+     * @param emitter - The IValueOpEmitter object that the new value type will use to emit ops
+     * @returns The new value type
+     */
+    private loadValueType(params: any, type: string, emitter: IValueOpEmitter): any {
         const valueType = this.valueTypes.get(type);
         if (!valueType) {
             throw new Error(`Unknown type '${type}' specified`);
         }
 
-        return valueType.factory.load(emitter, value);
+        return valueType.factory.load(emitter, params);
     }
 }
