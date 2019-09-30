@@ -533,7 +533,7 @@ export class MapKernel {
      * @param op - Operation to check
      * @param local - Whether the message originated from the local client
      * @param message - The message
-     * @return True if the operation should be processed, false otherwise
+     * @returns True if the operation should be processed, false otherwise
      */
     private needProcessKeyOperation(
         op: IMapKeyOperation,
