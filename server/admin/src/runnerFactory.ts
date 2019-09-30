@@ -4,12 +4,9 @@
  */
 
 import * as services from "@microsoft/fluid-server-services";
-import { promiseTimeout } from "@microsoft/fluid-server-services-client";
 import * as core from "@microsoft/fluid-server-services-core";
 import * as utils from "@microsoft/fluid-server-services-utils";
 import { Provider } from "nconf";
-import * as winston from "winston";
-import { KeyValueManager } from "./keyValueManager";
 import { AdminRunner } from "./runner";
 import { IWebServerFactory, WebServerFactory } from "./webServer";
 
@@ -19,7 +16,6 @@ export class AdminResources implements utils.IResources {
     constructor(
         public config: Provider,
         public mongoManager: core.MongoManager,
-        public keyValueManager: KeyValueManager,
         public port: any) {
 
         this.webServerFactory = new WebServerFactory();
@@ -38,21 +34,12 @@ export class AdminResourcesFactory implements utils.IResourcesFactory<AdminResou
         const mongoFactory = new services.MongoDbFactory(mongoUrl);
         const mongoManager = new core.MongoManager(mongoFactory);
 
-        let keyValueManager: KeyValueManager;
-        try {
-            keyValueManager = await promiseTimeout(15000, KeyValueManager.load(config));
-        } catch (err) {
-            winston.error(`key-value load error`);
-            winston.error(err);
-        }
-
         // This wanst to create stuff
         const port = utils.normalizePort(process.env.PORT || "3000");
 
         return new AdminResources(
             config,
             mongoManager,
-            keyValueManager,
             port);
     }
 }
@@ -63,7 +50,6 @@ export class AdminRunnerFactory implements utils.IRunnerFactory<AdminResources> 
             resources.webServerFactory,
             resources.config,
             resources.port,
-            resources.mongoManager,
-            resources.keyValueManager);
+            resources.mongoManager);
     }
 }
