@@ -512,9 +512,9 @@ export class MapKernel {
      * have the information we need to create a real object, but will not be the real object yet.  For example,
      * we might know it's a map and the map's ID but not have the actual map or its data yet.  makeLocal's
      * job is to convert that information into a real object for local usage.
-     * @param key - the key that the caller intends to store the local value into (used for ops later).  But
+     * @param key - The key that the caller intends to store the local value into (used for ops later).  But
      * doesn't actually store the local value into that key.  So better not lie!
-     * @param serializable - the remote information that we can convert into a real object
+     * @param serializable - The remote information that we can convert into a real object
      * @returns The local value that was produced
      */
     private makeLocal(key: string, serializable: ISerializableValue): ILocalValue {
