@@ -4,8 +4,10 @@
  */
 
 import { IDeltaManager, IDeltaQueue, ITelemetryLogger } from "@microsoft/fluid-container-definitions";
+import { Deferred } from "@microsoft/fluid-core-utils";
 import {
     IDocumentMessage,
+    IDocumentStorageService,
     ISequencedDocumentMessage,
     ISummaryConfiguration,
     ISummaryProposal,
@@ -37,6 +39,7 @@ describe("Runtime", () => {
                     maxAckWaitTime: 600000, // 10 min
                 };
                 const testSummaryOpSeqNum = -13;
+                let refreshBaseSummaryDeferred: Deferred<void>;
 
                 before(() => {
                     clock = sinon.useFakeTimers();
@@ -46,6 +49,7 @@ describe("Runtime", () => {
                     clock.reset();
                     runCount = 0;
                     lastSeq = 0;
+                    refreshBaseSummaryDeferred = new Deferred();
                     emitter = new EventEmitter();
                     summarizer = new Summarizer(
                         "",
@@ -62,6 +66,10 @@ describe("Runtime", () => {
                                 send: (event) => {},
                                 sendTelemetryEvent: (event) => {},
                             } as ITelemetryLogger,
+                            storage: {
+                                getSnapshotTree: () => Promise.resolve(null),
+                                getVersions: (versionId, count) => Promise.resolve([]),
+                            } as IDocumentStorageService,
                         } as ContainerRuntime,
                         summaryConfig,
                         async () => {
@@ -74,7 +82,7 @@ describe("Runtime", () => {
                                 totalBlobSize: 0,
                             };
                         },
-                        () => {},
+                        () => { refreshBaseSummaryDeferred.resolve(); },
                     );
 
                     summarizer.run(summarizerClientId).catch((reason) => assert.fail(JSON.stringify(reason)));
@@ -120,6 +128,10 @@ describe("Runtime", () => {
                         summarySequenceNumber: testSummaryOpSeqNum,
                     };
                     emitter.emit(summaryOpEvent, { contents: { summaryProposal }, type });
+
+                    // wait for refresh base summary to complete
+                    await refreshBaseSummaryDeferred.promise;
+                    refreshBaseSummaryDeferred = new Deferred();
                 }
 
                 it("Should summarize after configured number of ops when not pending", async () => {
