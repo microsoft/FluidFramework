@@ -564,6 +564,7 @@ export class MapKernel {
 
     /**
      * Get the message handlers for the map.
+     * @returns A map of string op names to IMapMessageHandlers for those ops
      */
     private getMessageHandlers() {
         const messageHandlers = new Map<string, IMapMessageHandler>();
@@ -647,6 +648,10 @@ export class MapKernel {
         return messageHandlers;
     }
 
+    /**
+     * Submit a clear message to remote clients.
+     * @param op - The clear message
+     */
     private submitMapClearMessage(op: IMapClearOperation): void {
         const clientSequenceNumber = this.submitMessage(op);
         if (clientSequenceNumber !== -1) {
@@ -654,6 +659,10 @@ export class MapKernel {
         }
     }
 
+    /**
+     * Submit a map key message to remote clients.
+     * @param op - The map key message
+     */
     private submitMapKeyMessage(op: IMapKeyOperation): void {
         const clientSequenceNumber = this.submitMessage(op);
         if (clientSequenceNumber !== -1) {
@@ -661,6 +670,11 @@ export class MapKernel {
         }
     }
 
+    /**
+     * Create an emitter for a value type to emit ops from the given key.
+     * @alpha
+     * @param key - The key of the map that the value type will be stored on
+     */
     private makeMapValueOpEmitter(key: string): IValueOpEmitter {
         const emit = (opName: string, previousValue: any, params: any) => {
             const translatedParams = serializeHandles(
