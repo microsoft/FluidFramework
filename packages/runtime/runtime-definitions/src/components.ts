@@ -256,6 +256,14 @@ export interface IComponentContext extends EventEmitter {
     createComponent(pkgOrId: string, pkg?: string): Promise<IComponentRuntime>;
 
     /**
+     * Creates a new component by using subregistries.
+     * @param pkgOrId - Package name if a second parameter is not provided. Otherwise an explicit ID.
+     * @param pkg - Package name of the component. Optional and only required if specifying an explicit ID.
+     * @param props - properties to be passed to the instantiateComponent thru the context
+     */
+    createSubComponent(pkgOrId: string, pkg?: string, props?: any): Promise<IComponentRuntime>;
+
+    /**
      * Returns the runtime of the component.
      * @param id - Id supplied during creating the component.
      * @param wait - True if you want to wait for it.
