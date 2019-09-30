@@ -159,13 +159,12 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this.hostRuntime.createComponent(pkgOrId, pkg);
     }
 
-    public async createSubComponent(pkgOrId: string, pkg?: string, props?: any): Promise<IComponentRuntime> {
+    public async createSubComponent(pkg: string, props?: any): Promise<IComponentRuntime> {
         const details = await this.getSnapshotDetails();
         const packagePath: string[] = [...details.pkg];
-        const id = pkg === undefined ? uuid() : pkgOrId;
-        pkg === undefined ? packagePath.push(pkgOrId) : packagePath.push(pkg);
-
-        return this.hostRuntime._createComponentWithProps(packagePath, props, id);
+        packagePath.push(pkg);
+        const pkgId = uuid();
+        return this.hostRuntime._createComponentWithProps(packagePath, props, pkgId);
     }
 
     public async realize(): Promise<IComponentRuntime> {
