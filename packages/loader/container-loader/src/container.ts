@@ -157,7 +157,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private _parentBranch: string | undefined | null;
     private _connectionState = ConnectionState.Disconnected;
     private _serviceConfiguration: IServiceConfiguration | undefined;
-    private _audience: Audience | undefined;
+    private readonly _audience: Audience;
 
     private context: ContainerContext | undefined;
     private pkg: string | IFluidCodeDetails | undefined;
@@ -220,7 +220,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return this._existing;
     }
 
-    public get audience(): Audience | undefined {
+    /**
+     * Retrieves the audience associated with the document
+     */
+    public get audience(): Audience {
         return this._audience;
     }
 
@@ -247,6 +250,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         const [, documentId] = id.split("/");
         this._id = decodeURI(documentId);
         this._scopes = this.getScopes(options);
+        this._audience = new Audience();
 
         // create logger for components to use
         this.subLogger = DebugLogger.mixinDebugLogger(
@@ -307,7 +311,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return this.context!.request(path);
     }
 
-    public async snapshot(tagMessage: string, generateFullTreeNoOptimizations?: boolean): Promise<void> {
+    public async snapshot(tagMessage: string, fullTree: boolean = false): Promise<void> {
         // TODO: Issue-2171 Support for Branch Snapshots
         if (tagMessage.includes("ReplayTool Snapshot") === false && this.parentBranch) {
             // The below debug ruins the chrome debugging session
@@ -328,7 +332,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                 await this.deltaManager.inbound.systemPause();
             }
 
-            await this.snapshotCore(tagMessage, generateFullTreeNoOptimizations);
+            await this.snapshotCore(tagMessage, fullTree);
 
         } catch (ex) {
             this.logger.logException({ eventName: "SnapshotExceptionError" }, ex);
@@ -395,10 +399,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         await this.loadContext(attributes, storage, snapshot);
     }
 
-    private async snapshotCore(tagMessage: string, generateFullTreeNoOptimizations?: boolean) {
+    private async snapshotCore(tagMessage: string, fullTree: boolean = false) {
         // Snapshots base document state and currently running context
         const root = this.snapshotBase();
-        const componentEntries = await this.context!.snapshot(tagMessage, generateFullTreeNoOptimizations);
+        const componentEntries = await this.context!.snapshot(tagMessage, fullTree);
 
         // And then combine
         if (componentEntries) {
@@ -805,8 +809,12 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                 }
 
                 // back-compat for new client and old server.
+                this._audience.clear();
+
                 const priorClients = details.initialClients ? details.initialClients : [];
-                this._audience = new Audience(priorClients);
+                for (const client of priorClients) {
+                    this._audience.addMember(client.clientId, client.client);
+                }
             });
 
             this._deltaManager.on("disconnect", (reason: string) => {

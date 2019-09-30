@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import * as api from "@fluid-internal/client-api";
 import { isSystemType } from "@microsoft/fluid-core-utils";
 import { IConnect, IConnected } from "@microsoft/fluid-driver-base";
 import {
@@ -14,6 +13,7 @@ import {
     IDocumentSystemMessage,
     ISignalMessage,
     ITokenClaims,
+    MessageType,
 } from "@microsoft/fluid-protocol-definitions";
 import * as agent from "@microsoft/fluid-server-agent";
 import { canSummarize, canWrite } from "@microsoft/fluid-server-services-client";
@@ -263,7 +263,7 @@ export function register(
                         const messages = Array.isArray(messageBatch) ? messageBatch : [messageBatch];
                         const sanitized = messages
                             .filter((message) => {
-                                if (message.type === api.RoundTrip) {
+                                if (message.type === MessageType.RoundTrip) {
                                     // End of tracking. Write traces.
                                     metricLogger.writeLatencyMetric("latency", message.traces).catch(
                                         (error) => {
@@ -353,18 +353,19 @@ export function register(
             });
 
         socket.on("disconnect", async () => {
-            const removeP = [];
             // Send notification messages for all client IDs in the connection map
             for (const [clientId, connection] of connectionsMap) {
                 winston.info(`Disconnect of ${clientId}`);
                 connection.disconnect();
-                const room = roomMap.get(clientId);
-                if (room) {
-                    removeP.push(clientManager.removeClient(room.tenantId, room.documentId, clientId));
-                    // back-compat check for older clients.
-                    if (versionMap.has(clientId)) {
-                        socket.emitToRoom(getRoomId(room), "signal", createRoomLeaveMessage(clientId));
-                    }
+            }
+            // Send notification messages for all client IDs in the room map
+            const removeP = [];
+            for (const [clientId, room] of roomMap) {
+                winston.info(`Disconnect of ${clientId} from room`);
+                removeP.push(clientManager.removeClient(room.tenantId, room.documentId, clientId));
+                // back-compat check for older clients.
+                if (versionMap.has(clientId)) {
+                    socket.emitToRoom(getRoomId(room), "signal", createRoomLeaveMessage(clientId));
                 }
             }
             await Promise.all(removeP);

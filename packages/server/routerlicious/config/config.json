@@ -164,6 +164,10 @@
         "host": "redis",
         "port": 6379
     },
+    "redis2": {
+        "host": "redis",
+        "port": 6379
+    },
     "error": {
         "track": false,
         "endpoint" : ""

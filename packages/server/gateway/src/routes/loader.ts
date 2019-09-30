@@ -17,8 +17,7 @@ import { v4 } from "uuid";
 import * as winston from "winston";
 import { spoEnsureLoggedIn } from "../gateway-odsp-utils";
 import { resolveUrl } from "../gateway-urlresolver";
-import { IAlfred } from "../interfaces";
-import { KeyValueWrapper } from "../keyValueWrapper";
+import { IAlfred, IKeyValueWrapper } from "../interfaces";
 import { getConfig, getParam, getUserDetails } from "../utils";
 import { defaultPartials } from "./partials";
 
@@ -27,7 +26,7 @@ export function create(
     alfred: IAlfred,
     appTenants: IAlfredTenant[],
     ensureLoggedIn: any,
-    cache: KeyValueWrapper): Router {
+    cache: IKeyValueWrapper): Router {
 
     const router: Router = Router();
     const jwtKey = config.get("gateway:key");
