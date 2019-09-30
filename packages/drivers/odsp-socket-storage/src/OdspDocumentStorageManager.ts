@@ -226,37 +226,46 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         if (this.firstVersionCall && count === 1 && (blobid === null || blobid === this.documentId)) {
             this.firstVersionCall = false;
 
-            const event = PerformanceEvent.start(this.logger, { eventName: "TreesLatest" });
+            // This event measures whole process end-to-end, including token refresh and retries.
+            const event = PerformanceEvent.start(this.logger, { eventName: "TreesLatestFull" });
 
-            const result = await getWithRetryForTokenRefresh(async (refresh) => {
-                const storageToken = await this.getStorageToken(refresh);
+            try {
+                return await getWithRetryForTokenRefresh(async (refresh) => {
+                    const storageToken = await this.getStorageToken(refresh);
 
-                // TODO: This snapshot will return deltas, which we currently aren't using. We need to enable this flag to go down the "optimized"
-                // snapshot code path. We should leverage the fact that these deltas are returned to speed up the deltas fetch.
-                const { headers, url } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/trees/latest?deltas=1&channels=1&blobs=2`, storageToken);
+                    // TODO: This snapshot will return deltas, which we currently aren't using. We need to enable this flag to go down the "optimized"
+                    // snapshot code path. We should leverage the fact that these deltas are returned to speed up the deltas fetch.
+                    const { headers, url } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/trees/latest?deltas=1&channels=1&blobs=2`, storageToken);
 
-                const { trees, blobs, ops, sha } = await this.fetchWrapper.get<IOdspSnapshot>(url, this.documentId, headers);
+                    // This event measures only successful cases of getLatest call (no tokens, no retries).
+                    const eventInner = PerformanceEvent.start(this.logger, { eventName: "TreesLatest" });
 
-                if (trees) {
-                    this.initTreesCache(trees);
-                }
+                    const { trees, blobs, ops, sha } = await this.fetchWrapper.get<IOdspSnapshot>(url, this.documentId, headers);
 
-                if (blobs) {
-                    this.initBlobsCache(blobs);
-                }
+                    if (trees) {
+                        this.initTreesCache(trees);
+                    }
 
-                this.ops = ops;
+                    if (blobs) {
+                        this.initBlobsCache(blobs);
+                    }
 
-                event.end({
-                    trees: trees ? trees.length : 0,
-                    blobs: blobs ? blobs.length : 0,
-                    ops: ops.length,
+                    this.ops = ops;
+
+                    const props = {
+                        trees: trees ? trees.length : 0,
+                        blobs: blobs ? blobs.length : 0,
+                        ops: ops.length,
+                    };
+                    eventInner.end(props);
+                    event.end(props);
+
+                    return sha ? [{ id: sha, treeId: undefined! }] : [];
                 });
-
-                return sha ? [{ id: sha, treeId: undefined! }] : [];
-            });
-
-            return result;
+            } catch (error) {
+                event.cancel({}, error);
+                throw error;
+            }
         }
 
         return getWithRetryForTokenRefresh(async (refresh) => {
