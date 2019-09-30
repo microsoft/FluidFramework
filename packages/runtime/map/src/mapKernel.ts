@@ -515,6 +515,7 @@ export class MapKernel {
      * @param key - the key that the caller intends to store the local value into (used for ops later).  But
      * doesn't actually store the local value into that key.  So better not lie!
      * @param serializable - the remote information that we can convert into a real object
+     * @returns The local value that was produced
      */
     private makeLocal(key: string, serializable: ISerializableValue): ILocalValue {
         if (serializable.type === ValueType[ValueType.Plain] || serializable.type === ValueType[ValueType.Shared]) {
