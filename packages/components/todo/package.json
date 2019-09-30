@@ -46,8 +46,7 @@
     "@microsoft/fluid-runtime-definitions": "^0.11.0",
     "@microsoft/fluid-sequence": "^0.11.0",
     "react": "^16.8.3",
-    "react-dom": "^16.8.3",
-    "react-list": "^0.8.11"
+    "react-dom": "^16.8.3"
   },
   "devDependencies": {
     "@microsoft/fluid-build-common": "^0.11.0",

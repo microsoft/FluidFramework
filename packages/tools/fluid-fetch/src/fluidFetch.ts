@@ -6,7 +6,7 @@
 // tslint:disable:object-literal-sort-keys
 import * as fs from "fs";
 import * as util from "util";
-import { paramSave, parseArguments } from "./fluidFetchArgs";
+import { paramSave, paramURL, parseArguments } from "./fluidFetchArgs";
 import { connectionInfo, fluidFetchInit, paramDocumentService } from "./fluidFetchInit";
 import { fluidFetchMessages } from "./fluidFetchMessages";
 import { fluidFetchSnapshot } from "./fluidFetchSnapshot";
@@ -20,6 +20,7 @@ async function fluidFetchMain() {
         const info = {
             creationDate: new Date().toString(),
             connectionInfo,
+            url: paramURL,
         };
         await writeFile(`${paramSave}/info.json`, JSON.stringify(info, undefined, 2));
     }

@@ -9,7 +9,6 @@ export * from "./testCollection";
 export * from "./testContext";
 export * from "./testDeltaStorageService";
 export * from "./testDocumentDeltaConnection";
-export * from "./testDocument";
 export * from "./testDocumentStorage";
 export * from "./testHistorian";
 export * from "./testKafka";
