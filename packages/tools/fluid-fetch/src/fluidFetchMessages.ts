@@ -66,7 +66,7 @@ async function *loadAllSequencedMessages(
             }
         }
         if (lastSeq !== 0) {
-            console.log(`Read ${lastSeq} ops from local files`);
+            console.log(`Read ${lastSeq} ops from local cache`);
         }
     }
 
@@ -174,7 +174,7 @@ async function* saveOps(
 
 export async function fluidFetchMessages(documentService?: IDocumentService) {
     const messageStats = dumpMessageStats || dumpMessages;
-    if (!messageStats && paramSave === undefined) {
+    if (!messageStats && (paramSave === undefined || documentService === undefined)) {
         return;
     }
 

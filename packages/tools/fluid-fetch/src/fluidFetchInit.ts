@@ -386,6 +386,8 @@ export async function fluidFetchInit() {
             if (fs.existsSync(file)) {
                 const info = JSON.parse(fs.readFileSync(file, { encoding: "utf-8"}));
                 setParamSave(info.url as string);
+            } else {
+                console.log(`Can't file ${file}`);
             }
         }
 
