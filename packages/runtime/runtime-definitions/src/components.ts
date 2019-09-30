@@ -253,7 +253,7 @@ export interface IComponentContext extends EventEmitter {
      * @param pkgOrId - Package name if a second parameter is not provided. Otherwise an explicit ID.
      * @param pkg - Package name of the component. Optional and only required if specifying an explicit ID.
      */
-    createComponent(pkgOrId: string, pkg?: string): Promise<IComponentRuntime>;
+    createComponent(pkgOrId: string, pkg?: string | string[]): Promise<IComponentRuntime>;
 
     /**
      * Creates a new component by using subregistries.
