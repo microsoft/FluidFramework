@@ -12,7 +12,8 @@ import {
     reservedRangeLabelsKey,
 } from "@prague/merge-tree";
 import { Schema, Slice } from "prosemirror-model";
-import { ISequenceDeltaRange, SharedString } from "@prague/sequence";
+import { ISequenceDeltaRange, SharedString, SequenceDeltaEvent } from "@prague/sequence";
+import { EditorState, Transaction } from "prosemirror-state";
 
 export interface IProseMirrorNode {
     [key: string]: any;
@@ -30,6 +31,22 @@ export interface IProseMirrorSlice {
 export const proseMirrorTreeLabel = "prosemirror";
 
 export const nodeTypeKey = "nodeType";
+
+export class ProseMirrorTransactionBuilder {
+    private transaction: Transaction<any>;
+
+    constructor(state: EditorState) {
+        this.transaction = state.tr;
+    }
+
+    addSequencedDelta(delta: SequenceDeltaEvent) {
+        return;
+    }
+
+    build() {
+
+    }
+}
 
 export function sliceToGroupOps(from: number, slice: IProseMirrorSlice, schema: Schema): IMergeTreeOp[] {
     const ops = new Array<IMergeTreeOp>();

@@ -16,7 +16,7 @@ import {
     IMergeTreeOp,
 } from "@prague/merge-tree";
 import { Schema } from "prosemirror-model";
-import { sliceToGroupOps, segmentsToSlice } from "./fluidBridge";
+import { sliceToGroupOps, segmentsToSlice, ProseMirrorTransactionBuilder } from "./fluidBridge";
 
 export class FluidCollabPlugin {
     public readonly plugin: Plugin;
@@ -36,7 +36,7 @@ export class FluidCollabPlugin {
     }
 
     public attachView(editorView: EditorView) {
-        let sequencedDeltas = new Array<SequenceDeltaEvent>();
+        let sliceBuilder = new ProseMirrorTransactionBuilder(editorView.state);
 
         // TODO given that the relative positions will be changing I believe I will need to apply these
         // as they arrive
