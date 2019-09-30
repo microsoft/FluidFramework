@@ -36,7 +36,6 @@ export class DrawerCommandBar extends React.Component<IDrawerCommandBarProps, {}
     private async createDocument(details: { pkg: string, name: string, version: string, icon: string }) {
         const chaincode: IFluidCodeDetails = {
             config: {
-                "@chaincode:cdn": "https://pragueauspkn-3873244262.azureedge.net",
                 "@fluid-example:cdn": "https://pragueauspkn-3873244262.azureedge.net",
             },
             package: `${details.pkg}@${details.version}`,
