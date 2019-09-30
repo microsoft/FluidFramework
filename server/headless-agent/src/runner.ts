@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { Deferred } from "@microsoft/fluid-core-utils";
 import { IQueueMessage } from "@microsoft/fluid-runtime-definitions";
 import * as core from "@microsoft/fluid-server-services-core";
 import * as utils from "@microsoft/fluid-server-services-utils";
-import { Deferred } from "@microsoft/fluid-core-utils";
 import * as winston from "winston";
 import { ICloseEvent, PuppetMaster } from "./puppeteer";
 import { ICache } from "./redisCache";

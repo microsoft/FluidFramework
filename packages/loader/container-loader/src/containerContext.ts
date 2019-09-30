@@ -11,6 +11,7 @@ import {
 } from "@microsoft/fluid-component-core-interfaces";
 import {
     ConnectionState,
+    IAudience,
     ICodeLoader,
     IContainerContext,
     IDeltaManager,
@@ -121,6 +122,10 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         return this.container.serviceConfiguration;
     }
 
+    public get audience(): IAudience {
+        return this.container.audience;
+    }
+
     // tslint:disable-next-line:no-unsafe-any
     public get options(): any {
         return this.container.options;
@@ -168,8 +173,8 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         this.logger = container.subLogger;
     }
 
-    public async snapshot(tagMessage: string, generateFullTreeNoOptimizations?: boolean): Promise<ITree | null> {
-        return this.runtime!.snapshot(tagMessage, generateFullTreeNoOptimizations);
+    public async snapshot(tagMessage: string, fullTree: boolean = false): Promise<ITree | null> {
+        return this.runtime!.snapshot(tagMessage, fullTree);
     }
 
     public changeConnectionState(value: ConnectionState, clientId: string, version?: string) {
@@ -178,7 +183,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
     }
 
     public async stop(): Promise<ITree | null> {
-        const snapshot = await this.runtime!.snapshot("", false /*generageFullTreeNoOptimizations*/);
+        const snapshot = await this.runtime!.snapshot("", false);
         await this.runtime!.stop();
 
         // dispose

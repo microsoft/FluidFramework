@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { SharedMap } from "@prague/map";
-import { IComponentRuntime } from "@prague/runtime-definitions";
-import { SequenceDeltaEvent, SharedString } from "@prague/sequence";
+import { SharedMap } from "@microsoft/fluid-map";
+import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { SequenceDeltaEvent, SharedString } from "@microsoft/fluid-sequence";
 import { ContentState, Editor, EditorProps, EditorState, RichUtils } from "draft-js";
 import * as React from "react";
 
@@ -164,7 +164,7 @@ export class FluidEditor extends React.Component<IProps, IState> {
           this.props.sharedString.replaceText(start, end, insertedText, styleProp);
         } else {
           // text was simply inserted
-          this.props.sharedString.insertText(insertedText, start, styleProp);
+          this.props.sharedString.insertText(start, insertedText, styleProp);
         }
       } else if (
         changeType === "delete-character" ||
@@ -185,7 +185,7 @@ export class FluidEditor extends React.Component<IProps, IState> {
           throw new Error("Expected changedStyle to be set for style changes");
         }
         const styleProp = draftStyleToSharedTextProp(editorState.getCurrentInlineStyle(), changedStyle);
-        this.props.sharedString.annotateRange(styleProp, start, end);
+        this.props.sharedString.annotateRange(start, end, styleProp);
       } else if (changeType === "change-block-type") {
         const markers = getMarkersInBlockRange(
           this.props.sharedString,

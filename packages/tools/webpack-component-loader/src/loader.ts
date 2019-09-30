@@ -8,7 +8,7 @@
 import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 import { IHostConfig, start as startCore } from "@microsoft/fluid-base-host";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { IFluidModule, IFluidPackage, IPackage, IPraguePackage } from "@microsoft/fluid-container-definitions";
+import { IFluidModule, IFluidPackage, IPackage } from "@microsoft/fluid-container-definitions";
 import {
     TestDeltaConnectionServer,
     TestDocumentServiceFactory,
@@ -21,7 +21,8 @@ import { extractDetails, IResolvedPackage } from "@microsoft/fluid-web-code-load
 import * as jwt from "jsonwebtoken";
 import * as uuid from "uuid/v4";
 import { InsecureUrlResolver } from "./insecureUrlResolver";
-
+import { SessionStorageDbFactory } from "./sessionStorageTestDb";
+// import * as fetch from "isomorphic-fetch";
 export interface IDevServerUser extends IUser {
     name: string;
 }
@@ -43,17 +44,6 @@ function getUser(): IDevServerUser {
 
 function modifyFluidPackage(packageJson: IPackage): IFluidPackage {
     const fluidPackage = packageJson as IFluidPackage;
-    if (!("fluid" in packageJson)) {
-        const praguePackage = packageJson as IPraguePackage;
-        fluidPackage.fluid = {
-            browser: {
-                umd: {
-                    files: praguePackage.prague.browser.bundle,
-                    library: praguePackage.prague.browser.entrypoint,
-                },
-            },
-        };
-    }
 
     // Start by translating the input package to be webpack-dev-server relative URLs
     for (let i = 0; i < fluidPackage.fluid.browser.umd.files.length; i++) {
@@ -170,12 +160,11 @@ export async function start(
     switch (options.mode) {
         case "localhost":
             npm = "http://localhost:3002";
-            const localHost = "http://localhost:3000";
             urlResolver = new InsecureUrlResolver(
-                localHost,
-                localHost,
-                localHost,
-                "prague",
+                "http://localhost:3000",
+                "http://localhost:3003",
+                "http://localhost:3001",
+                "fluid",
                 "43cfc3fbf04a97c0921fd23ff10f9e4b",
                 getUser(),
                 bearerSecret);
@@ -222,7 +211,7 @@ export async function start(
         );
     } else {
 
-        const deltaConn = TestDeltaConnectionServer.create();
+        const deltaConn = TestDeltaConnectionServer.create(new SessionStorageDbFactory(url));
         documentServiceFactory = new TestDocumentServiceFactory(deltaConn);
         const hostConf: IHostConfig = { documentServiceFactory, urlResolver };
         startCore(

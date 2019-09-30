@@ -27,3 +27,7 @@ export interface IKeyValue {
 
     value: string;
 }
+
+export interface IKeyValueWrapper {
+    get(key: string): Promise<any>;
+}

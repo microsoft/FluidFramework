@@ -60,13 +60,13 @@ describe("non-collab", () => {
 
         function insertText(offset: number, text: string): void {
             let deltaArgs: IMergeTreeDeltaCallbackArgs;
-            client.mergeTree.mergeTreeDeltaCallback = (op, delta) => { deltaArgs = delta; };
-            client.insertTextLocal(offset, text);
+            client.mergeTree.mergeTreeDeltaCallback = (opArgs, delta) => { deltaArgs = delta; };
+            const op = client.insertTextLocal(offset, text);
 
             assert(deltaArgs);
             assert.equal(deltaArgs.deltaSegments.length, 1);
 
-            const event = new SequenceDeltaEvent(undefined, deltaArgs, client);
+            const event = new SequenceDeltaEvent({op}, deltaArgs, client);
 
             assert(event.isLocal);
             assert(!event.isEmpty);
@@ -105,13 +105,13 @@ describe("non-collab", () => {
 
         function removeText(start: number, end: number): void {
             let deltaArgs: IMergeTreeDeltaCallbackArgs;
-            client.mergeTree.mergeTreeDeltaCallback = (op, delta) => { deltaArgs = delta; };
-            client.removeRangeLocal(start, end);
+            client.mergeTree.mergeTreeDeltaCallback = (opArgs, delta) => { deltaArgs = delta; };
+            const op = client.removeRangeLocal(start, end);
 
             assert(deltaArgs);
             assert.equal(deltaArgs.deltaSegments.length, 1);
 
-            const event = new SequenceDeltaEvent(undefined, deltaArgs, client);
+            const event = new SequenceDeltaEvent({op}, deltaArgs, client);
 
             assert(event.isLocal);
             assert(!event.isEmpty);
@@ -179,13 +179,13 @@ describe("non-collab", () => {
                 expected: IExpectedSegmentInfo[])
                 : void {
             let deltaArgs: IMergeTreeDeltaCallbackArgs;
-            client.mergeTree.mergeTreeDeltaCallback = (op, delta) => { deltaArgs = delta; };
-            client.annotateRangeLocal(start, end, newProps, undefined);
+            client.mergeTree.mergeTreeDeltaCallback = (opArgs, delta) => { deltaArgs = delta; };
+            const op = client.annotateRangeLocal(start, end, newProps, undefined);
 
             assert(deltaArgs);
             assert.equal(deltaArgs.deltaSegments.length, expected.length);
 
-            const event = new SequenceDeltaEvent(undefined, deltaArgs, client);
+            const event = new SequenceDeltaEvent({op}, deltaArgs, client);
 
             assert(event.isLocal);
             assert(!event.isEmpty);
@@ -3071,13 +3071,13 @@ describe("SequenceDeltaEvent", () => {
         it("single segment", () => {
             const insertText = "text";
             let deltaArgs: IMergeTreeDeltaCallbackArgs;
-            client.mergeTree.mergeTreeDeltaCallback = (op, delta) => { deltaArgs = delta; };
-            client.insertTextLocal(0, insertText);
+            client.mergeTree.mergeTreeDeltaCallback = (opArgs, delta) => { deltaArgs = delta; };
+            const op = client.insertTextLocal(0, insertText);
 
             assert(deltaArgs);
             assert.equal(deltaArgs.deltaSegments.length, 1);
 
-            const event = new SequenceDeltaEvent(undefined, deltaArgs, client);
+            const event = new SequenceDeltaEvent({op}, deltaArgs, client);
 
             assert(event.isLocal);
             assert(!event.isEmpty);
@@ -3096,8 +3096,8 @@ describe("SequenceDeltaEvent", () => {
             }
 
             let deltaArgs: IMergeTreeDeltaCallbackArgs;
-            client.mergeTree.mergeTreeDeltaCallback = (op, delta) => { deltaArgs = delta; };
-            client.annotateRangeLocal(
+            client.mergeTree.mergeTreeDeltaCallback = (opArgs, delta) => { deltaArgs = delta; };
+            const op = client.annotateRangeLocal(
                 insertText.length,
                 client.getLength() - insertText.length,
                 {
@@ -3108,7 +3108,7 @@ describe("SequenceDeltaEvent", () => {
             assert(deltaArgs);
             assert.equal(deltaArgs.deltaSegments.length, segmentCount);
 
-            const event = new SequenceDeltaEvent(undefined, deltaArgs, client);
+            const event = new SequenceDeltaEvent({op}, deltaArgs, client);
 
             assert(event.isLocal);
             assert(!event.isEmpty);

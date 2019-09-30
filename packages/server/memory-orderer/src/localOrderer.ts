@@ -298,7 +298,7 @@ export class LocalOrderer implements IOrderer {
     }
 
     private setupKafkas() {
-        this.rawDeltasKafka = new LocalKafka(this.existing ? this.details.value.sequenceNumber : 0);
+        this.rawDeltasKafka = new LocalKafka(this.existing ? this.details.value.logOffset : 0);
         this.deltasKafka = new LocalKafka();
     }
 

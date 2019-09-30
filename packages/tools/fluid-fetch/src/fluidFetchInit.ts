@@ -15,12 +15,15 @@ import {
 import { IDocumentService } from "@microsoft/fluid-protocol-definitions";
 import * as r11s from "@microsoft/fluid-routerlicious-driver";
 import * as child_process from "child_process";
+import * as fs from "fs";
 import * as http from "http";
 import { URL } from "url";
-import { paramForceRefreshToken, paramJWT, paramURL } from "./fluidFetchArgs";
+import { localDataOnly, paramForceRefreshToken, paramJWT, paramSave, paramURL, setParamSave } from "./fluidFetchArgs";
 import { loadRC, saveRC } from "./fluidToolRC";
 
-export let paramDocumentService: IDocumentService;
+// tslint:disable:non-literal-fs-path
+
+export let paramDocumentService: IDocumentService | undefined;
 export let latestVersionsId: string = "";
 export let connectionInfo: any;
 
@@ -148,6 +151,10 @@ async function initializeODSPCore(
         drive,
         item,
     };
+
+    if (localDataOnly) {
+        return;
+    }
 
     console.log(`Connecting to ODSP:\n  server: ${server}\n  drive:  ${drive}\n  item:   ${item}`);
 
@@ -299,6 +306,10 @@ async function initializeR11s(server: string, pathname: string) {
         id: documentId,
     };
 
+    if (localDataOnly) {
+        return;
+    }
+
     const serverSuffix = server.substring(4);
     console.log(`Connecting to r11s: tenantId=${tenantId} id:${documentId}`);
     const tokenProvider = new r11s.TokenProvider(paramJWT);
@@ -319,7 +330,7 @@ async function initializeR11sLocalhost(pathname: string) {
         tenantId = path[2];
         documentId = path[3];
     } else {
-        tenantId = "prague";
+        tenantId = "fluid";
         documentId = path[2];
     }
 
@@ -331,6 +342,10 @@ async function initializeR11sLocalhost(pathname: string) {
         tenantId,
         id: documentId,
     };
+
+    if (localDataOnly) {
+        return;
+    }
 
     console.log(`Connecting to r11s localhost: tenantId=${tenantId} id:${documentId}`);
     const tokenProvider = new r11s.TokenProvider(paramJWT);
@@ -365,23 +380,34 @@ const r11sServers = [
     "www.eu.prague.office-int.com",
 ];
 export async function fluidFetchInit() {
-    if (paramURL) {
-        const url = new URL(paramURL);
-
-        const server = url.hostname.toLowerCase();
-        if (officeServers.indexOf(server) !== -1) {
-            return initializeOfficeODSP(url);
-        } else if (odspServers.indexOf(server) !== -1) {
-            return initializeODSP(url, server);
-        } else if (r11sServers.indexOf(server) !== -1) {
-            return initializeR11s(server, url.pathname);
-        } else if (fluidOfficeServers.indexOf(server) !== -1) {
-            return initializeFluidOffice(url);
-        } else if (server === "localhost" && url.port === "3000") {
-            return initializeR11sLocalhost(url.pathname);
+    if (!paramURL) {
+        if (paramSave) {
+            const file = `${paramSave}/info.json`;
+            if (fs.existsSync(file)) {
+                const info = JSON.parse(fs.readFileSync(file, { encoding: "utf-8"}));
+                setParamSave(info.url as string);
+            }
         }
-        console.log(server);
-        return Promise.reject(`Unknown URL ${paramURL}`);
+
+        if (!paramURL) {
+            return Promise.reject("Missing URL");
+        }
     }
-    return Promise.reject("Missing URL");
+
+    const url = new URL(paramURL);
+
+    const server = url.hostname.toLowerCase();
+    if (officeServers.indexOf(server) !== -1) {
+        return initializeOfficeODSP(url);
+    } else if (odspServers.indexOf(server) !== -1) {
+        return initializeODSP(url, server);
+    } else if (r11sServers.indexOf(server) !== -1) {
+        return initializeR11s(server, url.pathname);
+    } else if (fluidOfficeServers.indexOf(server) !== -1) {
+        return initializeFluidOffice(url);
+    } else if (server === "localhost" && url.port === "3000") {
+        return initializeR11sLocalhost(url.pathname);
+    }
+    console.log(server);
+    return Promise.reject(`Unknown URL ${paramURL}`);
 }

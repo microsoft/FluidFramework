@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-// Prague
-import { Component, Document } from '@prague/app-component';
-import { IContainerContext, IRuntime } from '@prague/container-definitions';
+// Fluid
+import { PrimedComponent, PrimedComponentFactory, SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
+import { IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
 
 // React
 import * as React from 'react';
@@ -19,45 +19,33 @@ import { DAW } from './DAW';
 // TODO: Is this right?
 const audioContext = new AudioContext();
 
-export class Musica extends Document {
-  constructor() {
-    super();
+export class Musica extends PrimedComponent implements IComponentHTMLVisual {
+  public get IComponentHTMLVisual() { return this; }
+
+  protected async componentHasInitialized() {
     this.player = new Player(audioContext);
+
   }
 
   private player: Player;
-  /**
-   * Create the component's schema and perform other initialization tasks
-   * (only called when document is initially created).
-   */
-  protected async create() {}
 
-  protected render(host: HTMLDivElement) {
-    // TODO: DAW and Recorder logic and visuals can be fully seperated and just both called here
-    // I think their only tie together is tempo, which isn't DAW related either so tempo may have to be updated in here as a global
-    ReactDOM.render(<DAW rootMap={this.root} />, host);
-  }
-
-  /**
-   *  The component has been loaded. Render the component into the provided div
-   * */
-  public async opened() {
-    await this.connected;
-
-    const maybeDiv = await this.platform.queryInterface<HTMLDivElement>('div');
-    if (maybeDiv) {
-      this.render(maybeDiv);
-      this.root.on('op', op => {
-        this.onOp(op);
-        this.render(maybeDiv);
-      });
-    } else {
-      return;
+  public render(div: HTMLDivElement) {
+    const reactRender = () => {
+      // TODO: DAW and Recorder logic and visuals can be fully seperated and just both called here
+      // I think their only tie together is tempo, which isn't DAW related either so tempo may have to be updated in here as a global
+      ReactDOM.render(<DAW rootDir={this.root} />, div);
     }
+
+    reactRender();
+
+    this.root.on('op', (op) => {
+      this.onOp(op);
+      reactRender();
+    });
   }
 
   /**
-   * Invoked anytime a value changes in the root map.
+   * Invoked anytime a value changes in the root directory.
    */
   private onOp(op: any) {
     const contents = op.contents;
@@ -105,11 +93,14 @@ export class Musica extends Document {
   }
 }
 
-export async function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-  return Component.instantiateRuntime(
-    context,
-    '@fluid-example/clicker',
-    new Map([['@fluid-example/clicker', Promise.resolve(Component.createComponentFactory(Musica))]])
-  );
-}
-//CSPELL:ignore Unpress chaincode Musica
+export const MusicaInstantiationFactory = new PrimedComponentFactory(
+  Musica,
+  [],
+);
+
+export const fluidExport = new SimpleModuleInstantiationFactory(
+  "@fluid-example/musica",
+  new Map([
+    ["@fluid-example/musica", Promise.resolve(MusicaInstantiationFactory)],
+  ]),
+);

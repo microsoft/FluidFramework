@@ -11,20 +11,30 @@ import {
     IComponentHTMLOptions,
     IComponentHTMLVisual,
     IComponentHandle,
-} from "@prague/component-core-interfaces";
-import { ComponentRuntime } from "@prague/component-runtime";
-import { ISharedMap, SharedMap } from "@prague/map";
-import { ReferenceType, reservedTileLabelsKey } from "@prague/merge-tree";
-import { IComponentContext, IComponentFactory, IComponentRuntime } from "@prague/runtime-definitions";
-import { SharedString } from "@prague/sequence";
-import { ISharedObjectFactory } from "@prague/shared-object-common";
+} from "@microsoft/fluid-component-core-interfaces";
+import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
+import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
+import {
+    IMergeTreeInsertMsg,
+    ReferenceType,
+    reservedRangeLabelsKey,
+    MergeTreeDeltaType,
+    createMap,
+    TextSegment,
+    Marker,
+} from "@microsoft/fluid-merge-tree";
+import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { SharedString } from "@microsoft/fluid-sequence";
+import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
+import * as assert from "assert";
 import { EventEmitter } from "events";
 import { EditorState } from "prosemirror-state";
 import { EditorView } from "prosemirror-view";
-import { Schema, DOMParser, NodeSpec } from "prosemirror-model";
-import { schema } from "prosemirror-schema-basic";
+import { Schema, NodeSpec } from "prosemirror-model";
 import { addListNodes } from "prosemirror-schema-list";
 import { exampleSetup } from "prosemirror-example-setup";
+import { FluidCollabPlugin } from "./fluidPlugin";
+import { schema } from "./fluidSchema";
 
 require("prosemirror-view/style/prosemirror.css");
 require("prosemirror-menu/style/menu.css");
@@ -32,6 +42,44 @@ require("prosemirror-example-setup/style/style.css");
 require("./style.css");
 
 import OrderedMap = require('orderedmap');
+
+const nodeTypeKey = "nodeType";
+
+function createTreeMarkerOps(
+    treeRangeLabel: string,
+    beginMarkerPos: number,
+    endMarkerPos: number,
+    nodeType: string,
+): IMergeTreeInsertMsg[] {
+
+    const endMarkerProps = createMap<any>();
+    endMarkerProps[reservedRangeLabelsKey] = [treeRangeLabel];
+    endMarkerProps[nodeTypeKey] = nodeType;
+
+    const beginMarkerProps = createMap<any>();
+    beginMarkerProps[reservedRangeLabelsKey] = [treeRangeLabel];
+    beginMarkerProps[nodeTypeKey] = nodeType;
+
+    return [
+        {
+            seg: { marker: { refType: ReferenceType.NestBegin }, props: beginMarkerProps },
+            pos1: beginMarkerPos,
+            type: MergeTreeDeltaType.INSERT,
+        },
+        {
+            seg: { marker: { refType: ReferenceType.NestEnd }, props: endMarkerProps },
+            pos1: endMarkerPos,
+            type: MergeTreeDeltaType.INSERT,
+        },
+    ];
+}
+
+interface IProseMirrorNode {
+    [key: string]: any;
+    type: string,
+    content?: IProseMirrorNode[],
+    marks?: any[],
+}
 
 export class ProseMirror extends EventEmitter implements IComponentLoadable, IComponentRouter, IComponentHTMLVisual {
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
@@ -74,11 +122,12 @@ export class ProseMirror extends EventEmitter implements IComponentLoadable, ICo
             this.root = SharedMap.create(this.runtime, "root");
             const text = SharedString.create(this.runtime);
 
-            // initial paragraph marker
-            text.insertMarker(
-                0,
-                ReferenceType.Tile,
-                { [reservedTileLabelsKey]: ["pg"] });
+            const ops = createTreeMarkerOps("prosemirror", 0, 1, "paragraph");
+            text.groupOperation({ ops, type: MergeTreeDeltaType.GROUP });
+            text.insertText(1, "Hello, world!");
+
+            // text.annotateRange(4, 6, { bold: true });
+            // text.annotateRange(5, 6, { yellow: "mello" });
 
             this.root.set("text", text.handle);
             this.root.register();
@@ -86,6 +135,9 @@ export class ProseMirror extends EventEmitter implements IComponentLoadable, ICo
 
         this.root = await this.runtime.getChannel("root") as ISharedMap;
         this.text = await this.root.get<IComponentHandle>("text").get<SharedString>();
+
+        // access for debugging
+        window["easyText"] = this.text;
     }
 
     public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
@@ -95,25 +147,7 @@ export class ProseMirror extends EventEmitter implements IComponentLoadable, ICo
             this.textArea.classList.add("editor");
             this.content = document.createElement("div");
             this.content.style.display = "none";
-            this.content.innerHTML =
-            `
-<h3>Hello ProseMirror</h3>
-
-<p>This is editable text. You can focus it and start typing.</p>
-
-<p>To apply styling, you can select a piece of text and manipulate
-its styling from the menu. The basic schema
-supports <em>emphasis</em>, <strong>strong
-text</strong>, <a href="http://marijnhaverbeke.nl/blog">links</a>, <code>code
-font</code>, and <img src="/img/smiley.png"> images.</p>
-
-<p>Block-level structure can be manipulated with key bindings (try
-ctrl-shift-2 to create a level 2 heading, or enter in an empty
-textblock to exit the parent block), or through the menu.</p>
-
-<p>Try using the “list” item in the menu to wrap this paragraph in
-a numbered list.</p>
-            `;
+            this.content.innerHTML = "";
         }
 
         // reparent if needed
@@ -130,21 +164,106 @@ a numbered list.</p>
     }
 
     private setupEditor() {
-        // Mix the nodes from prosemirror-schema-list into the basic schema to
-        // create a schema with list support.
-        const mySchema = new Schema({
+        // Initialize the base ProseMirror JSON data structure
+        const nodeStack = new Array<IProseMirrorNode>();
+        nodeStack.push({ type: "doc", content: [] });
+
+        this.text.walkSegments((segment) => {
+            let top = nodeStack[nodeStack.length - 1];
+
+            if (TextSegment.is(segment)) {
+                const nodeJson: IProseMirrorNode = {
+                    type: "text",
+                    text: segment.text,
+                };
+
+                if (segment.properties) {
+                    nodeJson.marks = [];
+                    for (const propertyKey of Object.keys(segment.properties)) {
+                        nodeJson.marks.push({
+                            type: propertyKey,
+                            value: segment.properties[propertyKey],
+                        })
+                    }
+                }
+
+                top.content.push(nodeJson);
+            } else if (Marker.is(segment)) {
+                // TODO are marks applied to the structural nodes as well? Or just inner text?
+
+                const nodeType = segment.properties[nodeTypeKey];
+                switch (segment.refType) {
+                    case ReferenceType.NestBegin:
+                        // Create the new node, add it to the top's content, and push it on the stack
+                        const newNode = { type: nodeType, content: [] };
+                        top.content.push(newNode);
+                        nodeStack.push(newNode);
+                        break;
+
+                    case ReferenceType.NestEnd:
+                        const popped = nodeStack.pop();
+                        assert(popped.type === nodeType);
+                        break;
+
+                    case ReferenceType.Simple:
+                        // TODO consolidate the text segment and simple references
+                        const nodeJson: IProseMirrorNode = {
+                            type: segment.properties["type"],
+                            attrs: segment.properties["attrs"],
+                        };
+
+                        if (segment.properties) {
+                            nodeJson.marks = [];
+                            for (const propertyKey of Object.keys(segment.properties)) {
+                                if (propertyKey !== "type" && propertyKey !== "attrs") {
+                                    nodeJson.marks.push({
+                                        type: propertyKey,
+                                        value: segment.properties[propertyKey],
+                                    });
+                                }
+                            }
+                        }
+
+                        top.content.push(nodeJson);
+                        break;
+
+                    default:
+                        // throw for now when encountering something unknown
+                        throw new Error("Unknown marker");
+                }
+            }
+
+            return true;
+        });
+
+        const doc = nodeStack.pop();
+        console.log(JSON.stringify(doc, null, 2));
+
+        const fluidSchema = new Schema({
             nodes: addListNodes(schema.spec.nodes as OrderedMap<NodeSpec>, "paragraph block*", "block"),
             marks: schema.spec.marks
-        })
-        
+        });
+
+        const fluidDoc = fluidSchema.nodeFromJSON(doc);
+
+        // initialize the prosemirror schema from the sequence
+        console.log(JSON.stringify(fluidDoc.toJSON(), null, 2));
+
+        const fluidPlugin = new FluidCollabPlugin(this.text, fluidSchema);
+
+        const state = EditorState.create({
+            doc: fluidDoc,
+            plugins: exampleSetup({ schema: fluidSchema }).concat(fluidPlugin.plugin),
+        });
+
         this.editorView = new EditorView(
             this.textArea,
             {
-                state: EditorState.create({
-                    doc: DOMParser.fromSchema(mySchema).parse(this.content),
-                    plugins: exampleSetup({schema: mySchema})
-                })
-        })
+                state,
+            });
+        fluidPlugin.attachView(this.editorView);
+
+        window["easyView"] = this.editorView;
     }
 }
 

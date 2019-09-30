@@ -8,6 +8,7 @@ import {
     IContentMessage,
     ISequencedDocumentMessage,
     IServiceConfiguration,
+    ISignalClient,
     ISignalMessage,
     ITokenClaims,
     MessageType,
@@ -22,6 +23,7 @@ export interface IConnectionDetails {
     mode: ConnectionMode;
     parentBranch: string | null;
     version: string;
+    initialClients?: ISignalClient[];
     initialMessages?: ISequencedDocumentMessage[];
     initialContents?: IContentMessage[];
     initialSignals?: ISignalMessage[];
