@@ -44,6 +44,8 @@ export interface ISummarizer extends IProvideSummarizer {
      * clientId is the elected summarizer and will stop once it is not.
      */
     run(onBehalfOf: string): Promise<void>;
+
+    stop();
 }
 
 export class Summarizer implements IComponentLoadable, ISummarizer {
@@ -63,6 +65,8 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
     private deferBroadcast: Deferred<void>;
     private deferAck: Deferred<void>;
 
+    private onBehalfOfClientId: string;
+
     constructor(
         public readonly url: string,
         private readonly runtime: ContainerRuntime,
@@ -77,7 +81,7 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
     }
 
     public async run(onBehalfOf: string): Promise<void> {
-        this.logger.sendTelemetryEvent({ eventName: "RunningSummarizer", onBehalfOf });
+        this.onBehalfOfClientId = onBehalfOf;
 
         if (!this.runtime.connected) {
             await new Promise((resolve) => this.runtime.once("connected", resolve));
@@ -91,6 +95,13 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
         this.lastSummarySeqNumber = this.runtime.deltaManager.referenceSequenceNumber;
         this.lastSummaryTime = Date.now();
 
+        this.logger.sendTelemetryEvent({
+            eventName: "RunningSummarizer",
+            clientId: this.runtime.clientId,
+            onBehalfOf,
+            initSummarySeqNumber: this.lastSummarySeqNumber,
+        });
+
         // start the timer after connecting to the document
         this.resetIdleTimer();
 
@@ -100,6 +111,16 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
         this.runtime.on("batchEnd", (error: any, op: ISequencedDocumentMessage) => this.handleOp(error, op));
 
         return this.runDeferred.promise;
+    }
+
+    public stop() {
+        this.logger.sendTelemetryEvent({
+            eventName: "StoppingSummarizer",
+            clientId: this.runtime.clientId,
+            onBehalfOf: this.onBehalfOfClientId,
+        });
+        this.runDeferred.resolve();
+        this.runtime.closeFn();
     }
 
     private async handleSummaryOp(op: ISequencedDocumentMessage) {
@@ -118,6 +139,7 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
                 if (op.clientId === this.runtime.clientId && op.referenceSequenceNumber === this.lastSummarySeqNumber) {
                     this.logger.sendTelemetryEvent({
                         eventName: "PendingSummaryBroadcast",
+                        clientId: this.runtime.clientId,
                         timeWaitingForBroadcast: Date.now() - this.lastSummaryTime,
                         pendingSummarySequenceNumber: op.sequenceNumber,
                     });
@@ -140,6 +162,7 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
                 if (ack.summaryProposal.summarySequenceNumber === this.pendingSummarySequenceNumber) {
                     this.logger.sendTelemetryEvent({
                         eventName: "PendingSummaryAck",
+                        clientId: this.runtime.clientId,
                         type: op.type,
                         timePending: Date.now() - this.lastSummaryTime,
                         summarySequenceNumber: ack.summaryProposal.summarySequenceNumber,
@@ -163,6 +186,7 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
             if (pendingTime > this.configuration.maxAckWaitTime) {
                 this.runtime.logger.sendTelemetryEvent({
                     eventName: "SummaryAckWaitTimeout",
+                    clientId: this.runtime.clientId,
                     maxAckWaitTime: this.configuration.maxAckWaitTime,
                 });
                 this.cancelPending();
@@ -185,6 +209,12 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
         // it shouldn't be possible to enter here if already summarizing or pending
         assert(!this.summarizing && !this.summaryPending);
 
+        if (this.onBehalfOfClientId !== this.runtime.summarizerClientId) {
+            // we are no longer the summarizer, we should close ourself
+            this.stop();
+            return;
+        }
+
         // generateSummary could take some time
         // mark that we are currently summarizing to prevent concurrent summarizing
         this.summarizing = true;
@@ -194,13 +224,13 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
             this.summarizing = false;
         }).catch((error) => {
             this.cancelPending();
-            this.logger.sendErrorEvent({ eventName: "SummarizeError" }, error);
+            this.logger.sendErrorEvent({ eventName: "SummarizeError", clientId: this.runtime.clientId }, error);
         });
     }
 
     private async summarizeCore(message: string) {
         const summarizingEvent = PerformanceEvent.start(this.logger,
-            { eventName: "Summarizing", stage: "start", message });
+            { eventName: "Summarizing", stage: "start", message, clientId: this.runtime.clientId });
 
         const summaryData = await this.generateSummary();
 
