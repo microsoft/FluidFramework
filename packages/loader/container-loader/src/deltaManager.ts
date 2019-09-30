@@ -464,6 +464,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 success,
             });
 
+            if (delay) {
+                this.emitDelayInfo(delay);
+            }
             await waitForConnectedState(delay);
         }
 
@@ -552,6 +555,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         } else {
             return coreMessage;
         }
+    }
+
+    private emitDelayInfo(delay: number) {
+        this.emit("connectionDelay", delay);
     }
 
     private connectCore(reason: string, delay: number, mode: ConnectionMode): void {
@@ -667,18 +674,14 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                         },
                         error);
                 }
-                this.connectRepeatCount++;
 
                 let delayNext: number = 0;
-                if (error instanceof NetworkError && error.retryAfterSeconds) {
+                if (error.retryAfterSeconds !== undefined) {
                     delayNext = error.retryAfterSeconds;
-                    if (delayNext > MaxReconnectDelay) {
-                        this.closeOnConnectionError(error);
-                        return;
-                    }
                 } else {
                     delayNext = Math.min(delay * 2, MaxReconnectDelay);
                 }
+                this.emitDelayInfo(delay);
                 waitForConnectedState(delayNext).then(() => this.connectCore(reason, delayNext, mode));
             });
     }
