@@ -22,31 +22,92 @@ import {
     ValueTypeLocalValue,
 } from "./localValues";
 
+/**
+ * Defines the means to process and submit a given op on a map.
+ */
 interface IMapMessageHandler {
+    /**
+     * Apply the given operation.
+     * @param op - The map operation to apply
+     * @param local - Whether the message originated from the local client
+     * @param message - The full message
+     */
     process(op: IMapOperation, local: boolean, message: ISequencedDocumentMessage): void;
+
+    /**
+     * Communicate the operation to remote clients.
+     * @param op - The map operation to submit
+     */
     submit(op: IMapOperation): void;
 }
 
+/**
+ * Describes an operation specific to a value type.
+ */
 interface IMapValueTypeOperation {
+    /**
+     * String identifier of the operation type.
+     */
     type: "act";
+
+    /**
+     * Map key being modified.
+     */
     key: string;
+
+    /**
+     * Value of the operation, specific to the value type.
+     */
     value: IValueTypeOperationValue;
 }
 
+/**
+ * Operation indicating a value should be set for a key.
+ */
 interface IMapSetOperation {
+    /**
+     * String identifier of the operation type.
+     */
     type: "set";
+
+    /**
+     * Map key being modified.
+     */
     key: string;
+
+    /**
+     * Value to be set on the key.
+     */
     value: ISerializableValue;
 }
 
+/**
+ * Operation indicating a key should be deleted from the map.
+ */
 interface IMapDeleteOperation {
+    /**
+     * String identifier of the operation type.
+     */
     type: "delete";
+
+    /**
+     * Map key being modified.
+     */
     key: string;
 }
 
+/**
+ * Map key operations are one of several types.
+ */
 type IMapKeyOperation = IMapValueTypeOperation | IMapSetOperation | IMapDeleteOperation;
 
+/**
+ * Operation indicating the map should be cleared.
+ */
 interface IMapClearOperation {
+    /**
+     * String identifier of the operation type.
+     */
     type: "clear";
 }
 
@@ -67,20 +128,46 @@ interface IMapDataObject {
  * A SharedMap is a map-like distributed data structure.
  */
 export class MapKernel {
-
-    public get size() {
+    /**
+     * The number of key/value pairs stored in the map.
+     */
+    public get size(): number {
         return this.data.size;
     }
+
+    /**
+     * Mapping of op types to message handlers.
+     */
     private readonly messageHandlers: ReadonlyMap<string, IMapMessageHandler> = new Map();
 
+    /**
+     * The in-memory data the map is storing.
+     */
     private readonly data = new Map<string, ILocalValue>();
+
+    /**
+     * Keys that have been modified locally but not yet ack'd from the server.
+     */
     private readonly pendingKeys: Map<string, number> = new Map();
+
+    /**
+     * If a clear has been performed locally but not yet ack'd from the server, then this stores the client sequence
+     * number of that clear operation.  Otherwise, is -1.
+     */
     private pendingClearClientSequenceNumber: number = -1;
+
+    /**
+     * Object to create encapsulations of the values stored in the map.
+     */
     private readonly localValueMaker: LocalValueMaker;
 
     /**
-     * Constructs a new shared map. If the object is non-local an id and service interfaces will
-     * be provided
+     * Create a new shared map kernel.
+     * @param runtime - The component runtime the shared object using the kernel will be associated with
+     * @param handle - The handle of the shared object using the kernel
+     * @param submitMessage - A callback to submit a message through the shared object
+     * @param valueTypes - The value types to register
+     * @param eventEmitter - The object that will emit map events
      */
     constructor(
         private readonly runtime: IComponentRuntime,
@@ -90,16 +177,24 @@ export class MapKernel {
         public readonly eventEmitter = new EventEmitter(),
     ) {
         this.localValueMaker = new LocalValueMaker(runtime);
-        this.messageHandlers = this.setMessageHandlers();
+        this.messageHandlers = this.getMessageHandlers();
         for (const type of valueTypes) {
             this.localValueMaker.registerValueType(type);
         }
     }
 
+    /**
+     * Get an iterator over the keys in this map.
+     * @returns The iterator
+     */
     public keys(): IterableIterator<string> {
         return this.data.keys();
     }
 
+    /**
+     * Get an iterator over the entries in this map.
+     * @returns The iterator
+     */
     public entries(): IterableIterator<[string, any]> {
         const localEntriesIterator = this.data.entries();
         const iterator = {
@@ -120,6 +215,10 @@ export class MapKernel {
         return iterator;
     }
 
+    /**
+     * Get an iterator over the values in this map.
+     * @returns The iterator
+     */
     public values(): IterableIterator<any> {
         const localValuesIterator = this.data.values();
         const iterator = {
@@ -140,31 +239,40 @@ export class MapKernel {
         return iterator;
     }
 
+    /**
+     * Get an iterator over the entries in this map.
+     * @returns The iterator
+     */
     public [Symbol.iterator](): IterableIterator<[string, any]> {
         return this.entries();
     }
 
-    // TODO: fix to pass-through when meta-data moved to separate map
-    public forEach(callbackFn: (value: any, key: string, map: Map<string, any>) => void) {
+    /**
+     * Executes the given callback on each entry in the map.
+     * @param callbackFn - callback function
+     */
+    public forEach(callbackFn: (value: any, key: string, map: Map<string, any>) => void): void {
         this.data.forEach((localValue, key, m) => {
             callbackFn(localValue.value, key, m);
         });
     }
 
     /**
-     * Retrieves the value with the given key from the map.
+     * {@inheritDoc ISharedMap.get}
      */
     public get<T = any>(key: string): T {
         if (!this.data.has(key)) {
             return undefined;
         }
 
-        // Let's stash the *type* of the object on the key
         const localValue = this.data.get(key);
 
         return localValue.value as T;
     }
 
+    /**
+     * {@inheritDoc ISharedMap.wait}
+     */
     public async wait<T = any>(key: string): Promise<T> {
         // Return immediately if the value already exists
         if (this.has(key)) {
@@ -184,14 +292,17 @@ export class MapKernel {
         });
     }
 
+    /**
+     * Check if a key exists in the map.
+     * @param key - The key to check
+     * @returns True if the key exists, false otherwise
+     */
     public has(key: string): boolean {
         return this.data.has(key);
     }
 
     /**
-     * Public set API.
-     * @param key - key to set
-     * @param value - value to set
+     * {@inheritDoc ISharedMap.set}
      */
     public set(key: string, value: any) {
         const localValue = this.localValueMaker.fromInMemory(value);
@@ -250,8 +361,9 @@ export class MapKernel {
     }
 
     /**
-     * Public delete API.
-     * @param key - key to delete
+     * Delete a key from the map.
+     * @param key - Key to delete
+     * @returns True if the key existed and was deleted, false if it did not exist
      */
     public delete(key: string): boolean {
         const op: IMapDeleteOperation = {
@@ -265,7 +377,7 @@ export class MapKernel {
     }
 
     /**
-     * Public clear API.
+     * Clear all data from the map.
      */
     public clear(): void {
         const op: IMapClearOperation = {
@@ -277,7 +389,7 @@ export class MapKernel {
     }
 
     /**
-     * Serializes the shared map to a JSON string
+     * Serializes the data stored in the shared map to a JSON string
      */
     public serialize(): string {
         const serializableMapData: IMapDataObject = {};
@@ -290,6 +402,10 @@ export class MapKernel {
         return JSON.stringify(serializableMapData);
     }
 
+    /**
+     * Populate the kernel with the given map data.
+     * @param data - A JSON string containing serialized map data
+     */
     public populate(data: string): void {
         const json = safelyParseJSON(data) as IMapDataObject;
         for (const [key, serializable] of Object.entries(json)) {
@@ -302,25 +418,34 @@ export class MapKernel {
         }
     }
 
+    // maybe not needed
     public hasHandlerFor(op: any): boolean {
         // tslint:disable-next-line:no-unsafe-any
         return this.messageHandlers.has(op.type);
     }
 
+    /**
+     * Submit the given op if a handler is registered.
+     * @param op - The operation to attempt to submit
+     * @returns True if the operation was submitted, false otherwise.
+     */
     public trySubmitMessage(op: any): boolean {
         // tslint:disable-next-line:no-unsafe-any
         const type: string = op.type;
         if (this.messageHandlers.has(type)) {
-            this.messageHandlers
-                .get(type)
-                .submit(op as IMapOperation);
+            this.messageHandlers.get(type).submit(op as IMapOperation);
             return true;
         }
         return false;
     }
 
+    /**
+     * Process the given op if a handler is registered.
+     * @param message - The message to process
+     * @param local - Whether the message originated from the local client
+     * @returns True if the operation was processed, false otherwise.
+     */
     public tryProcessMessage(message: ISequencedDocumentMessage, local: boolean): boolean {
-        // tslint:disable-next-line:no-unsafe-any
         const op = message.contents as IMapOperation;
         if (this.messageHandlers.has(op.type)) {
             this.messageHandlers
@@ -331,19 +456,38 @@ export class MapKernel {
         return false;
     }
 
-    private setCore(key: string, value: ILocalValue, local: boolean, op: ISequencedDocumentMessage) {
+    /**
+     * Set implementation used for both locally sourced sets as well as incoming remote sets.
+     * @param key - The key being set
+     * @param value - The value being set
+     * @param local - Whether the message originated from the local client
+     * @param op - The message if from a remote set, or null if from a local set
+     */
+    private setCore(key: string, value: ILocalValue, local: boolean, op: ISequencedDocumentMessage): void {
         const previousValue = this.get(key);
         this.data.set(key, value);
         const event: IValueChanged = { key, previousValue };
         this.eventEmitter.emit("valueChanged", event, local, op, this);
     }
 
-    private clearCore(local: boolean, op: ISequencedDocumentMessage) {
+    /**
+     * Clear implementation used for both locally sourced clears as well as incoming remote clears.
+     * @param local - Whether the message originated from the local client
+     * @param op - The message if from a remote clear, or null if from a local clear
+     */
+    private clearCore(local: boolean, op: ISequencedDocumentMessage): void {
         this.data.clear();
         this.eventEmitter.emit("clear", local, op, this);
     }
 
-    private deleteCore(key: string, local: boolean, op: ISequencedDocumentMessage) {
+    /**
+     * Delete implementation used for both locally sourced deletes as well as incoming remote deletes.
+     * @param key - The key being deleted
+     * @param local - Whether the message originated from the local client
+     * @param op - The message if from a remote delete, or null if from a local delete
+     * @returns True if the key existed and was deleted, false if it did not exist
+     */
+    private deleteCore(key: string, local: boolean, op: ISequencedDocumentMessage): boolean {
         const previousValue = this.get(key);
         const successfullyRemoved = this.data.delete(key);
         if (successfullyRemoved) {
@@ -353,11 +497,14 @@ export class MapKernel {
         return successfullyRemoved;
     }
 
-    private clearExceptPendingKeys(pendingKeys: Map<string, number>) {
+    /**
+     * Clear all keys in memory in response to a remote clear, but retain keys we have modified but not yet been ack'd.
+     */
+    private clearExceptPendingKeys(): void {
         // Assuming the pendingKeys is small and the map is large
         // we will get the value for the pendingKeys and clear the map
         const temp = new Map<string, ILocalValue>();
-        pendingKeys.forEach((value, key) => {
+        this.pendingKeys.forEach((value, key) => {
             temp.set(key, this.data.get(key));
         });
         this.data.clear();
@@ -386,7 +533,15 @@ export class MapKernel {
         }
     }
 
-    private needProcessKeyOperations(
+    /**
+     * If our local operations that have not yet been ack'd will eventually overwrite an incoming operation, we should
+     * not process the incoming operation.
+     * @param op - Operation to check
+     * @param local - Whether the message originated from the local client
+     * @param message - The message
+     * @return True if the operation should be processed, false otherwise
+     */
+    private needProcessKeyOperation(
         op: IMapKeyOperation,
         local: boolean,
         message: ISequencedDocumentMessage,
@@ -396,7 +551,7 @@ export class MapKernel {
             return false;
         }
 
-        if ((this.pendingKeys.size !== 0 && this.pendingKeys.has(op.key))) {
+        if (this.pendingKeys.has(op.key)) {
             // Found an NACK op, clear it from the map if the latest sequence number in the map match the message's
             // and don't process the op.
             if (local) {
@@ -412,7 +567,10 @@ export class MapKernel {
         return !local;
     }
 
-    private setMessageHandlers() {
+    /**
+     * Get the message handlers for the map.
+     */
+    private getMessageHandlers() {
         const messageHandlers = new Map<string, IMapMessageHandler>();
         messageHandlers.set(
             "clear",
@@ -425,7 +583,7 @@ export class MapKernel {
                         return;
                     }
                     if (this.pendingKeys.size !== 0) {
-                        this.clearExceptPendingKeys(this.pendingKeys);
+                        this.clearExceptPendingKeys();
                         return;
                     }
                     this.clearCore(local, message);
@@ -438,7 +596,7 @@ export class MapKernel {
             "delete",
             {
                 process: (op: IMapDeleteOperation, local, message) => {
-                    if (!this.needProcessKeyOperations(op, local, message)) {
+                    if (!this.needProcessKeyOperation(op, local, message)) {
                         return;
                     }
                     this.deleteCore(op.key, local, message);
@@ -451,7 +609,7 @@ export class MapKernel {
             "set",
             {
                 process: (op: IMapSetOperation, local, message) => {
-                    if (!this.needProcessKeyOperations(op, local, message)) {
+                    if (!this.needProcessKeyOperation(op, local, message)) {
                         return;
                     }
 
