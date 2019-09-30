@@ -21,7 +21,6 @@ import {
     ISerializableValue,
     ISharedDirectory,
     IValueOpEmitter,
-    IValueType,
     IValueTypeOperationValue,
 } from "./interfaces";
 import { ILocalValue, LocalValueMaker, ValueTypeLocalValue, valueTypes } from "./localValues";
@@ -112,25 +111,41 @@ export interface IDirectoryDataObject {
 }
 
 /**
- * The factory that defines the directory
+ * The factory that defines the directory.
+ * @sealed
  */
 export class DirectoryFactory {
+    /**
+     * {@inheritDoc @microsoft/fluid-shared-object-base#ISharedObjectFactory."type"}
+     */
     public static readonly Type = "https://graph.microsoft.com/types/directory";
 
+    /**
+     * {@inheritDoc @microsoft/fluid-shared-object-base#ISharedObjectFactory.attributes}
+     */
     public static readonly Attributes: IChannelAttributes = {
         type: DirectoryFactory.Type,
         snapshotFormatVersion: "0.1",
         packageVersion: pkgVersion,
     };
 
+    /**
+     * {@inheritDoc @microsoft/fluid-shared-object-base#ISharedObjectFactory."type"}
+     */
     public get type() {
         return DirectoryFactory.Type;
     }
 
+    /**
+     * {@inheritDoc @microsoft/fluid-shared-object-base#ISharedObjectFactory.attributes}
+     */
     public get attributes() {
         return DirectoryFactory.Attributes;
     }
 
+    /**
+     * {@inheritDoc @microsoft/fluid-shared-object-base#ISharedObjectFactory.load}
+     */
     public async load(
         runtime: IComponentRuntime,
         id: string,
@@ -143,6 +158,9 @@ export class DirectoryFactory {
         return directory;
     }
 
+    /**
+     * {@inheritDoc @microsoft/fluid-shared-object-base#ISharedObjectFactory.create}
+     */
     public create(runtime: IComponentRuntime, id: string): ISharedDirectory {
         const directory = new SharedDirectory(id, runtime);
         directory.initializeLocal();
@@ -154,13 +172,16 @@ export class DirectoryFactory {
 /**
  * SharedDirectory provides a hierarchical organization of map-like data structures as SubDirectories.
  * The values stored within can be accessed like a map, and the hierarchy can be navigated using path syntax.
- * SubDirectories can be retrieved for use as working directories.  For example:
+ * SubDirectories can be retrieved for use as working directories.
  *
+ * @example
  * ```ts
  * mySharedDirectory.createSubDirectory("a").createSubDirectory("b").createSubDirectory("c").set("foo", val1);
  * const mySubDir = mySharedDirectory.getWorkingDirectory("/a/b/c");
  * mySubDir.get("foo"); // returns val1
  * ```
+ *
+ * @sealed
  */
 export class SharedDirectory extends SharedObject implements ISharedDirectory {
     /**
@@ -183,6 +204,9 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
         return new DirectoryFactory();
     }
 
+    /**
+     * String representation for the class.
+     */
     public [Symbol.toStringTag]: string = "SharedDirectory";
 
     /**
@@ -215,7 +239,7 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
         this.localValueMaker = new LocalValueMaker(runtime);
         this.setMessageHandlers();
         for (const type of valueTypes) {
-            this.registerValueType(type);
+            this.localValueMaker.registerValueType(type);
         }
     }
 
@@ -252,6 +276,7 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
     /**
      * Deletes the given key from within this IDirectory.
      * @param key - the key to delete
+     * @returns True if the key existed and was deleted, false if it did not exist
      */
     public delete(key: string): boolean {
         return this.root.delete(key);
@@ -267,6 +292,7 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
     /**
      * Checks whether the given key exists in this IDirectory.
      * @param key - the key to check
+     * @returns True if the key exists, false otherwise
      */
     public has(key: string): boolean {
         return this.root.has(key);
@@ -289,6 +315,7 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
 
     /**
      * Get an iterator over the entries under this IDirectory.
+     * @returns The iterator
      */
     public [Symbol.iterator](): IterableIterator<[string, any]> {
         return this.root[Symbol.iterator]();
@@ -296,6 +323,7 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
 
     /**
      * Get an iterator over the entries under this IDirectory.
+     * @returns The iterator
      */
     public entries(): IterableIterator<[string, any]> {
         return this.root.entries();
@@ -303,6 +331,7 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
 
     /**
      * Get an iterator over the keys under this IDirectory.
+     * @returns The iterator
      */
     public keys(): IterableIterator<string> {
         return this.root.keys();
@@ -310,6 +339,7 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
 
     /**
      * Get an iterator over the values under this IDirectory.
+     * @returns The iterator
      */
     public values(): IterableIterator<any> {
         return this.root.values();
@@ -560,13 +590,6 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
                     .process(op, local, message);
             }
         }
-    }
-
-    /**
-     * Registers a new value type on the directory
-     */
-    protected registerValueType<T>(type: IValueType<T>) {
-        this.localValueMaker.registerValueType(type);
     }
 
     /**
@@ -993,6 +1016,7 @@ class SubDirectory implements IDirectory {
 
     /**
      * Get an iterator over the keys under this IDirectory.
+     * @returns The iterator
      */
     public keys(): IterableIterator<string> {
         return this._storage.keys();
@@ -1000,6 +1024,7 @@ class SubDirectory implements IDirectory {
 
     /**
      * Get an iterator over the values under this IDirectory.
+     * @returns The iterator
      */
     public values(): IterableIterator<any> {
         const localValuesIterator = this._storage.values();
@@ -1022,6 +1047,7 @@ class SubDirectory implements IDirectory {
 
     /**
      * Get an iterator over the entries under this IDirectory.
+     * @returns The iterator
      */
     public [Symbol.iterator](): IterableIterator<[string, any]> {
         return this.entries();
@@ -1041,7 +1067,7 @@ class SubDirectory implements IDirectory {
             }
             return;
         }
-        this.clearExceptPendingKeys(this.pendingKeys);
+        this.clearExceptPendingKeys();
         this.directory.emit("clear", local, op);
     }
 
@@ -1053,7 +1079,7 @@ class SubDirectory implements IDirectory {
         local: boolean,
         message: ISequencedDocumentMessage,
     ): void {
-        if (!this.needProcessStorageOperations(op, local, message)) {
+        if (!this.needProcessStorageOperation(op, local, message)) {
             return;
         }
         this.deleteCore(op.key, local, message);
@@ -1068,7 +1094,7 @@ class SubDirectory implements IDirectory {
         local: boolean,
         message: ISequencedDocumentMessage,
     ): void {
-        if (!this.needProcessStorageOperations(op, local, message)) {
+        if (!this.needProcessStorageOperation(op, local, message)) {
             return;
         }
         this.setCore(op.key, context, local, message);
@@ -1172,13 +1198,14 @@ class SubDirectory implements IDirectory {
 
     /**
      * Converts the given relative path into an absolute path.
-     * @param path - relative path
+     * @param path - Relative path to convert
+     * @returns The equivalent absolute path
      */
     private makeAbsolute(relativePath: string): string {
         return posix.resolve(this.absolutePath, relativePath);
     }
 
-    private needProcessStorageOperations(
+    private needProcessStorageOperation(
         op: IDirectoryKeyOperation,
         local: boolean,
         message: ISequencedDocumentMessage,
@@ -1188,7 +1215,7 @@ class SubDirectory implements IDirectory {
             return false;
         }
 
-        if ((this.pendingKeys.size !== 0 && this.pendingKeys.has(op.key))) {
+        if (this.pendingKeys.has(op.key)) {
             // Found an NACK op, clear it from the directory if the latest sequence number in the directory
             // match the message's and don't process the op.
             if (local) {
@@ -1222,11 +1249,11 @@ class SubDirectory implements IDirectory {
         return !local;
     }
 
-    private clearExceptPendingKeys(pendingKeys: Map<string, number>) {
+    private clearExceptPendingKeys() {
         // Assuming the pendingKeys is small and the map is large
         // we will get the value for the pendingKeys and clear the map
         const temp = new Map<string, ILocalValue>();
-        pendingKeys.forEach((value, key, map) => {
+        this.pendingKeys.forEach((value, key, map) => {
             temp.set(key, this._storage.get(key));
         });
         this._storage.clear();
