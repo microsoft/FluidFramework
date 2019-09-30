@@ -905,7 +905,7 @@ class SubDirectory implements IDirectory {
      * The subdirectories the directory is holding.
      */
     private readonly _subdirectories: Map<string, SubDirectory> = new Map();
-    
+
     /**
      * Keys that have been modified locally but not yet ack'd from the server.
      */
