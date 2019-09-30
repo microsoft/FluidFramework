@@ -156,6 +156,10 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
     }
 
     public async createComponent(pkgOrId: string, pkg?: string, props?: any): Promise<IComponentRuntime> {
+        return this.hostRuntime.createComponent(pkgOrId, pkg);
+    }
+
+    public async createSubComponent(pkgOrId: string, pkg?: string, props?: any): Promise<IComponentRuntime> {
         const details = await this.getSnapshotDetails();
         const packagePath: string[] = [...details.pkg];
         const id = pkg === undefined ? uuid() : pkgOrId;
@@ -172,15 +176,10 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
             this.baseId = details.snapshot ? details.snapshot.id : null;
             const packages = details.pkg;
             let registry = this._hostRuntime.IComponentRegistry;
-            const mainRegistry = registry;
             let factory: ComponentFactoryTypes & Partial<IComponentRegistry>;
             for (const pkg of packages) {
                 if (!registry) {
-                    factory = await mainRegistry.get(packages[packages.length - 1]);
-                    if (!factory) {
-                        throw new Error("Factory does not supply the component Registry");
-                    }
-                    break;
+                    throw new Error("Factory does not supply the component Registry");
                 }
                 factory = await registry.get(pkg);
                 registry = factory.IComponentRegistry;
