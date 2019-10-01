@@ -317,7 +317,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return this.context!.request(path);
     }
 
-    public async snapshot(tagMessage: string, generateFullTreeNoOptimizations?: boolean): Promise<void> {
+    public async snapshot(tagMessage: string, fullTree: boolean = false): Promise<void> {
         // TODO: Issue-2171 Support for Branch Snapshots
         if (tagMessage.includes("ReplayTool Snapshot") === false && this.parentBranch) {
             // The below debug ruins the chrome debugging session
@@ -338,7 +338,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                 await this.deltaManager.inbound.systemPause();
             }
 
-            await this.snapshotCore(tagMessage, generateFullTreeNoOptimizations);
+            await this.snapshotCore(tagMessage, fullTree);
 
         } catch (ex) {
             this.logger.logException({ eventName: "SnapshotExceptionError" }, ex);
@@ -405,10 +405,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         await this.loadContext(attributes, storage, snapshot);
     }
 
-    private async snapshotCore(tagMessage: string, generateFullTreeNoOptimizations?: boolean) {
+    private async snapshotCore(tagMessage: string, fullTree: boolean = false) {
         // Snapshots base document state and currently running context
         const root = this.snapshotBase();
-        const componentEntries = await this.context!.snapshot(tagMessage, generateFullTreeNoOptimizations);
+        const componentEntries = await this.context!.snapshot(tagMessage, fullTree);
 
         // And then combine
         if (componentEntries) {
