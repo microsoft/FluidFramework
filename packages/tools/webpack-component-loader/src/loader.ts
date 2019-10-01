@@ -10,6 +10,7 @@ import { IHostConfig, start as startCore } from "@microsoft/fluid-base-host";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IFluidModule, IFluidPackage, IPackage } from "@microsoft/fluid-container-definitions";
 import {
+    ITestDeltaConnectionServer,
     TestDeltaConnectionServer,
     TestDocumentServiceFactory,
     TestResolver,
@@ -22,7 +23,7 @@ import * as jwt from "jsonwebtoken";
 import * as uuid from "uuid/v4";
 import { InsecureUrlResolver } from "./insecureUrlResolver";
 import { SessionStorageDbFactory } from "./sessionStorageTestDb";
-// import * as fetch from "isomorphic-fetch";
+
 export interface IDevServerUser extends IUser {
     name: string;
 }
@@ -33,6 +34,7 @@ export interface IRouteOptions {
     tenantId?: string;
     tenantSecret?: string;
     component?: string;
+    double?: boolean;
 }
 
 function getUser(): IDevServerUser {
@@ -188,6 +190,8 @@ export async function start(
     }
 
     let documentServiceFactory: IDocumentServiceFactory;
+    let hostConf: IHostConfig;
+    let deltaConn: ITestDeltaConnectionServer ;
     if (options.mode !== "local") {
         documentServiceFactory = new RouterliciousDocumentServiceFactory(
             false,
@@ -196,24 +200,35 @@ export async function start(
             true,
             undefined,
         );
-        const hostConf: IHostConfig = { documentServiceFactory, urlResolver };
-
-        startCore(
-            url,
-            await urlResolver.resolve(req),
-            pkg,
-            scriptIds,
-            npm,
-            config,
-            {},
-            div,
-            hostConf,
-        );
+        hostConf = { documentServiceFactory, urlResolver };
     } else {
-
-        const deltaConn = TestDeltaConnectionServer.create(new SessionStorageDbFactory(url));
+        deltaConn = TestDeltaConnectionServer.create(new SessionStorageDbFactory(url));
         documentServiceFactory = new TestDocumentServiceFactory(deltaConn);
-        const hostConf: IHostConfig = { documentServiceFactory, urlResolver };
+        hostConf = { documentServiceFactory, urlResolver };
+    }
+
+    const [leftDiv, rightDiv] = div.getElementsByTagName("div");
+    if (options.double && options.mode === "local" && !(leftDiv && rightDiv)) {
+        throw new Error("not enough divs");
+    }
+
+    startCore(
+        url,
+        await urlResolver.resolve(req),
+        pkg,
+        scriptIds,
+        npm,
+        config,
+        {},
+        options.double ? leftDiv : div,
+        hostConf,
+    );
+
+    if (options.double && options.mode === "local") {
+        // new documentServiceFactory for right div
+        const docServFac2: IDocumentServiceFactory = new TestDocumentServiceFactory(deltaConn);
+        const hostConf2 = { documentServiceFactory: docServFac2, urlResolver };
+
         startCore(
             url,
             await urlResolver.resolve(req),
@@ -222,8 +237,8 @@ export async function start(
             npm,
             config,
             {},
-            div,
-            hostConf,
+            rightDiv,
+            hostConf2,
         );
     }
 }

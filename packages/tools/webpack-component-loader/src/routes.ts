@@ -49,8 +49,12 @@ const fluid = (req: express.Request, res: express.Response,  baseDir: string, op
 </head>
 <body>
     <div style="width: 100%; height: 100%;">
-        <div id="content"></div>
-    </div>
+      ${ options.double ?
+      `<div id="content">
+        <div id="left_content" style="width: 50%; float: left; border: 1px solid lightgray"></div>
+        <div id="right_content" style="margin-left: 50%; border: 1px solid lightgray"></div>
+      </div>` :
+      `<div id="content"></div>`}
 
     <script src="/node_modules/@microsoft/fluid-webpack-component-loader/dist/fluid-loader.bundle.js"></script>
     <script>

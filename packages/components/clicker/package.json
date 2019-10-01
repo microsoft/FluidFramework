@@ -17,6 +17,7 @@
     "start": "webpack-dev-server --config webpack.config.js --package package.json",
     "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode  localhost",
     "start:local": "webpack-dev-server --config webpack.config.js --package package.json --env.mode  local",
+    "start:double": "webpack-dev-server --config webpack.config.js --package package.json --env.double --env.mode  local",
     "deploy": "npm publish --registry https://packages.wu2.prague.office-int.com",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose",
