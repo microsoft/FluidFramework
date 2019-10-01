@@ -137,7 +137,3 @@ class PersonaFactory implements IComponentFactory {
 }
 
 export const fluidExport = new PersonaFactory();
-
-export function instantiateComponent(context: IComponentContext): void {
-    fluidExport.instantiateComponent(context);
-}

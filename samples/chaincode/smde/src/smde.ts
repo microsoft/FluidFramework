@@ -215,7 +215,3 @@ class SmdeFactory implements IComponentFactory {
 }
 
 export const fluidExport = new SmdeFactory();
-
-export function instantiateComponent(context: IComponentContext): void {
-    fluidExport.instantiateComponent(context);
-}
