@@ -4,11 +4,10 @@
  */
 
 import { IComponent, IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { IContainerContext } from "@microsoft/fluid-container-definitions";
-import { Heap, IComparer, IHeapNode } from "@microsoft/fluid-core-utils";
+import { IContainerContext, ITelemetryLogger } from "@microsoft/fluid-container-definitions";
+import { ChildLogger, Heap, IComparer, IHeapNode } from "@microsoft/fluid-core-utils";
 import { ISequencedClient } from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
-import { debug } from "./debug";
 import { ISummarizer } from "./summarizer";
 
 interface ITrackedClient {
@@ -34,6 +33,7 @@ export class SummaryManager extends EventEmitter {
     private connected = false;
     private clientId: string;
     private runningSummarizer?: ISummarizer;
+    private readonly logger: ITelemetryLogger;
 
     public get summarizer() {
         return this._summarizer;
@@ -43,8 +43,14 @@ export class SummaryManager extends EventEmitter {
         return this.connected && this.clientId === this.summarizer;
     }
 
-    constructor(private readonly context: IContainerContext, private readonly generateSummaries: boolean) {
+    constructor(
+        private readonly context: IContainerContext,
+        private readonly generateSummaries: boolean,
+        parentLogger: ITelemetryLogger,
+    ) {
         super();
+
+        this.logger = ChildLogger.create(parentLogger, "SummaryManager");
 
         const members = context.quorum.getMembers();
         for (const [clientId, member] of members) {
@@ -134,10 +140,16 @@ export class SummaryManager extends EventEmitter {
                 () => {
                     // In the future we will respawn the summarizer - for now we simply stop
                     // this.computeSummarizer(this.connected)
-                    debug("summary generation complete");
+                    this.logger.sendTelemetryEvent({
+                        eventName: "RunningSummarizerCompleted",
+                        clientId: this.clientId,
+                    });
                 },
                 (error) => {
-                    debug("summary generation error", error);
+                    this.logger.sendErrorEvent({
+                        eventName: "RunningSummarizerFailed",
+                        clientId: this.clientId,
+                    }, error);
                 });
         }
 
@@ -146,7 +158,10 @@ export class SummaryManager extends EventEmitter {
     private async createSummarizer() {
         // We have been elected the summarizer. Some day we may be able to summarize with a live document but for
         // now we play it safe and launch a second copy.
-        debug(`${this.clientId} elected summarizer`);
+        this.logger.sendTelemetryEvent({
+            eventName: "CreatingSummarizer",
+            clientId: this.clientId,
+        });
 
         const loader = this.context.loader;
 

@@ -20,7 +20,9 @@ import {
     ITelemetryLogger,
 } from "@microsoft/fluid-container-definitions";
 import {
+    BlobTreeEntry,
     buildHierarchy,
+    CommitTreeEntry,
     ComponentSerializer,
     Deferred,
     flatten,
@@ -65,8 +67,8 @@ import { DocumentStorageServiceProxy } from "./documentStorageServiceProxy";
 import { LeaderElector } from "./leaderElection";
 import { Summarizer } from "./summarizer";
 import { SummaryManager } from "./summaryManager";
+import { ISummaryStats, SummaryTreeConverter } from "./summaryTreeConverter";
 import { analyzeTasks } from "./taskAnalyzer";
-import { BlobTreeEntry, CommitTreeEntry, ISummaryStats, SummaryTreeConverter } from "./utils";
 
 interface ISummaryTreeWithStats {
     summaryStats: ISummaryStats;
@@ -563,7 +565,9 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
         // Create the SummaryManager and mark the initial state
         this.summaryManager = new SummaryManager(
-            context, this.runtimeOptions.generateSummaries || this.loadedFromSummary);
+            context,
+            this.runtimeOptions.generateSummaries || this.loadedFromSummary,
+            this.logger);
         if (this.context.connectionState === ConnectionState.Connected) {
             this.summaryManager.setConnected(this.context.clientId);
         }
