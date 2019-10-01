@@ -4,7 +4,7 @@
  */
 
 import { ConnectionState } from "@microsoft/fluid-container-definitions";
-import { readAndParse } from "@microsoft/fluid-core-utils";
+import { readAndParse, SummaryTracker } from "@microsoft/fluid-core-utils";
 import {
     IDocumentStorageService,
     ISequencedDocumentMessage,
@@ -28,7 +28,7 @@ type RequiredIChannelAttributes = Pick<IChannelAttributes, "type"> & Partial<ICh
 
 export class RemoteChannelContext implements IChannelContext {
     private connection: ChannelDeltaConnection | undefined;
-    private baseId?: string;
+    private readonly summaryTracker = new SummaryTracker();
     private isLoaded = false;
     private pending: ISequencedDocumentMessage[] | undefined = [];
     private channelP: Promise<IChannel> | undefined;
@@ -40,12 +40,14 @@ export class RemoteChannelContext implements IChannelContext {
         private readonly storageService: IDocumentStorageService,
         private readonly submitFn: (type: MessageType, content: any) => number,
         private readonly id: string,
-        private baseSnapshot: ISnapshotTree,
+        baseSnapshot: ISnapshotTree,
         private readonly registry: ISharedObjectRegistry,
         private readonly extraBlobs: Map<string, string>,
         private readonly branch: string,
         private readonly attributes: RequiredIChannelAttributes | undefined,
-    ) {}
+    ) {
+        this.summaryTracker.refreshBaseSummary(baseSnapshot);
+    }
 
     public getChannel(): Promise<IChannel> {
         if (!this.channelP) {
@@ -71,8 +73,7 @@ export class RemoteChannelContext implements IChannelContext {
     }
 
     public processOp(message: ISequencedDocumentMessage, local: boolean): void {
-        // Clear base id since the channel is now dirty
-        this.baseId = undefined;
+        this.summaryTracker.trackChange();
 
         if (this.isLoaded) {
             // tslint:disable-next-line: no-non-null-assertion
@@ -85,16 +86,29 @@ export class RemoteChannelContext implements IChannelContext {
     }
 
     public async snapshot(fullTree: boolean = false): Promise<ITree> {
-        if (this.baseId !== undefined && !fullTree) {
-            return { id: this.baseId, entries: [] };
+        const baseId = this.summaryTracker.getBaseId();
+        if (baseId !== null && !fullTree) {
+            return { id: baseId, entries: [] };
+        } else {
+            this.summaryTracker.resetChangeTracker();
         }
         const channel = await this.getChannel();
-        return snapshotChannel(channel, this.baseId);
+        return snapshotChannel(channel, baseId);
     }
 
     public refreshBaseSummary(snapshot: ISnapshotTree) {
-        this.baseSnapshot = snapshot;
-        this.baseId = this.baseSnapshot.id === null ? undefined : this.baseSnapshot.id;
+        this.summaryTracker.refreshBaseSummary(snapshot);
+    }
+
+    private getAttributesFromBaseTree(): Promise<RequiredIChannelAttributes> {
+        const baseTree = this.summaryTracker.baseTree;
+        if (baseTree) {
+            return readAndParse<RequiredIChannelAttributes>(
+                this.storageService,
+                baseTree.blobs[".attributes"]);
+        } else {
+            throw new Error("Null base summary tree should not be possible for remote channel.");
+        }
     }
 
     private async loadChannel(): Promise<IChannel> {
@@ -103,9 +117,7 @@ export class RemoteChannelContext implements IChannelContext {
         // Create the channel if it hasn't already been passed in the constructor
         const { type, snapshotFormatVersion, packageVersion } = this.attributes
             ? this.attributes
-            : await readAndParse<RequiredIChannelAttributes>(
-                this.storageService,
-                this.baseSnapshot.blobs[".attributes"]);
+            : await this.getAttributesFromBaseTree();
 
         // Pass the transformedMessages - but the object really should be storing this
         const factory = this.registry.get(type);
@@ -127,7 +139,7 @@ export class RemoteChannelContext implements IChannelContext {
             this.componentContext.connectionState,
             this.submitFn,
             this.storageService,
-            this.baseSnapshot,
+            this.summaryTracker.baseTree === null ? undefined : this.summaryTracker.baseTree,
             this.extraBlobs);
         this.channel = await factory.load(
             this.runtime,
@@ -145,7 +157,6 @@ export class RemoteChannelContext implements IChannelContext {
         }
         this.pending = undefined;
         this.isLoaded = true;
-        this.baseId = this.baseSnapshot.id == null ? undefined : this.baseSnapshot.id;
 
         // Because have some await between we created the service and here, the connection state might have changed
         // and we don't propagate the connection state when we are not loaded.  So we have to set it again here.

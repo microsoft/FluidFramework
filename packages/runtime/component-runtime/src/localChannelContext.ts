@@ -4,6 +4,7 @@
  */
 
 import { ConnectionState } from "@microsoft/fluid-container-definitions";
+import { SummaryTracker } from "@microsoft/fluid-core-utils";
 import { IDocumentStorageService, ISequencedDocumentMessage, ISnapshotTree, ITree, MessageType } from "@microsoft/fluid-protocol-definitions";
 import { IChannel, IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import * as assert from "assert";
@@ -18,7 +19,7 @@ export class LocalChannelContext implements IChannelContext {
     public readonly channel: IChannel;
     private attached = false;
     private connection: ChannelDeltaConnection | undefined;
-    private baseId?: string;
+    private readonly summaryTracker = new SummaryTracker();
 
     constructor(
         id: string,
@@ -57,22 +58,24 @@ export class LocalChannelContext implements IChannelContext {
 
     public processOp(message: ISequencedDocumentMessage, local: boolean): void {
         assert(this.attached);
+        this.summaryTracker.trackChange();
 
-        // Clear base id since the channel is now dirty
-        this.baseId = undefined;
         // tslint:disable-next-line: no-non-null-assertion
         this.connection!.process(message, local);
     }
 
     public async snapshot(fullTree: boolean = false): Promise<ITree> {
-        if (this.baseId !== undefined && !fullTree) {
-            return { id: this.baseId, entries: [] };
+        const baseId = this.summaryTracker.getBaseId();
+        if (baseId !== null && !fullTree) {
+            return { id: baseId, entries: [] };
+        } else {
+            this.summaryTracker.resetChangeTracker();
         }
         return this.getAttachSnapshot();
     }
 
     public getAttachSnapshot(): ITree {
-        return snapshotChannel(this.channel, this.baseId);
+        return snapshotChannel(this.channel, this.summaryTracker.getBaseId());
     }
 
     public attach(): void {
@@ -92,6 +95,6 @@ export class LocalChannelContext implements IChannelContext {
     }
 
     public refreshBaseSummary(snapshot: ISnapshotTree) {
-        this.baseId = snapshot.id === null ? undefined : snapshot.id;
+        this.summaryTracker.refreshBaseSummary(snapshot);
     }
 }

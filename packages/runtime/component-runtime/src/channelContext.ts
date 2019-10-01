@@ -54,7 +54,7 @@ export function createServiceEndpoints(
     };
 }
 
-export function snapshotChannel(channel: IChannel, baseId?: string) {
+export function snapshotChannel(channel: IChannel, baseId: string | null) {
     const snapshot = channel.snapshot();
 
     // Add in the object attributes to the returned tree
@@ -70,7 +70,7 @@ export function snapshotChannel(channel: IChannel, baseId?: string) {
     });
 
     // If baseId exists then the previous snapshot is still valid
-    snapshot.id = baseId === undefined ? null : baseId;
+    snapshot.id = baseId;
 
     return snapshot;
 }
