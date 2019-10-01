@@ -45,28 +45,30 @@ export class SummaryTracker {
     }
 
     /**
-     * Indicate that a change has occurred since the base
+     * Indicate that a change has occurred since the base.
+     * Set state to invalid.
      */
-    public trackChange() {
+    public invalidate() {
         if (this._state !== SummaryTrackerState.Invalid) {
             this._state = SummaryTrackerState.Invalid;
         }
     }
 
     /**
-     * Resets to initial state: there are no changes, but base not yet set
+     * Resets state to initial.
      */
-    public resetChangeTracker() {
+    public reset() {
         if (this._state !== SummaryTrackerState.Initial) {
             this._state = SummaryTrackerState.Initial;
         }
     }
 
     /**
-     * Sets the base summary and sets state as valid if initial
+     * Sets the base summary tree.
+     * Set state to valid if not invalid.
      * @param snapshot - base summary to set
      */
-    public refreshBaseSummary(snapshot: ISnapshotTree | null) {
+    public setBaseTree(snapshot: ISnapshotTree | null) {
         this._baseSnapshotTree = snapshot;
         if (this._state === SummaryTrackerState.Initial) {
             this._state = SummaryTrackerState.Valid;

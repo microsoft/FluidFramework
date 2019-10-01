@@ -148,7 +148,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         if (!this.componentRuntimeDeferred) {
             this.componentRuntimeDeferred = new Deferred<IComponentRuntime>();
             const details = await this.getInitialSnapshotDetails();
-            this.summaryTracker.refreshBaseSummary(details.snapshot);
+            this.summaryTracker.setBaseTree(details.snapshot);
             const factory = await this._hostRuntime.IComponentRegistry.get(details.pkg);
 
             // During this call we will invoke the instantiate method - which will call back into us
@@ -186,7 +186,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         this.verifyNotClosed();
 
         // component has been modified and will need to regenerate its snapshot
-        this.summaryTracker.trackChange();
+        this.summaryTracker.invalidate();
 
         if (this.loaded) {
             return this.componentRuntime.process(message, local);
@@ -248,7 +248,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         if (baseId && !fullTree) {
             return { id: baseId, entries: [] };
         }
-        this.summaryTracker.resetChangeTracker();
+        this.summaryTracker.reset();
 
         const entries = await this.componentRuntime.snapshotInternal(fullTree);
 
@@ -305,7 +305,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
 
         if (this.pending.length > 0) {
             // component has been modified and will need to regenerate its snapshot
-            this.summaryTracker.trackChange();
+            this.summaryTracker.invalidate();
 
             // Apply all pending ops
             for (const op of this.pending) {
@@ -326,7 +326,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
     public abstract generateAttachMessage(): IAttachMessage;
 
     public refreshBaseSummary(snapshot: ISnapshotTree) {
-        this.summaryTracker.refreshBaseSummary(snapshot);
+        this.summaryTracker.setBaseTree(snapshot);
         // need to notify runtime of the update
         this.emit("refreshBaseSummary", snapshot);
     }

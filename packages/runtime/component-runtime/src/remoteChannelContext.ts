@@ -46,7 +46,7 @@ export class RemoteChannelContext implements IChannelContext {
         private readonly branch: string,
         private readonly attributes: RequiredIChannelAttributes | undefined,
     ) {
-        this.summaryTracker.refreshBaseSummary(baseSnapshot);
+        this.summaryTracker.setBaseTree(baseSnapshot);
     }
 
     public getChannel(): Promise<IChannel> {
@@ -73,7 +73,7 @@ export class RemoteChannelContext implements IChannelContext {
     }
 
     public processOp(message: ISequencedDocumentMessage, local: boolean): void {
-        this.summaryTracker.trackChange();
+        this.summaryTracker.invalidate();
 
         if (this.isLoaded) {
             // tslint:disable-next-line: no-non-null-assertion
@@ -90,13 +90,13 @@ export class RemoteChannelContext implements IChannelContext {
         if (baseId !== null && !fullTree) {
             return { id: baseId, entries: [] };
         }
-        this.summaryTracker.resetChangeTracker();
+        this.summaryTracker.reset();
         const channel = await this.getChannel();
         return snapshotChannel(channel, baseId);
     }
 
     public refreshBaseSummary(snapshot: ISnapshotTree) {
-        this.summaryTracker.refreshBaseSummary(snapshot);
+        this.summaryTracker.setBaseTree(snapshot);
     }
 
     private getAttributesFromBaseTree(): Promise<RequiredIChannelAttributes> {

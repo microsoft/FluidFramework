@@ -58,7 +58,7 @@ export class LocalChannelContext implements IChannelContext {
 
     public processOp(message: ISequencedDocumentMessage, local: boolean): void {
         assert(this.attached);
-        this.summaryTracker.trackChange();
+        this.summaryTracker.invalidate();
 
         // tslint:disable-next-line: no-non-null-assertion
         this.connection!.process(message, local);
@@ -69,7 +69,7 @@ export class LocalChannelContext implements IChannelContext {
         if (baseId !== null && !fullTree) {
             return { id: baseId, entries: [] };
         }
-        this.summaryTracker.resetChangeTracker();
+        this.summaryTracker.reset();
 
         return this.getAttachSnapshot();
     }
@@ -95,6 +95,6 @@ export class LocalChannelContext implements IChannelContext {
     }
 
     public refreshBaseSummary(snapshot: ISnapshotTree) {
-        this.summaryTracker.refreshBaseSummary(snapshot);
+        this.summaryTracker.setBaseTree(snapshot);
     }
 }
