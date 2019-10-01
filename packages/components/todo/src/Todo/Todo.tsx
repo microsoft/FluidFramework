@@ -7,6 +7,7 @@ import { PrimedComponent } from "@microsoft/fluid-aqueduct";
 import { IComponentReactViewable } from "@microsoft/fluid-aqueduct-react";
 import { IComponentHandle, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
+import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -99,14 +100,14 @@ export class Todo extends PrimedComponent implements IComponentHTMLVisual, IComp
   // start public API surface for the Todo model, used by the view
 
   public async addTodoItemComponent(props?: any) {
-    // create a new ID for our component
-    const id = `item${Date.now().toString()}`;
 
     // create a new todo item
-    await this.createAndAttachComponent(id, TodoItemName, props);
+    const componentRuntime: IComponentRuntime = await this.context.createSubComponent(TodoItemName, props);
+    await componentRuntime.request({ url: "/" });
+    componentRuntime.attach();
 
     // Store the id of the component in our ids map so we can reference it later
-    this.todoItemsMap.set(id, "");
+    this.todoItemsMap.set(componentRuntime.id, "");
 
     this.emit("todoItemsChanged");
   }

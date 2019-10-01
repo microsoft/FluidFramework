@@ -8,6 +8,7 @@ import { PrimedComponent } from "@microsoft/fluid-aqueduct";
 import { IComponentReactViewable } from "@microsoft/fluid-aqueduct-react";
 import { ISharedCell, SharedCell } from "@microsoft/fluid-cell";
 import { IComponentHandle, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -162,26 +163,26 @@ export class TodoItem extends PrimedComponent
    * @param props - props to be passed into component creation
    */
   public async createInnerComponent(type: TodoItemSupportedComponents, props?: any): Promise<void> {
-    const id = `item${Date.now().toString()}`;
-
+    let componentRuntime: IComponentRuntime;
     switch (type) {
       case "todo":
-          await this.createAndAttachComponent(id, TodoItemName, props);
+          componentRuntime = await this.context.createSubComponent(TodoItemName, props);
           break;
       case "clicker":
-          await this.createAndAttachComponent(id, ClickerName, props);
+          componentRuntime = await this.context.createSubComponent(ClickerName, props);
           break;
       case "textBox":
-          await this.createAndAttachComponent(id, TextBoxName, props);
+          componentRuntime = await this.context.createSubComponent(TextBoxName, props);
           break;
       case "textList":
-          await this.createAndAttachComponent(id, TextListName, props);
+          componentRuntime = await this.context.createSubComponent(TextListName, props);
           break;
       default:
     }
-
+    await componentRuntime.request({ url: "/" });
+    componentRuntime.attach();
     // Update the inner component id
-    this.innerIdCell.set(id);
+    this.innerIdCell.set(componentRuntime.id);
 
     this.emit("innerComponentChanged");
   }
