@@ -221,66 +221,82 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             return [];
         }
 
+        // If count is one, we can use the trees/latest API, which returns the latest version and trees in a single request for better performance
+        // Do it only once - we might get more here due to summarizer - it needs only container tree, not full snapshot.
+        if (this.firstVersionCall && count === 1 && (blobid === null || blobid === this.documentId)) {
+            this.firstVersionCall = false;
+
+            // This event measures whole process end-to-end, including token refresh and retries.
+            const event = PerformanceEvent.start(this.logger, { eventName: "TreesLatestFull" });
+
+            try {
+                return await getWithRetryForTokenRefresh(async (refresh) => {
+                    const storageToken = await this.getStorageToken(refresh);
+
+                    // TODO: This snapshot will return deltas, which we currently aren't using. We need to enable this flag to go down the "optimized"
+                    // snapshot code path. We should leverage the fact that these deltas are returned to speed up the deltas fetch.
+                    const { headers, url } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/trees/latest?deltas=1&channels=1&blobs=2`, storageToken);
+
+                    // This event measures only successful cases of getLatest call (no tokens, no retries).
+                    const eventInner = PerformanceEvent.start(this.logger, { eventName: "TreesLatest" });
+
+                    const { trees, blobs, ops, sha } = await this.fetchWrapper.get<IOdspSnapshot>(url, this.documentId, headers);
+
+                    if (trees) {
+                        this.initTreesCache(trees);
+                    }
+
+                    if (blobs) {
+                        this.initBlobsCache(blobs);
+                    }
+
+                    this.ops = ops;
+
+                    const props = {
+                        trees: trees ? trees.length : 0,
+                        blobs: blobs ? blobs.length : 0,
+                        ops: ops.length,
+                    };
+                    eventInner.end(props);
+                    event.end(props);
+
+                    return sha ? [{ id: sha, treeId: undefined! }] : [];
+                });
+            } catch (error) {
+                event.cancel({}, error);
+                throw error;
+            }
+        }
+
         return getWithRetryForTokenRefresh(async (refresh) => {
             const storageToken = await this.getStorageToken(refresh);
+            const { url, headers } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/versions?count=${count}`, storageToken);
 
-            // If count is one, we can use the trees/latest API, which returns the latest version and trees in a single request for better performance
-            // Do it only once - we might get more here due to summarizer - it needs only container tree, not full snapshot.
-            if (this.firstVersionCall && count === 1 && (blobid === null || blobid === this.documentId)) {
-                this.firstVersionCall = false;
-
-                const event = PerformanceEvent.start(this.logger, { eventName: "treesLatest" });
-
-                // TODO: This snapshot will return deltas, which we currently aren't using. We need to enable this flag to go down the "optimized"
-                // snapshot code path. We should leverage the fact that these deltas are returned to speed up the deltas fetch.
-                const { headers, url } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/trees/latest?deltas=1&channels=1&blobs=2`, storageToken);
-
-                const { trees, blobs, ops, sha } = await this.fetchWrapper.get<IOdspSnapshot>(url, this.documentId, headers);
-
-                event.end();
-
-                if (trees) {
-                    this.initTreesCache(trees);
-                }
-
-                if (blobs) {
-                    this.initBlobsCache(blobs);
-                }
-
-                this.ops = ops;
-
-                return sha ? [{ id: sha, treeId: undefined! }] : [];
-            } else {
-                const { url, headers } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/versions?count=${count}`, storageToken);
-
-                // fetch the latest snapshot versions for the document
-                const versionsResponse = await this.fetchWrapper
-                    .get<IDocumentStorageGetVersionsResponse>(url, this.documentId, headers);
-                if (!versionsResponse) {
-                    throwNetworkError("getVersions returned no response", 400);
-                }
-                if (!Array.isArray(versionsResponse.value)) {
-                    throwNetworkError("getVersions returned non-array response", 400);
-                }
-                return versionsResponse.value.map((version) => {
-                    // Parse the date from the message
-                    let date: string|undefined;
-                    for (const rec of version.message.split("\n")) {
-                        const index = rec.indexOf(":");
-                        if (index !== -1 && rec.substr(0, index) === "Date") {
-                            date = rec.substr(index + 1).trim();
-                            break;
-                        }
-                    }
-                    return {
-                        date,
-                        id: version.sha,
-                        treeId: undefined!,
-                    };
-                });
+            // fetch the latest snapshot versions for the document
+            const versionsResponse = await this.fetchWrapper
+                .get<IDocumentStorageGetVersionsResponse>(url, this.documentId, headers);
+            if (!versionsResponse) {
+                throwNetworkError("getVersions returned no response", 400);
             }
-
-            return [];
+            if (!Array.isArray(versionsResponse.value)) {
+                throwNetworkError("getVersions returned non-array response", 400);
+            }
+            return versionsResponse.value.map((version) => {
+                // Parse the date from the message
+                let date: string|undefined;
+                for (const rec of version.message.split("\n")) {
+                    const index = rec.indexOf(":");
+                    if (index !== -1 && rec.substr(0, index) === "Date") {
+                        date = rec.substr(index + 1).trim();
+                        break;
+                    }
+                }
+                return {
+                    date,
+                    id: version.sha,
+                    treeId: undefined!,
+                };
+            });
         });
     }
 
