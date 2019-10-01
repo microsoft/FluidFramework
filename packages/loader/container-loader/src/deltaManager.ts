@@ -626,11 +626,12 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
                 //  Connection mode is always read on disconnect/error unless the system mode was write.
                 connection.on("disconnect", (disconnectReason) => {
-                    const reconnectionMode = this.systemConnectionMode === "write" ? "write" : "read";
+                    // Note: we might get multiple disconnect calls on same socket, as early disconnect notification
+                    // ("server_disconnect", ODSP-specific) is mapped to "disconnect"
                     this.reconnectOnError(
                         `Reconnecting on disconnect: ${disconnectReason}`,
                         connection,
-                        reconnectionMode);
+                        this.systemConnectionMode);
                 });
 
                 connection.on("error", (error) => {
@@ -638,8 +639,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                     // We are getting transport errors from WebSocket here, right before or after "disconnect".
                     // This happens only in Firefox.
                     logNetworkFailure(this.logger, {eventName: "DeltaConnectionError"}, error);
-                    const reconnectionMode = this.systemConnectionMode === "write" ? "write" : "read";
-                    this.reconnectOnError("Reconnecting on error", connection, reconnectionMode, error);
+                    this.reconnectOnError("Reconnecting on error", connection, this.systemConnectionMode, error);
                 });
 
                 connection.on("pong", (latency: number) => {
