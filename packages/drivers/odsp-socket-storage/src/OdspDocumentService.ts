@@ -41,7 +41,7 @@ export class OdspDocumentService implements IDocumentService {
 
     /**
      * @param appId - app id used for telemetry for network requests
-     * @param hashedDocumentId - A unique identifer for the document. The "hashed" here implies that the contents of this string
+     * @param documentId - An identifer for the document.
      * contains no end user identifiable information.
      * @param siteUrl - the url of the site that hosts this container
      * @param driveId - the id of the drive that hosts this container
@@ -58,7 +58,7 @@ export class OdspDocumentService implements IDocumentService {
      */
     constructor(
         private readonly appId: string,
-        private readonly hashedDocumentId: string,
+        private readonly documentId: string,
         private readonly siteUrl: string,
         driveId: string,
         itemId: string,
@@ -102,7 +102,7 @@ export class OdspDocumentService implements IDocumentService {
 
         this.storageManager = new OdspDocumentStorageManager(
             { app_id: this.appId },
-            this.hashedDocumentId,
+            this.documentId,
             this.snapshotStorageUrl,
             latestSha,
             this.storageFetchWrapper,

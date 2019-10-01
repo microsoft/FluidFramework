@@ -47,10 +47,9 @@ export class OdspUrlResolver implements IUrlResolver {
     // We can't use siteUrl or driveId in clear as that can be used as proxy for user or tenant.
     // itemID is fine - it identifies the document without giving information about the filename, path, etc.
     // Having itemID in clear is helpful because it helps us to correlate with server logs.
-    // const hashedDocumentId = new sha.sha256().update(`${siteUrl}_${driveId}_${itemId}`).digest("hex");
-    const hashedDocumentId = itemId;
+    const documentId = itemId;
 
-    let documentUrl = `fluid-odsp://placeholder/placeholder/${hashedDocumentId}/${removeBeginningSlash(path)}`;
+    let documentUrl = `fluid-odsp://placeholder/placeholder/${documentId}/${removeBeginningSlash(path)}`;
 
     if (request.url.length > 0) {
       // In case of any additional parameters add them back to the url
@@ -65,7 +64,7 @@ export class OdspUrlResolver implements IUrlResolver {
       tokens: {},
       type: "fluid",
       url: documentUrl,
-      hashedDocumentId,
+      documentId,
       siteUrl,
       driveId,
       itemId,

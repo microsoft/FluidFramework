@@ -40,7 +40,7 @@ export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentService
   public async createDocumentService(resolvedUrl: IOdspResolvedUrl): Promise<IDocumentService> {
     return new OdspDocumentService(
       this.appId,
-      resolvedUrl.hashedDocumentId,
+      resolvedUrl.documentId,
       resolvedUrl.siteUrl,
       resolvedUrl.driveId,
       resolvedUrl.itemId,

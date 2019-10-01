@@ -12,8 +12,8 @@ export interface IOdspResolvedUrl extends api.IResolvedUrlBase {
   // URL to send to fluid, contains the documentId and the path
   url: string;
 
-  // A hashed identifier that is unique to this document
-  hashedDocumentId: string;
+  // A identifier of the document. Not necessarily unique
+  documentId: string;
 
   siteUrl: string;
 
