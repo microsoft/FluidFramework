@@ -5,17 +5,17 @@
 
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { ComponentRuntime, ISharedObjectRegistry } from "@microsoft/fluid-component-runtime";
-import { ComponentFactoryTypes, ComponentRegistryTypes, IComponentContext, IComponentFactory, IComponentRegistry, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { ComponentRegistryTypes, IComponentContext, IComponentFactory, IComponentRegistry, IComponentRuntime, IProvideComponentRegistry } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { SharedComponent } from "../components/sharedComponent";
 
-export class SharedComponentFactory implements IComponentFactory, IComponentRegistry {
+export class SharedComponentFactory implements IComponentFactory, IProvideComponentRegistry  {
     private readonly sharedObjectRegistry: ISharedObjectRegistry;
 
     constructor(
         private readonly ctor: new (runtime: IComponentRuntime, context: IComponentContext) => SharedComponent,
         sharedObjects: ReadonlyArray<ISharedObjectFactory>,
-        private readonly componentRegistry?: ComponentRegistryTypes,
+        private readonly componentRegistry: ComponentRegistryTypes,
         private readonly onDemandInstantiation = true,
     ) {
         this.sharedObjectRegistry = new Map(sharedObjects.map((ext) => [ext.type, ext]));
@@ -24,13 +24,7 @@ export class SharedComponentFactory implements IComponentFactory, IComponentRegi
     public get IComponentFactory() { return this; }
 
     public get IComponentRegistry(): IComponentRegistry {
-        return this;
-    }
-
-    public get(name: string): Promise<ComponentFactoryTypes> | undefined {
-        if (this.componentRegistry) {
-            return this.componentRegistry.get(name);
-        }
+        return this.componentRegistry as IComponentRegistry;
     }
 
     /**

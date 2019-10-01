@@ -33,6 +33,6 @@ export class PrimedComponentFactory extends SharedComponentFactory {
             mergedObjects.push(SharedMap.getFactory());
         }
 
-        super(ctor, mergedObjects, componentRegistry, onDemandInstantiation);
+        super(ctor, mergedObjects, componentRegistry!, onDemandInstantiation);
     }
 }
