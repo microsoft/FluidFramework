@@ -104,6 +104,25 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
         return this.runDeferred.promise;
     }
 
+    private async setOrLogError<T>(eventName: string, setter: () => Promise<T>):
+        Promise<{ result: T, success: boolean }> {
+        let result: T;
+        let success = true;
+        try {
+            result = await setter();
+        } catch (error) {
+            // send error event for exceptions
+            this.logger.sendErrorEvent({ eventName, clientId: this.runtime.clientId }, error);
+            success = false;
+        }
+        if (success && !result) {
+            // send error event when result is falsey
+            this.logger.sendErrorEvent({ eventName, clientId: this.runtime.clientId });
+            success = false;
+        }
+        return { result, success };
+    }
+
     private async handleSummaryOp(op: ISequencedDocumentMessage) {
         // ignore all ops if not pending
         if (!this.summaryPending) {
@@ -152,14 +171,19 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
                         // it might be nice to do this in the container in the future, and maybe for all
                         // clients, not just the summarizer
                         const handle = (ack as ISummaryAck).handle;
+
                         // we have to call get version to get the treeId for r11s; this isnt needed
                         // for odsp currently, since their treeId is undefined
-                        const versions = await this.runtime.storage.getVersions(handle, 1);
-                        if (!versions) {
-                            this.logger.sendErrorEvent({ eventName: "SummarizerFailedToGetVersion" });
-                        } else {
-                            const snapshot = await this.runtime.storage.getSnapshotTree(versions[0]);
-                            this.refreshBaseSummary(snapshot);
+                        const versionsResult = await this.setOrLogError("SummarizerFailedToGetVersion",
+                            () => this.runtime.storage.getVersions(handle, 1));
+
+                        if (versionsResult.success) {
+                            const snapshotResult = await this.setOrLogError("SummarizerFailedToGetSnapshot",
+                                () => this.runtime.storage.getSnapshotTree(versionsResult.result[0]));
+
+                            if (snapshotResult.success) {
+                                this.refreshBaseSummary(snapshotResult.result);
+                            }
                         }
                     }
                     this.summaryPending = false;
