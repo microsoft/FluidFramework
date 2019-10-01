@@ -157,6 +157,13 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
          return this.inQuorum && this.connectionMode === "write";
     }
 
+    public get socketDocumentId(): string | undefined {
+        if (this.connection) {
+            return this.connection.details.claims.documentId;
+        }
+        return undefined;
+   }
+
     constructor(
         private readonly service: IDocumentService,
         private readonly client: IClient | null,

@@ -141,7 +141,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         });
     }
 
-    public subLogger: ITelemetryLogger;
+    public subLogger: TelemetryLogger;
     private readonly logger: ITelemetryLogger;
 
     private pendingClientId: string | undefined;
@@ -878,6 +878,15 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     }
 
     private logConnectionStateChangeTelemetry(value: ConnectionState, reason: string) {
+        // We do not have good correlation ID to match server activity.
+        // Add couple IDs here
+        this.subLogger.setProperties({
+            SocketClientId: this.clientId,
+            SocketDocumentId: this._deltaManager!.socketDocumentId,
+            SocketPendingClientId: value === ConnectionState.Connecting ? this.pendingClientId : undefined,
+        });
+
+        // Log actual event
         const time = performanceNow();
         this.connectionTransitionTimes[value] = time;
         const duration = time - this.connectionTransitionTimes[this.connectionState];
@@ -923,8 +932,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             return;
         }
 
-        this.logConnectionStateChangeTelemetry(value, reason);
-
         this._connectionState = value;
         this._version = version;
         this._scopes = scopes;
@@ -945,6 +952,9 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             // Important as we process our own joinSession message through delta request
             this.pendingClientId = undefined;
         }
+
+        // Report telemetry after we set client id!
+        this.logConnectionStateChangeTelemetry(value, reason);
 
         if (!this.loaded) {
             // If not fully loaded return early
