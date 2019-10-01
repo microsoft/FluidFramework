@@ -101,7 +101,6 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
 
         this.logger.sendTelemetryEvent({
             eventName: "RunningSummarizer",
-            clientId: this.runtime.clientId,
             onBehalfOf,
             initSummarySeqNumber: this.lastSummarySeqNumber,
         });
@@ -120,7 +119,6 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
     public stop(reason?: string) {
         this.logger.sendTelemetryEvent({
             eventName: "StoppingSummarizer",
-            clientId: this.runtime.clientId,
             onBehalfOf: this.onBehalfOfClientId,
             reason,
         });
@@ -144,7 +142,6 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
                 if (op.clientId === this.runtime.clientId && op.referenceSequenceNumber === this.lastSummarySeqNumber) {
                     this.logger.sendTelemetryEvent({
                         eventName: "PendingSummaryBroadcast",
-                        clientId: this.runtime.clientId,
                         timeWaitingForBroadcast: Date.now() - this.lastSummaryTime,
                         pendingSummarySequenceNumber: op.sequenceNumber,
                     });
@@ -166,9 +163,8 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
                 const ack = op.contents as ISummaryAck | ISummaryNack;
                 if (ack.summaryProposal.summarySequenceNumber === this.pendingSummarySequenceNumber) {
                     this.logger.sendTelemetryEvent({
-                        eventName: "PendingSummaryAck",
-                        clientId: this.runtime.clientId,
-                        type: op.type,
+                        category: op.type === MessageType.SummaryAck ? "generic" : "error",
+                        eventName: op.type === MessageType.SummaryAck ? "SummaryAck" : "SummaryNack",
                         timePending: Date.now() - this.lastSummaryTime,
                         summarySequenceNumber: ack.summaryProposal.summarySequenceNumber,
                     });
@@ -189,9 +185,8 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
         if (this.summaryPending) {
             const pendingTime = Date.now() - this.lastSummaryTime;
             if (pendingTime > this.configuration.maxAckWaitTime) {
-                this.runtime.logger.sendTelemetryEvent({
+                this.logger.sendErrorEvent({
                     eventName: "SummaryAckWaitTimeout",
-                    clientId: this.runtime.clientId,
                     maxAckWaitTime: this.configuration.maxAckWaitTime,
                 });
                 this.cancelPending();
@@ -229,20 +224,18 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
             this.summarizing = false;
         }).catch((error) => {
             this.cancelPending();
-            this.logger.sendErrorEvent({ eventName: "SummarizeError", clientId: this.runtime.clientId }, error);
         });
     }
 
     private async summarizeCore(message: string) {
         const summarizingEvent = PerformanceEvent.start(this.logger,
-            { eventName: "Summarizing", stage: "start", message, clientId: this.runtime.clientId });
+            { eventName: "Summarizing", message });
 
         const summaryData = await this.generateSummary();
 
         const summaryEndTime = Date.now();
 
         summarizingEvent.end({
-            stage: "end",
             ...summaryData,
             opsSinceLastSummary: summaryData.sequenceNumber - this.lastSummarySeqNumber,
             timeSinceLastSummary: summaryEndTime - this.lastSummaryTime,

@@ -527,7 +527,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         this.startLeaderElection();
 
         this.deltaManager.on("allSentOpsAckd", () => {
-            this.logger.debugAssert(this.connected, { eventName: "allSentOpsAckd in disconnected state" });
             this.updateDocumentDirtyState(false);
         });
 
@@ -1089,7 +1088,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                 ...treeWithStats.summaryStats,
             };
         } catch (ex) {
-            this.logger.logException({ eventName: "GenerateSummaryExceptionError" }, ex);
+            this.logger.logException({ eventName: "Summarizer:GenerateSummaryExceptionError" }, ex);
             throw ex;
         } finally {
             // Restart the delta manager

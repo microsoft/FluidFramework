@@ -72,6 +72,9 @@ import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService
 import { isSystemMessage, ProtocolOpHandler } from "./protocol";
 import { Quorum, QuorumProxy } from "./quorum";
 
+// tslint:disable-next-line:no-var-requires
+const performanceNow = require("performance-now") as (() => number);
+
 const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
 export class Container extends EventEmitterWithErrorHandling implements IContainer {
@@ -138,7 +141,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         });
     }
 
-    public subLogger: ITelemetryLogger;
+    public subLogger: TelemetryLogger;
     private readonly logger: ITelemetryLogger;
 
     private pendingClientId: string | undefined;
@@ -164,6 +167,9 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private codeQuorumKey;
     private protocolHandler: ProtocolOpHandler | undefined;
     private connectionDetailsP: Promise<IConnectionDetails | null> | undefined;
+
+    private firstConnection = true;
+    private readonly connectionTransitionTimes: number[] = [];
 
     public get id(): string {
         return this._id;
@@ -497,6 +503,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
     private connectToDeltaStream() {
         if (!this.connectionDetailsP) {
+            this.connectionTransitionTimes[ConnectionState.Disconnected] = performanceNow();
             this.connectionDetailsP = this._deltaManager!.connect("Document loading");
         }
         return this.connectionDetailsP;
@@ -524,7 +531,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         const connect = connectionValues.indexOf("open") !== -1;
         const pause = connectionValues.indexOf("pause") !== -1;
 
-        const perfEvent = PerformanceEvent.start(this.logger, { eventName: "ContextLoadProgress", stage: "start" });
+        const perfEvent = PerformanceEvent.start(this.logger, { eventName: "Load" });
 
         const storageP = this.service.connectToStorage().then((storage) => {
             this.storageService = new PrefetchDocumentStorageService(storage);
@@ -590,7 +597,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                 this.protocolHandler = protocolHandler;
                 this.blobManager = blobManager;
 
-                perfEvent.reportProgress({ stage: "BeforeContextLoad" });
+                perfEvent.reportProgress({}, "beforeContextLoad");
 
                 // Initialize document details - if loading a snapshot use that - otherwise we need to wait on
                 // the initial details
@@ -602,8 +609,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
                     this._existing = details!.existing;
                     this._parentBranch = details!.parentBranch;
-
-                    perfEvent.reportProgress({ stage: "AfterSocketConnect" });
                 }
 
                 await this.loadContext(attributes, storage, tree);
@@ -614,11 +619,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                 this.loaded = true;
 
                 if (connect && !pause) {
-                    perfEvent.reportProgress({ stage: "resuming" });
                     this.resume();
                 }
 
-                perfEvent.end({ stage: "Loaded" });
+                perfEvent.end({}, tree ? "end" : "end_NoSnapshot");
             });
     }
 
@@ -657,7 +661,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             values,
             (key, value) => this.submitMessage(MessageType.Propose, { key, value }),
             (sequenceNumber) => this.submitMessage(MessageType.Reject, sequenceNumber),
-            this.subLogger);
+            ChildLogger.create(this.subLogger, "ProtocolHandler"));
 
         // Track membership changes and update connection state accordingly
         protocol.quorum.on("addMember", (clientId, details) => {
@@ -783,7 +787,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         this._deltaManager = new DeltaManager(
             this.service,
             clientDetails,
-            ChildLogger.create(this.logger, "DeltaManager"),
+            ChildLogger.create(this.subLogger, "DeltaManager"),
             this.canReconnect,
         );
 
@@ -873,9 +877,43 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         }
     }
 
+    private logConnectionStateChangeTelemetry(value: ConnectionState, reason: string) {
+        // We do not have good correlation ID to match server activity.
+        // Add couple IDs here
+        this.subLogger.setProperties({
+            SocketClientId: this.clientId,
+            SocketDocumentId: this._deltaManager!.socketDocumentId,
+            SocketPendingClientId: value === ConnectionState.Connecting ? this.pendingClientId : undefined,
+        });
+
+        // Log actual event
+        const time = performanceNow();
+        this.connectionTransitionTimes[value] = time;
+        const duration = time - this.connectionTransitionTimes[this.connectionState];
+        this.logger.sendPerformanceEvent({
+            eventName: `ConnectionStateChange_${ConnectionState[value]}`,
+            from: ConnectionState[this.connectionState],
+            duration,
+            reason,
+        });
+
+        if (value === ConnectionState.Connected) {
+            // We just logged event with disconnected/connecting -> connected time
+            // Log extra event recording disconnected -> connected time, as well as provide some extra info.
+            // We can group that info in previous event, but it's easier to analyze telemetry if these are
+            // two separate events (actually - three!).
+            this.logger.sendPerformanceEvent({
+                eventName: this.firstConnection ? "ConnectionStateChange_InitialConnect" : "ConnectionStateChange_Reconnect",
+                duration: time - this.connectionTransitionTimes[this.connectionState],
+                reason,
+            });
+            this.firstConnection = false;
+        }
+    }
+
     private setConnectionState(value: ConnectionState.Disconnected, reason: string);
     private setConnectionState(
-        value: ConnectionState.Connecting | ConnectionState.Connected,
+        value: ConnectionState,
         reason: string,
         clientId: string,
         version: string,
@@ -892,13 +930,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             // Already in the desired state - exit early
             return;
         }
-
-        this.logger.sendPerformanceEvent({
-            eventName: "ConnectionStateChange",
-            from: ConnectionState[this.connectionState],
-            reason,
-            to: ConnectionState[value],
-        });
 
         this._connectionState = value;
         this._version = version;
@@ -920,6 +951,9 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             // Important as we process our own joinSession message through delta request
             this.pendingClientId = undefined;
         }
+
+        // Report telemetry after we set client id!
+        this.logConnectionStateChangeTelemetry(value, reason);
 
         if (!this.loaded) {
             // If not fully loaded return early
