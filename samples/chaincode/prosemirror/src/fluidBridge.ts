@@ -4,15 +4,23 @@
  */
 
 import {
-    IMergeTreeOp,
-    TextSegment,
     createInsertSegmentOp,
+    IMergeTreeOp,
     Marker,
+    MergeTreeDeltaType,
     ReferenceType,
     reservedRangeLabelsKey,
+    TextSegment,
 } from "@prague/merge-tree";
-import { Schema, Slice } from "prosemirror-model";
-import { ISequenceDeltaRange, SharedString, SequenceDeltaEvent } from "@prague/sequence";
+import {
+    SharedString,
+    // ISequenceDeltaRange,
+    SequenceDeltaEvent,
+} from "@prague/sequence";
+import {
+    Schema,
+    // Slice,
+} from "prosemirror-model";
 import { EditorState, Transaction } from "prosemirror-state";
 
 export interface IProseMirrorNode {
@@ -33,18 +41,76 @@ export const proseMirrorTreeLabel = "prosemirror";
 export const nodeTypeKey = "nodeType";
 
 export class ProseMirrorTransactionBuilder {
-    private transaction: Transaction<any>;
+    private transaction: Transaction;
 
-    constructor(state: EditorState) {
+    constructor(
+        state: EditorState,
+        private schema: Schema,
+        sharedString: SharedString,
+    ) {
         this.transaction = state.tr;
+        this.transaction.setMeta("fluid-local", true);
     }
 
-    addSequencedDelta(delta: SequenceDeltaEvent) {
-        return;
+    public addSequencedDelta(delta: SequenceDeltaEvent) {
+        for (const range of delta.ranges) {
+            const segment = range.segment;
+
+            if (range.operation === MergeTreeDeltaType.INSERT) {
+                if (TextSegment.is(segment)) {
+                    this.transaction.insertText(segment.text, range.position);
+
+                    if (segment.properties) {
+                        for (const prop of Object.keys(segment.properties)) {
+                            const value = range.segment.properties[prop];
+                            this.transaction.addMark(
+                                range.position,
+                                range.position + segment.text.length,
+                                this.schema.marks[prop].create(value));
+                        }
+                    }
+                } else if (Marker.is(segment)) {
+                    if (segment.refType === ReferenceType.Simple) {
+                        const nodeType = segment.properties["type"];
+                        const node = this.schema.nodes[nodeType].create(segment.properties["attrs"]);
+                        this.transaction.insert(range.position, node);
+                    }
+                }
+            } else if (range.operation === MergeTreeDeltaType.REMOVE) {
+                if (TextSegment.is(segment)) {
+                    this.transaction.replace(range.position, range.position + segment.text.length);
+                } else if (Marker.is(segment)) {
+                    if (segment.refType === ReferenceType.Simple) {
+                        this.transaction.replace(range.position, range.position + 1);
+                    }
+                }
+            } else if (range.operation === MergeTreeDeltaType.ANNOTATE) {
+                for (const prop of Object.keys(range.propertyDeltas)) {
+                    const value = range.segment.properties[prop];
+
+                    // TODO I think I need to query the sequence for *all* marks and then set them here
+                    // for PM it's an all or nothing set. Not anything additive
+
+                    const length = TextSegment.is(segment) ? segment.text.length : 1;
+
+                    if (value) {
+                        this.transaction.addMark(
+                            range.position,
+                            range.position + length,
+                            this.schema.marks[prop].create(value));
+                    } else {
+                        this.transaction.removeMark(
+                            range.position,
+                            range.position + length,
+                            this.schema.marks[prop]);
+                    }
+                }
+            }
+        }
     }
 
-    build() {
-
+    public build(): Transaction {
+        return this.transaction;
     }
 }
 
@@ -85,27 +151,27 @@ export function sliceToGroupOps(from: number, slice: IProseMirrorSlice, schema: 
 //     }
 // }
 
-export function segmentsToSlice(text: SharedString, segments: ISequenceDeltaRange[]): Slice {
-    const initialSegment = segments[0];
+// export function segmentsToSlice(text: SharedString, segments: ISequenceDeltaRange[]): Slice {
+    // const initialSegment = segments[0];
 
-    const stack = text.getStackContext(initialSegment.position, [proseMirrorTreeLabel]).proseMirrorTreeLabel;
-    let root: IProseMirrorNode = {
-        content: [],
-        type: "doc",
-    }
-    while (!stack.empty()) {
-        const marker = stack.pop();
-        const type = marker.properties[nodeTypeKey];
+    // const stack = text.getStackContext(initialSegment.position, [proseMirrorTreeLabel]).proseMirrorTreeLabel;
+    // let root: IProseMirrorNode = {
+    //     content: [],
+    //     type: "doc",
+    // }
+    // while (!stack.empty()) {
+    //     const marker = stack.pop();
+    //     const type = marker.properties[nodeTypeKey];
 
-        const newNode = { type, content: [] };
-        root.content.push(newNode);
+    //     const newNode = { type, content: [] };
+    //     root.content.push(newNode);
         
-        root = newNode;
-    }
+    //     root = newNode;
+    // }
 
-    segments.forEach((segment) => {
-        // TODO do stuff here
-    });
+    // segments.forEach(() => {
+    //     // TODO do stuff here
+    // });
 
     // Initialize the base ProseMirror JSON data structure
     // const nodeStack = new Array<IProseMirrorNode>();
@@ -179,12 +245,12 @@ export function segmentsToSlice(text: SharedString, segments: ISequenceDeltaRang
     //     return true;
     // });
 
-    const fragment = null;
-    const openStart = 0;
-    const openEnd = 0;
+    // const fragment = null;
+    // const openStart = 0;
+    // const openEnd = 0;
 
-    return new Slice(fragment, openStart, openEnd);
-}
+    // return new Slice(fragment, openStart, openEnd);
+// }
 
 function sliceToGroupOpsInternal(
     value: IProseMirrorNode,
