@@ -5,7 +5,6 @@
 
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IResolvedUrl, IUrlResolver } from "@microsoft/fluid-protocol-definitions";
-import * as sha from "sha.js";
 import { IOdspResolvedUrl } from "./contracts";
 
 function getSnapshotUrl(siteUrl: string, driveId: string, itemId: string) {
@@ -43,7 +42,13 @@ export class OdspUrlResolver implements IUrlResolver {
 
   public async resolve(request: IRequest): Promise<IResolvedUrl> {
     const { siteUrl, driveId, itemId, path } = this.decodeOdspUrl(request.url);
-    const hashedDocumentId = new sha.sha256().update(`${siteUrl}_${driveId}_${itemId}`).digest("hex");
+
+    // DocumentID is primarily used for telemetry purposes.
+    // We can't use siteUrl or driveId in clear as that can be used as proxy for user or tenant.
+    // itemID is fine - it identifies the document without giving information about the filename, path, etc.
+    // Having itemID in clear is helpful because it helps us to correlate with server logs.
+    // const hashedDocumentId = new sha.sha256().update(`${siteUrl}_${driveId}_${itemId}`).digest("hex");
+    const hashedDocumentId = itemId;
 
     let documentUrl = `fluid-odsp://placeholder/placeholder/${hashedDocumentId}/${removeBeginningSlash(path)}`;
 
