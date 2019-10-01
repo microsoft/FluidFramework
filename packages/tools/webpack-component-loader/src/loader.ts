@@ -205,9 +205,17 @@ export async function start(
     }
     const hostConf: IHostConfig = { documentServiceFactory, urlResolver };
 
-    const [leftDiv, rightDiv] = div.getElementsByTagName("div");
-    if (options.double && options.mode === "local" && !(leftDiv && rightDiv)) {
-        throw new Error("not enough divs");
+    let leftDiv: HTMLDivElement;
+    let rightDiv: HTMLDivElement;
+    if (options.double) {
+        leftDiv = document.createElement("div");
+        leftDiv.style.width = "50%";
+        leftDiv.style.cssFloat = "left";
+        leftDiv.style.border = "1px solid lightgray";
+        rightDiv = document.createElement("div");
+        rightDiv.style.marginLeft = "50%";
+        rightDiv.style.border = "1px solid lightgray";
+        div.append(leftDiv, rightDiv);
     }
 
     startCore(
