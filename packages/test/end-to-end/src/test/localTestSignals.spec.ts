@@ -12,7 +12,7 @@ import {
     TestDeltaConnectionServer,
     TestDocumentServiceFactory,
     TestResolver,
-} from "../";
+} from "@microsoft/fluid-local-test-server";
 
 describe("TestSignals", () => {
     const id = "fluid-test://test.com/test/test";

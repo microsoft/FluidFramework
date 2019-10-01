@@ -13,7 +13,12 @@ import {
     IFluidResolvedUrl,
 } from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
-import { ITestDeltaConnectionServer, TestDeltaConnectionServer, TestDocumentServiceFactory, TestResolver } from "../";
+import {
+    ITestDeltaConnectionServer,
+    TestDeltaConnectionServer,
+    TestDocumentServiceFactory,
+    TestResolver,
+} from "@microsoft/fluid-local-test-server"
 
 describe("Container", () => {
     let testDeltaConnectionServer: ITestDeltaConnectionServer;
