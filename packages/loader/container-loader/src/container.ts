@@ -1067,13 +1067,16 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         }
 
         const versions = await this.getVersion(specifiedVersion || this.id);
+        const version = versions ? versions[0] : undefined;
 
-        // we should have a non-null version to load from if specified version requested
-        if (specifiedVersion && !versions) {
-            throw new Error("No version found from storage, but version was specified.");
+        if (version) {
+            return await this.storageService!.getSnapshotTree(version) || undefined;
+        } else if (specifiedVersion) {
+            // we should have a defined version to load from if specified version requested
+            this.logger.sendErrorEvent({ eventName: "NoVersionFoundWhenSpecified", specifiedVersion });
         }
 
-        return await this.storageService!.getSnapshotTree(versions[0]) || undefined;
+        return undefined;
     }
 
     private async loadContext(
