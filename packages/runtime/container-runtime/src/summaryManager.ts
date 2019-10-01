@@ -33,6 +33,7 @@ export class SummaryManager extends EventEmitter {
     private readonly heapMembers = new Map<string, IHeapNode<ITrackedClient>>();
     private connected = false;
     private clientId: string;
+    private runningSummarizer?: ISummarizer;
 
     public get summarizer() {
         return this._summarizer;
@@ -85,6 +86,10 @@ export class SummaryManager extends EventEmitter {
 
         this.connected = false;
         this.clientId = undefined;
+        if (this.runningSummarizer) {
+            this.runningSummarizer.stop("parent disconnected");
+            this.runningSummarizer = undefined;
+        }
     }
 
     private addHeapNode(clientId: string, client: ISequencedClient) {
@@ -121,6 +126,7 @@ export class SummaryManager extends EventEmitter {
             const doneP = this.createSummarizer()
                 .then((summarizer) => {
                     if (this.shouldSummarize) {
+                        this.runningSummarizer = summarizer;
                         return summarizer.run(this.clientId);
                     }
                 });
