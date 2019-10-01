@@ -19,6 +19,7 @@ import {
     FileMode,
     IDocumentMessage,
     ISequencedDocumentMessage,
+    ISnapshotTree,
     ITreeEntry,
     MessageType,
     TreeEntry,
@@ -584,6 +585,19 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         this.componentContext.on("leader", (clientId: string) => {
             this.emit("leader", clientId);
         });
+
+        this.componentContext.on("refreshBaseSummary",
+            (snapshot: ISnapshotTree) => this.refreshBaseSummary(snapshot));
+    }
+
+    private refreshBaseSummary(snapshot: ISnapshotTree) {
+        // propogate updated tree to all channels
+        for (const key of Object.keys(snapshot.trees)) {
+            const channel = this.contexts.get(key);
+            if (channel) {
+                channel.refreshBaseSummary(snapshot.trees[key]);
+            }
+        }
     }
 
     private verifyNotClosed() {

@@ -8,6 +8,7 @@ import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
 import { ChildLogger, Deferred, PerformanceEvent } from "@microsoft/fluid-core-utils";
 import {
     ISequencedDocumentMessage,
+    ISnapshotTree,
     ISummaryAck,
     ISummaryConfiguration,
     ISummaryNack,
@@ -76,6 +77,7 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
         private readonly runtime: ContainerRuntime,
         private readonly configuration: ISummaryConfiguration,
         private readonly generateSummary: () => Promise<IGeneratedSummaryData>,
+        private readonly refreshBaseSummary: (snapshot: ISnapshotTree) => void,
     ) {
         this.logger = ChildLogger.create(this.runtime.logger, "Summarizer");
 
@@ -126,6 +128,28 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
         this.runtime.closeFn();
     }
 
+    private async setOrLogError<T>(
+        eventName: string,
+        setter: () => Promise<T>,
+        validator: (result: T) => boolean,
+    ): Promise<{ result: T, success: boolean }> {
+        let result: T;
+        let success = true;
+        try {
+            result = await setter();
+        } catch (error) {
+            // send error event for exceptions
+            this.logger.sendErrorEvent({ eventName, clientId: this.runtime.clientId }, error);
+            success = false;
+        }
+        if (success && !validator(result)) {
+            // send error event when result is invalid
+            this.logger.sendErrorEvent({ eventName, clientId: this.runtime.clientId });
+            success = false;
+        }
+        return { result, success };
+    }
+
     private async handleSummaryOp(op: ISequencedDocumentMessage) {
         // ignore all ops if not pending
         if (!this.summaryPending) {
@@ -168,6 +192,29 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
                         timePending: Date.now() - this.lastSummaryTime,
                         summarySequenceNumber: ack.summaryProposal.summarySequenceNumber,
                     });
+
+                    if (op.type === MessageType.SummaryAck) {
+                        // refresh base snapshot
+                        // it might be nice to do this in the container in the future, and maybe for all
+                        // clients, not just the summarizer
+                        const handle = (ack as ISummaryAck).handle;
+
+                        // we have to call get version to get the treeId for r11s; this isnt needed
+                        // for odsp currently, since their treeId is undefined
+                        const versionsResult = await this.setOrLogError("SummarizerFailedToGetVersion",
+                            () => this.runtime.storage.getVersions(handle, 1),
+                            (versions) => !!(versions && versions.length));
+
+                        if (versionsResult.success) {
+                            const snapshotResult = await this.setOrLogError("SummarizerFailedToGetSnapshot",
+                                () => this.runtime.storage.getSnapshotTree(versionsResult.result[0]),
+                                (snapshot) => !!snapshot);
+
+                            if (snapshotResult.success) {
+                                this.refreshBaseSummary(snapshotResult.result);
+                            }
+                        }
+                    }
                     this.summaryPending = false;
                 }
             }
