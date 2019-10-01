@@ -102,20 +102,22 @@ export abstract class ASharedIntervalCollection<TInterval extends ISerializableI
     public async waitIntervalCollection(
         label: string,
     ): Promise<IntervalCollection<TInterval>> {
-        return this.intervalMapKernel.wait<IntervalCollection<TInterval>>(label);
+        return this.intervalMapKernel.wait<IntervalCollection<TInterval>>(
+            this.getIntervalCollectionPath(label));
     }
 
     // TODO: fix race condition on creation by putting type on every operation
     public getIntervalCollection(label: string): IntervalCollection<TInterval> {
-        if (!this.intervalMapKernel.has(label)) {
+        const realLabel = this.getIntervalCollectionPath(label);
+        if (!this.intervalMapKernel.has(realLabel)) {
             this.intervalMapKernel.createValueType(
-                label,
+                realLabel,
                 this.valueType.name,
                 undefined);
         }
 
         const sharedCollection =
-            this.intervalMapKernel.get<IntervalCollection<TInterval>>(label);
+            this.intervalMapKernel.get<IntervalCollection<TInterval>>(realLabel);
         return sharedCollection;
     }
     public snapshot(): ITree {
@@ -249,6 +251,14 @@ export abstract class ASharedIntervalCollection<TInterval extends ISerializableI
      */
     protected snapshotContent(): ITree {
         return null;
+    }
+
+    /**
+     * Creates the full path of the intervalCollection label
+     * @param label - the incoming lable
+     */
+    protected getIntervalCollectionPath(label: string): string {
+        return label;
     }
 }
 
