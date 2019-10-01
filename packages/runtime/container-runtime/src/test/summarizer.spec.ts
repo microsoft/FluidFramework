@@ -67,8 +67,8 @@ describe("Runtime", () => {
                                 sendTelemetryEvent: (event) => {},
                             } as ITelemetryLogger,
                             storage: {
-                                getSnapshotTree: () => Promise.resolve(null),
-                                getVersions: (versionId, count) => Promise.resolve([]),
+                                getSnapshotTree: () => Promise.resolve({}),
+                                getVersions: (versionId, count) => Promise.resolve([{}]),
                             } as IDocumentStorageService,
                         } as ContainerRuntime,
                         summaryConfig,
