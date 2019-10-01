@@ -56,8 +56,8 @@ function canRetryOnError(error: any) {
     return error === null || typeof error !== "object" || error.canRetry === undefined || error.canRetry;
 }
 enum retryFor {
-    "DELTASTREAM",
-    "DELTASTORAGE",
+    DELTASTREAM,
+    DELTASTORAGE,
 }
 
 /**
@@ -568,6 +568,8 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     }
 
     private emitDelayInfo(retryEndpoint: number, delay: number) {
+        // delay === 0 means the corresponding endpoint has connected properly
+        // and we do not need to emit any delay to app.
         if (retryEndpoint === retryFor.DELTASTORAGE) {
             this.deltaStorageDelay = delay;
         } else if (retryEndpoint === retryFor.DELTASTREAM) {
