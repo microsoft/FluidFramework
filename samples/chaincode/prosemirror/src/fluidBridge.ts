@@ -43,6 +43,11 @@ export const nodeTypeKey = "nodeType";
 export class ProseMirrorTransactionBuilder {
     private transaction: Transaction;
 
+    private removalStart = -1;
+    private removalLength = -1;
+
+    private commands: any;
+
     constructor(
         state: EditorState,
         private schema: Schema,
@@ -56,61 +61,87 @@ export class ProseMirrorTransactionBuilder {
         for (const range of delta.ranges) {
             const segment = range.segment;
 
-            if (range.operation === MergeTreeDeltaType.INSERT) {
-                if (TextSegment.is(segment)) {
-                    this.transaction.insertText(segment.text, range.position);
+            switch (range.operation) {
+                case MergeTreeDeltaType.REMOVE:
+                    const length = TextSegment.is(segment) ? segment.text.length : 1;
+                    this.addRemovalRange(range.position, range.position + length);
+                    
+                    this.transaction.delete(range.position, range.position + length);
 
-                    if (segment.properties) {
-                        for (const prop of Object.keys(segment.properties)) {
-                            const value = range.segment.properties[prop];
-                            this.transaction.addMark(
-                                range.position,
-                                range.position + segment.text.length,
-                                this.schema.marks[prop].create(value));
+                    break;
+
+                case MergeTreeDeltaType.INSERT: 
+                    if (TextSegment.is(segment)) {
+                        this.transaction.insertText(segment.text, range.position);
+
+                        if (segment.properties) {
+                            for (const prop of Object.keys(segment.properties)) {
+                                const value = range.segment.properties[prop];
+                                this.transaction.addMark(
+                                    range.position,
+                                    range.position + segment.text.length,
+                                    this.schema.marks[prop].create(value));
+                            }
+                        }
+                    } else if (Marker.is(segment)) {
+                        if (segment.refType === ReferenceType.Simple) {
+                            const nodeType = segment.properties["type"];
+                            const node = this.schema.nodes[nodeType].create(segment.properties["attrs"]);
+                            this.transaction.insert(range.position, node);
                         }
                     }
-                } else if (Marker.is(segment)) {
-                    if (segment.refType === ReferenceType.Simple) {
-                        const nodeType = segment.properties["type"];
-                        const node = this.schema.nodes[nodeType].create(segment.properties["attrs"]);
-                        this.transaction.insert(range.position, node);
-                    }
-                }
-            } else if (range.operation === MergeTreeDeltaType.REMOVE) {
-                if (TextSegment.is(segment)) {
-                    this.transaction.replace(range.position, range.position + segment.text.length);
-                } else if (Marker.is(segment)) {
-                    if (segment.refType === ReferenceType.Simple) {
-                        this.transaction.replace(range.position, range.position + 1);
-                    }
-                }
-            } else if (range.operation === MergeTreeDeltaType.ANNOTATE) {
-                for (const prop of Object.keys(range.propertyDeltas)) {
-                    const value = range.segment.properties[prop];
+                    break;
 
-                    // TODO I think I need to query the sequence for *all* marks and then set them here
-                    // for PM it's an all or nothing set. Not anything additive
+                case MergeTreeDeltaType.ANNOTATE:
+                    // An annotation should just be an immediate flush - I think
 
-                    const length = TextSegment.is(segment) ? segment.text.length : 1;
-
-                    if (value) {
-                        this.transaction.addMark(
-                            range.position,
-                            range.position + length,
-                            this.schema.marks[prop].create(value));
-                    } else {
-                        this.transaction.removeMark(
-                            range.position,
-                            range.position + length,
-                            this.schema.marks[prop]);
+                    for (const prop of Object.keys(range.propertyDeltas)) {
+                        const value = range.segment.properties[prop];
+    
+                        // TODO I think I need to query the sequence for *all* marks and then set them here
+                        // for PM it's an all or nothing set. Not anything additive
+    
+                        const length = TextSegment.is(segment) ? segment.text.length : 1;
+    
+                        if (value) {
+                            this.transaction.addMark(
+                                range.position,
+                                range.position + length,
+                                this.schema.marks[prop].create(value));
+                        } else {
+                            this.transaction.removeMark(
+                                range.position,
+                                range.position + length,
+                                this.schema.marks[prop]);
+                        }
                     }
-                }
+                    break;
             }
         }
     }
 
     public build(): Transaction {
         return this.transaction;
+    }
+
+    private addRemovalRange(from: number, to: number) {
+        // initialize the removal range
+        if (this.removalStart === -1) {
+            this.removalStart = from;
+            this.removalLength = to - from;
+            return;
+        }
+        
+        // removal range that can be combined
+        if (from === this.removalStart) {
+            this.removalStart += to - from;
+            return;
+        }
+
+        // Mark a new command to be executed
+        this.commands.add({ type: "remove", from: this.removalStart, to: this.removalStart + this.removalLength});
+        this.removalStart = from;
+        this.removalLength = to - from;
     }
 }
 
@@ -129,6 +160,99 @@ export function sliceToGroupOps(from: number, slice: IProseMirrorSlice, schema: 
     });
 
     return ops;
+}
+
+function sliceToGroupOpsInternal(
+    value: IProseMirrorNode,
+    schema: Schema,
+    openStart: number,
+    openEnd: number,
+    from: number,
+    ops: IMergeTreeOp[],
+) {
+    let offset = 0;
+
+    let props: any = undefined;
+    if (value.marks) {
+        props = {};
+        for (const mark of value.marks) {
+            props[mark.type] = mark.attrs || true;
+        }
+    }
+
+    const node = schema.nodes[value.type];
+    if (node.isInline) {
+        if (value.type === "text") {
+            const segment = new TextSegment(value.text);
+            if (props) {
+                segment.addProperties(props);
+            }
+            ops.push(createInsertSegmentOp(from + offset, segment));
+
+            offset += value.text.length;
+        } else {
+            const nodeProps = {
+                ...props,
+                ...{
+                    type: value.type,
+                    attrs: value.attrs,
+                },
+            };
+
+            const marker = new Marker(ReferenceType.Simple);
+            marker.addProperties(nodeProps);
+            ops.push(createInsertSegmentOp(from + offset, marker));
+
+            offset++;
+        }
+    } else {
+        // negative open start indicates we have past the depth from which the opening began
+        if (openStart < 0) {
+            const beginProps = {
+                ...props,
+                ...{
+                    [reservedRangeLabelsKey]: [proseMirrorTreeLabel],
+                    [nodeTypeKey]: value.type,
+                }
+            };
+
+            const marker = new Marker(ReferenceType.NestBegin);
+            marker.addProperties(beginProps);
+            ops.push(createInsertSegmentOp(from + offset, marker));
+
+            offset++;
+        }
+
+        if (value.content) {
+            value.content.forEach((content, index) => {
+                offset += sliceToGroupOpsInternal(
+                    content,
+                    schema,
+                    index === 0 ? openStart - 1 : -1,
+                    index === value.content.length - 1 ? openEnd - 1 : -1,
+                    from + offset,
+                    ops);
+            });
+        }
+
+        if (openEnd < 0) {
+            const endProps = {
+                ...props,
+                ...{
+                    [reservedRangeLabelsKey]: [proseMirrorTreeLabel],
+                    [nodeTypeKey]: value.type,
+                }
+            };
+
+            const marker = new Marker(ReferenceType.NestEnd);
+            marker.addProperties(endProps);
+            ops.push(createInsertSegmentOp(from + offset, marker));
+
+            offset++;
+        }
+    }
+
+    return offset;
 }
 
 // if (TextSegment.is(segment)) {
@@ -251,99 +375,6 @@ export function sliceToGroupOps(from: number, slice: IProseMirrorSlice, schema: 
 
     // return new Slice(fragment, openStart, openEnd);
 // }
-
-function sliceToGroupOpsInternal(
-    value: IProseMirrorNode,
-    schema: Schema,
-    openStart: number,
-    openEnd: number,
-    from: number,
-    ops: IMergeTreeOp[],
-) {
-    let offset = 0;
-
-    let props: any = undefined;
-    if (value.marks) {
-        props = {};
-        for (const mark of value.marks) {
-            props[mark.type] = mark.attrs || true;
-        }
-    }
-
-    const node = schema.nodes[value.type];
-    if (node.isInline) {
-        if (value.type === "text") {
-            const segment = new TextSegment(value.text);
-            if (props) {
-                segment.addProperties(props);
-            }
-            ops.push(createInsertSegmentOp(from + offset, segment));
-
-            offset += value.text.length;
-        } else {
-            const nodeProps = {
-                ...props,
-                ...{
-                    type: value.type,
-                    attrs: value.attrs,
-                },
-            };
-
-            const marker = new Marker(ReferenceType.Simple);
-            marker.addProperties(nodeProps);
-            ops.push(createInsertSegmentOp(from + offset, marker));
-
-            offset++;
-        }
-    } else {
-        // negative open start indicates we have past the depth from which the opening began
-        if (openStart < 0) {
-            const beginProps = {
-                ...props,
-                ...{
-                    [reservedRangeLabelsKey]: [proseMirrorTreeLabel],
-                    [nodeTypeKey]: value.type,
-                }
-            };
-
-            const marker = new Marker(ReferenceType.NestBegin);
-            marker.addProperties(beginProps);
-            ops.push(createInsertSegmentOp(from + offset, marker));
-
-            offset++;
-        }
-
-        if (value.content) {
-            value.content.forEach((content, index) => {
-                offset += sliceToGroupOpsInternal(
-                    content,
-                    schema,
-                    index === 0 ? openStart - 1 : -1,
-                    index === value.content.length - 1 ? openEnd - 1 : -1,
-                    from + offset,
-                    ops);
-            });
-        }
-
-        if (openEnd < 0) {
-            const endProps = {
-                ...props,
-                ...{
-                    [reservedRangeLabelsKey]: [proseMirrorTreeLabel],
-                    [nodeTypeKey]: value.type,
-                }
-            };
-
-            const marker = new Marker(ReferenceType.NestEnd);
-            marker.addProperties(endProps);
-            ops.push(createInsertSegmentOp(from + offset, marker));
-
-            offset++;
-        }
-    }
-
-    return offset;
-}
 
 // TODO a replace should be an entire group
 // iterate over all elements and create a new fragment

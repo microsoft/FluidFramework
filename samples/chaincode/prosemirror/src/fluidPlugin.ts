@@ -10,6 +10,7 @@ import {
     createRemoveRangeOp,
     createGroupOp,
     IMergeTreeOp,
+    ISegment,
 } from "@prague/merge-tree";
 import { Schema } from "prosemirror-model";
 import { sliceToGroupOps, ProseMirrorTransactionBuilder } from "./fluidBridge";
@@ -34,12 +35,16 @@ export class FluidCollabPlugin {
     public attachView(editorView: EditorView) {
         let sliceBuilder: ProseMirrorTransactionBuilder;
 
+        let allSegments: ISegment[];
+
         this.sharedString.on(
             "pre-op",
             (op, local) => {
                 if (local) {
                     return;
                 }
+
+                allSegments = new Array<ISegment>();
 
                 sliceBuilder = new ProseMirrorTransactionBuilder(
                     editorView.state,
@@ -54,6 +59,8 @@ export class FluidCollabPlugin {
                     return;
                 }
 
+                allSegments.push(...ev.ranges.map((range) => range.segment));
+
                 sliceBuilder.addSequencedDelta(ev);
             });
 
@@ -62,6 +69,15 @@ export class FluidCollabPlugin {
             (op, local) => {
                 if (local) {
                     return;
+                }
+
+                console.log(`Segment count ${allSegments.length}`);
+
+                const client = this.sharedString.client;
+                for (const segment of allSegments) {
+                    segment.removedSeq
+                    console.log(
+                        `${(client as any).mergeTree.getPosition(segment, client.getCurrentSeq(), client.getClientId())}`);
                 }
 
                 const tr = sliceBuilder.build();
