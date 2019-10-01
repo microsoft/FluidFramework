@@ -190,7 +190,6 @@ export async function start(
     }
 
     let documentServiceFactory: IDocumentServiceFactory;
-    let hostConf: IHostConfig;
     let deltaConn: ITestDeltaConnectionServer ;
     if (options.mode !== "local") {
         documentServiceFactory = new RouterliciousDocumentServiceFactory(
@@ -200,12 +199,11 @@ export async function start(
             true,
             undefined,
         );
-        hostConf = { documentServiceFactory, urlResolver };
     } else {
         deltaConn = TestDeltaConnectionServer.create(new SessionStorageDbFactory(url));
         documentServiceFactory = new TestDocumentServiceFactory(deltaConn);
-        hostConf = { documentServiceFactory, urlResolver };
     }
+    const hostConf: IHostConfig = { documentServiceFactory, urlResolver };
 
     const [leftDiv, rightDiv] = div.getElementsByTagName("div");
     if (options.double && options.mode === "local" && !(leftDiv && rightDiv)) {
