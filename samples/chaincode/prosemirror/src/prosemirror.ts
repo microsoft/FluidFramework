@@ -292,7 +292,3 @@ class ProseMirrorFactory implements IComponentFactory {
 }
 
 export const fluidExport = new ProseMirrorFactory();
-
-export function instantiateComponent(context: IComponentContext): void {
-    fluidExport.instantiateComponent(context);
-}
