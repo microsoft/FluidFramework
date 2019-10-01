@@ -898,11 +898,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         });
 
         if (value === ConnectionState.Connected) {
-            // We just logged event with connecting -> connected time
+            // We just logged event with disconnected/connecting -> connected time
             // Log extra event recording disconnected -> connected time, as well as provide some extra info.
             // We can group that info in previous event, but it's easier to analyze telemetry if these are
             // two separate events (actually - three!).
-            assert(this.connectionState === ConnectionState.Connecting);
             this.logger.sendPerformanceEvent({
                 eventName: this.firstConnection ? "ConnectionStateChange_InitialConnect" : "ConnectionStateChange_Reconnect",
                 duration: time - this.connectionTransitionTimes[this.connectionState],
