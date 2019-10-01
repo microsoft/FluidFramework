@@ -87,7 +87,7 @@ export class SummaryManager extends EventEmitter {
         this.connected = false;
         this.clientId = undefined;
         if (this.runningSummarizer) {
-            this.runningSummarizer.stop();
+            this.runningSummarizer.stop("parent disconnected");
             this.runningSummarizer = undefined;
         }
     }

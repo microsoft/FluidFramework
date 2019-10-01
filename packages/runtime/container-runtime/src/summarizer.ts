@@ -45,7 +45,11 @@ export interface ISummarizer extends IProvideSummarizer {
      */
     run(onBehalfOf: string): Promise<void>;
 
-    stop();
+    /**
+     * Stops the summarizer by closing its container and resolving its run promise.
+     * @param reason - reason for stopping
+     */
+    stop(reason?: string);
 }
 
 export class Summarizer implements IComponentLoadable, ISummarizer {
@@ -113,11 +117,12 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
         return this.runDeferred.promise;
     }
 
-    public stop() {
+    public stop(reason?: string) {
         this.logger.sendTelemetryEvent({
             eventName: "StoppingSummarizer",
             clientId: this.runtime.clientId,
             onBehalfOf: this.onBehalfOfClientId,
+            reason,
         });
         this.runDeferred.resolve();
         this.runtime.closeFn();
@@ -211,7 +216,7 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
 
         if (this.onBehalfOfClientId !== this.runtime.summarizerClientId) {
             // we are no longer the summarizer, we should close ourself
-            this.stop();
+            this.stop("parent is no longer summarizer");
             return;
         }
 
