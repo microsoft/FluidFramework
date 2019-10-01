@@ -5,22 +5,33 @@
 
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { ComponentRuntime, ISharedObjectRegistry } from "@microsoft/fluid-component-runtime";
-import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { ComponentFactoryTypes, ComponentRegistryTypes, IComponentContext, IComponentFactory, IComponentRegistry, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { SharedComponent } from "../components/sharedComponent";
 
-export class SharedComponentFactory implements IComponentFactory {
-    private readonly registry: ISharedObjectRegistry;
+export class SharedComponentFactory implements IComponentFactory, IComponentRegistry {
+    private readonly sharedObjectRegistry: ISharedObjectRegistry;
 
     constructor(
         private readonly ctor: new (runtime: IComponentRuntime, context: IComponentContext) => SharedComponent,
         sharedObjects: ReadonlyArray<ISharedObjectFactory>,
+        private readonly componentRegistry?: ComponentRegistryTypes,
         private readonly onDemandInstantiation = true,
     ) {
-        this.registry = new Map(sharedObjects.map((ext) => [ext.type, ext]));
+        this.sharedObjectRegistry = new Map(sharedObjects.map((ext) => [ext.type, ext]));
     }
 
     public get IComponentFactory() { return this; }
+
+    public get IComponentRegistry(): IComponentRegistry {
+        return this;
+    }
+
+    public get(name: string): Promise<ComponentFactoryTypes> | undefined {
+        if (this.componentRegistry) {
+            return this.componentRegistry.get(name);
+        }
+    }
 
     /**
      * This is where we do component setup.
@@ -32,7 +43,7 @@ export class SharedComponentFactory implements IComponentFactory {
         // The runtime is what Fluid uses to create DDS' and route to your component
         ComponentRuntime.load(
             context,
-            this.registry,
+            this.sharedObjectRegistry,
             (runtime: ComponentRuntime) => {
                 let instanceP: Promise<SharedComponent>;
                 // For new runtime, we need to force the component instance to be create
