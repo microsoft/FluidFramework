@@ -89,9 +89,8 @@ export class RemoteChannelContext implements IChannelContext {
         const baseId = this.summaryTracker.getBaseId();
         if (baseId !== null && !fullTree) {
             return { id: baseId, entries: [] };
-        } else {
-            this.summaryTracker.resetChangeTracker();
         }
+        this.summaryTracker.resetChangeTracker();
         const channel = await this.getChannel();
         return snapshotChannel(channel, baseId);
     }

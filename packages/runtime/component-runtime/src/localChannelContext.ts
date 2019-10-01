@@ -68,9 +68,9 @@ export class LocalChannelContext implements IChannelContext {
         const baseId = this.summaryTracker.getBaseId();
         if (baseId !== null && !fullTree) {
             return { id: baseId, entries: [] };
-        } else {
-            this.summaryTracker.resetChangeTracker();
         }
+        this.summaryTracker.resetChangeTracker();
+
         return this.getAttachSnapshot();
     }
 

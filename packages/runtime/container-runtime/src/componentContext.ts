@@ -247,9 +247,8 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         const baseId = this.summaryTracker.getBaseId();
         if (baseId && !fullTree) {
             return { id: baseId, entries: [] };
-        } else {
-            this.summaryTracker.resetChangeTracker();
         }
+        this.summaryTracker.resetChangeTracker();
 
         const entries = await this.componentRuntime.snapshotInternal(fullTree);
 
