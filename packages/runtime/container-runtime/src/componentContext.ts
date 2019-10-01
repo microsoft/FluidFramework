@@ -34,6 +34,8 @@ import {
 } from "@microsoft/fluid-runtime-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";
+// tslint:disable-next-line:no-submodule-imports
+import * as uuid from "uuid/v4";
 import { ContainerRuntime } from "./containerRuntime";
 import { BlobTreeEntry } from "./utils";
 
@@ -153,8 +155,20 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         super();
     }
 
-    public createComponent(pkgOrId: string, pkg?: string): Promise<IComponentRuntime> {
+    public async createComponent(pkgOrId: string, pkg?: string | string[]): Promise<IComponentRuntime> {
         return this.hostRuntime.createComponent(pkgOrId, pkg);
+    }
+
+    public async createSubComponent(pkg: string, props?: any): Promise<IComponentRuntime> {
+        const details = await this.getSnapshotDetails();
+        const packagePath: string[] = [...details.pkg];
+        // A factory could not contain the registry for itself. So do not add a package in
+        // path if it is same as the last one.
+        if (packagePath.length > 0 && pkg !== packagePath[packagePath.length - 1]) {
+            packagePath.push(pkg);
+        }
+        const pkgId = uuid();
+        return this.hostRuntime._createComponentWithProps(packagePath, props, pkgId);
     }
 
     public async realize(): Promise<IComponentRuntime> {
