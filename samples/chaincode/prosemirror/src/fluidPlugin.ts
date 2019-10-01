@@ -10,7 +10,6 @@ import {
     createRemoveRangeOp,
     createGroupOp,
     IMergeTreeOp,
-    ISegment,
 } from "@prague/merge-tree";
 import { Schema } from "prosemirror-model";
 import { sliceToGroupOps, ProseMirrorTransactionBuilder } from "./fluidBridge";
@@ -35,16 +34,12 @@ export class FluidCollabPlugin {
     public attachView(editorView: EditorView) {
         let sliceBuilder: ProseMirrorTransactionBuilder;
 
-        let allSegments: ISegment[];
-
         this.sharedString.on(
             "pre-op",
             (op, local) => {
                 if (local) {
                     return;
                 }
-
-                allSegments = new Array<ISegment>();
 
                 sliceBuilder = new ProseMirrorTransactionBuilder(
                     editorView.state,
@@ -59,8 +54,6 @@ export class FluidCollabPlugin {
                     return;
                 }
 
-                allSegments.push(...ev.ranges.map((range) => range.segment));
-
                 sliceBuilder.addSequencedDelta(ev);
             });
 
@@ -69,15 +62,6 @@ export class FluidCollabPlugin {
             (op, local) => {
                 if (local) {
                     return;
-                }
-
-                console.log(`Segment count ${allSegments.length}`);
-
-                const client = this.sharedString.client;
-                for (const segment of allSegments) {
-                    segment.removedSeq
-                    console.log(
-                        `${(client as any).mergeTree.getPosition(segment, client.getCurrentSeq(), client.getClientId())}`);
                 }
 
                 const tr = sliceBuilder.build();
@@ -118,6 +102,37 @@ export class FluidCollabPlugin {
                     const groupOp = createGroupOp(...operations);
                     this.sharedString.groupOperation(groupOp);
                     
+                    break;
+                
+                case "replaceAround":
+                    console.log("Don't yet support replaceAround");
+                    // export class ReplaceAroundStep extends Step {
+                    // :: (number, number, number, number, Slice, number, ?bool)
+                    // Create a replace-around step with the given range and gap.
+                    // `insert` should be the point in the slice into which the content
+                    // of the gap should be moved. `structure` has the same meaning as
+                    // it has in the [`ReplaceStep`](#transform.ReplaceStep) class.
+                    // {
+                    //     "stepType": "replaceAround",
+                    //     "from": 0,
+                    //     "to": 15,
+                    //     "gapFrom": 0,
+                    //     "gapTo": 15,
+                    //     "insert": 2,
+                    //     "slice": {
+                    //         "content": [
+                    //         {
+                    //             "type": "bullet_list",
+                    //             "content": [
+                    //             {
+                    //                 "type": "list_item"
+                    //             }
+                    //             ]
+                    //         }
+                    //         ]
+                    //     },
+                    //     "structure": true
+                    //     }
                     break;
 
                 case "addMark":
