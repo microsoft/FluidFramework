@@ -282,7 +282,15 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         if (resume) {
             this._inbound.systemResume();
             this._inboundSignal.systemResume();
-            this.fetchMissingDeltas("DocumentOpen", sequenceNumber);
+
+            // If we have pending ops from web socket, then we can use that to start download
+            // based on missing ops - catchUp() will do just that.
+            // Otherwise proactively ask storage for ops
+            if (this.pending.length > 0) {
+                this.catchUp("DocumentOpen", []);
+            } else {
+                this.fetchMissingDeltas("DocumentOpen", sequenceNumber);
+            }
         }
     }
 
@@ -586,25 +594,19 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 }
 
                 connection.on("op", (documentId: string, messages: ISequencedDocumentMessage[]) => {
-                    if (this.handler) {
-                        if (messages instanceof Array) {
-                            this.enqueueMessages(messages);
-                        } else {
-                            this.enqueueMessages([messages]);
-                        }
+                    if (messages instanceof Array) {
+                        this.enqueueMessages(messages);
+                    } else {
+                        this.enqueueMessages([messages]);
                     }
                 });
 
                 connection.on("op-content", (message: IContentMessage) => {
-                    if (this.handler) {
-                        this.contentCache.set(message);
-                    }
+                    this.contentCache.set(message);
                 });
 
                 connection.on("signal", (message: ISignalMessage) => {
-                    if (this.handler) {
-                        this._inboundSignal.push(message);
-                    }
+                    this._inboundSignal.push(message);
                 });
 
                 // Always connect in write mode after getting nacked.
@@ -751,7 +753,16 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     }
 
     private enqueueMessages(messages: ISequencedDocumentMessage[]): void {
-        assert(this.handler);
+        if (!this.handler) {
+            // We did not setup handler yet.
+            // This happens when we connect to web socket faster than we get attributes for container
+            // and thus faster than attachOpHandler() is called
+            // this.baseSequenceNumber is still zero, so we can't rely on this.handleOutOfOrderMessage()
+            // to do the right thing.
+            this.pending = this.pending.concat(messages);
+            return;
+        }
+
         for (const message of messages) {
             // Check that the messages are arriving in the expected order
             if (message.sequenceNumber !== this.lastQueuedSequenceNumber + 1) {
@@ -932,9 +943,12 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         // Then sort pending operations and attempt to apply them again.
         // This could be optimized to stop handling messages once we realize we need to fetch missing values.
         // But for simplicity, and because catching up should be rare, we just process all of them.
-        const pendingSorted = this.pending.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
-        this.pending = [];
-        this.enqueueMessages(pendingSorted);
+        // Optimize for case of no handler - we put ops back into this.pending in such case
+        if (this.handler) {
+            const pendingSorted = this.pending.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
+            this.pending = [];
+            this.enqueueMessages(pendingSorted);
+        }
     }
 
     /**
