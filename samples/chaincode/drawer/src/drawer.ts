@@ -12,13 +12,13 @@ import {
     IComponentHTMLVisual,
     IComponent,
     IComponentHTMLView,
-} from "@prague/component-core-interfaces";
-import { ComponentRuntime } from "@prague/component-runtime";
-import { IPackageManager } from "@prague/host-service-interfaces";
-import { ISharedMap, SharedMap } from "@prague/map";
-import { IComponentContext, IComponentFactory, IComponentRuntime } from "@prague/runtime-definitions";
-import { SharedString } from "@prague/sequence";
-import { ISharedObjectFactory } from "@prague/shared-object-common";
+} from "@microsoft/fluid-component-core-interfaces";
+import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
+import { IPackageManager } from "@microsoft/fluid-host-service-interfaces";
+import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
+import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { SharedString } from "@microsoft/fluid-sequence";
+import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { initializeIcons } from '@uifabric/icons';
 import { EventEmitter } from "events";
 import * as semver from "semver";
@@ -33,14 +33,14 @@ export class Drawer extends EventEmitter implements IComponentLoadable, ICompone
     }
 
     private static packages = [
-        { pkg: "@chaincode/drawer", name: "Folder", version: "latest", icon: "FabricNewFolder" },
-        { pkg: "@chaincode/shared-text", name: "Shared Text", version: "^0.10.0", icon: "TextDocument" },
-        { pkg: "@chaincode/flow-scroll", name: "Web Flow", version: "^0.10.0", icon: "WebComponents" },
-        { pkg: "@chaincode/prosemirror", name: "ProseMirror", version: "latest", icon: "WebComponents" },
-        { pkg: "@chaincode/smde", name: "Markdown", version: "latest", icon: "MarkDownLanguage" },
+        { pkg: "@fluid-example/drawer", name: "Folder", version: "latest", icon: "FabricNewFolder" },
+        { pkg: "@fluid-example/shared-text", name: "Shared Text", version: "^0.10.0", icon: "TextDocument" },
+        { pkg: "@fluid-example/flow-scroll", name: "Web Flow", version: "^0.10.0", icon: "WebComponents" },
+        { pkg: "@fluid-example/prosemirror", name: "ProseMirror", version: "latest", icon: "WebComponents" },
+        { pkg: "@fluid-example/smde", name: "Markdown", version: "latest", icon: "MarkDownLanguage" },
         { pkg: "@fluid-example/monaco", name: "Monaco", version: "^0.10.0", icon: "Code" },
-        { pkg: "@chaincode/codemirror", name: "CodeMirror", version: "latest", icon: "Code" },
-        { pkg: "@chaincode/table-view", name: "Table", version: "^0.10.0", icon: "Table" },
+        { pkg: "@fluid-example/codemirror", name: "CodeMirror", version: "latest", icon: "Code" },
+        { pkg: "@fluid-example/table-view", name: "Table", version: "^0.10.0", icon: "Table" },
     ];
 
     public get IComponentLoadable() { return this; }

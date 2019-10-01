@@ -97,6 +97,7 @@ export class Pond extends SharedComponent implements IComponentHTMLVisual {
   private static readonly factory = new SharedComponentFactory(
       Pond,
       [],
+      new Map(),
   );
 }
 
