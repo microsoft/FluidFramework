@@ -31,6 +31,7 @@ export interface IProseMirrorNode {
     type: string,
     content?: IProseMirrorNode[],
     marks?: any[],
+    _open?: boolean;
 }
 
 export interface IProseMirrorSlice {
@@ -205,17 +206,21 @@ export class ProseMirrorTransactionBuilder {
         console.log(`Total groups! ${groups.length}`);
         for (const group of groups) {
             let removalSize = 0;
-            let fragment = [];
+            let insertSegments = [];
 
             group.items.forEach((value) => {
                 if (value.type === "delete") {
                     removalSize += value.event.segment.cachedLength;
                 } else {
-                    fragment.push(this.getJson(value.event.segment));
+                    insertSegments.push(value.event.segment);
                 }
             });
 
-            const slice = new Slice(Fragment.fromJSON(this.schema, fragment), 0, 0);
+            const fragment = generateFragment(insertSegments);
+            const slice = new Slice(
+                Fragment.fromJSON(this.schema, fragment),
+                this.getOpenStart(fragment),
+                this.getOpenEnd(fragment));
             
             this.transaction.replaceRange(
                 group.position,
@@ -227,63 +232,22 @@ export class ProseMirrorTransactionBuilder {
         return this.transaction;
     }
 
-    private getJson(segment: ISegment) {
-        if (TextSegment.is(segment)) {
-            const nodeJson: IProseMirrorNode = {
-                type: "text",
-                text: segment.text,
-            };
-
-            if (segment.properties) {
-                nodeJson.marks = [];
-                for (const propertyKey of Object.keys(segment.properties)) {
-                    nodeJson.marks.push({
-                        type: propertyKey,
-                        value: segment.properties[propertyKey],
-                    })
-                }
-            }
-
-            return nodeJson;
-        } else if (Marker.is(segment)) {
-            // TODO are marks applied to the structural nodes as well? Or just inner text?
-
-            // const nodeType = segment.properties[nodeTypeKey];
-            switch (segment.refType) {
-                case ReferenceType.NestBegin:
-                    // TODO!
-                    break;
-
-                case ReferenceType.NestEnd:
-                    // TODO!
-                    break;
-
-                case ReferenceType.Simple:
-                    // TODO consolidate the text segment and simple references
-                    const nodeJson: IProseMirrorNode = {
-                        type: segment.properties["type"],
-                        attrs: segment.properties["attrs"],
-                    };
-
-                    if (segment.properties) {
-                        nodeJson.marks = [];
-                        for (const propertyKey of Object.keys(segment.properties)) {
-                            if (propertyKey !== "type" && propertyKey !== "attrs") {
-                                nodeJson.marks.push({
-                                    type: propertyKey,
-                                    value: segment.properties[propertyKey],
-                                });
-                            }
-                        }
-                    }
-
-                    return nodeJson;
-
-                default:
-                    // throw for now when encountering something unknown
-                    throw new Error("Unknown marker");
-            }
+    private getOpenStart(node: IProseMirrorNode[]): number {
+        if (!node || node.length === 0) {
+            return 0;
         }
+
+        const start = node[0];
+        return !start._open || !start.content ? 0 : 1 + this.getOpenStart(start.content);
+    }
+
+    private getOpenEnd(node: IProseMirrorNode[]): number {
+        if (!node || node.length === 0) {
+            return 0;
+        }
+
+        const end = node[node.length - 1];
+        return !end._open || !end.content ? 0 : 1 + this.getOpenEnd(end.content);
     }
 
     // private processRemove(range: ISequenceDeltaRange) {
@@ -484,6 +448,88 @@ function sliceToGroupOpsInternal(
     }
 
     return offset;
+}
+
+function generateFragment(segments: ISegment[]) {
+    const nodeStack = new Array<IProseMirrorNode>();
+    nodeStack.push({ type: "doc", content: [] });
+
+    // TODO should I pre-seed the data structure based on the nodes to the left of the open?
+
+    for (const segment of segments) {
+        let top = nodeStack[nodeStack.length - 1];
+
+        if (TextSegment.is(segment)) {
+            const nodeJson: IProseMirrorNode = {
+                type: "text",
+                text: segment.text,
+            };
+
+            if (segment.properties) {
+                nodeJson.marks = [];
+                for (const propertyKey of Object.keys(segment.properties)) {
+                    nodeJson.marks.push({
+                        type: propertyKey,
+                        value: segment.properties[propertyKey],
+                    })
+                }
+            }
+
+            top.content.push(nodeJson);
+        } else if (Marker.is(segment)) {
+            const nodeType = segment.properties[nodeTypeKey];
+            switch (segment.refType) {
+                case ReferenceType.NestBegin:
+                    // Create the new node, add it to the top's content, and push it on the stack
+                    const newNode = { type: nodeType, content: [], _open: true };
+                    top.content.push(newNode);
+                    nodeStack.push(newNode);
+                    break;
+
+                case ReferenceType.NestEnd:
+                    if (top.type === nodeType) {
+                        top._open = false;
+                        // matching open
+                        nodeStack.pop();
+                    } else {
+                        // unmatched open
+                        const newNode = { type: nodeType, content: [], _open: true };
+                        top.content.push(newNode);
+                    }
+                    
+                    break;
+
+                case ReferenceType.Simple:
+                    // TODO consolidate the text segment and simple references
+                    const nodeJson: IProseMirrorNode = {
+                        type: segment.properties["type"],
+                        attrs: segment.properties["attrs"],
+                    };
+
+                    if (segment.properties) {
+                        nodeJson.marks = [];
+                        for (const propertyKey of Object.keys(segment.properties)) {
+                            if (propertyKey !== "type" && propertyKey !== "attrs") {
+                                nodeJson.marks.push({
+                                    type: propertyKey,
+                                    value: segment.properties[propertyKey],
+                                });
+                            }
+                        }
+                    }
+
+                    top.content.push(nodeJson);
+                    break;
+
+                default:
+                    // throw for now when encountering something unknown
+                    throw new Error("Unknown marker");
+            }
+        }
+    }
+
+    const doc = nodeStack[0];
+    return doc.content;
 }
 
 // if (TextSegment.is(segment)) {
