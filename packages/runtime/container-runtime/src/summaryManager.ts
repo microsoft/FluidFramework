@@ -109,6 +109,10 @@ export class SummaryManager extends EventEmitter {
      */
     private computeSummarizer(force = false) {
         const clientId = this.heap.count() > 0 ? this.heap.peek().value.clientId : undefined;
+
+        // Do not start if we are already the summarizer, unless force is passed.
+        // Force will be passed if we think we are not already summarizing, which might
+        // happen if we are not yet connected the first time through computeSummarizer.
         if (!force && clientId === this._summarizer) {
             return;
         }
@@ -116,6 +120,7 @@ export class SummaryManager extends EventEmitter {
         this._summarizer = clientId;
         this.emit("summarizer", clientId);
 
+        // do not start if we are not the summarizer or not connected
         if (this._summarizer !== this.clientId || !this.connected) {
             return;
         }
@@ -140,16 +145,10 @@ export class SummaryManager extends EventEmitter {
                 () => {
                     // In the future we will respawn the summarizer - for now we simply stop
                     // this.computeSummarizer(this.connected)
-                    this.logger.sendTelemetryEvent({
-                        eventName: "RunningSummarizerCompleted",
-                        clientId: this.clientId,
-                    });
+                    this.logger.sendTelemetryEvent({ eventName: "RunningSummarizerCompleted" });
                 },
                 (error) => {
-                    this.logger.sendErrorEvent({
-                        eventName: "RunningSummarizerFailed",
-                        clientId: this.clientId,
-                    }, error);
+                    this.logger.sendErrorEvent({ eventName: "RunningSummarizerFailed" }, error);
                 });
         }
 
