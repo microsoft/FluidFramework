@@ -37,7 +37,7 @@ export class SummaryTracker {
      * returns null otherwise
      */
     public getBaseId(): string | null {
-        if (this._state === SummaryTrackerState.Valid && this._baseSnapshotTree) {
+        if (this._state === SummaryTrackerState.Valid && this._baseSnapshotTree && this._baseSnapshotTree.id) {
             return this._baseSnapshotTree.id;
         } else {
             return null;
