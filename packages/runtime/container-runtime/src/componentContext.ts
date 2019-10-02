@@ -164,7 +164,11 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
     public async createSubComponent(pkg: string, props?: any): Promise<IComponentRuntime> {
         const details = await this.getSnapshotDetails();
         const packagePath: string[] = [...details.pkg];
-        packagePath.push(pkg);
+        // A factory could not contain the registry for itself. So do not add a package in
+        // path if it is same as the last one.
+        if (packagePath.length > 0 && pkg !== packagePath[packagePath.length - 1]) {
+            packagePath.push(pkg);
+        }
         const pkgId = uuid();
         return this.hostRuntime._createComponentWithProps(packagePath, props, pkgId);
     }
