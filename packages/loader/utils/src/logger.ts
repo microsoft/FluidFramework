@@ -48,7 +48,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
         return name.replace("@", "").replace("/", "-");
     }
 
-    public static prepareErrorObject(event: ITelemetryBaseEvent, error: any) {
+    public static prepareErrorObject(event: ITelemetryBaseEvent, error: any, fetchStack: boolean) {
         if (error === null || typeof error !== "object") {
             // tslint:disable-next-line:no-unsafe-any
             event.error = error;
@@ -67,7 +67,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
 
         // Collect stack if we were not able to extract it from error
         event.stackFromError = (event.stack !== undefined);
-        if (event.stack === undefined) {
+        if (event.stack === undefined && fetchStack) {
             event.stack = TelemetryLogger.getStack();
         }
     }
@@ -111,7 +111,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
     public sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any) {
         const newEvent: ITelemetryBaseEvent = { ...event, category: "generic" };
         if (error !== undefined) {
-            TelemetryLogger.prepareErrorObject(newEvent, error);
+            TelemetryLogger.prepareErrorObject(newEvent, error, false);
         }
         this.send(newEvent);
     }
@@ -123,7 +123,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      */
     public sendErrorEvent(event: ITelemetryErrorEvent, error?: any) {
         const newEvent: ITelemetryBaseEvent = { ...event, category: "error" };
-        TelemetryLogger.prepareErrorObject(newEvent, error);
+        TelemetryLogger.prepareErrorObject(newEvent, error, true);
         this.send(newEvent);
     }
 
@@ -133,7 +133,9 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      */
     public sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void {
         const perfEvent: ITelemetryBaseEvent = { ...event, category: "performance" };
-        TelemetryLogger.prepareErrorObject(perfEvent, error);
+        if (error !== undefined) {
+            TelemetryLogger.prepareErrorObject(perfEvent, error, false);
+        }
 
         if (event.duration) {
             perfEvent.duration = TelemetryLogger.formatTick(event.duration);
