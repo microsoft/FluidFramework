@@ -1,7 +1,7 @@
 {
   "name": "@fluid-example/type-race",
   "description": "Typing race",
-  "version": "0.0.11",
+  "version": "0.10.0",
   "author": "Microsoft",
   "repository": "microsoft/FluidFramework",
   "main": "dist/index.js",
