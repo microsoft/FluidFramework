@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
 import { BatchManager, NetworkError } from "@microsoft/fluid-core-utils";
 import {
     ConnectionMode,
@@ -67,12 +68,10 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         client: IClient,
         url: string,
         mode: ConnectionMode,
-        url2?: string): Promise<IDocumentDeltaConnection> {
-            let canRetry = false;
+        url2?: string,
+        logger?: ITelemetryLogger): Promise<IDocumentDeltaConnection> {
             // tslint:disable-next-line: strict-boolean-expressions
-            if (url2) {
-                canRetry = true;
-            }
+            const canRetry = !!url2;
 
             return this.createImpl(
                 tenantId,
@@ -87,6 +86,9 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
             ).catch((error) => {
                 if (error instanceof NetworkError && error.canRetry && canRetry) {
                     debug(`Socket connection error on non-AFD URL. Error was [${error}]. Retry on AFD URL: ${url}`);
+                    if (logger) {
+                        logger.sendTelemetryEvent({ eventName: "UseAfdUrl" });
+                    }
                     return this.createImpl(
                         tenantId,
                         id,
@@ -139,6 +141,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
                 },
                 reconnection: false,
                 transports: ["websocket"],
+                timeout: 15000,
             });
 
         const connectMessage: IConnect = {
