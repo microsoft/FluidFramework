@@ -112,7 +112,6 @@ module.exports = env => {
             publicPath: "/dist/",
         },
         devServer: {
-            contentBase: [path.resolve(__dirname, 'assets')],
             before: (app, server) => fluidRoute.before(app, server),
             after: (app, server) => fluidRoute.after(app, server, __dirname, env),
         }
