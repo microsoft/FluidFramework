@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+// tslint:disable: max-line-length
+
 import {
     createAnnotateRangeOp,
     createInsertSegmentOp,
@@ -71,10 +73,10 @@ describe("non-collab", () => {
             assert(event.isLocal);
             assert(!event.isEmpty);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.start, offset);
+            assert.equal(event.first.position, offset);
             assert.equal(event.ranges[0].position, offset);
             assert.equal(event.ranges[0].segment.cachedLength, text.length);
-            assert.equal(event.end, offset + text.length);
+            assert.equal(event.last.position + event.last.segment.cachedLength, offset + text.length);
             const segment = event.ranges[0].segment as TextSegment;
             assert.equal(segment.text, text);
         }
@@ -116,10 +118,10 @@ describe("non-collab", () => {
             assert(event.isLocal);
             assert(!event.isEmpty);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.start, start);
+            assert.equal(event.first.position, start);
             assert.equal(event.ranges[0].position, start);
             assert.equal(event.ranges[0].segment.cachedLength, end - start);
-            assert.equal(event.end, end);
+            assert.equal(event.last.position + event.last.segment.cachedLength, end);
         }
     });
 
@@ -189,8 +191,8 @@ describe("non-collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, start);
-            assert.equal(event.end, end);
+            assert.equal(event.first.position, start);
+            assert.equal(event.last.position + event.last.segment.cachedLength, end);
             assert.equal(event.ranges.length, expected.length);
             for (let i = 0; i < expected.length; i = i + 1) {
                 assert.equal(event.ranges[i].position, expected[i].offset);
@@ -249,8 +251,9 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, localInsertPos);
-            assert.equal(event.end, localInsertPos + localInsertText.length);
+            assert.equal(event.first.position, localInsertPos);
+            assert.equal(event.last.position, localInsertPos);
+            assert.equal(event.last.segment.cachedLength, localInsertText.length);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, localInsertPos);
             assert.equal(event.ranges[0].segment.cachedLength, localInsertText.length);
@@ -267,8 +270,8 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, remoteInsertPos + localInsertText.length);
-            assert.equal(event.end, remoteInsertPos + localInsertText.length + remoteInsertText.length);
+            assert.equal(event.first.position, remoteInsertPos + localInsertText.length);
+            assert.equal(event.last.position + event.last.segment.cachedLength, remoteInsertPos + localInsertText.length + remoteInsertText.length);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, remoteInsertPos + localInsertText.length);
             assert.equal(event.ranges[0].segment.cachedLength, remoteInsertText.length);
@@ -297,8 +300,8 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, localInsertPos);
-            assert.equal(event.end, localInsertPos + localInsertText.length);
+            assert.equal(event.first.position, localInsertPos);
+            assert.equal(event.last.position + event.last.segment.cachedLength, localInsertPos + localInsertText.length);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, localInsertPos);
             assert.equal(event.ranges[0].segment.cachedLength, localInsertText.length);
@@ -317,8 +320,8 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, remoteInsertPos);
-            assert.equal(event.end, remoteInsertPos + remoteInsertText.length);
+            assert.equal(event.first.position, remoteInsertPos);
+            assert.equal(event.last.position + event.last.segment.cachedLength, remoteInsertPos + remoteInsertText.length);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, remoteInsertPos);
             assert.equal(event.ranges[0].segment.cachedLength, remoteInsertText.length);
@@ -349,8 +352,8 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, localInsertPos);
-            assert.equal(event.end, localInsertPos + localInsertText.length);
+            assert.equal(event.first.position, localInsertPos);
+            assert.equal(event.last.position + event.last.segment.cachedLength, localInsertPos + localInsertText.length);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, localInsertPos);
             assert.equal(event.ranges[0].segment.cachedLength, localInsertText.length);
@@ -367,8 +370,8 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, remoteInsertPos);
-            assert.equal(event.end, remoteInsertPos + remoteInsertText.length);
+            assert.equal(event.first.position, remoteInsertPos);
+            assert.equal(event.last.position + event.last.segment.cachedLength, remoteInsertPos + remoteInsertText.length);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, remoteInsertPos);
             assert.equal(event.ranges[0].segment.cachedLength, remoteInsertText.length);
@@ -398,8 +401,8 @@ describe("collab", () => {
             assert(event.isLocal);
             assert(!event.isEmpty);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.start, localInsertPos);
-            assert.equal(event.end, localInsertPos + localInsertText.length);
+            assert.equal(event.first.position, localInsertPos);
+            assert.equal(event.last.position + event.last.segment.cachedLength, localInsertPos + localInsertText.length);
             assert.equal(event.ranges[0].position, localInsertPos);
             assert.equal(event.ranges[0].segment.cachedLength, localInsertText.length);
             const segment1 = event.ranges[0].segment as TextSegment;
@@ -418,8 +421,8 @@ describe("collab", () => {
             assert(!event.isLocal);
             assert(!event.isEmpty);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.start, remoteInsertPos + localInsertText.length);
-            assert.equal(event.end, remoteInsertPos + localInsertText.length + remoteInsertText.length);
+            assert.equal(event.first.position, remoteInsertPos + localInsertText.length);
+            assert.equal(event.last.position + event.last.segment.cachedLength, remoteInsertPos + localInsertText.length + remoteInsertText.length);
             assert.equal(event.ranges[0].position, remoteInsertPos + localInsertText.length);
             assert.equal(event.ranges[0].segment.cachedLength, remoteInsertText.length);
             const segment2 = event.ranges[0].segment as TextSegment;
@@ -451,8 +454,8 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, localInsertPos);
-            assert.equal(event.end, localInsertPos + localInsertText.length);
+            assert.equal(event.first.position, localInsertPos);
+            assert.equal(event.last.position + event.last.segment.cachedLength, localInsertPos + localInsertText.length);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, localInsertPos);
             assert.equal(event.ranges[0].segment.cachedLength, localInsertText.length);
@@ -469,8 +472,8 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, remoteInsertPos);
-            assert.equal(event.end, remoteInsertPos + remoteInsertText.length);
+            assert.equal(event.first.position, remoteInsertPos);
+            assert.equal(event.last.position + event.last.segment.cachedLength, remoteInsertPos + remoteInsertText.length);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, remoteInsertPos);
             assert.equal(event.ranges[0].segment.cachedLength, remoteInsertText.length);
@@ -499,8 +502,8 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, localInsertPos);
-            assert.equal(event.end, localInsertPos + localInsertText.length);
+            assert.equal(event.first.position, localInsertPos);
+            assert.equal(event.last.position + event.last.segment.cachedLength, localInsertPos + localInsertText.length);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, localInsertPos);
             assert.equal(event.ranges[0].segment.cachedLength, localInsertText.length);
@@ -519,8 +522,8 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, remoteInsertPos + localInsertText.length);
-            assert.equal(event.end, remoteInsertPos + localInsertText.length + remoteInsertText.length);
+            assert.equal(event.first.position, remoteInsertPos + localInsertText.length);
+            assert.equal(event.last.position + event.last.segment.cachedLength, remoteInsertPos + localInsertText.length + remoteInsertText.length);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, remoteInsertPos + localInsertText.length);
             assert.equal(event.ranges[0].segment.cachedLength, remoteInsertText.length);
@@ -556,8 +559,8 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, localInsertPos);
-            assert.equal(event.end, localInsertPos + localInsertText.length);
+            assert.equal(event.first.position, localInsertPos);
+            assert.equal(event.last.position + event.last.segment.cachedLength, localInsertPos + localInsertText.length);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, localInsertPos);
             assert.equal(event.ranges[0].segment.cachedLength, localInsertText.length);
@@ -574,8 +577,8 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, remoteInsertPos1);
-            assert.equal(event.end, remoteInsertPos1 + remoteInsertText1.length);
+            assert.equal(event.first.position, remoteInsertPos1);
+            assert.equal(event.last.position + event.last.segment.cachedLength, remoteInsertPos1 + remoteInsertText1.length);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, remoteInsertPos1);
             assert.equal(event.ranges[0].segment.cachedLength, remoteInsertText1.length);
@@ -592,8 +595,8 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, remoteInsertPos2);
-            assert.equal(event.end, remoteInsertPos2 + remoteInsertText2.length);
+            assert.equal(event.first.position, remoteInsertPos2);
+            assert.equal(event.last.position + event.last.segment.cachedLength, remoteInsertPos2 + remoteInsertText2.length);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, remoteInsertPos2);
             assert.equal(event.ranges[0].segment.cachedLength, remoteInsertText2.length);
@@ -627,8 +630,8 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, localInsertPos1);
-            assert.equal(event.end, localInsertPos1 + localInsertText1.length);
+            assert.equal(event.first.position, localInsertPos1);
+            assert.equal(event.last.position + event.last.segment.cachedLength, localInsertPos1 + localInsertText1.length);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, localInsertPos1);
             assert.equal(event.ranges[0].segment.cachedLength, localInsertText1.length);
@@ -647,8 +650,8 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, remoteInsertPos + localInsertText1.length);
-            assert.equal(event.end, remoteInsertPos + localInsertText1.length + remoteInsertText.length);
+            assert.equal(event.first.position, remoteInsertPos + localInsertText1.length);
+            assert.equal(event.last.position + event.last.segment.cachedLength, remoteInsertPos + localInsertText1.length + remoteInsertText.length);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, remoteInsertPos + localInsertText1.length);
             assert.equal(event.ranges[0].segment.cachedLength, remoteInsertText.length);
@@ -665,8 +668,8 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, localInsertPos2);
-            assert.equal(event.end, localInsertPos2 + localInsertText2.length);
+            assert.equal(event.first.position, localInsertPos2);
+            assert.equal(event.last.position + event.last.segment.cachedLength, localInsertPos2 + localInsertText2.length);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, localInsertPos2);
             assert.equal(event.ranges[0].segment.cachedLength, localInsertText2.length);
@@ -707,8 +710,8 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, localRemovePosStart);
-            assert.equal(event.end, localRemovePosEnd);
+            assert.equal(event.first.position, localRemovePosStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, localRemovePosStart);
             assert.equal(event.ranges[0].segment.cachedLength, localRemovePosEnd - localRemovePosStart);
@@ -725,8 +728,8 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, remoteRemovePosStart - localRemovePosEnd + localRemovePosStart);
-            assert.equal(event.end, remoteRemovePosEnd - localRemovePosEnd + localRemovePosStart);
+            assert.equal(event.first.position, remoteRemovePosStart - localRemovePosEnd + localRemovePosStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength, remoteRemovePosEnd - localRemovePosEnd + localRemovePosStart);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, remoteRemovePosStart - localRemovePosEnd + localRemovePosStart);
             assert.equal(event.ranges[0].segment.cachedLength, remoteRemovePosEnd - remoteRemovePosStart);
@@ -757,8 +760,8 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, localRemovePosStart);
-            assert.equal(event.end, localRemovePosEnd);
+            assert.equal(event.first.position, localRemovePosStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, localRemovePosStart);
             assert.equal(event.ranges[0].segment.cachedLength, localRemovePosEnd - localRemovePosStart);
@@ -777,8 +780,8 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, remoteRemovePosStart - localRemovePosEnd + localRemovePosStart);
-            assert.equal(event.end, remoteRemovePosEnd - localRemovePosEnd + localRemovePosStart);
+            assert.equal(event.first.position, remoteRemovePosStart - localRemovePosEnd + localRemovePosStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength, remoteRemovePosEnd - localRemovePosEnd + localRemovePosStart);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, remoteRemovePosStart - localRemovePosEnd + localRemovePosStart);
             assert.equal(event.ranges[0].segment.cachedLength, remoteRemovePosEnd - remoteRemovePosStart);
@@ -809,8 +812,8 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, localRemovePosStart);
-            assert.equal(event.end, localRemovePosEnd);
+            assert.equal(event.first.position, localRemovePosStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, localRemovePosStart);
             assert.equal(event.ranges[0].segment.cachedLength, localRemovePosEnd - localRemovePosStart);
@@ -827,8 +830,8 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(event.isEmpty);
-            assert.strictEqual(event.start, undefined);
-            assert.strictEqual(event.end, undefined);
+            assert.strictEqual(event.first, undefined);
+            assert.strictEqual(event.last, undefined);
         });
 
         it("overlapping regions, same range, remote before local", () => {
@@ -852,8 +855,8 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, localRemovePosStart);
-            assert.equal(event.end, localRemovePosEnd);
+            assert.equal(event.first.position, localRemovePosStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, localRemovePosStart);
             assert.equal(event.ranges[0].segment.cachedLength, localRemovePosEnd - localRemovePosStart);
@@ -872,8 +875,8 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(event.isEmpty);
-            assert.strictEqual(event.start, undefined);
-            assert.strictEqual(event.end, undefined);
+            assert.strictEqual(event.first, undefined);
+            assert.strictEqual(event.last, undefined);
         });
 
         it("overlapping regions, local shadows remote, local before remote", () => {
@@ -899,8 +902,8 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, localRemovePosStart);
-            assert.equal(event.end, localRemovePosEnd);
+            assert.equal(event.first.position, localRemovePosStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, localRemovePosStart);
             assert.equal(event.ranges[0].segment.cachedLength, localRemovePosEnd - localRemovePosStart);
@@ -917,8 +920,8 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(event.isEmpty);
-            assert.strictEqual(event.start, undefined);
-            assert.strictEqual(event.end, undefined);
+            assert.strictEqual(event.first, undefined);
+            assert.strictEqual(event.last, undefined);
         });
 
         it("overlapping regions, local shadows remote, remote before local", () => {
@@ -942,8 +945,8 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, localRemovePosStart);
-            assert.equal(event.end, localRemovePosEnd);
+            assert.equal(event.first.position, localRemovePosStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, localRemovePosStart);
             assert.equal(event.ranges[0].segment.cachedLength, localRemovePosEnd - localRemovePosStart);
@@ -962,8 +965,8 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(event.isEmpty);
-            assert.strictEqual(event.start, undefined);
-            assert.strictEqual(event.end, undefined);
+            assert.strictEqual(event.first, undefined);
+            assert.strictEqual(event.last, undefined);
         });
 
         it("overlapping regions, local range precedes remote range, local before remote", () => {
@@ -990,8 +993,8 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, localRemovePosStart);
-            assert.equal(event.end, localRemovePosEnd);
+            assert.equal(event.first.position, localRemovePosStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, localRemovePosStart);
             assert.equal(event.ranges[0].segment.cachedLength, localRemovePosEnd - localRemovePosStart);
@@ -1014,8 +1017,8 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, start);
-            assert.equal(event.end, end);
+            assert.equal(event.first.position, start);
+            assert.equal(event.last.position + event.last.segment.cachedLength, end);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, start);
             assert.equal(event.ranges[0].segment.cachedLength, end - start);
@@ -1045,8 +1048,8 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, localRemovePosStart);
-            assert.equal(event.end, localRemovePosEnd);
+            assert.equal(event.first.position, localRemovePosStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, localRemovePosStart);
             assert.equal(event.ranges[0].segment.cachedLength, localRemovePosEnd - localRemovePosStart);
@@ -1071,8 +1074,8 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, start);
-            assert.equal(event.end, end);
+            assert.equal(event.first.position, start);
+            assert.equal(event.last.position + event.last.segment.cachedLength, end);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, start);
             assert.equal(event.ranges[0].segment.cachedLength, end - start);
@@ -1104,8 +1107,8 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, localRemovePosStart);
-            assert.equal(event.end, localRemovePosEnd);
+            assert.equal(event.first.position, localRemovePosStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, localRemovePosStart);
             assert.equal(event.ranges[0].segment.cachedLength, localRemovePosEnd - localRemovePosStart);
@@ -1128,8 +1131,8 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, start);
-            assert.equal(event.end, end);
+            assert.equal(event.first.position, start);
+            assert.equal(event.last.position + event.last.segment.cachedLength, end);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, start);
             assert.equal(event.ranges[0].segment.cachedLength, end - start);
@@ -1159,8 +1162,8 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, localRemovePosStart);
-            assert.equal(event.end, localRemovePosEnd);
+            assert.equal(event.first.position, localRemovePosStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, localRemovePosStart);
             assert.equal(event.ranges[0].segment.cachedLength, localRemovePosEnd - localRemovePosStart);
@@ -1185,8 +1188,8 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, start);
-            assert.equal(event.end, end);
+            assert.equal(event.first.position, start);
+            assert.equal(event.last.position + event.last.segment.cachedLength, end);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, start);
             assert.equal(event.ranges[0].segment.cachedLength, end - start);
@@ -1217,8 +1220,8 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, localRemovePosStart);
-            assert.equal(event.end, localRemovePosEnd);
+            assert.equal(event.first.position, localRemovePosStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, localRemovePosStart);
             assert.equal(event.ranges[0].segment.cachedLength, localRemovePosEnd - localRemovePosStart);
@@ -1269,8 +1272,8 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, localRemovePosStart);
-            assert.equal(event.end, localRemovePosEnd);
+            assert.equal(event.first.position, localRemovePosStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, localRemovePosStart);
             assert.equal(event.ranges[0].segment.cachedLength, localRemovePosEnd - localRemovePosStart);
@@ -1938,11 +1941,11 @@ describe("collab", () => {
             assert(event.isLocal === isLocal);
             assert(event.isEmpty === isEmpty);
             if (isEmpty) {
-                assert.equal(event.start, undefined);
+                assert.equal(event.first.position, undefined);
                 return;
             }
-            assert.equal(event.start, start);
-            assert.equal(event.end, end);
+            assert.equal(event.first.position, start);
+            assert.equal(event.last.position + event.last.segment.cachedLength, end);
             assert.equal(event.ranges.length, expected.length);
             for (let i = 0; i < expected.length; i = i + 1) {
                 assert.equal(event.ranges[i].position, expected[i].offset);
@@ -2001,8 +2004,8 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, insertPos);
-            assert.equal(event.end, insertPos + insertText.length);
+            assert.equal(event.first.position, insertPos);
+            assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, insertPos);
             assert.equal(event.ranges[0].segment.cachedLength, insertText.length);
@@ -2019,8 +2022,8 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, deleteRangeStart + insertText.length);
-            assert.equal(event.end, deleteRangeEnd + insertText.length);
+            assert.equal(event.first.position, deleteRangeStart + insertText.length);
+            assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd + insertText.length);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, deleteRangeStart + insertText.length);
             assert.equal(event.ranges[0].segment.cachedLength, deleteRangeEnd - deleteRangeStart);
@@ -2052,8 +2055,8 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, insertPos);
-            assert.equal(event.end, insertPos + insertText.length);
+            assert.equal(event.first.position, insertPos);
+            assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, insertPos);
             assert.equal(event.ranges[0].segment.cachedLength, insertText.length);
@@ -2070,8 +2073,8 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, deleteRangeStart + insertText.length);
-            assert.equal(event.end, deleteRangeEnd + insertText.length);
+            assert.equal(event.first.position, deleteRangeStart + insertText.length);
+            assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd + insertText.length);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, deleteRangeStart + insertText.length);
             assert.equal(event.ranges[0].segment.cachedLength, deleteRangeEnd - deleteRangeStart);
@@ -2107,8 +2110,8 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, deleteRangeStart);
-            assert.equal(event.end, deleteRangeEnd);
+            assert.equal(event.first.position, deleteRangeStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, deleteRangeStart);
             assert.equal(event.ranges[0].segment.cachedLength, deleteRangeEnd - deleteRangeStart);
@@ -2125,8 +2128,8 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, insertPos);
-            assert.equal(event.end, insertPos + insertText.length);
+            assert.equal(event.first.position, insertPos);
+            assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, insertPos);
             assert.equal(event.ranges[0].segment.cachedLength, insertText.length);
@@ -2158,8 +2161,8 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, deleteRangeStart);
-            assert.equal(event.end, deleteRangeEnd);
+            assert.equal(event.first.position, deleteRangeStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, deleteRangeStart);
             assert.equal(event.ranges[0].segment.cachedLength, deleteRangeEnd - deleteRangeStart);
@@ -2176,8 +2179,8 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, insertPos);
-            assert.equal(event.end, insertPos + insertText.length);
+            assert.equal(event.first.position, insertPos);
+            assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, insertPos);
             assert.equal(event.ranges[0].segment.cachedLength, insertText.length);
@@ -2213,8 +2216,8 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, insertPos);
-            assert.equal(event.end, insertPos + insertText.length);
+            assert.equal(event.first.position, insertPos);
+            assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, insertPos);
             assert.equal(event.ranges[0].segment.cachedLength, insertText.length);
@@ -2231,8 +2234,8 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, deleteRangeStart);
-            assert.equal(event.end, deleteRangeEnd);
+            assert.equal(event.first.position, deleteRangeStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, deleteRangeStart);
             assert.equal(event.ranges[0].segment.cachedLength, deleteRangeEnd - deleteRangeStart);
@@ -2264,8 +2267,8 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, insertPos);
-            assert.equal(event.end, insertPos + insertText.length);
+            assert.equal(event.first.position, insertPos);
+            assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, insertPos);
             assert.equal(event.ranges[0].segment.cachedLength, insertText.length);
@@ -2282,8 +2285,8 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, deleteRangeStart);
-            assert.equal(event.end, deleteRangeEnd);
+            assert.equal(event.first.position, deleteRangeStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, deleteRangeStart);
             assert.equal(event.ranges[0].segment.cachedLength, deleteRangeEnd - deleteRangeStart);
@@ -2319,8 +2322,8 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, deleteRangeStart);
-            assert.equal(event.end, deleteRangeEnd);
+            assert.equal(event.first.position, deleteRangeStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, deleteRangeStart);
             assert.equal(event.ranges[0].segment.cachedLength, deleteRangeEnd - deleteRangeStart);
@@ -2337,8 +2340,8 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, insertPos - (deleteRangeEnd - deleteRangeStart));
-            assert.equal(event.end, insertPos - (deleteRangeEnd - deleteRangeStart) + insertText.length);
+            assert.equal(event.first.position, insertPos - (deleteRangeEnd - deleteRangeStart));
+            assert.equal(event.last.position + event.last.segment.cachedLength, insertPos - (deleteRangeEnd - deleteRangeStart) + insertText.length);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, insertPos - (deleteRangeEnd - deleteRangeStart));
             assert.equal(event.ranges[0].segment.cachedLength, insertText.length);
@@ -2370,8 +2373,8 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, deleteRangeStart);
-            assert.equal(event.end, deleteRangeEnd);
+            assert.equal(event.first.position, deleteRangeStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, deleteRangeStart);
             assert.equal(event.ranges[0].segment.cachedLength, deleteRangeEnd - deleteRangeStart);
@@ -2388,8 +2391,8 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, insertPos - (deleteRangeEnd - deleteRangeStart));
-            assert.equal(event.end, insertPos - (deleteRangeEnd - deleteRangeStart) + insertText.length);
+            assert.equal(event.first.position, insertPos - (deleteRangeEnd - deleteRangeStart));
+            assert.equal(event.last.position + event.last.segment.cachedLength, insertPos - (deleteRangeEnd - deleteRangeStart) + insertText.length);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, insertPos - (deleteRangeEnd - deleteRangeStart));
             assert.equal(event.ranges[0].segment.cachedLength, insertText.length);
@@ -2425,8 +2428,8 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, insertPos);
-            assert.equal(event.end, insertPos + insertText.length);
+            assert.equal(event.first.position, insertPos);
+            assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, insertPos);
             assert.equal(event.ranges[0].segment.cachedLength, insertText.length);
@@ -2443,8 +2446,8 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, deleteRangeStart + insertText.length);
-            assert.equal(event.end, deleteRangeEnd + insertText.length);
+            assert.equal(event.first.position, deleteRangeStart + insertText.length);
+            assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd + insertText.length);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, deleteRangeStart + insertText.length);
             assert.equal(event.ranges[0].segment.cachedLength, deleteRangeEnd - deleteRangeStart);
@@ -2475,8 +2478,8 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, insertPos);
-            assert.equal(event.end, insertPos + insertText.length);
+            assert.equal(event.first.position, insertPos);
+            assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, insertPos);
             assert.equal(event.ranges[0].segment.cachedLength, insertText.length);
@@ -2493,8 +2496,8 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, deleteRangeStart + insertText.length);
-            assert.equal(event.end, deleteRangeEnd + insertText.length);
+            assert.equal(event.first.position, deleteRangeStart + insertText.length);
+            assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd + insertText.length);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, deleteRangeStart + insertText.length);
             assert.equal(event.ranges[0].segment.cachedLength, deleteRangeEnd - deleteRangeStart);
@@ -2530,8 +2533,8 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, deleteRangeStart);
-            assert.equal(event.end, deleteRangeEnd);
+            assert.equal(event.first.position, deleteRangeStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, deleteRangeStart);
             assert.equal(event.ranges[0].segment.cachedLength, deleteRangeEnd - deleteRangeStart);
@@ -2548,8 +2551,8 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, insertPos);
-            assert.equal(event.end, insertPos + insertText.length);
+            assert.equal(event.first.position, insertPos);
+            assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, insertPos);
             assert.equal(event.ranges[0].segment.cachedLength, insertText.length);
@@ -2581,8 +2584,8 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, deleteRangeStart);
-            assert.equal(event.end, deleteRangeEnd);
+            assert.equal(event.first.position, deleteRangeStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, deleteRangeStart);
             assert.equal(event.ranges[0].segment.cachedLength, deleteRangeEnd - deleteRangeStart);
@@ -2599,8 +2602,8 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, insertPos);
-            assert.equal(event.end, insertPos + insertText.length);
+            assert.equal(event.first.position, insertPos);
+            assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, insertPos);
             assert.equal(event.ranges[0].segment.cachedLength, insertText.length);
@@ -2636,8 +2639,8 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, insertPos);
-            assert.equal(event.end, insertPos + insertText.length);
+            assert.equal(event.first.position, insertPos);
+            assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, insertPos);
             assert.equal(event.ranges[0].segment.cachedLength, insertText.length);
@@ -2654,8 +2657,8 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, deleteRangeStart);
-            assert.equal(event.end, deleteRangeEnd);
+            assert.equal(event.first.position, deleteRangeStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, deleteRangeStart);
             assert.equal(event.ranges[0].segment.cachedLength, deleteRangeEnd - deleteRangeStart);
@@ -2687,8 +2690,8 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, insertPos);
-            assert.equal(event.end, insertPos + insertText.length);
+            assert.equal(event.first.position, insertPos);
+            assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, insertPos);
             assert.equal(event.ranges[0].segment.cachedLength, insertText.length);
@@ -2705,8 +2708,8 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, deleteRangeStart);
-            assert.equal(event.end, deleteRangeEnd);
+            assert.equal(event.first.position, deleteRangeStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, deleteRangeStart);
             assert.equal(event.ranges[0].segment.cachedLength, deleteRangeEnd - deleteRangeStart);
@@ -2740,8 +2743,8 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, deleteRangeStart);
-            assert.equal(event.end, deleteRangeEnd);
+            assert.equal(event.first.position, deleteRangeStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, deleteRangeStart);
             assert.equal(event.ranges[0].segment.cachedLength, deleteRangeEnd - deleteRangeStart);
@@ -2760,8 +2763,8 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, insertPos - (deleteRangeEnd - deleteRangeStart));
-            assert.equal(event.end, insertPos + insertText.length - (deleteRangeEnd - deleteRangeStart));
+            assert.equal(event.first.position, insertPos - (deleteRangeEnd - deleteRangeStart));
+            assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length - (deleteRangeEnd - deleteRangeStart));
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, insertPos - (deleteRangeEnd - deleteRangeStart));
             assert.equal(event.ranges[0].segment.cachedLength, insertText.length);
@@ -2793,8 +2796,8 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, deleteRangeStart);
-            assert.equal(event.end, deleteRangeEnd);
+            assert.equal(event.first.position, deleteRangeStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, deleteRangeStart);
             assert.equal(event.ranges[0].segment.cachedLength, deleteRangeEnd - deleteRangeStart);
@@ -2811,8 +2814,8 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, insertPos - (deleteRangeEnd - deleteRangeStart));
-            assert.equal(event.end, insertPos + insertText.length - (deleteRangeEnd - deleteRangeStart));
+            assert.equal(event.first.position, insertPos - (deleteRangeEnd - deleteRangeStart));
+            assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length - (deleteRangeEnd - deleteRangeStart));
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, insertPos - (deleteRangeEnd - deleteRangeStart));
             assert.equal(event.ranges[0].segment.cachedLength, insertText.length);
@@ -2848,8 +2851,8 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, insertPos);
-            assert.equal(event.end, insertPos + insertText.length);
+            assert.equal(event.first.position, insertPos);
+            assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, insertPos);
             assert.equal(event.ranges[0].segment.cachedLength, insertText.length);
@@ -2872,8 +2875,8 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, expectedRangeStart1);
-            assert.equal(event.end, expectedRangeEnd2);
+            assert.equal(event.first.position, expectedRangeStart1);
+            assert.equal(event.last.position + event.last.segment.cachedLength, expectedRangeEnd2);
             assert.equal(event.ranges.length, 2);
             assert.equal(event.ranges[0].position, expectedRangeStart1);
             assert.equal(event.ranges[0].segment.cachedLength, expectedRangeEnd1 - expectedRangeStart1);
@@ -2908,8 +2911,8 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, insertPos);
-            assert.equal(event.end, insertPos + insertText.length);
+            assert.equal(event.first.position, insertPos);
+            assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, insertPos);
             assert.equal(event.ranges[0].segment.cachedLength, insertText.length);
@@ -2932,8 +2935,8 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, expectedRangeStart1);
-            assert.equal(event.end, expectedRangeEnd2);
+            assert.equal(event.first.position, expectedRangeStart1);
+            assert.equal(event.last.position + event.last.segment.cachedLength, expectedRangeEnd2);
             assert.equal(event.ranges.length, 2);
             assert.equal(event.ranges[0].position, expectedRangeStart1);
             assert.equal(event.ranges[0].segment.cachedLength, expectedRangeEnd1 - expectedRangeStart1);
@@ -2973,8 +2976,8 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, deleteRangeStart);
-            assert.equal(event.end, deleteRangeEnd);
+            assert.equal(event.first.position, deleteRangeStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, deleteRangeStart);
             assert.equal(event.ranges[0].segment.cachedLength, deleteRangeEnd - deleteRangeStart);
@@ -2991,8 +2994,8 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, deleteRangeStart);
-            assert.equal(event.end, deleteRangeStart + insertText.length);
+            assert.equal(event.first.position, deleteRangeStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeStart + insertText.length);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, deleteRangeStart);
             assert.equal(event.ranges[0].segment.cachedLength, insertText.length);
@@ -3024,8 +3027,8 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, deleteRangeStart);
-            assert.equal(event.end, deleteRangeEnd);
+            assert.equal(event.first.position, deleteRangeStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, deleteRangeStart);
             assert.equal(event.ranges[0].segment.cachedLength, deleteRangeEnd - deleteRangeStart);
@@ -3042,8 +3045,8 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, deleteRangeStart);
-            assert.equal(event.end, deleteRangeStart + insertText.length);
+            assert.equal(event.first.position, deleteRangeStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeStart + insertText.length);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.ranges[0].position, deleteRangeStart);
             assert.equal(event.ranges[0].segment.cachedLength, insertText.length);
@@ -3082,10 +3085,10 @@ describe("SequenceDeltaEvent", () => {
             assert(event.isLocal);
             assert(!event.isEmpty);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.start, 0);
+            assert.equal(event.first.position, 0);
             assert.equal(event.ranges[0].position, 0);
             assert.equal(event.ranges[0].segment.cachedLength, insertText.length);
-            assert.equal(event.end, insertText.length);
+            assert.equal(event.last.position + event.last.segment.cachedLength, insertText.length);
         });
 
         it("multiple continuous segments", () => {
@@ -3113,14 +3116,14 @@ describe("SequenceDeltaEvent", () => {
             assert(event.isLocal);
             assert(!event.isEmpty);
             assert.equal(event.ranges.length, segmentCount);
-            assert.equal(event.start, insertText.length);
+            assert.equal(event.first.position, insertText.length);
             assert.equal(event.ranges[0].position, insertText.length);
             for (let i = 0; i < segmentCount; i = i + 1) {
                 assert.equal(event.ranges[i].position, (i + 1) * insertText.length);
                 assert.equal(event.ranges[i].segment.cachedLength, insertText.length);
                 assert.equal(event.ranges[i].propertyDeltas.foo, undefined);
             }
-            assert.equal(event.end, client.getLength() - insertText.length);
+            assert.equal(event.last.position + event.last.segment.cachedLength, client.getLength() - insertText.length);
         });
 
         it("multiple noncontinuous segments", () => {

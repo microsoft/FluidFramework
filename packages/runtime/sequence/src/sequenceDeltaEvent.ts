@@ -25,9 +25,9 @@ import {
 export class SequenceEvent {
     public readonly isEmpty: boolean;
     public readonly deltaOperation: MergeTreeDeltaOperationType | MergeTreeMaintenanceType;
-    private readonly pStart: Lazy<number>;
-    private readonly pEnd: Lazy<number>;
     private readonly sortedRanges: Lazy<SortedSegmentSet<ISequenceDeltaRange>>;
+    private readonly pFirst: Lazy<ISequenceDeltaRange>;
+    private readonly pLast: Lazy<ISequenceDeltaRange>;
 
     constructor(
         public readonly deltaArgs: IMergeTreeDeltaCallbackArgs | IMergeTreeMaintenanceCallbackArgs,
@@ -51,6 +51,22 @@ export class SequenceEvent {
                 return set;
             });
 
+        this.pFirst = new Lazy<ISequenceDeltaRange>(
+            () => {
+                if (this.isEmpty) {
+                    return undefined;
+                }
+                return this.sortedRanges.value.items[0];
+            });
+
+        this.pLast = new Lazy<ISequenceDeltaRange>(
+            () => {
+                if (this.isEmpty) {
+                    return undefined;
+                }
+                return this.sortedRanges.value.items[this.sortedRanges.value.size - 1];
+            });
+        /*
         this.pStart = new Lazy<number>(
             () => {
                 if (this.isEmpty) {
@@ -69,6 +85,7 @@ export class SequenceEvent {
 
                 return lastRange.position + lastRange.segment.cachedLength;
             });
+        */
     }
 
     /**
@@ -86,6 +103,15 @@ export class SequenceEvent {
         return this.mergeTreeClient.longClientId;
     }
 
+    public get first(): ISequenceDeltaRange {
+        return this.pFirst.value;
+    }
+
+    public get last(): ISequenceDeltaRange {
+        return this.pLast.value;
+    }
+
+    /*
     public get start(): number {
         return this.pStart.value;
     }
@@ -93,6 +119,7 @@ export class SequenceEvent {
     public get end(): number {
         return this.pEnd.value;
     }
+    */
 }
 
 /**
