@@ -122,6 +122,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      * Send am error event with the logger
      *
      * @param event - the event to send
+     * @param error - optional error object to log
      */
     public sendErrorEvent(event: ITelemetryErrorEvent, error?: any) {
         const newEvent: ITelemetryBaseEvent = { ...event, category: "error" };
@@ -132,6 +133,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
     /**
      * Send error telemetry event
      * @param event - Event to send
+     * @param error - optional error object to log
      */
     public sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void {
         const perfEvent: ITelemetryBaseEvent = { ...event, category: "performance" };
@@ -173,7 +175,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      * Log an debug assert with the logger
      *
      * @param condition - the condition to assert on
-     * @param exception - the message to log if the condition fails
+     * @param event - the event to log if the condition fails
      */
     public debugAssert(condition: boolean, event?: ITelemetryErrorEvent): void {
         this.shipAssert(condition, event);
@@ -183,7 +185,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      * Log an ship assert with the logger
      *
      * @param condition - the condition to assert on
-     * @param exception - the message to log if the condition fails
+     * @param event - the event to log if the condition fails
      */
     public shipAssert(condition: boolean, event?: ITelemetryErrorEvent): void {
         if (!condition) {
@@ -263,6 +265,7 @@ export class ChildLogger extends TelemetryLogger {
      * is created, but it does not sends telemetry events anywhere.
      * @param namespace - Telemetry event name prefix to add to all events
      * @param properties - Base properties to add to all events
+     * @param propertyGetters - Getters to add additional properties to all events
      */
     public static create(
         baseLogger?: ITelemetryBaseLogger,
@@ -273,7 +276,8 @@ export class ChildLogger extends TelemetryLogger {
         return new ChildLogger(
             baseLogger ? baseLogger : new BaseTelemetryNullLogger(),
             namespace,
-            properties);
+            properties,
+            propertyGetters);
     }
 
     constructor(
@@ -306,6 +310,7 @@ export class MultiSinkLogger extends TelemetryLogger {
      * Create multiple sink logger (i.e. logger that sends events to multiple sinks)
      * @param namespace - Telemetry event name prefix to add to all events
      * @param properties - Base properties to add to all events
+     * @param propertyGetters - Getters to add additional properties to all events
      */
     constructor(
         namespace?: string,
@@ -345,6 +350,7 @@ export class DebugLogger extends TelemetryLogger {
      * Create debug logger - all events are output to debug npm library
      * @param namespace - Telemetry event name prefix to add to all events
      * @param properties - Base properties to add to all events
+     * @param propertyGetters - Getters to add additional properties to all events
      */
     public static create(
         namespace: string,
@@ -366,6 +372,7 @@ export class DebugLogger extends TelemetryLogger {
      * Returned logger will output events to both newly created debug logger, as well as base logger
      * @param namespace - Telemetry event name prefix to add to all events
      * @param properties - Base properties to add to all events
+     * @param propertyGetters - Getters to add additional properties to all events
      * @param baseLogger - Base logger to output events (in addition to debug logger being created). Can be undefined.
      */
     public static mixinDebugLogger(
@@ -373,13 +380,13 @@ export class DebugLogger extends TelemetryLogger {
         properties?: object,
         propertyGetters?: ITelemetryPropertyGetters,
         baseLogger?: ITelemetryBaseLogger): TelemetryLogger {
-        const debugLogger = DebugLogger.create(namespace, properties, propertyGetters);
         if (!baseLogger) {
-            return debugLogger;
+            return DebugLogger.create(namespace, properties, propertyGetters);
         }
-        const multiSinkLogger = new MultiSinkLogger();
-        multiSinkLogger.addLogger(debugLogger);
-        multiSinkLogger.addLogger(ChildLogger.create(baseLogger, namespace, properties, propertyGetters));
+
+        const multiSinkLogger = new MultiSinkLogger(undefined, properties, propertyGetters);
+        multiSinkLogger.addLogger(DebugLogger.create(namespace));
+        multiSinkLogger.addLogger(ChildLogger.create(baseLogger, namespace));
 
         return multiSinkLogger;
     }
