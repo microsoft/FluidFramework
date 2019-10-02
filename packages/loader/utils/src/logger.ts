@@ -10,12 +10,17 @@ import {
     ITelemetryGenericEvent,
     ITelemetryLogger,
     ITelemetryPerformanceEvent,
+    ITelemetryProperties,
     TelemetryEventPropertyType,
 } from "@microsoft/fluid-container-definitions";
 import * as registerDebug from "debug";
 import { pkgName, pkgVersion } from "./packageVersion";
 // tslint:disable-next-line:no-var-requires
 const performanceNow = require("performance-now") as (() => number);
+
+export interface ITelemetryPropertyGetters {
+    [index: string]: () => TelemetryEventPropertyType;
+}
 
 /**
  * Null logger
@@ -88,7 +93,8 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
 
     protected constructor(
         private readonly namespace?: string,
-        private properties?: object) {
+        private readonly properties?: object,
+        private readonly propertyGetters?: ITelemetryPropertyGetters) {
     }
 
     /**
@@ -97,10 +103,6 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      * @param event - the event to send
      */
     public abstract send(event: ITelemetryBaseEvent): void;
-
-    public setProperties(properties: object) {
-        this.properties = {...this.properties, ...properties};
-    }
 
     /**
      * Send a telemetry event with the logger
@@ -203,6 +205,24 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
         if (this.namespace !== undefined) {
             newEvent.eventName = `${this.namespace}${TelemetryLogger.eventNamespaceSeparator}${newEvent.eventName}`;
         }
+        // evaluate any getter functions
+        if (this.propertyGetters) {
+            for (const key of Object.keys(this.propertyGetters)) {
+                if (event[key] !== undefined) {
+                    // properties directly on the event take priority
+                    continue;
+                }
+                const getter = this.propertyGetters[key];
+                try {
+                    const value = getter();
+                    if (value !== undefined) {
+                        newEvent[key] = value;
+                    }
+                } catch {
+                    // if a default value exists on properties it will remain
+                }
+            }
+        }
 
         return newEvent;
     }
@@ -247,7 +267,8 @@ export class ChildLogger extends TelemetryLogger {
     public static create(
         baseLogger?: ITelemetryBaseLogger,
         namespace?: string,
-        properties?: object): TelemetryLogger {
+        properties?: object,
+        propertyGetters?: ITelemetryPropertyGetters): TelemetryLogger {
 
         return new ChildLogger(
             baseLogger ? baseLogger : new BaseTelemetryNullLogger(),
@@ -258,8 +279,9 @@ export class ChildLogger extends TelemetryLogger {
     constructor(
         protected readonly logger: ITelemetryBaseLogger,
         namespace?: string,
-        properties?: object) {
-        super(namespace, properties);
+        properties?: object,
+        propertyGetters?: ITelemetryPropertyGetters) {
+        super(namespace, properties, propertyGetters);
     }
 
     /**
@@ -285,8 +307,11 @@ export class MultiSinkLogger extends TelemetryLogger {
      * @param namespace - Telemetry event name prefix to add to all events
      * @param properties - Base properties to add to all events
      */
-    constructor(namespace?: string, properties?: object) {
-        super(namespace, properties);
+    constructor(
+        namespace?: string,
+        properties?: object,
+        propertyGetters?: ITelemetryPropertyGetters) {
+        super(namespace, properties, propertyGetters);
     }
 
     /**
@@ -321,7 +346,10 @@ export class DebugLogger extends TelemetryLogger {
      * @param namespace - Telemetry event name prefix to add to all events
      * @param properties - Base properties to add to all events
      */
-    public static create(namespace: string, properties?: object): TelemetryLogger {
+    public static create(
+        namespace: string,
+        properties?: object,
+        propertyGetters?: ITelemetryPropertyGetters): TelemetryLogger {
         // setup base logger upfront, such that host can disable it (if needed)
         const debug = registerDebug(namespace);
         debug.enabled = true;
@@ -330,7 +358,7 @@ export class DebugLogger extends TelemetryLogger {
         debugErr.log = console.error.bind(console);
         debugErr.enabled = true;
 
-        return new DebugLogger(debug, debugErr, properties);
+        return new DebugLogger(debug, debugErr, properties, propertyGetters);
     }
 
     /**
@@ -343,14 +371,15 @@ export class DebugLogger extends TelemetryLogger {
     public static mixinDebugLogger(
         namespace: string,
         properties?: object,
+        propertyGetters?: ITelemetryPropertyGetters,
         baseLogger?: ITelemetryBaseLogger): TelemetryLogger {
-        const debugLogger = DebugLogger.create(namespace, properties);
+        const debugLogger = DebugLogger.create(namespace, properties, propertyGetters);
         if (!baseLogger) {
             return debugLogger;
         }
         const multiSinkLogger = new MultiSinkLogger();
         multiSinkLogger.addLogger(debugLogger);
-        multiSinkLogger.addLogger(ChildLogger.create(baseLogger, namespace, properties));
+        multiSinkLogger.addLogger(ChildLogger.create(baseLogger, namespace, properties, propertyGetters));
 
         return multiSinkLogger;
     }
@@ -359,8 +388,9 @@ export class DebugLogger extends TelemetryLogger {
         private readonly debug: registerDebug.IDebugger,
         private readonly debugErr: registerDebug.IDebugger,
         properties?: object,
+        propertyGetters?: ITelemetryPropertyGetters,
     ) {
-        super(undefined, properties);
+        super(undefined, properties, propertyGetters);
     }
 
     /**
@@ -369,7 +399,7 @@ export class DebugLogger extends TelemetryLogger {
      * @param event - the event to send
      */
     public send(event: ITelemetryBaseEvent): void {
-        const newEvent: { [index: string]: TelemetryEventPropertyType } = this.prepareEvent(event);
+        const newEvent: ITelemetryProperties = this.prepareEvent(event);
         let logger = newEvent.category === "error" ? this.debugErr : this.debug;
 
         // Use debug's coloring schema for base of the event

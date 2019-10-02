@@ -268,6 +268,13 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                     version: pkgVersion,
                 },
             },
+            {
+                clientId: () => this.clientId,
+                socketDocumentId: () => this._deltaManager!.socketDocumentId,
+                pendingClientId: () => {
+                    return this._connectionState === ConnectionState.Connecting ? this.pendingClientId : undefined;
+                },
+            },
             logger);
 
         // Prefix all events in this file with container-loader
@@ -878,14 +885,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     }
 
     private logConnectionStateChangeTelemetry(value: ConnectionState, reason: string) {
-        // We do not have good correlation ID to match server activity.
-        // Add couple IDs here
-        this.subLogger.setProperties({
-            SocketClientId: this.clientId,
-            SocketDocumentId: this._deltaManager!.socketDocumentId,
-            SocketPendingClientId: value === ConnectionState.Connecting ? this.pendingClientId : undefined,
-        });
-
         // Log actual event
         const time = performanceNow();
         this.connectionTransitionTimes[value] = time;
