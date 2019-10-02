@@ -1,3 +1,7 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
 import { loadComponent } from '../appServices/ComponentLoader';
 import { IComponentContext } from '@microsoft/fluid-runtime-definitions';
 import { IComponent } from '@microsoft/fluid-component-core-interfaces';
