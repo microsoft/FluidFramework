@@ -4,8 +4,9 @@
 */
 
 import { PrimedComponent } from "@microsoft/fluid-aqueduct";
-import { IComponent, IComponentHTMLVisual, IComponentLoadable } from "@microsoft/fluid-component-core-interfaces";
+import { IComponent, IComponentHTMLVisual, IComponentLoadable, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import { IPackage } from "@microsoft/fluid-container-definitions";
+import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import * as uuid from "uuid";
 
 // tslint:disable-next-line: no-var-requires no-require-imports
@@ -110,8 +111,10 @@ export class ExternalComponentLoader extends PrimedComponent
                 if (this.viewComponentP) {
                     const viewComponent = await this.viewComponentP;
                     if (viewComponent && viewComponent.IComponentCollection) {
-                        const componentId = uuid();
-                        let component = await this.createAndAttachComponent<IComponent>(componentId, url);
+                        const componentRuntime: IComponentRuntime = await this.context.createSubComponent(url);
+                        const response: IResponse = await componentRuntime.request({ url: "/" });
+                        let component: IComponent = response.value as IComponent;
+                        componentRuntime.attach();
                         if (component.IComponentCollection !== undefined) {
                             // tslint:disable-next-line: await-promise
                             component = await component.IComponentCollection.createCollectionItem();

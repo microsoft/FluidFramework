@@ -8,7 +8,7 @@
 import { IComponent, IComponentQueryableLegacy } from "@microsoft/fluid-component-core-interfaces";
 import { IFluidPackage } from "@microsoft/fluid-container-definitions";
 import { Deferred } from "@microsoft/fluid-core-utils";
-import { ComponentFactoryTypes, ComponentRegistryTypes, IComponentFactory, IComponentRegistry } from "@microsoft/fluid-runtime-definitions";
+import { ComponentFactoryTypes, IComponentFactory, IComponentRegistry } from "@microsoft/fluid-runtime-definitions";
 
 /**
  * A component registry that can load component via their url
@@ -17,14 +17,10 @@ export class UrlRegistry implements IComponentRegistry {
     private static readonly WindowKeyPrefix = "FluidExternalComponent";
 
     private readonly urlRegistryMap = new Map<string, Promise<ComponentFactoryTypes>>();
-    private readonly subRegistries: Promise<ComponentRegistryTypes>[] = [];
     private readonly loadingPackages: Map<string, Promise<any>>;
     private readonly loadingEntrypoints: Map<string, Promise<unknown>>;
 
     constructor(entries: Map<string, Promise<ComponentFactoryTypes>>) {
-
-        this.subRegistries.push(Promise.resolve(entries));
-        this.subRegistries.push(Promise.resolve(this.urlRegistryMap));
 
         // stash on the window so multiple instance can coordinate
         const loadingPackagesKey = `${UrlRegistry.WindowKeyPrefix}LoadingPackages`;
@@ -61,21 +57,6 @@ export class UrlRegistry implements IComponentRegistry {
                 }
             });
 
-            this.subRegistries.push(entryPointPromise.then((entrypoint) => {
-                const fluidExport: IComponent = entrypoint.fluidExport;
-                if (fluidExport !== undefined) {
-                    if (fluidExport.IComponentRegistry) {
-                        return fluidExport.IComponentRegistry;
-                    } else {
-                        const queryable = fluidExport as IComponentQueryableLegacy;
-                        if (queryable.query) {
-                            return queryable.query<IComponentRegistry>("IComponentRegistry");
-                        }
-                    }
-                }
-                return undefined;
-            }));
-
             this.urlRegistryMap.set(name, entryPointPromise.then((entrypoint) => {
                 const fluidExport: IComponent = entrypoint.fluidExport;
                 let componentFactory = entrypoint as IComponentFactory;
@@ -99,28 +80,12 @@ export class UrlRegistry implements IComponentRegistry {
             }));
         }
 
-        const factory = await this.getFromSubRegistries(name);
+        const factory = await this.urlRegistryMap.get(name);
         if (factory !== undefined) {
             return factory;
         }
 
         throw new Error(`Unknown package: ${name}`);
-    }
-
-    // tslint:disable-next-line: promise-function-async
-    private async getFromSubRegistries(name: string): Promise<ComponentFactoryTypes> {
-        for (const registryP of this.subRegistries) {
-            try {
-                const registry = await registryP;
-                if (registry !== undefined) {
-                    const factory = await registry.get(name);
-                    if (factory !== undefined) {
-                        return factory;
-                    }
-                }
-            } catch { }
-        }
-        return undefined;
     }
 
     private async loadEntrypoint(name: string): Promise<any> {
