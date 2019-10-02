@@ -6,9 +6,9 @@
 import {
     IRequest,
 } from "@microsoft/fluid-component-core-interfaces";
+import { IOdspResolvedUrl } from "@microsoft/fluid-odsp-driver";
 import { getDriveItemByFileId, IClientConfig, IODSPDriveItem, IODSPTokens } from "@microsoft/fluid-odsp-utils";
 import {
-    IOdspResolvedUrl,
     IResolvedUrl,
     IUrlResolver,
 } from "@microsoft/fluid-protocol-definitions";
@@ -49,7 +49,7 @@ export class OfficeOdspUrlResolver implements IUrlResolver {
             const response: IOdspResolvedUrl = {
               endpoints: { snapshotStorageUrl: getSnapshotUrl(site, drive, item) },
               tokens: {},
-              type: "prague",
+              type: "fluid",
               url: documentUrl,
               hashedDocumentId,
               siteUrl: site,

@@ -4,8 +4,9 @@
  */
 
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { IOdspResolvedUrl, IResolvedUrl, IUrlResolver } from "@microsoft/fluid-protocol-definitions";
+import { IResolvedUrl, IUrlResolver } from "@microsoft/fluid-protocol-definitions";
 import * as sha from "sha.js";
+import { IOdspResolvedUrl } from "./contracts";
 
 function getSnapshotUrl(siteUrl: string, driveId: string, itemId: string) {
   const siteOrigin = new URL(siteUrl).origin;

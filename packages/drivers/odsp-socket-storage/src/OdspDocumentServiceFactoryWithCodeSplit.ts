@@ -4,7 +4,8 @@
  */
 import { ITelemetryBaseLogger } from "@microsoft/fluid-container-definitions";
 import { ChildLogger } from "@microsoft/fluid-core-utils";
-import { IDocumentService, IDocumentServiceFactory, IOdspResolvedUrl, IResolvedUrl } from "@microsoft/fluid-protocol-definitions";
+import { IDocumentService, IDocumentServiceFactory, IResolvedUrl } from "@microsoft/fluid-protocol-definitions";
+import { IOdspResolvedUrl } from "./contracts";
 import { FetchWrapper, IFetchWrapper } from "./fetchWrapper";
 import { OdspDocumentService } from "./OdspDocumentService";
 

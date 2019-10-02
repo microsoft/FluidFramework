@@ -6,6 +6,29 @@
 import * as resources from "@microsoft/fluid-gitresources";
 import * as api from "@microsoft/fluid-protocol-definitions";
 
+export interface IOdspResolvedUrl extends api.IResolvedUrlBase {
+    type: "fluid";
+
+    // URL to send to fluid, contains the documentId and the path
+    url: string;
+
+    // A hashed identifier that is unique to this document
+    hashedDocumentId: string;
+
+    siteUrl: string;
+
+    driveId: string;
+
+    itemId: string;
+
+    endpoints: {
+      snapshotStorageUrl: string;
+    };
+
+    // Tokens are not obtained by the ODSP driver using the resolve flow, the app must provide them.
+    tokens: {};
+}
+
 /**
  * Interface for creating/getting/writing blobs to the underlying storage.
  */
