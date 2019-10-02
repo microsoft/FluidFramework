@@ -844,19 +844,19 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         }
     }
 
-    public async createComponent(idOrPkg: string, maybePkg?: string) {
+    public async createComponent(idOrPkg: string, maybePkg?: string | string[]) {
         const id = maybePkg === undefined ? uuid() : idOrPkg;
         const pkg = maybePkg === undefined ? idOrPkg : maybePkg;
         return this._createComponentWithProps(pkg, undefined, id);
     }
 
     // tslint:disable-next-line: function-name
-    public async _createComponentWithProps(pkg: string, props: any, id: string): Promise<IComponentRuntime> {
+    public async _createComponentWithProps(pkg: string | string[], props: any, id: string): Promise<IComponentRuntime> {
         this.verifyNotClosed();
 
         const context = new LocalComponentContext(
             id,
-            pkg,
+            Array.isArray(pkg) ? pkg : [pkg],
             this,
             this.storage,
             this.context.scope,
@@ -997,8 +997,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                     snapshotTree,
                     this,
                     new DocumentStorageServiceProxy(this.storage, flatBlobs),
-                    this.context.scope,
-                    attachMessage.type);
+                    this.context.scope);
 
                 break;
 
