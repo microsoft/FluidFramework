@@ -34,7 +34,7 @@ export interface IRouteOptions {
     tenantId?: string;
     tenantSecret?: string;
     component?: string;
-    double?: boolean;
+    single?: boolean;
 }
 
 function getUser(): IDevServerUser {
@@ -205,9 +205,10 @@ export async function start(
     }
     const hostConf: IHostConfig = { documentServiceFactory, urlResolver };
 
+    const double = (options.mode === "local") && !options.single;
     let leftDiv: HTMLDivElement;
     let rightDiv: HTMLDivElement;
-    if (options.double) {
+    if (double) {
         leftDiv = document.createElement("div");
         leftDiv.style.width = "50%";
         leftDiv.style.cssFloat = "left";
@@ -226,11 +227,11 @@ export async function start(
         npm,
         config,
         {},
-        options.double ? leftDiv : div,
+        double ? leftDiv : div,
         hostConf,
     );
 
-    if (options.double && options.mode === "local") {
+    if (double) {
         // new documentServiceFactory for right div
         const docServFac2: IDocumentServiceFactory = new TestDocumentServiceFactory(deltaConn);
         const hostConf2 = { documentServiceFactory: docServFac2, urlResolver };
