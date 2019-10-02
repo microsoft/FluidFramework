@@ -53,6 +53,18 @@ export class IProseMirrorTransaction {
 // export class ReplaceStep extends Step {
 // export class ReplaceAroundStep extends Step {
 
+// Task is to convert from INSERT/REMOVE/ANNOTATE into addMark/removeMark/replace/replaceAround
+// export class AddMarkStep extends Step {
+// export class RemoveMarkStep extends Step {
+// export class ReplaceStep extends Step {
+//
+// export class ReplaceAroundStep extends Step {
+// :: (number, number, number, number, Slice, number, ?bool)
+// Create a replace-around step with the given range and gap.
+// `insert` should be the point in the slice into which the content
+// of the gap should be moved. `structure` has the same meaning as
+// it has in the [`ReplaceStep`](#transform.ReplaceStep) class.
+
 interface IThing {
     type: "ether" | "delete" | "insert" | "annotate";
     event?: ISequenceDeltaRange;
@@ -93,6 +105,7 @@ export class ProseMirrorTransactionBuilder {
             type: currentThing.type,
             event: currentThing.event,
             length: currentThing.length - position,
+            annotations: currentThing.annotations,
         };
         currentThing.length = position;
         this.things.splice(offset + 1, 0, newThing);
@@ -102,9 +115,9 @@ export class ProseMirrorTransactionBuilder {
 
     private addRange(range: ISequenceDeltaRange) {
         // let's assume some things...
-        // ... we will *never* delete a newly inerted node.
-        // ... deletes will always apply to the empty range
-        // ... annotates will *not* apply to newly inserted nodes
+        // ... we will *never* delete an inserted node.
+        // ... deletes will always apply to the ether
+        // ... annotates will apply to non-deleted ether nodes
 
         let i = 0;
         let position = range.position;
@@ -119,7 +132,7 @@ export class ProseMirrorTransactionBuilder {
 
         // position's current value will tell us *where* in this.things[i] to begin inserting
         switch (range.operation) {
-            case MergeTreeDeltaType.REMOVE:
+            case MergeTreeDeltaType.REMOVE: {
                 // walk the ether looking for the first ether element where position is found. Then split the ether
                 // and add in the removal node.
                 //
@@ -146,8 +159,9 @@ export class ProseMirrorTransactionBuilder {
                 }
 
                 break;
+            }
             
-            case MergeTreeDeltaType.INSERT:
+            case MergeTreeDeltaType.INSERT: {
                 // Walk the ether + new ether (ignoring deletes) looking for the position to insert the element
                 //
                 // Typing the above out it's not all that different from the removal case actually
@@ -155,12 +169,38 @@ export class ProseMirrorTransactionBuilder {
                 this.things.splice(splicePoint, 0, { type: "insert", event: range, length: range.segment.cachedLength });
 
                 break;
+            }
 
-            case MergeTreeDeltaType.ANNOTATE:
+            case MergeTreeDeltaType.ANNOTATE: {
                 // Same walk, except we will split/append the ether with annotations.
                 // Will do this one later. I think I just add an annotations field to the nodes and will go look
                 // for these after the fact
+                // walk the ether looking for the first ether element where position is found. Then split the ether
+                // and add in the removal node.
+                //
+                // For positions we *will* need to include any newly inserted nodes. We can count these as "new" ether
+
+                assert(i < this.things.length);
+
+                i = this.splitAt(position, i);
+                let length = range.segment.cachedLength;
+                while (length > 0) {
+                    assert(this.things[i].type === "ether");
+
+                    if (this.things[i].length <= length) {
+                        // ether node is fully encompasing
+                        this.things[i].annotations = range.propertyDeltas;
+                        this.things[i].event = range;
+                        length -= this.things[i].length;
+                        i++;
+                    } else {
+                        // ether node is partially encompasing. Split it and loop around to then remove it
+                        this.splitAt(length, i);
+                    }
+                }
+
                 break;
+            }
         }
     }
 
@@ -186,10 +226,20 @@ export class ProseMirrorTransactionBuilder {
 
         let currentGroup: IThingGroup;
         const groups = new Array<IThingGroup>();
+        let annotations = [];
         let position = 0;
 
         for (const thing of this.things) {
             if (thing.type === "ether") {
+                if (thing.annotations) {
+                    annotations.push({
+                        from: position,
+                        to: position + thing.length,
+                        segment: thing.event.segment,
+                        propertyDeltas: thing.annotations
+                    });
+                }
+
                 currentGroup = undefined;
                 position += thing.length;
             } else {
@@ -228,6 +278,26 @@ export class ProseMirrorTransactionBuilder {
                 slice)
         }
 
+        // apply annotations
+        for (const annotation of annotations) {
+            const segment = annotation.segment;
+            // An annotation should just be an immediate flush - I think
+            for (const prop of Object.keys(annotation.propertyDeltas)) {
+                const value = segment.properties[prop];
+
+                if (value) {
+                    this.transaction.addMark(
+                        annotation.from,
+                        annotation.to,
+                        this.schema.marks[prop].create(value));
+                } else {
+                    this.transaction.removeMark(
+                        annotation.from,
+                        annotation.to,
+                        this.schema.marks[prop]);
+                }
+            }
+        }
 
         return this.transaction;
     }
@@ -249,95 +319,6 @@ export class ProseMirrorTransactionBuilder {
         const end = node[node.length - 1];
         return !end._open || !end.content ? 0 : 1 + this.getOpenEnd(end.content);
     }
-
-    // private processRemove(range: ISequenceDeltaRange) {
-    //     const segment = range.segment;
-
-    //     const length = TextSegment.is(segment) ? segment.text.length : 1;
-    //     this.addRemovalRange(range.position, range.position + length);
-        
-    //     this.transaction.delete(range.position, range.position + length);
-    // }
-
-    // private processInsert(range: ISequenceDeltaRange) {
-    //     const segment = range.segment;
-
-    //     if (TextSegment.is(segment)) {
-    //         this.transaction.insertText(segment.text, range.position);
-
-    //         if (segment.properties) {
-    //             for (const prop of Object.keys(segment.properties)) {
-    //                 const value = range.segment.properties[prop];
-    //                 this.transaction.addMark(
-    //                     range.position,
-    //                     range.position + segment.text.length,
-    //                     this.schema.marks[prop].create(value));
-    //             }
-    //         }
-    //     } else if (Marker.is(segment)) {
-    //         if (segment.refType === ReferenceType.Simple) {
-    //             const nodeType = segment.properties["type"];
-    //             const node = this.schema.nodes[nodeType].create(segment.properties["attrs"]);
-    //             this.transaction.insert(range.position, node);
-    //         }
-    //     }
-    // }
-
-    // private processAnnotate(range: ISequenceDeltaRange) {
-    //     const segment = range.segment;
-
-    //     // An annotation should just be an immediate flush - I think
-    //     for (const prop of Object.keys(range.propertyDeltas)) {
-    //         const value = range.segment.properties[prop];
-
-    //         // TODO I think I need to query the sequence for *all* marks and then set them here
-    //         // for PM it's an all or nothing set. Not anything additive
-
-    //         const length = TextSegment.is(segment) ? segment.text.length : 1;
-
-    //         if (value) {
-    //             this.transaction.addMark(
-    //                 range.position,
-    //                 range.position + length,
-    //                 this.schema.marks[prop].create(value));
-    //         } else {
-    //             this.transaction.removeMark(
-    //                 range.position,
-    //                 range.position + length,
-    //                 this.schema.marks[prop]);
-    //         }
-    //     }
-    // }
-
-    // Do I need to just build up a mini-merge tree with the inbound segments. Include in that the deleted segments?
-    //
-    // Or do I split the insert vs. remove treees?
-
-    // Task is to convert from INSERT/REMOVE/ANNOTATE into addMark/removeMark/replace/replaceAround
-    // export class AddMarkStep extends Step {
-    // export class RemoveMarkStep extends Step {
-    // export class ReplaceStep extends Step {
-    //
-    // export class ReplaceAroundStep extends Step {
-    // :: (number, number, number, number, Slice, number, ?bool)
-    // Create a replace-around step with the given range and gap.
-    // `insert` should be the point in the slice into which the content
-    // of the gap should be moved. `structure` has the same meaning as
-    // it has in the [`ReplaceStep`](#transform.ReplaceStep) class.
-
-    // let allSegments: ISegment[];
-    // allSegments = new Array<ISegment>();
-
-    // allSegments.push(...ev.ranges.map((range) => range.segment));
-
-    // console.log(`Segment count ${allSegments.length}`);
-
-    // const client = this.sharedString.client;
-    // for (const segment of allSegments) {
-    //     segment.removedSeq
-    //     console.log(
-    //         `${(client as any).mergeTree.getPosition(segment, client.getCurrentSeq(), client.getClientId())}`);
-    // }
 }
 
 export function sliceToGroupOps(from: number, slice: IProseMirrorSlice, schema: Schema): IMergeTreeOp[] {
