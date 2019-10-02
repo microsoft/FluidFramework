@@ -8,6 +8,7 @@ import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
 import { ChildLogger, Deferred, PerformanceEvent } from "@microsoft/fluid-core-utils";
 import {
     ISequencedDocumentMessage,
+    ISnapshotTree,
     ISummaryAck,
     ISummaryConfiguration,
     ISummaryNack,
@@ -44,6 +45,12 @@ export interface ISummarizer extends IProvideSummarizer {
      * clientId is the elected summarizer and will stop once it is not.
      */
     run(onBehalfOf: string): Promise<void>;
+
+    /**
+     * Stops the summarizer by closing its container and resolving its run promise.
+     * @param reason - reason for stopping
+     */
+    stop(reason?: string);
 }
 
 export class Summarizer implements IComponentLoadable, ISummarizer {
@@ -63,11 +70,14 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
     private deferBroadcast: Deferred<void>;
     private deferAck: Deferred<void>;
 
+    private onBehalfOfClientId: string;
+
     constructor(
         public readonly url: string,
         private readonly runtime: ContainerRuntime,
         private readonly configuration: ISummaryConfiguration,
         private readonly generateSummary: () => Promise<IGeneratedSummaryData>,
+        private readonly refreshBaseSummary: (snapshot: ISnapshotTree) => void,
     ) {
         this.logger = ChildLogger.create(this.runtime.logger, "Summarizer");
 
@@ -77,7 +87,7 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
     }
 
     public async run(onBehalfOf: string): Promise<void> {
-        this.logger.sendTelemetryEvent({ eventName: "RunningSummarizer", onBehalfOf });
+        this.onBehalfOfClientId = onBehalfOf;
 
         if (!this.runtime.connected) {
             await new Promise((resolve) => this.runtime.once("connected", resolve));
@@ -91,6 +101,12 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
         this.lastSummarySeqNumber = this.runtime.deltaManager.referenceSequenceNumber;
         this.lastSummaryTime = Date.now();
 
+        this.logger.sendTelemetryEvent({
+            eventName: "RunningSummarizer",
+            onBehalfOf,
+            initSummarySeqNumber: this.lastSummarySeqNumber,
+        });
+
         // start the timer after connecting to the document
         this.resetIdleTimer();
 
@@ -100,6 +116,38 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
         this.runtime.on("batchEnd", (error: any, op: ISequencedDocumentMessage) => this.handleOp(error, op));
 
         return this.runDeferred.promise;
+    }
+
+    public stop(reason?: string) {
+        this.logger.sendTelemetryEvent({
+            eventName: "StoppingSummarizer",
+            onBehalfOf: this.onBehalfOfClientId,
+            reason,
+        });
+        this.runDeferred.resolve();
+        this.runtime.closeFn();
+    }
+
+    private async setOrLogError<T>(
+        eventName: string,
+        setter: () => Promise<T>,
+        validator: (result: T) => boolean,
+    ): Promise<{ result: T, success: boolean }> {
+        let result: T;
+        let success = true;
+        try {
+            result = await setter();
+        } catch (error) {
+            // send error event for exceptions
+            this.logger.sendErrorEvent({ eventName, clientId: this.runtime.clientId }, error);
+            success = false;
+        }
+        if (success && !validator(result)) {
+            // send error event when result is invalid
+            this.logger.sendErrorEvent({ eventName, clientId: this.runtime.clientId });
+            success = false;
+        }
+        return { result, success };
     }
 
     private async handleSummaryOp(op: ISequencedDocumentMessage) {
@@ -144,6 +192,29 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
                         timePending: Date.now() - this.lastSummaryTime,
                         summarySequenceNumber: ack.summaryProposal.summarySequenceNumber,
                     });
+
+                    if (op.type === MessageType.SummaryAck) {
+                        // refresh base snapshot
+                        // it might be nice to do this in the container in the future, and maybe for all
+                        // clients, not just the summarizer
+                        const handle = (ack as ISummaryAck).handle;
+
+                        // we have to call get version to get the treeId for r11s; this isnt needed
+                        // for odsp currently, since their treeId is undefined
+                        const versionsResult = await this.setOrLogError("SummarizerFailedToGetVersion",
+                            () => this.runtime.storage.getVersions(handle, 1),
+                            (versions) => !!(versions && versions.length));
+
+                        if (versionsResult.success) {
+                            const snapshotResult = await this.setOrLogError("SummarizerFailedToGetSnapshot",
+                                () => this.runtime.storage.getSnapshotTree(versionsResult.result[0]),
+                                (snapshot) => !!snapshot);
+
+                            if (snapshotResult.success) {
+                                this.refreshBaseSummary(snapshotResult.result);
+                            }
+                        }
+                    }
                     this.summaryPending = false;
                 }
             }
@@ -185,6 +256,12 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
         // it shouldn't be possible to enter here if already summarizing or pending
         assert(!this.summarizing && !this.summaryPending);
 
+        if (this.onBehalfOfClientId !== this.runtime.summarizerClientId) {
+            // we are no longer the summarizer, we should close ourself
+            this.stop("parent is no longer summarizer");
+            return;
+        }
+
         // generateSummary could take some time
         // mark that we are currently summarizing to prevent concurrent summarizing
         this.summarizing = true;
@@ -193,13 +270,14 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
         this.summarizeCore(message).finally(() => {
             this.summarizing = false;
         }).catch((error) => {
+            this.logger.sendErrorEvent({ eventName: "SummarizeError" }, error);
             this.cancelPending();
         });
     }
 
     private async summarizeCore(message: string) {
         const summarizingEvent = PerformanceEvent.start(this.logger,
-            { eventName: "Summarizing", message });
+            { eventName: "Summarizing", stage: "start", message });
 
         const summaryData = await this.generateSummary();
 
