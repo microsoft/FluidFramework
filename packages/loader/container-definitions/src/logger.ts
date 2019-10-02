@@ -11,16 +11,19 @@ export type TelemetryEventPropertyType = string | number | boolean | object | un
 // to raise all telemetry errors to user in non-production builds in addition to raising all container events)
 export const TelemetryEventRaisedOnContainer = "criticalErrorRaisedOnContainer";
 
+export interface ITelemetryProperties {
+    [index: string]: TelemetryEventPropertyType;
+}
+
 /**
  * Base interface for logging telemetry statements.
  * Can contain any number of properties that get serialized as json payload.
  * @param category - category of the event, like "error", "performance", "generic", etc.
  * @param eventName - name of the event.
  */
-export interface ITelemetryBaseEvent {
+export interface ITelemetryBaseEvent extends ITelemetryProperties {
     category: TelemetryEventCategory;
     eventName: string;
-    [index: string]: TelemetryEventPropertyType;
 }
 
 /**
@@ -35,29 +38,26 @@ export interface ITelemetryBaseLogger {
  * Informational (non-error) telemetry event
  * Maps to category = "generic"
  */
-export interface ITelemetryGenericEvent {
+export interface ITelemetryGenericEvent extends ITelemetryProperties {
     eventName: string;
-    [index: string]: TelemetryEventPropertyType;
 }
 
 /**
  * Error telemetry event.
  * Maps to category = "error"
  */
-export interface ITelemetryErrorEvent {
+export interface ITelemetryErrorEvent extends ITelemetryProperties {
     eventName: string;
-    [index: string]: TelemetryEventPropertyType;
 }
 
 /**
  * Performance telemetry event.
  * Maps to category = "performance"
  */
-export interface ITelemetryPerformanceEvent {
+export interface ITelemetryPerformanceEvent extends ITelemetryProperties {
     eventName: string;
     duration?: number;            // Duration of event (optional)
     tick?: number;                // Event time, relative to start of page load. Filled in by logger if not specified.
-    [index: string]: TelemetryEventPropertyType;
 }
 
 /**

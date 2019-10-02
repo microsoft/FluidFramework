@@ -139,12 +139,12 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
             result = await setter();
         } catch (error) {
             // send error event for exceptions
-            this.logger.sendErrorEvent({ eventName, clientId: this.runtime.clientId }, error);
+            this.logger.sendErrorEvent({ eventName }, error);
             success = false;
         }
         if (success && !validator(result)) {
             // send error event when result is invalid
-            this.logger.sendErrorEvent({ eventName, clientId: this.runtime.clientId });
+            this.logger.sendErrorEvent({ eventName });
             success = false;
         }
         return { result, success };
