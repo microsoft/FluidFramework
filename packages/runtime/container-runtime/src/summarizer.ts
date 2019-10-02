@@ -101,7 +101,6 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
 
         this.logger.sendTelemetryEvent({
             eventName: "RunningSummarizer",
-            clientId: this.runtime.clientId,
             onBehalfOf,
             initSummarySeqNumber: this.lastSummarySeqNumber,
         });
@@ -120,7 +119,6 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
     public stop(reason?: string) {
         this.logger.sendTelemetryEvent({
             eventName: "StoppingSummarizer",
-            clientId: this.runtime.clientId,
             onBehalfOf: this.onBehalfOfClientId,
             reason,
         });
@@ -144,7 +142,6 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
                 if (op.clientId === this.runtime.clientId && op.referenceSequenceNumber === this.lastSummarySeqNumber) {
                     this.logger.sendTelemetryEvent({
                         eventName: "PendingSummaryBroadcast",
-                        clientId: this.runtime.clientId,
                         timeWaitingForBroadcast: Date.now() - this.lastSummaryTime,
                         pendingSummarySequenceNumber: op.sequenceNumber,
                     });
@@ -190,7 +187,6 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
             if (pendingTime > this.configuration.maxAckWaitTime) {
                 this.logger.sendErrorEvent({
                     eventName: "SummaryAckWaitTimeout",
-                    clientId: this.runtime.clientId,
                     maxAckWaitTime: this.configuration.maxAckWaitTime,
                 });
                 this.cancelPending();
