@@ -24,6 +24,7 @@
     "@microsoft/fluid-webpack-component-loader": "0.11.14243",
     "@fluid-internal/url-generator": "^1.0.4",
     "@types/node": "^10.14.6",
+    "source-map-loader": "^0.2.4",
     "ts-loader": "^4.5.0",
     "typescript": "~3.4.5",
     "webpack": "4.16.5",

@@ -1,7 +1,7 @@
 {
   "name": "@fluid-example/badge",
-  "description": "Chaincode starter project",
-  "version": "0.0.10",
+  "description": "Badge Fluid example component",
+  "version": "0.10.0",
   "author": "Microsoft",
   "repository": "microsoft/FluidFramework",
   "main": "dist/index.js",

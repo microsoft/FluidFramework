@@ -1,5 +1,5 @@
 {
-  "name": "@chaincode/source-document",
+  "name": "@fluid-example/source-document",
   "version": "0.11.0",
   "description": "Experiments with incremental parsing.",
   "main": "dist/index.js",
