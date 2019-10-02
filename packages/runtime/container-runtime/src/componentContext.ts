@@ -162,7 +162,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
     }
 
     public async createSubComponent(pkg: string, props?: any): Promise<IComponentRuntime> {
-        const details = await this.getSnapshotDetails();
+        const details = await this.getInitialSnapshotDetails();
         const packagePath: string[] = [...details.pkg];
         // A factory could not contain the registry for itself. So do not add a package in
         // path if it is same as the last one.
@@ -178,8 +178,6 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
             this.componentRuntimeDeferred = new Deferred<IComponentRuntime>();
             const details = await this.getInitialSnapshotDetails();
             this.summaryTracker.setBaseTree(details.snapshot);
-            this._baseSnapshot = details.snapshot;
-            this.baseId = details.snapshot ? details.snapshot.id : null;
             const packages = details.pkg;
             let registry = this._hostRuntime.IComponentRegistry;
             let factory: ComponentFactoryTypes & Partial<IComponentRegistry>;
