@@ -82,6 +82,54 @@ export const nodes = {
     // :: NodeSpec An inline image (`<img>`) node. Supports `src`,
     // `alt`, and `href` attributes. The latter two default to the empty
     // string.
+    fluid: {
+        group: "inline",
+        content: "inline*",
+        inline: true,
+        draggable: true,
+        // This makes the view treat the node as a leaf, even though it
+        // technically has content
+        atom: true,
+        toDOM: () => ["fluid", 0],
+        parseDOM: [{tag: "fluid"}]
+        // inline: true,
+        // attrs: {
+        //     src: { default: "" },
+        //     alt: { default: null },
+        //     title: { default: null }
+        // },
+        // group: "inline",
+        // atom: true,
+        // draggable: true,
+        // parseDOM: [{
+        //     tag: "component", getAttrs(dom) {
+        //         return {
+        //             src: dom.getAttribute("src"),
+        //             title: dom.getAttribute("title"),
+        //             alt: dom.getAttribute("alt")
+        //         }
+        //     }
+        // }],
+        // toDOM() {
+        //     return ["component", 0];
+        // }
+    },
+
+    footnote: {
+        group: "inline",
+        content: "inline*",
+        inline: true,
+        draggable: true,
+        // This makes the view treat the node as a leaf, even though it
+        // technically has content
+        atom: true,
+        toDOM: () => ["footnote", 0],
+        parseDOM: [{ tag: "footnote" }]
+    },
+
+    // :: NodeSpec An inline image (`<img>`) node. Supports `src`,
+    // `alt`, and `href` attributes. The latter two default to the empty
+    // string.
     image: {
         inline: true,
         attrs: {

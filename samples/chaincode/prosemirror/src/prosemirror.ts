@@ -28,22 +28,25 @@ import { SharedString } from "@microsoft/fluid-sequence";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import * as assert from "assert";
 import { EventEmitter } from "events";
+import { MenuItem } from "prosemirror-menu"
 import { EditorState } from "prosemirror-state";
 import { EditorView } from "prosemirror-view";
-import { Schema, NodeSpec } from "prosemirror-model";
+import { insertPoint } from "prosemirror-transform";
+import { Schema, NodeSpec, Fragment } from "prosemirror-model";
 import { addListNodes } from "prosemirror-schema-list";
-import { exampleSetup } from "prosemirror-example-setup";
+import { buildMenuItems, exampleSetup } from "prosemirror-example-setup";
 import { IProseMirrorNode, nodeTypeKey } from "./fluidBridge";
 import { FluidCollabPlugin } from "./fluidPlugin";
 import { schema } from "./fluidSchema";
+import OrderedMap = require('orderedmap');
+import { ComponentView } from "./componentView";
+import { FootnoteView } from "./footnoteView";
 import { create as createSelection } from "./selection";
 
 require("prosemirror-view/style/prosemirror.css");
 require("prosemirror-menu/style/menu.css");
 require("prosemirror-example-setup/style/style.css");
 require("./style.css");
-
-import OrderedMap = require('orderedmap');
 
 function createTreeMarkerOps(
     treeRangeLabel: string,
@@ -244,9 +247,38 @@ export class ProseMirror extends EventEmitter implements IComponentLoadable, ICo
 
         const fluidPlugin = new FluidCollabPlugin(this.text, fluidSchema);
 
+        const menu = buildMenuItems(fluidSchema);
+        menu.insertMenu.content.push(new MenuItem({
+            title: "Insert Component",
+            label: "Component",
+            select(state) {
+                return insertPoint(state.doc, state.selection.from, fluidSchema.nodes.fluid) != null
+            },
+            run: (state, dispatch) => {
+                let { empty, $from, $to } = state.selection, content = Fragment.empty
+                if (!empty && $from.sameParent($to) && $from.parent.inlineContent)
+                    content = $from.parent.content.cut($from.parentOffset, $to.parentOffset)
+                dispatch(state.tr.replaceSelectionWith(fluidSchema.nodes.fluid.create(null, content)))
+            }
+        }));
+
+        menu.insertMenu.content.push(new MenuItem({
+            title: "Insert footnote",
+            label: "Footnote",
+            select(state) {
+                return insertPoint(state.doc, state.selection.from, fluidSchema.nodes.footnote) != null
+            },
+            run(state, dispatch) {
+                let { empty, $from, $to } = state.selection, content = Fragment.empty
+                if (!empty && $from.sameParent($to) && $from.parent.inlineContent)
+                    content = $from.parent.content.cut($from.parentOffset, $to.parentOffset)
+                dispatch(state.tr.replaceSelectionWith(fluidSchema.nodes.footnote.create(null, content)))
+            }
+        }));
+
         const state = EditorState.create({
             doc: fluidDoc,
-            plugins: exampleSetup({ schema: fluidSchema })
+            plugins: exampleSetup({ schema: fluidSchema, menuContent: menu.fullMenu })
                 .concat(fluidPlugin.plugin)
                 .concat(createSelection()),
         });
@@ -255,6 +287,10 @@ export class ProseMirror extends EventEmitter implements IComponentLoadable, ICo
             this.textArea,
             {
                 state,
+                nodeViews: {
+                    fluid(node, view, getPos) { return new ComponentView(node, view, getPos); },
+                    footnote(node, view, getPos) { return new FootnoteView(node, view, getPos) },
+                }
             });
         fluidPlugin.attachView(this.editorView);
 
