@@ -131,6 +131,7 @@ const bearerSecret = "VBQyoGpEYrTn3XQPtXW3K8fFDd";
 
 // tslint:disable-next-line: max-func-body-length
 export async function start(
+    documentId: string,
     packageJson: IPackage,
     options: IRouteOptions,
     div: HTMLDivElement
@@ -211,7 +212,7 @@ export async function start(
         );
     } else {
 
-        const deltaConn = TestDeltaConnectionServer.create(new SessionStorageDbFactory(url));
+        const deltaConn = TestDeltaConnectionServer.create(new SessionStorageDbFactory(documentId));
         documentServiceFactory = new TestDocumentServiceFactory(deltaConn);
         const hostConf: IHostConfig = { documentServiceFactory, urlResolver };
         startCore(
