@@ -5,6 +5,7 @@
 
 // tslint:disable: no-console
 
+import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 import { IComponent, IComponentQueryableLegacy } from "@microsoft/fluid-component-core-interfaces";
 import { IFluidPackage } from "@microsoft/fluid-container-definitions";
 import { Deferred } from "@microsoft/fluid-core-utils";
@@ -57,13 +58,15 @@ export class UrlRegistry implements IComponentRegistry {
                 }
             });
 
-            this.urlRegistryMap.set(name, entryPointPromise.then((entrypoint) => {
+            this.urlRegistryMap.set(name, entryPointPromise.then(async (entrypoint) => {
                 const fluidExport: IComponent = entrypoint.fluidExport;
                 let componentFactory = entrypoint as IComponentFactory;
 
                 if (fluidExport !== undefined) {
-                    if (fluidExport.IComponentFactory) {
-                        componentFactory = fluidExport.IComponentFactory;
+                    if (fluidExport.IComponentRegistry && fluidExport.IComponentFactory) {
+                        const registry = fluidExport.IComponentRegistry;
+                        const compFactory = fluidExport.IComponentFactory as SimpleModuleInstantiationFactory;
+                        componentFactory = (await registry.get(compFactory.defaultComponentName)) as IComponentFactory;
                     } else {
                         const queryable = fluidExport as IComponentQueryableLegacy;
                         if (queryable.query) {

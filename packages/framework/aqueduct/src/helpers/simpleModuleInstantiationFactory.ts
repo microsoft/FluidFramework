@@ -23,7 +23,7 @@ export class SimpleModuleInstantiationFactory implements
     IComponentFactory {
 
     constructor(
-        private readonly defaultComponentName: string,
+        public readonly defaultComponentName: string,
         private readonly registry: ComponentRegistryTypes) {
     }
 
