@@ -23,7 +23,7 @@ const chart =
 name: routerlicious
 version: 0.1.${patch}
 description: Distributive object router
-home: https://github.com/microsoft/prague
+home: https://github.com/microsoft/FluidFramework
 `;
 
 const values =
@@ -60,7 +60,7 @@ gateway:
   externalUrl: https://www.wu2.prague.office-int.com
   host: www.wu2.prague.office-int.com
   cert: wu2-tls-certificate
-  keyValueUrl: https://www.wu2.prague.office-int.com/loader/prague/kv-cache-00016
+  keyValueUrl: https://www.wu2.prague.office-int.com/loader/fluid/kv-cache-00018
 
 deli:
   name: deli
@@ -128,6 +128,9 @@ mongodb:
 
 redis:
   url: winsome-wombat-redis
+
+redis2:
+  url: dining-maltese-redis
 
 kafka:
   topics:

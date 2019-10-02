@@ -4,13 +4,13 @@
  */
 
 import { Plugin, Transaction } from "prosemirror-state";
-import { SharedString } from "@prague/sequence";
+import { SharedString } from "@microsoft/fluid-sequence";
 import { EditorView } from "prosemirror-view";
 import {
     createRemoveRangeOp,
     createGroupOp,
     IMergeTreeOp,
-} from "@prague/merge-tree";
+} from "@microsoft/fluid-merge-tree";
 import { Schema } from "prosemirror-model";
 import { sliceToGroupOps, ProseMirrorTransactionBuilder } from "./fluidBridge";
 

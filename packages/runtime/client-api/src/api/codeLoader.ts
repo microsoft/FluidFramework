@@ -35,6 +35,7 @@ class Chaincode implements IComponentFactory {
         const consensusRegisterCollectionFactory = ConsensusRegisterCollection.getFactory();
         const sparseMatrixFactory = sequence.SparseMatrix.getFactory();
         const directoryFactory = map.SharedDirectory.getFactory();
+        const sharedIntervalFactory = sequence.SharedIntervalCollection.getFactory();
 
         // Register channel factories
         const modules = new Map<string, any>();
@@ -49,6 +50,7 @@ class Chaincode implements IComponentFactory {
         modules.set(consensusRegisterCollectionFactory.type, consensusRegisterCollectionFactory);
         modules.set(sparseMatrixFactory.type, sparseMatrixFactory);
         modules.set(directoryFactory.type, directoryFactory);
+        modules.set(sharedIntervalFactory.type, sharedIntervalFactory);
 
         ComponentRuntime.load(
             context,

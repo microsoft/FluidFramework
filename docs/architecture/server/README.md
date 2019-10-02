@@ -216,8 +216,8 @@ exploration (i.e. branching, forking, merging documents).
 To view the git stored snapshots simply run
 
 ```text
-git clone ssh://git@localhost:3022/home/git/prague/prague
-cd prague/prague
+git clone ssh://git@localhost:3022/home/git/fluid/fluid
+cd fluid/fluid
 git checkout <document id>
 ```
 

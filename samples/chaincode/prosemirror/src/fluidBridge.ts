@@ -12,13 +12,13 @@ import {
     reservedRangeLabelsKey,
     TextSegment,
     ISegment,
-} from "@prague/merge-tree";
+} from "@microsoft/fluid-merge-tree";
 import {
     SharedString,
     // ISequenceDeltaRange,
     SequenceDeltaEvent,
     ISequenceDeltaRange,
-} from "@prague/sequence";
+} from "@microsoft/fluid-sequence";
 import * as assert from "assert";
 import {
     Schema, Fragment, Slice,

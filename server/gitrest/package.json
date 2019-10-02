@@ -11,7 +11,7 @@
     "tslint": "tslint 'src/**/*.ts'"
   },
   "dependencies": {
-    "@microsoft/fluid-gitresources": "^0.1.4489",
+    "@microsoft/fluid-gitresources": "^0.10.0",
     "body-parser": "^1.17.2",
     "compression": "^1.7.3",
     "cors": "^2.8.5",

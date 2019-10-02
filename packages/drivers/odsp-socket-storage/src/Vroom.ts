@@ -34,10 +34,10 @@ export async function fetchJoinSession(
   path: string,
   additionalParams: string,
   method: string,
-  getVroomToken: (siteUrl: string, refresh: boolean) => Promise<string | undefined | null>,
+  getVroomToken: (refresh: boolean) => Promise<string | undefined | null>,
 ): Promise<ISocketStorageDiscovery> {
   return getWithRetryForTokenRefresh(async (refresh: boolean) => {
-    const token = await getVroomToken(siteUrl, refresh);
+    const token = await getVroomToken(refresh);
     if (!token) {
       throwNetworkError("Failed to acquire Vroom token", 400);
     }
@@ -76,26 +76,32 @@ export async function getSocketStorageDiscovery(
   itemId: string,
   siteUrl: string,
   logger: ITelemetryLogger,
-  getVroomToken: (siteUrl: string, refresh: boolean) => Promise<string | undefined | null>,
+  getVroomToken: (refresh: boolean) => Promise<string | undefined | null>,
 ): Promise<ISocketStorageDiscovery> {
-  const event = PerformanceEvent.start(logger, { eventName: "joinSession" });
+  const event = PerformanceEvent.start(logger, { eventName: "JoinSession" });
+  let socketStorageDiscovery: ISocketStorageDiscovery;
 
-  const socketStorageDiscovery: ISocketStorageDiscovery = await fetchJoinSession(
-    appId,
-    driveId,
-    itemId,
-    siteUrl,
-    "opStream/joinSession",
-    "",
-    "POST",
-    getVroomToken,
-  );
+  try {
+    socketStorageDiscovery = await fetchJoinSession(
+      appId,
+      driveId,
+      itemId,
+      siteUrl,
+      "opStream/joinSession",
+      "",
+      "POST",
+      getVroomToken,
+    );
+  } catch (error) {
+    event.cancel({}, error);
+    throw error;
+  }
+
+  event.end();
 
   if (socketStorageDiscovery.runtimeTenantId && !socketStorageDiscovery.tenantId) {
     socketStorageDiscovery.tenantId = socketStorageDiscovery.runtimeTenantId;
   }
-
-  event.end();
 
   return socketStorageDiscovery;
 }

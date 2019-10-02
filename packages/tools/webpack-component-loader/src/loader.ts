@@ -160,11 +160,10 @@ export async function start(
     switch (options.mode) {
         case "localhost":
             npm = "http://localhost:3002";
-            const localHost = "http://localhost:3000";
             urlResolver = new InsecureUrlResolver(
-                localHost,
-                localHost,
-                localHost,
+                "http://localhost:3000",
+                "http://localhost:3003",
+                "http://localhost:3001",
                 "fluid",
                 "43cfc3fbf04a97c0921fd23ff10f9e4b",
                 getUser(),

@@ -296,7 +296,7 @@ describe("SharedInterval", () => {
             // LocalIntervalCollection serializes as an array of ISerializedInterval, let's get the first comment
             const serializedInterval1FromSnapshot =
                 // tslint:disable-next-line: no-unsafe-any
-                (parsedSnapshot.comments.value as ISerializedInterval[])[0];
+                (parsedSnapshot["intervalCollections/comments"].value as ISerializedInterval[])[0];
             // The "story" is the ILocalValue of the handle pointing to the SharedString
             const handleLocalValueFromSnapshot = serializedInterval1FromSnapshot.properties.story as { type: string };
             assert.equal(handleLocalValueFromSnapshot.type, "__fluid_handle__");
