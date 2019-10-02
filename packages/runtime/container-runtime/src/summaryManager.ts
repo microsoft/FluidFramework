@@ -157,10 +157,7 @@ export class SummaryManager extends EventEmitter {
     private async createSummarizer() {
         // We have been elected the summarizer. Some day we may be able to summarize with a live document but for
         // now we play it safe and launch a second copy.
-        this.logger.sendTelemetryEvent({
-            eventName: "CreatingSummarizer",
-            clientId: this.clientId,
-        });
+        this.logger.sendTelemetryEvent({ eventName: "CreatingSummarizer" });
 
         const loader = this.context.loader;
 
