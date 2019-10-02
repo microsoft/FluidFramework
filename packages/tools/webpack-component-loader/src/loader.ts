@@ -232,10 +232,12 @@ export async function start(
     );
 
     if (double) {
-        // new documentServiceFactory for right div
+        // new documentServiceFactory for right div, same everything else
         const docServFac2: IDocumentServiceFactory = new TestDocumentServiceFactory(deltaConn);
         const hostConf2 = { documentServiceFactory: docServFac2, urlResolver };
 
+        // startCore will create a new Loader/Container/Component from the startCore above. This is
+        // intentional because we want to emulate two clients collaborating with each other.
         startCore(
             url,
             await urlResolver.resolve(req),
