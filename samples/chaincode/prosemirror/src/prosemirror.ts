@@ -29,7 +29,7 @@ import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { MenuItem } from "prosemirror-menu"
-import { EditorState } from "prosemirror-state";
+import { EditorState, NodeSelection } from "prosemirror-state";
 import { EditorView } from "prosemirror-view";
 import { insertPoint } from "prosemirror-transform";
 import { Schema, NodeSpec, Fragment } from "prosemirror-model";
@@ -42,6 +42,7 @@ import OrderedMap = require('orderedmap');
 import { ComponentView } from "./componentView";
 import { FootnoteView } from "./footnoteView";
 import { create as createSelection } from "./selection";
+import { openPrompt, TextField } from "./prompt";
 
 require("prosemirror-view/style/prosemirror.css");
 require("prosemirror-menu/style/menu.css");
@@ -251,14 +252,26 @@ export class ProseMirror extends EventEmitter implements IComponentLoadable, ICo
         menu.insertMenu.content.push(new MenuItem({
             title: "Insert Component",
             label: "Component",
-            select(state) {
-                return insertPoint(state.doc, state.selection.from, fluidSchema.nodes.fluid) != null
-            },
-            run: (state, dispatch) => {
-                let { empty, $from, $to } = state.selection, content = Fragment.empty
-                if (!empty && $from.sameParent($to) && $from.parent.inlineContent)
-                    content = $from.parent.content.cut($from.parentOffset, $to.parentOffset)
-                dispatch(state.tr.replaceSelectionWith(fluidSchema.nodes.fluid.create(null, content)))
+            enable(state) { return true },
+            run(state, _, view) {
+                let { from, to } = state.selection, attrs = null
+                if (state.selection instanceof NodeSelection && state.selection.node.type == fluidSchema.nodes.fluid)
+                    attrs = state.selection.node.attrs
+                openPrompt({
+                    title: "Insert component",
+                    fields: {
+                        url: new TextField({ label: "Url", required: true, value: attrs && attrs.src }),
+                        title: new TextField({ label: "Title", value: attrs && attrs.title }),
+                        alt: new TextField({
+                            label: "Description",
+                            value: attrs ? attrs.alt : state.doc.textBetween(from, to, " ")
+                        })
+                    },
+                    callback(attrs) {
+                        view.dispatch(view.state.tr.replaceSelectionWith(fluidSchema.nodes.fluid.createAndFill(attrs)))
+                        view.focus()
+                    }
+                })
             }
         }));
 
@@ -288,8 +301,12 @@ export class ProseMirror extends EventEmitter implements IComponentLoadable, ICo
             {
                 state,
                 nodeViews: {
-                    fluid(node, view, getPos) { return new ComponentView(node, view, getPos); },
-                    footnote(node, view, getPos) { return new FootnoteView(node, view, getPos) },
+                    fluid: (node, view, getPos) => {
+                        return new ComponentView(node, view, getPos);
+                    },
+                    footnote: (node, view, getPos) => {
+                        return new FootnoteView(node, view, getPos);
+                    },
                 }
             });
         fluidPlugin.attachView(this.editorView);
