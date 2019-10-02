@@ -21,16 +21,13 @@ const odspServers = [
     "microsoft.sharepoint.com",
 ];
 
-export class OfficeOdspUrlResolver implements IUrlResolver {
+export class SpoOdspUrlResolver implements IUrlResolver {
 
-    public async resolve(
-        request: IRequest,
-        odspTokens?: IODSPTokens,
-        clientConfig?: IClientConfig): Promise<IResolvedUrl> {
+    public async resolve(request: IRequest): Promise<IResolvedUrl> {
         const reqUrl = new URL(request.url);
         const server = reqUrl.hostname.toLowerCase();
         if (odspServers.indexOf(server) !== -1) {
-            const { site, drive, item } = await initializeSpoODSP(server, reqUrl, odspTokens, clientConfig);
+            const { site, drive, item } = await initializeSpoODSP(server, reqUrl, request.headers);
             if (site === undefined || drive === undefined || item === undefined) {
                 return Promise.reject("Cannot resolve the givem url!!");
             }
@@ -71,8 +68,7 @@ function getSnapshotUrl(server: string, drive: string, item: string) {
 async function initializeSpoODSP(
     server: string,
     url: URL,
-    odspTokens?: IODSPTokens,
-    clientConfig?: IClientConfig): Promise<{site: string, drive: string, item: string}> {
+    headers: any): Promise<{site: string, drive: string, item: string}> {
 
     const pathname = url.pathname;
     const searchParams = url.searchParams;
@@ -82,6 +78,8 @@ async function initializeSpoODSP(
     if (sourceDoc) {
         const hostedMatch = pathname.match(/\/(personal|teams)\/([^\/]*)\//i);
         if (hostedMatch !== null) {
+            const odspTokens: IODSPTokens = headers && headers.odspTokens ? headers.odspTokens : undefined;
+            const clientConfig: IClientConfig = headers && headers.clientConfig ? headers.clientConfig : undefined;
             if (!odspTokens || !clientConfig) {
                 return Promise.reject("Missing odsp tokesn and client credentials!!");
             }

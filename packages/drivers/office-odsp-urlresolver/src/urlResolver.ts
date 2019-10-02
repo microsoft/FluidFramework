@@ -50,7 +50,6 @@ export class OfficeOdspUrlResolver implements IUrlResolver {
               driveId: drive,
               itemId: item,
             };
-
             return response;
         }
         return Promise.reject("Cannot resolve the givem url!!");
@@ -64,9 +63,7 @@ function initializeOfficeODSP(searchParams: URLSearchParams) {
     if (site === null || drive === null || item === null) {
         return {};
     }
-    const url = new URL(site);
-    const server = url.host;
-    return { site: server, drive, item };
+    return { site, drive, item };
 }
 
 function getSnapshotUrl(server: string, drive: string, item: string) {
