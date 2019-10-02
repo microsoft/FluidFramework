@@ -25,6 +25,7 @@ import {
     // Slice,
 } from "prosemirror-model";
 import { EditorState, Transaction } from "prosemirror-state";
+import { ReplaceAroundStep } from "prosemirror-transform";
 
 export interface IProseMirrorNode {
     [key: string]: any;
@@ -254,7 +255,10 @@ export class ProseMirrorTransactionBuilder {
 
         // For now we *just* support replace range
         console.log(`Total groups! ${groups.length}`);
-        for (const group of groups) {
+
+        if (groups.length === 1) {
+            const group = groups[0];
+        
             let removalSize = 0;
             let insertSegments = [];
 
@@ -276,6 +280,43 @@ export class ProseMirrorTransactionBuilder {
                 group.position,
                 group.position + removalSize,
                 slice)
+        } else if (groups.length > 1) {
+            let removalSizes = [];
+            let insertSizes = [];
+            let insertSegments = [];
+
+            for (const group of groups) {
+                let removalSize = 0;
+                let groupSize = 0;
+
+                group.items.forEach((value) => {
+                    if (value.type === "delete") {
+                        removalSize += value.event.segment.cachedLength;
+                    } else {
+                        insertSegments.push(value.event.segment);
+                        groupSize += value.event.segment.cachedLength;
+                    }
+                });
+
+                removalSizes.push(removalSize);
+                insertSizes.push(groupSize);
+            }
+
+            const fragment = generateFragment(insertSegments);
+            const slice = new Slice(
+                Fragment.fromJSON(this.schema, fragment),
+                this.getOpenStart(fragment),
+                this.getOpenEnd(fragment));
+
+            const gapSize = groups[1].position - groups[0].position;
+
+            this.transaction.step(new ReplaceAroundStep(
+                groups[0].position,
+                groups[0].position + removalSizes[0] + gapSize + removalSizes[1],
+                groups[0].position + removalSizes[0],
+                groups[0].position + removalSizes[0] + gapSize,
+                slice,
+                insertSizes[0]));
         }
 
         // apply annotations
@@ -321,21 +362,33 @@ export class ProseMirrorTransactionBuilder {
     }
 }
 
-export function sliceToGroupOps(from: number, slice: IProseMirrorSlice, schema: Schema): IMergeTreeOp[] {
+export function sliceToGroupOps(
+    from: number,
+    slice: IProseMirrorSlice,
+    schema: Schema,
+    insert?: number,
+    gapDistance?: number,
+): IMergeTreeOp[] {
     const ops = new Array<IMergeTreeOp>();
 
     const sliceOpenStart = slice.openStart || 0;
     const sliceOpenEnd = slice.openEnd || 0;
-    let offset = from;
+    let offset = from + adjustOffset(from, 0, 0, insert, gapDistance);
 
     slice.content.forEach((value, index) => {
         const openStart = index === 0 ? sliceOpenStart - 1 : -1;
         const openEnd = index === slice.content.length - 1 ? sliceOpenEnd - 1 : -1;
 
-        offset += sliceToGroupOpsInternal(value, schema, openStart, openEnd, offset, ops);
+        offset += sliceToGroupOpsInternal(value, schema, openStart, openEnd, offset, ops, insert, gapDistance);
     });
 
     return ops;
+}
+
+// Likely a cleaner way to detect the gap than checking every offset adjust - but brute forcing for now
+function adjustOffset(from, offset, value, insert, gapDistance) {
+    const newFrom = from + offset + value;
+    return newFrom === insert ? offset + value + gapDistance : offset + value;
 }
 
 function sliceToGroupOpsInternal(
@@ -345,6 +398,8 @@ function sliceToGroupOpsInternal(
     openEnd: number,
     from: number,
     ops: IMergeTreeOp[],
+    insert?: number,
+    gapDistance?: number,
 ) {
     let offset = 0;
 
@@ -365,7 +420,7 @@ function sliceToGroupOpsInternal(
             }
             ops.push(createInsertSegmentOp(from + offset, segment));
 
-            offset += value.text.length;
+            offset = adjustOffset(from, offset, value.text.length, insert, gapDistance);
         } else {
             const nodeProps = {
                 ...props,
@@ -379,7 +434,7 @@ function sliceToGroupOpsInternal(
             marker.addProperties(nodeProps);
             ops.push(createInsertSegmentOp(from + offset, marker));
 
-            offset++;
+            offset = adjustOffset(from, offset, 1, insert, gapDistance);
         }
     } else {
         // negative open start indicates we have past the depth from which the opening began
@@ -396,7 +451,7 @@ function sliceToGroupOpsInternal(
             marker.addProperties(beginProps);
             ops.push(createInsertSegmentOp(from + offset, marker));
 
-            offset++;
+            offset = adjustOffset(from, offset, 1, insert, gapDistance);
         }
 
         if (value.content) {
@@ -407,7 +462,9 @@ function sliceToGroupOpsInternal(
                     index === 0 ? openStart - 1 : -1,
                     index === value.content.length - 1 ? openEnd - 1 : -1,
                     from + offset,
-                    ops);
+                    ops,
+                    insert,
+                    gapDistance);
             });
         }
 
@@ -424,7 +481,7 @@ function sliceToGroupOpsInternal(
             marker.addProperties(endProps);
             ops.push(createInsertSegmentOp(from + offset, marker));
 
-            offset++;
+            offset = adjustOffset(from, offset, 1, insert, gapDistance);
         }
     }
 
@@ -434,6 +491,8 @@ function sliceToGroupOpsInternal(
 function generateFragment(segments: ISegment[]) {
     const nodeStack = new Array<IProseMirrorNode>();
     nodeStack.push({ type: "doc", content: [] });
+
+    let openTop: IProseMirrorNode;
 
     // TODO should I pre-seed the data structure based on the nodes to the left of the open?
 
@@ -461,6 +520,11 @@ function generateFragment(segments: ISegment[]) {
             const nodeType = segment.properties[nodeTypeKey];
             switch (segment.refType) {
                 case ReferenceType.NestBegin:
+                    // special case the open top
+                    if (openTop) {
+                        top.content.push(openTop);
+                        openTop = undefined;
+                    }
                     // Create the new node, add it to the top's content, and push it on the stack
                     const newNode = { type: nodeType, content: [], _open: true };
                     top.content.push(newNode);
@@ -475,7 +539,11 @@ function generateFragment(segments: ISegment[]) {
                     } else {
                         // unmatched open
                         const newNode = { type: nodeType, content: [], _open: true };
-                        top.content.push(newNode);
+                        if (openTop) {
+                            newNode.content.push(openTop);
+                        }
+
+                        openTop = newNode;
                     }
                     
                     break;
@@ -510,129 +578,23 @@ function generateFragment(segments: ISegment[]) {
     }
 
     const doc = nodeStack[0];
-    return doc.content;
-}
+    const content = doc.content;
 
-// if (TextSegment.is(segment)) {
-//     transaction.insertText(segment.text, range.position);
-
-//     if (segment.properties) {
-//         for (const prop of Object.keys(segment.properties)) {
-//             const value = range.segment.properties[prop];
-//             transaction.addMark(
-//                 range.position,
-//                 range.position + segment.text.length,
-//                 this.schema.marks[prop].create(value));
-//         }
-//     }
-// } else if (Marker.is(segment)) {
-//     if (segment.refType === ReferenceType.Simple) {
-//         const nodeType = segment.properties["type"];
-//         const node = this.schema.nodes[nodeType].create(segment.properties["attrs"]);
-//         transaction.insert(range.position, node);
-//     }
-// }
-
-// export function segmentsToSlice(text: SharedString, segments: ISequenceDeltaRange[]): Slice {
-    // const initialSegment = segments[0];
-
-    // const stack = text.getStackContext(initialSegment.position, [proseMirrorTreeLabel]).proseMirrorTreeLabel;
-    // let root: IProseMirrorNode = {
-    //     content: [],
-    //     type: "doc",
-    // }
-    // while (!stack.empty()) {
-    //     const marker = stack.pop();
-    //     const type = marker.properties[nodeTypeKey];
-
-    //     const newNode = { type, content: [] };
-    //     root.content.push(newNode);
-        
-    //     root = newNode;
-    // }
-
-    // segments.forEach(() => {
-    //     // TODO do stuff here
-    // });
-
-    // Initialize the base ProseMirror JSON data structure
-    // const nodeStack = new Array<IProseMirrorNode>();
-    // nodeStack.push({ type: "doc", content: [] });
-
-    // this.text.walkSegments((segment) => {
-    //     let top = nodeStack[nodeStack.length - 1];
-
-    //     if (TextSegment.is(segment)) {
-    //         const nodeJson: IProseMirrorNode = {
-    //             type: "text",
-    //             text: segment.text,
-    //         };
-
-    //         if (segment.properties) {
-    //             nodeJson.marks = [];
-    //             for (const propertyKey of Object.keys(segment.properties)) {
-    //                 nodeJson.marks.push({
-    //                     type: propertyKey,
-    //                     value: segment.properties[propertyKey],
-    //                 })
-    //             }
-    //         }
-
-    //         top.content.push(nodeJson);
-    //     } else if (Marker.is(segment)) {
-    //         // TODO are marks applied to the structural nodes as well? Or just inner text?
-
-    //         const nodeType = segment.properties[nodeTypeKey];
-    //         switch (segment.refType) {
-    //             case ReferenceType.NestBegin:
-    //                 // Create the new node, add it to the top's content, and push it on the stack
-    //                 const newNode = { type: nodeType, content: [] };
-    //                 top.content.push(newNode);
-    //                 nodeStack.push(newNode);
-    //                 break;
-
-    //             case ReferenceType.NestEnd:
-    //                 const popped = nodeStack.pop();
-    //                 assert(popped.type === nodeType);
-    //                 break;
-
-    //             case ReferenceType.Simple:
-    //                 // TODO consolidate the text segment and simple references
-    //                 const nodeJson: IProseMirrorNode = {
-    //                     type: segment.properties["type"],
-    //                     attrs: segment.properties["attrs"],
-    //                 };
-
-    //                 if (segment.properties) {
-    //                     nodeJson.marks = [];
-    //                     for (const propertyKey of Object.keys(segment.properties)) {
-    //                         if (propertyKey !== "type" && propertyKey !== "attrs") {
-    //                             nodeJson.marks.push({
-    //                                 type: propertyKey,
-    //                                 value: segment.properties[propertyKey],
-    //                             });
-    //                         }
-    //                     }
-    //                 }
-
-    //                 top.content.push(nodeJson);
-    //                 break;
-
-    //             default:
-    //                 // throw for now when encountering something unknown
-    //                 throw new Error("Unknown marker");
-    //         }
+    // we do a fix up down the left edge for all the open nodes since we need to change the ordering. Likely
+    // better way to do this but holding off until better understand slice use
+    // if (content[0] && content[0]._open) {
+    //     let prev;
+    //     let current = content[0];
+    //     while (current) {
+    //         const next = current.content ? current.content[0] : undefined;
+    //         prev = current;
+    //         current = next;
     //     }
-
-    //     return true;
-    // });
-
-    // const fragment = null;
-    // const openStart = 0;
-    // const openEnd = 0;
-
-    // return new Slice(fragment, openStart, openEnd);
-// }
+    //     content[0] = prev;
+    // }
+    
+    return content;
+}
 
 // TODO a replace should be an entire group
 // iterate over all elements and create a new fragment

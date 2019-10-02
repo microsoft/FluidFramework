@@ -80,7 +80,7 @@ export class FluidCollabPlugin {
 
             const stepAsJson = step.toJSON();
             switch (stepAsJson.stepType) {
-                case "replace":
+                case "replace": {
                     const from = stepAsJson.from;
                     const to = stepAsJson.to;
 
@@ -103,9 +103,17 @@ export class FluidCollabPlugin {
                     this.sharedString.groupOperation(groupOp);
                     
                     break;
+                }
                 
-                case "replaceAround":
-                    console.log("Don't yet support replaceAround");
+                case "replaceAround": {
+                    let operations = new Array<IMergeTreeOp>();
+
+                    const from = stepAsJson.from;
+                    const to = stepAsJson.to;
+                    const gapFrom = stepAsJson.gapFrom;
+                    const gapTo = stepAsJson.gapTo;
+                    const insert = stepAsJson.insert;
+
                     // export class ReplaceAroundStep extends Step {
                     // :: (number, number, number, number, Slice, number, ?bool)
                     // Create a replace-around step with the given range and gap.
@@ -133,9 +141,34 @@ export class FluidCollabPlugin {
                     //     },
                     //     "structure": true
                     //     }
-                    break;
 
-                case "addMark":
+                    if (gapTo !== to) {
+                        const removeOp = createRemoveRangeOp(gapTo, to);
+                        operations.push(removeOp);
+                    }
+
+                    if (gapFrom !== from) {
+                        const removeOp = createRemoveRangeOp(from, gapFrom);
+                        operations.push(removeOp);
+                    }
+
+                    if (stepAsJson.slice) {
+                        const sliceOperations = sliceToGroupOps(
+                            from,
+                            stepAsJson.slice,
+                            this.schema,
+                            insert ? from + insert : insert,
+                            gapTo - gapFrom);
+                        operations = operations.concat(sliceOperations);
+                    }
+
+                    const groupOp = createGroupOp(...operations);
+                    this.sharedString.groupOperation(groupOp);
+
+                    break;
+                }
+
+                case "addMark": {
                     const attrs = stepAsJson.mark.attrs || true;
 
                     this.sharedString.annotateRange(
@@ -144,8 +177,9 @@ export class FluidCollabPlugin {
                         { [stepAsJson.mark.type]: attrs });
 
                     break;
+                }
 
-                case "removeMark":
+                case "removeMark": {
                     // Is there a way to actually clear an annotation?
                     this.sharedString.annotateRange(
                         stepAsJson.from,
@@ -153,6 +187,7 @@ export class FluidCollabPlugin {
                         { [stepAsJson.mark.type]: false });
 
                     break;
+                }
 
                 default:
             }
