@@ -33,7 +33,7 @@ should handle these events by constructing and setting the copied content on the
 other components should ignore these events. Instead, they will report their copied content, if any,
 via a different interface described below.
 
-Host components use can use their “selection” or equivalent concept to identify any nested
+Host components can use their “selection” or equivalent concept to identify any nested
 components involved. If the selection includes nested components, the host component
 should use the **IComponentClipboardProvider** interface on each of these nested component to acquire
 their contribution to the copied content, and combine it with its own copied content. These nested
@@ -68,7 +68,7 @@ nested components. As such, this functionality is currently left out of the inte
 
 ## Paste
 
-On paste, the target component should do the following:
+On paste, the target component of the paste event should do the following:
 
 1. Insert appropriate internal data for the content being pasted
 2. Either create nested components based on their **fluidUrlAttributeName** attribute found
@@ -77,23 +77,23 @@ On paste, the target component should do the following:
 
 At the moment, we support two different options for nested components:
 
-1. They are a linked copy and retrieve their content from fluid based on the **fluidUrlAttributeName** attribute
-   written during copy
+1. They are a linked copy and retrieve their content from fluid based on the **fluidUrlAttributeName**
+   attribute written during copy
 2. They are a new instance and can optionally retrieve content or state from the query parameters
    appended to the **fluidUrlAttributeName** attribute
 
 Choosing between the options above might require user input.
 
-**ComponentClipboardHelper.loadPastableComponent** is a helper method used for instantiating a nested
-component. It provides functionality to correctly parse and decode **sourceComponentURL**, which is
-the value of the **fluidUrlAttributeName** attribute on the nested component's HTML element. The nested
-component is created using the **componentIdentifier** contained in the **sourceComponentURL**.
+To instantiate a nested components, the target component should call createComponent on the target
+context (i.e. IComponentContext) using the component identifier found in the **fluidUrlAttributeName**
+attribute on the nested component's HTML element. 
 
-Some components implement **IComponentPastable.getComponentUrlOnPaste** to provide an alternate identifier.
-In this case, this alternate component should be loaded instead of the original component. In essence,
-the first loaded component may act as a factory for the component that will actually be used. The
-**ComponentClipboardHelper.loadPastableComponent** helper takes care this. It will call
-**IComponentPastable.getComponentUrlOnPaste** on the first component with any query parameters found in
-**sourceComponentURL**, and if that component returns an alternate component identifier, it will load the
-corresponding component and discard the original one. If first component does not return an alternate identifier
-or does not implement this interface, it will be loaded.
+Some components implement **IComponentPastable.getComponentUrlOnPaste** to provide an alternate component
+identifier. In this case, this alternate component should be loaded instead of the original component. In 
+essence, the first loaded component may act as a factory for the component that will actually be used. 
+The target component should call **IComponentPastable.getComponentUrlOnPaste** on the first component with
+any query parameters found in the value of the **fluidUrlAttributeName** attribute.
+
+If that component returns an alternate component identifier, this component identified should be used
+to load the component during paste and discard the original one. If first component does not return an 
+alternate identifier or does not implement this interface, it will be loaded.
