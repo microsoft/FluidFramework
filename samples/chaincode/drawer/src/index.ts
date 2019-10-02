@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@prague/component-core-interfaces";
+import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import {
     IContainerContext,
     IRuntime,
     IRuntimeFactory,
-} from "@prague/container-definitions";
-import { ContainerRuntime } from "@prague/container-runtime";
-import { IComponentFactory, FlushMode } from "@prague/runtime-definitions";
+} from "@microsoft/fluid-container-definitions";
+import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
+import { IComponentFactory, FlushMode } from "@microsoft/fluid-runtime-definitions";
 import { fluidExport as smde } from "./drawer";
 
 class DrawerDocumentFactory implements IRuntimeFactory {
@@ -18,11 +18,11 @@ class DrawerDocumentFactory implements IRuntimeFactory {
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
         const registry = new Map<string, Promise<IComponentFactory>>([
-            ["@chaincode/drawer", Promise.resolve(smde)],
+            ["@fluid-example/drawer", Promise.resolve(smde)],
         ]);
 
         const defaultComponentId = "default";
-        const defaultComponent = "@chaincode/drawer";
+        const defaultComponent = "@fluid-example/drawer";
 
         const runtime = await ContainerRuntime.load(
             context,

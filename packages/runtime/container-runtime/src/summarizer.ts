@@ -139,8 +139,8 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
                 const ack = op.contents as ISummaryAck | ISummaryNack;
                 if (ack.summaryProposal.summarySequenceNumber === this.pendingSummarySequenceNumber) {
                     this.logger.sendTelemetryEvent({
-                        eventName: "PendingSummaryAck",
-                        type: op.type,
+                        category: op.type === MessageType.SummaryAck ? "generic" : "error",
+                        eventName: op.type === MessageType.SummaryAck ? "SummaryAck" : "SummaryNack",
                         timePending: Date.now() - this.lastSummaryTime,
                         summarySequenceNumber: ack.summaryProposal.summarySequenceNumber,
                     });
@@ -161,7 +161,7 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
         if (this.summaryPending) {
             const pendingTime = Date.now() - this.lastSummaryTime;
             if (pendingTime > this.configuration.maxAckWaitTime) {
-                this.runtime.logger.sendTelemetryEvent({
+                this.logger.sendErrorEvent({
                     eventName: "SummaryAckWaitTimeout",
                     maxAckWaitTime: this.configuration.maxAckWaitTime,
                 });
@@ -194,20 +194,18 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
             this.summarizing = false;
         }).catch((error) => {
             this.cancelPending();
-            this.logger.sendErrorEvent({ eventName: "SummarizeError" }, error);
         });
     }
 
     private async summarizeCore(message: string) {
         const summarizingEvent = PerformanceEvent.start(this.logger,
-            { eventName: "Summarizing", stage: "start", message });
+            { eventName: "Summarizing", message });
 
         const summaryData = await this.generateSummary();
 
         const summaryEndTime = Date.now();
 
         summarizingEvent.end({
-            stage: "end",
             ...summaryData,
             opsSinceLastSummary: summaryData.sequenceNumber - this.lastSummarySeqNumber,
             timeSinceLastSummary: summaryEndTime - this.lastSummaryTime,

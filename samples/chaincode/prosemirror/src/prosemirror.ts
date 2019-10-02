@@ -33,8 +33,10 @@ import { EditorView } from "prosemirror-view";
 import { Schema, NodeSpec } from "prosemirror-model";
 import { addListNodes } from "prosemirror-schema-list";
 import { exampleSetup } from "prosemirror-example-setup";
+import { IProseMirrorNode, nodeTypeKey } from "./fluidBridge";
 import { FluidCollabPlugin } from "./fluidPlugin";
 import { schema } from "./fluidSchema";
+import { create as createSelection } from "./selection";
 
 require("prosemirror-view/style/prosemirror.css");
 require("prosemirror-menu/style/menu.css");
@@ -42,8 +44,6 @@ require("prosemirror-example-setup/style/style.css");
 require("./style.css");
 
 import OrderedMap = require('orderedmap');
-
-const nodeTypeKey = "nodeType";
 
 function createTreeMarkerOps(
     treeRangeLabel: string,
@@ -72,13 +72,6 @@ function createTreeMarkerOps(
             type: MergeTreeDeltaType.INSERT,
         },
     ];
-}
-
-interface IProseMirrorNode {
-    [key: string]: any;
-    type: string,
-    content?: IProseMirrorNode[],
-    marks?: any[],
 }
 
 export class ProseMirror extends EventEmitter implements IComponentLoadable, IComponentRouter, IComponentHTMLVisual {
@@ -253,7 +246,9 @@ export class ProseMirror extends EventEmitter implements IComponentLoadable, ICo
 
         const state = EditorState.create({
             doc: fluidDoc,
-            plugins: exampleSetup({ schema: fluidSchema }).concat(fluidPlugin.plugin),
+            plugins: exampleSetup({ schema: fluidSchema })
+                .concat(fluidPlugin.plugin)
+                .concat(createSelection()),
         });
 
         this.editorView = new EditorView(
@@ -292,7 +287,3 @@ class ProseMirrorFactory implements IComponentFactory {
 }
 
 export const fluidExport = new ProseMirrorFactory();
-
-export function instantiateComponent(context: IComponentContext): void {
-    fluidExport.instantiateComponent(context);
-}

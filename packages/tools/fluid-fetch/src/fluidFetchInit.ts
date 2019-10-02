@@ -122,14 +122,14 @@ function getClientConfig() {
         get clientId() {
             if (!process.env.login__microsoft__clientId) {
                 throw new Error("ODSP clientId/secret must be set as environment variables. " +
-                    "Please run the script at https://github.com/microsoft/Prague/tree/master/tools/getkeys");
+                    "Please run the script at https://github.com/microsoft/FluidFramework/tree/master/tools/getkeys");
             }
             return process.env.login__microsoft__clientId;
         },
         get clientSecret() {
             if (!process.env.login__microsoft__secret) {
                 throw new Error("ODSP clientId/secret must be set as environment variables. " +
-                    "Please run the script at https://github.com/microsoft/Prague/tree/master/tools/getkeys");
+                    "Please run the script at https://github.com/microsoft/FluidFramework/tree/master/tools/getkeys");
             }
             return process.env.login__microsoft__secret;
         },

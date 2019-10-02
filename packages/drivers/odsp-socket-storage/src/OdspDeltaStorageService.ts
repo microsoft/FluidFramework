@@ -30,11 +30,10 @@ export class OdspDeltaStorageService implements api.IDocumentDeltaStorageService
         from?: number,
         to?: number,
     ): Promise<api.ISequencedDocumentMessage[]> {
-        if (this.ops !== undefined && from !== undefined) {
-            const returnOps = this.ops;
-            this.ops = undefined;
-
-            return returnOps.filter((op) => op.sequenceNumber > from).map((op) => op.op);
+        const ops = this.ops;
+        this.ops = undefined;
+        if (ops !== undefined && from !== undefined) {
+            return ops.filter((op) => op.sequenceNumber > from).map((op) => op.op);
         }
         this.ops = undefined;
 

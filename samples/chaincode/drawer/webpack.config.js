@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+const fluidRoute = require("@microsoft/fluid-webpack-component-loader");
 const path = require("path");
 const merge = require("webpack-merge");
 
@@ -39,14 +40,16 @@ module.exports = env => {
             path: path.resolve(__dirname, "dist"),
             library: "[name]",
             // https://github.com/webpack/webpack/issues/5767
-            // https://github.com/webpack/webpack/issues/7939            
+            // https://github.com/webpack/webpack/issues/7939
             devtoolNamespace: chaincodeName,
             libraryTarget: "umd"
         },
         devServer: {
             publicPath: '/dist',
             stats: "minimal",
-            host: "0.0.0.0"
+            host: "0.0.0.0",
+            before: fluidRoute.before,
+            after: (app, server) => fluidRoute.after(app, server, __dirname, env),
         }
     }, isProduction
         ? require("./webpack.prod")
