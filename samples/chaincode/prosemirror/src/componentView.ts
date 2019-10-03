@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { Node } from "prosemirror-model";
 import { EditorView, NodeView } from "prosemirror-view";
 import { ILoader } from "@microsoft/fluid-container-definitions";

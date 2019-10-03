@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { StepMap } from "prosemirror-transform";
 import { keymap } from "prosemirror-keymap";
 import { undo, redo } from "prosemirror-history";
