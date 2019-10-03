@@ -7,7 +7,7 @@ msRestAzure = require('ms-rest-azure');
 keyVault = require('azure-keyvault');
 const { exec } = require('child_process');
 
-(async () => {
+async function getKeys() {
     credentials = await msRestAzure.interactiveLogin();
     const keyVaultClient = new keyVault.KeyVaultClient(credentials);
     const vaultUri = "https://" + "prague-key-vault" + ".vault.azure.net/";
@@ -24,7 +24,7 @@ const { exec } = require('child_process');
             });
         }
     }
-})();
+}
 
 function setEnv(name, value) {
     const shell = process.env.SHELL ? process.env.SHELL.split('/').pop() : null;
@@ -45,3 +45,9 @@ function setEnv(name, value) {
 function stdResponse(err, stdout, stderr) {
     console.log(err ? err : (stderr || stdout) ? stderr + stdout : "done");
 }
+
+if (require.main === module) {
+    getKeys();
+}
+
+module.exports.getKeys = getKeys;
