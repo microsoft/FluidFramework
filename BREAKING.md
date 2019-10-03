@@ -12,6 +12,7 @@
 - [`.createValueType` replaces third argument to `.set`](#.createValueType-replaces-third-argument-to-.set)
 - [Package rename](#package-rename)
 - [Support for IPraguePackage removed](#support-for-IPraguePackage-removed)
+- [`IComponentForge` no longer necessary](#icomponentforge-no-longer-necessary)
 
 
 ## `@fluid-example/tiny-web-host` prague -> fluid changes
@@ -170,6 +171,10 @@ Support for IPraguePackage and the `"prague"` entry in `package.json` has been r
     }
   },
 ```
+
+## `IComponentForge` no longer necessary
+
+`IComponentForge` is no longer necessary. If you use Aqueduct for your component, Component initialization will be done automatically on creation, so no need to call `IComponentForge.forge` explicitly any more.  If you implement IComponentForge, simply remove it.
 
 # 0.9 Breaking Changes (August 26, 2019)
 
