@@ -1,5 +1,5 @@
 {
-  "name": "@chaincode/persona",
+  "name": "@fluid-example/persona",
   "description": "Fluid user persona document",
   "version": "0.10.0",
   "author": "Microsoft",
