@@ -402,6 +402,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             const maxFetchTo = from + MaxBatchDeltas;
             const fetchTo = to === undefined ? maxFetchTo : Math.min(maxFetchTo, to);
 
+            let requests = 0;
             let deltasRetrievedLast = 0;
             let success = true;
             let canRetry = false;
@@ -413,6 +414,8 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 }
 
                 const deltaStorage = await this.deltaStorageP!;
+
+                requests++;
 
                 // Grab a chunk of deltas - limit the number fetched to MaxBatchDeltas
                 canRetry = true;
@@ -434,7 +437,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 //    any more, thus it's time to leave
                 // 2) else case: if we got what we asked (to - 1) or more, then time to leave.
                 if (to === undefined ? lastFetch < maxFetchTo - 1 : to - 1 <= lastFetch) {
-                    telemetryEvent.end({ lastFetch, totalDeltas: allDeltas.length, retries: retry });
+                    telemetryEvent.end({ lastFetch, totalDeltas: allDeltas.length, requests });
                     return allDeltas;
                 }
 
@@ -448,6 +451,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                         eventName: "GetDeltas_Error",
                         fetchTo,
                         from,
+                        requests,
                         retry: retry + 1,
                     },
                     error);
@@ -461,28 +465,30 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 success = false;
             }
 
-            retry++;
             let delay: number;
             if (deltasRetrievedLast !== 0) {
                 delay = 0;
+                retry = 0; // start calculating timeout over if we got some ops
             } else {
+                retry++;
                 delay = Math.min(MaxFetchDelay, MissingFetchDelay * Math.pow(2, retry));
-            }
 
-            // Chances that we will get something from storage after that many retries is zero.
-            // We wait 10 seconds between most of retries, so that's 16 minutes of waiting!
-            // Note - it's very important that we differentiate connected state from possibly disconnected state!
-            // Only bail out if we successfully connected to storage, but there were no ops
-            // One (last) successful connection is sufficient, even if user was disconnected all prior attempts
-            if (success && retry >= 100) {
-                telemetryEvent.cancel({
-                    reason: "too many retries",
-                    retry,
-                    deltasRetrievedTotal: allDeltas.length,
-                    replayFrom: from,
-                    to });
-                this.closeOnConnectionError(new Error());
-                return [];
+                // Chances that we will get something from storage after that many retries is zero.
+                // We wait 10 seconds between most of retries, so that's 16 minutes of waiting!
+                // Note - it's very important that we differentiate connected state from possibly disconnected state!
+                // Only bail out if we successfully connected to storage, but there were no ops
+                // One (last) successful connection is sufficient, even if user was disconnected all prior attempts
+                if (success && retry >= 100) {
+                    telemetryEvent.cancel({
+                        reason: "too many retries",
+                        retry,
+                        requests,
+                        deltasRetrievedTotal: allDeltas.length,
+                        replayFrom: from,
+                        to });
+                    this.closeOnConnectionError(new Error("Failed to retrieve ops from storage: giving up after too many retries"));
+                    return [];
+                }
             }
 
             telemetryEvent.reportProgress({
@@ -490,6 +496,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 deltasRetrievedLast,
                 deltasRetrievedTotal: allDeltas.length,
                 replayFrom: from,
+                requests,
                 retry,
                 success,
             });
