@@ -305,7 +305,7 @@ export class ProseMirror extends EventEmitter implements IComponentLoadable, ICo
                         return new ComponentView(node, view, getPos, this.runtime.loader);
                     },
                     footnote: (node, view, getPos) => {
-                        return new FootnoteView(node, view, getPos);
+                        return new FootnoteView(node, view, getPos, this.runtime.loader);
                     },
                 }
             });

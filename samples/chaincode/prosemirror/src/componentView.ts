@@ -17,7 +17,7 @@ export class ComponentView implements NodeView {
     constructor(
         public node: Node,
         public outerView: EditorView,
-        public getPos: () => number,
+        public getPos: (() => number) | boolean,
         public loader: ILoader,
     ) {
         // The node's representation in the editor (empty, for now)

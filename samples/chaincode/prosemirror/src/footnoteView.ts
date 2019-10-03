@@ -8,6 +8,8 @@ import { keymap } from "prosemirror-keymap";
 import { undo, redo } from "prosemirror-history";
 import { EditorView } from "prosemirror-view";
 import { EditorState } from "prosemirror-state";
+import { ILoader } from "@microsoft/fluid-container-definitions";
+import { ComponentView } from "./componentView";
 
 export class FootnoteView {
     public node;
@@ -16,7 +18,7 @@ export class FootnoteView {
     public dom;
     public innerView;
 
-    constructor(node, view, getPos) {
+    constructor(node, view, getPos, private loader: ILoader) {
         // We'll need these later
         this.node = node
         this.outerView = view
@@ -27,6 +29,7 @@ export class FootnoteView {
         // These are used when the footnote is selected
         this.innerView = null
     }
+
     selectNode() {
         this.dom.classList.add("ProseMirror-selectednode")
         if (!this.innerView) this.open()
@@ -36,6 +39,7 @@ export class FootnoteView {
         this.dom.classList.remove("ProseMirror-selectednode")
         if (this.innerView) this.close()
     }
+
     open() {
         // Append a tooltip to the outer node
         let tooltip = this.dom.appendChild(document.createElement("div"))
@@ -50,6 +54,11 @@ export class FootnoteView {
                     "Mod-y": () => redo(this.outerView.state, this.outerView.dispatch)
                 })]
             }),
+            nodeViews: {
+                fluid: (node, view, getPos) => {
+                    return new ComponentView(node, view, getPos, this.loader);
+                },
+            },
             // This is the magic part
             dispatchTransaction: this.dispatchInner.bind(this),
             handleDOMEvents: {
@@ -69,6 +78,7 @@ export class FootnoteView {
         this.innerView = null
         this.dom.textContent = ""
     }
+
     dispatchInner(tr) {
         let { state, transactions } = this.innerView.state.applyTransaction(tr)
         this.innerView.updateState(state)
@@ -83,6 +93,7 @@ export class FootnoteView {
             if (outerTr.docChanged) this.outerView.dispatch(outerTr)
         }
     }
+
     update(node) {
         if (!node.sameMarkup(this.node)) return false
         this.node = node
@@ -101,6 +112,7 @@ export class FootnoteView {
         }
         return true
     }
+
     destroy() {
         if (this.innerView) this.close()
     }
