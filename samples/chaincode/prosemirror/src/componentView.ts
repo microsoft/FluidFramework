@@ -1,108 +1,87 @@
-import { StepMap } from "prosemirror-transform";
-import { keymap } from "prosemirror-keymap";
-import { undo, redo } from "prosemirror-history";
-import { EditorView } from "prosemirror-view";
-import { EditorState } from "prosemirror-state";
+import { Node } from "prosemirror-model";
+import { EditorView, NodeView } from "prosemirror-view";
+import { ILoader } from "@microsoft/fluid-container-definitions";
+import { IComponent, IComponentHTMLRender, IComponentHTMLView } from "@microsoft/fluid-component-core-interfaces";
 
-export class ComponentView {
+export class ComponentView implements NodeView {
     public dom: HTMLElement;
     public innerView;
+    
+    private renderable: IComponentHTMLView | IComponentHTMLRender;
 
-    constructor(public node, public outerView, public getPos) {
+    constructor(
+        public node: Node,
+        public outerView: EditorView,
+        public getPos: () => number,
+        public loader: ILoader,
+    ) {
         // The node's representation in the editor (empty, for now)
-        this.dom = document.createElement("fluid")
-
-        // These are used when the footnote is selected
-        this.innerView = null
+        this.dom = document.createElement("fluid");
+        const src = node.attrs["src"];
+        this.load(src);
     }
 
     selectNode() {
-        this.dom.classList.add("ProseMirror-selectednode")
-        if (!this.innerView) this.open()
+        this.dom.classList.add("ProseMirror-selectednode");
     }
 
     deselectNode() {
-        this.dom.classList.remove("ProseMirror-selectednode")
-        if (this.innerView) this.close()
-    }
-
-    open() {
-        // Append a tooltip to the outer node
-        let tooltip = this.dom.appendChild(document.createElement("div"))
-        tooltip.className = "footnote-tooltip"
-        // And put a sub-ProseMirror into that
-        this.innerView = new EditorView(tooltip, {
-            // You can use any node as an editor document
-            state: EditorState.create({
-                doc: this.node,
-                plugins: [keymap({
-                    "Mod-z": () => undo(this.outerView.state, this.outerView.dispatch),
-                    "Mod-y": () => redo(this.outerView.state, this.outerView.dispatch)
-                })]
-            }),
-            // This is the magic part
-            dispatchTransaction: this.dispatchInner.bind(this),
-            handleDOMEvents: {
-                mousedown: () => {
-                    // Kludge to prevent issues due to the fact that the whole
-                    // footnote is node-selected (and thus DOM-selected) when
-                    // the parent editor is focused.
-                    if (this.outerView.hasFocus()) this.innerView.focus()
-
-                    // not sure whether true or false
-                    return false;
-                }
-            }
-        })
-    }
-
-    close() {
-        this.innerView.destroy()
-        this.innerView = null
-        this.dom.textContent = ""
+        this.dom.classList.remove("ProseMirror-selectednode");
     }
 
     dispatchInner(tr) {
-        let { state, transactions } = this.innerView.state.applyTransaction(tr)
-        this.innerView.updateState(state)
-
-        if (!tr.getMeta("fromOutside")) {
-            let outerTr = this.outerView.state.tr, offsetMap = StepMap.offset(this.getPos() + 1)
-            for (let i = 0; i < transactions.length; i++) {
-                let steps = transactions[i].steps
-                for (let j = 0; j < steps.length; j++)
-                    outerTr.step(steps[j].map(offsetMap))
-            }
-            if (outerTr.docChanged) this.outerView.dispatch(outerTr)
-        }
     }
 
     update(node) {
-        if (!node.sameMarkup(this.node)) return false
-        this.node = node
-        if (this.innerView) {
-            let state = this.innerView.state
-            let start = node.content.findDiffStart(state.doc.content)
-            if (start != null) {
-                let { a: endA, b: endB } = node.content.findDiffEnd(state.doc.content)
-                let overlap = start - Math.min(endA, endB)
-                if (overlap > 0) { endA += overlap; endB += overlap }
-                this.innerView.dispatch(
-                    state.tr
-                        .replace(start, endB, node.slice(start, endA))
-                        .setMeta("fromOutside", true))
-            }
-        }
-        return true
+        return true;
     }
 
     destroy() {
-        if (this.innerView) this.close()
     }
 
-    stopEvent(event) {
-        return this.innerView && this.innerView.dom.contains(event.target)
+    private load(url: string) {
+        this.attach(url);
+        const containerP = this.loader.resolve({ url });
+        containerP.then((container) => {
+            container.on("contextChanged", (value) => {
+                this.attach(url);
+            });
+        })
     }
 
-    ignoreMutation() { return true }
+    private attach(url: string) {
+        const loadP = this.loader.request({ url });
+        const componentP = loadP.then(
+            (result) => {
+                if (result.mimeType !== "fluid/component") {
+                    return Promise.reject<IComponent>();
+                }
+
+                const component = result.value as IComponent;
+                if (!component.IComponentHTMLVisual) {
+                    return Promise.reject<IComponent>();
+                }
+
+                return component;
+            });
+
+        componentP.then(
+            (component) => {
+                // clear any previous content
+                this.dom.innerHTML = "";
+
+                // Remove the previous view
+                if (this.renderable && "remove" in this.renderable) {
+                    this.renderable.remove();
+                }
+
+                const visual = component.IComponentHTMLVisual;
+                this.renderable = visual.addView ? visual.addView() : visual;
+                this.renderable.render(this.dom);
+            },
+            (error) => {
+                // fall back to URL if can't load
+                this.dom.innerHTML = `<a href="${url}">${url}</a>`;
+            });
+    }
 }

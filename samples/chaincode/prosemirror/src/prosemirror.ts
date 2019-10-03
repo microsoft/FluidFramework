@@ -260,7 +260,7 @@ export class ProseMirror extends EventEmitter implements IComponentLoadable, ICo
                 openPrompt({
                     title: "Insert component",
                     fields: {
-                        url: new TextField({ label: "Url", required: true, value: attrs && attrs.src }),
+                        src: new TextField({ label: "Url", required: true, value: attrs && attrs.src }),
                         title: new TextField({ label: "Title", value: attrs && attrs.title }),
                         alt: new TextField({
                             label: "Description",
@@ -302,7 +302,7 @@ export class ProseMirror extends EventEmitter implements IComponentLoadable, ICo
                 state,
                 nodeViews: {
                     fluid: (node, view, getPos) => {
-                        return new ComponentView(node, view, getPos);
+                        return new ComponentView(node, view, getPos, this.runtime.loader);
                     },
                     footnote: (node, view, getPos) => {
                         return new FootnoteView(node, view, getPos);
