@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
-import { BatchManager, NetworkError } from "@microsoft/fluid-core-utils";
+import { BatchManager, NetworkError, TelemetryNullLogger } from "@microsoft/fluid-core-utils";
 import {
     ConnectionMode,
     IClient,
@@ -69,9 +69,12 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         url: string,
         mode: ConnectionMode,
         url2?: string,
-        logger?: ITelemetryLogger): Promise<IDocumentDeltaConnection> {
+        telemetryLogger?: ITelemetryLogger): Promise<IDocumentDeltaConnection> {
             // tslint:disable-next-line: strict-boolean-expressions
-            const canRetry = !!url2;
+            const hasUrl2 = !!url2;
+
+            // Create null logger if telemetry logger is not available from caller
+            const logger = telemetryLogger ? telemetryLogger : new TelemetryNullLogger();
 
             return this.createImpl(
                 tenantId,
@@ -81,26 +84,30 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
                 client,
                 url,
                 mode,
-                canRetry,
+                hasUrl2 ? 15000 : 20000,
             // tslint:disable-next-line: promise-function-async
             ).catch((error) => {
-                if (error instanceof NetworkError && error.canRetry && canRetry) {
-                    debug(`Socket connection error on non-AFD URL. Error was [${error}]. Retry on AFD URL: ${url}`);
-                    if (logger) {
+                if (error instanceof NetworkError && hasUrl2) {
+                    if (error.message === "connect_error" || error.message === "connect_timeout") {
+                        debug(`Socket connection error on non-AFD URL. Error was [${error}]. Retry on AFD URL: ${url}`);
+
                         logger.sendTelemetryEvent({ eventName: "UseAfdUrl" });
+
+                        return this.createImpl(
+                            tenantId,
+                            id,
+                            token,
+                            io,
+                            client,
+                            // tslint:disable-next-line: no-non-null-assertion
+                            url2!,
+                            mode,
+                            20000,
+                        );
                     }
-                    return this.createImpl(
-                        tenantId,
-                        id,
-                        token,
-                        io,
-                        client,
-                        // tslint:disable-next-line: no-non-null-assertion
-                        url2!,
-                        mode,
-                        false,
-                    );
                 }
+
+                logger.sendTelemetryEvent({ eventName: "FailedAfdUrl" });
 
                 throw error;
             });
@@ -115,6 +122,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
      * @param io - websocket library
      * @param client - information about the client
      * @param url - websocket URL
+     * @param timeoutMs - timeout for socket connection attempt in milliseconds
      */
     // tslint:disable-next-line: max-func-body-length
     private static async createImpl(
@@ -125,7 +133,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         client: IClient,
         url: string,
         mode: ConnectionMode,
-        canRetry: boolean): Promise<IDocumentDeltaConnection> {
+        timeoutMs: number): Promise<IDocumentDeltaConnection> {
 
         // Note on multiplex = false:
         // Temp fix to address issues on SPO. Scriptor hits same URL for Fluid & Notifications.
@@ -141,7 +149,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
                 },
                 reconnection: false,
                 transports: ["websocket"],
-                timeout: 15000,
+                timeout: timeoutMs,
             });
 
         const connectMessage: IConnect = {
@@ -180,12 +188,12 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
             // Listen for connection issues
             socket.on("connect_error", (error) => {
                 debug(`Socket connection error: [${error}]`);
-                reject(createErrorObject("connect_error", error, canRetry));
+                reject(createErrorObject("connect_error", error));
             });
 
             // Listen for timeouts
             socket.on("connect_timeout", () => {
-                reject(createErrorObject("connect_timeout", "Socket connection timed out", canRetry));
+                reject(createErrorObject("connect_timeout", "Socket connection timed out"));
             });
 
             socket.on("connect_document_success", (response: IConnected) => {
