@@ -484,6 +484,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     // Local copy of sent but unacknowledged chunks.
     private readonly unackedChunkedMessages: Map<number, IBufferedChunk> = new Map<number, IBufferedChunk>();
 
+    private loadedFromSummary: boolean;
+
     private constructor(
         private readonly context: IContainerContext,
         private readonly registry: IComponentRegistry,
@@ -497,9 +499,9 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         this.IComponentHandleContext = new ComponentHandleContext("", this);
 
         // Extract components stored inside the snapshot
-        const loadedFromSummary = context.baseSnapshot.trees[".protocol"] ? true : false;
+        this.loadedFromSummary = context.baseSnapshot.trees[".protocol"] ? true : false;
         const components = new Map<string, ISnapshotTree | string>();
-        if (loadedFromSummary) {
+        if (this.loadedFromSummary) {
             Object.keys(context.baseSnapshot.trees).forEach((value) => {
                 if (value !== ".protocol") {
                     const tree = context.baseSnapshot.trees[value];
@@ -529,7 +531,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         this.logger = context.logger;
 
         this.deltaManager.on("allSentOpsAckd", () => {
-            this.logger.debugAssert(this.connected, { eventName: "allSentOpsAckd in disconnected state" });
             this.updateDocumentDirtyState(false);
         });
 
@@ -544,6 +545,9 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             this.clearPartialChunks(clientId);
         });
 
+        this.context.on("refreshBaseSummary",
+            (snapshot: ISnapshotTree) => this.refreshBaseSummary(snapshot));
+
         const summaryConfiguration = context.serviceConfiguration
             ? { ...DefaultSummaryConfiguration, ...context.serviceConfiguration.summary }
             : DefaultSummaryConfiguration;
@@ -556,10 +560,12 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             "/_summarizer",
             this,
             summaryConfiguration,
-            () => this.generateSummary(!loadedFromSummary));
+            () => this.generateSummary(!this.loadedFromSummary),
+            (snapshot) => this.context.refreshBaseSummary(snapshot));
 
         // Create the SummaryManager and mark the initial state
-        this.summaryManager = new SummaryManager(context, this.runtimeOptions.generateSummaries || loadedFromSummary);
+        this.summaryManager = new SummaryManager(
+            context, this.runtimeOptions.generateSummaries || this.loadedFromSummary);
         if (this.context.connectionState === ConnectionState.Connected) {
             this.summaryManager.setConnected(this.context.clientId);
         }
@@ -567,10 +573,10 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     public get IComponentTokenProvider() {
 
         // tslint:disable-next-line: no-unsafe-any
-        if (this.options && this.options.config && this.options.config.intelligence) {
+        if (this.options && this.options.intelligence) {
             return  {
                 // tslint:disable-next-line: no-unsafe-any
-                intelligence: this.options.config.intelligence,
+                intelligence: this.options.intelligence,
             } as IComponentTokenProvider;
         }
         return undefined;
@@ -635,9 +641,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                     });
                 }
                 const parent = commit ? [commit] : [];
-                const version = await this.storage
-                    .write(snapshot, parent, `${componentId} commit ${tagMessage}`, componentId);
-                value.updateBaseId(version.treeId);
+                const version = await this.storage.write(
+                    snapshot, parent, `${componentId} commit ${tagMessage}`, componentId);
 
                 return {
                     id: componentId,
@@ -836,19 +841,19 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         }
     }
 
-    public async createComponent(idOrPkg: string, maybePkg?: string) {
+    public async createComponent(idOrPkg: string, maybePkg?: string | string[]) {
         const id = maybePkg === undefined ? uuid() : idOrPkg;
         const pkg = maybePkg === undefined ? idOrPkg : maybePkg;
         return this._createComponentWithProps(pkg, undefined, id);
     }
 
     // tslint:disable-next-line: function-name
-    public async _createComponentWithProps(pkg: string, props: any, id: string): Promise<IComponentRuntime> {
+    public async _createComponentWithProps(pkg: string | string[], props: any, id: string): Promise<IComponentRuntime> {
         this.verifyNotClosed();
 
         const context = new LocalComponentContext(
             id,
-            [pkg],
+            Array.isArray(pkg) ? pkg : [pkg],
             this,
             this.storage,
             this.context.scope,
@@ -908,6 +913,18 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
      */
     public isDocumentDirty(): boolean {
         return this.dirtyDocument;
+    }
+
+    private refreshBaseSummary(snapshot: ISnapshotTree) {
+        // currently only is called from summaries
+        this.loadedFromSummary = true;
+        // propogate updated tree to all components
+        for (const key of Object.keys(snapshot.trees)) {
+            if (this.contexts.has(key)) {
+                const component = this.contexts.get(key);
+                component.refreshBaseSummary(snapshot.trees[key]);
+            }
+        }
     }
 
     /**
@@ -1085,7 +1102,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                 ...treeWithStats.summaryStats,
             };
         } catch (ex) {
-            this.logger.logException({ eventName: "GenerateSummaryExceptionError" }, ex);
+            this.logger.logException({ eventName: "Summarizer:GenerateSummaryExceptionError" }, ex);
             throw ex;
         } finally {
             // Restart the delta manager

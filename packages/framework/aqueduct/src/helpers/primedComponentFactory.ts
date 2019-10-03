@@ -4,7 +4,7 @@
  */
 
 import { DirectoryFactory, MapFactory, SharedDirectory, SharedMap } from "@microsoft/fluid-map";
-import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { ComponentRegistryTypes, IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { SharedComponent } from "../components/sharedComponent";
 import { SharedComponentFactory } from "./sharedComponentFactory";
@@ -13,6 +13,7 @@ export class PrimedComponentFactory extends SharedComponentFactory {
     constructor(
         ctor: new (runtime: IComponentRuntime, context: IComponentContext) => SharedComponent,
         sharedObjects: ReadonlyArray<ISharedObjectFactory>,
+        componentRegistry?: ComponentRegistryTypes,
         onDemandInstantiation = true,
     ) {
         const mergedObjects = [...sharedObjects];
@@ -32,6 +33,6 @@ export class PrimedComponentFactory extends SharedComponentFactory {
             mergedObjects.push(SharedMap.getFactory());
         }
 
-        super(ctor, mergedObjects, onDemandInstantiation);
+        super(ctor, mergedObjects, componentRegistry!, onDemandInstantiation);
     }
 }

@@ -253,7 +253,14 @@ export interface IComponentContext extends EventEmitter {
      * @param pkgOrId - Package name if a second parameter is not provided. Otherwise an explicit ID.
      * @param pkg - Package name of the component. Optional and only required if specifying an explicit ID.
      */
-    createComponent(pkgOrId: string, pkg?: string): Promise<IComponentRuntime>;
+    createComponent(pkgOrId: string, pkg?: string | string[]): Promise<IComponentRuntime>;
+
+    /**
+     * Creates a new component by using subregistries.
+     * @param pkg - Package name of the component.
+     * @param props - properties to be passed to the instantiateComponent thru the context.
+     */
+    createSubComponent(pkg: string, props?: any): Promise<IComponentRuntime>;
 
     /**
      * Returns the runtime of the component.
@@ -337,7 +344,7 @@ export interface IHostRuntime extends
      * @param pkgOrId - Package name if a second parameter is not provided. Otherwise an explicit ID.
      * @param pkg - Package name of the component. Optional and only required if specifying an explicit ID.
      */
-    createComponent(pkgOrId: string, pkg?: string): Promise<IComponentRuntime>;
+    createComponent(pkgOrId: string, pkg?: string | string[]): Promise<IComponentRuntime>;
 
     /**
      * Creates a new component with props
@@ -350,7 +357,7 @@ export interface IHostRuntime extends
      * Further change to the component create flow to split the local create vs remote instantiate make this deprecated.
      * @internal
      */
-    _createComponentWithProps(pkg: string, props: any, id: string): Promise<IComponentRuntime>;
+    _createComponentWithProps(pkg: string | string[], props: any, id: string): Promise<IComponentRuntime>;
 
     /**
      * Returns the current quorum.

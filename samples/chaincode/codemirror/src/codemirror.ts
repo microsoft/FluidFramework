@@ -11,13 +11,15 @@ import {
     IComponentHTMLOptions,
     IComponentHTMLVisual,
     IComponentHandle,
-} from "@prague/component-core-interfaces";
-import { ComponentRuntime } from "@prague/component-runtime";
-import { ISharedMap, SharedMap } from "@prague/map";
-import { MergeTreeDeltaType, TextSegment, ReferenceType, reservedTileLabelsKey, Marker } from "@prague/merge-tree";
-import { IComponentContext, IComponentFactory, IComponentRuntime } from "@prague/runtime-definitions";
-import { SharedString } from "@prague/sequence";
-import { ISharedObjectFactory } from "@prague/shared-object-common";
+    IComponent,
+    IComponentHTMLView,
+} from "@microsoft/fluid-component-core-interfaces";
+import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
+import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
+import { MergeTreeDeltaType, TextSegment, ReferenceType, reservedTileLabelsKey, Marker } from "@microsoft/fluid-merge-tree";
+import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { SharedString, SequenceDeltaEvent } from "@microsoft/fluid-sequence";
+import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import * as CodeMirror from "codemirror";
 import { EventEmitter } from "events";
 
@@ -26,9 +28,156 @@ require("./style.css");
 
 require("codemirror/mode/javascript/javascript.js");
 
-export class Smde extends EventEmitter implements IComponentLoadable, IComponentRouter, IComponentHTMLVisual {
+class CodemirrorView implements IComponentHTMLView {
+    private textArea: HTMLTextAreaElement;
+    private codeMirror: CodeMirror.EditorFromTextArea;
+    
+    // TODO would be nice to be able to distinguish local edits across different uses of a sequence so that when
+    // bridging to another model we know which one to update
+    private updatingSequence: boolean;
+    private updatingCodeMirror: boolean;
+
+    private sequenceDeltaCb: any;
+
+    constructor(private text: SharedString) {
+    }
+
+    public remove(): void {
+        // text area being removed will dispose of CM
+        // https://stackoverflow.com/questions/18828658/how-to-kill-a-codemirror-instance
+
+        if (this.sequenceDeltaCb) {
+            this.text.removeListener("sequenceDelta", this.sequenceDeltaCb);
+            this.sequenceDeltaCb = undefined;
+        }
+    }
+    
+    public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
+        // create base textarea
+        if (!this.textArea) {
+            this.textArea = document.createElement("textarea");
+        }
+
+        // reparent if needed
+        if (this.textArea.parentElement !== elm) {
+            this.textArea.remove();
+            elm.appendChild(this.textArea);
+        }
+
+        if (!this.codeMirror) {
+            this.setupEditor();
+        }
+    }
+
+    private setupEditor() {
+        this.codeMirror = CodeMirror.fromTextArea(
+            this.textArea,
+            {
+                lineNumbers: true,
+                mode: "text/typescript",
+                viewportMargin: Infinity,
+            });
+
+        const { parallelText } = this.text.getTextAndMarkers("pg");
+        const text = parallelText.join("\n");
+        this.codeMirror.setValue(text);
+
+        this.codeMirror.on(
+            "beforeChange",
+            (instance, changeObj) => {
+                // Ignore this callback if it is a local change
+                if (this.updatingSequence) {
+                    return;
+                }
+
+                // mark that our editor is making the edit
+                this.updatingCodeMirror = true;
+
+                const doc = instance.getDoc();
+
+                // we add in line to adjust for paragraph markers
+                let from = doc.indexFromPos(changeObj.from);
+                const to = doc.indexFromPos(changeObj.to);
+
+                if (from !== to) {
+                    this.text.removeText(from, to);
+                }
+
+                const text = changeObj.text as string[];
+                text.forEach((value, index) => {
+                    // Insert the updated text
+                    if (value) {
+                        this.text.insertText(from, value);
+                        from += value.length;
+                    }
+
+                    // Add in a paragraph marker if this is a multi-line update
+                    if (index !== text.length - 1) {
+                        this.text.insertMarker(
+                            from,
+                            ReferenceType.Tile,
+                            { [reservedTileLabelsKey]: ["pg"] });
+                        from++;
+                    }
+                });
+
+                this.updatingCodeMirror = false;
+            });
+
+        this.sequenceDeltaCb = (ev: SequenceDeltaEvent) => {
+            // If in the middle of making an editor change to our instance we can skip this update
+            if (this.updatingCodeMirror) {
+                return;
+            }
+
+            // mark that we are making a local edit so that when "beforeChange" fires we don't attempt
+            // to submit new ops
+            this.updatingSequence = true;
+    
+            const doc = this.codeMirror.getDoc();
+            for (const range of ev.ranges) {
+                const segment = range.segment;
+    
+                if (range.operation === MergeTreeDeltaType.INSERT) {
+                    if (TextSegment.is(segment)) {
+                        doc.replaceRange(
+                            segment.text,
+                            doc.posFromIndex(range.position));
+                    } else if (Marker.is(segment)) {
+                        doc.replaceRange(
+                            "\n",
+                            doc.posFromIndex(range.position));
+                    }
+                } else if (range.operation === MergeTreeDeltaType.REMOVE) {
+                    if (TextSegment.is(segment)) {
+                        const textSegment = range.segment as TextSegment;
+                        doc.replaceRange(
+                            "",
+                            doc.posFromIndex(range.position),
+                            doc.posFromIndex(range.position + textSegment.text.length));
+                    } else if (Marker.is(segment)) {
+                        doc.replaceRange(
+                            "",
+                            doc.posFromIndex(range.position),
+                            doc.posFromIndex(range.position + 1));
+                    }
+                }
+            }
+    
+            // and then flip the bit back since we are done making codemirror changes
+            this.updatingSequence = false;
+        }
+
+        this.text.on("sequenceDelta", this.sequenceDeltaCb);
+    }
+}
+
+export class CodeMirrorComponent
+    extends EventEmitter
+    implements IComponentLoadable, IComponentRouter, IComponentHTMLVisual {
+
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
-        const collection = new Smde(runtime, context);
+        const collection = new CodeMirrorComponent(runtime, context);
         await collection.initialize();
 
         return collection;
@@ -41,8 +190,8 @@ export class Smde extends EventEmitter implements IComponentLoadable, IComponent
     public url: string;
     private text: SharedString;
     private root: ISharedMap;
-    private textArea: HTMLTextAreaElement;
-    private codeMirror: CodeMirror.EditorFromTextArea;
+    
+    private defaultView: CodemirrorView;
 
     constructor(
         private runtime: IComponentRuntime,
@@ -80,113 +229,16 @@ export class Smde extends EventEmitter implements IComponentLoadable, IComponent
         this.text = await this.root.get<IComponentHandle>("text").get<SharedString>();
     }
 
-    public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
-        // create base textarea
-        if (!this.textArea) {
-            this.textArea = document.createElement("textarea");
-        }
-
-        // reparent if needed
-        if (this.textArea.parentElement !== elm) {
-            this.textArea.remove();
-            elm.appendChild(this.textArea);
-        }
-
-        if (!this.codeMirror) {
-            this.setupEditor();
-        }
+    public addView(scope: IComponent): IComponentHTMLView {
+        return new CodemirrorView(this.text);
     }
 
-    private setupEditor() {
-        this.codeMirror = CodeMirror.fromTextArea(
-            this.textArea,
-            {
-                lineNumbers: true,
-                mode: "text/typescript",
-                viewportMargin: Infinity,
-            });
+    public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
+        if (!this.defaultView) {
+            this.defaultView = new CodemirrorView(this.text);
+        }
 
-        const { parallelText } = this.text.getTextAndMarkers("pg");
-        const text = parallelText.join("\n");
-        this.codeMirror.setValue(text);
-
-        let localEdit = false;
-
-        this.text.on(
-            "sequenceDelta",
-            (ev) => {
-                if (ev.isLocal) {
-                    return;
-                }
-
-                const doc = this.codeMirror.getDoc();
-                localEdit = true;
-                for (const range of ev.ranges) {
-                    const segment = range.segment;
-
-                    if (range.operation === MergeTreeDeltaType.INSERT) {
-                        if (TextSegment.is(segment)) {
-                            doc.replaceRange(
-                                segment.text,
-                                doc.posFromIndex(range.position));
-                        } else if (Marker.is(segment)) {
-                            doc.replaceRange(
-                                "\n",
-                                doc.posFromIndex(range.position));
-                        }
-                    } else if (range.operation === MergeTreeDeltaType.REMOVE) {
-                        if (TextSegment.is(segment)) {
-                            const textSegment = range.segment as TextSegment;
-                            doc.replaceRange(
-                                "",
-                                doc.posFromIndex(range.position),
-                                doc.posFromIndex(range.position + textSegment.text.length));
-                        } else if (Marker.is(segment)) {
-                            doc.replaceRange(
-                                "",
-                                doc.posFromIndex(range.position),
-                                doc.posFromIndex(range.position + 1));
-                        }
-                    }
-                }
-                localEdit = false;
-            });
-
-        this.codeMirror.on(
-            "beforeChange",
-            (instance, changeObj) => {
-                if (localEdit) {
-                    return;
-                }
-
-                const doc = instance.getDoc();
-
-                // we add in line to adjust for paragraph markers
-                let from = doc.indexFromPos(changeObj.from);
-                const to = doc.indexFromPos(changeObj.to);
-
-                if (from !== to) {
-                    this.text.removeText(from, to);
-                }
-
-                const text = changeObj.text as string[];
-                text.forEach((value, index) => {
-                    // Insert the updated text
-                    if (value) {
-                        this.text.insertText(from, value);
-                        from += value.length;
-                    }
-
-                    // Add in a paragraph marker if this is a multi-line update
-                    if (index !== text.length - 1) {
-                        this.text.insertMarker(
-                            from,
-                            ReferenceType.Tile,
-                            { [reservedTileLabelsKey]: ["pg"] });
-                        from++;
-                    }
-                });
-            });
+        this.defaultView.render(elm, options);
     }
 }
 
@@ -205,7 +257,7 @@ class SmdeFactory implements IComponentFactory {
             context,
             dataTypes,
             (runtime) => {
-                const progressCollectionP = Smde.load(runtime, context);
+                const progressCollectionP = CodeMirrorComponent.load(runtime, context);
                 runtime.registerRequestHandler(async (request: IRequest) => {
                     const progressCollection = await progressCollectionP;
                     return progressCollection.request(request);
@@ -215,7 +267,3 @@ class SmdeFactory implements IComponentFactory {
 }
 
 export const fluidExport = new SmdeFactory();
-
-export function instantiateComponent(context: IComponentContext): void {
-    fluidExport.instantiateComponent(context);
-}

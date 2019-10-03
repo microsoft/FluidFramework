@@ -260,7 +260,7 @@ export interface WaveProperties {
   overtone4: number;
 }
 
-// Properties sent over Prague
+// Properties sent over Fluid
 export interface NoteProperties {
   length: number;
   midiNumber: number;

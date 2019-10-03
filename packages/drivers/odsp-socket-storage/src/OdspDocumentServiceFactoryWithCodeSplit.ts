@@ -47,7 +47,7 @@ export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentService
       resolvedUrl.endpoints.snapshotStorageUrl,
       this.getStorageToken,
       this.getWebsocketToken,
-      ChildLogger.create(this.logger, "OdspDriver"),
+      ChildLogger.create(this.logger, "fluid:telemetry:OdspDriver"),
       this.storageFetchWrapper,
       this.deltasFetchWrapper,
       import("./getSocketIo").then((m) => m.getSocketIo()),

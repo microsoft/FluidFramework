@@ -10,6 +10,7 @@ import { IHostConfig, start as startCore } from "@microsoft/fluid-base-host";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IFluidModule, IFluidPackage, IPackage } from "@microsoft/fluid-container-definitions";
 import {
+    ITestDeltaConnectionServer,
     TestDeltaConnectionServer,
     TestDocumentServiceFactory,
     TestResolver,
@@ -22,7 +23,7 @@ import * as jwt from "jsonwebtoken";
 import * as uuid from "uuid/v4";
 import { InsecureUrlResolver } from "./insecureUrlResolver";
 import { SessionStorageDbFactory } from "./sessionStorageTestDb";
-// import * as fetch from "isomorphic-fetch";
+
 export interface IDevServerUser extends IUser {
     name: string;
 }
@@ -33,6 +34,7 @@ export interface IRouteOptions {
     tenantId?: string;
     tenantSecret?: string;
     component?: string;
+    single?: boolean;
 }
 
 function getUser(): IDevServerUser {
@@ -188,6 +190,7 @@ export async function start(
     }
 
     let documentServiceFactory: IDocumentServiceFactory;
+    let deltaConn: ITestDeltaConnectionServer ;
     if (options.mode !== "local") {
         documentServiceFactory = new RouterliciousDocumentServiceFactory(
             false,
@@ -196,24 +199,45 @@ export async function start(
             true,
             undefined,
         );
-        const hostConf: IHostConfig = { documentServiceFactory, urlResolver };
-
-        startCore(
-            url,
-            await urlResolver.resolve(req),
-            pkg,
-            scriptIds,
-            npm,
-            config,
-            {},
-            div,
-            hostConf,
-        );
     } else {
-
-        const deltaConn = TestDeltaConnectionServer.create(new SessionStorageDbFactory(url));
+        deltaConn = TestDeltaConnectionServer.create(new SessionStorageDbFactory(url));
         documentServiceFactory = new TestDocumentServiceFactory(deltaConn);
-        const hostConf: IHostConfig = { documentServiceFactory, urlResolver };
+    }
+    const hostConf: IHostConfig = { documentServiceFactory, urlResolver };
+
+    const double = (options.mode === "local") && !options.single;
+    let leftDiv: HTMLDivElement;
+    let rightDiv: HTMLDivElement;
+    if (double) {
+        leftDiv = document.createElement("div");
+        leftDiv.style.width = "50%";
+        leftDiv.style.cssFloat = "left";
+        leftDiv.style.border = "1px solid lightgray";
+        rightDiv = document.createElement("div");
+        rightDiv.style.marginLeft = "50%";
+        rightDiv.style.border = "1px solid lightgray";
+        div.append(leftDiv, rightDiv);
+    }
+
+    startCore(
+        url,
+        await urlResolver.resolve(req),
+        pkg,
+        scriptIds,
+        npm,
+        config,
+        {},
+        double ? leftDiv : div,
+        hostConf,
+    );
+
+    if (double) {
+        // new documentServiceFactory for right div, same everything else
+        const docServFac2: IDocumentServiceFactory = new TestDocumentServiceFactory(deltaConn);
+        const hostConf2 = { documentServiceFactory: docServFac2, urlResolver };
+
+        // startCore will create a new Loader/Container/Component from the startCore above. This is
+        // intentional because we want to emulate two clients collaborating with each other.
         startCore(
             url,
             await urlResolver.resolve(req),
@@ -222,8 +246,8 @@ export async function start(
             npm,
             config,
             {},
-            div,
-            hostConf,
+            rightDiv,
+            hostConf2,
         );
     }
 }

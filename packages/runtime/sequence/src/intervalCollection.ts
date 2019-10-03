@@ -389,7 +389,7 @@ class SequenceIntervalCollectionFactory
 
 export class SequenceIntervalCollectionValueType
     implements IValueType<IntervalCollection<SequenceInterval>> {
-    public static Name = "sequenceIntervalCollection";
+    public static Name = "sharedStringIntervalCollection";
 
     public get name(): string {
         return SequenceIntervalCollectionValueType.Name;
