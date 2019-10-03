@@ -14,15 +14,13 @@ import {
     IQuorum,
     ITelemetryLogger,
 } from "@microsoft/fluid-container-definitions";
-import { buildHierarchy, ChildLogger, Deferred, flatten, raiseConnectedEvent } from "@microsoft/fluid-core-utils";
+import { buildHierarchy, ChildLogger, Deferred, flatten, raiseConnectedEvent, TreeTreeEntry } from "@microsoft/fluid-core-utils";
 import {
-    FileMode,
     IDocumentMessage,
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITreeEntry,
     MessageType,
-    TreeEntry,
 } from "@microsoft/fluid-protocol-definitions";
 import {
     IAttachMessage,
@@ -460,12 +458,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
                 const snapshot = await value.snapshot(fullTree);
 
                 // And then store the tree
-                return {
-                    mode: FileMode.Directory,
-                    path: key,
-                    type: TreeEntry[TreeEntry.Tree],
-                    value: snapshot,
-                };
+                return new TreeTreeEntry(key, snapshot);
             }));
 
         return entries;
@@ -484,12 +477,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
                 const snapshot = value.getAttachSnapshot();
 
                 // And then store the tree
-                entries.push({
-                    mode: FileMode.Directory,
-                    path: objectId,
-                    type: TreeEntry[TreeEntry.Tree],
-                    value: snapshot,
-                });
+                entries.push(new TreeTreeEntry(objectId, snapshot));
             }
         }
 

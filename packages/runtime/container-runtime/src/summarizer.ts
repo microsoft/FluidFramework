@@ -50,7 +50,7 @@ export interface ISummarizer extends IProvideSummarizer {
      * Stops the summarizer by closing its container and resolving its run promise.
      * @param reason - reason for stopping
      */
-    stop(reason?: string);
+    stop(reason?: string): void;
 }
 
 export class Summarizer implements IComponentLoadable, ISummarizer {
