@@ -23,6 +23,7 @@ export const TodoItemName = `${pkg.name as string}-item`;
 
 const checkedKey = "checked";
 const textKey = "text";
+const baseUrlKey = "baseUrl";
 const innerComponentKey = "innerId";
 
 /**
@@ -42,6 +43,7 @@ export class TodoItem extends PrimedComponent
   private text: SharedString;
   private innerIdCell: ISharedCell;
   // tslint:enable:prefer-readonly
+  private baseUrl: string;
 
   public get IComponentHTMLVisual() { return this; }
   public get IComponentReactViewable() { return this; }
@@ -53,8 +55,13 @@ export class TodoItem extends PrimedComponent
     let newItemText = "New Item";
 
     // if the creating component passed props with a startingText value then set it.
-    if (props && props.startingText) {
-      newItemText = props.startingText;
+    if (props) {
+      if (props.startingText) {
+        newItemText = props.startingText;
+      }
+      if (props.baseUrl) {
+        this.baseUrl = props.baseUrl;
+      }
     }
 
     // the text of the todo item
@@ -64,6 +71,7 @@ export class TodoItem extends PrimedComponent
 
     // the state of the checkbox
     this.root.set(checkedKey, false);
+    this.root.set(baseUrlKey, this.baseUrl);
 
     // Each Todo Item has one inner component that it can have. This value is originally empty since we let the
     // user choose the component they want to embed. We store it in a cell for easier event handling.
@@ -75,15 +83,18 @@ export class TodoItem extends PrimedComponent
   protected async componentHasInitialized() {
     const text = this.root.get<IComponentHandle>(textKey).get<SharedString>();
     const innerIdCell = this.root.get<IComponentHandle>(innerComponentKey).get<ISharedCell>();
+    const baseUrl = Promise.resolve<string>(this.root.get(baseUrlKey));
 
     this.setCheckedState = this.setCheckedState.bind(this);
 
     [
       this.text,
       this.innerIdCell,
+      this.baseUrl,
     ] = await Promise.all([
       text,
       innerIdCell,
+      baseUrl,
     ]);
 
     this.innerIdCell.on("op", (op, local) => {
@@ -133,6 +144,10 @@ export class TodoItem extends PrimedComponent
   // Would prefer not to hand this out, and instead give back a component?
   public getTodoItemText() {
     return this.text;
+  }
+
+  public getBaseUrl() {
+    return this.baseUrl;
   }
 
   public setCheckedState(newState: boolean): void {
