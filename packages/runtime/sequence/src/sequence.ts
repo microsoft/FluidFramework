@@ -430,9 +430,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     protected onConnect(pending: any[]) {
 
         for (const message of pending) {
-            if (this.intervalMapKernel.hasHandlerFor(message)) {
-                this.intervalMapKernel.trySubmitMessage(message);
-            }
+            this.intervalMapKernel.trySubmitMessage(message);
         }
 
         // Update merge tree collaboration information with new client ID and then resend pending ops

@@ -17,7 +17,8 @@
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "tslint": "tslint --project tsconfig.json --format verbose",
     "start": "webpack-dev-server --config webpack.config.js --package package.json --env.component",
-    "start:local": "webpack-dev-server --config webpack.config.js --package package.json --env.local --env.component",
+    "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.component --env.mode localhost",
+    "start:local": "webpack-dev-server --config webpack.config.js --package package.json --env.component --env.mode local",
     "webpack": "webpack --config webpack.config.js"
   },
   "dependencies": {
