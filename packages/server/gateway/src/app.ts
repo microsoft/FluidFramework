@@ -20,8 +20,10 @@ import * as passportLocal from "passport-local";
 import * as passportOpenIdConnect from "passport-openidconnect";
 import * as path from "path";
 import * as redis from "redis";
+import * as request from "request";
 import * as expiry from "static-expiry";
 import * as winston from "winston";
+import * as accounts from "./accounts";
 import { saveSpoTokens } from "./gateway-odsp-utils";
 import { IAlfred } from "./interfaces";
 import * as gatewayRoutes from "./routes";
@@ -69,6 +71,47 @@ export function translateStaticUrl(
 const stream = split().on("data", (message) => {
     winston.info(message);
 });
+
+function completeAuthentication(
+    provider: string,
+    providerId: string,
+    accessToken: string,
+    expires: number,
+    refreshToken: string,
+    details: accounts.IUserDetails,
+    done: (error: any, user?: any) => void) {
+
+    const expiration = accounts.getTokenExpiration(expires);
+    const userP = accounts.createOrGetUser(provider, providerId, accessToken, expiration, refreshToken, details);
+    userP.then(
+        (user) => {
+            done(null, user);
+        },
+        (error) => {
+            done(error, null);
+        });
+}
+
+function connectAccount(
+    provider: string,
+    providerId: string,
+    accessToken: string,
+    expires: number,
+    refreshToken: string,
+    userId: string,
+    done: (error: any, user?: any) => void) {
+
+    const expiration = accounts.getTokenExpiration(expires);
+    const linkP = accounts.linkAccount(provider, providerId, accessToken, expiration, refreshToken, userId);
+    linkP.then(
+        (user) => {
+            done(null, user);
+        },
+        (error) => {
+            console.log(error);
+            done(error, null);
+        });
+}
 
 export function create(
     config: Provider,
@@ -121,6 +164,55 @@ export function create(
             },
         ),
     );
+
+    const msaConfiguration = config.get("login:msa");
+    passport.use(
+        new passportOpenIdConnect.Strategy({
+                authorizationURL: "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
+                callbackURL: "/auth/microsoft/callback",
+                clientID: msaConfiguration.clientId,
+                clientSecret: msaConfiguration.secret,
+                passReqToCallback: true,
+                skipUserProfile: true,
+                tokenURL: "https://login.microsoftonline.com/common/oauth2/v2.0/token",
+            },
+            (req, iss, sub, profile, jwtClaims, accessToken, refreshToken, params, done) => {
+                console.log(params);
+                if (!req.user) {
+                    // use request to load in the user profile
+                    request.get(
+                        "https://graph.microsoft.com/v1.0/me",
+                        { auth: { bearer: accessToken }, json: true },
+                        (error, response, body) => {
+                            console.log("User profile information");
+                            console.log(JSON.stringify(body, null, 2));
+
+                            completeAuthentication(
+                                "microsoft",
+                                sub,
+                                accessToken,
+                                params.expires_in,
+                                refreshToken,
+                                {
+                                    displayName: body.displayName,
+                                    name: {
+                                        familyName: body.surname,
+                                        givenName: body.givenName,
+                                    },
+                                },
+                                done);
+                        });
+                } else {
+                    connectAccount(
+                        "microsoft",
+                        sub,
+                        accessToken,
+                        params.expires_in,
+                        refreshToken,
+                        req.user.user.id,
+                        done);
+                }
+            }));
 
     const opts = {
         jwtFromRequest: passportJWT.ExtractJwt.fromAuthHeaderAsBearerToken(),

@@ -48,6 +48,10 @@
             "clientId": "",
             "secret": ""
         },
+        "msa": {
+            "clientId": "",
+            "secret": ""
+        },
         "accounts": [
         ]
     },

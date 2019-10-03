@@ -9,6 +9,19 @@ import * as passport from "passport";
 import { getUserDetails } from "../utils";
 import { defaultPartials } from "./partials";
 
+const microsoftScopes = {
+    scope: [
+        "profile",
+        "email",
+        "openid",
+        "Calendars.ReadWrite",
+        "Mail.Read",
+        "Mail.Send",
+        "Tasks.ReadWrite",
+        "User.Read",
+    ],
+};
+
 export function create(config: Provider, ensureLoggedIn: any): Router {
     const router: Router = Router();
 
@@ -65,6 +78,17 @@ export function create(config: Provider, ensureLoggedIn: any): Router {
             ],
         },
     ));
+
+    router.get(
+        "/auth/microsoft",
+        passport.authenticate("openidconnect", microsoftScopes));
+
+    router.get(
+        "/auth/microsoft/callback",
+        passport.authenticate("openidconnect", {
+            failureRedirect: "/",
+            successRedirect: "/",
+        }));
 
     router.get(
         "/auth/callback",
