@@ -28,10 +28,10 @@ export interface IValueChanged {
 export interface IValueOpEmitter {
     /**
      * Called by the value type to emit a value type operation through the container type holding it.
-     * @alpha
      * @param opName - Name of the emitted operation
      * @param previousValue - JSONable previous value as defined by the value type
      * @param params - JSONable params for the operation as defined by the value type
+     * @alpha
      */
     emit(opName: string, previousValue: any, params: any): void;
 }
@@ -44,19 +44,19 @@ export interface IValueFactory<T> {
     /**
      * Create a new value type.  Used both in creation of new value types, as well as in loading existing ones
      * from remote.
-     * @alpha
      * @param emitter - Emitter object that the created value type will use to emit operations
      * @param raw - Initialization parameters as defined by the value type
      * @returns The new value type
+     * @alpha
      */
     load(emitter: IValueOpEmitter, raw: any): T;
 
     /**
      * Given a value type, provides a JSONable form of its data to be used for snapshotting.  This data must be
      * loadable using the load method of its factory.
-     * @alpha
      * @param value - The value type to serialize
      * @returns The JSONable form of the value type
+     * @alpha
      */
     store(value: T): any;
 }
@@ -68,11 +68,11 @@ export interface IValueFactory<T> {
 export interface IValueOperation<T> {
     /**
      * Performs the actual processing on the incoming operation.
-     * @alpha
      * @param value - The current value stored at the given key, which should be the value type
      * @param params - The params on the incoming operation
      * @param local - Whether the operation originated from this client
      * @param message - The operation itself
+     * @alpha
      */
     process(value: T, params: any, local: boolean, message: ISequencedDocumentMessage);
 }
@@ -108,16 +108,17 @@ export interface IValueType<T> {
 export interface IValueTypeCreator {
     /**
      * Create a new value type at the given key.
-     * @alpha
      * @param key - Key to create the value type at
      * @param type - Type of the value type to create
      * @param params - Initialization params for the value type
+     * @alpha
      */
     createValueType(key: string, type: string, params: any): this;
 }
 
 /**
  * Interface describing actions on a directory.
+ *
  * @remarks
  * When used as a Map, operates on its keys.
  */

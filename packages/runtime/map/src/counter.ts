@@ -41,9 +41,9 @@ export class Counter extends EventEmitter {
 
     /**
      * Create a new Counter.
-     * @alpha
      * @param emitter - The emitter object to be used for op emission
      * @param _value - The initial value of the Counter
+     * @alpha
      */
     constructor(private readonly emitter: IValueOpEmitter, private _value: number) {
         super();
@@ -58,9 +58,9 @@ export class Counter extends EventEmitter {
 
     /**
      * Increment the value stored by the Counter.  Negative values can be used to decrement the Counter.
-     * @alpha
      * @param value - The value to increment by
      * @param submit - True if an increment op should also be submitted to remote clients, false otherwise
+     * @alpha
      */
     public increment(value: number, submit = true) {
         const previousValue = this._value;

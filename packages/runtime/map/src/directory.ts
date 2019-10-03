@@ -290,9 +290,9 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
     /**
      * Create a new shared directory
      *
-     * @param runtime - component runtime the new shared directory belongs to
-     * @param id - optional name of the shared directory
-     * @returns newly create shared directory (but not attached yet)
+     * @param runtime - Component runtime the new shared directory belongs to
+     * @param id - Optional name of the shared directory
+     * @returns Newly create shared directory (but not attached yet)
      */
     public static create(runtime: IComponentRuntime, id?: string): SharedDirectory {
         return runtime.createChannel(SharedObject.getIdForCreate(id), DirectoryFactory.Type) as SharedDirectory;
@@ -301,7 +301,7 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
     /**
      * Get a factory for SharedDirectory to register with the component.
      *
-     * @returns a factory that creates and load SharedDirectory
+     * @returns A factory that creates and load SharedDirectory
      */
     public static getFactory(): ISharedObjectFactory {
         return new DirectoryFactory();
@@ -337,9 +337,9 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
     /**
      * Constructs a new shared directory. If the object is non-local an id and service interfaces will
      * be provided.
-     * @param id - string identifier for the SharedDirectory
-     * @param runtime - component runtime
-     * @param type - type identifier
+     * @param id - String identifier for the SharedDirectory
+     * @param runtime - Component runtime
+     * @param type - Type identifier
      */
     constructor(
         id: string,
@@ -385,7 +385,7 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
 
     /**
      * Deletes the given key from within this IDirectory.
-     * @param key - the key to delete
+     * @param key - The key to delete
      * @returns True if the key existed and was deleted, false if it did not exist
      */
     public delete(key: string): boolean {
@@ -401,7 +401,7 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
 
     /**
      * Checks whether the given key exists in this IDirectory.
-     * @param key - the key to check
+     * @param key - The key to check
      * @returns True if the key exists, false otherwise
      */
     public has(key: string): boolean {
@@ -417,7 +417,7 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
 
     /**
      * Issue a callback on each entry under this IDirectory.
-     * @param callback - callback to issue
+     * @param callback - Callback to issue
      */
     public forEach(callback: (value: any, key: string, map: Map<string, any>) => void): void {
         this.root.forEach(callback);
@@ -725,7 +725,7 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
 
     /**
      * Converts the given relative path to absolute against the root.
-     * @param relativePath - the path to convert
+     * @param relativePath - The path to convert
      */
     private makeAbsolute(relativePath: string): string {
         return posix.resolve(posix.sep, relativePath);
@@ -736,9 +736,9 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
      * will have the information we need to create a real object, but will not be the real object yet.  For example,
      * we might know it's a map and the ID but not have the actual map or its data yet.  makeLocal's job
      * is to convert that information into a real object for local usage.
-     * @param key - key of element being converted
-     * @param absolutePath - path of element being converted
-     * @param serializable - the remote information that we can convert into a real object
+     * @param key - Key of element being converted
+     * @param absolutePath - Path of element being converted
+     * @param serializable - The remote information that we can convert into a real object
      * @returns The local value that was produced
      */
     private makeLocal(
@@ -936,7 +936,7 @@ class SubDirectory implements IDirectory {
 
     /**
      * Checks whether the given key exists in this IDirectory.
-     * @param key - the key to check
+     * @param key - The key to check
      * @returns True if the key exists, false otherwise
      */
     public has(key: string): boolean {
@@ -1109,7 +1109,7 @@ class SubDirectory implements IDirectory {
 
     /**
      * Deletes the given key from within this IDirectory.
-     * @param key - the key to delete
+     * @param key - The key to delete
      * @returns True if the key existed and was deleted, false if it did not exist
      */
     public delete(key: string): boolean {
@@ -1139,7 +1139,7 @@ class SubDirectory implements IDirectory {
 
     /**
      * Issue a callback on each entry under this IDirectory.
-     * @param callback - callback to issue
+     * @param callback - Callback to issue
      */
     public forEach(callback: (value: any, key: string, map: Map<string, any>) => void): void {
         this._storage.forEach((localValue, key, map) => {

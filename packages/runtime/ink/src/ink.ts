@@ -35,7 +35,7 @@ export class Ink extends SharedObject implements IInk {
     /**
      * Create a new Ink.
      * @param runtime - Component runtime the new Ink belongs to
-     * @param id - Optional name of the Ink, will be assigned a unique ID if not provided
+     * @param id - Optional name of the Ink; will be assigned a unique ID if not provided
      * @returns Newly create Ink object (but not attached yet)
      */
     public static create(runtime: IComponentRuntime, id?: string) {

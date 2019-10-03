@@ -249,7 +249,7 @@ export class MapKernel {
 
     /**
      * Executes the given callback on each entry in the map.
-     * @param callbackFn - callback function
+     * @param callbackFn - Callback function
      */
     public forEach(callbackFn: (value: any, key: string, map: Map<string, any>) => void): void {
         this.data.forEach((localValue, key, m) => {

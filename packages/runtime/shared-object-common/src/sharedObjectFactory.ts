@@ -28,7 +28,6 @@ export interface ISharedObjectFactory {
      * Loads the given shared object. This call is only ever invoked internally as the only thing
      * that is ever directly loaded is the document itself. Load will then only be called on documents that
      * were created and added to a shared object.
-     *
      * @param runtime - Component runtime containing state/info/helper methods about the component.
      * @param id - ID of the shared object.
      * @param services - Services to read objects at a given path using the delta connection.
@@ -49,9 +48,7 @@ export interface ISharedObjectFactory {
 
     /**
      * Creates a local version of the shared object.
-     *
      * Calling attach on the object later will insert it into the object stream.
-     *
      * @param runtime - The runtime the new object will be associated with
      * @param id - The unique ID of the new object
      * @returns The newly created object.

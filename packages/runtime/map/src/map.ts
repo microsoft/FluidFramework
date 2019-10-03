@@ -93,9 +93,9 @@ export class MapFactory implements ISharedObjectFactory {
 export class SharedMap extends SharedObject implements ISharedMap {
     /**
      * Create a new shared map.
-     * @param runtime - component runtime the new shared map belongs to
-     * @param id - optional name of the shared map
-     * @returns newly create shared map (but not attached yet)
+     * @param runtime - Component runtime the new shared map belongs to
+     * @param id - Optional name of the shared map
+     * @returns Newly create shared map (but not attached yet)
      */
     public static create(runtime: IComponentRuntime, id?: string): SharedMap {
         return runtime.createChannel(SharedObject.getIdForCreate(id), MapFactory.Type) as SharedMap;
@@ -103,7 +103,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
 
     /**
      * Get a factory for SharedMap to register with the component.
-     * @returns a factory that creates and load SharedMap
+     * @returns A factory that creates and load SharedMap
      */
     public static getFactory(): ISharedObjectFactory {
         return new MapFactory();

@@ -127,9 +127,11 @@ export class SharedLocalValue implements ILocalValue {
 
 /**
  * Manages a contained value type.
- * @alpha
+ *
  * @privateRemarks
  * TODO: Should maybe be a generic
+ *
+ * @alpha
  */
 export class ValueTypeLocalValue implements ILocalValue {
     /**
@@ -198,8 +200,8 @@ export class LocalValueMaker {
 
     /**
      * Register a value type this maker will be able to produce.
-     * @alpha
      * @param type - The value type to register
+     * @alpha
      */
     public registerValueType<T>(type: IValueType<T>) {
         this.valueTypes.set(type.name, type);
@@ -246,7 +248,7 @@ export class LocalValueMaker {
     /**
      * Create a new local value containing a given plain object.
      * @param value - The value to store
-     * @returns an ILocalValue containing the value
+     * @returns An ILocalValue containing the value
      */
     public fromInMemory(value: any): ILocalValue {
         if (SharedObject.is(value)) {
@@ -258,11 +260,11 @@ export class LocalValueMaker {
 
     /**
      * Create a new local value containing a value type.
-     * @alpha
      * @param type - The type of the value type to create
      * @param emitter - The IValueOpEmitter object that the new value type will use to emit ops
      * @param params - The initialization arguments for the value type
-     * @returns an ILocalValue containing the new value type
+     * @returns An ILocalValue containing the new value type
+     * @alpha
      */
     public makeValueType(type: string, emitter: IValueOpEmitter, params: any): ILocalValue {
         // params is the initialization information for the value type, e.g. initial count on a counter
@@ -273,11 +275,11 @@ export class LocalValueMaker {
 
     /**
      * Create a new value type.
-     * @alpha
      * @param params - The initialization arguments for the value type
      * @param type - The type of value type to create
      * @param emitter - The IValueOpEmitter object that the new value type will use to emit ops
      * @returns The new value type
+     * @alpha
      */
     private loadValueType(params: any, type: string, emitter: IValueOpEmitter): any {
         const valueType = this.valueTypes.get(type);
