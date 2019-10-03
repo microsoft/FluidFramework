@@ -109,8 +109,8 @@ export class DocumentService implements api.IDocumentService {
             this.tokenProvider.token,
             io,
             client,
-            this.ordererUrl,
-            mode);
+            mode,
+            this.ordererUrl);
     }
 
     public async branch(): Promise<string> {

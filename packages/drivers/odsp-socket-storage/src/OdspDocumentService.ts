@@ -150,8 +150,8 @@ export class OdspDocumentService implements IDocumentService {
             webSocketToken ? webSocketToken : websocketEndpoint.socketToken,
             io,
             client,
-            websocketEndpoint.deltaStreamSocketUrl,
             mode,
+            websocketEndpoint.deltaStreamSocketUrl,
             websocketEndpoint.deltaStreamSocketUrl2,
             this.logger,
         ).catch((error) => {

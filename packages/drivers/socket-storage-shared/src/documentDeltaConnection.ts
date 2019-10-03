@@ -66,8 +66,8 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         token: string | null,
         io: SocketIOClientStatic,
         client: IClient,
-        url: string,
         mode: ConnectionMode,
+        url: string,
         url2?: string,
         telemetryLogger?: ITelemetryLogger): Promise<IDocumentDeltaConnection> {
             // tslint:disable-next-line: strict-boolean-expressions
@@ -88,9 +88,8 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
             // tslint:disable-next-line: promise-function-async
             ).catch((error) => {
                 if (error instanceof NetworkError && hasUrl2) {
-                    if (error.message === "connect_error" || error.message === "connect_timeout") {
+                    if (error.canRetry) {
                         debug(`Socket connection error on non-AFD URL. Error was [${error}]. Retry on AFD URL: ${url}`);
-
                         logger.sendTelemetryEvent({ eventName: "UseAfdUrl" });
 
                         return this.createImpl(
