@@ -66,26 +66,6 @@ export class SequenceEvent {
                 }
                 return this.sortedRanges.value.items[this.sortedRanges.value.size - 1];
             });
-        /*
-        this.pStart = new Lazy<number>(
-            () => {
-                if (this.isEmpty) {
-                    return undefined;
-                }
-                return this.sortedRanges.value.items[0].position;
-            });
-
-        this.pEnd = new Lazy<number>(
-            () => {
-                if (this.isEmpty) {
-                    return undefined;
-                }
-                const lastRange =
-                    this.sortedRanges.value.items[this.sortedRanges.value.size - 1];
-
-                return lastRange.position + lastRange.segment.cachedLength;
-            });
-        */
     }
 
     /**
@@ -110,16 +90,6 @@ export class SequenceEvent {
     public get last(): ISequenceDeltaRange {
         return this.pLast.value;
     }
-
-    /*
-    public get start(): number {
-        return this.pStart.value;
-    }
-
-    public get end(): number {
-        return this.pEnd.value;
-    }
-    */
 }
 
 /**
