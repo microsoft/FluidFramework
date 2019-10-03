@@ -629,7 +629,6 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
 
     /**
      * Create an emitter for a value type to emit ops from the given key and path.
-     * @alpha
      * @param key - The key of the directory that the value type will be stored on
      * @param absolutePath - The absolute path of the subdirectory storing the value type
      * @returns A value op emitter for the given key and path
@@ -1387,15 +1386,11 @@ class SubDirectory implements IDirectory {
     }
 
     /**
-     * @internal
-     */
-    /**
      * Retrieve the local value at the given key.  This is used to get value type information stashed on the local
      * value so op handlers can be retrieved
      * @param key - The key to retrieve from
      * @returns The local value
      * @internal
-     * @alpha
      */
     public getLocalValue<T extends ILocalValue = ILocalValue>(key: string): T {
         return this._storage.get(key) as T;
