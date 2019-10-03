@@ -13,8 +13,6 @@ import {
     IRawSingleKafkaMessage,
     RawOperationType,
 } from "@microsoft/fluid-server-services-core";
-// tslint:disable-next-line
-// import winston = require("winston");
 
 export class CopierLambda implements IPartitionLambda {
     private pending = new Map<string, IRawOperationMessage[]>();
@@ -35,12 +33,6 @@ export class CopierLambda implements IPartitionLambda {
             // for eventual addition to Mongo:
             if (baseMessage.type === RawOperationType) {
                 const value = baseMessage as IRawOperationMessage;
-                // console.log("A NEW BASEMESSAGE");
-                // console.log(value.documentId);
-                // console.log(value.operation.clientSequenceNumber);
-                // console.log(value.operation.metadata);
-                // console.log(value.operation.contents);
-                // console.log("))))))))))))))))))");
 
                 // Remove traces and serialize content before writing to mongo.
                 value.operation.traces = [];
@@ -95,9 +87,6 @@ export class CopierLambda implements IPartitionLambda {
                 orderedMessages.push(tmp);
             }
 
-            // winston.info("COPIER TEST : ***********************************");
-            // winston.info(orderedMessages);
-            // winston.info(orderedMessages[0]);
             const processP = this.processMongoCore(orderedMessages);
             allProcessed.push(processP);
         }
@@ -111,8 +100,6 @@ export class CopierLambda implements IPartitionLambda {
             (error) => {
                 this.context.error(error, true);
             });
-
-        // console.log("sent Pending!");
     }
 
     private async processMongoCore(kafkaOrderedMessages: IRawSingleKafkaMessage[]): Promise<void> {
@@ -124,8 +111,6 @@ export class CopierLambda implements IPartitionLambda {
         return this.rawOpCollection
             .insertMany(kafkaOrderedMessages, false)
             .catch((error) => {
-                console.log("MONGO ERROR!");
-                console.log(error);
                 // Duplicate key errors are ignored since a replay may cause us to insert twice into Mongo.
                 // All other errors result in a rejected promise.
                 if (error.code !== 11000) {
