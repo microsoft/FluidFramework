@@ -14,6 +14,7 @@ import {
     IQuorum,
 } from "@microsoft/fluid-container-definitions";
 import {
+    BlobTreeEntry,
     Deferred,
     raiseConnectedEvent,
     readAndParse,
@@ -42,7 +43,6 @@ import { EventEmitter } from "events";
 // tslint:disable-next-line:no-submodule-imports
 import * as uuid from "uuid/v4";
 import { ContainerRuntime } from "./containerRuntime";
-import { BlobTreeEntry } from "./utils";
 
 // Snapshot Format Version to be used in component attributes.
 const currentSnapshotFormatVersion = "0.1";
