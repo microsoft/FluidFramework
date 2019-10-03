@@ -14,7 +14,7 @@ import {
     RawOperationType,
 } from "@microsoft/fluid-server-services-core";
 // tslint:disable-next-line
-import winston = require("winston");
+// import winston = require("winston");
 
 export class CopierLambda implements IPartitionLambda {
     private pending = new Map<string, IRawOperationMessage[]>();
@@ -35,12 +35,12 @@ export class CopierLambda implements IPartitionLambda {
             // for eventual addition to Mongo:
             if (baseMessage.type === RawOperationType) {
                 const value = baseMessage as IRawOperationMessage;
-                console.log("A NEW BASEMESSAGE");
-                console.log(value.documentId);
-                console.log(value.operation.clientSequenceNumber);
-                console.log(value.operation.metadata);
-                console.log(value.operation.contents);
-                console.log("))))))))))))))))))");
+                // console.log("A NEW BASEMESSAGE");
+                // console.log(value.documentId);
+                // console.log(value.operation.clientSequenceNumber);
+                // console.log(value.operation.metadata);
+                // console.log(value.operation.contents);
+                // console.log("))))))))))))))))))");
 
                 // Remove traces and serialize content before writing to mongo.
                 value.operation.traces = [];
@@ -88,13 +88,14 @@ export class CopierLambda implements IPartitionLambda {
             // tslint:disable-next-line
             for (let i = 0; i < messages.length; i++) {
                 const tmp = messages[i] as IRawSingleKafkaMessage;
-                tmp.extendedSequenceNumber = `${batchOffset}::${i}`;
+                tmp.batchedSequenceNumber.batchNumber = batchOffset;
+                tmp.batchedSequenceNumber.opIndex = i;
                 orderedMessages.push(tmp);
             }
 
-            winston.info("COPIER TEST : ***********************************");
-            winston.info(orderedMessages);
-            winston.info(orderedMessages[0]);
+            // winston.info("COPIER TEST : ***********************************");
+            // winston.info(orderedMessages);
+            // winston.info(orderedMessages[0]);
             const processP = this.processMongoCore(orderedMessages);
             allProcessed.push(processP);
         }
@@ -109,7 +110,7 @@ export class CopierLambda implements IPartitionLambda {
                 this.context.error(error, true);
             });
 
-        console.log("sent Pending!");
+        // console.log("sent Pending!");
     }
 
     private async processMongoCore(kafkaOrderedMessages: IRawSingleKafkaMessage[]): Promise<void> {

@@ -82,7 +82,7 @@ export interface IRawOperationMessage extends IObjectMessage {
  * Combination of the batch and index (relative to the batch) to describe the
  * "total" sequence number of an op received in a batching process.
  */
-export interface BatchedSequenceNumber {
+export interface IBatchedSequenceNumber {
     // Batch number (or batch offset in Kafka language).
     batchNumber: number;
 
@@ -94,8 +94,7 @@ export interface BatchedSequenceNumber {
  * A single op received from Kafka.
  */
 export interface IRawSingleKafkaMessage extends IRawOperationMessage {
-    // This number: `{Kafka batch offset}:{1-indexed position in batch}`.
-    batchedSequenceNumber: BatchedSequenceNumber;
+    batchedSequenceNumber: IBatchedSequenceNumber;
 }
 
 // Need to change this name - it isn't necessarily ticketed
