@@ -104,7 +104,7 @@ export function create(config: Provider, mongoManager: MongoManager, appTenants:
             getParam(request.params, "id"),
             from,
             to,
-            "extendedSequenceNumber");
+            "batchedSequenceNumber");
 
         deltasP.then(
             (deltas) => {

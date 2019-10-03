@@ -19,7 +19,7 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
     await rawOpCollection.createIndex(
         {
             documentId: 1,
-            extendedSequenceNumber: 1,
+            batchedSequenceNumber: 1,
             tenantId: 1,
         },
         true);

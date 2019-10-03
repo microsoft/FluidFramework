@@ -88,8 +88,10 @@ export class CopierLambda implements IPartitionLambda {
             // tslint:disable-next-line
             for (let i = 0; i < messages.length; i++) {
                 const tmp = messages[i] as IRawSingleKafkaMessage;
-                tmp.batchedSequenceNumber.batchNumber = batchOffset;
-                tmp.batchedSequenceNumber.opIndex = i;
+                tmp.batchedSequenceNumber = {
+                    batchNumber: batchOffset,
+                    opIndex: i,
+                };
                 orderedMessages.push(tmp);
             }
 
