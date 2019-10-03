@@ -15,7 +15,7 @@ const microsoftScopes = {
         "email",
         "openid",
         "Calendars.ReadWrite",
-        "Mail.Read",
+        "Mail.ReadWrite",
         "Mail.Send",
         "Tasks.ReadWrite",
         "User.Read",

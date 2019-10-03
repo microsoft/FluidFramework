@@ -42,12 +42,19 @@ data:
                 "endpoint": "http://{{ template "riddler.fullname" . }}"
             }
         },
+        "mongo": {
+            "endpoint": "{{ .Values.mongodb.url }}",
+            "collectionNames": {
+                "accounts": "accounts"
+            }
+        },
         "login": {
             "enabled": true,
             "microsoft": {
                 "clientId": "{{ .Values.login.microsoft.clientId }}",
                 "secret": "{{ .Values.login.microsoft.secret }}"
             },
+            "linkedAccounts": "{{ .Values.login.linkedAccounts }}",
             "accounts": [
                 {
                     "username": "{{ .Values.login.accounts.username }}",
