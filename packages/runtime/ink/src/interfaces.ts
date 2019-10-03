@@ -49,22 +49,23 @@ export interface IColor {
  */
 export interface IInk extends ISharedObject {
     /**
-     * Get the collection of strokes.
+     * Get the collection of strokes stored in this Ink object.
+     * @returns the array of strokes
      */
     getStrokes(): IInkStroke[];
 
     /**
      * Get a specific stroke with the given key.
-     *
      * @param key - ID for the stroke
+     * @returns the requested stroke, or undefined if it does not exist
      */
     getStroke(key: string): IInkStroke;
 
     /**
-     * Send the op and process it
-     * @param operation - op to submit
+     * Send the op and apply it to the local Ink object as well.
+     * @param operation - op to submit and apply
      */
-    submitOperation(operation: IInkOperation);
+    submitOperation(operation: IInkOperation): void;
 }
 
 /**
@@ -86,6 +87,9 @@ export interface IPen {
  * Signals a clear operation.
  */
 export interface IClearOperation {
+    /**
+     * String identifier for the operation type.
+     */
     type: "clear";
 
     /**
@@ -94,13 +98,29 @@ export interface IClearOperation {
     time: number;
 }
 
+/**
+ * Create stroke operations notify clients that a new stroke has been created, along with basic information about
+ * the stroke.
+ */
 export interface ICreateStrokeOperation {
+    /**
+     * String identifier for the operation type.
+     */
     type: "createStroke";
 
+    /**
+     * Time, in milliseconds, that the operation occurred on the originating device.
+     */
     time: number;
 
+    /**
+     * Unique ID that will be used to reference this stroke.
+     */
     id: string;
 
+    /**
+     * Description of the pen used to create the stroke.
+     */
     pen: IPen;
 }
 
@@ -108,6 +128,9 @@ export interface ICreateStrokeOperation {
  * Base interface for stylus operations.
  */
 export interface IStylusOperation {
+    /**
+     * String identifier for the operation type.
+     */
     type: "stylus";
 
     /**
@@ -121,17 +144,19 @@ export interface IStylusOperation {
     point: IPoint;
 
     /**
-     * The ink pressure applied (from PointerEvent.pressure).
+     * The ink pressure applied (typically from PointerEvent.pressure).
      */
     pressure: number;
 
     /**
-     * UUID for the stylus performing the operation. This value is unique
-     * per down...up operation.
+     * ID of the stroke this stylus operation is associated with.
      */
     id: string;
 }
 
+/**
+ * Ink operations are one of several types.
+ */
 export type IInkOperation =
     IClearOperation |
     ICreateStrokeOperation |
@@ -151,5 +176,8 @@ export interface IInkStroke {
      */
     operations: IStylusOperation[];
 
+    /**
+     * Description of the pen used to create the stroke.
+     */
     pen: IPen;
 }
