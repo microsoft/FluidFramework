@@ -80,12 +80,14 @@ export function create(config: Provider, ensureLoggedIn: any): Router {
     ));
 
     router.get(
-        "/auth/microsoft",
-        passport.authenticate("openidconnect", microsoftScopes));
+        "/connect/microsoft",
+        ensureLoggedIn(),
+        passport.authenticate("msa", microsoftScopes));
 
     router.get(
-        "/auth/microsoft/callback",
-        passport.authenticate("openidconnect", {
+        "/connect/microsoft/callback",
+        ensureLoggedIn(),
+        passport.authenticate("msa", {
             failureRedirect: "/",
             successRedirect: "/",
         }));
