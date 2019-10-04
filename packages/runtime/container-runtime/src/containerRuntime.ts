@@ -1369,6 +1369,7 @@ export class WrappedComponentRegistry implements IComponentRegistry {
     public async get(name: string): Promise<ComponentFactoryTypes> {
         // This change is not supposed to reach in next release. It is just a fix
         // for already corrupted documents in bohemia due to sub registry changes.
+        // The name could be a jsonified array so we parse it accordingly.
         let pkgName: string = name;
         if (name.startsWith("[")) {
             const pkgArray = JSON.parse(name) as string[];
