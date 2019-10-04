@@ -1371,12 +1371,14 @@ export class WrappedComponentRegistry implements IComponentRegistry {
         // for already corrupted documents in bohemia due to sub registry changes.
         // The name could be a jsonified array so we parse it accordingly.
         let pkgName: string = name;
-        if (name.startsWith("[")) {
-            const pkgArray = JSON.parse(name) as string[];
-            if (pkgArray && pkgArray.length > 0) {
-                pkgName = pkgArray[pkgArray.length - 1];
+        try {
+            if (name.startsWith("[")) {
+                const pkgArray = JSON.parse(name) as string[];
+                if (pkgArray && pkgArray.length > 0) {
+                    pkgName = pkgArray[pkgArray.length - 1];
+                }
             }
-        }
+        } catch (error) { }
         if (pkgName === "_scheduler") {
             return this.agentScheduler;
         } else if (this.extraRegistries && this.extraRegistries.has(pkgName)) {
