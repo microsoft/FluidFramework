@@ -221,12 +221,10 @@ export function create(
     // Right now we simply pass through the entire stored user object to the session storage for that user.
     // Ideally we should just serialize the oid and retrieve user info back from DB on deserialization.
     passport.serializeUser((user: any, done) => {
-        console.log(JSON.stringify(user, null, 2));
         done(null, user);
     });
 
     passport.deserializeUser((user: any, done) => {
-        console.log(JSON.stringify(user, null, 2));
         done(null, user);
     });
 

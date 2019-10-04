@@ -49,16 +49,12 @@
         }
     },
     "login": {
-        "enabled": true,
+        "enabled": false,
         "microsoft": {
             "clientId": "",
             "secret": ""
         },
         "linkedAccounts": {
-            "msa": {
-                "clientId": "",
-                "secret": ""
-            }
         },
         "accounts": [
         ]
