@@ -29,11 +29,17 @@ export interface IProvideComponentClipboardProvider {
 export const fluidUrlAttributeName = "fluid-url";
 
 export interface IComponentClipboardProvider extends IProvideComponentClipboardProvider {
-  // Return a new/unattached HTMLElement representation of the entire component instance to be
-  // serialized for the html clipboard slot.
+  /**
+   * Return a new/unattached HTMLElement representation of the entire component instance to be
+   * serialized for the html clipboard slot.
+   * @alpha
+   */
   getComponentHtmlForClipboard(): HTMLElement | undefined;
 
-  // Returns the string representation for the entire component instance to be serialized for the
-  // clipboard plain-text clipboard slot.
+  /**
+   * Returns the string representation for the entire component instance to be serialized for the
+   * clipboard plain-text clipboard slot.
+   * @alpha
+   */
   getComponentTextForClipboard(): string | undefined;
 }
