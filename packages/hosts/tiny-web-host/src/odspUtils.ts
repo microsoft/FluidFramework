@@ -12,7 +12,7 @@ const spoTenants = new Map<string, string>([
     ["spo-df", "microsoft-my.sharepoint-df.com"],
 ]);
 
-const pushSrv = "pushchannel.1drv.ms";
+export const pushSrv = "pushchannel.1drv.ms";
 
 export function isSpoTenant(tenantId: string) {
     return spoTenants.has(tenantId);
@@ -20,6 +20,15 @@ export function isSpoTenant(tenantId: string) {
 
 export function getSpoServer(tenantId: string) {
     return spoTenants.get(tenantId);
+}
+
+export function isSpoServer(server: string) {
+    for (const item of spoTenants.values()) {
+        if (item === server) {
+            return true;
+        }
+    }
+    return false;
 }
 
 export async function spoGetResolvedUrl(

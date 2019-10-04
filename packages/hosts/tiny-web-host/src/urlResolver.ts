@@ -44,15 +44,15 @@ async function spoResolveUrl(
     return [resolvedP, fullTreeP];
 }
 
-function r11sResolveUrl(
+export function r11sResolveUrl(
     config: IConfig,
     appTenants: IAlfredTenant[],
     tenantId: string,
     documentId: string,
+    user: IAlfredUser | undefined,
+    scopes: ScopeType[] | undefined,
 ) {
-    const user: IAlfredUser | undefined = undefined;
-
-    const token = getR11sToken(tenantId, documentId, appTenants, user);
+    const token = getR11sToken(tenantId, documentId, appTenants, user, scopes);
 
     const fluidUrl = "fluid://" +
         `${parse(config.serverUrl).host}/` +
@@ -93,15 +93,24 @@ export function resolveUrl(
     if (isSpoTenant(tenantId)) {
         return spoResolveUrl(config, tenantId, `${documentId}`, getToken);
     } else {
-        return r11sResolveUrl(config, /* alfred,*/ appTenants, tenantId, documentId);
+        return r11sResolveUrl(config, /* alfred,*/ appTenants, tenantId, documentId, undefined, undefined);
     }
 }
 
-function getR11sToken(tenantId: string, documentId: string, tenants: IAlfredTenant[], user?: IAlfredUser): string {
-    const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
+function getR11sToken(
+    tenantId: string,
+    documentId: string,
+    tenants: IAlfredTenant[],
+    user?: IAlfredUser,
+    scopes?: ScopeType[],
+    ): string {
+    let scope: ScopeType[] = scopes;
+    if (!scopes) {
+        scope = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
+    }
     for (const tenant of tenants) {
         if (tenantId === tenant.id) {
-            return generateToken(tenantId, documentId, tenant.key, scopes, user);
+            return generateToken(tenantId, documentId, tenant.key, scope, user);
         }
     }
 
