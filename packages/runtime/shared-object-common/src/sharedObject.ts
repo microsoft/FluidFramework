@@ -4,7 +4,7 @@
  */
 
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { ConnectionState, ITelemetryErrorEvent, ITelemetryLogger } from "@microsoft/fluid-container-definitions";
+import { ConnectionState, IComponent, ITelemetryErrorEvent, ITelemetryLogger } from "@microsoft/fluid-container-definitions";
 import { ChildLogger, EventEmitterWithErrorHandling } from "@microsoft/fluid-core-utils";
 import { ISequencedDocumentMessage, ITree, MessageType } from "@microsoft/fluid-protocol-definitions";
 import {
@@ -30,12 +30,7 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
      * @returns Returns true if the object is a SharedObject
      */
     public static is(obj: any): obj is SharedObject {
-        if (obj !== undefined
-            && obj !== null
-            && obj.__sharedObject__ === true) {
-            return true;
-        }
-        return false;
+        return obj && !!(obj as IComponent).ISharedObject;
     }
 
     /**
@@ -50,12 +45,6 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
     public get ISharedObject() { return this; }
     public get IChannel() { return this; }
     public get IComponentLoadable() { return this; }
-
-    /**
-     * Marker to clearly identify the object as a shared object
-     */
-    // tslint:disable-next-line:variable-name
-    public readonly __sharedObject__ = true;
 
     public readonly handle: IComponentHandle;
 
