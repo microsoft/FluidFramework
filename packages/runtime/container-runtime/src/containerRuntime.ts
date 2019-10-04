@@ -81,13 +81,15 @@ interface IBufferedChunk {
     content: string;
 }
 
-export interface IGeneratedSummaryData extends ISummaryStats {
+export interface IGeneratedSummaryData {
     sequenceNumber: number;
 
     /**
      * true if the summary op was submitted
      */
     submitted: boolean;
+
+    summaryStats?: ISummaryStats;
 }
 
 // Consider idle 5s of no activity. And snapshot if a minute has gone by with no snapshot.
@@ -1090,15 +1092,28 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
         try {
             await this.scheduleManager.pause();
+            const sequenceNumber = this.deltaManager.referenceSequenceNumber;
 
+            const ret: IGeneratedSummaryData = {
+                sequenceNumber,
+                submitted: false,
+                summaryStats: undefined,
+            };
+
+            if (!this.connected) {
+                return ret;
+            }
             // TODO in the future we can have stored the latest summary by listening to the summary ack message
             // after loading from the beginning of the snapshot
             const versions = await this.context.storage.getVersions(this.id, 1);
             const parents = versions.map((version) => version.id);
 
-            const sequenceNumber = this.deltaManager.referenceSequenceNumber;
             const treeWithStats = await this.summarize(fullTree);
+            ret.summaryStats = treeWithStats.summaryStats;
 
+            if (!this.connected) {
+                return ret;
+            }
             const handle = await this.context.storage.uploadSummary(treeWithStats.summaryTree);
             const summary = {
                 handle: handle.handle,
@@ -1107,18 +1122,14 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                 parents,
             };
 
-            let submitted = false;
-            if (this.connected) {
-                // if summarizer loses connection it will never reconnect
-                this.submit(MessageType.Summarize, summary);
-                submitted = true;
+            if (!this.connected) {
+                return ret;
             }
+            // if summarizer loses connection it will never reconnect
+            this.submit(MessageType.Summarize, summary);
+            ret.submitted = true;
 
-            return {
-                sequenceNumber,
-                submitted,
-                ...treeWithStats.summaryStats,
-            };
+            return ret;
         } catch (ex) {
             this.logger.logException({ eventName: "Summarizer:GenerateSummaryExceptionError" }, ex);
             throw ex;
