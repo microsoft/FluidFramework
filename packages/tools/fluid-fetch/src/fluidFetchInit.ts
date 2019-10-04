@@ -387,7 +387,7 @@ export async function fluidFetchInit() {
                 const info = JSON.parse(fs.readFileSync(file, { encoding: "utf-8"}));
                 setParamSave(info.url as string);
             } else {
-                console.log(`Can't file ${file}`);
+                console.log(`Can't find file ${file}`);
             }
         }
 
