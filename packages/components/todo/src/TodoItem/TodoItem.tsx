@@ -43,7 +43,7 @@ export class TodoItem extends PrimedComponent
   private text: SharedString;
   private innerIdCell: ISharedCell;
   // tslint:enable:prefer-readonly
-  private baseUrl: string;
+  private baseUrl: string = "";
 
   public get IComponentHTMLVisual() { return this; }
   public get IComponentReactViewable() { return this; }
@@ -83,18 +83,16 @@ export class TodoItem extends PrimedComponent
   protected async componentHasInitialized() {
     const text = this.root.get<IComponentHandle>(textKey).get<SharedString>();
     const innerIdCell = this.root.get<IComponentHandle>(innerComponentKey).get<ISharedCell>();
-    const baseUrl = Promise.resolve<string>(this.root.get(baseUrlKey));
+    this.baseUrl = this.root.get(baseUrlKey);
 
     this.setCheckedState = this.setCheckedState.bind(this);
 
     [
       this.text,
       this.innerIdCell,
-      this.baseUrl,
     ] = await Promise.all([
       text,
       innerIdCell,
-      baseUrl,
     ]);
 
     this.innerIdCell.on("op", (op, local) => {
