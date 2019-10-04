@@ -30,7 +30,7 @@ export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentService
    */
   constructor(
     private readonly appId: string,
-    private readonly getStorageToken: (siteUrl: string) => Promise<string | null>,
+    private readonly getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
     private readonly getWebsocketToken: () => Promise<string | null>,
     private readonly logger: ITelemetryBaseLogger,
     private readonly storageFetchWrapper: IFetchWrapper = new FetchWrapper(),
@@ -47,7 +47,7 @@ export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentService
       resolvedUrl.endpoints.snapshotStorageUrl,
       this.getStorageToken,
       this.getWebsocketToken,
-      ChildLogger.create(this.logger, "OdspDriver"),
+      ChildLogger.create(this.logger, "fluid:telemetry:OdspDriver"),
       this.storageFetchWrapper,
       this.deltasFetchWrapper,
       import("./getSocketIo").then((m) => m.getSocketIo()),

@@ -17,4 +17,5 @@ export * from "./rangeTracker";
 export * from "./rateLimiter";
 export * from "./safeParser";
 export * from "./serializer";
+export * from "./summaryTracker";
 export * from "./utils";
