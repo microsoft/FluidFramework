@@ -1,7 +1,3 @@
-/*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
- * Licensed under the MIT License.
- */
 # Component Clipboard Model
 
 ## Introduction
@@ -15,7 +11,7 @@ The following considerations were taken into account in shaping this model.
 1. Components can host nested components in a hierarchical manner.
 2. The underlying Fluid model is private to the component.
 3. The rendering DOM is custom to the component and used only for rendering (it has no semantic
-   value). It might not exists (e.g., component may not render anything) or might exist only
+   value). It might not exist (e.g., component may not render anything) or might exist only
    partially (e.g., in the case of DOM virtualization).
 4. Components might have a custom internal model, which is also private.
 5. Selection is custom to each component (e.g., text range, list, two-dimensional range).

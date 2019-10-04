@@ -31,11 +31,11 @@ export interface IComponentClipboardConsumer extends IProvideComponentClipboardC
   /**
    * Provide an alternate component identifier to be instantiated during the paste operation.
    * @alpha
-   * @param targetContainerContext - IComponentContext of the target container.
+   * @param targetContext - IComponentContext of the target
    * @param clipboardHTML - the html string that serialized by the component to the system clipboard.
    */
   getComponentFromClipboardHTML(
-    targetContainerContext: IComponentContext,
+    targetContext: IComponentContext,
     clipboardHTML: string | undefined,
   ): Promise<string | undefined>;
 }
