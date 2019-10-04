@@ -72,6 +72,10 @@ import { analyzeTasks } from "./taskAnalyzer";
 
 interface ISummaryTreeWithStats {
     summaryStats: ISummaryStats;
+
+    /**
+     * true if the summary op was submitted
+     */
     summaryTree: ISummaryTree;
 }
 
@@ -83,6 +87,7 @@ interface IBufferedChunk {
 
 export interface IGeneratedSummaryData extends ISummaryStats {
     sequenceNumber: number;
+    submitted: boolean;
 }
 
 // Consider idle 5s of no activity. And snapshot if a minute has gone by with no snapshot.
@@ -1102,11 +1107,16 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                 parents,
             };
 
-            this.submit(MessageType.Summarize, summary);
+            let submitted = false;
+            if (this.connected) {
+                // if summarizer loses connection it will never reconnect
+                this.submit(MessageType.Summarize, summary);
+                submitted = true;
+            }
 
-            // notify summarizer while still paused
             return {
                 sequenceNumber,
+                submitted,
                 ...treeWithStats.summaryStats,
             };
         } catch (ex) {
