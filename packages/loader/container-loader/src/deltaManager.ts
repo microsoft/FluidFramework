@@ -119,8 +119,8 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     private connectRepeatCount = 0;
     private connectStartTime = 0;
 
-    private deltaStorageDelay: number = -1;
-    private deltaStreamDelay: number = -1;
+    private deltaStorageDelay: number | undefined;
+    private deltaStreamDelay: number | undefined;
 
     // collab window tracking.
     // Start with 50 not to record anything below 50 (= 30 + 20).
@@ -433,7 +433,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 // 2) else case: if we got what we asked (to - 1) or more, then time to leave.
                 if (to === undefined ? lastFetch < maxFetchTo - 1 : to - 1 <= lastFetch) {
                     telemetryEvent.end({ lastFetch, totalDeltas: allDeltas.length, retries: retry });
-                    this.emitDelayInfo(retryFor.DELTASTORAGE, 0);
+                    this.emitDelayInfo(retryFor.DELTASTORAGE, -1);
                     return allDeltas;
                 }
 
@@ -482,7 +482,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         // Might need to change to non-error event
         this.logger.sendErrorEvent({eventName: "GetDeltasClosedConnection" });
-        this.emitDelayInfo(retryFor.DELTASTORAGE, 0);
+        this.emitDelayInfo(retryFor.DELTASTORAGE, -1);
         return [];
     }
 
@@ -575,12 +575,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         } else if (retryEndpoint === retryFor.DELTASTREAM) {
             this.deltaStreamDelay = delay;
         }
-        if (this.deltaStreamDelay >= 0 && this.deltaStorageDelay >= 0) {
+        if (this.deltaStreamDelay && this.deltaStorageDelay) {
             const delayTime = Math.max(this.deltaStorageDelay, this.deltaStreamDelay);
-            if (delayTime) {
+            if (delayTime >= 0) {
                 this.emit("connectionDelay", delayTime);
-                this.deltaStreamDelay = -1;
-                this.deltaStorageDelay = -1;
             }
         }
     }
@@ -605,7 +603,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
                 this._outbound.systemResume();
 
-                this.emitDelayInfo(retryFor.DELTASTREAM, 0);
+                this.emitDelayInfo(retryFor.DELTASTREAM, -1);
                 this.clientSequenceNumber = 0;
                 this.clientSequenceNumberObserved = 0;
 
