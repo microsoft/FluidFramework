@@ -117,7 +117,7 @@ function getR11sToken(
     throw new Error("Invalid tenant");
 }
 
-interface IAlfredUser extends IUser {
+export interface IAlfredUser extends IUser {
     displayName: string;
     name: string;
 }
