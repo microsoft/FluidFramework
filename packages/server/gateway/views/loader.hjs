@@ -48,7 +48,7 @@
             jwt,
             config,
             clientId,
-            user.accessToken);
+            user);
     </script>
 {{/scripts}}
 
