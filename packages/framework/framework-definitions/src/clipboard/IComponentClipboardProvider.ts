@@ -10,23 +10,22 @@ export interface IProvideComponentClipboardProvider {
   readonly IComponentClipboardProvider: IComponentClipboardProvider;
 }
 
-/*
- * Components should all register for the browser clipboard events on any of their HTML elements.
- * If a component is the outermost component in the selection, i.e., if it owns the selection, it
- * should handle these events by constructing and setting the selected content on the clipboard.
- * All other components should ignore these events.
+/**
+ * During copy, component hosts can use their “selection” or equivalent concept to identify any nested
+ * components involved. If the selection includes nested components, the host component should use the
+ * **IComponentClipboardProvider** interface on each of these nested component to acquire their contribution
+ * to the copied content, and combine it with its own copied content. These nested components should do the
+ * same with their own nested components. What content a component provides is entirely up to it.
  *
- * If the selection includes nested components, the component that owns the selection should use
- * the IComponentClipboardProvider interface to acquire content to set on the clipboard from these
- * nested components, and combine it with its own content. These nested components should do the same
- * with their own nested components. What content a component provides is entirely up to it.
+ * Nested components might need to contribute multiple formats of clipboard data to their host components
+ * (e.g. plain-text, HTML).
  *
- * ComponentClipboardHelper method shouldHandleClipboardEvent indicates if a component is the owner
- * of the selection. For this helper to work, all components need to have called
- * ComponentClipboardHelper.setComponentBoundaryAttributes pior to anybody calling this helper.
- * setComponentBoundaryAttributes accepts two parameters, the HTMLElement that is the outermost element for the
- * component and the fluid-id that identifies this component.
+ * In addition, a nested component should specify their complete fluid url in the **fluidUrlAttributeName**
+ * data- attribute of its containing HTML element to ensure that the proper component is instantiated on paste.
+ *
+ * Disclaimer: These interfaces are experimental and are subject to change.
  */
+
 export const fluidUrlAttributeName = "fluid-url";
 
 export interface IComponentClipboardProvider extends IProvideComponentClipboardProvider {
@@ -35,6 +34,6 @@ export interface IComponentClipboardProvider extends IProvideComponentClipboardP
   getComponentHtmlForClipboard(): HTMLElement | undefined;
 
   // Returns the string representation for the entire component instance to be serialized for the
-  // clipboard plain-text clipboard slot. This should likely be consistent with the IStringData produced by getData.
+  // clipboard plain-text clipboard slot.
   getComponentTextForClipboard(): string | undefined;
 }

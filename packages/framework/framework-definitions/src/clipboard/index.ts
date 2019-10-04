@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 export * from "./IComponentClipboardProvider";
-export * from "./IComponentPastable";
+export * from "./IComponentClipboardConsumer";
