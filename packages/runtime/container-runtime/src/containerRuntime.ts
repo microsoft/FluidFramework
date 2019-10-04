@@ -72,10 +72,6 @@ import { analyzeTasks } from "./taskAnalyzer";
 
 interface ISummaryTreeWithStats {
     summaryStats: ISummaryStats;
-
-    /**
-     * true if the summary op was submitted
-     */
     summaryTree: ISummaryTree;
 }
 
@@ -87,6 +83,10 @@ interface IBufferedChunk {
 
 export interface IGeneratedSummaryData extends ISummaryStats {
     sequenceNumber: number;
+
+    /**
+     * true if the summary op was submitted
+     */
     submitted: boolean;
 }
 
