@@ -1367,12 +1367,24 @@ export class WrappedComponentRegistry implements IComponentRegistry {
     public get IComponentRegistry() { return this; }
 
     public async get(name: string): Promise<ComponentFactoryTypes> {
-        if (name === "_scheduler") {
+        // This change is not supposed to reach in next release. It is just a fix
+        // for already corrupted documents in bohemia due to sub registry changes.
+        // The name could be a jsonified array so we parse it accordingly.
+        let pkgName: string = name;
+        try {
+            if (name.startsWith("[")) {
+                const pkgArray = JSON.parse(name) as string[];
+                if (pkgArray && pkgArray.length > 0) {
+                    pkgName = pkgArray[pkgArray.length - 1];
+                }
+            }
+        } catch (error) { }
+        if (pkgName === "_scheduler") {
             return this.agentScheduler;
-        } else if (this.extraRegistries && this.extraRegistries.has(name)) {
-            return this.extraRegistries.get(name);
+        } else if (this.extraRegistries && this.extraRegistries.has(pkgName)) {
+            return this.extraRegistries.get(pkgName);
         } else {
-            return this.registry.get(name);
+            return this.registry.get(pkgName);
         }
     }
 }
