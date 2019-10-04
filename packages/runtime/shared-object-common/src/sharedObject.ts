@@ -57,6 +57,9 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
     // tslint:disable-next-line:variable-name
     public readonly __sharedObject__ = true;
 
+    /**
+     * The handle referring to this SharedObject
+     */
     public readonly handle: IComponentHandle;
 
     /**
@@ -92,6 +95,9 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
         return this._state;
     }
 
+    /**
+     * The loadable URL for this SharedObject
+     */
     public get url(): string {
         return this.handle.path;
     }
@@ -124,7 +130,7 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
     }
 
     /**
-     * Creates a JSON object with information about the shared object
+     * Creates a JSON object with information about the shared object.
      * @returns A JSON object containing the ValueType (always Shared) and the id of the shared object
      */
     public toJSON() {
@@ -155,12 +161,12 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
      * Initializes the object as a local, non-shared object. This object can become shared after
      * it is attached to the document.
      */
-    public initializeLocal() {
+    public initializeLocal(): void {
         this.initializeLocalCore();
     }
 
     /**
-     * Registers the channel with the runtime. The channel will get attach when the runtime is.
+     * {@inheritDoc ISharedObject.register}
      */
     public register(): void {
         if (this.isRegistered()) {
@@ -178,7 +184,7 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
     }
 
     /**
-     * Enables the channel to send and receive ops
+     * {@inheritDoc ISharedObject.connect}
      */
     public connect(services: ISharedObjectServices) {
         this.services = services;
@@ -186,16 +192,14 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
     }
 
     /**
-     * Returns whether the given shared object is local
-     * @returns True if the given shared object is local
+     * {@inheritDoc ISharedObject.isLocal}
      */
     public isLocal(): boolean {
         return !this.services;
     }
 
     /**
-     * Returns whether the given shared object is registered
-     * @returns True if the given shared object is registered
+     * {@inheritDoc ISharedObject.isRegistered}
      */
     public isRegistered(): boolean {
         return (!this.isLocal() || this.registered);
@@ -218,8 +222,7 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
     }
 
     /**
-     * Gets a form of the object that can be serialized.
-     * @returns A tree representing the snapshot of the shared object
+     * {@inheritDoc ISharedObject.snapshot}
      */
     public abstract snapshot(): ITree;
 
@@ -352,6 +355,10 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
         this.setConnectionState(this.services!.deltaConnection.state);
     }
 
+    /**
+     * Set the state of connection to services.
+     * @param state - The new state of the connection
+     */
     private setConnectionState(state: ConnectionState) {
         if (this._state === state) {
             // Not changing state, nothing the same.
@@ -401,7 +408,9 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
     }
 
     /**
-     * Handles a message being received from the remote delta server
+     * Handles a message being received from the remote delta server.
+     * @param message - The message to process
+     * @param local - Whether the message originated from the local client
      */
     private process(message: ISequencedDocumentMessage, local: boolean) {
         if (message.type === MessageType.Operation && local) {
@@ -413,6 +422,10 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
         this.emit("op", message, local);
     }
 
+    /**
+     * Process an op that originated from the local client (i.e. is in pending state).
+     * @param message - The op to process
+     */
     private processPendingOp(message: ISequencedDocumentMessage) {
         const firstPendingOp = this.pendingOps.peekFront();
 
