@@ -85,8 +85,7 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
      * @returns newly create consensus register collection (but not attached yet)
      */
     public static create<T>(runtime: IComponentRuntime, id?: string) {
-        return runtime.createChannel(SharedObject.getIdForCreate(id),
-            ConsensusRegisterCollectionFactory.Type) as ConsensusRegisterCollection<T>;
+        return runtime.createChannel(id, ConsensusRegisterCollectionFactory.Type) as ConsensusRegisterCollection<T>;
     }
 
     /**

@@ -39,7 +39,7 @@ export class Ink extends SharedObject implements IInk {
      * @returns Newly create Ink object (but not attached yet)
      */
     public static create(runtime: IComponentRuntime, id?: string) {
-        return runtime.createChannel(SharedObject.getIdForCreate(id), InkFactory.Type) as Ink;
+        return runtime.createChannel(id, InkFactory.Type) as Ink;
     }
 
     /**

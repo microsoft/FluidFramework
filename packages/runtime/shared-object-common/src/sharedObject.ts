@@ -15,8 +15,6 @@ import {
 } from "@microsoft/fluid-runtime-definitions";
 import * as assert from "assert";
 import * as Deque from "double-ended-queue";
-// tslint:disable-next-line:no-submodule-imports
-import * as uuid from "uuid/v4";
 import { debug } from "./debug";
 import { SharedObjectComponentHandle } from "./handle";
 import { ISharedObject } from "./types";
@@ -31,15 +29,6 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
      */
     public static is(obj: any): obj is SharedObject {
         return obj && !!(obj as IComponent).ISharedObject;
-    }
-
-    /**
-     * Get an id for a sharedobject for creation
-     * @param id - User-specified id or undefined if it is not specified
-     * @returns Generated id if the parameter `id` is undefined, value of `id` otherwise
-     */
-    protected static getIdForCreate(id?: string): string {
-        return id === undefined ? uuid() : id;
     }
 
     public get ISharedObject() { return this; }
