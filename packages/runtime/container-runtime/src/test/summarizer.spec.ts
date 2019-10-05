@@ -76,6 +76,7 @@ describe("Runtime", () => {
                             emitter.emit(generateSummaryEvent);
                             return {
                                 sequenceNumber: lastSeq,
+                                submitted: true,
                                 treeNodeCount: 0,
                                 blobNodeCount: 0,
                                 handleNodeCount: 0,

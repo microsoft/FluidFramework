@@ -283,11 +283,20 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
 
         const summaryEndTime = Date.now();
 
-        summarizingEvent.end({
-            ...summaryData,
+        const telemetryProps = {
+            sequenceNumber: summaryData.sequenceNumber,
+            ...summaryData.summaryStats,
             opsSinceLastSummary: summaryData.sequenceNumber - this.lastSummarySeqNumber,
             timeSinceLastSummary: summaryEndTime - this.lastSummaryTime,
-        });
+        };
+        if (!summaryData.submitted) {
+            // did not send the summary op
+            summarizingEvent.cancel(telemetryProps);
+            this.cancelPending();
+            return;
+        }
+
+        summarizingEvent.end(telemetryProps);
 
         this.lastSummaryTime = summaryEndTime;
         this.lastSummarySeqNumber = summaryData.sequenceNumber;
