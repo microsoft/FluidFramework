@@ -19,7 +19,7 @@ import {
     ITaskMessageSender,
     ITenantManager,
 } from "@microsoft/fluid-server-services-core";
-import { IDocumentAttributes } from "@prague/protocol-definitions";
+import { IDocumentAttributes } from "@microsoft/fluid-protocol-definitions";
 import { Server } from "socket.io";
 
 export class LocalOrdererSetup implements ILocalOrdererSetup {
