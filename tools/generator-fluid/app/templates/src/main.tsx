@@ -21,9 +21,10 @@ export class DiceRoller extends PrimedComponent implements IComponentHTMLVisual 
     public get IComponentHTMLVisual() { return this; }
 
     /**
-     * ComponentInitializingFirstTime is where you do setup for your component. This is only called once the first
-     * time your component is created. Anything that happens in componentInitializingFirstTime will happen before
-     * any other user will see the component.
+     * ComponentInitializingFirstTime is called only once, it is executed only by the first client to open the
+     * component and all work will resolve before the view is presented to any user.
+     *
+     * This method is used to perform component setup, which can include setting an initial schema or initial values.
      */
     protected async componentInitializingFirstTime() {
         this.root.set("diceValue", 1);
