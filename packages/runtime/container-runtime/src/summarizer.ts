@@ -50,7 +50,7 @@ export interface ISummarizer extends IProvideSummarizer {
      * Stops the summarizer by closing its container and resolving its run promise.
      * @param reason - reason for stopping
      */
-    stop(reason?: string);
+    stop(reason?: string): void;
 }
 
 export class Summarizer implements IComponentLoadable, ISummarizer {
@@ -282,11 +282,20 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
 
         const summaryEndTime = Date.now();
 
-        summarizingEvent.end({
-            ...summaryData,
+        const telemetryProps = {
+            sequenceNumber: summaryData.sequenceNumber,
+            ...summaryData.summaryStats,
             opsSinceLastSummary: summaryData.sequenceNumber - this.lastSummarySeqNumber,
             timeSinceLastSummary: summaryEndTime - this.lastSummaryTime,
-        });
+        };
+        if (!summaryData.submitted) {
+            // did not send the summary op
+            summarizingEvent.cancel(telemetryProps);
+            this.cancelPending();
+            return;
+        }
+
+        summarizingEvent.end(telemetryProps);
 
         this.lastSummaryTime = summaryEndTime;
         this.lastSummarySeqNumber = summaryData.sequenceNumber;

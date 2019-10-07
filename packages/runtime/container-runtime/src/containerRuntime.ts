@@ -20,7 +20,9 @@ import {
     ITelemetryLogger,
 } from "@microsoft/fluid-container-definitions";
 import {
+    BlobTreeEntry,
     buildHierarchy,
+    CommitTreeEntry,
     ComponentSerializer,
     Deferred,
     flatten,
@@ -65,8 +67,8 @@ import { DocumentStorageServiceProxy } from "./documentStorageServiceProxy";
 import { LeaderElector } from "./leaderElection";
 import { Summarizer } from "./summarizer";
 import { SummaryManager } from "./summaryManager";
+import { ISummaryStats, SummaryTreeConverter } from "./summaryTreeConverter";
 import { analyzeTasks } from "./taskAnalyzer";
-import { BlobTreeEntry, CommitTreeEntry, ISummaryStats, SummaryTreeConverter } from "./utils";
 
 interface ISummaryTreeWithStats {
     summaryStats: ISummaryStats;
@@ -79,8 +81,15 @@ interface IBufferedChunk {
     content: string;
 }
 
-export interface IGeneratedSummaryData extends ISummaryStats {
+export interface IGeneratedSummaryData {
     sequenceNumber: number;
+
+    /**
+     * true if the summary op was submitted
+     */
+    submitted: boolean;
+
+    summaryStats?: ISummaryStats;
 }
 
 // Consider idle 5s of no activity. And snapshot if a minute has gone by with no snapshot.
@@ -563,7 +572,9 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
         // Create the SummaryManager and mark the initial state
         this.summaryManager = new SummaryManager(
-            context, this.runtimeOptions.generateSummaries || this.loadedFromSummary);
+            context,
+            this.runtimeOptions.generateSummaries || this.loadedFromSummary,
+            this.logger);
         if (this.context.connectionState === ConnectionState.Connected) {
             this.summaryManager.setConnected(this.context.clientId);
         }
@@ -844,19 +855,19 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         }
     }
 
-    public async createComponent(idOrPkg: string, maybePkg?: string | string[]) {
+    public async createComponent(idOrPkg: string, maybePkg?: string) {
         const id = maybePkg === undefined ? uuid() : idOrPkg;
         const pkg = maybePkg === undefined ? idOrPkg : maybePkg;
         return this._createComponentWithProps(pkg, undefined, id);
     }
 
     // tslint:disable-next-line: function-name
-    public async _createComponentWithProps(pkg: string | string[], props: any, id: string): Promise<IComponentRuntime> {
+    public async _createComponentWithProps(pkg: string, props: any, id: string): Promise<IComponentRuntime> {
         this.verifyNotClosed();
 
         const context = new LocalComponentContext(
             id,
-            Array.isArray(pkg) ? pkg : [pkg],
+            pkg,
             this,
             this.storage,
             this.context.scope,
@@ -997,7 +1008,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                     snapshotTree,
                     this,
                     new DocumentStorageServiceProxy(this.storage, flatBlobs),
-                    this.context.scope);
+                    this.context.scope,
+                    attachMessage.type);
 
                 break;
 
@@ -1080,15 +1092,28 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
         try {
             await this.scheduleManager.pause();
+            const sequenceNumber = this.deltaManager.referenceSequenceNumber;
 
+            const ret: IGeneratedSummaryData = {
+                sequenceNumber,
+                submitted: false,
+                summaryStats: undefined,
+            };
+
+            if (!this.connected) {
+                return ret;
+            }
             // TODO in the future we can have stored the latest summary by listening to the summary ack message
             // after loading from the beginning of the snapshot
             const versions = await this.context.storage.getVersions(this.id, 1);
             const parents = versions.map((version) => version.id);
 
-            const sequenceNumber = this.deltaManager.referenceSequenceNumber;
             const treeWithStats = await this.summarize(fullTree);
+            ret.summaryStats = treeWithStats.summaryStats;
 
+            if (!this.connected) {
+                return ret;
+            }
             const handle = await this.context.storage.uploadSummary(treeWithStats.summaryTree);
             const summary = {
                 handle: handle.handle,
@@ -1097,13 +1122,14 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                 parents,
             };
 
+            if (!this.connected) {
+                return ret;
+            }
+            // if summarizer loses connection it will never reconnect
             this.submit(MessageType.Summarize, summary);
+            ret.submitted = true;
 
-            // notify summarizer while still paused
-            return {
-                sequenceNumber,
-                ...treeWithStats.summaryStats,
-            };
+            return ret;
         } catch (ex) {
             this.logger.logException({ eventName: "Summarizer:GenerateSummaryExceptionError" }, ex);
             throw ex;
@@ -1362,12 +1388,24 @@ export class WrappedComponentRegistry implements IComponentRegistry {
     public get IComponentRegistry() { return this; }
 
     public async get(name: string): Promise<ComponentFactoryTypes> {
-        if (name === "_scheduler") {
+        // This change is not supposed to reach in next release. It is just a fix
+        // for already corrupted documents in bohemia due to sub registry changes.
+        // The name could be a jsonified array so we parse it accordingly.
+        let pkgName: string = name;
+        try {
+            if (name.startsWith("[")) {
+                const pkgArray = JSON.parse(name) as string[];
+                if (pkgArray && pkgArray.length > 0) {
+                    pkgName = pkgArray[pkgArray.length - 1];
+                }
+            }
+        } catch (error) { }
+        if (pkgName === "_scheduler") {
             return this.agentScheduler;
-        } else if (this.extraRegistries && this.extraRegistries.has(name)) {
-            return this.extraRegistries.get(name);
+        } else if (this.extraRegistries && this.extraRegistries.has(pkgName)) {
+            return this.extraRegistries.get(pkgName);
         } else {
-            return this.registry.get(name);
+            return this.registry.get(pkgName);
         }
     }
 }
