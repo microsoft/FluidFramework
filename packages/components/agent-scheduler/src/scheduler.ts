@@ -34,7 +34,7 @@ interface IChanged {
 
 const LeaderTaskId = "leader";
 
-export class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent, IComponentRouter {
+class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent, IComponentRouter {
 
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
         let root: ISharedMap;
