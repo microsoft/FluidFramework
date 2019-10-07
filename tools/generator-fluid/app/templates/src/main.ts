@@ -81,6 +81,7 @@ export class DiceRoller extends PrimedComponent implements IComponentHTMLVisual 
 
         const diceSpan = document.createElement("span");
         diceSpan.id = "diceSpan";
+        diceSpan.style.fontSize = "50px";
         diceSpan.textContent = this.getDiceChar(diceValue);
         host.appendChild(diceSpan);
 
