@@ -40,12 +40,15 @@ describe("Runtime", () => {
                 };
                 const testSummaryOpSeqNum = -13;
                 let refreshBaseSummaryDeferred: Deferred<void>;
+                let shouldDeferGenerateSummary: boolean = false;
+                let deferGenerateSummary: Deferred<void>;
 
                 before(() => {
                     clock = sinon.useFakeTimers();
                 });
 
                 beforeEach(() => {
+                    shouldDeferGenerateSummary = false;
                     clock.reset();
                     runCount = 0;
                     lastSeq = 0;
@@ -74,6 +77,10 @@ describe("Runtime", () => {
                         summaryConfig,
                         async () => {
                             emitter.emit(generateSummaryEvent);
+                            if (shouldDeferGenerateSummary) {
+                                deferGenerateSummary = new Deferred<void>();
+                                await deferGenerateSummary.promise;
+                            }
                             return {
                                 sequenceNumber: lastSeq,
                                 submitted: true,
@@ -239,6 +246,34 @@ describe("Runtime", () => {
                     await emitAck();
                     await emitNextOp();
                     assert.strictEqual(runCount, 3);
+                });
+
+                it("Should not cause pending ack timeouts using older summary time", async () => {
+                    shouldDeferGenerateSummary = true;
+                    await emitNextOp();
+
+                    // should do first summary fine
+                    await emitNextOp(summaryConfig.maxOps);
+                    assert.strictEqual(runCount, 1);
+                    deferGenerateSummary.resolve();
+                    await emitAck();
+
+                    // pass time that should not count towards the next max ack wait time
+                    clock.tick(summaryConfig.maxAckWaitTime);
+
+                    // subsequent summary should not cancel pending!
+                    await emitNextOp(summaryConfig.maxOps + 1);
+                    assert.strictEqual(runCount, 2);
+                    await emitNextOp(); // fine
+                    clock.tick(1); // next op will exceed maxAckWaitTime from first summary
+                    await emitNextOp(); // not fine, nay cancel pending too soon
+                    deferGenerateSummary.resolve();
+
+                    // we should not generate another summary without previous ack
+                    await emitNextOp(); // flush finish summarizing
+                    await emitNextOp(summaryConfig.maxOps + 1);
+                    assert.strictEqual(runCount, 2);
+                    deferGenerateSummary.resolve();
                 });
             });
         });
