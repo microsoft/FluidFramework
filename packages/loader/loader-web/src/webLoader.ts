@@ -72,29 +72,6 @@ export function extractDetails(value: string): IParsedPackage {
 }
 
 /**
- * Normalize any input into IFluidCodeDetails format
- * @param inputEither - a string, which is pkgName[at]versionNumber or the full code details
- * @param defaultCdn - If !(input is IFluidCodeDetails), this is where we'll look up the cdn
- */
-export function normalize(input: string | IFluidCodeDetails, defaultCdn?: string): IFluidCodeDetails {
-    let source: IFluidCodeDetails;
-    if (typeof input === "string") {
-        const details = extractDetails(input);
-        source = {
-            config: {
-                // tslint:disable-next-line: no-non-null-assertion
-                [`@${details.scope}:cdn`]: defaultCdn!,
-            },
-            package: input,
-        };
-    } else {
-        source = input;
-    }
-
-    return source;
-}
-
-/**
  * Helper class to manage loading of script elements. Only loads a given script once.
  */
 class ScriptManager {
@@ -311,9 +288,7 @@ export class WebCodeLoader implements ICodeLoader {
         return this.resolvedCache.get(details.packageUrl)!;
     }
 
-    private getPackageDetails(input: IFluidCodeDetails): IPackageDetails {
-        // Only need input the code details, baseURl is for old input format only
-        const details = normalize(input);
+    private getPackageDetails(details: IFluidCodeDetails): IPackageDetails {
 
         const fullPkg = typeof details.package === "string"
             ? details.package // just return it if it's a string e.g. "@fluid-example/clicker@0.1.1"

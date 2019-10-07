@@ -16,7 +16,7 @@ export class WhiteList implements ICodeWhiteList {
     public scriptIds?: string[];
 
     constructor(
-        private readonly testHandler: (source: IFluidCodeDetails) => Promise<boolean>,
+        private readonly testHandler: (source: IFluidCodeDetails) => Promise<boolean> = () => Promise.resolve(true),
     ) { }
 
     public async testSource(source: IFluidCodeDetails): Promise<boolean> {

@@ -27,8 +27,10 @@ class TestRootComponent extends PrimedComponent {
     /**
      * Type name of the component for the IComponentRegistryLookup
      */
-    public static readonly type: IFluidCodeDetails =  {
-        package: "@chaincode/test-root-component",
+    public static readonly type: string = "@chaincode/test-root-component";
+
+    public static readonly codeProposal: IFluidCodeDetails =  {
+        package: TestRootComponent.type,
         config: {},
     };
 
@@ -159,32 +161,32 @@ export class TestHost {
         if (Array.isArray(componentRegistry)) {
             storeComponentRegistry = new Map(componentRegistry.concat([
                 [
-                    TestRootComponent.type.package as string,
+                    TestRootComponent.type as string,
                     Promise.resolve(TestRootComponent.getFactory()),
                 ],
             ]));
         } else {
             const extraRegistryMap: Map<string, Promise<IComponentFactory>> =
-                new Map([[TestRootComponent.type.package as string, Promise.resolve(TestRootComponent.getFactory())]]);
+                new Map([[TestRootComponent.type as string, Promise.resolve(TestRootComponent.getFactory())]]);
             storeComponentRegistry =
                 new WrappedComponentRegistry(componentRegistry as IComponentRegistry, extraRegistryMap);
         }
 
         const store = new TestDataStore(
             new TestCodeLoader([
-                [TestRootComponent.type.package as string,
+                [TestRootComponent.type as string,
                     {
                     IRuntimeFactory: undefined,
                     instantiateRuntime: (context) => SimpleContainerRuntimeFactory.instantiateRuntime(
                         context,
-                        TestRootComponent.type.package as string,
+                        TestRootComponent.type as string,
                         storeComponentRegistry),
                 }],
             ]),
             new TestDocumentServiceFactory(this.deltaConnectionServer),
             new TestResolver());
 
-        store.open<TestRootComponent>("test-root-component", TestRootComponent.type, "")
+        store.open<TestRootComponent>("test-root-component", TestRootComponent.codeProposal, "")
             .then(this.rootResolver)
             .catch((reason) => { throw new Error(`${reason}`); });
     }

@@ -143,7 +143,7 @@ export async function start(
 ): Promise<Container> {
     const loader = createWebLoader(
         resolved,
-        new WhiteList(() => Promise.resolve(true)),
+        new WhiteList(),
         pkg,
         scriptIds,
         config,

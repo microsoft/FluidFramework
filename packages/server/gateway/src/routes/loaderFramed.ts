@@ -30,7 +30,7 @@ export function create(
 
     const router: Router = Router();
     const jwtKey = config.get("gateway:key");
-    const webLoader = new WebCodeLoader(new WhiteList(() => Promise.resolve(true)));
+    const webLoader = new WebCodeLoader(new WhiteList());
 
     /**
      * Looks up the version of a chaincode in the cache.

@@ -68,7 +68,7 @@ export async function initialize(
         };
         const loader = createWebLoader(
             resolved,
-            new WhiteList(() => Promise.resolve(true)),
+            new WhiteList(),
             pkg,
             scriptIds,
             config,

@@ -116,10 +116,12 @@ export async function initialize(
         IPackageManager: packageManager,
     };
 
-    for (const account of user.accounts) {
-        if (account.provider === "msa") {
-            const mailServices = new MailServices(account.accessToken);
-            (services as any).IMail = mailServices;
+    if ( user.accounts ) {
+        for (const account of user.accounts) {
+            if (account.provider === "msa") {
+                const mailServices = new MailServices(account.accessToken);
+                (services as any).IMail = mailServices;
+            }
         }
     }
 
@@ -152,7 +154,7 @@ export async function initialize(
     console.log(`Loading ${url}`);
     const loader = createWebLoader(
         resolved,
-        new WhiteList(() => Promise.resolve(true)),
+        new WhiteList(),
         pkg,
         scriptIds,
         config,
