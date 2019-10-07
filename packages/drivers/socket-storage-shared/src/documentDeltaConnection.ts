@@ -200,7 +200,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         return new DocumentDeltaConnection(socket, id, connection, socketReferenceKey);
     }
 
-    // Map of all existing socket io socket. [url, tenantId, documentId] -> socket
+    // Map of all existing socket io sockets. [url, tenantId, documentId] -> socket
     private static readonly socketIoSockets: Map<string, ISocketReference> = new Map();
 
     /**
