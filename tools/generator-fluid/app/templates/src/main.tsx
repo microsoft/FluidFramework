@@ -11,9 +11,6 @@ import {
     IComponentHTMLVisual,
 } from "@microsoft/fluid-component-core-interfaces";
 import {
-    CounterValueType,
-} from "@microsoft/fluid-map";
-import {
     IComponentContext,
     IComponentRuntime,
 } from "@microsoft/fluid-runtime-definitions";
@@ -22,9 +19,9 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 
 /**
- * Clicker example using view interfaces and stock component classes.
+ * Dice roller example using view interfaces and stock component classes.
  */
-export class Clicker extends PrimedComponent implements IComponentHTMLVisual {
+export class DiceRoller extends PrimedComponent implements IComponentHTMLVisual {
     public get IComponentHTMLVisual() { return this; }
 
     /**
@@ -32,7 +29,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLVisual {
      * is created. Anything that happens in componentInitializingFirstTime will happen before any other user will see the component.
      */
     protected async componentInitializingFirstTime() {
-        this.root.createValueType("clicks", CounterValueType.Name, 0);
+        this.root.set("diceValue", 1);
     }
 
     /**
@@ -40,25 +37,25 @@ export class Clicker extends PrimedComponent implements IComponentHTMLVisual {
      * This becomes the standard practice for creating components in the new world.
      * Using a static allows us to have async calls in class creation that you can't have in a constructor
      */
-    public static async load(runtime: IComponentRuntime, context: IComponentContext): Promise<Clicker> {
-        const clicker = new Clicker(runtime, context);
-        await clicker.initialize();
+    public static async load(runtime: IComponentRuntime, context: IComponentContext): Promise<DiceRoller> {
+        const diceRoller = new DiceRoller(runtime, context);
+        await diceRoller.initialize();
 
-        return clicker;
+        return diceRoller;
     }
 
     /**
-     * Will render a new Clicker view
+     * Render the dice.
      */
     public render(div: HTMLElement) {
-        // Get our counter object that we set in initialize and pass it in to the view.
-        const counter = this.root.get("clicks");
-
         const rerender = () => {
+            // Get our dice value stored in the root.
+            const diceValue = this.root.get<number>("diceValue");
+
             ReactDOM.render(
                 <div>
-                    <span>{counter.value}</span>
-                    <button onClick={() => counter.increment(1)}>+</button>
+                    <span style={{fontSize: 50}}>{this.getDiceChar(diceValue)}</span>
+                    <button onClick={this.rollDice.bind(this)}>Roll</button>
                 </div>,
                 div
             );
@@ -69,12 +66,22 @@ export class Clicker extends PrimedComponent implements IComponentHTMLVisual {
             rerender();
         });
     }
+
+    private rollDice() {
+        const rollValue = Math.floor(Math.random() * 6) + 1;
+        this.root.set("diceValue", rollValue);
+    }
+
+    private getDiceChar(value: number) {
+        // Unicode 0x2680-0x2685 are the sides of a dice (⚀⚁⚂⚃⚄⚅)
+        return String.fromCodePoint(0x267F + value);
+    }
 }
 
 /**
  * This is where you define all your Distributed Data Structures and Value Types
  */
-export const ClickerInstantiationFactory = new PrimedComponentFactory(
-    Clicker,
+export const DiceRollerInstantiationFactory = new PrimedComponentFactory(
+    DiceRoller,
     [],
 );

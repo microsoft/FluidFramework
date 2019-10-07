@@ -1,6 +1,6 @@
 {
-  "name": "@yo-fluid/bootstrap-counter",
-  "description": "Minimal Fluid example to implement a collaborative counter.",
+  "name": "@yo-fluid/dice-roller",
+  "description": "Minimal Fluid example to implement a collaborative dice roller.",
   "version": "0.11.0",
   "author": "Microsoft",
   "repository": "microsoft/FluidFramework",

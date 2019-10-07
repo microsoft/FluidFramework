@@ -1,6 +1,6 @@
 # Fluid Generator
 
-Use this tool to quickly bootstrap a counter chaincode example.
+Use this tool to quickly bootstrap a dice roller chaincode example.
 
 To set up, do these one time steps.
 ````bash
@@ -13,7 +13,7 @@ npm link
 ````
 
 
-You can now bootstrap a new counter chaincode at any time. 
+You can now bootstrap a new dice roller chaincode at any time. 
 
 Go back to your root directory and try it now.
 ````bash

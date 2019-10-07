@@ -139,9 +139,9 @@ module.exports = class extends Generator {
     );
 
     const chaincodeClassName = this.answers.name.charAt(0).toUpperCase() + this.answers.name.slice(1);
-    file.getClass("Clicker").rename(chaincodeClassName);
+    file.getClass("DiceRoller").rename(chaincodeClassName);
 
-    file.getVariableDeclaration("ClickerInstantiationFactory").rename(`${chaincodeClassName}InstantiationFactory`)
+    file.getVariableDeclaration("DiceRollerInstantiationFactory").rename(`${chaincodeClassName}InstantiationFactory`)
 
     // TODO: Move this save so that it saves when the rest of the fs does a commit
     // Or write to a string and use fs to write.

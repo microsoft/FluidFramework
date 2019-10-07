@@ -19,7 +19,7 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 
 /**
- * Clicker example using view interfaces and stock component classes.
+ * Dice roller example using view interfaces and stock component classes.
  */
 export class DiceRoller extends PrimedComponent implements IComponentHTMLVisual {
     public get IComponentHTMLVisual() { return this; }
@@ -50,7 +50,7 @@ export class DiceRoller extends PrimedComponent implements IComponentHTMLVisual 
     public render(div: HTMLElement) {
         const rerender = () => {
             // Get our dice value stored in the root.
-            const diceValue = this.root.get("diceValue");
+            const diceValue = this.root.get<number>("diceValue");
 
             ReactDOM.render(
                 <div>
