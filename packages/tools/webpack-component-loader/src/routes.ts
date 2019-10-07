@@ -16,7 +16,7 @@ export const before = (app: express.Application, server: WebpackDevServer) => {
 };
 
 export const after = (app: express.Application, server: WebpackDevServer, baseDir: string, env: IRouteOptions) => {
-    const options: IRouteOptions = env ? env : { mode: "live" };
+    const options: IRouteOptions = env ? env : { mode: "local" };
     const config: nconf.Provider = nconf.env("__").file(path.join(baseDir, "config.json"));
     // tslint:disable: no-unsafe-any
     options.fluidHost = options.fluidHost ? options.fluidHost : config.get("fluid:webpack:fluidHost");

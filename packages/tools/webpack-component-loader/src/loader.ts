@@ -171,11 +171,7 @@ export async function start(
                 options.bearerSecret);
             break;
 
-        case "local":
-            urlResolver = new TestResolver();
-            break;
-
-        default: // live
+        case "live":
             urlResolver = new InsecureUrlResolver(
                 options.fluidHost,
                 options.fluidHost.replace("www", "alfred"),
@@ -184,6 +180,10 @@ export async function start(
                 options.tenantSecret,
                 getUser(),
                 options.bearerSecret);
+            break;
+
+        default: // local
+            urlResolver = new TestResolver();
     }
 
     let documentServiceFactory: IDocumentServiceFactory;
