@@ -1,6 +1,6 @@
 {
-  "name": "@yo-fluid/diceroller",
-  "description": "Fluid starter project",
+  "name": "@fluid-example/diceroller",
+  "description": "Minimal Fluid component sample to implement a collaborative dice roller.",
   "version": "0.11.0",
   "author": "Microsoft",
   "repository": "microsoft/FluidFramework",
@@ -8,29 +8,20 @@
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "webpack --env.production && npm run tsc",
-    "dev": "webpack --env.development",
+    "build": "concurrently npm:build:compile npm:tslint",
+    "build:compile": "concurrently npm:tsc npm:build:esnext",
+    "build:esnext": "tsc --project ./tsconfig.esnext.json",
+    "build:full": "npm run build",
+    "build:full:compile": "npm run build:compile",
+    "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
     "start": "webpack-dev-server --config webpack.config.js --package package.json",
     "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
     "start:local": "webpack-dev-server --config webpack.config.js --package package.json --env.mode local",
-    "verdaccio": "npm publish --registry https://packages.wu2.prague.office-int.com",
-    "deploy": "npm run build && npm version patch && npm run verdaccio && npm run post-deploy",
-    "post-deploy": "getUrl -p",
+    "deploy": "npm publish --registry https://packages.wu2.prague.office-int.com",
     "tsc": "tsc",
-    "webpack": "npm run build",
-    "webpack:dev": "npm run dev"
-  },
-  "devDependencies": {
-    "@fluid-internal/url-generator": "^1.0.4",
-    "@microsoft/fluid-webpack-component-loader": "^0.11.0",
-    "@types/node": "^10.14.6",
-    "@types/react-dom": "^16.0.11",
-    "ts-loader": "^4.5.0",
-    "typescript": "~3.4.5",
-    "webpack": "4.16.5",
-    "webpack-cli": "3.1.0",
-    "webpack-dev-server": "^3.8.0",
-    "webpack-merge": "4.1.4"
+    "tslint": "tslint --project tsconfig.json --format verbose",
+    "webpack": "webpack --env.production",
+    "webpack:dev": "webpack --env.development"
   },
   "fluid": {
     "browser": {
@@ -42,17 +33,28 @@
       }
     }
   },
+  "license": "MIT",
   "dependencies": {
     "@microsoft/fluid-aqueduct": "^0.11.0",
-    "@microsoft/fluid-build-common": "^0.11.0",
     "@microsoft/fluid-component-core-interfaces": "^0.11.0",
-    "@microsoft/fluid-component-runtime": "^0.11.0",
-    "@microsoft/fluid-container-definitions": "^0.11.0",
-    "@microsoft/fluid-map": "^0.11.0",
     "@microsoft/fluid-runtime-definitions": "^0.11.0",
-    "@microsoft/fluid-shared-object-base": "^0.11.0",
     "react": "^16.8.3",
     "react-dom": "^16.8.3"
   },
-  "license": "MIT"
+  "devDependencies": {
+    "@microsoft/fluid-build-common": "^0.11.0",
+    "@microsoft/fluid-webpack-component-loader": "^0.11.0",
+    "@types/node": "^10.12.12",
+    "@types/react": "^16.7.7",
+    "@types/react-dom": "^16.0.11",
+    "concurrently": "^4.1.0",
+    "rimraf": "^2.6.2",
+    "ts-loader": "^4.5.0",
+    "tslint": "^5.11.0",
+    "typescript": "~3.4.5",
+    "webpack": "^4.8.2",
+    "webpack-cli": "^3.1.2",
+    "webpack-dev-server": "^3.8.0",
+    "webpack-merge": "^4.1.2"
+  }
 }
