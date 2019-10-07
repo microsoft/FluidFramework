@@ -88,3 +88,9 @@ export interface IData {
 
     keyValues: IKeyValue[];
 }
+
+export interface IKeyValueWrapper {
+    getKeyValues(): Promise<IKeyValue[]>;
+    addKeyValue(keyValue: IKeyValue): Promise<IKeyValue>;
+    removeKeyValue(key: string): Promise<string>;
+}

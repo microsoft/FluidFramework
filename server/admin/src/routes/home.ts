@@ -9,7 +9,7 @@ import { Provider } from "nconf";
 import * as passport from "passport";
 import * as winston from "winston";
 import { IData } from "../definitions";
-import { KeyValueManager } from "../keyValueManager";
+import { KeyValueWrapper } from "../keyValueWrapper";
 import { TenantManager } from "../tenantManager";
 import { defaultPartials } from "./partials";
 
@@ -18,7 +18,7 @@ export function create(
     mongoManager: core.MongoManager,
     ensureLoggedIn: any,
     tenantManager: TenantManager,
-    cache: KeyValueManager): Router {
+    cache: KeyValueWrapper): Router {
 
     const router: Router = Router();
 
@@ -30,9 +30,13 @@ export function create(
         const user = request.user ? request.user : {displayName: "local"};
         const tenantsP = tenantManager.getTenantsforUser(oid);
         // Return empty result if the key-value document was not loaded properly.
-        const keyValues = cache === undefined ? [] : cache.getKeyValues();
+        const keyValuesP = cache.getKeyValues().then((keyValues) => {
+            return keyValues;
+        }, () => {
+            return [];
+        });
 
-        tenantsP.then((tenants) => {
+        Promise.all([tenantsP, keyValuesP]).then(([tenants, keyValues]) => {
             const data: IData = {
                 keyValues,
                 tenants,

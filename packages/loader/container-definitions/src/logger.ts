@@ -4,7 +4,6 @@
  */
 
 export type TelemetryEventCategory = "generic" | "error" | "performance";
-export type TelemetryPerfType = "start" | "end" | "cancel" | "progress";
 export type TelemetryEventPropertyType = string | number | boolean | object | undefined;
 
 // Name of the error event property indicating if error was raised through Container.emit("error");
@@ -58,7 +57,6 @@ export interface ITelemetryPerformanceEvent {
     eventName: string;
     duration?: number;            // Duration of event (optional)
     tick?: number;                // Event time, relative to start of page load. Filled in by logger if not specified.
-    perfType?: TelemetryPerfType;
     [index: string]: TelemetryEventPropertyType;
 }
 
@@ -92,7 +90,7 @@ export interface ITelemetryLogger extends ITelemetryBaseLogger {
      * Send error telemetry event
      * @param event - Event to send
      */
-    sendPerformanceEvent(event: ITelemetryPerformanceEvent): void;
+    sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void;
 
     /**
      * Helper method to log generic errors

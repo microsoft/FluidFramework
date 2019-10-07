@@ -29,12 +29,12 @@ export interface IConvertedSummaryResults {
 }
 
 export class SummaryTreeConverter {
-    public convertToSummaryTree(snapshot: ITree, generateFullTreeNoOptimizations?: boolean): IConvertedSummaryResults {
+    public convertToSummaryTree(snapshot: ITree, fullTree: boolean = false): IConvertedSummaryResults {
         const summaryStats = this.mergeStats();
         const summaryTree = this.convertToSummaryTreeCore(
             snapshot,
             summaryStats,
-            generateFullTreeNoOptimizations);
+            fullTree);
 
         return { summaryStats, summaryTree };
     }
@@ -59,9 +59,9 @@ export class SummaryTreeConverter {
     protected convertToSummaryTreeCore(
         snapshot: ITree,
         summaryStats: ISummaryStats,
-        generateFullTreeNoOptimizations?: boolean,
+        fullTree: boolean = false,
     ): SummaryTree {
-        if (snapshot.id && !generateFullTreeNoOptimizations) {
+        if (snapshot.id && !fullTree) {
             summaryStats.handleNodeCount++;
             return {
                 handle: snapshot.id,
@@ -99,7 +99,7 @@ export class SummaryTreeConverter {
                         value = this.convertToSummaryTreeCore(
                             entry.value as ITree,
                             summaryStats,
-                            generateFullTreeNoOptimizations);
+                            fullTree);
                         break;
 
                     case TreeEntry[TreeEntry.Commit]:
@@ -108,7 +108,7 @@ export class SummaryTreeConverter {
                         value = this.convertToSummaryTreeCore(
                             entry.value as ITree,
                             summaryStats,
-                            generateFullTreeNoOptimizations);
+                            fullTree);
                         break;
 
                     default:

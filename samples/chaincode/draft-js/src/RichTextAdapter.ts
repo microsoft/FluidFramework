@@ -10,8 +10,8 @@ import {
   ReferenceType,
   reservedMarkerIdKey,
   TextSegment,
-} from "@prague/merge-tree";
-import { ISequenceDeltaRange, SharedString } from "@prague/sequence";
+} from "@microsoft/fluid-merge-tree";
+import { ISequenceDeltaRange, SharedString } from "@microsoft/fluid-sequence";
 import { CharacterMetadata, ContentBlock, ContentState, genKey, SelectionState } from "draft-js";
 import { List, OrderedSet } from "immutable";
 
@@ -249,18 +249,18 @@ export const updateTextRange = (
 
   for (const delta of opRanges) {
     if (delta.operation === MergeTreeDeltaType.INSERT) {
-      if (delta.offset <= updatedRange.start) {
+      if (delta.position <= updatedRange.start) {
         updatedRange.start += delta.segment.cachedLength;
         updatedRange.end += delta.segment.cachedLength;
-      } else if (delta.offset < updatedRange.end) {
+      } else if (delta.position < updatedRange.end) {
         updatedRange.end += delta.segment.cachedLength;
       }
     } else if (delta.operation === MergeTreeDeltaType.REMOVE) {
-      if (delta.offset < updatedRange.start) {
+      if (delta.position < updatedRange.start) {
         updatedRange.start -= delta.segment.cachedLength;
         updatedRange.end -= delta.segment.cachedLength;
-      } else if (delta.offset < updatedRange.end) {
-        updatedRange.end -= Math.min(delta.segment.cachedLength, updatedRange.end - delta.offset);
+      } else if (delta.position < updatedRange.end) {
+        updatedRange.end -= Math.min(delta.segment.cachedLength, updatedRange.end - delta.position);
       }
     }
   }

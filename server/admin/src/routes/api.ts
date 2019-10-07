@@ -7,7 +7,7 @@ import * as core from "@microsoft/fluid-server-services-core";
 import { Response, Router } from "express";
 import { Provider } from "nconf";
 import { IKeyValue, ITenantInput } from "../definitions";
-import { KeyValueManager } from "../keyValueManager";
+import { KeyValueWrapper } from "../keyValueWrapper";
 import { TenantManager } from "../tenantManager";
 
 export function create(
@@ -15,7 +15,7 @@ export function create(
     mongoManager: core.MongoManager,
     ensureLoggedIn: any,
     tenantManager: TenantManager,
-    cache: KeyValueManager): Router {
+    cache: KeyValueWrapper): Router {
     const router: Router = Router();
 
     function returnResponse<T>(resultP: Promise<T>, response: Response) {
@@ -47,12 +47,8 @@ export function create(
      */
     router.post("/keyValues", ensureLoggedIn(), (request, response) => {
         const keyValueInput = request.body as IKeyValue;
-        if (cache === undefined) {
-            response.status(400).end("No cache loaded");
-        } else {
-            const newKeyValue = cache.addKeyValue(keyValueInput);
-            response.status(200).json(newKeyValue);
-        }
+        const addP = cache.addKeyValue(keyValueInput);
+        returnResponse(addP, response);
     });
 
     /**
@@ -60,12 +56,8 @@ export function create(
      */
     router.delete("/keyValues/*", ensureLoggedIn(), (request, response) => {
         const key = request.params[0] as string;
-        if (cache === undefined) {
-            response.status(400).end("No cache loaded");
-        } else {
-            const deletedKeyValue = cache.removeKeyValue(key);
-            response.status(200).json(deletedKeyValue);
-        }
+        const delP = cache.removeKeyValue(key);
+        returnResponse(delP, response);
     });
 
     return router;

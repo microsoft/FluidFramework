@@ -5,9 +5,6 @@
 
 import { ITrace } from "@microsoft/fluid-protocol-definitions";
 
-// Message to indicate successful round trip.
-export const RoundTrip = "tripComplete";
-
 export interface ILatencyMessage {
     // Latency traces.
     traces: ITrace[];

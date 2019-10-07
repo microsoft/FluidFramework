@@ -43,7 +43,7 @@ export class CollaborativeTextArea extends React.Component<IProps, IState> {
         this.updateSelection = this.updateSelection.bind(this);
     }
 
-    public componentWillMount() {
+    public componentDidMount() {
         // Sets an event listener so we can update our state as the value changes
 
         this.props.sharedString.on("sequenceDelta", (event) => {

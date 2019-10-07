@@ -140,7 +140,7 @@ export interface IRuntime {
     /**
      * Snapshots the runtime
      */
-    snapshot(tagMessage: string, generateFullTreeNoOptimizations?: boolean): Promise<ITree | null>;
+    snapshot(tagMessage: string, fullTree?: boolean): Promise<ITree | null>;
 
     /**
      * Notifies the runtime of a change in the connection state
@@ -218,6 +218,7 @@ export interface IContainerContext extends EventEmitter, IMessageScheduler, IPro
     error(err: any): void;
     requestSnapshot(tagMessage: string): Promise<void>;
     reloadContext(): void;
+    refreshBaseSummary(snapshot: ISnapshotTree): void;
 }
 
 export interface IProvideComponentTokenProvider {
