@@ -8,7 +8,7 @@ import {
     IDocumentService,
     IDocumentStorageService,
     ISnapshotTree,
-    IVersion
+    IVersion,
 } from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
 import * as fs from "fs";
@@ -103,6 +103,7 @@ async function fetchBlobsFromSnapshotTree(
         }
         const componentSnapShotTree = await storage.getSnapshotTree(componentVersions[0]);
         if (componentSnapShotTree === null) {
+            // tslint:disable-next-line: max-line-length
             console.error(`No component tree for component = ${component}, path = ${prefix}, version = ${componentVersions[0].id}`);
             continue;
         }
@@ -145,6 +146,7 @@ async function dumpSnapshotTreeVerbose(name: string, blobs: IBlob[]) {
         if (blob === undefined) {
             continue;
         }
+        // tslint:disable-next-line: max-line-length
         console.log(`${item.path.padEnd(nameLength)} |    ${item.reused ? "X" : " "}   | ${formatNumber(blob.length).padStart(10)}`);
         size += blob.length;
     }

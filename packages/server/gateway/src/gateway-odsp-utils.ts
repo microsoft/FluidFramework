@@ -95,7 +95,8 @@ export async function spoGetResolvedUrl(
     const odspUrlResolver = new OdspUrlResolver();
     // TODO: pass path
     const path = "";
-    const request = { url: `https://${server}/?driveId=${encodeURIComponent(drive)}&itemId=${encodeURIComponent(item)}&path=${encodeURIComponent(path)}` };
+    // tslint:disable-next-line: max-line-length
+    const request = {url: `https://${server}/?driveId=${encodeURIComponent(drive)}&itemId=${encodeURIComponent(item)}&path=${encodeURIComponent(path)}`};
     const resolved = await odspUrlResolver.resolve(request) as IFluidResolvedUrl;
     // For now pass the token via the resolved url, so that we can fake the token call back for the driver.
     resolved.tokens.storageToken = tokens.accessToken;

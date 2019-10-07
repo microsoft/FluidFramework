@@ -10,7 +10,7 @@ import {
     IDocumentMessage,
     ISignalMessage,
     ITokenClaims,
-    MessageType
+    MessageType,
 } from "@microsoft/fluid-protocol-definitions";
 import {
     LocalNodeFactory,
