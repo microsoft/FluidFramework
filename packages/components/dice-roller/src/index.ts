@@ -7,7 +7,7 @@ import {
     SimpleModuleInstantiationFactory
 } from "@microsoft/fluid-aqueduct";
 
-import {} from "./main";
+import { DiceRollerInstantiationFactory as ComponentInstantiationFactory } from "./main";
 
 // tslint:disable-next-line: no-var-requires no-require-imports
 const pkg = require("../package.json");
