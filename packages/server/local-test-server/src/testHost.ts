@@ -24,6 +24,7 @@ import { TestDataStore } from "./testDataStore";
  */
 class TestRootComponent extends PrimedComponent implements IComponentRunnable {
     public get IComponentRunnable() { return this; }
+
     /**
      * Type name of the component for the IComponentRegistryLookup
      */
@@ -46,7 +47,7 @@ class TestRootComponent extends PrimedComponent implements IComponentRunnable {
         super(runtime, context);
     }
 
-    public run = () =>  Promise.resolve(console.log("run()"));
+    public run = () =>  Promise.resolve();
 
     // Make this function public so TestHost can use them
     // tslint:disable-next-line: no-unnecessary-override

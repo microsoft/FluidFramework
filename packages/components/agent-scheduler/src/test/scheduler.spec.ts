@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// tslint:disable: no-console
 // tslint:disable no-import-side-effect
 import { TestHost } from "@microsoft/fluid-local-test-server";
 import { IAgentScheduler } from "@microsoft/fluid-runtime-definitions";
@@ -14,19 +13,7 @@ import { AgentSchedulerFactory, TaskManager } from "../scheduler";
 const AgentSchedulerType = "@microsoft/fluid-agent-scheduler";
 
 describe("AgentScheduler", () => {
-    /*
-    const createEmptyTask = (id: string) => {
-        return {
-            callback: () => {},
-            id,
-        };
-    }; */
     const leader = "leader";
-
-    /*
-    async function createScheduler(host: TestHost): Promise<TaskManager> {
-        return host.createAndAttachComponent<TaskManager>("scheduler", AgentSchedulerType);
-    } */
 
     describe("Single client", () => {
         let host: TestHost;
@@ -41,29 +28,23 @@ describe("AgentScheduler", () => {
 
         let scheduler: IAgentScheduler;
         beforeEach(async () => {
-            // scheduler = await createScheduler(host).then((taskmanager) => taskmanager.IAgentScheduler);
             scheduler = await host.getComponent<TaskManager>("_scheduler")
                 .then((taskmanager) => taskmanager.IAgentScheduler);
         });
 
         it("No tasks initially", async () => {
             assert.deepStrictEqual(scheduler.pickedTasks(), []);
-            console.log(scheduler.pickedTasks());
         });
 
         it("Can pick tasks", async () => {
-            // await scheduler.pick(createEmptyTask("task1"));
             await scheduler.pick("task1");
-            console.log(scheduler.pickedTasks());
             assert.deepStrictEqual(scheduler.pickedTasks() , [leader, "task1"]);
         });
 
         it("Can pick and release tasks", async () => {
             await scheduler.pick("task1");
-            console.log(scheduler.pickedTasks());
             assert.deepStrictEqual(scheduler.pickedTasks() , [leader, "task1"]);
             await scheduler.release("task1");
-            console.log(scheduler.pickedTasks());
             assert.deepStrictEqual(scheduler.pickedTasks(), [leader]);
         });
 
@@ -116,12 +97,6 @@ describe("AgentScheduler", () => {
                 [AgentSchedulerType, Promise.resolve(new AgentSchedulerFactory())],
             ]);
             host2 = host1.clone();
-            // scheduler1 = await host1.createAndAttachComponent<TaskManager>("scheduler", AgentSchedulerType)
-            //     .then((taskmanager) => taskmanager.IAgentScheduler);
-            // scheduler2 = await host2.waitComponent("scheduler");
-            // scheduler2 = await host1.createAndAttachComponent<TaskManager>("scheduler", AgentSchedulerType)
-            //     .then((taskmanager) => taskmanager.IAgentScheduler);
-            // scheduler1 = await createScheduler(host1).then((taskmanager) => taskmanager.IAgentScheduler);
             scheduler1 = await host1.getComponent<TaskManager>("_scheduler")
                 .then((taskmanager) => taskmanager.IAgentScheduler);
             scheduler2 = await host2.getComponent<TaskManager>("_scheduler")
@@ -154,8 +129,6 @@ describe("AgentScheduler", () => {
             await scheduler1.pick("task1", "task2", "task3");
             await scheduler2.pick("task2", "task3", "task4");
             await TestHost.sync(host1, host2);
-            console.log(scheduler1.pickedTasks());
-            console.log(scheduler2.pickedTasks());
             assert.deepStrictEqual(scheduler1.pickedTasks(), [leader, "task1", "task2", "task3"]);
             assert.deepStrictEqual(scheduler2.pickedTasks(), ["task4"]);
         });
@@ -214,4 +187,3 @@ describe("AgentScheduler", () => {
         });
     });
 });
-// */
