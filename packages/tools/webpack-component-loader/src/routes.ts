@@ -22,6 +22,7 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
     options.fluidHost = options.fluidHost ? options.fluidHost : config.get("fluid:webpack:fluidHost");
     options.tenantId = options.tenantId ? options.tenantId : config.get("fluid:webpack:tenantId");
     options.tenantSecret = options.tenantSecret ? options.tenantSecret : config.get("fluid:webpack:tenantSecret");
+    options.bearerSecret = options.bearerSecret ? options.bearerSecret : config.get("fluid:webpack:bearerSecret");
     options.npm = options.npm ? options.npm : config.get("fluid:webpack:npm");
     // tslint:enable: no-unsafe-any
 

@@ -33,6 +33,7 @@ export interface IRouteOptions {
     fluidHost?: string;
     tenantId?: string;
     tenantSecret?: string;
+    bearerSecret?: string;
     npm?: string;
     component?: string;
     single?: boolean;
@@ -130,8 +131,6 @@ async function getPkg(packageJson: IPackage, scriptIds: string[], component = fa
     };
 }
 
-const bearerSecret = "VBQyoGpEYrTn3XQPtXW3K8fFDd";
-
 // tslint:disable-next-line: max-func-body-length
 export async function start(
     packageJson: IPackage,
@@ -169,7 +168,7 @@ export async function start(
                 options.tenantId,
                 options.tenantSecret,
                 getUser(),
-                bearerSecret);
+                options.bearerSecret);
             break;
 
         case "local":
@@ -184,7 +183,7 @@ export async function start(
                 options.tenantId,
                 options.tenantSecret,
                 getUser(),
-                bearerSecret);
+                options.bearerSecret);
     }
 
     let documentServiceFactory: IDocumentServiceFactory;
