@@ -81,7 +81,7 @@ export class DiceRoller extends PrimedComponent implements IComponentHTMLVisual 
 }
 
 /**
- * This is where you define all your Distributed Data Structures and Value Types
+ * This is where you define all your Distributed Data Structures
  */
 export const DiceRollerInstantiationFactory = new PrimedComponentFactory(
     DiceRoller,
