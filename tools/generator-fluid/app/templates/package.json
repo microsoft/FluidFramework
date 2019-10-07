@@ -20,18 +20,6 @@
     "webpack": "npm run build",
     "webpack:dev": "npm run dev"
   },
-  "devDependencies": {
-    "@fluid-internal/url-generator": "^1.0.4",
-    "@microsoft/fluid-webpack-component-loader": "^0.11.0",
-    "@types/node": "^10.14.6",
-    "@types/react-dom": "^16.0.11",
-    "ts-loader": "^4.5.0",
-    "typescript": "~3.4.5",
-    "webpack": "4.16.5",
-    "webpack-cli": "3.1.0",
-    "webpack-dev-server": "^3.8.0",
-    "webpack-merge": "4.1.4"
-  },
   "fluid": {
     "browser": {
       "umd": {
@@ -42,6 +30,7 @@
       }
     }
   },
+  "license": "MIT",
   "dependencies": {
     "@microsoft/fluid-aqueduct": "^0.11.0",
     "@microsoft/fluid-build-common": "^0.11.0",
@@ -54,5 +43,15 @@
     "react": "^16.8.3",
     "react-dom": "^16.8.3"
   },
-  "license": "MIT"
+  "devDependencies": {
+    "@microsoft/fluid-webpack-component-loader": "^0.11.0",
+    "@types/node": "^10.14.6",
+    "@types/react-dom": "^16.0.11",
+    "ts-loader": "^4.5.0",
+    "typescript": "~3.4.5",
+    "webpack": "4.16.5",
+    "webpack-cli": "3.1.0",
+    "webpack-dev-server": "^3.8.0",
+    "webpack-merge": "4.1.4"
+  }
 }

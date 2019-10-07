@@ -14,9 +14,9 @@ const pkg = require("../package.json");
 const chaincodeName = pkg.name as string;
 
 /**
- * This does setup for the Container. The SimpleModuleInstantiationFactory also enables dynamic loading in the 
+ * This does setup for the Container. The SimpleModuleInstantiationFactory also enables dynamic loading in the
  * EmbeddedComponentLoader.
- * 
+ *
  * There are two important things here:
  * 1. Default Component name
  * 2. Map of string to factory for all components

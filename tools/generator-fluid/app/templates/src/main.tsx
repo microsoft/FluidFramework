@@ -25,8 +25,9 @@ export class DiceRoller extends PrimedComponent implements IComponentHTMLVisual 
     public get IComponentHTMLVisual() { return this; }
 
     /**
-     * ComponentInitializingFirstTime is where you do setup for your component. This is only called once the first time your component
-     * is created. Anything that happens in componentInitializingFirstTime will happen before any other user will see the component.
+     * ComponentInitializingFirstTime is where you do setup for your component. This is only called once the first
+     * time your component is created. Anything that happens in componentInitializingFirstTime will happen before
+     * any other user will see the component.
      */
     protected async componentInitializingFirstTime() {
         this.root.set("diceValue", 1);
@@ -57,7 +58,7 @@ export class DiceRoller extends PrimedComponent implements IComponentHTMLVisual 
                     <span style={{fontSize: 50}}>{this.getDiceChar(diceValue)}</span>
                     <button onClick={this.rollDice.bind(this)}>Roll</button>
                 </div>,
-                div
+                div,
             );
         };
 
@@ -68,6 +69,7 @@ export class DiceRoller extends PrimedComponent implements IComponentHTMLVisual 
     }
 
     private rollDice() {
+        // tslint:disable-next-line:insecure-random
         const rollValue = Math.floor(Math.random() * 6) + 1;
         this.root.set("diceValue", rollValue);
     }
