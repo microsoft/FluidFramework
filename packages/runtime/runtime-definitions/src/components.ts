@@ -14,6 +14,7 @@ import {
 } from "@microsoft/fluid-component-core-interfaces";
 import {
     ConnectionState,
+    IAudience,
     IBlobManager,
     IDeltaManager,
     IGenericBlob,
@@ -98,7 +99,7 @@ export interface IComponentRuntime extends EventEmitter, IComponentRouter {
     /**
      * Generates a snapshot of the given component
      */
-    snapshotInternal(): Promise<ITreeEntry[]>;
+    snapshotInternal(fullTree?: boolean): Promise<ITreeEntry[]>;
 
     /**
      * Retrieves the snapshot used as part of the initial snapshot message
@@ -170,6 +171,11 @@ export interface IComponentRuntime extends EventEmitter, IComponentRouter {
     getQuorum(): IQuorum;
 
     /**
+     * Returns the current audience.
+     */
+    getAudience(): IAudience;
+
+    /**
      * Called by distributed data structures in disconnected state to notify about pending local changes.
      * All pending changes are automatically flushed by shared objects on connection.
      */
@@ -221,6 +227,11 @@ export interface IComponentContext extends EventEmitter {
      */
     getQuorum(): IQuorum;
 
+    /**
+     * Returns the current audience.
+     */
+    getAudience(): IAudience;
+
     error(err: any): void;
 
     /**
@@ -242,7 +253,14 @@ export interface IComponentContext extends EventEmitter {
      * @param pkgOrId - Package name if a second parameter is not provided. Otherwise an explicit ID.
      * @param pkg - Package name of the component. Optional and only required if specifying an explicit ID.
      */
-    createComponent(pkgOrId: string, pkg?: string): Promise<IComponentRuntime>;
+    createComponent(pkgOrId: string, pkg?: string | string[]): Promise<IComponentRuntime>;
+
+    /**
+     * Creates a new component by using subregistries.
+     * @param pkg - Package name of the component.
+     * @param props - properties to be passed to the instantiateComponent thru the context.
+     */
+    createSubComponent(pkg: string, props?: any): Promise<IComponentRuntime>;
 
     /**
      * Returns the runtime of the component.
@@ -326,7 +344,7 @@ export interface IHostRuntime extends
      * @param pkgOrId - Package name if a second parameter is not provided. Otherwise an explicit ID.
      * @param pkg - Package name of the component. Optional and only required if specifying an explicit ID.
      */
-    createComponent(pkgOrId: string, pkg?: string): Promise<IComponentRuntime>;
+    createComponent(pkgOrId: string, pkg?: string | string[]): Promise<IComponentRuntime>;
 
     /**
      * Creates a new component with props
@@ -339,12 +357,17 @@ export interface IHostRuntime extends
      * Further change to the component create flow to split the local create vs remote instantiate make this deprecated.
      * @internal
      */
-    _createComponentWithProps(pkg: string, props: any, id: string): Promise<IComponentRuntime>;
+    _createComponentWithProps(pkg: string | string[], props: any, id: string): Promise<IComponentRuntime>;
 
     /**
      * Returns the current quorum.
      */
     getQuorum(): IQuorum;
+
+    /**
+     * Returns the current audience.
+     */
+    getAudience(): IAudience;
 
     /**
      * Used to raise an unrecoverable error on the runtime.

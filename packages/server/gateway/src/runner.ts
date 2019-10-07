@@ -4,7 +4,13 @@
  */
 
 import { Deferred } from "@microsoft/fluid-core-utils";
-import { IAlfredTenant, ICache, IWebServer, IWebServerFactory } from "@microsoft/fluid-server-services-core";
+import {
+    IAlfredTenant,
+    ICache,
+    IWebServer,
+    IWebServerFactory,
+    MongoManager,
+} from "@microsoft/fluid-server-services-core";
 import * as utils from "@microsoft/fluid-server-services-utils";
 import { Provider } from "nconf";
 import * as winston from "winston";
@@ -20,6 +26,8 @@ export class GatewayRunner implements utils.IRunner {
         private config: Provider,
         private port: string | number,
         private cache: ICache,
+        public mongoManager: MongoManager,
+        public accountsCollectionName: string,
         private alfred: IAlfred,
         private appTenants: IAlfredTenant[]) {
     }
@@ -32,7 +40,9 @@ export class GatewayRunner implements utils.IRunner {
             this.config,
             this.alfred,
             this.appTenants,
-            this.cache);
+            this.cache,
+            this.mongoManager,
+            this.accountsCollectionName);
         gateway.set("port", this.port);
 
         this.server = this.serverFactory.create(gateway);

@@ -57,6 +57,9 @@ export enum MessageType {
 
     // Message to indicate that no active clients are present.
     NoClient = "noClient",
+
+    // Message to indicate successful round trip.
+    RoundTrip = "tripComplete",
 }
 
 export interface IChunkedOp {

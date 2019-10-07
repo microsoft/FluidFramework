@@ -4,14 +4,14 @@
  */
 
 import { PrimedComponent } from "@microsoft/fluid-aqueduct";
-import { EmbeddedReactComponentFactory, IComponentReactViewable } from "@microsoft/fluid-aqueduct-react";
-import { ISharedCell, SharedCell } from "@microsoft/fluid-cell";
+import { IComponentReactViewable } from "@microsoft/fluid-aqueduct-react";
 import { IComponentHandle, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
+import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import { TodoItemName } from "../TodoItem/index";
+import { TodoItem, TodoItemName } from "../TodoItem/index";
 import { TodoView } from "./TodoView";
 
 // tslint:disable-next-line: no-var-requires no-require-imports
@@ -28,18 +28,18 @@ export const TodoName = `${pkg.name as string}-todo`;
 export class Todo extends PrimedComponent implements IComponentHTMLVisual, IComponentReactViewable {
 
   // DDS ids stored as variables to minimize simple string mistakes
-  private readonly innerCellIds = "innerCellIds";
-  private readonly titleId = "title";
-  private readonly sharedStringTitleId = "sharedString-title";
+  private readonly todoItemsKey = "todo-items";
+  private readonly todoTitleKey = "todo-title";
 
-  // tslint:disable:prefer-readonly
-  private innerCellIdsMap: ISharedMap;
-  private titleTextCell: ISharedCell;
-  private titleTextSharedString: SharedString;
-  // tslint:enable:prefer-readonly
+  private todoItemsMap: ISharedMap;
 
   public get IComponentHTMLVisual() { return this; }
   public get IComponentReactViewable() { return this; }
+
+  // Would prefer not to hand this out, and instead give back a title component?
+  public async getTodoTitleString() {
+    return this.root.get<IComponentHandle>(this.todoTitleKey).get<SharedString>();
+  }
 
   /**
    * Do setup work here
@@ -48,42 +48,21 @@ export class Todo extends PrimedComponent implements IComponentHTMLVisual, IComp
     // create a list for of all inner todo item components
     // we will use this to know what components to load.
     const map = SharedMap.create(this.runtime);
-    this.root.set(this.innerCellIds, map.handle);
-
-    // create a cell that we will use for the title
-    // we use a cell because we pass it directly to the contentEditable
-    const cell = SharedCell.create(this.runtime);
-    // Set the default title
-    cell.set("My New Todo");
-    this.root.set(this.titleId, cell.handle);
+    this.root.set(this.todoItemsKey, map.handle);
 
     const text = SharedString.create(this.runtime);
     text.insertText(0, "Title");
-    this.root.set(this.sharedStringTitleId, text.handle);
+    this.root.set(this.todoTitleKey, text.handle);
   }
 
   protected async componentHasInitialized() {
-    const innerCellIdsMap = this.root.get<IComponentHandle>(this.innerCellIds).get<ISharedMap>();
-    const titleTextCell = this.root.get<IComponentHandle>(this.titleId).get<ISharedCell>();
-    const titleTextSharedString = this.root.get<IComponentHandle>(this.sharedStringTitleId).get<SharedString>();
-
-    // tslint:disable-next-line: no-console
-    console.log("here");
-    this.context.on("op", (e) => {
-      alert("hello");
-      // tslint:disable-next-line: no-console
-      console.log(JSON.stringify(e));
+    this.todoItemsMap = await this.root.get<IComponentHandle>(this.todoItemsKey).get<ISharedMap>();
+    // Hide the DDS eventing used by the model, expose a model-specific event interface.
+    this.todoItemsMap.on("op", (op, local) => {
+      if (!local) {
+        this.emit("todoItemsChanged");
+      }
     });
-
-    [
-      this.innerCellIdsMap,
-      this.titleTextCell,
-      this.titleTextSharedString,
-    ] = await Promise.all([
-      innerCellIdsMap,
-      titleTextCell,
-      titleTextSharedString,
-    ]);
   }
 
   // start IComponentHTMLVisual
@@ -111,30 +90,36 @@ export class Todo extends PrimedComponent implements IComponentHTMLVisual, IComp
    * Since this returns a JSX.Element it allows for an easier model.
    */
   public createJSXElement(): JSX.Element {
-    // callback that allows for creation of new Todo Items
-    const createComponent = async (props?: any) => {
-      // create a new ID for our component
-      const id = `item${Date.now().toString()}`;
-
-      // create a new todo item
-      await this.createAndAttachComponent(id, TodoItemName, props);
-
-      // Store the id of the component in our ids map so we can reference it later
-      this.innerCellIdsMap.set(id, "");
-    };
-
-    // The factory allows us to create new embedded component without having to pipe the
-    // getComponent call throughout the app.
-    const factory = new EmbeddedReactComponentFactory(this.getComponent.bind(this));
     return(
-      <TodoView
-          getComponentView = {(id: string) => factory.create(id)}
-          createComponent={createComponent.bind(this)}
-          map={this.innerCellIdsMap}
-          textSharedString={this.titleTextSharedString}
-          textCell={this.titleTextCell}/>
+      <TodoView todoModel={this} />
     );
   }
 
   // end IComponentReactViewable
+
+  // start public API surface for the Todo model, used by the view
+
+  public async addTodoItemComponent(props?: any) {
+
+    // create a new todo item
+    const componentRuntime: IComponentRuntime = await this.context.createSubComponent(TodoItemName, props);
+    await componentRuntime.request({ url: "/" });
+    componentRuntime.attach();
+
+    // Store the id of the component in our ids map so we can reference it later
+    this.todoItemsMap.set(componentRuntime.id, "");
+
+    this.emit("todoItemsChanged");
+  }
+
+  public async getTodoItemComponents() {
+    const todoItemComponentPromises: Promise<TodoItem>[] = [];
+    for (const id of this.todoItemsMap.keys()) {
+      todoItemComponentPromises.push(this.getComponent<TodoItem>(id));
+    }
+
+    return Promise.all(todoItemComponentPromises);
+  }
+
+  // end public API surface for the Todo model, used by the view
 }

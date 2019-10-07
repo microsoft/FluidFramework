@@ -14,7 +14,7 @@
         Type "insert monaco" and "insert chart" to add Monaco and Charts respectively.
     </p>
     <li class="list-unstyled">
-        <a href="/loader/prague/{{chartMonacoMoniker}}?chaincode=@fluid-example/shared-text@{{version}}" target="_blank">Data + Code Bindings</a>
+        <a href="/loader/fluid/{{chartMonacoMoniker}}?chaincode=@fluid-example/shared-text@{{version}}" target="_blank">Data + Code Bindings</a>
     </li>
     <p>
         For a coding example start by pasting in the code to the Monaco editor. This sample comes with two errors:
@@ -77,7 +77,7 @@ function getRandomValues(length: number): number[] {
 </pre>
     <h3>Fluid Math</h3>
     <ul class="list-unstyled">
-        <li><a href="/loader/prague/{{mathMoniker}}?chaincode=@chaincode/math@0.0.7" target="_blank">Fluid Math Component</a></li>
+        <li><a href="/loader/fluid/{{mathMoniker}}?chaincode=@chaincode/math@0.0.7" target="_blank">Fluid Math Component</a></li>
     </ul>
 
     <h2>OWA + Bohemia</h2>
@@ -107,12 +107,12 @@ function getRandomValues(length: number): number[] {
     <ul class="list-unstyled">
         <li><a href="https://docs.google.com/document/d/1Ed3_Bgmfj4L1tvjjh8geSHNZMbh_X6SaRd1uZGSQSio/edit"
                 target="_blank">Google Docs Pride and Prejudice</a></li>
-        <li><a href="/loader/prague/{{sharedTextMoniker}}?chaincode=@fluid-example/shared-text@{{version}}&template=pp.txt" target="_blank">Fluid Pride and Prejudice</a></li>
+        <li><a href="/loader/fluid/{{sharedTextMoniker}}?chaincode=@fluid-example/shared-text@{{version}}&template=pp.txt" target="_blank">Fluid Pride and Prejudice</a></li>
     </ul>
 
 
     <h3>Inking Canvas</h3>
-    <li class="list-unstyled"><a href="/loader/prague/{{inkMoniker}}?chaincode=@chaincode/canvas@{{version}}" target="_blank">Canvas Chaincode</a></li>
+    <li class="list-unstyled"><a href="/loader/fluid/{{inkMoniker}}?chaincode=@chaincode/canvas@{{version}}" target="_blank">Canvas Chaincode</a></li>
 </div>
 
 {{/content}}

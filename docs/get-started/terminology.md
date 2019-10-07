@@ -43,8 +43,8 @@ See [Summary ops](xref:terminology#summary-ops)
 
 ## Summary ops
 
-* Summary ops are the conceptual replacement for what we formerly called snapshots.
-* Summary ops are created by the client and sent to the server for sequence number stamping and broadcasting like any
+- Summary ops are the conceptual replacement for what we formerly called snapshots.
+- Summary ops are created by the client and sent to the server for sequence number stamping and broadcasting like any
   other op type.
 
 ## Total Order Broadcast

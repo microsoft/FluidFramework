@@ -27,7 +27,6 @@ import {
     ISerializableValue,
     ISharedDirectory,
     IValueOpEmitter,
-    IValueType,
     IValueTypeOperationValue,
 } from "./interfaces";
 import { ILocalValue, LocalValueMaker, ValueTypeLocalValue, valueTypes } from "./localValues";
@@ -41,32 +40,96 @@ const posix = path.posix || path;
 assert(posix.sep === "/");
 const snapshotFileName = "header";
 
+/**
+ * Defines the means to process and submit a given op on a directory.
+ */
 interface IDirectoryMessageHandler {
+    /**
+     * Apply the given operation.
+     * @param op - The directory operation to apply
+     * @param local - Whether the message originated from the local client
+     * @param message - The full message
+     */
     process(
         op: IDirectoryOperation,
         local: boolean,
         message: ISequencedDocumentMessage,
     ): void;
+
+    /**
+     * Communicate the operation to remote clients.
+     * @param op - The directory operation to submit
+     */
     submit(op: IDirectoryOperation): void;
 }
 
+/**
+ * Describes an operation specific to a value type.
+ */
 interface IDirectoryValueTypeOperation {
+    /**
+     * String identifier of the operation type.
+     */
     type: "act";
+
+    /**
+     * Directory key being modified.
+     */
     key: string;
+
+    /**
+     * Absolute path of the directory where the modified key is located.
+     */
     path: string;
+
+    /**
+     * Value of the operation, specific to the value type.
+     */
     value: IValueTypeOperationValue;
 }
 
+/**
+ * Operation indicating a value should be set for a key.
+ */
 interface IDirectorySetOperation {
+    /**
+     * String identifier of the operation type.
+     */
     type: "set";
+
+    /**
+     * Directory key being modified.
+     */
     key: string;
+
+    /**
+     * Absolute path of the directory where the modified key is located.
+     */
     path: string;
+
+    /**
+     * Value to be set on the key.
+     */
     value: ISerializableValue;
 }
 
+/**
+ * Operation indicating a key should be deleted from the directory.
+ */
 interface IDirectoryDeleteOperation {
+    /**
+     * String identifier of the operation type.
+     */
     type: "delete";
+
+    /**
+     * Directory key being modified.
+     */
     key: string;
+
+    /**
+     * Absolute path of the directory where the modified key is located.
+     */
     path: string;
 }
 
@@ -75,8 +138,18 @@ interface IDirectoryDeleteOperation {
  */
 type IDirectoryKeyOperation = IDirectoryValueTypeOperation | IDirectorySetOperation | IDirectoryDeleteOperation;
 
+/**
+ * Operation indicating the directory should be cleared.
+ */
 interface IDirectoryClearOperation {
+    /**
+     * String identifier of the operation type.
+     */
     type: "clear";
+
+    /**
+     * Absolute path of the directory being cleared.
+     */
     path: string;
 }
 
@@ -85,15 +158,43 @@ interface IDirectoryClearOperation {
  */
 type IDirectoryStorageOperation = IDirectoryKeyOperation | IDirectoryClearOperation;
 
+/**
+ * Operation indicating a subdirectory should be created.
+ */
 interface IDirectoryCreateSubDirectoryOperation {
+    /**
+     * String identifier of the operation type.
+     */
     type: "createSubDirectory";
+
+    /**
+     * Absolute path of the directory that will contain the new subdirectory.
+     */
     path: string;
+
+    /**
+     * Name of the new subdirectory.
+     */
     subdirName: string;
 }
 
+/**
+ * Operation indicating a subdirectory should be deleted.
+ */
 interface IDirectoryDeleteSubDirectoryOperation {
+    /**
+     * String identifier of the operation type.
+     */
     type: "deleteSubDirectory";
+
+    /**
+     * Absolute path of the directory that contains the directory to be deleted.
+     */
     path: string;
+
+    /**
+     * Name of the subdirectory to be deleted.
+     */
     subdirName: string;
 }
 
@@ -107,9 +208,10 @@ type IDirectorySubDirectoryOperation = IDirectoryCreateSubDirectoryOperation | I
  */
 type IDirectoryOperation = IDirectoryStorageOperation | IDirectorySubDirectoryOperation;
 
-// Defines the in-memory object structure to be used for the conversion to/from serialized.
-// Directly used in JSON.stringify, direct result from JSON.parse
 /**
+ * Defines the in-memory object structure to be used for the conversion to/from serialized.
+ * @privateRemarks
+ * Directly used in JSON.stringify, direct result from JSON.parse.
  * @internal
  */
 export interface IDirectoryDataObject {
@@ -118,25 +220,41 @@ export interface IDirectoryDataObject {
 }
 
 /**
- * The factory that defines the directory
+ * The factory that defines the directory.
+ * @sealed
  */
 export class DirectoryFactory {
+    /**
+     * {@inheritDoc @microsoft/fluid-shared-object-base#ISharedObjectFactory."type"}
+     */
     public static readonly Type = "https://graph.microsoft.com/types/directory";
 
+    /**
+     * {@inheritDoc @microsoft/fluid-shared-object-base#ISharedObjectFactory.attributes}
+     */
     public static readonly Attributes: IChannelAttributes = {
         type: DirectoryFactory.Type,
         snapshotFormatVersion: "0.1",
         packageVersion: pkgVersion,
     };
 
+    /**
+     * {@inheritDoc @microsoft/fluid-shared-object-base#ISharedObjectFactory."type"}
+     */
     public get type() {
         return DirectoryFactory.Type;
     }
 
+    /**
+     * {@inheritDoc @microsoft/fluid-shared-object-base#ISharedObjectFactory.attributes}
+     */
     public get attributes() {
         return DirectoryFactory.Attributes;
     }
 
+    /**
+     * {@inheritDoc @microsoft/fluid-shared-object-base#ISharedObjectFactory.load}
+     */
     public async load(
         runtime: IComponentRuntime,
         id: string,
@@ -149,6 +267,9 @@ export class DirectoryFactory {
         return directory;
     }
 
+    /**
+     * {@inheritDoc @microsoft/fluid-shared-object-base#ISharedObjectFactory.create}
+     */
     public create(runtime: IComponentRuntime, id: string): ISharedDirectory {
         const directory = new SharedDirectory(id, runtime);
         directory.initializeLocal();
@@ -160,21 +281,24 @@ export class DirectoryFactory {
 /**
  * SharedDirectory provides a hierarchical organization of map-like data structures as SubDirectories.
  * The values stored within can be accessed like a map, and the hierarchy can be navigated using path syntax.
- * SubDirectories can be retrieved for use as working directories.  For example:
+ * SubDirectories can be retrieved for use as working directories.
  *
+ * @example
  * ```ts
  * mySharedDirectory.createSubDirectory("a").createSubDirectory("b").createSubDirectory("c").set("foo", val1);
  * const mySubDir = mySharedDirectory.getWorkingDirectory("/a/b/c");
  * mySubDir.get("foo"); // returns val1
  * ```
+ *
+ * @sealed
  */
 export class SharedDirectory extends SharedObject implements ISharedDirectory {
     /**
      * Create a new shared directory
      *
-     * @param runtime - component runtime the new shared directory belongs to
-     * @param id - optional name of the shared directory
-     * @returns newly create shared directory (but not attached yet)
+     * @param runtime - Component runtime the new shared directory belongs to
+     * @param id - Optional name of the shared directory
+     * @returns Newly create shared directory (but not attached yet)
      */
     public static create(runtime: IComponentRuntime, id?: string): SharedDirectory {
         return runtime.createChannel(SharedObject.getIdForCreate(id), DirectoryFactory.Type) as SharedDirectory;
@@ -183,12 +307,15 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
     /**
      * Get a factory for SharedDirectory to register with the component.
      *
-     * @returns a factory that creates and load SharedDirectory
+     * @returns A factory that creates and load SharedDirectory
      */
     public static getFactory(): ISharedObjectFactory {
         return new DirectoryFactory();
     }
 
+    /**
+     * String representation for the class.
+     */
     public [Symbol.toStringTag]: string = "SharedDirectory";
 
     /**
@@ -203,15 +330,22 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
      */
     public readonly localValueMaker: LocalValueMaker;
 
+    /**
+     * Root of the SharedDirectory, most operations on the SharedDirectory itself act on the root.
+     */
     private readonly root: SubDirectory = new SubDirectory(this, this.runtime, posix.sep);
+
+    /**
+     * Mapping of op types to message handlers.
+     */
     private readonly messageHandlers: Map<string, IDirectoryMessageHandler> = new Map();
 
     /**
      * Constructs a new shared directory. If the object is non-local an id and service interfaces will
      * be provided.
-     * @param id - string identifier for the SharedDirectory
-     * @param runtime - component runtime
-     * @param type - type identifier
+     * @param id - String identifier for the SharedDirectory
+     * @param runtime - Component runtime
+     * @param type - Type identifier
      */
     constructor(
         id: string,
@@ -221,7 +355,7 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
         this.localValueMaker = new LocalValueMaker(runtime);
         this.setMessageHandlers();
         for (const type of valueTypes) {
-            this.registerValueType(type);
+            this.localValueMaker.registerValueType(type);
         }
     }
 
@@ -257,7 +391,8 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
 
     /**
      * Deletes the given key from within this IDirectory.
-     * @param key - the key to delete
+     * @param key - The key to delete
+     * @returns True if the key existed and was deleted, false if it did not exist
      */
     public delete(key: string): boolean {
         return this.root.delete(key);
@@ -272,7 +407,8 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
 
     /**
      * Checks whether the given key exists in this IDirectory.
-     * @param key - the key to check
+     * @param key - The key to check
+     * @returns True if the key exists, false otherwise
      */
     public has(key: string): boolean {
         return this.root.has(key);
@@ -287,7 +423,7 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
 
     /**
      * Issue a callback on each entry under this IDirectory.
-     * @param callback - callback to issue
+     * @param callback - Callback to issue
      */
     public forEach(callback: (value: any, key: string, map: Map<string, any>) => void): void {
         this.root.forEach(callback);
@@ -295,6 +431,7 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
 
     /**
      * Get an iterator over the entries under this IDirectory.
+     * @returns The iterator
      */
     public [Symbol.iterator](): IterableIterator<[string, any]> {
         return this.root[Symbol.iterator]();
@@ -302,6 +439,7 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
 
     /**
      * Get an iterator over the entries under this IDirectory.
+     * @returns The iterator
      */
     public entries(): IterableIterator<[string, any]> {
         return this.root.entries();
@@ -309,6 +447,7 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
 
     /**
      * Get an iterator over the keys under this IDirectory.
+     * @returns The iterator
      */
     public keys(): IterableIterator<string> {
         return this.root.keys();
@@ -316,6 +455,7 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
 
     /**
      * Get an iterator over the values under this IDirectory.
+     * @returns The iterator
      */
     public values(): IterableIterator<any> {
         return this.root.values();
@@ -418,6 +558,7 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
     /**
      * Returns the contents of the SharedDirectory as a string which can be rehydrate into a SharedDirectory
      * when loaded using populate().
+     * @returns A JSON string containing serialized directory data
      * @internal
      */
     public serialize(): string {
@@ -446,6 +587,8 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
     }
 
     /**
+     * Populate the directory with the given directory data.
+     * @param data - A JSON string containing serialized directory data
      * @internal
      */
     public populate(data: IDirectoryDataObject): void {
@@ -482,7 +625,8 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
 
     /**
      * Submits an operation
-     * @param op - op to submit
+     * @param op - Op to submit
+     * @returns The client sequence number
      * @internal
      */
     public submitDirectoryMessage(op: IDirectoryOperation): number {
@@ -490,6 +634,10 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
     }
 
     /**
+     * Create an emitter for a value type to emit ops from the given key and path.
+     * @param key - The key of the directory that the value type will be stored on
+     * @param absolutePath - The absolute path of the subdirectory storing the value type
+     * @returns A value op emitter for the given key and path
      * @internal
      */
     public makeDirectoryValueOpEmitter(
@@ -514,10 +662,16 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
         return { emit };
     }
 
+    /**
+     * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.onDisconnect}
+     */
     protected onDisconnect() {
         debug(`Directory ${this.id} is now disconnected`);
     }
 
+    /**
+     * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.onConnect}
+     */
     protected onConnect(pending: any[]) {
         debug(`Directory ${this.id} is now connected`);
 
@@ -528,6 +682,9 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
         }
     }
 
+    /**
+     * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.loadCore}
+     */
     protected async loadCore(
         branchId: string,
         storage: IObjectStorageService) {
@@ -539,7 +696,7 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
     }
 
     /**
-     * Registers all the shared objects stored in this directory.
+     * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.registerCore}
      */
     protected registerCore(): void {
         const subdirsToRegisterFrom = new Array<SubDirectory>();
@@ -558,6 +715,9 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
         }
     }
 
+    /**
+     * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.processCore}
+     */
     protected processCore(message: ISequencedDocumentMessage, local: boolean): void {
         if (message.type === MessageType.Operation) {
             const op: IDirectoryOperation = message.contents as IDirectoryOperation;
@@ -569,15 +729,8 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
     }
 
     /**
-     * Registers a new value type on the directory
-     */
-    protected registerValueType<T>(type: IValueType<T>) {
-        this.localValueMaker.registerValueType(type);
-    }
-
-    /**
      * Converts the given relative path to absolute against the root.
-     * @param relativePath - the path to convert
+     * @param relativePath - The path to convert
      */
     private makeAbsolute(relativePath: string): string {
         return posix.resolve(posix.sep, relativePath);
@@ -588,9 +741,10 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
      * will have the information we need to create a real object, but will not be the real object yet.  For example,
      * we might know it's a map and the ID but not have the actual map or its data yet.  makeLocal's job
      * is to convert that information into a real object for local usage.
-     * @param key - key of element being converted
-     * @param absolutePath - path of element being converted
-     * @param serializable - the remote information that we can convert into a real object
+     * @param key - Key of element being converted
+     * @param absolutePath - Path of element being converted
+     * @param serializable - The remote information that we can convert into a real object
+     * @returns The local value that was produced
      */
     private makeLocal(
         key: string,
@@ -607,8 +761,11 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
         }
     }
 
+    /**
+     * Set the message handlers for the directory.
+     */
     // tslint:disable-next-line:max-func-body-length
-    private setMessageHandlers() {
+    private setMessageHandlers(): void {
         this.messageHandlers.set(
             "clear",
             {
@@ -736,20 +893,45 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
 
 /**
  * Node of the directory tree.
+ * @sealed
  */
 class SubDirectory implements IDirectory {
+    /**
+     * String representation for the class.
+     */
     public [Symbol.toStringTag]: string = "SubDirectory";
 
+    /**
+     * The in-memory data the directory is storing.
+     */
     private readonly _storage: Map<string, ILocalValue> = new Map();
+
+    /**
+     * The subdirectories the directory is holding.
+     */
     private readonly _subdirectories: Map<string, SubDirectory> = new Map();
+
+    /**
+     * Keys that have been modified locally but not yet ack'd from the server.
+     */
     private readonly pendingKeys: Map<string, number> = new Map();
+
+    /**
+     * Subdirectories that have been modified locally but not yet ack'd from the server.
+     */
     private readonly pendingSubDirectories: Map<string, number> = new Map();
+
+    /**
+     * If a clear has been performed locally but not yet ack'd from the server, then this stores the client sequence
+     * number of that clear operation.  Otherwise, is -1.
+     */
     private pendingClearClientSequenceNumber: number = -1;
 
     /**
      * Constructor.
-     * @param directory - reference back to the SharedDirectory to perform operations
-     * @param absolutePath - the absolute path of this IDirectory
+     * @param directory - Reference back to the SharedDirectory to perform operations
+     * @param runtime - The component runtime this directory is associated with
+     * @param absolutePath - The absolute path of this IDirectory
      */
     constructor(
         private readonly directory: SharedDirectory,
@@ -759,7 +941,8 @@ class SubDirectory implements IDirectory {
 
     /**
      * Checks whether the given key exists in this IDirectory.
-     * @param key - the key to check
+     * @param key - The key to check
+     * @returns True if the key exists, false otherwise
      */
     public has(key: string): boolean {
         return this._storage.has(key);
@@ -931,7 +1114,8 @@ class SubDirectory implements IDirectory {
 
     /**
      * Deletes the given key from within this IDirectory.
-     * @param key - the key to delete
+     * @param key - The key to delete
+     * @returns True if the key existed and was deleted, false if it did not exist
      */
     public delete(key: string): boolean {
         const op: IDirectoryDeleteOperation = {
@@ -960,7 +1144,7 @@ class SubDirectory implements IDirectory {
 
     /**
      * Issue a callback on each entry under this IDirectory.
-     * @param callback - callback to issue
+     * @param callback - Callback to issue
      */
     public forEach(callback: (value: any, key: string, map: Map<string, any>) => void): void {
         this._storage.forEach((localValue, key, map) => {
@@ -977,6 +1161,7 @@ class SubDirectory implements IDirectory {
 
     /**
      * Get an iterator over the entries under this IDirectory.
+     * @returns The iterator
      */
     public entries(): IterableIterator<[string, any]> {
         const localEntriesIterator = this._storage.entries();
@@ -999,6 +1184,7 @@ class SubDirectory implements IDirectory {
 
     /**
      * Get an iterator over the keys under this IDirectory.
+     * @returns The iterator
      */
     public keys(): IterableIterator<string> {
         return this._storage.keys();
@@ -1006,6 +1192,7 @@ class SubDirectory implements IDirectory {
 
     /**
      * Get an iterator over the values under this IDirectory.
+     * @returns The iterator
      */
     public values(): IterableIterator<any> {
         const localValuesIterator = this._storage.values();
@@ -1028,12 +1215,17 @@ class SubDirectory implements IDirectory {
 
     /**
      * Get an iterator over the entries under this IDirectory.
+     * @returns The iterator
      */
     public [Symbol.iterator](): IterableIterator<[string, any]> {
         return this.entries();
     }
 
     /**
+     * Process a clear operation.
+     * @param op - The op to process
+     * @param local - Whether the message originated from the local client
+     * @param message - The message
      * @internal
      */
     public processClearMessage(
@@ -1047,11 +1239,15 @@ class SubDirectory implements IDirectory {
             }
             return;
         }
-        this.clearExceptPendingKeys(this.pendingKeys);
+        this.clearExceptPendingKeys();
         this.directory.emit("clear", local, op);
     }
 
     /**
+     * Process a delete operation.
+     * @param op - The op to process
+     * @param local - Whether the message originated from the local client
+     * @param message - The message
      * @internal
      */
     public processDeleteMessage(
@@ -1059,13 +1255,17 @@ class SubDirectory implements IDirectory {
         local: boolean,
         message: ISequencedDocumentMessage,
     ): void {
-        if (!this.needProcessStorageOperations(op, local, message)) {
+        if (!this.needProcessStorageOperation(op, local, message)) {
             return;
         }
         this.deleteCore(op.key, local, message);
     }
 
     /**
+     * Process a set operation.
+     * @param op - The op to process
+     * @param local - Whether the message originated from the local client
+     * @param message - The message
      * @internal
      */
     public processSetMessage(
@@ -1074,13 +1274,17 @@ class SubDirectory implements IDirectory {
         local: boolean,
         message: ISequencedDocumentMessage,
     ): void {
-        if (!this.needProcessStorageOperations(op, local, message)) {
+        if (!this.needProcessStorageOperation(op, local, message)) {
             return;
         }
         this.setCore(op.key, context, local, message);
     }
 
     /**
+     * Process a create subdirectory operation.
+     * @param op - The op to process
+     * @param local - Whether the message originated from the local client
+     * @param message - The message
      * @internal
      */
     public processCreateSubDirectoryMessage(
@@ -1095,6 +1299,10 @@ class SubDirectory implements IDirectory {
     }
 
     /**
+     * Process a delete subdirectory operation.
+     * @param op - The op to process
+     * @param local - Whether the message originated from the local client
+     * @param message - The message
      * @internal
      */
     public processDeleteSubDirectoryMessage(
@@ -1109,6 +1317,8 @@ class SubDirectory implements IDirectory {
     }
 
     /**
+     * Submit a clear operation.
+     * @param op - The operation
      * @internal
      */
     public submitClearMessage(op: IDirectoryClearOperation): void {
@@ -1119,6 +1329,8 @@ class SubDirectory implements IDirectory {
     }
 
     /**
+     * Submit a key operation.
+     * @param op - The operation
      * @internal
      */
     public submitKeyMessage(op: IDirectoryKeyOperation): void {
@@ -1129,6 +1341,8 @@ class SubDirectory implements IDirectory {
     }
 
     /**
+     * Submit a subdirectory operation.
+     * @param op - The operation
      * @internal
      */
     public submitSubDirectoryMessage(op: IDirectorySubDirectoryOperation): void {
@@ -1139,6 +1353,8 @@ class SubDirectory implements IDirectory {
     }
 
     /**
+     * Get the storage of this subdirectory in a serializable format, to be used in snapshotting.
+     * @returns The JSONable string representing the storage of this subdirectory
      * @internal
      */
     public getSerializableStorage(): { [key: string]: ISerializableValue } {
@@ -1156,20 +1372,30 @@ class SubDirectory implements IDirectory {
     }
 
     /**
+     * Populate a key value in this subdirectory's storage, to be used when loading from snapshot.
+     * @param key - The key to populate
+     * @param localValue - The local value to populate into it
      * @internal
      */
-    public populateStorage(key: string, localValue: ILocalValue) {
+    public populateStorage(key: string, localValue: ILocalValue): void {
         this._storage.set(key, localValue);
     }
 
     /**
+     * Populate a subdirectory into this subdirectory, to be used when loading from snapshot.
+     * @param subdirName - The name of the subdirectory to add
+     * @param newSubDir - The new subdirectory to add
      * @internal
      */
-    public populateSubDirectory(subdirName: string, newSubDir: SubDirectory) {
+    public populateSubDirectory(subdirName: string, newSubDir: SubDirectory): void {
         this._subdirectories.set(subdirName, newSubDir);
     }
 
     /**
+     * Retrieve the local value at the given key.  This is used to get value type information stashed on the local
+     * value so op handlers can be retrieved
+     * @param key - The key to retrieve from
+     * @returns The local value
      * @internal
      */
     public getLocalValue<T extends ILocalValue = ILocalValue>(key: string): T {
@@ -1178,13 +1404,22 @@ class SubDirectory implements IDirectory {
 
     /**
      * Converts the given relative path into an absolute path.
-     * @param path - relative path
+     * @param path - Relative path to convert
+     * @returns The equivalent absolute path
      */
     private makeAbsolute(relativePath: string): string {
         return posix.resolve(this.absolutePath, relativePath);
     }
 
-    private needProcessStorageOperations(
+    /**
+     * If our local operations that have not yet been ack'd will eventually overwrite an incoming operation, we should
+     * not process the incoming operation.
+     * @param op - Operation to check
+     * @param local - Whether the message originated from the local client
+     * @param message - The message
+     * @returns True if the operation should be processed, false otherwise
+     */
+    private needProcessStorageOperation(
         op: IDirectoryKeyOperation,
         local: boolean,
         message: ISequencedDocumentMessage,
@@ -1194,7 +1429,7 @@ class SubDirectory implements IDirectory {
             return false;
         }
 
-        if ((this.pendingKeys.size !== 0 && this.pendingKeys.has(op.key))) {
+        if (this.pendingKeys.has(op.key)) {
             // Found an NACK op, clear it from the directory if the latest sequence number in the directory
             // match the message's and don't process the op.
             if (local) {
@@ -1210,6 +1445,14 @@ class SubDirectory implements IDirectory {
         return !local;
     }
 
+    /**
+     * If our local operations that have not yet been ack'd will eventually overwrite an incoming operation, we should
+     * not process the incoming operation.
+     * @param op - Operation to check
+     * @param local - Whether the message originated from the local client
+     * @param message - The message
+     * @returns True if the operation should be processed, false otherwise
+     */
     private needProcessSubDirectoryOperations(
         op: IDirectorySubDirectoryOperation,
         local: boolean,
@@ -1228,11 +1471,14 @@ class SubDirectory implements IDirectory {
         return !local;
     }
 
-    private clearExceptPendingKeys(pendingKeys: Map<string, number>) {
+    /**
+     * Clear all keys in memory in response to a remote clear, but retain keys we have modified but not yet been ack'd.
+     */
+    private clearExceptPendingKeys() {
         // Assuming the pendingKeys is small and the map is large
         // we will get the value for the pendingKeys and clear the map
         const temp = new Map<string, ILocalValue>();
-        pendingKeys.forEach((value, key, map) => {
+        this.pendingKeys.forEach((value, key, map) => {
             temp.set(key, this._storage.get(key));
         });
         this._storage.clear();
@@ -1241,11 +1487,23 @@ class SubDirectory implements IDirectory {
         });
     }
 
+    /**
+     * Clear implementation used for both locally sourced clears as well as incoming remote clears.
+     * @param local - Whether the message originated from the local client
+     * @param op - The message if from a remote clear, or null if from a local clear
+     */
     private clearCore(local: boolean, op: ISequencedDocumentMessage) {
         this._storage.clear();
         this.directory.emit("clear", local, op);
     }
 
+    /**
+     * Delete implementation used for both locally sourced deletes as well as incoming remote deletes.
+     * @param key - The key being deleted
+     * @param local - Whether the message originated from the local client
+     * @param op - The message if from a remote delete, or null if from a local delete
+     * @returns True if the key existed and was deleted, false if it did not exist
+     */
     private deleteCore(key: string, local: boolean, op: ISequencedDocumentMessage) {
         const previousValue = this.get(key);
         const successfullyRemoved = this._storage.delete(key);
@@ -1256,6 +1514,13 @@ class SubDirectory implements IDirectory {
         return successfullyRemoved;
     }
 
+    /**
+     * Set implementation used for both locally sourced sets as well as incoming remote sets.
+     * @param key - The key being set
+     * @param value - The value being set
+     * @param local - Whether the message originated from the local client
+     * @param op - The message if from a remote set, or null if from a local set
+     */
     private setCore(key: string, value: ILocalValue, local: boolean, op: ISequencedDocumentMessage) {
         const previousValue = this.get(key);
         this._storage.set(key, value);
@@ -1263,6 +1528,12 @@ class SubDirectory implements IDirectory {
         this.directory.emit("valueChanged", event, local, op);
     }
 
+    /**
+     * Create subdirectory implementation used for both locally sourced creation as well as incoming remote creation.
+     * @param subdirName - The name of the subdirectory being created
+     * @param local - Whether the message originated from the local client
+     * @param op - The message if from a remote create, or null if from a local create
+     */
     private createSubDirectoryCore(subdirName: string, local: boolean, op: ISequencedDocumentMessage) {
         if (!this._subdirectories.has(subdirName)) {
             this._subdirectories.set(
@@ -1272,6 +1543,12 @@ class SubDirectory implements IDirectory {
         }
     }
 
+    /**
+     * Delete subdirectory implementation used for both locally sourced creation as well as incoming remote creation.
+     * @param subdirName - The name of the subdirectory being deleted
+     * @param local - Whether the message originated from the local client
+     * @param op - The message if from a remote delete, or null if from a local delete
+     */
     private deleteSubDirectoryCore(subdirName: string, local: boolean, op: ISequencedDocumentMessage) {
         // This should make the subdirectory structure unreachable so it can be GC'd and won't appear in snapshots
         // Might want to consider cleaning out the structure more exhaustively though?

@@ -8,16 +8,16 @@ import {
     IDocumentService,
     IDocumentStorageService,
     ISnapshotTree,
-    IVersion,
+    IVersion
 } from "@microsoft/fluid-protocol-definitions";
+import * as assert from "assert";
 import * as fs from "fs";
 import * as util from "util";
+import { formatNumber } from "./fluidAnalyzeMessages";
 import {
-    dumpSnapshotBlobs,
     dumpSnapshotStats,
     dumpSnapshotTrees,
     dumpSnapshotVersions,
-    dumpTotalStats,
     paramNumSnapshotVersions,
     paramSave,
     paramSnapshotVersionIndex,
@@ -26,25 +26,75 @@ import { latestVersionsId } from "./fluidFetchInit";
 
 // tslint:disable:non-literal-fs-path
 
-async function fetchSnapshotTreeBlobs(
-    storage: IDocumentStorageService,
-    tree: ISnapshotTree,
-    prefix: string = "",
-    saveTreeDir?: string) {
-    if (saveTreeDir === undefined && dumpSnapshotTrees) {
+interface ISnapshotInfo {
+    blobCountNew: number;
+    blobCount: number;
+    size: number;
+    sizeNew: number;
+}
+
+interface IBlob {
+    path: string;
+    blobId: string;
+    blob: Promise<string | undefined>;
+    isTree: boolean;
+    reused: boolean;
+    canBeReused: boolean;
+}
+
+const blobCache = new Map<string, Promise<string>>();
+let blobCachePrevious = new Map<string, Promise<string>>();
+let blobCacheCurrent = new Map<string, Promise<string>>();
+
+function fetchBlobs(prefix: string, tree: ISnapshotTree, storage: IDocumentStorageService) {
+    const result: IBlob[] = [];
+    for (const item of Object.keys(tree.blobs)) {
+        const path = `${prefix}${item}`;
+        const blobId = tree.blobs[item];
+        if (blobId !== null) {
+            let reused = true;
+            const canBeReused = false;
+            let blob = blobCachePrevious.get(blobId);
+            if (!blob) {
+                reused = false;
+                blob = blobCache.get(blobId);
+                if (blob === undefined) {
+                    blob = storage.read(blobId);
+                    blobCache.set(blobId, blob);
+                }
+            }
+            blobCacheCurrent.set(blobId, blob);
+            result.push({ path, blobId, blob, isTree: false, reused, canBeReused });
+        }
+    }
+    return result;
+}
+
+async function fetchBlobsFromSnapshotTree(
+        storage: IDocumentStorageService,
+        tree: ISnapshotTree,
+        prefix: string = "/",
+        commit = true) {
+    assert(Object.keys(tree.commits).length === 0 || (prefix === "/"));
+    if (commit && dumpSnapshotTrees) {
         console.log(tree);
     }
 
-    let result: { path: string, blobId: string, blob: Promise<string | undefined> }[] = [];
-    const itemPrefix = prefix !== "" ? prefix : "!CONTAINER!/";
-    for (const item of Object.keys(tree.blobs)) {
-        const path = `${itemPrefix}${item}`;
-        const blobId = tree.blobs[item];
-        if (blobId !== null) {
-            const blob = storage.read(blobId);
-            result.push({ path, blobId, blob });
-        }
+    if (prefix === "/") {
+        blobCachePrevious = blobCacheCurrent;
+        blobCacheCurrent = new Map<string, Promise<string>>();
     }
+
+    let result = fetchBlobs(prefix, tree, storage);
+
+    if (commit) {
+        assert(tree.id);
+        const blobId = prefix === "/" ? "tree" : tree.id === null ? "no id" : tree.id;
+        const content = JSON.stringify(tree, undefined, 2);
+        const path = `${prefix}tree.json`;
+        result.push({ path, blobId, blob: Promise.resolve(content), isTree: true, reused: false, canBeReused: false });
+    }
+
     for (const component of Object.keys(tree.commits)) {
         const componentVersions = await storage.getVersions(tree.commits[component], 1);
         if (componentVersions.length !== 1) {
@@ -52,148 +102,200 @@ async function fetchSnapshotTreeBlobs(
             continue;
         }
         const componentSnapShotTree = await storage.getSnapshotTree(componentVersions[0]);
-        if (saveTreeDir !== undefined) {
-            fs.writeFileSync(`${saveTreeDir}/${componentVersions[0].id}.json`,
-                JSON.stringify(componentSnapShotTree, undefined, 2));
+        if (componentSnapShotTree === null) {
+            console.error(`No component tree for component = ${component}, path = ${prefix}, version = ${componentVersions[0].id}`);
+            continue;
         }
-        if (componentSnapShotTree) {
-            const componentBlobs = await fetchSnapshotTreeBlobs(
-                storage,
-                componentSnapShotTree,
-                `${prefix}[${component}]/`,
-                saveTreeDir);
-            result = result.concat(componentBlobs);
-        }
+        assert(componentSnapShotTree.id === tree.commits[component]);
+        assert(componentSnapShotTree.id === componentVersions[0].id);
+        const componentBlobs = await fetchBlobsFromSnapshotTree(
+            storage,
+            componentSnapShotTree,
+            `${prefix}[${component}]/`);
+        result = result.concat(componentBlobs);
     }
 
-    for (const subtree of Object.keys(tree.trees)) {
-        const componentBlobs = await fetchSnapshotTreeBlobs(
-            storage, tree.trees[subtree],
-            `${prefix}${subtree}/`,
-            saveTreeDir);
+    for (const subtreeId of Object.keys(tree.trees)) {
+        const subtree = tree.trees[subtreeId];
+        assert(Object.keys(subtree.commits).length === 0);
+        const componentBlobs = await fetchBlobsFromSnapshotTree(
+            storage,
+            subtree,
+            `${prefix}${subtreeId}/`,
+            false);
         result = result.concat(componentBlobs);
     }
     return result;
 }
 
-async function dumpSnapshotTree(storage: IDocumentStorageService, tree: ISnapshotTree) {
-    const blobs = await fetchSnapshotTreeBlobs(storage, tree);
+async function dumpSnapshotTreeVerbose(name: string, blobs: IBlob[]) {
     let size = 0;
     const sorted = blobs.sort((a, b) => a.path.localeCompare(b.path));
 
-    if (dumpSnapshotStats || dumpSnapshotBlobs) {
-        console.log(`${"Blob Path".padEnd(75)}| Bytes`);
-        console.log("-".repeat(100));
-    }
+    let nameLength = 10;
     for (const item of sorted) {
-        try {
-            const blob = await item.blob;
-            if (blob === undefined) {
-                continue;
-            }
-            if (dumpSnapshotStats || dumpSnapshotBlobs) {
-                console.log(`${item.path.padEnd(75)}| ${blob.length}`);
-            }
-            if (dumpSnapshotBlobs) {
-                const decoded = fromBase64ToUtf8(blob);
-                try {
-                    console.log(JSON.parse(decoded));
-                } catch (e) {
-                    console.log(decoded);
-                }
-                console.log("-".repeat(100));
-            }
-            size += blob.length;
-        } catch (e) {
-            console.log(`${item.path.padEnd(75)}: ERROR: ${e.message}`);
-        }
+        nameLength = Math.max(nameLength, item.path.length);
     }
-    return size;
+
+    console.log("");
+    console.log(`${"Blob Path".padEnd(nameLength)} | Reused |      Bytes`);
+    console.log("-".repeat(nameLength + 26));
+    for (const item of sorted) {
+        const blob = await item.blob;
+        if (blob === undefined) {
+            continue;
+        }
+        console.log(`${item.path.padEnd(nameLength)} |    ${item.reused ? "X" : " "}   | ${formatNumber(blob.length).padStart(10)}`);
+        size += blob.length;
+    }
+
+    console.log("-".repeat(nameLength + 26));
+    // tslint:disable-next-line:max-line-length
+    console.log(`${"Total snapshot size".padEnd(nameLength)} |        | ${formatNumber(size).padStart(10)}`);
 }
 
-async function saveSnapshot(storage: IDocumentStorageService, version: IVersion, index?: number) {
-    const suffix = `${index !== undefined ? `${index}-` : ""}${version.id}`;
-    console.log(`Saving snapshot ${suffix}`);
-    const outDir = `${paramSave}/${suffix}/`;
-    const snapshotTree = await storage.getSnapshotTree(version);
-    if (!snapshotTree) {
-        return Promise.reject(new Error("Failed to load snapshot tree"));
+async function dumpSnapshotTree(name: string, blobs: IBlob[]): Promise<ISnapshotInfo> {
+    let size = 0;
+    let sizeNew = 0;
+    let blobCountNew = 0;
+    const sorted = blobs.sort((a, b) => a.path.localeCompare(b.path));
+
+    for (const item of sorted) {
+        const blob = await item.blob;
+        if (blob === undefined) {
+            continue;
+        }
+        if (!item.reused) {
+            sizeNew += blob.length;
+            blobCountNew++;
+        }
+        size += blob.length;
     }
+
+    return {blobCountNew, blobCount: sorted.length, size, sizeNew };
+}
+
+async function saveSnapshot(name: string, blobs: IBlob[]) {
+    const outDir = `${paramSave}/${name}/`;
     const mkdir = util.promisify(fs.mkdir);
 
     await mkdir(`${outDir}/decoded`, { recursive: true });
-    fs.writeFileSync(`${outDir}/tree.json`, JSON.stringify(snapshotTree, undefined, 2));
-    const blobs = await fetchSnapshotTreeBlobs(storage, snapshotTree, "", outDir);
     await Promise.all(blobs.map(async (blob) => {
         const data = await blob.blob;
         if (data === undefined) {
             console.error(`ERROR: Unable to get data for blob ${blob.blobId}`);
             return;
         }
-        // tslint:disable-next-line:non-literal-fs-path
-        fs.writeFileSync(`${outDir}/${blob.blobId}`, data);
 
-        const decoded = fromBase64ToUtf8(data);
-        try {
-            const object = JSON.parse(decoded);
-            fs.writeFileSync(`${outDir}/decoded/${blob.blobId}.json`, JSON.stringify(object, undefined, 2));
-        } catch (e) {
-            fs.writeFileSync(`${outDir}/decoded/${blob.blobId}.txt`, decoded);
+        if (!blob.isTree) {
+            fs.writeFileSync(`${outDir}/${blob.blobId}`, data);
+            const decoded = fromBase64ToUtf8(data);
+            try {
+                const object = JSON.parse(decoded);
+                fs.writeFileSync(`${outDir}/decoded/${blob.blobId}.json`, JSON.stringify(object, undefined, 2));
+            } catch (e) {
+                fs.writeFileSync(`${outDir}/decoded/${blob.blobId}.txt`, decoded);
+            }
+        } else {
+            // Write out same data for tree
+            fs.writeFileSync(`${outDir}/${blob.blobId}.json`, data);
+            fs.writeFileSync(`${outDir}/decoded/${blob.blobId}.json`, data);
         }
     }));
 }
 
-export async function fluidFetchSnapshot(documentService: IDocumentService) {
+async function fetchBlobsFromVersion(storage: IDocumentStorageService, version: IVersion) {
+    const tree = await storage.getSnapshotTree(version);
+    if (!tree) {
+        return Promise.reject(new Error("Failed to load snapshot tree"));
+    }
+    return fetchBlobsFromSnapshotTree(storage, tree);
+}
 
-    const dumpTree = dumpSnapshotStats || dumpSnapshotTrees || dumpSnapshotBlobs || dumpTotalStats;
-    if (dumpTree || dumpSnapshotVersions || paramSave !== undefined) {
-        const storage = await documentService.connectToStorage();
-        let version: IVersion | undefined;
-        if (dumpSnapshotVersions || paramSnapshotVersionIndex !== undefined || paramSave !== undefined) {
-            const versions = await storage.getVersions(latestVersionsId, paramNumSnapshotVersions);
-            if (dumpSnapshotVersions) {
-                console.log("Snapshot versions");
-                console.log(versions);
-            }
-            if (paramSnapshotVersionIndex !== undefined) {
-                version = versions[paramSnapshotVersionIndex];
-                if (paramSave !== undefined) {
-                    await saveSnapshot(storage, version);
-                }
-            } else if (paramSave !== undefined) {
-                const batch: Promise<void>[] = [];
-                let i = 0;
-                for (const v of versions) {
-                    batch.push(saveSnapshot(storage, v, i++));
-                    if (batch.length === 10) {
-                        // Only do 10 at a time concurrently to not spam the server
-                        await Promise.all(batch);
-                        batch.length = 0;
+export async function fluidFetchSnapshot(documentService?: IDocumentService) {
+    if (!dumpSnapshotStats && !dumpSnapshotTrees && !dumpSnapshotVersions && paramSave === undefined) {
+        return;
+    }
+
+    // --local mode - do not connect to storage.
+    // For now, bail out early.
+    // In future, separate download from analyzes parts and allow offline analyzes
+    if (!documentService) {
+        return;
+    }
+
+    console.log("\n");
+
+    const storage = await documentService.connectToStorage();
+    let version: IVersion | undefined;
+    const versions = await storage.getVersions(latestVersionsId, paramNumSnapshotVersions);
+    if (dumpSnapshotVersions) {
+        console.log("Snapshot versions");
+        console.log(versions);
+    }
+
+    let blobsToDump: IBlob[] | undefined;
+    if (paramSnapshotVersionIndex !== undefined) {
+        version = versions[paramSnapshotVersionIndex];
+        if (version === undefined) {
+            console.log(`There are only ${versions.length} snapshots, --snapshotVersionIndex is too large`);
+            return;
+        }
+        if (paramSave !== undefined) {
+            blobsToDump = await fetchBlobsFromVersion(storage, version);
+            const name = version.id;
+            console.log(`Saving snapshot ${name}`);
+            await saveSnapshot(name, blobsToDump);
+        }
+    } else {
+        version = versions[0];
+        if (paramSave !== undefined && versions.length > 0) {
+            // tslint:disable-next-line:max-line-length
+            console.log("  Name          |                  Date |       Size |   New Size |  Blobs | New Blobs");
+            console.log("-".repeat(86));
+
+            // Go in reverse order, to correctly calculate blob reuse - from oldest to newest snapshots
+            for (let i = versions.length - 1; i >= 0; i--) {
+                const v = versions[i];
+                const blobs = await fetchBlobsFromVersion(storage, v);
+                blobsToDump = blobs;
+                const name = `${i}-${v.id}`;
+                const res = await dumpSnapshotTree(name, blobs);
+
+                let date = "";
+                if (v.date) {
+                    try {
+                        date = new Date(v.date).toLocaleString();
+                    } catch (e) {
+                        date = v.date.replace("T", " ");
+                        const index = date.lastIndexOf(".");
+                        if (index > 0) {
+                            date = `${date.substr(0, index)} Z`;
+                        }
                     }
                 }
-                if (batch.length) {
-                    await Promise.all(batch);
-                }
+                date = date.padStart(21);
+                const size = formatNumber(res.size).padStart(10);
+                const sizeNew = formatNumber(res.sizeNew).padStart(10);
+                const blobCount = formatNumber(res.blobCount).padStart(6);
+                const blobCountNew = formatNumber(res.blobCountNew).padStart(9);
+
+                console.log(`${name.padEnd(15)} | ${date} | ${size} | ${sizeNew} | ${blobCount} | ${blobCountNew}`);
+
+                await saveSnapshot(name, blobs);
             }
         }
+    }
 
-        if (dumpTree) {
-            if (version !== undefined) {
-                console.log(`Loading snapshot version ${JSON.stringify(version)}`);
+    if (dumpSnapshotStats || dumpSnapshotTrees) {
+        if (version === undefined) {
+            console.log("No snapshot tree");
+        } else {
+            if (blobsToDump === undefined) {
+                blobsToDump = await fetchBlobsFromVersion(storage, version);
             }
-            const snapshotTree = await storage.getSnapshotTree(version);
-            if (snapshotTree) {
-                const snapshotSize = await dumpSnapshotTree(storage, snapshotTree);
-                if (dumpSnapshotStats) {
-                    console.log("-".repeat(100));
-                    // tslint:disable-next-line:max-line-length
-                    console.log(`Total snapshot size                                                        | ${snapshotSize}`);
-                } else if (dumpTotalStats) {
-                    console.log(`Total snapshot size: ${snapshotSize}`);
-                }
-            } else {
-                console.log("No snapshot tree");
-            }
+            console.log(`\n\nSnapshot version ${version.id}`);
+            await dumpSnapshotTreeVerbose(version.id, blobsToDump);
         }
     }
 }

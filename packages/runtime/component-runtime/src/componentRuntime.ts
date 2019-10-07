@@ -11,6 +11,7 @@ import {
 } from "@microsoft/fluid-component-core-interfaces";
 import {
     ConnectionState,
+    IAudience,
     IBlobManager,
     IDeltaManager,
     IGenericBlob,
@@ -23,6 +24,7 @@ import {
     FileMode,
     IDocumentMessage,
     ISequencedDocumentMessage,
+    ISnapshotTree,
     ITreeEntry,
     MessageType,
     TreeEntry,
@@ -68,6 +70,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
             context.blobManager,
             context.deltaManager,
             context.getQuorum(),
+            context.getAudience(),
             context.snapshotFn,
             context.closeFn,
             registry,
@@ -139,6 +142,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         private readonly blobManager: IBlobManager,
         public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         private readonly quorum: IQuorum,
+        private readonly audience: IAudience,
         private readonly snapshotFn: (message: string) => Promise<void>,
         private readonly closeFn: () => void,
         private readonly registry: ISharedObjectRegistry,
@@ -343,6 +347,12 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         return this.quorum;
     }
 
+    public getAudience(): IAudience {
+        this.verifyNotClosed();
+
+        return this.audience;
+    }
+
     public snapshot(message: string): Promise<void> {
         this.verifyNotClosed();
         return this.snapshotFn(message);
@@ -443,7 +453,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         this.emit("signal", message, local);
     }
 
-    public async snapshotInternal(): Promise<ITreeEntry[]> {
+    public async snapshotInternal(fullTree: boolean = false): Promise<ITreeEntry[]> {
         // Craft the .attributes file for each shared object
         const entries = await Promise.all(Array.from(this.contexts)
             .filter(([key, value]) => {
@@ -452,7 +462,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
                 return value.isRegistered();
             })
             .map(async ([key, value]) => {
-                const snapshot = await value.snapshot();
+                const snapshot = await value.snapshot(fullTree);
 
                 // And then store the tree
                 return {
@@ -580,6 +590,21 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         this.componentContext.on("leader", (clientId: string) => {
             this.emit("leader", clientId);
         });
+        this.componentContext.on("notleader", (clientId: string) => {
+            this.emit("notleader", clientId);
+        });
+        this.componentContext.on("refreshBaseSummary",
+            (snapshot: ISnapshotTree) => this.refreshBaseSummary(snapshot));
+    }
+
+    private refreshBaseSummary(snapshot: ISnapshotTree) {
+        // propogate updated tree to all channels
+        for (const key of Object.keys(snapshot.trees)) {
+            const channel = this.contexts.get(key);
+            if (channel) {
+                channel.refreshBaseSummary(snapshot.trees[key]);
+            }
+        }
     }
 
     private verifyNotClosed() {

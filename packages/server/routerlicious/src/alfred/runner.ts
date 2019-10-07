@@ -6,7 +6,7 @@
 import { Deferred } from "@microsoft/fluid-core-utils";
 import {
     IAlfredTenant,
-    ICache,
+    IClientManager,
     ICollection,
     IDocumentStorage,
     IOrdererManager,
@@ -33,7 +33,7 @@ export class AlfredRunner implements utils.IRunner {
         private orderManager: IOrdererManager,
         private tenantManager: ITenantManager,
         private storage: IDocumentStorage,
-        private cache: ICache,
+        private clientManager: IClientManager,
         private appTenants: IAlfredTenant[],
         private mongoManager: MongoManager,
         private producer: IProducer,
@@ -51,7 +51,6 @@ export class AlfredRunner implements utils.IRunner {
             this.storage,
             this.appTenants,
             this.mongoManager,
-            this.cache,
             this.producer);
         alfred.set("port", this.port);
 
@@ -66,7 +65,8 @@ export class AlfredRunner implements utils.IRunner {
             this.orderManager,
             this.tenantManager,
             this.storage,
-            this.contentCollection);
+            this.contentCollection,
+            this.clientManager);
 
         // Listen on provided port, on all network interfaces.
         httpServer.listen(this.port);

@@ -6,15 +6,15 @@
 import {
     IComponentHTMLOptions,
     IComponentHTMLView,
-} from "@prague/component-core-interfaces";
+} from "@microsoft/fluid-component-core-interfaces";
 import { mergeStyles } from 'office-ui-fabric-react';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import { DrawerCommandBar } from './drawerCommandBar';
 import { DocumentList } from "./documentList";
-import { IDocumentFactory } from "@prague/host-service-interfaces";
-import { ISharedMap } from "@prague/map";
-import { IComponentContext } from "@prague/runtime-definitions";
+import { IDocumentFactory } from "@microsoft/fluid-host-service-interfaces";
+import { ISharedMap } from "@microsoft/fluid-map";
+import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
 
 // Inject some global styles
 mergeStyles({

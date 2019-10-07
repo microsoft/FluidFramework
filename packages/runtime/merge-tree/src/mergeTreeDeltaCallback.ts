@@ -13,8 +13,6 @@ export type MergeTreeDeltaOperationType =
     MergeTreeDeltaType.ANNOTATE | MergeTreeDeltaType.INSERT | MergeTreeDeltaType.REMOVE;
 
 export interface IMergeTreeDeltaCallbackArgs {
-    readonly mergeTreeClientId: number;
-    readonly mergeTree: MergeTree;
     readonly operation: MergeTreeDeltaOperationType;
     readonly deltaSegments: IMergeTreeSegmentDelta[];
 }

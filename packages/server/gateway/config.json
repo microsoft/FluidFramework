@@ -14,7 +14,7 @@
         "url": "http://localhost:3000",
         "tenants": [
             {
-                "id": "prague",
+                "id": "fluid",
                 "key": "43cfc3fbf04a97c0921fd23ff10f9e4b"
             },
             {
@@ -42,11 +42,19 @@
             "endpoint": "http://riddler:5000"
         }
     },
+    "mongo": {
+        "endpoint": "mongodb://mongodb:27017",
+        "collectionNames": {
+            "accounts": "accounts"
+        }
+    },
     "login": {
         "enabled": false,
         "microsoft": {
             "clientId": "",
             "secret": ""
+        },
+        "linkedAccounts": {
         },
         "accounts": [
         ]
@@ -88,7 +96,8 @@
         "permission": ["snapshot", "spell", "intel", "translation", "chain-snapshot", "chain-spell", "chain-intel", "chain-translation"]
     },
     "keyValue": {
-        "documentUrl": "https://www.wu2.prague.office-int.com/loader/prague/kv-cache-local-00016"
+        "documentUrl": "https://www.wu2.prague.office-int.com/loader/fluid/kv-cache-local-00018",
+        "load": false
     },
     "express": {
         "session": {

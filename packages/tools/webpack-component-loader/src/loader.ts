@@ -8,8 +8,9 @@
 import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 import { IHostConfig, start as startCore } from "@microsoft/fluid-base-host";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { IFluidModule, IFluidPackage, IPackage, IPraguePackage } from "@microsoft/fluid-container-definitions";
+import { IFluidModule, IFluidPackage, IPackage } from "@microsoft/fluid-container-definitions";
 import {
+    ITestDeltaConnectionServer,
     TestDeltaConnectionServer,
     TestDocumentServiceFactory,
     TestResolver,
@@ -21,6 +22,7 @@ import { extractDetails, IResolvedPackage } from "@microsoft/fluid-web-code-load
 import * as jwt from "jsonwebtoken";
 import * as uuid from "uuid/v4";
 import { InsecureUrlResolver } from "./insecureUrlResolver";
+import { SessionStorageDbFactory } from "./sessionStorageTestDb";
 
 export interface IDevServerUser extends IUser {
     name: string;
@@ -32,6 +34,7 @@ export interface IRouteOptions {
     tenantId?: string;
     tenantSecret?: string;
     component?: string;
+    single?: boolean;
 }
 
 function getUser(): IDevServerUser {
@@ -43,17 +46,6 @@ function getUser(): IDevServerUser {
 
 function modifyFluidPackage(packageJson: IPackage): IFluidPackage {
     const fluidPackage = packageJson as IFluidPackage;
-    if (!("fluid" in packageJson)) {
-        const praguePackage = packageJson as IPraguePackage;
-        fluidPackage.fluid = {
-            browser: {
-                umd: {
-                    files: praguePackage.prague.browser.bundle,
-                    library: praguePackage.prague.browser.entrypoint,
-                },
-            },
-        };
-    }
 
     // Start by translating the input package to be webpack-dev-server relative URLs
     for (let i = 0; i < fluidPackage.fluid.browser.umd.files.length; i++) {
@@ -170,12 +162,11 @@ export async function start(
     switch (options.mode) {
         case "localhost":
             npm = "http://localhost:3002";
-            const localHost = "http://localhost:3000";
             urlResolver = new InsecureUrlResolver(
-                localHost,
-                localHost,
-                localHost,
-                "prague",
+                "http://localhost:3000",
+                "http://localhost:3003",
+                "http://localhost:3001",
+                "fluid",
                 "43cfc3fbf04a97c0921fd23ff10f9e4b",
                 getUser(),
                 bearerSecret);
@@ -199,6 +190,7 @@ export async function start(
     }
 
     let documentServiceFactory: IDocumentServiceFactory;
+    let deltaConn: ITestDeltaConnectionServer ;
     if (options.mode !== "local") {
         documentServiceFactory = new RouterliciousDocumentServiceFactory(
             false,
@@ -207,24 +199,45 @@ export async function start(
             true,
             undefined,
         );
-        const hostConf: IHostConfig = { documentServiceFactory, urlResolver };
-
-        startCore(
-            url,
-            await urlResolver.resolve(req),
-            pkg,
-            scriptIds,
-            npm,
-            config,
-            {},
-            div,
-            hostConf,
-        );
     } else {
-
-        const deltaConn = TestDeltaConnectionServer.create();
+        deltaConn = TestDeltaConnectionServer.create(new SessionStorageDbFactory(url));
         documentServiceFactory = new TestDocumentServiceFactory(deltaConn);
-        const hostConf: IHostConfig = { documentServiceFactory, urlResolver };
+    }
+    const hostConf: IHostConfig = { documentServiceFactory, urlResolver };
+
+    const double = (options.mode === "local") && !options.single;
+    let leftDiv: HTMLDivElement;
+    let rightDiv: HTMLDivElement;
+    if (double) {
+        leftDiv = document.createElement("div");
+        leftDiv.style.width = "50%";
+        leftDiv.style.cssFloat = "left";
+        leftDiv.style.border = "1px solid lightgray";
+        rightDiv = document.createElement("div");
+        rightDiv.style.marginLeft = "50%";
+        rightDiv.style.border = "1px solid lightgray";
+        div.append(leftDiv, rightDiv);
+    }
+
+    startCore(
+        url,
+        await urlResolver.resolve(req),
+        pkg,
+        scriptIds,
+        npm,
+        config,
+        {},
+        double ? leftDiv : div,
+        hostConf,
+    );
+
+    if (double) {
+        // new documentServiceFactory for right div, same everything else
+        const docServFac2: IDocumentServiceFactory = new TestDocumentServiceFactory(deltaConn);
+        const hostConf2 = { documentServiceFactory: docServFac2, urlResolver };
+
+        // startCore will create a new Loader/Container/Component from the startCore above. This is
+        // intentional because we want to emulate two clients collaborating with each other.
         startCore(
             url,
             await urlResolver.resolve(req),
@@ -233,8 +246,8 @@ export async function start(
             npm,
             config,
             {},
-            div,
-            hostConf,
+            rightDiv,
+            hostConf2,
         );
     }
 }

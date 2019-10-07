@@ -4,15 +4,19 @@
  */
 
 import {
+    IRequest,
+    IResponse,
+} from "@microsoft/fluid-component-core-interfaces";
+import {
     ConnectionState,
     IContainerContext,
     IQuorum,
-    IRequest,
-    IResponse,
+} from "@microsoft/fluid-container-definitions";
+import {
     ISequencedDocumentMessage,
     ITree,
     MessageType,
-} from "@prague/container-definitions";
+} from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
 
 export class Runtime extends EventEmitter {
@@ -58,7 +62,7 @@ export class Runtime extends EventEmitter {
     }
 
     public async snapshot(tagMessage: string): Promise<ITree> {
-        const root: ITree = { entries: [], sha: null };
+        const root: ITree = { entries: [], id: null };
         return root;
     }
 
@@ -97,7 +101,7 @@ export class Runtime extends EventEmitter {
         local: boolean,
         context: any,
     ): Promise<void> {
-    //
+        //
     }
 
     public submitMessage(type: MessageType, content: any) {
@@ -114,7 +118,7 @@ export class Runtime extends EventEmitter {
 
     private submit(type: MessageType, content: any) {
         this.verifyNotClosed();
-        this.context.submitFn(type, content);
+        this.context.submitFn(type, content, false);
     }
 
     private verifyNotClosed() {

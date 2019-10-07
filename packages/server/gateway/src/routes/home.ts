@@ -9,6 +9,19 @@ import * as passport from "passport";
 import { getUserDetails } from "../utils";
 import { defaultPartials } from "./partials";
 
+const microsoftScopes = {
+    scope: [
+        "profile",
+        "email",
+        "openid",
+        "Calendars.ReadWrite",
+        "Mail.ReadWrite",
+        "Mail.Send",
+        "Tasks.ReadWrite",
+        "User.Read",
+    ],
+};
+
 export function create(config: Provider, ensureLoggedIn: any): Router {
     const router: Router = Router();
 
@@ -40,8 +53,6 @@ export function create(config: Provider, ensureLoggedIn: any): Router {
         "/login_spo",
         passport.authenticate("openidconnect", {
             scope: [
-                "profile",
-                "email",
                 "offline_access",
                 "https://microsoft-my.sharepoint.com/AllSites.Write",
             ],
@@ -52,13 +63,34 @@ export function create(config: Provider, ensureLoggedIn: any): Router {
         "/login_spo-df",
         passport.authenticate("openidconnect", {
             scope: [
-                "profile",
-                "email",
                 "offline_access",
                 "https://microsoft-my.sharepoint-df.com/AllSites.Write",
             ],
         },
     ));
+
+    router.get(
+        "/login_pushsrv",
+        passport.authenticate("openidconnect", {
+            scope: [
+                "offline_access",
+                "https://pushchannel.1drv.ms/PushChannel.ReadWrite.All",
+            ],
+        },
+    ));
+
+    router.get(
+        "/connect/microsoft",
+        ensureLoggedIn(),
+        passport.authenticate("msa", microsoftScopes));
+
+    router.get(
+        "/connect/microsoft/callback",
+        ensureLoggedIn(),
+        passport.authenticate("msa", {
+            failureRedirect: "/",
+            successRedirect: "/",
+        }));
 
     router.get(
         "/auth/callback",

@@ -9,7 +9,7 @@
             <ul class="list-unstyled">
                 {{#templates}}
                 <li>
-                    <a href="/loader/prague/{{documentId}}?chaincode=@fluid-example/shared-text@{{version}}{{full}}">{{name}}</a>
+                    <a href="/loader/fluid/{{documentId}}?chaincode=@fluid-example/shared-text@{{version}}{{full}}">{{name}}</a>
                 </li>  
                 {{/templates}}
             </ul>

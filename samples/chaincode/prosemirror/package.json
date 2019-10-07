@@ -1,5 +1,5 @@
 {
-  "name": "@chaincode/prosemirror",
+  "name": "@fluid-example/prosemirror",
   "description": "ProseMirror",
   "version": "0.10.0",
   "author": "Microsoft",
@@ -10,7 +10,9 @@
   "scripts": {
     "build": "webpack --env=\"production\" && npm run tsc",
     "dev": "webpack --env=\"development\"",
-    "start": "prague-dev-server --config webpack.config.js --package package.json",
+    "start": "webpack-dev-server --config webpack.config.js --package package.json",
+    "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode  localhost",
+    "start:local": "webpack-dev-server --config webpack.config.js --package package.json --env.mode  local",
     "verdaccio": "npm publish --registry https://packages.wu2.prague.office-int.com",
     "deploy": "npm run build && npm version patch && npm run verdaccio && npm run post-deploy",
     "post-deploy": "getUrl -p",
@@ -19,8 +21,8 @@
     "webpack:dev": "npm run dev"
   },
   "devDependencies": {
-    "@prague/prague-dev-server": "~3.9.0",
-    "@prague/url-generator": "^1.0.4",
+    "@fluid-internal/url-generator": "^1.0.4",
+    "@microsoft/fluid-webpack-component-loader": "^0.11.0",
     "@types/node": "^10.14.6",
     "css-loader": "^3.2.0",
     "style-loader": "^1.0.0",
@@ -28,6 +30,7 @@
     "typescript": "~3.4.5",
     "webpack": "4.16.5",
     "webpack-cli": "3.1.0",
+    "webpack-dev-server": "^3.8.0",
     "webpack-merge": "4.1.4"
   },
   "fluid": {
@@ -42,15 +45,15 @@
   },
   "dependencies": {
     "@microsoft/fluid-build-common": "^0.10.0",
-    "@prague/component-core-interfaces": "^0.10.0",
-    "@prague/component-runtime": "^0.10.0",
-    "@prague/container-definitions": "^0.10.0",
-    "@prague/container-runtime": "^0.10.0",
-    "@prague/map": "^0.10.0",
-    "@prague/merge-tree": "^0.10.0",
-    "@prague/runtime-definitions": "^0.10.0",
-    "@prague/sequence": "^0.10.0",
-    "@prague/shared-object-common": "^0.10.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.10.0",
+    "@microsoft/fluid-component-runtime": "^0.10.0",
+    "@microsoft/fluid-container-definitions": "^0.10.0",
+    "@microsoft/fluid-container-runtime": "^0.10.0",
+    "@microsoft/fluid-map": "^0.10.0",
+    "@microsoft/fluid-merge-tree": "^0.10.0",
+    "@microsoft/fluid-runtime-definitions": "^0.10.0",
+    "@microsoft/fluid-sequence": "^0.10.0",
+    "@microsoft/fluid-shared-object-base": "^0.10.0",
     "@types/prosemirror-model": "^1.7.2",
     "@types/prosemirror-schema-basic": "^1.0.1",
     "@types/prosemirror-schema-list": "^1.0.1",
