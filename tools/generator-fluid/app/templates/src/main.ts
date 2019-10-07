@@ -9,10 +9,6 @@ import {
 import {
     IComponentHTMLVisual,
 } from "@microsoft/fluid-component-core-interfaces";
-import {
-    IComponentContext,
-    IComponentRuntime,
-} from "@microsoft/fluid-runtime-definitions";
 
 /**
  * DiceRoller example using view interfaces and stock component classes.
@@ -30,18 +26,6 @@ export class DiceRoller extends PrimedComponent implements IComponentHTMLVisual 
 
         // Uncomment the line below to add a title to your data schema!
         // this.root.set("title", "Initial Title Value");
-    }
-
-    /**
-     * Static load function that allows us to make async calls while creating our object.
-     * This becomes the standard practice for creating components in the new world.
-     * Using a static allows us to have async calls in class creation that you can't have in a constructor
-     */
-    public static async load(runtime: IComponentRuntime, context: IComponentContext): Promise<DiceRoller> {
-        const diceRoller = new DiceRoller(runtime, context);
-        await diceRoller.initialize();
-
-        return diceRoller;
     }
 
     /**
@@ -94,7 +78,7 @@ export class DiceRoller extends PrimedComponent implements IComponentHTMLVisual 
     }
 
     private rollDice() {
-        // tslint:disable-next-line:insecure-random
+        // tslint:disable-next-line:insecure-random - We don't need secure random numbers for this application.
         const rollValue = Math.floor(Math.random() * 6) + 1;
         this.root.set("diceValue", rollValue);
     }

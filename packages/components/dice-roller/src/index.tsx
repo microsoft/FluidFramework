@@ -11,10 +11,6 @@ import {
 import {
     IComponentHTMLVisual,
 } from "@microsoft/fluid-component-core-interfaces";
-import {
-    IComponentContext,
-    IComponentRuntime,
-} from "@microsoft/fluid-runtime-definitions";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -32,18 +28,6 @@ export class DiceRoller extends PrimedComponent implements IComponentHTMLVisual 
      */
     protected async componentInitializingFirstTime() {
         this.root.set("diceValue", 1);
-    }
-
-    /**
-     * Static load function that allows us to make async calls while creating our object.
-     * This becomes the standard practice for creating components in the new world.
-     * Using a static allows us to have async calls in class creation that you can't have in a constructor
-     */
-    public static async load(runtime: IComponentRuntime, context: IComponentContext): Promise<DiceRoller> {
-        const diceRoller = new DiceRoller(runtime, context);
-        await diceRoller.initialize();
-
-        return diceRoller;
     }
 
     /**
@@ -70,7 +54,7 @@ export class DiceRoller extends PrimedComponent implements IComponentHTMLVisual 
     }
 
     private rollDice() {
-        // tslint:disable-next-line:insecure-random
+        // tslint:disable-next-line:insecure-random - We don't need secure random numbers for this application.
         const rollValue = Math.floor(Math.random() * 6) + 1;
         this.root.set("diceValue", rollValue);
     }
@@ -81,6 +65,8 @@ export class DiceRoller extends PrimedComponent implements IComponentHTMLVisual 
     }
 }
 
+// ----- FACTORY SETUP STUFF -----
+
 /**
  * This is where you define all your Distributed Data Structures
  */
@@ -89,11 +75,9 @@ export const DiceRollerInstantiationFactory = new PrimedComponentFactory(
     [],
 );
 
-// ----- COMPONENT SETUP STUFF -----
-
 // tslint:disable-next-line: no-var-requires no-require-imports
 const pkg = require("../package.json");
-const chaincodeName = pkg.name as string;
+const componentName = pkg.name as string;
 
 /**
  * This does setup for the Container. The SimpleModuleInstantiationFactory also enables dynamic loading in the
@@ -102,10 +86,13 @@ const chaincodeName = pkg.name as string;
  * There are two important things here:
  * 1. Default Component name
  * 2. Map of string to factory for all components
+ *
+ * In this example, we are only registering a single component, but more complex examples will register multiple
+ * components.
  */
 export const fluidExport = new SimpleModuleInstantiationFactory(
-    chaincodeName,
+    componentName,
     new Map([
-        [chaincodeName, Promise.resolve(DiceRollerInstantiationFactory)],
+        [componentName, Promise.resolve(DiceRollerInstantiationFactory)],
     ]),
 );

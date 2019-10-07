@@ -10,10 +10,6 @@ import {
 import {
     IComponentHTMLVisual,
 } from "@microsoft/fluid-component-core-interfaces";
-import {
-    IComponentContext,
-    IComponentRuntime,
-} from "@microsoft/fluid-runtime-definitions";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -31,18 +27,6 @@ export class DiceRoller extends PrimedComponent implements IComponentHTMLVisual 
      */
     protected async componentInitializingFirstTime() {
         this.root.set("diceValue", 1);
-    }
-
-    /**
-     * Static load function that allows us to make async calls while creating our object.
-     * This becomes the standard practice for creating components in the new world.
-     * Using a static allows us to have async calls in class creation that you can't have in a constructor
-     */
-    public static async load(runtime: IComponentRuntime, context: IComponentContext): Promise<DiceRoller> {
-        const diceRoller = new DiceRoller(runtime, context);
-        await diceRoller.initialize();
-
-        return diceRoller;
     }
 
     /**
@@ -69,7 +53,7 @@ export class DiceRoller extends PrimedComponent implements IComponentHTMLVisual 
     }
 
     private rollDice() {
-        // tslint:disable-next-line:insecure-random
+        // tslint:disable-next-line:insecure-random - We don't need secure random numbers for this application.
         const rollValue = Math.floor(Math.random() * 6) + 1;
         this.root.set("diceValue", rollValue);
     }
