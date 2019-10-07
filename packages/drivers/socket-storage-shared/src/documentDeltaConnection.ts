@@ -22,6 +22,11 @@ import { IConnect, IConnected } from "./messages";
 
 const protocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
 
+interface ISocketReference {
+    socket: SocketIOClient.Socket;
+    references: number;
+}
+
 /**
  * Error raising for socket.io issues
  */
@@ -66,21 +71,12 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         url: string,
         mode: ConnectionMode): Promise<IDocumentDeltaConnection> {
 
-        // Note on multiplex = false:
-        // Temp fix to address issues on SPO. Scriptor hits same URL for Fluid & Notifications.
-        // As result Socket.io reuses socket (as there is no collision on namespaces).
-        // ODSP does not currently supports multiple namespaces on same socket :(
-        const socket = io(
-            url,
-            {
-                multiplex: false,
-                query: {
-                    documentId: id,
-                    tenantId,
-                },
-                reconnection: false,
-                transports: ["websocket"],
-            });
+        const socketReferenceKey = `${url},${tenantId},${id}`;
+
+        const socketReference = DocumentDeltaConnection.getOrCreateSocketIoReference(
+            socketReferenceKey, url, tenantId, id);
+
+        const socket = socketReference.socket;
 
         const connectMessage: IConnect = {
             client,
@@ -91,15 +87,22 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
             versions: protocolVersions,
         };
 
+        // tslint:disable-next-line:max-func-body-length
         const connection = await new Promise<IConnected>((resolve, reject) => {
             // Listen for ops sent before we receive a response to connect_document
             const queuedMessages: ISequencedDocumentMessage[] = [];
             const queuedContents: IContentMessage[] = [];
             const queuedSignals: ISignalMessage[] = [];
 
+            const disconnect = () => {
+                DocumentDeltaConnection.removeSocketIoReference(socketReferenceKey);
+            };
+
             const earlyOpHandler = (documentId: string, msgs: ISequencedDocumentMessage[]) => {
-                debug("Queued early ops", msgs.length);
-                queuedMessages.push(...msgs);
+                if (documentId === id) {
+                    debug("Queued early ops", msgs.length);
+                    queuedMessages.push(...msgs);
+                }
             };
             socket.on("op", earlyOpHandler);
 
@@ -168,13 +171,17 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
                     response.initialSignals.push(...queuedSignals);
                 }
 
+                debug("signals", JSON.stringify(response.initialSignals));
+
                 resolve(response);
             });
 
             socket.on("error", ((error) => {
                 debug(`Error in documentDeltaConection: ${error}`);
+
                 // This includes "Invalid namespace" error, which we consider critical (reconnecting will not help)
-                socket.disconnect();
+                disconnect();
+
                 reject(createErrorObject("error", error, error !== "Invalid namespace"));
             }));
 
@@ -182,17 +189,74 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
                 // This is not an error for the socket - it's a protocol error.
                 // In this case we disconnect the socket and indicate that we were unable to create the
                 // DocumentDeltaConnection.
-                socket.disconnect();
+                disconnect();
+
                 reject(createErrorObject("connect_document_error", error));
             }));
 
             socket.emit("connect_document", connectMessage);
         });
 
-        // tslint:disable-next-line:no-unnecessary-local-variable
-        const deltaConnection = new DocumentDeltaConnection(socket, id, connection);
+        return new DocumentDeltaConnection(socket, id, connection, socketReferenceKey);
+    }
 
-        return deltaConnection;
+    // Map of all existing socket io socket. [url, tenantId, documentId] -> socket
+    private static readonly socketIoSockets: Map<string, ISocketReference> = new Map();
+
+    /**
+     * Gets or create a socket io connection for the given key
+     */
+    private static getOrCreateSocketIoReference(
+        key: string,
+        url: string,
+        tenantId: string,
+        documentId: string): ISocketReference {
+        let socketReference = DocumentDeltaConnection.socketIoSockets.get(key);
+        if (socketReference) {
+            socketReference.references++;
+
+            debug(`Using existing socketio reference for ${key} (${socketReference.references})`);
+
+        } else {
+            const socket = io(
+                url,
+                {
+                    multiplex: false, // don't rely on socket.io built-in multiplexing
+                    query: {
+                        documentId,
+                        tenantId,
+                    },
+                    reconnection: false,
+                    transports: ["websocket"],
+                });
+
+            socketReference = {
+                socket,
+                references: 1,
+            };
+
+            DocumentDeltaConnection.socketIoSockets.set(key, socketReference);
+            debug(`Created new socketio reference for ${key}`);
+        }
+
+        return socketReference;
+    }
+
+    /**
+     * Removes a reference for the given key
+     * Once the ref count hits 0, the socket is disconnected and removed
+     * @param key Socket reference key
+     */
+    private static removeSocketIoReference(key: string) {
+        const socketReference = DocumentDeltaConnection.socketIoSockets.get(key);
+        if (socketReference) {
+            socketReference.references--;
+            if (socketReference.references === 0) {
+                DocumentDeltaConnection.socketIoSockets.delete(key);
+                socketReference.socket.disconnect();
+                debug(`Removed socketio reference ${key}`);
+            }
+        }
     }
 
     private readonly submitManager: BatchManager<IDocumentMessage[]>;
@@ -309,7 +373,8 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
     constructor(
         private readonly socket: SocketIOClient.Socket,
         public documentId: string,
-        public details: IConnected) {
+        public details: IConnected,
+        private readonly socketReferenceKey: string) {
         super();
 
         this.submitManager = new BatchManager<IDocumentMessage[]>(
@@ -381,6 +446,6 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
      * Disconnect from the websocket
      */
     public disconnect() {
-        this.socket.disconnect();
+        DocumentDeltaConnection.removeSocketIoReference(this.socketReferenceKey);
     }
 }
