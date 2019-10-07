@@ -160,7 +160,7 @@ export async function start(
     let urlResolver: IUrlResolver;
     switch (options.mode) {
         case "localhost":
-            options.npm = options.npm ? options.npm : "http://localhost:3002";
+            options.npm = "http://localhost:3002";
             urlResolver = new InsecureUrlResolver(
                 "http://localhost:3000",
                 "http://localhost:3003",
