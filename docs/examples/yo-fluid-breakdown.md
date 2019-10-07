@@ -4,11 +4,6 @@ uid: yo-fluid-details
 
 # Yo Fluid Breakdown
 
-> [!WARNING]
-> This documentation is based on an earlier version of the Fluid Framework and is outdated.
->
-> Track the documentation update with [#3499](https://github.com/microsoft/Prague/issues/3499).
-
 So you've used <xref:yo-fluid> to create your first component! If you haven't done this yet, head over to <xref:yo-fluid>.
 
 ## Different Components
