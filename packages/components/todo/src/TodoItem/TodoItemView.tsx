@@ -20,7 +20,7 @@ interface TodoItemViewState {
 
 export class TodoItemView extends React.Component<TodoItemViewProps, TodoItemViewState> {
     private readonly itemText: SharedString;
-    private readonly baseUrl = `${window.location.origin}`;
+    private readonly baseUrl: string;
     private readonly buttonStyle = {
         height: "25px",
         marginLeft: "2px",
@@ -33,14 +33,9 @@ export class TodoItemView extends React.Component<TodoItemViewProps, TodoItemVie
 
         this.itemText = this.props.todoItemModel.getTodoItemText();
 
-        const pathName = window.location.pathname.split("/");
-        const path: string[] = [];
-        for (const val of pathName) {
-            if (!val.startsWith("item")) {
-                path.push(val);
-            }
-        }
-        this.baseUrl += `${path.join("/")}${window.location.search}`;
+        const baseUrl = this.props.todoItemModel.getBaseUrl();
+        this.baseUrl = `${baseUrl}${window.location.search}`;
+
         this.state = {
             checked: this.props.todoItemModel.getCheckedState(),
             innerComponentVisible: false,

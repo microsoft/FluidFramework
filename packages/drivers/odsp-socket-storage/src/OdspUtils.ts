@@ -4,7 +4,7 @@
  */
 
 import { NetworkError, throwNetworkError } from "@microsoft/fluid-core-utils";
-import { default as fetch } from "node-fetch";
+import { default as fetch, RequestInfo as FetchRequestInfo, RequestInit as FetchRequestInit } from "node-fetch";
 
 /**
  * returns true when the request should/can be retried
@@ -42,7 +42,9 @@ export function fetchHelper(
     requestInit: RequestInit | undefined,
     retryFilter: RetryFilter = defaultRetryFilter,
 ): Promise<any> {
-    return fetch(requestInfo, requestInit).then((response) => {
+    // node-fetch and dom has conflicting typing, force them to work by casting for now
+    return fetch(requestInfo as FetchRequestInfo, requestInit as FetchRequestInit).then((fetchResponse) => {
+        const response = fetchResponse as any as Response;
         // Let's assume we can retry.
         if (!response) {
             throwNetworkError(`No response from the server`, 400, true, response);
