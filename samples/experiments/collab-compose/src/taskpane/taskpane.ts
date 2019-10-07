@@ -12,7 +12,12 @@ Office.onReady(info => {
 });
 
 export async function run() {
-  /**
-   * Insert your Outlook code here
-   */
+  const messageCompose = Office.context.mailbox.item as Office.MessageCompose;
+  let value = 0;
+  messageCompose.body.setAsync(`HELLLOOOOO! ${value++}`, { coercionType: Office.CoercionType.Text });
+  setInterval(
+    () => {
+      messageCompose.body.setAsync(`HELLLOOOOO! ${value++}`, { coercionType: Office.CoercionType.Text });
+    },
+    5000);
 }

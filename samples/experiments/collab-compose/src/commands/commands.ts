@@ -17,7 +17,7 @@ function action(event: Office.AddinCommands.Event) {
     message: "Performed action.",
     icon: "Icon.80x80",
     persistent: true
-  }
+  };
   
   // Show a notification message
   Office.context.mailbox.item.notificationMessages.replaceAsync("action", message);
