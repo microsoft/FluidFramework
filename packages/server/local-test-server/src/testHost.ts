@@ -161,25 +161,25 @@ export class TestHost {
         if (Array.isArray(componentRegistry)) {
             storeComponentRegistry = new Map(componentRegistry.concat([
                 [
-                    TestRootComponent.type as string,
+                    TestRootComponent.type,
                     Promise.resolve(TestRootComponent.getFactory()),
                 ],
             ]));
         } else {
             const extraRegistryMap: Map<string, Promise<IComponentFactory>> =
-                new Map([[TestRootComponent.type as string, Promise.resolve(TestRootComponent.getFactory())]]);
+                new Map([[TestRootComponent.type, Promise.resolve(TestRootComponent.getFactory())]]);
             storeComponentRegistry =
                 new WrappedComponentRegistry(componentRegistry as IComponentRegistry, extraRegistryMap);
         }
 
         const store = new TestDataStore(
             new TestCodeLoader([
-                [TestRootComponent.type as string,
+                [TestRootComponent.type,
                     {
                     IRuntimeFactory: undefined,
                     instantiateRuntime: (context) => SimpleContainerRuntimeFactory.instantiateRuntime(
                         context,
-                        TestRootComponent.type as string,
+                        TestRootComponent.type,
                         storeComponentRegistry),
                 }],
             ]),
