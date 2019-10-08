@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
-import { BatchManager, NetworkError, TelemetryNullLogger } from "@microsoft/fluid-core-utils";
+import { BatchManager, NetworkError } from "@microsoft/fluid-core-utils";
+import { IConnect, IConnected } from "@microsoft/fluid-driver-base";
 import {
     ConnectionMode,
     IClient,
@@ -19,9 +19,14 @@ import {
 } from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
 import { debug } from "./debug";
-import { IConnect, IConnected } from "./messages";
 
 const protocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
+
+interface ISocketReference {
+    socket: SocketIOClient.Socket | undefined;
+    references: number;
+    pendingConnect?: Promise<IConnected>;
+}
 
 /**
  * Error raising for socket.io issues
@@ -48,71 +53,6 @@ function createErrorObject(handler: string, error: any, canRetry = true) {
  */
 export class DocumentDeltaConnection extends EventEmitter implements IDocumentDeltaConnection {
     /**
-     * Create a DocumentDeltaConnection.
-     * If url #1 fails to connect, will try url #2 if applicable.
-     *
-     * @param tenantId - the ID of the tenant
-     * @param id - document ID
-     * @param token - authorization token for storage service
-     * @param io - websocket library
-     * @param client - information about the client
-     * @param url - websocket URL
-     * @param url2 - alternate websocket URL
-     */
-    // tslint:disable-next-line: max-func-body-length
-    public static async create(
-        tenantId: string,
-        id: string,
-        token: string | null,
-        io: SocketIOClientStatic,
-        client: IClient,
-        mode: ConnectionMode,
-        url: string,
-        url2?: string,
-        telemetryLogger?: ITelemetryLogger): Promise<IDocumentDeltaConnection> {
-            // tslint:disable-next-line: strict-boolean-expressions
-            const hasUrl2 = !!url2;
-
-            // Create null logger if telemetry logger is not available from caller
-            const logger = telemetryLogger ? telemetryLogger : new TelemetryNullLogger();
-
-            return this.createImpl(
-                tenantId,
-                id,
-                token,
-                io,
-                client,
-                url,
-                mode,
-                hasUrl2 ? 15000 : 20000,
-            // tslint:disable-next-line: promise-function-async
-            ).catch((error) => {
-                if (error instanceof NetworkError && hasUrl2) {
-                    if (error.canRetry) {
-                        debug(`Socket connection error on non-AFD URL. Error was [${error}]. Retry on AFD URL: ${url}`);
-                        logger.sendTelemetryEvent({ eventName: "UseAfdUrl" });
-
-                        return this.createImpl(
-                            tenantId,
-                            id,
-                            token,
-                            io,
-                            client,
-                            // tslint:disable-next-line: no-non-null-assertion
-                            url2!,
-                            mode,
-                            20000,
-                        );
-                    }
-                }
-
-                logger.sendTelemetryEvent({ eventName: "FailedAfdUrl" });
-
-                throw error;
-            });
-    }
-
-    /**
      * Create a DocumentDeltaConnection
      *
      * @param tenantId - the ID of the tenant
@@ -121,35 +61,35 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
      * @param io - websocket library
      * @param client - information about the client
      * @param url - websocket URL
-     * @param timeoutMs - timeout for socket connection attempt in milliseconds
      */
     // tslint:disable-next-line: max-func-body-length
-    private static async createImpl(
+    public static async create(
         tenantId: string,
         id: string,
         token: string | null,
         io: SocketIOClientStatic,
         client: IClient,
         url: string,
-        mode: ConnectionMode,
-        timeoutMs: number): Promise<IDocumentDeltaConnection> {
+        mode: ConnectionMode): Promise<IDocumentDeltaConnection> {
 
-        // Note on multiplex = false:
-        // Temp fix to address issues on SPO. Scriptor hits same URL for Fluid & Notifications.
-        // As result Socket.io reuses socket (as there is no collision on namespaces).
-        // ODSP does not currently supports multiple namespaces on same socket :(
-        const socket = io(
-            url,
-            {
-                multiplex: false,
-                query: {
-                    documentId: id,
-                    tenantId,
-                },
-                reconnection: false,
-                transports: ["websocket"],
-                timeout: timeoutMs,
-            });
+        const socketReferenceKey = `${url},${tenantId},${id}`;
+
+        const socketReference = DocumentDeltaConnection.getOrCreateSocketIoReference(
+            io, socketReferenceKey, url, tenantId, id);
+
+        const socket = socketReference.socket;
+        if (!socket) {
+            throw new Error(`Invalid socket for key "${socketReferenceKey}`);
+        }
+
+        if (socketReference.pendingConnect) {
+            // another connection is in progress. wait for it to finish
+            try {
+                await socketReference.pendingConnect;
+            } catch (ex) {
+                // ignore any error from it
+            }
+        }
 
         const connectMessage: IConnect = {
             client,
@@ -160,15 +100,22 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
             versions: protocolVersions,
         };
 
-        const connection = await new Promise<IConnected>((resolve, reject) => {
+        // tslint:disable-next-line:max-func-body-length
+        socketReference.pendingConnect = new Promise<IConnected>((resolve, reject) => {
             // Listen for ops sent before we receive a response to connect_document
             const queuedMessages: ISequencedDocumentMessage[] = [];
             const queuedContents: IContentMessage[] = [];
             const queuedSignals: ISignalMessage[] = [];
 
+            const disconnect = () => {
+                DocumentDeltaConnection.removeSocketIoReference(socketReferenceKey);
+            };
+
             const earlyOpHandler = (documentId: string, msgs: ISequencedDocumentMessage[]) => {
-                debug("Queued early ops", msgs.length);
-                queuedMessages.push(...msgs);
+                if (documentId === id) {
+                    debug("Queued early ops", msgs.length);
+                    queuedMessages.push(...msgs);
+                }
             };
             socket.on("op", earlyOpHandler);
 
@@ -237,13 +184,17 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
                     response.initialSignals.push(...queuedSignals);
                 }
 
+                debug("signals", JSON.stringify(response.initialSignals));
+
                 resolve(response);
             });
 
             socket.on("error", ((error) => {
                 debug(`Error in documentDeltaConection: ${error}`);
+
                 // This includes "Invalid namespace" error, which we consider critical (reconnecting will not help)
-                socket.disconnect();
+                disconnect();
+
                 reject(createErrorObject("error", error, error !== "Invalid namespace"));
             }));
 
@@ -251,17 +202,84 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
                 // This is not an error for the socket - it's a protocol error.
                 // In this case we disconnect the socket and indicate that we were unable to create the
                 // DocumentDeltaConnection.
-                socket.disconnect();
+                disconnect();
+
                 reject(createErrorObject("connect_document_error", error));
             }));
 
             socket.emit("connect_document", connectMessage);
         });
 
-        // tslint:disable-next-line:no-unnecessary-local-variable
-        const deltaConnection = new DocumentDeltaConnection(socket, id, connection);
+        const connection = await socketReference.pendingConnect;
+        socketReference.pendingConnect = undefined;
 
-        return deltaConnection;
+        return new DocumentDeltaConnection(socket, id, connection, socketReferenceKey);
+    }
+
+    // Map of all existing socket io sockets. [url, tenantId, documentId] -> socket
+    private static readonly socketIoSockets: Map<string, ISocketReference> = new Map();
+
+    /**
+     * Gets or create a socket io connection for the given key
+     */
+    private static getOrCreateSocketIoReference(
+        io: SocketIOClientStatic,
+        key: string,
+        url: string,
+        tenantId: string,
+        documentId: string): ISocketReference {
+        let socketReference = DocumentDeltaConnection.socketIoSockets.get(key);
+        if (socketReference) {
+            socketReference.references++;
+            debug(`Using existing socketio reference for ${key} (${socketReference.references})`);
+
+        } else {
+            const socket = io(
+                url,
+                {
+                    multiplex: false, // don't rely on socket.io built-in multiplexing
+                    query: {
+                        documentId,
+                        tenantId,
+                    },
+                    reconnection: false,
+                    transports: ["websocket"],
+                });
+
+            socketReference = {
+                socket,
+                references: 1,
+            };
+
+            DocumentDeltaConnection.socketIoSockets.set(key, socketReference);
+            debug(`Created new socketio reference for ${key}`);
+        }
+
+        return socketReference;
+    }
+
+    /**
+     * Removes a reference for the given key
+     * Once the ref count hits 0, the socket is disconnected and removed
+     * @param key - socket reference key
+     */
+    private static removeSocketIoReference(key: string) {
+        const socketReference = DocumentDeltaConnection.socketIoSockets.get(key);
+        if (!socketReference) {
+            throw new Error(`Invalid socket reference for "${key}"`);
+        }
+
+        socketReference.references--;
+        if (socketReference.references === 0) {
+            DocumentDeltaConnection.socketIoSockets.delete(key);
+
+            if (socketReference.socket) {
+                socketReference.socket.disconnect();
+                socketReference.socket = undefined;
+            }
+
+            debug(`Removed socketio reference ${key}`);
+        }
     }
 
     private readonly submitManager: BatchManager<IDocumentMessage[]>;
@@ -378,7 +396,8 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
     constructor(
         private readonly socket: SocketIOClient.Socket,
         public documentId: string,
-        public details: IConnected) {
+        public details: IConnected,
+        private socketReferenceKey: string | undefined) {
         super();
 
         this.submitManager = new BatchManager<IDocumentMessage[]>(
@@ -450,6 +469,11 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
      * Disconnect from the websocket
      */
     public disconnect() {
-        this.socket.disconnect();
+        if (this.socketReferenceKey === undefined) {
+            throw new Error("Invalid socket reference key");
+        }
+
+        DocumentDeltaConnection.removeSocketIoReference(this.socketReferenceKey);
+        this.socketReferenceKey = undefined;
     }
 }
