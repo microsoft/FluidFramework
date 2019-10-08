@@ -25,7 +25,7 @@ const protocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
 /**
  * Error raising for socket.io issues
  */
-function createErrorObject(handler: string, error: any, canRetry = true) {
+export function createErrorObject(handler: string, error: any, canRetry = true) {
     // Note: we assume error object is a string here.
     // If it's not (and it's an object), we would not get its content.
     // That is likely Ok, as it may contain PII that will get logged to telemetry,

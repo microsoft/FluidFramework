@@ -5,7 +5,6 @@
 
 import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
 import { NetworkError, SinglePromise } from "@microsoft/fluid-core-utils";
-import { DocumentDeltaConnection } from "@microsoft/fluid-driver-base";
 import {
     ConnectionMode,
     IClient,
@@ -18,6 +17,7 @@ import {
 import { IOdspSocketError, ISocketStorageDiscovery } from "./contracts";
 import { IFetchWrapper } from "./fetchWrapper";
 import { OdspDeltaStorageService } from "./OdspDeltaStorageService";
+import { OdspDocumentDeltaConnection } from "./OdspDocumentDeltaConnection";
 import { OdspDocumentStorageManager } from "./OdspDocumentStorageManager";
 import { OdspDocumentStorageService } from "./OdspDocumentStorageService";
 import { defaultRetryFilter } from "./OdspUtils";
@@ -163,7 +163,7 @@ export class OdspDocumentService implements IDocumentService {
 
         const [websocketEndpoint, webSocketToken, io] = await Promise.all([this.websocketEndpointP, this.getWebsocketToken(), this.socketIOClientP]);
 
-        return DocumentDeltaConnection.create(
+        return OdspDocumentDeltaConnection.create(
             websocketEndpoint.tenantId,
             websocketEndpoint.id,
             // This is workaround for fluid-fetcher. Need to have better long term solution
