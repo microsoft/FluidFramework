@@ -3,12 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import {
-    PrimedComponent,
-    PrimedComponentFactory,
-    SimpleContainerRuntimeFactory,
-} from "@microsoft/fluid-aqueduct";
-import { IComponentHandle, IComponentLoadable } from "@microsoft/fluid-component-core-interfaces";
+import { PrimedComponent, PrimedComponentFactory, SimpleContainerRuntimeFactory } from "@microsoft/fluid-aqueduct";
+import { IComponentHandle, IComponentLoadable, IComponentRunnable } from "@microsoft/fluid-component-core-interfaces";
 import { WrappedComponentRegistry } from "@microsoft/fluid-container-runtime";
 import {
     IComponentContext,
@@ -31,7 +27,9 @@ import { TestDataStore } from "./testDataStore";
 /**
  * Basic component implementation for testing.
  */
-class TestRootComponent extends PrimedComponent {
+class TestRootComponent extends PrimedComponent implements IComponentRunnable {
+    public get IComponentRunnable() { return this; }
+
     /**
      * Type name of the component for the IComponentRegistryLookup
      */
@@ -53,6 +51,8 @@ class TestRootComponent extends PrimedComponent {
     constructor(runtime: IComponentRuntime, context: IComponentContext) {
         super(runtime, context);
     }
+
+    public run = () =>  Promise.resolve();
 
     // Make this function public so TestHost can use them
     // tslint:disable-next-line: no-unnecessary-override
