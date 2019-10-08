@@ -16,10 +16,13 @@ export class WhiteList implements ICodeWhiteList {
     public scriptIds?: string[];
 
     constructor(
-        private readonly testHandler: (source: IFluidCodeDetails) => Promise<boolean> = () => Promise.resolve(true),
+        private readonly testHandler?: (source: IFluidCodeDetails) => Promise<boolean>,
     ) { }
 
     public async testSource(source: IFluidCodeDetails): Promise<boolean> {
+        if (!this.testHandler) {
+            return true;
+        }
         return this.testHandler(source);
     }
 }
