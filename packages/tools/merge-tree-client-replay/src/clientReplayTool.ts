@@ -4,7 +4,13 @@
  */
 
 import { FileDeltaStorageService } from "@microsoft/fluid-file-driver";
-import { createGroupOp, IJSONSegment, IMergeTreeOp, ISegment, MergeTreeDeltaType } from "@microsoft/fluid-merge-tree";
+import {
+    createGroupOp,
+    IJSONSegment,
+    IMergeTreeOp,
+    ISegment,
+    MergeTreeDeltaType,
+} from "@microsoft/fluid-merge-tree";
 // tslint:disable-next-line: no-submodule-imports
 import { TestClient } from "@microsoft/fluid-merge-tree/dist/test/testClient";
 import {
@@ -293,6 +299,7 @@ export class ClientReplayTool {
                             break;
                         }
                     }
+                    // tslint:disable-next-line: max-line-length
                     console.log(`MergeTree Found:\n ${JSON.stringify({fullPath: ssTree.fullPath, type: mergeTreeType.type })}`);
                     mergeTreeAttachTrees.set(
                         ssTree.fullPath,

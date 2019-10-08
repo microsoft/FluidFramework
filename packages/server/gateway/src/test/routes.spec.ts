@@ -26,6 +26,8 @@ describe("Gateway", () => {
                 defaultConfig,
                 alf,
                 [{ id: "git", key: "git" }],
+                null,
+                null,
                 null);
             testServer = supertest(gateway);
         });

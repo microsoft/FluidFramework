@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IConnectionDetails, IDeltaHandlerStrategy, IDeltaManager, IDeltaQueue } from "@microsoft/fluid-container-definitions";
+import {
+    IConnectionDetails,
+    IDeltaHandlerStrategy,
+    IDeltaManager,
+    IDeltaQueue,
+} from "@microsoft/fluid-container-definitions";
 import * as utils from "@microsoft/fluid-core-utils";
 import {
     IDocumentMessage,

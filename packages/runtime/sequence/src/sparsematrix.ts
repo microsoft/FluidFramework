@@ -5,7 +5,13 @@
 
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { BaseSegment, createGroupOp, IJSONSegment, ISegment, PropertySet } from "@microsoft/fluid-merge-tree";
-import { IChannelAttributes, IComponentRuntime, ISharedObjectServices, Jsonable, JsonablePrimitive } from "@microsoft/fluid-runtime-definitions";
+import {
+    IChannelAttributes,
+    IComponentRuntime,
+    ISharedObjectServices,
+    Jsonable,
+    JsonablePrimitive,
+} from "@microsoft/fluid-runtime-definitions";
 import { ISharedObject, ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { SharedSegmentSequence, SubSequence } from "./";
 import { pkgVersion } from "./packageVersion";
@@ -184,8 +190,7 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
      * @returns newly create sparse matrix (but not attached yet)
      */
     public static create(runtime: IComponentRuntime, id?: string) {
-        return runtime.createChannel(SharedSegmentSequence.getIdForCreate(id),
-            SparseMatrixFactory.Type) as SparseMatrix;
+        return runtime.createChannel(id, SparseMatrixFactory.Type) as SparseMatrix;
     }
 
     /**

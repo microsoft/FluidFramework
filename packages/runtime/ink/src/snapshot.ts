@@ -12,7 +12,7 @@ import {
  */
 export interface ISerializableInk {
     /**
-     * Collection of the strokes in this snapshot.
+     * Collection of ink strokes.
      */
     strokes: IInkStroke[];
 
@@ -27,12 +27,19 @@ export interface ISerializableInk {
  * Maintains a live record of the data that can be used for snapshotting.
  */
 export class InkData {
+    /**
+     * {@inheritDoc ISerializableInk.strokes}
+     */
     private strokes: IInkStroke[];
+
+    /**
+     * {@inheritDoc ISerializableInk.strokeIndex}
+     */
     private strokeIndex: { [key: string]: number };
 
     /**
-     * Construct a new snapshot.
-     * @param snapshot - Existing snapshot to be cloned
+     * Construct a new InkData.
+     * @param snapshot - Existing data to initialize with
      */
     constructor(snapshot?: ISerializableInk) {
         this.strokes = snapshot ? snapshot.strokes : [];
@@ -40,34 +47,40 @@ export class InkData {
     }
 
     /**
-     * Get the ink strokes from the snapshot.
+     * {@inheritDoc IInk.getStrokes}
      */
     public getStrokes(): IInkStroke[] {
         return this.strokes;
     }
 
     /**
-     * Get a specific stroke from the snapshot.
-     *
-     * @param key - The UUID for the stroke
+     * {@inheritDoc IInk.getStroke}
      */
     public getStroke(key: string): IInkStroke {
         return this.strokes[this.strokeIndex[key]];
     }
 
     /**
-     * Clear all data from the snapshot
+     * Clear all stored data.
      */
-    public clear() {
+    public clear(): void {
         this.strokes = [];
         this.strokeIndex = {};
     }
 
-    public addStroke(stroke: IInkStroke) {
+    /**
+     * Add the given stroke to the stored data.
+     * @param stroke - The stroke to add
+     */
+    public addStroke(stroke: IInkStroke): void {
         this.strokes.push(stroke);
         this.strokeIndex[stroke.id] = this.strokes.length - 1;
     }
 
+    /**
+     * Get a JSON-compatible representation of the stored data.
+     * @returns The JSON-compatible object
+     */
     public getSerializable(): ISerializableInk {
         return {
             strokes: this.strokes,
