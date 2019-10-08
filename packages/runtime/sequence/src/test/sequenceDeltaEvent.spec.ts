@@ -71,11 +71,10 @@ describe("non-collab", () => {
             assert(event.isLocal);
             assert(!event.isEmpty);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.start, offset);
-            assert.equal(event.ranges[0].position, offset);
-            assert.equal(event.ranges[0].segment.cachedLength, text.length);
-            assert.equal(event.end, offset + text.length);
-            const segment = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.position, offset);
+            assert.equal(event.first.segment.cachedLength, text.length);
+            assert.equal(event.last.position + event.last.segment.cachedLength, offset + text.length);
+            const segment = event.first.segment as TextSegment;
             assert.equal(segment.text, text);
         }
     });
@@ -116,10 +115,9 @@ describe("non-collab", () => {
             assert(event.isLocal);
             assert(!event.isEmpty);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.start, start);
-            assert.equal(event.ranges[0].position, start);
-            assert.equal(event.ranges[0].segment.cachedLength, end - start);
-            assert.equal(event.end, end);
+            assert.equal(event.first.position, start);
+            assert.equal(event.first.segment.cachedLength, end - start);
+            assert.equal(event.last.position + event.last.segment.cachedLength, end);
         }
     });
 
@@ -189,8 +187,8 @@ describe("non-collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, start);
-            assert.equal(event.end, end);
+            assert.equal(event.first.position, start);
+            assert.equal(event.last.position + event.last.segment.cachedLength, end);
             assert.equal(event.ranges.length, expected.length);
             for (let i = 0; i < expected.length; i = i + 1) {
                 assert.equal(event.ranges[i].position, expected[i].offset);
@@ -249,12 +247,12 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, localInsertPos);
-            assert.equal(event.end, localInsertPos + localInsertText.length);
+            assert.equal(event.first.position, localInsertPos);
+            assert.equal(event.last.position, localInsertPos);
+            assert.equal(event.first.segment.cachedLength, localInsertText.length);
+            assert.equal(event.last.segment.cachedLength, localInsertText.length);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, localInsertPos);
-            assert.equal(event.ranges[0].segment.cachedLength, localInsertText.length);
-            const segment1 = event.ranges[0].segment as TextSegment;
+            const segment1 = event.first.segment as TextSegment;
             assert.equal(segment1.text, localInsertText);
 
             const remoteInsertMessage = client.makeOpMessage(
@@ -267,12 +265,12 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, remoteInsertPos + localInsertText.length);
-            assert.equal(event.end, remoteInsertPos + localInsertText.length + remoteInsertText.length);
+            assert.equal(event.first.position, remoteInsertPos + localInsertText.length);
+            assert.equal(event.last.position, remoteInsertPos + localInsertText.length);
+            assert.equal(event.first.segment.cachedLength, remoteInsertText.length);
+            assert.equal(event.last.segment.cachedLength, remoteInsertText.length);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, remoteInsertPos + localInsertText.length);
-            assert.equal(event.ranges[0].segment.cachedLength, remoteInsertText.length);
-            const segment2 = event.ranges[0].segment as TextSegment;
+            const segment2 = event.first.segment as TextSegment;
             assert.equal(segment2.text, remoteInsertText);
         });
 
@@ -297,12 +295,12 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, localInsertPos);
-            assert.equal(event.end, localInsertPos + localInsertText.length);
+            assert.equal(event.first.position, localInsertPos);
+            assert.equal(event.last.position, localInsertPos);
+            assert.equal(event.first.segment.cachedLength, localInsertText.length);
+            assert.equal(event.last.segment.cachedLength, localInsertText.length);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, localInsertPos);
-            assert.equal(event.ranges[0].segment.cachedLength, localInsertText.length);
-            const segment1 = event.ranges[0].segment as TextSegment;
+            const segment1 = event.first.segment as TextSegment;
             assert.equal(segment1.text, localInsertText);
 
             const remoteInsertMessage = client.makeOpMessage(
@@ -317,12 +315,12 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, remoteInsertPos);
-            assert.equal(event.end, remoteInsertPos + remoteInsertText.length);
+            assert.equal(event.first.position, remoteInsertPos);
+            assert.equal(event.last.position, remoteInsertPos);
+            assert.equal(event.first.segment.cachedLength, remoteInsertText.length);
+            assert.equal(event.last.segment.cachedLength, remoteInsertText.length);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, remoteInsertPos);
-            assert.equal(event.ranges[0].segment.cachedLength, remoteInsertText.length);
-            const segment2 = event.ranges[0].segment as TextSegment;
+            const segment2 = event.first.segment as TextSegment;
             assert.equal(segment2.text, remoteInsertText);
         });
 
@@ -349,12 +347,12 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, localInsertPos);
-            assert.equal(event.end, localInsertPos + localInsertText.length);
+            assert.equal(event.first.position, localInsertPos);
+            assert.equal(event.last.position, localInsertPos);
+            assert.equal(event.first.segment.cachedLength, localInsertText.length);
+            assert.equal(event.last.segment.cachedLength, localInsertText.length);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, localInsertPos);
-            assert.equal(event.ranges[0].segment.cachedLength, localInsertText.length);
-            const segment1 = event.ranges[0].segment as TextSegment;
+            const segment1 = event.first.segment as TextSegment;
             assert.equal(segment1.text, localInsertText);
 
             const remoteInsertMessage = client.makeOpMessage(
@@ -367,12 +365,13 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, remoteInsertPos);
-            assert.equal(event.end, remoteInsertPos + remoteInsertText.length);
+            assert.equal(event.first.position, remoteInsertPos);
+            assert.equal(event.last.position, remoteInsertPos);
+            assert.equal(event.first.segment.cachedLength, remoteInsertText.length);
+            assert.equal(event.last.segment.cachedLength, remoteInsertText.length);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, remoteInsertPos);
-            assert.equal(event.ranges[0].segment.cachedLength, remoteInsertText.length);
-            const segment2 = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.position, remoteInsertPos);
+            const segment2 = event.first.segment as TextSegment;
             assert.equal(segment2.text, remoteInsertText);
         });
 
@@ -398,11 +397,11 @@ describe("collab", () => {
             assert(event.isLocal);
             assert(!event.isEmpty);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.start, localInsertPos);
-            assert.equal(event.end, localInsertPos + localInsertText.length);
-            assert.equal(event.ranges[0].position, localInsertPos);
-            assert.equal(event.ranges[0].segment.cachedLength, localInsertText.length);
-            const segment1 = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.position, localInsertPos);
+            assert.equal(event.last.position, localInsertPos);
+            assert.equal(event.first.segment.cachedLength, localInsertText.length);
+            assert.equal(event.last.segment.cachedLength, localInsertText.length);
+            const segment1 = event.first.segment as TextSegment;
             assert.equal(segment1.text, localInsertText);
 
             const remoteInsertMessage = client.makeOpMessage(
@@ -418,11 +417,11 @@ describe("collab", () => {
             assert(!event.isLocal);
             assert(!event.isEmpty);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.start, remoteInsertPos + localInsertText.length);
-            assert.equal(event.end, remoteInsertPos + localInsertText.length + remoteInsertText.length);
-            assert.equal(event.ranges[0].position, remoteInsertPos + localInsertText.length);
-            assert.equal(event.ranges[0].segment.cachedLength, remoteInsertText.length);
-            const segment2 = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.position, remoteInsertPos + localInsertText.length);
+            assert.equal(event.last.position, remoteInsertPos + localInsertText.length);
+            assert.equal(event.first.segment.cachedLength, remoteInsertText.length);
+            assert.equal(event.last.segment.cachedLength, remoteInsertText.length);
+            const segment2 = event.first.segment as TextSegment;
             assert.equal(segment2.text, remoteInsertText);
         });
 
@@ -451,12 +450,12 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, localInsertPos);
-            assert.equal(event.end, localInsertPos + localInsertText.length);
+            assert.equal(event.first.position, localInsertPos);
+            assert.equal(event.last.position, localInsertPos);
+            assert.equal(event.first.segment.cachedLength, localInsertText.length);
+            assert.equal(event.last.segment.cachedLength, localInsertText.length);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, localInsertPos);
-            assert.equal(event.ranges[0].segment.cachedLength, localInsertText.length);
-            const segment1 = event.ranges[0].segment as TextSegment;
+            const segment1 = event.first.segment as TextSegment;
             assert.equal(segment1.text, localInsertText);
 
             const remoteInsertMessage = client.makeOpMessage(
@@ -469,12 +468,12 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, remoteInsertPos);
-            assert.equal(event.end, remoteInsertPos + remoteInsertText.length);
+            assert.equal(event.first.position, remoteInsertPos);
+            assert.equal(event.last.position, remoteInsertPos);
+            assert.equal(event.first.segment.cachedLength, remoteInsertText.length);
+            assert.equal(event.last.segment.cachedLength, remoteInsertText.length);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, remoteInsertPos);
-            assert.equal(event.ranges[0].segment.cachedLength, remoteInsertText.length);
-            const segment2 = event.ranges[0].segment as TextSegment;
+            const segment2 = event.first.segment as TextSegment;
             assert.equal(segment2.text, remoteInsertText);
         });
 
@@ -499,12 +498,12 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, localInsertPos);
-            assert.equal(event.end, localInsertPos + localInsertText.length);
+            assert.equal(event.first.position, localInsertPos);
+            assert.equal(event.last.position, localInsertPos);
+            assert.equal(event.first.segment.cachedLength, localInsertText.length);
+            assert.equal(event.last.segment.cachedLength, localInsertText.length);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, localInsertPos);
-            assert.equal(event.ranges[0].segment.cachedLength, localInsertText.length);
-            const segment1 = event.ranges[0].segment as TextSegment;
+            const segment1 = event.first.segment as TextSegment;
             assert.equal(segment1.text, localInsertText);
 
             const remoteInsertMessage = client.makeOpMessage(
@@ -519,12 +518,12 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, remoteInsertPos + localInsertText.length);
-            assert.equal(event.end, remoteInsertPos + localInsertText.length + remoteInsertText.length);
+            assert.equal(event.first.position, remoteInsertPos + localInsertText.length);
+            assert.equal(event.last.position, remoteInsertPos + localInsertText.length);
+            assert.equal(event.first.segment.cachedLength, remoteInsertText.length);
+            assert.equal(event.last.segment.cachedLength, remoteInsertText.length);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, remoteInsertPos + localInsertText.length);
-            assert.equal(event.ranges[0].segment.cachedLength, remoteInsertText.length);
-            const segment2 = event.ranges[0].segment as TextSegment;
+            const segment2 = event.first.segment as TextSegment;
             assert.equal(segment2.text, remoteInsertText);
         });
 
@@ -556,12 +555,12 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, localInsertPos);
-            assert.equal(event.end, localInsertPos + localInsertText.length);
+            assert.equal(event.first.position, localInsertPos);
+            assert.equal(event.last.position, localInsertPos);
+            assert.equal(event.first.segment.cachedLength, localInsertText.length);
+            assert.equal(event.last.segment.cachedLength, localInsertText.length);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, localInsertPos);
-            assert.equal(event.ranges[0].segment.cachedLength, localInsertText.length);
-            const segment1 = event.ranges[0].segment as TextSegment;
+            const segment1 = event.first.segment as TextSegment;
             assert.equal(segment1.text, localInsertText);
 
             const remoteInsertMessage1 = client.makeOpMessage(
@@ -574,12 +573,12 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, remoteInsertPos1);
-            assert.equal(event.end, remoteInsertPos1 + remoteInsertText1.length);
+            assert.equal(event.first.position, remoteInsertPos1);
+            assert.equal(event.last.position, remoteInsertPos1);
+            assert.equal(event.first.segment.cachedLength, remoteInsertText1.length);
+            assert.equal(event.last.segment.cachedLength, remoteInsertText1.length);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, remoteInsertPos1);
-            assert.equal(event.ranges[0].segment.cachedLength, remoteInsertText1.length);
-            const segment2 = event.ranges[0].segment as TextSegment;
+            const segment2 = event.first.segment as TextSegment;
             assert.equal(segment2.text, remoteInsertText1);
 
             const remoteInsertMessage2 = client.makeOpMessage(
@@ -592,12 +591,12 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, remoteInsertPos2);
-            assert.equal(event.end, remoteInsertPos2 + remoteInsertText2.length);
+            assert.equal(event.first.position, remoteInsertPos2);
+            assert.equal(event.last.position, remoteInsertPos2);
+            assert.equal(event.first.segment.cachedLength, remoteInsertText2.length);
+            assert.equal(event.last.segment.cachedLength, remoteInsertText2.length);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, remoteInsertPos2);
-            assert.equal(event.ranges[0].segment.cachedLength, remoteInsertText2.length);
-            const segment3 = event.ranges[0].segment as TextSegment;
+            const segment3 = event.first.segment as TextSegment;
             assert.equal(segment3.text, remoteInsertText2);
         });
 
@@ -627,12 +626,12 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, localInsertPos1);
-            assert.equal(event.end, localInsertPos1 + localInsertText1.length);
+            assert.equal(event.first.position, localInsertPos1);
+            assert.equal(event.last.position, localInsertPos1);
+            assert.equal(event.first.segment.cachedLength, localInsertText1.length);
+            assert.equal(event.last.segment.cachedLength, localInsertText1.length);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, localInsertPos1);
-            assert.equal(event.ranges[0].segment.cachedLength, localInsertText1.length);
-            const segment1 = event.ranges[0].segment as TextSegment;
+            const segment1 = event.first.segment as TextSegment;
             assert.equal(segment1.text, localInsertText1);
 
             const remoteInsertMessage = client.makeOpMessage(
@@ -647,12 +646,12 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, remoteInsertPos + localInsertText1.length);
-            assert.equal(event.end, remoteInsertPos + localInsertText1.length + remoteInsertText.length);
+            assert.equal(event.first.position, remoteInsertPos + localInsertText1.length);
+            assert.equal(event.last.position, remoteInsertPos + localInsertText1.length);
+            assert.equal(event.first.segment.cachedLength, remoteInsertText.length);
+            assert.equal(event.last.segment.cachedLength, remoteInsertText.length);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, remoteInsertPos + localInsertText1.length);
-            assert.equal(event.ranges[0].segment.cachedLength, remoteInsertText.length);
-            const segment2 = event.ranges[0].segment as TextSegment;
+            const segment2 = event.first.segment as TextSegment;
             assert.equal(segment2.text, remoteInsertText);
 
             const localInsertMessage2 = client.makeOpMessage(
@@ -665,12 +664,12 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, localInsertPos2);
-            assert.equal(event.end, localInsertPos2 + localInsertText2.length);
+            assert.equal(event.first.position, localInsertPos2);
+            assert.equal(event.last.position, localInsertPos2);
+            assert.equal(event.first.segment.cachedLength, localInsertText2.length);
+            assert.equal(event.last.segment.cachedLength, localInsertText2.length);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, localInsertPos2);
-            assert.equal(event.ranges[0].segment.cachedLength, localInsertText2.length);
-            const segment3 = event.ranges[0].segment as TextSegment;
+            const segment3 = event.first.segment as TextSegment;
             assert.equal(segment3.text, localInsertText2);
         });
     });
@@ -707,12 +706,11 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, localRemovePosStart);
-            assert.equal(event.end, localRemovePosEnd);
+            assert.equal(event.first.position, localRemovePosStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, localRemovePosStart);
-            assert.equal(event.ranges[0].segment.cachedLength, localRemovePosEnd - localRemovePosStart);
-            const segment1 = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, localRemovePosEnd - localRemovePosStart);
+            const segment1 = event.first.segment as TextSegment;
             assert.equal(segment1.text, "quick ");
 
             const remoteRemoveMessage = client.makeOpMessage(
@@ -725,12 +723,12 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, remoteRemovePosStart - localRemovePosEnd + localRemovePosStart);
-            assert.equal(event.end, remoteRemovePosEnd - localRemovePosEnd + localRemovePosStart);
+            assert.equal(event.first.position, remoteRemovePosStart - localRemovePosEnd + localRemovePosStart);
+            // tslint:disable-next-line: max-line-length
+            assert.equal(event.last.position + event.last.segment.cachedLength, remoteRemovePosEnd - localRemovePosEnd + localRemovePosStart);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, remoteRemovePosStart - localRemovePosEnd + localRemovePosStart);
-            assert.equal(event.ranges[0].segment.cachedLength, remoteRemovePosEnd - remoteRemovePosStart);
-            const segment2 = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, remoteRemovePosEnd - remoteRemovePosStart);
+            const segment2 = event.first.segment as TextSegment;
             assert.equal(segment2.text, "lazy ");
         });
 
@@ -757,12 +755,11 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, localRemovePosStart);
-            assert.equal(event.end, localRemovePosEnd);
+            assert.equal(event.first.position, localRemovePosStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, localRemovePosStart);
-            assert.equal(event.ranges[0].segment.cachedLength, localRemovePosEnd - localRemovePosStart);
-            const segment1 = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, localRemovePosEnd - localRemovePosStart);
+            const segment1 = event.first.segment as TextSegment;
             assert.equal(segment1.text, "quick ");
 
             const remoteRemoveMessage = client.makeOpMessage(
@@ -777,12 +774,12 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, remoteRemovePosStart - localRemovePosEnd + localRemovePosStart);
-            assert.equal(event.end, remoteRemovePosEnd - localRemovePosEnd + localRemovePosStart);
+            assert.equal(event.first.position, remoteRemovePosStart - localRemovePosEnd + localRemovePosStart);
+            // tslint:disable-next-line: max-line-length
+            assert.equal(event.last.position + event.last.segment.cachedLength, remoteRemovePosEnd - localRemovePosEnd + localRemovePosStart);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, remoteRemovePosStart - localRemovePosEnd + localRemovePosStart);
-            assert.equal(event.ranges[0].segment.cachedLength, remoteRemovePosEnd - remoteRemovePosStart);
-            const segment2 = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, remoteRemovePosEnd - remoteRemovePosStart);
+            const segment2 = event.first.segment as TextSegment;
             assert.equal(segment2.text, "lazy ");
         });
 
@@ -809,12 +806,11 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, localRemovePosStart);
-            assert.equal(event.end, localRemovePosEnd);
+            assert.equal(event.first.position, localRemovePosStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, localRemovePosStart);
-            assert.equal(event.ranges[0].segment.cachedLength, localRemovePosEnd - localRemovePosStart);
-            const segment = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, localRemovePosEnd - localRemovePosStart);
+            const segment = event.first.segment as TextSegment;
             assert.equal(segment.text, "quick brown ");
 
             const remoteRemoveMessage = client.makeOpMessage(
@@ -827,8 +823,8 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(event.isEmpty);
-            assert.strictEqual(event.start, undefined);
-            assert.strictEqual(event.end, undefined);
+            assert.strictEqual(event.first, undefined);
+            assert.strictEqual(event.last, undefined);
         });
 
         it("overlapping regions, same range, remote before local", () => {
@@ -852,12 +848,11 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, localRemovePosStart);
-            assert.equal(event.end, localRemovePosEnd);
+            assert.equal(event.first.position, localRemovePosStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, localRemovePosStart);
-            assert.equal(event.ranges[0].segment.cachedLength, localRemovePosEnd - localRemovePosStart);
-            const segment = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, localRemovePosEnd - localRemovePosStart);
+            const segment = event.first.segment as TextSegment;
             assert.equal(segment.text, "quick brown ");
 
             const remoteRemoveMessage = client.makeOpMessage(
@@ -872,8 +867,8 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(event.isEmpty);
-            assert.strictEqual(event.start, undefined);
-            assert.strictEqual(event.end, undefined);
+            assert.strictEqual(event.first, undefined);
+            assert.strictEqual(event.last, undefined);
         });
 
         it("overlapping regions, local shadows remote, local before remote", () => {
@@ -899,12 +894,11 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, localRemovePosStart);
-            assert.equal(event.end, localRemovePosEnd);
+            assert.equal(event.first.position, localRemovePosStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, localRemovePosStart);
-            assert.equal(event.ranges[0].segment.cachedLength, localRemovePosEnd - localRemovePosStart);
-            const segment = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, localRemovePosEnd - localRemovePosStart);
+            const segment = event.first.segment as TextSegment;
             assert.equal(segment.text, "quick brown ");
 
             const remoteRemoveMessage = client.makeOpMessage(
@@ -917,8 +911,8 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(event.isEmpty);
-            assert.strictEqual(event.start, undefined);
-            assert.strictEqual(event.end, undefined);
+            assert.strictEqual(event.first, undefined);
+            assert.strictEqual(event.last, undefined);
         });
 
         it("overlapping regions, local shadows remote, remote before local", () => {
@@ -942,12 +936,11 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, localRemovePosStart);
-            assert.equal(event.end, localRemovePosEnd);
+            assert.equal(event.first.position, localRemovePosStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, localRemovePosStart);
-            assert.equal(event.ranges[0].segment.cachedLength, localRemovePosEnd - localRemovePosStart);
-            const segment = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, localRemovePosEnd - localRemovePosStart);
+            const segment = event.first.segment as TextSegment;
             assert.equal(segment.text, "quick brown ");
 
             const remoteRemoveMessage = client.makeOpMessage(
@@ -962,8 +955,8 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(event.isEmpty);
-            assert.strictEqual(event.start, undefined);
-            assert.strictEqual(event.end, undefined);
+            assert.strictEqual(event.first, undefined);
+            assert.strictEqual(event.last, undefined);
         });
 
         it("overlapping regions, local range precedes remote range, local before remote", () => {
@@ -990,12 +983,11 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, localRemovePosStart);
-            assert.equal(event.end, localRemovePosEnd);
+            assert.equal(event.first.position, localRemovePosStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, localRemovePosStart);
-            assert.equal(event.ranges[0].segment.cachedLength, localRemovePosEnd - localRemovePosStart);
-            const segment1 = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, localRemovePosEnd - localRemovePosStart);
+            const segment1 = event.first.segment as TextSegment;
             assert.equal(segment1.text, "quick ");
 
             const remoteRemoveMessage = client.makeOpMessage(
@@ -1014,12 +1006,11 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, start);
-            assert.equal(event.end, end);
+            assert.equal(event.first.position, start);
+            assert.equal(event.last.position + event.last.segment.cachedLength, end);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, start);
-            assert.equal(event.ranges[0].segment.cachedLength, end - start);
-            const segment2 = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, end - start);
+            const segment2 = event.first.segment as TextSegment;
             assert.equal(segment2.text, "brown ");
         });
 
@@ -1045,12 +1036,11 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, localRemovePosStart);
-            assert.equal(event.end, localRemovePosEnd);
+            assert.equal(event.first.position, localRemovePosStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, localRemovePosStart);
-            assert.equal(event.ranges[0].segment.cachedLength, localRemovePosEnd - localRemovePosStart);
-            const segment1 = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, localRemovePosEnd - localRemovePosStart);
+            const segment1 = event.first.segment as TextSegment;
             assert.equal(segment1.text, "quick ");
 
             const remoteRemoveMessage = client.makeOpMessage(
@@ -1071,12 +1061,11 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, start);
-            assert.equal(event.end, end);
+            assert.equal(event.first.position, start);
+            assert.equal(event.last.position + event.last.segment.cachedLength, end);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, start);
-            assert.equal(event.ranges[0].segment.cachedLength, end - start);
-            const segment2 = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, end - start);
+            const segment2 = event.first.segment as TextSegment;
             assert.equal(segment2.text, "brown ");
         });
 
@@ -1104,12 +1093,11 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, localRemovePosStart);
-            assert.equal(event.end, localRemovePosEnd);
+            assert.equal(event.first.position, localRemovePosStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, localRemovePosStart);
-            assert.equal(event.ranges[0].segment.cachedLength, localRemovePosEnd - localRemovePosStart);
-            const segment1 = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, localRemovePosEnd - localRemovePosStart);
+            const segment1 = event.first.segment as TextSegment;
             assert.equal(segment1.text, " brown ");
 
             const remoteRemoveMessage = client.makeOpMessage(
@@ -1128,12 +1116,11 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, start);
-            assert.equal(event.end, end);
+            assert.equal(event.first.position, start);
+            assert.equal(event.last.position + event.last.segment.cachedLength, end);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, start);
-            assert.equal(event.ranges[0].segment.cachedLength, end - start);
-            const segment2 = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, end - start);
+            const segment2 = event.first.segment as TextSegment;
             assert.equal(segment2.text, "quick");
         });
 
@@ -1159,12 +1146,11 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, localRemovePosStart);
-            assert.equal(event.end, localRemovePosEnd);
+            assert.equal(event.first.position, localRemovePosStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, localRemovePosStart);
-            assert.equal(event.ranges[0].segment.cachedLength, localRemovePosEnd - localRemovePosStart);
-            const segment1 = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, localRemovePosEnd - localRemovePosStart);
+            const segment1 = event.first.segment as TextSegment;
             assert.equal(segment1.text, " brown ");
 
             const remoteRemoveMessage = client.makeOpMessage(
@@ -1185,12 +1171,11 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, start);
-            assert.equal(event.end, end);
+            assert.equal(event.first.position, start);
+            assert.equal(event.last.position + event.last.segment.cachedLength, end);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, start);
-            assert.equal(event.ranges[0].segment.cachedLength, end - start);
-            const segment2 = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, end - start);
+            const segment2 = event.first.segment as TextSegment;
             assert.equal(segment2.text, "quick");
         });
 
@@ -1217,12 +1202,11 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, localRemovePosStart);
-            assert.equal(event.end, localRemovePosEnd);
+            assert.equal(event.first.position, localRemovePosStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, localRemovePosStart);
-            assert.equal(event.ranges[0].segment.cachedLength, localRemovePosEnd - localRemovePosStart);
-            const segment1 = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, localRemovePosEnd - localRemovePosStart);
+            const segment1 = event.first.segment as TextSegment;
             assert.equal(segment1.text, "brown");
 
             const remoteRemoveMessage = client.makeOpMessage(
@@ -1236,10 +1220,10 @@ describe("collab", () => {
             assert(!event.isLocal);
             assert(!event.isEmpty);
             assert.equal(event.ranges.length, 2);
-            assert.equal(event.ranges[0].position, remoteRemovePosStart);
+            assert.equal(event.first.position, remoteRemovePosStart);
             // -1 is for split
-            assert.equal(event.ranges[0].segment.cachedLength, "quick ".length);
-            const segment2 = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, "quick ".length);
+            const segment2 = event.first.segment as TextSegment;
             assert.equal(segment2.text, "quick ");
             assert.equal(event.ranges[1].position, remoteRemovePosStart);
             // -1 is for split
@@ -1269,12 +1253,11 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, localRemovePosStart);
-            assert.equal(event.end, localRemovePosEnd);
+            assert.equal(event.first.position, localRemovePosStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, localRemovePosStart);
-            assert.equal(event.ranges[0].segment.cachedLength, localRemovePosEnd - localRemovePosStart);
-            const segment1 = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, localRemovePosEnd - localRemovePosStart);
+            const segment1 = event.first.segment as TextSegment;
             assert.equal(segment1.text, "brown");
 
             const remoteRemoveMessage = client.makeOpMessage(
@@ -1290,10 +1273,10 @@ describe("collab", () => {
             assert(!event.isLocal);
             assert(!event.isEmpty);
             assert.equal(event.ranges.length, 2);
-            assert.equal(event.ranges[0].position, remoteRemovePosStart);
+            assert.equal(event.first.position, remoteRemovePosStart);
             // -1 is for split
-            assert.equal(event.ranges[0].segment.cachedLength, "quick ".length);
-            const segment2 = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, "quick ".length);
+            const segment2 = event.first.segment as TextSegment;
             assert.equal(segment2.text, "quick ");
             assert.equal(event.ranges[1].position, remoteRemovePosStart);
             // -1 is for split
@@ -1938,11 +1921,11 @@ describe("collab", () => {
             assert(event.isLocal === isLocal);
             assert(event.isEmpty === isEmpty);
             if (isEmpty) {
-                assert.equal(event.start, undefined);
+                assert.equal(event.first.position, undefined);
                 return;
             }
-            assert.equal(event.start, start);
-            assert.equal(event.end, end);
+            assert.equal(event.first.position, start);
+            assert.equal(event.last.position + event.last.segment.cachedLength, end);
             assert.equal(event.ranges.length, expected.length);
             for (let i = 0; i < expected.length; i = i + 1) {
                 assert.equal(event.ranges[i].position, expected[i].offset);
@@ -2001,12 +1984,11 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, insertPos);
-            assert.equal(event.end, insertPos + insertText.length);
+            assert.equal(event.first.position, insertPos);
+            assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, insertPos);
-            assert.equal(event.ranges[0].segment.cachedLength, insertText.length);
-            const segment1 = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, insertText.length);
+            const segment1 = event.first.segment as TextSegment;
             assert.equal(segment1.text, insertText);
 
             const remoteRemoveMessage = client.makeOpMessage(
@@ -2019,12 +2001,11 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, deleteRangeStart + insertText.length);
-            assert.equal(event.end, deleteRangeEnd + insertText.length);
+            assert.equal(event.first.position, deleteRangeStart + insertText.length);
+            assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd + insertText.length);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, deleteRangeStart + insertText.length);
-            assert.equal(event.ranges[0].segment.cachedLength, deleteRangeEnd - deleteRangeStart);
-            const segment2 = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, deleteRangeEnd - deleteRangeStart);
+            const segment2 = event.first.segment as TextSegment;
             assert.equal(segment2.text, "lazy ");
 
             assert.equal(client.getText(), output);
@@ -2052,12 +2033,11 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, insertPos);
-            assert.equal(event.end, insertPos + insertText.length);
+            assert.equal(event.first.position, insertPos);
+            assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, insertPos);
-            assert.equal(event.ranges[0].segment.cachedLength, insertText.length);
-            const segment1 = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, insertText.length);
+            const segment1 = event.first.segment as TextSegment;
             assert.equal(segment1.text, insertText);
 
             const remoteRemoveMessage = client.makeOpMessage(
@@ -2070,12 +2050,11 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, deleteRangeStart + insertText.length);
-            assert.equal(event.end, deleteRangeEnd + insertText.length);
+            assert.equal(event.first.position, deleteRangeStart + insertText.length);
+            assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd + insertText.length);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, deleteRangeStart + insertText.length);
-            assert.equal(event.ranges[0].segment.cachedLength, deleteRangeEnd - deleteRangeStart);
-            const segment2 = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, deleteRangeEnd - deleteRangeStart);
+            const segment2 = event.first.segment as TextSegment;
             assert.equal(segment2.text, "lazy ");
 
             client.applyMsg(localInsertMessage);
@@ -2107,12 +2086,11 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, deleteRangeStart);
-            assert.equal(event.end, deleteRangeEnd);
+            assert.equal(event.first.position, deleteRangeStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, deleteRangeStart);
-            assert.equal(event.ranges[0].segment.cachedLength, deleteRangeEnd - deleteRangeStart);
-            const segment1 = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, deleteRangeEnd - deleteRangeStart);
+            const segment1 = event.first.segment as TextSegment;
             assert.equal(segment1.text, "lazy ");
 
             const remoteInsertMessage = client.makeOpMessage(
@@ -2125,12 +2103,11 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, insertPos);
-            assert.equal(event.end, insertPos + insertText.length);
+            assert.equal(event.first.position, insertPos);
+            assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, insertPos);
-            assert.equal(event.ranges[0].segment.cachedLength, insertText.length);
-            const segment2 = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, insertText.length);
+            const segment2 = event.first.segment as TextSegment;
             assert.equal(segment2.text, insertText);
 
             assert.equal(client.getText(), output);
@@ -2158,12 +2135,11 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, deleteRangeStart);
-            assert.equal(event.end, deleteRangeEnd);
+            assert.equal(event.first.position, deleteRangeStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, deleteRangeStart);
-            assert.equal(event.ranges[0].segment.cachedLength, deleteRangeEnd - deleteRangeStart);
-            const segment1 = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, deleteRangeEnd - deleteRangeStart);
+            const segment1 = event.first.segment as TextSegment;
             assert.equal(segment1.text, "lazy ");
 
             const remoteInsertMessage = client.makeOpMessage(
@@ -2176,12 +2152,11 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, insertPos);
-            assert.equal(event.end, insertPos + insertText.length);
+            assert.equal(event.first.position, insertPos);
+            assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, insertPos);
-            assert.equal(event.ranges[0].segment.cachedLength, insertText.length);
-            const segment2 = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, insertText.length);
+            const segment2 = event.first.segment as TextSegment;
             assert.equal(segment2.text, insertText);
 
             client.applyMsg(localRemoveMessage);
@@ -2213,12 +2188,11 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, insertPos);
-            assert.equal(event.end, insertPos + insertText.length);
+            assert.equal(event.first.position, insertPos);
+            assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, insertPos);
-            assert.equal(event.ranges[0].segment.cachedLength, insertText.length);
-            const segment1 = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, insertText.length);
+            const segment1 = event.first.segment as TextSegment;
             assert.equal(segment1.text, insertText);
 
             const remoteRemoveMessage = client.makeOpMessage(
@@ -2231,12 +2205,11 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, deleteRangeStart);
-            assert.equal(event.end, deleteRangeEnd);
+            assert.equal(event.first.position, deleteRangeStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, deleteRangeStart);
-            assert.equal(event.ranges[0].segment.cachedLength, deleteRangeEnd - deleteRangeStart);
-            const segment2 = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, deleteRangeEnd - deleteRangeStart);
+            const segment2 = event.first.segment as TextSegment;
             assert.equal(segment2.text, "brown ");
 
             assert.equal(client.getText(), output);
@@ -2264,12 +2237,11 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, insertPos);
-            assert.equal(event.end, insertPos + insertText.length);
+            assert.equal(event.first.position, insertPos);
+            assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, insertPos);
-            assert.equal(event.ranges[0].segment.cachedLength, insertText.length);
-            const segment1 = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, insertText.length);
+            const segment1 = event.first.segment as TextSegment;
             assert.equal(segment1.text, insertText);
 
             const remoteRemoveMessage = client.makeOpMessage(
@@ -2282,12 +2254,11 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, deleteRangeStart);
-            assert.equal(event.end, deleteRangeEnd);
+            assert.equal(event.first.position, deleteRangeStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, deleteRangeStart);
-            assert.equal(event.ranges[0].segment.cachedLength, deleteRangeEnd - deleteRangeStart);
-            const segment2 = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, deleteRangeEnd - deleteRangeStart);
+            const segment2 = event.first.segment as TextSegment;
             assert.equal(segment2.text, "brown ");
 
             client.applyMsg(localInsertMessage);
@@ -2319,12 +2290,11 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, deleteRangeStart);
-            assert.equal(event.end, deleteRangeEnd);
+            assert.equal(event.first.position, deleteRangeStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, deleteRangeStart);
-            assert.equal(event.ranges[0].segment.cachedLength, deleteRangeEnd - deleteRangeStart);
-            const segment1 = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, deleteRangeEnd - deleteRangeStart);
+            const segment1 = event.first.segment as TextSegment;
             assert.equal(segment1.text, "brown ");
 
             const remoteInsertMessage = client.makeOpMessage(
@@ -2337,12 +2307,12 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, insertPos - (deleteRangeEnd - deleteRangeStart));
-            assert.equal(event.end, insertPos - (deleteRangeEnd - deleteRangeStart) + insertText.length);
+            assert.equal(event.first.position, insertPos - (deleteRangeEnd - deleteRangeStart));
+            // tslint:disable-next-line: max-line-length
+            assert.equal(event.last.position + event.last.segment.cachedLength, insertPos - (deleteRangeEnd - deleteRangeStart) + insertText.length);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, insertPos - (deleteRangeEnd - deleteRangeStart));
-            assert.equal(event.ranges[0].segment.cachedLength, insertText.length);
-            const segment2 = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, insertText.length);
+            const segment2 = event.first.segment as TextSegment;
             assert.equal(segment2.text, insertText);
 
             assert.equal(client.getText(), output);
@@ -2370,12 +2340,11 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, deleteRangeStart);
-            assert.equal(event.end, deleteRangeEnd);
+            assert.equal(event.first.position, deleteRangeStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, deleteRangeStart);
-            assert.equal(event.ranges[0].segment.cachedLength, deleteRangeEnd - deleteRangeStart);
-            const segment1 = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, deleteRangeEnd - deleteRangeStart);
+            const segment1 = event.first.segment as TextSegment;
             assert.equal(segment1.text, "brown ");
 
             const remoteInsertMessage = client.makeOpMessage(
@@ -2388,12 +2357,12 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, insertPos - (deleteRangeEnd - deleteRangeStart));
-            assert.equal(event.end, insertPos - (deleteRangeEnd - deleteRangeStart) + insertText.length);
+            assert.equal(event.first.position, insertPos - (deleteRangeEnd - deleteRangeStart));
+            // tslint:disable-next-line: max-line-length
+            assert.equal(event.last.position + event.last.segment.cachedLength, insertPos - (deleteRangeEnd - deleteRangeStart) + insertText.length);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, insertPos - (deleteRangeEnd - deleteRangeStart));
-            assert.equal(event.ranges[0].segment.cachedLength, insertText.length);
-            const segment2 = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, insertText.length);
+            const segment2 = event.first.segment as TextSegment;
             assert.equal(segment2.text, insertText);
 
             client.applyMsg(localRemoveMessage);
@@ -2425,12 +2394,11 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, insertPos);
-            assert.equal(event.end, insertPos + insertText.length);
+            assert.equal(event.first.position, insertPos);
+            assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, insertPos);
-            assert.equal(event.ranges[0].segment.cachedLength, insertText.length);
-            const segment1 = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, insertText.length);
+            const segment1 = event.first.segment as TextSegment;
             assert.equal(segment1.text, insertText);
 
             const remoteRemoveMessage = client.makeOpMessage(
@@ -2443,12 +2411,11 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, deleteRangeStart + insertText.length);
-            assert.equal(event.end, deleteRangeEnd + insertText.length);
+            assert.equal(event.first.position, deleteRangeStart + insertText.length);
+            assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd + insertText.length);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, deleteRangeStart + insertText.length);
-            assert.equal(event.ranges[0].segment.cachedLength, deleteRangeEnd - deleteRangeStart);
-            const segment2 = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, deleteRangeEnd - deleteRangeStart);
+            const segment2 = event.first.segment as TextSegment;
             assert.equal(segment2.text, "lazy ");
             assert.equal(client.getText(), output);
         });
@@ -2475,12 +2442,11 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, insertPos);
-            assert.equal(event.end, insertPos + insertText.length);
+            assert.equal(event.first.position, insertPos);
+            assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, insertPos);
-            assert.equal(event.ranges[0].segment.cachedLength, insertText.length);
-            const segment1 = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, insertText.length);
+            const segment1 = event.first.segment as TextSegment;
             assert.equal(segment1.text, insertText);
 
             const remoteRemoveMessage = client.makeOpMessage(
@@ -2493,12 +2459,11 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, deleteRangeStart + insertText.length);
-            assert.equal(event.end, deleteRangeEnd + insertText.length);
+            assert.equal(event.first.position, deleteRangeStart + insertText.length);
+            assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd + insertText.length);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, deleteRangeStart + insertText.length);
-            assert.equal(event.ranges[0].segment.cachedLength, deleteRangeEnd - deleteRangeStart);
-            const segment2 = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, deleteRangeEnd - deleteRangeStart);
+            const segment2 = event.first.segment as TextSegment;
             assert.equal(segment2.text, "lazy ");
 
             client.applyMsg(localInsertMessage);
@@ -2530,12 +2495,11 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, deleteRangeStart);
-            assert.equal(event.end, deleteRangeEnd);
+            assert.equal(event.first.position, deleteRangeStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, deleteRangeStart);
-            assert.equal(event.ranges[0].segment.cachedLength, deleteRangeEnd - deleteRangeStart);
-            const segment1 = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, deleteRangeEnd - deleteRangeStart);
+            const segment1 = event.first.segment as TextSegment;
             assert.equal(segment1.text, "lazy ");
 
             const remoteInsertMessage = client.makeOpMessage(
@@ -2548,12 +2512,11 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, insertPos);
-            assert.equal(event.end, insertPos + insertText.length);
+            assert.equal(event.first.position, insertPos);
+            assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, insertPos);
-            assert.equal(event.ranges[0].segment.cachedLength, insertText.length);
-            const segment2 = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, insertText.length);
+            const segment2 = event.first.segment as TextSegment;
             assert.equal(segment2.text, insertText);
 
             assert.equal(client.getText(), output);
@@ -2581,12 +2544,11 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, deleteRangeStart);
-            assert.equal(event.end, deleteRangeEnd);
+            assert.equal(event.first.position, deleteRangeStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, deleteRangeStart);
-            assert.equal(event.ranges[0].segment.cachedLength, deleteRangeEnd - deleteRangeStart);
-            const segment1 = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, deleteRangeEnd - deleteRangeStart);
+            const segment1 = event.first.segment as TextSegment;
             assert.equal(segment1.text, "lazy ");
 
             const remoteInsertMessage = client.makeOpMessage(
@@ -2599,12 +2561,11 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, insertPos);
-            assert.equal(event.end, insertPos + insertText.length);
+            assert.equal(event.first.position, insertPos);
+            assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, insertPos);
-            assert.equal(event.ranges[0].segment.cachedLength, insertText.length);
-            const segment2 = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, insertText.length);
+            const segment2 = event.first.segment as TextSegment;
             assert.equal(segment2.text, insertText);
 
             client.applyMsg(localRemoveMessage);
@@ -2636,12 +2597,11 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, insertPos);
-            assert.equal(event.end, insertPos + insertText.length);
+            assert.equal(event.first.position, insertPos);
+            assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, insertPos);
-            assert.equal(event.ranges[0].segment.cachedLength, insertText.length);
-            const segment1 = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, insertText.length);
+            const segment1 = event.first.segment as TextSegment;
             assert.equal(segment1.text, insertText);
 
             const remoteRemoveMessage = client.makeOpMessage(
@@ -2654,12 +2614,11 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, deleteRangeStart);
-            assert.equal(event.end, deleteRangeEnd);
+            assert.equal(event.first.position, deleteRangeStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, deleteRangeStart);
-            assert.equal(event.ranges[0].segment.cachedLength, deleteRangeEnd - deleteRangeStart);
-            const segment2 = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, deleteRangeEnd - deleteRangeStart);
+            const segment2 = event.first.segment as TextSegment;
             assert.equal(segment2.text, "lazy ");
 
             assert.equal(client.getText(), output);
@@ -2687,12 +2646,11 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, insertPos);
-            assert.equal(event.end, insertPos + insertText.length);
+            assert.equal(event.first.position, insertPos);
+            assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, insertPos);
-            assert.equal(event.ranges[0].segment.cachedLength, insertText.length);
-            const segment1 = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, insertText.length);
+            const segment1 = event.first.segment as TextSegment;
             assert.equal(segment1.text, insertText);
 
             const remoteRemoveMessage = client.makeOpMessage(
@@ -2705,12 +2663,11 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, deleteRangeStart);
-            assert.equal(event.end, deleteRangeEnd);
+            assert.equal(event.first.position, deleteRangeStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, deleteRangeStart);
-            assert.equal(event.ranges[0].segment.cachedLength, deleteRangeEnd - deleteRangeStart);
-            const segment2 = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, deleteRangeEnd - deleteRangeStart);
+            const segment2 = event.first.segment as TextSegment;
             assert.equal(segment2.text, "lazy ");
 
             client.applyMsg(localInsertMessage);
@@ -2740,12 +2697,11 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, deleteRangeStart);
-            assert.equal(event.end, deleteRangeEnd);
+            assert.equal(event.first.position, deleteRangeStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, deleteRangeStart);
-            assert.equal(event.ranges[0].segment.cachedLength, deleteRangeEnd - deleteRangeStart);
-            const segment1 = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, deleteRangeEnd - deleteRangeStart);
+            const segment1 = event.first.segment as TextSegment;
             assert.equal(segment1.text, "lazy ");
 
             client.applyMsg(localRemoveMessage);
@@ -2760,12 +2716,12 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, insertPos - (deleteRangeEnd - deleteRangeStart));
-            assert.equal(event.end, insertPos + insertText.length - (deleteRangeEnd - deleteRangeStart));
+            assert.equal(event.first.position, insertPos - (deleteRangeEnd - deleteRangeStart));
+            // tslint:disable-next-line: max-line-length
+            assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length - (deleteRangeEnd - deleteRangeStart));
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, insertPos - (deleteRangeEnd - deleteRangeStart));
-            assert.equal(event.ranges[0].segment.cachedLength, insertText.length);
-            const segment2 = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, insertText.length);
+            const segment2 = event.first.segment as TextSegment;
             assert.equal(segment2.text, insertText);
 
             assert.equal(client.getText(), output);
@@ -2793,12 +2749,11 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, deleteRangeStart);
-            assert.equal(event.end, deleteRangeEnd);
+            assert.equal(event.first.position, deleteRangeStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, deleteRangeStart);
-            assert.equal(event.ranges[0].segment.cachedLength, deleteRangeEnd - deleteRangeStart);
-            const segment1 = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, deleteRangeEnd - deleteRangeStart);
+            const segment1 = event.first.segment as TextSegment;
             assert.equal(segment1.text, "lazy ");
 
             const remoteInsertMessage = client.makeOpMessage(
@@ -2811,12 +2766,12 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, insertPos - (deleteRangeEnd - deleteRangeStart));
-            assert.equal(event.end, insertPos + insertText.length - (deleteRangeEnd - deleteRangeStart));
+            assert.equal(event.first.position, insertPos - (deleteRangeEnd - deleteRangeStart));
+            // tslint:disable-next-line: max-line-length
+            assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length - (deleteRangeEnd - deleteRangeStart));
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, insertPos - (deleteRangeEnd - deleteRangeStart));
-            assert.equal(event.ranges[0].segment.cachedLength, insertText.length);
-            const segment2 = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, insertText.length);
+            const segment2 = event.first.segment as TextSegment;
             assert.equal(segment2.text, insertText);
 
             client.applyMsg(localRemoveMessage);
@@ -2848,12 +2803,11 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, insertPos);
-            assert.equal(event.end, insertPos + insertText.length);
+            assert.equal(event.first.position, insertPos);
+            assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, insertPos);
-            assert.equal(event.ranges[0].segment.cachedLength, insertText.length);
-            const segment1 = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, insertText.length);
+            const segment1 = event.first.segment as TextSegment;
             assert.equal(segment1.text, insertText);
 
             const remoteRemoveMessage = client.makeOpMessage(
@@ -2872,12 +2826,11 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, expectedRangeStart1);
-            assert.equal(event.end, expectedRangeEnd2);
+            assert.equal(event.first.position, expectedRangeStart1);
+            assert.equal(event.last.position + event.last.segment.cachedLength, expectedRangeEnd2);
             assert.equal(event.ranges.length, 2);
-            assert.equal(event.ranges[0].position, expectedRangeStart1);
-            assert.equal(event.ranges[0].segment.cachedLength, expectedRangeEnd1 - expectedRangeStart1);
-            const segment2 = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, expectedRangeEnd1 - expectedRangeStart1);
+            const segment2 = event.first.segment as TextSegment;
             assert.equal(segment2.text, "brown ");
             assert.equal(event.ranges[1].position, expectedRangeStart2);
             assert.equal(event.ranges[1].segment.cachedLength, expectedRangeEnd2 - expectedRangeStart2);
@@ -2908,12 +2861,11 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, insertPos);
-            assert.equal(event.end, insertPos + insertText.length);
+            assert.equal(event.first.position, insertPos);
+            assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, insertPos);
-            assert.equal(event.ranges[0].segment.cachedLength, insertText.length);
-            const segment1 = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, insertText.length);
+            const segment1 = event.first.segment as TextSegment;
             assert.equal(segment1.text, insertText);
 
             const remoteRemoveMessage = client.makeOpMessage(
@@ -2932,12 +2884,11 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, expectedRangeStart1);
-            assert.equal(event.end, expectedRangeEnd2);
+            assert.equal(event.first.position, expectedRangeStart1);
+            assert.equal(event.last.position + event.last.segment.cachedLength, expectedRangeEnd2);
             assert.equal(event.ranges.length, 2);
-            assert.equal(event.ranges[0].position, expectedRangeStart1);
-            assert.equal(event.ranges[0].segment.cachedLength, expectedRangeEnd1 - expectedRangeStart1);
-            const segment2 = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, expectedRangeEnd1 - expectedRangeStart1);
+            const segment2 = event.first.segment as TextSegment;
             assert.equal(segment2.text, "brown ");
             assert.equal(event.ranges[1].position, expectedRangeStart2);
             assert.equal(event.ranges[1].segment.cachedLength, expectedRangeEnd2 - expectedRangeStart2);
@@ -2973,12 +2924,11 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, deleteRangeStart);
-            assert.equal(event.end, deleteRangeEnd);
+            assert.equal(event.first.position, deleteRangeStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, deleteRangeStart);
-            assert.equal(event.ranges[0].segment.cachedLength, deleteRangeEnd - deleteRangeStart);
-            const segment1 = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, deleteRangeEnd - deleteRangeStart);
+            const segment1 = event.first.segment as TextSegment;
             assert.equal(segment1.text, "brown fox ");
 
             const remoteInsertMessage = client.makeOpMessage(
@@ -2991,12 +2941,11 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, deleteRangeStart);
-            assert.equal(event.end, deleteRangeStart + insertText.length);
+            assert.equal(event.first.position, deleteRangeStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeStart + insertText.length);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, deleteRangeStart);
-            assert.equal(event.ranges[0].segment.cachedLength, insertText.length);
-            const segment2 = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, insertText.length);
+            const segment2 = event.first.segment as TextSegment;
             assert.equal(segment2.text, insertText);
 
             assert.equal(client.getText(), output);
@@ -3024,12 +2973,11 @@ describe("collab", () => {
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, deleteRangeStart);
-            assert.equal(event.end, deleteRangeEnd);
+            assert.equal(event.first.position, deleteRangeStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, deleteRangeStart);
-            assert.equal(event.ranges[0].segment.cachedLength, deleteRangeEnd - deleteRangeStart);
-            const segment1 = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, deleteRangeEnd - deleteRangeStart);
+            const segment1 = event.first.segment as TextSegment;
             assert.equal(segment1.text, "brown fox ");
 
             const remoteInsertMessage = client.makeOpMessage(
@@ -3042,12 +2990,11 @@ describe("collab", () => {
 
             assert(!event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.start, deleteRangeStart);
-            assert.equal(event.end, deleteRangeStart + insertText.length);
+            assert.equal(event.first.position, deleteRangeStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeStart + insertText.length);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.ranges[0].position, deleteRangeStart);
-            assert.equal(event.ranges[0].segment.cachedLength, insertText.length);
-            const segment2 = event.ranges[0].segment as TextSegment;
+            assert.equal(event.first.segment.cachedLength, insertText.length);
+            const segment2 = event.first.segment as TextSegment;
             assert.equal(segment2.text, insertText);
 
             client.applyMsg(localRemoveMessage);
@@ -3082,10 +3029,9 @@ describe("SequenceDeltaEvent", () => {
             assert(event.isLocal);
             assert(!event.isEmpty);
             assert.equal(event.ranges.length, 1);
-            assert.equal(event.start, 0);
-            assert.equal(event.ranges[0].position, 0);
-            assert.equal(event.ranges[0].segment.cachedLength, insertText.length);
-            assert.equal(event.end, insertText.length);
+            assert.equal(event.first.position, 0);
+            assert.equal(event.first.segment.cachedLength, insertText.length);
+            assert.equal(event.last.position + event.last.segment.cachedLength, insertText.length);
         });
 
         it("multiple continuous segments", () => {
@@ -3113,14 +3059,13 @@ describe("SequenceDeltaEvent", () => {
             assert(event.isLocal);
             assert(!event.isEmpty);
             assert.equal(event.ranges.length, segmentCount);
-            assert.equal(event.start, insertText.length);
-            assert.equal(event.ranges[0].position, insertText.length);
+            assert.equal(event.first.position, insertText.length);
             for (let i = 0; i < segmentCount; i = i + 1) {
                 assert.equal(event.ranges[i].position, (i + 1) * insertText.length);
                 assert.equal(event.ranges[i].segment.cachedLength, insertText.length);
                 assert.equal(event.ranges[i].propertyDeltas.foo, undefined);
             }
-            assert.equal(event.end, client.getLength() - insertText.length);
+            assert.equal(event.last.position + event.last.segment.cachedLength, client.getLength() - insertText.length);
         });
 
         it("multiple noncontinuous segments", () => {

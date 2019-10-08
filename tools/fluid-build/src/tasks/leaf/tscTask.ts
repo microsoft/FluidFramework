@@ -135,12 +135,15 @@ export class TscTask extends LeafTask {
         if (existsSync(this.getPackageFileFullPath(tsBuildInfoFileLib))) {
             return tsBuildInfoFileLib;
         }
-        return tsBuildInfoFileRoot;
+        return undefined;
     }
 
     private get tsBuildInfoFileFullPath() {
         if (this._tsBuildInfoFullPath === undefined) {
-            this._tsBuildInfoFullPath = this.getPackageFileFullPath(this.tsBuildInfoFile);
+            const infoFile = this.tsBuildInfoFile;
+            if (infoFile) {
+                this._tsBuildInfoFullPath = this.getPackageFileFullPath(infoFile);
+            }
         }
         return this._tsBuildInfoFullPath;
     }
@@ -159,10 +162,15 @@ export class TscTask extends LeafTask {
     public async readTsBuildInfo(): Promise<ITsBuildInfo | undefined> {
         if (this._tsBuildInfo === undefined) {
             const tsBuildInfoFileFullPath = this.tsBuildInfoFileFullPath;
-            try {
-                this._tsBuildInfo = JSON.parse(await readFileAsync(tsBuildInfoFileFullPath, "utf8"));
-            } catch {
-                logVerbose(`${this.node.pkg.nameColored}: Unable to load ${tsBuildInfoFileFullPath}`)
+            if (tsBuildInfoFileFullPath) {
+                try {
+                    this._tsBuildInfo = JSON.parse(await readFileAsync(tsBuildInfoFileFullPath, "utf8"));
+                    return this._tsBuildInfo;
+                } catch {
+                    logVerbose(`${this.node.pkg.nameColored}: Unable to load ${tsBuildInfoFileFullPath}`);
+                }
+            } else {
+                logVerbose(`${this.node.pkg.nameColored}: ${this.tsBuildInfoFileName} file not found`);
             }
         }
         return this._tsBuildInfo;

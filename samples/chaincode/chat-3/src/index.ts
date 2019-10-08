@@ -3,32 +3,29 @@
  * Licensed under the MIT License.
  */
 
-import {
-  IContainerContext,
-  IPlatform,
-} from "@prague/container-definitions";
+import { IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
+import { IContainerContext } from "@microsoft/fluid-container-definitions";
 import { renderChat } from "./chat";
 import { Runtime } from "./runtime/runtime";
 
-export class ChatRunner {
-  constructor(private runtime: Runtime) {
-  }
+export class ChatRunner implements IComponentHTMLVisual {
 
-  public async attach(platform: IPlatform) {
-      const hostContent: HTMLElement = await platform.queryInterface<HTMLElement>("div");
-      if (!hostContent) {
-          return this.runtime;
-      }
-      renderChat(this.runtime, hostContent);
-  }
+    public get IComponentHTMLVisual() { return this; }
+
+    constructor(private runtime: Runtime) {
+    }
+
+    public render(elm: HTMLElement) {
+        renderChat(this.runtime, elm);
+    }
 }
 
 export async function instantiateRuntime(context: IContainerContext): Promise<Runtime> {
-  const runtime = await Runtime.load(context);
+    const runtime = await Runtime.load(context);
 
-  runtime.registerRequestHandler(async (request) => {
-    return { status: 200, mimeType: "fluid/component", value: new ChatRunner(runtime) };
-  });
+    runtime.registerRequestHandler(async (request) => {
+        return { status: 200, mimeType: "fluid/component", value: new ChatRunner(runtime) };
+    });
 
-  return runtime;
+    return runtime;
 }

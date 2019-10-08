@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentHTMLOptions, IComponentHTMLView } from "@prague/component-core-interfaces";
-import { IDirectory } from "@prague/map";
+import { IComponentHTMLOptions, IComponentHTMLView } from "@microsoft/fluid-component-core-interfaces";
+import { IDirectory } from "@microsoft/fluid-map";
 import { mergeStyles } from 'office-ui-fabric-react';
 import { Persona, PersonaPresence } from 'office-ui-fabric-react/lib/Persona';
 import * as React from 'react';

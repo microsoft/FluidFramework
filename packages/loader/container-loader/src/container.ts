@@ -116,7 +116,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return new Promise<Container>(async (res, rej) => {
             let alreadyRaisedError = false;
             const onError = (error) => {
-                container.off("error", onError);
+                container.removeListener("error", onError);
                 // Depending where error happens, we can be attempting to connect to web socket
                 // and continuously retrying (consider offline mode)
                 // Host has no container to close, so it's prudent to do it here
@@ -128,7 +128,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
             return container.load(version, connection)
                 .then(() => {
-                    container.off("error", onError);
+                    container.removeListener("error", onError);
                     res(container);
                 })
                 .catch((error) => {
@@ -903,7 +903,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             // We can group that info in previous event, but it's easier to analyze telemetry if these are
             // two separate events (actually - three!).
             this.logger.sendPerformanceEvent({
-                eventName: this.firstConnection ? "ConnectionStateChange_InitialConnect" : "ConnectionStateChange_Reconnect",
+                eventName:
+                    this.firstConnection
+                    ? "ConnectionStateChange_InitialConnect"
+                    : "ConnectionStateChange_Reconnect",
                 duration: time - this.connectionTransitionTimes[this.connectionState],
                 reason,
             });
