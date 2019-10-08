@@ -143,7 +143,8 @@ async function initializeODSPCore(
     server: string,
     drive: string,
     item: string,
-    clientConfig: IClientConfig) {
+    clientConfig: IClientConfig,
+) {
 
     connectionInfo = {
         server,
@@ -198,8 +199,8 @@ async function resolveDriveItemByFileId(
     account: string,
     docId: string,
     clientConfig: IClientConfig,
-    forceTokenRefresh = false) {
-
+    forceTokenRefresh = false,
+) {
     const odspTokens = await getODSPTokens(server, clientConfig, forceTokenRefresh);
     try {
         const oldAccessToken = odspTokens.accessToken;
@@ -223,7 +224,8 @@ async function initializeODSPHosted(
     server: string,
     account: string,
     docId: string,
-    clientConfig: IClientConfig) {
+    clientConfig: IClientConfig,
+) {
     const driveItem = await resolveDriveItemByFileId(server, account, docId, clientConfig);
     const odspUrl = odsp.createOdspUrl(url.href, driveItem.drive, driveItem.item, url.pathname);
     return initializeODSPCore(odspUrl, server, driveItem.drive, driveItem.item, clientConfig);
