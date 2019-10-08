@@ -300,18 +300,18 @@ to provide this name.
 
 ```typescript
 const pkg = require("../package.json");
-const chaincodeName = pkg.name as string;
+const componentName = pkg.name as string;
 ```
 
-Finally we use `SimpleModuleInstantiationFactory` to create a `fluidExport`. The factory takes a default component name `chaincodeName`
+Finally we use `SimpleModuleInstantiationFactory` to create a `fluidExport`. The factory takes a default component name `componentName`
 that is used to load the default component. It also takes the registry of components pointing to the creation factory. In
-our case just our one component. `[chaincodeName, Promise.resolve(ExampleFluidComponentInstantiationFactory)]`
+our case just our one component. `[componentName, Promise.resolve(ExampleFluidComponentInstantiationFactory)]`
 
 ```typescript
 export const fluidExport = new SimpleModuleInstantiationFactory(
-  chaincodeName,
+  componentName,
   new Map([
-    [chaincodeName, Promise.resolve(ExampleFluidComponentInstantiationFactory)],
+    [componentName, Promise.resolve(ExampleFluidComponentInstantiationFactory)],
   ]),
 );
 ```
