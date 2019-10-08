@@ -9,7 +9,6 @@ uid: sudoku-example
 Table of contents:
 
 - Overview of example and goals
-  - What we build will be usable in both the Fluid Preview App and Web Part pages
   - Learn about the SharedMap and SharedDirectory
   - Distributed data structures and SPFx
 
@@ -94,462 +93,141 @@ more detail later.
 
 ## The WebPart/Fluid component
 
-The React component described above does not itself represent a Fluid component. Rather, the Fluid component itself is
-defined in `src/SudokuWebPart.tsx`.
+The React component described above does not itself represent a Fluid component. Rather, the Fluid component is defined
+in `src/SudokuWebPart.tsx`.
 
 ```typescript
-export class SudokuWebPart extends BaseMFxPart<{}> implements IComponentReactViewable {
-  public get IComponentReactViewable() {
-    return this;
-  }
-
-...
-
-}
+export class SudokuWebPart extends BaseMFxPart<{}> {}
 ```
 
 This class extends the `BaseMfxPart` abstract base class. Our component is visual, so we need to implement the
-[IComponentHTMLVisual][] or [IProvideComponentHTMLVisual][] interfaces. However, the BaseMfxPart base class implements the
-IProvideComponentHTMLVisual Fluid component interface, so we do not need to explicitly implement it in our class.
+[IComponentHTMLVisual][] or [IProvideComponentHTMLVisual][] interfaces. However, the BaseMfxPart base class already
+implements the IProvideComponentHTMLVisual Fluid component interface, so we do not need to explicitly implement it in
+our class.
 
-We are required to implement the render() method, but we'll return to that later.
-
-[IComponentHTMLVisual]: xref:@microsoft/fluid-component-core-interfaces!IComponentHTMLVisual:interface
-[IProvideComponentHTMLVisual]: xref:@microsoft/fluid-component-core-interfaces!IProvideComponentHTMLVisual:interface
-
-## Examine the code
-
-The code consists of a React component called `SudokuView` that renders the Sudoku puzzle, a `SudokuWebPart` class that
-inherits from `BaseMfxPart`, and an `index.ts` file that instantiates the Web Part. We'll now review the code in detail.
-
-### SudokuWebPart.tsx
-
-This file defines a class called `SudokuWebPart`:
-
-
-
-
-However, since our component uses React for rendering, we can implement the IComponentReactViewable interface, which
-will allow for simpler interation with React-based component hosts. The IComponentReactViewable interface requires a
-method, createJSXElement, that returns a JSX.Element for rendering.
-
-Our implementation looks like this:
+We are required to implement the `render()` method, which is straightforward since we're using the `SudokuView` React
+component to do the heavy lifting.
 
 ```typescript
-public createJSXElement(props?): JSX.Element {
-  if (this.puzzle) {
-    return <SudokuView puzzle={this.puzzle} />;
-  } else {
-    return <div />;
+  public render(): void {
+    ReactDOM.render(
+      <SudokuView puzzle={this.puzzle} />,
+      this.domElement);
   }
+```
+
+As you can see, the render method uses React to render the `SudokuView` React component, passing in the map of Sudoku
+cell data in the `puzzle` prop.
+
+### Creating Fluid distributed data structures
+
+How does the `puzzle` property get populated? How are distributed data structures created and used?
+
+To answer that question, look at the `onInitializeFirstTime` method in the `SudokuWebPart` class:
+
+```typescript
+private sudokuMapKey = "sudoku-map";
+private puzzle: ISharedMap;
+
+public onInitializeFirstTime() {
+  // Create a new map for our Sudoku data
+  const map = SharedMap.create(this._fluidShim.runtime);
+
+  // Populate it with some puzzle data
+  loadPuzzle(0, map);
+
+  // Add it to our root directory
+  this._fluidShim.root.set(this.sudokuMapKey, map.handle);
 }
 ```
 
-This method
+This method is called once when a component is initially created. We create a new SharedMap using `.create`, then add it
+to our root SharedDirectory.
 
-#### Implementing interfaces
-
-The SudokuW
-
-Since these interfaces are already satisfied by the base class.
-
-###
-
-
-
-# Connect your client-side web part to SharePoint (Hello World part 2)
-
-Connect your web part to SharePoint to access functionality and data in SharePoint and provide a more integrated
-experience for end users. This article continues building the Hello World web part built in the previous article [Build
-your first web part](./build-a-hello-world-web-part.md).
-
-## Run gulp serve
-
-Ensure that you have the `gulp serve` command running. If it is not already running, go to the **helloworld-webpart**
-project directory and run it by using the following commands.
-
-```shell
-cd helloworld-webpart
-gulp serve
-```
-
-## Get access to page context
-
-When the Workbench is hosted locally, you do not have the SharePoint page context. You can still test your web part in
-many different ways. For example, you can concentrate on building the web part's UX and use mock data to simulate
-SharePoint interaction when you don't have the SharePoint context.
-
-However, when the Workbench is hosted in SharePoint, you get access to the page context, which provides various key
-properties such as:
-
-* Web title
-* Web absolute URL
-* Web server-relative URL
-* User sign-in name
-
-### To get access to the page context
-
-To access contextual information in your web part, you'll be using the following object in your code:
+Shared objects that are stored within other Shared objects (e.g. a SharedMap within the root, which is itself a
+SharedDirectory) must be retrieved asynchronously. We do that from the asynchronous onAfterInitialize method, then store
+a local reference to the object so we can easily use it in synchronous code.
 
 ```typescript
-this.context.pageContext
+public async onAfterInitialize() {
+  // Our "puzzle" SharedMap is stored as a handle on the "root" SharedDirectory. To get it we must make a
+  // synchronous call to get the IComponentHandle, then an asynchronous call to get the ISharedMap from the
+  // handle.
+  this.puzzle = await this._fluidShim.root
+    .get<IComponentHandle>(this.sudokuMapKey)
+    .get<ISharedMap>();
+
+  // Since we're using a Fluid distributed data structure to store our Sudoku data, we need to render whenever a value
+  // in our map changes. Recall that distributed data structures can be changed by both local and remote clients, so
+  // if we don't call render here, then our UI will not update when remote clients change data.
+  this.puzzle.on("valueChanged", (changed, local, op) => {
+    this.render();
+  });
+}
 ```
 
-1. Switch to Visual Studio code (or your preferred IDE) and open **src\webparts\helloWorld\HelloWorldWebPart.ts**.
-1. Inside the **render** method, replace the **innerHTML** code block with the following code:
+### Handling events from distributed data structures
 
-    ```tsx
-    this.domElement.innerHTML = `
-      <div class="${ styles.helloWorld }">
-        <div class="${ styles.container }">
-          <div class="${ styles.row }">
-            <div class="${ styles.column }">
-              <span class="${ styles.title }">Welcome to SharePoint!</span>
-              <p class="${ styles.subTitle }">Customize SharePoint experiences using web parts.</p>
-              <p class="${ styles.description }">${escape(this.properties.description)}</p>
-              <p class="${ styles.description }">${escape(this.properties.test)}</p>
-              <p class="${ styles.description }">Loading from ${escape(this.context.pageContext.web.title)}</p>
-              <a href="https://aka.ms/spfx" class="${ styles.button }">
-                <span class="${ styles.label }">Learn more</span>
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>`;
-    ```
+Distributed data structures can be changed by both local and remote clients. In the onAfterInitialize method, we also
+connect a method to be called each time the Sudoku data - the SharedMap - is changed. In our case we simply call render
+again. This ensures that our UI updates whenever a remote client changes the Sudoku data.
 
-1. Notice how `${ }` is used to output the variable's value in the HTML block. An extra HTML `p` is used to display
-   `this.context.pageContext.web.title`. Because this web part loads from the local environment, the title is **Local
-   Workbench**.
-1. Save the file. The `gulp serve` running in your console detects this save operation and:
+```typescript
+  this.puzzle.on("valueChanged", (changed, local, op) => {
+    this.render();
+  });
+```
 
-    * Builds and bundles the updated code automatically.
-    * Refreshes your local Workbench page (as the web part code needs to be reloaded).
+## Connecting it all together
 
-    > [!NOTE] Keep the console window and Visual Studio Code side-by-side to see gulp automatically compile as you save
-    > changes in Visual Studio Code.
+We've now reviewed the SudokuView React component, which handles most of the rendering, and the SudokuWebPart class,
+which is the Sudoku Fluid component itself. We've shown how those two classes work together to render content to the
+screen and share data using a Fluid distributed data structure.
 
-1. In your browser, switch to the local **SharePoint Workbench** tab. If you have already closed the tab, the URL is
-   `https://localhost:4321/temp/workbench.html`.
+The final step is to connect everything together, so that the framework knows how to load your component code. To see
+how that's done, look at the `index.ts` file.
 
-    You should see the following in the web part:
+```typescript
+import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 
-    ![SharePoint page context in localhost](../../../images/sp-mock-localhost-wp.png)
+import { SudokuWebPart } from "./sudoku/SudokuWebPart";
+import { MFxComponentFactory } from "./packages/mfx-web-part-base/MFxComponentFactory";
 
-1. Navigate to the SharePoint Workbench hosted in SharePoint. The full URL is
-   `https://your-sharepoint-site-url/_layouts/workbench.aspx`. Notice that on the SharePoint Online side, you need to
-   refresh the page to see the changes.
+// tslint:disable-next-line: no-var-requires no-require-imports
+const pkg = require("../package.json");
+const chaincodeName = pkg.name as string;
 
-    You should now see your SharePoint site title in the web part now that page context is available to the web part.
+export const MFxInstantiationFactory = new MFxComponentFactory(
+  SudokuWebPart
+);
 
-    ![SharePoint page context in SharePoint site](../../../images/sp-lists-spsiteurl-wp.png)
+export const fluidExport = new SimpleModuleInstantiationFactory(
+  chaincodeName,
+  (new Map([
+    [chaincodeName, Promise.resolve(MFxInstantiationFactory)],
+  ])),
+);
 
-## Define list model
+// This is needed for SPFx
+export { SudokuWebPart as default } from './sudoku/SudokuWebPart';
+```
 
-You need a list model to start working with SharePoint list data. To retrieve the lists, you need two models.
+# Implementing a Fluid component interface
 
-1. Switch to Visual Studio Code and go to **src\webparts\helloWorld\HelloWorldWebPart.ts**.
-1. Define the following `interface` models just above the **HelloWorldWebPart** class:
+TODO: will walk through adding the [IComponentReactViewable][] interface.
 
-    ```typescript
-    export interface ISPLists {
-      value: ISPList[];
-    }
+# Adding "presence" to the Fluid Sudoku component
 
-    export interface ISPList {
-      Title: string;
-      Id: string;
-    }
-    ```
+TODO: will walk through creating a second map for presence and adjusting the code to handle everything. Will also call
+out that this approach will persist all of the presence data, which often isn't what you want, but that this is a useful
+implementation to illustrate how to use richer data models.
 
-    The **ISPList** interface holds the SharePoint list information that we are connecting to.
+# Adding move history to the Fluid Sudoku component
 
-## Retrieve lists from mock store
+TODO: **(stretch goal)** will walk through adding a SharedObjectSequence to store the history of moves that have
+been made.
 
-To test in the local Workbench, you need a mock store that returns mock data.
-
-### To create a mock store
-
-1. Create a new file inside the **src\webparts\helloWorld** folder named **MockHttpClient.ts**.
-1. Copy the following code into **MockHttpClient.ts**:
-
-    ```typescript
-    import { ISPList } from './HelloWorldWebPart';
-
-    export default class MockHttpClient  {
-
-        private static _items: ISPList[] = [{ Title: 'Mock List', Id: '1' },
-                                            { Title: 'Mock List 2', Id: '2' },
-                                            { Title: 'Mock List 3', Id: '3' }];
-
-        public static get(): Promise<ISPList[]> {
-        return new Promise<ISPList[]>((resolve) => {
-                resolve(MockHttpClient._items);
-            });
-        }
-    }
-    ```
-
-    Things to note about the code:
-
-* Because there are multiple exports in **HelloWorldWebPart.ts**, the specific one to import is specified by using
-  `{ }`. In this case, only the data model `ISPList` is required.
-* You do not need to type the file extension when importing from the default module, which in this case is
-  **HelloWorldWebPart**.
-* It exports the **MockHttpClient** class as a default module so that it can be imported in other files.
-* It builds the initial `ISPList` mock array and returns.
-
-1. Save the file.
-
-You can now use the **MockHttpClient** class in the **HelloWorldWebPart** class. You first need to import the
-**MockHttpClient** module.
-
-### To import the **MockHttpClient** module
-
-1. Open the **HelloWorldWebPart.ts** file.
-1. Copy and paste the following code just under `import * as strings from 'HelloWorldWebPartStrings';`.
-
-    ```typescript
-    import MockHttpClient from './MockHttpClient';
-    ```
-
-1. Add the following private method that mocks the list retrieval inside the **HelloWorldWebPart** class.
-
-    ```typescript
-    private _getMockListData(): Promise<ISPLists> {
-      return MockHttpClient.get()
-        .then((data: ISPList[]) => {
-          var listData: ISPLists = { value: data };
-          return listData;
-        }) as Promise<ISPLists>;
-    }
-    ```
-
-1. Save the file.
-
-## Retrieve lists from SharePoint site
-
-Next you need to retrieve lists from the current site. You will use SharePoint REST APIs to retrieve the lists from the
-site, which are located at `https://yourtenantprefix.sharepoint.com/_api/web/lists`.
-
-SharePoint Framework includes a helper class **spHttpClient** to execute REST API requests against SharePoint. It adds
-default headers, manages the digest needed for writes, and collects telemetry that helps the service to monitor the
-performance of an application.
-
-### To use this helper class, import them from the @microsoft/sp-http module
-
-1. Scroll to the top of the **HelloWorldWebPart.ts** file.
-1. Copy and paste the following code just under `import MockHttpClient from './MockHttpClient';`:
-
-    ```typescript
-    import {
-      SPHttpClient,
-      SPHttpClientResponse
-    } from '@microsoft/sp-http';
-    ```
-
-1. Add the following private method to retrieve lists from SharePoint inside the **HelloWorldWebPart** class.
-
-    ```typescript
-    private _getListData(): Promise<ISPLists> {
-      return this.context.spHttpClient.get(this.context.pageContext.web.absoluteUrl + `/_api/web/lists?$filter=Hidden eq false`, SPHttpClient.configurations.v1)
-        .then((response: SPHttpClientResponse) => {
-          return response.json();
-        });
-    }
-    ```
-
-    The method uses the **spHttpClient** helper class and issues a `get` request. It uses the **ISPLists** model and
-    also applies a filter to not retrieve hidden lists.
-
-1. Save the file.
-1. Switch to the console window that is running `gulp serve` and check if there are any errors. If there are errors,
-   gulp reports them in the console, and you need to fix them before proceeding.
-
-## Add new styles
-
-The SharePoint Framework uses [Sass](http://sass-lang.com/) as the CSS pre-processor, and specifically uses the [SCSS
-syntax](http://sass-lang.com/documentation/file.SCSS_FOR_SASS_USERS.html), which is fully compliant with normal CSS
-syntax. Sass extends the CSS language and allows you to use features such as variables, nested rules, and inline imports
-to organize and create efficient style sheets for your web parts. The SharePoint Framework already comes with a SCSS
-compiler that converts your Sass files to normal CSS files, and also provides a typed version to use during development.
-
-### To add new styles
-
-1. Open **HelloWorldWebPart.module.scss**. This is the SCSS file where you define your styles.
-
-    By default, the styles are scoped to your web part. You can see that as the styles are defined under
-    **.helloWorld**.
-
-1. Add the following styles after the `.button` style, but still inside the main `.helloWorld` style section:
-
-    ```css
-    .list {
-      color: #333333;
-      font-family: 'Segoe UI Regular WestEuropean', 'Segoe UI', Tahoma, Arial, sans-serif;
-      font-size: 14px;
-      font-weight: normal;
-      box-sizing: border-box;
-      margin: 10;
-      padding: 10;
-      line-height: 50px;
-      list-style-type: none;
-      box-shadow: 0 4px 4px 0 rgba(0, 0, 0, 0.2), 0 25px 50px 0 rgba(0, 0, 0, 0.1);
-    }
-
-    .listItem {
-      color: #333333;
-      vertical-align: center;
-      font-family: 'Segoe UI Regular WestEuropean', 'Segoe UI', Tahoma, Arial, sans-serif;
-      font-size: 14px;
-      font-weight: normal;
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      box-shadow: none;
-      *zoom: 1;
-      padding: 9px 28px 3px;
-      position: relative;
-    }
-    ```
-
-1. Save the file.
-
-    Gulp rebuilds the code in the console as soon as you save the file. This generates the corresponding typings in the
-    **HelloWorldWebPart.module.scss.ts** file. After compiled to TypeScript, you can then import and reference these
-    styles in your web part code.
-
-    You can see that in the **render** method of the web part:
-
-    ```html
-    <div class="${styles.row}">
-    ```
-
-## Render lists information
-
-Open the **HelloWorldWebPart** class.
-
-SharePoint Workbench gives you the flexibility to test web parts in your local environment and from a SharePoint site.
-SharePoint Framework aids this capability by helping you understand which environment your web part is running from by
-using the **EnvironmentType** module.
-
-### To use the EnvironmentType module
-
-1. Import the **Environment** and the **EnvironmentType** modules from the **@microsoft/sp-core-library** bundle. Add it
-   to the **import** section at the top as shown in the following code:
-
-    ```typescript
-    import {
-      Environment,
-      EnvironmentType
-    } from '@microsoft/sp-core-library';
-    ```
-
-1. Add the following private method inside the **HelloWorldWebPart** class:
-
-    ```typescript
-    private _renderList(items: ISPList[]): void {
-      let html: string = '';
-      items.forEach((item: ISPList) => {
-        html += `
-      <ul class="${styles.list}">
-        <li class="${styles.listItem}">
-          <span class="ms-font-l">${item.Title}</span>
-        </li>
-      </ul>`;
-      });
-
-      const listContainer: Element = this.domElement.querySelector('#spListContainer');
-      listContainer.innerHTML = html;
-    }
-    ```
-
-    This method references the new CSS styles added earlier by using the **styles** variable and is used to render list
-    information which will be received from REST API.
-
-1. Save the file.
-1. Add the following private method inside the **HelloWorldWebPart** class to call the respective methods to retrieve
-   list data:
-
-    ```typescript
-    private _renderListAsync(): void {
-      // Local environment
-      if (Environment.type === EnvironmentType.Local) {
-        this._getMockListData().then((response) => {
-          this._renderList(response.value);
-        });
-      }
-      else if (Environment.type == EnvironmentType.SharePoint ||
-                Environment.type == EnvironmentType.ClassicSharePoint) {
-        this._getListData()
-          .then((response) => {
-            this._renderList(response.value);
-          });
-      }
-    }
-    ```
-
-    Things to note about hostType in the **_renderListAsync** method:
-
-    * The `Environment.type` property helps you check if you are in a local or SharePoint environment.
-    * The correct method is called depending on where your Workbench is hosted.
-
-1. Save the file.
-
-## Retrieve list data
-
-1. Navigate to the **render** method, and replace the code inside the method with the following code:
-
-    ```typescript
-    this.domElement.innerHTML = `
-      <div class="${ styles.helloWorld }">
-        <div class="${ styles.container }">
-          <div class="${ styles.row }">
-            <div class="${ styles.column }">
-              <span class="${ styles.title }">Welcome to SharePoint!</span>
-              <p class="${ styles.subTitle }">Customize SharePoint experiences using web parts.</p>
-              <p class="${ styles.description }">${escape(this.properties.description)}</p>
-              <p class="${ styles.description }">${escape(this.properties.test)}</p>
-              <p class="${ styles.description }">Loading from ${escape(this.context.pageContext.web.title)}</p>
-              <a href="https://aka.ms/spfx" class="${ styles.button }">
-                <span class="${ styles.label }">Learn more</span>
-              </a>
-            </div>
-          </div>
-          <div id="spListContainer" />
-        </div>
-      </div>`;
-
-      this._renderListAsync();
-    ```
-
-1. Save the file.
-
-    Notice in the `gulp serve` console window that it rebuilds the code. Make sure you don't see any errors.
-
-1. Switch to your local Workbench and add the HelloWorld web part.
-
-    You should see the mock data returned.
-
-    ![Render lists data from localhost](../../../images/sp-lists-render-localhost.png)
-
-1. Switch to the Workbench hosted in SharePoint. Refresh the page and add the HelloWorld web part.
-
-    You should see lists returned from the current site.
-
-    ![Render lists data from SharePoint](../../../images/sp-lists-render-spsite.png)
-
-1. Now you can stop the server from running. Switch to the console and stop `gulp serve`. Select Ctrl+C to terminate the
-   gulp task.
-
-## Next steps
-
-Congratulations on connecting your web part to SharePoint list data!
-
-You can continue building out your Hello World web part in the next topic [Deploy your web part to a SharePoint
-page](./serve-your-web-part-in-a-sharepoint-page.md). You will learn how to deploy and preview the Hello World web part
-in a SharePoint page.
-
-> [!NOTE] If you find an issue in the documentation or in the SharePoint Framework, please report that to SharePoint
-> engineering by using the [issue list at the sp-dev-docs repository](https://github.com/SharePoint/sp-dev-docs/issues)
-> or by adding a comment to this article. Thanks for your input in advance.
+<!-- Links -->
+[IComponentHTMLVisual]: xref:@microsoft/fluid-component-core-interfaces!IComponentHTMLVisual:interface
+[IProvideComponentHTMLVisual]: xref:@microsoft/fluid-component-core-interfaces!IProvideComponentHTMLVisual:interface
+[IComponentReactViewable]: xref:@microsoft/fluid-aqueduct-react!IComponentReactViewable:interface
