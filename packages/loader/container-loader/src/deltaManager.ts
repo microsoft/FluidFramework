@@ -398,11 +398,12 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             to,
         });
 
+        let requests = 0;
+
         while (!this.closed) {
             const maxFetchTo = from + MaxBatchDeltas;
             const fetchTo = to === undefined ? maxFetchTo : Math.min(maxFetchTo, to);
 
-            let requests = 0;
             let deltasRetrievedLast = 0;
             let success = true;
             let canRetry = false;
