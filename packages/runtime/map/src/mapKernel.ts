@@ -304,9 +304,9 @@ export class MapKernel {
      * {@inheritDoc ISharedMap.set}
      */
     public set(key: string, value: any) {
-        // Undefined keys can't be serialized to JSON in the manner we currently snapshot.
-        if (key === undefined) {
-            throw new Error("Undefined keys are not supported");
+        // Undefined/null keys can't be serialized to JSON in the manner we currently snapshot.
+        if (key === undefined || key === null) {
+            throw new Error("Undefined and null keys are not supported");
         }
 
         const localValue = this.localValueMaker.fromInMemory(value);

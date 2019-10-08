@@ -115,10 +115,13 @@ describe("Routerlicious", () => {
                     assert.equal(await retrieved.nestedObj.subMap2Handle.get(), subMap2);
                 });
 
-                it("Should reject an undefined key set", () => {
+                it("Should reject undefined and null key sets", () => {
                     assert.throws(() => {
                         sharedMap.set(undefined, "one");
                     }, "Should throw for key of undefined");
+                    assert.throws(() => {
+                        sharedMap.set(null, "two");
+                    }, "Should throw for key of null");
                 });
             });
 
