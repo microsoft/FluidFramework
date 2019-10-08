@@ -135,7 +135,7 @@ export class SourceDocument extends PrimedComponent {
     public off(event: "maintenance", listener: (event: SequenceMaintenanceEvent, target: SharedString, ...args: any[]) => void): this;
     public off(event: "sequenceDelta", listener: (event: SequenceDeltaEvent, target: SharedString, ...args: any[]) => void): this;
     public off(event: "maintenance" | "sequenceDelta", listener: (event: any, target: SharedString, ...args: any[]) => void): this {
-        this.maybeSharedString.off(event, listener);
+        this.maybeSharedString.removeListener(event, listener);
         return this;
     }
 
