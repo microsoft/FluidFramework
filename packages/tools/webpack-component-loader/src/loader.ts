@@ -135,6 +135,7 @@ async function getPkg(packageJson: IPackage, scriptIds: string[], component = fa
 
 // tslint:disable-next-line: max-func-body-length
 export async function start(
+    documentId: string,
     packageJson: IPackage,
     options: IRouteOptions,
     div: HTMLDivElement
@@ -199,7 +200,8 @@ export async function start(
             undefined,
         );
     } else {
-        deltaConn = TestDeltaConnectionServer.create(new SessionStorageDbFactory(url));
+
+        deltaConn = TestDeltaConnectionServer.create(new SessionStorageDbFactory(documentId));
         documentServiceFactory = new TestDocumentServiceFactory(deltaConn);
     }
     const hostConf: IHostConfig = { documentServiceFactory, urlResolver };
