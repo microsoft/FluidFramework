@@ -4,7 +4,12 @@
  */
 
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { ConnectionState, IComponent, ITelemetryErrorEvent, ITelemetryLogger } from "@microsoft/fluid-container-definitions";
+import {
+    ConnectionState,
+    IComponent,
+    ITelemetryErrorEvent,
+    ITelemetryLogger,
+} from "@microsoft/fluid-container-definitions";
 import { ChildLogger, EventEmitterWithErrorHandling } from "@microsoft/fluid-core-utils";
 import { ISequencedDocumentMessage, ITree, MessageType } from "@microsoft/fluid-protocol-definitions";
 import {
