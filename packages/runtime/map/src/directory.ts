@@ -985,6 +985,7 @@ class SubDirectory implements IDirectory {
      * {@inheritDoc IDirectory.set}
      */
     public set<T = any>(key: string, value: T): this {
+        // Undefined keys can't be serialized to JSON in the manner we currently snapshot.
         if (key === undefined) {
             throw new Error("Undefined keys are not supported");
         }
@@ -1057,6 +1058,7 @@ class SubDirectory implements IDirectory {
      * {@inheritDoc IDirectory.createSubDirectory}
      */
     public createSubDirectory(subdirName: string): IDirectory {
+        // Undefined subdirectory names can't be serialized to JSON in the manner we currently snapshot.
         if (subdirName === undefined) {
             throw new Error("SubDirectory name may not be undefined");
         }

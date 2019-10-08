@@ -304,6 +304,7 @@ export class MapKernel {
      * {@inheritDoc ISharedMap.set}
      */
     public set(key: string, value: any) {
+        // Undefined keys can't be serialized to JSON in the manner we currently snapshot.
         if (key === undefined) {
             throw new Error("Undefined keys are not supported");
         }
