@@ -10,7 +10,6 @@
   "scripts": {
     "build": "concurrently npm:build:compile npm:tslint",
     "build:compile": "concurrently npm:tsc npm:build:esnext",
-    "build:docs": "api-extractor run --local",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
