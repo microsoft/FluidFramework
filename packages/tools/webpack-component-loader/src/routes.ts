@@ -4,6 +4,7 @@
  */
 
 import * as express from "express";
+import * as fs from "fs";
 import * as moniker from "moniker";
 import * as nconf from "nconf";
 import * as path from "path";
@@ -32,17 +33,17 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
         throw new Error("tenantId and tenantSecret must be provided together");
     }
     console.log(options);
-
-    app.get("/*", (req, res) => fluid(req, res, baseDir, options));
+    app.get("/file*", (req, res) => {
+        // tslint:disable-next-line: non-literal-fs-path no-unsafe-any
+        const buffer = fs.readFileSync(req.params[0].substr(1));
+        res.end(buffer);
+    });
+    app.get("/:id*", (req, res) => fluid(req, res, baseDir, options));
 };
 
 const fluid = (req: express.Request, res: express.Response,  baseDir: string, options: IRouteOptions) => {
-    const rawPath = req.params[0];
-    const slash = rawPath.indexOf("/");
-    const documentId = rawPath.substring(
-        0,
-        slash !== -1 ? slash : rawPath.length
-    );
+
+    const documentId = req.params.id;
     // tslint:disable-next-line: non-literal-require
     const packageJson = require(path.join(baseDir, "./package.json"));
 
@@ -64,6 +65,7 @@ const fluid = (req: express.Request, res: express.Response,  baseDir: string, op
         var pkgJson = ${JSON.stringify(packageJson)};
         var options = ${JSON.stringify(options)};
         FluidLoader.start(
+            "${documentId}",
             pkgJson,
             options,
             document.getElementById("content"))
