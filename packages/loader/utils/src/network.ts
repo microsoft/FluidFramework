@@ -8,7 +8,7 @@ import { INetworkError } from "@microsoft/fluid-protocol-definitions";
  * Network error error class - used to communicate all  network errors
  */
 export class NetworkError extends Error implements INetworkError {
-    public readonly isOnline: boolean;
+    public readonly isOnline: string;
 
     constructor(
             errorMessage: string,
@@ -16,7 +16,7 @@ export class NetworkError extends Error implements INetworkError {
             readonly canRetry: boolean,
             readonly retryAfterSeconds?: number) {
       super(errorMessage);
-      this.isOnline = isOnline() === OnlineStatus.Online;
+      this.isOnline = OnlineStatus[isOnline()];
     }
 }
 
