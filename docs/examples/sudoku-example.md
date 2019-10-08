@@ -2,6 +2,7 @@
 
 title: Connect your client-side web part to SharePoint (Hello World part 2)
 description: Access functionality and data in SharePoint and provide a more integrated experience for end users.
+uid: sudoku-example
 
 ---
 
@@ -65,12 +66,94 @@ instance. Changes will be synchronized to the other instance.
 Try changing the theme in one of the components. Notice that these changes are not synchronized between the two
 instances.
 
+# Deep dive
+
+## Data model
+
+For our Sudoku data model, we will use a map-like data structure with string keys. Each key in the map is a coordinate
+(row, column) of a cell in the Sudoku puzzle. The top left cell has coordinate `"0,0"`, the cell to its right has
+coordinate `"0,1"`, etc.
+
+Each value stored in the map is a `SudokuCell`, a simple class that contains the following properties:
+
+```typescript
+value: number // The current value in the cell; 0 denotes an empty cell
+isCorrect: boolean = false // True if the value in the cell is correct
+readonly fixed: boolean; // True if the value in the cell is supplied as part of the puzzle's "clues"
+readonly correctValue: number // Stores the correct value of the cell
+readonly coordinate: CoordinateString // The coordinate of the cell, as a comma-separated string, e.g. "2,3"
+```
+
+## Rendering
+
+In order to render the Sudoku data, we use a React component called `SudokuView` This component is defined in
+`view/sudokuView.tsx` and accepts the map of Sudoku cell data as a prop. It then renders the Sudoku and accompanying UI.
+
+The `SudokuView` React component is also responsible for handling UI interaction from the user; we'll examine that in
+more detail later.
+
+## The WebPart/Fluid component
+
+The React component described above does not itself represent a Fluid component. Rather, the Fluid component itself is
+defined in `src/SudokuWebPart.tsx`.
+
+```typescript
+export class SudokuWebPart extends BaseMFxPart<{}> implements IComponentReactViewable {
+  public get IComponentReactViewable() {
+    return this;
+  }
+
+...
+
+}
+```
+
+This class extends the `BaseMfxPart` abstract base class. Our component is visual, so we need to implement the
+[IComponentHTMLVisual][] or [IProvideComponentHTMLVisual][] interfaces. However, the BaseMfxPart base class implements the
+IProvideComponentHTMLVisual Fluid component interface, so we do not need to explicitly implement it in our class.
+
+We are required to implement the render() method, but we'll return to that later.
+
+[IComponentHTMLVisual]: xref:@microsoft/fluid-component-core-interfaces!IComponentHTMLVisual:interface
+[IProvideComponentHTMLVisual]: xref:@microsoft/fluid-component-core-interfaces!IProvideComponentHTMLVisual:interface
+
 ## Examine the code
 
 The code consists of a React component called `SudokuView` that renders the Sudoku puzzle, a `SudokuWebPart` class that
-inherits from `BaseMfxPart`, and an `index.ts` file that instantiates the Web Part.
+inherits from `BaseMfxPart`, and an `index.ts` file that instantiates the Web Part. We'll now review the code in detail.
 
-### 
+### SudokuWebPart.tsx
+
+This file defines a class called `SudokuWebPart`:
+
+
+
+
+However, since our component uses React for rendering, we can implement the IComponentReactViewable interface, which
+will allow for simpler interation with React-based component hosts. The IComponentReactViewable interface requires a
+method, createJSXElement, that returns a JSX.Element for rendering.
+
+Our implementation looks like this:
+
+```typescript
+public createJSXElement(props?): JSX.Element {
+  if (this.puzzle) {
+    return <SudokuView puzzle={this.puzzle} />;
+  } else {
+    return <div />;
+  }
+}
+```
+
+This method
+
+#### Implementing interfaces
+
+The SudokuW
+
+Since these interfaces are already satisfied by the base class.
+
+###
 
 
 
