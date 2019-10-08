@@ -3,12 +3,10 @@
  * Licensed under the MIT License.
  */
 
-// tslint:disable no-import-side-effect
+import { AgentSchedulerFactory, TaskManager } from "@microsoft/fluid-agent-scheduler";
 import { TestHost } from "@microsoft/fluid-local-test-server";
 import { IAgentScheduler } from "@microsoft/fluid-runtime-definitions";
 import * as assert from "assert";
-import "mocha";
-import { AgentSchedulerFactory, TaskManager } from "../scheduler";
 
 const AgentSchedulerType = "@microsoft/fluid-agent-scheduler";
 
@@ -17,20 +15,17 @@ describe("AgentScheduler", () => {
 
     describe("Single client", () => {
         let host: TestHost;
+        let scheduler: IAgentScheduler;
 
-        beforeEach(() => {
+        beforeEach(async () => {
             host = new TestHost([
                 [AgentSchedulerType, Promise.resolve(new AgentSchedulerFactory())],
             ]);
-        });
-
-        afterEach(async () => { await host.close(); });
-
-        let scheduler: IAgentScheduler;
-        beforeEach(async () => {
             scheduler = await host.getComponent<TaskManager>("_scheduler")
                 .then((taskmanager) => taskmanager.IAgentScheduler);
         });
+
+        afterEach(async () => { await host.close(); });
 
         it("No tasks initially", async () => {
             assert.deepStrictEqual(scheduler.pickedTasks(), []);
