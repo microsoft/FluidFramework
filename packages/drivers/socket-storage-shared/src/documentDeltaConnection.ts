@@ -245,7 +245,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
     /**
      * Removes a reference for the given key
      * Once the ref count hits 0, the socket is disconnected and removed
-     * @param key Socket reference key
+     * @param key - socket reference key
      */
     private static removeSocketIoReference(key: string) {
         const socketReference = DocumentDeltaConnection.socketIoSockets.get(key);
