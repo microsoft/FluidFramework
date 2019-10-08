@@ -5,8 +5,18 @@
 
 import { ConnectionState } from "@microsoft/fluid-container-definitions";
 import { fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
-import { FileMode, ISequencedDocumentMessage, ITree, MessageType, TreeEntry } from "@microsoft/fluid-protocol-definitions";
-import { IChannelAttributes, IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
+import {
+    FileMode,
+    ISequencedDocumentMessage,
+    ITree,
+    MessageType,
+    TreeEntry,
+} from "@microsoft/fluid-protocol-definitions";
+import {
+    IChannelAttributes,
+    IComponentRuntime,
+    IObjectStorageService,
+} from "@microsoft/fluid-runtime-definitions";
 import { ISharedObject, SharedObject, ValueType } from "@microsoft/fluid-shared-object-base";
 import * as assert from "assert";
 import { ConsensusRegisterCollectionFactory } from "./consensusRegisterCollectionFactory";

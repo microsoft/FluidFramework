@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentHandle, IComponentHandleContext, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
+import {
+    IComponentHandle,
+    IComponentHandleContext,
+    IRequest,
+    IResponse,
+} from "@microsoft/fluid-component-core-interfaces";
 import { IRuntime } from "@microsoft/fluid-container-definitions";
 
 export class ComponentHandleContext implements IComponentHandleContext {

@@ -5,7 +5,13 @@
 
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { BaseSegment, createGroupOp, IJSONSegment, ISegment, PropertySet } from "@microsoft/fluid-merge-tree";
-import { IChannelAttributes, IComponentRuntime, ISharedObjectServices, Jsonable, JsonablePrimitive } from "@microsoft/fluid-runtime-definitions";
+import {
+    IChannelAttributes,
+    IComponentRuntime,
+    ISharedObjectServices,
+    Jsonable,
+    JsonablePrimitive,
+} from "@microsoft/fluid-runtime-definitions";
 import { ISharedObject, ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { SharedSegmentSequence, SubSequence } from "./";
 import { pkgVersion } from "./packageVersion";

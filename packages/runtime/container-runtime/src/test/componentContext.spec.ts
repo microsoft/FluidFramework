@@ -5,7 +5,13 @@
 // tslint:disable: prefer-const
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { IDocumentStorageService, ISnapshotTree } from "@microsoft/fluid-protocol-definitions";
-import { ComponentFactoryTypes, IComponentContext, IComponentFactory, IComponentRegistry, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import {
+    ComponentFactoryTypes,
+    IComponentContext,
+    IComponentFactory,
+    IComponentRegistry,
+    IComponentRuntime,
+} from "@microsoft/fluid-runtime-definitions";
 import { MockRuntime } from "@microsoft/fluid-test-runtime-utils";
 import * as assert from "assert";
 import { BlobTreeEntry } from "..";
@@ -54,7 +60,10 @@ describe("Component Context Tests", () => {
             };
 
             assert.equal(contents.pkg, componentAttributes.pkg, "Local Component package does not match.");
-            assert.equal(contents.snapshotFormatVersion, componentAttributes.snapshotFormatVersion, "Local Component snapshot version does not match.");
+            assert.equal(
+                contents.snapshotFormatVersion,
+                componentAttributes.snapshotFormatVersion,
+                "Local Component snapshot version does not match.");
             assert.equal(attachMessage.type, "TestComponent1", "Attach message type does not match.");
         });
 
@@ -101,7 +110,10 @@ describe("Component Context Tests", () => {
             };
 
             assert.equal(contents.pkg, componentAttributes.pkg, "Local Component package does not match.");
-            assert.equal(contents.snapshotFormatVersion, componentAttributes.snapshotFormatVersion, "Local Component snapshot version does not match.");
+            assert.equal(
+                contents.snapshotFormatVersion,
+                componentAttributes.snapshotFormatVersion,
+                "Local Component snapshot version does not match.");
             assert.equal(attachMessage.type, "SubComp", "Attach message type does not match.");
         });
     });
@@ -153,7 +165,10 @@ describe("Component Context Tests", () => {
 
             const contents = JSON.parse(blob.value.contents) as IComponentAttributes;
             assert.equal(contents.pkg, componentAttributes.pkg, "Remote Component package does not match.");
-            assert.equal(contents.snapshotFormatVersion, componentAttributes.snapshotFormatVersion, "Remote Component snapshot version does not match.");
+            assert.equal(
+                contents.snapshotFormatVersion,
+                componentAttributes.snapshotFormatVersion,
+                "Remote Component snapshot version does not match.");
         });
 
         it("Check RemotedComponent Attributes without version", async () => {
@@ -179,7 +194,10 @@ describe("Component Context Tests", () => {
             const blob = snapshot.entries[0] as BlobTreeEntry;
 
             const contents = JSON.parse(blob.value.contents) as IComponentAttributes;
-            assert.equal(contents.pkg, JSON.stringify([componentAttributes.pkg]), "Remote Component package does not match.");
+            assert.equal(
+                contents.pkg,
+                JSON.stringify([componentAttributes.pkg]),
+                "Remote Component package does not match.");
             assert.equal(contents.snapshotFormatVersion, "0.1", "Remote Component snapshot version does not match.");
         });
 
