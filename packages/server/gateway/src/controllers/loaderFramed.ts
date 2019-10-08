@@ -68,12 +68,13 @@ export async function initialize(
         };
         const loader = createWebLoader(
             resolved,
-            new WhiteList(),
             pkg,
             scriptIds,
             config,
             services,
-            hostConf);
+            hostConf,
+            new WhiteList(),
+            );
 
         documentFactory = new DocumentFactory(config.tenantId,
             config.moniker,

@@ -247,9 +247,13 @@ export class WebCodeLoader implements ICodeLoader {
     private readonly resolvedCache = new Map<string, FluidPackage>();
     private readonly scriptManager = new ScriptManager();
 
-    constructor(private readonly whiteList: ICodeWhiteList) { }
+    constructor(private readonly whiteList?: ICodeWhiteList) { }
 
     public async seed(seedable: ISeedable) {
+        if (this.whiteList && !(await this.whiteList.testSource(
+            { config: seedable.config, package: seedable.package }))) {
+            throw new Error("Attempted to load invalid package");
+        }
         const fluidPackage = this.getFluidPackage({ config: seedable.config, package: seedable.package });
         fluidPackage.seed(seedable.scriptIds);
     }
@@ -269,8 +273,8 @@ export class WebCodeLoader implements ICodeLoader {
     public async load<T>(
         source: IFluidCodeDetails,
     ): Promise<T> {
-        if (!(await this.whiteList.testSource(source))) {
-            throw new Error("Attempted to load invalid package");
+        if (this.whiteList && !(await this.whiteList.testSource(source))) {
+            return Promise.reject("Attempted to load invalid package");
         }
         const fluidPackage = this.getFluidPackage(source);
         return fluidPackage.load();

@@ -90,12 +90,12 @@ export async function registerAttach(loader: Loader, container: Container, uri: 
 
 export function createWebLoader(
     resolved: IResolvedUrl,
-    whiteList: ICodeWhiteList,
     pkg: IResolvedPackage,
     scriptIds: string[],
     config: any,
     scope: IComponent,
     hostConf: IHostConfig,
+    whiteList?: ICodeWhiteList,
 ): Loader {
 
     // Create the web loader and prefetch the chaincode we will need
@@ -143,12 +143,13 @@ export async function start(
 ): Promise<Container> {
     const loader = createWebLoader(
         resolved,
-        new WhiteList(),
         pkg,
         scriptIds,
         config,
         scope,
-        hostConf);
+        hostConf,
+        new WhiteList(),
+        );
 
     const container = await loader.resolve({ url });
     registerAttach(

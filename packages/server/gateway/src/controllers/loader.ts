@@ -154,12 +154,13 @@ export async function initialize(
     console.log(`Loading ${url}`);
     const loader = createWebLoader(
         resolved,
-        new WhiteList(),
         pkg,
         scriptIds,
         config,
         services,
-        hostConf);
+        hostConf,
+        new WhiteList(),
+        );
     documentFactory.resolveLoader(loader);
 
     const div = document.getElementById("content") as HTMLDivElement;
