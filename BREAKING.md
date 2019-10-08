@@ -1,5 +1,9 @@
 # 0.11 Breaking Changes
 
+- [Undefined keys and subdirectory names on SharedMap and SharedDirectory throw](#Undefined-keys-and-subdirectory-names-on-SharedMap-and-SharedDirectory-throw)
+
+## Undefined keys and subdirectory names on SharedMap and SharedDirectory throw
+Previously, attempting to set `undefined` as a key on a SharedMap or SharedDirectory, or creating a subdirectory with name `undefined` would appear to succeed but would cause inconsistencies in snapshotting.  This will now throw immediately upon trying to set an `undefined` key or subdirectory name.
 
 # 0.10 Breaking Changes
 
