@@ -113,6 +113,9 @@ export interface ISocketStorageDiscovery {
     storageToken: string;
 
     deltaStreamSocketUrl: string;
+
+    // The AFD URL for PushChannel
+    deltaStreamSocketUrl2?: string;
     socketToken: string;
 }
 
