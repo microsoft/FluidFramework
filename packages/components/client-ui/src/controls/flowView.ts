@@ -5331,7 +5331,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                     event.opArgs.sequencedMessage.referenceSequenceNumber,
                     opCursorPos);
             }
-            this.queueRender(undefined, this.posInViewport(event.start) || this.posInViewport(opCursorPos));
+            this.queueRender(undefined, this.posInViewport(event.first.position) || this.posInViewport(opCursorPos));
         }
     }
 

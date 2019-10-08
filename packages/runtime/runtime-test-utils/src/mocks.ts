@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentHandle, IComponentHandleContext, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
+import {
+    IComponentHandle,
+    IComponentHandleContext,
+    IRequest,
+    IResponse,
+} from "@microsoft/fluid-component-core-interfaces";
 import {
     ConnectionState,
     IAudience,
@@ -13,9 +18,19 @@ import {
     IQuorum,
     ITelemetryLogger,
 } from "@microsoft/fluid-container-definitions";
-import { ComponentSerializer, DebugLogger, Deferred, fromUtf8ToBase64 } from "@microsoft/fluid-core-utils";
+import {
+    ComponentSerializer,
+    DebugLogger,
+    Deferred,
+    fromUtf8ToBase64,
+} from "@microsoft/fluid-core-utils";
 import * as git from "@microsoft/fluid-gitresources";
-import { IDocumentMessage, ISequencedDocumentMessage, ITreeEntry, MessageType } from "@microsoft/fluid-protocol-definitions";
+import {
+    IDocumentMessage,
+    ISequencedDocumentMessage,
+    ITreeEntry,
+    MessageType,
+} from "@microsoft/fluid-protocol-definitions";
 import {
     IChannel,
     IComponentRuntime,

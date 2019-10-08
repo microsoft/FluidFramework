@@ -4,11 +4,6 @@ uid: yo-fluid-details
 
 # Yo Fluid Breakdown
 
-> [!WARNING]
-> This documentation is based on an earlier version of the Fluid Framework and is outdated.
->
-> Track the documentation update with [#3499](https://github.com/microsoft/Prague/issues/3499).
-
 So you've used <xref:yo-fluid> to create your first component! If you haven't done this yet, head over to <xref:yo-fluid>.
 
 ## Different Components
@@ -82,7 +77,6 @@ First we will declare all our imports. Here is a quick description and use cases
 
 `PrimedComponent` and `PrimedComponentFactory` from <xref:@microsoft/fluid-aqueduct!> provides helper functionality.
 `IComponentHTMLVisual` from <xref:@microsoft/fluid-component-core-interfaces!> provides the interface for enabling rendering.
-`CounterValueType` from <xref:@microsoft/fluid-map!> is a Value Type we'll use in our root Distributed Data Structure (more on that later).
 `IComponentContext` and `IComponentRuntime` are the interfaces for important fluid objects passed to our Component.
 `React` and `ReactDOM` are _only for React_ and enable React use.
 
@@ -92,7 +86,6 @@ import {
   PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
 import { IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
-import { CounterValueType } from "@microsoft/fluid-map";
 import {
   IComponentContext,
   IComponentRuntime,
@@ -138,213 +131,119 @@ export class ExampleFluidComponent extends PrimedComponent
 }
 ```
 
-### `load(...)` and `componentInitializingFirstTime()`
-
-The `public static async load(runtime: IComponentRuntime, context: IComponentContext){...}` function is the entry point
-to creating an instance of our `ExampleFluidComponent`. We require using a `static async` load function instead of simply
-creating an instance of the component because we could be required to perform `async` actions as a part of load.
-
-Within the load function we create a new instance of our component passing through the `IComponentRuntime` and the
-`IComponentContext`. Having the `runtime` and `context` allow our component to perform actions against Fluid Framework.
-Example actions include creating/modifying distributed data structures as well as creating/getting other components.
-
-We also pass through our `supportedInterface`. As described above our component is viewable so it implements
-`IComponentHTMLViewable`. By passing through this as a supported interface anyone who has a reference to our component
-can discover that we implement `IComponentHTMLViewable`.
-
-Next we call, and `await`, `initialize()` on our newly created component instance. `initialize()` is a method on the
-<xref:@microsoft/fluid-aqueduct!SharedComponent:class> that properly calls the three override methods discussed above, `componentInitializingFirstTime()`, `existing()`,
-and `opened()`. We want to `await` this call because it could perform asynchronous operations such as creating and/or getting
-a component.
-
-`componentInitializingFirstTime()` will be called only the first time the `initialize()` is called. In here we perform setup operations that we only
-want to happen once. `await super.componentInitializingFirstTime()` calls the `componentInitializingFirstTime()` function on the `PrimedComponent`.
-In here we create and set the `root` SharedDirectory. We need to call this first to ensure the root is available later. Next we create a new counter,
-called `"clicks"` on our root directory `this.root.createValueType("clicks", CounterValueType.Name, 0);`
+We also must implement our interface provider. As described above our component is viewable so it implements
+`IComponentHTMLViewable`. By returning the component when this interface is queried, anyone who has a reference to
+our component can discover that we implement `IComponentHTMLViewable`.
 
 ```typescript
-private static readonly supportedInterfaces = ["IComponentHTMLVisual"];
+public get IComponentHTMLVisual() { return this; }
+```
 
-/**
- * ComponentInitializingFirstTime is where you do setup for your component. This is only called once the first time your component
- * is created. Anything that happens in componentInitializingFirstTime will happen before any other user will see the component.
- */
+### `componentInitializingFirstTime()`
+
+`componentInitializingFirstTime()` will be called only the first time a client opens the component. In here we
+perform setup operations that we only want to happen once.  Since we are using a `PrimedComponent`, we have a `root`
+SharedDirectory we can use to store data. We set our initial `diceValue` on our root directory
+`this.root.set("diceValue", 1);`
+
+```typescript
 protected async componentInitializingFirstTime() {
-  // Calling super.componentInitializingFirstTime() creates a root SharedDirectory that you can work off.
-  await super.componentInitializingFirstTime();
-  this.root.createValueType("clicks", CounterValueType.Name, 0);
-}
-
-/**
- * Static load function that allows us to make async calls while creating our object.
- * This becomes the standard practice for creating components in the new world.
- * Using a static allows us to have async calls in class creation that you can't have in a constructor
- */
-public static async load(runtime: IComponentRuntime, context: IComponentContext): Promise<ExampleFluidComponent> {
-  const clicker = new ExampleFluidComponent(runtime, context, ExampleFluidComponent.supportedInterfaces);
-  await clicker.initialize();
-
-  return clicker;
+  this.root.set("diceValue", 1);
 }
 ```
 
 ### `render(div: HTMLElement)`
 
 `render(div: HTMLElement)` is the implementation of `IComponentHTMLVisual`. The caller provides an `HTMLElement` that the
-Component can use to render into. Every time `render(...)` is called we should return a new view.
+Component can use to render into. Every time `render(...)` is called we should produce a new view.
 
 > [!NOTE]
 > This is the point where React and vanillaJS differ.
 
 #### [React Implementation](#tab/tabid-3)
-
-The first thing we do is get our `"clicks"` counter, created in `componentInitializingFirstTime()`.
-
-```typescript
-const counter = this.root.get("clicks");
-```
-
-Next we create a function that will display our content into the provided `HTMLElement`.
-Because we are using React we will call `ReactDOM.render(...)` with a span displaying
-our `counter.value` and a button that increments our counter by 1 when clicked `counter.increment(1)`.
-Finally we pass the provided `HTMLElement`(`div`) into our `ReactDOM.render(...)` to tell React
-what to render in.
+We create a `rerender` function that will display our content into the provided `HTMLElement`.
+To get the dice value we use the `get` method on the root, using the same key `diceValue` that
+we created in `componentInitializingFirstTime()`. Because we are using React we will call
+`ReactDOM.render(...)` with a span displaying our dice value as a Unicode character and a button
+that rolls the dice when clicked. Finally we pass the provided `HTMLElement`(`div`) into our
+`ReactDOM.render(...)` to tell React what to render in.
 
 Once we've created our function we call it once to render the first time.
 
 ```jsx
 const rerender = () => {
+  // Get our dice value stored in the root.
+  const diceValue = this.root.get<number>("diceValue");
+
   ReactDOM.render(
     <div>
-      <span>{counter.value}</span>
-      <button onClick={() => counter.increment(1)}>+</button>
+      <span style={{fontSize: 50}}>{this.getDiceChar(diceValue)}</span>
+      <button onClick={this.rollDice.bind(this)}>Roll</button>
     </div>,
-    div,
+    div
   );
 };
 
 rerender();
 ```
 
-Finally we add a listener so when the value of the counter changes we will trigger a render.
+Finally we add a listener so when the value of the dice changes we will trigger a render.
 
 ```typescript
-counter.on("incremented", () => {
+this.root.on("valueChanged", () => {
   rerender();
 });
-return div;
 ```
 
-Altogether the code looks like this:
+To set the value of the dice after rolling, we use the `set` method on the root, using the same
+key `diceValue` as before.  The helper functions used look like this:
 
-```jsx
-/**
- * Will return a new Clicker view
- */
-public render(div: HTMLElement) {
-  // Get our counter object that we set in initialize and pass it in to the view.
-  const counter = this.root.get("clicks");
+```typescript
+private rollDice() {
+  const rollValue = Math.floor(Math.random() * 6) + 1;
+  this.root.set("diceValue", rollValue);
+}
 
-  const rerender = () => {
-    ReactDOM.render(
-      <div>
-        <span>{counter.value}</span>
-        <button onClick={() => counter.increment(1)}>+</button>
-      </div>,
-      div
-    );
-  };
-
-  rerender();
-  counter.on("incremented", () => {
-    rerender();
-  });
-  return div;
+private getDiceChar(value: number) {
+  // Unicode 0x2680-0x2685 are the sides of a dice (⚀⚁⚂⚃⚄⚅)
+  return String.fromCodePoint(0x267F + value);
 }
 ```
 
 #### [VanillaJS Implementation](#tab/tabid-4)
 
-The VanillaJS implementation is similar in many ways to the React version. There is more
-code because ReactDOM provides a lot of the inner element setup.
+The VanillaJS implementation is similar in many ways to the React version.
 
-Here we get our counter
-
-```typescript
-const counter = this.root.get<Counter>("clicks");
-```
-
-Next we create our `reRender` function we will call when the counter is incremented.
+We create our component's DOM structure in `this.createComponentDom(div);` which creates the span that
+holds the dice value `diceSpan.textContent = this.getDiceChar(diceValue);`and the button that when clicked
+rolls the dice `rollButton.onclick = this.rollDice.bind(this);`.
 
 ```typescript
-const reRender = () => {
-  const counterSpan = document.getElementById("counterSpan");
-  counterSpan.textContent = counter.value.toString();
-};
-```
+private createComponentDom(host: HTMLElement) {
+  const diceValue = this.root.get<number>("diceValue");
 
-Next we call `this.createComponentDom(div);` which creates the span that holds our value
-`counterSpan.textContent = counter.value.toString();`and the button that when clicked increments 1
-`counterButton.onclick = () => counter.increment(1);`.
+  const diceSpan = document.createElement("span");
+  diceSpan.id = "diceSpan";
+  diceSpan.style.fontSize = "50px";
+  diceSpan.textContent = this.getDiceChar(diceValue);
+  host.appendChild(diceSpan);
 
-```typescript
-protected createComponentDom(host: HTMLElement) {
-  const counter = this.root.get<Counter>("clicks");
-  const counterSpan = document.createElement("span");
-  counterSpan.id = "counterSpan";
-  counterSpan.textContent = counter.value.toString();
-  host.appendChild(counterSpan);
-
-  const counterButton = document.createElement("button");
-  counterButton.id = "counterButton";
-  counterButton.textContent = "+";
-  counterButton.onclick = () => counter.increment(1);
-  host.appendChild(counterButton);
+  const rollButton = document.createElement("button");
+  rollButton.id = "rollButton";
+  rollButton.textContent = "Roll";
+  rollButton.onclick = this.rollDice.bind(this);
+  host.appendChild(rollButton);
 }
 ```
 
-Finally we add a listener so when the value of the counter changes we will trigger a render.
+And we register our function to re-render when the value of the dice changes.
 
 ```typescript
-counter.on("incremented", () => {
-  reRender();
+this.root.on("valueChanged", () => {
+  const diceValue = this.root.get<number>("diceValue");
+  const diceSpan = document.getElementById("diceSpan");
+  diceSpan.textContent = this.getDiceChar(diceValue);
 });
-```
-
-Altogether the code looks like this:
-
-```typescript
-/**
- * Will return a new Clicker view
- */
-public render(div: HTMLElement) {
-  const counter = this.root.get<Counter>("clicks");
-  const reRender = () => {
-    const counterSpan = document.getElementById("counterSpan");
-    counterSpan.textContent = counter.value.toString();
-  };
-
-  this.createComponentDom(div);
-
-  // When the value of the counter is incremented we will reRender
-  counter.on("incremented", () => {
-    reRender();
-  });
-}
-
-protected createComponentDom(host: HTMLElement) {
-  const counter = this.root.get<Counter>("clicks");
-  const counterSpan = document.createElement("span");
-  counterSpan.id = "counterSpan";
-  counterSpan.textContent = counter.value.toString();
-  host.appendChild(counterSpan);
-
-  const counterButton = document.createElement("button");
-  counterButton.id = "counterButton";
-  counterButton.textContent = "+";
-  counterButton.onclick = () => counter.increment(1);
-  host.appendChild(counterButton);
-}
 ```
 
 ---
@@ -374,7 +273,8 @@ Finally we export this so we can use it in the [index.ts](#index.ts) below for o
 
 ```typescript
 /**
- * This is where you define all your Distributed Data Structures
+ * The PrimedComponentFactory declares the component and defines any additional distributed data structures.
+ * To add a SharedSequence, SharedMap, or any other structure, put it in the array below.
  */
 export const ExampleFluidComponentInstantiationFactory = new SharedComponentFactory(
   ExampleFluidComponent,
@@ -408,33 +308,6 @@ that is used to load the default component. It also takes the registry of compon
 our case just our one component. `[chaincodeName, Promise.resolve(ExampleFluidComponentInstantiationFactory)]`
 
 ```typescript
-export const fluidExport = new SimpleModuleInstantiationFactory(
-  chaincodeName,
-  new Map([
-    [chaincodeName, Promise.resolve(ExampleFluidComponentInstantiationFactory)],
-  ]),
-);
-```
-
-All together the code looks like this:
-
-```typescript
-import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
-
-import { ExampleFluidComponentInstantiationFactory } from "./main";
-
-// tslint:disable-next-line: no-var-requires no-require-imports
-const pkg = require("../package.json");
-const chaincodeName = pkg.name as string;
-
-/**
- * This does setup for the Container. The SimpleModuleInstantiationFactory also enables dynamic loading in the
- * EmbeddedComponentLoader.
- *
- * There are two important things here:
- * 1. Default Component name
- * 2. Map of string to factory for all components
- */
 export const fluidExport = new SimpleModuleInstantiationFactory(
   chaincodeName,
   new Map([
