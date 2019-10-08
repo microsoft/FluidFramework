@@ -131,50 +131,24 @@ export class ExampleFluidComponent extends PrimedComponent
 }
 ```
 
-### `load(...)` and `componentInitializingFirstTime()`
-
-The `public static async load(runtime: IComponentRuntime, context: IComponentContext){...}` function is the entry point
-to creating an instance of our `ExampleFluidComponent`. We require using a `static async` load function instead of simply
-creating an instance of the component because we could be required to perform `async` actions as a part of load.
-
-Within the load function we create a new instance of our component passing through the `IComponentRuntime` and the
-`IComponentContext`. Having the `runtime` and `context` allow our component to perform actions against Fluid Framework.
-Example actions include creating/modifying distributed data structures as well as creating/getting other components.
-
-We also implement our interface provider. As described above our component is viewable so it implements
-`IComponentHTMLViewable`. By returning the component when this interface is queried, anyone who has a reference to our component
-can discover that we implement `IComponentHTMLViewable`.
-
-Next we call, and `await`, `initialize()` on our newly created component instance. `initialize()` is a method on the
-<xref:@microsoft/fluid-aqueduct!SharedComponent:class> that properly calls the three override methods discussed above, `componentInitializingFirstTime()`, `existing()`,
-and `opened()`. We want to `await` this call because it could perform asynchronous operations such as creating and/or getting
-a component.
-
-`componentInitializingFirstTime()` will be called only the first time the `initialize()` is called. In here we perform setup operations that we only
-want to happen once.  Since we are using a `PrimedComponent`, we have a `root` SharedDirectory we can use to store data. We set our initial
-`diceValue` on our root directory `this.root.set("diceValue", 1);`
+We also must implement our interface provider. As described above our component is viewable so it implements
+`IComponentHTMLViewable`. By returning the component when this interface is queried, anyone who has a reference to
+our component can discover that we implement `IComponentHTMLViewable`.
 
 ```typescript
 public get IComponentHTMLVisual() { return this; }
+```
 
-/**
- * ComponentInitializingFirstTime is where you do setup for your component. This is only called once the first time your component
- * is created. Anything that happens in componentInitializingFirstTime will happen before any other user will see the component.
- */
+### `componentInitializingFirstTime()`
+
+`componentInitializingFirstTime()` will be called only the first time a client opens the component. In here we
+perform setup operations that we only want to happen once.  Since we are using a `PrimedComponent`, we have a `root`
+SharedDirectory we can use to store data. We set our initial `diceValue` on our root directory
+`this.root.set("diceValue", 1);`
+
+```typescript
 protected async componentInitializingFirstTime() {
   this.root.set("diceValue", 1);
-}
-
-/**
- * Static load function that allows us to make async calls while creating our object.
- * This becomes the standard practice for creating components in the new world.
- * Using a static allows us to have async calls in class creation that you can't have in a constructor
- */
-public static async load(runtime: IComponentRuntime, context: IComponentContext): Promise<ExampleFluidComponent> {
-  const diceRoller = new ExampleFluidComponent(runtime, context);
-  await diceRoller.initialize();
-
-  return diceRoller;
 }
 ```
 
@@ -299,7 +273,8 @@ Finally we export this so we can use it in the [index.ts](#index.ts) below for o
 
 ```typescript
 /**
- * This is where you define all your Distributed Data Structures
+ * The PrimedComponentFactory declares the component and defines any additional distributed data structures.
+ * To add a SharedSequence, SharedMap, or any other structure, put it in the array below.
  */
 export const ExampleFluidComponentInstantiationFactory = new SharedComponentFactory(
   ExampleFluidComponent,

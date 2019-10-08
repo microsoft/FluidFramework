@@ -66,7 +66,8 @@ export class DiceRoller extends PrimedComponent implements IComponentHTMLVisual 
 }
 
 /**
- * This is where you define all your Distributed Data Structures
+ * The PrimedComponentFactory declares the component and defines any additional distributed data structures.
+ * To add a SharedSequence, SharedMap, or any other structure, put it in the array below.
  */
 export const DiceRollerInstantiationFactory = new PrimedComponentFactory(
     DiceRoller,
