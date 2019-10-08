@@ -985,6 +985,10 @@ class SubDirectory implements IDirectory {
      * {@inheritDoc IDirectory.set}
      */
     public set<T = any>(key: string, value: T): this {
+        if (key === undefined) {
+            throw new Error("Undefined keys are not supported");
+        }
+
         const localValue = this.directory.localValueMaker.fromInMemory(value);
         const serializableValue = localValue.makeSerializable(
             this.runtime.IComponentSerializer,
@@ -1053,8 +1057,12 @@ class SubDirectory implements IDirectory {
      * {@inheritDoc IDirectory.createSubDirectory}
      */
     public createSubDirectory(subdirName: string): IDirectory {
+        if (subdirName === undefined) {
+            throw new Error("SubDirectory name may not be undefined");
+        }
+
         if (subdirName.indexOf(posix.sep) !== -1) {
-            throw new Error(`SubDirectory names may not contain ${posix.sep}`);
+            throw new Error(`SubDirectory name may not contain ${posix.sep}`);
         }
 
         this.createSubDirectoryCore(subdirName, true, null);
