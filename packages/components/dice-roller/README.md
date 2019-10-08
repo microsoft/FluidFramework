@@ -1,4 +1,4 @@
-# Clicker Component
+# Dice roller Component
 
 This is a basic example component using the interface model and stock classes.
 
