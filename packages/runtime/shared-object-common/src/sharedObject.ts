@@ -4,7 +4,7 @@
  */
 
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { ConnectionState, ITelemetryErrorEvent, ITelemetryLogger } from "@microsoft/fluid-container-definitions";
+import { ConnectionState, IComponent, ITelemetryErrorEvent, ITelemetryLogger } from "@microsoft/fluid-container-definitions";
 import { ChildLogger, EventEmitterWithErrorHandling } from "@microsoft/fluid-core-utils";
 import { ISequencedDocumentMessage, ITree, MessageType } from "@microsoft/fluid-protocol-definitions";
 import {
@@ -15,8 +15,6 @@ import {
 } from "@microsoft/fluid-runtime-definitions";
 import * as assert from "assert";
 import * as Deque from "double-ended-queue";
-// tslint:disable-next-line:no-submodule-imports
-import * as uuid from "uuid/v4";
 import { debug } from "./debug";
 import { SharedObjectComponentHandle } from "./handle";
 import { ISharedObject } from "./types";
@@ -30,32 +28,12 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
      * @returns Returns true if the object is a SharedObject
      */
     public static is(obj: any): obj is SharedObject {
-        if (obj !== undefined
-            && obj !== null
-            && obj.__sharedObject__ === true) {
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * Get an id for a sharedobject for creation
-     * @param id - User-specified id or undefined if it is not specified
-     * @returns Generated id if the parameter `id` is undefined, value of `id` otherwise
-     */
-    protected static getIdForCreate(id?: string): string {
-        return id === undefined ? uuid() : id;
+        return obj && !!(obj as IComponent).ISharedObject;
     }
 
     public get ISharedObject() { return this; }
     public get IChannel() { return this; }
     public get IComponentLoadable() { return this; }
-
-    /**
-     * Marker to clearly identify the object as a shared object
-     */
-    // tslint:disable-next-line:variable-name
-    public readonly __sharedObject__ = true;
 
     public readonly handle: IComponentHandle;
 

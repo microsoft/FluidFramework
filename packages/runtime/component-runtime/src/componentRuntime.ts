@@ -40,6 +40,8 @@ import {
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import * as assert from "assert";
 import { EventEmitter } from "events";
+// tslint:disable-next-line:no-submodule-imports
+import * as uuid from "uuid/v4";
 import { IChannelContext } from "./channelContext";
 import { LocalChannelContext } from "./localChannelContext";
 import { RemoteChannelContext } from "./remoteChannelContext";
@@ -237,7 +239,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         return channel;
     }
 
-    public createChannel(id: string, type: string): IChannel {
+    public createChannel(id: string = uuid(), type: string): IChannel {
         this.verifyNotClosed();
 
         const context = new LocalChannelContext(

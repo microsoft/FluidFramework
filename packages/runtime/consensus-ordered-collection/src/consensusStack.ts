@@ -37,8 +37,7 @@ export class ConsensusStack<T = any> extends ConsensusOrderedCollection<T> {
      * @returns newly create consensus stack (but not attached yet)
      */
     public static create<T = any>(runtime: IComponentRuntime, id?: string) {
-        return runtime.createChannel(ConsensusOrderedCollection.getIdForCreate(id),
-            ConsensusStackFactory.Type) as ConsensusStack<T>;
+        return runtime.createChannel(id, ConsensusStackFactory.Type) as ConsensusStack<T>;
     }
 
     /**

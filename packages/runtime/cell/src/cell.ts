@@ -54,7 +54,7 @@ export class SharedCell extends SharedObject implements ISharedCell {
      * @returns newly create shared map (but not attached yet)
      */
     public static create(runtime: IComponentRuntime, id?: string) {
-        return runtime.createChannel(SharedObject.getIdForCreate(id), CellFactory.Type) as SharedCell;
+        return runtime.createChannel(id, CellFactory.Type) as SharedCell;
     }
 
     /**

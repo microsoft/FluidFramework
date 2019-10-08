@@ -104,7 +104,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
      * @returns Newly create shared map (but not attached yet)
      */
     public static create(runtime: IComponentRuntime, id?: string): SharedMap {
-        return runtime.createChannel(SharedObject.getIdForCreate(id), MapFactory.Type) as SharedMap;
+        return runtime.createChannel(id, MapFactory.Type) as SharedMap;
     }
 
     /**
