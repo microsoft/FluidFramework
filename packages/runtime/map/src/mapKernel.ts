@@ -4,7 +4,6 @@
  */
 
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { safelyParseJSON } from "@microsoft/fluid-core-utils";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { parseHandles, serializeHandles, ValueType } from "@microsoft/fluid-shared-object-base";
@@ -408,7 +407,7 @@ export class MapKernel {
      * @param data - A JSON string containing serialized map data
      */
     public populate(data: string): void {
-        const json = safelyParseJSON(data) as IMapDataObject;
+        const json = JSON.parse(data) as IMapDataObject;
         for (const [key, serializable] of Object.entries(json)) {
             const localValue = {
                 key,
