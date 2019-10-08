@@ -74,112 +74,55 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
             versions: protocolVersions,
         };
 
-        // tslint:disable-next-line:max-func-body-length
         socketReference.pendingConnect = new Promise<IConnected>((resolve, reject) => {
-            // Listen for ops sent before we receive a response to connect_document
-            const queuedMessages: ISequencedDocumentMessage[] = [];
-            const queuedContents: IContentMessage[] = [];
-            const queuedSignals: ISignalMessage[] = [];
+            let cleanupListeners: () => void;
 
-            const disconnect = () => {
-                OdspDocumentDeltaConnection.removeSocketIoReference(socketReferenceKey);
+            const {
+                errorHandler,
+                connectErrorHandler,
+                connectTimeoutHandler,
+                earlyOpHandler,
+                earlyOpContentHandler,
+                earlySignalHandler,
+                connectDocumentSuccessHandler,
+                connectDocumentErrorHandler,
+            } = OdspDocumentDeltaConnection.getSocketIoEventListerners(socketReferenceKey, id, (connected) => {
+                cleanupListeners();
+                resolve(connected);
+            }, (err: any) => {
+                cleanupListeners();
+                reject(err);
+            });
+
+            // Cleanup all the listeners we add
+            cleanupListeners = () => {
+                socket.removeListener("error", errorHandler);
+                socket.removeListener("connect_error", connectErrorHandler);
+                socket.removeListener("connect_timeout", connectTimeoutHandler);
+                socket.removeListener("op", earlyOpHandler);
+                socket.removeListener("op-content", earlyOpContentHandler);
+                socket.removeListener("signal", earlySignalHandler);
+                socket.removeListener("connect_document_success", connectDocumentSuccessHandler);
+                socket.removeListener("connect_document_error", connectDocumentErrorHandler);
             };
 
-            const earlyOpHandler = (documentId: string, msgs: ISequencedDocumentMessage[]) => {
-                if (documentId === id) {
-                    debug("Queued early ops", msgs.length);
-                    queuedMessages.push(...msgs);
-                }
-            };
-            socket.on("op", earlyOpHandler);
-
-            const earlyContentHandler = (msg: IContentMessage) => {
-                debug("Queued early contents");
-                queuedContents.push(msg);
-            };
-            socket.on("op-content", earlyContentHandler);
-
-            const earlySignalHandler = (msg: ISignalMessage) => {
-                debug("Queued early signals");
-                queuedSignals.push(msg);
-            };
-            socket.on("signal", earlySignalHandler);
+            // Listen for socket.io errors
+            socket.on("error", errorHandler);
 
             // Listen for connection issues
-            socket.on("connect_error", (error) => {
-                debug(`Socket connection error: [${error}]`);
-                reject(createErrorObject("connect_error", error));
-            });
+            socket.on("connect_error", connectErrorHandler);
 
             // Listen for timeouts
-            socket.on("connect_timeout", () => {
-                reject(createErrorObject("connect_timeout", "Socket connection timed out"));
-            });
+            socket.on("connect_timeout", connectTimeoutHandler);
 
-            socket.on("connect_document_success", (response: IConnected) => {
-                socket.removeListener("op", earlyOpHandler);
-                socket.removeListener("op-content", earlyContentHandler);
-                socket.removeListener("signal", earlySignalHandler);
+            // Listen for early ops and signals
+            socket.on("op", earlyOpHandler);
+            socket.on("op-content", earlyOpContentHandler);
+            socket.on("signal", earlySignalHandler);
 
-                if (queuedMessages.length > 0) {
-                    // some messages were queued.
-                    // add them to the list of initialMessages to be processed
-                    if (!response.initialMessages) {
-                        response.initialMessages = [];
-                    }
-
-                    response.initialMessages.push(...queuedMessages);
-
-                    response.initialMessages.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
-                }
-
-                if (queuedContents.length > 0) {
-                    // some contents were queued.
-                    // add them to the list of initialContents to be processed
-                    if (!response.initialContents) {
-                        response.initialContents = [];
-                    }
-
-                    response.initialContents.push(...queuedContents);
-
-                    response.initialContents.sort((a, b) =>
-                        // tslint:disable-next-line:strict-boolean-expressions
-                        (a.clientId === b.clientId) ? 0 : ((a.clientId < b.clientId) ? -1 : 1) ||
-                            a.clientSequenceNumber - b.clientSequenceNumber);
-                }
-
-                if (queuedSignals.length > 0) {
-                    // some signals were queued.
-                    // add them to the list of initialSignals to be processed
-                    if (!response.initialSignals) {
-                        response.initialSignals = [];
-                    }
-
-                    response.initialSignals.push(...queuedSignals);
-                }
-
-                debug("signals", JSON.stringify(response.initialSignals));
-
-                resolve(response);
-            });
-
-            socket.on("error", ((error) => {
-                debug(`Error in documentDeltaConection: ${error}`);
-
-                // This includes "Invalid namespace" error, which we consider critical (reconnecting will not help)
-                disconnect();
-
-                reject(createErrorObject("error", error, error !== "Invalid namespace"));
-            }));
-
-            socket.on("connect_document_error", ((error) => {
-                // This is not an error for the socket - it's a protocol error.
-                // In this case we disconnect the socket and indicate that we were unable to create the
-                // OdspDocumentDeltaConnection.
-                disconnect();
-
-                reject(createErrorObject("connect_document_error", error));
-            }));
+            // Listen for connect document events
+            socket.on("connect_document_success", connectDocumentSuccessHandler);
+            socket.on("connect_document_error", connectDocumentErrorHandler);
 
             socket.emit("connect_document", connectMessage);
         });
@@ -254,6 +197,118 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
 
             debug(`Removed socketio reference ${key}`);
         }
+    }
+
+    /**
+     * Returns all the event listeners when setting up the document connection
+     */
+    // tslint:disable-next-line:max-func-body-length
+    private static getSocketIoEventListerners(
+        socketReferenceKey: string,
+        id: string,
+        resolve: (connected: IConnected) => void,
+        reject: (err: any) => void) {
+        // Listen for ops sent before we receive a response to connect_document
+        const queuedMessages: ISequencedDocumentMessage[] = [];
+        const queuedContents: IContentMessage[] = [];
+        const queuedSignals: ISignalMessage[] = [];
+
+        const disconnectAndReject = (errorObject: any) => {
+            OdspDocumentDeltaConnection.removeSocketIoReference(socketReferenceKey);
+            reject(errorObject);
+        };
+
+        const connectErrorHandler = (error) => {
+            debug(`Socket connection error: [${error}]`);
+            disconnectAndReject(createErrorObject("connect_error", error));
+        };
+
+        const connectTimeoutHandler = () => {
+            disconnectAndReject(createErrorObject("connect_timeout", "Socket connection timed out"));
+        };
+
+        const errorHandler = (error) => {
+            debug(`Error in documentDeltaConection: ${error}`);
+
+            // This includes "Invalid namespace" error, which we consider critical (reconnecting will not help)
+            disconnectAndReject(createErrorObject("error", error, error !== "Invalid namespace"));
+        };
+
+        const earlyOpHandler = (documentId: string, msgs: ISequencedDocumentMessage[]) => {
+            if (documentId === id) {
+                debug("Queued early ops", msgs.length);
+                queuedMessages.push(...msgs);
+            }
+        };
+
+        const earlyOpContentHandler = (msg: IContentMessage) => {
+            debug("Queued early contents");
+            queuedContents.push(msg);
+        };
+
+        const earlySignalHandler = (msg: ISignalMessage) => {
+            debug("Queued early signals");
+            queuedSignals.push(msg);
+        };
+
+        const connectDocumentSuccessHandler = (response: IConnected) => {
+            if (queuedMessages.length > 0) {
+                // some messages were queued.
+                // add them to the list of initialMessages to be processed
+                if (!response.initialMessages) {
+                    response.initialMessages = [];
+                }
+
+                response.initialMessages.push(...queuedMessages);
+
+                response.initialMessages.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
+            }
+
+            if (queuedContents.length > 0) {
+                // some contents were queued.
+                // add them to the list of initialContents to be processed
+                if (!response.initialContents) {
+                    response.initialContents = [];
+                }
+
+                response.initialContents.push(...queuedContents);
+
+                response.initialContents.sort((a, b) =>
+                    // tslint:disable-next-line:strict-boolean-expressions
+                    (a.clientId === b.clientId) ? 0 : ((a.clientId < b.clientId) ? -1 : 1) ||
+                        a.clientSequenceNumber - b.clientSequenceNumber);
+            }
+
+            if (queuedSignals.length > 0) {
+                // some signals were queued.
+                // add them to the list of initialSignals to be processed
+                if (!response.initialSignals) {
+                    response.initialSignals = [];
+                }
+
+                response.initialSignals.push(...queuedSignals);
+            }
+
+            resolve(response);
+        };
+
+        const connectDocumentErrorHandler = (error) => {
+            // This is not an error for the socket - it's a protocol error.
+            // In this case we disconnect the socket and indicate that we were unable to create the
+            // OdspDocumentDeltaConnection.
+            disconnectAndReject(createErrorObject("connect_document_error", error));
+        };
+
+        return {
+            connectErrorHandler,
+            connectTimeoutHandler,
+            errorHandler,
+            earlyOpHandler,
+            earlyOpContentHandler,
+            earlySignalHandler,
+            connectDocumentSuccessHandler,
+            connectDocumentErrorHandler,
+        };
     }
 
     /**
