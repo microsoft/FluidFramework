@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
-import { BatchManager, NetworkError, TelemetryNullLogger } from "@microsoft/fluid-core-utils";
+import { BatchManager, NetworkError } from "@microsoft/fluid-core-utils";
 import {
     ConnectionMode,
     IClient,
@@ -48,71 +47,6 @@ function createErrorObject(handler: string, error: any, canRetry = true) {
  */
 export class DocumentDeltaConnection extends EventEmitter implements IDocumentDeltaConnection {
     /**
-     * Create a DocumentDeltaConnection.
-     * If url #1 fails to connect, will try url #2 if applicable.
-     *
-     * @param tenantId - the ID of the tenant
-     * @param id - document ID
-     * @param token - authorization token for storage service
-     * @param io - websocket library
-     * @param client - information about the client
-     * @param url - websocket URL
-     * @param url2 - alternate websocket URL
-     */
-    // tslint:disable-next-line: max-func-body-length
-    public static async create(
-        tenantId: string,
-        id: string,
-        token: string | null,
-        io: SocketIOClientStatic,
-        client: IClient,
-        mode: ConnectionMode,
-        url: string,
-        url2?: string,
-        telemetryLogger?: ITelemetryLogger): Promise<IDocumentDeltaConnection> {
-            // tslint:disable-next-line: strict-boolean-expressions
-            const hasUrl2 = !!url2;
-
-            // Create null logger if telemetry logger is not available from caller
-            const logger = telemetryLogger ? telemetryLogger : new TelemetryNullLogger();
-
-            return this.createImpl(
-                tenantId,
-                id,
-                token,
-                io,
-                client,
-                url,
-                mode,
-                hasUrl2 ? 15000 : 20000,
-            // tslint:disable-next-line: promise-function-async
-            ).catch((error) => {
-                if (error instanceof NetworkError && hasUrl2) {
-                    if (error.canRetry) {
-                        debug(`Socket connection error on non-AFD URL. Error was [${error}]. Retry on AFD URL: ${url}`);
-                        logger.sendTelemetryEvent({ eventName: "UseAfdUrl" });
-
-                        return this.createImpl(
-                            tenantId,
-                            id,
-                            token,
-                            io,
-                            client,
-                            // tslint:disable-next-line: no-non-null-assertion
-                            url2!,
-                            mode,
-                            20000,
-                        );
-                    }
-                }
-
-                logger.sendTelemetryEvent({ eventName: "FailedAfdUrl" });
-
-                throw error;
-            });
-    }
-
-    /**
      * Create a DocumentDeltaConnection
      *
      * @param tenantId - the ID of the tenant
@@ -121,18 +55,16 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
      * @param io - websocket library
      * @param client - information about the client
      * @param url - websocket URL
-     * @param timeoutMs - timeout for socket connection attempt in milliseconds
      */
     // tslint:disable-next-line: max-func-body-length
-    private static async createImpl(
+    public static async create(
         tenantId: string,
         id: string,
         token: string | null,
         io: SocketIOClientStatic,
         client: IClient,
         url: string,
-        mode: ConnectionMode,
-        timeoutMs: number): Promise<IDocumentDeltaConnection> {
+        mode: ConnectionMode): Promise<IDocumentDeltaConnection> {
 
         // Note on multiplex = false:
         // Temp fix to address issues on SPO. Scriptor hits same URL for Fluid & Notifications.
@@ -148,7 +80,6 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
                 },
                 reconnection: false,
                 transports: ["websocket"],
-                timeout: timeoutMs,
             });
 
         const connectMessage: IConnect = {
