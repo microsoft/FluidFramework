@@ -1,0 +1,59 @@
+{
+  "name": "@fluid-example/diceroller",
+  "description": "Minimal Fluid component sample to implement a collaborative dice roller.",
+  "version": "0.11.0",
+  "author": "Microsoft",
+  "repository": "microsoft/FluidFramework",
+  "main": "dist/index.js",
+  "module": "lib/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "concurrently npm:build:compile npm:tslint",
+    "build:compile": "concurrently npm:tsc npm:build:esnext",
+    "build:esnext": "tsc --project ./tsconfig.esnext.json",
+    "build:full": "npm run build",
+    "build:full:compile": "npm run build:compile",
+    "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
+    "start": "webpack-dev-server --config webpack.config.js --package package.json",
+    "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
+    "start:local": "webpack-dev-server --config webpack.config.js --package package.json --env.mode local",
+    "deploy": "npm publish --registry https://packages.wu2.prague.office-int.com",
+    "tsc": "tsc",
+    "tslint": "tslint --project tsconfig.json --format verbose",
+    "webpack": "webpack --env.production",
+    "webpack:dev": "webpack --env.development"
+  },
+  "fluid": {
+    "browser": {
+      "umd": {
+        "files": [
+          "dist/main.bundle.js"
+        ],
+        "library": "main"
+      }
+    }
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@microsoft/fluid-aqueduct": "^0.11.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.11.0",
+    "react": "^16.8.3",
+    "react-dom": "^16.8.3"
+  },
+  "devDependencies": {
+    "@microsoft/fluid-build-common": "^0.11.0",
+    "@microsoft/fluid-webpack-component-loader": "^0.11.0",
+    "@types/node": "^10.12.12",
+    "@types/react": "^16.7.7",
+    "@types/react-dom": "^16.0.11",
+    "concurrently": "^4.1.0",
+    "rimraf": "^2.6.2",
+    "ts-loader": "^4.5.0",
+    "tslint": "^5.11.0",
+    "typescript": "~3.4.5",
+    "webpack": "^4.8.2",
+    "webpack-cli": "^3.1.2",
+    "webpack-dev-server": "^3.8.0",
+    "webpack-merge": "^4.1.2"
+  }
+}

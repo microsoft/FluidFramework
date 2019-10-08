@@ -42,11 +42,19 @@
             "endpoint": "http://riddler:5000"
         }
     },
+    "mongo": {
+        "endpoint": "mongodb://mongodb:27017",
+        "collectionNames": {
+            "accounts": "accounts"
+        }
+    },
     "login": {
         "enabled": false,
         "microsoft": {
             "clientId": "",
             "secret": ""
+        },
+        "linkedAccounts": {
         },
         "accounts": [
         ]

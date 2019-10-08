@@ -89,9 +89,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
      * @returns newly create shared map (but not attached yet)
      */
     public static create(runtime: IComponentRuntime, id?: string) {
-        return runtime.createChannel(
-            SharedObject.getIdForCreate(id),
-            SharedIntervalCollectionFactory.Type) as SharedIntervalCollection;
+        return runtime.createChannel(id, SharedIntervalCollectionFactory.Type) as SharedIntervalCollection;
     }
 
     /**

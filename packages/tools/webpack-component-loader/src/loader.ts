@@ -8,7 +8,7 @@
 import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 import { IHostConfig, start as startCore } from "@microsoft/fluid-base-host";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { IFluidModule, IFluidPackage, IPackage } from "@microsoft/fluid-container-definitions";
+import { IFluidModule, IFluidPackage, IPackage, isFluidPackage } from "@microsoft/fluid-container-definitions";
 import {
     ITestDeltaConnectionServer,
     TestDeltaConnectionServer,
@@ -33,6 +33,8 @@ export interface IRouteOptions {
     fluidHost?: string;
     tenantId?: string;
     tenantSecret?: string;
+    bearerSecret?: string;
+    npm?: string;
     component?: string;
     single?: boolean;
 }
@@ -44,9 +46,7 @@ function getUser(): IDevServerUser {
      };
 }
 
-function modifyFluidPackage(packageJson: IPackage): IFluidPackage {
-    const fluidPackage = packageJson as IFluidPackage;
-
+function modifyFluidPackage(fluidPackage: IFluidPackage): IFluidPackage {
     // Start by translating the input package to be webpack-dev-server relative URLs
     for (let i = 0; i < fluidPackage.fluid.browser.umd.files.length; i++) {
         const value = fluidPackage.fluid.browser.umd.files[i];
@@ -61,7 +61,11 @@ async function getPkg(packageJson: IPackage, scriptIds: string[], component = fa
 
     // Start the creation of pkg.
     if (!packageJson) {
-        return Promise.reject("No package specified");
+        return Promise.reject(new Error("No package specified"));
+    }
+
+    if (!isFluidPackage(packageJson)) {
+        return Promise.reject(new Error(`Package ${packageJson.name} not a fluid module.`));
     }
 
     const fluidPackage = modifyFluidPackage(packageJson);
@@ -129,8 +133,6 @@ async function getPkg(packageJson: IPackage, scriptIds: string[], component = fa
     };
 }
 
-const bearerSecret = "VBQyoGpEYrTn3XQPtXW3K8fFDd";
-
 // tslint:disable-next-line: max-func-body-length
 export async function start(
     packageJson: IPackage,
@@ -158,35 +160,32 @@ export async function start(
         },
     };
     let urlResolver: IUrlResolver;
-    let npm: string;
     switch (options.mode) {
         case "localhost":
-            npm = "http://localhost:3002";
+            options.npm = "http://localhost:3002";
             urlResolver = new InsecureUrlResolver(
                 "http://localhost:3000",
                 "http://localhost:3003",
                 "http://localhost:3001",
-                "fluid",
-                "43cfc3fbf04a97c0921fd23ff10f9e4b",
+                options.tenantId,
+                options.tenantSecret,
                 getUser(),
-                bearerSecret);
+                options.bearerSecret);
             break;
 
-        case "local":
-            urlResolver = new TestResolver();
-            break;
-
-        default: // live
-            npm = "https://pragueauspkn-3873244262.azureedge.net";
-            const host = options.fluidHost ? options.fluidHost : "https://www.wu2.prague.office-int.com";
+        case "live":
             urlResolver = new InsecureUrlResolver(
-                host,
-                host.replace("www", "alfred"),
-                host.replace("www", "historian"),
-                options.tenantId ? options.tenantId : "stoic-gates",
-                options.tenantSecret ? options.tenantSecret : "1a7f744b3c05ddc525965f17a1b58aa0",
+                options.fluidHost,
+                options.fluidHost.replace("www", "alfred"),
+                options.fluidHost.replace("www", "historian"),
+                options.tenantId,
+                options.tenantSecret,
                 getUser(),
-                bearerSecret);
+                options.bearerSecret);
+            break;
+
+        default: // local
+            urlResolver = new TestResolver();
     }
 
     let documentServiceFactory: IDocumentServiceFactory;
@@ -224,7 +223,7 @@ export async function start(
         await urlResolver.resolve(req),
         pkg,
         scriptIds,
-        npm,
+        options.npm,
         config,
         {},
         double ? leftDiv : div,
@@ -243,7 +242,7 @@ export async function start(
             await urlResolver.resolve(req),
             pkg,
             scriptIds,
-            npm,
+            options.npm,
             config,
             {},
             rightDiv,
