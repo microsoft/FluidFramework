@@ -111,8 +111,8 @@ export class Layout extends EventEmitter {
     }
 
     public remove() {
-        this.doc.off("sequenceDelta", this.onChange);
-        this.doc.off("maintenance", this.onChange);
+        this.doc.removeListener("sequenceDelta", this.onChange);
+        this.doc.removeListener("maintenance", this.onChange);
         Dom.removeAllChildren(this.root);
     }
 

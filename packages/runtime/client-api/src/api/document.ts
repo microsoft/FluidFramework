@@ -247,7 +247,7 @@ async function requestDocument(loader: Loader, container: Container, uri: string
     });
 
     // tslint:disable-next-line: no-floating-promises
-    deferred.promise.finally(() => container.off("error", errorHandler));
+    deferred.promise.finally(() => container.removeListener("error", errorHandler));
     return deferred.promise;
 }
 

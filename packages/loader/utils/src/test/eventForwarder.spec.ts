@@ -80,9 +80,9 @@ describe("Loader", () => {
                     forwarder.on(testEvent, listener1);
                     forwarder.on(testEvent, listener2);
                     source.emit(testEvent, "a");
-                    forwarder.off(testEvent, listener2);
+                    forwarder.removeListener(testEvent, listener2);
                     source.emit(testEvent, "b");
-                    forwarder.off(testEvent, listener1);
+                    forwarder.removeListener(testEvent, listener1);
                     source.emit(testEvent, "c");
                     forwarder.once(testEvent, listener2);
                     source.emit(testEvent, "d");
@@ -108,7 +108,7 @@ describe("Loader", () => {
                     assert.strictEqual(sourceCount, 1);
 
                     // removed source listeners should throw
-                    source.off(errorEvent, sourceListener);
+                    source.removeListener(errorEvent, sourceListener);
                     assert.throws(() => source.emit(errorEvent));
 
                     // forwarder listener only should raise event
@@ -124,7 +124,7 @@ describe("Loader", () => {
 
                     // removed forwarder listener should not throw
                     // it is important that this case does not throw
-                    forwarder.off(errorEvent, forwarderListener);
+                    forwarder.removeListener(errorEvent, forwarderListener);
                     source.emit(errorEvent);
                     assert.strictEqual(sourceCount, 3);
                     assert.strictEqual(forwarderCount, 2);
