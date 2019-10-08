@@ -29,29 +29,27 @@ const appTenants = [
  *
  * This function purposefully does not expose all functionality.
  *
- * @param url - Url of the Fluid component to be loaded (spo and spo-df will both be loaded against odsp)
- * @param getToken - A function that either returns an SPO token, or a Routerlicious tenant token
+ * @param url - Url of the Fluid component to be loaded
  * @param div - The div to load the component into
- * @param appId - The SPO appId. If no SPO AppId available, a consistent and descriptive app name is acceptable
+ * @param pkg - A resolved package with cdn links. Overrides a query paramter.
+ * @param getToken - A function that either returns an SPO token, or a Routerlicious tenant token
  * @param clientId - The SPO clientId
  * @param clientSecret - The SPO clientSecret
- * @param pkg - A resolved package with cdn links. Overrides a query paramter.
  * @param scriptIds - the script tags the chaincode are attached to the view with
  */
 export async function loadFluidComponent(
     url: string,
-    getToken: () => Promise<string>,
     div: HTMLDivElement,
-    appId: string,
-    clientId: string,
-    secret: string,
+    getToken?: () => Promise<string>,
+    clientId?: string,
+    clientSecret?: string,
     pkg?: IResolvedPackage,
     scriptIds?: string[],
 ): Promise<any> {
 
     let componentP: Promise<any>;
     if (isRouterliciousUrl(url)) {
-        componentP = startWrapper(url, getToken, div, clientId, secret, pkg, scriptIds);
+        componentP = loadRouterlicious(url, getToken, div, clientId, clientSecret, pkg, scriptIds);
     } else if (isSpoUrl(url)) {
         throw new Error("Office.com URLs are not yet supported.");
     } else {
@@ -60,7 +58,7 @@ export async function loadFluidComponent(
     return componentP;
 }
 
-async function startWrapper(
+async function loadRouterlicious(
     href: string,
     getToken: () => Promise<string>,
     div: HTMLDivElement,
