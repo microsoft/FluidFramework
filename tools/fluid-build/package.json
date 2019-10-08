@@ -1,6 +1,6 @@
 {
   "name": "fluid-build",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Fluid Build tool",
   "private": true,
   "main": "dist/fluidBuild.js",
