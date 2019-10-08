@@ -8,7 +8,7 @@
 import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 import { IHostConfig, start as startCore } from "@microsoft/fluid-base-host";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { IFluidModule, IFluidPackage, IPackage } from "@microsoft/fluid-container-definitions";
+import { IFluidModule, IFluidPackage, IPackage, isFluidPackage } from "@microsoft/fluid-container-definitions";
 import {
     ITestDeltaConnectionServer,
     TestDeltaConnectionServer,
@@ -46,9 +46,7 @@ function getUser(): IDevServerUser {
      };
 }
 
-function modifyFluidPackage(packageJson: IPackage): IFluidPackage {
-    const fluidPackage = packageJson as IFluidPackage;
-
+function modifyFluidPackage(fluidPackage: IFluidPackage): IFluidPackage {
     // Start by translating the input package to be webpack-dev-server relative URLs
     for (let i = 0; i < fluidPackage.fluid.browser.umd.files.length; i++) {
         const value = fluidPackage.fluid.browser.umd.files[i];
@@ -63,7 +61,11 @@ async function getPkg(packageJson: IPackage, scriptIds: string[], component = fa
 
     // Start the creation of pkg.
     if (!packageJson) {
-        return Promise.reject("No package specified");
+        return Promise.reject(new Error("No package specified"));
+    }
+
+    if (!isFluidPackage(packageJson)) {
+        return Promise.reject(new Error(`Package ${packageJson.name} not a fluid module.`));
     }
 
     const fluidPackage = modifyFluidPackage(packageJson);
