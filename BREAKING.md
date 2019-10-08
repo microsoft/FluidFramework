@@ -1,5 +1,9 @@
 # 0.11 Breaking Changes
 
+- [SequenceEvent start/end replaced with first/last](#SequenceEvent-startend-replaced-with-firstlast)
+
+## SequenceEvent start/end replaced with first/last
+The `start` and `end` members of SequenceEvent (and SequenceDeltaEvent) have been replaced with `first` and `last`, which return the first and last range, respectively. The values equivalent to `start` and `end` can be obtained with `first.position` and `last.position + last.segment.cachedLength`.
 
 # 0.10 Breaking Changes
 
