@@ -40,7 +40,7 @@ export class Editor {
         this.root.removeEventListener("paste", this.onPaste);
         this.root.removeEventListener("keydown", this.onKeyDown);
         this.root.removeEventListener("keypress", this.onKeyPress);
-        this.layout.off("render", this.caretSync);
+        this.layout.removeListener("render", this.caretSync);
         this.layout.remove();
     }
 
