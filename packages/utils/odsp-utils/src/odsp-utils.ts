@@ -56,9 +56,14 @@ async function processTokenBody(requestResult: IRequestResult): Promise<IODSPTok
     return { accessToken, refreshToken };
 }
 
-export async function postTokenRequest(postBody: string): Promise<IODSPTokens> {
+export function getTenant(server: string) {
+    const tenant = server.substr(0, server.indexOf("."));
+    return (tenant === "microsoft") ? "organizations" : `${tenant}.onmicrosoft.com`;
+}
+
+export async function postTokenRequest(server: string, postBody: string): Promise<IODSPTokens> {
     return new Promise((resolve, reject) => {
-        const tokenUrl = "https://login.microsoftonline.com/organizations/oauth2/v2.0/token";
+        const tokenUrl = `https://login.microsoftonline.com/${getTenant(server)}/oauth2/v2.0/token`;
 
         request.post({ url: tokenUrl, body: postBody },
             (error, response, body) => {
@@ -74,7 +79,8 @@ export async function postTokenRequest(postBody: string): Promise<IODSPTokens> {
 async function refreshAccessToken(server: string, clientConfig: IClientConfig, tokens: IODSPTokens) {
     console.log("Refreshing access token");
     tokens.accessToken = "";
-    const odspTokens = await postTokenRequest(getRefreshAccessTokenBody(server, clientConfig, tokens.refreshToken));
+    const odspTokens = await postTokenRequest(server,
+        getRefreshAccessTokenBody(server, clientConfig, tokens.refreshToken));
     tokens.accessToken = odspTokens.accessToken;
     tokens.refreshToken = odspTokens.refreshToken;
     return odspTokens;
