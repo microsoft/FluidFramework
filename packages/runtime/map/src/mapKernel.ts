@@ -304,6 +304,10 @@ export class MapKernel {
      * {@inheritDoc ISharedMap.set}
      */
     public set(key: string, value: any) {
+        if (key === undefined) {
+            throw new Error("Undefined keys are not supported");
+        }
+
         const localValue = this.localValueMaker.fromInMemory(value);
         const serializableValue = localValue.makeSerializable(
             this.runtime.IComponentSerializer,
