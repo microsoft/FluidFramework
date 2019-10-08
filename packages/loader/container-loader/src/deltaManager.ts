@@ -810,6 +810,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         for (const message of messages) {
             // Check that the messages are arriving in the expected order
             if (message.sequenceNumber !== this.lastQueuedSequenceNumber + 1) {
+                // tslint:disable-next-line: max-line-length
                 debug(`DeltaManager: enque Messages *Out of* Order Message ${message.sequenceNumber} - last ${this.lastQueuedSequenceNumber}`);
 
                 this.handleOutOfOrderMessage(message);

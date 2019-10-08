@@ -4,7 +4,13 @@
  */
 
 import { fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
-import { FileMode, ISequencedDocumentMessage, ITree, MessageType, TreeEntry } from "@microsoft/fluid-protocol-definitions";
+import {
+    FileMode,
+    ISequencedDocumentMessage,
+    ITree,
+    MessageType,
+    TreeEntry,
+} from "@microsoft/fluid-protocol-definitions";
 import {
     IChannelAttributes,
     IComponentRuntime,
@@ -295,7 +301,7 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
      * @returns Newly create shared directory (but not attached yet)
      */
     public static create(runtime: IComponentRuntime, id?: string): SharedDirectory {
-        return runtime.createChannel(SharedObject.getIdForCreate(id), DirectoryFactory.Type) as SharedDirectory;
+        return runtime.createChannel(id, DirectoryFactory.Type) as SharedDirectory;
     }
 
     /**

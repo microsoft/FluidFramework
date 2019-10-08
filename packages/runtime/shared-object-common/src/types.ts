@@ -19,11 +19,6 @@ export interface IProvideSharedObject {
  */
 export interface ISharedObject extends IProvideSharedObject, IChannel {
     /**
-     * Marker to clearly identify the object as a shared object
-     */
-    __sharedObject__: boolean;
-
-    /**
      * Attaches an event listener for the given event
      */
     on(event: string | symbol, listener: (...args: any[]) => void): this;

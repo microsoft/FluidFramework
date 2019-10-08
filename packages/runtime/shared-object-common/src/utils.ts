@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentHandle, IComponentHandleContext, IComponentSerializer } from "@microsoft/fluid-component-core-interfaces";
+import {
+    IComponentHandle,
+    IComponentHandleContext,
+    IComponentSerializer,
+} from "@microsoft/fluid-component-core-interfaces";
 
 /**
  * Given a mostly-plain object that may have handle objects embedded within, will return a fully-plain object
