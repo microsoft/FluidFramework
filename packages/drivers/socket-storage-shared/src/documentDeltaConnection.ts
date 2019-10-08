@@ -25,6 +25,7 @@ const protocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
 interface ISocketReference {
     socket: SocketIOClient.Socket;
     references: number;
+    pendingConnect?: Promise<IConnected>;
 }
 
 /**
@@ -74,9 +75,18 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         const socketReferenceKey = `${url},${tenantId},${id}`;
 
         const socketReference = DocumentDeltaConnection.getOrCreateSocketIoReference(
-            socketReferenceKey, url, tenantId, id);
+            io, socketReferenceKey, url, tenantId, id);
 
         const socket = socketReference.socket;
+
+        if (socketReference.pendingConnect) {
+            // another connection is in progress. wait for it to finish
+            try {
+                await socketReference.pendingConnect;
+            } catch (ex) {
+                // ignore any error from it
+            }
+        }
 
         const connectMessage: IConnect = {
             client,
@@ -88,7 +98,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         };
 
         // tslint:disable-next-line:max-func-body-length
-        const connection = await new Promise<IConnected>((resolve, reject) => {
+        socketReference.pendingConnect = new Promise<IConnected>((resolve, reject) => {
             // Listen for ops sent before we receive a response to connect_document
             const queuedMessages: ISequencedDocumentMessage[] = [];
             const queuedContents: IContentMessage[] = [];
@@ -197,6 +207,9 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
             socket.emit("connect_document", connectMessage);
         });
 
+        const connection = await socketReference.pendingConnect;
+        socketReference.pendingConnect = undefined;
+
         return new DocumentDeltaConnection(socket, id, connection, socketReferenceKey);
     }
 
@@ -207,6 +220,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
      * Gets or create a socket io connection for the given key
      */
     private static getOrCreateSocketIoReference(
+        io: SocketIOClientStatic,
         key: string,
         url: string,
         tenantId: string,
