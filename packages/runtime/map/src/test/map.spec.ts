@@ -49,7 +49,7 @@ describe("Routerlicious", () => {
                 let called2: boolean = false;
                 dummyMap.on("op", (agr1, arg2, arg3) => called1 = true);
                 dummyMap.on("valueChanged", (agr1, arg2, arg3, arg4) => called2 = true);
-                dummyMap.set("dwyane", "johnson");
+                dummyMap.set("marco", "polo");
                 assert.equal(called1, false, "op");
                 assert.equal(called2, true, "valueChanged");
             });
@@ -113,6 +113,15 @@ describe("Routerlicious", () => {
                     const retrieved = sharedMap.get("object");
                     assert.equal(await retrieved.subMapHandle.get(), subMap);
                     assert.equal(await retrieved.nestedObj.subMap2Handle.get(), subMap2);
+                });
+
+                it("Should reject undefined and null key sets", () => {
+                    assert.throws(() => {
+                        sharedMap.set(undefined, "one");
+                    }, "Should throw for key of undefined");
+                    assert.throws(() => {
+                        sharedMap.set(null, "two");
+                    }, "Should throw for key of null");
                 });
             });
 
