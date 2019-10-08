@@ -55,7 +55,7 @@ describe("Runtime", () => {
                         "",
                         {
                             on: (event, listener) => emitter.on(event, listener),
-                            off: (event, listener) => emitter.off(event, listener),
+                            off: (event, listener) => emitter.removeListener(event, listener),
                             connected: true,
                             summarizerClientId,
                             deltaManager: {
