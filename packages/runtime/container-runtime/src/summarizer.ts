@@ -229,12 +229,13 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
         this.clearIdleTimer();
 
         // clear pending if timeout waiting for server ack
-        if (this.summaryPending) {
+        if (this.summaryPending && !this.summarizing) {
             const pendingTime = Date.now() - this.lastSummaryTime;
             if (pendingTime > this.configuration.maxAckWaitTime) {
                 this.logger.sendErrorEvent({
                     eventName: "SummaryAckWaitTimeout",
                     maxAckWaitTime: this.configuration.maxAckWaitTime,
+                    pendingSummarySequenceNumber: this.pendingSummarySequenceNumber,
                 });
                 this.cancelPending();
             }
