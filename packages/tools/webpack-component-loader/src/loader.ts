@@ -8,8 +8,9 @@
 import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 import { IHostConfig, start as startCore } from "@microsoft/fluid-base-host";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { IFluidModule, IFluidPackage, IPackage } from "@microsoft/fluid-container-definitions";
+import { IFluidModule, IFluidPackage, IPackage, isFluidPackage } from "@microsoft/fluid-container-definitions";
 import {
+    ITestDeltaConnectionServer,
     TestDeltaConnectionServer,
     TestDocumentServiceFactory,
     TestResolver,
@@ -22,7 +23,7 @@ import * as jwt from "jsonwebtoken";
 import * as uuid from "uuid/v4";
 import { InsecureUrlResolver } from "./insecureUrlResolver";
 import { SessionStorageDbFactory } from "./sessionStorageTestDb";
-// import * as fetch from "isomorphic-fetch";
+
 export interface IDevServerUser extends IUser {
     name: string;
 }
@@ -32,7 +33,10 @@ export interface IRouteOptions {
     fluidHost?: string;
     tenantId?: string;
     tenantSecret?: string;
+    bearerSecret?: string;
+    npm?: string;
     component?: string;
+    single?: boolean;
 }
 
 function getUser(): IDevServerUser {
@@ -42,9 +46,7 @@ function getUser(): IDevServerUser {
      };
 }
 
-function modifyFluidPackage(packageJson: IPackage): IFluidPackage {
-    const fluidPackage = packageJson as IFluidPackage;
-
+function modifyFluidPackage(fluidPackage: IFluidPackage): IFluidPackage {
     // Start by translating the input package to be webpack-dev-server relative URLs
     for (let i = 0; i < fluidPackage.fluid.browser.umd.files.length; i++) {
         const value = fluidPackage.fluid.browser.umd.files[i];
@@ -59,7 +61,11 @@ async function getPkg(packageJson: IPackage, scriptIds: string[], component = fa
 
     // Start the creation of pkg.
     if (!packageJson) {
-        return Promise.reject("No package specified");
+        return Promise.reject(new Error("No package specified"));
+    }
+
+    if (!isFluidPackage(packageJson)) {
+        return Promise.reject(new Error(`Package ${packageJson.name} not a fluid module.`));
     }
 
     const fluidPackage = modifyFluidPackage(packageJson);
@@ -127,8 +133,6 @@ async function getPkg(packageJson: IPackage, scriptIds: string[], component = fa
     };
 }
 
-const bearerSecret = "VBQyoGpEYrTn3XQPtXW3K8fFDd";
-
 // tslint:disable-next-line: max-func-body-length
 export async function start(
     documentId: string,
@@ -157,38 +161,36 @@ export async function start(
         },
     };
     let urlResolver: IUrlResolver;
-    let npm: string;
     switch (options.mode) {
         case "localhost":
-            npm = "http://localhost:3002";
+            options.npm = "http://localhost:3002";
             urlResolver = new InsecureUrlResolver(
                 "http://localhost:3000",
                 "http://localhost:3003",
                 "http://localhost:3001",
-                "fluid",
-                "43cfc3fbf04a97c0921fd23ff10f9e4b",
+                options.tenantId,
+                options.tenantSecret,
                 getUser(),
-                bearerSecret);
+                options.bearerSecret);
             break;
 
-        case "local":
-            urlResolver = new TestResolver();
-            break;
-
-        default: // live
-            npm = "https://pragueauspkn-3873244262.azureedge.net";
-            const host = options.fluidHost ? options.fluidHost : "https://www.wu2.prague.office-int.com";
+        case "live":
             urlResolver = new InsecureUrlResolver(
-                host,
-                host.replace("www", "alfred"),
-                host.replace("www", "historian"),
-                options.tenantId ? options.tenantId : "stoic-gates",
-                options.tenantSecret ? options.tenantSecret : "1a7f744b3c05ddc525965f17a1b58aa0",
+                options.fluidHost,
+                options.fluidHost.replace("www", "alfred"),
+                options.fluidHost.replace("www", "historian"),
+                options.tenantId,
+                options.tenantSecret,
                 getUser(),
-                bearerSecret);
+                options.bearerSecret);
+            break;
+
+        default: // local
+            urlResolver = new TestResolver();
     }
 
     let documentServiceFactory: IDocumentServiceFactory;
+    let deltaConn: ITestDeltaConnectionServer ;
     if (options.mode !== "local") {
         documentServiceFactory = new RouterliciousDocumentServiceFactory(
             false,
@@ -197,34 +199,56 @@ export async function start(
             true,
             undefined,
         );
-        const hostConf: IHostConfig = { documentServiceFactory, urlResolver };
-
-        startCore(
-            url,
-            await urlResolver.resolve(req),
-            pkg,
-            scriptIds,
-            npm,
-            config,
-            {},
-            div,
-            hostConf,
-        );
     } else {
 
-        const deltaConn = TestDeltaConnectionServer.create(new SessionStorageDbFactory(documentId));
+        deltaConn = TestDeltaConnectionServer.create(new SessionStorageDbFactory(documentId));
         documentServiceFactory = new TestDocumentServiceFactory(deltaConn);
-        const hostConf: IHostConfig = { documentServiceFactory, urlResolver };
+    }
+    const hostConf: IHostConfig = { documentServiceFactory, urlResolver };
+
+    const double = (options.mode === "local") && !options.single;
+    let leftDiv: HTMLDivElement;
+    let rightDiv: HTMLDivElement;
+    if (double) {
+        leftDiv = document.createElement("div");
+        leftDiv.style.width = "50%";
+        leftDiv.style.cssFloat = "left";
+        leftDiv.style.border = "1px solid lightgray";
+        rightDiv = document.createElement("div");
+        rightDiv.style.marginLeft = "50%";
+        rightDiv.style.border = "1px solid lightgray";
+        div.append(leftDiv, rightDiv);
+    }
+
+    startCore(
+        url,
+        await urlResolver.resolve(req),
+        pkg,
+        scriptIds,
+        options.npm,
+        config,
+        {},
+        double ? leftDiv : div,
+        hostConf,
+    );
+
+    if (double) {
+        // new documentServiceFactory for right div, same everything else
+        const docServFac2: IDocumentServiceFactory = new TestDocumentServiceFactory(deltaConn);
+        const hostConf2 = { documentServiceFactory: docServFac2, urlResolver };
+
+        // startCore will create a new Loader/Container/Component from the startCore above. This is
+        // intentional because we want to emulate two clients collaborating with each other.
         startCore(
             url,
             await urlResolver.resolve(req),
             pkg,
             scriptIds,
-            npm,
+            options.npm,
             config,
             {},
-            div,
-            hostConf,
+            rightDiv,
+            hostConf2,
         );
     }
 }

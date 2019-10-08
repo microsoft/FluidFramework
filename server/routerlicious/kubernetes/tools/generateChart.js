@@ -53,6 +53,7 @@ login:
   accounts:
     username: ""
     password: ""
+  linkedAccounts: {}
 
 gateway:
   name: gateway

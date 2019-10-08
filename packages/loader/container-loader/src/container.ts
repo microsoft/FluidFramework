@@ -903,7 +903,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             // We can group that info in previous event, but it's easier to analyze telemetry if these are
             // two separate events (actually - three!).
             this.logger.sendPerformanceEvent({
-                eventName: this.firstConnection ? "ConnectionStateChange_InitialConnect" : "ConnectionStateChange_Reconnect",
+                eventName:
+                    this.firstConnection
+                    ? "ConnectionStateChange_InitialConnect"
+                    : "ConnectionStateChange_Reconnect",
                 duration: time - this.connectionTransitionTimes[this.connectionState],
                 reason,
             });

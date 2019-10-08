@@ -9,9 +9,7 @@ export let dumpMessages = false;
 export let dumpMessageStats = false;
 export let dumpSnapshotStats = false;
 export let dumpSnapshotTrees = false;
-export let dumpSnapshotBlobs = false;
 export let dumpSnapshotVersions = false;
-export let dumpTotalStats = false;
 export let paramSnapshotVersionIndex: number | undefined;
 export let paramNumSnapshotVersions = 10;
 
@@ -35,10 +33,10 @@ const optionsArray =
         ["--dump:rawmessage", "dump all messages"],
         ["--dump:snapshotVersion", "dump a list of snapshot version"],
         ["--dump:snapshotTree", "dump the snapshot trees"],
-        ["--dump:snapshotBlob", "dump the contents of snapshot blobs"],
         ["--forceRefreshToken", "Force refresh token (SPO only)"],
         ["--stat:message", "show message type, channel type, data type statistics"],
         ["--stat:snapshot", "show a table of snapshot path and blob size"],
+        ["--stat", "Show both messages & snapshot stats"],
         ["--filter:messageType <type>", "filter message by <type>"],
         ["--jwt <token>", "token to be used for routerlicious URLs"],
         ["--numSnapshotVersions <number>", "Number of versions to load (default:10)"],
@@ -68,7 +66,8 @@ export function parseArguments() {
                 dumpMessageStats = true;
                 break;
             case "--stat":
-                dumpTotalStats = true;
+                dumpMessageStats = true;
+                dumpSnapshotStats = true;
                 break;
             case "--filter:messageType":
                 messageTypeFilter.add(parseStrArg(i++, "type name for messageType filter"));
@@ -81,9 +80,6 @@ export function parseArguments() {
                 break;
             case "--dump:snapshotTree":
                 dumpSnapshotTrees = true;
-                break;
-            case "--dump:snapshotBlob":
-                dumpSnapshotBlobs = true;
                 break;
             case "--help":
                 printUsage();

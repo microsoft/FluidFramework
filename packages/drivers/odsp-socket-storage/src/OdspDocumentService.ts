@@ -106,7 +106,7 @@ export class OdspDocumentService implements IDocumentService {
      * @returns returns the document storage service for sharepoint driver.
      */
     public async connectToStorage(): Promise<IDocumentStorageService> {
-        const latestSha: string | null | undefined = null;
+        const latestSha: string | null | undefined = undefined;
 
         this.storageManager = new OdspDocumentStorageManager(
             { app_id: this.appId },

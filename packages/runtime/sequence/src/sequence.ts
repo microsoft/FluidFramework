@@ -6,7 +6,13 @@
 import { ChildLogger, Deferred, fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
 import { IValueChanged, MapKernel } from "@microsoft/fluid-map";
 import * as MergeTree from "@microsoft/fluid-merge-tree";
-import { FileMode, ISequencedDocumentMessage, ITree, MessageType, TreeEntry } from "@microsoft/fluid-protocol-definitions";
+import {
+    FileMode,
+    ISequencedDocumentMessage,
+    ITree,
+    MessageType,
+    TreeEntry,
+} from "@microsoft/fluid-protocol-definitions";
 import { IChannelAttributes, IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
 import { parseHandles, serializeHandles, SharedObject } from "@microsoft/fluid-shared-object-base";
 import * as assert from "assert";
@@ -430,9 +436,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     protected onConnect(pending: any[]) {
 
         for (const message of pending) {
-            if (this.intervalMapKernel.hasHandlerFor(message)) {
-                this.intervalMapKernel.trySubmitMessage(message);
-            }
+            this.intervalMapKernel.trySubmitMessage(message);
         }
 
         // Update merge tree collaboration information with new client ID and then resend pending ops

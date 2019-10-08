@@ -87,6 +87,15 @@ export interface IFluidPackage extends IPackage {
     };
 }
 
+/**
+ * Check if the package.json defines a fluid module, which requires a `fluid` entry
+ * @param pkg - the package json data to check if it is a fluid package.
+ */
+export function isFluidPackage(pkg: IPackage): pkg is IFluidPackage {
+    // tslint:disable-next-line: no-unsafe-any
+    return pkg.fluid && pkg.fluid.browser && pkg.fluid.browser.umd;
+}
+
 export enum ConnectionState {
     /**
      * The document is no longer connected to the delta server

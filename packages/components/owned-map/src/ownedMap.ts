@@ -26,7 +26,7 @@ export class OwnedSharedMap extends SharedMap implements ISharedMap {
      * @returns newly create owned shared map (but not attached yet)
      */
     public static create(runtime: IComponentRuntime, id?: string) {
-        return runtime.createChannel(OwnedSharedMap.getIdForCreate(id), OwnedMapFactory.Type) as OwnedSharedMap;
+        return runtime.createChannel(id, OwnedMapFactory.Type) as OwnedSharedMap;
     }
 
     /**
