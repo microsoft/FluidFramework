@@ -1,7 +1,7 @@
 {
-  "name": "@microsoft/fluid-r11s-urlresolver",
+  "name": "@microsoft/fluid-routerlicious-urlresolver",
   "version": "0.11.0",
-  "description": "Url Resolver for r11s urls.",
+  "description": "Url Resolver for routerlicious urls.",
   "main": "dist/index.js",
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
