@@ -88,31 +88,17 @@ module.exports = class extends Generator {
     packageJson.name = "@yo-fluid/" + this.answers.name.toLowerCase();
     packageJson.description = this.answers.description;
 
-    packageJson = this._cleanDependencies(packageJson);
+    if (this.answers.template === "vanillaJS") {
+      // REMOVE react-specific dependencies. This is preferred because it keeps all dependencies in one place
+      delete packageJson.devDependencies["@types/react-dom"];
+      delete packageJson.dependencies["react"];
+      delete packageJson.dependencies["react-dom"];
+    }
 
     this.fs.writeJSON(
       this.destinationPath("package.json"), // TO
       packageJson // contents
     );
-  }
-
-  /**
-   * REMOVE dependencies. This is preferred because it keeps all dependencies in one place
-   * @param {*} packageJson 
-   */
-  _cleanDependencies(packageJson) {
-    switch (this.answers.template) {
-      case "react": {
-        break;
-      }
-      case "vanillaJS": {
-        delete packageJson.devDependencies["@types/react-dom"];
-        delete packageJson.dependencies["react"];
-        delete packageJson.dependencies["react-dom"];
-        break;
-      }
-    }
-    return packageJson;
   }
 
   _copyComponent() {
