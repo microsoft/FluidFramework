@@ -102,7 +102,7 @@ module.exports = class extends Generator {
   }
 
   _copyComponent() {
-    const componentFilePath = this.answers.template === "react" ? "src/main.tsx" : "src/main.ts"
+    const componentFilePath = this.answers.template === "react" ? "src/main.tsx" : "src/main.ts";
     const fileString = this.fs.read(this.templatePath(componentFilePath));
 
     const project = new Project({});
