@@ -24,7 +24,7 @@ any nested component.
 ## Copy
 
 Hosts can use their “selection” or equivalent concept to identify any nested components involved.
-If the selection includes nested components, the host should use the **IComponentClipboardProvider**
+If the selection includes nested components, the host should use the **IComponentClipboardData**
 interface on each of these nested component to acquire their contribution to the copied content,
 and combine it with its own copied content. These nested components should do the same with their
 own nested components. What content a component provides is entirely up to it.

@@ -30,11 +30,11 @@ export const fluidUrlAttributeName = "fluidUrl";
 
 export interface IComponentClipboardData extends IProvideComponentClipboardData {
   /**
-   * Return a new/unattached HTMLElement representation of the entire component instance to be
-   * serialized for the html clipboard slot.
+   * Return the serialized HTML representation of the entire component instance to be
+   * included for the html clipboard slot.
    * @alpha
    */
-  getComponentHtmlForClipboard(): HTMLElement | undefined;
+  getComponentHtmlForClipboard(): string | undefined;
 
   /**
    * Returns the string representation for the entire component instance to be serialized for the
