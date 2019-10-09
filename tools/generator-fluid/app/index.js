@@ -48,7 +48,7 @@ module.exports = class extends Generator {
         default: function (answers) {
           return "./" + answers.name;
         },
-      }
+      },
     ]);
 
     this.destinationRoot(this.answers.path);
@@ -57,7 +57,7 @@ module.exports = class extends Generator {
   moveBuildFiles() {
     this.fs.copy(
       this.templatePath("tsconfig.json"), // FROM
-      this.destinationPath("tsconfig.json") // TO
+      this.destinationPath("tsconfig.json"), // TO
     );
 
     this._copyPackageFile();
@@ -66,17 +66,17 @@ module.exports = class extends Generator {
 
     this.fs.copy(
       this.templatePath("webpack.*.js"), // FROM
-      this.destinationPath("./") // TO Base Folder
+      this.destinationPath("./"), // TO Base Folder
     );
 
     this.fs.copy(
       this.templatePath("README.md"), // FROM
-      this.destinationPath("./README.md") // TO Base Folder
+      this.destinationPath("./README.md"), // TO Base Folder
     );
 
     this.fs.copy(
       this.templatePath(".*"), // FROM
-      this.destinationPath("./") // TO
+      this.destinationPath("./"), // TO
     );
   }
 
@@ -97,7 +97,7 @@ module.exports = class extends Generator {
 
     this.fs.writeJSON(
       this.destinationPath("package.json"), // TO
-      packageJson // contents
+      packageJson, // contents
     );
   }
 
@@ -109,7 +109,7 @@ module.exports = class extends Generator {
 
     const file = project.createSourceFile(
       this.destinationPath(componentFilePath),
-      fileString
+      fileString,
     );
 
     const componentClassName = this.answers.name.charAt(0).toUpperCase() + this.answers.name.slice(1);
@@ -129,12 +129,12 @@ module.exports = class extends Generator {
 
     const file = project.createSourceFile(
       this.destinationPath("src/index.ts"),
-      fileString
+      fileString,
     );
 
     // Change Classname plus references
     const componentDec = file.getImportDeclaration((dec) => {
-      return dec.isModuleSpecifierRelative()
+      return dec.isModuleSpecifierRelative();
     });
 
     const componentClassName = this.answers.name.charAt(0).toUpperCase() + this.answers.name.slice(1);
