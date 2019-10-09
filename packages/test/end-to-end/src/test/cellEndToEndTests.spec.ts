@@ -6,8 +6,6 @@
 import * as api from "@fluid-internal/client-api";
 import { ISharedCell } from "@microsoft/fluid-cell";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { ISharedMap } from "@microsoft/fluid-map";
-import * as assert from "assert";
 import {
     DocumentDeltaEventManager,
     ITestDeltaConnectionServer,
@@ -15,6 +13,8 @@ import {
     TestDocumentServiceFactory,
     TestResolver,
 } from "@microsoft/fluid-local-test-server";
+import { ISharedMap } from "@microsoft/fluid-map";
+import * as assert from "assert";
 
 describe("Cell", () => {
     const id = "fluid://test.com/test/test";
