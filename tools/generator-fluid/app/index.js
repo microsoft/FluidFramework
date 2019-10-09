@@ -7,11 +7,6 @@ var Generator = require("yeoman-generator");
 var { Project } = require("ts-morph");
 var chalk = require("chalk");
 
-const choices = [
-  "react",
-  "vanillaJS"
-]
-
 /**
  * Go to the Yeoman Website to find out more about their generators in general.
  * 
@@ -19,10 +14,6 @@ const choices = [
  * Functions **with** a _ can be called as helper functions.
  */
 module.exports = class extends Generator {
-  constructor(args, opts) {
-    super(args, opts);
-  }
-
   async prompting() {
     this.log("Congratulations! You've started building your own Fluid component.");
     this.log("Let us help you get set up. Once we're done, you can start coding!");
@@ -35,20 +26,20 @@ module.exports = class extends Generator {
         filter: input => {
           input = input.replace(" ", "_").toLowerCase();
           return input.replace(/\W/g, "");
-        }
+        },
       },
       {
         type: "list",
         name: "template",
         message: "Which experience would you like to start with?",
         default: "react",
-        choices: choices
+        choices: ["react", "vanillaJS"],
       },
       {
         type: "input",
         name: "description",
         message: "Component Description",
-        default: "Fluid starter project"
+        default: "Fluid starter project",
       },
       {
         type: "input",
@@ -56,15 +47,11 @@ module.exports = class extends Generator {
         message: "Where would you like to put your Fluid component?",
         default: function (answers) {
           return "./" + answers.name;
-        }
+        },
       }
     ]);
 
-    this._setNewDestinationPath(this.answers.path);
-  }
-
-  _setNewDestinationPath(path) {
-    this.destinationRoot(path);
+    this.destinationRoot(this.answers.path);
   }
 
   moveBuildFiles() {
@@ -209,28 +196,5 @@ module.exports = class extends Generator {
       this.log(chalk.cyan(cdPath));
     }
     this.log(chalk.cyan("    npm start"));
-  }
-
-  // Helper Functions
-  _cleanDestination() {
-    this.log("Remove old tmp stuff");
-    this.fs.delete(this.destinationPath("./**/*"));
-  }
-
-  _reiterateChoices() {
-    this.log("App Name", this.answers.name);
-    this.log("Running against", this.answers.local === "Y" ? "local" : "live");
-  }
-
-  _getPathOfInvocation() {
-    this.log("InvocationRoot", this.contextRoot);
-  }
-
-  _getDestinationPath() {
-    this.log("DestinationRoot", this.destinationRoot());
-  }
-
-  _getTemplatePath() {
-    this.log("Template path", this.templatePath());
   }
 };
