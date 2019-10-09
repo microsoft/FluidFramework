@@ -23,11 +23,16 @@ const odspServers = [
 
 export class OdspUrlResolver implements IUrlResolver {
 
+    constructor(
+        private readonly odspTokens?: IODSPTokens,
+        private readonly clientConfig?: IClientConfig,
+    ) { }
+
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
         const reqUrl = new URL(request.url);
         const server = reqUrl.hostname.toLowerCase();
         if (odspServers.indexOf(server) !== -1) {
-            const { site, drive, item } = await initializeSpoODSP(server, reqUrl, request.headers);
+            const { site, drive, item } = await initializeODSP(server, reqUrl, this.odspTokens, this.clientConfig);
             if (site === undefined || drive === undefined || item === undefined) {
                 return Promise.reject("Cannot resolve the givem url!!");
             }
@@ -65,10 +70,11 @@ function getSnapshotUrl(server: string, drive: string, item: string) {
     return `${siteOrigin}/_api/v2.1/drives/${drive}/items/${item}/opStream/snapshots`;
 }
 
-async function initializeSpoODSP(
+async function initializeODSP(
     server: string,
     url: URL,
-    headers: any): Promise<{site: string, drive: string, item: string}> {
+    odspTokens: IODSPTokens | undefined,
+    clientConfig: IClientConfig | undefined): Promise<{site: string, drive: string, item: string}> {
 
     const pathname = url.pathname;
     const searchParams = url.searchParams;
@@ -78,8 +84,6 @@ async function initializeSpoODSP(
     if (sourceDoc) {
         const hostedMatch = pathname.match(/\/(personal|teams)\/([^\/]*)\//i);
         if (hostedMatch !== null) {
-            const odspTokens: IODSPTokens = headers && headers.odspTokens ? headers.odspTokens : undefined;
-            const clientConfig: IClientConfig = headers && headers.clientConfig ? headers.clientConfig : undefined;
             if (!odspTokens || !clientConfig) {
                 return Promise.reject("Missing odsp tokesn and client credentials!!");
             }
@@ -122,17 +126,13 @@ async function resolveDriveItemByFileId(
     account: string,
     docId: string,
     clientConfig: IClientConfig,
-    odspTokens: IODSPTokens,
-    forceTokenRefresh = false): Promise<IODSPDriveItem> {
+    odspTokens: IODSPTokens): Promise<IODSPDriveItem> {
 
     try {
         const driveItem: IODSPDriveItem = await getDriveItemByFileId(server, account, docId, clientConfig, odspTokens);
         return driveItem;
     } catch (e) {
         const parsedBody = JSON.parse(e.requestResult.data);
-        if (parsedBody.error === "invalid_grant" && parsedBody.suberror === "consent_required" && !forceTokenRefresh) {
-            return resolveDriveItemByFileId(server, account, docId, clientConfig, odspTokens, true);
-        }
         const responseMsg = JSON.stringify(parsedBody.error, undefined, 2);
         return Promise.reject(`Fail to connect to ODSP server\nError Response:\n${responseMsg}`);
     }

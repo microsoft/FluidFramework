@@ -16,7 +16,9 @@ describe("SPo Url Resolver", () => {
         assert.equal(resolved.driveId, "randomDrive", "Drive id does not match");
         assert.equal(resolved.itemId, "randomItem", "Item id does not match");
         assert.equal(resolved.siteUrl, url, "Site id does not match");
-        assert.equal(resolved.endpoints.snapshotStorageUrl, `${url}/opStream/snapshots`, "SnashotStorageUrl does not match");
-        assert.equal(resolved.url, `fluid-odsp://placeholder/placeholder/${resolved.hashedDocumentId}`, "fluid url does not match");
+        assert.equal(resolved.endpoints.snapshotStorageUrl,
+            `${url}/opStream/snapshots`, "SnashotStorageUrl does not match");
+        assert.equal(resolved.url,
+            `fluid-odsp://placeholder/placeholder/${resolved.hashedDocumentId}`, "fluid url does not match");
     });
 });

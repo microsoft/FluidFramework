@@ -28,7 +28,6 @@ export class RouterliciousUrlResolver implements IUrlResolver {
         private readonly config: IConfig | undefined,
         private token: string | undefined,
         private readonly appTenants: IAlfredTenant[],
-        private readonly isLocalHost: boolean = false,
         private readonly scopes?: ScopeType[],
         private readonly user?: IAlfredUser) {
     }
@@ -52,7 +51,9 @@ export class RouterliciousUrlResolver implements IUrlResolver {
                 this.token = getR11sToken(tenantId, documentId, this.appTenants, this.scopes, this.user);
             }
 
-            const serverSuffix = this.isLocalHost ? `${server}:3003` : server.substring(4);
+            const isLocalHost = server === "localhost" ? true : false;
+
+            const serverSuffix = isLocalHost ? `${server}:3003` : server.substring(4);
 
             let fluidUrl = "fluid://" +
                 `${this.config ? parse(this.config.serverUrl).host : serverSuffix}/` +
@@ -68,11 +69,16 @@ export class RouterliciousUrlResolver implements IUrlResolver {
             }
 
             const storageUrl = this.config ? this.config.blobStorageUrl.replace("historian:3000", "localhost:3001") :
-                this.isLocalHost ? `http://localhost:3001/repos/${tenantId}` : `https://historian.${serverSuffix}/repos/${tenantId}`;
+                isLocalHost ?
+                    `http://localhost:3001/repos/${tenantId}` : `https://historian.${serverSuffix}/repos/${tenantId}`;
             const ordererUrl = this.config ? this.config.serverUrl :
-                this.isLocalHost ? `http://localhost:3003/` : `https://alfred.${serverSuffix}`;
-            const deltaStorageUrl = this.config ? `${this.config.serverUrl}/deltas/${encodeURIComponent(tenantId)}/${encodeURIComponent(documentId)}` :
-                this.isLocalHost ? `http://localhost:3003/deltas/${tenantId}/${documentId}` : `https://alfred.${serverSuffix}/deltas/${tenantId}/${documentId}`;
+                isLocalHost ?
+                    `http://localhost:3003/` : `https://alfred.${serverSuffix}`;
+            const deltaStorageUrl = this.config ?
+                `${this.config.serverUrl}/deltas/${encodeURIComponent(tenantId)}/${encodeURIComponent(documentId)}` :
+                    isLocalHost ?
+                        `http://localhost:3003/deltas/${tenantId}/${documentId}` :
+                            `https://alfred.${serverSuffix}/deltas/${tenantId}/${documentId}`;
 
             const resolved: IFluidResolvedUrl = {
                 endpoints: {

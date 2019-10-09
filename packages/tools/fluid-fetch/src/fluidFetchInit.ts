@@ -4,17 +4,20 @@
  */
 
 // tslint:disable:object-literal-sort-keys
-import { BaseTelemetryNullLogger, fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
+import { BaseTelemetryNullLogger } from "@microsoft/fluid-core-utils";
+import { FluidAppOdspUrlResolver } from "@microsoft/fluid-fluidapp-odsp-urlresolver";
 import * as odsp from "@microsoft/fluid-odsp-driver";
+import { OdspUrlResolver } from "@microsoft/fluid-odsp-urlresolver";
 import {
-    getDriveItemByFileId,
     getTenant,
     IClientConfig,
     IODSPTokens,
     postTokenRequest,
 } from "@microsoft/fluid-odsp-utils";
-import { IDocumentService } from "@microsoft/fluid-protocol-definitions";
+import { OfficeUrlResolver } from "@microsoft/fluid-office-urlresolver";
+import { IDocumentService, IFluidResolvedUrl, IResolvedUrl, IUrlResolver } from "@microsoft/fluid-protocol-definitions";
 import * as r11s from "@microsoft/fluid-routerlicious-driver";
+import { RouterliciousUrlResolver } from "@microsoft/fluid-routerlicious-urlresolver";
 import * as child_process from "child_process";
 import * as fs from "fs";
 import * as http from "http";
@@ -139,27 +142,23 @@ function getClientConfig() {
 }
 
 async function initializeODSPCore(
-    odspUrl: string,
+    odspResolvedUrl: odsp.IOdspResolvedUrl,
     server: string,
-    drive: string,
-    item: string,
     clientConfig: IClientConfig,
 ) {
 
     connectionInfo = {
         server,
-        drive,
-        item,
+        drive: odspResolvedUrl.driveId,
+        item: odspResolvedUrl.itemId,
     };
 
     if (localDataOnly) {
         return;
     }
 
-    console.log(`Connecting to ODSP:\n  server: ${server}\n  drive:  ${drive}\n  item:   ${item}`);
-
-    const resolver = new odsp.OdspUrlResolver();
-    const odspResolvedUrl = await resolver.resolve({ url: odspUrl }) as odsp.IOdspResolvedUrl;
+    console.log(`Connecting to ODSP:\n  server: ${server}\n
+        drive:  ${odspResolvedUrl.driveId}\n  item:   ${odspResolvedUrl.itemId}`);
 
     const getStorageTokenStub = async (siteUrl: string, refresh: boolean) => {
         const tokens = await getODSPTokens(server, clientConfig, refresh);
@@ -174,129 +173,17 @@ async function initializeODSPCore(
     paramDocumentService = await odspDocumentServiceFactory.createDocumentService(odspResolvedUrl);
 }
 
-async function initializeOfficeODSP(url: URL) {
-    const searchParams = url.searchParams;
-    const site = searchParams.get("site");
-    if (site === null) {
-        return Promise.reject("Missing site in the querystring");
-    }
-    const drive = searchParams.get("drive");
-    if (drive === null) {
-        return Promise.reject("Missing drive in the querystring");
-    }
-    const item = searchParams.get("item");
-    if (item === null) {
-        return Promise.reject("Missing item in the querystring");
-    }
-    const server = url.host;
-    const odspUrl = odsp.createOdspUrl(url.href, drive, item, url.pathname);
-
-    return initializeODSPCore(odspUrl, server, drive, item, getClientConfig());
-}
-
-async function resolveDriveItemByFileId(
-    server: string,
-    account: string,
-    docId: string,
-    clientConfig: IClientConfig,
-    forceTokenRefresh = false,
-) {
-    const odspTokens = await getODSPTokens(server, clientConfig, forceTokenRefresh);
-    try {
-        const oldAccessToken = odspTokens.accessToken;
-        const driveItem = await getDriveItemByFileId(server, account, docId, clientConfig, odspTokens);
-        if (oldAccessToken !== odspTokens.accessToken) {
-            await saveAccessToken(server, odspTokens);
-        }
-        return driveItem;
-    } catch (e) {
-        const parsedBody = JSON.parse(e.requestResult.data);
-        if (parsedBody.error === "invalid_grant" && parsedBody.suberror === "consent_required" && !forceTokenRefresh) {
-            return resolveDriveItemByFileId(server, account, docId, clientConfig, true);
-        }
-        const responseMsg = JSON.stringify(parsedBody.error, undefined, 2);
-        return Promise.reject(`Fail to connect to ODSP server\nError Response:\n${responseMsg}`);
-    }
-}
-
-async function initializeODSPHosted(
-    url: URL,
-    server: string,
-    account: string,
-    docId: string,
-    clientConfig: IClientConfig,
-) {
-    const driveItem = await resolveDriveItemByFileId(server, account, docId, clientConfig);
-    const odspUrl = odsp.createOdspUrl(url.href, driveItem.drive, driveItem.item, url.pathname);
-    return initializeODSPCore(odspUrl, server, driveItem.drive, driveItem.item, clientConfig);
-}
-
-async function initializeODSP(
-    url: URL,
-    server: string) {
-
-    const pathname = url.pathname;
-    const searchParams = url.searchParams;
-
-    const clientConfig = getClientConfig();
-
-    // Sharepoint hosted URL
-    const sourceDoc = searchParams.get("sourcedoc");
-    if (sourceDoc) {
-        const hostedMatch = pathname.match(/\/(personal|teams)\/([^\/]*)\//i);
-        if (hostedMatch !== null) {
-            return initializeODSPHosted(url, server, `${hostedMatch[1]}/${hostedMatch[2]}`, sourceDoc, clientConfig);
-        }
-    }
-
-    // Joinsession like URL
-    const joinSessionMatch = pathname.match(
-        /(.*)\/_api\/v2.1\/drives\/([^\/]*)\/items\/([^\/]*)(.*)/);
-
-    if (joinSessionMatch === null) {
-        return Promise.reject("Unable to parse ODSP URL path");
-    }
-    const drive = joinSessionMatch[2];
-    const item = joinSessionMatch[3];
-
-    const odspUrl = odsp.createOdspUrl(url.href, drive, item, url.pathname);
-    return initializeODSPCore(odspUrl, server, drive, item, clientConfig);
-}
-
-async function initializeFluidOffice(urlSource: URL) {
-    const pathname = urlSource.pathname;
-    const siteDriveItemMatch = pathname.match(/\/p\/([^\/]*)\/([^\/]*)\/([^\/]*)/);
-
-    if (siteDriveItemMatch === null) {
-        return Promise.reject("Unable to parse fluid.office.com URL path");
-    }
-
-    const site = siteDriveItemMatch[1];
-
-    // Path value is base64 encoded so need to decode first
-    const decodedSite = fromBase64ToUtf8(site);
-
-    // Site value includes storage type
-    const storageType = decodedSite.split(":")[0];
-    const expectedStorageType = "spo";  // Only support spo for now
-    if (storageType !== expectedStorageType) {
-        return Promise.reject(`Unexpected storage type ${storageType}, expected: ${expectedStorageType}`);
-    }
-
-    // Since we have the drive and item, only take the host ignore the rest
-    const url = new URL(decodedSite.substring(storageType.length + 1));
-    const server = url.host;
-    const drive = siteDriveItemMatch[2];
-    const item = siteDriveItemMatch[3];
-    // TODO: Assume df server now
-    const odspUrl = odsp.createOdspUrl(url.href, drive, item, url.pathname);
-    return initializeODSPCore(odspUrl, server, drive, item, getClientConfig());
-}
-
-async function initializeR11s(server: string, pathname: string) {
+async function initializeR11s(server: string, pathname: string, r11sResolvedUrl: IFluidResolvedUrl) {
     const path = pathname.split("/");
-    const tenantId = path[2];
-    const documentId = path[3];
+    let tenantId: string;
+    let documentId: string;
+    if (server === "localhost" && path.length < 4) {
+        tenantId = "fluid";
+        documentId = path[2];
+    } else {
+        tenantId = path[2];
+        documentId = path[3];
+    }
 
     // latest version id is the documentId for r11s
     latestVersionsId = documentId;
@@ -311,65 +198,22 @@ async function initializeR11s(server: string, pathname: string) {
         return;
     }
 
-    const serverSuffix = server.substring(4);
     console.log(`Connecting to r11s: tenantId=${tenantId} id:${documentId}`);
     const tokenProvider = new r11s.TokenProvider(paramJWT);
     paramDocumentService = r11s.createDocumentService(
-        `https://alfred.${serverSuffix}`,
-        `https://alfred.${serverSuffix}/deltas/${tenantId}/${documentId}`,
-        `https://historian.${serverSuffix}/repos/${tenantId}`,
+        r11sResolvedUrl.endpoints.ordererUrl,
+        r11sResolvedUrl.endpoints.deltaStorageUrl,
+        r11sResolvedUrl.endpoints.storageUrl,
         tokenProvider,
         tenantId,
         documentId);
 }
 
-async function initializeR11sLocalhost(pathname: string) {
-    const path = pathname.split("/");
-    let tenantId;
-    let documentId;
-    if (path.length >= 4) {
-        tenantId = path[2];
-        documentId = path[3];
-    } else {
-        tenantId = "fluid";
-        documentId = path[2];
-    }
-
-    // latest version id is the documentId for r11s
-    latestVersionsId = documentId;
-
-    connectionInfo = {
-        server: "localhost",
-        tenantId,
-        id: documentId,
-    };
-
-    if (localDataOnly) {
-        return;
-    }
-
-    console.log(`Connecting to r11s localhost: tenantId=${tenantId} id:${documentId}`);
-    const tokenProvider = new r11s.TokenProvider(paramJWT);
-    paramDocumentService = r11s.createDocumentService(
-        `http://localhost:3003/`,
-        `http://localhost:3003/deltas/${tenantId}/${documentId}`,
-        `http://localhost:3001/repos/${tenantId}`,
-        tokenProvider,
-        tenantId,
-        documentId);
-}
-
-const officeServers = [
+const spoServers = [
     "weuprodprv.www.office.com",
     "ncuprodprv.www.office.com",
-];
-
-const fluidOfficeServers = [
     "dev.fluid.office.com",
     "fluidpreview.office.net",
-];
-
-const odspServers = [
     "microsoft-my.sharepoint-df.com",
     "microsoft-my.sharepoint.com",
     "microsoft.sharepoint-df.com",
@@ -381,6 +225,30 @@ const r11sServers = [
     "www.wu2.prague.office-int.com",
     "www.eu.prague.office-int.com",
 ];
+
+async function resolveUrl(url: string, server: string, forceTokenRefresh: boolean): Promise<IResolvedUrl> {
+    const clientConfig = getClientConfig();
+    const odspTokens = await getODSPTokens(server, clientConfig, forceTokenRefresh);
+    const resolversList: IUrlResolver[] = [
+        new OdspUrlResolver(odspTokens, clientConfig),
+        new OfficeUrlResolver(),
+        new FluidAppOdspUrlResolver(),
+        new RouterliciousUrlResolver(undefined, paramJWT, []),
+    ];
+    let resolved: IResolvedUrl | undefined;
+    for (const resolver of resolversList) {
+        try {
+            resolved = await resolver.resolve({ url });
+        } catch {
+            continue;
+        }
+    }
+    if (!resolved) {
+        throw new Error("No resolver is able to resolve the given url!!");
+    }
+    return resolved;
+}
+
 export async function fluidFetchInit() {
     if (!paramURL) {
         if (paramSave) {
@@ -401,16 +269,20 @@ export async function fluidFetchInit() {
     const url = new URL(paramURL);
 
     const server = url.hostname.toLowerCase();
-    if (officeServers.indexOf(server) !== -1) {
-        return initializeOfficeODSP(url);
-    } else if (odspServers.indexOf(server) !== -1) {
-        return initializeODSP(url, server);
-    } else if (r11sServers.indexOf(server) !== -1) {
-        return initializeR11s(server, url.pathname);
-    } else if (fluidOfficeServers.indexOf(server) !== -1) {
-        return initializeFluidOffice(url);
-    } else if (server === "localhost" && url.port === "3000") {
-        return initializeR11sLocalhost(url.pathname);
+    if (spoServers.indexOf(server) !== -1) {
+        const odspResolvedUrlP = resolveUrl(paramURL, server, false);
+        odspResolvedUrlP.then(async (odspResolvedUrl) => {
+            return initializeODSPCore(odspResolvedUrl as odsp.IOdspResolvedUrl, server, getClientConfig());
+        },
+        async (error) => {
+            console.log("Error", error);
+            // tslint:disable-next-line: no-non-null-assertion
+            const odspResolvedUrl = await resolveUrl(paramURL!, server, true);
+            return initializeODSPCore(odspResolvedUrl as odsp.IOdspResolvedUrl, server, getClientConfig());
+        });
+    } else if (r11sServers.indexOf(server) !== -1 || (server === "localhost" && url.port === "3000")) {
+        const r11sResolvedUrl = await resolveUrl(paramURL, server, false) as IFluidResolvedUrl;
+        return initializeR11s(server, url.pathname, r11sResolvedUrl);
     }
     console.log(server);
     return Promise.reject(`Unknown URL ${paramURL}`);

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+// tslint:disable: max-line-length
 import { IOdspResolvedUrl } from "@microsoft/fluid-odsp-driver";
 import * as assert from "assert";
 import { OfficeUrlResolver } from "../urlResolver";

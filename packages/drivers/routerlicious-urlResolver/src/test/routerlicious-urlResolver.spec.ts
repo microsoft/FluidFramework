@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+// tslint:disable: max-line-length
 import { IFluidResolvedUrl } from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
 import { RouterliciousUrlResolver } from "../urlResolver";
@@ -22,7 +23,7 @@ describe("Routerlicious Url Resolver", () => {
     });
 
     it("Should resolve the localhost urls correctly", async () => {
-        const urlResolver = new RouterliciousUrlResolver(undefined, token, [], true);
+        const urlResolver = new RouterliciousUrlResolver(undefined, token, []);
         const url: string = "http://localhost:3000/loader/fluid/damp-competition?chaincode=@fluid-example/shared-text@^0.11.0";
         const resolved = (await urlResolver.resolve({ url })) as IFluidResolvedUrl;
         assert.equal(resolved.tokens.jwt, token, "Token does not match");
