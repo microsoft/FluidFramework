@@ -85,7 +85,7 @@ export class SimpleContainerRuntimeFactory {
                 : this.defaultComponentId;
 
             // Pull the part of the URL after the component ID
-            const pathForComponent = trailingSlash !== -1 ? requestUrl.substr(trailingSlash) : requestUrl;
+            const pathForComponent = trailingSlash !== -1 ? requestUrl.substr(trailingSlash) : "";
 
             let wait = true;
             if (request.headers && (typeof request.headers.wait) === "boolean") {

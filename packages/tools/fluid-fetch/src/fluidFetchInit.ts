@@ -8,6 +8,7 @@ import { BaseTelemetryNullLogger, fromBase64ToUtf8 } from "@microsoft/fluid-core
 import * as odsp from "@microsoft/fluid-odsp-driver";
 import {
     getDriveItemByFileId,
+    getTenant,
     IClientConfig,
     IODSPTokens,
     postTokenRequest,
@@ -31,7 +32,7 @@ const redirectUri = "http://localhost:7000/auth/callback";
 
 async function getAuthorizationCode(server: string, clientConfig: IClientConfig): Promise<string> {
     let message = "Please open browser and navigate to this URL:";
-    const authUrl = `https://login.microsoftonline.com/organizations/oauth2/v2.0/authorize?`
+    const authUrl = `https://login.microsoftonline.com/${getTenant(server)}/oauth2/v2.0/authorize?`
         + `client_id=${clientConfig.clientId}`
         + `&scope=https://${server}/AllSites.Write`
         + `&response_type=code`
@@ -98,7 +99,7 @@ async function getRequestAccessTokenBody(server: string, clientConfig: IClientCo
 
 async function acquireTokens(server: string, clientConfig: IClientConfig): Promise<IODSPTokens> {
     console.log("Acquiring tokens");
-    const tokens = await postTokenRequest(await getRequestAccessTokenBody(server, clientConfig));
+    const tokens = await postTokenRequest(server, await getRequestAccessTokenBody(server, clientConfig));
     await saveAccessToken(server, tokens);
     return tokens;
 }
@@ -138,14 +139,13 @@ function getClientConfig() {
 }
 
 async function initializeODSPCore(
-        odspUrl: string,
-        server: string,
-        drive: string,
-        item: string,
-        clientConfig: IClientConfig) {
-    if (odspServers.indexOf(server) === -1) {
-        return Promise.reject(new Error(`Tenant not supported: ${server}`));
-    }
+    odspUrl: string,
+    server: string,
+    drive: string,
+    item: string,
+    clientConfig: IClientConfig,
+) {
+
     connectionInfo = {
         server,
         drive,
@@ -199,8 +199,8 @@ async function resolveDriveItemByFileId(
     account: string,
     docId: string,
     clientConfig: IClientConfig,
-    forceTokenRefresh = false) {
-
+    forceTokenRefresh = false,
+) {
     const odspTokens = await getODSPTokens(server, clientConfig, forceTokenRefresh);
     try {
         const oldAccessToken = odspTokens.accessToken;
@@ -220,11 +220,12 @@ async function resolveDriveItemByFileId(
 }
 
 async function initializeODSPHosted(
-        url: URL,
-        server: string,
-        account: string,
-        docId: string,
-        clientConfig: IClientConfig) {
+    url: URL,
+    server: string,
+    account: string,
+    docId: string,
+    clientConfig: IClientConfig,
+) {
     const driveItem = await resolveDriveItemByFileId(server, account, docId, clientConfig);
     const odspUrl = odsp.createOdspUrl(url.href, driveItem.drive, driveItem.item, url.pathname);
     return initializeODSPCore(odspUrl, server, driveItem.drive, driveItem.item, clientConfig);
@@ -365,6 +366,7 @@ const officeServers = [
 
 const fluidOfficeServers = [
     "dev.fluid.office.com",
+    "fluidpreview.office.net",
 ];
 
 const odspServers = [
@@ -384,7 +386,7 @@ export async function fluidFetchInit() {
         if (paramSave) {
             const file = `${paramSave}/info.json`;
             if (fs.existsSync(file)) {
-                const info = JSON.parse(fs.readFileSync(file, { encoding: "utf-8"}));
+                const info = JSON.parse(fs.readFileSync(file, { encoding: "utf-8" }));
                 setParamSave(info.url as string);
             } else {
                 console.log(`Can't find file ${file}`);

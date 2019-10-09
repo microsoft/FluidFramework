@@ -10,6 +10,7 @@ import {
     IFluidPackage,
     IPackage,
     IPackageConfig,
+    isFluidPackage,
 } from "@microsoft/fluid-container-definitions";
 import * as fetch from "isomorphic-fetch";
 
@@ -215,17 +216,15 @@ class FluidPackage {
             packageJson = this.details.details.package;
         }
 
-        if (!("fluid" in packageJson)) {
-            return Promise.reject("Not a fluid package");
+        if (!isFluidPackage(packageJson)) {
+            return Promise.reject(new Error(`Package ${packageJson.name} not a fluid module.`));
         }
-
-        const fluidPackage = packageJson as IFluidPackage;
 
         return {
             details: this.details.details,
             packageUrl: this.details.packageUrl,
             parsed: this.details.parsed,
-            pkg: fluidPackage,
+            pkg: packageJson,
         };
     }
 

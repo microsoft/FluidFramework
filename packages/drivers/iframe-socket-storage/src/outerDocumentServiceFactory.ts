@@ -5,7 +5,13 @@
 
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IHost } from "@microsoft/fluid-container-definitions";
-import { ConnectionMode, IClient, IDocumentService, IDocumentServiceFactory, IResolvedUrl } from "@microsoft/fluid-protocol-definitions";
+import {
+    ConnectionMode,
+    IClient,
+    IDocumentService,
+    IDocumentServiceFactory,
+    IResolvedUrl,
+} from "@microsoft/fluid-protocol-definitions";
 import { OuterDocumentService } from "./outerDocumentService";
 
 /**

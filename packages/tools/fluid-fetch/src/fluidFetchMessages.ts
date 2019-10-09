@@ -91,6 +91,7 @@ async function *loadAllSequencedMessages(
     }
 
     if (requests > 0) {
+        // tslint:disable-next-line: max-line-length
         console.log(`\n${Math.floor((Date.now() - timeStart) / 1000)} seconds to retrieve ${opsStorage} ops in ${requests} requests`);
     }
 
@@ -115,6 +116,7 @@ async function *loadAllSequencedMessages(
             const filtered = initialMessages.filter((a) => a.sequenceNumber > lastSequenceNumber);
             const sorted = filtered.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
             lastSeq = sorted[sorted.length - 1].sequenceNumber;
+            // tslint:disable-next-line: max-line-length
             logMsg = ` (${opsStorage} delta storage, ${initialMessages.length} initial ws messages, ${initialMessages.length - sorted.length} dup)`;
             yield sorted;
         }

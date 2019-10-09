@@ -4,10 +4,15 @@
  */
 
 import { PrimedComponent, PrimedComponentFactory, SimpleContainerRuntimeFactory } from "@microsoft/fluid-aqueduct";
-import { IComponentHandle, IComponentLoadable } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHandle, IComponentLoadable, IComponentRunnable } from "@microsoft/fluid-component-core-interfaces";
 import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
 import { WrappedComponentRegistry } from "@microsoft/fluid-container-runtime";
-import { IComponentContext, IComponentFactory, IComponentRegistry, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import {
+    IComponentContext,
+    IComponentFactory,
+    IComponentRegistry,
+    IComponentRuntime,
+} from "@microsoft/fluid-runtime-definitions";
 import { SharedString, SparseMatrix } from "@microsoft/fluid-sequence";
 import { ISharedObject } from "@microsoft/fluid-shared-object-base";
 import {
@@ -23,7 +28,9 @@ import { TestDataStore } from "./testDataStore";
 /**
  * Basic component implementation for testing.
  */
-class TestRootComponent extends PrimedComponent {
+class TestRootComponent extends PrimedComponent implements IComponentRunnable {
+    public get IComponentRunnable() { return this; }
+
     /**
      * Type name of the component for the IComponentRegistryLookup
      */
@@ -50,6 +57,8 @@ class TestRootComponent extends PrimedComponent {
     constructor(runtime: IComponentRuntime, context: IComponentContext) {
         super(runtime, context);
     }
+
+    public run = () =>  Promise.resolve();
 
     // Make this function public so TestHost can use them
     // tslint:disable-next-line: no-unnecessary-override

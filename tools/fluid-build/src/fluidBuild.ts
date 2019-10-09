@@ -64,7 +64,7 @@ async function inferRoot() {
 
 function versionCheck() {
     const pkg = require(path.join(__dirname, "..", "package.json"));
-    const builtVersion = "0.0.1";
+    const builtVersion = "0.0.2";
     if (pkg.version > builtVersion) {
         console.log(`WARNING: fluid-build is out of date, please rebuild (built: ${builtVersion}, package: ${pkg.version})\n`);
     }

@@ -6,6 +6,7 @@
 import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
 import { TscTask } from "./tscTask";
 import { readFileAsync } from "../../common/utils";
+import { existsSync } from "fs";
 
 export class TsLintTask extends LeafWithDoneFileTask {
     private tscTask: TscTask | undefined;
@@ -26,10 +27,15 @@ export class TsLintTask extends LeafWithDoneFileTask {
                     return undefined;
                 }
                 doneFileContent.tsBuildInfoFile = tsBuildInfo;
-                doneFileContent.tslintJson = await readFileAsync(this.configFileFullPath, "utf8");
+                const configFile = this.configFileFullPath;
+                if (existsSync(configFile)) {
+                    // Include the config file if it exists so that we can detect changes
+                    doneFileContent.tslintJson = await readFileAsync(this.configFileFullPath, "utf8");
+                }
             }
             return JSON.stringify(doneFileContent);
-        } catch {
+        } catch(e) {
+            this.logVerboseTask(`error generating done file content ${e}`);
             return undefined;
         }
     }
