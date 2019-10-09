@@ -26,7 +26,7 @@ export interface IProvideComponentClipboardProvider {
  * Disclaimer: These interfaces are experimental and are subject to change.
  */
 
-export const fluidUrlAttributeName = "fluid-url";
+export const fluidUrlAttributeName = "fluidUrl";
 
 export interface IComponentClipboardProvider extends IProvideComponentClipboardProvider {
   /**
