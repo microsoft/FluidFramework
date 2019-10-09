@@ -11,7 +11,7 @@ interface FastBuildOptions {
     timer: boolean;
     logtime: boolean;
     clean: boolean;
-    matchedOnly?: boolean
+    matchedOnly: boolean
     buildScript: string;
     build?: boolean;
     vscode: boolean;
@@ -32,6 +32,7 @@ export const options: FastBuildOptions = {
     timer: false,
     clean: false,
     args: [],
+    matchedOnly: true,
     root: process.env["_FLUID_ROOT_"],
     buildScript: "build",
     vscode: false,
@@ -46,32 +47,26 @@ function printUsage() {
 Usage: fluid-build <options> [<package regexp> ...]
   [<package regexp> ...] Regexp to match the package name (default: all packages)
 Options:
-  -c --clean             Same as running build script 'clean', implies -f if -s or -r is specified
-  -f --force             Force build everything and ignore dependency check
-  -? --help              Print this message
-     --logtime           Display the current time on every status message for logging
-  -r --rebuild           Clean and build
-     --root              Root directory of the fluid repo (default: env _FLUID_ROOT_)
-  -s --script <name>     NPM script to execute (default:build)
-     --timer             Time separate phases
-  -v --verbose           Verbose messages
-     --vscode            Output error message to work with default problem matcher in vscode
+  -c --clean          Same as running build script 'clean' on matched packages (all if package regexp is not specified)
+  -d --dep            Apply actions (clean/force/rebuild) to matched packages and their dependent packages
+  -f --force          Force build and ignore dependency check on matched packages (all if package regexp is not specified)
+  -? --help           Print this message
+     --logtime        Display the current time on every status message for logging
+  -r --rebuild        Clean and build on matched packages (all if package regexp is not specified)
+     --root <path>    Root directory of the fluid repo (default: env _FLUID_ROOT_)
+  -s --script <name>  NPM script to execute (default:build)
+     --timer          Time separate phases
+  -v --verbose        Verbose messages
+     --vscode         Output error message to work with default problem matcher in vscode
 `);
 }
 
-function setForce(matchedOnly: boolean) {
+function setClean(build: boolean) {
     options.force = true;
-    if (!matchedOnly || options.matchedOnly === undefined) {
-        options.matchedOnly = matchedOnly;
-    }
-}
-
-function setClean(matchedOnly: boolean, build: boolean) {
     options.clean = true;
     if (build || options.build === undefined) {
         options.build = build;
     }
-    setForce(matchedOnly);
 }
 
 export function parseOptions(argv: string[]) {
@@ -89,33 +84,23 @@ export function parseOptions(argv: string[]) {
             continue;
         }
 
-        if (arg === "-r" || arg === "--rebuild") {
-            setClean(/* matchedOnly */ false, /* build */ true);
+        if (arg === "-d" || arg === "--dep") {
+            options.matchedOnly = false;
             continue;
         }
 
-        if (arg === "-rm" || arg === "--rebuild-matched") {
-            setClean(/* matchedOnly */ true, /* build */ true);
+        if (arg === "-r" || arg === "--rebuild") {
+            setClean(true);
             continue;
         }
 
         if (arg === "-c" || arg === "--clean") {
-            setClean(/* matchedOnly */ false,  /* build */ false);
-            continue;
-        }
-
-        if (arg === "-cm" || arg === "--clean-matched") {
-            setClean(/* matchedOnly */ true, /* build */ false);
+            setClean(false);
             continue;
         }
 
         if (arg === "-f" || arg === "--force") {
-            setForce(/* matchedOnly */ false);
-            continue;
-        }
-
-        if (arg === "-fm" || arg === "--force-matched") {
-            setForce(/* matchedOnly */ true);
+            options.force = true;
             continue;
         }
 
