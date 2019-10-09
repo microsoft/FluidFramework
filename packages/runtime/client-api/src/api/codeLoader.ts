@@ -6,7 +6,11 @@
 import * as cell from "@microsoft/fluid-cell";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
-import { ICodeLoader, IContainerContext, IRuntime, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
+import { ICodeLoader,
+        IContainerContext,
+        IFluidCodeDetails,
+        IRuntime,
+        IRuntimeFactory } from "@microsoft/fluid-container-definitions";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@microsoft/fluid-container-runtime";
 import * as ink from "@microsoft/fluid-ink";
 import * as map from "@microsoft/fluid-map";
@@ -35,6 +39,7 @@ class Chaincode implements IComponentFactory {
         const consensusRegisterCollectionFactory = ConsensusRegisterCollection.getFactory();
         const sparseMatrixFactory = sequence.SparseMatrix.getFactory();
         const directoryFactory = map.SharedDirectory.getFactory();
+        const sharedIntervalFactory = sequence.SharedIntervalCollection.getFactory();
 
         // Register channel factories
         const modules = new Map<string, any>();
@@ -49,6 +54,7 @@ class Chaincode implements IComponentFactory {
         modules.set(consensusRegisterCollectionFactory.type, consensusRegisterCollectionFactory);
         modules.set(sparseMatrixFactory.type, sparseMatrixFactory);
         modules.set(directoryFactory.type, directoryFactory);
+        modules.set(sharedIntervalFactory.type, sharedIntervalFactory);
 
         ComponentRuntime.load(
             context,
@@ -152,7 +158,7 @@ export class CodeLoader implements ICodeLoader {
         this.factory = new ChaincodeFactory(runtimeOptions);
     }
 
-    public async load<T>(source: string): Promise<T> {
+    public async load<T>(source: IFluidCodeDetails): Promise<T> {
         return Promise.resolve(this.factory as any);
     }
 }

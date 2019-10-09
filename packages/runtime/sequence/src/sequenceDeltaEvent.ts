@@ -25,9 +25,9 @@ import {
 export class SequenceEvent {
     public readonly isEmpty: boolean;
     public readonly deltaOperation: MergeTreeDeltaOperationType | MergeTreeMaintenanceType;
-    private readonly pStart: Lazy<number>;
-    private readonly pEnd: Lazy<number>;
     private readonly sortedRanges: Lazy<SortedSegmentSet<ISequenceDeltaRange>>;
+    private readonly pFirst: Lazy<ISequenceDeltaRange>;
+    private readonly pLast: Lazy<ISequenceDeltaRange>;
 
     constructor(
         public readonly deltaArgs: IMergeTreeDeltaCallbackArgs | IMergeTreeMaintenanceCallbackArgs,
@@ -51,23 +51,20 @@ export class SequenceEvent {
                 return set;
             });
 
-        this.pStart = new Lazy<number>(
+        this.pFirst = new Lazy<ISequenceDeltaRange>(
             () => {
                 if (this.isEmpty) {
                     return undefined;
                 }
-                return this.sortedRanges.value.items[0].position;
+                return this.sortedRanges.value.items[0];
             });
 
-        this.pEnd = new Lazy<number>(
+        this.pLast = new Lazy<ISequenceDeltaRange>(
             () => {
                 if (this.isEmpty) {
                     return undefined;
                 }
-                const lastRange =
-                    this.sortedRanges.value.items[this.sortedRanges.value.size - 1];
-
-                return lastRange.position + lastRange.segment.cachedLength;
+                return this.sortedRanges.value.items[this.sortedRanges.value.size - 1];
             });
     }
 
@@ -86,12 +83,12 @@ export class SequenceEvent {
         return this.mergeTreeClient.longClientId;
     }
 
-    public get start(): number {
-        return this.pStart.value;
+    public get first(): ISequenceDeltaRange {
+        return this.pFirst.value;
     }
 
-    public get end(): number {
-        return this.pEnd.value;
+    public get last(): ISequenceDeltaRange {
+        return this.pLast.value;
     }
 }
 
@@ -115,9 +112,7 @@ export class SequenceDeltaEvent extends SequenceEvent {
         mergeTreeClient: Client,
     ) {
         super(deltaArgs, mergeTreeClient);
-        this.isLocal =
-            deltaArgs.mergeTreeClientId ===
-            deltaArgs.mergeTree.collabWindow.clientId;
+        this.isLocal = opArgs.sequencedMessage === undefined;
     }
 }
 

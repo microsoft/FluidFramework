@@ -24,9 +24,11 @@ export interface IChannelContext {
 
     processOp(message: ISequencedDocumentMessage, local: boolean): void;
 
-    snapshot(): Promise<ITree>;
+    snapshot(fullTree?: boolean): Promise<ITree>;
 
     isRegistered(): boolean;
+
+    refreshBaseSummary(snapshot: ISnapshotTree);
 }
 
 export function createServiceEndpoints(

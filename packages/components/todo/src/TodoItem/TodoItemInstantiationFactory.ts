@@ -3,10 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { ClickerInstantiationFactory, ClickerName } from "@fluid-example/clicker";
 import { PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import { SharedCell } from "@microsoft/fluid-cell";
 import { IComponentFactory } from "@microsoft/fluid-runtime-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
+import { TextBoxInstantiationFactory, TextBoxName } from "../TextBox";
+import { TextListInstantiationFactory, TextListName } from "../TextList";
 import { TodoItem } from "./index";
 
 export const TodoItemInstantiationFactory: IComponentFactory = new PrimedComponentFactory(
@@ -15,4 +18,9 @@ export const TodoItemInstantiationFactory: IComponentFactory = new PrimedCompone
         SharedString.getFactory(),
         SharedCell.getFactory(),
     ],
+    new Map([
+        [TextBoxName, Promise.resolve(TextBoxInstantiationFactory)],
+        [TextListName, Promise.resolve(TextListInstantiationFactory)],
+        [ClickerName, Promise.resolve(ClickerInstantiationFactory)],
+    ]),
 );

@@ -46,7 +46,7 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
       odspResolvedUrl.endpoints.snapshotStorageUrl,
       this.getStorageToken,
       this.getWebsocketToken,
-      ChildLogger.create(this.logger, "OdspDriver"),
+      ChildLogger.create(this.logger, "fluid:telemetry:OdspDriver"),
       this.storageFetchWrapper,
       this.deltasFetchWrapper,
       Promise.resolve(getSocketIo()),

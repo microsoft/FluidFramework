@@ -4,10 +4,15 @@
  */
 
 import { Plugin, Transaction } from "prosemirror-state";
-import { SharedString } from "@prague/sequence";
+import { SharedString } from "@microsoft/fluid-sequence";
 import { EditorView } from "prosemirror-view";
-import { MergeTreeDeltaType, TextSegment, Marker } from "@prague/merge-tree";
+import {
+    createRemoveRangeOp,
+    createGroupOp,
+    IMergeTreeOp,
+} from "@microsoft/fluid-merge-tree";
 import { Schema } from "prosemirror-model";
+import { sliceToGroupOps, ProseMirrorTransactionBuilder } from "./fluidBridge";
 
 export class FluidCollabPlugin {
     public readonly plugin: Plugin;
@@ -15,10 +20,10 @@ export class FluidCollabPlugin {
     constructor(private readonly sharedString: SharedString, private readonly schema: Schema) {
         this.plugin = new Plugin({
             state: {
-                init: (config, instance) => {
+                init: () => {
                     return null;
                 },
-                apply: (tr, old) => {
+                apply: (tr) => {
                     this.applyTransaction(tr);
                     return null;
                 }
@@ -27,6 +32,21 @@ export class FluidCollabPlugin {
     }
 
     public attachView(editorView: EditorView) {
+        let sliceBuilder: ProseMirrorTransactionBuilder;
+
+        this.sharedString.on(
+            "pre-op",
+            (op, local) => {
+                if (local) {
+                    return;
+                }
+
+                sliceBuilder = new ProseMirrorTransactionBuilder(
+                    editorView.state,
+                    this.schema,
+                    this.sharedString);
+            });
+
         this.sharedString.on(
             "sequenceDelta",
             (ev) => {
@@ -34,57 +54,18 @@ export class FluidCollabPlugin {
                     return;
                 }
 
-                const transaction = editorView.state.tr;
+                sliceBuilder.addSequencedDelta(ev);
+            });
 
-                for (const range of ev.ranges) {
-                    const segment = range.segment;
-
-                    if (range.operation === MergeTreeDeltaType.INSERT) {
-                        if (TextSegment.is(segment)) {
-                            transaction.insertText(segment.text, range.position);
-                        } else if (Marker.is(segment)) {
-                            // doc.replaceRange(
-                            //     "\n",
-                            //     doc.posFromIndex(range.position));
-                        }
-                    } else if (range.operation === MergeTreeDeltaType.REMOVE) {
-                        if (TextSegment.is(segment)) {
-                            transaction.replace(range.position, range.position + segment.text.length);
-                        } else if (Marker.is(segment)) {
-                            // TODO need to modify the tree at this point - and probably remove the matching
-                            // segment
-                            // doc.replaceRange(
-                            //     "",
-                            //     doc.posFromIndex(range.position),
-                            //     doc.posFromIndex(range.position + 1));
-                        }
-                    } else if (range.operation === MergeTreeDeltaType.ANNOTATE) {
-                        const segment = range.segment as TextSegment;
-
-                        for (const prop of Object.keys(range.propertyDeltas)) {
-                            const value = range.segment.properties[prop];
-
-                            // TODO I think I need to query the sequence for *all* marks and then set them here
-                            // for PM it's an all or nothing set. Not anything additive
-
-                            if (value) {
-                                transaction.addMark(
-                                    range.position,
-                                    range.position + segment.text.length,
-                                    this.schema.marks[prop].create(value));
-                            } else {
-                                transaction.removeMark(
-                                    range.position,
-                                    range.position + segment.text.length,
-                                    this.schema.marks[prop]);
-                            }
-                        }
-                    }
+        this.sharedString.on(
+            "op",
+            (op, local) => {
+                if (local) {
+                    return;
                 }
 
-                transaction.setMeta("fluid-local", true);
-
-                editorView.dispatch(transaction);
+                const tr = sliceBuilder.build();
+                editorView.dispatch(tr);
             });
     }
 
@@ -99,46 +80,114 @@ export class FluidCollabPlugin {
 
             const stepAsJson = step.toJSON();
             switch (stepAsJson.stepType) {
-                case "replace":
+                case "replace": {
                     const from = stepAsJson.from;
                     const to = stepAsJson.to;
 
+                    let operations = new Array<IMergeTreeOp>();
+
                     if (from !== to) {
-                        this.sharedString.removeText(from, to);
+                        const removeOp = createRemoveRangeOp(from, to);
+                        operations.push(removeOp);
                     }
 
-                    if (!stepAsJson.slice) {
-                        break;
+                    if (stepAsJson.slice) {
+                        const sliceOperations = sliceToGroupOps(
+                            from,
+                            stepAsJson.slice,
+                            this.schema);
+                        operations = operations.concat(sliceOperations);
                     }
 
-                    // TODO flatten content
-                    // type: hard_break is a shift+enter
-                    // type: text is text
-                    const text = stepAsJson.slice.content[0].text;
-                    if (!text) {
-                        break;
+                    const groupOp = createGroupOp(...operations);
+                    this.sharedString.groupOperation(groupOp);
+                    
+                    break;
+                }
+                
+                case "replaceAround": {
+                    let operations = new Array<IMergeTreeOp>();
+
+                    const from = stepAsJson.from;
+                    const to = stepAsJson.to;
+                    const gapFrom = stepAsJson.gapFrom;
+                    const gapTo = stepAsJson.gapTo;
+                    const insert = stepAsJson.insert;
+
+                    // export class ReplaceAroundStep extends Step {
+                    // :: (number, number, number, number, Slice, number, ?bool)
+                    // Create a replace-around step with the given range and gap.
+                    // `insert` should be the point in the slice into which the content
+                    // of the gap should be moved. `structure` has the same meaning as
+                    // it has in the [`ReplaceStep`](#transform.ReplaceStep) class.
+                    // {
+                    //     "stepType": "replaceAround",
+                    //     "from": 0,
+                    //     "to": 15,
+                    //     "gapFrom": 0,
+                    //     "gapTo": 15,
+                    //     "insert": 2,
+                    //     "slice": {
+                    //         "content": [
+                    //         {
+                    //             "type": "bullet_list",
+                    //             "content": [
+                    //             {
+                    //                 "type": "list_item"
+                    //             }
+                    //             ]
+                    //         }
+                    //         ]
+                    //     },
+                    //     "structure": true
+                    //     }
+
+                    if (gapTo !== to) {
+                        const removeOp = createRemoveRangeOp(gapTo, to);
+                        operations.push(removeOp);
                     }
 
-                    this.sharedString.insertText(stepAsJson.from, text);
+                    if (gapFrom !== from) {
+                        const removeOp = createRemoveRangeOp(from, gapFrom);
+                        operations.push(removeOp);
+                    }
+
+                    if (stepAsJson.slice) {
+                        const sliceOperations = sliceToGroupOps(
+                            from,
+                            stepAsJson.slice,
+                            this.schema,
+                            insert ? from + insert : insert,
+                            gapTo - gapFrom);
+                        operations = operations.concat(sliceOperations);
+                    }
+
+                    const groupOp = createGroupOp(...operations);
+                    this.sharedString.groupOperation(groupOp);
 
                     break;
+                }
 
-                case "addMark":
+                case "addMark": {
                     const attrs = stepAsJson.mark.attrs || true;
 
                     this.sharedString.annotateRange(
                         stepAsJson.from,
                         stepAsJson.to,
                         { [stepAsJson.mark.type]: attrs });
-                    break;
 
-                case "removeMark":
+                    break;
+                }
+
+                case "removeMark": {
                     // Is there a way to actually clear an annotation?
                     this.sharedString.annotateRange(
                         stepAsJson.from,
                         stepAsJson.to,
                         { [stepAsJson.mark.type]: false });
+
                     break;
+                }
 
                 default:
             }

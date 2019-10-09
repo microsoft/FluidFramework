@@ -11,9 +11,9 @@ import {
     IComponentHTMLOptions,
     IComponentHTMLVisual,
     IComponentHandle,
-} from "@prague/component-core-interfaces";
-import { ComponentRuntime } from "@prague/component-runtime";
-import { ISharedMap, SharedMap } from "@prague/map";
+} from "@microsoft/fluid-component-core-interfaces";
+import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
+import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import {
     IMergeTreeInsertMsg,
     ReferenceType,
@@ -22,28 +22,32 @@ import {
     createMap,
     TextSegment,
     Marker,
-} from "@prague/merge-tree";
-import { IComponentContext, IComponentFactory, IComponentRuntime } from "@prague/runtime-definitions";
-import { SharedString } from "@prague/sequence";
-import { ISharedObjectFactory } from "@prague/shared-object-common";
+} from "@microsoft/fluid-merge-tree";
+import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { SharedString } from "@microsoft/fluid-sequence";
+import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import { EditorState } from "prosemirror-state";
+import { MenuItem } from "prosemirror-menu"
+import { EditorState, NodeSelection } from "prosemirror-state";
 import { EditorView } from "prosemirror-view";
-import { Schema, NodeSpec } from "prosemirror-model";
+import { insertPoint } from "prosemirror-transform";
+import { Schema, NodeSpec, Fragment } from "prosemirror-model";
 import { addListNodes } from "prosemirror-schema-list";
-import { exampleSetup } from "prosemirror-example-setup";
+import { buildMenuItems, exampleSetup } from "prosemirror-example-setup";
+import { IProseMirrorNode, nodeTypeKey } from "./fluidBridge";
 import { FluidCollabPlugin } from "./fluidPlugin";
 import { schema } from "./fluidSchema";
+import OrderedMap = require('orderedmap');
+import { ComponentView } from "./componentView";
+import { FootnoteView } from "./footnoteView";
+import { create as createSelection } from "./selection";
+import { openPrompt, TextField } from "./prompt";
 
 require("prosemirror-view/style/prosemirror.css");
 require("prosemirror-menu/style/menu.css");
 require("prosemirror-example-setup/style/style.css");
 require("./style.css");
-
-import OrderedMap = require('orderedmap');
-
-const nodeTypeKey = "nodeType";
 
 function createTreeMarkerOps(
     treeRangeLabel: string,
@@ -72,13 +76,6 @@ function createTreeMarkerOps(
             type: MergeTreeDeltaType.INSERT,
         },
     ];
-}
-
-interface IProseMirrorNode {
-    [key: string]: any;
-    type: string,
-    content?: IProseMirrorNode[],
-    marks?: any[],
 }
 
 export class ProseMirror extends EventEmitter implements IComponentLoadable, IComponentRouter, IComponentHTMLVisual {
@@ -118,19 +115,6 @@ export class ProseMirror extends EventEmitter implements IComponentLoadable, ICo
     }
 
     private async initialize() {
-        // {
-        //     "type": "doc",
-        //     "content": [
-        //         {
-        //             "type": "paragraph",
-        //             "content": [
-        //             {
-        //                 "type": "text",
-        //                 "text": "HELLO!"
-        //             }]
-        //         }]
-        // }
-
         if (!this.runtime.existing) {
             this.root = SharedMap.create(this.runtime, "root");
             const text = SharedString.create(this.runtime);
@@ -218,6 +202,28 @@ export class ProseMirror extends EventEmitter implements IComponentLoadable, ICo
                         assert(popped.type === nodeType);
                         break;
 
+                    case ReferenceType.Simple:
+                        // TODO consolidate the text segment and simple references
+                        const nodeJson: IProseMirrorNode = {
+                            type: segment.properties["type"],
+                            attrs: segment.properties["attrs"],
+                        };
+
+                        if (segment.properties) {
+                            nodeJson.marks = [];
+                            for (const propertyKey of Object.keys(segment.properties)) {
+                                if (propertyKey !== "type" && propertyKey !== "attrs") {
+                                    nodeJson.marks.push({
+                                        type: propertyKey,
+                                        value: segment.properties[propertyKey],
+                                    });
+                                }
+                            }
+                        }
+
+                        top.content.push(nodeJson);
+                        break;
+
                     default:
                         // throw for now when encountering something unknown
                         throw new Error("Unknown marker");
@@ -242,15 +248,66 @@ export class ProseMirror extends EventEmitter implements IComponentLoadable, ICo
 
         const fluidPlugin = new FluidCollabPlugin(this.text, fluidSchema);
 
+        const menu = buildMenuItems(fluidSchema);
+        menu.insertMenu.content.push(new MenuItem({
+            title: "Insert Component",
+            label: "Component",
+            enable(state) { return true },
+            run(state, _, view) {
+                let { from, to } = state.selection, attrs = null
+                if (state.selection instanceof NodeSelection && state.selection.node.type == fluidSchema.nodes.fluid)
+                    attrs = state.selection.node.attrs
+                openPrompt({
+                    title: "Insert component",
+                    fields: {
+                        src: new TextField({ label: "Url", required: true, value: attrs && attrs.src }),
+                        title: new TextField({ label: "Title", value: attrs && attrs.title }),
+                        alt: new TextField({
+                            label: "Description",
+                            value: attrs ? attrs.alt : state.doc.textBetween(from, to, " ")
+                        })
+                    },
+                    callback(attrs) {
+                        view.dispatch(view.state.tr.replaceSelectionWith(fluidSchema.nodes.fluid.createAndFill(attrs)))
+                        view.focus()
+                    }
+                })
+            }
+        }));
+
+        menu.insertMenu.content.push(new MenuItem({
+            title: "Insert footnote",
+            label: "Footnote",
+            select(state) {
+                return insertPoint(state.doc, state.selection.from, fluidSchema.nodes.footnote) != null
+            },
+            run(state, dispatch) {
+                let { empty, $from, $to } = state.selection, content = Fragment.empty
+                if (!empty && $from.sameParent($to) && $from.parent.inlineContent)
+                    content = $from.parent.content.cut($from.parentOffset, $to.parentOffset)
+                dispatch(state.tr.replaceSelectionWith(fluidSchema.nodes.footnote.create(null, content)))
+            }
+        }));
+
         const state = EditorState.create({
             doc: fluidDoc,
-            plugins: exampleSetup({ schema: fluidSchema }).concat(fluidPlugin.plugin),
+            plugins: exampleSetup({ schema: fluidSchema, menuContent: menu.fullMenu })
+                .concat(fluidPlugin.plugin)
+                .concat(createSelection()),
         });
 
         this.editorView = new EditorView(
             this.textArea,
             {
                 state,
+                nodeViews: {
+                    fluid: (node, view, getPos) => {
+                        return new ComponentView(node, view, getPos, this.runtime.loader);
+                    },
+                    footnote: (node, view, getPos) => {
+                        return new FootnoteView(node, view, getPos, this.runtime.loader);
+                    },
+                }
             });
         fluidPlugin.attachView(this.editorView);
 
@@ -283,7 +340,3 @@ class ProseMirrorFactory implements IComponentFactory {
 }
 
 export const fluidExport = new ProseMirrorFactory();
-
-export function instantiateComponent(context: IComponentContext): void {
-    fluidExport.instantiateComponent(context);
-}

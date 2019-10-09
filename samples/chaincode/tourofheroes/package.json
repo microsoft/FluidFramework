@@ -1,7 +1,7 @@
 {
   "name": "@fluid-example/tourofheroes",
   "description": "Angular 2 Tour of Heroes tutorial as a fluid package",
-  "version": "0.0.5",
+  "version": "0.10.0",
   "author": "Microsoft",
   "repository": "microsoft/FluidFramework",
   "main": "dist/main.bundle.js",
@@ -11,7 +11,7 @@
     "dev": "webpack --env=\"development\"",
     "start": "webpack-dev-server --config webpack.config.js --package package.json",
     "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
-    "start:local": "webpack-dev-server --config webpack.config.js --package package.json --env.local",
+    "start:live": "webpack-dev-server --config webpack.config.js --package package.json --env.mode live",
     "deploy": "npm run build && npm version patch && npm publish --registry https://packages.wu2.prague.office-int.com",
     "tsc": "tsc"
   },

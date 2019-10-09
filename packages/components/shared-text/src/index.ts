@@ -46,12 +46,14 @@ const DefaultComponentName = "text";
 // tslint:enable
 
 class MyRegistry implements IComponentRegistry {
-    constructor(private context: IContainerContext, private readonly sharedTextFactory: SharedTextFactoryComponent) {
+    constructor(private context: IContainerContext,
+                private readonly sharedTextFactory: SharedTextFactoryComponent,
+                private readonly defaultRegistry: string) {
     }
 
     public get IComponentRegistry() {return this; }
 
-    public async get(name: string): Promise<IComponentFactory> {
+    public async get(name: string, cdn?: string): Promise<IComponentFactory> {
         if (name === "@fluid-example/shared-text") {
             return this.sharedTextFactory;
         } else if (name === "@fluid-example/math") {
@@ -67,7 +69,15 @@ class MyRegistry implements IComponentRegistry {
         } else if (name === "@fluid-example/pinpoint-editor") {
             return pinpoint.then((m) => m.fluidExport);
         } else {
-            return this.context.codeLoader.load<IComponentFactory>(name);
+            const scope = `${name.split("/")[0]}:cdn`;
+            const config = {};
+            config[scope] = cdn ? cdn : this.defaultRegistry;
+
+            const codeDetails = {
+                package: name,
+                config,
+            };
+            return this.context.codeLoader.load<IComponentFactory>(codeDetails);
         }
     }
 }
@@ -89,7 +99,7 @@ class SharedTextFactoryComponent implements IComponentFactory, IRuntimeFactory {
 
         const runtime = await ContainerRuntime.load(
             context,
-            new MyRegistry(context, this),
+            new MyRegistry(context, this, "https://pragueauspkn-3873244262.azureedge.net"),
             this.createContainerRequestHandler,
             { generateSummaries });
 

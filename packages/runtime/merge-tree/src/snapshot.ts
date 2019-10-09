@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentHandle, IComponentHandleContext, IComponentSerializer } from "@microsoft/fluid-component-core-interfaces";
+import {
+    IComponentHandle,
+    IComponentHandleContext,
+    IComponentSerializer,
+} from "@microsoft/fluid-component-core-interfaces";
 import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
 import { ChildLogger, fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
 import { FileMode, ISequencedDocumentMessage, ITree, TreeEntry } from "@microsoft/fluid-protocol-definitions";

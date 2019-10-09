@@ -14,21 +14,21 @@
 import {
   PrimedComponent,
   PrimedComponentFactory,
-} from "@prague/aqueduct";
+} from "@microsoft/fluid-aqueduct";
 import {
   IComponentHTMLVisual,
   IComponentHandle,
   IComponentHTMLRender,
-} from "@prague/component-core-interfaces";
+} from "@microsoft/fluid-component-core-interfaces";
 import {
   IComponentContext,
   IComponentRuntime,
-} from "@prague/runtime-definitions";
+} from "@microsoft/fluid-runtime-definitions";
 
 import {
   SequenceDeltaEvent,
   SharedString,
-} from "@prague/sequence";
+} from "@microsoft/fluid-sequence";
 /******************************************************************************/
 
 /**
@@ -179,8 +179,8 @@ export class TextareaNoReact
 
     // Because we did not make the change we need to manage the remote
     // character insertion.
-    const remoteCaretStart = event.start;
-    const remoteCaretEnd = event.end;
+    const remoteCaretStart = event.first.position;
+    const remoteCaretEnd = event.last.position + event.last.segment.cachedLength;
     const charactersModifiedCount =
       newText.length - this.textareaState.text.length;
 

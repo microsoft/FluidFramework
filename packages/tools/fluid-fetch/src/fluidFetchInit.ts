@@ -8,6 +8,7 @@ import { BaseTelemetryNullLogger, fromBase64ToUtf8 } from "@microsoft/fluid-core
 import * as odsp from "@microsoft/fluid-odsp-driver";
 import {
     getDriveItemByFileId,
+    getTenant,
     IClientConfig,
     IODSPTokens,
     postTokenRequest,
@@ -15,12 +16,15 @@ import {
 import { IDocumentService } from "@microsoft/fluid-protocol-definitions";
 import * as r11s from "@microsoft/fluid-routerlicious-driver";
 import * as child_process from "child_process";
+import * as fs from "fs";
 import * as http from "http";
 import { URL } from "url";
-import { paramForceRefreshToken, paramJWT, paramURL } from "./fluidFetchArgs";
+import { localDataOnly, paramForceRefreshToken, paramJWT, paramSave, paramURL, setParamSave } from "./fluidFetchArgs";
 import { loadRC, saveRC } from "./fluidToolRC";
 
-export let paramDocumentService: IDocumentService;
+// tslint:disable:non-literal-fs-path
+
+export let paramDocumentService: IDocumentService | undefined;
 export let latestVersionsId: string = "";
 export let connectionInfo: any;
 
@@ -28,7 +32,7 @@ const redirectUri = "http://localhost:7000/auth/callback";
 
 async function getAuthorizationCode(server: string, clientConfig: IClientConfig): Promise<string> {
     let message = "Please open browser and navigate to this URL:";
-    const authUrl = `https://login.microsoftonline.com/organizations/oauth2/v2.0/authorize?`
+    const authUrl = `https://login.microsoftonline.com/${getTenant(server)}/oauth2/v2.0/authorize?`
         + `client_id=${clientConfig.clientId}`
         + `&scope=https://${server}/AllSites.Write`
         + `&response_type=code`
@@ -95,7 +99,7 @@ async function getRequestAccessTokenBody(server: string, clientConfig: IClientCo
 
 async function acquireTokens(server: string, clientConfig: IClientConfig): Promise<IODSPTokens> {
     console.log("Acquiring tokens");
-    const tokens = await postTokenRequest(await getRequestAccessTokenBody(server, clientConfig));
+    const tokens = await postTokenRequest(server, await getRequestAccessTokenBody(server, clientConfig));
     await saveAccessToken(server, tokens);
     return tokens;
 }
@@ -119,14 +123,14 @@ function getClientConfig() {
         get clientId() {
             if (!process.env.login__microsoft__clientId) {
                 throw new Error("ODSP clientId/secret must be set as environment variables. " +
-                    "Please run the script at https://github.com/microsoft/Prague/tree/master/tools/getkeys");
+                    "Please run the script at https://github.com/microsoft/FluidFramework/tree/master/tools/getkeys");
             }
             return process.env.login__microsoft__clientId;
         },
         get clientSecret() {
             if (!process.env.login__microsoft__secret) {
                 throw new Error("ODSP clientId/secret must be set as environment variables. " +
-                    "Please run the script at https://github.com/microsoft/Prague/tree/master/tools/getkeys");
+                    "Please run the script at https://github.com/microsoft/FluidFramework/tree/master/tools/getkeys");
             }
             return process.env.login__microsoft__secret;
         },
@@ -135,19 +139,22 @@ function getClientConfig() {
 }
 
 async function initializeODSPCore(
-        odspUrl: string,
-        server: string,
-        drive: string,
-        item: string,
-        clientConfig: IClientConfig) {
-    if (odspServers.indexOf(server) === -1) {
-        return Promise.reject(new Error(`Tenant not supported: ${server}`));
-    }
+    odspUrl: string,
+    server: string,
+    drive: string,
+    item: string,
+    clientConfig: IClientConfig,
+) {
+
     connectionInfo = {
         server,
         drive,
         item,
     };
+
+    if (localDataOnly) {
+        return;
+    }
 
     console.log(`Connecting to ODSP:\n  server: ${server}\n  drive:  ${drive}\n  item:   ${item}`);
 
@@ -192,8 +199,8 @@ async function resolveDriveItemByFileId(
     account: string,
     docId: string,
     clientConfig: IClientConfig,
-    forceTokenRefresh = false) {
-
+    forceTokenRefresh = false,
+) {
     const odspTokens = await getODSPTokens(server, clientConfig, forceTokenRefresh);
     try {
         const oldAccessToken = odspTokens.accessToken;
@@ -213,11 +220,12 @@ async function resolveDriveItemByFileId(
 }
 
 async function initializeODSPHosted(
-        url: URL,
-        server: string,
-        account: string,
-        docId: string,
-        clientConfig: IClientConfig) {
+    url: URL,
+    server: string,
+    account: string,
+    docId: string,
+    clientConfig: IClientConfig,
+) {
     const driveItem = await resolveDriveItemByFileId(server, account, docId, clientConfig);
     const odspUrl = odsp.createOdspUrl(url.href, driveItem.drive, driveItem.item, url.pathname);
     return initializeODSPCore(odspUrl, server, driveItem.drive, driveItem.item, clientConfig);
@@ -299,6 +307,10 @@ async function initializeR11s(server: string, pathname: string) {
         id: documentId,
     };
 
+    if (localDataOnly) {
+        return;
+    }
+
     const serverSuffix = server.substring(4);
     console.log(`Connecting to r11s: tenantId=${tenantId} id:${documentId}`);
     const tokenProvider = new r11s.TokenProvider(paramJWT);
@@ -332,6 +344,10 @@ async function initializeR11sLocalhost(pathname: string) {
         id: documentId,
     };
 
+    if (localDataOnly) {
+        return;
+    }
+
     console.log(`Connecting to r11s localhost: tenantId=${tenantId} id:${documentId}`);
     const tokenProvider = new r11s.TokenProvider(paramJWT);
     paramDocumentService = r11s.createDocumentService(
@@ -350,6 +366,7 @@ const officeServers = [
 
 const fluidOfficeServers = [
     "dev.fluid.office.com",
+    "fluidpreview.office.net",
 ];
 
 const odspServers = [
@@ -365,23 +382,36 @@ const r11sServers = [
     "www.eu.prague.office-int.com",
 ];
 export async function fluidFetchInit() {
-    if (paramURL) {
-        const url = new URL(paramURL);
-
-        const server = url.hostname.toLowerCase();
-        if (officeServers.indexOf(server) !== -1) {
-            return initializeOfficeODSP(url);
-        } else if (odspServers.indexOf(server) !== -1) {
-            return initializeODSP(url, server);
-        } else if (r11sServers.indexOf(server) !== -1) {
-            return initializeR11s(server, url.pathname);
-        } else if (fluidOfficeServers.indexOf(server) !== -1) {
-            return initializeFluidOffice(url);
-        } else if (server === "localhost" && url.port === "3000") {
-            return initializeR11sLocalhost(url.pathname);
+    if (!paramURL) {
+        if (paramSave) {
+            const file = `${paramSave}/info.json`;
+            if (fs.existsSync(file)) {
+                const info = JSON.parse(fs.readFileSync(file, { encoding: "utf-8" }));
+                setParamSave(info.url as string);
+            } else {
+                console.log(`Can't find file ${file}`);
+            }
         }
-        console.log(server);
-        return Promise.reject(`Unknown URL ${paramURL}`);
+
+        if (!paramURL) {
+            return Promise.reject("Missing URL");
+        }
     }
-    return Promise.reject("Missing URL");
+
+    const url = new URL(paramURL);
+
+    const server = url.hostname.toLowerCase();
+    if (officeServers.indexOf(server) !== -1) {
+        return initializeOfficeODSP(url);
+    } else if (odspServers.indexOf(server) !== -1) {
+        return initializeODSP(url, server);
+    } else if (r11sServers.indexOf(server) !== -1) {
+        return initializeR11s(server, url.pathname);
+    } else if (fluidOfficeServers.indexOf(server) !== -1) {
+        return initializeFluidOffice(url);
+    } else if (server === "localhost" && url.port === "3000") {
+        return initializeR11sLocalhost(url.pathname);
+    }
+    console.log(server);
+    return Promise.reject(`Unknown URL ${paramURL}`);
 }

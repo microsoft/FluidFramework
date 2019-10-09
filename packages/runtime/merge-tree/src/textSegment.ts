@@ -54,12 +54,7 @@ export class TextSegment extends BaseSegment {
     }
 
     public clone(start = 0, end?: number) {
-        let text = this.text;
-        if (end === undefined) {
-            text = text.substring(start);
-        } else {
-            text = text.substring(start, end);
-        }
+        const text = this.text.substring(start, end);
         const b = TextSegment.make(text, this.properties);
         this.cloneInto(b);
         return b;

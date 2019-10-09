@@ -2,10 +2,16 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import { RoundTrip } from "@fluid-internal/client-api";
 import { IConnect, IConnected } from "@microsoft/fluid-driver-base";
-import { ConnectionMode, IClient, IContentMessage, IDocumentMessage, ISignalMessage, ITokenClaims } from "@microsoft/fluid-protocol-definitions";
+import {
+    ConnectionMode,
+    IClient,
+    IContentMessage,
+    IDocumentMessage,
+    ISignalMessage,
+    ITokenClaims,
+    MessageType,
+} from "@microsoft/fluid-protocol-definitions";
 import {
     LocalNodeFactory,
     LocalOrderer,
@@ -297,7 +303,7 @@ export function register(
                 messageBatches.forEach((messageBatch) => {
                     const messages = Array.isArray(messageBatch) ? messageBatch : [messageBatch];
                     const filtered = messages
-                        .filter((message) => message.type !== RoundTrip);
+                        .filter((message) => message.type !== MessageType.RoundTrip);
 
                     if (filtered.length > 0) {
                         connection.order(filtered);
