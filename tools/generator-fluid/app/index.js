@@ -36,6 +36,13 @@ module.exports = class extends Generator {
         choices: ["react", "vanillaJS"],
       },
       {
+        type: "list",
+        name: "template",
+        message: "Do you want to customize your container (advanced)?",
+        default: "no",
+        choices: ["no", "yes"],
+      },
+      {
         type: "input",
         name: "description",
         message: "Component Description",
