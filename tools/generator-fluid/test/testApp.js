@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-const assert = require("yeoman-assert");
 const path = require("path");
+const assert = require("yeoman-assert");
 const helpers = require("yeoman-test");
 
 describe("Yo fluid", function () {
