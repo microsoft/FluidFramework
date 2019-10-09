@@ -11,6 +11,7 @@ interface FastBuildOptions {
     timer: boolean;
     logtime: boolean;
     clean: boolean;
+    matchedOnly?: boolean
     buildScript: string;
     build?: boolean;
     vscode: boolean;
@@ -42,8 +43,7 @@ export const options: FastBuildOptions = {
 function printUsage() {
     console.log(
         `
-Usage: fluid-build <options> [<npm script>] [<package regexp> ...]
-  [<npm script>]         Name of the npm script to run (default: build)
+Usage: fluid-build <options> [<package regexp> ...]
   [<package regexp> ...] Regexp to match the package name (default: all packages)
 Options:
   -c --clean             Same as running build script 'clean', implies -f if -s or -r is specified
@@ -59,16 +59,25 @@ Options:
 `);
 }
 
+function setForce(matchedOnly: boolean) {
+    options.force = true;
+    if (!matchedOnly || options.matchedOnly === undefined) {
+        options.matchedOnly = matchedOnly;
+    }
+}
+
+function setClean(matchedOnly: boolean, build: boolean) {
+    options.clean = true;
+    if (build || options.build === undefined) {
+        options.build = build;
+    }
+    setForce(matchedOnly);
+}
+
 export function parseOptions(argv: string[]) {
     let error = false;
     for (let i = 2; i < process.argv.length; i++) {
         const arg = process.argv[i];
-
-        // Build script or package name
-        if (!arg.startsWith("-")) {
-            options.args.push(arg);
-            continue;
-        }
 
         if (arg === "-?" || arg === "--help") {
             printUsage();
@@ -81,22 +90,32 @@ export function parseOptions(argv: string[]) {
         }
 
         if (arg === "-r" || arg === "--rebuild") {
-            options.clean = true;
-            options.build = true;
+            setClean(/* matchedOnly */ false, /* build */ true);
             continue;
         }
 
-        if (arg === "-c" || arg === "--clean" || arg === "clean") {
-            options.clean = true;
-            options.force = true;
-            if (options.build === undefined) {
-                options.build = false;
-            }
+        if (arg === "-rm" || arg === "--rebuild-matched") {
+            setClean(/* matchedOnly */ true, /* build */ true);
+            continue;
+        }
+
+        if (arg === "-c" || arg === "--clean") {
+            setClean(/* matchedOnly */ false,  /* build */ false);
+            continue;
+        }
+
+        if (arg === "-cm" || arg === "--clean-matched") {
+            setClean(/* matchedOnly */ true, /* build */ false);
             continue;
         }
 
         if (arg === "-f" || arg === "--force") {
-            options.force = true;
+            setForce(/* matchedOnly */ false);
+            continue;
+        }
+
+        if (arg === "-fm" || arg === "--force-matched") {
+            setForce(/* matchedOnly */ true);
             continue;
         }
 
@@ -106,7 +125,7 @@ export function parseOptions(argv: string[]) {
                 options.build = true;
                 continue;
             }
-            console.log("ERROR: Missing argument for --script");
+            console.error("ERROR: Missing argument for --script");
             error = true;
             break;
         }
@@ -126,7 +145,7 @@ export function parseOptions(argv: string[]) {
                 options.root = process.argv[++i];
                 continue;
             }
-            console.log("ERROR: Missing argument for --root");
+            console.error("ERROR: Missing argument for --root");
             error = true;
             break;
         }
@@ -159,6 +178,12 @@ export function parseOptions(argv: string[]) {
 
         if (arg === "--showExec") {
             options.showExec = true;
+            continue;
+        }
+
+        // Package regexp
+        if (!arg.startsWith("-")) {
+            options.args.push(arg);
             continue;
         }
 

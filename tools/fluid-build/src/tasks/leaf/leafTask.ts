@@ -59,7 +59,7 @@ export abstract class LeafTask extends Task {
             logStatus(`[${taskNum}/${totalTask}] ${this.node.pkg.nameColored}: ${this.command}`);
         }
         const startTime = Date.now();
-        if (this.recheckLeafIsUpToDate && await this.checkLeafIsUpToDate()) {
+        if (this.recheckLeafIsUpToDate && !this.forced && await this.checkLeafIsUpToDate()) {
             return this.execDone(startTime, BuildResult.UpToDate);
         }
         const ret = await execAsync(this.command, {
@@ -68,7 +68,7 @@ export abstract class LeafTask extends Task {
         });
 
         if (ret.error) {
-            console.log(`${this.node.pkg.nameColored}: error during command ${this.command}`)
+            console.error(`${this.node.pkg.nameColored}: error during command ${this.command}`)
             let errorMessages = ret.stdout;
             if (ret.stderr) {
                 errorMessages = `${errorMessages}\n${ret.stderr}`;
@@ -82,6 +82,20 @@ export abstract class LeafTask extends Task {
             }
             console.error(errorMessages);
             return this.execDone(startTime, BuildResult.Failed);
+        } else if (ret.stderr) {
+            console.warn(`${this.node.pkg.nameColored}: warning during command ${this.command}`);
+            let errorMessages = ret.stdout;
+            if (ret.stderr) {
+                errorMessages = `${errorMessages}\n${ret.stderr}`;
+            }
+            errorMessages = errorMessages.trim();
+            if (options.vscode) {
+                errorMessages = this.getVsCodeErrorMessages(errorMessages);
+            } else {
+                errorMessages = errorMessages.replace(/\n/g, `\n${this.node.pkg.nameColored}: `);
+                errorMessages = `${this.node.pkg.nameColored}: ${errorMessages}`;
+            }
+            console.warn(errorMessages);
         }
 
         await this.markExecDone();
@@ -248,7 +262,7 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
                     await unlinkAsync(doneFileFullPath);
                 }
             } catch {
-                console.log(`${this.node.pkg.nameColored}: warning: unable to unlink ${doneFileFullPath}`);
+                console.warn(`${this.node.pkg.nameColored}: warning: unable to unlink ${doneFileFullPath}`);
             }
         }
         return leafIsUpToDate;
@@ -261,10 +275,10 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
             if (content !== undefined) {
                 await writeFileAsync(doneFileFullPath, content);
             } else {
-                console.log(`${this.node.pkg.nameColored}: warning: unable to generate content for ${doneFileFullPath}`);
+                console.warn(`${this.node.pkg.nameColored}: warning: unable to generate content for ${doneFileFullPath}`);
             }
         } catch {
-            console.log(`${this.node.pkg.nameColored}: warning: unable to write ${doneFileFullPath}`);
+            console.warn(`${this.node.pkg.nameColored}: warning: unable to write ${doneFileFullPath}`);
         }
     }
 
