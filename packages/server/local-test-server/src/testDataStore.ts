@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ICodeLoader } from "@microsoft/fluid-container-definitions";
+import { ICodeLoader, IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
 import { IDocumentServiceFactory, IUrlResolver } from "@microsoft/fluid-protocol-definitions";
 import { debug } from "./debug";
@@ -28,10 +28,10 @@ export class TestDataStore {
      */
     public async open<T>(
         componentId: string,
-        chaincodePackage: string,
+        chaincodePackage: IFluidCodeDetails,
         path: string,
     ): Promise<T> {
-        debug(`TestDataStore.open("${componentId}", "${chaincodePackage}")`);
+        debug(`TestDataStore.open("${componentId}", "${chaincodePackage.package}")`);
 
         const resolver = this.resolver;
         const loader = new Loader(
@@ -78,7 +78,7 @@ export class TestDataStore {
     }
 }
 
-async function initializeChaincode(container: Container, pkg: string): Promise<void> {
+async function initializeChaincode(container: Container, pkg: IFluidCodeDetails): Promise<void> {
     if (!pkg) {
         return;
     }

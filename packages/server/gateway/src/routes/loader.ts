@@ -6,7 +6,7 @@
 import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
 import { ScopeType } from "@microsoft/fluid-protocol-definitions";
 import { IAlfredTenant } from "@microsoft/fluid-server-services-core";
-import { extractDetails, WebCodeLoader } from "@microsoft/fluid-web-code-loader";
+import { extractDetails, WebCodeLoader, WhiteList } from "@microsoft/fluid-web-code-loader";
 import { Router } from "express";
 import * as safeStringify from "json-stringify-safe";
 import * as jwt from "jsonwebtoken";
@@ -30,7 +30,7 @@ export function create(
 
     const router: Router = Router();
     const jwtKey = config.get("gateway:key");
-    const webLoader = new WebCodeLoader(config.get(config.get("worker:npm")));
+    const webLoader = new WebCodeLoader(new WhiteList());
 
     /**
      * Looks up the version of a chaincode in the cache.
