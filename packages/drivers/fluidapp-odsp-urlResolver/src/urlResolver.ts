@@ -16,6 +16,7 @@ import * as sha from "sha.js";
 
 const fluidOfficeServers = [
     "dev.fluid.office.com",
+    "fluidpreview.office.net",
 ];
 
 export class FluidAppOdspUrlResolver implements IUrlResolver {

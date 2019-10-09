@@ -5,12 +5,12 @@
 
 import { IOdspResolvedUrl } from "@microsoft/fluid-odsp-driver";
 import * as assert from "assert";
-import { SpoOdspUrlResolver } from "../urlResolver";
+import { OdspUrlResolver } from "../urlResolver";
 
 describe("SPo Url Resolver", () => {
 
     it("Should resolve the spo urls correctly", async () => {
-        const urlResolver = new SpoOdspUrlResolver();
+        const urlResolver = new OdspUrlResolver();
         const url: string = "https://microsoft-my.sharepoint-df.com/_api/v2.1/drives/randomDrive/items/randomItem";
         const resolved = (await urlResolver.resolve({ url })) as IOdspResolvedUrl;
         assert.equal(resolved.driveId, "randomDrive", "Drive id does not match");

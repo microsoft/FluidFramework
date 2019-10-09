@@ -21,7 +21,7 @@ const odspServers = [
     "microsoft.sharepoint.com",
 ];
 
-export class SpoOdspUrlResolver implements IUrlResolver {
+export class OdspUrlResolver implements IUrlResolver {
 
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
         const reqUrl = new URL(request.url);

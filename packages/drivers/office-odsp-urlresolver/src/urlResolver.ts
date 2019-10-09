@@ -18,7 +18,7 @@ const officeServers = [
     "ncuprodprv.www.office.com",
 ];
 
-export class OfficeOdspUrlResolver implements IUrlResolver {
+export class OfficeUrlResolver implements IUrlResolver {
 
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
         const reqUrl = new URL(request.url);

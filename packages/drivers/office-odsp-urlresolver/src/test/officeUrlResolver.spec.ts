@@ -5,12 +5,12 @@
 
 import { IOdspResolvedUrl } from "@microsoft/fluid-odsp-driver";
 import * as assert from "assert";
-import { OfficeOdspUrlResolver } from "../urlResolver";
+import { OfficeUrlResolver } from "../urlResolver";
 
 describe("Office Url Resolver", () => {
 
     it("Should resolve the office urls correctly", async () => {
-        const urlResolver = new OfficeOdspUrlResolver();
+        const urlResolver = new OfficeUrlResolver();
         const resolved = (await urlResolver.resolve({ url: "https://weuprodprv.www.office.com/content/bohemia?auth=2&drive=randomDrive&item=randomItem&file=randomFile.b&site=https://randomSite.com" })) as IOdspResolvedUrl;
         assert.equal(resolved.driveId, "randomDrive", "Drive id does not match");
         assert.equal(resolved.itemId, "randomItem", "Item id does not match");
