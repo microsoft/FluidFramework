@@ -40,7 +40,7 @@ const appTenants = [
 export async function loadFluidComponent(
     url: string,
     div: HTMLDivElement,
-    getToken?: () => Promise<string>,
+    getToken: () => Promise<string> = () => Promise.resolve(""),
     clientId?: string,
     clientSecret?: string,
     pkg?: IResolvedPackage,
@@ -165,16 +165,16 @@ export function isSpoUrl(url: string): boolean {
  * Create an IFrame for loading Fluid Components.
  *
  * @param url - Url of the Fluid component to be loaded
- * @param getToken - A function that either returns an SPO token, or a Routerlicious tenant token
  * @param div - The div to load the component into
+ * @param getToken - A function that either returns an SPO token, or a Routerlicious tenant token
  * @param clientId - The SPO clientId.
  * @param secret - The SPO clientSecret.
  * @param libraryName - if loaded from React, this should be "reactLoader"
  */
 export async function loadIFramedFluidComponent(
     url: string,
-    getToken: () => Promise<string>,
     div: HTMLDivElement,
+    getToken: () => Promise<string> = () => Promise.resolve(""),
     clientId?: string,
     secret?: string,
     libraryName: string = "tinyWebLoader"): Promise<any> {
