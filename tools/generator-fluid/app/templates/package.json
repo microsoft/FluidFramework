@@ -39,6 +39,7 @@
   },
   "devDependencies": {
     "@microsoft/fluid-webpack-component-loader": "^0.11.0",
+    "@fluid-internal/url-generator": "^1.0.4",
     "@types/node": "^10.14.6",
     "@types/react-dom": "^16.0.11",
     "ts-loader": "^4.5.0",
