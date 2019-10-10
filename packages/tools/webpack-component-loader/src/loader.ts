@@ -221,8 +221,7 @@ export async function start(
         div.append(leftDiv, rightDiv);
     }
 
-    // tslint:disable-next-line:no-floating-promises
-    startCore(
+    const start1Promise = startCore(
         url,
         await urlResolver.resolve(req),
         pkg,
@@ -234,6 +233,7 @@ export async function start(
         hostConf,
     );
 
+    let start2Promise: Promise<any> = Promise.resolve();
     if (double) {
         // new documentServiceFactory for right div, same everything else
         const docServFac2: IDocumentServiceFactory = new TestDocumentServiceFactory(deltaConn);
@@ -241,8 +241,7 @@ export async function start(
 
         // startCore will create a new Loader/Container/Component from the startCore above. This is
         // intentional because we want to emulate two clients collaborating with each other.
-        // tslint:disable-next-line:no-floating-promises
-        startCore(
+        start2Promise = startCore(
             url,
             await urlResolver.resolve(req),
             pkg,
@@ -254,6 +253,7 @@ export async function start(
             hostConf2,
         );
     }
+    await Promise.all([start1Promise, start2Promise]);
 }
 
 export function getUserToken(bearerSecret: string) {
