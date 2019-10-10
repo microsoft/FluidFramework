@@ -375,7 +375,8 @@ export class DebugLogger extends TelemetryLogger {
      */
     public send(event: ITelemetryBaseEvent): void {
         const newEvent: { [index: string]: TelemetryEventPropertyType } = this.prepareEvent(event);
-        let logger = newEvent.category === "error" ? this.debugErr : this.debug;
+        const isError = newEvent.category === "error";
+        let logger = isError ? this.debugErr : this.debug;
 
         // Use debug's coloring schema for base of the event
         const index = event.eventName.lastIndexOf(TelemetryLogger.eventNamespaceSeparator);
@@ -408,6 +409,11 @@ export class DebugLogger extends TelemetryLogger {
 
         if (payload === "{}") {
             payload = "";
+        }
+
+        // Force errors out, to help with diagnostics
+        if (isError) {
+            logger.enabled = true;
         }
 
         // print multi-line.
