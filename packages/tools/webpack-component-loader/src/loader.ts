@@ -45,6 +45,29 @@ function getUser(): IDevServerUser {
      };
 }
 
+async function loadScripts(files: string[], origin: string) {
+    // Add script to page, rather than load bundle directly
+    const scriptLoadP: Promise<string>[] = [];
+    const scriptIdPrefix = "fluidDevServerScriptToLoad";
+    let scriptIndex = 0;
+    files.forEach((file: string) => {
+        const script = document.createElement("script");
+        // translate URLs to be webpack-dev-server relative URLs
+        script.src = `${origin}/${file}`;
+        const scriptId = `${scriptIdPrefix}_${scriptIndex++}`;
+        script.id = scriptId;
+
+        scriptLoadP.push(new Promise((resolve) => {
+            script.onload = () => {
+                resolve(scriptId);
+            };
+        }));
+
+        document.body.appendChild(script);
+    });
+    return Promise.all(scriptLoadP);
+}
+
 async function getPkg(packageJson: IPackage, scriptIds: string[], component = false): Promise<IResolvedPackage> {
 
     // Start the creation of pkg.
@@ -59,26 +82,10 @@ async function getPkg(packageJson: IPackage, scriptIds: string[], component = fa
     const details = extractDetails(`${packageJson.name}@${packageJson.version}`);
     const legacyPackage = `${packageJson.name}@${packageJson.version}`;
 
-    // Add script to page, rather than load bundle directly
-    const scriptLoadP: Promise<void>[] = [];
-    const scriptIdPrefix = "fluidDevServerScriptToLoad";
-    let scriptIndex = 0;
-    packageJson.fluid.browser.umd.files.forEach((file) => {
-        const script = document.createElement("script");
-        script.src = `${window.location.origin}/${file}`;
-        const scriptId = `${scriptIdPrefix}_${scriptIndex++}`;
-        script.id = scriptId;
+    const loadedScriptIds = await loadScripts(packageJson.fluid.browser.umd.files, window.location.origin);
+    loadedScriptIds.forEach((scriptId) => {
         scriptIds.push(scriptId);
-
-        scriptLoadP.push(new Promise((resolve) => {
-            script.onload = () => {
-                resolve();
-            };
-        }));
-
-        document.body.appendChild(script);
     });
-    await Promise.all(scriptLoadP);
 
     if (component) {
         // Wrap the core component in a runtime
