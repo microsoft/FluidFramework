@@ -12,24 +12,16 @@ function go() {
     const iframe = document.createElement('iframe');
     const container = document.getElementById('container');
 
-    styleIFrame(iframe);
+    iframe.src = "./tinyWebHostDemo.html";
+    iframe.id = `theframe${container.childElementCount}`;
 
     const iframeContainerDiv = document.createElement('div');
     iframeContainerDiv.id = `thediv${container.childElementCount}`;
     iframeContainerDiv.style.display = 'inline-block';
-    addCloseIframeButton(iframeContainerDiv);
+    addCloseIframeButton(iframeContainerDiv, iframe.id);
 
     iframeContainerDiv.appendChild(iframe);
     container.appendChild(iframeContainerDiv);
-
-    // Get Document from within IFrame
-    const iframeDocument = iframe.contentDocument;
-    if (!iframeDocument && iframe.contentWindow) {
-        iframeDocument = iframe.contentWindow.document;
-    }
-    createDivForContainerToLoadInto(iframeDocument);
-
-    useTinyWebHost(iframeDocument);
 }
 
 function useTinyWebHost(iframeDocument) {
@@ -92,17 +84,13 @@ function createDivForContainerToLoadInto(iframeDocument) {
     iframeDocument.body.appendChild(newdiv);
 }
 
-function setInitialView() {
-
-}
-
-function addCloseIframeButton(iframeContainerDiv) {
+function addCloseIframeButton(iframeContainerDiv, id) {
     const closeButton = document.createElement('button');
     closeButton.textContent = 'Close Container';
     closeButton.style.width = '45vw';
     closeButton.style.display = 'block';
     closeButton.onclick = () => {
-        document.getElementById(iframe.id).remove();
+        document.getElementById(id).remove();
         const removeDiv = document.getElementById(iframeContainerDiv.id);
         removeDiv.style.visibility = 'hidden';
         removeDiv.style.width = '0px';
@@ -111,14 +99,6 @@ function addCloseIframeButton(iframeContainerDiv) {
     iframeContainerDiv.appendChild(closeButton);
 }
 
-function styleIFrame(iframe) {
-    iframe.id = `theframe${container.childElementCount}`;
-    iframe.style.height = '45vw';
-    iframe.style.width = '45vw';
-    iframe.style.maxHeight = '1000px';
-    iframe.style.maxWidth = iframe.style.maxHeight;
-    iframe.style.display = 'block';
-}
 
 // Fill Tokens and links
 function prefillInputs() {
