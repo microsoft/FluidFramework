@@ -220,11 +220,10 @@ export async function start(
     let rightDiv: HTMLDivElement;
     if (double) {
         leftDiv = document.createElement("div");
-        leftDiv.style.width = "50%";
-        leftDiv.style.cssFloat = "left";
+        leftDiv.style.flexGrow = "1";
         leftDiv.style.border = "1px solid lightgray";
         rightDiv = document.createElement("div");
-        rightDiv.style.marginLeft = "50%";
+        rightDiv.style.flexGrow = "1";
         rightDiv.style.border = "1px solid lightgray";
         div.append(leftDiv, rightDiv);
     }
