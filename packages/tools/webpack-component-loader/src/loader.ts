@@ -6,7 +6,7 @@
 import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 import { IHostConfig, start as startCore } from "@microsoft/fluid-base-host";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { IFluidModule, IFluidPackage, IPackage, isFluidPackage } from "@microsoft/fluid-container-definitions";
+import { IFluidModule, IPackage, isFluidPackage } from "@microsoft/fluid-container-definitions";
 import {
     ITestDeltaConnectionServer,
     TestDeltaConnectionServer,
@@ -45,17 +45,6 @@ function getUser(): IDevServerUser {
      };
 }
 
-function modifyFluidPackage(fluidPackage: IFluidPackage): IFluidPackage {
-    // Start by translating the input package to be webpack-dev-server relative URLs
-    for (let i = 0; i < fluidPackage.fluid.browser.umd.files.length; i++) {
-        const value = fluidPackage.fluid.browser.umd.files[i];
-        const updatedUrl = `${window.location.origin}/${value}`;
-        console.log(updatedUrl);
-        fluidPackage.fluid.browser.umd.files[i] = updatedUrl;
-    }
-    return fluidPackage;
-}
-
 async function getPkg(packageJson: IPackage, scriptIds: string[], component = false): Promise<IResolvedPackage> {
 
     // Start the creation of pkg.
@@ -67,17 +56,16 @@ async function getPkg(packageJson: IPackage, scriptIds: string[], component = fa
         return Promise.reject(new Error(`Package ${packageJson.name} not a fluid module.`));
     }
 
-    const fluidPackage = modifyFluidPackage(packageJson);
-    const details = extractDetails(`${fluidPackage.name}@${fluidPackage.version}`);
-    const legacyPackage = `${fluidPackage.name}@${fluidPackage.version}`;
+    const details = extractDetails(`${packageJson.name}@${packageJson.version}`);
+    const legacyPackage = `${packageJson.name}@${packageJson.version}`;
 
     // Add script to page, rather than load bundle directly
     const scriptLoadP: Promise<void>[] = [];
     const scriptIdPrefix = "fluidDevServerScriptToLoad";
     let scriptIndex = 0;
-    fluidPackage.fluid.browser.umd.files.forEach((file) => {
+    packageJson.fluid.browser.umd.files.forEach((file) => {
         const script = document.createElement("script");
-        script.src = file;
+        script.src = `${window.location.origin}/${file}`;
         const scriptId = `${scriptIdPrefix}_${scriptIndex++}`;
         script.id = scriptId;
         scriptIds.push(scriptId);
@@ -110,18 +98,18 @@ async function getPkg(packageJson: IPackage, scriptIds: string[], component = fa
             fluidExport: runtimeFactory,
         };
 
-        fluidPackage.fluid.browser.umd.library = "componentMain";
-        fluidPackage.name = `${fluidPackage.name}-dev-server`;
+        packageJson.fluid.browser.umd.library = "componentMain";
+        packageJson.name = `${packageJson.name}-dev-server`;
 
     }
 
     return {
-        pkg: fluidPackage,
+        pkg: packageJson,
         details: {
             config: {
                 [`@${details.scope}:cdn`]: window.location.origin,
             },
-            package: fluidPackage,
+            package: packageJson,
         },
         parsed: {
             full: legacyPackage,
