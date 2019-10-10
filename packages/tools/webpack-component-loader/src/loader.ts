@@ -6,7 +6,7 @@
 import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 import { IHostConfig, start as startCore } from "@microsoft/fluid-base-host";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { IFluidModule, IPackage, isFluidPackage } from "@microsoft/fluid-container-definitions";
+import { IFluidModule, IFluidPackage, IPackage, isFluidPackage } from "@microsoft/fluid-container-definitions";
 import {
     ITestDeltaConnectionServer,
     TestDeltaConnectionServer,
@@ -68,6 +68,28 @@ async function loadScripts(files: string[], origin: string) {
     return Promise.all(scriptLoadP);
 }
 
+function wrapComponentPackage(packageName: string, packageJson: IFluidPackage) {
+    // Wrap the core component in a runtime
+    // tslint:disable-next-line:no-string-literal
+    const loadedComponentRaw = window["main"];
+    const fluidModule = loadedComponentRaw as IFluidModule;
+    const componentFactory = fluidModule.fluidExport.IComponentFactory;
+
+    const runtimeFactory = new SimpleModuleInstantiationFactory(
+        packageName,
+        new Map([
+            [packageName, Promise.resolve(componentFactory)],
+        ]),
+    );
+    // tslint:disable-next-line:no-string-literal
+    window["componentMain"] = {
+        fluidExport: runtimeFactory,
+    };
+
+    packageJson.fluid.browser.umd.library = "componentMain";
+    packageJson.name = `${packageJson.name}-dev-server`;
+}
+
 async function getPkg(packageJson: IPackage, scriptIds: string[], component = false): Promise<IResolvedPackage> {
 
     // Start the creation of pkg.
@@ -88,26 +110,7 @@ async function getPkg(packageJson: IPackage, scriptIds: string[], component = fa
     });
 
     if (component) {
-        // Wrap the core component in a runtime
-        // tslint:disable-next-line:no-string-literal
-        const loadedComponentRaw = window["main"];
-        const fluidModule = loadedComponentRaw as IFluidModule;
-        const componentFactory = fluidModule.fluidExport.IComponentFactory;
-
-        const runtimeFactory = new SimpleModuleInstantiationFactory(
-            legacyPackage,
-            new Map([
-                [legacyPackage, Promise.resolve(componentFactory)],
-            ]),
-        );
-        // tslint:disable-next-line:no-string-literal
-        window["componentMain"] = {
-            fluidExport: runtimeFactory,
-        };
-
-        packageJson.fluid.browser.umd.library = "componentMain";
-        packageJson.name = `${packageJson.name}-dev-server`;
-
+        wrapComponentPackage(legacyPackage, packageJson);
     }
 
     return {
