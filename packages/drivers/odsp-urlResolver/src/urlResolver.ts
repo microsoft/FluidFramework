@@ -80,4 +80,3 @@ async function initializeODSP(url: URL): Promise<{site: string, drive: string, i
 
     return { site: url.href, drive, item };
 }
-

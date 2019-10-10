@@ -14,7 +14,6 @@ import {
     IODSPTokens,
     postTokenRequest,
 } from "@microsoft/fluid-odsp-utils";
-import { OfficeUrlResolver } from "@microsoft/fluid-office-urlresolver";
 import { IDocumentService, IFluidResolvedUrl, IResolvedUrl, IUrlResolver } from "@microsoft/fluid-protocol-definitions";
 import * as r11s from "@microsoft/fluid-routerlicious-driver";
 import { RouterliciousUrlResolver } from "@microsoft/fluid-routerlicious-urlresolver";
@@ -209,28 +208,10 @@ async function initializeR11s(server: string, pathname: string, r11sResolvedUrl:
         documentId);
 }
 
-const spoBaseServers = [
-    "microsoft-my.sharepoint-df.com",
-    "microsoft-my.sharepoint.com",
-    "microsoft.sharepoint-df.com",
-    "microsoft.sharepoint.com",
-];
+async function resolveUrl(url: string): Promise<IResolvedUrl> {
 
-async function resolveUrl(
-    url: string,
-    server: string,
-    forceTokenRefresh: boolean): Promise<IResolvedUrl> {
-    const clientConfig = getClientConfig();
-    let odspTokens = {
-        accessToken: "",
-        refreshToken: "",
-    };
-    if (spoBaseServers.indexOf(server) !== -1) {
-        odspTokens = await getODSPTokens(server, clientConfig, forceTokenRefresh);
-    }
     const resolversList: IUrlResolver[] = [
-        new OdspUrlResolver(odspTokens, clientConfig),
-        new OfficeUrlResolver(),
+        new OdspUrlResolver(),
         new FluidAppOdspUrlResolver(),
         new RouterliciousUrlResolver(undefined, paramJWT, []),
     ];
@@ -244,11 +225,7 @@ async function resolveUrl(
         }
     }
     if (!resolved) {
-        if (forceTokenRefresh) {
-            throw new Error("No resolver is able to resolve the given url!!");
-        } else {
-            return resolveUrl(url, server, true);
-        }
+        throw new Error("No resolver is able to resolve the given url!!");
     }
     return resolved;
 }
@@ -273,7 +250,7 @@ export async function fluidFetchInit() {
     const url = new URL(paramURL);
 
     const server = url.hostname.toLowerCase();
-    const resolvedUrl = await resolveUrl(paramURL, server, false) as IFluidResolvedUrl;
+    const resolvedUrl = await resolveUrl(paramURL) as IFluidResolvedUrl;
     const protocol = new URL(resolvedUrl.url).protocol;
     if (protocol === "fluid-odsp:") {
         const odspResolvedUrl = resolvedUrl as odsp.IOdspResolvedUrl;
