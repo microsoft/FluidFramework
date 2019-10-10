@@ -135,7 +135,42 @@ async function getResolvedPackage(
     };
 }
 
-// tslint:disable-next-line:max-func-body-length
+function getUrlResolver(options: IRouteOptions): IUrlResolver {
+    switch (options.mode) {
+        case "localhost":
+            return new InsecureUrlResolver(
+                "http://localhost:3000",
+                "http://localhost:3003",
+                "http://localhost:3001",
+                options.tenantId,
+                options.tenantSecret,
+                getUser(),
+                options.bearerSecret);
+
+        case "live":
+            return new InsecureUrlResolver(
+                options.fluidHost,
+                options.fluidHost.replace("www", "alfred"),
+                options.fluidHost.replace("www", "historian"),
+                options.tenantId,
+                options.tenantSecret,
+                getUser(),
+                options.bearerSecret);
+
+        default: // local
+            return new TestResolver();
+    }
+}
+
+function getNpm(options: IRouteOptions): string {
+    if (options.mode === "localhost") {
+        return "http://localhost:3002";
+    }
+
+    // local, live
+    return options.npm;
+}
+
 export async function start(
     documentId: string,
     packageJson: IPackage,
@@ -161,34 +196,8 @@ export async function start(
             type: "browser",
         },
     };
-    let urlResolver: IUrlResolver;
-    switch (options.mode) {
-        case "localhost":
-            options.npm = "http://localhost:3002";
-            urlResolver = new InsecureUrlResolver(
-                "http://localhost:3000",
-                "http://localhost:3003",
-                "http://localhost:3001",
-                options.tenantId,
-                options.tenantSecret,
-                getUser(),
-                options.bearerSecret);
-            break;
-
-        case "live":
-            urlResolver = new InsecureUrlResolver(
-                options.fluidHost,
-                options.fluidHost.replace("www", "alfred"),
-                options.fluidHost.replace("www", "historian"),
-                options.tenantId,
-                options.tenantSecret,
-                getUser(),
-                options.bearerSecret);
-            break;
-
-        default: // local
-            urlResolver = new TestResolver();
-    }
+    const urlResolver = getUrlResolver(options);
+    const npm = getNpm(options);
 
     let documentServiceFactory: IDocumentServiceFactory;
     let deltaConn: ITestDeltaConnectionServer;
@@ -225,7 +234,7 @@ export async function start(
         await urlResolver.resolve(req),
         pkg,
         scriptIds,
-        options.npm,
+        npm,
         config,
         {},
         double ? leftDiv : div,
@@ -245,7 +254,7 @@ export async function start(
             await urlResolver.resolve(req),
             pkg,
             scriptIds,
-            options.npm,
+            npm,
             config,
             {},
             rightDiv,
