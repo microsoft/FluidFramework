@@ -16,11 +16,7 @@
     "build:genver": "node node_modules/@microsoft/fluid-build-common/gen_version.js",
     "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
     "tsc": "tsc",
-    "tslint": "tslint --project tsconfig.json --format verbose",
-    "test": "mocha --recursive dist/test/**/*.spec.js",
-    "testfarm": "node dist/test/testFarm.js",
-    "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
-    "test:newsnapfiles": "node dist/test/createSnapshotFiles.js"
+    "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "author": "Microsoft",
   "repository": "microsoft/FluidFramework",
