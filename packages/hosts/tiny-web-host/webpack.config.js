@@ -11,6 +11,7 @@ module.exports = env => {
         disableHostCheck: true,
         port: 3030,
         public: 'localhost:' + 3030,
+        contentBase: "public",
         headers: {
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Methods": "*",

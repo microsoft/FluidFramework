@@ -5,10 +5,6 @@
 
 import * as api from "@fluid-internal/client-api";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { ISharedMap } from "@microsoft/fluid-map";
-import { ConsensusQueue, ConsensusStack, IConsensusOrderedCollection } from "@microsoft/fluid-ordered-collection";
-import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
-import * as assert from "assert";
 import {
     DocumentDeltaEventManager,
     ITestDeltaConnectionServer,
@@ -16,6 +12,10 @@ import {
     TestDocumentServiceFactory,
     TestResolver,
 } from "@microsoft/fluid-local-test-server";
+import { ISharedMap } from "@microsoft/fluid-map";
+import { ConsensusQueue, ConsensusStack, IConsensusOrderedCollection } from "@microsoft/fluid-ordered-collection";
+import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import * as assert from "assert";
 
 interface ISharedObjectConstructor<T> {
     create(runtime: IComponentRuntime, id?: string): T;

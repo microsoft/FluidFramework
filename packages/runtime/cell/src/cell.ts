@@ -5,7 +5,13 @@
 
 import { ISerializedHandle } from "@microsoft/fluid-component-core-interfaces";
 import { fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
-import { FileMode, ISequencedDocumentMessage, ITree, MessageType, TreeEntry } from "@microsoft/fluid-protocol-definitions";
+import {
+    FileMode,
+    ISequencedDocumentMessage,
+    ITree,
+    MessageType,
+    TreeEntry,
+} from "@microsoft/fluid-protocol-definitions";
 import { IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObjectFactory, SharedObject, ValueType } from "@microsoft/fluid-shared-object-base";
 import { CellFactory } from "./cellFactory";
@@ -48,7 +54,7 @@ export class SharedCell extends SharedObject implements ISharedCell {
      * @returns newly create shared map (but not attached yet)
      */
     public static create(runtime: IComponentRuntime, id?: string) {
-        return runtime.createChannel(SharedObject.getIdForCreate(id), CellFactory.Type) as SharedCell;
+        return runtime.createChannel(id, CellFactory.Type) as SharedCell;
     }
 
     /**

@@ -4,7 +4,13 @@
  */
 
 import { fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
-import { FileMode, ISequencedDocumentMessage, ITree, MessageType, TreeEntry } from "@microsoft/fluid-protocol-definitions";
+import {
+    FileMode,
+    ISequencedDocumentMessage,
+    ITree,
+    MessageType,
+    TreeEntry,
+} from "@microsoft/fluid-protocol-definitions";
 import { IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
 import { SharedObject } from "@microsoft/fluid-shared-object-base";
 // tslint:disable-next-line:no-submodule-imports
@@ -39,7 +45,7 @@ export class Ink extends SharedObject implements IInk {
      * @returns Newly create Ink object (but not attached yet)
      */
     public static create(runtime: IComponentRuntime, id?: string) {
-        return runtime.createChannel(SharedObject.getIdForCreate(id), InkFactory.Type) as Ink;
+        return runtime.createChannel(id, InkFactory.Type) as Ink;
     }
 
     /**

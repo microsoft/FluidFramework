@@ -37,8 +37,7 @@ export class ConsensusQueue<T = any> extends ConsensusOrderedCollection<T> {
      * @returns newly create consensus queue (but not attached yet)
      */
     public static create<T = any>(runtime: IComponentRuntime, id?: string) {
-        return runtime.createChannel(ConsensusOrderedCollection.getIdForCreate(id),
-            ConsensusQueueFactory.Type) as ConsensusQueue<T>;
+        return runtime.createChannel(id, ConsensusQueueFactory.Type) as ConsensusQueue<T>;
     }
 
     /**

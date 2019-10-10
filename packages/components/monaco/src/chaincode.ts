@@ -5,7 +5,11 @@
 
 // inspiration for this example taken from https://github.com/agentcooper/typescript-play
 import { PrimedComponent } from "@microsoft/fluid-aqueduct";
-import { IComponentHandle, IComponentHTMLOptions, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
+import {
+    IComponentHandle,
+    IComponentHTMLOptions,
+    IComponentHTMLVisual,
+} from "@microsoft/fluid-component-core-interfaces";
 import { IComponentLayout } from "@microsoft/fluid-framework-interfaces";
 import {
     IMergeTreeGroupMsg,

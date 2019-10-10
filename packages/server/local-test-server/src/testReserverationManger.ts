@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IConcreteNode, IConcreteNodeFactory, IReservation, IReservationManager } from "@microsoft/fluid-server-memory-orderer";
+import {
+    IConcreteNode,
+    IConcreteNodeFactory,
+    IReservation,
+    IReservationManager,
+} from "@microsoft/fluid-server-memory-orderer";
 import { ICollection, MongoManager } from "@microsoft/fluid-server-services-core";
 import { EventEmitter } from "events";
 

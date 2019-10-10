@@ -1,10 +1,10 @@
 {
   "name": "@microsoft/generator-fluid",
   "version": "0.11.0",
-  "description": "A yeoman project generator for fluid chaincode",
+  "description": "A yeoman project generator for fluid components",
   "main": "app/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "mocha --recursive test",
     "unlink": "npm rm --global generator-fluid",
     "check": "npm ls --global --depth 0",
     "link": "npm install && npm link"
@@ -16,7 +16,13 @@
   "license": "MIT",
   "dependencies": {
     "chalk": "^2.4.2",
-    "ts-morph": "^1.2.0",
-    "yeoman-generator": "^3.2.0"
+    "ts-morph": "^4.2.0",
+    "yeoman-generator": "^4.1.0"
+  },
+  "devDependencies": {
+    "@types/mocha": "^5.2.5",
+    "mocha": "^5.2.0",
+    "yeoman-assert": "^3.1.1",
+    "yeoman-test": "^2.0.0"
   }
 }
