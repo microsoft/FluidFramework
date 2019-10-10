@@ -1,0 +1,3 @@
+{
+    "extends": ["@microsoft/fluid-build-common/tslint.json"],
+}
