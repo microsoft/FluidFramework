@@ -12,12 +12,12 @@ import {
     IComponentHTMLVisual,
     IComponent,
     IComponentHTMLView,
-} from "@prague/component-core-interfaces";
-import { ComponentRuntime } from "@prague/component-runtime";
-import { SharedDirectory, IDirectory } from "@prague/map";
-import { IComponentContext, IComponentFactory, IComponentRuntime } from "@prague/runtime-definitions";
-import { SharedString } from "@prague/sequence";
-import { ISharedObjectFactory } from "@prague/shared-object-common";
+} from "@microsoft/fluid-component-core-interfaces";
+import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
+import { SharedDirectory, IDirectory } from "@microsoft/fluid-map";
+import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { SharedString } from "@microsoft/fluid-sequence";
+import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { initializeIcons } from '@uifabric/icons';
 import { EventEmitter } from "events";
 import { PersonaView } from "./personaView";
@@ -137,7 +137,3 @@ class PersonaFactory implements IComponentFactory {
 }
 
 export const fluidExport = new PersonaFactory();
-
-export function instantiateComponent(context: IComponentContext): void {
-    fluidExport.instantiateComponent(context);
-}

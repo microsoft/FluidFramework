@@ -153,7 +153,3 @@ class DrawerFactory implements IComponentFactory {
 }
 
 export const fluidExport = new DrawerFactory();
-
-export function instantiateComponent(context: IComponentContext): void {
-    fluidExport.instantiateComponent(context);
-}

@@ -16,7 +16,7 @@ export const nodes = {
     // :: NodeSpec The top level document node.
     doc: {
         // Making one block to start for simplicity
-        content: "block"
+        content: "block+"
     },
 
     // :: NodeSpec A plain paragraph textblock. Represented in the DOM
@@ -77,6 +77,49 @@ export const nodes = {
     // :: NodeSpec The text node.
     text: {
         group: "inline"
+    },
+
+    // :: NodeSpec An inline image (`<img>`) node. Supports `src`,
+    // `alt`, and `href` attributes. The latter two default to the empty
+    // string.
+    fluid: {
+        group: "inline",
+        content: "inline*",
+        inline: true,
+        draggable: true,
+        // This makes the view treat the node as a leaf, even though it
+        // technically has content
+        atom: true,
+        toDOM(node) {
+            const { src, alt, title } = node.attrs;
+            return ["fluid", { src, alt, title }];
+        },
+        parseDOM: [{
+            tag: "fluid", getAttrs(dom) {
+                return {
+                    alt: dom.getAttribute("alt"),
+                    src: dom.getAttribute("src"),
+                    title: dom.getAttribute("title"),
+                }
+            }
+        }],
+        attrs: {
+            src: { default: "" },
+            alt: { default: null },
+            title: { default: null }
+        },
+    },
+
+    footnote: {
+        group: "inline",
+        content: "inline*",
+        inline: true,
+        draggable: true,
+        // This makes the view treat the node as a leaf, even though it
+        // technically has content
+        atom: true,
+        toDOM: () => ["footnote", 0],
+        parseDOM: [{ tag: "footnote" }]
     },
 
     // :: NodeSpec An inline image (`<img>`) node. Supports `src`,

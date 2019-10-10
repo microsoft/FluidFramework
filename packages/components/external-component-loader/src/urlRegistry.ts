@@ -5,7 +5,7 @@
 
 // tslint:disable: no-console
 import { IComponent, IComponentQueryableLegacy } from "@microsoft/fluid-component-core-interfaces";
-import { IFluidPackage } from "@microsoft/fluid-container-definitions";
+import { IFluidPackage, isFluidPackage } from "@microsoft/fluid-container-definitions";
 import { Deferred } from "@microsoft/fluid-core-utils";
 import { ComponentFactoryTypes, IComponentFactory, IComponentRegistry } from "@microsoft/fluid-runtime-definitions";
 
@@ -102,16 +102,14 @@ export class UrlRegistry implements IComponentRegistry {
         } else {
             const responseText = await response.text();
             const packageJson = JSON.parse(responseText);
-            const fluidPackage = packageJson as IFluidPackage;
-
-            let entrypointName: string;
-            let scripts: string[];
-            if (fluidPackage.fluid && fluidPackage.fluid.browser && fluidPackage.fluid.browser.umd) {
-                entrypointName = fluidPackage.fluid.browser.umd.library;
-                scripts = fluidPackage.fluid.browser.umd.files;
-            } else {
+            if (!isFluidPackage(packageJson)) {
                 throw new Error(`UrlRegistry: ${name}: Package json not deserializable as IFluidPackage`);
             }
+
+            const fluidPackage: IFluidPackage = packageJson;
+
+            const entrypointName = fluidPackage.fluid.browser.umd.library;
+            const scripts = fluidPackage.fluid.browser.umd.files;
 
             if (entrypointName && scripts) {
 

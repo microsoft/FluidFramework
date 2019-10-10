@@ -23,7 +23,7 @@ const chart =
 name: routerlicious
 version: 0.1.${patch}
 description: Distributive object router
-home: https://github.com/microsoft/prague
+home: https://github.com/microsoft/FluidFramework
 `;
 
 const values =
@@ -53,6 +53,7 @@ login:
   accounts:
     username: ""
     password: ""
+  linkedAccounts: {}
 
 gateway:
   name: gateway

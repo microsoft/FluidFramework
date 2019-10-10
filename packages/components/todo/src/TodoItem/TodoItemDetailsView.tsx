@@ -31,7 +31,10 @@ export class TodoItemDetailsView extends React.Component<TodoItemDetailsViewProp
     }
 
     private async createInnerComponent(type: TodoItemSupportedComponents) {
-        await this.props.todoItemModel.createInnerComponent(type, { startingText: type });
+        await this.props.todoItemModel.createInnerComponent(type, {
+            startingText: type,
+            baseUrl: this.props.todoItemModel.getBaseUrl(),
+        });
     }
 
     private async refreshInnerComponentFromModel(): Promise<void> {

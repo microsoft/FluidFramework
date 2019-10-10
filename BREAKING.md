@@ -1,5 +1,13 @@
 # 0.11 Breaking Changes
 
+- [SequenceEvent start/end replaced with first/last](#SequenceEvent-startend-replaced-with-firstlast)
+- [Undefined keys and subdirectory names on SharedMap and SharedDirectory throw](#Undefined-keys-and-subdirectory-names-on-SharedMap-and-SharedDirectory-throw)
+
+## SequenceEvent start/end replaced with first/last
+The `start` and `end` members of SequenceEvent (and SequenceDeltaEvent) have been replaced with `first` and `last`, which return the first and last range, respectively. The values equivalent to `start` and `end` can be obtained with `first.position` and `last.position + last.segment.cachedLength`.
+
+## Undefined keys and subdirectory names on SharedMap and SharedDirectory throw
+Previously, attempting to set `undefined` as a key on a SharedMap or SharedDirectory, or creating a subdirectory with name `undefined` would appear to succeed but would cause inconsistencies in snapshotting.  This will now throw immediately upon trying to set an `undefined` key or subdirectory name.
 
 # 0.10 Breaking Changes
 
@@ -12,6 +20,7 @@
 - [`.createValueType` replaces third argument to `.set`](#.createValueType-replaces-third-argument-to-.set)
 - [Package rename](#package-rename)
 - [Support for IPraguePackage removed](#support-for-IPraguePackage-removed)
+- [`IComponentForge` no longer necessary](#icomponentforge-no-longer-necessary)
 
 
 ## `@fluid-example/tiny-web-host` prague -> fluid changes
@@ -170,6 +179,10 @@ Support for IPraguePackage and the `"prague"` entry in `package.json` has been r
     }
   },
 ```
+
+## `IComponentForge` no longer necessary
+
+`IComponentForge` is no longer necessary. If you use Aqueduct for your component, Component initialization will be done automatically on creation, so no need to call `IComponentForge.forge` explicitly any more.  If you implement IComponentForge, simply remove it.
 
 # 0.9 Breaking Changes (August 26, 2019)
 

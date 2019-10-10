@@ -258,7 +258,3 @@ class ProgressBarsFactory implements IComponentFactory {
 }
 
 export const fluidExport = new ProgressBarsFactory();
-
-export function instantiateComponent(context: IComponentContext): void {
-    fluidExport.instantiateComponent(context);
-}

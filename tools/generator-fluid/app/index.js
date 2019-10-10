@@ -138,10 +138,10 @@ module.exports = class extends Generator {
       fileString
     );
 
-    const chaincodeClassName = this.answers.name.charAt(0).toUpperCase() + this.answers.name.slice(1);
-    file.getClass("Clicker").rename(chaincodeClassName);
+    const componentClassName = this.answers.name.charAt(0).toUpperCase() + this.answers.name.slice(1);
+    file.getClass("DiceRoller").rename(componentClassName);
 
-    file.getVariableDeclaration("ClickerInstantiationFactory").rename(`${chaincodeClassName}InstantiationFactory`)
+    file.getVariableDeclaration("DiceRollerInstantiationFactory").rename(`${componentClassName}InstantiationFactory`)
 
     // TODO: Move this save so that it saves when the rest of the fs does a commit
     // Or write to a string and use fs to write.
@@ -163,8 +163,8 @@ module.exports = class extends Generator {
       return dec.isModuleSpecifierRelative()
     });
 
-    const chaincodeClassName = this.answers.name.charAt(0).toUpperCase() + this.answers.name.slice(1);
-    const factoryImportName = `${chaincodeClassName}InstantiationFactory`;
+    const componentClassName = this.answers.name.charAt(0).toUpperCase() + this.answers.name.slice(1);
+    const factoryImportName = `${componentClassName}InstantiationFactory`;
     const importSpecifier = componentDec.addNamedImport(factoryImportName);
     importSpecifier.setAlias("ComponentInstantiationFactory");
 
@@ -199,7 +199,7 @@ module.exports = class extends Generator {
 
     this.log(chalk.cyan("    npm run deploy"));
     this.log(
-      "       Publishes the chaincode to https://packages.wu2.prague.office-int.com/#/"
+      "       Publishes the component to https://packages.wu2.prague.office-int.com/#/"
     );
     this.log("\n");
 
