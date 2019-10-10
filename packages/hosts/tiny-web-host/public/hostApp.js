@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-const contentDivId = "content";
-
 function go() {
 
     cacheInputs();
@@ -22,66 +20,6 @@ function go() {
 
     iframeContainerDiv.appendChild(iframe);
     container.appendChild(iframeContainerDiv);
-}
-
-function useTinyWebHost(iframeDocument) {
-    const useIframe = document.getElementById('hostingMode').value === 'iframe';
-
-    var loadFluidScript = document.createElement('script');
-    loadFluidScript.type = "text/javascript";
-    loadFluidScript.src = "../dist/main.bundle.js";
-
-    // Onload, execute the tiny-web-host bundle
-    loadFluidScript.onload = () => {
-        const url = document.getElementById('link').value;
-        const token = document.getElementById('token').value;
-        const clientId = document.getElementById('clientId').value;
-        const clientSecret = document.getElementById('clientSecret').value;
-
-        // Example of using tiny-web-host
-        const runScript = document.createElement('script');
-        if (useIframe) {
-            runScript.text = `
-            tinyWebLoader.loadIFramedFluidComponent(
-                "${url}",
-                document.getElementById('${contentDivId}'),
-                () => {"${token}"},
-                "${clientId}",
-                "${clientSecret}",
-                );
-            `;
-        } else {
-            runScript.text = `
-            tinyWebLoader.loadFluidComponent(
-                "${url}",
-                document.getElementById('${contentDivId}'),
-                () => {"${token}"},
-                "${clientId}",
-                "${clientSecret}",
-                );
-            `;
-        }
-        iframeDocument.body.appendChild(runScript);
-    }
-
-    iframeDocument.body.style.margin = '0';
-    iframeDocument.body.appendChild(loadFluidScript);
-}
-
-
-function createDivForContainerToLoadInto(iframeDocument) {
-    const useFixedSize = document.getElementById('layoutMode').value === 'fixed';
-
-    const newdiv = document.createElement('div');
-    newdiv.id = contentDivId;
-    newdiv.style.position = "absolute";
-    if (useFixedSize) {
-        newdiv.style.top = "0";
-        newdiv.style.left = "0";
-        newdiv.style.bottom = "0";
-        newdiv.style.right = "0";
-    }
-    iframeDocument.body.appendChild(newdiv);
 }
 
 function addCloseIframeButton(iframeContainerDiv, id) {
