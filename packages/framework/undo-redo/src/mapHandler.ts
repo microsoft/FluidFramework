@@ -28,7 +28,7 @@ export class SharedMapUndoRedoHandler {
 }
 
 /**
- * Tracks allows reverting a change on a shared map
+ * Tracks a change on a shared map allows reverting it
  */
 export class SharedMapRevertable implements IRevertable {
 

@@ -34,21 +34,13 @@ export class SharedSequenceUndoRedoHandler {
 
     private readonly sequenceDeltaHandler = (event: SequenceDeltaEvent, target: SharedSegmentSequence<ISegment>) => {
         if (event.isLocal) {
-            if (event.opArgs.groupOp
-                && event.opArgs.op === event.opArgs.groupOp.ops[0]) {
-                this.stackManager.closeCurrentOperation();
-            }
             this.stackManager.push(new SharedSequenceRevertable(event, target));
-            if (event.opArgs.groupOp
-                && event.opArgs.op === event.opArgs.groupOp.ops[event.opArgs.groupOp.ops.length - 1]) {
-                    this.stackManager.closeCurrentOperation();
-            }
         }
     }
 }
 
 /**
- * Tracks allows reverting a change on a shared sequence
+ * Tracks a change on a shared sequence and allows reverting it
  */
 export class SharedSequenceRevertable implements IRevertable {
 
