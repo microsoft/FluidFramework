@@ -7,7 +7,6 @@ import {
     IRequest,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IOdspResolvedUrl } from "@microsoft/fluid-odsp-driver";
-import { getDriveItemByFileId, IClientConfig, IODSPDriveItem, IODSPTokens } from "@microsoft/fluid-odsp-utils";
 import {
     IResolvedUrl,
     IUrlResolver,
@@ -23,16 +22,11 @@ const odspServers = [
 
 export class OdspUrlResolver implements IUrlResolver {
 
-    constructor(
-        private readonly odspTokens?: IODSPTokens,
-        private readonly clientConfig?: IClientConfig,
-    ) { }
-
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
         const reqUrl = new URL(request.url);
         const server = reqUrl.hostname.toLowerCase();
         if (odspServers.indexOf(server) !== -1) {
-            const { site, drive, item } = await initializeODSP(server, reqUrl, this.odspTokens, this.clientConfig);
+            const { site, drive, item } = await initializeODSP(reqUrl);
             if (site === undefined || drive === undefined || item === undefined) {
                 return Promise.reject("Cannot resolve the given url!!");
             }
@@ -41,22 +35,22 @@ export class OdspUrlResolver implements IUrlResolver {
             let documentUrl = `fluid-odsp://placeholder/placeholder/${hashedDocumentId}`;
 
             if (request.url.length > 0) {
-              // In case of any additional parameters add them back to the url
-              const requestURL = new URL(request.url);
-              const searchParams = requestURL.search;
-              if (!!searchParams) {
+                // In case of any additional parameters add them back to the url
+                const requestURL = new URL(request.url);
+                const searchParams = requestURL.search;
+                if (!!searchParams) {
                 documentUrl += searchParams;
-              }
+                }
             }
             const response: IOdspResolvedUrl = {
-              endpoints: { snapshotStorageUrl: getSnapshotUrl(site, drive, item) },
-              tokens: {},
-              type: "fluid",
-              url: documentUrl,
-              hashedDocumentId,
-              siteUrl: site,
-              driveId: drive,
-              itemId: item,
+                endpoints: { snapshotStorageUrl: getSnapshotUrl(site, drive, item) },
+                tokens: {},
+                type: "fluid",
+                url: documentUrl,
+                hashedDocumentId,
+                siteUrl: site,
+                driveId: drive,
+                itemId: item,
             };
 
             return response;
@@ -70,32 +64,9 @@ function getSnapshotUrl(server: string, drive: string, item: string) {
     return `${siteOrigin}/_api/v2.1/drives/${drive}/items/${item}/opStream/snapshots`;
 }
 
-async function initializeODSP(
-    server: string,
-    url: URL,
-    odspTokens: IODSPTokens | undefined,
-    clientConfig: IClientConfig | undefined): Promise<{site: string, drive: string, item: string}> {
+async function initializeODSP(url: URL): Promise<{site: string, drive: string, item: string}> {
 
     const pathname = url.pathname;
-    const searchParams = url.searchParams;
-
-    // Sharepoint hosted URL
-    const sourceDoc = searchParams.get("sourcedoc");
-    if (sourceDoc) {
-        const hostedMatch = pathname.match(/\/(personal|teams)\/([^\/]*)\//i);
-        if (hostedMatch !== null) {
-            if (!odspTokens || !clientConfig) {
-                return Promise.reject("Missing odsp tokesn and client credentials!!");
-            }
-            const a = await initializeODSPHosted(url,
-                server,
-                `${hostedMatch[1]}/${hostedMatch[2]}`,
-                sourceDoc,
-                odspTokens,
-                clientConfig);
-            return a;
-        }
-    }
 
     // Joinsession like URL
     const joinSessionMatch = pathname.match(
@@ -110,30 +81,3 @@ async function initializeODSP(
     return { site: url.href, drive, item };
 }
 
-async function initializeODSPHosted(
-    url: URL,
-    server: string,
-    account: string,
-    docId: string,
-    odspTokens: IODSPTokens,
-    clientConfig: IClientConfig) {
-    const driveItem = await resolveDriveItemByFileId(server, account, docId, clientConfig, odspTokens);
-    return { site: url.href, drive: driveItem.drive, item: driveItem.item };
-}
-
-async function resolveDriveItemByFileId(
-    server: string,
-    account: string,
-    docId: string,
-    clientConfig: IClientConfig,
-    odspTokens: IODSPTokens): Promise<IODSPDriveItem> {
-
-    try {
-        const driveItem: IODSPDriveItem = await getDriveItemByFileId(server, account, docId, clientConfig, odspTokens);
-        return driveItem;
-    } catch (e) {
-        const parsedBody = JSON.parse(e.requestResult.data);
-        const responseMsg = JSON.stringify(parsedBody.error, undefined, 2);
-        return Promise.reject(`Fail to connect to ODSP server\nError Response:\n${responseMsg}`);
-    }
-}

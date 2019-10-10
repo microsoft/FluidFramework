@@ -43,7 +43,6 @@ export class ContainerUrlResolver implements IUrlResolver {
 
             this.cache.set(request.url, resolvedP.then((resolved) => resolved.data));
         }
-        console.log("hjbwjhw", this.cache.get(request.url));
         return this.cache.get(request.url)!;
     }
 }
