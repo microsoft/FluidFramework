@@ -1,5 +1,5 @@
 {
-  "name": "office-addin-taskpane",
+  "name": "@fluid-example/collab-compose",
   "version": "0.0.1",
   "repository": {
     "type": "git",
@@ -23,7 +23,12 @@
     "validate": "office-addin-manifest validate manifest.xml",
     "watch": "webpack --mode development --watch"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@microsoft/fluid-base-host": "^0.11.14879",
+    "@microsoft/fluid-routerlicious-driver": "^0.11.14879",
+    "@microsoft/fluid-routerlicious-host": "^0.11.14879",
+    "jsonwebtoken": "^8.5.1"
+  },
   "devDependencies": {
     "@babel/core": "^7.5.5",
     "@babel/polyfill": "^7.4.4",

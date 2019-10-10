@@ -32,6 +32,7 @@ import { FootnoteView } from "./footnoteView";
 import { create as createSelection } from "./selection";
 import { openPrompt, TextField } from "./prompt";
 import { ILoader } from "@microsoft/fluid-container-definitions";
+import { EventEmitter } from "events";
 
 export interface IProvideRichTextEditor {
     readonly IRichTextEditor: IRichTextEditor;
@@ -43,7 +44,7 @@ export interface IRichTextEditor extends IProvideRichTextEditor {
     initializeValue(value: string): void;
 }
 
-export class FluidCollabManager {
+export class FluidCollabManager extends EventEmitter {
     public get IRichTextEditor() { return this; }
 
     public readonly plugin: Plugin;
@@ -52,6 +53,8 @@ export class FluidCollabManager {
     private editorView: EditorView;
 
     constructor(private readonly text: SharedString, private readonly loader: ILoader) {
+        super();
+
         this.plugin = new Plugin({
             state: {
                 init: () => {
@@ -227,6 +230,8 @@ export class FluidCollabManager {
         this.text.on(
             "op",
             (op, local) => {
+                this.emit("valueChanged");
+
                 if (local) {
                     return;
                 }
