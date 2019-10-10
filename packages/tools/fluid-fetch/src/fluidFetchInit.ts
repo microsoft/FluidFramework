@@ -209,6 +209,13 @@ async function initializeR11s(server: string, pathname: string, r11sResolvedUrl:
         documentId);
 }
 
+const spoBaseServers = [
+    "microsoft-my.sharepoint-df.com",
+    "microsoft-my.sharepoint.com",
+    "microsoft.sharepoint-df.com",
+    "microsoft.sharepoint.com",
+];
+
 const spoServers = [
     "weuprodprv.www.office.com",
     "ncuprodprv.www.office.com",
@@ -226,9 +233,18 @@ const r11sServers = [
     "www.eu.prague.office-int.com",
 ];
 
-async function resolveUrl(url: string, server: string, forceTokenRefresh: boolean): Promise<IResolvedUrl> {
+async function resolveUrl(
+    url: string,
+    server: string,
+    forceTokenRefresh: boolean): Promise<IResolvedUrl> {
     const clientConfig = getClientConfig();
-    const odspTokens = await getODSPTokens(server, clientConfig, forceTokenRefresh);
+    let odspTokens = {
+        accessToken: "",
+        refreshToken: "",
+    };
+    if (spoBaseServers.indexOf(server) !== -1 && forceTokenRefresh) {
+        odspTokens = await getODSPTokens(server, clientConfig, forceTokenRefresh);
+    }
     const resolversList: IUrlResolver[] = [
         new OdspUrlResolver(odspTokens, clientConfig),
         new OfficeUrlResolver(),
@@ -244,7 +260,11 @@ async function resolveUrl(url: string, server: string, forceTokenRefresh: boolea
         }
     }
     if (!resolved) {
-        throw new Error("No resolver is able to resolve the given url!!");
+        if (forceTokenRefresh) {
+            throw new Error("No resolver is able to resolve the given url!!");
+        } else {
+            return resolveUrl(url, server, true);
+        }
     }
     return resolved;
 }
@@ -270,16 +290,8 @@ export async function fluidFetchInit() {
 
     const server = url.hostname.toLowerCase();
     if (spoServers.indexOf(server) !== -1) {
-        const odspResolvedUrlP = resolveUrl(paramURL, server, false);
-        odspResolvedUrlP.then(async (odspResolvedUrl) => {
-            return initializeODSPCore(odspResolvedUrl as odsp.IOdspResolvedUrl, server, getClientConfig());
-        },
-        async (error) => {
-            console.log("Error", error);
-            // tslint:disable-next-line: no-non-null-assertion
-            const odspResolvedUrl = await resolveUrl(paramURL!, server, true);
-            return initializeODSPCore(odspResolvedUrl as odsp.IOdspResolvedUrl, server, getClientConfig());
-        });
+        const odspResolvedUrl = await resolveUrl(paramURL, server, false) as odsp.IOdspResolvedUrl;
+        return initializeODSPCore(odspResolvedUrl, new URL(odspResolvedUrl.siteUrl).host, getClientConfig());
     } else if (r11sServers.indexOf(server) !== -1 || (server === "localhost" && url.port === "3000")) {
         const r11sResolvedUrl = await resolveUrl(paramURL, server, false) as IFluidResolvedUrl;
         return initializeR11s(server, url.pathname, r11sResolvedUrl);
