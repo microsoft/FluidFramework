@@ -26,7 +26,7 @@ export class OfficeUrlResolver implements IUrlResolver {
         if (officeServers.indexOf(server) !== -1) {
             const { site, drive, item } = initializeOfficeODSP(reqUrl.searchParams);
             if (site === undefined || drive === undefined || item === undefined) {
-                return Promise.reject("Cannot resolve the givem url!!");
+                return Promise.reject("Cannot resolve the given url!!");
             }
             const hashedDocumentId = new sha.sha256().update(`${site}_${drive}_${item}`).digest("hex");
 
@@ -52,7 +52,7 @@ export class OfficeUrlResolver implements IUrlResolver {
             };
             return response;
         }
-        return Promise.reject("Cannot resolve the givem url!!");
+        return Promise.reject("Cannot resolve the given url!!");
     }
 }
 

@@ -27,7 +27,7 @@ export class FluidAppOdspUrlResolver implements IUrlResolver {
         if (fluidOfficeServers.indexOf(server) !== -1) {
             const { site, drive, item } = await initializeFluidOffice(reqUrl);
             if (site === undefined || drive === undefined || item === undefined) {
-                return Promise.reject("Cannot resolve the givem url!!");
+                return Promise.reject("Cannot resolve the given url!!");
             }
             const hashedDocumentId = new sha.sha256().update(`${site}_${drive}_${item}`).digest("hex");
 
@@ -53,7 +53,7 @@ export class FluidAppOdspUrlResolver implements IUrlResolver {
             };
             return response;
         }
-        return Promise.reject("Cannot resolve the givem url!!");
+        return Promise.reject("Cannot resolve the given url!!");
     }
 }
 

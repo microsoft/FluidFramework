@@ -34,7 +34,7 @@ export class OdspUrlResolver implements IUrlResolver {
         if (odspServers.indexOf(server) !== -1) {
             const { site, drive, item } = await initializeODSP(server, reqUrl, this.odspTokens, this.clientConfig);
             if (site === undefined || drive === undefined || item === undefined) {
-                return Promise.reject("Cannot resolve the givem url!!");
+                return Promise.reject("Cannot resolve the given url!!");
             }
             const hashedDocumentId = new sha.sha256().update(`${site}_${drive}_${item}`).digest("hex");
 
@@ -61,7 +61,7 @@ export class OdspUrlResolver implements IUrlResolver {
 
             return response;
         }
-        return Promise.reject("Cannot resolve the givem url!!");
+        return Promise.reject("Cannot resolve the given url!!");
     }
 }
 

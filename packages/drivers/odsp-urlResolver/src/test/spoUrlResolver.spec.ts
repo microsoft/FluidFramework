@@ -7,7 +7,7 @@ import { IOdspResolvedUrl } from "@microsoft/fluid-odsp-driver";
 import * as assert from "assert";
 import { OdspUrlResolver } from "../urlResolver";
 
-describe("SPo Url Resolver", () => {
+describe("Spo Url Resolver", () => {
 
     it("Should resolve the spo urls correctly", async () => {
         const urlResolver = new OdspUrlResolver();

@@ -216,23 +216,6 @@ const spoBaseServers = [
     "microsoft.sharepoint.com",
 ];
 
-const spoServers = [
-    "weuprodprv.www.office.com",
-    "ncuprodprv.www.office.com",
-    "dev.fluid.office.com",
-    "fluidpreview.office.net",
-    "microsoft-my.sharepoint-df.com",
-    "microsoft-my.sharepoint.com",
-    "microsoft.sharepoint-df.com",
-    "microsoft.sharepoint.com",
-];
-
-const r11sServers = [
-    "www.wu2-ppe.prague.office-int.com",
-    "www.wu2.prague.office-int.com",
-    "www.eu.prague.office-int.com",
-];
-
 async function resolveUrl(
     url: string,
     server: string,
@@ -255,6 +238,7 @@ async function resolveUrl(
     for (const resolver of resolversList) {
         try {
             resolved = await resolver.resolve({ url });
+            return resolved;
         } catch {
             continue;
         }
@@ -289,12 +273,13 @@ export async function fluidFetchInit() {
     const url = new URL(paramURL);
 
     const server = url.hostname.toLowerCase();
-    if (spoServers.indexOf(server) !== -1) {
-        const odspResolvedUrl = await resolveUrl(paramURL, server, false) as odsp.IOdspResolvedUrl;
+    const resolvedUrl = await resolveUrl(paramURL, server, false) as IFluidResolvedUrl;
+    const protocol = new URL(resolvedUrl.url).protocol;
+    if (protocol === "fluid-odsp:") {
+        const odspResolvedUrl = resolvedUrl as odsp.IOdspResolvedUrl;
         return initializeODSPCore(odspResolvedUrl, new URL(odspResolvedUrl.siteUrl).host, getClientConfig());
-    } else if (r11sServers.indexOf(server) !== -1 || (server === "localhost" && url.port === "3000")) {
-        const r11sResolvedUrl = await resolveUrl(paramURL, server, false) as IFluidResolvedUrl;
-        return initializeR11s(server, url.pathname, r11sResolvedUrl);
+    } else if (protocol === "fluid:") {
+        return initializeR11s(server, url.pathname, resolvedUrl);
     }
     console.log(server);
     return Promise.reject(`Unknown URL ${paramURL}`);

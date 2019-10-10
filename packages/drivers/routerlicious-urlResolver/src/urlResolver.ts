@@ -92,7 +92,7 @@ export class RouterliciousUrlResolver implements IUrlResolver {
             };
             return resolved;
         }
-        return Promise.reject("Cannot resolve the givem url!!");
+        return Promise.reject("Cannot resolve the given url!!");
     }
 }
 
