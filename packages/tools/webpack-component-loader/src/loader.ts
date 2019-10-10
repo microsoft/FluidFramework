@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// tslint:disable no-string-literal trailing-comma no-shadowed-variable no-floating-promises
-
 import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 import { IHostConfig, start as startCore } from "@microsoft/fluid-base-host";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
@@ -96,6 +94,7 @@ async function getPkg(packageJson: IPackage, scriptIds: string[], component = fa
 
     if (component) {
         // Wrap the core component in a runtime
+        // tslint:disable-next-line:no-string-literal
         const loadedComponentRaw = window["main"];
         const fluidModule = loadedComponentRaw as IFluidModule;
         const componentFactory = fluidModule.fluidExport.IComponentFactory;
@@ -106,6 +105,7 @@ async function getPkg(packageJson: IPackage, scriptIds: string[], component = fa
                 [legacyPackage, Promise.resolve(componentFactory)],
             ]),
         );
+        // tslint:disable-next-line:no-string-literal
         window["componentMain"] = {
             fluidExport: runtimeFactory,
         };
@@ -134,7 +134,7 @@ async function getPkg(packageJson: IPackage, scriptIds: string[], component = fa
     };
 }
 
-// tslint:disable-next-line: max-func-body-length
+// tslint:disable-next-line:max-func-body-length
 export async function start(
     documentId: string,
     packageJson: IPackage,
@@ -221,6 +221,7 @@ export async function start(
         div.append(leftDiv, rightDiv);
     }
 
+    // tslint:disable-next-line:no-floating-promises
     startCore(
         url,
         await urlResolver.resolve(req),
@@ -240,6 +241,7 @@ export async function start(
 
         // startCore will create a new Loader/Container/Component from the startCore above. This is
         // intentional because we want to emulate two clients collaborating with each other.
+        // tslint:disable-next-line:no-floating-promises
         startCore(
             url,
             await urlResolver.resolve(req),
