@@ -73,9 +73,26 @@ module.exports = class extends Generator {
       this._copyContainer();
     }
 
+    let entryFilePath;
+    if (this.answers.container === "yes") {
+      entryFilePath = "./src/index.ts";
+    } else {
+      entryFilePath = this.answers.template === "react" ? "./src/main.tsx" : "./src/main.ts";
+    }
+    this.fs.copyTpl(
+      this.templatePath("webpack.config.js"), // FROM
+      this.destinationPath("./webpack.config.js"), // TO Base Folder
+      { entryFilePath },
+    );
+
     this.fs.copy(
-      this.templatePath("webpack.*.js"), // FROM
-      this.destinationPath("./"), // TO Base Folder
+      this.templatePath("webpack.dev.js"), // FROM
+      this.destinationPath("./webpack.dev.js"), // TO Base Folder
+    );
+
+    this.fs.copy(
+      this.templatePath("webpack.prod.js"), // FROM
+      this.destinationPath("./webpack.prod.js"), // TO Base Folder
     );
 
     this.fs.copy(

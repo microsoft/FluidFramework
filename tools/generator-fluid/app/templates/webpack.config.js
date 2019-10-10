@@ -12,11 +12,10 @@ const componentName = pkg.name.slice(1);
 
 module.exports = env => {
     const isProduction = env && env.production;
-    const isComponent = env && env.component;
 
     return merge({
         entry: {
-            main: isComponent ? "./src/main.tsx" : "./src/index.ts",
+            main: "<%= entryFilePath %>",
         },
         resolve: {
             extensions: [".ts", ".tsx", ".js"],
