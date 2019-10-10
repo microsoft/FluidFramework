@@ -89,6 +89,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     private lastQueuedSequenceNumber: number = 0;
     private baseSequenceNumber: number = 0;
 
+    // the sequence number we initially loaded from
+    private initSequenceNumber: number = 0;
+
     private readonly _inboundPending: DeltaQueue<ISequencedDocumentMessage>;
     private readonly _inbound: DeltaQueue<ISequencedDocumentMessage>;
     private readonly _inboundSignal: DeltaQueue<ISignalMessage>;
@@ -130,6 +133,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
     public get inboundSignal(): IDeltaQueue<ISignalMessage> {
         return this._inboundSignal;
+    }
+
+    public get initialSequenceNumber(): number {
+        return this.initSequenceNumber;
     }
 
     public get referenceSequenceNumber(): number {
@@ -277,7 +284,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             resume: boolean) {
         debug("Attached op handler", sequenceNumber);
 
-        this.baseSequenceNumber = sequenceNumber;
+        this.baseSequenceNumber = this.initSequenceNumber = sequenceNumber;
         this.minSequenceNumber = minSequenceNumber;
         this.lastQueuedSequenceNumber = sequenceNumber;
 

@@ -98,7 +98,7 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
         }
 
         // initialize values (not exact)
-        this.lastSummarySeqNumber = this.runtime.deltaManager.referenceSequenceNumber;
+        this.lastSummarySeqNumber = this.runtime.deltaManager.initialSequenceNumber;
         this.lastSummaryTime = Date.now();
 
         this.logger.sendTelemetryEvent({
