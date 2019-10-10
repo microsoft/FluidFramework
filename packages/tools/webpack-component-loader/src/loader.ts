@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-// tslint:disable no-string-literal trailing-comma no-shadowed-variable no-submodule-imports no-floating-promises
+// tslint:disable no-string-literal trailing-comma no-shadowed-variable no-floating-promises
 
 import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 import { IHostConfig, start as startCore } from "@microsoft/fluid-base-host";
@@ -20,6 +20,7 @@ import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@micr
 import { getRandomName } from "@microsoft/fluid-server-services-core";
 import { extractDetails, IResolvedPackage } from "@microsoft/fluid-web-code-loader";
 import * as jwt from "jsonwebtoken";
+// tslint:disable-next-line:no-submodule-imports
 import * as uuid from "uuid/v4";
 import { InsecureUrlResolver } from "./insecureUrlResolver";
 import { SessionStorageDbFactory } from "./sessionStorageTestDb";
