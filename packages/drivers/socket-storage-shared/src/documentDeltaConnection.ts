@@ -22,6 +22,8 @@ import { debug } from "./debug";
 import { IConnect, IConnected } from "./messages";
 
 const protocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
+const afdUrlConnectExpirationMs = 8 * 60 * 60 * 1000; // 8 hours
+const lastAfdConnectionTimeMsKey = "LastAfdConnectionTimeMs";
 
 /**
  * Error raising for socket.io issues
@@ -76,6 +78,34 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
             // Create null logger if telemetry logger is not available from caller
             const logger = telemetryLogger ? telemetryLogger : new TelemetryNullLogger();
 
+            let shouldUseAfdUrl = false;
+
+            // If we have used the AFD URL within a certain time in the past, then we should use it again.
+            const lastAfdConnection = localStorage.getItem(lastAfdConnectionTimeMsKey);
+            if (lastAfdConnection !== null) {
+                const lastAfdTimeMs = Number(lastAfdConnection);
+                if (!isNaN(lastAfdTimeMs) && lastAfdTimeMs > 0
+                    && Date.now() - lastAfdTimeMs <= afdUrlConnectExpirationMs) {
+                    shouldUseAfdUrl = true;
+                }
+            }
+
+            // Use AFD URL if in cache
+            if (shouldUseAfdUrl && hasUrl2) {
+                logger.sendTelemetryEvent({ eventName: "UseAfdUrl" });
+                return this.createImpl(
+                    tenantId,
+                    id,
+                    token,
+                    io,
+                    client,
+                    // tslint:disable-next-line: no-non-null-assertion
+                    url2!,
+                    mode,
+                    20000,
+                );
+            }
+
             return this.createImpl(
                 tenantId,
                 id,
@@ -91,6 +121,9 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
                     if (error.canRetry) {
                         debug(`Socket connection error on non-AFD URL. Error was [${error}]. Retry on AFD URL: ${url}`);
                         logger.sendTelemetryEvent({ eventName: "UseAfdUrl" });
+                        logger.sendTelemetryEvent({ eventName: "CacheAfdUrl" });
+                        localStorage.setItem(lastAfdConnectionTimeMsKey, Date.now().toString());
+                        debug(`Cached AFD connection time. Expiring in ${new Date(Number(localStorage.getItem(lastAfdConnectionTimeMsKey)) + afdUrlConnectExpirationMs)}`);
 
                         return this.createImpl(
                             tenantId,
