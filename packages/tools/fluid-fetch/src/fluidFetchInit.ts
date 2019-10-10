@@ -242,7 +242,7 @@ async function resolveUrl(
         accessToken: "",
         refreshToken: "",
     };
-    if (spoBaseServers.indexOf(server) !== -1 && forceTokenRefresh) {
+    if (spoBaseServers.indexOf(server) !== -1) {
         odspTokens = await getODSPTokens(server, clientConfig, forceTokenRefresh);
     }
     const resolversList: IUrlResolver[] = [
