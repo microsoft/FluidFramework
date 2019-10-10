@@ -12,10 +12,11 @@ const componentName = pkg.name.slice(1);
 
 module.exports = env => {
     const isProduction = env && env.production;
+    const isComponent = env && env.component;
 
     return merge({
         entry: {
-            main: "./src/index.ts"
+            main: isComponent ? "./src/main.tsx" : "./src/index.ts",
         },
         resolve: {
             extensions: [".ts", ".tsx", ".js"],
@@ -23,7 +24,7 @@ module.exports = env => {
         module: {
             rules: [{
                 test: /\.tsx?$/,
-                loader: "ts-loader"
+                loader: "ts-loader",
             }]
         },
         output: {
@@ -33,7 +34,7 @@ module.exports = env => {
             // https://github.com/webpack/webpack/issues/5767
             // https://github.com/webpack/webpack/issues/7939
             devtoolNamespace: componentName,
-            libraryTarget: "umd"
+            libraryTarget: "umd",
         },
         devServer: {
             publicPath: '/dist',

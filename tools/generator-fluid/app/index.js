@@ -37,7 +37,7 @@ module.exports = class extends Generator {
       },
       {
         type: "list",
-        name: "template",
+        name: "container",
         message: "Do you want to customize your container (advanced)?",
         default: "no",
         choices: ["no", "yes"],
@@ -69,7 +69,9 @@ module.exports = class extends Generator {
 
     this._copyPackageFile();
     this._copyComponent();
-    this._copyFactory();
+    if (this.answers.container === "yes") {
+      this._copyContainer();
+    }
 
     this.fs.copy(
       this.templatePath("webpack.*.js"), // FROM
@@ -102,6 +104,15 @@ module.exports = class extends Generator {
       delete packageJson.dependencies["react-dom"];
     }
 
+    // Put the correct start script into npm start, then delete the start:* scripts
+    if (this.answers.container === "no") {
+      packageJson.scripts["start"] = packageJson.scripts["start:component"];
+    } else {
+      packageJson.scripts["start"] = packageJson.scripts["start:container"];
+    }
+    delete packageJson.scripts["start:component"];
+    delete packageJson.scripts["start:container"];
+
     this.fs.writeJSON(
       this.destinationPath("package.json"), // TO
       packageJson, // contents
@@ -119,17 +130,23 @@ module.exports = class extends Generator {
       fileString,
     );
 
-    const componentClassName = this.answers.name.charAt(0).toUpperCase() + this.answers.name.slice(1);
-    file.getClass("DiceRoller").rename(componentClassName);
+    file.getClass("DiceRoller").rename(this._componentClassName());
 
-    file.getVariableDeclaration("DiceRollerInstantiationFactory").rename(`${componentClassName}InstantiationFactory`)
+    if (this.answers.container === "no") {
+      // In the case that we're loading the component directly, we export the component factory through fluidExport
+      file.getVariableDeclaration("DiceRollerInstantiationFactory").rename("fluidExport");
+    } else {
+      // In the case that we're creating our own container, we'll import the component to the container and then
+      // export the container through fluidExport
+      file.getVariableDeclaration("DiceRollerInstantiationFactory").rename(this._componentFactoryClassName());
+    }
 
     // TODO: Move this save so that it saves when the rest of the fs does a commit
     // Or write to a string and use fs to write.
     file.save();
   }
 
-  _copyFactory() {
+  _copyContainer() {
     const fileString = this.fs.read(this.templatePath("src/index.ts"));
 
     const project = new Project({});
@@ -144,14 +161,20 @@ module.exports = class extends Generator {
       return dec.isModuleSpecifierRelative();
     });
 
-    const componentClassName = this.answers.name.charAt(0).toUpperCase() + this.answers.name.slice(1);
-    const factoryImportName = `${componentClassName}InstantiationFactory`;
-    const importSpecifier = componentDec.addNamedImport(factoryImportName);
+    const importSpecifier = componentDec.addNamedImport(this._componentFactoryClassName());
     importSpecifier.setAlias("ComponentInstantiationFactory");
 
     // TODO: Move this save so that it saves when the rest of the fs does a commit
     // Or write to a string and use fs to write.
     file.save();
+  }
+
+  _componentClassName() {
+    return this.answers.name.charAt(0).toUpperCase() + this.answers.name.slice(1);
+  }
+
+  _componentFactoryClassName() {
+    return `${this._componentClassName()}InstantiationFactory`;
   }
 
   install() {
