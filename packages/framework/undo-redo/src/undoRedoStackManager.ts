@@ -17,8 +17,8 @@ enum UndoRedoMode { None, Redo, Undo }
  * Helper class for createing a stack over an array
  */
 class Stack<T> {
+    public itemPushedCallback: (() => void) | undefined;
     private readonly items: T[] = [];
-
     constructor(...items: T[]) {
         if (items !== undefined) {
             items.forEach((item) => this.push(item));
@@ -39,7 +39,10 @@ class Stack<T> {
     }
 
     public push(item: T) {
-        return this.items.unshift(item);
+        this.items.unshift(item);
+        if (this.itemPushedCallback !== undefined) {
+            this.itemPushedCallback();
+        }
     }
 }
 
@@ -48,14 +51,24 @@ class Stack<T> {
  */
 class UndoRedoStack extends Stack<Stack<IRevertable> | undefined> {
 
-    public closeOperationCallback: (() => void) | undefined;
+    public push(item: Stack<IRevertable> | undefined) {
+        if (item !== undefined) {
+            item.itemPushedCallback = () => this.callItemPushedCallback;
+        }
+        super.push(item);
+    }
 
     public closeCurrentOperationIfInProgress() {
         if (this.top() !== undefined) {
             this.push(undefined);
+        } else {
+            this.callItemPushedCallback();
         }
-        if (this.closeOperationCallback !== undefined) {
-            this.closeOperationCallback();
+    }
+
+    private callItemPushedCallback() {
+        if (this.itemPushedCallback !== undefined) {
+            this.itemPushedCallback();
         }
     }
 }
@@ -106,10 +119,10 @@ export class UndoRedoStackManager {
     private readonly eventEmitter = new EventEmitter();
 
     constructor(private readonly runtime: IHostRuntime) {
-        this.undoStack.closeOperationCallback =
-            () => this.eventEmitter.emit("operationClosed");
-        this.redoStack.closeOperationCallback =
-            () => this.eventEmitter.emit("operationClosed");
+        this.undoStack.itemPushedCallback =
+            () => this.eventEmitter.emit("changePushed");
+        this.redoStack.itemPushedCallback =
+            () => this.eventEmitter.emit("changePushed");
      }
 
     public closeCurrentOperation() {
@@ -118,10 +131,10 @@ export class UndoRedoStackManager {
         }
     }
 
-    public on(event: "operationClosed" | "changePushed", listener: () => void) {
+    public on(event: "changePushed", listener: () => void) {
         this.eventEmitter.on(event, listener);
     }
-    public removeListener(event: "operationClosed" | "changePushed", listener: () => void) {
+    public removeListener(event: "changePushed", listener: () => void) {
         this.eventEmitter.removeListener(event, listener);
     }
 
@@ -171,7 +184,6 @@ export class UndoRedoStackManager {
         } else {
             operationStack.push(revertable);
         }
-        this.eventEmitter.emit("changePushed");
     }
 
     private clearRedoStack() {

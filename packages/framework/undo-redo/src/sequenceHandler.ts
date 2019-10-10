@@ -26,7 +26,6 @@ export class SharedSequenceUndoRedoHandler {
         new Map<SharedSegmentSequence<ISegment>, SharedSequenceRevertable | undefined>();
 
     constructor(private readonly stackManager: UndoRedoStackManager) {
-        this.stackManager.on("operationClosed", () => this.sequences.clear());
         this.stackManager.on("changePushed", () => this.sequences.clear());
     }
 
@@ -58,7 +57,7 @@ interface ITrackedSharedSequenceRevertable {
 }
 
 /**
- * Tracks a changes on a shared sequence and allows reverting them
+ * Tracks a change on a shared sequence and allows reverting it
  */
 export class SharedSequenceRevertable implements IRevertable {
 
@@ -93,85 +92,56 @@ export class SharedSequenceRevertable implements IRevertable {
     }
 
     public revert() {
-        this.tracking.forEach((tracked) => {
-            switch (tracked.operation) {
-                case MergeTreeDeltaType.INSERT:
-                    this.revertInsert(tracked);
-                    break;
+        while (this.tracking.length > 0) {
+            const tracked = this.tracking.pop();
+            if (tracked !== undefined) {
+                while (tracked.trackingGroup.size > 0) {
+                    const sg = tracked.trackingGroup.segments[0];
+                    sg.trackingCollection.unlink(tracked.trackingGroup);
+                    switch (tracked.operation) {
+                        case MergeTreeDeltaType.INSERT:
+                            if (sg.removedSeq === undefined) {
+                                const start = this.sequence.getPosition(sg);
+                                this.sequence.removeRange(start, start + sg.cachedLength);
+                            }
+                            break;
 
-                case MergeTreeDeltaType.REMOVE:
-                    this.revertRemove(tracked);
-                    break;
+                        case MergeTreeDeltaType.REMOVE:
+                            const insertSegment = this.sequence.segmentFromSpec(sg.toJSONObject() as IJSONSegment);
+                            this.sequence.insertAtReferencePosition(
+                                this.sequence.createPositionReference(sg, 0, ReferenceType.Transient),
+                                insertSegment);
+                            sg.trackingCollection.trackingGroups.forEach((tg) => {
+                                tg.link(insertSegment);
+                                tg.unlink(sg);
+                            });
+                            break;
 
-                case MergeTreeDeltaType.ANNOTATE:
-                    this.revertAnnotate(tracked);
-                    break;
-
-                default:
-                    throw new Error("operation type not revertable");
-            }
-        });
-    }
-
-    public disgard() {
-        this.tracking.forEach((tracked) => tracked.trackingGroup.segments.forEach(
-            (sg) => sg.trackingCollection.unlink(tracked.trackingGroup)));
-    }
-
-    private revertInsert(tracked: ITrackedSharedSequenceRevertable) {
-        this.coalesceTrackingGroupToRangesAndRevert(
-            tracked.trackingGroup,
-            (start, end) => this.sequence.removeRange(start, end));
-    }
-
-    private revertRemove(tracked: ITrackedSharedSequenceRevertable) {
-        tracked.trackingGroup.segments.forEach((sg) => {
-            sg.trackingCollection.unlink(tracked.trackingGroup);
-            const insertSegment = this.sequence.segmentFromSpec(sg.toJSONObject() as IJSONSegment);
-            this.sequence.insertAtReferencePosition(
-                this.sequence.createPositionReference(sg, 0, ReferenceType.Transient),
-                insertSegment);
-            sg.trackingCollection.trackingGroups.forEach((tg) => {
-                tg.link(insertSegment);
-                tg.unlink(sg);
-            });
-        });
-    }
-
-    private revertAnnotate(tracked: ITrackedSharedSequenceRevertable) {
-        this.coalesceTrackingGroupToRangesAndRevert(
-            tracked.trackingGroup,
-            (start, end) => this.sequence.annotateRange(
-                start,
-                end,
-                tracked.propertyDelta,
-                undefined));
-    }
-
-    private coalesceTrackingGroupToRangesAndRevert(
-        trackingGroup: TrackingGroup,
-        revertAction: (start: number, end: number) => void,
-    ) {
-        if (trackingGroup.size > 0) {
-            let start = this.sequence.getPosition(trackingGroup.segments[0]);
-            let end = start + trackingGroup.segments[0].cachedLength;
-            trackingGroup.unlink(trackingGroup.segments[0]);
-            while (trackingGroup.size > 0) {
-                const segment = trackingGroup.segments[0];
-                trackingGroup.unlink(segment);
-                if (segment.removedSeq === undefined) {
-                    const segStart = this.sequence.getPosition(segment);
-                    const segEnd = segStart + segment.cachedLength;
-                    if (end === segStart) {
-                        end = segEnd;
-                    } else {
-                        revertAction(start, end);
-                        start = segStart;
-                        end = segEnd;
+                        case MergeTreeDeltaType.ANNOTATE:
+                            if (sg.removedSeq === undefined) {
+                                const start = this.sequence.getPosition(sg);
+                                this.sequence.annotateRange(
+                                    start,
+                                    start + sg.cachedLength,
+                                    tracked.propertyDelta,
+                                    undefined);
+                            }
+                        default:
+                            throw new Error("operationt type not revertable");
                     }
                 }
             }
-            revertAction(start, end);
+        }
+    }
+
+    public disgard() {
+        while (this.tracking.length > 0) {
+            const tracked = this.tracking.pop();
+            if (tracked !== undefined) {
+                while (tracked.trackingGroup.size > 0) {
+                    tracked.trackingGroup.unlink(tracked.trackingGroup.segments[0]);
+                }
+            }
         }
     }
 }
