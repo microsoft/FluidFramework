@@ -90,8 +90,11 @@ function wrapComponentPackage(packageName: string, packageJson: IFluidPackage) {
     packageJson.name = `${packageJson.name}-dev-server`;
 }
 
-async function getPkg(packageJson: IPackage, scriptIds: string[], component = false): Promise<IResolvedPackage> {
-
+async function getResolvedPackage(
+    packageJson: IPackage,
+    scriptIds: string[],
+    component = false,
+): Promise<IResolvedPackage> {
     // Start the creation of pkg.
     if (!packageJson) {
         return Promise.reject(new Error("No package specified"));
@@ -143,7 +146,7 @@ export async function start(
 
     // Create Package
     const scriptIds: string[] = [];
-    const pkg = await getPkg(packageJson, scriptIds, !!options.component);
+    const pkg = await getResolvedPackage(packageJson, scriptIds, !!options.component);
 
     // Construct a request
     const req: IRequest = {
@@ -154,7 +157,6 @@ export async function start(
     const config = {
         client: {
             permission: [
-
             ],
             type: "browser",
         },
@@ -189,7 +191,7 @@ export async function start(
     }
 
     let documentServiceFactory: IDocumentServiceFactory;
-    let deltaConn: ITestDeltaConnectionServer ;
+    let deltaConn: ITestDeltaConnectionServer;
     if (options.mode !== "local") {
         documentServiceFactory = new RouterliciousDocumentServiceFactory(
             false,
@@ -199,7 +201,6 @@ export async function start(
             undefined,
         );
     } else {
-
         deltaConn = TestDeltaConnectionServer.create(new SessionStorageDbFactory(documentId));
         documentServiceFactory = new TestDocumentServiceFactory(deltaConn);
     }
