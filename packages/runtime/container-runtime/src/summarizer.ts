@@ -323,14 +323,28 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
                 shouldSummarize: true,
                 canStartIdleTimer: true,
             };
+        }
+
+        // Summarize if it has been above the max time between summaries.
+        const timeSinceLastSummary = Date.now() - this.lastSummaryTime;
+        const opCountSinceLastSummary = op.sequenceNumber - this.lastSummarySeqNumber;
+
+        if (timeSinceLastSummary > this.configuration.maxTime) {
+            return {
+                message: "maxTime",
+                shouldSummarize: true,
+                canStartIdleTimer: true,
+            };
+        } else if (opCountSinceLastSummary > this.configuration.maxOps) {
+            return {
+                message: "maxOps",
+                shouldSummarize: true,
+                canStartIdleTimer: true,
+            };
         } else {
-            // Summarize if it has been above the max time between summaries.
-            const timeSinceLastSummary = Date.now() - this.lastSummaryTime;
-            const opCountSinceLastSummary = op.sequenceNumber - this.lastSummarySeqNumber;
             return {
                 message: "",
-                shouldSummarize: (timeSinceLastSummary > this.configuration.maxTime) ||
-                    (opCountSinceLastSummary > this.configuration.maxOps),
+                shouldSummarize: false,
                 canStartIdleTimer: true,
             };
         }
