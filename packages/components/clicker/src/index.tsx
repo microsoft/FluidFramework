@@ -88,6 +88,7 @@ export const ClickerInstantiationFactory = new PrimedComponentFactory(
 
 export const fluidExport = new SimpleModuleInstantiationFactory(
   ClickerName,
+  ClickerInstantiationFactory,
   new Map([
     [ClickerName, Promise.resolve(ClickerInstantiationFactory)],
   ]),

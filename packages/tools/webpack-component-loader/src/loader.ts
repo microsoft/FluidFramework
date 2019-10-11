@@ -101,6 +101,7 @@ async function getPkg(packageJson: IPackage, scriptIds: string[], component = fa
 
         const runtimeFactory = new SimpleModuleInstantiationFactory(
             legacyPackage,
+            componentFactory,
             new Map([
                 [legacyPackage, Promise.resolve(componentFactory)],
             ]),

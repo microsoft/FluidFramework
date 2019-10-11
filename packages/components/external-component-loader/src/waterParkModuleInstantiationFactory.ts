@@ -8,7 +8,7 @@ import { IContainerContext, IRuntime } from "@microsoft/fluid-container-definiti
 import { ComponentRegistryTypes } from "@microsoft/fluid-runtime-definitions";
 import * as uuid from "uuid";
 import { ExternalComponentLoader, WaterParkLoaderName } from "./waterParkLoader";
-import { ExternalComponentView, WaterParkViewName } from "./waterParkView";
+import { ExternalComponentView, WaterParkViewInstantiationFactory, WaterParkViewName } from "./waterParkView";
 
 /**
  * This class creates two components: A loader and a view component for water park and then
@@ -20,7 +20,7 @@ export class WaterParkModuleInstantiationFactory extends SimpleModuleInstantiati
         private readonly componentRegistry: ComponentRegistryTypes,
         private readonly loaderComponentName: string = WaterParkLoaderName,
         private readonly viewComponentName: string = WaterParkViewName) {
-            super(viewComponentName, componentRegistry);
+            super(viewComponentName, WaterParkViewInstantiationFactory, componentRegistry);
     }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {

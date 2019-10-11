@@ -7,7 +7,11 @@
 import { IComponent, IComponentQueryableLegacy } from "@microsoft/fluid-component-core-interfaces";
 import { IFluidPackage, isFluidPackage } from "@microsoft/fluid-container-definitions";
 import { Deferred } from "@microsoft/fluid-core-utils";
-import { ComponentFactoryTypes, IComponentFactory, IComponentRegistry } from "@microsoft/fluid-runtime-definitions";
+import {
+    ComponentFactoryTypes,
+    IComponentFactory,
+    IComponentRegistry,
+} from "@microsoft/fluid-runtime-definitions";
 
 /**
  * A component registry that can load component via their url
@@ -63,14 +67,6 @@ export class UrlRegistry implements IComponentRegistry {
                 if (fluidExport !== undefined) {
                     if (fluidExport.IComponentFactory) {
                         componentFactory = fluidExport.IComponentFactory;
-                        if (fluidExport.IComponentRegistry) {
-                            const registry = fluidExport.IComponentRegistry;
-                            const defaultFactroy = componentFactory as any;
-                            if (defaultFactroy.defaultComponentName) {
-                                componentFactory =
-                                    (await registry.get(defaultFactroy.defaultComponentName)) as IComponentFactory;
-                            }
-                        }
                     } else {
                         const queryable = fluidExport as IComponentQueryableLegacy;
                         if (queryable.query) {

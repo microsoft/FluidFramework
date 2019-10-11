@@ -5,7 +5,7 @@
 
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { IContainerContext, IRuntime, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
-import { ComponentFactoryTypes, ComponentRegistryTypes, IComponentContext, IComponentFactory, IComponentRegistry } from "@microsoft/fluid-runtime-definitions";
+import { ComponentFactoryTypes, ComponentRegistryTypes, IComponentFactory, IComponentRegistry, IProvideComponentFactory } from "@microsoft/fluid-runtime-definitions";
 import { SimpleContainerRuntimeFactory } from "./simpleContainerRuntimeFactory";
 
 /**
@@ -20,33 +20,22 @@ export class SimpleModuleInstantiationFactory implements
     IComponent,
     IRuntimeFactory,
     IComponentRegistry,
-    IComponentFactory {
+    IProvideComponentFactory {
 
     constructor(
-        public readonly defaultComponentName: string,
+        private readonly defaultComponentName: string,
+        private readonly defaultComponentFactory: IComponentFactory,
         private readonly registry: ComponentRegistryTypes) {
     }
 
-    public get IComponentFactory() { return this; }
+    public get IComponentFactory() {
+        return this.defaultComponentFactory;
+    }
     public get IComponentRegistry() { return this; }
     public get IRuntimeFactory() { return this; }
 
     public get(name: string): Promise<ComponentFactoryTypes> | undefined {
         return this.registry.get(name);
-    }
-
-    public instantiateComponent(context: IComponentContext): void {
-        const factoryP = this.get(this.defaultComponentName);
-        if (factoryP === undefined) {
-            throw new Error(`No component factory for ${this.defaultComponentName}`);
-        }
-        factoryP.then(
-            (factory) => {
-                factory.instantiateComponent(context);
-            },
-            (error) => {
-                context.error(error);
-            });
     }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {

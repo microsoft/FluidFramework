@@ -8,6 +8,7 @@ import { TodoInstantiationFactory, TodoName } from "./Todo";
 
 export const fluidExport = new SimpleModuleInstantiationFactory(
     TodoName,
+    TodoInstantiationFactory,
     new Map([
         [TodoName, Promise.resolve(TodoInstantiationFactory)],
     ]),

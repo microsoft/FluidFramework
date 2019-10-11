@@ -10,6 +10,7 @@ import { WebFlowHost, webFlowHostFactory } from "./host";
 
 export const fluidExport = new SimpleModuleInstantiationFactory(
     WebFlowHost.type,
+    webFlowHostFactory,
     new Map([
         [FlowDocumentType, Promise.resolve(flowDocumentFactory)],
         [WebFlowHost.type, Promise.resolve(webFlowHostFactory)],
