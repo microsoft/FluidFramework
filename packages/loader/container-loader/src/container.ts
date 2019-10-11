@@ -598,8 +598,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                 this.protocolHandler = protocolHandler;
                 this.blobManager = blobManager;
 
-                perfEvent.reportProgress({}, "beforeContextLoad");
-
                 // Initialize document details - if loading a snapshot use that - otherwise we need to wait on
                 // the initial details
                 if (tree) {
@@ -894,6 +892,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         const time = performanceNow();
         this.connectionTransitionTimes[value] = time;
         const duration = time - this.connectionTransitionTimes[oldState];
+
         this.logger.sendPerformanceEvent({
             eventName: `ConnectionStateChange_${ConnectionState[value]}`,
             from: ConnectionState[oldState],
@@ -908,8 +907,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             // two separate events (actually - three!).
             this.logger.sendPerformanceEvent({
                 eventName: this.firstConnection ? "ConnectionStateChange_InitialConnect" : "ConnectionStateChange_Reconnect",
-                duration: time - this.connectionTransitionTimes[oldState],
-                reason,
+                duration: time - this.connectionTransitionTimes[ConnectionState.Disconnected],
+                durationCatchUp: time - this.connectionTransitionTimes[ConnectionState.Connecting],
             });
             this.firstConnection = false;
         }
