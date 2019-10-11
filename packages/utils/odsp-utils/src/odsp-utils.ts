@@ -76,7 +76,7 @@ export async function postTokenRequest(server: string, postBody: string): Promis
     });
 }
 
-async function refreshAccessToken(server: string, clientConfig: IClientConfig, tokens: IODSPTokens) {
+export async function refreshAccessToken(server: string, clientConfig: IClientConfig, tokens: IODSPTokens) {
     console.log("Refreshing access token");
     tokens.accessToken = "";
     const odspTokens = await postTokenRequest(server,
@@ -142,6 +142,71 @@ async function putAsync(
     });
 }
 
+interface IODSPUser {
+    displayName: string;
+    email?: string;
+    id?: string;
+}
+
+interface IODSPGroup {
+    displayName: string;
+    email?: string;
+}
+
+interface IODSPDriveQuota {
+    deleted: number;
+    fileCount: number;
+    remaining: number;
+    state: string;
+    total: number;
+    used: number;
+}
+
+interface IODSPEntity {
+    user?: IODSPUser;
+    group?: IODSPGroup;
+}
+
+interface IODSPDriveInfo {
+    id: string;
+    createdDateTime: string;
+    description: string;
+    driveType: string;
+    lastModifiedDateTime: string;
+    name: string;
+    webUrl: string;
+    createdBy: IODSPEntity;
+    lastModifiedBy: IODSPEntity;
+    owner: IODSPEntity;
+    quota: IODSPDriveQuota;
+}
+
+async function getDrives(server: string, account: string, clientConfig: IClientConfig, tokens: IODSPTokens) {
+    const getDriveUrl = `https://${server}/${account}/_api/v2.1/drives`;
+    const getDriveResult = await getAsync(server, clientConfig, tokens, getDriveUrl);
+    if (getDriveResult.status !== 200) {
+        return Promise.reject(getDriveResult);
+    }
+    const parsedBody = JSON.parse(getDriveResult.data);
+    return parsedBody.value as IODSPDriveInfo[];
+}
+
+async function getDriveId(
+    server: string,
+    account: string,
+    path: string,
+    clientConfig: IClientConfig,
+    tokens: IODSPTokens,
+) {
+    const drives = await getDrives(server, account, clientConfig, tokens);
+    const drivePath = encodeURI(`https://${server}/${account}/${path.split("/")[0]}`);
+    const index = drives.findIndex((value) => value.webUrl === drivePath);
+    if (index === -1) {
+        return Promise.reject(new Error(`Drive ${drivePath} not found.`));
+    }
+    return drives[index].id;
+}
+
 export async function getDriveItemByFileId(
     server: string,
     account: string,
@@ -157,26 +222,36 @@ export async function getDriveItemByFileId(
         return Promise.reject(getFileByIdResult);
     }
     const parsedBody = JSON.parse(getFileByIdResult.data);
-    const path = parsedBody.ServerRelativeUrl;
-    const documentPathMatch = path.match(/\/(personal|teams)\/(.*)\/(Shared )?Documents\/(.*)/i);
-    if (documentPathMatch === null) {
-        return Promise.reject(createRequestError("Unable to match file name from file Id", getFileByIdResult));
-    }
-
-    if (`${documentPathMatch[1]}/${documentPathMatch[2]}`.toLowerCase() !== account.toLowerCase()) {
-        return Promise.reject(
-            createRequestError("File URL doesn't match expected account from file Id", getFileByIdResult));
-    }
-
-    const fileName = documentPathMatch[4];
-    if (!fileName) {
-        return Promise.reject(createRequestError("Filename missing from URL from file Id", getFileByIdResult));
-    }
-
-    return getDriveItemByFileName(server, account, `/${fileName}`, clientConfig, tokens, false);
+    const serverRelativeUrl = parsedBody.ServerRelativeUrl;
+    return getDriveItemByServerRelativePath(server, serverRelativeUrl, clientConfig, tokens);
 }
 
-export async function getDriveItemByFileName(
+export async function getDriveItemByServerRelativePath(
+    server: string,
+    serverRelativePath: string,
+    clientConfig: IClientConfig,
+    tokens: IODSPTokens,
+): Promise<IODSPDriveItem> {
+    const documentPathMatch = serverRelativePath.match(/\/(personal|teams)\/(.*)\/(.*)\/(.*)/i);
+    if (documentPathMatch === null) {
+        return Promise.reject(new Error("serverRelativePath is not in the right format"));
+    }
+    const account = `${documentPathMatch[1]}/${documentPathMatch[2]}`;
+    const library = documentPathMatch[3];
+    const path = documentPathMatch[4];
+    const driveId = await getDriveId(server, account, library, clientConfig, tokens);
+    const getDriveItemUrl = `https://${server}/_api/v2.1/drives/${driveId}/root:/${path}:`;
+    const getDriveItemResult = await getAsync(server, clientConfig, tokens,
+        getDriveItemUrl, { accept: "application/json" });
+    if (getDriveItemResult.status !== 200) {
+        return Promise.reject(getDriveItemResult);
+    }
+
+    const parsedDriveItemBody = JSON.parse(getDriveItemResult.data);
+    return { drive: parsedDriveItemBody.parentReference.driveId, item: parsedDriveItemBody.id };
+}
+
+export async function getDriveItemByRootFileName(
     server: string,
     account: string,
     path: string,
@@ -185,7 +260,7 @@ export async function getDriveItemByFileName(
     create: boolean = false,
 ): Promise<IODSPDriveItem> {
     const accountPath = account ? `/${account}` : "";
-    const getDriveItemUrl = `https://${server}${accountPath}/_api/v2.1/drive/root:${path}`;
+    const getDriveItemUrl = `https://${server}${accountPath}/_api/v2.1/drive/root:${path}:`;
     let getDriveItemResult = await getAsync(server, clientConfig, tokens, getDriveItemUrl);
     if (getDriveItemResult.status !== 200) {
         if (!create) {

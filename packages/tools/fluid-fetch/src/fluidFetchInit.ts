@@ -8,137 +8,16 @@ import { BaseTelemetryNullLogger, configurableUrlResolver } from "@microsoft/flu
 import { FluidAppOdspUrlResolver } from "@microsoft/fluid-fluidapp-odsp-urlresolver";
 import * as odsp from "@microsoft/fluid-odsp-driver";
 import { OdspUrlResolver } from "@microsoft/fluid-odsp-urlresolver";
-import {
-    getTenant,
-    IClientConfig,
-    IODSPTokens,
-    postTokenRequest,
-} from "@microsoft/fluid-odsp-utils";
-import { IDocumentService, IFluidResolvedUrl, IResolvedUrl, IUrlResolver } from "@microsoft/fluid-protocol-definitions";
+import { IClientConfig, refreshAccessToken } from "@microsoft/fluid-odsp-utils";
+import { IFluidResolvedUrl, IResolvedUrl, IUrlResolver } from "@microsoft/fluid-protocol-definitions";
 import * as r11s from "@microsoft/fluid-routerlicious-driver";
 import { RouterliciousUrlResolver } from "@microsoft/fluid-routerlicious-urlresolver";
-import * as child_process from "child_process";
-import * as fs from "fs";
-import * as http from "http";
 import { URL } from "url";
-import { localDataOnly, paramForceRefreshToken, paramJWT, paramSave, paramURL, setParamSave } from "./fluidFetchArgs";
-import { loadRC, saveRC } from "./fluidToolRC";
+import { localDataOnly, paramJWT } from "./fluidFetchArgs";
+import { getClientConfig, getODSPTokens, saveAccessToken } from "./fluidFetchODSPTokens";
 
-// tslint:disable:non-literal-fs-path
-
-export let paramDocumentService: IDocumentService | undefined;
 export let latestVersionsId: string = "";
 export let connectionInfo: any;
-
-const redirectUri = "http://localhost:7000/auth/callback";
-
-async function getAuthorizationCode(server: string, clientConfig: IClientConfig): Promise<string> {
-    let message = "Please open browser and navigate to this URL:";
-    const authUrl = `https://login.microsoftonline.com/${getTenant(server)}/oauth2/v2.0/authorize?`
-        + `client_id=${clientConfig.clientId}`
-        + `&scope=https://${server}/AllSites.Write`
-        + `&response_type=code`
-        + `&redirect_uri=${redirectUri}`;
-    if (process.platform === "win32") {
-        child_process.exec(`start "fluid-fetch" /B "${authUrl}"`);
-        message = "Opening browser to get authorization code.  If that doesn't open, please go to this URL manually";
-    }
-
-    console.log(`${message}\n  ${authUrl}`);
-    return new Promise((resolve, reject) => {
-        const httpServer = http.createServer((req, res) => {
-            res.write("Please close the window");
-            res.end();
-            httpServer.close();
-            if (req.url === undefined) {
-                reject("Failed to get authorization");
-                return;
-            }
-            const url = new URL(`http://localhost:7000${req.url}`);
-            const code = url.searchParams.get("code");
-            if (code === null) {
-                reject("Failed to get authorization");
-                return;
-            }
-            console.log("Got authorization code");
-            resolve(code);
-        }).listen(7000);
-    });
-}
-
-async function loadODSPTokens(server: string): Promise<IODSPTokens | undefined> {
-    const rc = await loadRC();
-    const tokens = rc.tokens;
-    if (!tokens) {
-        return undefined;
-    }
-    const odspTokens = tokens[server];
-    if (!odspTokens) {
-        return undefined;
-    }
-    return odspTokens;
-}
-
-async function saveAccessToken(server: string, odspTokens: IODSPTokens) {
-    const rc = await loadRC();
-    let tokens = rc.tokens;
-    if (!tokens) {
-        tokens = {};
-        rc.tokens = tokens;
-    }
-    tokens[server] = odspTokens;
-    return saveRC(rc);
-}
-
-async function getRequestAccessTokenBody(server: string, clientConfig: IClientConfig) {
-    return `scope=offline_access https://${server}/AllSites.Write`
-        + `&client_id=${clientConfig.clientId}`
-        + `&client_secret=${clientConfig.clientSecret}`
-        + `&grant_type=authorization_code`
-        + `&code=${await getAuthorizationCode(server, clientConfig)}`
-        + `&redirect_uri=${redirectUri}`;
-}
-
-async function acquireTokens(server: string, clientConfig: IClientConfig): Promise<IODSPTokens> {
-    console.log("Acquiring tokens");
-    const tokens = await postTokenRequest(server, await getRequestAccessTokenBody(server, clientConfig));
-    await saveAccessToken(server, tokens);
-    return tokens;
-}
-
-async function getODSPTokens(
-    server: string,
-    clientConfig: IClientConfig,
-    forceTokenRefresh: boolean): Promise<IODSPTokens> {
-
-    if (!forceTokenRefresh && !paramForceRefreshToken) {
-        const odspTokens = await loadODSPTokens(server);
-        if (odspTokens !== undefined && odspTokens.refreshToken !== undefined) {
-            return odspTokens;
-        }
-    }
-    return acquireTokens(server, clientConfig);
-}
-
-function getClientConfig() {
-    const clientConfig: IClientConfig = {
-        get clientId() {
-            if (!process.env.login__microsoft__clientId) {
-                throw new Error("ODSP clientId/secret must be set as environment variables. " +
-                    "Please run the script at https://github.com/microsoft/FluidFramework/tree/master/tools/getkeys");
-            }
-            return process.env.login__microsoft__clientId;
-        },
-        get clientSecret() {
-            if (!process.env.login__microsoft__secret) {
-                throw new Error("ODSP clientId/secret must be set as environment variables. " +
-                    "Please run the script at https://github.com/microsoft/FluidFramework/tree/master/tools/getkeys");
-            }
-            return process.env.login__microsoft__secret;
-        },
-    };
-    return clientConfig;
-}
 
 async function initializeODSPCore(
     odspResolvedUrl: odsp.IOdspResolvedUrl,
@@ -156,11 +35,18 @@ async function initializeODSPCore(
         return;
     }
 
-    console.log(`Connecting to ODSP:\n  server: ${server}\n
-        drive:  ${odspResolvedUrl.driveId}\n  item:   ${odspResolvedUrl.itemId}`);
+    console.log(`Connecting to ODSP:
+  server: ${server}
+  drive:  ${odspResolvedUrl.driveId}
+  item:   ${odspResolvedUrl.itemId}`);
 
     const getStorageTokenStub = async (siteUrl: string, refresh: boolean) => {
-        const tokens = await getODSPTokens(server, clientConfig, refresh);
+        const tokens = await getODSPTokens(server, clientConfig, false);
+        if (refresh || !tokens.accessToken) {
+            // TODO: might want to handle if refresh failed and we want to reauth here.
+            await refreshAccessToken(server, clientConfig, tokens);
+            await saveAccessToken(server, tokens);
+        }
         return tokens.accessToken;
     };
     const getWebsocketTokenStub = () => Promise.resolve("");
@@ -169,7 +55,7 @@ async function initializeODSPCore(
         getStorageTokenStub,
         getWebsocketTokenStub,
         new BaseTelemetryNullLogger());
-    paramDocumentService = await odspDocumentServiceFactory.createDocumentService(odspResolvedUrl);
+    return odspDocumentServiceFactory.createDocumentService(odspResolvedUrl);
 }
 
 async function initializeR11s(server: string, pathname: string, r11sResolvedUrl: IFluidResolvedUrl) {
@@ -199,7 +85,7 @@ async function initializeR11s(server: string, pathname: string, r11sResolvedUrl:
 
     console.log(`Connecting to r11s: tenantId=${tenantId} id:${documentId}`);
     const tokenProvider = new r11s.TokenProvider(paramJWT);
-    paramDocumentService = r11s.createDocumentService(
+    return r11s.createDocumentService(
         r11sResolvedUrl.endpoints.ordererUrl,
         r11sResolvedUrl.endpoints.deltaStorageUrl,
         r11sResolvedUrl.endpoints.storageUrl,
@@ -219,27 +105,8 @@ async function resolveUrl(url: string): Promise<IResolvedUrl | undefined> {
     return resolved;
 }
 
-export async function fluidFetchInit() {
-    if (!paramURL) {
-        if (paramSave) {
-            const file = `${paramSave}/info.json`;
-            if (fs.existsSync(file)) {
-                const info = JSON.parse(fs.readFileSync(file, { encoding: "utf-8" }));
-                setParamSave(info.url as string);
-            } else {
-                console.log(`Can't find file ${file}`);
-            }
-        }
-
-        if (!paramURL) {
-            return Promise.reject("Missing URL");
-        }
-    }
-
-    const url = new URL(paramURL);
-
-    const server = url.hostname.toLowerCase();
-    const resolvedUrl = await resolveUrl(paramURL) as IFluidResolvedUrl;
+export async function fluidFetchInit(urlStr: string) {
+    const resolvedUrl = await resolveUrl(urlStr) as IFluidResolvedUrl;
     if (!resolvedUrl) {
         console.log(server);
         return Promise.reject(`Unknown URL ${paramURL}`);
@@ -249,8 +116,9 @@ export async function fluidFetchInit() {
         const odspResolvedUrl = resolvedUrl as odsp.IOdspResolvedUrl;
         return initializeODSPCore(odspResolvedUrl, new URL(odspResolvedUrl.siteUrl).host, getClientConfig());
     } else if (protocol === "fluid:") {
+        const url = new URL(urlStr);
+        const server = url.hostname.toLowerCase();
         return initializeR11s(server, url.pathname, resolvedUrl);
     }
-    console.log(server);
-    return Promise.reject(`Unknown URL ${paramURL}`);
+    return Promise.reject(`Unknown resolved protocol ${protocol}`);
 }
