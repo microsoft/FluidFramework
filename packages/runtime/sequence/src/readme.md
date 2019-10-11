@@ -18,20 +18,40 @@ Insert operations on the sequence take a single position argument along with the
 ```typescript
     //   content:
     // positions:
-    sharedString.insertText(0, "hi world");
-    //   content: hi world
-    // positions: 01234567
+
+    // insert text a positions 0
+    sharedString.insertText(0, "hi");
+    //   content: hi
+    // positions: 01
+
+    // insert text at the end position
+    sharedString.insertText(
+        sharedString.getLength(),
+        "!");
+    //   content: hi!
+    // positions: 012
+
+    // insert text at position 2
+    sharedString.insertText(
+        2,
+        " world");
+    //   content: hi world!
+    // positions: 012345678
 ```
 
 Remove operations take a start and an end position. The start position is similar to the insert’s position, in that is can be any position in the sequence and is inclusive. However, unlike insert the start position cannot be the length of the sequence, as nothing exists there yet. The end position is exclusive and must be greater than the start, so it can be any value from 1 to the length of the sequence.
 
 ```typescript
-    //   content: hi world
-    // positions: 01234567
+    //   content: hi world!
+    // positions: 012345678
+
+    // remove the first 3 characters
     sharedString.removeRange(0, 4);
-    //   content: world
-    // positions: 01234
-    sharedString.removeRange(0, 5);
+    //   content: world!
+    // positions: 012345
+
+    // remove all the characters
+    sharedString.removeRange(0, sharedString.getLength());
     //   content:
     // positions:
 ```
@@ -41,6 +61,7 @@ Annotate operations can add or remove map-like properties to or from content of 
 ```typescript
     //   content: hi world
     // positions: 01234567
+    
     let props1 = sharedString.getPropertiesAtPosition(1);
     let props5 = sharedString.getPropertiesAtPosition(5);
     // props1 = {}
