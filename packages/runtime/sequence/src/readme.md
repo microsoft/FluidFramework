@@ -99,7 +99,7 @@ Whenever an operation is perfomed on a sequence a _sequenceDelta_ event will be 
 
 ## How Collaboration Works
 
-Like other data structures the sequences are eventually consistent which means all collaborators will end up in the same final state;, however, the intermediate states seen by each collaborator may not be seen by other collaborators. These intermediate states occur when two or more collaborators modify the same position in the sequence which results in a conflict.
+Like other data structures the sequences are eventually consistent which means all collaborators will end up in the same final state, however, the intermediate states seen by each collaborator may not be seen by other collaborators. These intermediate states occur when two or more collaborators modify the same position in the sequence which results in a conflict.
 
 The basic strategy for insert conflict resolution in the sequence is to merge _far_. This strategy depends on a fundamental property of the Fluid Framework, which is guaranteed ordering. So, if two or more collaborators perform an operation on a sequence, the operations will be given an ordering and all clients will see those operations in the same order. What this means for the merge _far_ strategy for resolving conflicting inserts is that the first operation will be placed in the conflicting position when it is received. When the next insert with the same position arrives and is applied it will be placed at the specified position and the previous inserts content position will be increased by the length of the incoming content pushing is farther towards the length of the sequence. This is what we call merging _far_.
 
