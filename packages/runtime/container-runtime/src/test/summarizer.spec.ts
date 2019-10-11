@@ -74,7 +74,7 @@ describe("Runtime", () => {
                                 getVersions: (versionId, count) => Promise.resolve([{}]),
                             } as IDocumentStorageService,
                         } as ContainerRuntime,
-                        summaryConfig,
+                        () => summaryConfig,
                         async () => {
                             emitter.emit(generateSummaryEvent);
                             if (shouldDeferGenerateSummary) {

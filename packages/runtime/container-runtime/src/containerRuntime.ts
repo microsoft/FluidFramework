@@ -469,6 +469,12 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this.summaryManager.summarizer;
     }
 
+    private get summaryConfiguration() {
+        return this.context.serviceConfiguration
+            ? { ...DefaultSummaryConfiguration, ...this.context.serviceConfiguration.summary }
+            : DefaultSummaryConfiguration;
+    }
+
     // Components tracked by the Domain
     private closed = false;
     private readonly pendingAttach = new Map<string, IAttachMessage>();
@@ -556,10 +562,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         this.context.on("refreshBaseSummary",
             (snapshot: ISnapshotTree) => this.refreshBaseSummary(snapshot));
 
-        const summaryConfiguration = context.serviceConfiguration
-            ? { ...DefaultSummaryConfiguration, ...context.serviceConfiguration.summary }
-            : DefaultSummaryConfiguration;
-
         // We always create the summarizer in the case that we are asked to generate summaries. But this may
         // want to be on demand instead.
         // Don't use optimizations when generating summaries with a document loaded using snapshots.
@@ -567,7 +569,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         this.summarizer = new Summarizer(
             "/_summarizer",
             this,
-            summaryConfiguration,
+            () => this.summaryConfiguration,
             () => this.generateSummary(!this.loadedFromSummary),
             (snapshot) => this.context.refreshBaseSummary(snapshot));
 

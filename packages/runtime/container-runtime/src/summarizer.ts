@@ -67,11 +67,12 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
     private summarizing = false;
     private summaryPending = false;
     private pendingSummarySequenceNumber?: number;
-    private readonly idleTimer: Timer;
+    private idleTimer: Timer;
+    private pendingTimer: Timer;
     private readonly summarizeTimer: Timer;
-    private readonly pendingTimer: Timer;
     private readonly runDeferred = new Deferred<void>();
     private readonly logger: ITelemetryLogger;
+    private configuration: ISummaryConfiguration;
 
     private deferBroadcast: Deferred<void>;
     private deferAck: Deferred<void>;
@@ -82,7 +83,7 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
     constructor(
         public readonly url: string,
         private readonly runtime: ContainerRuntime,
-        private readonly configuration: ISummaryConfiguration,
+        private readonly configurationGetter: () => ISummaryConfiguration,
         private readonly generateSummary: () => Promise<IGeneratedSummaryData>,
         private readonly refreshBaseSummary: (snapshot: ISnapshotTree) => void,
     ) {
@@ -103,23 +104,9 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
             this.runDeferred.resolve();
         });
 
-        this.idleTimer = new Timer(
-            () => this.summarize("idle"),
-            this.configuration.idleTime);
-
         this.summarizeTimer = new Timer(
             () => this.summarizeTimerHandler(maxSummarizeTimeoutTime, 1),
             maxSummarizeTimeoutTime);
-
-        this.pendingTimer = new Timer(
-            () => {
-                this.logger.sendErrorEvent({
-                    eventName: "SummaryAckWaitTimeout",
-                    maxAckWaitTime: this.configuration.maxAckWaitTime,
-                    pendingSummarySequenceNumber: this.pendingSummarySequenceNumber,
-                });
-                this.cancelPending();
-            }, this.configuration.maxAckWaitTime);
     }
 
     public async run(onBehalfOf: string): Promise<void> {
@@ -132,6 +119,23 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
         if (this.runtime.summarizerClientId !== onBehalfOf) {
             return;
         }
+
+        // need to wait until we are connected
+        this.configuration = this.configurationGetter();
+
+        this.idleTimer = new Timer(
+            () => this.summarize("idle"),
+            this.configuration.idleTime);
+
+        this.pendingTimer = new Timer(
+            () => {
+                this.logger.sendErrorEvent({
+                    eventName: "SummaryAckWaitTimeout",
+                    maxAckWaitTime: this.configuration.maxAckWaitTime,
+                    pendingSummarySequenceNumber: this.pendingSummarySequenceNumber,
+                });
+                this.cancelPending();
+            }, this.configuration.maxAckWaitTime);
 
         // initialize values (not exact)
         this.lastSummarySeqNumber = this.runtime.deltaManager.initialSequenceNumber;
