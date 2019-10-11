@@ -82,6 +82,7 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
         this.logger = ChildLogger.create(this.runtime.logger, "Summarizer");
 
         this.runtime.on("disconnected", () => {
+            this.logger.sendTelemetryEvent({ eventName: "SummarizerDisconnected" });
             this.runDeferred.resolve();
         });
     }
@@ -268,44 +269,42 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
         this.summarizing = true;
         this.startPending();
 
-        this.summarizeCore(message).finally(() => {
-            this.summarizing = false;
-        }).catch((error) => {
-            this.cancelPending();
-        });
-    }
-
-    private async summarizeCore(message: string) {
         const summarizingEvent = PerformanceEvent.start(this.logger,
             { eventName: "Summarizing", message });
 
-        const summaryData = await this.generateSummary();
+        this.generateSummary().finally(() => {
+            // always leave summarizing state
+            this.summarizing = false;
+        }).then((summaryData) => {
+            const summaryEndTime = Date.now();
 
-        const summaryEndTime = Date.now();
+            const telemetryProps = {
+                sequenceNumber: summaryData.sequenceNumber,
+                ...summaryData.summaryStats,
+                opsSinceLastSummary: summaryData.sequenceNumber - this.lastSummarySeqNumber,
+                timeSinceLastSummary: summaryEndTime - this.lastSummaryTime,
+            };
+            if (!summaryData.submitted) {
+                // did not send the summary op
+                summarizingEvent.cancel(telemetryProps);
+                this.cancelPending();
+                return;
+            }
 
-        const telemetryProps = {
-            sequenceNumber: summaryData.sequenceNumber,
-            ...summaryData.summaryStats,
-            opsSinceLastSummary: summaryData.sequenceNumber - this.lastSummarySeqNumber,
-            timeSinceLastSummary: summaryEndTime - this.lastSummaryTime,
-        };
-        if (!summaryData.submitted) {
-            // did not send the summary op
-            summarizingEvent.cancel(telemetryProps);
+            summarizingEvent.end(telemetryProps);
+
+            this.lastSummaryTime = summaryEndTime;
+            this.lastSummarySeqNumber = summaryData.sequenceNumber;
+
+            // Because summarizing is async, the incoming op stream will be resumed before
+            // we update our lastSummarySeqNumber.  We use this to defer the broadcast listeners
+            // until we are sure that no summary ops are handled before lastSummarySeqNumber is
+            // set here.
+            this.deferBroadcast.resolve();
+        }, (error) => {
+            summarizingEvent.cancel({}, error);
             this.cancelPending();
-            return;
-        }
-
-        summarizingEvent.end(telemetryProps);
-
-        this.lastSummaryTime = summaryEndTime;
-        this.lastSummarySeqNumber = summaryData.sequenceNumber;
-
-        // Because summarizing is async, the incoming op stream will be resumed before
-        // we update our lastSummarySeqNumber.  We use this to defer the broadcast listeners
-        // until we are sure that no summary ops are handled before lastSummarySeqNumber is
-        // set here.
-        this.deferBroadcast.resolve();
+        });
     }
 
     private getOpSummaryDetails(op: ISequencedDocumentMessage): IOpSummaryDetails {

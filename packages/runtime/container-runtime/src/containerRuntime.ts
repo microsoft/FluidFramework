@@ -27,6 +27,7 @@ import {
     Deferred,
     flatten,
     isSystemType,
+    PerformanceEvent,
     raiseConnectedEvent,
     readAndParse,
 } from "@microsoft/fluid-core-utils";
@@ -1090,6 +1091,11 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             return;
         }
 
+        const generateSummaryEvent = PerformanceEvent.start(this.logger, {
+            eventName: "GenerateSummary",
+            fullTree,
+        });
+
         try {
             await this.scheduleManager.pause();
             const sequenceNumber = this.deltaManager.referenceSequenceNumber;
@@ -1129,9 +1135,15 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             this.submit(MessageType.Summarize, summary);
             ret.submitted = true;
 
+            generateSummaryEvent.end({
+                sequenceNumber,
+                submitted: ret.submitted,
+                handle: handle.handle,
+                ...ret.summaryStats,
+            });
             return ret;
         } catch (ex) {
-            this.logger.logException({ eventName: "Summarizer:GenerateSummaryExceptionError" }, ex);
+            generateSummaryEvent.cancel({}, ex);
             throw ex;
         } finally {
             // Restart the delta manager
