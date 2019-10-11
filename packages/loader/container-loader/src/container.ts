@@ -718,7 +718,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             : [];
 
         const blobManager = new BlobManager(storage);
-        // tslint:disable-next-line:no-floating-promises
         blobManager.loadBlobMetadata(blobs);
 
         return blobManager;
@@ -1112,7 +1111,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     // Please avoid calling it directly.
     // raiseCriticalError() is the right flow for most cases
     private logCriticalError(error: any) {
-        // tslint:disable-next-line:no-unsafe-any
         this.logger.sendErrorEvent({ eventName: "onError", [TelemetryEventRaisedOnContainer]: true }, error);
     }
 }
