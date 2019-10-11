@@ -71,9 +71,6 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
         }
 
         // Collect stack if we were not able to extract it from error
-        if (fetchStack || event.stack !== undefined) {
-            event.stackFromError = (event.stack !== undefined);
-        }
         if (event.stack === undefined && fetchStack) {
             event.stack = TelemetryLogger.getStack();
         }
