@@ -17,6 +17,10 @@ import {
 import * as assert from "assert";
 import { ContainerRuntime, IGeneratedSummaryData } from "./containerRuntime";
 
+// send some telemetry if generate summary takes too long
+const maxSummarizeTimeoutTime = 20000; // 20 sec
+const maxSummarizeTimeoutCount = 5; // double and resend 5 times
+
 /**
  * Wrapper interface holding summary details for a given op
  */
@@ -63,7 +67,9 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
     private summarizing = false;
     private summaryPending = false;
     private pendingSummarySequenceNumber?: number;
-    private idleTimer: NodeJS.Timeout | null = null;
+    private readonly idleTimer: Timer;
+    private readonly summarizeTimer: Timer;
+    private readonly pendingTimer: Timer;
     private readonly runDeferred = new Deferred<void>();
     private readonly logger: ITelemetryLogger;
 
@@ -71,6 +77,7 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
     private deferAck: Deferred<void>;
 
     private onBehalfOfClientId: string;
+    private everConnected = false;
 
     constructor(
         public readonly url: string,
@@ -81,16 +88,44 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
     ) {
         this.logger = ChildLogger.create(this.runtime.logger, "Summarizer");
 
+        // try to determine if the runtime has ever been connected
+        if (this.runtime.connected) {
+            this.everConnected = true;
+        } else {
+            this.runtime.once("connected", () => this.everConnected = true);
+        }
         this.runtime.on("disconnected", () => {
+            // sometimes the initial connection state is raised as disconnected
+            if (!this.everConnected) {
+                return;
+            }
             this.logger.sendTelemetryEvent({ eventName: "SummarizerDisconnected" });
             this.runDeferred.resolve();
         });
+
+        this.idleTimer = new Timer(
+            () => this.summarize("idle"),
+            this.configuration.idleTime);
+
+        this.summarizeTimer = new Timer(
+            () => this.summarizeTimerHandler(maxSummarizeTimeoutTime, 1),
+            maxSummarizeTimeoutTime);
+
+        this.pendingTimer = new Timer(
+            () => {
+                this.logger.sendErrorEvent({
+                    eventName: "SummaryAckWaitTimeout",
+                    maxAckWaitTime: this.configuration.maxAckWaitTime,
+                    pendingSummarySequenceNumber: this.pendingSummarySequenceNumber,
+                });
+                this.cancelPending();
+            }, this.configuration.maxAckWaitTime);
     }
 
     public async run(onBehalfOf: string): Promise<void> {
         this.onBehalfOfClientId = onBehalfOf;
 
-        if (!this.runtime.connected) {
+        if (!this.runtime.connected && !this.everConnected) {
             await new Promise((resolve) => this.runtime.once("connected", resolve));
         }
 
@@ -109,14 +144,19 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
         });
 
         // start the timer after connecting to the document
-        this.resetIdleTimer();
+        this.idleTimer.start();
 
         // listen for summary ops
         this.runtime.deltaManager.inbound.on("op", (op) => this.handleSummaryOp(op as ISequencedDocumentMessage));
 
         this.runtime.on("batchEnd", (error: any, op: ISequencedDocumentMessage) => this.handleOp(error, op));
 
-        return this.runDeferred.promise;
+        await this.runDeferred.promise;
+
+        // cleanup
+        this.idleTimer.clear();
+        this.summarizeTimer.clear();
+        this.cancelPending();
     }
 
     public stop(reason?: string) {
@@ -217,6 +257,7 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
                         }
                     }
                     this.summaryPending = false;
+                    this.pendingTimer.clear();
                 }
             }
         }
@@ -227,20 +268,7 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
             return;
         }
 
-        this.clearIdleTimer();
-
-        // clear pending if timeout waiting for server ack
-        if (this.summaryPending && !this.summarizing) {
-            const pendingTime = Date.now() - this.lastSummaryTime;
-            if (pendingTime > this.configuration.maxAckWaitTime) {
-                this.logger.sendErrorEvent({
-                    eventName: "SummaryAckWaitTimeout",
-                    maxAckWaitTime: this.configuration.maxAckWaitTime,
-                    pendingSummarySequenceNumber: this.pendingSummarySequenceNumber,
-                });
-                this.cancelPending();
-            }
-        }
+        this.idleTimer.clear();
 
         // Get the summary details for the given op
         const lastOpSummaryDetails = this.getOpSummaryDetails(op);
@@ -250,7 +278,7 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
             this.summarize(lastOpSummaryDetails.message);
         } else if (lastOpSummaryDetails.canStartIdleTimer) {
             // Otherwise detect when we idle to trigger the snapshot
-            this.resetIdleTimer();
+            this.idleTimer.start();
         }
     }
 
@@ -272,9 +300,12 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
         const summarizingEvent = PerformanceEvent.start(this.logger,
             { eventName: "Summarizing", message });
 
+        this.summarizeTimer.start();
+
         this.generateSummary().finally(() => {
             // always leave summarizing state
             this.summarizing = false;
+            this.summarizeTimer.clear();
         }).then((summaryData) => {
             const summaryEndTime = Date.now();
 
@@ -301,6 +332,7 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
             // until we are sure that no summary ops are handled before lastSummarySeqNumber is
             // set here.
             this.deferBroadcast.resolve();
+            this.pendingTimer.start();
         }, (error) => {
             summarizingEvent.cancel({}, error);
             this.cancelPending();
@@ -349,6 +381,19 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
         }
     }
 
+    private summarizeTimerHandler(time: number, count: number) {
+        this.logger.sendTelemetryEvent({
+            eventName: "SummarizeTimeout",
+            timeoutTime: time,
+            timeoutCount: count,
+        });
+        if (count < maxSummarizeTimeoutCount) {
+            // double and start a new timer
+            const nextTime = time * 2;
+            this.summarizeTimer.start(() => this.summarizeTimerHandler(nextTime, count + 1), nextTime);
+        }
+    }
+
     private startPending() {
         this.summaryPending = true;
         this.pendingSummarySequenceNumber = undefined;
@@ -358,24 +403,44 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
 
     private cancelPending() {
         this.summaryPending = false;
+        this.pendingTimer.clear();
         // release all deferred summary op/ack/nack handlers
-        this.deferBroadcast.resolve();
-        this.deferAck.resolve();
+        if (this.deferBroadcast) {
+            this.deferBroadcast.resolve();
+        }
+        if (this.deferAck) {
+            this.deferAck.resolve();
+        }
+    }
+}
+
+class Timer {
+    public get hasTimer() {
+        return !!this.timer;
     }
 
-    private clearIdleTimer() {
-        if (!this.idleTimer) {
+    private timer?: NodeJS.Timeout;
+
+    constructor(
+        private readonly defaultHandler: () => void,
+        private readonly defaultTimeout: number) {}
+
+    public start(handler: () => void = this.defaultHandler, timeout: number = this.defaultTimeout) {
+        this.clear();
+        this.timer = setTimeout(() => this.wrapHandler(handler), timeout);
+    }
+
+    public clear() {
+        if (!this.timer) {
             return;
         }
-        clearTimeout(this.idleTimer);
-        this.idleTimer = null;
+        clearTimeout(this.timer);
+        this.timer = undefined;
     }
 
-    private resetIdleTimer() {
-        this.clearIdleTimer();
-
-        this.idleTimer = setTimeout(
-            () => this.summarize("idle"),
-            this.configuration.idleTime);
+    private wrapHandler(handler: () => void) {
+        // run clear first, in case the handler decides to start again
+        this.clear();
+        handler();
     }
 }
