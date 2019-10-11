@@ -1113,9 +1113,11 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             // after loading from the beginning of the snapshot
             const versions = await this.context.storage.getVersions(this.id, 1);
             const parents = versions.map((version) => version.id);
+            generateSummaryEvent.reportProgress({}, "loadedVersions");
 
             const treeWithStats = await this.summarize(fullTree);
             ret.summaryStats = treeWithStats.summaryStats;
+            generateSummaryEvent.reportProgress({}, "generatedTree");
 
             if (!this.connected) {
                 return ret;
@@ -1127,6 +1129,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                 message,
                 parents,
             };
+            generateSummaryEvent.reportProgress({}, "uploadedTree");
 
             if (!this.connected) {
                 return ret;
