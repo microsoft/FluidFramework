@@ -58,8 +58,7 @@ const fluid = (req: express.Request, res: express.Response,  baseDir: string, op
     <title>${documentId}</title>
 </head>
 <body>
-    <div style="width: 100%; height: 100%;">
-        <div id="content"></div>
+    <div id="content" style="width: 100%; height: 100%; display: flex">
     </div>
 
     <script src="/node_modules/@microsoft/fluid-webpack-component-loader/dist/fluid-loader.bundle.js"></script>
