@@ -512,7 +512,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     /**
      * Closes the connection and clears inbound & outbound queues.
      */
-    public close(closeOnError = false): void {
+    public close(): void {
         if (this.closed) {
             return;
         }
