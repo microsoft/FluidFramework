@@ -291,7 +291,7 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
         };
         if (!summaryData.submitted) {
             // did not send the summary op
-            summarizingEvent.cancel(telemetryProps);
+            summarizingEvent.cancel({...telemetryProps, category: "error"});
             this.cancelPending();
             return;
         }

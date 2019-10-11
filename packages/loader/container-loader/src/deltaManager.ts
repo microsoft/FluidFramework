@@ -457,7 +457,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
                 if (!canRetry || !canRetryOnError(error)) {
                     // It's game over scenario.
-                    telemetryEvent.cancel({ reason: "error" }, error);
+                    telemetryEvent.cancel({category: "error"}, error);
                     this.closeOnConnectionError(error);
                     return [];
                 }
@@ -479,6 +479,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 // One (last) successful connection is sufficient, even if user was disconnected all prior attempts
                 if (success && retry >= 100) {
                     telemetryEvent.cancel({
+                        category: "error",
                         reason: "too many retries",
                         retry,
                         requests,
@@ -696,7 +697,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 }
 
                 // Log error once - we get too many errors in logs when we are offline,
-                // and unfortunately there is no way to detect that.
+                // and unfortunately there is no reliable way to detect that.
                 if (this.connectRepeatCount === 1) {
                     logNetworkFailure(
                         this.logger,

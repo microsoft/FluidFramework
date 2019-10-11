@@ -71,7 +71,9 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
         }
 
         // Collect stack if we were not able to extract it from error
-        event.stackFromError = (event.stack !== undefined);
+        if (fetchStack || event.stack !== undefined) {
+            event.stackFromError = (event.stack !== undefined);
+        }
         if (event.stack === undefined && fetchStack) {
             event.stack = TelemetryLogger.getStack();
         }
@@ -114,10 +116,8 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      * @param error - optional error object to log
      */
     public sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any) {
-        const newEvent: ITelemetryBaseEvent = { ...event, category: "generic" };
-        if (error !== undefined) {
-            TelemetryLogger.prepareErrorObject(newEvent, error, false);
-        }
+        const newEvent: ITelemetryBaseEvent = { ...event, category: event.category ? event.category : "generic" };
+        TelemetryLogger.prepareErrorObject(newEvent, error, false);
         this.send(newEvent);
     }
 
@@ -136,11 +136,14 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      * Send error telemetry event
      * @param event - Event to send
      */
-    public sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void {
-        const perfEvent: ITelemetryBaseEvent = { ...event, category: "performance" };
-        if (error !== undefined) {
-            TelemetryLogger.prepareErrorObject(perfEvent, error, false);
-        }
+    public sendPerformanceEvent(
+            event: ITelemetryPerformanceEvent,
+            error?: any): void {
+        const perfEvent: ITelemetryBaseEvent = {
+             ...event,
+             category: event.category ? event.category : "performance",
+        };
+        TelemetryLogger.prepareErrorObject(perfEvent, error, false);
 
         if (event.duration) {
             perfEvent.duration = TelemetryLogger.formatTick(event.duration);
@@ -199,11 +202,9 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
 
     protected prepareEvent(event: ITelemetryBaseEvent): ITelemetryBaseEvent {
         const newEvent: ITelemetryBaseEvent = { ...this.properties, ...event };
-        if (newEvent.package === undefined) {
-            newEvent.package = {
-                name: TelemetryLogger.sanitizePkgName(pkgName),
-                version: pkgVersion,
-            };
+        if (newEvent.packageVersion === undefined) {
+            newEvent.packageName = TelemetryLogger.sanitizePkgName(pkgName);
+            newEvent.packageVersion = pkgVersion;
         }
         if (this.namespace !== undefined) {
             newEvent.eventName = `${this.namespace}${TelemetryLogger.eventNamespaceSeparator}${newEvent.eventName}`;
