@@ -297,17 +297,188 @@ factories that create the component.
 
 # Lab: Adding "presence" to the Fluid Sudoku component
 
+<!--
 TODO: will walk through creating a second map for presence and adjusting the code to handle everything. Will also call
 out that this approach will persist all of the presence data, which often isn't what you want, but that this is a useful
 implementation to illustrate how to use richer data models.
+-->
 
 The Sudoku component is collaborative; multiple clients can update the cells in real time. However, there's no
 indication of where other clients are - which cells they're in. In this lab we'll add basic 'presence' to our Sudoku
 component, so we can see where other clients are.
 
-To do this, we'll create a new SharedMap to store the presence information. Like the map we're using for Sudoku data, it
-will be a map of cell coordinates to client names. As clients select cells, the presence map will be updated with the
+To do this, we'll create a new `SharedMap` to store the presence information. Like the map we're using for Sudoku data,
+it will be a map of cell coordinates to client names. As clients select cells, the presence map will be updated with the
 current client in the cell.
+
+Note that using a SharedMap for presence means that the history of each user's movement - their presence - will be
+persisted in the Fluid op stream. In this particular scenario, maintaining a history of a client's movement isn't
+particularly interesting, and Fluid provides an alternative mechanism, _signals_, to address cases where persisting ops
+isn't necessary. That said, this serves as a useful example of how to use Fluid to solve complex problems with very
+little code.
+
+## Create a SharedMap to contain presence data
+
+First, you need to create a `SharedMap` for your presence data.
+
+1. Open `src/sudoku/SudokuWebPart.tsx`.
+1. Inside the `SudokuWebPart` class, declare two new private variables like so:
+
+    ```ts
+    private presenceMapKey = "clientPresence";
+    private clientPresence: ISharedMap;
+    ```
+
+1. Inside the `onInitializeFirstTime` method, add the following code below the existing code to create and register a
+   second `SharedMap`:
+
+    ```ts
+    // Create and register a SharedMap to store presence data
+    const clientPresence = SharedMap.create(this._fluidShim.runtime, this.presenceMapKey);
+    clientPresence.register();
+    ```
+
+    Notice that the Fluid runtime is exposed via the `_fluidShim` property provided by `BaseMfxPart`.
+
+1. Inside the `onInit` method, add the following code below the existing code to retrieve the presence map when the
+   component initializes:
+
+    ```ts
+    this.clientPresence = await this._fluidShim.runtime.getChannel(this.presenceMapKey) as ISharedMap;
+    ```
+
+    You now have a `SharedMap` to store presence data. When the component is created initially, `onInitializeFirstTime`
+    will be called and the presence map will be created. When the component is loaded, `onInit` will be called, which
+    retrieves the `SharedMap` instance.
+
+## Rendering presence
+
+Now that you have a presence map, you need to render some indication that a remote user is in a cell.
+
+1. Open `src/sudoku/view/sudokuView.tsx`.
+1. Add the following code to the `ISudokuViewProps` interface:
+
+    ```ts
+    clientId: string;
+    clientPresence?: ISharedMap;
+    setPresence?(cellCoord: CoordinateString, reset: boolean): void;
+    ```
+
+    This interface defines the props that the React component accepts. `setPresence` is a function that the React
+    component will call to update presence. Notice that the `clientPresence` and `setPresence` properties are optional.
+    This allows the same React component to be used both with and without presence.
+
+1. Inside the `renderGridRows` method, add the following code **before** this line:
+   `const disabled = currentCell.fixed === true;`
+
+    ```ts
+    if (props.clientPresence) {
+        const cellOwner = props.clientPresence.get(coord);
+        if (cellOwner && cellOwner !== props.clientId) {
+            inputClasses += " presence";
+        }
+    }
+    ```
+
+    You have now added a CSS class to cells based on the data in the presence map. To make sure the local client doesn't
+    see presence styles in their own cell, the second if check ensures that the cell is occupied by someone other than
+    the local client.
+
+## Setting presence data: DOM events
+
+As users click in and out of cells, you need to update the presence map.
+
+1. Still in `src/sudoku/view/sudokuView.tsx`, add the following event handlers under the `handleChange` method:
+
+    ```ts
+    const handleInputFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+        if (props.setPresence) {
+            const key = e.target.getAttribute("data-fluidmapkey");
+            if (key !== null) {
+                props.setPresence(key, false);
+            }
+        }
+    };
+
+    const handleInputBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+        if (props.setPresence) {
+            const key = e.target.getAttribute("data-fluidmapkey");
+            if (key !== null) {
+                props.setPresence(key, true);
+            }
+        }
+    };
+    ```
+
+1. Inside the `renderGridRows` method, add `onFocus` and `onBlur` attributes connecting the DOM events to your handlers:
+
+    ```tsx
+    onFocus={handleInputFocus}
+    onBlur={handleInputBlur}
+    ```
+
+## Setting presence data: Wiring it all together
+
+1. Open `src/sudoku/SudokuWebPart.tsx`.
+1. Add the following function at the bottom of the `SudokuWebPart` class:
+
+    ```ts
+    /**
+     * A function that can be used to update presence data.
+     *
+     * @param cellCoordinate - The coordinate of the cell to set.
+     * @param reset - If true, presence for the cell will be cleared.
+     */
+    private readonly presenceSetter = (cellCoordinate: string, reset: boolean): void => {
+        if (this.clientPresence) {
+            if (reset) {
+                // Retrieve the current clientId in the cell, if there is one
+                const prev = this.clientPresence.get<string>(cellCoordinate);
+                const isCurrentClient = this._fluidShim.runtime.clientId === prev;
+                if (!isCurrentClient) {
+                    return;
+                }
+                this.clientPresence.delete(cellCoordinate);
+            } else {
+                this.clientPresence.set(cellCoordinate, this._fluidShim.runtime.clientId);
+            }
+        }
+    }
+    ```
+
+    You can pass this function in to the `SudokuView` React component as a prop. The component will call it when users
+    enter and leave cells, which will update the presence `SharedMap`.
+
+1. Replace the `render` method with the following code:
+
+    ```ts
+    public render(): void {
+        ReactDOM.render(
+            <SudokuView puzzle={this.puzzle}
+                clientPresence={this.clientPresence}
+                clientId={this._fluidShim.runtime.clientId}
+                setPresence={this.presenceSetter}
+            />,
+            this.domElement);
+    }
+    ```
+
+    Notice that all of the props you added earlier to the `ISudokuViewProps` interface are now provided.
+
+## Listening to distributed data structure events
+
+1. Still in `src/sudoku/SudokuWebPart.tsx`, add the following code to call render whenever a remote change is made to
+   the presence map:
+
+    ```ts
+    this.clientPresence.on("valueChanged", (changed, local, op) => {
+        this.render();
+    });
+    ```
+
+## Testing the changes
+
+TODO
 
 # Implementing a Fluid component interface
 
@@ -315,22 +486,11 @@ TODO: will walk through adding the [IComponentReactViewable][] interface.
 
 # Adding move history to the Fluid Sudoku component
 
-TODO: **(stretch goal)** will walk through adding a SharedObjectSequence to store the history of moves that have
-been made.
+TODO: **(stretch goal)** will walk through adding a SharedObjectSequence to store the history of moves that have been
+made.
 
 <!-- Links -->
 [IComponentHTMLVisual]: xref:@microsoft/fluid-component-core-interfaces!IComponentHTMLVisual:interface
 [IProvideComponentHTMLVisual]: xref:@microsoft/fluid-component-core-interfaces!IProvideComponentHTMLVisual:interface
 [IComponentReactViewable]: xref:@microsoft/fluid-aqueduct-react!IComponentReactViewable:interface
-[SharedMap]: TODO
-
-# Tips
-
-## Plain objects
-
-
-# Where do I...
-
-## Register a distributed data structure so I can use it in my component?
-
-
+[SharedMap]: @microsoft/fluid-map!SharedMap:class
