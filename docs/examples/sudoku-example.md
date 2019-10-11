@@ -58,6 +58,9 @@ Fluid component, which we'll cover in more depth later.
 
 # Run the sample locally
 
+> [!WARNING]
+> This is contingent on making the component loadable using `fluid-webpack-component-loader`.
+
 In order to run the example, run `npm start` from the project root. Then visit <http://localhost:8080/> in a browser.
 Two instances of the Sudoku component will be loaded side by side. Try entering numbers in the cells in either component
 instance. Changes will be synchronized to the other instance.
@@ -73,6 +76,18 @@ For our Sudoku data model, we will use a map-like data structure with string key
 (row, column) of a cell in the Sudoku puzzle. The top left cell has coordinate `"0,0"`, the cell to its right has
 coordinate `"0,1"`, etc.
 
+| 0,1 | 0,2 | 0,3 | 0,4 | 0,5 | 0,6 | 0,7 | 0,8 | 0,9 |
+|-----|-----|-----|-----|-----|-----|-----|-----|-----|
+| 1,1 | 1,2 | 1,3 | 1,4 | 1,5 | 1,6 | 1,7 | 1,8 | 1,9 |
+| 2,1 | 2,2 | 2,3 | 2,4 | 2,5 | 2,6 | 2,7 | 2,8 | 2,9 |
+| 3,1 | 3,2 | 3,3 | 3,4 | 3,5 | 3,6 | 3,7 | 3,8 | 3,9 |
+| 4,1 | 4,2 | 4,3 | 4,4 | 4,5 | 4,6 | 4,7 | 4,8 | 4,9 |
+| 5,1 | 5,2 | 5,3 | 5,4 | 5,5 | 5,6 | 5,7 | 5,8 | 5,9 |
+| 6,1 | 6,2 | 6,3 | 6,4 | 6,5 | 6,6 | 6,7 | 6,8 | 6,9 |
+| 7,1 | 7,2 | 7,3 | 7,4 | 7,5 | 7,6 | 7,7 | 7,8 | 7,9 |
+| 8,1 | 8,2 | 8,3 | 8,4 | 8,5 | 8,6 | 8,7 | 8,8 | 8,9 |
+| 9,1 | 9,2 | 9,3 | 9,4 | 9,5 | 9,6 | 9,7 | 9,8 | 9,9 |
+
 Each value stored in the map is a `SudokuCell`, a simple class that contains the following properties:
 
 ```typescript
@@ -83,6 +98,14 @@ readonly correctValue: number // Stores the correct value of the cell
 readonly coordinate: CoordinateString // The coordinate of the cell, as a comma-separated string, e.g. "2,3"
 ```
 
+> [!IMPORTANT]
+> Objects that are stored in distributed data structures, as SudokuCell is, must be safely JSON-serializable. This means
+> that you cannot use functions or TypeScript class properties with these objects, because those are not
+> JSON-serialized.
+>
+> One pattern to address this is to define static functions that accept the object as a parameter and manipulate it. See
+> the SudokuCell class in `/helpers/sudokuCell.ts` for an example of this pattern.
+
 ## Rendering
 
 In order to render the Sudoku data, we use a React component called `SudokuView` This component is defined in
@@ -91,7 +114,7 @@ In order to render the Sudoku data, we use a React component called `SudokuView`
 The `SudokuView` React component is also responsible for handling UI interaction from the user; we'll examine that in
 more detail later.
 
-## The WebPart/Fluid component
+## The Fluid component
 
 The React component described above does not itself represent a Fluid component. Rather, the Fluid component is defined
 in `src/SudokuWebPart.tsx`.
@@ -129,47 +152,48 @@ To answer that question, look at the `onInitializeFirstTime` method in the `Sudo
 private sudokuMapKey = "sudoku-map";
 private puzzle: ISharedMap;
 
-public onInitializeFirstTime() {
+public async onInitializeFirstTime() {
   // Create a new map for our Sudoku data
-  const map = SharedMap.create(this._fluidShim.runtime);
+  const map = SharedMap.create(this._fluidShim.runtime, this.sudokuMapKey);
 
   // Populate it with some puzzle data
   loadPuzzle(0, map);
 
-  // Add it to our root directory
-  this._fluidShim.root.set(this.sudokuMapKey, map.handle);
+  // Register the map with the Fluid runtime
+  map.register();
 }
 ```
 
-This method is called once when a component is initially created. We create a new SharedMap using `.create`, then add it
-to our root SharedDirectory.
+This method is called once when a component is initially created. We create a new [SharedMap][] using `.create`, then
+add it to our root SharedDirectory.
 
 Shared objects that are stored within other Shared objects (e.g. a SharedMap within the root, which is itself a
-SharedDirectory) must be retrieved asynchronously. We do that from the asynchronous onAfterInitialize method, then store
-a local reference to the object so we can easily use it in synchronous code.
+SharedDirectory) must be retrieved asynchronously. We do that from the asynchronous onInit method, then store a local
+reference to the object so we can easily use it in synchronous code.
 
 ```typescript
-public async onAfterInitialize() {
-  // Our "puzzle" SharedMap is stored as a handle on the "root" SharedDirectory. To get it we must make a
-  // synchronous call to get the IComponentHandle, then an asynchronous call to get the ISharedMap from the
-  // handle.
-  this.puzzle = await this._fluidShim.root
-    .get<IComponentHandle>(this.sudokuMapKey)
-    .get<ISharedMap>();
+    public async onInit() {
+        // TODO: The comment below is misleading now because it was based on having a root map and adding new DDS to it
+        // rather than retrieving the channel.
 
-  // Since we're using a Fluid distributed data structure to store our Sudoku data, we need to render whenever a value
-  // in our map changes. Recall that distributed data structures can be changed by both local and remote clients, so
-  // if we don't call render here, then our UI will not update when remote clients change data.
-  this.puzzle.on("valueChanged", (changed, local, op) => {
-    this.render();
-  });
-}
+        // Our "puzzle" SharedMap is stored as a handle on the "root" SharedDirectory. To get it we must make a
+        // synchronous call to get the IComponentHandle, then an asynchronous call to get the ISharedMap from the
+        // handle.
+        this.puzzle = await this._fluidShim.runtime.getChannel(this.sudokuMapKey) as ISharedMap;
+
+        // Since we're using a Fluid distributed data structure to store our Sudoku data, we need to render whenever a value
+        // in our map changes. Recall that distributed data structures can be changed by both local and remote clients, so
+        // if we don't call render here, then our UI will not update when remote clients change data.
+        this.puzzle.on("valueChanged", (changed, local, op) => {
+            this.render();
+        });
+    }
 ```
 
 ### Handling events from distributed data structures
 
-Distributed data structures can be changed by both local and remote clients. In the onAfterInitialize method, we also
-connect a method to be called each time the Sudoku data - the SharedMap - is changed. In our case we simply call render
+Distributed data structures can be changed by both local and remote clients. In the `onAfterInitialize` method, we also
+connect a method to be called each time the Sudoku data - the [SharedMap][] - is changed. In our case we simply call render
 again. This ensures that our UI updates whenever a remote client changes the Sudoku data.
 
 ```typescript
@@ -178,49 +202,116 @@ again. This ensures that our UI updates whenever a remote client changes the Sud
   });
 ```
 
+### Updating distributed data structures
+
+In the previous step we showed how to use event listeners with distributed data structures to respond to remote data
+changes. But how do we update the data based on user input? To do that, we need to listen to some DOM events as users
+enter data in the Sudoku cells. Since the `SudokuView` class handles the rendering, that's where the DOM events will be
+handled.
+
+Let's look at the event handler for the change event from each Sudoku cell:
+
+> [!NOTE]
+> The `handleChange` function can be found in the `SimpleTable` React component within `view/sudokuView.ts`.
+> `SimpleTable` is a helper React component that is not exported; you can consider it part of the `SudokuView` React
+> component.
+
+```typescript
+const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let valueToSet = Number(e.target.value);
+    valueToSet = Number.isNaN(valueToSet) ? 0 : valueToSet;
+    const key = e.target.getAttribute("data-fluidmapkey");
+    if (key !== null) {
+        const toSet = props.puzzle.get<SudokuCell>(key);
+        toSet.value = valueToSet;
+        toSet.isCorrect = valueToSet === toSet.correctValue;
+        props.puzzle.set(key, toSet);
+    }
+};
+```
+
+Lines 2 and 3 ensure we only accept numeric values. In line 4, we retrieve the coordinate of the cell from a DOM
+attribute that we added during render. Once we have the coordinate, which is a key in the `SharedMap` storing our Sudoku
+data, we retrieve the cell data by calling `.get<SudokuCell>(key)`. We then update the cell's value and set whether it
+is correct. Finally, we call `.set(key, toSet)` to update the data in the `SharedMap`.
+
+This pattern of first retrieving an object from a `SharedMap`, updating it, then setting it again, is an idiomatic Fluid
+pattern. Without calling `.set()`, other clients will not be notified of the updates to the values within the map. By
+setting the value, we ensure that Fluid notifies all other clients of the change.
+
+Once the value is set, the `valueChanged` event will be raised on the SharedMap, and as you'll recall from the previous
+section, we listen to that event and render again every time the values change. Both local and remote clients will
+render based on this event, because all clients are running the same code.
+
 ## Connecting it all together
 
-We've now reviewed the SudokuView React component, which handles most of the rendering, and the SudokuWebPart class,
-which is the Sudoku Fluid component itself. We've shown how those two classes work together to render content to the
-screen and share data using a Fluid distributed data structure.
+We've now reviewed the `SudokuView` React component, which handles most of the rendering and updates distributed data
+structures as needed, and the `SudokuWebPart` class, which is the Sudoku Fluid component itself. We've shown how those
+two classes work together to render content to the screen and share data using a Fluid distributed data structure.
 
 The final step is to connect everything together, so that the framework knows how to load your component code. To see
 how that's done, look at the `index.ts` file.
 
 ```typescript
-import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
-
+import { SharedMap } from "@microsoft/fluid-map";
+import { MFxComponentFactory, SimpleModuleInstantiationFactory } from "@ms/mfx-part-base";
 import { SudokuWebPart } from "./sudoku/SudokuWebPart";
-import { MFxComponentFactory } from "./packages/mfx-web-part-base/MFxComponentFactory";
 
 // tslint:disable-next-line: no-var-requires no-require-imports
 const pkg = require("../package.json");
-const chaincodeName = pkg.name as string;
+const componentName = pkg.name as string;
 
-export const MFxInstantiationFactory = new MFxComponentFactory(
-  SudokuWebPart
-);
+const sudokuInstantiationFactory = new MFxComponentFactory(
+    SudokuWebPart,
+    [SharedMap.getFactory()]);
 
 export const fluidExport = new SimpleModuleInstantiationFactory(
-  chaincodeName,
-  (new Map([
-    [chaincodeName, Promise.resolve(MFxInstantiationFactory)],
-  ])),
+    componentName,
+    new Map([
+        [componentName, Promise.resolve(sudokuInstantiationFactory)],
+    ] as any)
 );
-
-// This is needed for SPFx
-export { SudokuWebPart as default } from './sudoku/SudokuWebPart';
 ```
 
-# Implementing a Fluid component interface
+### Component and distributed data structure factories
 
-TODO: will walk through adding the [IComponentReactViewable][] interface.
+A Fluid component must provide a factory that the runtime uses to create the component. The `MFxComponentFactory` class
+makes it easy to create factories for components that inherit from `BaseMFxComponent`. You pass it your Fluid component
+class (`SudokuWebPart` in this case), as well as an array of distributed data structure factories. If your component
+uses any distributed data structures, their factories must all be registered. All distributed data structures provide a
+factory.
 
-# Adding "presence" to the Fluid Sudoku component
+A Fluid component is, in some ways, a collection of distributed data structures. While a component does not need to use
+distributed data structures, most will. Registering the distributed data structure factories that your component uses
+ensures the runtime can initialize both your component and the data structures it depends on.
+
+If your module contains several components, each will require a factory. Since our module only contains a single
+component, we only need to create one factory.
+
+### Another factory: fluidExport
+
+A Fluid component must export an object called `fluidExport` from its entrypoint module. This export is what the Fluid
+runtime uses to load components. The `SimpleModuleInstantiationFactory` class can be used to simplify this process. You
+need to provide the name of the default component in your module, along with a mapping of component names (strings) to
+factories that create the component.
+
+# Lab: Adding "presence" to the Fluid Sudoku component
 
 TODO: will walk through creating a second map for presence and adjusting the code to handle everything. Will also call
 out that this approach will persist all of the presence data, which often isn't what you want, but that this is a useful
 implementation to illustrate how to use richer data models.
+
+The Sudoku component is collaborative; multiple clients can update the cells in real time. However, there's no
+indication of where other clients are - which cells they're in. In this lab we'll add basic 'presence' to our Sudoku
+component, so we can see where other clients are.
+
+To do this, we'll create a new SharedMap to store the presence information. Like the map we're using for Sudoku data, it
+will be a map of cell coordinates to client names. As clients select cells, the presence map will be updated with the
+current client in the cell.
+
+# Implementing a Fluid component interface
+
+TODO: will walk through adding the [IComponentReactViewable][] interface.
 
 # Adding move history to the Fluid Sudoku component
 
@@ -231,3 +322,15 @@ been made.
 [IComponentHTMLVisual]: xref:@microsoft/fluid-component-core-interfaces!IComponentHTMLVisual:interface
 [IProvideComponentHTMLVisual]: xref:@microsoft/fluid-component-core-interfaces!IProvideComponentHTMLVisual:interface
 [IComponentReactViewable]: xref:@microsoft/fluid-aqueduct-react!IComponentReactViewable:interface
+[SharedMap]: TODO
+
+# Tips
+
+## Plain objects
+
+
+# Where do I...
+
+## Register a distributed data structure so I can use it in my component?
+
+
