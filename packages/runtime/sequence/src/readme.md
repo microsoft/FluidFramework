@@ -46,7 +46,7 @@ Remove operations take a start and an end position. The start position is simila
     // positions: 012345678
 
     // remove the first 3 characters
-    sharedString.removeRange(0, 4);
+    sharedString.removeRange(0, 3);
     //   content: world!
     // positions: 012345
 
@@ -61,7 +61,7 @@ Annotate operations can add or remove map-like properties to or from content of 
 ```typescript
     //   content: hi world
     // positions: 01234567
-    
+
     let props1 = sharedString.getPropertiesAtPosition(1);
     let props5 = sharedString.getPropertiesAtPosition(5);
     // props1 = {}
