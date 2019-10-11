@@ -1,49 +1,77 @@
 # Shared Segment Sequence
 
-Every item in a SharedSegmentSequence is at a specific position starting at 0, kind of like an array. However, it differs from an array in that the positions can move as the local and remote collaborators make modifications. There are a number of different sequence types:
+Every item in a SharedSegmentSequence is at a specific position starting at 0, kind of like an array. However, it differs from an array in that the positions can move as local and remote collaborators make modifications to the sequence. There are a number of different sequence types:
 - SharedString for storing and collaborating on a sequence of text
 - SharedNumberSequence for storing and collaborating on a sequence of numbers
 - SharedObjectSequence for storing and collaborating on a sequence of json serializable objects
 
-As the name suggests SharedSegmentSequence, or sequences for short, are made of segments. Segments are the leaf nodes of the tree data structure that enables collaboration and backs the sequence. Segments may be split and merged as modifications are made to the sequence. Eveny segment has a length from 0, to the length of the sequence. The length of the sequence will be the combined length of all the segments.
+As the name suggests SharedSegmentSequence, or sequence for short, are made of segments. Segments are the leaf nodes of the tree data structure that enables collaboration and backs the sequence. Segments may be split and merged as modifications are made to the sequence. Every segment has a length from 1, to the length of the sequence. The length of the sequence will be the combined length of all the segments.
 
 When talking about positions in a sequence we use the terms _near_, and _far_. The nearest position in a sequence is 0, and the farthest position is its length. When comparing two positions the nearer position is closer to 0, and the farther position is closer to the length.
 
 ## Using a Sequence
 
-Sequences supports three basic operations: insert, remove, and annotate.
+Sequences support three basic operations: insert, remove, and annotate.
 
-Insert operations on the sequence take a single position argument along with the content. This position is inclusive. This position can any position in the sequence including 0, and the length of the shared string.
+Insert operations on the sequence take a single position argument along with the content. This position is inclusive. This position can any position in the sequence including 0, and the length of the sequence.
 
 ```typescript
-    // with an empty shared string
+    //   content:
+    // positions:
     sharedString.insertText(0, "hi world");
     //   content: hi world
     // positions: 01234567
 ```
 
-Remove operations take a start and an end position. The start position is similar to the insert’s position, in that is can be any position in the sequence and is inclusive. However, unlike insert it cannot be the length of the sequence, as nothing exists there yet. The end position is exclusive and must be greater than the start, so it can be any value from 1 to the length of the sequence.
+Remove operations take a start and an end position. The start position is similar to the insert’s position, in that is can be any position in the sequence and is inclusive. However, unlike insert the start position cannot be the length of the sequence, as nothing exists there yet. The end position is exclusive and must be greater than the start, so it can be any value from 1 to the length of the sequence.
 
 ```typescript
     //   content: hi world
     // positions: 01234567
     sharedString.removeRange(0, 4);
     //   content: world
-    // positions: 01234567
+    // positions: 01234
+    sharedString.removeRange(0, 5);
+    //   content:
+    // positions:
 ```
 
-Annotate operations can add or remove map- like properties to or from content of the sequence. They can store any json serializable data and have similar behavior to a shared map. Annotate takes a start and end position which work the same way as the start and end of the remove operation. In addition to start and end annotate also takes a map like properties object. Each key of the provided properties object will be set on the properties of each position of the specified range. Setting a property key to null will remove that property from the positions in the range.
+Annotate operations can add or remove map-like properties to or from content of the sequence. They can store any json serializable data and have similar behavior to a shared map. Annotate takes a start and end position which work the same way as the start and end of the remove operation. In addition to start and end annotate also takes a map-like properties object. Each key of the provided properties object will be set on each position of the specified range. Setting a property key to null will remove that property from the positions in the range.
 
 ```typescript
-    const preProps2 = sharedString.getPropertiesAtPosition(2);
-    const preProps5 = sharedString.getPropertiesAtPosition(5);
-    // preProps2 = {}
-    // preProps5 = {}
-    sharedString.annotateRange(0, 4, { fontWeight: 5 });
-    const postProps2 = sharedString.getPropertiesAtPosition(2);
-    const postProps5 = sharedString.getPropertiesAtPosition(5);
-    // preProps2 = { fontWeight: 5 }
-    // preProps5 = {}
+    //   content: hi world
+    // positions: 01234567
+    let props1 = sharedString.getPropertiesAtPosition(1);
+    let props5 = sharedString.getPropertiesAtPosition(5);
+    // props1 = {}
+    // props5 = {}
+
+    // set property called weight on positions 0 and 1
+    sharedString.annotateRange(0, 2, { weight: 5 });
+    props1 = sharedString.getPropertiesAtPosition(1);
+    props5 = sharedString.getPropertiesAtPosition(5);
+    // props1 = { weight: 5 }
+    // props5 = {}
+
+    // set property called decoration on all positions
+    sharedString.annotateRange(
+        0,
+        sharedString.getLength(),
+        { decoration: "underline" });
+    props1 = sharedString.getPropertiesAtPosition(1);
+    props5 = sharedString.getPropertiesAtPosition(5);
+    // props1 = { weight: 5, decoration: "underline" }
+    // props5 = { decoration: "underline" }
+
+    // remove property called weight on all positions
+    sharedString.annotateRange(
+        0,
+        sharedString.getLength(),
+        { weight: null });
+    props1 = sharedString.getPropertiesAtPosition(1);
+    props5 = sharedString.getPropertiesAtPosition(5);
+    // props1 = { decoration: "underline" }
+    // props5 = { decoration: "underline" }
 ```
 
 Whenever an operation is perfomed on a sequence a _sequenceDelta_ event will be raised. This even provides the ranges affected by the operation, the type of the operation, and the properties that were changes by the operation.
