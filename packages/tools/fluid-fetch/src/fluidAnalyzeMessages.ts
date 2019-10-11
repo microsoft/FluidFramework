@@ -552,13 +552,19 @@ function processOp(
 }
 
 function processComponentAttachOp(
-        attachMessage: IAttachMessage,
+        attachMessage: IAttachMessage | string,
         dataType: Map<string, string>) {
     // dataType.set(getObjectId(attachMessage.id), attachMessage.type);
 
     // That's component, and it brings a bunch of data structures.
     // Let's try to crack it.
-    for (const entry of attachMessage.snapshot.entries) {
+    let parsedAttachMessage: IAttachMessage;
+    if (typeof attachMessage === "string") {
+        parsedAttachMessage = JSON.parse(attachMessage);
+    } else {
+        parsedAttachMessage = attachMessage;
+    }
+    for (const entry of parsedAttachMessage.snapshot.entries) {
         if (entry.type === TreeEntry[TreeEntry.Tree]) {
             for (const entry2 of (entry.value as ITree).entries) {
                 if (entry2.path === ".attributes" && entry2.type === TreeEntry[TreeEntry.Blob]) {
@@ -567,7 +573,7 @@ function processComponentAttachOp(
                     if (objectType.startsWith(objectTypePrefix)) {
                         objectType = objectType.substring(objectTypePrefix.length);
                     }
-                    dataType.set(getObjectId(attachMessage.id, entry.path), objectType);
+                    dataType.set(getObjectId(parsedAttachMessage.id, entry.path), objectType);
                 }
             }
         }

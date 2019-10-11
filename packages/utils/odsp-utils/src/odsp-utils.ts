@@ -58,7 +58,7 @@ async function processTokenBody(requestResult: IRequestResult): Promise<IODSPTok
 
 export function getTenant(server: string) {
     const tenant = server.substr(0, server.indexOf("."));
-    return (tenant === "microsoft") ? "organizations" : `${tenant}.onmicrosoft.com`;
+    return (tenant === "microsoft" || tenant === "microsoft-my") ? "organizations" : `${tenant}.onmicrosoft.com`;
 }
 
 export async function postTokenRequest(server: string, postBody: string): Promise<IODSPTokens> {
