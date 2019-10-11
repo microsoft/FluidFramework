@@ -26,7 +26,7 @@ import * as MergeTree from "@microsoft/fluid-merge-tree";
 import { IClient, ISequencedDocumentMessage, IUser } from "@microsoft/fluid-protocol-definitions";
 import { IInboundSignalMessage } from "@microsoft/fluid-runtime-definitions";
 import * as Sequence from "@microsoft/fluid-sequence";
-import { SharedSequenceUndoRedoHandler, UndoRedoStackManager } from "@microsoft/fluid-undo-redo";
+import { SharedSegmentSequenceUndoRedoHandler, UndoRedoStackManager } from "@microsoft/fluid-undo-redo";
 import { blobUploadHandler } from "../blob";
 import { CharacterCodes, Paragraph, Table } from "../text";
 import * as ui from "../ui";
@@ -3121,7 +3121,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         this.statusMessage("si", " ");
 
         this.undoRedoManager = new UndoRedoStackManager(this.collabDocument.context.hostRuntime);
-        const sequenceHandler = new SharedSequenceUndoRedoHandler(this.undoRedoManager);
+        const sequenceHandler = new SharedSegmentSequenceUndoRedoHandler(this.undoRedoManager);
         sequenceHandler.attachSequence(sharedString);
 
         sharedString.on("sequenceDelta", (event, target) => {
@@ -4895,10 +4895,10 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                 this.collabDocument.save();
                 break;
             case CharacterCodes.Y:
-                this.undoRedoManager.redo();
+                this.undoRedoManager.undoOperation();
                 break;
             case CharacterCodes.Z:
-                this.undoRedoManager.undo();
+                this.undoRedoManager.redoOperation();
                 break;
             default:
                 console.log(`got command key ${String.fromCharCode(charCode)} code: ${charCode}`);

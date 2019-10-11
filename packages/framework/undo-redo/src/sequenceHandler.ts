@@ -17,13 +17,13 @@ import { SequenceDeltaEvent, SharedSegmentSequence } from "@microsoft/fluid-sequ
 import { IRevertable, UndoRedoStackManager } from "./undoRedoStackManager";
 
 /**
- * A shared sequence undo redo handler that will add sequences changes to the provided
+ * A shared segment sequence undo redo handler that will add all local sequences changes to the provided
  * undo redo stack manager
  */
-export class SharedSequenceUndoRedoHandler {
+export class SharedSegmentSequenceUndoRedoHandler {
 
     private readonly sequences =
-        new Map<SharedSegmentSequence<ISegment>, SharedSequenceRevertable | undefined>();
+        new Map<SharedSegmentSequence<ISegment>, SharedSegmentSequenceRevertable | undefined>();
 
     constructor(private readonly stackManager: UndoRedoStackManager) {
         this.stackManager.on("changePushed", () => this.sequences.clear());
@@ -41,8 +41,8 @@ export class SharedSequenceUndoRedoHandler {
         if (event.isLocal) {
             let revertable = this.sequences.get(target);
             if (revertable === undefined) {
-                revertable = new SharedSequenceRevertable(target);
-                this.stackManager.push(revertable);
+                revertable = new SharedSegmentSequenceRevertable(target);
+                this.stackManager.pushToCurrentOperation(revertable);
                 this.sequences.set(target, revertable);
             }
             revertable.add(event);
@@ -50,18 +50,18 @@ export class SharedSequenceUndoRedoHandler {
     }
 }
 
-interface ITrackedSharedSequenceRevertable {
+interface ITrackedSharedSegmentSequenceRevertable {
     trackingGroup: TrackingGroup;
     propertyDelta: PropertySet;
     operation: MergeTreeDeltaOperationType;
 }
 
 /**
- * Tracks a change on a shared sequence and allows reverting it
+ * Tracks a change on a shared segment sequence and allows reverting it
  */
-export class SharedSequenceRevertable implements IRevertable {
+export class SharedSegmentSequenceRevertable implements IRevertable {
 
-    private readonly tracking: ITrackedSharedSequenceRevertable[];
+    private readonly tracking: ITrackedSharedSegmentSequenceRevertable[];
 
     constructor(
         public readonly sequence: SharedSegmentSequence<ISegment>,

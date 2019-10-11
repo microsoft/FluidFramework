@@ -7,7 +7,7 @@ import { ISharedMap, IValueChanged } from "@microsoft/fluid-map";
 import { IRevertable, UndoRedoStackManager } from "./undoRedoStackManager";
 
 /**
- * A shared map undo redo handler that will add all map changes to the provided
+ * A shared map undo redo handler that will add all local map changes to the provided
  * undo redo stack manager
  */
 export class SharedMapUndoRedoHandler {
@@ -22,7 +22,7 @@ export class SharedMapUndoRedoHandler {
 
     private readonly mapDeltaHandler = (changed: IValueChanged, local: boolean, op, target: ISharedMap) => {
         if (local) {
-            this.stackManager.push(new SharedMapRevertable(changed, target));
+            this.stackManager.pushToCurrentOperation(new SharedMapRevertable(changed, target));
         }
     }
 }

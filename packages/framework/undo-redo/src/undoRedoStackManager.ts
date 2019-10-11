@@ -138,7 +138,7 @@ export class UndoRedoStackManager {
         this.eventEmitter.removeListener(event, listener);
     }
 
-    public undo() {
+    public undoOperation() {
         this.mode = UndoRedoMode.Undo;
         this.runtime.orderSequentially(() => {
             UndoRedoStackManager.revert(
@@ -148,7 +148,7 @@ export class UndoRedoStackManager {
         this.mode = UndoRedoMode.None;
     }
 
-    public redo() {
+    public redoOperation() {
         this.mode = UndoRedoMode.Redo;
         this.runtime.orderSequentially(() => {
             UndoRedoStackManager.revert(
@@ -158,7 +158,7 @@ export class UndoRedoStackManager {
         this.mode = UndoRedoMode.None;
     }
 
-    public push(revertable: IRevertable) {
+    public pushToCurrentOperation(revertable: IRevertable) {
         let currentStack: UndoRedoStack;
 
         switch (this.mode) {
