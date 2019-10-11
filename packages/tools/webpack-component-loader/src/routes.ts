@@ -28,12 +28,14 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
     options.npm = options.npm ? options.npm : config.get("fluid:webpack:npm");
     // tslint:enable: no-unsafe-any
 
+    console.log(options);
+
     if (options.mode === "live" && !(options.tenantId && options.tenantSecret)) {
         throw new Error("You must provide a tenantId and tenantSecret to connect to a live server");
     } else if ((options.tenantId || options.tenantSecret) && !(options.tenantId && options.tenantSecret)) {
         throw new Error("tenantId and tenantSecret must be provided together");
     }
-    console.log(options);
+
     app.get("/file*", (req, res) => {
         // tslint:disable-next-line: non-literal-fs-path no-unsafe-any
         const buffer = fs.readFileSync(req.params[0].substr(1));

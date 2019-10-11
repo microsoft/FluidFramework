@@ -12,68 +12,146 @@ describe("Yo fluid", function () {
     this.timeout(10000);
 
     describe("React", () => {
-        beforeEach(() => {
-            return helpers.run(path.join(__dirname, "../app/index.js"))
-                .withPrompts({
-                    name: "foobar",
-                    template: "react",
-                    description: "Fluid starter project",
-                    path: "./foobar",
-                });
-        })
-        it("Produces the expected files", async () => {
-            const expectedFiles = [
-                "src/main.tsx",
-                "src/index.ts",
-                ".gitignore",
-                ".npmignore",
-                ".npmrc",
-                "package.json",
-                "README.md",
-                "tsconfig.json",
-                "webpack.config.js",
-                "webpack.dev.js",
-                "webpack.prod.js",
-            ]
-            assert.file(expectedFiles);
+        describe("With container", () => {
+            beforeEach(() => {
+                return helpers.run(path.join(__dirname, "../app/index.js"))
+                    .withPrompts({
+                        name: "foobar",
+                        template: "react",
+                        container: "yes",
+                        description: "Fluid starter project",
+                        path: "./foobar",
+                    });
+            });
 
-            const unexpectedFiles = [
-                "src/main.ts",
-            ]
-            assert.noFile(unexpectedFiles);
+            it("Produces the expected files", async () => {
+                const expectedFiles = [
+                    "src/main.tsx",
+                    "src/index.ts",
+                    ".gitignore",
+                    ".npmignore",
+                    ".npmrc",
+                    "package.json",
+                    "README.md",
+                    "tsconfig.json",
+                    "webpack.config.js",
+                    "webpack.dev.js",
+                    "webpack.prod.js",
+                ]
+                assert.file(expectedFiles);
+
+                const unexpectedFiles = [
+                    "src/main.ts",
+                ]
+                assert.noFile(unexpectedFiles);
+            });
+        });
+
+        describe("Without container", () => {
+            beforeEach(() => {
+                return helpers.run(path.join(__dirname, "../app/index.js"))
+                    .withPrompts({
+                        name: "foobar",
+                        template: "react",
+                        container: "no",
+                        description: "Fluid starter project",
+                        path: "./foobar",
+                    });
+            });
+
+            it("Produces the expected files", async () => {
+                const expectedFiles = [
+                    "src/main.tsx",
+                    ".gitignore",
+                    ".npmignore",
+                    ".npmrc",
+                    "package.json",
+                    "README.md",
+                    "tsconfig.json",
+                    "webpack.config.js",
+                    "webpack.dev.js",
+                    "webpack.prod.js",
+                ]
+                assert.file(expectedFiles);
+
+                const unexpectedFiles = [
+                    "src/main.ts",
+                    "src/index.ts",
+                ]
+                assert.noFile(unexpectedFiles);
+            });
         });
     });
 
     describe("Vanilla", () => {
-        beforeEach(() => {
-            return helpers.run(path.join(__dirname, "../app/index.js"))
-                .withPrompts({
-                    name: "foobar",
-                    template: "vanillaJS",
-                    description: "Fluid starter project",
-                    path: "./foobar",
-                });
-        })
-        it("Produces the expected files", async () => {
-            const expectedFiles = [
-                "src/main.ts",
-                "src/index.ts",
-                ".gitignore",
-                ".npmignore",
-                ".npmrc",
-                "package.json",
-                "README.md",
-                "tsconfig.json",
-                "webpack.config.js",
-                "webpack.dev.js",
-                "webpack.prod.js",
-            ]
-            assert.file(expectedFiles);
+        describe("With container", () => {
+            beforeEach(() => {
+                return helpers.run(path.join(__dirname, "../app/index.js"))
+                    .withPrompts({
+                        name: "foobar",
+                        template: "vanillaJS",
+                        container: "yes",
+                        description: "Fluid starter project",
+                        path: "./foobar",
+                    });
+            });
 
-            const unexpectedFiles = [
-                "src/main.tsx",
-            ]
-            assert.noFile(unexpectedFiles);
+            it("Produces the expected files", async () => {
+                const expectedFiles = [
+                    "src/main.ts",
+                    "src/index.ts",
+                    ".gitignore",
+                    ".npmignore",
+                    ".npmrc",
+                    "package.json",
+                    "README.md",
+                    "tsconfig.json",
+                    "webpack.config.js",
+                    "webpack.dev.js",
+                    "webpack.prod.js",
+                ]
+                assert.file(expectedFiles);
+
+                const unexpectedFiles = [
+                    "src/main.tsx",
+                ]
+                assert.noFile(unexpectedFiles);
+            });
+        });
+
+        describe("Without container", () => {
+            beforeEach(() => {
+                return helpers.run(path.join(__dirname, "../app/index.js"))
+                    .withPrompts({
+                        name: "foobar",
+                        template: "vanillaJS",
+                        container: "no",
+                        description: "Fluid starter project",
+                        path: "./foobar",
+                    });
+            });
+
+            it("Produces the expected files", async () => {
+                const expectedFiles = [
+                    "src/main.ts",
+                    ".gitignore",
+                    ".npmignore",
+                    ".npmrc",
+                    "package.json",
+                    "README.md",
+                    "tsconfig.json",
+                    "webpack.config.js",
+                    "webpack.dev.js",
+                    "webpack.prod.js",
+                ]
+                assert.file(expectedFiles);
+
+                const unexpectedFiles = [
+                    "src/main.tsx",
+                    "src/index.ts",
+                ]
+                assert.noFile(unexpectedFiles);
+            });
         });
     });
 });
