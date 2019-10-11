@@ -5,7 +5,7 @@
 
 // tslint:disable:object-literal-sort-keys
 import {
-    getTenant,
+    getSharepointTenant,
     IClientConfig,
     IODSPTokens,
     postTokenRequest,
@@ -20,7 +20,7 @@ const redirectUri = "http://localhost:7000/auth/callback";
 
 async function getAuthorizationCode(server: string, clientConfig: IClientConfig): Promise<string> {
     let message = "Please open browser and navigate to this URL:";
-    const authUrl = `https://login.microsoftonline.com/${getTenant(server)}/oauth2/v2.0/authorize?`
+    const authUrl = `https://login.microsoftonline.com/${getSharepointTenant(server)}/oauth2/v2.0/authorize?`
         + `client_id=${clientConfig.clientId}`
         + `&scope=https://${server}/AllSites.Write`
         + `&response_type=code`

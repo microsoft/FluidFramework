@@ -119,7 +119,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
     }
 
     /**
-     * Send am error event with the logger
+     * Send an error telemetry event with the logger
      *
      * @param event - the event to send
      * @param error - optional error object to log
@@ -131,7 +131,8 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
     }
 
     /**
-     * Send error telemetry event
+     * Send a performance telemetry event with the logger
+     *
      * @param event - Event to send
      * @param error - optional error object to log
      */

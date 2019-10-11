@@ -18,10 +18,7 @@ export let paramNumSnapshotVersions = 10;
 
 export let paramForceTokenReauth = false;
 
-export let paramSave: string | undefined;
-export function setParamSave(url: string) {
-    paramURL = url;
-}
+export let paramSaveDir: string | undefined;
 export const messageTypeFilter = new Set<string>();
 
 export let paramURL: string | undefined;
@@ -30,6 +27,8 @@ export let paramJWT: string;
 export let connectToWebSocket = false;
 
 export let localDataOnly = false;
+
+export let paramSite: string | undefined;
 
 const optionsArray =
     [
@@ -100,7 +99,7 @@ export function parseArguments() {
                 paramNumSnapshotVersions = parseIntArg(i++, "number of versions", false);
                 break;
             case "--saveDir":
-                paramSave = parseStrArg(i++, "save data path");
+                paramSaveDir = parseStrArg(i++, "save data path");
                 break;
             case "--websocket":
                 connectToWebSocket = true;
@@ -163,11 +162,11 @@ function checkArgs() {
     }
 
     if (!paramURL) {
-        if (paramSave) {
-            const file = `${paramSave}/info.json`;
+        if (paramSaveDir) {
+            const file = `${paramSaveDir}/info.json`;
             if (fs.existsSync(file)) {
                 const info = JSON.parse(fs.readFileSync(file, { encoding: "utf-8" }));
-                setParamSave(info.url as string);
+                paramURL = info.url;
             } else {
                 console.log(`Can't find file ${file}`);
             }

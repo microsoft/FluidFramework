@@ -12,6 +12,7 @@ import { IClientConfig, refreshAccessToken } from "@microsoft/fluid-odsp-utils";
 import { IFluidResolvedUrl, IResolvedUrl, IUrlResolver } from "@microsoft/fluid-protocol-definitions";
 import * as r11s from "@microsoft/fluid-routerlicious-driver";
 import { RouterliciousUrlResolver } from "@microsoft/fluid-routerlicious-urlresolver";
+import * as sha from "sha.js";
 import { URL } from "url";
 import { localDataOnly, paramJWT } from "./fluidFetchArgs";
 import { getClientConfig, getODSPTokens, saveAccessToken } from "./fluidFetchODSPTokens";
@@ -25,20 +26,25 @@ async function initializeODSPCore(
     clientConfig: IClientConfig,
 ) {
 
+    const { driveId, itemId } = odspResolvedUrl;
+
     connectionInfo = {
         server,
-        drive: odspResolvedUrl.driveId,
-        item: odspResolvedUrl.itemId,
+        drive: driveId,
+        item: itemId,
     };
 
     if (localDataOnly) {
         return;
     }
 
+    const docId = new sha.sha256().update(`${driveId}_${itemId}`).digest("base64");
+
     console.log(`Connecting to ODSP:
   server: ${server}
-  drive:  ${odspResolvedUrl.driveId}
-  item:   ${odspResolvedUrl.itemId}`);
+  drive:  ${driveId}
+  item:   ${itemId}
+  docId:  ${docId}`);
 
     const getStorageTokenStub = async (siteUrl: string, refresh: boolean) => {
         const tokens = await getODSPTokens(server, clientConfig, false);
@@ -108,8 +114,7 @@ async function resolveUrl(url: string): Promise<IResolvedUrl | undefined> {
 export async function fluidFetchInit(urlStr: string) {
     const resolvedUrl = await resolveUrl(urlStr) as IFluidResolvedUrl;
     if (!resolvedUrl) {
-        console.log(server);
-        return Promise.reject(`Unknown URL ${paramURL}`);
+        return Promise.reject(`Unknown URL ${urlStr}`);
     }
     const protocol = new URL(resolvedUrl.url).protocol;
     if (protocol === "fluid-odsp:") {
