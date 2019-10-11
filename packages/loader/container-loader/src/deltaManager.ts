@@ -512,7 +512,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     /**
      * Closes the connection and clears inbound & outbound queues.
      */
-    public close(): void {
+    public close(closeOnError = false): void {
+        if (this.closed) {
+            return;
+        }
         this.closed = true;
         this.stopSequenceNumberUpdate();
         if (this.connection) {
@@ -536,6 +539,8 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this.pending = [];
 
         this.removeAllListeners();
+
+        this.emit("closed");
     }
 
     private closeOnConnectionError(error: any) {
@@ -604,6 +609,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             this.client!,
             mode).then(
             (connection) => {
+                if (this.closed) {
+                    connection.close();
+                    return;
+                }
                 this.connection = connection;
                 // back-compat for newer clients and old server. If the server does not have mode, we reset to write.
                 this.connectionMode = connection.details.mode ? connection.details.mode : "write";
