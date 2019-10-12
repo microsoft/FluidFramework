@@ -5,6 +5,7 @@
     "type": "git",
     "url": "https://github.com/OfficeDev/Office-Addin-TaskPane.git"
   },
+  "author": "Microsoft",
   "license": "MIT",
   "config": {
     "app-to-debug": "powerpoint",
