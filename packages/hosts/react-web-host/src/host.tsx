@@ -6,7 +6,7 @@
 import { loadFluidComponent, loadIFramedFluidComponent } from "@fluid-example/tiny-web-host";
 import * as React from "react";
 
-export { isFluidURL, isSpoUrl, loadFluidComponent } from "@fluid-example/tiny-web-host";
+export { isSpoUrl, loadFluidComponent } from "@fluid-example/tiny-web-host";
 
 export interface ILoaderProps {
 
@@ -57,7 +57,9 @@ export class FluidLoader extends React.Component<ILoaderProps, any> {
       loadFluidComponent(
         this.props.url,
         this.divRef.current,
-        this.props.getToken,
+        {
+          getToken: this.props.getToken,
+        },
         this.props.clientId ? this.props.clientId : "",
         this.props.clientSecret ? this.props.clientSecret : "",
       );

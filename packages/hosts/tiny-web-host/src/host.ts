@@ -19,6 +19,14 @@ const packageJson = require("../package.json");
 
 const npm = "https://pragueauspkn-3873244262.azureedge.net";
 
+// This is insecure, but is being used for the time being for ease of use during the hackathon.
+const appTenants = [
+    {
+        id: "fluid",
+        key: "43cfc3fbf04a97c0921fd23ff10f9e4b",
+    },
+];
+
 /**
  * A single line, basic function for loading Fluid Components.
  *
@@ -47,7 +55,7 @@ export async function loadFluidComponent(
     if (isRouterliciousUrl(url)) {
         const routerliciousApiConfig = tokenApiConfig as IRouterliciousTokenApi;
         if (routerliciousApiConfig) {
-            const resolverList = [new RouterliciousUrlResolver(undefined, () => Promise.resolve(""), [])];
+            const resolverList = [new RouterliciousUrlResolver(undefined, undefined, appTenants)];
             resolved = await resolveFluidUrl(url, resolverList);
         } else {
             throw new Error("No token api supplied!!");
