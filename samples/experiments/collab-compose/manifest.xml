@@ -6,8 +6,8 @@
   <DefaultLocale>en-US</DefaultLocale>
   <DisplayName DefaultValue="collab-compose"/>
   <Description DefaultValue="Fluid collaborative composition."/>
-  <IconUrl DefaultValue="https://localhost:3000/assets/icon-32.png"/>
-  <HighResolutionIconUrl DefaultValue="https://localhost:3000/assets/icon-80.png"/>
+  <IconUrl DefaultValue="https://pragueauspkn-3873244262.azureedge.net/@fluid-example/collab-compose@0.0.7/assets/icon-32.png"/>
+  <HighResolutionIconUrl DefaultValue="https://pragueauspkn-3873244262.azureedge.net/@fluid-example/collab-compose@0.0.7/assets/icon-80.png"/>
   <SupportUrl DefaultValue="https://www.contoso.com/help"/>
   <AppDomains>
     <AppDomain>contoso.com</AppDomain>
@@ -23,7 +23,7 @@
   <FormSettings>
     <Form xsi:type="ItemRead">
       <DesktopSettings>
-        <SourceLocation DefaultValue="https://localhost:3000/taskpane.html"/>
+        <SourceLocation DefaultValue="https://pragueauspkn-3873244262.azureedge.net/@fluid-example/collab-compose@0.0.7/dist/taskpane.html"/>
         <RequestedHeight>250</RequestedHeight>
       </DesktopSettings>
     </Form>
@@ -71,13 +71,13 @@
     </Hosts>
     <Resources>
       <bt:Images>
-        <bt:Image id="Icon.16x16" DefaultValue="https://localhost:3000/assets/icon-16.png"/>
-        <bt:Image id="Icon.32x32" DefaultValue="https://localhost:3000/assets/icon-32.png"/>
-        <bt:Image id="Icon.80x80" DefaultValue="https://localhost:3000/assets/icon-80.png"/>
+        <bt:Image id="Icon.16x16" DefaultValue="https://pragueauspkn-3873244262.azureedge.net/@fluid-example/collab-compose@0.0.7/assets/icon-16.png"/>
+        <bt:Image id="Icon.32x32" DefaultValue="https://pragueauspkn-3873244262.azureedge.net/@fluid-example/collab-compose@0.0.7/assets/icon-32.png"/>
+        <bt:Image id="Icon.80x80" DefaultValue="https://pragueauspkn-3873244262.azureedge.net/@fluid-example/collab-compose@0.0.7/assets/icon-80.png"/>
       </bt:Images>
       <bt:Urls>
-        <bt:Url id="Commands.Url" DefaultValue="https://localhost:3000/commands.html"/>
-        <bt:Url id="Taskpane.Url" DefaultValue="https://localhost:3000/taskpane.html"/>
+        <bt:Url id="Commands.Url" DefaultValue="https://pragueauspkn-3873244262.azureedge.net/@fluid-example/collab-compose@0.0.7/dist/commands.html"/>
+        <bt:Url id="Taskpane.Url" DefaultValue="https://pragueauspkn-3873244262.azureedge.net/@fluid-example/collab-compose@0.0.7/dist/taskpane.html"/>
       </bt:Urls>
       <bt:ShortStrings>
         <bt:String id="GroupLabel" DefaultValue="Contoso Add-in"/>
