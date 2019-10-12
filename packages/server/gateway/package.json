@@ -78,6 +78,7 @@
     "@microsoft/fluid-server-services-utils": "^0.11.0",
     "@microsoft/fluid-server-tools-core": "^0.11.0",
     "@microsoft/fluid-shared-object-base": "^0.11.0",
+    "@microsoft/fluid-routerlicious-urlresolver": "^0.11.0",
     "@microsoft/fluid-web-code-loader": "^0.11.0",
     "axios": "^0.18.0",
     "body-parser": "^1.17.1",

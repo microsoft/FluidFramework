@@ -26,7 +26,7 @@ export class RouterliciousUrlResolver implements IUrlResolver {
 
     constructor(
         private readonly config: IConfig | undefined,
-        private token: string | undefined,
+        private readonly getToken: (() => Promise<string>) | undefined,
         private readonly appTenants: IAlfredTenant[],
         private readonly scopes?: ScopeType[],
         private readonly user?: IAlfredUser) {
@@ -47,8 +47,11 @@ export class RouterliciousUrlResolver implements IUrlResolver {
                 documentId = path[2];
             }
 
-            if (!this.token) {
-                this.token = getR11sToken(tenantId, documentId, this.appTenants, this.scopes, this.user);
+            let token: string;
+            if (!this.getToken) {
+                token = getR11sToken(tenantId, documentId, this.appTenants, this.scopes, this.user);
+            } else {
+                token = await this.getToken();
             }
 
             const isLocalHost = server === "localhost" ? true : false;
@@ -86,7 +89,7 @@ export class RouterliciousUrlResolver implements IUrlResolver {
                     deltaStorageUrl,
                     ordererUrl,
                 },
-                tokens: { jwt: this.token },
+                tokens: { jwt: token },
                 type: "fluid",
                 url: fluidUrl,
             };

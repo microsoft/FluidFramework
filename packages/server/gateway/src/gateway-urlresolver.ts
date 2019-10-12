@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IConfig, isSpoTenant, r11sResolveUrl, spoGetResolvedUrl } from "@fluid-example/tiny-web-host";
+import { isSpoTenant, resolveFluidUrl, spoGetResolvedUrl } from "@fluid-example/tiny-web-host";
 import { IClientConfig } from "@microsoft/fluid-odsp-utils";
 import { ScopeType } from "@microsoft/fluid-protocol-definitions";
+import { IConfig, RouterliciousUrlResolver } from "@microsoft/fluid-routerlicious-urlresolver";
 import { chooseCelaName, IAlfredTenant } from "@microsoft/fluid-server-services-core";
 import { Request } from "express";
 import { Provider } from "nconf";
@@ -45,16 +46,13 @@ export function resolveUrl(
                 name: request.user.name,
             };
         }
-        const clientConfig: IConfig = {
-            clientId: "",
-            secret: "",
+        const endPointConfig: IConfig = {
             blobStorageUrl: config.get("worker:blobStorageUrl"),
             serverUrl: config.get("worker:serverUrl"),
         };
-        // tslint:disable-next-line: prefer-const
-        let [resolvedP, fullTreeP] =
-            r11sResolveUrl(clientConfig, appTenants, tenantId, documentId, user, scopes);
-        fullTreeP = alfred.getFullTree(tenantId, documentId);
+        const resolverList = [new RouterliciousUrlResolver(endPointConfig, undefined, appTenants, scopes, user)];
+        const resolvedP = resolveFluidUrl(request.url, resolverList);
+        const fullTreeP = alfred.getFullTree(tenantId, documentId);
         return [resolvedP, fullTreeP];
     }
 }

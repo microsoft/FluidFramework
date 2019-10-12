@@ -6,6 +6,17 @@
 import { ITokenClaims, ScopeType } from "@microsoft/fluid-protocol-definitions";
 import * as jwt from "jsonwebtoken";
 
+export interface IRouterliciousTokenApi {
+    getToken(): Promise<string>;
+}
+
+export interface IOdspTokenApi {
+    getStorageToken(siteUrl: string, refresh: boolean): Promise<string | null>;
+    getWebsocketToken(): Promise<string | null>;
+}
+
+export type ITokenApis = IRouterliciousTokenApi | IOdspTokenApi;
+
 // This is insecure, but is being used for the time being for ease of use during the hackathon.
 async function fetchSecret(tenant: string, getToken: () => Promise<string>): Promise<string> {
     switch (tenant) {
