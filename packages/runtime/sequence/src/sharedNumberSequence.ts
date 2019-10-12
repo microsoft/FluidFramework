@@ -16,7 +16,7 @@ export class SharedNumberSequence extends SharedSequence<number> {
      * @returns newly create shared number sequence (but not attached yet)
      */
     public static create(runtime: IComponentRuntime, id?: string) {
-        return runtime.createChannel(SharedSequence.getIdForCreate(id),
+        return runtime.createChannel(id,
             SharedNumberSequenceFactory.Type) as SharedNumberSequence;
     }
 

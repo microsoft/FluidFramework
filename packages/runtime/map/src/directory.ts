@@ -4,7 +4,13 @@
  */
 
 import { fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
-import { FileMode, ISequencedDocumentMessage, ITree, MessageType, TreeEntry } from "@microsoft/fluid-protocol-definitions";
+import {
+    FileMode,
+    ISequencedDocumentMessage,
+    ITree,
+    MessageType,
+    TreeEntry,
+} from "@microsoft/fluid-protocol-definitions";
 import {
     IChannelAttributes,
     IComponentRuntime,
@@ -295,7 +301,7 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
      * @returns Newly create shared directory (but not attached yet)
      */
     public static create(runtime: IComponentRuntime, id?: string): SharedDirectory {
-        return runtime.createChannel(SharedObject.getIdForCreate(id), DirectoryFactory.Type) as SharedDirectory;
+        return runtime.createChannel(id, DirectoryFactory.Type) as SharedDirectory;
     }
 
     /**
@@ -979,6 +985,11 @@ class SubDirectory implements IDirectory {
      * {@inheritDoc IDirectory.set}
      */
     public set<T = any>(key: string, value: T): this {
+        // Undefined/null keys can't be serialized to JSON in the manner we currently snapshot.
+        if (key === undefined || key === null) {
+            throw new Error("Undefined and null keys are not supported");
+        }
+
         const localValue = this.directory.localValueMaker.fromInMemory(value);
         const serializableValue = localValue.makeSerializable(
             this.runtime.IComponentSerializer,
@@ -1047,8 +1058,13 @@ class SubDirectory implements IDirectory {
      * {@inheritDoc IDirectory.createSubDirectory}
      */
     public createSubDirectory(subdirName: string): IDirectory {
+        // Undefined/null subdirectory names can't be serialized to JSON in the manner we currently snapshot.
+        if (subdirName === undefined || subdirName === null) {
+            throw new Error("SubDirectory name may not be undefined or null");
+        }
+
         if (subdirName.indexOf(posix.sep) !== -1) {
-            throw new Error(`SubDirectory names may not contain ${posix.sep}`);
+            throw new Error(`SubDirectory name may not contain ${posix.sep}`);
         }
 
         this.createSubDirectoryCore(subdirName, true, null);

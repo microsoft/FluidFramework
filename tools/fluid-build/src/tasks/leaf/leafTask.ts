@@ -114,14 +114,14 @@ export abstract class LeafTask extends Task {
     }
 
     protected async runTask(q: AsyncPriorityQueue<TaskExec>): Promise<BuildResult> {
-        logVerbose(`Begin Leaf Task: ${this.node.pkg.nameColored} - ${this.command}`);
+        this.logVerboseTask("Begin Leaf Task");
         const result = await this.buildDependentTask(q);
         if (result === BuildResult.Failed) {
             return BuildResult.Failed;
         }
 
         return new Promise((resolve, reject) => {
-            logVerbose(`Queue Leaf Task: ${this.node.pkg.nameColored} - [${this.parentCount}] ${this.command}`);
+            this.logVerboseTask(`[${this.parentCount}] Queue Leaf Task`);
             q.push({ task: this, resolve }, -this.parentCount);
         });
     }
@@ -133,7 +133,7 @@ export abstract class LeafTask extends Task {
         const leafIsUpToDate = await this.checkDependentTasksIsUpToDate() && await this.checkLeafIsUpToDate();
         if (leafIsUpToDate) {
             this.node.buildContext.taskStats.leafUpToDateCount++;
-            logVerbose(`Skipping Leaf Task: ${this.node.pkg.nameColored} - ${this.command}`);
+            this.logVerboseTask(`Skipping Leaf Task`);
         }
 
         return leafIsUpToDate;
@@ -224,6 +224,10 @@ export abstract class LeafTask extends Task {
 
     protected logVerboseDependency(child: BuildPackage, dep: string) {
         logVerbose(`Task Dependency: ${this.node.pkg.nameColored} ${this.executable} -> ${child.pkg.nameColored} ${dep}`);
+    }
+
+    protected logVerboseTask(msg: string) {
+        logVerbose(`Task: ${this.node.pkg.nameColored} ${this.executable}: ${msg}`);
     }
 };
 

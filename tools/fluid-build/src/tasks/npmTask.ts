@@ -51,7 +51,7 @@ export class NPMTask extends Task {
         return true;
     }
     protected async runTask(q: AsyncPriorityQueue<TaskExec>): Promise<BuildResult> {
-        logVerbose(`Begin Child Tasks: ${this.node.pkg.nameColored} - ${this.command}`);
+        this.logVerboseTask(`Begin Child Tasks`);
         let retResult = BuildResult.UpToDate;
         for (const task of this.subTasks) {
             const result = await task.run(q);
@@ -63,7 +63,11 @@ export class NPMTask extends Task {
                 retResult = BuildResult.Success;
             }
         }
-        logVerbose(`End Child Tasks: ${this.node.pkg.nameColored} - ${this.command}`);
+        this.logVerboseTask(`End Child Tasks`);
         return retResult;
+    }
+
+    protected logVerboseTask(msg: string) {
+        logVerbose(`Task: ${this.node.pkg.nameColored} ${this.command}: ${msg}`);
     }
 };

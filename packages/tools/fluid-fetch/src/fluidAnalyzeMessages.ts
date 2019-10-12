@@ -145,9 +145,11 @@ function dumpStats(
 
     if (!props.removeTotals) {
         if (allOtherCount || allOtherSize) {
+            // tslint:disable-next-line: max-line-length
             console.log(`${`All Others (${sorted.length - recordsToShow})`.padEnd(nameLength)} │ ${formatNumber(allOtherCount).padStart(fieldSizes[0])} ${formatNumber(allOtherSize).padStart(fieldSizes[1])}`);
         }
         console.log(`${"─".repeat(nameLength + 1)}┼${"─".repeat(fieldsLength + 1)}`);
+        // tslint:disable-next-line: max-line-length
         console.log(`${"Total".padEnd(nameLength)} │ ${formatNumber(totalCount).padStart(fieldSizes[0])} ${formatNumber(sizeTotal).padStart(fieldSizes[1])}`);
     }
 }
@@ -278,6 +280,7 @@ class FilteredMessageAnalyzer implements IMessageAnalyzer {
 
     public reportAnalyzes(lastOp: ISequencedDocumentMessage): void {
         if (this.filtered) {
+            // tslint:disable-next-line: max-line-length
             console.log(`\nData is filtered according to --filter:messageType argument(s):\nOp size: ${this.sizeFiltered} / ${this.sizeTotal}\nOp count ${this.opsFiltered} / ${this.opsTotal}`);
         }
         if (this.opsTotal === 0) {
@@ -302,6 +305,7 @@ class MessageDensityAnalyzer implements IMessageAnalyzer {
             if (message.sequenceNumber !== 1) {
                 const timeDiff = durationFromTime(message.timestamp - this.timeStart);
                 const opsString = `ops = [${this.opLimit - this.opChunk}, ${this.opLimit - 1}]`.padEnd(26);
+                // tslint:disable-next-line: max-line-length
                 const timeString = `time = [${durationFromTime(this.timeStart - this.doctimerStart)}, ${durationFromTime(message.timestamp - this.doctimerStart)}]`;
                 this.ranges.set(
                     `${opsString} ${timeString}`,
@@ -548,13 +552,19 @@ function processOp(
 }
 
 function processComponentAttachOp(
-        attachMessage: IAttachMessage,
+        attachMessage: IAttachMessage | string,
         dataType: Map<string, string>) {
     // dataType.set(getObjectId(attachMessage.id), attachMessage.type);
 
     // That's component, and it brings a bunch of data structures.
     // Let's try to crack it.
-    for (const entry of attachMessage.snapshot.entries) {
+    let parsedAttachMessage: IAttachMessage;
+    if (typeof attachMessage === "string") {
+        parsedAttachMessage = JSON.parse(attachMessage);
+    } else {
+        parsedAttachMessage = attachMessage;
+    }
+    for (const entry of parsedAttachMessage.snapshot.entries) {
         if (entry.type === TreeEntry[TreeEntry.Tree]) {
             for (const entry2 of (entry.value as ITree).entries) {
                 if (entry2.path === ".attributes" && entry2.type === TreeEntry[TreeEntry.Blob]) {
@@ -563,7 +573,7 @@ function processComponentAttachOp(
                     if (objectType.startsWith(objectTypePrefix)) {
                         objectType = objectType.substring(objectTypePrefix.length);
                     }
-                    dataType.set(getObjectId(attachMessage.id, entry.path), objectType);
+                    dataType.set(getObjectId(parsedAttachMessage.id, entry.path), objectType);
                 }
             }
         }

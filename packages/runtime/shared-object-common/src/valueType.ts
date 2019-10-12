@@ -9,6 +9,7 @@
 export enum ValueType {
     /**
      * The value is a shared object
+     * @deprecated Instead store the handle of the shared object, rather than the shared object itself.
      */
     Shared,
 
