@@ -62,7 +62,7 @@ describe("Runtime", () => {
                             connected: true,
                             summarizerClientId,
                             deltaManager: {
-                                referenceSequenceNumber: 0,
+                                initialSequenceNumber: 0,
                                 inbound: emitter as IDeltaQueue<ISequencedDocumentMessage>,
                             } as IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
                             logger: {
@@ -231,7 +231,7 @@ describe("Runtime", () => {
                     assert.strictEqual(runCount, 1);
 
                     // should not run because still pending
-                    clock.tick(summaryConfig.maxAckWaitTime);
+                    clock.tick(summaryConfig.maxAckWaitTime - 1);
                     await emitNextOp(summaryConfig.maxOps + 1);
                     assert.strictEqual(runCount, 1);
 
