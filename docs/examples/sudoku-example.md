@@ -332,15 +332,15 @@ First, you need to create a `SharedMap` for your presence data.
 
     Notice that the Fluid runtime is exposed via the `_fluidShim` property provided by `BaseMfxPart`.
 
-1. Inside the `onInit` method, add the following code below the existing code to retrieve the presence map when the
+1. Inside the `_hydrate` method, add the following code below the existing code to retrieve the presence map when the
    component initializes:
 
     ```ts
     this.clientPresence = await this._fluidShim.runtime.getChannel(this.presenceMapKey) as ISharedMap;
     ```
 
-    You now have a `SharedMap` to store presence data. When the component is created initially, `onInitializeFirstTime`
-    will be called and the presence map will be created. When the component is loaded, `onInit` will be called, which
+    You now have a `SharedMap` to store presence data. When the component is first created, `onInitializeFirstTime` will
+    be called and the presence map will be created. When the component is loaded, `_hydrate` will be called, which
     retrieves the `SharedMap` instance.
 
 ## Rendering presence
@@ -373,7 +373,7 @@ Now that you have a presence map, you need to render some indication that a remo
     ```
 
     You have now added a CSS class to cells based on the data in the presence map. To make sure the local client doesn't
-    see presence styles in their own cell, the second if check ensures that the cell is occupied by someone other than
+    see presence styles in their own cell, the second `if` check ensures that the cell is occupied by someone other than
     the local client.
 
 ## Setting presence data: DOM events
