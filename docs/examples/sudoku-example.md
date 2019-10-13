@@ -428,4 +428,4 @@ made.
 [IComponentHTMLVisual]: xref:@microsoft/fluid-component-core-interfaces!IComponentHTMLVisual:interface
 [IProvideComponentHTMLVisual]: xref:@microsoft/fluid-component-core-interfaces!IProvideComponentHTMLVisual:interface
 [IComponentReactViewable]: xref:@microsoft/fluid-aqueduct-react!IComponentReactViewable:interface
-[SharedMap]: @microsoft/fluid-map!SharedMap:class
+[SharedMap]: xref:@microsoft/fluid-map!SharedMap:class
