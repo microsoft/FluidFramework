@@ -1,17 +1,9 @@
 ---
 
-title: Connect your client-side web part to SharePoint (Hello World part 2)
-description: Access functionality and data in SharePoint and provide a more integrated experience for end users.
+title: Developing a Microsoft 365 package with Fluid capabilities
 uid: sudoku-example
 
 ---
-
-Table of contents:
-
-- Overview of example and goals
-  - Learn about the SharedMap and SharedDirectory
-  - Distributed data structures and SPFx
-
 
 In this example we will build a collaborative Sudoku game. We will use Fluid distributed data structures to store and
 synchronize the Sudoku data.
@@ -19,9 +11,16 @@ synchronize the Sudoku data.
 # Set up your dev environment
 
 1. Install Node.js 10 and VS Code
-1. Clone the following git repo
-    1. (or copy a zip file)
-1. Open the resulting folder in VS Code
+1. Use the commands below to clone the lab repository:
+
+    ```shell
+    git clone https://cfyucwwsvf4tpvmuo4nszgxivuqfjgf35o3tnsrbt6csxnoqrrrq@sharkstooth.visualstudio.com/DefaultCollection/Fluid%20Dev%20Kitchen/_git/sudoku-mfx
+    cd sudoku-mfx
+    git checkout lab2
+    ```
+
+1. Run `npm install` in the root of the repository to install dependencies.
+1. Open the resulting folder in VS Code.
 
 ## Folder layout
 
@@ -34,10 +33,9 @@ The project has the following folder layout:
 │       package-solution.json
 │       write-manifests.json
 ├───copyToDist
-│       906962ff-9406-47e2-9f63-a21cf04314ca.manifest.json
-│       906962ff-9406-47e2-9f63-a21cf04314ca_color.png
-│       906962ff-9406-47e2-9f63-a21cf04314ca_outline.png
-│       package.json
+│       eec4b119-83b2-4780-bd93-37b1d62be0d8.manifest.json
+│       eec4b119-83b2-4780-bd93-37b1d62be0d8_color.png
+│       eec4b119-83b2-4780-bd93-37b1d62be0d8_outline.png
 └───src
     │   index.ts
     └───sudoku
@@ -58,14 +56,11 @@ Fluid component, which we'll cover in more depth later.
 
 # Run the sample locally
 
-> [!WARNING]
-> This is contingent on making the component loadable using `fluid-webpack-component-loader`.
-
 In order to run the example, run `npm start` from the project root. Then visit <http://localhost:8080/> in a browser.
 Two instances of the Sudoku component will be loaded side by side. Try entering numbers in the cells in either component
 instance. Changes will be synchronized to the other instance.
 
-Try changing the theme in one of the components. Notice that these changes are not synchronized between the two
+Try changing the theme in one of the Sudoku components. Notice that these changes are not synchronized between the two
 instances.
 
 # Deep dive
@@ -75,18 +70,6 @@ instances.
 For our Sudoku data model, we will use a map-like data structure with string keys. Each key in the map is a coordinate
 (row, column) of a cell in the Sudoku puzzle. The top left cell has coordinate `"0,0"`, the cell to its right has
 coordinate `"0,1"`, etc.
-
-| 0,1 | 0,2 | 0,3 | 0,4 | 0,5 | 0,6 | 0,7 | 0,8 | 0,9 |
-|-----|-----|-----|-----|-----|-----|-----|-----|-----|
-| 1,1 | 1,2 | 1,3 | 1,4 | 1,5 | 1,6 | 1,7 | 1,8 | 1,9 |
-| 2,1 | 2,2 | 2,3 | 2,4 | 2,5 | 2,6 | 2,7 | 2,8 | 2,9 |
-| 3,1 | 3,2 | 3,3 | 3,4 | 3,5 | 3,6 | 3,7 | 3,8 | 3,9 |
-| 4,1 | 4,2 | 4,3 | 4,4 | 4,5 | 4,6 | 4,7 | 4,8 | 4,9 |
-| 5,1 | 5,2 | 5,3 | 5,4 | 5,5 | 5,6 | 5,7 | 5,8 | 5,9 |
-| 6,1 | 6,2 | 6,3 | 6,4 | 6,5 | 6,6 | 6,7 | 6,8 | 6,9 |
-| 7,1 | 7,2 | 7,3 | 7,4 | 7,5 | 7,6 | 7,7 | 7,8 | 7,9 |
-| 8,1 | 8,2 | 8,3 | 8,4 | 8,5 | 8,6 | 8,7 | 8,8 | 8,9 |
-| 9,1 | 9,2 | 9,3 | 9,4 | 9,5 | 9,6 | 9,7 | 9,8 | 9,9 |
 
 Each value stored in the map is a `SudokuCell`, a simple class that contains the following properties:
 
@@ -128,7 +111,11 @@ This class extends the `BaseMfxPart` abstract base class. Our component is visua
 implements the IProvideComponentHTMLVisual Fluid component interface, so we do not need to explicitly implement it in
 our class.
 
-We are required to implement the `render()` method, which is straightforward since we're using the `SudokuView` React
+> [!TIP]
+> The `{}` in `BaseMFxPart<{}>` denotes that we are not using the SharePoint property bag in this example. Instead, we
+> are storing all data directly in Fluid distributed data structures.
+
+We need to implement the `render()` method, which is straightforward since we're using the `SudokuView` React
 component to do the heavy lifting.
 
 ```typescript
@@ -139,8 +126,8 @@ component to do the heavy lifting.
   }
 ```
 
-As you can see, the render method uses React to render the `SudokuView` React component, passing in the map of Sudoku
-cell data in the `puzzle` prop.
+As you can see, the render method uses React to render the `SudokuView` React component. We pass in the puzzle data
+which is a `SharedMap` distributed data structure that we will discuss more below.
 
 ### Creating Fluid distributed data structures
 
@@ -165,35 +152,40 @@ public async onInitializeFirstTime() {
 ```
 
 This method is called once when a component is initially created. We create a new [SharedMap][] using `.create`, then
-add it to our root SharedDirectory.
+register it with the runtime. Notice that we provide a string key, `this.sudokuMapKey`, when we create the `SharedMap`.
+This is how we will retrieve the data structure from the Fluid runtime later.
 
-Shared objects that are stored within other Shared objects (e.g. a SharedMap within the root, which is itself a
-SharedDirectory) must be retrieved asynchronously. We do that from the asynchronous onInit method, then store a local
-reference to the object so we can easily use it in synchronous code.
+`onInitializeFirstTime` is only called the _first time_ the component is created. This is exactly what we want in order
+to create the distributed data structures. We don't want to create new SharedMaps every time a client loads the
+component! However, we do need to load the distributed data structures when the component is loaded.
+
+Distributed data structures are initialized asynchronously, so we need to retrieve them from an asynchronous method. We
+do that by overloading the asynchronous `_hydrate` method, then store a local reference to the object so we can easily
+use it in synchronous code. Notice that we pass
+
+> [!NOTE]
+> Overriding the `_hydrate` method is a temporary solution. The code in this method should be in the `onInit` method.
 
 ```typescript
-    public async onInit() {
-        // TODO: The comment below is misleading now because it was based on having a root map and adding new DDS to it
-        // rather than retrieving the channel.
+  public async _hydrate(runtime: IComponentRuntime, context: IComponentContext): Promise<void> {
+    await super._hydrate(runtime, context);
 
-        // Our "puzzle" SharedMap is stored as a handle on the "root" SharedDirectory. To get it we must make a
-        // synchronous call to get the IComponentHandle, then an asynchronous call to get the ISharedMap from the
-        // handle.
-        this.puzzle = await this._fluidShim.runtime.getChannel(this.sudokuMapKey) as ISharedMap;
+    // Retrieve the distributed data structure (also called a channel in this context)
+    this.puzzle = await this._fluidShim.runtime.getChannel(this.sudokuMapKey) as ISharedMap;
 
-        // Since we're using a Fluid distributed data structure to store our Sudoku data, we need to render whenever a value
-        // in our map changes. Recall that distributed data structures can be changed by both local and remote clients, so
-        // if we don't call render here, then our UI will not update when remote clients change data.
-        this.puzzle.on("valueChanged", (changed, local, op) => {
-            this.render();
-        });
-    }
+    // Since we're using a Fluid distributed data structure to store our Sudoku data, we need to render whenever a value
+    // in our map changes. Recall that distributed data structures can be changed by both local and remote clients, so
+    // if we don't call render here, then our UI will not update when remote clients change data.
+    this.puzzle.on("valueChanged", (changed, local, op) => {
+      this.render();
+    });
+  }
 ```
 
 ### Handling events from distributed data structures
 
-Distributed data structures can be changed by both local and remote clients. In the `onAfterInitialize` method, we also
-connect a method to be called each time the Sudoku data - the [SharedMap][] - is changed. In our case we simply call render
+Distributed data structures can be changed by both local and remote clients. In the `_hydrate` method, we also connect
+a method to be called each time the Sudoku data - the [SharedMap][] - is changed. In our case we simply call render
 again. This ensures that our UI updates whenever a remote client changes the Sudoku data.
 
 ```typescript
