@@ -26,7 +26,7 @@ import { IDocumentServiceFactory, IFluidResolvedUrl, IResolvedUrl } from "@micro
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
 import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
 import { IGitCache } from "@microsoft/fluid-server-services-client";
-import { IResolvedPackage } from "@microsoft/fluid-web-code-loader";
+import { IResolvedPackage, WhiteList } from "@microsoft/fluid-web-code-loader";
 import Axios from "axios";
 import { DocumentFactory } from "./documentFactory";
 import { IHostServices } from "./services";
@@ -70,10 +70,11 @@ export async function initialize(
             resolved,
             pkg,
             scriptIds,
-            npm,
             config,
             services,
-            hostConf);
+            hostConf,
+            new WhiteList(),
+            );
 
         documentFactory = new DocumentFactory(config.tenantId,
             config.moniker,

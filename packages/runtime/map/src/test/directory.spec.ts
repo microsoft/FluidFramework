@@ -45,6 +45,15 @@ describe("Routerlicious", () => {
             assert.equal(testDirectory.get("testKey2"), "testValue2");
         });
 
+        it("Rejects a undefined and null key set", () => {
+            assert.throws(() => {
+                testDirectory.set(undefined, "testValue");
+            }, "Should throw for key of undefined");
+            assert.throws(() => {
+                testDirectory.set(null, "testValue");
+            }, "Should throw for key of null");
+        });
+
         it("Can set and get keys two levels deep", () => {
             const fooDirectory = testDirectory.createSubDirectory("foo");
             const barDirectory = testDirectory.createSubDirectory("bar");
@@ -260,6 +269,15 @@ describe("Routerlicious", () => {
                 assert.equal(testSubdir.get("testKey3"), undefined);
                 testSubdir.set("fromSubdir", "testValue4");
                 assert.equal(testDirectory.getWorkingDirectory("foo").get("fromSubdir"), "testValue4");
+            });
+
+            it("Rejects subdirectories with undefined and null names", () => {
+                assert.throws(() => {
+                    testDirectory.createSubDirectory(undefined);
+                }, "Should throw for undefined subdirectory name");
+                assert.throws(() => {
+                    testDirectory.createSubDirectory(null);
+                }, "Should throw for null subdirectory name");
             });
 
             describe(".wait()", () => {

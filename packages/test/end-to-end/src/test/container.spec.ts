@@ -7,18 +7,18 @@ import * as API from "@fluid-internal/client-api";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
 import {
+    ITestDeltaConnectionServer,
+    TestDeltaConnectionServer,
+    TestDocumentServiceFactory,
+    TestResolver,
+} from "@microsoft/fluid-local-test-server";
+import {
     IDocumentDeltaStorageService,
     IDocumentService,
     IDocumentStorageService,
     IFluidResolvedUrl,
 } from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
-import {
-    ITestDeltaConnectionServer,
-    TestDeltaConnectionServer,
-    TestDocumentServiceFactory,
-    TestResolver,
-} from "@microsoft/fluid-local-test-server"
 
 describe("Container", () => {
     let testDeltaConnectionServer: ITestDeltaConnectionServer;

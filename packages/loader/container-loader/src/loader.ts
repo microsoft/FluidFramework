@@ -137,6 +137,7 @@ export function createProtocolToFactoryMapping(
  * Manages Fluid resource loading
  */
 export class Loader extends EventEmitter implements ILoader {
+
     private readonly containers = new Map<string, Promise<Container>>();
     private readonly resolveCache = new Map<string, IResolvedUrl>();
     private readonly protocolToDocumentFactoryMap: Map<string, IDocumentServiceFactory>;

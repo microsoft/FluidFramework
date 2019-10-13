@@ -4,7 +4,6 @@
  */
 
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { safelyParseJSON } from "@microsoft/fluid-core-utils";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { parseHandles, serializeHandles, ValueType } from "@microsoft/fluid-shared-object-base";
@@ -305,6 +304,11 @@ export class MapKernel {
      * {@inheritDoc ISharedMap.set}
      */
     public set(key: string, value: any) {
+        // Undefined/null keys can't be serialized to JSON in the manner we currently snapshot.
+        if (key === undefined || key === null) {
+            throw new Error("Undefined and null keys are not supported");
+        }
+
         const localValue = this.localValueMaker.fromInMemory(value);
         const serializableValue = localValue.makeSerializable(
             this.runtime.IComponentSerializer,
@@ -408,7 +412,7 @@ export class MapKernel {
      * @param data - A JSON string containing serialized map data
      */
     public populate(data: string): void {
-        const json = safelyParseJSON(data) as IMapDataObject;
+        const json = JSON.parse(data) as IMapDataObject;
         for (const [key, serializable] of Object.entries(json)) {
             const localValue = {
                 key,
