@@ -14,9 +14,9 @@ synchronize the Sudoku data.
 1. Use the commands below to clone the lab repository:
 
     ```shell
-    git clone https://cfyucwwsvf4tpvmuo4nszgxivuqfjgf35o3tnsrbt6csxnoqrrrq@sharkstooth.visualstudio.com/DefaultCollection/Fluid%20Dev%20Kitchen/_git/sudoku-mfx
-    cd sudoku-mfx
-    git checkout lab2
+    $ git clone https://cfyucwwsvf4tpvmuo4nszgxivuqfjgf35o3tnsrbt6csxnoqrrrq@sharkstooth.visualstudio.com/DefaultCollection/Fluid%20Dev%20Kitchen/_git/sudoku-mfx
+    $ cd sudoku-mfx
+    $ git checkout lab2
     ```
 
 1. Run `npm install` in the root of the repository to install dependencies.
@@ -107,7 +107,7 @@ export class SudokuWebPart extends BaseMFxPart<{}> {}
 ```
 
 This class extends the `BaseMfxPart` abstract base class. Our component is visual, so we need to implement the
-[IComponentHTMLVisual][] or [IProvideComponentHTMLVisual][] interfaces. However, the BaseMfxPart base class already
+[IComponentHTMLVisual][] or [IProvideComponentHTMLVisual][] interfaces. However, the `BaseMfxPart` base class already
 implements the IProvideComponentHTMLVisual Fluid component interface, so we do not need to explicitly implement it in
 our class.
 
@@ -185,7 +185,7 @@ use it in synchronous code. Notice that we pass
 ### Handling events from distributed data structures
 
 Distributed data structures can be changed by both local and remote clients. In the `_hydrate` method, we also connect
-a method to be called each time the Sudoku data - the [SharedMap][] - is changed. In our case we simply call render
+a method to be called each time the Sudoku data - the [SharedMap][] - is changed. In our case we simply call `render`
 again. This ensures that our UI updates whenever a remote client changes the Sudoku data.
 
 ```typescript
@@ -235,65 +235,7 @@ Once the value is set, the `valueChanged` event will be raised on the SharedMap,
 section, we listen to that event and render again every time the values change. Both local and remote clients will
 render based on this event, because all clients are running the same code.
 
-## Connecting it all together
-
-We've now reviewed the `SudokuView` React component, which handles most of the rendering and updates distributed data
-structures as needed, and the `SudokuWebPart` class, which is the Sudoku Fluid component itself. We've shown how those
-two classes work together to render content to the screen and share data using a Fluid distributed data structure.
-
-The final step is to connect everything together, so that the framework knows how to load your component code. To see
-how that's done, look at the `index.ts` file.
-
-```typescript
-import { SharedMap } from "@microsoft/fluid-map";
-import { MFxComponentFactory, SimpleModuleInstantiationFactory } from "@ms/mfx-part-base";
-import { SudokuWebPart } from "./sudoku/SudokuWebPart";
-
-// tslint:disable-next-line: no-var-requires no-require-imports
-const pkg = require("../package.json");
-const componentName = pkg.name as string;
-
-const sudokuInstantiationFactory = new MFxComponentFactory(
-    SudokuWebPart,
-    [SharedMap.getFactory()]);
-
-export const fluidExport = new SimpleModuleInstantiationFactory(
-    componentName,
-    new Map([
-        [componentName, Promise.resolve(sudokuInstantiationFactory)],
-    ] as any)
-);
-```
-
-### Component and distributed data structure factories
-
-A Fluid component must provide a factory that the runtime uses to create the component. The `MFxComponentFactory` class
-makes it easy to create factories for components that inherit from `BaseMFxComponent`. You pass it your Fluid component
-class (`SudokuWebPart` in this case), as well as an array of distributed data structure factories. If your component
-uses any distributed data structures, their factories must all be registered. All distributed data structures provide a
-factory.
-
-A Fluid component is, in some ways, a collection of distributed data structures. While a component does not need to use
-distributed data structures, most will. Registering the distributed data structure factories that your component uses
-ensures the runtime can initialize both your component and the data structures it depends on.
-
-If your module contains several components, each will require a factory. Since our module only contains a single
-component, we only need to create one factory.
-
-### Another factory: fluidExport
-
-A Fluid component must export an object called `fluidExport` from its entrypoint module. This export is what the Fluid
-runtime uses to load components. The `SimpleModuleInstantiationFactory` class can be used to simplify this process. You
-need to provide the name of the default component in your module, along with a mapping of component names (strings) to
-factories that create the component.
-
 # Lab: Adding "presence" to the Fluid Sudoku component
-
-<!--
-TODO: will walk through creating a second map for presence and adjusting the code to handle everything. Will also call
-out that this approach will persist all of the presence data, which often isn't what you want, but that this is a useful
-implementation to illustrate how to use richer data models.
--->
 
 The Sudoku component is collaborative; multiple clients can update the cells in real time. However, there's no
 indication of where other clients are - which cells they're in. In this lab we'll add basic 'presence' to our Sudoku
