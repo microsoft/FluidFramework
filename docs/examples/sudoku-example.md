@@ -8,6 +8,12 @@ uid: sudoku-example
 In this example we will build a collaborative Sudoku game. We will use Fluid distributed data structures to store and
 synchronize the Sudoku data.
 
+# Acknowledgements
+
+This example uses the [sudokus](https://github.com/Moeriki/node-sudokus) NPM package by Dieter Luypaert
+(<https://github.com/Moeriki>) and the [@types/sudokus](https://www.npmjs.com/package/@types/sudokus) package by Florian
+Keller (<https://github.com/ffflorian>).
+
 # Set up your dev environment
 
 1. Install Node.js 10 and VS Code
@@ -32,10 +38,6 @@ The project has the following folder layout:
 │       copy-assets.json
 │       package-solution.json
 │       write-manifests.json
-├───copyToDist
-│       eec4b119-83b2-4780-bd93-37b1d62be0d8.manifest.json
-│       eec4b119-83b2-4780-bd93-37b1d62be0d8_color.png
-│       eec4b119-83b2-4780-bd93-37b1d62be0d8_outline.png
 └───src
     │   index.ts
     └───sudoku
@@ -50,14 +52,13 @@ The project has the following folder layout:
                 sudokuView.tsx
 ```
 
-The *config* folder contains the WebPart configuration files. The *copyToDist* folder contains files that will be copied
-to the **dist** folder when the project is built. Finally, the *src* folder contains the source files for the Sudoku
+The *config* folder contains the WebPart configuration files. The *src* folder contains the source files for the Sudoku
 Fluid component, which we'll cover in more depth later.
 
 # Run the sample locally
 
 In order to run the example, run `npm start` from the project root. Then visit <http://localhost:8080/> in a browser.
-Two instances of the Sudoku component will be loaded side by side. Try entering numbers in the cells in either component
+Two instances of the Sudoku component will be loaded side-by-side. Try entering numbers in the cells in either component
 instance. Changes will be synchronized to the other instance.
 
 Try changing the theme in one of the Sudoku components. Notice that these changes are not synchronized between the two
