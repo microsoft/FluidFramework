@@ -15,25 +15,35 @@ export type RuntimeRequestHandler = (request: RequestParser, runtime: IHostRunti
   */
 export class RuntimeRequestHandlerBuilder {
     private readonly handlers: RuntimeRequestHandler[] = [];
-
+    private runtime: IHostRuntime | undefined;
     constructor(...handlers: RuntimeRequestHandler[]) {
         this.addHandlers(...handlers);
     }
 
-    public createRequestHandler(runtime: IHostRuntime): (request: IRequest) => Promise<IResponse> {
-        return async (request: IRequest) => {
-            const parser = new RequestParser(request);
-            for (const handler of this.handlers) {
-                const response = await handler(parser, runtime);
-                if (response !== undefined) {
-                    return response;
-                }
-            }
-            return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
-        };
+    public get createRequestHandlerFn(): (runtime: IHostRuntime) => ((request: IRequest) => Promise<IResponse>) {
+        return this.createRequestHandler.bind(this);
     }
 
     public addHandlers(...handlers: RuntimeRequestHandler[]) {
-        this.handlers.push(...handlers);
+        if (handlers !== undefined) {
+            this.handlers.push(...handlers);
+        }
+    }
+
+    private createRequestHandler(runtime: IHostRuntime) {
+        this.runtime = runtime;
+        return this.handleRequest.bind(this);
+    }
+
+    private async handleRequest(request: IRequest): Promise<IResponse> {
+        const parser = new RequestParser(request);
+        for (const handler of this.handlers) {
+            // tslint:disable-next-line: no-non-null-assertion
+            const response = await handler(parser, this.runtime!);
+            if (response !== undefined) {
+                return response;
+            }
+        }
+        return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
     }
 }

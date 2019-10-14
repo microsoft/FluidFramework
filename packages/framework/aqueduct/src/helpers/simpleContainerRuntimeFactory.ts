@@ -26,7 +26,7 @@ export class SimpleContainerRuntimeFactory {
             componentRuntimeRequestHandler);
 
         // debug(`instantiateRuntime(chaincode=${chaincode},registry=${JSON.stringify(registry)})`);
-        const runtime = await ContainerRuntime.load(context, registry, runtimeRequestHandler.createRequestHandler, { generateSummaries });
+        const runtime = await ContainerRuntime.load(context, registry, runtimeRequestHandler.createRequestHandlerFn, { generateSummaries });
         // debug("runtime loaded.");
 
         // On first boot create the base component
