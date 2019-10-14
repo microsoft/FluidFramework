@@ -112,8 +112,14 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
     public async run(onBehalfOf: string): Promise<void> {
         this.onBehalfOfClientId = onBehalfOf;
 
-        if (!this.runtime.connected && !this.everConnected) {
-            await new Promise((resolve) => this.runtime.once("connected", resolve));
+        if (!this.runtime.connected) {
+            if (!this.everConnected) {
+                await new Promise((resolve) => this.runtime.once("connected", resolve));
+            } else {
+                // we will not try to reconnect, so we are done running
+                this.logger.sendTelemetryEvent({ eventName: "DisconnectedBeforeRun" });
+                return;
+            }
         }
 
         if (this.runtime.summarizerClientId !== onBehalfOf) {
