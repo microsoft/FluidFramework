@@ -34,12 +34,12 @@ export class RouterliciousUrlResolver implements IUrlResolver {
 
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
         let requestedUrl = request.url;
-        if (this.config && new URL(this.config.serverUrl).hostname === "localhost" && request.url.startsWith("/")) {
-            requestedUrl = `http://localhost:3000${request.url}`;
+        if (this.config && request.url.startsWith("/")) {
+            requestedUrl = `http://dummy:3000${request.url}`;
         }
         const reqUrl = new URL(requestedUrl);
         const server = reqUrl.hostname.toLowerCase();
-        if (r11sServers.indexOf(server) !== -1 || (server === "localhost" && reqUrl.port === "3000")) {
+        if (r11sServers.indexOf(server) !== -1 || (server === "localhost" && reqUrl.port === "3000") || this.config) {
             const path = reqUrl.pathname.split("/");
             let tenantId: string;
             let documentId: string;
