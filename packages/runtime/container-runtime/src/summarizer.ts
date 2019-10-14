@@ -386,7 +386,7 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
     }
 
     private summarizeTimerHandler(time: number, count: number) {
-        this.logger.sendTelemetryEvent({
+        this.logger.sendErrorEvent({
             eventName: "SummarizeTimeout",
             timeoutTime: time,
             timeoutCount: count,

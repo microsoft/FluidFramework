@@ -284,7 +284,8 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             resume: boolean) {
         debug("Attached op handler", sequenceNumber);
 
-        this.baseSequenceNumber = this.initSequenceNumber = sequenceNumber;
+        this.initSequenceNumber = sequenceNumber;
+        this.baseSequenceNumber = sequenceNumber;
         this.minSequenceNumber = minSequenceNumber;
         this.lastQueuedSequenceNumber = sequenceNumber;
 
