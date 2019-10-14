@@ -15,7 +15,7 @@ module.exports = env => {
 
     return merge({
         entry: {
-            main: "./src/index.ts"
+            main: "<%= entryFilePath %>",
         },
         resolve: {
             extensions: [".ts", ".tsx", ".js"],
@@ -23,7 +23,7 @@ module.exports = env => {
         module: {
             rules: [{
                 test: /\.tsx?$/,
-                loader: "ts-loader"
+                loader: "ts-loader",
             }]
         },
         output: {
@@ -33,7 +33,7 @@ module.exports = env => {
             // https://github.com/webpack/webpack/issues/5767
             // https://github.com/webpack/webpack/issues/7939
             devtoolNamespace: componentName,
-            libraryTarget: "umd"
+            libraryTarget: "umd",
         },
         devServer: {
             publicPath: '/dist',

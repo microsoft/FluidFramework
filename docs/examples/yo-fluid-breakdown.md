@@ -6,14 +6,9 @@ uid: yo-fluid-details
 
 So you've used <xref:yo-fluid> to create your first component! If you haven't done this yet, head over to <xref:yo-fluid>.
 
-## Different Components
+## Creation options
 
-<xref:yo-fluid> allows you to create two types of Fluid components:
-
-- react
-- vanillaJS
-
-When running <xref:yo-fluid> you can choose which one to use when prompted.
+<xref:yo-fluid> allows you to create a Fluid component either using React or just vanilla Javascript.
 
 ```powershell
 ? Which experience would you like to start with?
@@ -21,55 +16,19 @@ When running <xref:yo-fluid> you can choose which one to use when prompted.
   vanillaJS
 ```
 
-The difference between the two is how we render our view in the DOM. (Discussed below)
+You'll also get the option to customize your container. If this is your first time building a component, we recommend
+choosing "no" for this option (we'll explain this option further below).
 
-## Directory Structure Breakdown
-
-Upon creation your directory structure will look like this:
-
-### [React Directory Structure](#tab/tabid-1)
-
-```text
-├── node_modules
-├─┬ src
-│ ├── index.ts
-│ └── main.tsx
-├── .gitignore
-├── .npmignore
-├── .npmrc
-├── package-lock.json
-├── package.json
-├── README.md
-├── tsconfig.json
-├── webpack.config.js
-├── webpack.dev.js
-└── webpack.prod.js
+```powershell
+? Do you want to customize your container (advanced)?
+> no
+  yes
 ```
 
-### [VanillaJS Directory Structure](#tab/tabid-2)
+## main.tsx/main.ts
 
-```text
-├── node_modules
-├─┬ src
-│ ├── index.ts
-│ └── main.ts
-├── .gitignore
-├── .npmignore
-├── .npmrc
-├── package-lock.json
-├── package.json
-├── README.md
-├── tsconfig.json
-├── webpack.config.js
-├── webpack.dev.js
-└── webpack.prod.js
-```
-
----
-
-## Main.tsx/Main.ts
-
-The `src/main.ts*` file is where the component logic lives. Below we will walk through both the vanillaJS and the React examples.
+After completing the prompts, `yo fluid` will generate your project. `src/main.ts*` file is where the component logic lives.
+Below we will walk through both the vanillaJS and the React examples.
 
 ### Declare Imports
 
@@ -77,7 +36,6 @@ First we will declare all our imports. Here is a quick description and use cases
 
 `PrimedComponent` and `PrimedComponentFactory` from <xref:@microsoft/fluid-aqueduct!> provides helper functionality.
 `IComponentHTMLVisual` from <xref:@microsoft/fluid-component-core-interfaces!> provides the interface for enabling rendering.
-`IComponentContext` and `IComponentRuntime` are the interfaces for important fluid objects passed to our Component.
 `React` and `ReactDOM` are _only for React_ and enable React use.
 
 ```typescript
@@ -86,10 +44,6 @@ import {
   PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
 import { IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
-import {
-  IComponentContext,
-  IComponentRuntime,
-} from "@microsoft/fluid-runtime-definitions";
 
 import * as React from "react"; // only used with react
 import * as ReactDOM from "react-dom"; // only used with react
@@ -119,7 +73,7 @@ helpers to make development easier.
 
 Implementing <xref:@microsoft/fluid-component-core-interfaces!IComponentHTMLVisual:interface> denotes that our component can
 render a view. Throughout the Fluid Framework we define interfaces as a way to state our behavior. Whoever is attempting
-to use this component can can know we support this interface and therefor we will have a `render(...)` function. View
+to use this component can can know we support this interface and therefore it will have a `render(...)` function. View
 rendering is explained more below.
 
 #### Code
@@ -246,8 +200,6 @@ this.root.on("valueChanged", () => {
 });
 ```
 
----
-
 ### Component Instantiation
 
 In order to make our component compatible with the Fluid Framework we must have a way of creating a
@@ -269,14 +221,27 @@ The second property is an entry point into our component.
 ExampleFluidComponent.load;
 ```
 
-Finally we export this so we can use it in the [index.ts](#index.ts) below for our component registry.
+Finally we export this as `fluidExport`.  This export is special - the `@microsoft/fluid-webpack-component-loader` we
+are using to load our component knows to look for this particular export to load from.
 
 ```typescript
-/**
- * The PrimedComponentFactory declares the component and defines any additional distributed data structures.
- * To add a SharedSequence, SharedMap, or any other structure, put it in the array below.
- */
-export const ExampleFluidComponentInstantiationFactory = new SharedComponentFactory(
+export const fluidExport = new PrimedComponentFactory(
+  ExampleFluidComponent,
+  [],
+);
+```
+
+## Custom container
+
+If you instead chose to customize your container during the yo fluid setup, a couple things change.
+
+### Factory export
+
+Instead of exporting the `PrimedComponentFactory` directly as the `fluidExport`, we'll instead export this factory
+for use in the container we're customizing (in [index.ts](#index.ts)).
+
+```typescript
+export const ExampleFluidComponentInstantiationFactory = new PrimedComponentFactory(
   ExampleFluidComponent,
   [],
 );
@@ -284,12 +249,13 @@ export const ExampleFluidComponentInstantiationFactory = new SharedComponentFact
 
 <a name="index.ts" />
 
-## `index.ts`
+### `index.ts`
 
-In this file we define a registry of supported components. This is represented as a `Map<string,IComponentFactory>`. In
-our scenario we only have one component and therefore one factory.
+You'll also have a file `./src/index.ts` for the container.  In this file we define a registry of supported components.
+This is represented as a `Map<string, IComponentFactory>`. In our scenario we only have one component and therefore
+one factory.
 
-We import our `ExampleFluidComponentInstantiationFactory` from our `./main`
+We import our `ExampleFluidComponentInstantiationFactory` from our `./main`:
 
 ```typescript
 import { ExampleFluidComponentInstantiationFactory } from "./main";
@@ -303,9 +269,10 @@ const pkg = require("../package.json");
 const componentName = pkg.name as string;
 ```
 
-Finally we use `SimpleModuleInstantiationFactory` to create a `fluidExport`. The factory takes a default component name `componentName`
-that is used to load the default component. It also takes the registry of components pointing to the creation factory. In
-our case just our one component. `[componentName, Promise.resolve(ExampleFluidComponentInstantiationFactory)]`
+Finally we use `SimpleModuleInstantiationFactory` to create the `fluidExport`. The factory takes a default component
+name `componentName` that is used to load the default component. It also takes the registry of components pointing to
+the creation factory. In our case just our one component.
+`[componentName, Promise.resolve(ExampleFluidComponentInstantiationFactory)]`
 
 ```typescript
 export const fluidExport = new SimpleModuleInstantiationFactory(

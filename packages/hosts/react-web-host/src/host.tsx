@@ -47,9 +47,8 @@ export class FluidLoader extends React.Component<ILoaderProps, any> {
     if (this.props.iframe) {
        loadIFramedFluidComponent(
         this.props.url,
-        this.props.getToken,
         this.divRef.current,
-        // this.props.appId,
+        this.props.getToken,
         this.props.clientId ? this.props.clientId : "",
         this.props.clientSecret ? this.props.clientSecret : "",
         this.props.libraryName ? this.props.libraryName : "tinyWebLoader",
@@ -57,9 +56,8 @@ export class FluidLoader extends React.Component<ILoaderProps, any> {
     } else {
       loadFluidComponent(
         this.props.url,
-        this.props.getToken,
         this.divRef.current,
-        this.props.appId,
+        this.props.getToken,
         this.props.clientId ? this.props.clientId : "",
         this.props.clientSecret ? this.props.clientSecret : "",
       );

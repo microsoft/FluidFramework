@@ -158,8 +158,8 @@ export async function start(
         url,
         div);
 
-        // If this is a new document we will go and instantiate the chaincode. For old documents we assume a legacy
-        // package.
+    // If this is a new document we will go and instantiate the chaincode. For old documents we assume a legacy
+    // package.
     if (!container.existing) {
             await initializeChaincode(container, pkg)
                 .catch((error) => console.error("chaincode error", error));

@@ -18,6 +18,6 @@ yo fluid
 ```
 
 > [!TIP]
-> if you get an error when running `yo fluid` saying that a generator cannot be found, try using `yo @prague/fluid` instead.
+> if you get an error when running `yo fluid` saying that a generator cannot be found, try using `yo @microsoft/fluid` instead.
 
 Now you're ready to <xref:build-a-component>!
