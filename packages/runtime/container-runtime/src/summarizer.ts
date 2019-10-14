@@ -186,12 +186,20 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
             if (this.pendingSummarySequenceNumber) {
                 const ack = op.contents as ISummaryAck | ISummaryNack;
                 if (ack.summaryProposal.summarySequenceNumber === this.pendingSummarySequenceNumber) {
-                    this.logger.sendTelemetryEvent({
-                        category: op.type === MessageType.SummaryAck ? "generic" : "error",
-                        eventName: op.type === MessageType.SummaryAck ? "SummaryAck" : "SummaryNack",
-                        timePending: Date.now() - this.lastSummaryTime,
-                        summarySequenceNumber: ack.summaryProposal.summarySequenceNumber,
-                    });
+                    if (op.type === MessageType.SummaryAck) {
+                        this.logger.sendTelemetryEvent({
+                            eventName: "SummaryAck",
+                            timePending: Date.now() - this.lastSummaryTime,
+                            summarySequenceNumber: ack.summaryProposal.summarySequenceNumber,
+                        });
+                    } else {
+                        this.logger.sendErrorEvent({
+                            eventName: "SummaryNack",
+                            timePending: Date.now() - this.lastSummaryTime,
+                            summarySequenceNumber: ack.summaryProposal.summarySequenceNumber,
+                            message: (ack as ISummaryNack).errorMessage,
+                        });
+                    }
 
                     if (op.type === MessageType.SummaryAck) {
                         // refresh base snapshot
