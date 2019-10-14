@@ -263,10 +263,9 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             "fluid:telemetry",
             {
                 documentId: this.id,
-                package: {
-                    name: TelemetryLogger.sanitizePkgName(pkgName),
-                    version: pkgVersion,
-                },
+                canReconnect, // differentiating summarizer container from main container
+                packageName: TelemetryLogger.sanitizePkgName(pkgName),
+                packageVersion: pkgVersion,
             },
             logger);
 
@@ -597,8 +596,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                 this.protocolHandler = protocolHandler;
                 this.blobManager = blobManager;
 
-                perfEvent.reportProgress({}, "beforeContextLoad");
-
                 // Initialize document details - if loading a snapshot use that - otherwise we need to wait on
                 // the initial details
                 if (tree) {
@@ -613,10 +610,13 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
                 await this.loadContext(attributes, storage, tree);
 
-                this.context!.changeConnectionState(this.connectionState, this.clientId!, this._version);
-
                 // Internal context is fully loaded at this point
                 this.loaded = true;
+
+                // Propagate current connection state through the system.
+                const connected = this.connectionState === ConnectionState.Connected;
+                assert(!connected || this._deltaManager!.connectionMode === "read");
+                this.propagateConnectionState();
 
                 if (connect && !pause) {
                     this.resume();
@@ -877,7 +877,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         }
     }
 
-    private logConnectionStateChangeTelemetry(value: ConnectionState, reason: string) {
+    private logConnectionStateChangeTelemetry(value: ConnectionState, oldState: ConnectionState, reason: string) {
         // We do not have good correlation ID to match server activity.
         // Add couple IDs here
         this.subLogger.setProperties({
@@ -889,10 +889,11 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         // Log actual event
         const time = performanceNow();
         this.connectionTransitionTimes[value] = time;
-        const duration = time - this.connectionTransitionTimes[this.connectionState];
+        const duration = time - this.connectionTransitionTimes[oldState];
+
         this.logger.sendPerformanceEvent({
             eventName: `ConnectionStateChange_${ConnectionState[value]}`,
-            from: ConnectionState[this.connectionState],
+            from: ConnectionState[oldState],
             duration,
             reason,
         });
@@ -904,8 +905,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             // two separate events (actually - three!).
             this.logger.sendPerformanceEvent({
                 eventName: this.firstConnection ? "ConnectionStateChange_InitialConnect" : "ConnectionStateChange_Reconnect",
-                duration: time - this.connectionTransitionTimes[this.connectionState],
-                reason,
+                duration: time - this.connectionTransitionTimes[ConnectionState.Disconnected],
+                durationCatchUp: time - this.connectionTransitionTimes[ConnectionState.Connecting],
             });
             this.firstConnection = false;
         }
@@ -928,9 +929,11 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         configuration?: IServiceConfiguration) {
         if (this.connectionState === value) {
             // Already in the desired state - exit early
+            this.logger.sendErrorEvent({ eventName: "setConnectionStateSame", value });
             return;
         }
 
+        const oldState = this._connectionState;
         this._connectionState = value;
         this._version = version;
         this._scopes = scopes;
@@ -953,18 +956,18 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         }
 
         // Report telemetry after we set client id!
-        this.logConnectionStateChangeTelemetry(value, reason);
+        this.logConnectionStateChangeTelemetry(value, oldState, reason);
 
-        if (!this.loaded) {
-            // If not fully loaded return early
-            return;
+        if (this.loaded) {
+            this.propagateConnectionState();
         }
+    }
 
-        this.context!.changeConnectionState(value, this.clientId!, this._version!);
-
-        this.protocolHandler!.quorum.changeConnectionState(value, this.clientId!);
-
-        raiseConnectedEvent(this, value, this.clientId!);
+    private propagateConnectionState() {
+        assert(this.loaded);
+        this.context!.changeConnectionState(this._connectionState, this.clientId!, this._version!);
+        this.protocolHandler!.quorum.changeConnectionState(this._connectionState, this.clientId!);
+        raiseConnectedEvent(this, this._connectionState, this.clientId!);
     }
 
     private submitMessage(type: MessageType, contents: any, batch?: boolean, metadata?: any): number {
