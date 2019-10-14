@@ -19,7 +19,14 @@ import {
     IQuorum,
     ITelemetryLogger,
 } from "@microsoft/fluid-container-definitions";
-import { buildHierarchy, ChildLogger, Deferred, flatten, raiseConnectedEvent, TreeTreeEntry } from "@microsoft/fluid-core-utils";
+import {
+    buildHierarchy,
+    ChildLogger,
+    Deferred,
+    flatten,
+    raiseConnectedEvent,
+    TreeTreeEntry,
+} from "@microsoft/fluid-core-utils";
 import {
     IDocumentMessage,
     ISequencedDocumentMessage,
