@@ -148,7 +148,14 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         if (!this.componentRuntimeDeferred) {
             this.componentRuntimeDeferred = new Deferred<IComponentRuntime>();
             const details = await this.getInitialSnapshotDetails();
-            this.summaryTracker.setBaseTree(details.snapshot);
+            if (details.snapshot && !this.summaryTracker.baseTree) {
+                // do not overwrite if refreshed!
+                // local - will always give undefined tree, so never enter here
+                // remote - will give the tree at the time of construction (initial),
+                // which may be older than the refreshed one, but never newer than
+                // the refreshed or one set at constructor (in case of summarizer)
+                this.summaryTracker.setBaseTree(details.snapshot);
+            }
             const factory = await this._hostRuntime.IComponentRegistry.get(details.pkg);
 
             // During this call we will invoke the instantiate method - which will call back into us
@@ -237,18 +244,18 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
      * Notifies the object to take snapshot of a component.
      */
     public async snapshot(fullTree: boolean = false): Promise<ITree> {
-        await this.realize();
-
-        const { pkg } = await this.getInitialSnapshotDetails();
-
-        const componentAttributes = { pkg };
-
         // base ID still being set means previous snapshot is still valid
         const baseId = this.summaryTracker.getBaseId();
         if (baseId && !fullTree) {
             return { id: baseId, entries: [] };
         }
         this.summaryTracker.reset();
+
+        await this.realize();
+
+        const { pkg } = await this.getInitialSnapshotDetails();
+
+        const componentAttributes = { pkg };
 
         const entries = await this.componentRuntime.snapshotInternal(fullTree);
 
@@ -372,6 +379,13 @@ export class RemotedComponentContext extends ComponentContext {
             () => {
                 throw new Error("Already attached");
             });
+
+        if (initSnapshotValue && typeof initSnapshotValue !== "string") {
+            // This will allow the summarizer to avoid calling realize if there
+            // are no changes to the component.  If the initSnapshotValue is a
+            // string, the summarizer cannot avoid calling realize.
+            this.summaryTracker.setBaseTree(initSnapshotValue);
+        }
     }
 
     public generateAttachMessage(): IAttachMessage {
