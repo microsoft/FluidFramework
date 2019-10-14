@@ -18,7 +18,7 @@ export class RuntimeRequestHandlerBuilder {
     public createRequestHandler(runtime: IHostRuntime): (request: IRequest) => Promise<IResponse> {
         return async (request: IRequest) => {
             for (const handler of this.handlers) {
-                const response = await  handler(request, runtime);
+                const response = await handler(request, runtime);
                 if (response !== undefined) {
                     return response;
                 }
