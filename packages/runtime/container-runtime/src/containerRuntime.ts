@@ -27,6 +27,7 @@ import {
     Deferred,
     flatten,
     isSystemType,
+    PerformanceEvent,
     raiseConnectedEvent,
     readAndParse,
 } from "@microsoft/fluid-core-utils";
@@ -468,6 +469,12 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this.summaryManager.summarizer;
     }
 
+    private get summaryConfiguration() {
+        return this.context.serviceConfiguration
+            ? { ...DefaultSummaryConfiguration, ...this.context.serviceConfiguration.summary }
+            : DefaultSummaryConfiguration;
+    }
+
     // Components tracked by the Domain
     private closed = false;
     private readonly pendingAttach = new Map<string, IAttachMessage>();
@@ -555,10 +562,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         this.context.on("refreshBaseSummary",
             (snapshot: ISnapshotTree) => this.refreshBaseSummary(snapshot));
 
-        const summaryConfiguration = context.serviceConfiguration
-            ? { ...DefaultSummaryConfiguration, ...context.serviceConfiguration.summary }
-            : DefaultSummaryConfiguration;
-
         // We always create the summarizer in the case that we are asked to generate summaries. But this may
         // want to be on demand instead.
         // Don't use optimizations when generating summaries with a document loaded using snapshots.
@@ -566,7 +569,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         this.summarizer = new Summarizer(
             "/_summarizer",
             this,
-            summaryConfiguration,
+            () => this.summaryConfiguration,
             () => this.generateSummary(!this.loadedFromSummary),
             (snapshot) => this.context.refreshBaseSummary(snapshot));
 
@@ -1090,6 +1093,11 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             return;
         }
 
+        const generateSummaryEvent = PerformanceEvent.start(this.logger, {
+            eventName: "GenerateSummary",
+            fullTree,
+        });
+
         try {
             await this.scheduleManager.pause();
             const sequenceNumber = this.deltaManager.referenceSequenceNumber;
@@ -1107,9 +1115,11 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             // after loading from the beginning of the snapshot
             const versions = await this.context.storage.getVersions(this.id, 1);
             const parents = versions.map((version) => version.id);
+            generateSummaryEvent.reportProgress({}, "loadedVersions");
 
             const treeWithStats = await this.summarize(fullTree);
             ret.summaryStats = treeWithStats.summaryStats;
+            generateSummaryEvent.reportProgress({}, "generatedTree");
 
             if (!this.connected) {
                 return ret;
@@ -1121,6 +1131,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                 message,
                 parents,
             };
+            generateSummaryEvent.reportProgress({}, "uploadedTree");
 
             if (!this.connected) {
                 return ret;
@@ -1129,9 +1140,15 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             this.submit(MessageType.Summarize, summary);
             ret.submitted = true;
 
+            generateSummaryEvent.end({
+                sequenceNumber,
+                submitted: ret.submitted,
+                handle: handle.handle,
+                ...ret.summaryStats,
+            });
             return ret;
         } catch (ex) {
-            this.logger.logException({ eventName: "Summarizer:GenerateSummaryExceptionError" }, ex);
+            generateSummaryEvent.cancel({}, ex);
             throw ex;
         } finally {
             // Restart the delta manager
