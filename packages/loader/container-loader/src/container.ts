@@ -171,6 +171,12 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private firstConnection = true;
     private readonly connectionTransitionTimes: number[] = [];
 
+    private _closed = false;
+
+    public get closed(): boolean {
+        return this._closed;
+    }
+
     public get id(): string {
         return this._id;
     }
@@ -285,7 +291,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     }
 
     public on(event: "connected" | "contextChanged", listener: (clientId: string) => void): this;
-    public on(event: "disconnected" | "joining", listener: () => void): this;
+    public on(event: "disconnected" | "joining" | "closed", listener: () => void): this;
     public on(event: "error", listener: (error: any) => void): this;
     public on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
     public on(event: "pong" | "processTime", listener: (latency: number) => void): this;
@@ -297,6 +303,11 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     }
 
     public close() {
+        if (this._closed) {
+            return;
+        }
+        this._closed = true;
+
         if (this._deltaManager) {
             this._deltaManager.close();
         }
@@ -306,6 +317,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         }
 
         this.removeAllListeners();
+
+        this.emit("closed");
     }
 
     public async request(path: IRequest): Promise<IResponse> {
@@ -835,6 +848,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
             this._deltaManager.on("processTime", (time) => {
                 this.emit("processTime", time);
+            });
+
+            this._deltaManager.on("closed", () => {
+                this.close();
             });
 
             // If we're the outer frame, do we want to do this?
