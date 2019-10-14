@@ -6,14 +6,13 @@
 import { isSpoTenant, resolveFluidUrl, spoGetResolvedUrl } from "@fluid-example/tiny-web-host";
 import { IClientConfig } from "@microsoft/fluid-odsp-utils";
 import { ScopeType } from "@microsoft/fluid-protocol-definitions";
-import { IConfig, RouterliciousUrlResolver } from "@microsoft/fluid-routerlicious-urlresolver";
+import { IAlfredUser, IConfig, RouterliciousUrlResolver } from "@microsoft/fluid-routerlicious-urlresolver";
 import { chooseCelaName, IAlfredTenant } from "@microsoft/fluid-server-services-core";
 import { Request } from "express";
 import { Provider } from "nconf";
 // tslint:disable-next-line:no-submodule-imports
 import * as uuid from "uuid/v4";
 import { IAlfred } from "./interfaces";
-import { IAlfredUser } from "./utils";
 
 export function resolveUrl(
     config: Provider,
@@ -51,7 +50,7 @@ export function resolveUrl(
             serverUrl: config.get("worker:serverUrl"),
         };
         const resolverList = [new RouterliciousUrlResolver(endPointConfig, undefined, appTenants, scopes, user)];
-        const resolvedP = resolveFluidUrl(request.url, resolverList);
+        const resolvedP = resolveFluidUrl(request.originalUrl, resolverList);
         const fullTreeP = alfred.getFullTree(tenantId, documentId);
         return [resolvedP, fullTreeP];
     }

@@ -33,12 +33,16 @@ export class RouterliciousUrlResolver implements IUrlResolver {
     }
 
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
-        const reqUrl = new URL(request.url);
+        let requestedUrl = request.url;
+        if (this.config && new URL(this.config.serverUrl).hostname === "localhost" && request.url.startsWith("/")) {
+            requestedUrl = `http://localhost:3000${request.url}`;
+        }
+        const reqUrl = new URL(requestedUrl);
         const server = reqUrl.hostname.toLowerCase();
         if (r11sServers.indexOf(server) !== -1 || (server === "localhost" && reqUrl.port === "3000")) {
             const path = reqUrl.pathname.split("/");
-            let tenantId;
-            let documentId;
+            let tenantId: string;
+            let documentId: string;
             if (path.length >= 4) {
                 tenantId = path[2];
                 documentId = path[3];
@@ -71,9 +75,9 @@ export class RouterliciousUrlResolver implements IUrlResolver {
                 }
             }
 
-            const storageUrl = this.config ? this.config.blobStorageUrl.replace("historian:3000", "localhost:3001") :
-                isLocalHost ?
-                    `http://localhost:3001/repos/${tenantId}` : `https://historian.${serverSuffix}/repos/${tenantId}`;
+            const storageUrl = `${(this.config ? this.config.blobStorageUrl.replace("historian:3000", "localhost:3001")
+                : isLocalHost
+                    ? `http://localhost:3001` : `https://historian.${serverSuffix}`)}/repos/${tenantId}`;
             const ordererUrl = this.config ? this.config.serverUrl :
                 isLocalHost ?
                     `http://localhost:3003/` : `https://alfred.${serverSuffix}`;
@@ -99,7 +103,7 @@ export class RouterliciousUrlResolver implements IUrlResolver {
     }
 }
 
-function getR11sToken(
+export function getR11sToken(
     tenantId: string,
     documentId: string,
     tenants: IAlfredTenant[],
@@ -118,7 +122,7 @@ function getR11sToken(
         throw new Error("Invalid tenant");
 }
 
-interface IAlfredUser extends IUser {
+export interface IAlfredUser extends IUser {
     displayName: string;
     name: string;
 }

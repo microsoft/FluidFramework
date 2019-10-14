@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { loadFluidComponent, loadIFramedFluidComponent } from "@fluid-example/tiny-web-host";
+import { ITokenApis, loadFluidComponent, loadIFramedFluidComponent } from "@fluid-example/tiny-web-host";
 import * as React from "react";
 
 export { isSpoUrl, loadFluidComponent } from "@fluid-example/tiny-web-host";
@@ -31,7 +31,7 @@ export interface ILoaderProps {
   /**
    * Function that either returns an SPO token, or a Routerlicious tenant token
    */
-  getToken(): Promise<string>;
+  tokenApi: ITokenApis;
 }
 
 export class FluidLoader extends React.Component<ILoaderProps, any> {
@@ -48,7 +48,7 @@ export class FluidLoader extends React.Component<ILoaderProps, any> {
        loadIFramedFluidComponent(
         this.props.url,
         this.divRef.current,
-        this.props.getToken,
+        this.props.tokenApi,
         this.props.clientId ? this.props.clientId : "",
         this.props.clientSecret ? this.props.clientSecret : "",
         this.props.libraryName ? this.props.libraryName : "tinyWebLoader",
@@ -57,9 +57,7 @@ export class FluidLoader extends React.Component<ILoaderProps, any> {
       loadFluidComponent(
         this.props.url,
         this.divRef.current,
-        {
-          getToken: this.props.getToken,
-        },
+        this.props.tokenApi,
         this.props.clientId ? this.props.clientId : "",
         this.props.clientSecret ? this.props.clientSecret : "",
       );

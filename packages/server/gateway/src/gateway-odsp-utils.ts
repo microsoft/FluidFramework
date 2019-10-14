@@ -3,7 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { getSpoServer, isSpoServer, isSpoTenant, pushSrv } from "@fluid-example/tiny-web-host";
+import {
+    getSpoPushServer,
+    getSpoServer,
+    isSpoPushServer,
+    isSpoServer,
+    isSpoTenant,
+} from "@fluid-example/tiny-web-host";
 import { URL } from "url";
 
 export function saveSpoTokens(req, params, accessToken: string, refreshToken: string) {
@@ -12,7 +18,7 @@ export function saveSpoTokens(req, params, accessToken: string, refreshToken: st
     }
     try {
         const url = new URL(params.scope);
-        if (url.protocol === "https:" && (isSpoServer(url.hostname) || url.hostname === pushSrv)) {
+        if (url.protocol === "https:" && (isSpoServer(url.hostname) || isSpoPushServer(url.hostname))) {
             req.session.tokens[url.hostname] = { accessToken, refreshToken };
         }
     } catch (e) {
@@ -34,7 +40,7 @@ export function spoEnsureLoggedIn() {
                 return res.redirect(`/login_${req.params.tenantId}`);
             }
 
-            if (!req.session.tokens[pushSrv]) {
+            if (!req.session.tokens[getSpoPushServer()]) {
                 req.session.returnTo = req.originalUrl || req.url;
                 return res.redirect(`/login_pushsrv`);
             }

@@ -12,7 +12,15 @@ const spoTenants = new Map<string, string>([
     ["spo-df", "microsoft-my.sharepoint-df.com"],
 ]);
 
-export const pushSrv = "pushchannel.1drv.ms";
+const pushSrv = "pushchannel.1drv.ms";
+
+export function isSpoPushServer(server: string) {
+    return pushSrv === server ? true : false;
+}
+
+export function getSpoPushServer() {
+    return pushSrv;
+}
 
 export function isSpoTenant(tenantId: string) {
     return spoTenants.has(tenantId);

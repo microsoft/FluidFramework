@@ -170,7 +170,7 @@ const spoUrls = [
 export async function loadIFramedFluidComponent(
     url: string,
     div: HTMLDivElement,
-    getToken: () => Promise<string> = () => Promise.resolve(""),
+    tokenApiConfig: ITokenApis = { getToken: () => Promise.resolve("") },
     clientId?: string,
     secret?: string,
     libraryName: string = "tinyWebLoader"): Promise<any> {
@@ -212,8 +212,8 @@ export async function loadIFramedFluidComponent(
                 function start(url, token, appId) {
                     ${libraryName}.loadFluidComponent(
                         url,
-                        () => { "return token"},
                         document.getElementById("componentDiv"),
+                        tokenApiConfig,
                         "clientId",
                         "clientSecret");
                 }
@@ -236,7 +236,7 @@ export async function loadIFramedFluidComponent(
     iframe.onload = async () => {
         iframe.contentWindow.postMessage({
             appId: "app Id",
-            token: await getToken(),
+            token: "dummy token",
             url,
         }, "*");
     };
