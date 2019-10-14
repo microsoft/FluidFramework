@@ -381,7 +381,9 @@ export class RemotedComponentContext extends ComponentContext {
             });
 
         if (initSnapshotValue && typeof initSnapshotValue !== "string") {
-            // set on construction if possible
+            // This will allow the summarizer to avoid calling realize if there
+            // are no changes to the component.  If the initSnapshotValue is a
+            // string, the summarizer cannot avoid calling realize.
             this.summaryTracker.setBaseTree(initSnapshotValue);
         }
     }
