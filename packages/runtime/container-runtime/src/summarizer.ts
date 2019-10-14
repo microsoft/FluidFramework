@@ -68,7 +68,7 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
     private summaryPending = false;
     private pendingSummarySequenceNumber?: number;
     private idleTimer: Timer;
-    private pendingTimer: Timer;
+    private pendingAckTimer: Timer;
     private readonly summarizeTimer: Timer;
     private readonly runDeferred = new Deferred<void>();
     private readonly logger: ITelemetryLogger;
@@ -114,7 +114,8 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
 
         if (!this.runtime.connected) {
             if (!this.everConnected) {
-                await new Promise((resolve) => this.runtime.once("connected", resolve));
+                const waitConnected = new Promise((resolve) => this.runtime.once("connected", resolve));
+                await Promise.race([waitConnected, this.runDeferred.promise]);
             } else {
                 // we will not try to reconnect, so we are done running
                 this.logger.sendTelemetryEvent({ eventName: "DisconnectedBeforeRun" });
@@ -133,7 +134,7 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
             () => this.summarize("idle"),
             this.configuration.idleTime);
 
-        this.pendingTimer = new Timer(
+        this.pendingAckTimer = new Timer(
             () => {
                 this.logger.sendErrorEvent({
                     eventName: "SummaryAckWaitTimeout",
@@ -190,12 +191,12 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
             result = await setter();
         } catch (error) {
             // send error event for exceptions
-            this.logger.sendErrorEvent({ eventName, clientId: this.runtime.clientId }, error);
+            this.logger.sendErrorEvent({ eventName }, error);
             success = false;
         }
         if (success && !validator(result)) {
             // send error event when result is invalid
-            this.logger.sendErrorEvent({ eventName, clientId: this.runtime.clientId });
+            this.logger.sendErrorEvent({ eventName });
             success = false;
         }
         return { result, success };
@@ -275,7 +276,7 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
                         }
                     }
                     this.summaryPending = false;
-                    this.pendingTimer.clear();
+                    this.pendingAckTimer.clear();
                 }
             }
         }
@@ -350,7 +351,7 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
             // until we are sure that no summary ops are handled before lastSummarySeqNumber is
             // set here.
             this.deferBroadcast.resolve();
-            this.pendingTimer.start();
+            this.pendingAckTimer.start();
         }, (error) => {
             summarizingEvent.cancel({}, error);
             this.cancelPending();
@@ -421,7 +422,7 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
 
     private cancelPending() {
         this.summaryPending = false;
-        this.pendingTimer.clear();
+        this.pendingAckTimer.clear();
         // release all deferred summary op/ack/nack handlers
         if (this.deferBroadcast) {
             this.deferBroadcast.resolve();
