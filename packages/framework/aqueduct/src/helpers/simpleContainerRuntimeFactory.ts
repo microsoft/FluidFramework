@@ -5,7 +5,7 @@
 import { IContainerContext } from "@microsoft/fluid-container-definitions";
 import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
 import { ComponentRegistryTypes, IHostRuntime } from "@microsoft/fluid-runtime-definitions";
-import { componentRuntimeRequestHandler, RuntimeRequestHandler, RuntimeRequestHandlerBuilder } from "./runtimeRequestRouter";
+import { componentRuntimeRequestHandler, RequestParser, RuntimeRequestHandler, RuntimeRequestHandlerBuilder} from "@microsoft/fluid-runtime-router";
 
 export class SimpleContainerRuntimeFactory {
     public static readonly defaultComponentId = "default";
@@ -20,7 +20,10 @@ export class SimpleContainerRuntimeFactory {
         generateSummaries: boolean = false,
         requestHandlers: RuntimeRequestHandler[] = [],
     ): Promise<ContainerRuntime> {
-        const runtimeRequestHandler = new RuntimeRequestHandlerBuilder(... requestHandlers, componentRuntimeRequestHandler);
+        const runtimeRequestHandler = new RuntimeRequestHandlerBuilder(
+            defaultComponentRuntimeRequestHandler,
+            ...requestHandlers,
+            componentRuntimeRequestHandler);
 
         // debug(`instantiateRuntime(chaincode=${chaincode},registry=${JSON.stringify(registry)})`);
         const runtime = await ContainerRuntime.load(context, registry, runtimeRequestHandler.createRequestHandler, { generateSummaries });
@@ -65,3 +68,16 @@ export class SimpleContainerRuntimeFactory {
         }
     }
 }
+
+export const defaultComponentRuntimeRequestHandler: RuntimeRequestHandler =
+    async (request: RequestParser, runtime: IHostRuntime) => {
+        if (request.pathParts.length === 0) {
+            return componentRuntimeRequestHandler(
+                new RequestParser({
+                    url: SimpleContainerRuntimeFactory.defaultComponentId,
+                    headers: request.headers,
+                }),
+                runtime);
+        }
+        return undefined;
+    };
