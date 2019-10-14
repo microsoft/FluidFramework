@@ -171,6 +171,10 @@ export class TableDocument extends PrimedComponent implements ITable {
         this.maybeCols.on("op", (...args: any[]) => this.emit("op", ...args));
         this.maybeRows.on("op", (...args: any[]) => this.emit("op", ...args));
 
+        this.matrix.on("sequenceDelta", (e, t) => this.emit("sequenceDelta", e, t));
+        this.maybeCols.on("sequenceDelta", (e, t) => this.emit("sequenceDelta", e, t));
+        this.maybeRows.on("sequenceDelta", (e, t) => this.emit("sequenceDelta", e, t));
+
         this.maybeWorkbook = createSheetlet({
             rows: () => this.numRows,
             columns: () => this.numCols,
