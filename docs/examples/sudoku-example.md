@@ -55,15 +55,6 @@ The project has the following folder layout:
 The *config* folder contains the WebPart configuration files. The *src* folder contains the source files for the Sudoku
 Fluid component, which we'll cover in more depth later.
 
-# Run the sample locally
-
-In order to run the example, run `npm start` from the project root. Then visit <http://localhost:8080/> in a browser.
-Two instances of the Sudoku component will be loaded side-by-side. Try entering numbers in the cells in either component
-instance. Changes will be synchronized to the other instance.
-
-Try changing the theme in one of the Sudoku components. Notice that these changes are not synchronized between the two
-instances.
-
 # Deep dive
 
 ## Data model
