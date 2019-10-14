@@ -2,8 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
-import { IComponent } from "@microsoft/fluid-container-definitions";
+import { IComponent, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import { IHostRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SimpleContainerRuntimeFactory } from "./simpleContainerRuntimeFactory";
 
@@ -81,6 +80,7 @@ export function createServiceRuntimeRequestHandler(serviceId: string, component:
         if (requestParts.length >= 2
             && requestParts[0] === "_services"
             && requestParts[1] === serviceId) {
+
             if (requestParts.length === 2) {
                 return {
                     mimeType: "fluid/component",
@@ -88,6 +88,15 @@ export function createServiceRuntimeRequestHandler(serviceId: string, component:
                     value: component,
                 };
             }
+
+            if (component.IComponentRouter) {
+                return component.IComponentRouter.request({
+                    url: requestParts.slice(2).join("/"),
+                    headers: request.headers,
+                });
+            }
+
+            return { status: 400, mimeType: "text/plain", value: `${request.url} service is not a router` };
         }
 
         return undefined;
