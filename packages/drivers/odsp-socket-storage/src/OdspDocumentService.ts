@@ -26,6 +26,7 @@ import { getSocketStorageDiscovery } from "./Vroom";
 
 const afdUrlConnectExpirationMs = 8 * 60 * 60 * 1000; // 8 hours
 const lastAfdConnectionTimeMsKey = "LastAfdConnectionTimeMs";
+const localStorageTestKey = "LocalStorageTestKey";
 
 /**
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected
@@ -50,6 +51,8 @@ export class OdspDocumentService implements IDocumentService {
     private storageManager?: OdspDocumentStorageManager;
 
     private readonly getStorageToken: (refresh: boolean) => Promise<string | null>;
+
+    private readonly localStorageAvailable: boolean;
 
     /**
      * @param appId - app id used for telemetry for network requests
@@ -102,6 +105,8 @@ export class OdspDocumentService implements IDocumentService {
                 this.getStorageToken,
             ),
         );
+
+        this.localStorageAvailable = this.testLocalStorageAvailability();
     }
 
     /**
@@ -209,32 +214,16 @@ export class OdspDocumentService implements IDocumentService {
     }
 
     /**
-     * Safely tries to read from local storage
-     * Returns null if localStorage is not available
-     *
-     * @param key localStorage key
+     * Tests if localStorage is usable.
+     * Should we move this outside to a library?
      */
-    private readLocalStorage(key: string) {
+    private testLocalStorageAvailability(): boolean {
         try {
-            return localStorage.getItem(key);
-        } catch (e) {
-            debug(`Could not read from localStorage due to ${e}`);
-            return null;
-        }
-    }
-
-    /**
-     * Safely tries to write to local storage
-     * Returns false if localStorage is not available. True otherwise
-     *
-     * @param key localStorage key
-     */
-    private writeLocalStorage(key: string, value: string) {
-        try {
-            localStorage.setItem(key, value);
+            localStorage.setItem(localStorageTestKey, "v");
+            localStorage.removeItem(localStorageTestKey);
             return true;
         } catch (e) {
-            debug(`Could not write to localStorage due to ${e}`);
+            debug(`LocalStorage not available due to ${e}`);
             return false;
         }
     }
@@ -266,20 +255,26 @@ export class OdspDocumentService implements IDocumentService {
             // Create null logger if telemetry logger is not available from caller
             const logger = this.logger ? this.logger : new TelemetryNullLogger();
 
-            let shouldUseAfdUrl = false;
+            let afdCacheValid = false;
 
-            // If we have used the AFD URL within a certain time in the past, then we should use it again.
-            const lastAfdConnection = this.readLocalStorage(lastAfdConnectionTimeMsKey);
-            if (lastAfdConnection !== null) {
-                const lastAfdTimeMs = Number(lastAfdConnection);
-                if (!isNaN(lastAfdTimeMs) && lastAfdTimeMs > 0
-                    && Date.now() - lastAfdTimeMs <= afdUrlConnectExpirationMs) {
-                    shouldUseAfdUrl = true;
+            if (this.localStorageAvailable) {
+                const lastAfdConnection = localStorage.getItem(lastAfdConnectionTimeMsKey);
+                if (lastAfdConnection !== null) {
+                    const lastAfdTimeMs = Number(lastAfdConnection);
+                    // If we have used the AFD URL within a certain amount of time in the past,
+                    // then we should use it again.
+                    if (!isNaN(lastAfdTimeMs) && lastAfdTimeMs > 0
+                        && Date.now() - lastAfdTimeMs <= afdUrlConnectExpirationMs) {
+                        afdCacheValid = true;
+                    } else {
+                        localStorage.removeItem(lastAfdConnectionTimeMsKey);
+                    }
                 }
             }
 
             // Use AFD URL if in cache
-            if (shouldUseAfdUrl && hasUrl2) {
+            if (afdCacheValid && hasUrl2) {
+                debug("Connecting to AFD URL directly due to valid cache.");
                 logger.sendTelemetryEvent({ eventName: "UseAfdUrl-Cached" });
                 return DocumentDeltaConnection.create(
                     tenantId,
@@ -323,9 +318,8 @@ export class OdspDocumentService implements IDocumentService {
                                 logger.sendTelemetryEvent({ eventName: "UseAfdUrl" });
                                 logger.sendTelemetryEvent({ eventName: "CacheAfdUrl" });
                                 // Refresh AFD cache
-                                if (this.writeLocalStorage(lastAfdConnectionTimeMsKey, Date.now().toString())) {
-                                    debug(`Cached AFD connection time. Expiring in ${new Date(Number(this.readLocalStorage(lastAfdConnectionTimeMsKey)) + afdUrlConnectExpirationMs)}`);
-                                }
+                                localStorage.setItem(lastAfdConnectionTimeMsKey, Date.now().toString());
+                                debug(`Cached AFD connection time. Expiring in ${new Date(Number(localStorage.getItem(lastAfdConnectionTimeMsKey)) + afdUrlConnectExpirationMs)}`);
                                 return connection;
                             },
                         );
