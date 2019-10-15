@@ -152,7 +152,7 @@ export async function initialize(
     window["allServices"] = services;
 
     console.log(`Loading ${url}`);
-    const loader = createWebLoader(
+    const loader = await createWebLoader(
         resolved,
         pkg,
         scriptIds,
