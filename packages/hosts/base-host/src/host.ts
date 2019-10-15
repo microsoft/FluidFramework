@@ -18,13 +18,28 @@ import {
 import { IResolvedPackage, WebCodeLoader, WhiteList } from "@microsoft/fluid-web-code-loader";
 import { IHostConfig } from "./hostConfig";
 
+/**
+ * Interface to provide the info about the session.
+ */
 export interface IPrivateSessionInfo {
+    /**
+     * True if the request is made by outer frame.
+     */
     outerSession?: boolean;
 
+    /**
+     * True if the request is made by inner frame.
+     */
     innerSession?: boolean;
 
+    /**
+     * IFrame in which the inner session is loaded.
+     */
     frameP?: Promise<HTMLIFrameElement>;
 
+    /**
+     * Request to be resolved.
+     */
     request?: IRequest;
 }
 
@@ -88,6 +103,17 @@ export async function registerAttach(loader: Loader, container: Container, uri: 
     await attach(loader, uri, div);
 }
 
+/**
+ * Create a loader and return it.
+ * @param resolved - A resolved url from a url resolver.
+ * @param pkg - A resolved package with cdn links.
+ * @param scriptIds - The script tags the chaincode are attached to the view with.
+ * @param config - Any config to be provided to loader.
+ * @param scope - A component that gives host provided capabilities/configurations
+ *  to the component in the container(such as auth).
+ * @param hostConf - Config specifying the resolver/factory to be used.
+ * @param whiteList - functionality to check the validity of code to be loaded.
+ */
 export async function createWebLoader(
     resolved: IResolvedUrl,
     pkg: IResolvedPackage,
@@ -130,6 +156,19 @@ export async function createWebLoader(
         scope);
 }
 
+/**
+ * Function to load the container from the given url and initialize the chaincode.
+ * @param url - Url of the Fluid component to be loaded.
+ * @param resolved - A resolved url from a url resolver.
+ * @param pkg - A resolved package with cdn links.
+ * @param scriptIds - The script tags the chaincode are attached to the view with.
+ * @param npm - path from where the packages can be fetched.
+ * @param config - Any config to be provided to loader.
+ * @param scope - A component that gives host provided capabilities/configurations
+ *  to the component in the container(such as auth).
+ * @param div - The div to load the component into.
+ * @param hostConf - Config specifying the resolver/factory to be used.
+ */
 export async function start(
     url: string,
     resolved: IResolvedUrl,

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IServiceConfiguration, IUser, ScopeType } from "@microsoft/fluid-protocol-definitions";
-import { generateToken, IAlfredTenant, ITenantManager } from "@microsoft/fluid-server-services-core";
+import { IServiceConfiguration } from "@microsoft/fluid-protocol-definitions";
+import { ITenantManager } from "@microsoft/fluid-server-services-core";
 // In this case we want @types/express-serve-static-core, not express-serve-static-core, and so disable the lint rule
 // tslint:disable-next-line:no-implicit-dependencies
 import { Params } from "express-serve-static-core";
@@ -38,22 +38,6 @@ export async function getConfig(
     }
 
     return JSON.stringify(updatedConfig);
-}
-
-export function getToken(tenantId: string, documentId: string, tenants: IAlfredTenant[], user?: IAlfredUser): string {
-    const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
-    for (const tenant of tenants) {
-        if (tenantId === tenant.id) {
-            return generateToken(tenantId, documentId, tenant.key, scopes, user);
-        }
-    }
-
-    throw new Error("Invalid tenant");
-}
-
-export interface IAlfredUser extends IUser {
-    displayName: string;
-    name: string;
 }
 
 export const DefaultServiceConfiguration: IServiceConfiguration = {
