@@ -14,6 +14,9 @@ import { CellState, SudokuCell } from "../helpers/sudokuCell";
  */
 export interface ISudokuViewProps {
     puzzle: ISharedMap;
+    clientId: string;
+    clientPresence?: ISharedMap;
+    setPresence?(cellCoord: CoordinateString, reset: boolean): void;
 }
 
 /**
@@ -94,6 +97,7 @@ export function SudokuView(props: ISudokuViewProps) {
 }
 
 function SimpleTable(props: ISudokuViewProps) {
+    const coordinateDataAttributeName = "cellcoordinate";
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         let valueToSet = Number(e.target.value);
         valueToSet = Number.isNaN(valueToSet) ? 0 : valueToSet;
@@ -102,12 +106,30 @@ function SimpleTable(props: ISudokuViewProps) {
         }
 
         // tslint:disable-next-line: no-string-literal
-        const key = e.target.dataset["cellcoordinate"];
+        const key = e.target.dataset[coordinateDataAttributeName];
         if (key !== undefined) {
             const toSet = props.puzzle.get<SudokuCell>(key);
             toSet.value = valueToSet;
             toSet.isCorrect = valueToSet === toSet.correctValue;
             props.puzzle.set(key, toSet);
+        }
+    };
+
+    const handleInputFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+        if (props.setPresence) {
+            const key = e.target.dataset[coordinateDataAttributeName];
+            if (key !== undefined) {
+                props.setPresence(key, false);
+            }
+        }
+    };
+
+    const handleInputBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+        if (props.setPresence) {
+            const key = e.target.dataset[coordinateDataAttributeName];
+            if (key !== undefined) {
+                props.setPresence(key, true);
+            }
         }
     };
 
@@ -129,6 +151,13 @@ function SimpleTable(props: ISudokuViewProps) {
                         inputClasses = `sudoku-input`;
                 }
 
+                if (props.clientPresence) {
+                    const cellOwner = props.clientPresence.get<string>(coord);
+                    if (cellOwner && cellOwner !== props.clientId) {
+                        inputClasses += " presence";
+                    }
+                }
+
                 const disabled = currentCell.fixed === true;
                 return (
                     <td
@@ -140,6 +169,8 @@ function SimpleTable(props: ISudokuViewProps) {
                             className={inputClasses}
                             type="text"
                             onChange={handleChange}
+                            onFocus={handleInputFocus}
+                            onBlur={handleInputBlur}
                             value={SudokuCell.getDisplayString(currentCell)}
                             disabled={disabled}
                             data-cellcoordinate={coord}

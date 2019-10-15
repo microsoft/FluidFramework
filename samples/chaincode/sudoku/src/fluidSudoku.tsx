@@ -42,6 +42,8 @@ export class FluidSudoku extends PrimedComponent implements IComponentHTMLVisual
     private domElement: HTMLElement | undefined;
     private readonly sudokuMapKey = "sudoku-map";
     private puzzle: ISharedMap | undefined;
+    private readonly presenceMapKey = "clientPresence";
+    private clientPresence: ISharedMap | undefined;
 
     /**
      * ComponentInitializingFirstTime is where you do setup for your component. This is only called once the first time
@@ -57,6 +59,10 @@ export class FluidSudoku extends PrimedComponent implements IComponentHTMLVisual
 
         // Store the new map under the sudokuMapKey key in the root SharedDirectory
         this.root.set(this.sudokuMapKey, map.handle);
+
+        // Create a SharedMap to store presence data
+        const clientPresence = SharedMap.create(this.runtime);
+        this.root.set(this.presenceMapKey, clientPresence.handle);
     }
 
     /**
@@ -80,11 +86,24 @@ export class FluidSudoku extends PrimedComponent implements IComponentHTMLVisual
         this.puzzle.on("valueChanged", (changed, local, op) => {
             this.rerender();
         });
+
+        this.clientPresence = await this.root
+            .get<IComponentHandle>(this.presenceMapKey)
+            .get<ISharedMap>();
+
+        this.clientPresence.on("valueChanged", (changed, local, op) => {
+            this.rerender();
+        });
     }
 
     public createJSXElement(props?): JSX.Element {
         if (this.puzzle) {
-            return <SudokuView puzzle={this.puzzle} />;
+            return <SudokuView
+                puzzle={this.puzzle}
+                clientPresence={this.clientPresence}
+                clientId={this.runtime.clientId}
+                setPresence={this.presenceSetter}
+            />;
         } else {
             return <div />;
         }
@@ -101,5 +120,27 @@ export class FluidSudoku extends PrimedComponent implements IComponentHTMLVisual
     public render(element: HTMLElement): void {
         this.domElement = element;
         this.rerender();
+    }
+
+    /**
+     * A function that can be used to update presence data.
+     *
+     * @param cellCoordinate - The coordinate of the cell to set.
+     * @param reset - If true, presence for the cell will be cleared.
+     */
+    private readonly presenceSetter = (cellCoordinate: string, reset: boolean): void => {
+        if (this.clientPresence) {
+            if (reset) {
+                // Retrieve the current clientId in the cell, if there is one
+                const prev = this.clientPresence.get<string>(cellCoordinate);
+                const isCurrentClient = this.runtime.clientId === prev;
+                if (!isCurrentClient) {
+                    return;
+                }
+                this.clientPresence.delete(cellCoordinate);
+            } else {
+                this.clientPresence.set(cellCoordinate, this.runtime.clientId);
+            }
+        }
     }
 }
