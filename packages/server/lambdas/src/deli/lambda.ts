@@ -532,7 +532,8 @@ export class DeliLambda implements IPartitionLambda {
     private clearIdleClientsRefSeq(message: ITicketedMessageOutput) {
         if (this.clientSeqManager.count() > 0) {
             let client = this.clientSeqManager.peek();
-            while (client.referenceSequenceNumber !== undefined
+            while (client !== undefined
+                && client.referenceSequenceNumber !== undefined
                 && client.canEvict
                 && (message.timestamp - client.lastUpdate > this.clientTimeout)) {
                 this.clientSeqManager.updateClient(
