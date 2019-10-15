@@ -31,7 +31,7 @@ export class OdspUrlResolver implements IUrlResolver {
                 const requestURL = new URL(request.url);
                 const searchParams = requestURL.search;
                 if (!!searchParams) {
-                documentUrl += searchParams;
+                    documentUrl += searchParams;
                 }
             }
             const response: IOdspResolvedUrl = {
@@ -52,7 +52,7 @@ export class OdspUrlResolver implements IUrlResolver {
 }
 
 export function isOdspUrl(url: string) {
-    const regex = /(.*)\/_api\/v2.1\/drives\/([^\/]*)\/items\/([^\/]*)(.*)/;
+    const regex = /(.*)\/_api\/v2.1\/drives\/([^\/]*)\/items\/([^\/]*)/;
     if (url.match(regex) !== null) {
         return true;
     }
