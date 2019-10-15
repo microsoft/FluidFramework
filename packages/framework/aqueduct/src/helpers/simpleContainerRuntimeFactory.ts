@@ -20,10 +20,10 @@ export class SimpleContainerRuntimeFactory {
         generateSummaries: boolean = false,
         requestHandlers: RuntimeRequestHandler[] = [],
     ): Promise<ContainerRuntime> {
-        const runtimeRequestHandler = new RuntimeRequestHandlerBuilder(
-            defaultComponentRuntimeRequestHandler,
-            ...requestHandlers,
-            componentRuntimeRequestHandler);
+        const runtimeRequestHandler = new RuntimeRequestHandlerBuilder();
+        runtimeRequestHandler.pushHandler(defaultComponentRuntimeRequestHandler);
+        runtimeRequestHandler.pushHandler(...requestHandlers);
+        runtimeRequestHandler.pushHandler(componentRuntimeRequestHandler);
 
         // debug(`instantiateRuntime(chaincode=${chaincode},registry=${JSON.stringify(registry)})`);
         const runtime = await ContainerRuntime.load(context, registry, runtimeRequestHandler.createRequestHandlerFn, { generateSummaries });

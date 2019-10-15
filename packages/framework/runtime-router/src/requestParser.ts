@@ -25,7 +25,7 @@ export class RequestParser implements IRequest {
     public get pathParts(): ReadonlyArray<string> {
         if (this.requestPathParts === undefined) {
             this.requestPathParts = this.request.url
-                .substring(this.queryStartIndex)
+                .substring(this.queryStartIndex < 0 ? 0 : this.queryStartIndex)
                 .split("/")
                 .reduce<string[]>(
                 (pv, cv) => {
@@ -40,8 +40,9 @@ export class RequestParser implements IRequest {
     }
 
     public createSubRequest(startingPathIndex: number): IRequest {
+        const query = this.queryStartIndex < 0 ? "" : this.url.slice(this.queryStartIndex);
         return {
-            url: this.pathParts.slice(startingPathIndex).join("/") + this.url.slice(this.queryStartIndex),
+            url: this.pathParts.slice(startingPathIndex).join("/") + query,
             headers: this.headers,
         };
     }

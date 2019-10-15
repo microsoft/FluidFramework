@@ -16,15 +16,12 @@ export type RuntimeRequestHandler = (request: RequestParser, runtime: IHostRunti
 export class RuntimeRequestHandlerBuilder {
     private readonly handlers: RuntimeRequestHandler[] = [];
     private runtime: IHostRuntime | undefined;
-    constructor(...handlers: RuntimeRequestHandler[]) {
-        this.addHandlers(...handlers);
-    }
 
     public get createRequestHandlerFn(): (runtime: IHostRuntime) => ((request: IRequest) => Promise<IResponse>) {
         return this.createRequestHandler.bind(this);
     }
 
-    public addHandlers(...handlers: RuntimeRequestHandler[]) {
+    public pushHandler(...handlers: RuntimeRequestHandler[]) {
         if (handlers !== undefined) {
             this.handlers.push(...handlers);
         }
