@@ -203,7 +203,7 @@ const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     return;
   }
 
-  const key = e.target.getAttribute("data-fluidmapkey");
+  const key = e.target.dataset.fluidmapkey;
   if (key !== null) {
     const toSet = props.puzzle.get<SudokuCell>(key);
     toSet.value = valueToSet;
