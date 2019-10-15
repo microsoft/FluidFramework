@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Heap, IComparer, IHeapNode, isSystemType, RangeTracker } from "@microsoft/fluid-core-utils";
+import { isSystemType, RangeTracker } from "@microsoft/fluid-core-utils";
 import {
     IBranchOrigin,
     IClientJoin,
@@ -33,9 +33,9 @@ import {
     SequencedOperationType,
 } from "@microsoft/fluid-server-services-core";
 import * as assert from "assert";
-import * as _ from "lodash";
 import * as winston from "winston";
-import { CheckpointContext, ICheckpoint, IClientSequenceNumber } from "./checkpointContext";
+import { CheckpointContext, ICheckpoint } from "./checkpointContext";
+import { ClientManager as ClientSequenceManager } from "./clientManager";
 
 enum SendType {
     Immediate,
@@ -58,19 +58,6 @@ export interface ITicketedMessageOutput {
     nacked: boolean;
 }
 
-const SequenceNumberComparer: IComparer<IClientSequenceNumber> = {
-    compare: (a, b) => a.referenceSequenceNumber - b.referenceSequenceNumber,
-    min: {
-        canEvict: true,
-        clientId: undefined,
-        clientSequenceNumber: 0,
-        lastUpdate: -1,
-        nack: false,
-        referenceSequenceNumber: -1,
-        scopes: [],
-    },
-};
-
 /**
  * Maps from a branch to a clientId stored in the MSN map
  */
@@ -83,8 +70,7 @@ export class DeliLambda implements IPartitionLambda {
     private logOffset: number;
 
     // Client sequence number mapping
-    private clientNodeMap = new Map<string, IHeapNode<IClientSequenceNumber>>();
-    private clientSeqNumbers = new Heap<IClientSequenceNumber>(SequenceNumberComparer);
+    private readonly clientSeqManager = new ClientSequenceManager();
     private minimumSequenceNumber = 0;
     private branchMap: RangeTracker;
     private checkpointContext: CheckpointContext;
@@ -111,7 +97,7 @@ export class DeliLambda implements IPartitionLambda {
         // Instantiate existing clients
         if (dbObject.clients) {
             for (const client of dbObject.clients) {
-                this.upsertClient(
+                this.clientSeqManager.upsertClient(
                     client.clientId,
                     client.clientSequenceNumber,
                     client.referenceSequenceNumber,
@@ -137,7 +123,7 @@ export class DeliLambda implements IPartitionLambda {
                 }
 
                 // Add in the client representing the parent
-                this.upsertClient(
+                this.clientSeqManager.upsertClient(
                     getBranchClientId(dbObject.parent.documentId),
                     dbObject.parent.sequenceNumber,
                     dbObject.parent.minimumSequenceNumber,
@@ -148,7 +134,7 @@ export class DeliLambda implements IPartitionLambda {
 
         // Initialize counting context
         this.sequenceNumber = dbObject.sequenceNumber;
-        const msn = this.getMinimumSequenceNumber();
+        const msn = this.clientSeqManager.getMinimumSequenceNumber();
         this.minimumSequenceNumber = msn === -1 ? this.sequenceNumber : msn;
 
         this.logOffset = dbObject.logOffset;
@@ -247,12 +233,12 @@ export class DeliLambda implements IPartitionLambda {
             if (!message.clientId) {
                 if (message.operation.type === MessageType.ClientLeave) {
                     // Return if the client has already been removed due to a prior leave message.
-                    if (!this.removeClient(systemContent)) {
+                    if (!this.clientSeqManager.removeClient(systemContent)) {
                         return;
                     }
                 } else if (message.operation.type === MessageType.ClientJoin) {
                     const clientJoinMessage = systemContent as IClientJoin;
-                    this.upsertClient(
+                    this.clientSeqManager.upsertClient(
                         clientJoinMessage.clientId,
                         0,
                         this.minimumSequenceNumber,
@@ -265,8 +251,8 @@ export class DeliLambda implements IPartitionLambda {
                 }
             } else {
                 // Nack inexistent client.
-                const node = this.clientNodeMap.get(message.clientId);
-                if (!node || node.value.nack) {
+                const client = this.clientSeqManager.get(message.clientId);
+                if (!client || client.nack) {
                     return this.createNackMessage(message);
                 }
                 // Verify that the message is within the current window.
@@ -274,7 +260,7 @@ export class DeliLambda implements IPartitionLambda {
                 if (message.clientId &&
                     message.operation.referenceSequenceNumber !== -1 &&
                     message.operation.referenceSequenceNumber < this.minimumSequenceNumber) {
-                    this.upsertClient(
+                    this.clientSeqManager.upsertClient(
                         message.clientId,
                         message.operation.clientSequenceNumber,
                         this.minimumSequenceNumber,
@@ -286,7 +272,7 @@ export class DeliLambda implements IPartitionLambda {
                 }
                 // Nack if an unauthorized client tries to summarize.
                 if (message.operation.type === MessageType.Summarize) {
-                    if (!canSummarize(node.value.scopes)) {
+                    if (!canSummarize(client.scopes)) {
                         return this.createNackMessage(message);
                     }
                 }
@@ -351,7 +337,7 @@ export class DeliLambda implements IPartitionLambda {
             systemContent = this.extractSystemContent(message);
 
             // Update the entry for the branch client
-            this.upsertClient(
+            this.clientSeqManager.upsertClient(
                 branchClientId,
                 branchDocumentMessage.sequenceNumber,
                 transformedMinSeqNumber,
@@ -374,7 +360,7 @@ export class DeliLambda implements IPartitionLambda {
                     message.operation.referenceSequenceNumber >= this.minimumSequenceNumber,
                     `${message.operation.referenceSequenceNumber} >= ${this.minimumSequenceNumber}`);
 
-                this.upsertClient(
+                this.clientSeqManager.upsertClient(
                     message.clientId,
                     message.operation.clientSequenceNumber,
                     message.operation.referenceSequenceNumber,
@@ -390,7 +376,7 @@ export class DeliLambda implements IPartitionLambda {
 
         // Store the previous minimum sequence number we returned and then update it. If there are no clients
         // then set the MSN to the next SN.
-        const msn = this.getMinimumSequenceNumber();
+        const msn = this.clientSeqManager.getMinimumSequenceNumber();
         if (msn === -1) {
             this.minimumSequenceNumber = sequenceNumber;
             this.noActiveClients = true;
@@ -511,16 +497,16 @@ export class DeliLambda implements IPartitionLambda {
         }
 
         // TODO second check is to maintain back compat - can remove after deployment
-        const node = this.clientNodeMap.get(clientId);
-        if (!node || (node.value.clientSequenceNumber === undefined)) {
+        const node = this.clientSeqManager.get(clientId);
+        if (!node || (node.clientSequenceNumber === undefined)) {
             return false;
         }
 
         // Perform duplicate detection on client IDs - Check that we have an increasing CID
         // For back compat ignore the 0/undefined message
-        if (clientSequenceNumber && (node.value.clientSequenceNumber + 1 !== clientSequenceNumber)) {
+        if (clientSequenceNumber && (node.clientSequenceNumber + 1 !== clientSequenceNumber)) {
             // tslint:disable-next-line:max-line-length
-            winston.info(`Duplicate ${node.value.clientId}:${node.value.clientSequenceNumber + 1} !== ${clientSequenceNumber}`);
+            winston.info(`Duplicate ${node.clientId}:${node.clientSequenceNumber + 1} !== ${clientSequenceNumber}`);
             return true;
         }
 
@@ -542,36 +528,20 @@ export class DeliLambda implements IPartitionLambda {
     // To prevent recurrent leave message sending, leave messages are only piggybacked with
     // other message type.
     private checkIdleClients(message: ITicketedMessageOutput) {
-        if (message.type !== MessageType.ClientLeave) {
-            const idleClient = this.getIdleClient(message.timestamp);
-            if (idleClient) {
-                const leaveMessage = this.createLeaveMessage(idleClient.clientId);
-                this.sendToAlfred(leaveMessage);
+        if (this.clientSeqManager.count() > 0) {
+            let client = this.clientSeqManager.peek();
+            while (client.referenceSequenceNumber !== undefined
+                && client.canEvict
+                && (message.timestamp - client.lastUpdate > this.clientTimeout)) {
+                this.clientSeqManager.updateClient(
+                    client.clientId,
+                    client.lastUpdate,
+                    client.clientSequenceNumber,
+                    undefined,
+                    client.nack);
+                client = this.clientSeqManager.peek();
             }
         }
-    }
-
-    /**
-     * Creates a leave message for inactive clients.
-     */
-    private createLeaveMessage(clientId: string): IRawOperationMessage {
-        const operation: IDocumentSystemMessage = {
-            clientSequenceNumber: -1,
-            contents: null,
-            data: JSON.stringify(clientId),
-            referenceSequenceNumber: -1,
-            traces: [],
-            type: MessageType.ClientLeave,
-        };
-        const leaveMessage: IRawOperationMessage = {
-            clientId: null,
-            documentId: this.documentId,
-            operation,
-            tenantId: this.tenantId,
-            timestamp: Date.now(),
-            type: RawOperationType,
-        };
-        return leaveMessage;
     }
 
     /**
@@ -632,14 +602,10 @@ export class DeliLambda implements IPartitionLambda {
      * Generates a checkpoint of the current ticketing state
      */
     private generateCheckpoint(): ICheckpoint {
-        const clients: IClientSequenceNumber[] = [];
-        for (const [, value] of this.clientNodeMap) {
-            clients.push(_.clone(value.value));
-        }
 
         return {
             branchMap: this.branchMap ? this.branchMap.serialize() : undefined,
-            clients,
+            clients: this.clientSeqManager.cloneValues(),
             logOffset: this.logOffset,
             sequenceNumber: this.sequenceNumber,
         };
@@ -655,102 +621,6 @@ export class DeliLambda implements IPartitionLambda {
     private transformBranchSequenceNumber(sequenceNumber: number): number {
         // -1 indicates an unused sequence number
         return sequenceNumber !== -1 ? this.branchMap.get(sequenceNumber) : -1;
-    }
-
-    /**
-     * Begins tracking or updates an already tracked client.
-     * @param clientId The client identifier
-     * @param clientSequenceNumber The sequence number generated by client
-     * @param referenceSequenceNumber The sequence number the client is at
-     * @param timestamp The time of the operation
-     * @param canEvict Flag indicating whether or not we can evict the client (branch clients cannot be evicted)
-     * @param scopes scope of the client
-     * @param nack Flag indicating whether we have nacked this client
-     */
-    private upsertClient(
-        clientId: string,
-        clientSequenceNumber: number,
-        referenceSequenceNumber: number,
-        timestamp: number,
-        canEvict: boolean,
-        scopes: string[] = [],
-        nack: boolean = false) {
-
-        // Add the client ID to our map if this is the first time we've seen it
-        if (!this.clientNodeMap.has(clientId)) {
-            const newNode = this.clientSeqNumbers.add({
-                canEvict,
-                clientId,
-                clientSequenceNumber,
-                lastUpdate: timestamp,
-                nack,
-                referenceSequenceNumber,
-                scopes,
-            });
-            this.clientNodeMap.set(clientId, newNode);
-        }
-
-        // And then update its values
-        this.updateClient(clientId, timestamp, clientSequenceNumber, referenceSequenceNumber, nack);
-    }
-
-    /**
-     * Removes the provided client from the list of tracked clients.
-     * Returns false if the client has been removed earlier.
-     */
-    private removeClient(clientId: string): boolean {
-        if (!this.clientNodeMap.has(clientId)) {
-            return false;
-        }
-
-        // Remove the client from the list of nodes
-        const details = this.clientNodeMap.get(clientId);
-        this.clientSeqNumbers.remove(details);
-        this.clientNodeMap.delete(clientId);
-        return true;
-    }
-
-    /**
-     * Updates the sequence number of the specified client
-     */
-    private updateClient(
-        clientId: string,
-        timestamp: number,
-        clientSequenceNumber: number,
-        referenceSequenceNumber: number,
-        nack: boolean) {
-
-        // Lookup the node and then update its value based on the message
-        const heapNode = this.clientNodeMap.get(clientId);
-        heapNode.value.referenceSequenceNumber = referenceSequenceNumber;
-        heapNode.value.clientSequenceNumber = clientSequenceNumber;
-        heapNode.value.lastUpdate = timestamp;
-        heapNode.value.nack = nack;
-        this.clientSeqNumbers.update(heapNode);
-    }
-
-    /**
-     * Retrieves the minimum sequence number.
-     */
-    private getMinimumSequenceNumber(): number {
-        if (this.clientSeqNumbers.count() > 0) {
-            const client = this.clientSeqNumbers.peek();
-            return client.value.referenceSequenceNumber;
-        } else {
-            return -1;
-        }
-    }
-
-    /**
-     * Get idle client.
-     */
-    private getIdleClient(timestamp: number): IClientSequenceNumber {
-        if (this.clientSeqNumbers.count() > 0) {
-            const client = this.clientSeqNumbers.peek();
-            if (client.value.canEvict && (timestamp - client.value.lastUpdate > this.clientTimeout)) {
-                return client.value;
-            }
-        }
     }
 
     private setIdleTimer() {
