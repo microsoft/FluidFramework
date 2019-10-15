@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IHostConfig, registerAttach } from "@microsoft/fluid-base-host";
+import { IHostConfig } from "@microsoft/fluid-base-host";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { IFluidCodeDetails, ILoader } from "@microsoft/fluid-container-definitions";
 import { Deferred } from "@microsoft/fluid-core-utils";
@@ -68,11 +68,6 @@ export class DocumentFactory {
     }
 }
 
-/*
- * Copyright (c) Microsoft Corporation. All rights reserved. Licensed under the MIT license.
- * See LICENSE in the project root for license information.
- */
-
 Office.onReady(info => {
   start(info);
 });
@@ -133,8 +128,7 @@ async function attach(loader: ILoader, url: string, div: HTMLDivElement) {
 
   const editor = (component as any).IRichTextEditor;
 
-  const messageCompose = Office.context.mailbox.item as Office.MessageCompose;
-  messageCompose.body.getAsync(
+  Office.context.document.getSelectedDataAsync(
     Office.CoercionType.Text,
     (result) => {
       editor.initializeValue(result.value);
@@ -142,7 +136,7 @@ async function attach(loader: ILoader, url: string, div: HTMLDivElement) {
       editor.on(
         "valueChanged",
         () => {
-          updateBody(messageCompose, editor.getValue());
+          updateBody(editor.getValue());
         })
     });
 }
@@ -150,7 +144,7 @@ async function attach(loader: ILoader, url: string, div: HTMLDivElement) {
 let pendingSet: boolean = false
 let pendingValue: string;
 
-function updateBody(messageCompose: Office.MessageCompose, newValue: string) {
+function updateBody(newValue: string) {
   if (pendingSet) {
     pendingValue = newValue;
     return;
@@ -159,16 +153,26 @@ function updateBody(messageCompose: Office.MessageCompose, newValue: string) {
   pendingSet = true;
   pendingValue = undefined;
 
-  messageCompose.body.setAsync(
-    newValue,
-    { coercionType: Office.CoercionType.Html },
+  const outerDiv = document.createElement("div");
+  outerDiv.innerHTML = newValue;
+  const justText = outerDiv.innerText;
+
+  /**
+   * Insert your PowerPoint code here
+   */
+  Office.context.document.setSelectedDataAsync(
+    justText,
+    {
+      coercionType: Office.CoercionType.Text
+    },
     () => {
       pendingSet = false;
 
       if (pendingValue) {
-        updateBody(messageCompose, pendingValue);
+        updateBody(pendingValue);
       }
-    });
+    }
+  );
 }
 
 export async function run(loader: Loader, documentFactory: DocumentFactory, inOffice = false) {
