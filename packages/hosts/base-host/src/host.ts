@@ -18,13 +18,28 @@ import {
 import { IResolvedPackage, WebCodeLoader, WhiteList } from "@microsoft/fluid-web-code-loader";
 import { IHostConfig } from "./hostConfig";
 
+/**
+ * Interface to provide the info about the session.
+ */
 export interface IPrivateSessionInfo {
+    /**
+     * Whether the session is outer session or not.
+     */
     outerSession?: boolean;
 
+    /**
+     * Whether the session is inner session or not.
+     */
     innerSession?: boolean;
 
+    /**
+     * IFrame in which the inner session is loaded.
+     */
     frameP?: Promise<HTMLIFrameElement>;
 
+    /**
+     * Request to be resolved.
+     */
     request?: IRequest;
 }
 
@@ -88,6 +103,16 @@ export async function registerAttach(loader: Loader, container: Container, uri: 
     });
 }
 
+/**
+ * Create a loader and return it.
+ * @param resolved - A resolved package with cdn links. Overrides a query paramter.
+ * @param pkg - A resolved package with cdn links. Overrides a query paramter.
+ * @param scriptIds - The script tags the chaincode are attached to the view with.
+ * @param config - Any config to be provided to loader.
+ * @param scope - Scope of the component.
+ * @param hostConf - Config specifying the resolver/factory to be used.
+ * @param whiteList - functionality to check the validity of code to be loaded.
+ */
 export function createWebLoader(
     resolved: IResolvedUrl,
     pkg: IResolvedPackage,
@@ -130,6 +155,18 @@ export function createWebLoader(
         scope);
 }
 
+/**
+ * Function to load the container from the given url and initialize the chaincode.
+ * @param url - Url of the Fluid component to be loaded.
+ * @param resolved - A resolved package with cdn links. Overrides a query paramter.
+ * @param pkg - A resolved package with cdn links. Overrides a query paramter.
+ * @param scriptIds - The script tags the chaincode are attached to the view with.
+ * @param npm - path from where the packages can be fetched.
+ * @param config - Any config to be provided to loader.
+ * @param scope - Scope of the component.
+ * @param div - The div to load the component into.
+ * @param hostConf - Config specifying the resolver/factory to be used.
+ */
 export async function start(
     url: string,
     resolved: IResolvedUrl,
