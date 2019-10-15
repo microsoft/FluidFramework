@@ -306,8 +306,8 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
         assert(!this.summarizing && !this.summaryPending);
 
         if (this.onBehalfOfClientId !== this.runtime.summarizerClientId) {
-            // we are no longer the summarizer, we should close ourself
-            this.stop("parent is no longer summarizer");
+            // we are no longer the summarizer, we should stop ourself
+            this.stop("parentNoLongerSummarizer");
             return;
         }
 
