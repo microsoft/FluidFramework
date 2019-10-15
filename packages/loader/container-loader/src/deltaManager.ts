@@ -81,9 +81,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
     private inQuorum = false;
 
-    // Flag indicating whether or not we need to update the reference sequence number
-    private updateHasBeenRequested = false;
-    private updateSequenceNumberTimer: any;
+    private updateSequenceNumberTimer: NodeJS.Timeout | undefined;
 
     // The minimum sequence number and last sequence number received from the server
     private minSequenceNumber: number = 0;
@@ -876,10 +874,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                     // correctly update the minimum sequence number (MSN). We don't acknowledge other message types
                     // similarly (like a min sequence number update) to avoid acknowledgement cycles (i.e. ack the MSN
                     // update, which updates the MSN, then ack the update, etc...).
-                    if (message.type === MessageType.Operation ||
-                      message.type === MessageType.Propose) {
-                      this.updateSequenceNumber(message.type);
-                    }
+                    this.updateSequenceNumber(message.type);
 
                     const endTime = Date.now();
                     this.emit("processTime", endTime - startTime);
@@ -997,46 +992,37 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     /**
      * Acks the server to update the reference sequence number
      */
-    private updateSequenceNumber(type: MessageType): void {
+    private updateSequenceNumber(type: string): void {
         // Exit early for inactive clients. They don't take part in the minimum sequence number calculation.
         if (!this.active) {
             return;
         }
 
-        // On a quorum proposal, immediately send a response to expedite the approval.
-        if (type === MessageType.Propose) {
-            this.submit(MessageType.NoOp, ImmediateNoOpResponse);
-            return;
+        switch (type as MessageType) {
+            case MessageType.Propose:
+                // On a quorum proposal, immediately send a response to expedite the approval.
+                this.stopSequenceNumberUpdate();
+                this.submit(MessageType.NoOp, ImmediateNoOpResponse);
+                return;
+
+            case MessageType.NoOp:
+                return;
+
+            default:
+                if (this.updateSequenceNumberTimer === undefined) {
+                    // Clear an update in 100 ms
+                    this.updateSequenceNumberTimer = setTimeout(() => {
+                        this.updateSequenceNumberTimer = undefined;
+                        this.submit(MessageType.NoOp, null);
+                    }, 100);
+                }
         }
-
-        // If an update has already been requested then mark this fact. We will wait until no updates have
-        // been requested before sending the updated sequence number.
-        if (this.updateSequenceNumberTimer) {
-            this.updateHasBeenRequested = true;
-            return;
-        }
-
-        // Clear an update in 100 ms
-        this.updateSequenceNumberTimer = setTimeout(() => {
-            this.updateSequenceNumberTimer = undefined;
-
-            // If a second update wasn't requested then send an update message. Otherwise defer this until we
-            // stop processing new messages.
-            if (!this.updateHasBeenRequested) {
-                this.submit(MessageType.NoOp, null);
-            } else {
-                this.updateHasBeenRequested = false;
-                this.updateSequenceNumber(type);
-            }
-        }, 100);
     }
 
     private stopSequenceNumberUpdate(): void {
         if (this.updateSequenceNumberTimer) {
             clearTimeout(this.updateSequenceNumberTimer);
         }
-
-        this.updateHasBeenRequested = false;
         this.updateSequenceNumberTimer = undefined;
     }
 }
