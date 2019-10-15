@@ -35,7 +35,7 @@ import {
 import * as assert from "assert";
 import * as winston from "winston";
 import { CheckpointContext, ICheckpoint } from "./checkpointContext";
-import { ClientManager as ClientSequenceManager } from "./clientManager";
+import { ClientSequenceNumberManager } from "./clientManager";
 
 enum SendType {
     Immediate,
@@ -70,7 +70,7 @@ export class DeliLambda implements IPartitionLambda {
     private logOffset: number;
 
     // Client sequence number mapping
-    private readonly clientSeqManager = new ClientSequenceManager();
+    private readonly clientSeqManager = new ClientSequenceNumberManager();
     private minimumSequenceNumber = 0;
     private branchMap: RangeTracker;
     private checkpointContext: CheckpointContext;

@@ -32,7 +32,7 @@ const SequenceNumberComparer: IComparer<IClientSequenceNumber> = {
     },
 };
 
-export class ClientManager {
+export class ClientSequenceNumberManager {
     private clientNodeMap = new Map<string, IHeapNode<IClientSequenceNumber>>();
     private clientSeqNumbers = new Heap<IClientSequenceNumber>(SequenceNumberComparer);
 
