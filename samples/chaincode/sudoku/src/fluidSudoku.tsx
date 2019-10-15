@@ -10,7 +10,6 @@ import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { loadPuzzle } from "./helpers/puzzles";
-import { SudokuCell } from "./helpers/sudokuCell";
 import { SudokuView } from "./react/sudokuView";
 
 import "./helpers/styles.css";
@@ -40,6 +39,8 @@ export class FluidSudoku extends PrimedComponent implements IComponentHTMLVisual
         return this.factory;
     }
 
+    private domElement: HTMLElement | undefined;
+    private readonly sudokuMapKey = "sudoku-map";
     private puzzle: ISharedMap | undefined;
 
     /**
@@ -48,10 +49,14 @@ export class FluidSudoku extends PrimedComponent implements IComponentHTMLVisual
      * user will see the component.
      */
     protected async componentInitializingFirstTime() {
-        const puzzle = SharedMap.create(this.runtime);
-        loadPuzzle(0, puzzle);
+        // Create a new map for our Sudoku data
+        const map = SharedMap.create(this.runtime);
 
-        this.root.set("puzzle", puzzle.handle);
+        // Populate it with some puzzle data
+        loadPuzzle(0, map);
+
+        // Store the new map under the sudokuMapKey key in the root SharedDirectory
+        this.root.set(this.sudokuMapKey, map.handle);
     }
 
     /**
@@ -66,8 +71,15 @@ export class FluidSudoku extends PrimedComponent implements IComponentHTMLVisual
         // synchronous call to get the IComponentHandle, then an asynchronous call to get the ISharedMap from the
         // handle.
         this.puzzle = await this.root
-            .get<IComponentHandle>("puzzle")
+            .get<IComponentHandle>(this.sudokuMapKey)
             .get<ISharedMap>();
+
+        // Since we're using a Fluid distributed data structure to store our Sudoku data, we need to render whenever a
+        // value in our map changes. Recall that distributed data structures can be changed by both local and remote
+        // clients, so if we don't call render here, then our UI will not update when remote clients change data.
+        this.puzzle.on("valueChanged", (changed, local, op) => {
+            this.rerender();
+        });
     }
 
     public createJSXElement(props?): JSX.Element {
@@ -78,30 +90,16 @@ export class FluidSudoku extends PrimedComponent implements IComponentHTMLVisual
         }
     }
 
-    /**
-     * This method is called automatically by the Fluid runtime.
-     */
-    public render(div: HTMLElement) {
-        const rerender = () => {
-            console.log("rerender!");
-            if (this.puzzle) {
-                ReactDOM.render(this.createJSXElement(), div);
-            }
-        };
-
-        rerender();
-
-        if (this.puzzle) {
-            this.puzzle.on("valueChanged", (changed, local, op) => {
-                const prev = changed.previousValue as SudokuCell;
-                console.log(`local: ${local} | op: ${JSON.stringify(op)}`);
-                if (this.puzzle) {
-                    console.log(`${local ? "Local" : "Remote"} valueChanged: ${changed.key} ==> ${
-                        JSON.stringify(this.puzzle.get<SudokuCell>(changed.key))} :: was ${
-                        JSON.stringify(prev)})`);
-                    rerender();
-                }
-            });
+    private rerender(): void {
+        if (this.domElement) {
+            ReactDOM.render(
+                this.createJSXElement(),
+                this.domElement);
         }
+    }
+
+    public render(element: HTMLElement): void {
+        this.domElement = element;
+        this.rerender();
     }
 }

@@ -9,10 +9,17 @@ import { Coordinate, CoordinateString } from "../helpers/coordinate";
 import { loadPuzzle, PUZZLE_INDEXES } from "../helpers/puzzles";
 import { CellState, SudokuCell } from "../helpers/sudokuCell";
 
+/**
+ * Props for the SudokuView React component.
+ */
 export interface ISudokuViewProps {
     puzzle: ISharedMap;
 }
 
+/**
+ * Renders a Sudoku grid and UI for resetting/loading puzzles and changing the theme.
+ * @param props - Props for the component
+ */
 export function SudokuView(props: ISudokuViewProps) {
     const [theme, setTheme] = React.useState("default");
     const handleResetButton = (
@@ -37,17 +44,18 @@ export function SudokuView(props: ISudokuViewProps) {
     ) => {
         loadPuzzle(1, props.puzzle);
     };
+
     // tslint:disable: react-a11y-no-onchange
     return (
         <div className={`sudoku ${theme}`}>
             <div className="sudoku-wrapper">
-                <SimpleTable puzzle={props.puzzle} />
+                <SimpleTable {...props} />
                 <div className="sudoku-buttons">
                     <span className="sudoku-theme-select">
                         <label htmlFor="theme-select">Theme: </label>
                         <select
                             value={theme}
-                            onChange={onChange}
+                            onChange={onThemeChange}
                             id="theme-select"
                             name="theme"
                         >
@@ -80,7 +88,7 @@ export function SudokuView(props: ISudokuViewProps) {
         </div>
     );
 
-    function onChange(e) {
+    function onThemeChange(e) {
         setTheme(e.target.value);
     }
 }
@@ -89,9 +97,12 @@ function SimpleTable(props: ISudokuViewProps) {
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         let valueToSet = Number(e.target.value);
         valueToSet = Number.isNaN(valueToSet) ? 0 : valueToSet;
+        if (valueToSet >= 10 || valueToSet < 0) {
+            return;
+        }
+
         const key = e.target.getAttribute("data-fluidmapkey");
         if (key !== null) {
-            // const [row, col] = Coordinate.asArrayNumbers(key);
             const toSet = props.puzzle.get<SudokuCell>(key);
             toSet.value = valueToSet;
             toSet.isCorrect = valueToSet === toSet.correctValue;
@@ -157,6 +168,7 @@ function getCellBorderStyles(coord: CoordinateString): React.CSSProperties {
         borderBottom: "none",
         borderLeft: "none",
         borderRight: "none",
+        borderColor: "var(--neutralPrimaryAlt)",
     };
     const [row, col] = Coordinate.asArrayNumbers(coord);
 
