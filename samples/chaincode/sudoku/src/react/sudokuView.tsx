@@ -101,8 +101,8 @@ function SimpleTable(props: ISudokuViewProps) {
             return;
         }
 
-        const key = e.target.getAttribute("data-fluidmapkey");
-        if (key !== null) {
+        const key = e.target.dataset.cellCoordinate;
+        if (key !== undefined) {
             const toSet = props.puzzle.get<SudokuCell>(key);
             toSet.value = valueToSet;
             toSet.isCorrect = valueToSet === toSet.correctValue;
@@ -141,7 +141,7 @@ function SimpleTable(props: ISudokuViewProps) {
                             onChange={handleChange}
                             value={SudokuCell.getDisplayString(currentCell)}
                             disabled={disabled}
-                            data-fluidmapkey={coord}
+                            data-cellCoordinate={coord}
                         />
                     </td>
                 );
