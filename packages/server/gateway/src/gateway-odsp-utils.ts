@@ -3,34 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { OdspUrlResolver } from "@microsoft/fluid-odsp-driver";
-import { getDriveItemByFileName, IClientConfig, IODSPTokens } from "@microsoft/fluid-odsp-utils";
-import { IFluidResolvedUrl } from "@microsoft/fluid-protocol-definitions";
+import {
+    getSpoPushServer,
+    getSpoServer,
+    isSpoPushServer,
+    isSpoServer,
+    isSpoTenant,
+} from "@fluid-example/tiny-web-host";
 import { URL } from "url";
-
-const spoTenants = new Map<string, string>([
-    ["spo", "microsoft-my.sharepoint.com"],
-    ["spo-df", "microsoft-my.sharepoint-df.com"],
-]);
-
-const pushSrv = "pushchannel.1drv.ms";
-
-export function isSpoTenant(tenantId: string) {
-    return spoTenants.has(tenantId);
-}
-
-function isSpoServer(server: string) {
-    for (const item of spoTenants.values()) {
-        if (item === server) {
-            return true;
-        }
-    }
-    return false;
-}
-
-function getSpoServer(tenantId: string) {
-    return spoTenants.get(tenantId);
-}
 
 export function saveSpoTokens(req, params, accessToken: string, refreshToken: string) {
     if (!req.session.tokens) {
@@ -38,7 +18,7 @@ export function saveSpoTokens(req, params, accessToken: string, refreshToken: st
     }
     try {
         const url = new URL(params.scope);
-        if (url.protocol === "https:" && (isSpoServer(url.hostname) || url.hostname === pushSrv)) {
+        if (url.protocol === "https:" && (isSpoServer(url.hostname) || isSpoPushServer(url.hostname))) {
             req.session.tokens[url.hostname] = { accessToken, refreshToken };
         }
     } catch (e) {
@@ -60,47 +40,11 @@ export function spoEnsureLoggedIn() {
                 return res.redirect(`/login_${req.params.tenantId}`);
             }
 
-            if (!req.session.tokens[pushSrv]) {
+            if (!req.session.tokens[getSpoPushServer()]) {
                 req.session.returnTo = req.originalUrl || req.url;
                 return res.redirect(`/login_pushsrv`);
             }
         }
         next();
     };
-}
-
-export async function spoGetResolvedUrl(
-    tenantId: string,
-    id: string,
-    serverTokens: { [server: string]: IODSPTokens } | undefined,
-    clientConfig: IClientConfig) {
-
-    const server = getSpoServer(tenantId);
-    if (server === undefined) {
-        return Promise.reject(`Invalid SPO tenantId ${tenantId}`);
-    }
-    const tokens = serverTokens ? serverTokens[server] : undefined;
-    if (tokens === undefined) {
-        return Promise.reject(`Missing tokens for ${server}`);
-    }
-    const socketTokens = serverTokens ? serverTokens[pushSrv] : undefined;
-    if (socketTokens === undefined) {
-        return Promise.reject(`Missing tokens for ${pushSrv}`);
-    }
-    // Only .b items can be fluid
-    const encoded = encodeURIComponent(`${id}.b`);
-
-    const filePath = `/r11s/${encoded}`;
-    const { drive, item } = await getDriveItemByFileName(server, "", filePath, clientConfig, tokens, true);
-    const odspUrlResolver = new OdspUrlResolver();
-    // TODO: pass path
-    const path = "";
-    // tslint:disable-next-line: max-line-length
-    const request = {url: `https://${server}/?driveId=${encodeURIComponent(drive)}&itemId=${encodeURIComponent(item)}&path=${encodeURIComponent(path)}`};
-    const resolved = await odspUrlResolver.resolve(request) as IFluidResolvedUrl;
-    // For now pass the token via the resolved url, so that we can fake the token call back for the driver.
-    resolved.tokens.storageToken = tokens.accessToken;
-    resolved.tokens.socketToken = socketTokens.accessToken;
-
-    return resolved;
 }
