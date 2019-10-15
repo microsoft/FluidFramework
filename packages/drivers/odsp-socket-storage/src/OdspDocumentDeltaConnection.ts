@@ -19,7 +19,6 @@ const protocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
 interface ISocketReference {
     socket: SocketIOClient.Socket | undefined;
     references: number;
-    pendingConnect?: Promise<IConnected>;
 }
 
 /**
@@ -56,15 +55,6 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
             throw new Error(`Invalid socket for key "${socketReferenceKey}`);
         }
 
-        if (socketReference.pendingConnect) {
-            // another connection is in progress. wait for it to finish
-            try {
-                await socketReference.pendingConnect;
-            } catch (ex) {
-                // ignore any error from it
-            }
-        }
-
         const connectMessage: IConnect = {
             client,
             id,
@@ -74,7 +64,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
             versions: protocolVersions,
         };
 
-        socketReference.pendingConnect = new Promise<IConnected>((resolve, reject) => {
+        const connection = await new Promise<IConnected>((resolve, reject) => {
             let cleanupListeners: () => void;
 
             const {
@@ -126,9 +116,6 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
 
             socket.emit("connect_document", connectMessage);
         });
-
-        const connection = await socketReference.pendingConnect;
-        socketReference.pendingConnect = undefined;
 
         return new OdspDocumentDeltaConnection(socket, id, connection, socketReferenceKey);
     }
