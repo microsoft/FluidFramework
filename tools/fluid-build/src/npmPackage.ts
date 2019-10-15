@@ -84,8 +84,8 @@ export class Package {
 
     public readonly packageJson: Readonly<IPackage>;
     private readonly packageId = Package.packageCount++;
-
-    public markForBuild = false;
+    private _matched: boolean = false;
+    private _markForBuild: boolean = false;
 
     constructor(private readonly packageJsonFileName: string) {
         this.packageJson = require(packageJsonFileName);
@@ -102,6 +102,23 @@ export class Package {
 
     public get version(): string {
         return this.packageJson.version;
+    }
+
+    public get matched() {
+        return this._matched;
+    }
+
+    public setMatched() {
+        this._matched = true;
+        this._markForBuild = true;
+    }
+
+    public get markForBuild() {
+        return this._markForBuild;
+    }
+
+    public setMarkForBuild() {
+        this._markForBuild = true;
     }
 
     public get dependencies() {

@@ -13,9 +13,9 @@ export function logVerbose(msg: string) {
 }
 
 export function logStatus(msg: string) {
-    if (!options.logtime) { 
-        console.log(msg); 
-        return; 
+    if (!options.logtime) {
+        console.log(msg);
+        return;
     }
     const date = new Date();
     let hours = date.getHours().toString();
