@@ -526,7 +526,7 @@ export class DeliLambda implements IPartitionLambda {
 
     // Check if there are any old/idle clients, and clear their
     // reference sequence numbers so they don't hold back the
-    // collab window. If the next message they send in caught up
+    // collab window. If the next message they send is caught up
     // we will reset their reference sequence number, otherwise
     // they will be nacked.
     private clearIdleClientsRefSeq(message: ITicketedMessageOutput) {
