@@ -79,7 +79,7 @@ body {
 
 .sudoku {
     height: 100vh;
-    display: flex;
+    display: inline-block;
     justify-content: center;
     padding-top: 20px;
     background: var(--sudoku-bg);
@@ -168,11 +168,21 @@ body {
     font-family: Segoe UI Semibold;
 }
 
-.sudoku-input:focus {
-    border-color: var(--sudoku-input-border-color-focus);
+.sudoku-input:focus,
+.sudoku-input.presence {
     outline: none;
-    background: var(--sudoku-input-bg-focus);
-    color: var(--sudoku-input-fg-focus);
     box-shadow: 0 3.2px 7.2px 0 rgba(0, 0, 0, 0.132),
         0 0.6px 1.8px 0 rgba(0, 0, 0, 0.108);
+}
+
+.sudoku-input:focus {
+    border-color: var(--sudoku-input-border-color-focus);
+    background: var(--sudoku-input-bg-focus);
+    color: var(--sudoku-input-fg-focus);
+}
+
+.sudoku-input.presence {
+    --sudoku-input-bg: #edebe9;
+    --sudoku-input-fg: #323130;
+    --sudoku-input-border-color: #3b3a39;
 }

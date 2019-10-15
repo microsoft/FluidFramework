@@ -1,72 +1,72 @@
 {
-  "name": "@fluid-example/sudoku",
-  "description": "Fluid Sudoku",
-  "version": "0.10.5",
-  "author": "Microsoft",
-  "repository": "microsoft/FluidFramework",
-  "main": "dist/index.js",
-  "module": "lib/index.js",
-  "types": "dist/index.d.ts",
-  "scripts": {
-    "build": "npm run clean && npm run webpack && npm run tsc",
-    "build:esnext": "tsc --project ./tsconfig.esnext.json",
-    "clean": "rimraf dist/**",
-    "tslint": "tslint --project tsconfig.json --format verbose",
-    "dev": "npm run webpack:dev",
-    "start": "webpack-dev-server --config webpack.config.js --package package.json",
-    "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
-    "start:local": "webpack-dev-server --config webpack.config.js --package package.json --env.mode local",
-    "verdaccio": "npm publish --registry https://packages.wu2.prague.office-int.com",
-    "deploy": "npm run build && npm version patch && npm run verdaccio && npm run post-deploy",
-    "post-deploy": "getUrl -p",
-    "tsc": "tsc",
-    "webpack": "webpack --env.production",
-    "webpack:dev": "webpack --env.development"
-  },
-  "devDependencies": {
-    "@microsoft/fluid-build-common": "^0.10.14582",
-    "@microsoft/fluid-webpack-component-loader": "^0.11.0",
-    "@prague/url-generator": "^1.0.4",
-    "@types/node": "^10.14.6",
-    "@types/react-dom": "^16.0.11",
-    "@types/sudokus": "^1.0.0",
-    "copy-webpack-plugin": "^5.0.4",
-    "css-loader": "^3.2.0",
-    "prettier": "^1.18.2",
-    "rimraf": "^3.0.0",
-    "style-loader": "^1.0.0",
-    "ts-loader": "^6.1.2",
-    "tslint": "^5.20.0",
-    "tslint-config-prettier": "^1.18.0",
-    "tslint-microsoft-contrib": "^6.2.0",
-    "typescript": "~3.4.5",
-    "webpack": "4.16.5",
-    "webpack-cli": "3.1.0",
-    "webpack-dev-server": "^3.8.0",
-    "webpack-merge": "4.1.4"
-  },
-  "fluid": {
-    "browser": {
-      "umd": {
-        "files": [
-          "dist/main.bundle.js"
-        ],
-        "library": "main"
-      }
+    "name": "@fluid-example/sudoku",
+    "description": "Fluid Sudoku",
+    "version": "0.10.5",
+    "author": "Microsoft",
+    "repository": "microsoft/FluidFramework",
+    "license": "MIT",
+    "main": "dist/index.js",
+    "module": "lib/index.js",
+    "types": "dist/index.d.ts",
+    "scripts": {
+        "build": "npm run clean && npm run webpack && npm run tsc",
+        "build:esnext": "tsc --project ./tsconfig.esnext.json",
+        "clean": "rimraf dist/**",
+        "tslint": "tslint --project tsconfig.json --format verbose",
+        "dev": "npm run webpack:dev",
+        "start": "npm run start:local",
+        "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
+        "start:local": "webpack-dev-server --config webpack.config.js --package package.json --env.mode local",
+        "verdaccio": "npm publish --registry https://packages.wu2.prague.office-int.com",
+        "deploy": "npm run build && npm version patch && npm run verdaccio && npm run post-deploy",
+        "post-deploy": "getUrl -p",
+        "tsc": "tsc",
+        "webpack": "webpack --env.production",
+        "webpack:dev": "webpack --env.development"
+    },
+    "dependencies": {
+        "@microsoft/fluid-aqueduct": "^0.10.14582",
+        "@microsoft/fluid-aqueduct-react": "^0.10.14582",
+        "@microsoft/fluid-component-core-interfaces": "^0.10.14582",
+        "@microsoft/fluid-component-runtime": "^0.10.14582",
+        "@microsoft/fluid-container-definitions": "^0.10.14582",
+        "@microsoft/fluid-map": "^0.10.14582",
+        "@microsoft/fluid-runtime-definitions": "^0.10.14582",
+        "@microsoft/fluid-shared-object-base": "^0.10.14582",
+        "react": "^16.10.2",
+        "react-dom": "^16.10.2",
+        "sudokus": "^1.0.2"
+    },
+    "devDependencies": {
+        "@microsoft/fluid-build-common": "^0.10.14582",
+        "@microsoft/fluid-webpack-component-loader": "^0.11.0",
+        "@prague/url-generator": "^1.0.4",
+        "@types/node": "^10.14.6",
+        "@types/react-dom": "^16.0.11",
+        "@types/sudokus": "^1.0.0",
+        "copy-webpack-plugin": "^5.0.4",
+        "css-loader": "^3.2.0",
+        "prettier": "^1.18.2",
+        "rimraf": "^3.0.0",
+        "style-loader": "^1.0.0",
+        "ts-loader": "^6.1.2",
+        "tslint": "^5.20.0",
+        "tslint-config-prettier": "^1.18.0",
+        "tslint-microsoft-contrib": "^6.2.0",
+        "typescript": "~3.4.5",
+        "webpack": "4.16.5",
+        "webpack-cli": "3.1.0",
+        "webpack-dev-server": "^3.8.0",
+        "webpack-merge": "4.1.4"
+    },
+    "fluid": {
+        "browser": {
+            "umd": {
+                "files": [
+                    "dist/main.bundle.js"
+                ],
+                "library": "main"
+            }
+        }
     }
-  },
-  "dependencies": {
-    "@microsoft/fluid-aqueduct": "^0.10.14582",
-    "@microsoft/fluid-aqueduct-react": "^0.10.14582",
-    "@microsoft/fluid-component-core-interfaces": "^0.10.14582",
-    "@microsoft/fluid-component-runtime": "^0.10.14582",
-    "@microsoft/fluid-container-definitions": "^0.10.14582",
-    "@microsoft/fluid-map": "^0.10.14582",
-    "@microsoft/fluid-runtime-definitions": "^0.10.14582",
-    "@microsoft/fluid-shared-object-base": "^0.10.14582",
-    "react": "^16.10.1",
-    "react-dom": "^16.8.3",
-    "sudokus": "^1.0.2"
-  },
-  "license": "MIT"
 }
