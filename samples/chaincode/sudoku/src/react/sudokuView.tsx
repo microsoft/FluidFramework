@@ -101,7 +101,8 @@ function SimpleTable(props: ISudokuViewProps) {
             return;
         }
 
-        const key = e.target.dataset.cellCoordinate;
+        // tslint:disable-next-line: no-string-literal
+        const key = e.target.dataset["cellcoordinate"];
         if (key !== undefined) {
             const toSet = props.puzzle.get<SudokuCell>(key);
             toSet.value = valueToSet;
@@ -141,7 +142,7 @@ function SimpleTable(props: ISudokuViewProps) {
                             onChange={handleChange}
                             value={SudokuCell.getDisplayString(currentCell)}
                             disabled={disabled}
-                            data-cellCoordinate={coord}
+                            data-cellcoordinate={coord}
                         />
                     </td>
                 );
