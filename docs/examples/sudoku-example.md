@@ -20,13 +20,12 @@ Keller (<https://github.com/ffflorian>).
 1. Use the commands below to clone the lab repository:
 
     ```shell
-    $ git clone https://cfyucwwsvf4tpvmuo4nszgxivuqfjgf35o3tnsrbt6csxnoqrrrq@sharkstooth.visualstudio.com/DefaultCollection/Fluid%20Dev%20Kitchen/_git/sudoku-mfx
-    $ cd sudoku-mfx
-    $ git checkout lab2
+    $ git clone https://cfyucwwsvf4tpvmuo4nszgxivuqfjgf35o3tnsrbt6csxnoqrrrq@sharkstooth.visualstudio.com/DefaultCollection/Fluid%20Dev%20Kitchen/_git/dev-kitchen
+    $ cd dev-kitchen
     ```
 
 1. Run `npm install` in the root of the repository to install dependencies.
-1. Open the resulting folder in VS Code.
+1. Open the `dev-kitchen` folder in VS Code.
 
 ## Folder layout
 
@@ -401,6 +400,10 @@ As users click in and out of cells, you need to update the presence map.
         this.render();
     });
     ```
+
+## Testing the changes
+
+Now you can build and upload your updated Sudoku component to the SharePoint app catalog for testing.
 
 <!-- Links -->
 [IComponentHTMLVisual]: xref:@microsoft/fluid-component-core-interfaces!IComponentHTMLVisual:interface
