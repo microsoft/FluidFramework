@@ -10,7 +10,7 @@ import { BuildResult, BuildPackage, summarizeBuildResult } from "../../buildGrap
 import { logStatus, logVerbose } from "../../common/logging";
 import { options } from "../../options";
 import { Task, TaskExec } from "../task";
-import { getExecutableFromCommand, writeFileAsync, unlinkAsync, readFileAsync, execAsync, existsSync } from "../../common/utils";
+import { getExecutableFromCommand, writeFileAsync, unlinkAsync, readFileAsync, execAsync, existsSync, ExecAsyncResult } from "../../common/utils";
 import chalk from "chalk";
 
 export abstract class LeafTask extends Task {
@@ -69,37 +69,32 @@ export abstract class LeafTask extends Task {
 
         if (ret.error) {
             console.error(`${this.node.pkg.nameColored}: error during command ${this.command}`)
-            let errorMessages = ret.stdout;
-            if (ret.stderr) {
-                errorMessages = `${errorMessages}\n${ret.stderr}`;
-            }
-            errorMessages = errorMessages.trim();
-            if (options.vscode) {
-                errorMessages = this.getVsCodeErrorMessages(errorMessages);
-            } else {
-                errorMessages = errorMessages.replace(/\n/g, `\n${this.node.pkg.nameColored}: `);
-                errorMessages = `${this.node.pkg.nameColored}: ${errorMessages}`;
-            }
-            console.error(errorMessages);
+            console.error(this.getExecErrors(ret));
             return this.execDone(startTime, BuildResult.Failed);
-        } else if (ret.stderr) {
+        } 
+        if (ret.stderr) {
+            // no error code but still error messages, treat them is non fatal warnings
             console.warn(`${this.node.pkg.nameColored}: warning during command ${this.command}`);
-            let errorMessages = ret.stdout;
-            if (ret.stderr) {
-                errorMessages = `${errorMessages}\n${ret.stderr}`;
-            }
-            errorMessages = errorMessages.trim();
-            if (options.vscode) {
-                errorMessages = this.getVsCodeErrorMessages(errorMessages);
-            } else {
-                errorMessages = errorMessages.replace(/\n/g, `\n${this.node.pkg.nameColored}: `);
-                errorMessages = `${this.node.pkg.nameColored}: ${errorMessages}`;
-            }
-            console.warn(errorMessages);
+            console.warn(this.getExecErrors(ret));
         }
 
         await this.markExecDone();
         return this.execDone(startTime, BuildResult.Success);
+    }
+
+    private getExecErrors(ret: ExecAsyncResult) {
+        let errorMessages = ret.stdout;
+        if (ret.stderr) {
+            errorMessages = `${errorMessages}\n${ret.stderr}`;
+        }
+        errorMessages = errorMessages.trim();
+        if (options.vscode) {
+            errorMessages = this.getVsCodeErrorMessages(errorMessages);
+        } else {
+            errorMessages = errorMessages.replace(/\n/g, `\n${this.node.pkg.nameColored}: `);
+            errorMessages = `${this.node.pkg.nameColored}: ${errorMessages}`;
+        }
+        return errorMessages;
     }
 
     private execDone(startTime: number, status: BuildResult) {
