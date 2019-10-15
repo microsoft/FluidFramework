@@ -163,7 +163,7 @@ export class DeliLambda implements IPartitionLambda {
 
             if (!ticketedMessage.nacked) {
                 // Check for idle clients.
-                this.checkIdleClients(ticketedMessage);
+                this.clearIdleClientsRefSeq(ticketedMessage);
 
                 // Check for document inactivity.
                 if (ticketedMessage.type !== MessageType.NoClient && this.noActiveClients) {
@@ -497,16 +497,16 @@ export class DeliLambda implements IPartitionLambda {
         }
 
         // TODO second check is to maintain back compat - can remove after deployment
-        const node = this.clientSeqManager.get(clientId);
-        if (!node || (node.clientSequenceNumber === undefined)) {
+        const client = this.clientSeqManager.get(clientId);
+        if (!client || (client.clientSequenceNumber === undefined)) {
             return false;
         }
 
         // Perform duplicate detection on client IDs - Check that we have an increasing CID
         // For back compat ignore the 0/undefined message
-        if (clientSequenceNumber && (node.clientSequenceNumber + 1 !== clientSequenceNumber)) {
+        if (clientSequenceNumber && (client.clientSequenceNumber + 1 !== clientSequenceNumber)) {
             // tslint:disable-next-line:max-line-length
-            winston.info(`Duplicate ${node.clientId}:${node.clientSequenceNumber + 1} !== ${clientSequenceNumber}`);
+            winston.info(`Duplicate ${client.clientId}:${client.clientSequenceNumber + 1} !== ${clientSequenceNumber}`);
             return true;
         }
 
@@ -524,10 +524,12 @@ export class DeliLambda implements IPartitionLambda {
         });
     }
 
-    // Check if there are any old/idle clients. Craft and send a leave message to alfred.
-    // To prevent recurrent leave message sending, leave messages are only piggybacked with
-    // other message type.
-    private checkIdleClients(message: ITicketedMessageOutput) {
+    // Check if there are any old/idle clients, and clear their
+    // reference sequence numbers so they don't hold back the
+    // collab window. If the next message they send in caught up
+    // we will reset their reference sequence number, otherwise
+    // they will be nacked.
+    private clearIdleClientsRefSeq(message: ITicketedMessageOutput) {
         if (this.clientSeqManager.count() > 0) {
             let client = this.clientSeqManager.peek();
             while (client.referenceSequenceNumber !== undefined
