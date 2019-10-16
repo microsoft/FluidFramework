@@ -97,10 +97,10 @@ export async function initializeChaincode(document: Container, pkg: IResolvedPac
 }
 
 export async function registerAttach(loader: Loader, container: Container, uri: string, div: HTMLDivElement) {
-    attach(loader, uri, div);
-    container.on("contextChanged", (value) => {
-        attach(loader, uri, div);
+    container.on("contextChanged", async (value) => {
+        await attach(loader, uri, div);
     });
+    await attach(loader, uri, div);
 }
 
 /**
@@ -114,7 +114,7 @@ export async function registerAttach(loader: Loader, container: Container, uri: 
  * @param hostConf - Config specifying the resolver/factory to be used.
  * @param whiteList - functionality to check the validity of code to be loaded.
  */
-export function createWebLoader(
+export async function createWebLoader(
     resolved: IResolvedUrl,
     pkg: IResolvedPackage,
     scriptIds: string[],
@@ -122,13 +122,13 @@ export function createWebLoader(
     scope: IComponent,
     hostConf: IHostConfig,
     whiteList?: ICodeWhiteList,
-): Loader {
+): Promise<Loader> {
 
     // Create the web loader and prefetch the chaincode we will need
     const codeLoader = new WebCodeLoader(whiteList);
     if (pkg) {
         if (pkg.pkg) { // this is an IFluidPackage
-            codeLoader.seed({
+            await codeLoader.seed({
                 package: pkg.pkg,
                 config: pkg.details.config,
                 scriptIds,
@@ -180,7 +180,7 @@ export async function start(
     div: HTMLDivElement,
     hostConf: IHostConfig,
 ): Promise<Container> {
-    const loader = createWebLoader(
+    const loader = await createWebLoader(
         resolved,
         pkg,
         scriptIds,
@@ -191,7 +191,7 @@ export async function start(
         );
 
     const container = await loader.resolve({ url });
-    registerAttach(
+    await registerAttach(
         loader,
         container,
         url,

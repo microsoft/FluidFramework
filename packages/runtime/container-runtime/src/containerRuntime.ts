@@ -25,11 +25,14 @@ import {
     ITelemetryLogger,
 } from "@microsoft/fluid-container-definitions";
 import {
+    BlobTreeEntry,
     buildHierarchy,
+    CommitTreeEntry,
     ComponentSerializer,
     Deferred,
     flatten,
     isSystemType,
+    PerformanceEvent,
     raiseConnectedEvent,
     readAndParse,
 } from "@microsoft/fluid-core-utils";
@@ -68,8 +71,8 @@ import { debug } from "./debug";
 import { DocumentStorageServiceProxy } from "./documentStorageServiceProxy";
 import { Summarizer } from "./summarizer";
 import { SummaryManager } from "./summaryManager";
+import { ISummaryStats, SummaryTreeConverter } from "./summaryTreeConverter";
 import { analyzeTasks } from "./taskAnalyzer";
-import { BlobTreeEntry, CommitTreeEntry, ISummaryStats, SummaryTreeConverter } from "./utils";
 
 interface ISummaryTreeWithStats {
     summaryStats: ISummaryStats;
@@ -82,8 +85,15 @@ interface IBufferedChunk {
     content: string;
 }
 
-export interface IGeneratedSummaryData extends ISummaryStats {
+export interface IGeneratedSummaryData {
     sequenceNumber: number;
+
+    /**
+     * true if the summary op was submitted
+     */
+    submitted: boolean;
+
+    summaryStats?: ISummaryStats;
 }
 
 // Consider idle 5s of no activity. And snapshot if a minute has gone by with no snapshot.
@@ -463,6 +473,12 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this.summaryManager.summarizer;
     }
 
+    private get summaryConfiguration() {
+        return this.context.serviceConfiguration
+            ? { ...DefaultSummaryConfiguration, ...this.context.serviceConfiguration.summary }
+            : DefaultSummaryConfiguration;
+    }
+
     // Components tracked by the Domain
     private closed = false;
     private readonly pendingAttach = new Map<string, IAttachMessage>();
@@ -548,10 +564,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         this.context.on("refreshBaseSummary",
             (snapshot: ISnapshotTree) => this.refreshBaseSummary(snapshot));
 
-        const summaryConfiguration = context.serviceConfiguration
-            ? { ...DefaultSummaryConfiguration, ...context.serviceConfiguration.summary }
-            : DefaultSummaryConfiguration;
-
         // We always create the summarizer in the case that we are asked to generate summaries. But this may
         // want to be on demand instead.
         // Don't use optimizations when generating summaries with a document loaded using snapshots.
@@ -559,13 +571,15 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         this.summarizer = new Summarizer(
             "/_summarizer",
             this,
-            summaryConfiguration,
+            () => this.summaryConfiguration,
             () => this.generateSummary(!this.loadedFromSummary),
             (snapshot) => this.context.refreshBaseSummary(snapshot));
 
         // Create the SummaryManager and mark the initial state
         this.summaryManager = new SummaryManager(
-            context, this.runtimeOptions.generateSummaries || this.loadedFromSummary);
+            context,
+            this.runtimeOptions.generateSummaries || this.loadedFromSummary,
+            this.logger);
         if (this.context.connectionState === ConnectionState.Connected) {
             this.summaryManager.setConnected(this.context.clientId);
         }
@@ -1075,17 +1089,37 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             return;
         }
 
+        const generateSummaryEvent = PerformanceEvent.start(this.logger, {
+            eventName: "GenerateSummary",
+            fullTree,
+        });
+
         try {
             await this.scheduleManager.pause();
+            const sequenceNumber = this.deltaManager.referenceSequenceNumber;
 
+            const ret: IGeneratedSummaryData = {
+                sequenceNumber,
+                submitted: false,
+                summaryStats: undefined,
+            };
+
+            if (!this.connected) {
+                return ret;
+            }
             // TODO in the future we can have stored the latest summary by listening to the summary ack message
             // after loading from the beginning of the snapshot
             const versions = await this.context.storage.getVersions(this.id, 1);
             const parents = versions.map((version) => version.id);
+            generateSummaryEvent.reportProgress({}, "loadedVersions");
 
-            const sequenceNumber = this.deltaManager.referenceSequenceNumber;
             const treeWithStats = await this.summarize(fullTree);
+            ret.summaryStats = treeWithStats.summaryStats;
+            generateSummaryEvent.reportProgress({}, "generatedTree");
 
+            if (!this.connected) {
+                return ret;
+            }
             const handle = await this.context.storage.uploadSummary(treeWithStats.summaryTree);
             const summary = {
                 handle: handle.handle,
@@ -1093,16 +1127,24 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                 message,
                 parents,
             };
+            generateSummaryEvent.reportProgress({}, "uploadedTree");
 
+            if (!this.connected) {
+                return ret;
+            }
+            // if summarizer loses connection it will never reconnect
             this.submit(MessageType.Summarize, summary);
+            ret.submitted = true;
 
-            // notify summarizer while still paused
-            return {
+            generateSummaryEvent.end({
                 sequenceNumber,
-                ...treeWithStats.summaryStats,
-            };
+                submitted: ret.submitted,
+                handle: handle.handle,
+                ...ret.summaryStats,
+            });
+            return ret;
         } catch (ex) {
-            this.logger.logException({ eventName: "Summarizer:GenerateSummaryExceptionError" }, ex);
+            generateSummaryEvent.cancel({}, ex);
             throw ex;
         } finally {
             // Restart the delta manager

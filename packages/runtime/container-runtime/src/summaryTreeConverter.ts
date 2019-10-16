@@ -4,12 +4,10 @@
  */
 
 import {
-    FileMode,
     IBlob,
     ISummaryBlob,
     ISummaryTree,
     ITree,
-    ITreeEntry,
     SummaryObject,
     SummaryTree,
     SummaryType,
@@ -122,28 +120,4 @@ export class SummaryTreeConverter {
             return summaryTree;
         }
     }
-}
-
-export class BlobTreeEntry implements ITreeEntry {
-    public readonly mode = FileMode.File;
-    public readonly type = TreeEntry[TreeEntry.Blob];
-    public readonly value: IBlob;
-
-    constructor(public readonly path: string, contents: string, encoding: string = "utf-8") {
-        this.value = { contents, encoding };
-    }
-}
-
-export class CommitTreeEntry implements ITreeEntry {
-    public readonly mode = FileMode.Commit;
-    public readonly type = TreeEntry[TreeEntry.Commit];
-
-    constructor(public readonly path: string, public readonly value: string) {}
-}
-
-export class TreeTreeEntry implements ITreeEntry {
-    public readonly mode = FileMode.Directory;
-    public readonly type = TreeEntry[TreeEntry.Tree];
-
-    constructor(public readonly path: string, public readonly value: ITree) {}
 }
