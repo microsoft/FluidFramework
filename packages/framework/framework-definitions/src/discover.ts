@@ -27,17 +27,8 @@ declare module "@microsoft/fluid-component-core-interfaces" {
     export interface IComponent extends Readonly<Partial<
         IProvideComponentDiscoverableInterfaces
         & IProvideComponentDiscoverInterfaces
-        & IProvideComponentInterfacesRegistry
-        & IProvideComponentLocalName>> {
+        & IProvideComponentInterfacesRegistry>> {
     }
-}
-
-export interface IProvideComponentLocalName {
-    readonly IComponentLocalName: IComponentLocalName;
-}
-
-export interface IComponentLocalName extends IProvideComponentLocalName {
-    getDefaultComponentLocalName(): string;
 }
 
 export interface IProvideComponentDiscoverableInterfaces {

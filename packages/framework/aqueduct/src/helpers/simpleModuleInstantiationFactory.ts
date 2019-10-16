@@ -5,8 +5,8 @@
 
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { IContainerContext, IRuntime, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
-import { IComponentLocalName } from "@microsoft/fluid-framework-interfaces";
-import { ComponentFactoryTypes, ComponentRegistryTypes, IComponentContext, IComponentFactory, IComponentRegistry } from "@microsoft/fluid-runtime-definitions";
+import { IComponentRegistryWithDefaultFactory } from "@microsoft/fluid-framework-interfaces";
+import { ComponentFactoryTypes, ComponentRegistryTypes, IComponentContext, IComponentFactory } from "@microsoft/fluid-runtime-definitions";
 import { SimpleContainerRuntimeFactory } from "./simpleContainerRuntimeFactory";
 
 /**
@@ -20,9 +20,8 @@ import { SimpleContainerRuntimeFactory } from "./simpleContainerRuntimeFactory";
 export class SimpleModuleInstantiationFactory implements
     IComponent,
     IRuntimeFactory,
-    IComponentRegistry,
-    IComponentFactory,
-    IComponentLocalName {
+    IComponentRegistryWithDefaultFactory,
+    IComponentFactory {
 
     constructor(
         private readonly defaultComponentName: string,
@@ -30,12 +29,13 @@ export class SimpleModuleInstantiationFactory implements
     }
 
     public get IComponentFactory() { return this; }
-    public get IComponentLocalName() { return this; }
     public get IComponentRegistry() { return this; }
     public get IRuntimeFactory() { return this; }
+    public get IComponentRegistryWithDefaultFactory() { return this; }
 
-    public getDefaultComponentLocalName() {
-        return this.defaultComponentName;
+    public async getDefaultFactory() {
+        const factory = await this.registry.get(this.defaultComponentName) as IComponentFactory;
+        return factory;
     }
 
     public get(name: string): Promise<ComponentFactoryTypes> | undefined {
