@@ -45,7 +45,7 @@ export class ScribeLambda extends SequencedLambda {
     private pendingCheckpointMessages = new Deque<ISequencedOperationMessage>();
 
     // messages not yet included within protocolHandler
-    private readonly pendingMessages;
+    private readonly pendingMessages: Deque<ISequencedDocumentMessage>;
 
     // current sequence/msn of the last processed offset
     private sequenceNumber = 0;
