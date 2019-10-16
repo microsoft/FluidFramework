@@ -100,92 +100,120 @@ export function SudokuView(props: ISudokuViewProps) {
 // tslint:disable-next-line: max-func-body-length
 function SimpleTable(props: ISudokuViewProps) {
     const coordinateDataAttributeName = "cellcoordinate";
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        let valueToSet = Number(e.target.value);
-        valueToSet = Number.isNaN(valueToSet) ? 0 : valueToSet;
-        if (valueToSet >= 10 || valueToSet < 0) {
-            return;
-        }
-
-        // tslint:disable-next-line: no-string-literal
-        const key = e.target.dataset[coordinateDataAttributeName];
-        if (key !== undefined) {
-            const toSet = props.puzzle.get<SudokuCell>(key);
-            toSet.value = valueToSet;
-            toSet.isCorrect = valueToSet === toSet.correctValue;
-            props.puzzle.set(key, toSet);
-        }
-    };
-
     const handleInputFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+        const coord = e.target.dataset[coordinateDataAttributeName];
         if (props.setPresence) {
-            const key = e.target.dataset[coordinateDataAttributeName];
-            if (key !== undefined) {
-                props.setPresence(key, false);
+            if (coord !== undefined) {
+                props.setPresence(coord, false);
             }
         }
     };
 
     const handleInputBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+        const coord = e.target.dataset[coordinateDataAttributeName];
         if (props.setPresence) {
-            const key = e.target.dataset[coordinateDataAttributeName];
-            if (key !== undefined) {
-                props.setPresence(key, true);
+            if (coord !== undefined) {
+                props.setPresence(coord, true);
             }
         }
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        let keyString = e.key;
+
         let coord = e.currentTarget.dataset[coordinateDataAttributeName];
         coord = coord === undefined ? "" : coord;
+        switch (keyString) {
+            case "0":
+            case "Backspace":
+            case "Delete":
+            case "Del":
+                keyString = "0";
+            // intentional fall-through
+            case "1":
+            case "2":
+            case "3":
+            case "4":
+            case "5":
+            case "6":
+            case "7":
+            case "8":
+                let valueToSet = Number(keyString);
+                valueToSet = Number.isNaN(valueToSet) ? 0 : valueToSet;
+                if (valueToSet >= 10 || valueToSet < 0) {
+                    return;
+                }
 
-        // tslint:disable-next-line: no-shadowed-variable
+                if (coord !== undefined) {
+                    let cellInputElement: HTMLInputElement | null;
+                    cellInputElement = document.getElementById(`${props.clientId}-${coord}`) as HTMLInputElement;
+                    cellInputElement.value = keyString;
+
+                    const toSet = props.puzzle.get<SudokuCell>(coord);
+                    toSet.value = valueToSet;
+                    toSet.isCorrect = valueToSet === toSet.correctValue;
+                    props.puzzle.set(coord, toSet);
+                }
+                return;
+            default:
+                moveCell(keyString, coord);
+                // do nothing
+        }
+    };
+
+    const moveCell = (keyString: string, coordIn: string) => {
         const log = (newCoord: string) => {
             console.log(`${coord} ==> ${newCoord}`);
         };
 
-        // tslint:disable-next-line: no-shadowed-variable
         const move = (newCell: HTMLElement | null) => {
             if (newCell) {
                 newCell.focus();
             }
         };
 
-        let newCoord = coord;
-        let cell: SudokuCell | undefined;
-        while (cell === undefined) {
-            console.log(`while: ${coord}, ${cell}`)
-            switch (e.key) {
+        let coord = coordIn;
+        let newCoord = coordIn;
+        let sudokuCell: SudokuCell | undefined;
+        let iterationCount = 0;
+        while (sudokuCell === undefined && iterationCount <= 9) {
+            console.log(`while: ${coord}, ${sudokuCell}`)
+            iterationCount++;
+            switch (keyString) {
                 case "ArrowDown":
+                case "s":
                     newCoord = Coordinate.moveDown(coord);
                     break;
                 case "ArrowUp":
+                case "w":
                     newCoord = Coordinate.moveUp(coord);
                     break;
                 case "ArrowLeft":
+                case "a":
                     newCoord = Coordinate.moveLeft(coord);
                     break;
                 case "ArrowRight":
+                case "d":
                     newCoord = Coordinate.moveRight(coord);
                     break;
                 default:
                     newCoord = coord;
             }
-            // tslint:disable-next-line: prefer-const
-            cell = props.puzzle.get<SudokuCell>(newCoord);
-            console.log(JSON.stringify(cell));
-            if(cell !== undefined && cell.fixed){
+
+            sudokuCell = props.puzzle.get<SudokuCell>(newCoord);
+            if (sudokuCell !== undefined && sudokuCell.fixed) {
                 console.log(`setting coord to ${newCoord}`);
                 coord = newCoord;
-                cell = undefined;
+                sudokuCell = undefined;
             } else {
                 break;
             }
         }
+        console.log(`interationCount: ${iterationCount}`);
         log(newCoord);
         const newCell = document.getElementById(`${props.clientId}-${newCoord}`);
         move(newCell);
-    };
+    }
 
     const renderGridRows = () => {
         const rows = PUZZLE_INDEXES.map(row => {
@@ -223,7 +251,6 @@ function SimpleTable(props: ISudokuViewProps) {
                             id={`${props.clientId}-${coord}`}
                             className={inputClasses}
                             type="text"
-                            onChange={handleChange}
                             onFocus={handleInputFocus}
                             onBlur={handleInputBlur}
                             onKeyDown={handleKeyDown}
