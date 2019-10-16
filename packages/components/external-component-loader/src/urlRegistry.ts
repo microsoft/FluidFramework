@@ -69,7 +69,7 @@ export class UrlRegistry implements IComponentRegistry {
                         componentFactory = fluidExport.IComponentFactory;
                         if (fluidExport.IComponentRegistryWithDefaultFactory) {
                             const registry = fluidExport.IComponentRegistryWithDefaultFactory;
-                            componentFactory =  await registry.getDefaultFactory();
+                            componentFactory =  (await registry.getDefaultFactory()) as IComponentFactory;
                         }
                     } else {
                         const queryable = fluidExport as IComponentQueryableLegacy;

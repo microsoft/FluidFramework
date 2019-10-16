@@ -34,8 +34,7 @@ export class SimpleModuleInstantiationFactory implements
     public get IComponentRegistryWithDefaultFactory() { return this; }
 
     public async getDefaultFactory() {
-        const factory = await this.registry.get(this.defaultComponentName) as IComponentFactory;
-        return factory;
+        return this.registry.get(this.defaultComponentName)!;
     }
 
     public get(name: string): Promise<ComponentFactoryTypes> | undefined {
