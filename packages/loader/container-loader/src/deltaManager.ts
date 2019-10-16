@@ -877,12 +877,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 if (err) {
                     callback(err);
                 } else {
-                    // We will queue a message to update our reference sequence number upon receiving a server
-                    // operation. This allows the server to know our true reference sequence number and be able to
-                    // correctly update the minimum sequence number (MSN). We don't acknowledge other message types
-                    // similarly (like a min sequence number update) to avoid acknowledgement cycles (i.e. ack the MSN
-                    // update, which updates the MSN, then ack the update, etc...).
-                    this.updateSequenceNumber(message.type);
+                    this.scheduleSequenceNumberUpdate(message);
 
                     const endTime = Date.now();
                     this.emit("processTime", endTime - startTime);
@@ -998,15 +993,17 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     }
 
     /**
-     * Acks the server to update the reference sequence number
+     * Schedules as ack to the server to update the reference sequence number
      */
-    private updateSequenceNumber(type: string): void {
-        // Exit early for inactive clients. They don't take part in the minimum sequence number calculation.
+    private scheduleSequenceNumberUpdate(message: ISequencedDocumentMessage): void {
+        // Exit early for inactive (not in quorum or not writers) clients.
+        // They don't take part in the minimum sequence number calculation.
         if (!this.active) {
+            this.stopSequenceNumberUpdate();
             return;
         }
 
-        switch (type as MessageType) {
+        switch (message.type as MessageType) {
             case MessageType.Propose:
                 // On a quorum proposal, immediately send a response to expedite the approval.
                 this.stopSequenceNumberUpdate();
@@ -1014,14 +1011,21 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 return;
 
             case MessageType.NoOp:
+                // We don't acknowledge no-ops to avoid acknowledgement cycles (i.e. ack the MSN
+                // update, which updates the MSN, then ack the update, etc...).
                 return;
 
             default:
+                // We will queue a message to update our reference sequence number upon receiving a server
+                // operation. This allows the server to know our true reference sequence number and be able to
+                // correctly update the minimum sequence number (MSN).
                 if (this.updateSequenceNumberTimer === undefined) {
                     // Clear an update in 100 ms
                     this.updateSequenceNumberTimer = setTimeout(() => {
                         this.updateSequenceNumberTimer = undefined;
-                        this.submit(MessageType.NoOp, null);
+                        if (this.active) {
+                            this.submit(MessageType.NoOp, null);
+                        }
                     }, 100);
                 }
         }
