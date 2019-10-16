@@ -4,4 +4,4 @@
  */
 
 export * from "./containerRuntime";
-export * from "./utils";
+export * from "./summaryTreeConverter";
