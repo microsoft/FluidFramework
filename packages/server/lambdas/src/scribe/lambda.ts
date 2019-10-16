@@ -45,7 +45,7 @@ export class ScribeLambda extends SequencedLambda {
     private pendingCheckpointMessages = new Deque<ISequencedOperationMessage>();
 
     // messages not yet included within protocolHandler
-    private pendingMessages = new Deque<ISequencedDocumentMessage>();
+    private readonly pendingMessages;
 
     // current sequence/msn of the last processed offset
     private sequenceNumber = 0;
@@ -72,9 +72,10 @@ export class ScribeLambda extends SequencedLambda {
         this.minSequenceNumber = scribe.minimumSequenceNumber;
 
         // Filter messages in case they were not deleted after the last checkpoint.
-        this.pendingMessages.push(...messages
-            .filter((message) => message.operation.sequenceNumber > scribe.protocolState.sequenceNumber)
-            .map((message) => message.operation));
+        this.pendingMessages = new Deque<ISequencedDocumentMessage>(
+            messages
+                .filter((message) => message.operation.sequenceNumber > scribe.protocolState.sequenceNumber)
+                .map((message) => message.operation));
     }
 
     public async handlerCore(message: IKafkaMessage): Promise<void> {
