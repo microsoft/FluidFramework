@@ -54,7 +54,7 @@ data:
                 "clientId": "{{ .Values.login.microsoft.clientId }}",
                 "secret": "{{ .Values.login.microsoft.secret }}"
             },
-            "linkedAccounts": "{{ .Values.login.linkedAccounts }}",
+            "linkedAccounts": {{ toJson .Values.login.linkedAccounts }},
             "accounts": [
                 {
                     "username": "{{ .Values.login.accounts.username }}",

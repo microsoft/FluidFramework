@@ -40,16 +40,22 @@ function addCloseIframeButton(iframeContainerDiv, id) {
 
 // Fill Tokens and links
 function prefillInputs() {
-    const token = localStorage.getItem('token');
+    const storageToken = localStorage.getItem('storageToken');
+    const socketToken = localStorage.getItem('socketToken');
+    const clientId = localStorage.getItem('clientId');
     const link = localStorage.getItem('link');
 
-    if (token) document.getElementById('token').value = token;
+    if (storageToken) document.getElementById('storageToken').value = storageToken;
+    if (socketToken) document.getElementById('socketToken').value = socketToken;
+    if (clientId) document.getElementById('clientId').value = clientId;
     if (link) document.getElementById('link').value = link;
 }
 
 // Cache tokens and links locally.
 function cacheInputs() {
-    localStorage.setItem('token', document.getElementById('token').value);
+    localStorage.setItem('storageToken', document.getElementById('storageToken').value);
+    localStorage.setItem('socketToken', document.getElementById('socketToken').value);
+    localStorage.setItem('clientId', document.getElementById('clientId').value);
     localStorage.setItem('link', document.getElementById('link').value);
 }
 
