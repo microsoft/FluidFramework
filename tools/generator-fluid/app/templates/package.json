@@ -20,6 +20,18 @@
     "webpack": "npm run build",
     "webpack:dev": "npm run dev"
   },
+  "dependencies": {
+    "@microsoft/fluid-aqueduct": "^0.10.0",
+    "@microsoft/fluid-build-common": "^0.10.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.10.0",
+    "@microsoft/fluid-component-runtime": "^0.10.0",
+    "@microsoft/fluid-container-definitions": "^0.10.0",
+    "@microsoft/fluid-map": "^0.10.0",
+    "@microsoft/fluid-runtime-definitions": "^0.10.0",
+    "@microsoft/fluid-shared-object-base": "^0.10.0",
+    "react": "^16.8.3",
+    "react-dom": "^16.8.3"
+  },
   "devDependencies": {
     "@fluid-internal/url-generator": "^1.0.4",
     "@microsoft/fluid-webpack-component-loader": "^0.10.0",
@@ -41,18 +53,5 @@
         "library": "main"
       }
     }
-  },
-  "dependencies": {
-    "@microsoft/fluid-aqueduct": "^0.10.0",
-    "@microsoft/fluid-build-common": "^0.10.0",
-    "@microsoft/fluid-component-core-interfaces": "^0.10.0",
-    "@microsoft/fluid-component-runtime": "^0.10.0",
-    "@microsoft/fluid-container-definitions": "^0.10.0",
-    "@microsoft/fluid-map": "^0.10.0",
-    "@microsoft/fluid-runtime-definitions": "^0.10.0",
-    "@microsoft/fluid-shared-object-base": "^0.10.0",
-    "react": "^16.8.3",
-    "react-dom": "^16.8.3"
-  },
-  "license": "MIT"
+  }
 }
