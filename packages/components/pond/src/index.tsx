@@ -105,7 +105,6 @@ export class Pond extends SharedComponent implements IComponentHTMLVisual {
 
 export const fluidExport = new SimpleModuleInstantiationFactory(
   PondName,
-  Pond.getFactory(),
   new Map([
     [PondName, Promise.resolve(Pond.getFactory())],
     [ClickerName, Promise.resolve(Clicker.getFactory())],

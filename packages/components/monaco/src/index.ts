@@ -20,7 +20,6 @@ const componentFactory = new PrimedComponentFactory(
 
 const runtimeFactory = new SimpleModuleInstantiationFactory(
     "@fluid-example/monaco",
-    componentFactory,
     new Map([
         ["@fluid-example/monaco", Promise.resolve(componentFactory)],
     ]),

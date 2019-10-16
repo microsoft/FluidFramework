@@ -73,7 +73,6 @@ const ScoreboardComponentInstantiationFactory = new PrimedComponentFactory(
  */
 export const fluidExport = new SimpleModuleInstantiationFactory(
   Scoreboard.componentName,
-  ScoreboardComponentInstantiationFactory,
   new Map([
     [Scoreboard.componentName, Promise.resolve(ScoreboardComponentInstantiationFactory)],
   ]),

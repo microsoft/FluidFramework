@@ -20,7 +20,6 @@ export const CanvasInstantiationFactory = new PrimedComponentFactory(
 
 export const fluidExport = new SimpleModuleInstantiationFactory(
     CanvasName,
-    CanvasInstantiationFactory,
     new Map([
         [CanvasName, Promise.resolve(CanvasInstantiationFactory)],
     ]),

@@ -26,7 +26,6 @@ const componentName = pkg.name as string;
  */
 export const fluidExport = new SimpleModuleInstantiationFactory(
     componentName,
-    DiceRollerInstantiationFactory,
     new Map([
         [componentName, Promise.resolve(DiceRollerInstantiationFactory)],
     ]),

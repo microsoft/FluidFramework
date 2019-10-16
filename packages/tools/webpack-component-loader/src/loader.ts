@@ -77,7 +77,6 @@ function wrapComponentPackage(packageName: string, packageJson: IFluidPackage) {
 
     const runtimeFactory = new SimpleModuleInstantiationFactory(
         packageName,
-        componentFactory,
         new Map([
             [packageName, Promise.resolve(componentFactory)],
         ]),

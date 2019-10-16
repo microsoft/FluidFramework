@@ -5,13 +5,11 @@
 
 import { TableDocumentType } from "@fluid-example/table-document";
 import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
-import { TableView } from "./tableview";
 
 export const tableViewType = "@fluid-example/table-view";
 
 export const fluidExport = new SimpleModuleInstantiationFactory(
     tableViewType,
-    TableView.getFactory(),
     new Map([
         [tableViewType, import(/* webpackChunkName: "table-view", webpackPreload: true */ "./tableview").then((m) => m.TableView.getFactory())],
         [TableDocumentType, import(/* webpackChunkName: "table-document", webpackPreload: true */ "@fluid-example/table-document").then((m) => m.TableDocument.getFactory())],
