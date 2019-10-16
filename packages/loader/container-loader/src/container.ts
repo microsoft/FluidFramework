@@ -871,9 +871,9 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         // We do not have good correlation ID to match server activity.
         // Add couple IDs here
         this.subLogger.setProperties({
-            SocketClientId: this.clientId,
-            SocketDocumentId: this._deltaManager!.socketDocumentId,
-            SocketPendingClientId: value === ConnectionState.Connecting ? this.pendingClientId : undefined,
+            clientId: this.clientId,
+            socketDocumentId: this._deltaManager!.socketDocumentId,
+            pendingClientId: value === ConnectionState.Connecting ? this.pendingClientId : undefined,
         });
 
         // Log actual event

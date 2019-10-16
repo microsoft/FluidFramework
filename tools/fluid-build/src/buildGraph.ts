@@ -14,6 +14,7 @@ import { getExecutableFromCommand, execAsync, unlinkAsync, rmdirAsync, symlinkAs
 import { FileHashCache } from "./common/fileHashCache";
 import { existsSync, lstatAsync, realpathAsync } from "./common/utils";
 import chalk from "chalk";
+import { options } from "./options";
 
 export enum BuildResult {
     Success,
@@ -107,7 +108,7 @@ export class BuildPackage {
                                 await unlinkAsync(symlinkPath);
                             }
                             await symlinkAsync(depBuildPackage.pkg.directory, symlinkPath, "junction");
-                            console.warn(`WARNING: replaced existing package ${symlinkPath}`);
+                            console.warn(`${this.pkg.nameColored}: warning: replaced existing package ${symlinkPath}`);
                         }
                     } else {
                         await symlinkAsync(depBuildPackage.pkg.directory, symlinkPath, "junction");
@@ -185,13 +186,16 @@ export class BuildGraph {
                 env: { PATH: `${process.env["PATH"]}${path.delimiter}${path.join(pkg.directory, "node_modules", ".bin")}` }
             });
             if (ret.error) {
-                console.log(`${pkg.nameColored}: error during command ${cleanScript}`)
-                console.log(`${pkg.nameColored}: ${ret.stdout}\n${ret.stderr}`);
+                console.error(`${pkg.nameColored}: error during command ${cleanScript}`)
+                console.error(`${pkg.nameColored}: ${ret.stdout}\n${ret.stderr}`);
             }
             const elapsedTime = (Date.now() - startTime) / 1000;
             logStatus(`[${++numDone}/${numTotal}] ${pkg.nameColored}: ${cleanScript} - ${elapsedTime.toFixed(3)}s`);
         };
         this.buildPackages.forEach((node) => {
+            if (options.matchedOnly === true && !node.pkg.matched) {
+                return;
+            }
             const cleanScript = node.pkg.getScript("clean");
             if (cleanScript) {
                 numTotal++;
@@ -199,7 +203,7 @@ export class BuildGraph {
             } else {
                 const buildScript = node.pkg.getScript("build");
                 if (buildScript && getExecutableFromCommand(buildScript) !== "echo") {
-                    console.log(`${node.pkg.nameColored}: warning: package has "build" script without "clean" script`);
+                    console.warn(`${node.pkg.nameColored}: warning: package has "build" script without "clean" script`);
                 }
             }
         });
@@ -258,7 +262,7 @@ export class BuildGraph {
             }
             node.dependentPackages.forEach((child) => {
                 if (!child.pkg.markForBuild) {
-                    child.pkg.markForBuild = true;
+                    child.pkg.setMarkForBuild();
                     needPropagate.push(child);
                 }
             });

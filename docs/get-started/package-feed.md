@@ -15,7 +15,7 @@ Prerequisites: [Node (with npm)](https://nodejs.org) installed
 2. Add registry to the our scopes (globally per-user)
 
     ```text
-    npm config set @microsoft/fluid-:registry https://offnet.pkgs.visualstudio.com/_packaging/prague/npm/registry/
+    npm config set @microsoft:registry https://offnet.pkgs.visualstudio.com/_packaging/prague/npm/registry/
     npm config set @fluid-example:registry https://offnet.pkgs.visualstudio.com/_packaging/prague/npm/registry/
     ```
 
@@ -35,7 +35,7 @@ NOTE:
   Just add the follow to your .npmrc in the root of your NPM package:
 
     ```text
-    @microsoft/fluid-:registry=https://offnet.pkgs.visualstudio.com/_packaging/prague/npm/registry/
+    @microsoft:registry=https://offnet.pkgs.visualstudio.com/_packaging/prague/npm/registry/
     @fluid-example:registry=https://offnet.pkgs.visualstudio.com/_packaging/prague/npm/registry/
     ```
 

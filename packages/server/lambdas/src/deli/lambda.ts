@@ -605,7 +605,6 @@ export class DeliLambda implements IPartitionLambda {
      * Generates a checkpoint of the current ticketing state
      */
     private generateCheckpoint(): ICheckpoint {
-
         return {
             branchMap: this.branchMap ? this.branchMap.serialize() : undefined,
             clients: this.clientSeqManager.cloneValues(),

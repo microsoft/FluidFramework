@@ -4,7 +4,7 @@
  */
 // tslint:disable: prefer-const
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
-import { IDocumentStorageService, ISnapshotTree } from "@microsoft/fluid-protocol-definitions";
+import { IBlob, IDocumentStorageService, ISnapshotTree } from "@microsoft/fluid-protocol-definitions";
 import {
     ComponentFactoryTypes,
     IComponentContext,
@@ -14,7 +14,6 @@ import {
 } from "@microsoft/fluid-runtime-definitions";
 import { MockRuntime } from "@microsoft/fluid-test-runtime-utils";
 import * as assert from "assert";
-import { BlobTreeEntry } from "..";
 import { IComponentAttributes, LocalComponentContext, RemotedComponentContext } from "../componentContext";
 import { ContainerRuntime } from "../containerRuntime";
 import { DocumentStorageServiceProxy } from "../documentStorageServiceProxy";
@@ -51,9 +50,9 @@ describe("Component Context Tests", () => {
             localComponentContext.bindRuntime(new MockRuntime());
             const attachMessage = localComponentContext.generateAttachMessage();
 
-            const blob = attachMessage.snapshot.entries[0] as BlobTreeEntry;
+            const blob = attachMessage.snapshot.entries[0].value as IBlob;
 
-            const contents = JSON.parse(blob.value.contents) as IComponentAttributes;
+            const contents = JSON.parse(blob.contents) as IComponentAttributes;
             const componentAttributes: IComponentAttributes = {
                 pkg: JSON.stringify(["TestComponent1"]),
                 snapshotFormatVersion: "0.1",
@@ -102,8 +101,8 @@ describe("Component Context Tests", () => {
             localComponentContext.bindRuntime(new MockRuntime());
 
             const attachMessage = localComponentContext.generateAttachMessage();
-            const blob = attachMessage.snapshot.entries[0] as BlobTreeEntry;
-            const contents = JSON.parse(blob.value.contents) as IComponentAttributes;
+            const blob = attachMessage.snapshot.entries[0].value as IBlob;
+            const contents = JSON.parse(blob.contents) as IComponentAttributes;
             const componentAttributes: IComponentAttributes = {
                 pkg: JSON.stringify(["TestComp", "SubComp"]),
                 snapshotFormatVersion: "0.1",
@@ -161,9 +160,9 @@ describe("Component Context Tests", () => {
                 new DocumentStorageServiceProxy(storage, blobCache),
                 scope);
             const snapshot = await remotedComponentContext.snapshot(true);
-            const blob = snapshot.entries[0] as BlobTreeEntry;
+            const blob = snapshot.entries[0].value as IBlob;
 
-            const contents = JSON.parse(blob.value.contents) as IComponentAttributes;
+            const contents = JSON.parse(blob.contents) as IComponentAttributes;
             assert.equal(contents.pkg, componentAttributes.pkg, "Remote Component package does not match.");
             assert.equal(
                 contents.snapshotFormatVersion,
@@ -191,9 +190,9 @@ describe("Component Context Tests", () => {
                 new DocumentStorageServiceProxy(storage, blobCache),
                 scope);
             const snapshot = await remotedComponentContext.snapshot(true);
-            const blob = snapshot.entries[0] as BlobTreeEntry;
+            const blob = snapshot.entries[0].value as IBlob;
 
-            const contents = JSON.parse(blob.value.contents) as IComponentAttributes;
+            const contents = JSON.parse(blob.contents) as IComponentAttributes;
             assert.equal(
                 contents.pkg,
                 JSON.stringify([componentAttributes.pkg]),

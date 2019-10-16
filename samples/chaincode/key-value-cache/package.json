@@ -14,7 +14,6 @@
     "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
     "verdaccio": "npm publish --registry https://packages.wu2.prague.office-int.com",
     "deploy": "npm run build && npm version patch && npm run verdaccio && npm run post-deploy",
-    "post-deploy": "getUrl -p",
     "tsc": "tsc",
     "webpack": "npm run build",
     "webpack:dev": "npm run dev"
@@ -22,7 +21,6 @@
   "devDependencies": {
     "@microsoft/fluid-build-common": "0.11.14243",
     "@microsoft/fluid-webpack-component-loader": "0.11.14243",
-    "@fluid-internal/url-generator": "^1.0.4",
     "@types/node": "^10.14.6",
     "source-map-loader": "^0.2.4",
     "ts-loader": "^4.5.0",

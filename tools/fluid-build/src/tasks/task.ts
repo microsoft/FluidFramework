@@ -46,7 +46,7 @@ export abstract class Task {
 
     public async isUpToDate(): Promise<boolean> {
         // Always not up to date if forced
-        if (options.force) { return false; }
+        if (this.forced) { return false; }
 
         if (this.isUpToDateP === undefined) {
             this.isUpToDateP = this.checkIsUpToDate();
@@ -64,4 +64,8 @@ export abstract class Task {
     public abstract collectLeafTasks(leafTasks: LeafTask[]): void;
     protected abstract async checkIsUpToDate(): Promise<boolean>;
     protected abstract async runTask(q: AsyncPriorityQueue<TaskExec>): Promise<BuildResult>;
+
+    public get forced() {
+        return options.force && (options.matchedOnly !== true || this.package.matched);
+    }
 };
