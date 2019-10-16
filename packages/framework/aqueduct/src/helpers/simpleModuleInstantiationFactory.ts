@@ -5,7 +5,7 @@
 
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { IContainerContext, IRuntime, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
-import { IComponentRegistryWithDefaultFactory } from "@microsoft/fluid-framework-interfaces";
+import { IComponentDefaultFactory } from "@microsoft/fluid-framework-interfaces";
 import { ComponentFactoryTypes, ComponentRegistryTypes, IComponentContext, IComponentFactory } from "@microsoft/fluid-runtime-definitions";
 import { SimpleContainerRuntimeFactory } from "./simpleContainerRuntimeFactory";
 
@@ -20,7 +20,7 @@ import { SimpleContainerRuntimeFactory } from "./simpleContainerRuntimeFactory";
 export class SimpleModuleInstantiationFactory implements
     IComponent,
     IRuntimeFactory,
-    IComponentRegistryWithDefaultFactory,
+    IComponentDefaultFactory,
     IComponentFactory {
 
     constructor(
@@ -31,7 +31,7 @@ export class SimpleModuleInstantiationFactory implements
     public get IComponentFactory() { return this; }
     public get IComponentRegistry() { return this; }
     public get IRuntimeFactory() { return this; }
-    public get IComponentRegistryWithDefaultFactory() { return this; }
+    public get IComponentDefaultFactory() { return this; }
 
     public async getDefaultFactory() {
         return this.registry.get(this.defaultComponentName)!;
