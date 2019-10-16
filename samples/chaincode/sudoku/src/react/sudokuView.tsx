@@ -96,6 +96,8 @@ export function SudokuView(props: ISudokuViewProps) {
     }
 }
 
+
+// tslint:disable-next-line: max-func-body-length
 function SimpleTable(props: ISudokuViewProps) {
     const coordinateDataAttributeName = "cellcoordinate";
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -133,6 +135,58 @@ function SimpleTable(props: ISudokuViewProps) {
         }
     };
 
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        let coord = e.currentTarget.dataset[coordinateDataAttributeName];
+        coord = coord === undefined ? "" : coord;
+
+        // tslint:disable-next-line: no-shadowed-variable
+        const log = (newCoord: string) => {
+            console.log(`${coord} ==> ${newCoord}`);
+        };
+
+        // tslint:disable-next-line: no-shadowed-variable
+        const move = (newCell: HTMLElement | null) => {
+            if (newCell) {
+                newCell.focus();
+            }
+        };
+
+        let newCoord = coord;
+        let cell: SudokuCell | undefined;
+        while (cell === undefined) {
+            console.log(`while: ${coord}, ${cell}`)
+            switch (e.key) {
+                case "ArrowDown":
+                    newCoord = Coordinate.moveDown(coord);
+                    break;
+                case "ArrowUp":
+                    newCoord = Coordinate.moveUp(coord);
+                    break;
+                case "ArrowLeft":
+                    newCoord = Coordinate.moveLeft(coord);
+                    break;
+                case "ArrowRight":
+                    newCoord = Coordinate.moveRight(coord);
+                    break;
+                default:
+                    newCoord = coord;
+            }
+            // tslint:disable-next-line: prefer-const
+            cell = props.puzzle.get<SudokuCell>(newCoord);
+            console.log(JSON.stringify(cell));
+            if(cell !== undefined && cell.fixed){
+                console.log(`setting coord to ${newCoord}`);
+                coord = newCoord;
+                cell = undefined;
+            } else {
+                break;
+            }
+        }
+        log(newCoord);
+        const newCell = document.getElementById(`${props.clientId}-${newCoord}`);
+        move(newCell);
+    };
+
     const renderGridRows = () => {
         const rows = PUZZLE_INDEXES.map(row => {
             const columns = PUZZLE_INDEXES.map(col => {
@@ -166,11 +220,13 @@ function SimpleTable(props: ISudokuViewProps) {
                         style={getCellBorderStyles(coord)}
                     >
                         <input
+                            id={`${props.clientId}-${coord}`}
                             className={inputClasses}
                             type="text"
                             onChange={handleChange}
                             onFocus={handleInputFocus}
                             onBlur={handleInputBlur}
+                            onKeyDown={handleKeyDown}
                             value={SudokuCell.getDisplayString(currentCell)}
                             disabled={disabled}
                             data-cellcoordinate={coord}
