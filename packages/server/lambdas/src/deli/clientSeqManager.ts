@@ -23,7 +23,7 @@ const SequenceNumberComparer: IComparer<IClientSequenceNumber> = {
 export class ClientSequenceNumberManager {
     private clientNodeMap = new Map<string, IHeapNode<IClientSequenceNumber>>();
     private clientSeqNumbers = new Heap<IClientSequenceNumber>(SequenceNumberComparer);
-    private lastUpdate = 0;
+    private lastUpdate = -1;
     private recentIdleEnd: number | undefined;
 
     constructor(
@@ -153,7 +153,7 @@ export class ClientSequenceNumberManager {
             // if the gap between the last update, and this update
             // is greater than the client timeout then we were idle
             // so track the end time of this idle period
-            if (timestamp - this.lastUpdate > this.idleTimeout) {
+            if (this.lastUpdate >= 0 && timestamp - this.lastUpdate > this.idleTimeout) {
                 this.recentIdleEnd = timestamp;
             }
             this.lastUpdate = timestamp;

@@ -95,6 +95,10 @@ export class DeliLambda implements IPartitionLambda {
         private activityTimeout: number,
         private noOpConsolidationTimeout: number) {
 
+        this.clientSeqManager = new ClientSequenceNumberManager(
+            clientTimeout / 2,
+            clientTimeout);
+
         // Instantiate existing clients
         if (dbObject.clients) {
             for (const client of dbObject.clients) {
@@ -140,10 +144,6 @@ export class DeliLambda implements IPartitionLambda {
 
         this.logOffset = dbObject.logOffset;
         this.checkpointContext = new CheckpointContext(this.tenantId, this.documentId, collection, context);
-
-        this.clientSeqManager = new ClientSequenceNumberManager(
-            clientTimeout / 2,
-            clientTimeout);
     }
 
     public handler(rawMessage: IKafkaMessage): void {
