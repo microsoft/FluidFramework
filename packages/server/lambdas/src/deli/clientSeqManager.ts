@@ -23,6 +23,12 @@ const SequenceNumberComparer: IComparer<IClientSequenceNumber> = {
 export class ClientSequenceNumberManager {
     private clientNodeMap = new Map<string, IHeapNode<IClientSequenceNumber>>();
     private clientSeqNumbers = new Heap<IClientSequenceNumber>(SequenceNumberComparer);
+    private lastUpdate = 0;
+    private recentIdleEnd: number | undefined;
+
+    constructor(
+        private readonly idleTimeout: number,
+        private readonly clientIdleTimeout: number) { }
 
     public has(clientId: string): boolean {
         return this.clientNodeMap.has(clientId);
@@ -94,25 +100,6 @@ export class ClientSequenceNumberManager {
     }
 
     /**
-     * Updates the sequence number of the specified client
-     */
-    public updateClient(
-        clientId: string,
-        lastUpdate: number,
-        clientSequenceNumber: number,
-        referenceSequenceNumber: number,
-        nack: boolean) {
-
-        // Lookup the node and then update its value based on the message
-        const heapNode = this.clientNodeMap.get(clientId);
-        heapNode.value.referenceSequenceNumber = referenceSequenceNumber;
-        heapNode.value.clientSequenceNumber = clientSequenceNumber;
-        heapNode.value.lastUpdate = lastUpdate;
-        heapNode.value.nack = nack;
-        this.clientSeqNumbers.update(heapNode);
-    }
-
-    /**
      * Removes the provided client from the list of tracked clients.
      * Returns false if the client has been removed earlier.
      */
@@ -138,5 +125,63 @@ export class ClientSequenceNumberManager {
         } else {
             return -1;
         }
+    }
+
+    public getIdleClient(): IClientSequenceNumber {
+        if (this.clientNodeMap.size > 0) {
+            const node = this.clientSeqNumbers.peek();
+            const client = node.value;
+            if (client.canEvict
+                && this.recentIdleEnd === undefined
+                && (this.lastUpdate - client.lastUpdate > this.clientIdleTimeout)) {
+                    return client;
+            }
+        }
+    }
+
+    /**
+     * Updates the sequence number of the specified client
+     */
+    private updateClient(
+        clientId: string,
+        timestamp: number,
+        clientSequenceNumber: number,
+        referenceSequenceNumber: number,
+        nack: boolean) {
+
+        if (timestamp > this.lastUpdate) {
+            // if the gap between the last update, and this update
+            // is greater than the client timeout then we were idle
+            // so track the end time of this idle period
+            if (timestamp - this.lastUpdate > this.idleTimeout) {
+                this.recentIdleEnd = timestamp;
+            }
+            this.lastUpdate = timestamp;
+
+            if (this.recentIdleEnd !== undefined) {
+                // once the difference between this update and the recent
+                // idle end is greater than the idle timeout then we
+                // are not longer recently idle, so clear the recent idle end
+                if (timestamp - this.recentIdleEnd > this.idleTimeout) {
+                    this.recentIdleEnd = undefined;
+                } else {
+                    // if the oldest client has been updated since idle ended
+                    // then the idle can be cleared as well,
+                    // as we're not recently idle
+                    const client = this.peek();
+                    if (client.lastUpdate > this.recentIdleEnd) {
+                        this.recentIdleEnd = undefined;
+                    }
+                }
+            }
+        }
+
+        // Lookup the node and then update its value based on the message
+        const heapNode = this.clientNodeMap.get(clientId);
+        heapNode.value.referenceSequenceNumber = referenceSequenceNumber;
+        heapNode.value.clientSequenceNumber = clientSequenceNumber;
+        heapNode.value.lastUpdate = timestamp;
+        heapNode.value.nack = nack;
+        this.clientSeqNumbers.update(heapNode);
     }
 }

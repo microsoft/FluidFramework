@@ -35,7 +35,7 @@ import {
 import * as assert from "assert";
 import * as _ from "lodash";
 import * as winston from "winston";
-import { CheckpointContext, ICheckpoint, IClientSequenceNumber } from "./checkpointContext";
+import { CheckpointContext, ICheckpoint } from "./checkpointContext";
 import { ClientSequenceNumberManager } from "./clientSeqManager";
 
 enum SendType {
@@ -71,7 +71,7 @@ export class DeliLambda implements IPartitionLambda {
     private logOffset: number;
 
     // Client sequence number mapping
-    private readonly clientSeqManager = new ClientSequenceNumberManager();
+    private readonly clientSeqManager: ClientSequenceNumberManager;
     private minimumSequenceNumber = 0;
     private branchMap: RangeTracker;
     private checkpointContext: CheckpointContext;
@@ -91,7 +91,7 @@ export class DeliLambda implements IPartitionLambda {
         collection: ICollection<IDocument>,
         private forwardProducer: IProducer,
         private reverseProducer: IProducer,
-        private clientTimeout: number,
+        clientTimeout: number,
         private activityTimeout: number,
         private noOpConsolidationTimeout: number) {
 
@@ -140,6 +140,10 @@ export class DeliLambda implements IPartitionLambda {
 
         this.logOffset = dbObject.logOffset;
         this.checkpointContext = new CheckpointContext(this.tenantId, this.documentId, collection, context);
+
+        this.clientSeqManager = new ClientSequenceNumberManager(
+            clientTimeout / 2,
+            clientTimeout);
     }
 
     public handler(rawMessage: IKafkaMessage): void {
@@ -530,7 +534,7 @@ export class DeliLambda implements IPartitionLambda {
     // other message type.
     private checkIdleClients(message: ITicketedMessageOutput) {
         if (message.type !== MessageType.ClientLeave) {
-            const idleClient = this.getIdleClient(message.timestamp);
+            const idleClient = this.clientSeqManager.getIdleClient();
             if (idleClient) {
                 const leaveMessage = this.createLeaveMessage(idleClient.clientId);
                 this.sendToAlfred(leaveMessage);
@@ -637,18 +641,6 @@ export class DeliLambda implements IPartitionLambda {
     private transformBranchSequenceNumber(sequenceNumber: number): number {
         // -1 indicates an unused sequence number
         return sequenceNumber !== -1 ? this.branchMap.get(sequenceNumber) : -1;
-    }
-
-    /**
-     * Get idle client.
-     */
-    private getIdleClient(timestamp: number): IClientSequenceNumber {
-        if (this.clientSeqManager.count() > 0) {
-            const client = this.clientSeqManager.peek();
-            if (client.canEvict && (timestamp - client.lastUpdate > this.clientTimeout)) {
-                return client;
-            }
-        }
     }
 
     private setIdleTimer() {
