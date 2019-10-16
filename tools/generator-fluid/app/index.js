@@ -121,14 +121,12 @@ module.exports = class extends Generator {
       delete packageJson.dependencies["react-dom"];
     }
 
-    // Put the correct start script into npm start, then delete the start:* scripts
+    // Update start scripts for non-container case
     if (this.answers.container === "no") {
-      packageJson.scripts["start"] = packageJson.scripts["start:component"];
-    } else {
-      packageJson.scripts["start"] = packageJson.scripts["start:container"];
+      packageJson.scripts["start"] += " --env.component";
+      packageJson.scripts["start:live"] += " --env.component";
+      packageJson.scripts["start:localhost"] += " --env.component";
     }
-    delete packageJson.scripts["start:component"];
-    delete packageJson.scripts["start:container"];
 
     this.fs.writeJSON(
       this.destinationPath("package.json"), // TO
