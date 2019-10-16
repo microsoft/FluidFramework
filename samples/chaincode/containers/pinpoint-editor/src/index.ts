@@ -20,7 +20,6 @@ async function getPinpointFluidExport() {
  * Instantiates a new chaincode host
  */
 export async function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-    // const registry = new Map<string, any>([["@chaincode/pinpoint-editor", pinpoint]]);
     const registry = new Map<string, Promise<IComponentFactory>>(
         [["@fluid-example/pinpoint-editor", getPinpointFluidExport()]],
     );
