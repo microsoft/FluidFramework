@@ -111,6 +111,8 @@
     "request": "^2.88.0",
     "split": "^1.0.0",
     "static-expiry": "0.0.11",
+    "threads": "1.0.0-beta.6",
+    "tiny-worker": "2.3.0",
     "uuid": "^3.3.2",
     "winston": "^3.1.0"
   },
@@ -157,6 +159,7 @@
     "style-loader": "^0.23.0",
     "supertest": "^3.1.0",
     "thread-loader": "^1.2.0",
+    "threads-plugin": "^1.2.0",
     "ts-loader": "^4.5.0",
     "tslint": "^5.11.0",
     "typescript": "~3.4.5",

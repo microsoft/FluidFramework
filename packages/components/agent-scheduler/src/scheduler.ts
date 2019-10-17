@@ -58,8 +58,11 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
         return agentScheduler;
     }
 
+    public get IComponentLoadable() { return this; }
     public get IAgentScheduler() { return this; }
     public get IComponentRouter() { return this; }
+
+    public url = "/_tasks";
 
     private _leader = false;
 
@@ -366,15 +369,15 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
     }
 
     private async runTask(url: string) {
-        // TODO eventually we may wish to spawn an execution context from which to run this
         const request: IRequest = {
             headers: {
-                "fluid-cache": true,
+                "fluid-cache": false,
                 "fluid-reconnect": false,
+                "fluid-sequence-number": this.context.deltaManager.referenceSequenceNumber,
+                "execution-context": "thread",
             },
             url,
         };
-
         const response = await this.runtime.loader.request(request);
         if (response.status !== 200 || response.mimeType !== "fluid/component") {
             return Promise.reject<IComponentRunnable>("Invalid agent route");
@@ -397,12 +400,12 @@ export class TaskManager implements ITaskManager {
         return new TaskManager(agentScheduler, context);
     }
 
-    public url = "/_tasks";
-
     public get IAgentScheduler() { return this.scheduler; }
     public get IComponentLoadable() { return this; }
     public get IComponentRouter() { return this; }
     public get ITaskManager() { return this; }
+
+    public get url() { return this.scheduler.url; }
 
     private readonly taskMap = new Map<string, IComponentRunnable>();
     constructor(private readonly scheduler: IAgentScheduler, private readonly context: IComponentContext) {
@@ -425,22 +428,26 @@ export class TaskManager implements ITaskManager {
                 return { status: 200, mimeType: "fluid/component", value: this.taskMap.get(taskUrl) };
             }
         }
-
     }
 
-    public async pick(componentUrl: string, ...tasks: ITask[]): Promise<void> {
+    public register(...tasks: ITask[]): void {
+        for (const task of tasks) {
+            this.taskMap.set(task.id, task.instance);
+        }
+    }
+
+    public async pick(componentUrl: string, ...taskIds: string[]): Promise<void> {
         const configuration = (this.context.hostRuntime as IComponent).IComponentConfiguration;
         if (configuration && !configuration.canReconnect) {
             return Promise.reject("Picking not allowed on secondary copy");
         } else {
             const urlWithSlash = componentUrl.startsWith("/") ? componentUrl : `/${componentUrl}`;
-            const registersP: Promise<void>[] = [];
-            for (const task of tasks) {
-                this.taskMap.set(task.id, task.instance);
-                registersP.push(this.scheduler.pick(`${urlWithSlash}${this.url}/${task.id}`));
+            const picksP: Promise<void>[] = [];
+            for (const taskId of taskIds) {
+                picksP.push(this.scheduler.pick(`${urlWithSlash}${this.url}/${taskId}`));
             }
             try {
-                await Promise.all(registersP);
+                await Promise.all(picksP);
             } catch (err) {
                 debug(err as string); // Just log the error. It will be attempted again.
             }

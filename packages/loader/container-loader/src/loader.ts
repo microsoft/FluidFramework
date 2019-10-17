@@ -29,6 +29,7 @@ import * as querystring from "querystring";
 import { parse } from "url";
 import { Container } from "./container";
 import { debug } from "./debug";
+import { ThreadLoader } from "./threadLoader";
 
 interface IParsedUrl {
     id: string;
@@ -67,10 +68,14 @@ export class RelativeLoader extends EventEmitter implements ILoader {
 
     public async request(request: IRequest): Promise<IResponse> {
         if (request.url.indexOf("/") === 0) {
-            const container = this.canUseCache(request)
+            if (this.useThread(request)) {
+                return this.loader.requestThread(this.baseRequest.url, request);
+            } else {
+                const container = this.canUseCache(request)
                 ? await this.containerDeferred.promise
                 : await this.loader.resolve({ url: this.baseRequest.url, headers: request.headers });
-            return container.request(request);
+                return container.request(request);
+            }
         }
 
         return this.loader.request(request);
@@ -90,6 +95,19 @@ export class RelativeLoader extends EventEmitter implements ILoader {
             request.headers["fluid-reconnect"] === false;
 
         return !noCache;
+    }
+
+    private useThread(request: IRequest): boolean {
+        if (!request.headers) {
+            return false;
+        }
+        if (request.headers["execution-context"]) {
+            const requestContext = request.headers["execution-context"] as string;
+            if (requestContext === "thread") {
+                return true;
+            }
+        }
+        return false;
     }
 }
 
@@ -181,6 +199,27 @@ export class Loader extends EventEmitter implements ILoader {
         return resolved.container!.request({ url: resolved.parsed!.path });
     }
 
+    public async requestThread(baseUrl: string, request: IRequest): Promise<IResponse> {
+        const resolved = await this.getResolvedUrl({ url: baseUrl, headers: request.headers });
+        const resolvedAsFluid = resolved as IFluidResolvedUrl;
+        const parsed = this.parseUrl(resolvedAsFluid.url);
+        if (!parsed) {
+            return Promise.reject(`Invalid URL ${resolvedAsFluid.url}`);
+        }
+        const {connection, fromSequenceNumber, version} =
+            this.parseHeader(parsed, { url: baseUrl, headers: request.headers });
+        const threadLoader = await ThreadLoader.load(
+            parsed!.id,
+            version,
+            connection,
+            this.options,
+            request,
+            resolvedAsFluid,
+            fromSequenceNumber,
+        );
+        return threadLoader.request();
+    }
+
     private parseUrl(url: string): IParsedUrl | null {
         const parsed = parse(url);
         const qs = querystring.parse(parsed.query!);
@@ -232,34 +271,7 @@ export class Loader extends EventEmitter implements ILoader {
             return Promise.reject(`Invalid URL ${resolvedAsFluid.url}`);
         }
 
-        let canCache = true;
-        let canReconnect = true;
-        let connection = !parsed!.version ? "open" : "close";
-        let version = parsed!.version;
-        let fromSequenceNumber = -1;
-
-        if (request.headers) {
-            if (request.headers.connect) {
-                // If connection header is pure open or close we will cache it. Otherwise custom load behavior
-                // and so we will not cache the request
-                canCache = request.headers.connect === "open" || request.headers.connect === "close";
-                connection = request.headers.connect as string;
-            }
-
-            if (request.headers["fluid-cache"] === false) {
-                canCache = false;
-            }
-
-            if (request.headers["fluid-reconnect"] === false) {
-                canReconnect = false;
-            }
-
-            if (request.headers["fluid-sequence-number"]) {
-                fromSequenceNumber = request.headers["fluid-sequence-number"] as number;
-            }
-
-            version = version || request.headers.version as string;
-        }
+        const {canCache, canReconnect, connection, fromSequenceNumber, version} = this.parseHeader(parsed, request);
 
         debug(`${canCache} ${connection} ${version}`);
         const factory: IDocumentServiceFactory =
@@ -313,6 +325,45 @@ export class Loader extends EventEmitter implements ILoader {
         }
 
         return { container, parsed };
+
+    }
+
+    private parseHeader(parsed: IParsedUrl, request: IRequest) {
+        let canCache = true;
+        let canReconnect = true;
+        let connection = !parsed.version ? "open" : "close";
+        let version = parsed.version;
+        let fromSequenceNumber = -1;
+
+        if (request.headers) {
+            if (request.headers.connect) {
+                // If connection header is pure open or close we will cache it. Otherwise custom load behavior
+                // and so we will not cache the request
+                canCache = request.headers.connect === "open" || request.headers.connect === "close";
+                connection = request.headers.connect as string;
+            }
+
+            if (request.headers["fluid-cache"] === false) {
+                canCache = false;
+            }
+
+            if (request.headers["fluid-reconnect"] === false) {
+                canReconnect = false;
+            }
+
+            if (request.headers["fluid-sequence-number"]) {
+                fromSequenceNumber = request.headers["fluid-sequence-number"] as number;
+            }
+
+            version = version || request.headers.version as string;
+        }
+        return {
+            canCache,
+            canReconnect,
+            connection,
+            fromSequenceNumber,
+            version,
+        };
     }
 
     // @param version -one of the following

@@ -314,3 +314,25 @@ export class WebCodeLoader implements ICodeLoader {
         };
     }
 }
+
+// todo (web-loader): Change this.
+export class WorkerCodeLoader extends WebCodeLoader {
+    constructor() {
+        super();
+    }
+
+    /**
+     * @param source - Details of where to find chaincode
+     */
+    public async load<T>(
+        source: IFluidCodeDetails,
+    ): Promise<T> {
+        console.log(`Code package in worker loader`);
+        console.log(source);
+        const codeSource = "http://localhost:8080/dist/main.bundle.js"; // todo (web-loader): Change this.
+        // tslint:disable no-string-literal
+        await import(/* webpackMode: "eager", webpackIgnore: true */ codeSource);
+        // tslint:disable-next-line:no-unsafe-any
+        return self["main"];
+    }
+}

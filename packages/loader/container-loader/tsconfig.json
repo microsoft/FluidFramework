@@ -5,6 +5,7 @@
         "node_modules"
     ],
     "compilerOptions": {
+        "allowSyntheticDefaultImports": true,
         "strict": true,
         "rootDir": "./src",
         "outDir": "./dist",

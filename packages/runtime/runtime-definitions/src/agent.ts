@@ -21,7 +21,8 @@ export interface IProvideTaskManager {
  * Wrapper on top of IAgentScheduler.
  */
 export interface ITaskManager extends IProvideTaskManager, IComponentLoadable, IComponentRouter {
-    pick(componentUrl: string, ...tasks: ITask[]): Promise<void>;
+    register(...tasks: ITask[]): void;
+    pick(componentUrl: string, ...taskIds: string[]): Promise<void>;
 }
 
 export interface IProvideAgentScheduler {
@@ -31,7 +32,7 @@ export interface IProvideAgentScheduler {
 /**
  * Agent scheduler distributes a set of tasks/variables across connected clients.
  */
-export interface IAgentScheduler extends IProvideAgentScheduler, IComponentRouter {
+export interface IAgentScheduler extends IProvideAgentScheduler, IComponentRouter, IComponentLoadable {
     /**
      * Whether this instance is the leader.
      */
