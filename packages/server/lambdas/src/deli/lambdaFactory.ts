@@ -17,8 +17,8 @@ import { Provider } from "nconf";
 import { NoOpLambda } from "../utils";
 import { DeliLambda } from "./lambda";
 
-// We expire clients after 5 minutes of no activity
-export const ClientSequenceTimeout = 5 * 60 * 1000;
+// We expire clients after 2 minutes of no activity
+export const ClientSequenceTimeout = 2 * 60 * 1000;
 
 // Timeout for sending no-ops to trigger inactivity checker.
 export const ActivityCheckingTimeout = 30 * 1000;
