@@ -137,6 +137,7 @@ export function createProtocolToFactoryMapping(
  * Manages Fluid resource loading
  */
 export class Loader extends EventEmitter implements ILoader {
+
     private readonly containers = new Map<string, Promise<Container>>();
     private readonly resolveCache = new Map<string, IResolvedUrl>();
     private readonly protocolToDocumentFactoryMap: Map<string, IDocumentServiceFactory>;
@@ -177,7 +178,7 @@ export class Loader extends EventEmitter implements ILoader {
         debug(`Container loading: ${now()} `);
 
         const resolved = await this.resolveCore(request);
-        return resolved.container!.request({ url: resolved.parsed!.path });
+        return resolved.container.request({ url: resolved.parsed.path });
     }
 
     private parseUrl(url: string): IParsedUrl | null {
@@ -203,19 +204,23 @@ export class Loader extends EventEmitter implements ILoader {
     private async getResolvedUrl(request: IRequest): Promise<IResolvedUrl> {
         // Resolve the given request to a URL
         // Check for an already resolved URL otherwise make a new request
-        if (!this.resolveCache.has(request.url)) {
-            const toCache = await this.containerHost.resolver.resolve(request);
-            if (toCache.type !== "fluid") {
-                if (toCache.type === "prague") {
-                    // tslint:disable-next-line:max-line-length
-                    console.warn("IFluidResolvedUrl type === 'prague' has been deprecated. Please create IFluidResolvedUrls of type 'fluid' in the future.");
-                } else {
-                    return Promise.reject("Only Fluid components currently supported");
-                }
-            }
-            this.resolveCache.set(request.url, toCache);
+        const maybeResolvedUrl = this.resolveCache.get(request.url);
+        if (maybeResolvedUrl) {
+            return maybeResolvedUrl;
         }
-        return this.resolveCache.get(request.url)!;
+
+        const toCache = await this.containerHost.resolver.resolve(request);
+        if (toCache.type !== "fluid") {
+            if (toCache.type === "prague") {
+                // tslint:disable-next-line:max-line-length
+                console.warn("IFluidResolvedUrl type === 'prague' has been deprecated. Please create IFluidResolvedUrls of type 'fluid' in the future.");
+            } else {
+                return Promise.reject("Only Fluid components currently supported");
+            }
+        }
+        this.resolveCache.set(request.url, toCache);
+
+        return toCache;
     }
 
     private async resolveCore(
@@ -233,8 +238,8 @@ export class Loader extends EventEmitter implements ILoader {
 
         let canCache = true;
         let canReconnect = true;
-        let connection = !parsed!.version ? "open" : "close";
-        let version = parsed!.version;
+        let connection = !parsed.version ? "open" : "close";
+        let version = parsed.version;
         let fromSequenceNumber = -1;
 
         if (request.headers) {
@@ -268,11 +273,14 @@ export class Loader extends EventEmitter implements ILoader {
 
         let container: Container;
         if (canCache) {
-            const versionedId = version ? `${parsed!.id}@${version}` : parsed!.id;
-            if (!this.containers.has(versionedId)) {
+            const versionedId = version ? `${parsed.id}@${version}` : parsed.id;
+            const maybeContainer = await this.containers.get(versionedId);
+            if (maybeContainer) {
+                container = maybeContainer;
+            } else {
                 const containerP =
                     this.loadContainer(
-                        parsed!.id,
+                        parsed.id,
                         version,
                         connection,
                         documentService,
@@ -281,14 +289,12 @@ export class Loader extends EventEmitter implements ILoader {
                         canReconnect,
                         this.logger);
                 this.containers.set(versionedId, containerP);
+                container = await containerP;
             }
-
-            // container must exist since explicitly set above
-            container = (await this.containers.get(versionedId) as Container);
         } else {
             container =
                 await this.loadContainer(
-                    parsed!.id,
+                    parsed.id,
                     version,
                     connection,
                     documentService,
@@ -298,7 +304,7 @@ export class Loader extends EventEmitter implements ILoader {
                     this.logger);
         }
 
-        if (container.deltaManager!.referenceSequenceNumber <= fromSequenceNumber) {
+        if (container.deltaManager.referenceSequenceNumber <= fromSequenceNumber) {
             await new Promise((resolve, reject) => {
                 function opHandler(message: ISequencedDocumentMessage) {
                     if (message.sequenceNumber > fromSequenceNumber) {

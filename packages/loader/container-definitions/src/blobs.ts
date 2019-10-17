@@ -5,7 +5,7 @@
 
 export interface IBlobManager {
     // Rehydrate a blob manager from a snapshot
-    loadBlobMetadata(blobs: IGenericBlob[]);
+    loadBlobMetadata(blobs: IGenericBlob[]): void;
 
     // Get the metadata for all blobs on a document
     // Strip content if it exists

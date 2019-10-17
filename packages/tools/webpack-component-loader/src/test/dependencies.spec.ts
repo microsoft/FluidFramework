@@ -8,7 +8,7 @@ import * as fs from "fs";
 import * as path from "path";
 
 describe("Check Dependencies", () => {
-    it("verify no fuild packages", async () => {
+    it("verify no fluid packages", async () => {
         // tslint:disable-next-line: non-literal-fs-path
         await verifyNoFluidPackages(path.join(__dirname, "/../../node_modules/"));
     });

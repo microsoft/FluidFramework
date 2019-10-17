@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentSystemMessage, ISequencedDocumentSystemMessage, MessageType } from "@microsoft/fluid-protocol-definitions";
+import {
+    IDocumentSystemMessage,
+    ISequencedDocumentSystemMessage,
+    MessageType,
+} from "@microsoft/fluid-protocol-definitions";
 import { SequencedLambda } from "@microsoft/fluid-server-lambdas";
 import * as core from "@microsoft/fluid-server-services-core";
 import { DocumentManager } from "./documentManager";

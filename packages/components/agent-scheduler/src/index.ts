@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { AgentSchedulerFactory } from "./scheduler";
+export { AgentSchedulerFactory, TaskManager } from "./scheduler";

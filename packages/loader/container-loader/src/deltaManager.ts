@@ -93,6 +93,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     private lastQueuedSequenceNumber: number = 0;
     private baseSequenceNumber: number = 0;
 
+    // the sequence number we initially loaded from
+    private initSequenceNumber: number = 0;
+
     private readonly _inboundPending: DeltaQueue<ISequencedDocumentMessage>;
     private readonly _inbound: DeltaQueue<ISequencedDocumentMessage>;
     private readonly _inboundSignal: DeltaQueue<ISignalMessage>;
@@ -136,6 +139,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
     public get inboundSignal(): IDeltaQueue<ISignalMessage> {
         return this._inboundSignal;
+    }
+
+    public get initialSequenceNumber(): number {
+        return this.initSequenceNumber;
     }
 
     public get referenceSequenceNumber(): number {
@@ -284,6 +291,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             resume: boolean) {
         debug("Attached op handler", sequenceNumber);
 
+        this.initSequenceNumber = sequenceNumber;
         this.baseSequenceNumber = sequenceNumber;
         this.minSequenceNumber = minSequenceNumber;
         this.lastQueuedSequenceNumber = sequenceNumber;
@@ -815,6 +823,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         for (const message of messages) {
             // Check that the messages are arriving in the expected order
             if (message.sequenceNumber !== this.lastQueuedSequenceNumber + 1) {
+                // tslint:disable-next-line: max-line-length
                 debug(`DeltaManager: enque Messages *Out of* Order Message ${message.sequenceNumber} - last ${this.lastQueuedSequenceNumber}`);
 
                 this.handleOutOfOrderMessage(message);

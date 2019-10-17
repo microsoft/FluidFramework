@@ -4,7 +4,7 @@
  */
 import { ITelemetryBaseLogger } from "@microsoft/fluid-container-definitions";
 import { ChildLogger } from "@microsoft/fluid-core-utils";
-import { IDocumentService, IDocumentServiceFactory } from "@microsoft/fluid-protocol-definitions";
+import { IDocumentService, IDocumentServiceFactory, IResolvedUrl } from "@microsoft/fluid-protocol-definitions";
 import { IOdspResolvedUrl } from "./contracts";
 import { FetchWrapper, IFetchWrapper } from "./fetchWrapper";
 import { getSocketIo } from "./getSocketIo";
@@ -35,14 +35,15 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
     private readonly deltasFetchWrapper: IFetchWrapper = new FetchWrapper(),
   ) {}
 
-  public async createDocumentService(resolvedUrl: IOdspResolvedUrl): Promise<IDocumentService> {
+  public async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
+    const odspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
     return new OdspDocumentService(
       this.appId,
-      resolvedUrl.hashedDocumentId,
-      resolvedUrl.siteUrl,
-      resolvedUrl.driveId,
-      resolvedUrl.itemId,
-      resolvedUrl.endpoints.snapshotStorageUrl,
+      odspResolvedUrl.hashedDocumentId,
+      odspResolvedUrl.siteUrl,
+      odspResolvedUrl.driveId,
+      odspResolvedUrl.itemId,
+      odspResolvedUrl.endpoints.snapshotStorageUrl,
       this.getStorageToken,
       this.getWebsocketToken,
       ChildLogger.create(this.logger, "fluid:telemetry:OdspDriver"),

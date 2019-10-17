@@ -170,8 +170,10 @@ export class OdspDocumentService implements IDocumentService {
             webSocketToken ? webSocketToken : websocketEndpoint.socketToken,
             io,
             client,
-            websocketEndpoint.deltaStreamSocketUrl,
             mode,
+            websocketEndpoint.deltaStreamSocketUrl,
+            websocketEndpoint.deltaStreamSocketUrl2,
+            this.logger,
         ).then((connection) => {
             connection.on("server_disconnect", (socketError: IOdspSocketError) => {
                 const error = OdspDocumentService.errorObjectFromOdspError(socketError);
@@ -180,8 +182,7 @@ export class OdspDocumentService implements IDocumentService {
                 connection.emit("disconnect", error);
             });
             return connection;
-        })
-        .catch((error) => {
+        }).catch((error) => {
             // Test if it's NetworkError with IOdspSocketError.
             // Note that there might be no IOdspSocketError on it in case we hit socket.io protocol errors!
             // So we test canRetry property first - if it false, that means protocol is broken and reconnecting will not help.

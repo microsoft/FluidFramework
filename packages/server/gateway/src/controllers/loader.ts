@@ -3,14 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { createWebLoader, IHostConfig, initializeChaincode, registerAttach } from "@microsoft/fluid-base-host";
+import {
+    createWebLoader,
+    IHostConfig,
+    initializeChaincode,
+    registerAttach,
+} from "@microsoft/fluid-base-host";
 import { BaseTelemetryNullLogger } from "@microsoft/fluid-core-utils";
 import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
 import { IDocumentServiceFactory, IFluidResolvedUrl } from "@microsoft/fluid-protocol-definitions";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
 import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
 import { IGitCache } from "@microsoft/fluid-server-services-client";
-import { IResolvedPackage } from "@microsoft/fluid-web-code-loader";
+import { IResolvedPackage, WhiteList } from "@microsoft/fluid-web-code-loader";
 import Axios from "axios";
 import { DocumentFactory } from "./documentFactory";
 import { MicrosoftGraph } from "./graph";
@@ -111,10 +116,12 @@ export async function initialize(
         IPackageManager: packageManager,
     };
 
-    for (const account of user.accounts) {
-        if (account.provider === "msa") {
-            const mailServices = new MailServices(account.accessToken);
-            (services as any).IMail = mailServices;
+    if ( user.accounts ) {
+        for (const account of user.accounts) {
+            if (account.provider === "msa") {
+                const mailServices = new MailServices(account.accessToken);
+                (services as any).IMail = mailServices;
+            }
         }
     }
 
@@ -145,14 +152,15 @@ export async function initialize(
     window["allServices"] = services;
 
     console.log(`Loading ${url}`);
-    const loader = createWebLoader(
+    const loader = await createWebLoader(
         resolved,
         pkg,
         scriptIds,
-        npm,
         config,
         services,
-        hostConf);
+        hostConf,
+        new WhiteList(),
+        );
     documentFactory.resolveLoader(loader);
 
     const div = document.getElementById("content") as HTMLDivElement;

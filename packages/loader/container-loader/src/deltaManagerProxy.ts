@@ -102,6 +102,10 @@ export class DeltaManagerProxy
         return this.deltaManager.referenceSequenceNumber;
     }
 
+    public get initialSequenceNumber(): number {
+        return this.deltaManager.initialSequenceNumber;
+    }
+
     public get clientType(): string {
         return this.deltaManager.clientType;
     }

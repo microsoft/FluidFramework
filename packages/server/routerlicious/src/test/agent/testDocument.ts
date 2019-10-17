@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IConnectionDetails, IDeltaHandlerStrategy, IDeltaManager, IDeltaQueue } from "@microsoft/fluid-container-definitions";
+import {
+    IConnectionDetails,
+    IDeltaHandlerStrategy,
+    IDeltaManager,
+    IDeltaQueue,
+} from "@microsoft/fluid-container-definitions";
 import * as utils from "@microsoft/fluid-core-utils";
 import {
     IDocumentMessage,
@@ -79,6 +84,8 @@ export class TestDeltaManager
     public maxMessageSize: number;
 
     public minimumSequenceNumber: number;
+
+    public initialSequenceNumber: number;
 
     public inbound = new TestDeltaQueue<ISequencedDocumentMessage>();
 

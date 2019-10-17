@@ -1,6 +1,6 @@
 {
-  "name": "@yo-fluid/bootstrap-counter",
-  "description": "Minimal Fluid example to implement a collaborative counter.",
+  "name": "@yo-fluid/dice-roller",
+  "description": "Minimal Fluid example to implement a collaborative dice roller.",
   "version": "0.11.0",
   "author": "Microsoft",
   "repository": "microsoft/FluidFramework",
@@ -10,27 +10,14 @@
   "scripts": {
     "build": "webpack --env.production && npm run tsc",
     "dev": "webpack --env.development",
-    "start": "webpack-dev-server --config webpack.config.js --package package.json",
-    "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
+    "start": "webpack-dev-server --config webpack.config.js --package package.json --env.mode local",
     "start:live": "webpack-dev-server --config webpack.config.js --package package.json --env.mode live",
+    "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
     "verdaccio": "npm publish --registry https://packages.wu2.prague.office-int.com",
-    "deploy": "npm run build && npm version patch && npm run verdaccio && npm run post-deploy",
-    "post-deploy": "getUrl -p",
+    "deploy": "npm run build && npm version patch && npm run verdaccio",
     "tsc": "tsc",
     "webpack": "npm run build",
     "webpack:dev": "npm run dev"
-  },
-  "devDependencies": {
-    "@fluid-internal/url-generator": "^1.0.4",
-    "@microsoft/fluid-webpack-component-loader": "^0.11.0",
-    "@types/node": "^10.14.6",
-    "@types/react-dom": "^16.0.11",
-    "ts-loader": "^4.5.0",
-    "typescript": "~3.4.5",
-    "webpack": "4.16.5",
-    "webpack-cli": "3.1.0",
-    "webpack-dev-server": "^3.8.0",
-    "webpack-merge": "4.1.4"
   },
   "fluid": {
     "browser": {
@@ -42,17 +29,22 @@
       }
     }
   },
+  "license": "MIT",
   "dependencies": {
     "@microsoft/fluid-aqueduct": "^0.11.0",
-    "@microsoft/fluid-build-common": "^0.11.0",
     "@microsoft/fluid-component-core-interfaces": "^0.11.0",
-    "@microsoft/fluid-component-runtime": "^0.11.0",
-    "@microsoft/fluid-container-definitions": "^0.11.0",
-    "@microsoft/fluid-map": "^0.11.0",
-    "@microsoft/fluid-runtime-definitions": "^0.11.0",
-    "@microsoft/fluid-shared-object-base": "^0.11.0",
     "react": "^16.8.3",
     "react-dom": "^16.8.3"
   },
-  "license": "MIT"
+  "devDependencies": {
+    "@microsoft/fluid-webpack-component-loader": "^0.11.0",
+    "@types/node": "^10.14.6",
+    "@types/react-dom": "^16.0.11",
+    "ts-loader": "^4.5.0",
+    "typescript": "~3.4.5",
+    "webpack": "4.16.5",
+    "webpack-cli": "3.1.0",
+    "webpack-dev-server": "^3.8.0",
+    "webpack-merge": "4.1.4"
+  }
 }

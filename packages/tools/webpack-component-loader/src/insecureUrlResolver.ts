@@ -69,22 +69,25 @@ export class InsecureUrlResolver implements IUrlResolver {
 
             return response;
         } else {
-            if (!this.cache.has(request.url)) {
-                const headers = {
-                    Authorization: `Bearer ${this.bearer}`,
-                };
-                const resolvedP = Axios.post<IResolvedUrl>(
-                    `${this.hostUrl}/api/v1/load`,
-                    {
-                        url: request.url,
-                    },
-                    {
-                        headers,
-                    });
-                this.cache.set(request.url, resolvedP.then((resolved) => resolved.data));
+            const maybeResolvedUrl = this.cache.get(request.url);
+            if (maybeResolvedUrl) {
+                return maybeResolvedUrl;
             }
-            // tslint:disable no-non-null-assertion
-            return this.cache.get(request.url)!;
+
+            const headers = {
+                Authorization: `Bearer ${this.bearer}`,
+            };
+            const resolvedP = Axios.post<IResolvedUrl>(
+                `${this.hostUrl}/api/v1/load`,
+                {
+                    url: request.url,
+                },
+                {
+                    headers,
+                });
+            this.cache.set(request.url, resolvedP.then((resolved) => resolved.data));
+
+            return this.cache.get(request.url);
         }
     }
 

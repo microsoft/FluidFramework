@@ -13,7 +13,7 @@ export class BlobManager implements IBlobManager {
         this.blobs = new Map<string, IGenericBlob>();
     }
 
-    public async loadBlobMetadata(blobs: IGenericBlob[]) {
+    public loadBlobMetadata(blobs: IGenericBlob[]) {
         for (const blob of blobs) {
             this.blobs.set(blob.id, blob);
         }
