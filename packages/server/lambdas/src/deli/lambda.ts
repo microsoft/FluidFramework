@@ -180,8 +180,8 @@ export class DeliLambda implements IPartitionLambda {
                 }
 
                 // Return early but start a timer to create consolidated message.
+                this.clearNoopConsolidationTimer();
                 if (ticketedMessage.send === SendType.Later) {
-                    this.clearNoopConsolidationTimer();
                     this.setNoopConsolidationTimer();
                     continue;
                 }
