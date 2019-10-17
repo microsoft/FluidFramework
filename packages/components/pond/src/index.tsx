@@ -40,7 +40,8 @@ export class Pond extends PrimedComponent implements IComponentHTMLVisual {
     const response = clickerRuntime.request({url: "/"});
     const clicker = await this.asComponent<Clicker>(response);
 
-    // create
+    // create the clickerWithInitialValue
+    // Note: we have to use the props to ensure we are passing the initial value
     const clickerWithInitialValueRuntime =
       await this.context.hostRuntime._createComponentWithProps(
         ClickerWithInitialValueName,
