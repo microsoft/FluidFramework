@@ -24,11 +24,13 @@ export class ClientSequenceNumberManager {
     private clientNodeMap = new Map<string, IHeapNode<IClientSequenceNumber>>();
     private clientSeqNumbers = new Heap<IClientSequenceNumber>(SequenceNumberComparer);
     private lastUpdate = -1;
-    private recentIdleEnd: number | undefined;
+    private fullIdlePeriod = { start: 0, end: 0 };
 
-    constructor(
-        private readonly idleTimeout: number,
-        private readonly clientIdleTimeout: number) { }
+    constructor(private readonly clientIdleTimeout: number) { }
+
+    public get lastFullIdlePeriod() {
+        return Object.freeze(this.fullIdlePeriod);
+    }
 
     public has(clientId: string): boolean {
         return this.clientNodeMap.has(clientId);
@@ -128,12 +130,13 @@ export class ClientSequenceNumberManager {
     }
 
     public getIdleClient(): IClientSequenceNumber {
-        if (this.clientNodeMap.size > 0) {
+        if (this.clientNodeMap.size > 1) {
             const node = this.clientSeqNumbers.peek();
             const client = node.value;
             if (client.canEvict
-                && this.recentIdleEnd === undefined
-                && (this.lastUpdate - client.lastUpdate > this.clientIdleTimeout)) {
+                && (client.lastUpdate <= this.fullIdlePeriod.start - this.clientIdleTimeout
+                    || client.lastUpdate >= this.fullIdlePeriod.end)
+                && this.lastUpdate - client.lastUpdate > this.clientIdleTimeout) {
                     return client;
             }
         }
@@ -153,27 +156,10 @@ export class ClientSequenceNumberManager {
             // if the gap between the last update, and this update
             // is greater than the client timeout then we were idle
             // so track the end time of this idle period
-            if (this.lastUpdate >= 0 && timestamp - this.lastUpdate > this.idleTimeout) {
-                this.recentIdleEnd = timestamp;
+            if (this.lastUpdate > 0 &&  timestamp - this.lastUpdate > this.clientIdleTimeout) {
+                this.fullIdlePeriod = {start: this.lastUpdate, end: timestamp};
             }
             this.lastUpdate = timestamp;
-
-            if (this.recentIdleEnd !== undefined) {
-                // once the difference between this update and the recent
-                // idle end is greater than the idle timeout then we
-                // are not longer recently idle, so clear the recent idle end
-                if (timestamp - this.recentIdleEnd > this.idleTimeout) {
-                    this.recentIdleEnd = undefined;
-                } else {
-                    // if the oldest client has been updated since idle ended
-                    // then the idle can be cleared as well,
-                    // as we're not recently idle
-                    const client = this.peek();
-                    if (client.lastUpdate > this.recentIdleEnd) {
-                        this.recentIdleEnd = undefined;
-                    }
-                }
-            }
         }
 
         // Lookup the node and then update its value based on the message

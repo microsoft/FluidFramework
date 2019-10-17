@@ -96,7 +96,6 @@ export class DeliLambda implements IPartitionLambda {
         private noOpConsolidationTimeout: number) {
 
         this.clientSeqManager = new ClientSequenceNumberManager(
-            clientTimeout / 2,
             clientTimeout);
 
         // Instantiate existing clients
@@ -181,7 +180,6 @@ export class DeliLambda implements IPartitionLambda {
                 }
 
                 // Return early but start a timer to create consolidated message.
-                this.clearNoopConsolidationTimer();
                 if (ticketedMessage.send === SendType.Later) {
                     this.setNoopConsolidationTimer();
                     continue;
@@ -207,7 +205,6 @@ export class DeliLambda implements IPartitionLambda {
 
         // Start a timer to check inactivity on the document. To trigger idle client leave message,
         // we send a noop back to alfred. The noop should trigger a client leave message if there are any.
-        this.clearIdleTimer();
         this.setIdleTimer();
     }
 
@@ -644,10 +641,11 @@ export class DeliLambda implements IPartitionLambda {
     }
 
     private setIdleTimer() {
-        if (this.noActiveClients) {
+        if (this.noActiveClients || this.idleTimer !== undefined) {
             return;
         }
         this.idleTimer = setTimeout(() => {
+            this.idleTimer = undefined;
             if (!this.noActiveClients) {
                 const noOpMessage = this.createOpMessage(MessageType.NoOp);
                 this.sendToAlfred(noOpMessage);
@@ -663,10 +661,11 @@ export class DeliLambda implements IPartitionLambda {
     }
 
     private setNoopConsolidationTimer() {
-        if (this.noActiveClients) {
+        if (this.noActiveClients && this.noopTimer !== undefined) {
             return;
         }
         this.noopTimer = setTimeout(() => {
+            this.noopTimer = undefined;
             if (!this.noActiveClients) {
                 const noOpMessage = this.createOpMessage(MessageType.NoOp);
                 this.sendToAlfred(noOpMessage);
