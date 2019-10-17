@@ -3120,7 +3120,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         this.statusMessage("li", " ");
         this.statusMessage("si", " ");
 
-        this.undoRedoManager = new UndoRedoStackManager(this.collabDocument.context.hostRuntime);
+        this.undoRedoManager = new UndoRedoStackManager();
         const sequenceHandler = new SharedSegmentSequenceUndoRedoHandler(this.undoRedoManager);
         sequenceHandler.attachSequence(sharedString);
 

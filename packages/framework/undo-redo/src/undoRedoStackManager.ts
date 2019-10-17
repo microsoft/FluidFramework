@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { IHostRuntime } from "@microsoft/fluid-runtime-definitions";
 import { EventEmitter } from "events";
 
 export interface IRevertable {
@@ -118,7 +117,7 @@ export class UndoRedoStackManager {
     private mode: UndoRedoMode = UndoRedoMode.None;
     private readonly eventEmitter = new EventEmitter();
 
-    constructor(private readonly runtime: IHostRuntime) {
+    constructor() {
         this.undoStack.itemPushedCallback =
             () => this.eventEmitter.emit("changePushed");
         this.redoStack.itemPushedCallback =
@@ -140,21 +139,17 @@ export class UndoRedoStackManager {
 
     public undoOperation() {
         this.mode = UndoRedoMode.Undo;
-        this.runtime.orderSequentially(() => {
-            UndoRedoStackManager.revert(
-                this.undoStack,
-                this.redoStack);
-        });
+        UndoRedoStackManager.revert(
+            this.undoStack,
+            this.redoStack);
         this.mode = UndoRedoMode.None;
     }
 
     public redoOperation() {
         this.mode = UndoRedoMode.Redo;
-        this.runtime.orderSequentially(() => {
-            UndoRedoStackManager.revert(
-                this.redoStack,
-                this.undoStack);
-        });
+        UndoRedoStackManager.revert(
+            this.redoStack,
+            this.undoStack);
         this.mode = UndoRedoMode.None;
     }
 
