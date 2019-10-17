@@ -130,13 +130,21 @@ export class ClientSequenceNumberManager {
     }
 
     public getIdleClient(): IClientSequenceNumber {
+        // if there is only one client, they can't hold back the collab window
         if (this.clientNodeMap.size > 1) {
             const node = this.clientSeqNumbers.peek();
             const client = node.value;
+            // check if we can evict the client
+            // check if the client hasn't sent an update for longer that the timeout
+            // check if the client was updated after the full idle, if not see if it updated
+            //      within the timeout before full idle which handles the case where
+            //      there was no update before the idle
+            //
             if (client.canEvict
-                && (client.lastUpdate <= this.fullIdlePeriod.start - this.clientIdleTimeout
-                    || client.lastUpdate >= this.fullIdlePeriod.end)
-                && this.lastUpdate - client.lastUpdate > this.clientIdleTimeout) {
+                && this.lastUpdate - client.lastUpdate > this.clientIdleTimeout
+                && (client.lastUpdate >= this.fullIdlePeriod.end
+                    || client.lastUpdate <= this.fullIdlePeriod.start - this.clientIdleTimeout)
+                ) {
                     return client;
             }
         }
