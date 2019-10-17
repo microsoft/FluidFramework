@@ -2,12 +2,13 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+import { IComponent, IComponentLoadable, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import { IHostRuntime } from "@microsoft/fluid-runtime-definitions";
 import { RequestParser } from "./requestParser";
-import { RuntimeRequestDelegate } from "./runtimeRequestHandlerBuilder";
 
-export const componentRuntimeRequestHandler: RuntimeRequestDelegate =
+export type RuntimeRequestHandler = (request: RequestParser, runtime: IHostRuntime) => Promise<IResponse | undefined>;
+
+export const componentRuntimeRequestHandler: RuntimeRequestHandler =
     async (request: RequestParser, runtime: IHostRuntime) => {
 
         if (request.pathParts.length > 0) {
@@ -23,25 +24,32 @@ export const componentRuntimeRequestHandler: RuntimeRequestDelegate =
         return undefined;
     };
 
-export function createServiceRuntimeRequestHandler(
-    serviceId: string, initializeServiceComponent: (runtime: IHostRuntime) => IComponent): RuntimeRequestDelegate {
-    let component: IComponent | undefined;
-    return async (request: RequestParser, runtime: IHostRuntime) => {
+export function createComponentResponse(component: IComponent) {
+    return { status: 200, mimeType: "fluid/component", value: component };
+}
 
+export function createLoadableComponentRuntimeRequestHandler(component: IComponentLoadable): RuntimeRequestHandler {
+    const pathParts = RequestParser.getPathParts(component.url);
+    return async (request: RequestParser, runtime: IHostRuntime) => {
+        for (let i = 0; i < pathParts.length; i++) {
+            if (pathParts[i] !== request.pathParts[i]) {
+                return undefined;
+            }
+        }
+        return createComponentResponse(component);
+    };
+}
+
+export const serviceRoutePathRoot = "_services";
+export function createServiceRuntimeRequestHandler(
+    serviceId: string, component: IComponent): RuntimeRequestHandler {
+    return async (request: RequestParser, runtime: IHostRuntime) => {
         if (request.pathParts.length >= 2
-            && request.pathParts[0] === "_services"
+            && request.pathParts[0] === serviceRoutePathRoot
             && request.pathParts[1] === serviceId) {
 
-            if (component === undefined) {
-                component = initializeServiceComponent(runtime);
-            }
-
             if (request.pathParts.length === 2) {
-                return {
-                    mimeType: "fluid/component",
-                    status: 200,
-                    value: component,
-                };
+                return createComponentResponse(component);
             }
 
             if (component.IComponentRouter) {

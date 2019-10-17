@@ -8,7 +8,23 @@ import { IRequest } from "@microsoft/fluid-component-core-interfaces";
  * The Request Parser takes an IRequest provides parsing and sub request creation
  */
 export class RequestParser implements IRequest {
-    private requestPathParts: string[] | undefined;
+
+    public static getPathParts(url: string): ReadonlyArray<string> {
+        const queryStartIndex = url.indexOf("?");
+        return url
+            .substring(queryStartIndex < 0 ? 0 : queryStartIndex)
+            .split("/")
+            .reduce<string[]>(
+            (pv, cv) => {
+                if (cv !== undefined && cv.length > 0) {
+                    pv.push(decodeURIComponent(cv));
+                }
+                return pv;
+            },
+            []);
+    }
+
+    private requestPathParts: ReadonlyArray<string> | undefined;
     private readonly queryStartIndex: number;
     constructor(private readonly request: Readonly<IRequest>) {
         this.queryStartIndex = this.request.url.indexOf("?");
@@ -24,17 +40,7 @@ export class RequestParser implements IRequest {
 
     public get pathParts(): ReadonlyArray<string> {
         if (this.requestPathParts === undefined) {
-            this.requestPathParts = this.request.url
-                .substring(this.queryStartIndex < 0 ? 0 : this.queryStartIndex)
-                .split("/")
-                .reduce<string[]>(
-                (pv, cv) => {
-                    if (cv !== undefined && cv.length > 0) {
-                        pv.push(decodeURIComponent(cv));
-                    }
-                    return pv;
-                },
-                []);
+            this.requestPathParts = RequestParser.getPathParts(this.url);
         }
         return this.requestPathParts;
     }

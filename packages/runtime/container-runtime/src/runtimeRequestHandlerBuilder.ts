@@ -5,28 +5,23 @@
 
 import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import { IHostRuntime } from "@microsoft/fluid-runtime-definitions";
+import { RuntimeRequestHandler } from "./requestHandlers";
 import { RequestParser } from "./requestParser";
-
-export type RuntimeRequestDelegate = (request: RequestParser, runtime: IHostRuntime) => Promise<IResponse | undefined>;
 
  /**
   * The RuntimeRequestHandlerBuilder creates a runtime request handler based on request handlers.
   * The provided handlers sequentially applied until one is able to statify the request.
   */
 export class RuntimeRequestHandlerBuilder {
-    private readonly handlers: RuntimeRequestDelegate[] = [];
+    private readonly handlers: RuntimeRequestHandler[] = [];
 
-    public get requestHandlerFn(): ((request: IRequest, runtime: IHostRuntime) => Promise<IResponse>) {
-        return this.handleRequest.bind(this);
-    }
-
-    public pushHandler(...handlers: RuntimeRequestDelegate[]) {
+    public pushHandler(...handlers: RuntimeRequestHandler[]) {
         if (handlers !== undefined) {
             this.handlers.push(...handlers);
         }
     }
 
-    private async handleRequest(request: IRequest, runtime: IHostRuntime): Promise<IResponse> {
+    public async handleRequest(request: IRequest, runtime: IHostRuntime): Promise<IResponse> {
         const parser = new RequestParser(request);
         for (const handler of this.handlers) {
             const response = await handler(parser, runtime);

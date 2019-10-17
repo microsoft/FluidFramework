@@ -228,7 +228,7 @@ class SharedMapVisualizerFactory implements IComponentFactory, IRuntimeFactory {
         const runtime = await ContainerRuntime.load(
             context,
             registry,
-            async (request: IRequest, containerRuntime: IHostRuntime) => {
+            [async (request: IRequest, containerRuntime: IHostRuntime) => {
                 console.log(request.url);
 
                 const requestUrl = request.url.length > 0 && request.url.charAt(0) === "/"
@@ -242,7 +242,7 @@ class SharedMapVisualizerFactory implements IComponentFactory, IRuntimeFactory {
                 const component = await containerRuntime.getComponentRuntime(componentId, true);
 
                 return component.request({ url: trailingSlash === -1 ? "" : requestUrl.substr(trailingSlash + 1) });
-            },
+            }],
             { generateSummaries: true });
 
         // flush mode to manual to batch operations within a turn

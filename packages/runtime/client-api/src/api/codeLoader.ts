@@ -137,7 +137,7 @@ export class ChaincodeFactory implements IRuntimeFactory {
         const runtime = await ContainerRuntime.load(
             context,
             registry,
-            ChaincodeFactory.containerRequestHandler,
+            [ChaincodeFactory.containerRequestHandler],
             this.runtimeOptions);
 
         // On first boot create the base component

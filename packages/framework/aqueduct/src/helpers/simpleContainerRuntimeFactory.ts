@@ -3,9 +3,13 @@
  * Licensed under the MIT License.
  */
 import { IContainerContext } from "@microsoft/fluid-container-definitions";
-import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
+import {
+    componentRuntimeRequestHandler,
+    ContainerRuntime,
+    RequestParser,
+    RuntimeRequestHandler,
+} from "@microsoft/fluid-container-runtime";
 import { ComponentRegistryTypes, IHostRuntime } from "@microsoft/fluid-runtime-definitions";
-import { componentRuntimeRequestHandler, RequestParser, RuntimeRequestDelegate, RuntimeRequestHandlerBuilder} from "@microsoft/fluid-runtime-router";
 
 export class SimpleContainerRuntimeFactory {
     public static readonly defaultComponentId = "default";
@@ -18,15 +22,18 @@ export class SimpleContainerRuntimeFactory {
         chaincode: string,
         registry: ComponentRegistryTypes,
         generateSummaries: boolean = false,
-        requestHandlers: RuntimeRequestDelegate[] = [],
+        requestHandlers: RuntimeRequestHandler[] = [],
     ): Promise<ContainerRuntime> {
-        const runtimeRequestHandler = new RuntimeRequestHandlerBuilder();
-        runtimeRequestHandler.pushHandler(defaultComponentRuntimeRequestHandler);
-        runtimeRequestHandler.pushHandler(...requestHandlers);
-        runtimeRequestHandler.pushHandler(componentRuntimeRequestHandler);
-
         // debug(`instantiateRuntime(chaincode=${chaincode},registry=${JSON.stringify(registry)})`);
-        const runtime = await ContainerRuntime.load(context, registry, runtimeRequestHandler.requestHandlerFn, { generateSummaries });
+        const runtime = await ContainerRuntime.load(
+            context,
+            registry,
+            [
+                defaultComponentRuntimeRequestHandler,
+                ...requestHandlers,
+                componentRuntimeRequestHandler,
+            ],
+            { generateSummaries });
         // debug("runtime loaded.");
 
         // On first boot create the base component
@@ -69,7 +76,7 @@ export class SimpleContainerRuntimeFactory {
     }
 }
 
-export const defaultComponentRuntimeRequestHandler: RuntimeRequestDelegate =
+export const defaultComponentRuntimeRequestHandler: RuntimeRequestHandler =
     async (request: RequestParser, runtime: IHostRuntime) => {
         if (request.pathParts.length === 0) {
             return componentRuntimeRequestHandler(

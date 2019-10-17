@@ -137,7 +137,7 @@ class SharedTextFactoryComponent implements IComponentFactory, IRuntimeFactory {
         const runtime = await ContainerRuntime.load(
             context,
             new MyRegistry(context, this, "https://pragueauspkn-3873244262.azureedge.net"),
-            SharedTextFactoryComponent.containerRequestHandler,
+            [SharedTextFactoryComponent.containerRequestHandler],
             { generateSummaries });
 
         // Registering for tasks to run in headless runner.
