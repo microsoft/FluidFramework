@@ -16,7 +16,7 @@ export class RequestParser implements IRequest {
     public static getPathParts(url: string): ReadonlyArray<string> {
         const queryStartIndex = url.indexOf("?");
         return url
-            .substring(queryStartIndex < 0 ? 0 : queryStartIndex)
+            .substring(0, queryStartIndex < 0 ? url.length : queryStartIndex)
             .split("/")
             .reduce<string[]>(
             (pv, cv) => {
@@ -29,9 +29,14 @@ export class RequestParser implements IRequest {
     }
 
     private requestPathParts: ReadonlyArray<string> | undefined;
-    private readonly queryStartIndex: number;
+    private readonly query: string;
     constructor(private readonly request: Readonly<IRequest>) {
-        this.queryStartIndex = this.request.url.indexOf("?");
+        const queryStartIndex = this.request.url.indexOf("?");
+        if (queryStartIndex >= 0) {
+            this.query = this.request.url.substring(queryStartIndex);
+        } else {
+            this.query = "";
+        }
     }
 
     public get url(): string {
@@ -57,11 +62,13 @@ export class RequestParser implements IRequest {
      *
      * @param startingPathIndex - The index of the first path part of the sub request
      */
-    public createSubRequest(startingPathIndex: number): IRequest {
-        const query = this.queryStartIndex < 0 ? "" : this.url.slice(this.queryStartIndex);
-        return {
-            url: this.pathParts.slice(startingPathIndex).join("/") + query,
-            headers: this.headers,
-        };
+    public createSubRequest(startingPathIndex: number): IRequest | undefined {
+        if (startingPathIndex >= 0 && startingPathIndex < this.pathParts.length) {
+            const path = this.pathParts.slice(startingPathIndex).join("/");
+            return {
+                url: path + this.query,
+                headers: this.headers,
+            };
+        }
     }
 }
