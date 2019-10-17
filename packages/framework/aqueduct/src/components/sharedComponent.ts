@@ -6,7 +6,6 @@
 import {
     IComponent,
     IComponentHandle,
-    IComponentHandleContext,
     IComponentLoadable,
     IComponentRouter,
     IProvideComponentHandle,
@@ -16,42 +15,7 @@ import {
 import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { EventEmitter } from "events";
 
-export class SharedComponentHandle<T extends IComponentLoadable> implements IComponentHandle {
-    public get IComponentRouter(): IComponentRouter { return this.handleContext; }
-    public get IComponentHandleContext(): IComponentHandleContext { return this.handleContext; }
-    public get IComponentHandle(): IComponentHandle { return this; }
-
-    public get routeContext(): IComponentHandleContext | undefined {
-        return this.handleContext.routeContext;
-    }
-
-    public get isAttached(): boolean {
-        return this.handleContext.isAttached;
-    }
-
-    public get path(): string {
-        return this.handleContext.path;
-    }
-
-    public constructor(
-        private readonly handleContext: IComponentHandleContext,
-        private readonly obj: T) {
-    }
-
-    public async get(): Promise<any> {
-        return this.obj;
-    }
-
-    public attach(): void {
-        this.handleContext.attach();
-    }
-    public bind(handle: IComponentHandle): void {
-        this.handleContext.bind(handle);
-    }
-    public async request(request: IRequest): Promise<IResponse> {
-        return this.handleContext.request(request);
-    }
-}
+import { GenericComponentHandle } from "../helpers/genericComponentHandle";
 
 /**
  * This is as bare-bones base class that does basic setup and enables for factory on an initialize call.
@@ -73,7 +37,7 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
         protected readonly context: IComponentContext,
     ) {
         super();
-        this.innerHandle = new SharedComponentHandle(runtime.IComponentHandleContext, this);
+        this.innerHandle = new GenericComponentHandle(runtime.IComponentHandleContext, this);
     }
 
     /**
