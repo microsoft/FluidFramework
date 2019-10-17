@@ -257,9 +257,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         // Inbound signal queue
         this._inboundSignal = new DeltaQueue<ISignalMessage>((message, callback: (error?) => void) => {
-            // tslint:disable no-unsafe-any
-            message!.content = JSON.parse(message!.content);
-            this.handler!.processSignal(message!);
+            this.handler!.processSignal({
+                clientId: message.clientId,
+                content: JSON.parse(message!.content as string),
+            });
             callback();
         });
 
@@ -472,7 +473,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                     return [];
                 }
                 success = false;
+                // tslint:disable-next-line: no-unsafe-any
                 if (typeof error === "object" && error !== null && error.retryAfterSeconds !== undefined) {
+                    // tslint:disable-next-line: no-unsafe-any
                     retryAfter = error.retryAfterSeconds;
                 }
             }
@@ -714,7 +717,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 }
 
                 let delayNext: number = 0;
+                // tslint:disable-next-line: no-unsafe-any
                 if (typeof error === "object" && error !== null && error.retryAfterSeconds !== undefined) {
+                    // tslint:disable-next-line: no-unsafe-any
                     delayNext = error.retryAfterSeconds;
                 } else {
                     delayNext = Math.min(delay * 2, MaxReconnectDelay);
@@ -967,7 +972,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         return {
             clientId: message.clientId,
             clientSequenceNumber: message.clientSequenceNumber,
-            contents: message.contents,
+            contents: message.contents as string,
         };
     }
 
@@ -1033,6 +1038,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
     private stopSequenceNumberUpdate(): void {
         if (this.updateSequenceNumberTimer) {
+            // tslint:disable-next-line: no-unsafe-any
             clearTimeout(this.updateSequenceNumberTimer);
         }
         this.updateSequenceNumberTimer = undefined;
