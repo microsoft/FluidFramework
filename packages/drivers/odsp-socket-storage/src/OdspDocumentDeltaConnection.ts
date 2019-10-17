@@ -250,7 +250,8 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
     private static removeSocketIoReference(key: string) {
         const socketReference = OdspDocumentDeltaConnection.socketIoSockets.get(key);
         if (!socketReference) {
-            throw new Error(`Invalid socket reference for "${key}"`);
+            // this is expected to happens if we removed the reference due the socket not being connected
+            return;
         }
 
         if (socketReference.socket && !socketReference.socket.connected) {
