@@ -8,7 +8,10 @@ import {
   PrimedComponentFactory,
   SimpleModuleInstantiationFactory,
 } from "@microsoft/fluid-aqueduct";
-import { IComponent, IComponentHTMLVisual, IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
+import { IComponent, IComponentHandle, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
+// tslint:disable-next-line: no-implicit-dependencies no-submodule-imports
+import * as uuid from "uuid/v4";
+
 import { Clicker, ClickerName, ClickerWithInitialValue, ClickerWithInitialValueName } from "./internal-components";
 
 // tslint:disable-next-line: no-var-requires no-require-imports
@@ -37,20 +40,25 @@ export class Pond extends PrimedComponent implements IComponentHTMLVisual {
     const response = clickerRuntime.request({url: "/"});
     const clicker = await this.asComponent<Clicker>(response);
 
-    await this.createAndAttachComponent(
-      this.clickerWithInitialValueKey,
-      ClickerWithInitialValueName,
-      { initialValue: 100 },
-    );
+    // create
+    const clickerWithInitialValueRuntime =
+      await this.context.hostRuntime._createComponentWithProps(
+        ClickerWithInitialValueName,
+        { initialValue: 100 },
+        uuid(), // The componentId doesn't matter because we are saving the component handle
+      );
+    const clickerWithInitialValueResponse = clickerWithInitialValueRuntime.request({url: "/"});
+    const clickerWithInitialValue = await this.asComponent<ClickerWithInitialValue>(clickerWithInitialValueResponse);
 
     this.root.set(this.clickerKey, clicker.handle);
+    this.root.set(this.clickerWithInitialValueKey, clickerWithInitialValue.handle);
   }
 
   protected async componentHasInitialized() {
     const clicker2 = await this.root.get<IComponentHandle>(this.clickerKey).get<IComponent>();
     this.clicker2Render = clicker2.IComponentHTMLVisual;
 
-    const clicker3 = await this.getComponent<IComponent>(this.clickerWithInitialValueKey);
+    const clicker3 = await this.root.get<IComponentHandle>(this.clickerWithInitialValueKey).get<IComponent>();
     this.clicker3Render = clicker3.IComponentHTMLVisual;
   }
 
