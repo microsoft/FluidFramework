@@ -16,8 +16,9 @@ import { removeAllChildren } from "./utils";
  */
 export class BrowserContainerHost {
     private root: Component = null;
+    private parent: HTMLElement = null;
 
-    public attach(root: Component) {
+    public attach(root: Component, parent?: HTMLElement) {
         debug("Attaching new component to browser host");
 
         // Make note of the root node
@@ -25,6 +26,7 @@ export class BrowserContainerHost {
             throw new Error("A component has already been attached");
         }
         this.root = root;
+        this.parent = parent;
 
         // Listen for resize messages and propagate them to child elements
         window.addEventListener("resize", () => {
@@ -43,15 +45,24 @@ export class BrowserContainerHost {
             this.root.emit("keypress", e);
         };
 
-        removeAllChildren(document.body);
-        document.body.appendChild(root.element);
+        if (parent) {
+            parent.appendChild(root.element);
+        } else {
+            removeAllChildren(document.body);
+            document.body.appendChild(root.element);
+        }
 
         // Trigger initial resize due to attach
         this.resize();
     }
 
     private resize() {
-        const clientRect = document.body.getBoundingClientRect();
+        let clientRect;
+        if (this.parent) {
+            clientRect = this.parent.getBoundingClientRect();
+        } else {
+            clientRect = document.body.getBoundingClientRect();
+        }
         const newSize = Rectangle.fromClientRect(clientRect);
         newSize.conformElement(this.root.element);
         this.root.resize(newSize);

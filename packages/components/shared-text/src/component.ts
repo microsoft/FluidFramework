@@ -88,7 +88,7 @@ export class SharedTextRunner
             return;
         }
 
-        this.initializeUI().catch(debug);
+        this.initializeUI(element).catch(debug);
         this.uiInitialized = true;
     }
 
@@ -200,7 +200,7 @@ export class SharedTextRunner
         taskScheduler.start();
     }
 
-    private async initializeUI(): Promise<void> {
+    private async initializeUI(div): Promise<void> {
         // tslint:disable
         require("bootstrap/dist/css/bootstrap.min.css");
         require("bootstrap/dist/css/bootstrap-theme.min.css");
@@ -225,6 +225,7 @@ export class SharedTextRunner
         ]);
 
         const containerDiv = document.createElement("div");
+        containerDiv.id = "flow-container";
         const container = new controls.FlowContainer(
             containerDiv,
             new API.Document(this.runtime, this.context, this.rootView),
@@ -234,7 +235,7 @@ export class SharedTextRunner
             image,
             {});
         const theFlow = container.flowView;
-        browserContainerHost.attach(container);
+        browserContainerHost.attach(container, div);
 
         getInsights(this.rootView, this.sharedString.id).then(
             (insightsMap) => {
