@@ -80,6 +80,8 @@ export class TestDeltaManager
 
     public minimumSequenceNumber: number;
 
+    public initialSequenceNumber: number;
+
     public inbound = new TestDeltaQueue<ISequencedDocumentMessage>();
 
     public outbound = new TestDeltaQueue<IDocumentMessage[]>();

@@ -5,7 +5,7 @@
 
 import { IComponent, IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IContainerContext, ITelemetryLogger } from "@microsoft/fluid-container-definitions";
-import { ChildLogger, Heap, IComparer, IHeapNode } from "@microsoft/fluid-core-utils";
+import { ChildLogger, Heap, IComparer, IHeapNode, PerformanceEvent } from "@microsoft/fluid-core-utils";
 import { ISequencedClient } from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
 import { ISummarizer } from "./summarizer";
@@ -93,7 +93,7 @@ export class SummaryManager extends EventEmitter {
         this.connected = false;
         this.clientId = undefined;
         if (this.runningSummarizer) {
-            this.runningSummarizer.stop("parent disconnected");
+            this.runningSummarizer.stop("parentDisconnected");
             this.runningSummarizer = undefined;
         }
     }
@@ -120,41 +120,58 @@ export class SummaryManager extends EventEmitter {
         this._summarizer = clientId;
         this.emit("summarizer", clientId);
 
-        // do not start if we are not the summarizer or not connected
-        if (this._summarizer !== this.clientId || !this.connected) {
-            return;
-        }
-
         // To maintain back compat with snapshots we will not summarize unless asked. But will still run the
         // code to elect and detect the summarizer for testing + code coverage.
         if (!this.generateSummaries) {
+            // summaries disabled
             return;
         }
 
         // Make sure that the summarizer client does not load another summarizer.
-        if (this.context.configuration === undefined || this.context.configuration.canReconnect) {
-            // Create and run the new summarizer. On disconnect if we should still summarize launch another instance.
-            const doneP = this.createSummarizer()
-                .then((summarizer) => {
-                    if (this.shouldSummarize) {
-                        this.runningSummarizer = summarizer;
-                        return summarizer.run(this.clientId);
-                    }
-                });
-            doneP.then(
-                () => {
-                    // In the future we will respawn the summarizer - for now we simply stop
-                    // this.computeSummarizer(this.connected)
-                    this.logger.sendTelemetryEvent({ eventName: "RunningSummarizerCompleted" });
-                },
-                (error) => {
-                    this.logger.sendErrorEvent({ eventName: "RunningSummarizerFailed" }, error);
-                });
+        if (this.context.configuration && !this.context.configuration.canReconnect) {
+            return;
         }
 
+        // if we are connected and the elected summarizer client, start a summarizer
+        if (this.shouldSummarize && !this.runningSummarizer) {
+            const runSummarizerEvent = PerformanceEvent.start(this.logger, { eventName: "RunningSummarizer" });
+            this.startSummarizer().then(
+                (message: string) => {
+                    runSummarizerEvent.end({ message });
+                    this.computeSummarizer(this.connected);
+                },
+                (error) => {
+                    runSummarizerEvent.cancel({}, error);
+                    this.computeSummarizer(this.connected);
+                });
+        }
     }
 
-    private async createSummarizer() {
+    private async startSummarizer(): Promise<string> {
+        const summarizer = await this.createSummarizer();
+
+        // synchronous block where the summarizer actually runs
+        if (!this.shouldSummarize) {
+            summarizer.stop("parentShouldNotSummarize");
+            return "shouldNotSummarize";
+        }
+
+        if (this.runningSummarizer) {
+            summarizer.stop("parentAlreadyRunningSummarizer");
+            return "alreadyRunningSummarizer";
+        }
+
+        this.runningSummarizer = summarizer;
+        try {
+            await summarizer.run(this.clientId);
+        } finally {
+            this.runningSummarizer = undefined;
+        }
+
+        return "runComplete";
+    }
+
+    private async createSummarizer(): Promise<ISummarizer> {
         // We have been elected the summarizer. Some day we may be able to summarize with a live document but for
         // now we play it safe and launch a second copy.
         this.logger.sendTelemetryEvent({ eventName: "CreatingSummarizer" });
