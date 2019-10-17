@@ -63,12 +63,13 @@ export class RequestParser implements IRequest {
      * @param startingPathIndex - The index of the first path part of the sub request
      */
     public createSubRequest(startingPathIndex: number): IRequest | undefined {
-        if (startingPathIndex >= 0 && startingPathIndex < this.pathParts.length) {
-            const path = this.pathParts.slice(startingPathIndex).join("/");
-            return {
-                url: path + this.query,
-                headers: this.headers,
-            };
+        if (startingPathIndex < 0 || startingPathIndex > this.pathParts.length) {
+            return undefined;
         }
+        const path = this.pathParts.slice(startingPathIndex).join("/");
+        return {
+            url: path + this.query,
+            headers: this.headers,
+        };
     }
 }

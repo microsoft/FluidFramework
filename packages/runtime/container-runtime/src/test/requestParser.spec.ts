@@ -44,19 +44,22 @@ describe("RequestParser", () => {
     describe(".createSubRequest", () => {
         let requestParser: RequestParser;
         beforeEach(() => {
-            requestParser = new RequestParser({ url: "/componentId//some/route?foo=bar" });
+            requestParser = new RequestParser({ url: "/componentId//some/route/" });
         });
         it("Create request from part 0", () => {
-            assert.equal(requestParser.createSubRequest(0).url, "componentId/some/route?foo=bar");
+            assert.equal(requestParser.createSubRequest(0).url, "componentId/some/route");
         });
         it("Create request from part 1", () => {
-            assert.equal(requestParser.createSubRequest(1).url, "some/route?foo=bar");
+            assert.equal(requestParser.createSubRequest(1).url, "some/route");
         });
         it("Create request from part 2", () => {
-            assert.equal(requestParser.createSubRequest(2).url, "route?foo=bar");
+            assert.equal(requestParser.createSubRequest(2).url, "route");
+        });
+        it("Create request from parts length ", () => {
+            assert.equal(requestParser.createSubRequest(3).url, "");
         });
         it("Create request from invalid part ", () => {
-            assert.equal(requestParser.createSubRequest(3), undefined);
+            assert.equal(requestParser.createSubRequest(4), undefined);
             assert.equal(requestParser.createSubRequest(-1), undefined);
         });
     });
