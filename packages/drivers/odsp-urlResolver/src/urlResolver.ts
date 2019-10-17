@@ -52,8 +52,8 @@ export class OdspUrlResolver implements IUrlResolver {
 }
 
 export function isOdspUrl(url: string) {
-    const regex = /(.*)\/_api\/v2.1\/drives\/([^\/]*)\/items\/([^\/]*)/;
-    if (url.match(regex) !== null) {
+    const regex = /(.*\.sharepoint(-df)*\.com)\/_api\/v2.1\/drives\/([^\/]*)\/items\/([^\/]*)/;
+    if (url.toLowerCase().match(regex) !== null) {
         return true;
     }
     return false;
