@@ -16,7 +16,6 @@
     "start:live": "webpack-dev-server --config webpack.config.js --package package.json --env.mode live",
     "verdaccio": "npm publish --registry https://packages.wu2.prague.office-int.com",
     "deploy": "npm run build && npm version patch && npm run verdaccio && npm run post-deploy",
-    "post-deploy": "getUrl -p",
     "webpack": "webpack --env.production",
     "webpack:dev": "webpack --env.development"
   },
@@ -28,7 +27,6 @@
     "react-dom": "^16.8.3"
   },
   "devDependencies": {
-    "@fluid-internal/url-generator": "^1.0.4",
     "@fortawesome/fontawesome-free": "^5.9.0",
     "@microsoft/fluid-build-common": "^0.11.0",
     "@microsoft/fluid-webpack-component-loader": "^0.11.0",

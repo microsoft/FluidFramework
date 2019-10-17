@@ -66,7 +66,7 @@ export async function initialize(
             documentServiceFactory: new InnerDocumentServiceFactory(),
             urlResolver: new InnerUrlResolver(resolved),
         };
-        const loader = createWebLoader(
+        const loader = await createWebLoader(
             resolved,
             pkg,
             scriptIds,

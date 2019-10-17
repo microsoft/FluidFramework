@@ -15,7 +15,7 @@ import {
 import * as sha from "sha.js";
 
 const fluidOfficeServers = [
-    "dev.fluid.office.com",
+    "dev.fluidpreview.office.net",
     "fluidpreview.office.net",
 ];
 
