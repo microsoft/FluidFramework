@@ -16,6 +16,7 @@ import {
 } from "@microsoft/fluid-odsp-utils";
 import { IDocumentService, IFluidResolvedUrl, IResolvedUrl, IUrlResolver } from "@microsoft/fluid-protocol-definitions";
 import * as r11s from "@microsoft/fluid-routerlicious-driver";
+import { ConfigurableUrlResolver } from "@microsoft/fluid-routerlicious-host";
 import { RouterliciousUrlResolver } from "@microsoft/fluid-routerlicious-urlresolver";
 import * as child_process from "child_process";
 import * as fs from "fs";
@@ -213,20 +214,10 @@ async function resolveUrl(url: string): Promise<IResolvedUrl> {
     const resolversList: IUrlResolver[] = [
         new OdspUrlResolver(),
         new FluidAppOdspUrlResolver(),
-        new RouterliciousUrlResolver(undefined, paramJWT, []),
+        new RouterliciousUrlResolver(undefined, () => Promise.resolve(paramJWT), []),
     ];
-    let resolved: IResolvedUrl | undefined;
-    for (const resolver of resolversList) {
-        try {
-            resolved = await resolver.resolve({ url });
-            return resolved;
-        } catch {
-            continue;
-        }
-    }
-    if (!resolved) {
-        throw new Error("No resolver is able to resolve the given url!!");
-    }
+    const resolver = new ConfigurableUrlResolver(resolversList);
+    const resolved: IResolvedUrl = await resolver.resolve({ url });
     return resolved;
 }
 

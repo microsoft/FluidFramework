@@ -8,17 +8,23 @@ const contentDivId = "content";
 function load() {
 
     const url = parent.document.getElementById('link').value;
-    const token = parent.document.getElementById('token').value;
+    const storageToken =  parent.document.getElementById('storageToken').value;
+    const socketToken =  parent.document.getElementById('socketToken').value;
     const clientId = parent.document.getElementById('clientId').value;
     const clientSecret = parent.document.getElementById('clientSecret').value;
 
     const div = document.getElementById(contentDivId);
     div.style.margin = '0';
 
+    const tokenApiConfig = {
+        getStorageToken: () => storageToken,
+        getWebsocketToken: () => socketToken,
+    };
+
     tinyWebLoader.loadFluidComponent(
         url,
         div,
-        () => token,
+        tokenApiConfig,
         clientId,
         clientSecret,
     );

@@ -18,6 +18,7 @@ export const before = (app: express.Application, server: WebpackDevServer) => {
 
 export const after = (app: express.Application, server: WebpackDevServer, baseDir: string, env: IRouteOptions) => {
     const options: IRouteOptions = env ? env : { mode: "local" };
+    options.mode = options.mode ? options.mode : "local";
     const config: nconf.Provider = nconf.env("__").file(path.join(baseDir, "config.json"));
     // tslint:disable: no-unsafe-any
     options.fluidHost = options.fluidHost ? options.fluidHost : config.get("fluid:webpack:fluidHost");
@@ -29,7 +30,7 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
 
     console.log(options);
 
-    if ((options.mode === "live" || options.mode === undefined) && !(options.tenantId && options.tenantSecret)) {
+    if (options.mode === "live" && !(options.tenantId && options.tenantSecret)) {
         throw new Error("You must provide a tenantId and tenantSecret to connect to a live server");
     } else if ((options.tenantId || options.tenantSecret) && !(options.tenantId && options.tenantSecret)) {
         throw new Error("tenantId and tenantSecret must be provided together");
@@ -58,8 +59,7 @@ const fluid = (req: express.Request, res: express.Response,  baseDir: string, op
     <title>${documentId}</title>
 </head>
 <body>
-    <div style="width: 100%; height: 100%;">
-        <div id="content"></div>
+    <div id="content" style="width: 100%; height: 100%; display: flex">
     </div>
 
     <script src="/node_modules/@microsoft/fluid-webpack-component-loader/dist/fluid-loader.bundle.js"></script>

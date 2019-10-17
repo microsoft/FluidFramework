@@ -15,9 +15,8 @@ Prerequisites: [Node (with npm)](https://nodejs.org) installed
 2. Add registry to the our scopes (globally per-user)
 
     ```text
-    npm config set @prague:registry https://offnet.pkgs.visualstudio.com/_packaging/prague/npm/registry/
-    npm config set @chaincode:registry https://offnet.pkgs.visualstudio.com/_packaging/prague/npm/registry/
-    npm config set @component:registry https://offnet.pkgs.visualstudio.com/_packaging/prague/npm/registry/
+    npm config set @microsoft:registry https://offnet.pkgs.visualstudio.com/_packaging/prague/npm/registry/
+    npm config set @fluid-example:registry https://offnet.pkgs.visualstudio.com/_packaging/prague/npm/registry/
     ```
 
 3. Auth with VSTS using vsts-npm-auth (Windows only, Linux/Mac instructions
@@ -34,10 +33,10 @@ NOTE:
 
 * You can add the registry setting to your project only instead of globally.
   Just add the follow to your .npmrc in the root of your NPM package:
-    ```
-    @prague:registry=https://offnet.pkgs.visualstudio.com/_packaging/prague/npm/registry/
-    @chaincode:registry=https://offnet.pkgs.visualstudio.com/_packaging/prague/npm/registry/
-    @component:registry=https://offnet.pkgs.visualstudio.com/_packaging/prague/npm/registry/
+
+    ```text
+    @microsoft:registry=https://offnet.pkgs.visualstudio.com/_packaging/prague/npm/registry/
+    @fluid-example:registry=https://offnet.pkgs.visualstudio.com/_packaging/prague/npm/registry/
     ```
 
   Then run vsts-npm-auth in the same directory with no argument.
