@@ -718,7 +718,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             : [];
 
         const blobManager = new BlobManager(storage);
-        // tslint:disable-next-line:no-floating-promises
         blobManager.loadBlobMetadata(blobs);
 
         return blobManager;
@@ -872,9 +871,9 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         // We do not have good correlation ID to match server activity.
         // Add couple IDs here
         this.subLogger.setProperties({
-            SocketClientId: this.clientId,
-            SocketDocumentId: this._deltaManager!.socketDocumentId,
-            SocketPendingClientId: value === ConnectionState.Connecting ? this.pendingClientId : undefined,
+            clientId: this.clientId,
+            socketDocumentId: this._deltaManager!.socketDocumentId,
+            pendingClientId: value === ConnectionState.Connecting ? this.pendingClientId : undefined,
         });
 
         // Log actual event
@@ -1112,7 +1111,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     // Please avoid calling it directly.
     // raiseCriticalError() is the right flow for most cases
     private logCriticalError(error: any) {
-        // tslint:disable-next-line:no-unsafe-any
         this.logger.sendErrorEvent({ eventName: "onError", [TelemetryEventRaisedOnContainer]: true }, error);
     }
 }

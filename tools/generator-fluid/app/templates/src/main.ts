@@ -45,7 +45,7 @@ export class DiceRoller extends PrimedComponent implements IComponentHTMLVisual 
             // titleParagraph.textContent = title;
 
             const diceValue = this.root.get<number>("diceValue");
-            const diceSpan = document.getElementById("diceSpan");
+            const diceSpan = div.querySelector(".diceSpan");
             diceSpan.textContent = this.getDiceChar(diceValue);
         });
     }
@@ -66,13 +66,13 @@ export class DiceRoller extends PrimedComponent implements IComponentHTMLVisual 
         // host.appendChild(titleInput);
 
         const diceSpan = document.createElement("span");
-        diceSpan.id = "diceSpan";
+        diceSpan.classList.add("diceSpan");
         diceSpan.style.fontSize = "50px";
         diceSpan.textContent = this.getDiceChar(diceValue);
         host.appendChild(diceSpan);
 
         const rollButton = document.createElement("button");
-        rollButton.id = "rollButton";
+        rollButton.classList.add("rollButton");
         rollButton.textContent = "Roll";
         rollButton.onclick = this.rollDice.bind(this);
         host.appendChild(rollButton);
