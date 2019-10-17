@@ -19,7 +19,12 @@ const pkg = require("../package.json");
 export const PondName = pkg.name as string;
 
 /**
- * Basic Pond example using new interfaces and stock component classes.
+ * Basic Pond example using stock component classes.
+ *
+ * Provides:
+ *  - Component embedding
+ *  - Component creation with initial state
+ *  - Component creation and storage using Handles
  */
 export class Pond extends PrimedComponent implements IComponentHTMLVisual {
 
