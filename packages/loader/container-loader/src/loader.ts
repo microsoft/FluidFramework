@@ -27,7 +27,7 @@ import { EventEmitter } from "events";
 const now = require("performance-now") as () => number;
 import * as querystring from "querystring";
 import { parse } from "url";
-import { configurableUrlResolver } from "./ConfigurableUrlResolver";
+import { configurableUrlResolver } from "./configurableUrlResolver";
 import { Container } from "./container";
 import { debug } from "./debug";
 
