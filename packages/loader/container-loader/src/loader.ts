@@ -14,7 +14,7 @@ import {
     ILoader,
     ITelemetryBaseLogger,
 } from "@microsoft/fluid-container-definitions";
-import { Deferred } from "@microsoft/fluid-core-utils";
+import { configurableUrlResolver, Deferred } from "@microsoft/fluid-core-utils";
 import {
     IDocumentService,
     IDocumentServiceFactory,
@@ -27,7 +27,6 @@ import { EventEmitter } from "events";
 const now = require("performance-now") as () => number;
 import * as querystring from "querystring";
 import { parse } from "url";
-import { configurableUrlResolver } from "./configurableUrlResolver";
 import { Container } from "./container";
 import { debug } from "./debug";
 

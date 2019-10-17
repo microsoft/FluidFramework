@@ -5,7 +5,7 @@
 
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IHost } from "@microsoft/fluid-container-definitions";
-import { configurableUrlResolver } from "@microsoft/fluid-container-loader";
+import { configurableUrlResolver } from "@microsoft/fluid-core-utils";
 import {
     ConnectionMode,
     IClient,
