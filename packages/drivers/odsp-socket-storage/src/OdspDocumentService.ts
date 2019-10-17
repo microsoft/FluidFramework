@@ -229,6 +229,35 @@ export class OdspDocumentService implements IDocumentService {
     }
 
     /**
+     * Safely tries to write to local storage
+     * Returns false if writing to localStorage fails. True otherwise
+     *
+     * @param key - localStorage key
+     * @returns whether or not the write succeeded
+     */
+    private writeLocalStorage(key: string, value: string) {
+        try {
+            localStorage.setItem(key, value);
+            return true;
+        } catch (e) {
+            debug(`Could not write to localStorage due to ${e}`);
+            return false;
+        }
+    }
+
+    /**
+     * Test if we deal with INetworkError / NetworkError object and if it has enough information to make a call
+     * If in doubt, allow retries
+     *
+     * @param error - error object
+     */
+    private canRetryOnError(error: any) {
+        // Always retry unless told otherwise.
+        // tslint:disable-next-line:no-unsafe-any
+        return error === null || typeof error !== "object" || error.canRetry === undefined || error.canRetry;
+    }
+
+    /**
      * Connects to a delta stream endpoint
      * If url #1 fails to connect, tries url #2 if applicable
      *
@@ -300,30 +329,29 @@ export class OdspDocumentService implements IDocumentService {
                 hasUrl2 ? 15000 : 20000,
             // tslint:disable-next-line: promise-function-async
             ).catch((error) => {
-                if (error instanceof NetworkError && hasUrl2) {
-                    if (error.canRetry) {
-                        debug(`Socket connection error on non-AFD URL. Error was [${error}]. Retry on AFD URL: ${url}`);
+                if (hasUrl2 && this.canRetryOnError(error)) {
+                    debug(`Socket connection error on non-AFD URL. Error was [${error}]. Retry on AFD URL: ${url}`);
 
-                        return DocumentDeltaConnection.create(
-                            tenantId,
-                            id,
-                            token,
-                            io,
-                            client,
-                            mode,
-                            // tslint:disable-next-line: no-non-null-assertion
-                            url2!,
-                            20000,
-                        ).then((connection) => {
-                                logger.sendTelemetryEvent({ eventName: "UseAfdUrl" });
-                                logger.sendTelemetryEvent({ eventName: "CacheAfdUrl" });
-                                // Refresh AFD cache
-                                localStorage.setItem(lastAfdConnectionTimeMsKey, Date.now().toString());
+                    return DocumentDeltaConnection.create(
+                        tenantId,
+                        id,
+                        token,
+                        io,
+                        client,
+                        mode,
+                        // tslint:disable-next-line: no-non-null-assertion
+                        url2!,
+                        20000,
+                    ).then((connection) => {
+                            logger.sendTelemetryEvent({ eventName: "UseAfdUrl" });
+                            logger.sendTelemetryEvent({ eventName: "CacheAfdUrl" });
+                            // Refresh AFD cache
+                            if (this.writeLocalStorage(lastAfdConnectionTimeMsKey, Date.now().toString())) {
                                 debug(`Cached AFD connection time. Expiring in ${new Date(Number(localStorage.getItem(lastAfdConnectionTimeMsKey)) + afdUrlConnectExpirationMs)}`);
-                                return connection;
-                            },
-                        );
-                    }
+                            }
+                            return connection;
+                        },
+                    );
                 }
 
                 logger.sendTelemetryEvent({ eventName: "FailedAfdUrl" });
