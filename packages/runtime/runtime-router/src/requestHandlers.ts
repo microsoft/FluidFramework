@@ -5,9 +5,9 @@
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { IHostRuntime } from "@microsoft/fluid-runtime-definitions";
 import { RequestParser } from "./requestParser";
-import { RuntimeRequestHandler } from "./runtimeRequestHandlerBuilder";
+import { RuntimeRequestDelegate } from "./runtimeRequestHandlerBuilder";
 
-export const componentRuntimeRequestHandler: RuntimeRequestHandler =
+export const componentRuntimeRequestHandler: RuntimeRequestDelegate =
     async (request: RequestParser, runtime: IHostRuntime) => {
 
         if (request.pathParts.length > 0) {
@@ -16,7 +16,7 @@ export const componentRuntimeRequestHandler: RuntimeRequestHandler =
                 wait = request.headers.wait as boolean;
             }
 
-            const component = await runtime.getComponentRuntime(decodeURIComponent(request.pathParts[0]), wait);
+            const component = await runtime.getComponentRuntime(request.pathParts[0], wait);
 
             return component.request(request.createSubRequest(1));
         }
@@ -24,13 +24,13 @@ export const componentRuntimeRequestHandler: RuntimeRequestHandler =
     };
 
 export function createServiceRuntimeRequestHandler(
-    serviceId: string, initializeServiceComponent: (runtime: IHostRuntime) => IComponent): RuntimeRequestHandler {
+    serviceId: string, initializeServiceComponent: (runtime: IHostRuntime) => IComponent): RuntimeRequestDelegate {
     let component: IComponent | undefined;
     return async (request: RequestParser, runtime: IHostRuntime) => {
 
         if (request.pathParts.length >= 2
             && request.pathParts[0] === "_services"
-            && decodeURIComponent(request.pathParts[1]) === serviceId) {
+            && request.pathParts[1] === serviceId) {
 
             if (component === undefined) {
                 component = initializeServiceComponent(runtime);

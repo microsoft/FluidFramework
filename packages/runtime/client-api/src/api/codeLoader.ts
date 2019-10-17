@@ -16,7 +16,12 @@ import * as ink from "@microsoft/fluid-ink";
 import * as map from "@microsoft/fluid-map";
 import { ConsensusQueue, ConsensusStack } from "@microsoft/fluid-ordered-collection";
 import { ConsensusRegisterCollection } from "@microsoft/fluid-register-collection";
-import { IComponentContext, IComponentFactory, IComponentRegistry } from "@microsoft/fluid-runtime-definitions";
+import {
+    IComponentContext,
+    IComponentFactory,
+    IComponentRegistry,
+    IHostRuntime,
+} from "@microsoft/fluid-runtime-definitions";
 import * as sequence from "@microsoft/fluid-sequence";
 import { Document } from "./document";
 
@@ -104,16 +109,36 @@ class BackCompatLoader implements IComponentRegistry {
 
 export class ChaincodeFactory implements IRuntimeFactory {
 
-    constructor(private readonly runtimeOptions: IContainerRuntimeOptions) {
+    public get IRuntimeFactory() { return this; }
+
+    /**
+     * A request handler for a container runtime
+     * @param request - The request
+     * @param runtime - Container Runtime instance
+     */
+    private static async containerRequestHandler(request: IRequest, runtime: IHostRuntime) {
+        const trimmed = request.url
+            .substr(1)
+            .substr(0, request.url.indexOf("/", 1) === -1 ? request.url.length : request.url.indexOf("/"));
+
+        const componentId = trimmed ? trimmed : "root";
+
+        const component = await runtime.getComponentRuntime(componentId, true);
+        return component.request({ url: trimmed.substr(1 + trimmed.length) });
     }
 
-    public get IRuntimeFactory() { return this; }
+    constructor(private readonly runtimeOptions: IContainerRuntimeOptions) {
+    }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
         const chaincode = new Chaincode();
         const registry = new BackCompatLoader(chaincode);
 
-        const runtime = await ContainerRuntime.load(context, registry, this.createRequestHandler, this.runtimeOptions);
+        const runtime = await ContainerRuntime.load(
+            context,
+            registry,
+            ChaincodeFactory.containerRequestHandler,
+            this.runtimeOptions);
 
         // On first boot create the base component
         if (!runtime.existing) {
@@ -131,23 +156,6 @@ export class ChaincodeFactory implements IRuntimeFactory {
         }
 
         return runtime;
-    }
-
-    /**
-     * Add create and store a request handler as pat of ContainerRuntime load
-     * @param runtime - Container Runtime instance
-     */
-    private createRequestHandler(runtime: ContainerRuntime) {
-        return async (request: IRequest) => {
-            const trimmed = request.url
-                .substr(1)
-                .substr(0, request.url.indexOf("/", 1) === -1 ? request.url.length : request.url.indexOf("/"));
-
-            const componentId = trimmed ? trimmed : "root";
-
-            const component = await runtime.getComponentRuntime(componentId, true);
-            return component.request({ url: trimmed.substr(1 + trimmed.length) });
-        };
     }
 }
 

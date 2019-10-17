@@ -30,7 +30,7 @@ export class RequestParser implements IRequest {
                 .reduce<string[]>(
                 (pv, cv) => {
                     if (cv !== undefined && cv.length > 0) {
-                        pv.push(cv);
+                        pv.push(decodeURIComponent(cv));
                     }
                     return pv;
                 },

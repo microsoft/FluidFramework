@@ -327,6 +327,7 @@ function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
     }
 }
 
+export type RuntimeRequestHandler = (request: IRequest, runtime: IHostRuntime) => Promise<IResponse>;
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the component level mappings.
@@ -336,13 +337,13 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
      * Load the components from a snapshot and returns the runtime.
      * @param context - Context of the container.
      * @param registry - Mapping to the components.
-     * @param createRequestHandler - create a request handler to handle container requests
+     * @param createOrRequestHandler - create a request handler to handle container requests
      * @param runtimeOptions - Additional options to be passed to the runtime
      */
     public static async load(
         context: IContainerContext,
         registry: ComponentRegistryTypes,
-        createRequestHandler?: (runtime: ContainerRuntime) => ((request: IRequest) => Promise<IResponse>),
+        createOrRequestHandler?: ((runtime: ContainerRuntime) => RuntimeRequestHandler) | RuntimeRequestHandler,
         runtimeOptions?: IContainerRuntimeOptions,
     ): Promise<ContainerRuntime> {
         const componentRegistry = new WrappedComponentRegistry(registry);
@@ -353,7 +354,12 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             : [];
 
         const runtime = new ContainerRuntime(context, componentRegistry, chunks, runtimeOptions);
-        runtime.requestHandler = createRequestHandler(runtime);
+        if (createOrRequestHandler.length === 1) {
+            runtime.requestHandler =
+                (createOrRequestHandler as (runtime: ContainerRuntime) => RuntimeRequestHandler)(runtime);
+        } else {
+            runtime.requestHandler = createOrRequestHandler as RuntimeRequestHandler;
+        }
 
         // Create all internal components in first load.
         if (!context.existing) {
@@ -486,7 +492,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     private readonly summarizer: Summarizer;
     private readonly deltaSender: IDeltaSender | undefined;
     private readonly scheduleManager: ScheduleManager;
-    private requestHandler: (request: IRequest) => Promise<IResponse>;
+    private requestHandler: RuntimeRequestHandler;
 
     // Local copy of incomplete received chunks.
     private readonly chunkMap: Map<string, string[]>;
@@ -621,7 +627,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         }
 
         // Otherwise defer to the app to handle the request
-        return this.requestHandler(request);
+        return this.requestHandler(request, this);
     }
 
     /**

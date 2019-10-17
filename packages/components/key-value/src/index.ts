@@ -8,7 +8,7 @@ import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
 import { IContainerContext, IRuntime, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
 import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
-import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { IComponentContext, IComponentFactory, IComponentRuntime, IHostRuntime } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 
 // tslint:disable no-var-requires
@@ -88,6 +88,26 @@ export class KeyValueFactoryComponent implements IRuntimeFactory, IComponentFact
     public get IRuntimeFactory() { return this; }
     public get IComponentFactory() { return this; }
 
+    /**
+     * A request handler for a container runtime
+     * @param request - The request
+     * @param runtime - Container Runtime instance
+     */
+    private static async containerRequestHandler(request: IRequest, runtime: IHostRuntime): Promise<IResponse> {
+        const requestUrl = request.url.length > 0 && request.url.charAt(0) === "/"
+            ? request.url.substr(1)
+            : request.url;
+        const trailingSlash = requestUrl.indexOf("/");
+        const componentId = requestUrl
+            ? decodeURIComponent(requestUrl.substr(0, trailingSlash === -1 ? requestUrl.length : trailingSlash))
+            : ComponentName;
+        console.log(componentId);
+        const pathForComponent = trailingSlash !== -1 ? requestUrl.substr(trailingSlash) : requestUrl;
+        const component = await runtime.getComponentRuntime(componentId, true);
+        return component.request({ url: pathForComponent });
+
+    }
+
     public instantiateComponent(context: IComponentContext): void {
         const dataTypes = new Map<string, ISharedObjectFactory>();
         const mapFactory = SharedMap.getFactory();
@@ -109,7 +129,7 @@ export class KeyValueFactoryComponent implements IRuntimeFactory, IComponentFact
         const runtime = await ContainerRuntime.load(
             context,
             new Map([[ComponentName, Promise.resolve(this)]]),
-            this.createContainerRequestHandler,
+            KeyValueFactoryComponent.containerRequestHandler,
         );
 
         if (!runtime.existing) {
@@ -118,26 +138,6 @@ export class KeyValueFactoryComponent implements IRuntimeFactory, IComponentFact
         }
 
         return runtime;
-    }
-
-    /**
-     * Add create and store a request handler as pat of ContainerRuntime load
-     * @param runtime - Container Runtime instance
-     */
-    private createContainerRequestHandler(runtime: ContainerRuntime) {
-        return async (request: IRequest) => {
-            const requestUrl = request.url.length > 0 && request.url.charAt(0) === "/"
-                ? request.url.substr(1)
-                : request.url;
-            const trailingSlash = requestUrl.indexOf("/");
-            const componentId = requestUrl
-                ? decodeURIComponent(requestUrl.substr(0, trailingSlash === -1 ? requestUrl.length : trailingSlash))
-                : ComponentName;
-            console.log(componentId);
-            const pathForComponent = trailingSlash !== -1 ? requestUrl.substr(trailingSlash) : requestUrl;
-            const component = await runtime.getComponentRuntime(componentId, true);
-            return component.request({ url: pathForComponent });
-        };
     }
 }
 

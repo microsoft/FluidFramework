@@ -5,7 +5,7 @@
 import { IContainerContext } from "@microsoft/fluid-container-definitions";
 import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
 import { ComponentRegistryTypes, IHostRuntime } from "@microsoft/fluid-runtime-definitions";
-import { componentRuntimeRequestHandler, RequestParser, RuntimeRequestHandler, RuntimeRequestHandlerBuilder} from "@microsoft/fluid-runtime-router";
+import { componentRuntimeRequestHandler, RequestParser, RuntimeRequestDelegate, RuntimeRequestHandlerBuilder} from "@microsoft/fluid-runtime-router";
 
 export class SimpleContainerRuntimeFactory {
     public static readonly defaultComponentId = "default";
@@ -18,7 +18,7 @@ export class SimpleContainerRuntimeFactory {
         chaincode: string,
         registry: ComponentRegistryTypes,
         generateSummaries: boolean = false,
-        requestHandlers: RuntimeRequestHandler[] = [],
+        requestHandlers: RuntimeRequestDelegate[] = [],
     ): Promise<ContainerRuntime> {
         const runtimeRequestHandler = new RuntimeRequestHandlerBuilder();
         runtimeRequestHandler.pushHandler(defaultComponentRuntimeRequestHandler);
@@ -26,7 +26,7 @@ export class SimpleContainerRuntimeFactory {
         runtimeRequestHandler.pushHandler(componentRuntimeRequestHandler);
 
         // debug(`instantiateRuntime(chaincode=${chaincode},registry=${JSON.stringify(registry)})`);
-        const runtime = await ContainerRuntime.load(context, registry, runtimeRequestHandler.createRequestHandlerFn, { generateSummaries });
+        const runtime = await ContainerRuntime.load(context, registry, runtimeRequestHandler.requestHandlerFn, { generateSummaries });
         // debug("runtime loaded.");
 
         // On first boot create the base component
@@ -69,7 +69,7 @@ export class SimpleContainerRuntimeFactory {
     }
 }
 
-export const defaultComponentRuntimeRequestHandler: RuntimeRequestHandler =
+export const defaultComponentRuntimeRequestHandler: RuntimeRequestDelegate =
     async (request: RequestParser, runtime: IHostRuntime) => {
         if (request.pathParts.length === 0) {
             return componentRuntimeRequestHandler(
