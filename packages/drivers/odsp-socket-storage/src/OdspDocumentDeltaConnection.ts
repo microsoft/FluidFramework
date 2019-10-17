@@ -4,6 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
+import { NetworkError, TelemetryNullLogger } from "@microsoft/fluid-core-utils";
 import { createErrorObject, DocumentDeltaConnection, IConnect, IConnected } from "@microsoft/fluid-driver-base";
 import {
     ConnectionMode,
@@ -28,15 +29,18 @@ interface ISocketReference {
 export class OdspDocumentDeltaConnection extends DocumentDeltaConnection implements IDocumentDeltaConnection {
     /**
      * Create a OdspDocumentDeltaConnection
+     * If url #1 fails to connect, will try url #2 if applicable.
      *
      * @param tenantId - the ID of the tenant
      * @param id - document ID
      * @param token - authorization token for storage service
      * @param io - websocket library
      * @param client - information about the client
+     * @param mode - mode of the client
      * @param url - websocket URL
+     * @param url2 - alternate websocket URL
+     * @param telemetryLogger - optional telemetry logger
      */
-    // tslint:disable-next-line: max-func-body-length
     public static async create(
         tenantId: string,
         id: string,
@@ -46,8 +50,69 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
         mode: ConnectionMode,
         url: string,
         url2?: string,
-        telemetryLogger?: ITelemetryLogger): Promise<IDocumentDeltaConnection> {
+        telemetryLogger: ITelemetryLogger = new TelemetryNullLogger()): Promise<IDocumentDeltaConnection> {
+        // tslint:disable-next-line: strict-boolean-expressions
+        const hasUrl2 = !!url2;
 
+        return this.createForUrlWithTimeout(
+            tenantId,
+            id,
+            token,
+            io,
+            client,
+            url,
+            mode,
+            hasUrl2 ? 15000 : 20000,
+        ).catch((error) => {
+            if (error instanceof NetworkError && hasUrl2) {
+                if (error.canRetry) {
+                    debug(`Socket connection error on non-AFD URL. Error was [${error}]. Retry on AFD URL: ${url}`);
+                    telemetryLogger.sendTelemetryEvent({ eventName: "UseAfdUrl" });
+
+                    return this.createForUrlWithTimeout(
+                        tenantId,
+                        id,
+                        token,
+                        io,
+                        client,
+                        // tslint:disable-next-line: no-non-null-assertion
+                        url2!,
+                        mode,
+                        20000,
+                    );
+                }
+            }
+
+            telemetryLogger.sendTelemetryEvent({ eventName: "FailedAfdUrl" });
+
+            throw error;
+        });
+    }
+
+    // Map of all existing socket io sockets. [url, tenantId, documentId] -> socket
+    private static readonly socketIoSockets: Map<string, ISocketReference> = new Map();
+
+    /**
+     * Create a OdspDocumentDeltaConnection to the specific url
+     *
+     * @param tenantId - the ID of the tenant
+     * @param id - document ID
+     * @param token - authorization token for storage service
+     * @param io - websocket library
+     * @param client - information about the client
+     * @param url - websocket URL
+     * @param timeoutMs - timeout for socket connection attempt in milliseconds
+     */
+    // tslint:disable-next-line: max-func-body-length
+    private static async createForUrlWithTimeout(
+        tenantId: string,
+        id: string,
+        token: string | null,
+        io: SocketIOClientStatic,
+        client: IClient,
+        url: string,
+        mode: ConnectionMode,
+        timeoutMs: number): Promise<IDocumentDeltaConnection> {
         const socketReferenceKey = `${url},${tenantId},${id}`;
 
         const socketReference = OdspDocumentDeltaConnection.getOrCreateSocketIoReference(
@@ -199,9 +264,6 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
 
         return new OdspDocumentDeltaConnection(socket, id, connection, socketReferenceKey);
     }
-
-    // Map of all existing socket io sockets. [url, tenantId, documentId] -> socket
-    private static readonly socketIoSockets: Map<string, ISocketReference> = new Map();
 
     /**
      * Gets or create a socket io connection for the given key
