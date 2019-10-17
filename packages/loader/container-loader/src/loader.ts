@@ -27,6 +27,7 @@ import { EventEmitter } from "events";
 const now = require("performance-now") as () => number;
 import * as querystring from "querystring";
 import { parse } from "url";
+import { configurableUrlResolver } from "./ConfigurableUrlResolver";
 import { Container } from "./container";
 import { debug } from "./debug";
 
@@ -209,7 +210,12 @@ export class Loader extends EventEmitter implements ILoader {
             return maybeResolvedUrl;
         }
 
-        const toCache = await this.containerHost.resolver.resolve(request);
+        let toCache: IResolvedUrl;
+        if (Array.isArray(this.containerHost.resolver)) {
+            toCache = await configurableUrlResolver(this.containerHost.resolver, request);
+        } else {
+            toCache = await this.containerHost.resolver.resolve(request);
+        }
         if (toCache.type !== "fluid") {
             if (toCache.type === "prague") {
                 // tslint:disable-next-line:max-line-length

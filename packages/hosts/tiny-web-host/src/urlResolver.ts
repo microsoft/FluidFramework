@@ -4,11 +4,10 @@
  */
 
 // tslint:disable: no-unsafe-any
+import { configurableUrlResolver } from "@microsoft/fluid-container-loader";
 import { IResolvedUrl, IUrlResolver } from "@microsoft/fluid-protocol-definitions";
-import { ConfigurableUrlResolver } from "@microsoft/fluid-routerlicious-host";
 
 export async function resolveFluidUrl(url: string, resolversList: IUrlResolver[]): Promise<IResolvedUrl> {
-    const resolver = new ConfigurableUrlResolver(resolversList);
-    const resolved: IResolvedUrl = await resolver.resolve({ url });
+    const resolved: IResolvedUrl = await configurableUrlResolver(resolversList, { url });
     return resolved;
 }

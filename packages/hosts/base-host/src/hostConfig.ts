@@ -12,5 +12,5 @@ import { IDocumentServiceFactory, IUrlResolver } from "@microsoft/fluid-protocol
  */
 export interface IHostConfig {
     documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[];
-    urlResolver: IUrlResolver;
+    urlResolver: IUrlResolver | IUrlResolver[];
 }

@@ -9,3 +9,4 @@ export * from "./loader";
 export * from "./networkUtils";
 export * from "./protocol";
 export * from "./quorum";
+export * from "./configurableUrlResolver";
