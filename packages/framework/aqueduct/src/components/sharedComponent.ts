@@ -5,30 +5,75 @@
 
 import {
     IComponent,
+    IComponentHandle,
+    IComponentHandleContext,
     IComponentLoadable,
     IComponentRouter,
+    IProvideComponentHandle,
     IRequest,
     IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { EventEmitter } from "events";
 
+export class SharedComponentHandle<T extends IComponentLoadable> implements IComponentHandle {
+    public get IComponentRouter(): IComponentRouter { return this.handleContext; }
+    public get IComponentHandleContext(): IComponentHandleContext { return this.handleContext; }
+    public get IComponentHandle(): IComponentHandle { return this; }
+
+    public get routeContext(): IComponentHandleContext | undefined {
+        return this.handleContext.routeContext;
+    }
+
+    public get isAttached(): boolean {
+        return this.handleContext.isAttached;
+    }
+
+    public get path(): string {
+        return this.handleContext.path;
+    }
+
+    public constructor(
+        private readonly handleContext: IComponentHandleContext,
+        private readonly obj: T) {
+    }
+
+    public async get(): Promise<any> {
+        return this.obj;
+    }
+
+    public attach(): void {
+        this.handleContext.attach();
+    }
+    public bind(handle: IComponentHandle): void {
+        this.handleContext.bind(handle);
+    }
+    public async request(request: IRequest): Promise<IResponse> {
+        return this.handleContext.request(request);
+    }
+}
+
 /**
  * This is as bare-bones base class that does basic setup and enables for factory on an initialize call.
  * You probably don't want to inherit from this component directly unless you are creating another base component class
  */
-export abstract class SharedComponent extends EventEmitter implements IComponentLoadable, IComponentRouter {
+export abstract class SharedComponent extends EventEmitter implements IComponentLoadable, IComponentRouter, IProvideComponentHandle {
     private initializeP: Promise<void> | undefined;
+    private readonly innerHandle: IComponentHandle;
 
     public get id() { return this.runtime.id; }
     public get IComponentRouter() { return this; }
     public get IComponentLoadable() { return this; }
+    public get IComponentHandle() { return this.innerHandle; }
+
+    public get handle(): IComponentHandle {return this.innerHandle; }
 
     public constructor(
         protected readonly runtime: IComponentRuntime,
         protected readonly context: IComponentContext,
     ) {
         super();
+        this.innerHandle = new SharedComponentHandle(runtime.IComponentHandleContext, this);
     }
 
     /**
@@ -71,6 +116,19 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
     public get url() { return this.context.id; }
 
     // #endregion IComponentLoadable
+
+    /**
+     * Given a request response will return a component if a component was in the response.
+     */
+    public async asComponent<T>(response: Promise<IResponse>): Promise<T> {
+        const result = await response;
+
+        if (result.status === 200 && result.mimeType === "fluid/component") {
+            return result.value as T;
+        }
+
+        return Promise.reject("response does not contain fluid component");
+    }
 
     /**
      * Internal initialize implementation. Overwriting this will change the flow of the SharedComponent and should generally
@@ -137,17 +195,4 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
      * Called every time the component is initialized after create or existing.
      */
     protected async componentHasInitialized(): Promise<void> { }
-
-    /**
-     * Given a request response will return a component if a component was in the response.
-     */
-    private async asComponent<T>(response: Promise<IResponse>): Promise<T> {
-        const result = await response;
-
-        if (result.status === 200 && result.mimeType === "fluid/component") {
-            return result.value as T;
-        }
-
-        return Promise.reject("response does not contain fluid component");
-    }
 }

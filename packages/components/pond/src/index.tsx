@@ -3,8 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { SharedComponent, SharedComponentFactory, SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
-import { IComponent, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
+import {
+  PrimedComponent,
+  PrimedComponentFactory,
+  SimpleModuleInstantiationFactory,
+} from "@microsoft/fluid-aqueduct";
+import { IComponent, IComponentHTMLVisual, IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { Clicker, ClickerName, ClickerWithInitialValue, ClickerWithInitialValueName } from "./internal-components";
 
 // tslint:disable-next-line: no-var-requires no-require-imports
@@ -14,34 +18,39 @@ export const PondName = pkg.name as string;
 /**
  * Basic Pond example using new interfaces and stock component classes.
  */
-export class Pond extends SharedComponent implements IComponentHTMLVisual {
+export class Pond extends PrimedComponent implements IComponentHTMLVisual {
+
+  private readonly clickerKey = "clicker";
+  private readonly clickerWithInitialValueKey = "clicker-with-initial-value";
 
   public clicker2Render: IComponentHTMLVisual | undefined;
   public clicker3Render: IComponentHTMLVisual | undefined;
 
   public get IComponentHTMLVisual() { return this; }
 
-  protected async componentInitializingFromExisting() {
-    await this.setupSubComponents();
-  }
   /**
    * Do setup work here
    */
   protected async componentInitializingFirstTime() {
-    await this.createAndAttachComponent("clicker", ClickerName);
+    // create the clicker component
+    const clickerRuntime = await this.context.createComponent(ClickerName);
+    const response = clickerRuntime.request({url: "/"});
+    const clicker = await this.asComponent<Clicker>(response);
+
     await this.createAndAttachComponent(
-      "clicker-with-initial-value",
+      this.clickerWithInitialValueKey,
       ClickerWithInitialValueName,
       { initialValue: 100 },
     );
-    await this.setupSubComponents();
+
+    this.root.set(this.clickerKey, clicker.handle);
   }
 
-  async setupSubComponents() {
-    const clicker2 = await this.getComponent<IComponent>("clicker");
+  protected async componentHasInitialized() {
+    const clicker2 = await this.root.get<IComponentHandle>(this.clickerKey).get<IComponent>();
     this.clicker2Render = clicker2.IComponentHTMLVisual;
 
-    const clicker3 = await this.getComponent<IComponent>("clicker-with-initial-value");
+    const clicker3 = await this.getComponent<IComponent>(this.clickerWithInitialValueKey);
     this.clicker3Render = clicker3.IComponentHTMLVisual;
   }
 
@@ -94,7 +103,7 @@ export class Pond extends SharedComponent implements IComponentHTMLVisual {
 
   public static getFactory() { return Pond.factory; }
 
-  private static readonly factory = new SharedComponentFactory(
+  private static readonly factory = new PrimedComponentFactory(
       Pond,
       [],
       new Map(),
