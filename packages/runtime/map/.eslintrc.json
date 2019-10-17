@@ -1,0 +1,10 @@
+{
+    "extends": [
+        "./node_modules/@microsoft/fluid-build-common/.eslintrc.json"
+    ],
+    "rules": {
+        "@typescript-eslint/no-explicit-any": "off",
+        "@typescript-eslint/explicit-function-return-type": "off",
+        "@typescript-eslint/no-use-before-define": "off"
+    }
+}

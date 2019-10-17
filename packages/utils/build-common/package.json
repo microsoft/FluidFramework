@@ -10,8 +10,16 @@
     "build": "echo Skipping @microsoft/fluid-build-common: No build steps necessary."
   },
   "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^2.4.0",
+    "@typescript-eslint/eslint-plugin-tslint": "^2.4.0",
+    "@typescript-eslint/parser": "^2.4.0",
+    "eslint": "^6.5.1",
+    "eslint-plugin-react": "^7.16.0",
     "tslint": "^5.11.0",
     "tslint-microsoft-contrib": "^6.0.0",
     "typescript": "~3.4.5"
-  }
+  },
+  "eslintIgnore": [
+    "*.spec.ts"
+  ]
 }
