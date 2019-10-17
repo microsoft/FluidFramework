@@ -116,7 +116,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
         const socketReferenceKey = `${url},${tenantId},${id}`;
 
         const socketReference = OdspDocumentDeltaConnection.getOrCreateSocketIoReference(
-            io, socketReferenceKey, url, tenantId, id);
+            io, timeoutMs, socketReferenceKey, url, tenantId, id);
 
         const socket = socketReference.socket;
         if (!socket) {
@@ -270,6 +270,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
      */
     private static getOrCreateSocketIoReference(
         io: SocketIOClientStatic,
+        timeoutMs: number,
         key: string,
         url: string,
         tenantId: string,
@@ -290,6 +291,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
                     },
                     reconnection: false,
                     transports: ["websocket"],
+                    timeout: timeoutMs,
                 });
 
             socketReference = {
