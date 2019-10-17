@@ -9,6 +9,10 @@ import { IRequest } from "@microsoft/fluid-component-core-interfaces";
  */
 export class RequestParser implements IRequest {
 
+    /**
+     * Splits the path of the url and decodes each path part
+     * @param url - the url to get path parts of
+     */
     public static getPathParts(url: string): ReadonlyArray<string> {
         const queryStartIndex = url.indexOf("?");
         return url
@@ -38,6 +42,9 @@ export class RequestParser implements IRequest {
         return this.request.headers;
     }
 
+    /**
+     * Returns the decoded path parts of the request's url
+     */
     public get pathParts(): ReadonlyArray<string> {
         if (this.requestPathParts === undefined) {
             this.requestPathParts = RequestParser.getPathParts(this.url);
@@ -45,6 +52,11 @@ export class RequestParser implements IRequest {
         return this.requestPathParts;
     }
 
+    /**
+     * Creates a sub request starting at a specific path part of this request's url
+     *
+     * @param startingPathIndex - The index of the first path part of the sub request
+     */
     public createSubRequest(startingPathIndex: number): IRequest {
         const query = this.queryStartIndex < 0 ? "" : this.url.slice(this.queryStartIndex);
         return {

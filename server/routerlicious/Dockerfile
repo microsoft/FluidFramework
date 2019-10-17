@@ -75,7 +75,6 @@ COPY packages/drivers/routerlicious-urlResolver/package*.json packages/drivers/r
 COPY packages/framework/aqueduct/package*.json packages/framework/aqueduct/
 COPY packages/framework/aqueduct-react/package*.json packages/framework/aqueduct-react/
 COPY packages/framework/framework-definitions/package*.json packages/framework/framework-definitions/
-COPY packages/framework/runtime-router/package*.json packages/framework/runtime-router/
 COPY packages/loader/component-core-interfaces/package*.json packages/loader/component-core-interfaces/
 COPY packages/loader/container-definitions/package*.json packages/loader/container-definitions/
 COPY packages/loader/container-loader/package*.json packages/loader/container-loader/

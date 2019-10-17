@@ -334,10 +334,10 @@ function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
     }
 }
 
-export const schedulerRoutePathRoot = "_scheduler";
+export const schedulerId = "_scheduler";
 const schedulerRuntimeRequestHandler: RuntimeRequestHandler =
     async (request: RequestParser, runtime: IHostRuntime) => {
-        if (request.pathParts.length > 0 && request.pathParts[0] === schedulerRoutePathRoot) {
+        if (request.pathParts.length > 0 && request.pathParts[0] === schedulerId) {
             return componentRuntimeRequestHandler(request, runtime);
         }
         return undefined;
@@ -352,7 +352,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
      * Load the components from a snapshot and returns the runtime.
      * @param context - Context of the container.
      * @param registry - Mapping to the components.
-     * @param createOrRequestHandler - create a request handler to handle container requests
+     * @param requestHandlers - Request handlers for the container runtime
      * @param runtimeOptions - Additional options to be passed to the runtime
      */
     public static async load(
@@ -377,7 +377,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
         // Create all internal components in first load.
         if (!context.existing) {
-            await runtime.createComponent(schedulerRoutePathRoot, schedulerRoutePathRoot)
+            await runtime.createComponent(schedulerId, schedulerId)
                 .then((componentRuntime) => componentRuntime.attach());
         }
 
@@ -1327,7 +1327,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     }
 
     private async getScheduler() {
-        const schedulerRuntime = await this.getComponentRuntime(schedulerRoutePathRoot, true);
+        const schedulerRuntime = await this.getComponentRuntime(schedulerId, true);
         const schedulerResponse = await schedulerRuntime.request({ url: "" });
         const schedulerComponent = schedulerResponse.value as IComponent;
         return schedulerComponent.IAgentScheduler;
@@ -1396,7 +1396,7 @@ export class WrappedComponentRegistry implements IComponentRegistry {
     public get IComponentRegistry() { return this; }
 
     public async get(name: string): Promise<ComponentFactoryTypes> {
-        if (name === schedulerRoutePathRoot) {
+        if (name === schedulerId) {
             return this.agentScheduler;
         } else if (this.extraRegistries && this.extraRegistries.has(name)) {
             return this.extraRegistries.get(name);
