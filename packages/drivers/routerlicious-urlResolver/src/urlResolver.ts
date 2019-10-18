@@ -14,7 +14,7 @@ import {
     ScopeType,
 } from "@microsoft/fluid-protocol-definitions";
 import { generateToken, IAlfredTenant } from "@microsoft/fluid-server-services-core";
-import { parse } from "url";
+import { parse, URL } from "url";
 
 const r11sServers = [
     "www.wu2-ppe.prague.office-int.com",
