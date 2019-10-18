@@ -1040,7 +1040,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     }
 
     private catchUp(telemetryEventSuffix: string, messages: ISequencedDocumentMessage[]): void {
-        const messageGap = messages.length === 0 ?
+        const messageGap = messages.length === 0 || !this.handler ?
             undefined :
             messages[0].sequenceNumber - this.lastQueuedSequenceNumber - 1;
         this.logger.sendPerformanceEvent({

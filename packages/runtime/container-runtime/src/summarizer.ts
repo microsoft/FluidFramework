@@ -331,12 +331,13 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
             const telemetryProps = {
                 sequenceNumber: summaryData.sequenceNumber,
                 ...summaryData.summaryStats,
+                summaryMessage: summaryData.summaryMessage,
                 opsSinceLastSummary: summaryData.sequenceNumber - this.lastSummarySeqNumber,
                 timeSinceLastSummary: summaryEndTime - this.lastSummaryTime,
             };
             if (!summaryData.submitted) {
                 // did not send the summary op
-                summarizingEvent.cancel({...telemetryProps, category: "error"});
+                summarizingEvent.cancel({...telemetryProps});
                 this.cancelPending();
                 return;
             }

@@ -64,3 +64,13 @@ export interface ISummaryCommit {
     // Previous parents to the commit.
     parents: string[];
 }
+
+/**
+ * Payload of MessageType.Summarize op
+ */
+export interface ISummaryMessage {
+    handle: string;
+    head: string;
+    message: string;
+    parents: string[];
+};

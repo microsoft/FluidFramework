@@ -242,6 +242,14 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
                     const { trees, blobs, ops, sha } = await this.fetchWrapper.get<IOdspSnapshot>(url, this.documentId, headers);
 
+                    const props = {
+                        trees: trees ? trees.length : 0,
+                        blobs: blobs ? blobs.length : 0,
+                        ops: ops.length,
+                        size: 0, // Issue: 382
+                    };
+                    eventInner.end(props);
+
                     if (trees) {
                         this.initTreesCache(trees);
                     }
@@ -252,12 +260,6 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
                     this.ops = ops;
 
-                    const props = {
-                        trees: trees ? trees.length : 0,
-                        blobs: blobs ? blobs.length : 0,
-                        ops: ops.length,
-                    };
-                    eventInner.end(props);
                     event.end(props);
 
                     return sha ? [{ id: sha, treeId: undefined! }] : [];

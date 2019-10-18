@@ -40,6 +40,7 @@ import {
     ISignalMessage,
     ISnapshotTree,
     ISummaryConfiguration,
+    ISummaryMessage,
     ISummaryTree,
     ITree,
     MessageType,
@@ -89,6 +90,8 @@ export interface IGeneratedSummaryData {
      * true if the summary op was submitted
      */
     submitted: boolean;
+
+    summaryMessage?: ISummaryMessage;
 
     summaryStats?: ISummaryStats;
 }
@@ -1125,7 +1128,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                 return ret;
             }
             const handle = await this.context.storage.uploadSummary(treeWithStats.summaryTree);
-            const summary = {
+            const summaryMessage: ISummaryMessage = {
                 handle: handle.handle,
                 head: parents[0],
                 message,
@@ -1137,7 +1140,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                 return ret;
             }
             // if summarizer loses connection it will never reconnect
-            this.submit(MessageType.Summarize, summary);
+            this.submit(MessageType.Summarize, summaryMessage);
+            ret.summaryMessage = summaryMessage;
             ret.submitted = true;
 
             generateSummaryEvent.end({
