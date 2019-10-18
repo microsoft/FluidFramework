@@ -709,7 +709,8 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                     this.reconnectOnError(
                         `Reconnecting on disconnect: ${disconnectReason}`,
                         connection,
-                        this.systemConnectionMode);
+                        this.systemConnectionMode,
+                        disconnectReason);
                 });
 
                 connection.on("error", (error) => {
@@ -790,7 +791,14 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             this.closeOnConnectionError(error);
         } else {
             this.logger.sendTelemetryEvent({ eventName: "DeltaConnectionReconnect", reason }, error);
-            this.connectCore(reason, InitialReconnectDelay, mode);
+            let delayNext: number = 0;
+            if (error !== null && typeof error === "object" && error.retryAfterSeconds !== undefined) {
+                delayNext = error.retryAfterSeconds;
+            } else {
+                delayNext = InitialReconnectDelay;
+            }
+            this.emitDelayInfo(retryFor.DELTASTREAM, delayNext);
+            this.connectCore(reason, delayNext, mode);
         }
     }
 
