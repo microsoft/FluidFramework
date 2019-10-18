@@ -383,7 +383,17 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         this.emit("error", error);
     }
 
-    private async reloadContext(): Promise<void> {
+    public reloadContext(): Promise<void> {
+        // errors will emit error and reject promise
+        return new Promise((resolve, reject) => {
+            this.reloadContextCore().then(resolve, (error) => {
+                this.raiseCriticalError(error);
+                reject(error);
+            });
+        });
+    }
+
+    private async reloadContextCore(): Promise<void> {
         await Promise.all([
             this.deltaManager!.inbound.systemPause(),
             this.deltaManager!.inboundSignal.systemPause()]);
@@ -714,7 +724,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                         return;
                     }
 
-                    this.reloadContext().catch((error) => this.raiseCriticalError(error));
+                    this.reloadContext();
                 }
             });
 
