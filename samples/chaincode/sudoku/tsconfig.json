@@ -10,7 +10,7 @@
         "jsx": "react",
         "module": "esnext",
         "moduleResolution": "node",
-        "noImplicitAny": false,
+        "noImplicitAny": true,
         "noUnusedLocals": true,
         "outDir": "dist",
         "sourceMap": true,

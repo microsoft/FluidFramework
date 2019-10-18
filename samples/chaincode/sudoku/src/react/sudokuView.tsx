@@ -23,7 +23,7 @@ export interface ISudokuViewProps {
  * Renders a Sudoku grid and UI for resetting/loading puzzles and changing the theme.
  * @param props - Props for the component
  */
-export function SudokuView(props: ISudokuViewProps) {
+export function SudokuView(props: ISudokuViewProps): JSX.Element {
     const [theme, setTheme] = React.useState("default");
     const handleResetButton = (
         e: React.MouseEvent<HTMLButtonElement, MouseEvent>
@@ -91,13 +91,14 @@ export function SudokuView(props: ISudokuViewProps) {
         </div>
     );
 
-    function onThemeChange(e) {
+    function onThemeChange(e: any) {
         setTheme(e.target.value);
     }
 }
 
 
 // tslint:disable-next-line: max-func-body-length
+// eslint-disable-next-line @typescript-eslint/tslint/config, @typescript-eslint/no-unused-vars
 function SimpleTable(props: ISudokuViewProps) {
     const coordinateDataAttributeName = "cellcoordinate";
     const handleInputFocus = (e: React.FocusEvent<HTMLInputElement>) => {
@@ -130,6 +131,7 @@ function SimpleTable(props: ISudokuViewProps) {
             case "Del":
                 keyString = "0";
             // intentional fall-through
+            // eslint-disable-next-line no-fallthrough
             case "1":
             case "2":
             case "3":
@@ -138,7 +140,16 @@ function SimpleTable(props: ISudokuViewProps) {
             case "6":
             case "7":
             case "8":
-                let valueToSet = Number(keyString);
+                userInput(keyString, coord)
+                return;
+            default:
+                moveCell(keyString, coord);
+            // do nothing
+        }
+    };
+
+    const userInput = (keyString: string, coord: string) => {
+        let valueToSet = Number(keyString);
                 valueToSet = Number.isNaN(valueToSet) ? 0 : valueToSet;
                 if (valueToSet >= 10 || valueToSet < 0) {
                     return;
@@ -154,12 +165,7 @@ function SimpleTable(props: ISudokuViewProps) {
                     toSet.isCorrect = valueToSet === toSet.correctValue;
                     props.puzzle.set(coord, toSet);
                 }
-                return;
-            default:
-                moveCell(keyString, coord);
-                // do nothing
-        }
-    };
+    }
 
     const moveCell = (keyString: string, coordIn: string) => {
         const log = (newCoord: string) => {

@@ -96,7 +96,7 @@ export class FluidSudoku extends PrimedComponent implements IComponentHTMLVisual
         });
     }
 
-    public createJSXElement(props?): JSX.Element {
+    public createJSXElement(props?: any): JSX.Element {
         if (this.puzzle) {
             return <SudokuView
                 puzzle={this.puzzle}
