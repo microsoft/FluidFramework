@@ -152,6 +152,9 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
                 cleanupListeners();
                 OdspDocumentDeltaConnection.removeSocketIoReference(socketReferenceKey);
 
+                // Test if it's NetworkError with IOdspSocketError.
+                // Note that there might be no IOdspSocketError on it in case we hit socket.io protocol errors!
+                // So we test canRetry property first - if it false, that means protocol is broken and reconnecting will not help.
                 if (errorObject instanceof NetworkError && errorObject.canRetry) {
                     const socketError: IOdspSocketError = (errorObject as any).socketError;
                     if (typeof socketError === "object" && socketError !== null) {
