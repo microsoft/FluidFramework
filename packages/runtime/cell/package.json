@@ -49,7 +49,8 @@
     "@typescript-eslint/eslint-plugin": "^2.4.0",
     "@typescript-eslint/eslint-plugin-tslint": "^2.4.0",
     "@typescript-eslint/parser": "^2.4.0",
-    "eslint": "^6.5.1"
+    "eslint": "^6.5.1",
+    "@microsoft/eslint-config-fluid": "^0.11.0"
   },
   "nyc": {
     "all": true,

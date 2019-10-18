@@ -25,8 +25,9 @@ function updatePackageJson() {
 }
 
 function copyFiles() {
+    console.log(`root path: ${process.env.LERNA_ROOT_PATH}`);
     const src = path.join(process.env.LERNA_ROOT_PATH, "packages/utils/build-common/templates/");
-    copyfiles([src, "."]);
+    copyfiles([src, "."], options=1, () => {});
 }
 
 updatePackageJson();
