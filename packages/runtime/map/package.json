@@ -18,7 +18,7 @@
     "build:full:compile": "npm run build:compile",
     "build:genver": "node node_modules/@microsoft/fluid-build-common/gen_version.js",
     "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
-    "eslint": "eslint --fix-dry-run src/**.ts",
+    "eslint": "eslint --ext=ts,tsx --fix-dry-run src",
     "test": "mocha --recursive dist/test",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
     "tsc": "tsc",
