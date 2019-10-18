@@ -10,17 +10,18 @@
     "build": "echo Skipping @microsoft/fluid-build-common: No build steps necessary."
   },
   "devDependencies": {
+    "@microsoft/eslint-config-fluid": "^0.11.0",
     "@typescript-eslint/eslint-plugin": "^2.4.0",
     "@typescript-eslint/eslint-plugin-tslint": "^2.4.0",
     "@typescript-eslint/parser": "^2.4.0",
+    "copyfiles": "^2.1.0",
+    "cross-env": "^6.0.3",
+    "deepmerge": "^4.1.1",
     "eslint": "^6.5.1",
     "eslint-plugin-import": "^2.18.2",
     "eslint-plugin-react": "^7.16.0",
     "tslint": "^5.11.0",
     "tslint-microsoft-contrib": "^6.0.0",
     "typescript": "~3.4.5"
-  },
-  "eslintIgnore": [
-    "*.spec.ts"
-  ]
+  }
 }
