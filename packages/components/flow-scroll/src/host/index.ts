@@ -5,6 +5,7 @@
 
 import { TextAnalyzer } from "@fluid-example/flow-intel";
 import { FlowIntelViewer } from "@fluid-example/flow-intel-viewer";
+import { TableDocumentType, TableSliceType } from "@fluid-example/table-document";
 import { FlowDocument, flowDocumentFactory, FlowDocumentType } from "@fluid-example/webflow";
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import {
@@ -177,7 +178,7 @@ export const webFlowHostFactory = new PrimedComponentFactory(WebFlowHost, [Share
     ["@fluid-example/video-players", import(/* webpackChunkName: "video-players", webpackPrefetch: true */ "@fluid-example/video-players").then((m) => m.fluidExport)],
     ["@fluid-example/image-collection", import(/* webpackChunkName: "image-collection", webpackPrefetch: true */ "@fluid-example/image-collection").then((m) => m.fluidExport)],
     ["@fluid-example/math", import("@fluid-example/math").then((m) => m.fluidExport)],
-    // [TableDocumentType, import("@fluid-example/table-document").then((m) => m.TableDocument.getFactory())],
-    // [TableSliceType, import("@fluid-example/table-document").then((m) => m.TableSlice.getFactory())],
-    // ["@fluid-example/table-view", import("@fluid-example/table-view").then((m) => m.TableView.getFactory())],
+    [TableDocumentType, import("@fluid-example/table-document").then((m) => m.TableDocument.getFactory())],
+    [TableSliceType, import("@fluid-example/table-document").then((m) => m.TableSlice.getFactory())],
+    ["@fluid-example/table-view", import("@fluid-example/table-view").then((m) => m.TableView.getFactory())],
 ]));
