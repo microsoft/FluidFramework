@@ -14,13 +14,20 @@ import {
     ISequencedDocumentMessage,
     ISignalMessage,
 } from "@microsoft/fluid-protocol-definitions";
+import { IOdspSocketError } from "./contracts";
 import { debug } from "./debug";
+import { errorObjectFromOdspError } from "./OdspUtils";
 
 const protocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
+
+// how long to wait before disconnecting the socket after the last reference is removed
+// this allows reconnection after receiving a nack to be smooth
+const socketReferenceBufferTime = 2000;
 
 interface ISocketReference {
     socket: SocketIOClient.Socket | undefined;
     references: number;
+    delayDeleteTimeout?: NodeJS.Timeout;
 }
 
 /**
@@ -144,6 +151,15 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
             const disconnectAndReject = (errorObject: any) => {
                 cleanupListeners();
                 OdspDocumentDeltaConnection.removeSocketIoReference(socketReferenceKey);
+
+                if (errorObject instanceof NetworkError && errorObject.canRetry) {
+                    const socketError: IOdspSocketError = (errorObject as any).socketError;
+                    if (typeof socketError === "object" && socketError !== null) {
+                        reject(errorObjectFromOdspError(socketError));
+                        return;
+                    }
+                }
+
                 reject(errorObject);
             };
 
@@ -278,6 +294,13 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
         let socketReference = OdspDocumentDeltaConnection.socketIoSockets.get(key);
         if (socketReference) {
             socketReference.references++;
+
+            // clear the pending deletion if there is one
+            if (socketReference.delayDeleteTimeout !== undefined) {
+                clearTimeout(socketReference.delayDeleteTimeout);
+                socketReference.delayDeleteTimeout = undefined;
+            }
+
             debug(`Using existing socketio reference for ${key} (${socketReference.references})`);
 
         } else {
@@ -318,23 +341,33 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
             return;
         }
 
-        if (socketReference.socket && !socketReference.socket.connected) {
-            // the socket is not connected
-            // delete the reference
-            socketReference.references = 0;
-        } else {
-            socketReference.references--;
+        if (socketReference.delayDeleteTimeout !== undefined) {
+            clearTimeout(socketReference.delayDeleteTimeout);
+            socketReference.delayDeleteTimeout = undefined;
         }
 
-        if (socketReference.references === 0) {
+        if (socketReference.socket && !socketReference.socket.connected) {
+            // delete the reference because the socket is not connected
+            socketReference.socket.disconnect();
+            socketReference.socket = undefined;
             OdspDocumentDeltaConnection.socketIoSockets.delete(key);
+            debug(`Removed socketio reference ${key} due to an invalid connection`);
+            return;
+        }
 
-            if (socketReference.socket) {
-                socketReference.socket.disconnect();
-                socketReference.socket = undefined;
-            }
+        socketReference.references--;
 
-            debug(`Removed socketio reference ${key}`);
+        if (socketReference.references === 0) {
+            socketReference.delayDeleteTimeout = setTimeout(() => {
+                OdspDocumentDeltaConnection.socketIoSockets.delete(key);
+
+                if (socketReference.socket) {
+                    socketReference.socket.disconnect();
+                    socketReference.socket = undefined;
+                }
+
+                debug(`Removed socketio reference ${key}`);
+            }, socketReferenceBufferTime);
         }
     }
 
@@ -350,6 +383,11 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
         details: IConnected,
         private socketReferenceKey: string | undefined) {
         super(socket, documentId, details);
+        socket.on("server_disconnect", (socketError: IOdspSocketError) => {
+            // Raise it as disconnect.
+            // That produces cleaner telemetry (no errors) and keeps protocol simpler (and not driver-specific).
+            this.emit("disconnect", errorObjectFromOdspError(socketError));
+        });
     }
 
     /**
