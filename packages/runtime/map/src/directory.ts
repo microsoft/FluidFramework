@@ -1063,7 +1063,7 @@ class SubDirectory implements IDirectory {
             throw new Error("SubDirectory name may not be undefined or null");
         }
 
-        if (subdirName.indexOf(posix.sep) !== -1) {
+        if (subdirName.includes(posix.sep)) {
             throw new Error(`SubDirectory name may not contain ${posix.sep}`);
         }
 
