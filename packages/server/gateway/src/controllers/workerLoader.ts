@@ -19,7 +19,7 @@ import {
     ISequencedDocumentMessage,
 } from "@microsoft/fluid-protocol-definitions";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
-import { WorkerCodeLoader } from "@microsoft/fluid-web-code-loader";
+import { WebCodeLoader } from "@microsoft/fluid-web-code-loader";
 
 // tslint:disable no-submodule-imports
 import { expose } from "threads/worker";
@@ -75,7 +75,7 @@ const workerLoader = {
             id,
             version,
             documentService,
-            new WorkerCodeLoader(),
+            new WebCodeLoader(),
             options,
             undefined,  // Okay for now.
             connection,
