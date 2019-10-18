@@ -5,7 +5,7 @@
 
 import { TextAnalyzer } from "@fluid-example/flow-intel";
 import { FlowIntelViewer } from "@fluid-example/flow-intel-viewer";
-import { FlowDocument, FlowDocumentType } from "@fluid-example/webflow";
+import { FlowDocument, flowDocumentFactory, FlowDocumentType } from "@fluid-example/webflow";
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import {
     IComponent,
@@ -13,6 +13,7 @@ import {
     IComponentHTMLOptions,
     IComponentHTMLView,
     IComponentHTMLVisual,
+    IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentCollection } from "@microsoft/fluid-framework-interfaces";
 import { SharedMap } from "@microsoft/fluid-map";
@@ -40,12 +41,21 @@ export class WebFlowHost extends PrimedComponent implements IComponentHTMLVisual
 
     public addView(scope?: IComponent): IComponentHTMLView {
         return new HostView(
-            (id: string, pkg: string, props?: any) => this.createAndAttachComponent(id, pkg, props),
-            this.getComponent<FlowDocument>(this.docId),
+            (rootkey: string, pkg: string, props?: any) => this.createSubComponent(rootkey, pkg, props),
+            this.getComponent<FlowDocument>(this.root.get(this.docId)),
             this.openCollection("math"),
             this.openCollection("video-players"),
             this.openCollection("images"),
-            this.intelViewer);
+            this.intelViewer,
+            this.root);
+    }
+
+    public async createSubComponent<T>(rootkey: string, pkg: string, props?: any) {
+        const componentRuntime: IComponentRuntime = await this.context.createSubComponent(pkg);
+        const response: IResponse = await componentRuntime.request({ url: "/" });
+        componentRuntime.attach();
+        this.root.set(rootkey, componentRuntime.id);
+        return response.value as T;
     }
 
     public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
@@ -54,10 +64,10 @@ export class WebFlowHost extends PrimedComponent implements IComponentHTMLVisual
 
     protected async componentInitializingFirstTime() {
         await Promise.all([
-            this.createAndAttachComponent(this.docId, FlowDocumentType),
-            this.createAndAttachComponent("math", "@fluid-example/math"),
-            this.createAndAttachComponent("video-players", "@fluid-example/video-players"),
-            this.createAndAttachComponent("images", "@fluid-example/image-collection"),
+            this.createSubComponent(this.docId, FlowDocumentType),
+            this.createSubComponent("math", "@fluid-example/math"),
+            this.createSubComponent("video-players", "@fluid-example/video-players"),
+            this.createSubComponent("images", "@fluid-example/image-collection"),
         ]);
 
         const insights = SharedMap.create(this.runtime, insightsMapId);
@@ -66,7 +76,7 @@ export class WebFlowHost extends PrimedComponent implements IComponentHTMLVisual
         const url = new URL(window.location.href);
         const template = url.searchParams.get("template");
         if (template) {
-            importDoc(this.getComponent(this.docId), template);
+            importDoc(this.getComponent(this.root.get(this.docId)), template);
         }
     }
 
@@ -110,7 +120,7 @@ export class WebFlowHost extends PrimedComponent implements IComponentHTMLVisual
 
         this.intelViewer = new FlowIntelViewer(insights);
 
-        const flowDocument = await this.getComponent<FlowDocument>(this.docId);
+        const flowDocument = await this.getComponent<FlowDocument>(this.root.get(this.docId));
         const taskScheduler = new TaskScheduler(
             this.context,
             this.taskManager,
@@ -124,7 +134,7 @@ export class WebFlowHost extends PrimedComponent implements IComponentHTMLVisual
     private get docId() { return `${this.runtime.id}-doc`; }
 
     private async openCollection(id: string): Promise<IComponentCollection> {
-        const runtime = await this.context.getComponentRuntime(id, true);
+        const runtime = await this.context.getComponentRuntime(this.root.get(id), true);
         const request = await runtime.request({ url: "/" });
 
         if (request.status !== 200 || request.mimeType !== "fluid/component") {
@@ -162,4 +172,12 @@ class TaskScheduler {
     }
 }
 
-export const webFlowHostFactory = new PrimedComponentFactory(WebFlowHost, [SharedMap.getFactory()]);
+export const webFlowHostFactory = new PrimedComponentFactory(WebFlowHost, [SharedMap.getFactory()], new Map([
+    [FlowDocumentType, Promise.resolve(flowDocumentFactory)],
+    ["@fluid-example/video-players", import(/* webpackChunkName: "video-players", webpackPrefetch: true */ "@fluid-example/video-players").then((m) => m.fluidExport)],
+    ["@fluid-example/image-collection", import(/* webpackChunkName: "image-collection", webpackPrefetch: true */ "@fluid-example/image-collection").then((m) => m.fluidExport)],
+    ["@fluid-example/math", import("@fluid-example/math").then((m) => m.fluidExport)],
+    // [TableDocumentType, import("@fluid-example/table-document").then((m) => m.TableDocument.getFactory())],
+    // [TableSliceType, import("@fluid-example/table-document").then((m) => m.TableSlice.getFactory())],
+    // ["@fluid-example/table-view", import("@fluid-example/table-view").then((m) => m.TableView.getFactory())],
+]));
