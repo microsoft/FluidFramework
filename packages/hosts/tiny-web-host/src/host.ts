@@ -4,7 +4,7 @@
  */
 
 import { IHostConfig, start } from "@microsoft/fluid-base-host";
-import { BaseTelemetryNullLogger } from "@microsoft/fluid-core-utils";
+import { BaseTelemetryNullLogger, configurableUrlResolver } from "@microsoft/fluid-core-utils";
 import { FluidAppOdspUrlResolver } from "@microsoft/fluid-fluidapp-odsp-urlresolver";
 import { OdspDocumentServiceFactory, OdspUrlResolver } from "@microsoft/fluid-odsp-driver";
 import { IDocumentServiceFactory, IFluidResolvedUrl, IResolvedUrl } from "@microsoft/fluid-protocol-definitions";
@@ -12,7 +12,6 @@ import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@micr
 import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
 import { RouterliciousUrlResolver } from "@microsoft/fluid-routerlicious-urlresolver";
 import { IResolvedPackage } from "@microsoft/fluid-web-code-loader";
-import { resolveFluidUrl } from ".";
 import { IOdspTokenApi, IRouterliciousTokenApi, ITokenApis } from "./utils";
 // tslint:disable-next-line: no-var-requires no-require-imports
 const packageJson = require("../package.json");
@@ -55,8 +54,8 @@ export async function loadFluidComponent(
     if (isRouterliciousUrl(url)) {
         const routerliciousApiConfig = tokenApiConfig as IRouterliciousTokenApi;
         if (routerliciousApiConfig) {
-            const resolverList = [new RouterliciousUrlResolver(undefined, undefined, appTenants)];
-            resolved = await resolveFluidUrl(url, resolverList);
+            const resolver = new RouterliciousUrlResolver(undefined, undefined, appTenants);
+            resolved = await resolver.resolve({ url });
         } else {
             throw new Error("No token api supplied!!");
         }
@@ -67,7 +66,7 @@ export async function loadFluidComponent(
                 new OdspUrlResolver(),
                 new FluidAppOdspUrlResolver(),
             ];
-            resolved = await resolveFluidUrl(url, resolverList);
+            resolved = await configurableUrlResolver(resolverList, { url });
         } else {
             throw new Error("No token api supplied!!");
         }

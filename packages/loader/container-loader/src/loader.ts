@@ -14,7 +14,7 @@ import {
     ILoader,
     ITelemetryBaseLogger,
 } from "@microsoft/fluid-container-definitions";
-import { Deferred } from "@microsoft/fluid-core-utils";
+import { configurableUrlResolver, Deferred } from "@microsoft/fluid-core-utils";
 import {
     IDocumentService,
     IDocumentServiceFactory,
@@ -209,7 +209,12 @@ export class Loader extends EventEmitter implements ILoader {
             return maybeResolvedUrl;
         }
 
-        const toCache = await this.containerHost.resolver.resolve(request);
+        let toCache: IResolvedUrl;
+        if (Array.isArray(this.containerHost.resolver)) {
+            toCache = await configurableUrlResolver(this.containerHost.resolver, request);
+        } else {
+            toCache = await this.containerHost.resolver.resolve(request);
+        }
         if (toCache.type !== "fluid") {
             if (toCache.type === "prague") {
                 // tslint:disable-next-line:max-line-length
