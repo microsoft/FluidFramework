@@ -141,5 +141,6 @@ module.exports = env => {
             ],
         }];
 
-    return bundles.map((bundle) => merge(envOptions, defaultOptions, bundle));
+    // Always minify worker bundle for easy lookup.
+    return bundles.map((bundle) => merge(bundle.entry.worker ? prod : envOptions, defaultOptions, bundle));
 };

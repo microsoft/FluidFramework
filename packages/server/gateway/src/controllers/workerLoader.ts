@@ -33,7 +33,8 @@ let originalRequest: IRequest;
 let resolved: IFluidResolvedUrl;
 let container: Container;
 let runnerComponent: IComponentRunnable;
-let loadFromSequenceNumber: number;
+let fromSequenceNumber: number;
+let canReconnect: boolean;
 
 const workerLoader = {
     setup(
@@ -43,14 +44,16 @@ const workerLoader = {
         loadOptions: any,
         loadRequest: IRequest,
         loadResolved: IFluidResolvedUrl,
-        fromSequenceNumber: number) {
+        loadFromSequenceNumber: number,
+        loadCanReconnect: boolean) {
         id = loadId;
         version = loadVersion;
         connection = loadConnection;
         options = loadOptions;
         originalRequest = loadRequest;
         resolved = loadResolved;
-        loadFromSequenceNumber = fromSequenceNumber;
+        fromSequenceNumber = loadFromSequenceNumber;
+        canReconnect = loadCanReconnect;
     },
 
     async load(): Promise<IResponse> {
@@ -77,19 +80,18 @@ const workerLoader = {
             documentService,
             new WebCodeLoader(),
             options,
-            undefined,  // Okay for now.
+            { },
             connection,
             (this as unknown) as Loader,
             originalRequest,
-            false,
-            undefined);
+            canReconnect);
 
         container = await containerP;
         // tslint:disable no-non-null-assertion
-        if (container.deltaManager!.referenceSequenceNumber <= loadFromSequenceNumber) {
+        if (container.deltaManager!.referenceSequenceNumber <= fromSequenceNumber) {
             await new Promise((resolve, reject) => {
                 function opHandler(message: ISequencedDocumentMessage) {
-                    if (message.sequenceNumber > loadFromSequenceNumber) {
+                    if (message.sequenceNumber > fromSequenceNumber) {
                         resolve();
                         container.removeListener("op", opHandler);
                     }

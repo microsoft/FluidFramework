@@ -95,7 +95,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         service: IDocumentService,
         codeLoader: ICodeLoader,
         options: any,
-        scope: IComponent | undefined, // todo (web-loader): Change this.
+        scope: IComponent,
         connection: string,
         loader: Loader,
         request: IRequest,
@@ -107,7 +107,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             options,
             canReconnect,
             service,
-            scope!,
+            scope,
             codeLoader,
             loader,
             request,

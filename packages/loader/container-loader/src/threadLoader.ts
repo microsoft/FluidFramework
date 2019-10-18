@@ -15,13 +15,14 @@ import { ModuleThread, spawn, Worker } from "threads";
 // tslint:disable interface-over-type-literal
 type WorkerLoader = {
     setup(
-        loadId: string,
-        loadVersion: string | null | undefined,
-        loadConnection: string,
-        loadOptions: any,
-        loadRequest: IRequest,
-        loadResolved: IFluidResolvedUrl,
-        fromSequenceNumber: number): Promise<void>;
+        id: string,
+        version: string | null | undefined,
+        connection: string,
+        options: any,
+        request: IRequest,
+        resolved: IFluidResolvedUrl,
+        fromSequenceNumber: number,
+        canReconnect: boolean): Promise<void>;
     load(): Promise<IResponse>;
     run(): Promise<void>
 };
@@ -35,9 +36,9 @@ export class ThreadLoader {
         request: IRequest,
         resolved: IFluidResolvedUrl,
         fromSequenceNumber: number,
+        canReconnect: boolean,
     ) {
-        // todo (web-loader): Change this.
-        const worker = await spawn<WorkerLoader>(new Worker("/public/scripts/dist/worker.js"));
+        const worker = await spawn<WorkerLoader>(new Worker("/public/scripts/dist/worker.min.js"));
         await worker.setup(
             id,
             version,
@@ -46,6 +47,7 @@ export class ThreadLoader {
             request,
             resolved,
             fromSequenceNumber,
+            canReconnect,
         );
         return new ThreadLoader(worker);
     }

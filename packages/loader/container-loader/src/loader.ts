@@ -206,7 +206,7 @@ export class Loader extends EventEmitter implements ILoader {
         if (!parsed) {
             return Promise.reject(`Invalid URL ${resolvedAsFluid.url}`);
         }
-        const {connection, fromSequenceNumber, version} =
+        const {canReconnect, connection, fromSequenceNumber, version} =
             this.parseHeader(parsed, { url: baseUrl, headers: request.headers });
         const threadLoader = await ThreadLoader.load(
             parsed!.id,
@@ -216,6 +216,7 @@ export class Loader extends EventEmitter implements ILoader {
             request,
             resolvedAsFluid,
             fromSequenceNumber,
+            canReconnect,
         );
         return threadLoader.request();
     }
