@@ -1,7 +1,9 @@
-const copyfiles = require("copyfiles");
+const cpy = require("cpy");
+const copy = require("copy");
+const copydir = require("copy-dir");
 const deepmerge = require("deepmerge");
 const fs = require("fs");
-const path = require('path');
+const path = require("path");
 
 const add = {
     "scripts": {
@@ -26,9 +28,24 @@ function updatePackageJson() {
 
 function copyFiles() {
     console.log(`root path: ${process.env.LERNA_ROOT_PATH}`);
-    const src = path.join(process.env.LERNA_ROOT_PATH, "packages/utils/build-common/templates/**");
+    const src = path.join(process.env.LERNA_ROOT_PATH, "packages/utils/build-common/templates");
     console.log(`src: ${src}`);
-    copyfiles([src, "."]);
+    const dest = path.resolve("./");
+    console.log(`dest: ${dest}`);
+    // cpx.copySync(src, dest, {dereference: true, update: true});
+    // fs.copyFileSync(src, dest);
+    // copy(src, dest, function(err, files) {
+    //     if (err) throw err;
+    //     // `files` is an array of the files that were copied
+    //     console.log(`files: ${JSON.stringify(files)}`);
+    //   });
+
+    //   (async () => {
+    //     await cpy(src, dest);
+    //     console.log("Files copied!");
+    // })();
+
+    copydir.sync(src, dest);
 }
 
 updatePackageJson();

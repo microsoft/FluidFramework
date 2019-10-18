@@ -50,7 +50,7 @@
     "watch:webpack": "lerna run --parallel webpack -- -- --watch",
     "webpack": "lerna run --parallel webpack --stream",
     "lpr": "node lerna-exec.js -- /packages/utils/build-common/update-package-json.js",
-    "update-package-json": "node lerna-exec.js -- /packages/utils/build-common/update-package-json.js"
+    "update-package-json": "node lerna-exec.js --ignore @microsoft/fluid-build-common --ignore @microsoft/eslint-config-fluid /packages/utils/build-common/update-package-json.js"
   },
   "dependencies": {},
   "devDependencies": {
