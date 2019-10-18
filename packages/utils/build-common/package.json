@@ -7,7 +7,8 @@
   "author": "Microsoft",
   "sideEffects": "false",
   "scripts": {
-    "build": "echo Skipping @microsoft/fluid-build-common: No build steps necessary."
+    "build": "echo Skipping @microsoft/fluid-build-common: No build steps necessary.",
+    "eslint": "eslint --ext=ts,tsx --fix-dry-run src"
   },
   "devDependencies": {
     "@microsoft/eslint-config-fluid": "^0.11.0",

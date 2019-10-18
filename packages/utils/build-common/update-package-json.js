@@ -19,15 +19,16 @@ const add = {
 function updatePackageJson() {
     const pkg = JSON.parse(fs.readFileSync("package.json"));
     const merged = deepmerge(pkg, add);
-    const mergedOutput = JSON.stringify(merged, null, 2);
+    const mergedOutput = JSON.stringify(merged, null, 2) + "\n";
     // console.log(mergedOutput);
     fs.writeFileSync("package.json", mergedOutput);
 }
 
 function copyFiles() {
     console.log(`root path: ${process.env.LERNA_ROOT_PATH}`);
-    const src = path.join(process.env.LERNA_ROOT_PATH, "packages/utils/build-common/templates/");
-    copyfiles([src, "."], options=1, () => {});
+    const src = path.join(process.env.LERNA_ROOT_PATH, "packages/utils/build-common/templates/**");
+    console.log(`src: ${src}`);
+    copyfiles([src, "."]);
 }
 
 updatePackageJson();

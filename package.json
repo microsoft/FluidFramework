@@ -50,7 +50,7 @@
     "watch:webpack": "lerna run --parallel webpack -- -- --watch",
     "webpack": "lerna run --parallel webpack --stream",
     "lpr": "node lerna-exec.js -- /packages/utils/build-common/update-package-json.js",
-    "update-package-json": "lerna exec --scope @microsoft/fluid-cell -- node $LERNA_ROOT_PATH/packages/utils/build-common/update-package-json.js"
+    "update-package-json": "node lerna-exec.js -- /packages/utils/build-common/update-package-json.js"
   },
   "dependencies": {},
   "devDependencies": {
