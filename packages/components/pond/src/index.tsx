@@ -41,7 +41,6 @@ export class Pond extends PrimedComponent implements IComponentHTMLVisual {
 
   async createSubComponent(rootKey: string, pkgName: string, props?: any) {
     const componentRuntime: IComponentRuntime = await this.context.createSubComponent(pkgName, props);
-    await componentRuntime.request({ url: "/" });
     componentRuntime.attach();
     this.root.set(rootKey, componentRuntime.id);
   }
