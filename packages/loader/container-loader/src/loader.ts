@@ -29,7 +29,7 @@ import * as querystring from "querystring";
 import { parse } from "url";
 import { Container } from "./container";
 import { debug } from "./debug";
-import { ThreadLoader } from "./threadLoader";
+import { WorkerLoader } from "./workerLoader";
 
 interface IParsedUrl {
     id: string;
@@ -69,7 +69,7 @@ export class RelativeLoader extends EventEmitter implements ILoader {
     public async request(request: IRequest): Promise<IResponse> {
         if (request.url.indexOf("/") === 0) {
             if (this.useThread(request)) {
-                return this.loader.requestThread(this.baseRequest.url, request);
+                return this.loader.requestWorker(this.baseRequest.url, request);
             } else {
                 const container = this.canUseCache(request)
                 ? await this.containerDeferred.promise
@@ -199,7 +199,7 @@ export class Loader extends EventEmitter implements ILoader {
         return resolved.container.request({ url: resolved.parsed.path });
     }
 
-    public async requestThread(baseUrl: string, request: IRequest): Promise<IResponse> {
+    public async requestWorker(baseUrl: string, request: IRequest): Promise<IResponse> {
         const resolved = await this.getResolvedUrl({ url: baseUrl, headers: request.headers });
         const resolvedAsFluid = resolved as IFluidResolvedUrl;
         const parsed = this.parseUrl(resolvedAsFluid.url);
@@ -208,17 +208,17 @@ export class Loader extends EventEmitter implements ILoader {
         }
         const {canReconnect, connection, fromSequenceNumber, version} =
             this.parseHeader(parsed, { url: baseUrl, headers: request.headers });
-        const threadLoader = await ThreadLoader.load(
+
+        const workerLoader = await WorkerLoader.load(
             parsed!.id,
             version,
             connection,
             this.options,
-            request,
             resolvedAsFluid,
             fromSequenceNumber,
             canReconnect,
         );
-        return threadLoader.request();
+        return workerLoader.request(request);
     }
 
     private parseUrl(url: string): IParsedUrl | null {

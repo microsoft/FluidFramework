@@ -8,7 +8,7 @@ import {
     IRequest,
     IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
-import { IContainer } from "@microsoft/fluid-container-definitions";
+import { IContainer, ILoader } from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
 import { BaseTelemetryNullLogger } from "@microsoft/fluid-core-utils";
 import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
@@ -20,44 +20,27 @@ import {
 } from "@microsoft/fluid-protocol-definitions";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
 import { WebCodeLoader } from "@microsoft/fluid-web-code-loader";
-
-// tslint:disable no-submodule-imports
-import { expose } from "threads/worker";
+import * as Comlink from "comlink";
 import { parse } from "url";
 
-let id: string;
-let version: string | null | undefined;
-let connection: string;
-let options: any;
-let originalRequest: IRequest;
-let resolved: IFluidResolvedUrl;
-let container: Container;
-let runnerComponent: IComponentRunnable;
-let fromSequenceNumber: number;
-let canReconnect: boolean;
+// Loader class to load a container and proxy component interfaces from within a web worker.
+// Only supports IComponentRunnable for now.
+class WorkerLoader implements ILoader {
+    private container: Container;
+    private runnable: IComponentRunnable;
 
-const workerLoader = {
-    setup(
-        loadId: string,
-        loadVersion: string | null | undefined,
-        loadConnection: string,
-        loadOptions: any,
-        loadRequest: IRequest,
-        loadResolved: IFluidResolvedUrl,
-        loadFromSequenceNumber: number,
-        loadCanReconnect: boolean) {
-        id = loadId;
-        version = loadVersion;
-        connection = loadConnection;
-        options = loadOptions;
-        originalRequest = loadRequest;
-        resolved = loadResolved;
-        fromSequenceNumber = loadFromSequenceNumber;
-        canReconnect = loadCanReconnect;
-    },
+    constructor(
+        private readonly id: string,
+        private readonly version: string | null | undefined,
+        private readonly connection: string,
+        private readonly options: any,
+        private readonly resolved: IFluidResolvedUrl,
+        private readonly fromSequenceNumber: number,
+        private readonly canReconnect: boolean) {
+        }
 
-    async load(): Promise<IResponse> {
-        const urlObj = parse(resolved.url);
+    public async request(request: IRequest): Promise<IResponse> {
+        const urlObj = parse(this.resolved.url);
         let factory: IDocumentServiceFactory;
         if (urlObj.protocol === "fluid:") {
             factory = new RouterliciousDocumentServiceFactory(
@@ -69,61 +52,55 @@ const workerLoader = {
         } else {
             factory = new OdspDocumentServiceFactory(
                 "", // figure this out
-                (siteUrl: string) => Promise.resolve(resolved.tokens.storageToken),
-                () => Promise.resolve(resolved.tokens.socketToken),
+                (siteUrl: string) => Promise.resolve(this.resolved.tokens.storageToken),
+                () => Promise.resolve(this.resolved.tokens.socketToken),
                 new BaseTelemetryNullLogger());
         }
-        const documentService: IDocumentService = await factory.createDocumentService(resolved);
-        const containerP = Container.load(
-            id,
-            version,
+        const documentService: IDocumentService = await factory.createDocumentService(this.resolved);
+        this.container = await Container.load(
+            this.id,
+            this.version,
             documentService,
             new WebCodeLoader(),
-            options,
+            this.options,
             { },
-            connection,
+            this.connection,
             (this as unknown) as Loader,
-            originalRequest,
-            canReconnect);
+            request,
+            this.canReconnect,
+            new BaseTelemetryNullLogger());
 
-        container = await containerP;
         // tslint:disable no-non-null-assertion
-        if (container.deltaManager!.referenceSequenceNumber <= fromSequenceNumber) {
+        if (this.container.deltaManager!.referenceSequenceNumber <= this.fromSequenceNumber) {
             await new Promise((resolve, reject) => {
-                function opHandler(message: ISequencedDocumentMessage) {
-                    if (message.sequenceNumber > fromSequenceNumber) {
+                const opHandler = (message: ISequencedDocumentMessage) => {
+                    if (message.sequenceNumber > this.fromSequenceNumber) {
                         resolve();
-                        container.removeListener("op", opHandler);
+                        this.container.removeListener("op", opHandler);
                     }
-                }
-
-                container.on("op", opHandler);
+                };
+                this.container.on("op", opHandler);
             });
         }
 
-        const response = await container.request(originalRequest);
+        const response = await this.container.request(request);
         if (response.status !== 200 || response.mimeType !== "fluid/component") {
-            return { status: 404, mimeType: "text/plain", value: `${originalRequest.url} not found` };
+            return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
         }
-        runnerComponent = response.value as IComponentRunnable;
-        if (runnerComponent === undefined) {
+        this.runnable = response.value as IComponentRunnable;
+        if (this.runnable === undefined) {
             return { status: 404, mimeType: "text/plain", value: `IComponentRunnable not found` };
         }
         return { status: 200, mimeType: "fluid/component", value: `loaded` };
-    },
+    }
 
-    async request(request: IRequest): Promise<IResponse> {
-        return container.request(request);
-    },
+    public async resolve(request: IRequest): Promise<IContainer> {
+        return this.container;
+    }
 
-    async resolve(request: IRequest): Promise<IContainer> {
-        return container;
-    },
+    public async run(): Promise<void> {
+        return this.runnable === undefined ? Promise.reject() : this.runnable.run();
+    }
+}
 
-    async run(): Promise<void> {
-        return runnerComponent === undefined ? Promise.reject() : runnerComponent.run();
-    },
-};
-
-export type WorkerLoader = typeof workerLoader;
-expose(workerLoader);
+Comlink.expose(WorkerLoader);

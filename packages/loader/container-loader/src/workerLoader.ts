@@ -9,70 +9,68 @@ import {
     IRequest,
     IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
+import { ILoader } from "@microsoft/fluid-container-definitions";
 import { IFluidResolvedUrl } from "@microsoft/fluid-protocol-definitions";
-import { ModuleThread, spawn, Worker } from "threads";
+import * as Comlink from "comlink";
 
-// tslint:disable interface-over-type-literal
-type WorkerLoader = {
-    setup(
-        id: string,
+// Proxy loader that proxies request to web worker.
+interface IProxyLoader extends ILoader {
+    // tslint:disable no-misused-new
+    new(id: string,
         version: string | null | undefined,
         connection: string,
         options: any,
-        request: IRequest,
         resolved: IFluidResolvedUrl,
         fromSequenceNumber: number,
-        canReconnect: boolean): Promise<void>;
-    load(): Promise<IResponse>;
-    run(): Promise<void>
-};
+        canReconnect: boolean): IProxyLoader;
 
-export class ThreadLoader {
+    run(): Promise<void>;
+}
+
+export class WorkerLoader {
     public static async load(
         id: string,
         version: string | null | undefined,
         connection: string,
         options: any,
-        request: IRequest,
         resolved: IFluidResolvedUrl,
         fromSequenceNumber: number,
         canReconnect: boolean,
     ) {
-        const worker = await spawn<WorkerLoader>(new Worker("/public/scripts/dist/worker.min.js"));
-        await worker.setup(
+        const ProxyLoader = Comlink.wrap<IProxyLoader>(new Worker("/public/scripts/dist/worker.min.js"));
+        const proxyLoader = await new ProxyLoader(
             id,
             version,
             connection,
             options,
-            request,
             resolved,
             fromSequenceNumber,
             canReconnect,
         );
-        return new ThreadLoader(worker);
+        return new WorkerLoader(proxyLoader);
     }
 
-    constructor(private readonly thread: ModuleThread<WorkerLoader>) {
+    constructor(private readonly proxy: Comlink.Remote<IProxyLoader>) {
     }
 
-    public async request(): Promise<IResponse> {
-        const response = await this.thread.load();
+    public async request(request: IRequest): Promise<IResponse> {
+        const response = await this.proxy.request(request);
         if (response.status !== 200 || response.mimeType !== "fluid/component") {
             return response;
         }
-        return { status: 200, mimeType: "fluid/component", value: new Runner(this.thread) };
+        return { status: 200, mimeType: "fluid/component", value: new Runnable(this.proxy) };
     }
 }
 
-export class Runner implements IComponentRouter, IComponentRunnable {
-
-    constructor(private readonly thread: ModuleThread<WorkerLoader>) {}
+// Proxies request to IComponentRunnable.
+class Runnable implements IComponentRouter, IComponentRunnable {
+    constructor(private readonly proxy: Comlink.Remote<IProxyLoader>) {}
 
     public get IComponentRouter() { return this; }
     public get IComponentRunnable() { return this; }
 
     public async run(): Promise<void> {
-        return this.thread.run();
+        return this.proxy.run();
     }
 
     public async request(request: IRequest): Promise<IResponse> {
