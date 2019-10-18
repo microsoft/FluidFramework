@@ -138,7 +138,6 @@ export class SummaryManager extends EventEmitter {
         } else if (this.clientId !== this.summarizer) {
             return "parentShouldNotSummarize";
         } else {
-            this.logger.sendErrorEvent({ eventName: "shouldNotStop" });
             return undefined;
         }
     }
