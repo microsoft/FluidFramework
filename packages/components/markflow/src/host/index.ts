@@ -9,6 +9,7 @@ import {
     IComponentHTMLOptions,
     IComponentHTMLView,
     IComponentHTMLVisual,
+    IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { FlowDocument } from "../document";
@@ -35,15 +36,25 @@ export class WebFlow extends PrimedComponent implements IComponentHTMLVisual {
     // #endregion IComponentHTMLVisual
 
     protected async componentInitializingFirstTime() {
-        const docP = this.createAndAttachComponent<FlowDocument>(this.docId, FlowDocumentType);
+        const componentRuntime: IComponentRuntime = await this.context.createSubComponent(FlowDocumentType);
+        const response: IResponse = await componentRuntime.request({ url: "/" });
+        componentRuntime.attach();
+        this.docId = `${componentRuntime.id}`;
+        const doc = response.value as FlowDocument;
         const url = new URL(window.location.href);
         const template = url.searchParams.get("template");
         if (template) {
-            importDoc(docP, template);
+            importDoc(Promise.resolve(doc), template);
         }
     }
 
-    private get docId() { return `${this.runtime.id}-doc`; }
+    private get docId() { return this.root.get("docId"); }
+
+    private set docId(id: string) {
+        this.root.set("docId", id);
+    }
 }
 
-export const webFlowFactory = new PrimedComponentFactory(WebFlow, []);
+export const webFlowFactory = new PrimedComponentFactory(WebFlow, [], new Map([
+    [FlowDocumentType, import(/* webpackChunkName: "flowdoc", webpackPreload: true */ "../document").then((m) => m.flowDocumentFactory)],
+]));
