@@ -96,11 +96,15 @@ export function SudokuView(props: ISudokuViewProps): JSX.Element {
     }
 }
 
-
 // tslint:disable-next-line: max-func-body-length
 // eslint-disable-next-line @typescript-eslint/tslint/config, @typescript-eslint/no-unused-vars
 function SimpleTable(props: ISudokuViewProps) {
     const coordinateDataAttributeName = "cellcoordinate";
+
+    const getCellInputElement = (coord: CoordinateString): HTMLInputElement => {
+        return document.getElementById(`${props.clientId}-${coord}`) as HTMLInputElement;
+    }
+
     const handleInputFocus = (e: React.FocusEvent<HTMLInputElement>) => {
         const coord = e.target.dataset[coordinateDataAttributeName];
         if (props.setPresence) {
@@ -121,14 +125,15 @@ function SimpleTable(props: ISudokuViewProps) {
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
         let keyString = e.key;
-
-        let coord = e.currentTarget.dataset[coordinateDataAttributeName];
+        let coord = e.currentTarget.dataset[coordinateDataAttributeName] as string;
         coord = coord === undefined ? "" : coord;
+        const cell = props.puzzle.get<SudokuCell>(coord);
+
         switch (keyString) {
-            case "0":
             case "Backspace":
             case "Delete":
             case "Del":
+            case "0":
                 keyString = "0";
             // intentional fall-through
             // eslint-disable-next-line no-fallthrough
@@ -140,86 +145,62 @@ function SimpleTable(props: ISudokuViewProps) {
             case "6":
             case "7":
             case "8":
-                userInput(keyString, coord)
+                if (cell.fixed) { return; }
+                numericInput(keyString, coord)
                 return;
             default:
                 moveCell(keyString, coord);
-            // do nothing
+                return;
         }
     };
 
-    const userInput = (keyString: string, coord: string) => {
+    const numericInput = (keyString: string, coord: string) => {
         let valueToSet = Number(keyString);
-                valueToSet = Number.isNaN(valueToSet) ? 0 : valueToSet;
-                if (valueToSet >= 10 || valueToSet < 0) {
-                    return;
-                }
+        valueToSet = Number.isNaN(valueToSet) ? 0 : valueToSet;
+        if (valueToSet >= 10 || valueToSet < 0) {
+            return;
+        }
 
-                if (coord !== undefined) {
-                    let cellInputElement: HTMLInputElement | null;
-                    cellInputElement = document.getElementById(`${props.clientId}-${coord}`) as HTMLInputElement;
-                    cellInputElement.value = keyString;
+        if (coord !== undefined) {
+            const cellInputElement = getCellInputElement(coord);
+            cellInputElement.value = keyString;
 
-                    const toSet = props.puzzle.get<SudokuCell>(coord);
-                    toSet.value = valueToSet;
-                    toSet.isCorrect = valueToSet === toSet.correctValue;
-                    props.puzzle.set(coord, toSet);
-                }
+            const toSet = props.puzzle.get<SudokuCell>(coord);
+            if (toSet.fixed) { return; }
+            toSet.value = valueToSet;
+            toSet.isCorrect = valueToSet === toSet.correctValue;
+            props.puzzle.set(coord, toSet);
+        }
     }
 
     const moveCell = (keyString: string, coordIn: string) => {
-        const log = (newCoord: string) => {
-            console.log(`${coord} ==> ${newCoord}`);
-        };
-
-        const move = (newCell: HTMLElement | null) => {
-            if (newCell) {
-                newCell.focus();
-            }
-        };
-
-        let coord = coordIn;
+        const coord = coordIn;
         let newCoord = coordIn;
-        let sudokuCell: SudokuCell | undefined;
-        let iterationCount = 0;
-        while (sudokuCell === undefined && iterationCount <= 9) {
-            console.log(`while: ${coord}, ${sudokuCell}`)
-            iterationCount++;
-            switch (keyString) {
-                case "ArrowDown":
-                case "s":
-                    newCoord = Coordinate.moveDown(coord);
-                    break;
-                case "ArrowUp":
-                case "w":
-                    newCoord = Coordinate.moveUp(coord);
-                    break;
-                case "ArrowLeft":
-                case "a":
-                    newCoord = Coordinate.moveLeft(coord);
-                    break;
-                case "ArrowRight":
-                case "d":
-                    newCoord = Coordinate.moveRight(coord);
-                    break;
-                default:
-                    newCoord = coord;
-            }
-
-            sudokuCell = props.puzzle.get<SudokuCell>(newCoord);
-            if (sudokuCell !== undefined && sudokuCell.fixed) {
-                console.log(`setting coord to ${newCoord}`);
-                coord = newCoord;
-                sudokuCell = undefined;
-            } else {
+        switch (keyString) {
+            case "ArrowDown":
+            case "s":
+                newCoord = Coordinate.moveDown(coord);
                 break;
-            }
+            case "ArrowUp":
+            case "w":
+                newCoord = Coordinate.moveUp(coord);
+                break;
+            case "ArrowLeft":
+            case "a":
+                newCoord = Coordinate.moveLeft(coord);
+                break;
+            case "ArrowRight":
+            case "d":
+                newCoord = Coordinate.moveRight(coord);
+                break;
+            default:
+                newCoord = coord;
         }
-        console.log(`interationCount: ${iterationCount}`);
-        log(newCoord);
-        const newCell = document.getElementById(`${props.clientId}-${newCoord}`);
-        move(newCell);
+
+        const newCell = getCellInputElement(newCoord);
+        newCell.focus();
     }
+
 
     const renderGridRows = () => {
         const rows = PUZZLE_INDEXES.map(row => {
@@ -246,7 +227,8 @@ function SimpleTable(props: ISudokuViewProps) {
                     }
                 }
 
-                const disabled = currentCell.fixed === true;
+                const nada = () => { };
+                // const disabled = currentCell.fixed === true;
                 return (
                     <td
                         className="sudoku-cell"
@@ -257,11 +239,14 @@ function SimpleTable(props: ISudokuViewProps) {
                             id={`${props.clientId}-${coord}`}
                             className={inputClasses}
                             type="text"
+                            readOnly={true}
                             onFocus={handleInputFocus}
                             onBlur={handleInputBlur}
                             onKeyDown={handleKeyDown}
                             value={SudokuCell.getDisplayString(currentCell)}
-                            disabled={disabled}
+                            max={1}
+                            onChange={nada}
+                            // disabled={disabled}
                             data-cellcoordinate={coord}
                         />
                     </td>

@@ -6,6 +6,7 @@
     },
     "extends": [
         "eslint:recommended",
+        "plugin:react/recommended",
         "plugin:@typescript-eslint/eslint-recommended",
         "plugin:@typescript-eslint/recommended",
         "plugin:@typescript-eslint/recommended-requiring-type-checking",
@@ -35,8 +36,11 @@
         "@typescript-eslint/explicit-function-return-type": "off",
         "@typescript-eslint/no-use-before-define": "off",
         "@typescript-eslint/no-explicit-any": "off",
+        // note you must disable the base rule as it can report incorrect errors
+        "require-await": "off",
+        "@typescript-eslint/require-await": "error",
         "@typescript-eslint/no-unused-vars": [
-            "error",
+            "warn",
             {
                 "vars": "local",
                 "args": "none",

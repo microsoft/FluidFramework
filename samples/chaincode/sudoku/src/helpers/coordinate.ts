@@ -43,7 +43,6 @@ export class Coordinate {
     }
 
     public static moveDown(coord: CoordinateString): CoordinateString {
-        console.log(`moving down`);
         const [row, column] = Coordinate.asArrayNumbers(coord);
         const newRow = row + 1 < 0 ? 0 : row + 1;
         return Coordinate.asString(newRow, column);

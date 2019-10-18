@@ -27,7 +27,7 @@ export class SudokuCell implements sudoku.Cell {
     /**
      * True if the value in the cell is correct; false otherwise.
      */
-    public isCorrect: boolean = false;
+    public isCorrect = false;
 
     /**
      * Creates a new SudokuCell instance.
