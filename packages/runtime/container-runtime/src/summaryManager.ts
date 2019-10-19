@@ -155,9 +155,8 @@ export class SummaryManager extends EventEmitter {
             case SummaryManagerState.Off: {
                 if (this.shouldSummarize) {
                     this.start();
-                } else {
-                    return;
                 }
+                return;
             }
             case SummaryManagerState.Starting: {
                 // cannot take any action until summarizer is created
@@ -165,9 +164,7 @@ export class SummaryManager extends EventEmitter {
                 return;
             }
             case SummaryManagerState.Running: {
-                if (this.shouldSummarize) {
-                    return;
-                } else {
+                if (!this.shouldSummarize) {
                     // only need to check defined in case we are between
                     // finally and then states; stopping should trigger
                     // a change in states when the running summarizer closes
@@ -175,6 +172,7 @@ export class SummaryManager extends EventEmitter {
                         this.runningSummarizer.stop(this.getStopReason());
                     }
                 }
+                return;
             }
             default: {
                 return;
