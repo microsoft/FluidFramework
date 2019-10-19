@@ -14,12 +14,29 @@ const spoTenants = new Map<string, string>([
 
 const pushSrv = "pushchannel.1drv.ms";
 
+export function isSpoPushServer(server: string) {
+    return pushSrv === server ? true : false;
+}
+
+export function getSpoPushServer() {
+    return pushSrv;
+}
+
 export function isSpoTenant(tenantId: string) {
     return spoTenants.has(tenantId);
 }
 
 export function getSpoServer(tenantId: string) {
     return spoTenants.get(tenantId);
+}
+
+export function isSpoServer(server: string) {
+    for (const item of spoTenants.values()) {
+        if (item === server) {
+            return true;
+        }
+    }
+    return false;
 }
 
 export async function spoGetResolvedUrl(

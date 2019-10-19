@@ -16,3 +16,4 @@ export * from "./Vroom";
 export * from "./OdspDocumentServiceFactory";
 export * from "./OdspDocumentServiceFactoryWithCodeSplit";
 export * from "./OdspDocumentService";
+export * from "./OdspDocumentDeltaConnection";

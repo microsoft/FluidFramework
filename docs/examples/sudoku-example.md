@@ -20,13 +20,12 @@ Keller (<https://github.com/ffflorian>).
 1. Use the commands below to clone the lab repository:
 
     ```shell
-    $ git clone https://cfyucwwsvf4tpvmuo4nszgxivuqfjgf35o3tnsrbt6csxnoqrrrq@sharkstooth.visualstudio.com/DefaultCollection/Fluid%20Dev%20Kitchen/_git/sudoku-mfx
-    $ cd sudoku-mfx
-    $ git checkout lab2
+    $ git clone https://cfyucwwsvf4tpvmuo4nszgxivuqfjgf35o3tnsrbt6csxnoqrrrq@sharkstooth.visualstudio.com/DefaultCollection/Fluid%20Dev%20Kitchen/_git/dev-kitchen
+    $ cd dev-kitchen
     ```
 
 1. Run `npm install` in the root of the repository to install dependencies.
-1. Open the resulting folder in VS Code.
+1. Open the `dev-kitchen` folder in VS Code.
 
 ## Folder layout
 
@@ -36,7 +35,9 @@ The project has the following folder layout:
 ├───config
 │       config.json
 │       copy-assets.json
+│       deploy-azure-storage.json
 │       package-solution.json
+│       serve.json
 │       write-manifests.json
 └───src
     │   index.ts
@@ -54,15 +55,6 @@ The project has the following folder layout:
 
 The *config* folder contains the WebPart configuration files. The *src* folder contains the source files for the Sudoku
 Fluid component, which we'll cover in more depth later.
-
-# Run the sample locally
-
-In order to run the example, run `npm start` from the project root. Then visit <http://localhost:8080/> in a browser.
-Two instances of the Sudoku component will be loaded side-by-side. Try entering numbers in the cells in either component
-instance. Changes will be synchronized to the other instance.
-
-Try changing the theme in one of the Sudoku components. Notice that these changes are not synchronized between the two
-instances.
 
 # Deep dive
 
@@ -82,13 +74,12 @@ readonly correctValue: number // Stores the correct value of the cell
 readonly coordinate: CoordinateString // The coordinate of the cell, as a comma-separated string, e.g. "2,3"
 ```
 
-> [!IMPORTANT]
-> Objects that are stored in distributed data structures, as SudokuCell is, must be safely JSON-serializable. This means
-> that you cannot use functions or TypeScript class properties with these objects, because those are not
-> JSON-serialized.
+> [!IMPORTANT] Objects that are stored in distributed data structures, as `SudokuCell` is, must be safely
+> JSON-serializable. This means that you cannot use functions or TypeScript class properties with these objects, because
+> those are not JSON-serialized.
 >
 > One pattern to address this is to define static functions that accept the object as a parameter and manipulate it. See
-> the SudokuCell class in `/helpers/sudokuCell.ts` for an example of this pattern.
+> the `SudokuCell` class in `/helpers/sudokuCell.ts` for an example of this pattern.
 
 ## Rendering
 
@@ -161,16 +152,11 @@ to create the distributed data structures. We don't want to create new SharedMap
 component! However, we do need to load the distributed data structures when the component is loaded.
 
 Distributed data structures are initialized asynchronously, so we need to retrieve them from an asynchronous method. We
-do that by overloading the asynchronous `_hydrate` method, then store a local reference to the object so we can easily
+do that by overloading the asynchronous `onInit` method, then store a local reference to the object so we can easily
 use it in synchronous code. Notice that we pass
 
-> [!NOTE]
-> Overriding the `_hydrate` method is a temporary solution. The code in this method should be in the `onInit` method.
-
 ```typescript
-  public async _hydrate(runtime: IComponentRuntime, context: IComponentContext): Promise<void> {
-    await super._hydrate(runtime, context);
-
+  public async onInit() {
     // Retrieve the distributed data structure (also called a channel in this context)
     this.puzzle = await this._fluidShim.runtime.getChannel(this.sudokuMapKey) as ISharedMap;
 
@@ -185,7 +171,7 @@ use it in synchronous code. Notice that we pass
 
 ### Handling events from distributed data structures
 
-Distributed data structures can be changed by both local and remote clients. In the `_hydrate` method, we also connect
+Distributed data structures can be changed by both local and remote clients. In the `onInit` method, we also connect
 a method to be called each time the Sudoku data - the [SharedMap][] - is changed. In our case we simply call `render`
 again. This ensures that our UI updates whenever a remote client changes the Sudoku data.
 
@@ -211,19 +197,23 @@ Let's look at the event handler for the change event from each Sudoku cell:
 
 ```typescript
 const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let valueToSet = Number(e.target.value);
-    valueToSet = Number.isNaN(valueToSet) ? 0 : valueToSet;
-    const key = e.target.getAttribute("data-fluidmapkey");
-    if (key !== null) {
-        const toSet = props.puzzle.get<SudokuCell>(key);
-        toSet.value = valueToSet;
-        toSet.isCorrect = valueToSet === toSet.correctValue;
-        props.puzzle.set(key, toSet);
-    }
+  let valueToSet = Number(e.target.value);
+  valueToSet = Number.isNaN(valueToSet) ? 0 : valueToSet;
+  if (valueToSet >= 10 || valueToSet < 0) {
+    return;
+  }
+
+  const key = e.target.dataset.fluidmapkey;
+  if (key !== null) {
+    const toSet = props.puzzle.get<SudokuCell>(key);
+    toSet.value = valueToSet;
+    toSet.isCorrect = valueToSet === toSet.correctValue;
+    props.puzzle.set(key, toSet);
+  }
 };
 ```
 
-Lines 2 and 3 ensure we only accept numeric values. In line 4, we retrieve the coordinate of the cell from a DOM
+Lines 2-6 ensure we only accept single-digit numeric values. In line 8, we retrieve the coordinate of the cell from a DOM
 attribute that we added during render. Once we have the coordinate, which is a key in the `SharedMap` storing our Sudoku
 data, we retrieve the cell data by calling `.get<SudokuCell>(key)`. We then update the cell's value and set whether it
 is correct. Finally, we call `.set(key, toSet)` to update the data in the `SharedMap`.
@@ -275,7 +265,7 @@ First, you need to create a `SharedMap` for your presence data.
 
     Notice that the Fluid runtime is exposed via the `_fluidShim` property provided by `BaseMfxPart`.
 
-1. Inside the `_hydrate` method, add the following code below the existing code to retrieve the presence map when the
+1. Inside the `onInit` method, add the following code below the existing code to retrieve the presence map when the
    component initializes:
 
     ```ts
@@ -283,7 +273,7 @@ First, you need to create a `SharedMap` for your presence data.
     ```
 
     You now have a `SharedMap` to store presence data. When the component is first created, `onInitializeFirstTime` will
-    be called and the presence map will be created. When the component is loaded, `_hydrate` will be called, which
+    be called and the presence map will be created. When the component is loaded, `onInit` will be called, which
     retrieves the `SharedMap` instance.
 
 ## Rendering presence
@@ -402,8 +392,8 @@ As users click in and out of cells, you need to update the presence map.
 
 ## Listening to distributed data structure events
 
-1. Still in `src/sudoku/SudokuWebPart.tsx`, add the following code to call render whenever a remote change is made to
-   the presence map:
+1. Still in `src/sudoku/SudokuWebPart.tsx`, add the following code to the `onInit` method to call render whenever a
+   remote change is made to the presence map:
 
     ```ts
     this.clientPresence.on("valueChanged", (changed, local, op) => {
@@ -413,19 +403,10 @@ As users click in and out of cells, you need to update the presence map.
 
 ## Testing the changes
 
-TODO
-
-# Implementing a Fluid component interface
-
-TODO: will walk through adding the [IComponentReactViewable][] interface.
-
-# Adding move history to the Fluid Sudoku component
-
-TODO: **(stretch goal)** will walk through adding a SharedObjectSequence to store the history of moves that have been
-made.
+Now you can build and upload your updated Sudoku component to the SharePoint app catalog for testing.
 
 <!-- Links -->
 [IComponentHTMLVisual]: xref:@microsoft/fluid-component-core-interfaces!IComponentHTMLVisual:interface
 [IProvideComponentHTMLVisual]: xref:@microsoft/fluid-component-core-interfaces!IProvideComponentHTMLVisual:interface
 [IComponentReactViewable]: xref:@microsoft/fluid-aqueduct-react!IComponentReactViewable:interface
-[SharedMap]: @microsoft/fluid-map!SharedMap:class
+[SharedMap]: xref:@microsoft/fluid-map!SharedMap:class

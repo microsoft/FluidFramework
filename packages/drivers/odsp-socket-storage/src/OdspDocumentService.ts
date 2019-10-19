@@ -5,7 +5,6 @@
 
 import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
 import { NetworkError, SinglePromise } from "@microsoft/fluid-core-utils";
-import { DocumentDeltaConnection } from "@microsoft/fluid-driver-base";
 import {
     ConnectionMode,
     IClient,
@@ -18,6 +17,7 @@ import {
 import { IOdspSocketError, ISocketStorageDiscovery } from "./contracts";
 import { IFetchWrapper } from "./fetchWrapper";
 import { OdspDeltaStorageService } from "./OdspDeltaStorageService";
+import { OdspDocumentDeltaConnection } from "./OdspDocumentDeltaConnection";
 import { OdspDocumentStorageManager } from "./OdspDocumentStorageManager";
 import { OdspDocumentStorageService } from "./OdspDocumentStorageService";
 import { defaultRetryFilter } from "./OdspUtils";
@@ -163,15 +163,17 @@ export class OdspDocumentService implements IDocumentService {
 
         const [websocketEndpoint, webSocketToken, io] = await Promise.all([this.websocketEndpointP, this.getWebsocketToken(), this.socketIOClientP]);
 
-        return DocumentDeltaConnection.create(
+        return OdspDocumentDeltaConnection.create(
             websocketEndpoint.tenantId,
             websocketEndpoint.id,
             // This is workaround for fluid-fetcher. Need to have better long term solution
             webSocketToken ? webSocketToken : websocketEndpoint.socketToken,
             io,
             client,
-            websocketEndpoint.deltaStreamSocketUrl,
             mode,
+            websocketEndpoint.deltaStreamSocketUrl,
+            websocketEndpoint.deltaStreamSocketUrl2,
+            this.logger,
         ).then((connection) => {
             connection.on("server_disconnect", (socketError: IOdspSocketError) => {
                 const error = OdspDocumentService.errorObjectFromOdspError(socketError);
@@ -180,8 +182,7 @@ export class OdspDocumentService implements IDocumentService {
                 connection.emit("disconnect", error);
             });
             return connection;
-        })
-        .catch((error) => {
+        }).catch((error) => {
             // Test if it's NetworkError with IOdspSocketError.
             // Note that there might be no IOdspSocketError on it in case we hit socket.io protocol errors!
             // So we test canRetry property first - if it false, that means protocol is broken and reconnecting will not help.
