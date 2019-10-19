@@ -1,10 +1,10 @@
 {
     "name": "@fluid-example/sudoku",
-    "description": "Fluid Sudoku",
     "version": "0.10.5",
-    "author": "Microsoft",
+    "description": "Fluid Sudoku",
     "repository": "microsoft/FluidFramework",
     "license": "MIT",
+    "author": "Microsoft",
     "main": "dist/index.js",
     "module": "lib/index.js",
     "types": "dist/index.d.ts",
@@ -12,18 +12,21 @@
         "build": "npm run clean && npm run webpack && npm run tsc",
         "build:esnext": "tsc --project ./tsconfig.esnext.json",
         "clean": "rimraf dist/**",
-        "tslint": "tslint --project tsconfig.json --format verbose",
-        "eslint": "eslint --ext=ts,tsx --fix-dry-run src",
-        "dev": "npm run webpack:dev",
-        "start": "npm run start:local",
-        "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
-        "start:local": "webpack-dev-server --config webpack.config.js --package package.json --env.mode local",
-        "verdaccio": "npm publish --registry https://packages.wu2.prague.office-int.com",
         "deploy": "npm run build && npm version patch && npm run verdaccio",
+        "dev": "npm run webpack:dev",
+        "eslint": "eslint --ext=ts,tsx --fix-dry-run src",
+        "start": "npm run start:local",
+        "start:local": "webpack-dev-server --config webpack.config.js --package package.json --env.mode local",
+        "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
         "tsc": "tsc",
+        "tslint": "tslint --project tsconfig.json --format verbose",
+        "verdaccio": "npm publish --registry https://packages.wu2.prague.office-int.com",
         "webpack": "webpack --env.production",
         "webpack:dev": "webpack --env.development"
     },
+    "eslintIgnore": [
+        "*.spec.ts"
+    ],
     "dependencies": {
         "@microsoft/fluid-aqueduct": "^0.10.0",
         "@microsoft/fluid-aqueduct-react": "^0.10.0",
@@ -65,9 +68,6 @@
         "webpack-dev-server": "^3.8.0",
         "webpack-merge": "4.1.4"
     },
-    "eslintIgnore": [
-        "*.spec.ts"
-    ],
     "fluid": {
         "browser": {
             "umd": {
