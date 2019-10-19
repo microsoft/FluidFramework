@@ -60,6 +60,7 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
     public get ISummarizer() { return this; }
     public get IComponentLoadable() { return this; }
 
+    private summarizeCount: number = 0;
     private lastSummaryTime: number;
     private lastSummarySeqNumber: number;
     private summarizing = false;
@@ -115,18 +116,30 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
             if (!this.everConnected) {
                 const waitConnected = new Promise((resolve) => this.runtime.once("connected", resolve));
                 await Promise.race([waitConnected, this.runDeferred.promise]);
+                if (!this.runtime.connected) {
+                    // if still not connected, no need to start running
+                    this.logger.sendTelemetryEvent({ eventName: "NeverConnectedBeforeRun", onBehalfOf });
+                    return;
+                }
             } else {
                 // we will not try to reconnect, so we are done running
-                this.logger.sendTelemetryEvent({ eventName: "DisconnectedBeforeRun" });
+                this.logger.sendTelemetryEvent({ eventName: "DisconnectedBeforeRun", onBehalfOf });
                 return;
             }
         }
 
         if (this.runtime.summarizerClientId !== onBehalfOf) {
+            // this calculated summarizer differs from parent
+            // parent SummaryManager should prevent this from happening
+            this.logger.sendErrorEvent({
+                eventName: "ParentIsNotSummarizer",
+                onBehalfOf,
+                expectedSummarizer: this.runtime.summarizerClientId,
+            });
             return;
         }
 
-        // need to wait until we are connected
+        // need to wait until we are connected to get config
         this.configuration = this.configurationGetter();
 
         this.idleTimer = new Timer(
@@ -143,7 +156,7 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
                 this.stopPending();
             }, this.configuration.maxAckWaitTime);
 
-        // initialize values (not exact)
+        // initialize values (time is not exact)
         this.lastSummarySeqNumber = this.runtime.deltaManager.initialSequenceNumber;
         this.lastSummaryTime =  Date.now();
 
@@ -156,18 +169,15 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
         // start the timer after connecting to the document
         this.idleTimer.start();
 
-        // listen for summary ops
+        // listen for system ops
         this.runtime.deltaManager.inbound.on("op", (op) => this.handleSystemOp(op as ISequencedDocumentMessage));
 
         this.runtime.on("batchEnd", (error: any, op: ISequencedDocumentMessage) => this.handleOp(error, op));
 
         await this.runDeferred.promise;
 
-        // cleanup
-        this.idleTimer.clear();
-        this.summarizeTimer.clear();
-        this.opSinceSummarize = false;
-        this.stopPending();
+        // cleanup after running
+        this.dispose();
     }
 
     public stop(reason?: string) {
@@ -178,6 +188,13 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
         });
         this.runDeferred.resolve();
         this.runtime.closeFn();
+    }
+
+    private dispose() {
+        this.idleTimer.clear();
+        this.summarizeTimer.clear();
+        this.opSinceSummarize = false;
+        this.stopPending();
     }
 
     private async setOrLogError<T>(
@@ -286,10 +303,10 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
         // log some telemetry
         this.logger.sendTelemetryEvent({
             eventName: op.type === MessageType.SummaryAck ? "SummaryAck" : "SummaryNack",
+            category: op.type === MessageType.SummaryAck ? "generic" : "error",
             timePending: Date.now() - this.lastSummaryTime,
             summarySequenceNumber: ack.summaryProposal.summarySequenceNumber,
             message: op.type === MessageType.SummaryNack ? (ack as ISummaryNack).errorMessage : undefined,
-            category: op.type === MessageType.SummaryAck ? "generic" : "error",
         });
 
         if (op.type === MessageType.SummaryAck) {
@@ -392,7 +409,7 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
         this.startPending();
 
         const summarizingEvent = PerformanceEvent.start(this.logger,
-            { eventName: "Summarizing", message });
+            { eventName: "Summarizing", message, summarizeCount: ++this.summarizeCount });
 
         this.summarizeTimer.start();
 
