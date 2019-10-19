@@ -8,6 +8,7 @@ import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
 import { ChildLogger, Deferred, PerformanceEvent } from "@microsoft/fluid-core-utils";
 import {
     ISequencedDocumentMessage,
+    ISequencedDocumentSystemMessage,
     ISnapshotTree,
     ISummaryAck,
     ISummaryConfiguration,
@@ -207,17 +208,25 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
     private async handleSystemOp(op: ISequencedDocumentMessage) {
         // synchronously handle quorum ops
         switch (op.type) {
-            case MessageType.Propose:
-            case MessageType.Reject:
-            case MessageType.ClientJoin:
             case MessageType.ClientLeave: {
+                const leavingClientId = JSON.parse((op as ISequencedDocumentSystemMessage).data) as string;
+                if (leavingClientId === this.runtime.clientId || leavingClientId === this.onBehalfOfClientId) {
+                    // ignore summarizer leave messages, to make sure not to start generating
+                    // a summary as the summarizer is leaving
+                    return;
+                }
+                // leave ops for any other client fall through to handle normally
+            }
+            case MessageType.ClientJoin:
+            case MessageType.Propose:
+            case MessageType.Reject: {
                 this.handleOp(undefined, op);
                 return;
             }
             default: // fall out of switch
         }
 
-        // ignore all ops if not pending
+        // ignore all other ops if not pending
         if (!this.summaryPending) {
             return;
         }
