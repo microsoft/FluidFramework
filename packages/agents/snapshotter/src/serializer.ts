@@ -40,7 +40,7 @@ export class Serializer {
         private readonly maxTimeWithoutSnapshot: number,
         private readonly retryTime: number,
         private readonly maxOpCountWithoutSnapshot: number) {
-        }
+    }
 
     public run(op: ISequencedDocumentMessage) {
         assert(!this.snapshotting, "Op processing should be paused when a snapshot is happening");
@@ -120,7 +120,7 @@ export class Serializer {
                 message: "",
                 required: false,
                 shouldSnapshot: (timeSinceLastSnapshot > this.maxTimeWithoutSnapshot) ||
-                                (opCountSinceLastSnapshot > this.maxOpCountWithoutSnapshot),
+                    (opCountSinceLastSnapshot > this.maxOpCountWithoutSnapshot),
             };
         }
     }

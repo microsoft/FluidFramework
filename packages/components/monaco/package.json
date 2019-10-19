@@ -16,6 +16,7 @@
     "build:full:compile": "npm run build:compile && npm run webpack",
     "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
     "deploy": "npm publish --registry https://packages.wu2.prague.office-int.com",
+    "eslint": "eslint --ext=ts,tsx --fix-dry-run src",
     "start": "webpack-dev-server --config webpack.config.js --package package.json",
     "start:live": "webpack-dev-server --config webpack.config.js --package package.json --env.mode live",
     "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
@@ -37,10 +38,15 @@
     "monaco-editor": "^0.15.6"
   },
   "devDependencies": {
+    "@microsoft/eslint-config-fluid": "^0.11.0",
     "@microsoft/fluid-build-common": "^0.11.0",
     "@microsoft/fluid-webpack-component-loader": "^0.11.0",
+    "@typescript-eslint/eslint-plugin": "^2.4.0",
+    "@typescript-eslint/eslint-plugin-tslint": "^2.4.0",
+    "@typescript-eslint/parser": "^2.4.0",
     "concurrently": "^4.1.0",
     "css-loader": "^1.0.0",
+    "eslint": "^6.5.1",
     "html-loader": "^0.5.5",
     "loader-utils": "^1.1.0",
     "monaco-editor-webpack-plugin": "^1.5.4",

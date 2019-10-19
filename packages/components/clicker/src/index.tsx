@@ -73,16 +73,16 @@ export class Clicker extends PrimedComponent implements IComponentHTMLVisual {
 
 // ----- REACT STUFF -----
 
-interface p {
+interface CounterProps {
   counter: Counter;
 }
 
-interface s {
+interface CounterState {
   value: number;
 }
 
-class CounterReactView extends React.Component<p, s> {
-  constructor(props: p) {
+class CounterReactView extends React.Component<CounterProps, CounterState> {
+  constructor(props: CounterProps) {
     super(props);
 
     this.state = {
