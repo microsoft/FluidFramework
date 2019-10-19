@@ -39,6 +39,8 @@ export interface ITaskManager extends IProvideTaskManager, IComponentLoadable, I
 
     /**
      * Pick a task that was registered prior.
+     *
+     * @param worker - Flag that will execute tasks in web worker if connected to a service that supports them.
      */
     pick(componentUrl: string, taskId: string, worker?: boolean): Promise<void>;
 }
@@ -70,6 +72,8 @@ export interface IAgentScheduler extends IProvideAgentScheduler, IComponentRoute
      * Resolves when the tasks are assigned to one of the connected clients.
      *
      * This method should only be called once per task. Duplicate calls will be rejected.
+     *
+     * @param worker - Flag that will execute tasks in web worker if connected to a service that supports them.
      */
     pick(taskId: string, worker: boolean): Promise<void>;
 
