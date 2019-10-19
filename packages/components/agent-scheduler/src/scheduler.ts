@@ -68,7 +68,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
 
     // List of all tasks client is capable of running. This is a strict superset of tasks
     // running in the client.
-    private readonly localTasks = new Set<string>();
+    private readonly localTasks = new Map<string, boolean>();
 
     // Set of registered tasks client not capable of running.
     private readonly registeredTasks = new Set<string>();
@@ -114,26 +114,21 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
         return this.registerCore(unregisteredTasks);
     }
 
-    public async pick(...taskUrls: string[]): Promise<void> {
+    public async pick(taskId: string, worker: boolean): Promise<void> {
         if (!this.runtime.connected) {
             return Promise.reject(`Client is not connected`);
         }
-        for (const taskUrl of taskUrls) {
-            if (this.localTasks.has(taskUrl)) {
-                return Promise.reject(`${taskUrl} is already attempted`);
-            }
+
+        if (this.localTasks.has(taskId)) {
+            return Promise.reject(`${taskId} is already attempted`);
         }
 
-        const availableTasks: string[] = [];
-        for (const taskUrl of taskUrls) {
-            this.localTasks.add(taskUrl);
-            // Check the current status and express interest if it's a new one (undefined) or currently unpicked (null).
-            const currentClient = this.getTaskClientId(taskUrl);
-            if (currentClient === undefined || currentClient === null) {
-                availableTasks.push(taskUrl);
-            }
+        this.localTasks.set(taskId, worker);
+        // Check the current status and express interest if it's a new one (undefined) or currently unpicked (null).
+        const currentClient = this.getTaskClientId(taskId);
+        if (currentClient === undefined || currentClient === null) {
+            await this.pickCore([taskId]);
         }
-        await this.pickCore(availableTasks);
     }
 
     public async release(...taskUrls: string[]): Promise<void> {
@@ -225,7 +220,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
                     assert(this.localTasks.has(taskUrl), `Client did not try to pick ${taskUrl}`);
 
                     if (taskUrl !== LeaderTaskId) {
-                        runningP.push(this.runTask(taskUrl));
+                        runningP.push(this.runTask(taskUrl, this.localTasks.get(taskUrl) as boolean));
                         debug(`Picked ${taskUrl}`);
                         this.emit("picked", taskUrl);
                     }
@@ -349,7 +344,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
 
             // Each client expresses interest to be a leader.
             try {
-                await this.pick(LeaderTaskId);
+                await this.pick(LeaderTaskId, false);
 
                 // There must be a leader now.
                 const leaderClientId = this.getTaskClientId(LeaderTaskId);
@@ -368,13 +363,13 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
         });
     }
 
-    private async runTask(url: string) {
+    private async runTask(url: string, worker: boolean) {
         const request: IRequest = {
             headers: {
                 "fluid-cache": false,
                 "fluid-reconnect": false,
                 "fluid-sequence-number": this.context.deltaManager.referenceSequenceNumber,
-                "execution-context": "thread",
+                "execution-context": worker ? "thread" : "self",
             },
             url,
         };
@@ -436,18 +431,16 @@ export class TaskManager implements ITaskManager {
         }
     }
 
-    public async pick(componentUrl: string, ...taskIds: string[]): Promise<void> {
+    public async pick(componentUrl: string, taskId: string, worker?: boolean): Promise<void> {
         const configuration = (this.context.hostRuntime as IComponent).IComponentConfiguration;
         if (configuration && !configuration.canReconnect) {
             return Promise.reject("Picking not allowed on secondary copy");
         } else {
             const urlWithSlash = componentUrl.startsWith("/") ? componentUrl : `/${componentUrl}`;
-            const picksP: Promise<void>[] = [];
-            for (const taskId of taskIds) {
-                picksP.push(this.scheduler.pick(`${urlWithSlash}${this.url}/${taskId}`));
-            }
             try {
-                await Promise.all(picksP);
+                await this.scheduler.pick(
+                    `${urlWithSlash}${this.url}/${taskId}`,
+                    worker !== undefined ? worker : false);
             } catch (err) {
                 debug(err as string); // Just log the error. It will be attempted again.
             }

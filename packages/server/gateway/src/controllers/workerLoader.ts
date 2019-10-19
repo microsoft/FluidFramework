@@ -40,6 +40,7 @@ class WorkerLoader implements ILoader {
         }
 
     public async request(request: IRequest): Promise<IResponse> {
+        console.log(`Running in web worker`);
         const urlObj = parse(this.resolved.url);
         let factory: IDocumentServiceFactory;
         if (urlObj.protocol === "fluid:") {

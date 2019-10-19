@@ -65,7 +65,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLVisual {
       instance: new ClickerAgent(counter),
     };
     this.taskManager.register(agentTask);
-    this.taskManager.pick(this.url, "agent").then(() => {
+    this.taskManager.pick(this.url, "agent", true).then(() => {
       console.log(`Picked`);
     }, (err) => {
       console.log(err);

@@ -9,20 +9,38 @@ import {
     IComponentRunnable,
 } from "@microsoft/fluid-component-core-interfaces";
 
+/**
+ * Definition of a Task.
+ */
 export interface ITask {
+    /**
+     * id of the task
+     */
     id: string;
+
+    /**
+     * Instance of the task that implements IComponentRunnable
+     */
     instance: IComponentRunnable;
 }
 
 export interface IProvideTaskManager {
     readonly ITaskManager: ITaskManager;
 }
+
 /**
- * Wrapper on top of IAgentScheduler.
+ * Task manager enables app to register and pick tasks.
  */
 export interface ITaskManager extends IProvideTaskManager, IComponentLoadable, IComponentRouter {
+    /**
+     * Registers tasks task so that the client can run the task later.
+     */
     register(...tasks: ITask[]): void;
-    pick(componentUrl: string, ...taskIds: string[]): Promise<void>;
+
+    /**
+     * Pick a task that was registered prior.
+     */
+    pick(componentUrl: string, taskId: string, worker?: boolean): Promise<void>;
 }
 
 export interface IProvideAgentScheduler {
@@ -53,7 +71,7 @@ export interface IAgentScheduler extends IProvideAgentScheduler, IComponentRoute
      *
      * This method should only be called once per task. Duplicate calls will be rejected.
      */
-    pick(...taskUrls: string[]): Promise<void>;
+    pick(taskId: string, worker: boolean): Promise<void>;
 
     /**
      * Releases a set of tasks for other clients to grab. Resolves when the tasks are released.
