@@ -66,6 +66,7 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
     private lastSummarySeqNumber: number;
     private summarizing = false;
     private summaryPending = false;
+    private opSinceSummarize = false;
     private pendingSummarySequenceNumber?: number;
     private idleTimer: Timer;
     private pendingAckTimer: Timer;
@@ -141,12 +142,12 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
                     maxAckWaitTime: this.configuration.maxAckWaitTime,
                     pendingSummarySequenceNumber: this.pendingSummarySequenceNumber,
                 });
-                this.cancelPending();
+                this.stopPending();
             }, this.configuration.maxAckWaitTime);
 
         // initialize values (not exact)
         this.lastSummarySeqNumber = this.runtime.deltaManager.initialSequenceNumber;
-        this.lastSummaryTime = Date.now();
+        this.lastSummaryTime =  Date.now();
 
         this.logger.sendTelemetryEvent({
             eventName: "RunningSummarizer",
@@ -158,7 +159,7 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
         this.idleTimer.start();
 
         // listen for summary ops
-        this.runtime.deltaManager.inbound.on("op", (op) => this.handleSummaryOp(op as ISequencedDocumentMessage));
+        this.runtime.deltaManager.inbound.on("op", (op) => this.handleSystemOp(op as ISequencedDocumentMessage));
 
         this.runtime.on("batchEnd", (error: any, op: ISequencedDocumentMessage) => this.handleOp(error, op));
 
@@ -167,7 +168,8 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
         // cleanup
         this.idleTimer.clear();
         this.summarizeTimer.clear();
-        this.cancelPending();
+        this.opSinceSummarize = false;
+        this.stopPending();
     }
 
     public stop(reason?: string) {
@@ -202,7 +204,19 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
         return { result, success };
     }
 
-    private async handleSummaryOp(op: ISequencedDocumentMessage) {
+    private async handleSystemOp(op: ISequencedDocumentMessage) {
+        // synchronously handle quorum ops
+        switch (op.type) {
+            case MessageType.Propose:
+            case MessageType.Reject:
+            case MessageType.ClientJoin:
+            case MessageType.ClientLeave: {
+                this.handleOp(undefined, op);
+                return;
+            }
+            default: // fall out of switch
+        }
+
         // ignore all ops if not pending
         if (!this.summaryPending) {
             return;
@@ -275,8 +289,7 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
                             }
                         }
                     }
-                    this.summaryPending = false;
-                    this.pendingAckTimer.clear();
+                    this.stopPending();
                 }
             }
         }
@@ -337,7 +350,7 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
             if (!summaryData.submitted) {
                 // did not send the summary op
                 summarizingEvent.cancel({...telemetryProps, category: "error"});
-                this.cancelPending();
+                this.stopPending();
                 return;
             }
 
@@ -354,13 +367,17 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
             this.pendingAckTimer.start();
         }, (error) => {
             summarizingEvent.cancel({}, error);
-            this.cancelPending();
+            this.stopPending();
         });
     }
 
     private getOpSummaryDetails(op: ISequencedDocumentMessage): IOpSummaryDetails {
         if (this.summarizing || this.summaryPending) {
             // We are currently summarizing. Don't summarize again.
+            // Track that an op has come in though, to restart the idle timer.
+            if (!this.opSinceSummarize) {
+                this.opSinceSummarize = true;
+            }
             return {
                 message: "",
                 shouldSummarize: false,
@@ -420,7 +437,7 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
         this.deferAck = new Deferred();
     }
 
-    private cancelPending() {
+    private stopPending() {
         this.summaryPending = false;
         this.pendingAckTimer.clear();
         // release all deferred summary op/ack/nack handlers
@@ -429,6 +446,11 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
         }
         if (this.deferAck) {
             this.deferAck.resolve();
+        }
+        // start idle timer if op came in while pending
+        if (this.opSinceSummarize) {
+            this.idleTimer.start();
+            this.opSinceSummarize = false;
         }
     }
 }
