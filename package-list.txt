@@ -1,9 +1,9 @@
 ✔ @fluid-example/canvas
 ✔ @fluid-example/clicker
 @fluid-example/client-ui-lib
-@fluid-example/diceroller
-@fluid-example/flow-intel
-@fluid-example/flow-intel-viewer
+✔ @fluid-example/diceroller
+✔ @fluid-example/flow-intel
+✔ @fluid-example/flow-intel-viewer
 @fluid-example/flow-scroll
 @fluid-example/flow-util-lib
 @fluid-example/image-collection
