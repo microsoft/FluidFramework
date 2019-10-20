@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { faArrowDown, faArrowUp } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Counter } from "@microsoft/fluid-map";
 import * as React from "react";
 
@@ -19,17 +21,10 @@ interface TeamScoreState {
 export class TeamScore extends React.Component<TeamScoreProps, TeamScoreState> {
   public constructor(props: TeamScoreProps) {
     super(props);
-
-    // TODO: Why is props.counter.value null?
-    if (this.props.counter.value) {
-      this.state = { score: this.props.counter.value };
-    } else {
-      console.warn("props.counter.value was null");
-      console.log(this.props);
-      this.state = { score: 0 };
-    }
+    this.state = { score: this.props.counter.value };
   }
 
+  // eslint-disable-next-line react/no-deprecated
   componentWillMount() {
     // When the counter value changes, update the state of the React component
     this.props.counter.on("incremented", () => {
@@ -59,15 +54,11 @@ export class TeamScore extends React.Component<TeamScoreProps, TeamScoreState> {
           <div className="column">
             <div className="buttons has-addons is-centered">
               <button className="button" onClick={() => { this.increment(1); }}>
-                <span className="icon">
-                  <i className="fas fa-arrow-up" />
-                </span>
+                <FontAwesomeIcon icon={faArrowUp} />
                 <span>Increment</span>
               </button>
               <button className="button" onClick={() => { this.increment(-1); }}>
-                <span className="icon">
-                  <i className="fas fa-arrow-down" />
-                </span>
+                <FontAwesomeIcon icon={faArrowDown} />
                 <span>Decrement</span>
               </button>
             </div>

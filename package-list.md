@@ -1,7 +1,7 @@
 # Package status
 
 | ESLint passed | TSLint redirected | Done | Package                                    |
-| ------------- | ----------------- | ---- | ------------------------------------------ |
+| :-----------: | :---------------: | :--: | ------------------------------------------ |
 | ✔             |                   |      | @fluid-example/canvas                      |
 | ✔             |                   |      | @fluid-example/clicker                     |
 |               |                   |      | @fluid-example/client-ui-lib               |
@@ -21,7 +21,7 @@
 |               |                   |      | @fluid-example/pond                        |
 |               |                   |      | @fluid-example/progress-bars               |
 |               |                   |      | @fluid-example/react-web-host              |
-|               |                   |      | @fluid-example/scoreboard                  |
+| ✔             | ✔                 | ✔    | @fluid-example/scoreboard                  |
 |               |                   |      | @fluid-example/scribe                      |
 |               |                   |      | @fluid-example/search-menu                 |
 |               |                   |      | @fluid-example/shared-map-visualizer       |

@@ -16,6 +16,7 @@
     "start": "webpack-dev-server --config webpack.config.js --package package.json",
     "start:live": "webpack-dev-server --config webpack.config.js --package package.json --env.mode live",
     "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
+    "tslint": "npm run eslint",
     "verdaccio": "npm publish --registry https://packages.wu2.prague.office-int.com",
     "webpack": "webpack --env.production",
     "webpack:dev": "webpack --env.development"
@@ -29,6 +30,9 @@
   },
   "devDependencies": {
     "@fortawesome/fontawesome-free": "^5.9.0",
+    "@fortawesome/fontawesome-svg-core": "^1.1.25",
+    "@fortawesome/free-solid-svg-icons": "^5.11.2",
+    "@fortawesome/react-fontawesome": "^0.1.7",
     "@microsoft/eslint-config-fluid": "^0.11.0",
     "@microsoft/fluid-build-common": "^0.11.0",
     "@microsoft/fluid-webpack-component-loader": "^0.11.0",
@@ -45,6 +49,7 @@
     "mini-css-extract-plugin": "^0.8.0",
     "node-sass": "^4.9.3",
     "rimraf": "^2.6.2",
+    "sass-lint": "^1.13.1",
     "sass-loader": "^7.1.0",
     "style-loader": "^0.23.0",
     "ts-loader": "^4.5.0",

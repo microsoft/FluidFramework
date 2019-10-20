@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { CounterValueType } from "@microsoft/fluid-map";
 import { PrimedComponent, PrimedComponentFactory, SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 import { IComponentHTMLOptions, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
+import { CounterValueType } from "@microsoft/fluid-map";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { TeamScore } from "./teamScore";
@@ -17,11 +17,11 @@ export class Scoreboard extends PrimedComponent implements IComponentHTMLVisual 
   public get IComponentHTMLVisual() { return this; }
 
   /**
-  * Setup the distributed data structures; called once when the component is created (NOT initialized)
-  */
+   * Setup the distributed data structures; called once when the component is created (NOT initialized)
+   */
   protected async componentInitializingFirstTime() {
-    this.root.createValueType('Hardcoders', CounterValueType.Name, 0);
-    this.root.createValueType('Chaincoders', CounterValueType.Name, 0);
+    this.root.createValueType("Hardcoders", CounterValueType.Name, 0);
+    this.root.createValueType("Chaincoders", CounterValueType.Name, 0);
   }
 
   render(hostingElement: HTMLElement, options?: IComponentHTMLOptions): void {
@@ -41,10 +41,12 @@ export class Scoreboard extends PrimedComponent implements IComponentHTMLVisual 
         </section>
         <div className="columns is-mobile is-gapless">
           <div className="column">
-            <TeamScore name="Hardcoders" counter={this.root.get('Hardcoders')} colorClass="has-background-warning" />
+            <TeamScore name="Hardcoders" counter={this.root.get("Hardcoders")} colorClass="has-background-warning" />
           </div>
           <div className="column">
-            <TeamScore name="Chaincoders" counter={this.root.get('Chaincoders')} colorClass="has-background-grey-light" />
+            <TeamScore name="Chaincoders"
+              counter={this.root.get("Chaincoders")}
+              colorClass="has-background-grey-light" />
           </div>
         </div>
         <div>

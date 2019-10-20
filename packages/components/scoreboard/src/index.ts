@@ -4,7 +4,10 @@
  */
 
 // TODO: Is there a better way to get fontawesome on to the page?
+// eslint-disable-next-line
 import "@fortawesome/fontawesome-free/js/all.min.js";
+
+// eslint-disable-next-line
 import "./styles.scss";
 
 export * from "./scoreboard";

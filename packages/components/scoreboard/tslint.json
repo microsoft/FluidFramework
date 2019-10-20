@@ -1,0 +1,22 @@
+{
+  "extends": [
+    "@microsoft/fluid-build-common/tslint.json"
+  ],
+  "rules": {
+    "class-name": false,
+    "completed-docs": false,
+    "interface-name": false,
+    "member-access": false,
+    "member-ordering": false,
+    "no-console": false,
+    "no-import-side-effect": [
+      true,
+      {
+        "ignore-module": "(\\.html|\\.css|\\.scss)$"
+      }
+    ],
+    "no-suspicious-comment": false,
+    "no-unsafe-any": false,
+    "react-this-binding-issue": false
+  }
+}

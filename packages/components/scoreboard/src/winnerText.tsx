@@ -23,6 +23,7 @@ export class WinnerText extends React.Component<WinnerTextProps, WinnerTextState
     this.state = WinnerText.determineWinner(props.directory);
   }
 
+  // eslint-disable-next-line react/no-deprecated
   componentWillMount() {
     // When any of the values of the directory change, determine the current winner and re-render
     this.props.directory.on("valueChanged", () => {
@@ -33,9 +34,9 @@ export class WinnerText extends React.Component<WinnerTextProps, WinnerTextState
   render() {
     let text: string;
     if (this.state.tied) {
-      text = "Tied!"
+      text = "Tied!";
     } else {
-      text = `${this.state.teamName} are winning!`
+      text = `${this.state.teamName} are winning!`;
     }
     return (
       <div className="box has-text-centered is-size-4">
@@ -59,7 +60,7 @@ export class WinnerText extends React.Component<WinnerTextProps, WinnerTextState
           first = false;
         }
 
-        let currentScore: number = counter.value;
+        const currentScore: number = counter.value;
         if (currentScore !== initialScore) {
           tied = false;
         }
