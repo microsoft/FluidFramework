@@ -14,7 +14,7 @@ import { IFluidResolvedUrl } from "@microsoft/fluid-protocol-definitions";
 import * as Comlink from "comlink";
 
 // Proxy loader that proxies request to web worker.
-interface IProxyLoader extends ILoader {
+interface IProxyLoader extends ILoader, IComponentRunnable {
     // tslint:disable no-misused-new
     new(id: string,
         version: string | null | undefined,
@@ -24,9 +24,10 @@ interface IProxyLoader extends ILoader {
         fromSequenceNumber: number,
         canReconnect: boolean): IProxyLoader;
 
-    run(): Promise<void>;
+    stop(reason?: string): Promise<void>;
 }
 
+// Proxies request to web worker loader.
 export class WorkerLoader {
     public static async load(
         id: string,
@@ -69,8 +70,12 @@ class Runnable implements IComponentRouter, IComponentRunnable {
     public get IComponentRouter() { return this; }
     public get IComponentRunnable() { return this; }
 
-    public async run(): Promise<void> {
-        return this.proxy.run();
+    public async run(...args: any[]): Promise<void> {
+        return this.proxy.run(...args);
+    }
+
+    public async stop(reason?: string): Promise<void> {
+        return this.proxy.stop(reason);
     }
 
     public async request(request: IRequest): Promise<IResponse> {

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent, IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { IComponent, IComponentRunnable, IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IContainerContext, ITelemetryLogger } from "@microsoft/fluid-container-definitions";
 import { ChildLogger, Heap, IComparer, IHeapNode } from "@microsoft/fluid-core-utils";
 import { ISequencedClient } from "@microsoft/fluid-protocol-definitions";
@@ -46,6 +46,7 @@ export class SummaryManager extends EventEmitter {
     constructor(
         private readonly context: IContainerContext,
         private readonly generateSummaries: boolean,
+        private readonly enableWorker: boolean,
         parentLogger: ITelemetryLogger,
     ) {
         super();
@@ -137,7 +138,7 @@ export class SummaryManager extends EventEmitter {
             const doneP = this.createSummarizer()
                 .then((summarizer) => {
                     if (this.shouldSummarize) {
-                        this.runningSummarizer = summarizer;
+                        this.runningSummarizer = summarizer as ISummarizer;
                         return summarizer.run(this.clientId);
                     }
                 });
@@ -167,6 +168,7 @@ export class SummaryManager extends EventEmitter {
                 "fluid-cache": false,
                 "fluid-reconnect": false,
                 "fluid-sequence-number": this.context.deltaManager.referenceSequenceNumber,
+                "execution-context": this.enableWorker ? "thread" : "self",
             },
             url: "/_summarizer",
         };
@@ -178,10 +180,10 @@ export class SummaryManager extends EventEmitter {
         }
 
         const rawComponent = response.value as IComponent;
-        const summarizer = rawComponent.ISummarizer;
+        const summarizer = rawComponent.IComponentRunnable;
 
         if (!summarizer) {
-            return Promise.reject<ISummarizer>("Component does not implement ISummarizer");
+            return Promise.reject<IComponentRunnable>("Component does not implement ISummarizer");
         }
 
         return summarizer;

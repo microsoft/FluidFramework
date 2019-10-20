@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentLoadable } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentLoadable, IComponentRunnable } from "@microsoft/fluid-component-core-interfaces";
 import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
 import { ChildLogger, Deferred, PerformanceEvent } from "@microsoft/fluid-core-utils";
 import {
@@ -43,7 +43,7 @@ export interface IProvideSummarizer {
     readonly ISummarizer: ISummarizer;
 }
 
-export interface ISummarizer extends IProvideSummarizer {
+export interface ISummarizer extends IComponentRunnable, IProvideSummarizer {
     /**
      * Runs the summarizer on behalf of another clientId. In this case it will only run so long as the given
      * clientId is the elected summarizer and will stop once it is not.

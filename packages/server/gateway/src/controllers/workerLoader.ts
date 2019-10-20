@@ -25,7 +25,7 @@ import { parse } from "url";
 
 // Loader class to load a container and proxy component interfaces from within a web worker.
 // Only supports IComponentRunnable for now.
-class WorkerLoader implements ILoader {
+class WorkerLoader implements ILoader, IComponentRunnable {
     private container: Container;
     private runnable: IComponentRunnable;
 
@@ -40,7 +40,8 @@ class WorkerLoader implements ILoader {
         }
 
     public async request(request: IRequest): Promise<IResponse> {
-        console.log(`Running in web worker`);
+        console.log(`Request inside web worker`);
+        console.log(request);
         const urlObj = parse(this.resolved.url);
         let factory: IDocumentServiceFactory;
         if (urlObj.protocol === "fluid:") {
@@ -99,8 +100,14 @@ class WorkerLoader implements ILoader {
         return this.container;
     }
 
-    public async run(): Promise<void> {
-        return this.runnable === undefined ? Promise.reject() : this.runnable.run();
+    public async run(...args: any[]): Promise<void> {
+        return this.runnable === undefined ? Promise.reject() : this.runnable.run(...args);
+    }
+
+    public async stop(reason?: string): Promise<void> {
+        if (this.runnable !== undefined && this.runnable.stop !== undefined) {
+            return this.runnable.stop(reason);
+        }
     }
 }
 
