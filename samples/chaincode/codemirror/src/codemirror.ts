@@ -17,7 +17,7 @@ import {
 import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import { MergeTreeDeltaType, TextSegment, ReferenceType, reservedTileLabelsKey, Marker } from "@microsoft/fluid-merge-tree";
-import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { IComponentContext, IComponentFactory, IComponentRuntime, IInboundSignalMessage } from "@microsoft/fluid-runtime-definitions";
 import { SharedString, SequenceDeltaEvent } from "@microsoft/fluid-sequence";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import * as CodeMirror from "codemirror";
@@ -27,6 +27,26 @@ require("codemirror/lib/codemirror.css");
 require("./style.css");
 
 require("codemirror/mode/javascript/javascript.js");
+
+
+class PresenceMananger extends EventEmitter {
+    private presenceMap: Map<string, {}> = new Map();
+    public constructor(private runtime: IComponentRuntime) {
+        super();
+        runtime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
+            if (message.type === "presence" && !local) {
+                console.log(`received new presence signal: ${JSON.stringify(message)}`);
+                this.presenceMap.set(message.clientId, message.content);
+                this.emit("newPresence", message.clientId, message.content);
+            }
+        });
+    }
+
+    public send(location: any) {
+        console.log(`sending new presence signal: ${JSON.stringify(location)}`);   
+        this.runtime.submitSignal("presence", location);
+    }
+}
 
 class CodemirrorView implements IComponentHTMLView {
     private textArea: HTMLTextAreaElement;
@@ -39,7 +59,11 @@ class CodemirrorView implements IComponentHTMLView {
 
     private sequenceDeltaCb: any;
 
-    constructor(private text: SharedString) {
+    private get doc(): CodeMirror.Doc {
+        return this.codeMirror.getDoc();
+    }
+
+    constructor(private text: SharedString, private presenceManager: PresenceMananger) {
     }
 
     public remove(): void {
@@ -68,6 +92,8 @@ class CodemirrorView implements IComponentHTMLView {
             this.setupEditor();
         }
     }
+
+    private lastMarker:CodeMirror.TextMarker;
 
     private setupEditor() {
         this.codeMirror = CodeMirror.fromTextArea(
@@ -122,6 +148,23 @@ class CodemirrorView implements IComponentHTMLView {
                 });
 
                 this.updatingCodeMirror = false;
+            });
+
+        this.presenceManager.on("newPresence", (a,b) => {
+            if (this.lastMarker){
+                this.lastMarker.clear();
+            }
+            const style = {css:"color:green;border-left:1px solid purple"};
+            this.lastMarker = this.doc.markText(b.ranges[0].head, b.ranges[0].anchor, style);
+        })
+
+        this.codeMirror.on(
+            'beforeSelectionChange',
+            (instance: CodeMirror.Editor, selection: any) => {
+                const typedSelection: {
+                    ranges:[{ head: CodeMirror.Position; anchor: CodeMirror.Position; }]
+                } = selection;
+                this.presenceManager.send(typedSelection);
             });
 
         this.sequenceDeltaCb = (ev: SequenceDeltaEvent) => {
@@ -190,6 +233,7 @@ export class CodeMirrorComponent
     public url: string;
     private text: SharedString;
     private root: ISharedMap;
+    private presenceManager: PresenceMananger;
     
     private defaultView: CodemirrorView;
 
@@ -199,6 +243,8 @@ export class CodeMirrorComponent
     ) {
         super();
 
+        this.presenceManager = new PresenceMananger(runtime);
+        // this.emit("signal", message, local);
         this.url = context.id;
     }
 
@@ -230,12 +276,12 @@ export class CodeMirrorComponent
     }
 
     public addView(scope: IComponent): IComponentHTMLView {
-        return new CodemirrorView(this.text);
+        return new CodemirrorView(this.text, this.presenceManager);
     }
 
     public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
         if (!this.defaultView) {
-            this.defaultView = new CodemirrorView(this.text);
+            this.defaultView = new CodemirrorView(this.text, this.presenceManager);
         }
 
         this.defaultView.render(elm, options);
