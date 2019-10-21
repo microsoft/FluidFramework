@@ -5,7 +5,7 @@
 
 import { PrimedComponent, PrimedComponentFactory, SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 import { IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
-import { Counter, CounterValueType } from "@microsoft/fluid-map";
+import { Counter, CounterValueType, SharedMap } from "@microsoft/fluid-map";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
@@ -20,11 +20,27 @@ export class Clicker extends PrimedComponent implements IComponentHTMLVisual {
 
   public get IComponentHTMLVisual() { return this; }
 
+  private map: Map<string, string> = new Map();
+
   /**
    * Do setup work here
    */
   protected async componentInitializingFirstTime() {
     this.root.createValueType("clicks", CounterValueType.Name, 0);
+
+    const map = new Map();
+    map.set("a", "A");
+    map.set("b", "B");
+    map.set("c", "C");
+    this.root.set("map", [...map]);
+    console.log(map);
+    console.log(JSON.stringify([...map]));
+  }
+
+  protected async componentHasInitialized() {
+    this.map = new Map(this.root.get("map"));
+    console.log(this.map);
+    this.map.set("d", "D");
   }
 
   // #region IComponentHTMLVisual
@@ -36,7 +52,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLVisual {
     // Get our counter object that we set in initialize and pass it in to the view.
     const counter = this.root.get("clicks");
     ReactDOM.render(
-      <CounterReactView counter={counter} />,
+      <CounterReactView counter={counter} map={this.map} />,
       div,
     );
     return div;
@@ -49,6 +65,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLVisual {
 
 interface p {
   counter: Counter;
+  map: Map<string, string>;
 }
 
 interface s {
@@ -74,6 +91,7 @@ class CounterReactView extends React.Component<p, s> {
     return (
       <div>
         <span>{this.state.value}</span><button onClick={() => { this.props.counter.increment(1); }}>+</button>
+        {this.props.map}
       </div>
     );
   }
@@ -83,7 +101,7 @@ class CounterReactView extends React.Component<p, s> {
 
 export const ClickerInstantiationFactory = new PrimedComponentFactory(
   Clicker,
-  [],
+  [SharedMap.getFactory()],
 );
 
 export const fluidExport = new SimpleModuleInstantiationFactory(
