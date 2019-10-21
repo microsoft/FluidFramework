@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { ComponentFactoryTypes } from "./componentFactory";
 
 declare module "@microsoft/fluid-component-core-interfaces" {
@@ -10,12 +11,12 @@ declare module "@microsoft/fluid-component-core-interfaces" {
 }
 
 export type ComponentRegistryTypes =
-    IComponentRegistry | { get(name: string): Promise<ComponentFactoryTypes> | undefined };
+    IComponentRegistry | { get(name: string, scope?: IComponent): Promise<ComponentFactoryTypes> | undefined };
 
 export interface IProvideComponentRegistry {
-    IComponentRegistry: IComponentRegistry;
+    IComponentRegistry: ComponentRegistryTypes;
 }
 
 export interface IComponentRegistry extends IProvideComponentRegistry {
-    get(name: string, cdn?: string): Promise<ComponentFactoryTypes> | undefined;
+    get(name: string, scope?: IComponent): Promise<ComponentFactoryTypes> | undefined;
 }

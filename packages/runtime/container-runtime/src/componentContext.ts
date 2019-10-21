@@ -30,13 +30,14 @@ import {
 } from "@microsoft/fluid-protocol-definitions";
 import {
     ComponentFactoryTypes,
+    ComponentRegistryTypes,
     IAttachMessage,
     IComponentContext,
-    IComponentRegistry,
     IComponentRuntime,
     IEnvelope,
     IHostRuntime,
     IInboundSignalMessage,
+    IProvideComponentRegistry,
 } from "@microsoft/fluid-runtime-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";
@@ -186,13 +187,13 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
                 this.summaryTracker.setBaseTree(details.snapshot);
             }
             const packages = details.pkg;
-            let registry = this._hostRuntime.IComponentRegistry;
-            let factory: ComponentFactoryTypes & Partial<IComponentRegistry>;
+            let registry: ComponentRegistryTypes = this._hostRuntime.IComponentRegistry;
+            let factory: ComponentFactoryTypes & Partial<IProvideComponentRegistry>;
             for (const pkg of packages) {
                 if (!registry) {
                     throw new Error("Factory does not supply the component Registry");
                 }
-                factory = await registry.get(pkg);
+                factory = await registry.get(pkg, this.scope);
                 registry = factory.IComponentRegistry;
             }
 

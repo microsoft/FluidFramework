@@ -9,7 +9,7 @@ import "./publicpath";
 
 // import { SharedString } from "@prague/sequence";
 import * as Snapshotter from "@fluid-example/snapshotter-agent";
-import { IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { IComponent, IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IContainerContext, IRuntime, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
 import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
 import {
@@ -58,7 +58,7 @@ class MyRegistry implements IComponentRegistry {
 
     public get IComponentRegistry() {return this; }
 
-    public async get(name: string, cdn?: string): Promise<IComponentFactory> {
+    public async get(name: string, scope?: IComponent): Promise<IComponentFactory> {
         if (name === "@fluid-example/shared-text") {
             return this.sharedTextFactory;
         } else if (name === "@fluid-example/math") {
@@ -74,9 +74,9 @@ class MyRegistry implements IComponentRegistry {
         } else if (name === "@fluid-example/pinpoint-editor") {
             return pinpoint.then((m) => m.fluidExport);
         } else {
-            const scope = `${name.split("/")[0]}:cdn`;
+            const cdnScope = `${name.split("/")[0]}:cdn`;
             const config = {};
-            config[scope] = cdn ? cdn : this.defaultRegistry;
+            config[cdnScope] = this.defaultRegistry;
 
             const codeDetails = {
                 package: name,

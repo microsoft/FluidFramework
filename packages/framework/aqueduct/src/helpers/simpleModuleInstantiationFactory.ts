@@ -2,11 +2,9 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { IContainerContext, IRuntime, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
 import { IComponentDefaultFactory } from "@microsoft/fluid-framework-interfaces";
-import { ComponentFactoryTypes, ComponentRegistryTypes, IComponentContext, IComponentFactory } from "@microsoft/fluid-runtime-definitions";
+import { ComponentRegistryTypes, IComponentContext, IComponentFactory, IProvideComponentRegistry } from "@microsoft/fluid-runtime-definitions";
 import { SimpleContainerRuntimeFactory } from "./simpleContainerRuntimeFactory";
 
 /**
@@ -18,7 +16,7 @@ import { SimpleContainerRuntimeFactory } from "./simpleContainerRuntimeFactory";
  *  IComponentRegistry: instantiates a component registry that include the default component and sub-components
  */
 export class SimpleModuleInstantiationFactory implements
-    IComponent,
+    IProvideComponentRegistry,
     IRuntimeFactory,
     IComponentDefaultFactory,
     IComponentFactory {
@@ -29,7 +27,7 @@ export class SimpleModuleInstantiationFactory implements
     }
 
     public get IComponentFactory() { return this; }
-    public get IComponentRegistry() { return this; }
+    public get IComponentRegistry() { return this.registry; }
     public get IRuntimeFactory() { return this; }
     public get IComponentDefaultFactory() { return this; }
 
@@ -37,12 +35,8 @@ export class SimpleModuleInstantiationFactory implements
         return this.registry.get(this.defaultComponentName)!;
     }
 
-    public get(name: string): Promise<ComponentFactoryTypes> | undefined {
-        return this.registry.get(name);
-    }
-
     public instantiateComponent(context: IComponentContext): void {
-        const factoryP = this.get(this.defaultComponentName);
+        const factoryP = this.registry.get(this.defaultComponentName, context.scope);
         if (factoryP === undefined) {
             throw new Error(`No component factory for ${this.defaultComponentName}`);
         }
