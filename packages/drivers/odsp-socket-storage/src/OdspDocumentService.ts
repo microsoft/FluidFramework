@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
-import { NetworkError, SinglePromise } from "@microsoft/fluid-core-utils";
+import { SinglePromise } from "@microsoft/fluid-core-utils";
 import {
     ConnectionMode,
     IClient,
@@ -14,13 +14,12 @@ import {
     IDocumentStorageService,
     IErrorTrackingService,
 } from "@microsoft/fluid-protocol-definitions";
-import { IOdspSocketError, ISocketStorageDiscovery } from "./contracts";
+import { ISocketStorageDiscovery } from "./contracts";
 import { IFetchWrapper } from "./fetchWrapper";
 import { OdspDeltaStorageService } from "./OdspDeltaStorageService";
 import { OdspDocumentDeltaConnection } from "./OdspDocumentDeltaConnection";
 import { OdspDocumentStorageManager } from "./OdspDocumentStorageManager";
 import { OdspDocumentStorageService } from "./OdspDocumentStorageService";
-import { defaultRetryFilter } from "./OdspUtils";
 import { getSocketStorageDiscovery } from "./Vroom";
 
 /**
@@ -28,14 +27,6 @@ import { getSocketStorageDiscovery } from "./Vroom";
  * clients
  */
 export class OdspDocumentService implements IDocumentService {
-    private static errorObjectFromOdspError(socketError: IOdspSocketError) {
-        return new NetworkError(
-            socketError.message,
-            socketError.code,
-            defaultRetryFilter(socketError.code), // canRetry
-            socketError.retryAfter);
-    }
-
     // This should be used to make web socket endpoint requests, it ensures we only have one active join session call at a time.
     private readonly websocketEndpointRequestThrottler: SinglePromise<ISocketStorageDiscovery>;
 
@@ -174,27 +165,7 @@ export class OdspDocumentService implements IDocumentService {
             websocketEndpoint.deltaStreamSocketUrl,
             websocketEndpoint.deltaStreamSocketUrl2,
             this.logger,
-        ).then((connection) => {
-            connection.on("server_disconnect", (socketError: IOdspSocketError) => {
-                const error = OdspDocumentService.errorObjectFromOdspError(socketError);
-                // Raise it as disconnect.
-                // That produces cleaner telemetry (no errors) and keeps protocol simpler (and not driver-specific).
-                connection.emit("disconnect", error);
-            });
-            return connection;
-        }).catch((error) => {
-            // Test if it's NetworkError with IOdspSocketError.
-            // Note that there might be no IOdspSocketError on it in case we hit socket.io protocol errors!
-            // So we test canRetry property first - if it false, that means protocol is broken and reconnecting will not help.
-            if (error instanceof NetworkError && error.canRetry) {
-                const socketError: IOdspSocketError = (error as any).socketError;
-                if (typeof socketError === "object" && socketError !== null) {
-                    throw OdspDocumentService.errorObjectFromOdspError(socketError);
-                }
-            }
-
-            throw error;
-        });
+        );
     }
 
     public async branch(): Promise<string> {

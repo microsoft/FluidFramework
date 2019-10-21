@@ -14,13 +14,22 @@ import {
     ISequencedDocumentMessage,
     ISignalMessage,
 } from "@microsoft/fluid-protocol-definitions";
+import * as assert from "assert";
+import { IOdspSocketError } from "./contracts";
 import { debug } from "./debug";
+import { errorObjectFromOdspError } from "./OdspUtils";
 
 const protocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
+
+// how long to wait before disconnecting the socket after the last reference is removed
+// this allows reconnection after receiving a nack to be smooth
+const socketReferenceBufferTime = 2000;
 
 interface ISocketReference {
     socket: SocketIOClient.Socket | undefined;
     references: number;
+    delayDeleteTimeout?: NodeJS.Timeout;
+    delayDeleteTimeoutSetTime?: number;
 }
 
 /**
@@ -63,6 +72,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
             url,
             mode,
             hasUrl2 ? 15000 : 20000,
+            telemetryLogger,
         ).catch((error) => {
             if (error instanceof NetworkError && hasUrl2) {
                 if (error.canRetry) {
@@ -79,6 +89,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
                         url2!,
                         mode,
                         20000,
+                        telemetryLogger,
                     );
                 }
             }
@@ -102,6 +113,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
      * @param client - information about the client
      * @param url - websocket URL
      * @param timeoutMs - timeout for socket connection attempt in milliseconds
+     * @param telemetryLogger - telemetry logger
      */
     // tslint:disable-next-line: max-func-body-length
     private static async createForUrlWithTimeout(
@@ -112,11 +124,12 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
         client: IClient,
         url: string,
         mode: ConnectionMode,
-        timeoutMs: number): Promise<IDocumentDeltaConnection> {
+        timeoutMs: number,
+        telemetryLogger: ITelemetryLogger): Promise<IDocumentDeltaConnection> {
         const socketReferenceKey = `${url},${tenantId},${id}`;
 
         const socketReference = OdspDocumentDeltaConnection.getOrCreateSocketIoReference(
-            io, timeoutMs, socketReferenceKey, url, tenantId, id);
+            io, timeoutMs, socketReferenceKey, url, tenantId, id, telemetryLogger);
 
         const socket = socketReference.socket;
         if (!socket) {
@@ -141,26 +154,38 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
 
             let cleanupListeners: () => void;
 
-            const disconnectAndReject = (errorObject: any) => {
+            const disconnectAndReject = (errorObject: any, isFatalError?: boolean) => {
                 cleanupListeners();
-                OdspDocumentDeltaConnection.removeSocketIoReference(socketReferenceKey);
+                OdspDocumentDeltaConnection.removeSocketIoReference(socketReferenceKey, isFatalError);
+
+                // Test if it's NetworkError with IOdspSocketError.
+                // Note that there might be no IOdspSocketError on it in case we hit socket.io protocol errors!
+                // So we test canRetry property first - if it false, that means protocol is broken and reconnecting will not help.
+                if (errorObject instanceof NetworkError && errorObject.canRetry) {
+                    const socketError: IOdspSocketError = (errorObject as any).socketError;
+                    if (typeof socketError === "object" && socketError !== null) {
+                        reject(errorObjectFromOdspError(socketError));
+                        return;
+                    }
+                }
+
                 reject(errorObject);
             };
 
             const connectErrorHandler = (error) => {
                 debug(`Socket connection error: [${error}]`);
-                disconnectAndReject(createErrorObject("connect_error", error));
+                disconnectAndReject(createErrorObject("connect_error", error), true);
             };
 
             const connectTimeoutHandler = () => {
-                disconnectAndReject(createErrorObject("connect_timeout", "Socket connection timed out"));
+                disconnectAndReject(createErrorObject("connect_timeout", "Socket connection timed out"), true);
             };
 
             const errorHandler = (error) => {
                 debug(`Error in documentDeltaConection: ${error}`);
 
                 // This includes "Invalid namespace" error, which we consider critical (reconnecting will not help)
-                disconnectAndReject(createErrorObject("error", error, error !== "Invalid namespace"));
+                disconnectAndReject(createErrorObject("error", error, error !== "Invalid namespace"), true);
             };
 
             const earlyOpHandler = (documentId: string, msgs: ISequencedDocumentMessage[]) => {
@@ -274,10 +299,26 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
         key: string,
         url: string,
         tenantId: string,
-        documentId: string): ISocketReference {
+        documentId: string,
+        telemetryLogger: ITelemetryLogger): ISocketReference {
         let socketReference = OdspDocumentDeltaConnection.socketIoSockets.get(key);
         if (socketReference) {
+            telemetryLogger.sendTelemetryEvent({
+                references: socketReference.references,
+                eventName: "OdspDocumentDeltaCollection.GetSocketIoReference",
+                delayDeleteDelta: socketReference.delayDeleteTimeoutSetTime !== undefined ?
+                    (Date.now() - socketReference.delayDeleteTimeoutSetTime) : undefined,
+            });
+
             socketReference.references++;
+
+            // clear the pending deletion if there is one
+            if (socketReference.delayDeleteTimeout !== undefined) {
+                clearTimeout(socketReference.delayDeleteTimeout);
+                socketReference.delayDeleteTimeout = undefined;
+                socketReference.delayDeleteTimeoutSetTime = undefined;
+            }
+
             debug(`Using existing socketio reference for ${key} (${socketReference.references})`);
 
         } else {
@@ -310,31 +351,44 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
      * Removes a reference for the given key
      * Once the ref count hits 0, the socket is disconnected and removed
      * @param key - socket reference key
+     * @param isFatalError - true if the socket reference should be removed immediately due to a fatal error
      */
-    private static removeSocketIoReference(key: string) {
+    private static removeSocketIoReference(key: string, isFatalError?: boolean) {
         const socketReference = OdspDocumentDeltaConnection.socketIoSockets.get(key);
         if (!socketReference) {
             // this is expected to happens if we removed the reference due the socket not being connected
             return;
         }
 
-        if (socketReference.socket && !socketReference.socket.connected) {
-            // the socket is not connected
-            // delete the reference
-            socketReference.references = 0;
-        } else {
-            socketReference.references--;
-        }
+        socketReference.references--;
+        assert(socketReference.delayDeleteTimeout === undefined);
 
-        if (socketReference.references === 0) {
-            OdspDocumentDeltaConnection.socketIoSockets.delete(key);
+        debug(`Removed socketio reference for ${key}. Remaining references: ${socketReference.references}.`);
 
+        if (isFatalError || (socketReference.socket && !socketReference.socket.connected)) {
+            // delete the reference if a fatal error occurred or if the socket is not connected
             if (socketReference.socket) {
                 socketReference.socket.disconnect();
                 socketReference.socket = undefined;
             }
 
-            debug(`Removed socketio reference ${key}`);
+            OdspDocumentDeltaConnection.socketIoSockets.delete(key);
+            debug(`Deleted socketio reference for ${key}. Is fatal error: ${isFatalError}.`);
+            return;
+        }
+
+        if (socketReference.references === 0) {
+            socketReference.delayDeleteTimeout = setTimeout(() => {
+                OdspDocumentDeltaConnection.socketIoSockets.delete(key);
+
+                if (socketReference.socket) {
+                    socketReference.socket.disconnect();
+                    socketReference.socket = undefined;
+                }
+
+                debug(`Deleted socketio reference for ${key}.`);
+            }, socketReferenceBufferTime);
+            socketReference.delayDeleteTimeoutSetTime = Date.now();
         }
     }
 
@@ -350,6 +404,11 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
         details: IConnected,
         private socketReferenceKey: string | undefined) {
         super(socket, documentId, details);
+        socket.on("server_disconnect", (socketError: IOdspSocketError) => {
+            // Raise it as disconnect.
+            // That produces cleaner telemetry (no errors) and keeps protocol simpler (and not driver-specific).
+            this.emit("disconnect", errorObjectFromOdspError(socketError));
+        });
     }
 
     /**
