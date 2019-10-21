@@ -59,11 +59,53 @@ class PresenceMananger extends EventEmitter {
  */
 class CodeMirrorPresenceManager extends EventEmitter {
     private presenceManager: PresenceMananger;
+    private lastMarker:CodeMirror.TextMarker;
+    private lastWidget: HTMLSpanElement;
+
+    private get doc(): CodeMirror.Doc {
+        return this.codeMirror.getDoc();
+    }
+
     public constructor(private codeMirror: CodeMirror.EditorFromTextArea, runtime: IComponentRuntime) {
         super();
         this.presenceManager = new PresenceMananger(runtime);
         this.presenceManager.on("newPresence", (a,b)=> {
             this.emit("newPresence", a, b);
+        });
+
+        this.codeMirror.on(
+            'beforeSelectionChange',
+            (instance: CodeMirror.Editor, selection: any) => {
+                const typedSelection: {
+                    ranges:[{ head: CodeMirror.Position; anchor: CodeMirror.Position; }]
+                } = selection;
+                this.presenceManager.send(typedSelection);
+            });
+        
+        this.presenceManager.on("newPresence", (a,b) => {
+            if (this.lastMarker){
+                this.lastMarker.clear();
+            }
+            if (this.lastWidget){
+                this.lastWidget.remove();
+            }
+            const style = {
+                css: "backgound-color:green",
+            };
+            this.lastMarker = this.doc.markText(b.ranges[0].head, b.ranges[0].anchor, style);
+
+            const widget = document.createElement("span");
+            widget.id = "blah";
+            widget.style.width = "1px";
+            widget.style.backgroundColor = "orange";
+            widget.style.height = "15px";
+            widget.style.marginTop = "-15px";
+            
+            this.lastWidget = widget;
+
+            this.codeMirror.addWidget(b.ranges[0].head, widget, true);
+            // bookmarks only set location
+            // this.doc.setBookmark(b.ranges[0].head, {widget});
         });
     }
 
@@ -84,10 +126,6 @@ class CodemirrorView implements IComponentHTMLView {
 
     private sequenceDeltaCb: any;
 
-    private get doc(): CodeMirror.Doc {
-        return this.codeMirror.getDoc();
-    }
-
     constructor(private text: SharedString, private runtime: IComponentRuntime) {
     }
 
@@ -98,6 +136,11 @@ class CodemirrorView implements IComponentHTMLView {
         if (this.sequenceDeltaCb) {
             this.text.removeListener("sequenceDelta", this.sequenceDeltaCb);
             this.sequenceDeltaCb = undefined;
+        }
+
+        if (this.presenceManager) {
+            this.presenceManager.removeAllListeners();
+            this.presenceManager = undefined;
         }
     }
     
@@ -117,9 +160,6 @@ class CodemirrorView implements IComponentHTMLView {
             this.setupEditor();
         }
     }
-
-    private lastMarker:CodeMirror.TextMarker;
-    private lastWidget: HTMLSpanElement;
 
     private setupEditor() {
         this.codeMirror = CodeMirror.fromTextArea(
@@ -176,42 +216,6 @@ class CodemirrorView implements IComponentHTMLView {
                 });
 
                 this.updatingCodeMirror = false;
-            });
-
-        this.presenceManager.on("newPresence", (a,b) => {
-            if (this.lastMarker){
-                this.lastMarker.clear();
-            }
-            if (this.lastWidget){
-                this.lastWidget.remove();
-            }
-            const style = {
-                css: "backgound-color:green",
-            };
-            this.lastMarker = this.doc.markText(b.ranges[0].head, b.ranges[0].anchor, style);
-
-            const widget = document.createElement("span");
-            widget.id = "blah";
-            widget.style.width = "1px";
-            widget.style.backgroundColor = "orange";
-            widget.style.height = "13px";
-            widget.style.marginTop = "-13px";
-            // widget.style.marginLeft = "-1px";
-            
-            this.lastWidget = widget;
-
-            this.codeMirror.addWidget(b.ranges[0].head, widget, true);
-            // bookmarks only set location
-            // this.doc.setBookmark(b.ranges[0].head, {widget});
-        })
-
-        this.codeMirror.on(
-            'beforeSelectionChange',
-            (instance: CodeMirror.Editor, selection: any) => {
-                const typedSelection: {
-                    ranges:[{ head: CodeMirror.Position; anchor: CodeMirror.Position; }]
-                } = selection;
-                this.presenceManager.send(typedSelection);
             });
 
         this.sequenceDeltaCb = (ev: SequenceDeltaEvent) => {
