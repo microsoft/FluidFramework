@@ -33,9 +33,10 @@ require("codemirror/mode/javascript/javascript.js");
  * This will only take a dependency on the runtime.
  */
 class PresenceMananger extends EventEmitter {
-    private presenceMap: Map<string, {}> = new Map();
     private presenceKey: string;
-    public constructor(private runtime: IComponentRuntime) {
+    private presenceMap: Map<string, {}> = new Map();
+
+    public constructor(private runtime: IComponentRuntime, getLocation: () => void) {
         super();
         this.presenceKey = `presence-${runtime.id}`;
 
@@ -45,6 +46,15 @@ class PresenceMananger extends EventEmitter {
                 this.presenceMap.set(message.clientId, message.content);
                 this.emit("newPresence", message.clientId, message.content);
             }
+        });
+
+        const quorum = runtime.getQuorum();
+        quorum.on("addMember", () => {
+            alert("member")
+            getLocation();
+            // const location = getLocation();
+            // alert(JSON.stringify(location));
+            // // this.send(location);
         });
     }
 
@@ -61,6 +71,7 @@ class CodeMirrorPresenceManager extends EventEmitter {
     private presenceManager: PresenceMananger;
     private lastMarker:CodeMirror.TextMarker;
     private lastWidget: HTMLSpanElement;
+    // private presenceMap: Map<string, {}> = new Map();
 
     private get doc(): CodeMirror.Doc {
         return this.codeMirror.getDoc();
@@ -68,7 +79,7 @@ class CodeMirrorPresenceManager extends EventEmitter {
 
     public constructor(private codeMirror: CodeMirror.EditorFromTextArea, runtime: IComponentRuntime) {
         super();
-        this.presenceManager = new PresenceMananger(runtime);
+        this.presenceManager = new PresenceMananger(runtime, () => { alert(JSON.stringify(this.doc.listSelections()));});
         this.presenceManager.on("newPresence", (a,b)=> {
             this.emit("newPresence", a, b);
         });
@@ -79,21 +90,24 @@ class CodeMirrorPresenceManager extends EventEmitter {
                 const typedSelection: {
                     ranges:[{ head: CodeMirror.Position; anchor: CodeMirror.Position; }]
                 } = selection;
-                this.presenceManager.send(typedSelection);
+                this.presenceManager.send(typedSelection.ranges);
             });
         
-        this.presenceManager.on("newPresence", (a,b) => {
+        this.presenceManager.on("newPresence", (clientId: string, selections: [{ head: CodeMirror.Position; anchor: CodeMirror.Position; }]) => {
             if (this.lastMarker){
                 this.lastMarker.clear();
             }
             if (this.lastWidget){
                 this.lastWidget.remove();
             }
-            const style = {
-                css: "backgound-color:green",
-            };
-            this.lastMarker = this.doc.markText(b.ranges[0].head, b.ranges[0].anchor, style);
 
+            // Selection highlighting
+            const style = {
+                css: "background-color: rgba(255, 165, 0, 0.3)",
+            }; 
+            this.lastMarker = this.doc.markText(selections[0].head, selections[0].anchor, style);
+
+            // Cursor positioning
             const widget = document.createElement("span");
             widget.id = "blah";
             widget.style.width = "1px";
@@ -103,9 +117,7 @@ class CodeMirrorPresenceManager extends EventEmitter {
             
             this.lastWidget = widget;
 
-            this.codeMirror.addWidget(b.ranges[0].head, widget, true);
-            // bookmarks only set location
-            // this.doc.setBookmark(b.ranges[0].head, {widget});
+            this.codeMirror.addWidget(selections[0].head, widget, true);
         });
     }
 
