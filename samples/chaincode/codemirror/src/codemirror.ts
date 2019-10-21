@@ -28,13 +28,19 @@ require("./style.css");
 
 require("codemirror/mode/javascript/javascript.js");
 
-
+/**
+ * This should be super generic and only do really generic things.
+ * This will only take a dependency on the runtime.
+ */
 class PresenceMananger extends EventEmitter {
     private presenceMap: Map<string, {}> = new Map();
+    private presenceKey: string;
     public constructor(private runtime: IComponentRuntime) {
         super();
+        this.presenceKey = `presence-${runtime.id}`;
+
         runtime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
-            if (message.type === "presence" && !local) {
+            if (message.type === this.presenceKey && !local) {
                 console.log(`received new presence signal: ${JSON.stringify(message)}`);
                 this.presenceMap.set(message.clientId, message.content);
                 this.emit("newPresence", message.clientId, message.content);
@@ -44,13 +50,32 @@ class PresenceMananger extends EventEmitter {
 
     public send(location: any) {
         console.log(`sending new presence signal: ${JSON.stringify(location)}`);   
-        this.runtime.submitSignal("presence", location);
+        this.runtime.submitSignal(this.presenceKey, location);
+    }
+}
+
+/**
+ * This will be the codemirror specific implementation
+ */
+class CodeMirrorPresenceManager extends EventEmitter {
+    private presenceManager: PresenceMananger;
+    public constructor(private codeMirror: CodeMirror.EditorFromTextArea, runtime: IComponentRuntime) {
+        super();
+        this.presenceManager = new PresenceMananger(runtime);
+        this.presenceManager.on("newPresence", (a,b)=> {
+            this.emit("newPresence", a, b);
+        });
+    }
+
+    public send(location: any) {
+        this.presenceManager.send(location);
     }
 }
 
 class CodemirrorView implements IComponentHTMLView {
     private textArea: HTMLTextAreaElement;
     private codeMirror: CodeMirror.EditorFromTextArea;
+    private presenceManager : CodeMirrorPresenceManager;
     
     // TODO would be nice to be able to distinguish local edits across different uses of a sequence so that when
     // bridging to another model we know which one to update
@@ -63,7 +88,7 @@ class CodemirrorView implements IComponentHTMLView {
         return this.codeMirror.getDoc();
     }
 
-    constructor(private text: SharedString, private presenceManager: PresenceMananger) {
+    constructor(private text: SharedString, private runtime: IComponentRuntime) {
     }
 
     public remove(): void {
@@ -94,6 +119,7 @@ class CodemirrorView implements IComponentHTMLView {
     }
 
     private lastMarker:CodeMirror.TextMarker;
+    private lastWidget: HTMLSpanElement;
 
     private setupEditor() {
         this.codeMirror = CodeMirror.fromTextArea(
@@ -103,6 +129,8 @@ class CodemirrorView implements IComponentHTMLView {
                 mode: "text/typescript",
                 viewportMargin: Infinity,
             });
+        
+        this.presenceManager = new CodeMirrorPresenceManager(this.codeMirror, this.runtime);
 
         const { parallelText } = this.text.getTextAndMarkers("pg");
         const text = parallelText.join("\n");
@@ -154,8 +182,27 @@ class CodemirrorView implements IComponentHTMLView {
             if (this.lastMarker){
                 this.lastMarker.clear();
             }
-            const style = {css:"color:green;border-left:1px solid purple"};
+            if (this.lastWidget){
+                this.lastWidget.remove();
+            }
+            const style = {
+                css: "backgound-color:green",
+            };
             this.lastMarker = this.doc.markText(b.ranges[0].head, b.ranges[0].anchor, style);
+
+            const widget = document.createElement("span");
+            widget.id = "blah";
+            widget.style.width = "1px";
+            widget.style.backgroundColor = "orange";
+            widget.style.height = "13px";
+            widget.style.marginTop = "-13px";
+            // widget.style.marginLeft = "-1px";
+            
+            this.lastWidget = widget;
+
+            this.codeMirror.addWidget(b.ranges[0].head, widget, true);
+            // bookmarks only set location
+            // this.doc.setBookmark(b.ranges[0].head, {widget});
         })
 
         this.codeMirror.on(
@@ -233,8 +280,7 @@ export class CodeMirrorComponent
     public url: string;
     private text: SharedString;
     private root: ISharedMap;
-    private presenceManager: PresenceMananger;
-    
+
     private defaultView: CodemirrorView;
 
     constructor(
@@ -242,9 +288,6 @@ export class CodeMirrorComponent
         /* private */ context: IComponentContext,
     ) {
         super();
-
-        this.presenceManager = new PresenceMananger(runtime);
-        // this.emit("signal", message, local);
         this.url = context.id;
     }
 
@@ -276,12 +319,12 @@ export class CodeMirrorComponent
     }
 
     public addView(scope: IComponent): IComponentHTMLView {
-        return new CodemirrorView(this.text, this.presenceManager);
+        return new CodemirrorView(this.text, this.runtime);
     }
 
     public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
         if (!this.defaultView) {
-            this.defaultView = new CodemirrorView(this.text, this.presenceManager);
+            this.defaultView = new CodemirrorView(this.text, this.runtime);
         }
 
         this.defaultView.render(elm, options);
