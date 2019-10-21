@@ -2,7 +2,7 @@
 
 | ESLint passed | TSLint redirected | Done | Package                                    |
 | :-----------: | :---------------: | :--: | ------------------------------------------ |
-| ✔             |                   |      | @fluid-example/canvas                      |
+| ✔             | ✔                 | ✔    | @fluid-example/canvas                      |
 | ✔             |                   |      | @fluid-example/clicker                     |
 |               |                   |      | @fluid-example/client-ui-lib               |
 | ✔             |                   |      | @fluid-example/diceroller                  |
