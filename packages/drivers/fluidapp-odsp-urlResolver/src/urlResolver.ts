@@ -25,10 +25,13 @@ export class FluidAppOdspUrlResolver implements IUrlResolver {
         const reqUrl = new URL(request.url);
         const server = reqUrl.hostname.toLowerCase();
         if (fluidOfficeServers.indexOf(server) !== -1) {
-            const { site, drive, item } = await initializeFluidOffice(reqUrl);
-            if (site === undefined || drive === undefined || item === undefined) {
+            const contents = await initializeFluidOffice(reqUrl);
+            if (!contents) {
                 return undefined;
             }
+            const site = contents.site;
+            const drive = contents.drive;
+            const item = contents.item;
             const hashedDocumentId = new sha.sha256().update(`${site}_${drive}_${item}`).digest("hex");
 
             let documentUrl = `fluid-odsp://placeholder/placeholder/${hashedDocumentId}`;
@@ -67,7 +70,7 @@ async function initializeFluidOffice(urlSource: URL) {
     const siteDriveItemMatch = pathname.match(/\/p\/([^\/]*)\/([^\/]*)\/([^\/]*)/);
 
     if (siteDriveItemMatch === null) {
-        return { site: undefined, drive: undefined, item: undefined};
+        return undefined;
     }
 
     const site = decodeURIComponent(siteDriveItemMatch[1]);

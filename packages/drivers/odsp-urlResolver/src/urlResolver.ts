@@ -18,10 +18,13 @@ export class OdspUrlResolver implements IUrlResolver {
     public async resolve(request: IRequest): Promise<IResolvedUrl | undefined> {
         if (isOdspUrl(request.url)) {
             const reqUrl = new URL(request.url);
-            const { site, drive, item } = await initializeODSP(reqUrl);
-            if (site === undefined || drive === undefined || item === undefined) {
+            const contents = await initializeODSP(reqUrl);
+            if (!contents) {
                 return undefined;
             }
+            const site = contents.site;
+            const drive = contents.drive;
+            const item = contents.item;
             const hashedDocumentId = new sha.sha256().update(`${site}_${drive}_${item}`).digest("hex");
 
             let documentUrl = `fluid-odsp://placeholder/placeholder/${hashedDocumentId}`;
@@ -73,7 +76,7 @@ async function initializeODSP(url: URL) {
         /(.*)\/_api\/v2.1\/drives\/([^\/]*)\/items\/([^\/]*)(.*)/);
 
     if (joinSessionMatch === null) {
-        return { site: undefined, drive: undefined, item: undefined };
+        return undefined;
     }
     const drive = joinSessionMatch[2];
     const item = joinSessionMatch[3];
