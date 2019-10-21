@@ -117,14 +117,18 @@ class PresenceManager extends EventEmitter {
     }
 }
 
+interface ICodeMirrorPresenceInfo {
+    cursor: HTMLSpanElement;
+    markers: CodeMirror.TextMarker[];
+    info: IPresenceInfo;
+}
+
 /**
  * This will be the codemirror specific implementation
  */
 class CodeMirrorPresenceManager extends EventEmitter {
     private presenceManager: PresenceManager;
-    private lastMarker:CodeMirror.TextMarker;
-    private lastWidget: HTMLSpanElement;
-    // private presenceMap: Map<string, {}> = new Map();
+    private presenceMap: Map<string, ICodeMirrorPresenceInfo> = new Map();
 
     private get doc(): CodeMirror.Doc {
         return this.codeMirror.getDoc();
@@ -142,11 +146,16 @@ class CodeMirrorPresenceManager extends EventEmitter {
             });
         
         this.presenceManager.on("newPresence", (presenceInfo: IPresenceInfo) => {
-            if (this.lastMarker){
-                this.lastMarker.clear();
-            }
-            if (this.lastWidget){
-                this.lastWidget.remove();
+            if (this.presenceMap.has(presenceInfo.userId)) {
+                const previousUserInfo= this.presenceMap.get(presenceInfo.userId);
+                
+                // clean all the previous markers
+                previousUserInfo.markers.forEach(marker => {
+                    marker.clear();
+                });
+
+                // Clean the previous cursor
+                previousUserInfo.cursor.remove();
             }
 
             // Selection highlighting
@@ -154,36 +163,43 @@ class CodeMirrorPresenceManager extends EventEmitter {
                 css: `background-color: rgba(${presenceInfo.color.rgb.r}, ${presenceInfo.color.rgb.g}, ${presenceInfo.color.rgb.b}, 0.3)`,
             };
 
+            const markers: CodeMirror.TextMarker[] = []
             presenceInfo.location.forEach(range => {
                 const head = this.doc.indexFromPos(range.head);
                 const anchor = this.doc.indexFromPos(range.anchor);
                 if (head > anchor) {
-                    this.lastMarker = this.doc.markText(range.anchor, range.head, style);
+                    markers.push(this.doc.markText(range.anchor, range.head, style));
                 } else {
-                    this.lastMarker = this.doc.markText(range.head, range.anchor, style);
+                    markers.push(this.doc.markText(range.head, range.anchor, style));
                 }
             });
 
             // Cursor positioning
-            const widget = document.createElement("span");
-            widget.id = `cursor-${presenceInfo.userId}`;
-            widget.style.width = "1px";
-            widget.style.backgroundColor = `rgb(${presenceInfo.color.rgb.r}, ${presenceInfo.color.rgb.g}, ${presenceInfo.color.rgb.b})`;
-            widget.style.height = "15px";
-            widget.style.marginTop = "-15px";
+            const cursor = document.createElement("span");
+            cursor.id = `cursor-${presenceInfo.userId}`;
+            cursor.style.width = "1px";
+            cursor.style.backgroundColor = `rgb(${presenceInfo.color.rgb.r}, ${presenceInfo.color.rgb.g}, ${presenceInfo.color.rgb.b})`;
+            cursor.style.height = "15px";
+            cursor.style.marginTop = "-15px";
 
-            const dot = document.createElement("span");
-            dot.style.height = "4px";
-            dot.style.width = "4px";
-            dot.style.backgroundColor = `rgb(${presenceInfo.color.rgb.r}, ${presenceInfo.color.rgb.g}, ${presenceInfo.color.rgb.b})`;
-            dot.style.borderRadius = "50%";
-            dot.style.position = "absolute";
-            dot.style.marginTop = "-2px";
-            widget.appendChild(dot);
+            const cursorDot = document.createElement("span");
+            cursorDot.style.height = "4px";
+            cursorDot.style.width = "4px";
+            cursorDot.style.backgroundColor = `rgb(${presenceInfo.color.rgb.r}, ${presenceInfo.color.rgb.g}, ${presenceInfo.color.rgb.b})`;
+            cursorDot.style.borderRadius = "50%";
+            cursorDot.style.position = "absolute";
+            cursorDot.style.marginTop = "-2px";
+            cursor.appendChild(cursorDot);
             
-            this.lastWidget = widget;
 
-            this.codeMirror.addWidget(presenceInfo.location[0].head, widget, true);
+            const newUserInfo: ICodeMirrorPresenceInfo = {
+                cursor,
+                markers,
+                info: presenceInfo,
+            }
+
+            this.presenceMap.set(presenceInfo.userId, newUserInfo);
+            this.codeMirror.addWidget(presenceInfo.location[0].head, cursor, true);
         });
     }
 }
