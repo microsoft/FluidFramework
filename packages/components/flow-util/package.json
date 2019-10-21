@@ -21,7 +21,7 @@
     "test": "ts-mocha --recursive test/**/*.spec.ts --exit",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml --exit",
     "tsc": "tsc",
-    "tslint": "tslint --project tsconfig.json --format verbose"
+    "tslint": "npm run eslint"
   },
   "devDependencies": {
     "@microsoft/eslint-config-fluid": "^0.11.0",

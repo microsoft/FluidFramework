@@ -9,7 +9,7 @@
 | ✔             |                   |      | @fluid-example/flow-intel                  |
 | ✔             |                   |      | @fluid-example/flow-intel-viewer           |
 | ✔             |                   |      | @fluid-example/flow-scroll                 |
-|               |                   |      | @fluid-example/flow-util-lib               |
+| ✔             | ✔                 | ✔    | @fluid-example/flow-util-lib               |
 |               |                   |      | @fluid-example/image-collection            |
 |               |                   |      | @fluid-example/intelligence-runner-agent   |
 |               |                   |      | @fluid-example/key-value                   |
