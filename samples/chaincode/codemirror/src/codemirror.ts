@@ -31,7 +31,7 @@ require("codemirror/mode/javascript/javascript.js");
 interface IPresenceInfo {
     userId: string;
     color: IColor;
-    location: {};
+    location: any[];
 }
 
 interface IColor {
@@ -86,9 +86,7 @@ class PresenceManager extends EventEmitter {
     private getColor(id: string): IColor  {
         let sum = 0;
         for (let i = 0; i < id.length; i++) {
-            if (typeof id[i] === "number") {
-                sum += parseInt(id[i]);
-            } 
+            sum += id[i].charCodeAt(0);
         }
 
         const colorMap: IColor[] = [
@@ -158,16 +156,34 @@ class CodeMirrorPresenceManager extends EventEmitter {
             // Selection highlighting
             const style = {
                 css: `background-color: rgba(${presenceInfo.color.rgb.r}, ${presenceInfo.color.rgb.g}, ${presenceInfo.color.rgb.b}, 0.3)`,
-            }; 
-            this.lastMarker = this.doc.markText(presenceInfo.location[0].head, presenceInfo.location[0].anchor, style);
+            };
+
+            presenceInfo.location.forEach(location => {
+                const head = this.doc.indexFromPos(location.head);
+                const anchor = this.doc.indexFromPos(location.anchor);
+                if (head > anchor) {
+                    this.lastMarker = this.doc.markText(location.anchor, location.head, style);
+                } else {
+                    this.lastMarker = this.doc.markText(location.head, location.anchor, style);
+                }
+            });
 
             // Cursor positioning
             const widget = document.createElement("span");
-            widget.id = "blah";
+            widget.id = `cursor-${presenceInfo.userId}`;
             widget.style.width = "1px";
             widget.style.backgroundColor = presenceInfo.color.name;
             widget.style.height = "15px";
             widget.style.marginTop = "-15px";
+
+            const dot = document.createElement("span");
+            dot.style.height = "4px";
+            dot.style.width = "4px";
+            dot.style.backgroundColor = presenceInfo.color.name;
+            dot.style.borderRadius = "50%";
+            dot.style.position = "absolute";
+            dot.style.marginTop = "-1px";
+            widget.appendChild(dot);
             
             this.lastWidget = widget;
 
