@@ -50,6 +50,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             }
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
         const fluidResolvedUrl = resolvedUrl as IFluidResolvedUrl;
         const storageUrl = fluidResolvedUrl.endpoints.storageUrl;
         const ordererUrl = fluidResolvedUrl.endpoints.ordererUrl;

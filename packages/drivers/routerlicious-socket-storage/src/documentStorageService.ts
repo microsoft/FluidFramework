@@ -22,7 +22,7 @@ import * as gitStorage from "@microsoft/fluid-server-services-client";
 /**
  * Document access to underlying storage for routerlicious driver.
  */
-export class DocumentStorageService implements IDocumentStorageService  {
+export class DocumentStorageService implements IDocumentStorageService {
     public get repositoryUrl(): string {
         return "";
     }
@@ -67,7 +67,7 @@ export class DocumentStorageService implements IDocumentStorageService  {
     public write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion> {
         const branch = ref ? `components/${this.id}/${ref}` : this.id;
         const commit = this.manager.write(branch, tree, parents, message);
-        return commit.then((c) => ({date: c.committer.date, id: c.sha, treeId: c.tree.sha}));
+        return commit.then((c) => ({ date: c.committer.date, id: c.sha, treeId: c.tree.sha }));
     }
 
     public async uploadSummary(commit: ISummaryTree): Promise<ISummaryHandle> {
@@ -85,7 +85,7 @@ export class DocumentStorageService implements IDocumentStorageService  {
 
     public async createBlob(file: Buffer): Promise<ICreateBlobResponse> {
         const response = this.manager.createBlob(file.toString("base64"), "base64");
-        return response.then((r) => ({id: r.sha, url: r.url}));
+        return response.then((r) => ({ id: r.sha, url: r.url }));
     }
 
     public getRawUrl(blobId: string): string {

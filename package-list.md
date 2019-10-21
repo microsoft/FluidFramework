@@ -76,7 +76,7 @@
 |               |                   |      | @microsoft/fluid-register-collection       |
 |               |                   |      | @microsoft/fluid-replay-driver             |
 |               |                   |      | @microsoft/fluid-replay-tool               |
-|               |                   |      | @microsoft/fluid-routerlicious-driver      |
+| ✔             | ✔                 | ✔    | @microsoft/fluid-routerlicious-driver      |
 |               |                   |      | @microsoft/fluid-routerlicious-host        |
 |               |                   |      | @microsoft/fluid-routerlicious-urlresolver |
 |               |                   |      | @microsoft/fluid-runtime-definitions       |
