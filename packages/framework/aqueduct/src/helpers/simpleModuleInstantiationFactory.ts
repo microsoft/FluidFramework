@@ -4,7 +4,7 @@
  */
 import { IContainerContext, IRuntime, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
 import { IComponentDefaultFactory } from "@microsoft/fluid-framework-interfaces";
-import { ComponentRegistryTypes, IComponentContext, IComponentFactory, IProvideComponentRegistry } from "@microsoft/fluid-runtime-definitions";
+import { ComponentFactoryTypes, ComponentRegistryTypes, IHostRuntime, IProvideComponentRegistry } from "@microsoft/fluid-runtime-definitions";
 import { SimpleContainerRuntimeFactory } from "./simpleContainerRuntimeFactory";
 
 /**
@@ -18,35 +18,19 @@ import { SimpleContainerRuntimeFactory } from "./simpleContainerRuntimeFactory";
 export class SimpleModuleInstantiationFactory implements
     IProvideComponentRegistry,
     IRuntimeFactory,
-    IComponentDefaultFactory,
-    IComponentFactory {
+    IComponentDefaultFactory {
 
     constructor(
         private readonly defaultComponentName: string,
         private readonly registry: ComponentRegistryTypes) {
     }
 
-    public get IComponentFactory() { return this; }
     public get IComponentRegistry() { return this.registry; }
     public get IRuntimeFactory() { return this; }
     public get IComponentDefaultFactory() { return this; }
 
-    public async getDefaultFactory() {
-        return this.registry.get(this.defaultComponentName)!;
-    }
-
-    public instantiateComponent(context: IComponentContext): void {
-        const factoryP = this.registry.get(this.defaultComponentName, context.scope);
-        if (factoryP === undefined) {
-            throw new Error(`No component factory for ${this.defaultComponentName}`);
-        }
-        factoryP.then(
-            (factory) => {
-                factory.instantiateComponent(context);
-            },
-            (error) => {
-                context.error(error);
-            });
+    public async getDefaultFactory(runtime: IHostRuntime): Promise<ComponentFactoryTypes> {
+        return this.registry.get(this.defaultComponentName, runtime)!;
     }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {

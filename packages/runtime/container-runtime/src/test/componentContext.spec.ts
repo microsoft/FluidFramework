@@ -11,6 +11,7 @@ import {
     IComponentFactory,
     IComponentRegistry,
     IComponentRuntime,
+    IHostRuntime,
 } from "@microsoft/fluid-runtime-definitions";
 import { MockRuntime } from "@microsoft/fluid-test-runtime-utils";
 import * as assert from "assert";
@@ -29,7 +30,7 @@ describe("Component Context Tests", () => {
         beforeEach(async () => {
 
             containerRuntime = {
-                IComponentRegistry: { get: (id: string) => {
+                IComponentRegistry: { get: (id: string, runtime: IHostRuntime) => {
                     const factory = {
                         IComponentFactory: {
                             instantiateComponent: (context: IComponentContext) => undefined,
@@ -80,14 +81,14 @@ describe("Component Context Tests", () => {
 
         it("Supplying array of packages in LocalComponentContext should not create exception", async () => {
             containerRuntime = {
-                IComponentRegistry: { get: (id: string) => {
+                IComponentRegistry: { get: (id: string, runtime: IHostRuntime) => {
                     const factory = {
                         IComponentFactory: {
                             instantiateComponent: (context: IComponentContext) => undefined,
                         },
                         instantiateComponent: (context: IComponentContext) =>  undefined,
                     } as ComponentFactoryTypes & Partial<IComponentRegistry>;
-                    factory.IComponentRegistry = { get: (name: string) => {
+                    factory.IComponentRegistry = { get: (name: string, rt: IHostRuntime) => {
                         return Promise.resolve(factory);
                     }} as IComponentRegistry;
                     return Promise.resolve(factory);
@@ -127,7 +128,7 @@ describe("Component Context Tests", () => {
         beforeEach(async () => {
 
             containerRuntime = {
-                IComponentRegistry: {get: (id: string) => {
+                IComponentRegistry: {get: (id: string, runtime: IHostRuntime) => {
                     const factory = {
                         IComponentFactory: {
                             instantiateComponent: (context: IComponentContext) => undefined,

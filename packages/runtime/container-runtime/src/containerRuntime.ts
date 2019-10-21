@@ -1395,13 +1395,13 @@ export class WrappedComponentRegistry implements IComponentRegistry {
 
     public get IComponentRegistry() { return this; }
 
-    public async get(name: string): Promise<ComponentFactoryTypes> {
+    public async get(name: string, runtime: IHostRuntime): Promise<ComponentFactoryTypes> {
         if (name === schedulerId) {
             return this.agentScheduler;
         } else if (this.extraRegistries && this.extraRegistries.has(name)) {
             return this.extraRegistries.get(name);
         } else {
-            return this.registry.get(name);
+            return this.registry.get(name, runtime);
         }
     }
 }

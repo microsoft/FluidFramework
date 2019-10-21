@@ -193,7 +193,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
                 if (!registry) {
                     throw new Error("Factory does not supply the component Registry");
                 }
-                factory = await registry.get(pkg, this.scope);
+                factory = await registry.get(pkg, this.hostRuntime);
                 registry = factory.IComponentRegistry;
             }
 

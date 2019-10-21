@@ -11,6 +11,7 @@ import {
     ComponentFactoryTypes,
     IComponentFactory,
     IComponentRegistry,
+    IHostRuntime,
 } from "@microsoft/fluid-runtime-definitions";
 
 /**
@@ -41,7 +42,7 @@ export class UrlRegistry implements IComponentRegistry {
 
     public get IComponentRegistry() { return this; }
 
-    public async get(name: string): Promise<ComponentFactoryTypes> {
+    public async get(name: string, runtime: IHostRuntime): Promise<ComponentFactoryTypes> {
 
         if (!this.urlRegistryMap.has(name)
             && (name.startsWith("http://") || name.startsWith("https://"))) {
@@ -69,7 +70,7 @@ export class UrlRegistry implements IComponentRegistry {
                         componentFactory = fluidExport.IComponentFactory;
                         if (fluidExport.IComponentDefaultFactory) {
                             const registry = fluidExport.IComponentDefaultFactory;
-                            componentFactory =  (await registry.getDefaultFactory()) as IComponentFactory;
+                            componentFactory =  (await registry.getDefaultFactory(runtime)) as IComponentFactory;
                         }
                     } else {
                         const queryable = fluidExport as IComponentQueryableLegacy;

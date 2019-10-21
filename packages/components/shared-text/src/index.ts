@@ -9,7 +9,7 @@ import "./publicpath";
 
 // import { SharedString } from "@prague/sequence";
 import * as Snapshotter from "@fluid-example/snapshotter-agent";
-import { IComponent, IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IContainerContext, IRuntime, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
 import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
 import {
@@ -58,7 +58,7 @@ class MyRegistry implements IComponentRegistry {
 
     public get IComponentRegistry() {return this; }
 
-    public async get(name: string, scope?: IComponent): Promise<IComponentFactory> {
+    public async get(name: string, runtime: IHostRuntime): Promise<IComponentFactory> {
         if (name === "@fluid-example/shared-text") {
             return this.sharedTextFactory;
         } else if (name === "@fluid-example/math") {
