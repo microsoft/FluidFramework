@@ -43,7 +43,10 @@ export class RouterliciousUrlResolver implements IUrlResolver {
             const path = reqUrl.pathname.split("/");
             let tenantId: string;
             let documentId: string;
-            if (path.length >= 4) {
+            if (this.config) {
+                tenantId = this.config.tenantId;
+                documentId = this.config.documentId;
+            } else if (path.length >= 4) {
                 tenantId = path[2];
                 documentId = path[3];
             } else {
@@ -130,4 +133,6 @@ export interface IAlfredUser extends IUser {
 export interface IConfig {
     serverUrl: string;
     blobStorageUrl: string;
+    tenantId: string;
+    documentId: string;
 }
