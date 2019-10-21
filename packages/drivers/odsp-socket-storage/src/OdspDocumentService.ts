@@ -24,7 +24,7 @@ import { OdspDocumentStorageService } from "./OdspDocumentStorageService";
 import { defaultRetryFilter } from "./OdspUtils";
 import { getSocketStorageDiscovery } from "./Vroom";
 
-const afdUrlConnectExpirationMs = 8 * 60 * 60 * 1000; // 8 hours
+const afdUrlConnectExpirationMs = 6 * 60 * 60 * 1000; // 6 hours
 const lastAfdConnectionTimeMsKey = "LastAfdConnectionTimeMs";
 const localStorageTestKey = "LocalStorageTestKey";
 
@@ -305,6 +305,7 @@ export class OdspDocumentService implements IDocumentService {
             // Use AFD URL if in cache
             if (afdCacheValid && hasUrl2) {
                 debug("Connecting to AFD URL directly due to valid cache.");
+                const startAfd = performance.now();
                 return DocumentDeltaConnection.create(
                     tenantId,
                     id,
@@ -319,10 +320,16 @@ export class OdspDocumentService implements IDocumentService {
                     logger.sendTelemetryEvent({ eventName: "UsedAfdUrlDueToCache" });
                     return connection;
                 }).catch((error) => {
+                    const endAfd = performance.now();
                     localStorage.removeItem(lastAfdConnectionTimeMsKey);
                     // Retry on non-AFD URL
                     if (this.canRetryOnError(error)) {
                         debug(`Socket connection error on AFD URL (cached). Error was [${error}]. Retry on non-AFD URL: ${url}`);
+                        logger.sendPerformanceEvent({
+                            eventName: "WaitOnAfdAttempt",
+                            duration: endAfd - startAfd,
+                        });
+
                         return DocumentDeltaConnection.create(
                             tenantId,
                             id,
@@ -347,6 +354,7 @@ export class OdspDocumentService implements IDocumentService {
                 });
             }
 
+            const startNonAfd = performance.now();
             return DocumentDeltaConnection.create(
                 tenantId,
                 id,
@@ -360,8 +368,14 @@ export class OdspDocumentService implements IDocumentService {
                 logger.sendTelemetryEvent({ eventName: "UsedNonAfdUrl" });
                 return connection;
             }).catch((error) => {
+                const endNonAfd = performance.now();
                 if (hasUrl2 && this.canRetryOnError(error)) {
                     debug(`Socket connection error on non-AFD URL. Error was [${error}]. Retry on AFD URL: ${url}`);
+                    logger.sendPerformanceEvent({
+                        eventName: "WaitOnNonAfdAttempt",
+                        duration: endNonAfd - startNonAfd,
+                    });
+
                     return DocumentDeltaConnection.create(
                         tenantId,
                         id,
