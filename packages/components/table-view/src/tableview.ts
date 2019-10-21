@@ -6,7 +6,7 @@
 import { Template } from "@fluid-example/flow-util-lib";
 import { TableDocument, TableDocumentType } from "@fluid-example/table-document";
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
-import { IComponentHTMLOptions, IComponentHTMLVisual, IResponse } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHTMLOptions, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { GridView } from "./grid";
 import * as styles from "./index.css";
@@ -29,9 +29,6 @@ export class TableView extends PrimedComponent implements IComponentHTMLVisual {
     private static readonly factory = new PrimedComponentFactory(
         TableView,
         [],
-        new Map([
-            [TableDocumentType, Promise.resolve(TableDocument.getFactory())],
-        ]),
     );
 
     public get IComponentHTMLVisual() { return this; }
@@ -79,18 +76,10 @@ export class TableView extends PrimedComponent implements IComponentHTMLVisual {
     // #endregion IComponentHTMLVisual
 
     protected async componentInitializingFirstTime() {
-        const componentRuntime: IComponentRuntime = await this.context.createSubComponent(TableDocumentType);
-        const response: IResponse = await componentRuntime.request({ url: "/" });
-        componentRuntime.attach();
-        this.docId = `${componentRuntime.id}`;
-        const doc = response.value as TableDocument;
+        const doc = await this.createAndAttachComponent<TableDocument>(this.docId, TableDocumentType);
         doc.insertRows(0, 5);
         doc.insertCols(0, 8);
     }
 
-    private get docId() { return this.root.get("docId"); }
-
-    private set docId(id: string) {
-        this.root.set("docId", id);
-    }
+    private get docId() { return `${this.id}-doc`; }
 }
