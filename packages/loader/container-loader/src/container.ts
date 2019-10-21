@@ -384,12 +384,9 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     }
 
     public reloadContext(): Promise<void> {
-        // errors will emit error and reject promise
-        return new Promise((resolve, reject) => {
-            this.reloadContextCore().then(resolve, (error) => {
-                this.raiseCriticalError(error);
-                reject(error);
-            });
+        return this.reloadContextCore().catch((error) => {
+            this.raiseCriticalError(error);
+            throw error;
         });
     }
 
