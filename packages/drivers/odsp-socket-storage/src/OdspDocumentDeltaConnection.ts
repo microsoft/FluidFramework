@@ -14,6 +14,7 @@ import {
     ISequencedDocumentMessage,
     ISignalMessage,
 } from "@microsoft/fluid-protocol-definitions";
+import * as assert from "assert";
 import { IOdspSocketError } from "./contracts";
 import { debug } from "./debug";
 import { errorObjectFromOdspError } from "./OdspUtils";
@@ -148,9 +149,9 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
 
             let cleanupListeners: () => void;
 
-            const disconnectAndReject = (errorObject: any) => {
+            const disconnectAndReject = (errorObject: any, isFatalError?: boolean) => {
                 cleanupListeners();
-                OdspDocumentDeltaConnection.removeSocketIoReference(socketReferenceKey);
+                OdspDocumentDeltaConnection.removeSocketIoReference(socketReferenceKey, isFatalError);
 
                 // Test if it's NetworkError with IOdspSocketError.
                 // Note that there might be no IOdspSocketError on it in case we hit socket.io protocol errors!
@@ -168,18 +169,18 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
 
             const connectErrorHandler = (error) => {
                 debug(`Socket connection error: [${error}]`);
-                disconnectAndReject(createErrorObject("connect_error", error));
+                disconnectAndReject(createErrorObject("connect_error", error), true);
             };
 
             const connectTimeoutHandler = () => {
-                disconnectAndReject(createErrorObject("connect_timeout", "Socket connection timed out"));
+                disconnectAndReject(createErrorObject("connect_timeout", "Socket connection timed out"), true);
             };
 
             const errorHandler = (error) => {
                 debug(`Error in documentDeltaConection: ${error}`);
 
                 // This includes "Invalid namespace" error, which we consider critical (reconnecting will not help)
-                disconnectAndReject(createErrorObject("error", error, error !== "Invalid namespace"));
+                disconnectAndReject(createErrorObject("error", error, error !== "Invalid namespace"), true);
             };
 
             const earlyOpHandler = (documentId: string, msgs: ISequencedDocumentMessage[]) => {
@@ -336,31 +337,34 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
      * Removes a reference for the given key
      * Once the ref count hits 0, the socket is disconnected and removed
      * @param key - socket reference key
+     * @param isFatalError - true if the socket reference should be removed immediately due to a fatal error
      */
-    private static removeSocketIoReference(key: string) {
+    private static removeSocketIoReference(key: string, isFatalError?: boolean) {
         const socketReference = OdspDocumentDeltaConnection.socketIoSockets.get(key);
         if (!socketReference) {
             // this is expected to happens if we removed the reference due the socket not being connected
             return;
         }
 
-        if (socketReference.delayDeleteTimeout !== undefined) {
-            clearTimeout(socketReference.delayDeleteTimeout);
-            socketReference.delayDeleteTimeout = undefined;
-        }
+        socketReference.references--;
 
-        if (socketReference.socket && !socketReference.socket.connected) {
-            // delete the reference because the socket is not connected
-            socketReference.socket.disconnect();
-            socketReference.socket = undefined;
+        debug(`Removed socketio reference for ${key}. Remaining references: ${socketReference.references}.`);
+
+        if (isFatalError || (socketReference.socket && !socketReference.socket.connected)) {
+            // delete the reference if a fatal error occurred or if the socket is not connected
+            if (socketReference.socket) {
+                socketReference.socket.disconnect();
+                socketReference.socket = undefined;
+            }
+
             OdspDocumentDeltaConnection.socketIoSockets.delete(key);
-            debug(`Removed socketio reference ${key} due to an invalid connection`);
+            debug(`Deleted socketio reference for ${key}. Is fatal error: ${isFatalError}.`);
             return;
         }
 
-        socketReference.references--;
-
         if (socketReference.references === 0) {
+            assert(socketReference.delayDeleteTimeout === undefined);
+
             socketReference.delayDeleteTimeout = setTimeout(() => {
                 OdspDocumentDeltaConnection.socketIoSockets.delete(key);
 
@@ -369,7 +373,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
                     socketReference.socket = undefined;
                 }
 
-                debug(`Removed socketio reference ${key}`);
+                debug(`Deleted socketio reference for ${key}.`);
             }, socketReferenceBufferTime);
         }
     }
