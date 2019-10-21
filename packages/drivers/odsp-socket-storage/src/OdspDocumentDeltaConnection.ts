@@ -29,6 +29,7 @@ interface ISocketReference {
     socket: SocketIOClient.Socket | undefined;
     references: number;
     delayDeleteTimeout?: NodeJS.Timeout;
+    delayDeleteTimeoutSetTime?: number;
 }
 
 /**
@@ -71,6 +72,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
             url,
             mode,
             hasUrl2 ? 15000 : 20000,
+            telemetryLogger,
         ).catch((error) => {
             if (error instanceof NetworkError && hasUrl2) {
                 if (error.canRetry) {
@@ -87,6 +89,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
                         url2!,
                         mode,
                         20000,
+                        telemetryLogger,
                     );
                 }
             }
@@ -110,6 +113,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
      * @param client - information about the client
      * @param url - websocket URL
      * @param timeoutMs - timeout for socket connection attempt in milliseconds
+     * @param telemetryLogger - telemetry logger
      */
     // tslint:disable-next-line: max-func-body-length
     private static async createForUrlWithTimeout(
@@ -120,11 +124,12 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
         client: IClient,
         url: string,
         mode: ConnectionMode,
-        timeoutMs: number): Promise<IDocumentDeltaConnection> {
+        timeoutMs: number,
+        telemetryLogger: ITelemetryLogger): Promise<IDocumentDeltaConnection> {
         const socketReferenceKey = `${url},${tenantId},${id}`;
 
         const socketReference = OdspDocumentDeltaConnection.getOrCreateSocketIoReference(
-            io, timeoutMs, socketReferenceKey, url, tenantId, id);
+            io, timeoutMs, socketReferenceKey, url, tenantId, id, telemetryLogger);
 
         const socket = socketReference.socket;
         if (!socket) {
@@ -294,15 +299,24 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
         key: string,
         url: string,
         tenantId: string,
-        documentId: string): ISocketReference {
+        documentId: string,
+        telemetryLogger: ITelemetryLogger): ISocketReference {
         let socketReference = OdspDocumentDeltaConnection.socketIoSockets.get(key);
         if (socketReference) {
+            telemetryLogger.sendTelemetryEvent({
+                references: socketReference.references,
+                eventName: "OdspDocumentDeltaCollection.GetSocketIoReference",
+                delayDeleteDelta: socketReference.delayDeleteTimeoutSetTime !== undefined ?
+                    (Date.now() - socketReference.delayDeleteTimeoutSetTime) : undefined,
+            });
+
             socketReference.references++;
 
             // clear the pending deletion if there is one
             if (socketReference.delayDeleteTimeout !== undefined) {
                 clearTimeout(socketReference.delayDeleteTimeout);
                 socketReference.delayDeleteTimeout = undefined;
+                socketReference.delayDeleteTimeoutSetTime = undefined;
             }
 
             debug(`Using existing socketio reference for ${key} (${socketReference.references})`);
@@ -374,6 +388,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
 
                 debug(`Deleted socketio reference for ${key}.`);
             }, socketReferenceBufferTime);
+            socketReference.delayDeleteTimeoutSetTime = Date.now();
         }
     }
 
