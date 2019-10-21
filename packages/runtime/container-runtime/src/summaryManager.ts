@@ -220,17 +220,13 @@ export class SummaryManager extends EventEmitter {
 
         const runningSummarizerEvent = PerformanceEvent.start(this.logger, { eventName: "RunningSummarizer" });
         this.runningSummarizer = summarizer;
-        this.runningSummarizer.run(this.clientId).finally(() => {
-            this.runningSummarizer = undefined;
-        }).then(() => {
+        // tslint:disable-next-line: no-floating-promises
+        this.runningSummarizer.run(this.clientId).then(() => {
             runningSummarizerEvent.end();
-            if (this.shouldSummarize) {
-                this.start();
-            } else {
-                this.state = SummaryManagerState.Off;
-            }
         }, (error) => {
             runningSummarizerEvent.cancel({}, error);
+        }).finally(() => {
+            this.runningSummarizer = undefined;
             if (this.shouldSummarize) {
                 this.start();
             } else {
