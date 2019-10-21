@@ -31,7 +31,10 @@ require("codemirror/mode/javascript/javascript.js");
 interface IPresenceInfo {
     userId: string;
     color: IColor;
-    location: any[];
+    location: {
+        anchor: CodeMirror.Position;
+        head: CodeMirror.Position;
+    }[];
 }
 
 interface IColor {
@@ -56,7 +59,8 @@ class PresenceManager extends EventEmitter {
         this.presenceKey = `presence-${runtime.id}`;
 
         runtime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
-            if (message.type === this.presenceKey && !local) {
+            // only process presence keys that are not local while we are connected
+            if (message.type === this.presenceKey && !local && runtime.connected) {
                 console.log(`received new presence signal: ${JSON.stringify(message)}`);
                 const presenceInfo = {
                     userId: message.clientId,
@@ -67,20 +71,13 @@ class PresenceManager extends EventEmitter {
                 this.emit("newPresence", presenceInfo);
             }
         });
-
-        // We need to broadcast our position when a new user joins.
-        // const quorum = runtime.getQuorum();
-        // quorum.on("addMember", (clientId: string) => {
-        //     if (clientId !== runtime.clientId && runtime.connected) {
-        //         const location = getLocation();
-        //         this.send(location);
-        //     }
-        // });
     }
 
-    public send(location: any) {
-        console.log(`sending new presence signal: ${JSON.stringify(location)}`);   
-        this.runtime.submitSignal(this.presenceKey, location);
+    public send(location: {}) { 
+        if (this.runtime.connected) {
+            console.log(`sending new presence signal: ${JSON.stringify(location)}`);  
+            this.runtime.submitSignal(this.presenceKey, location);
+        }
     }
 
     private getColor(id: string): IColor  {
@@ -137,12 +134,11 @@ class CodeMirrorPresenceManager extends EventEmitter {
         super();
         this.presenceManager = new PresenceManager(runtime);
         this.codeMirror.on(
-            'beforeSelectionChange',
-            (instance: CodeMirror.Editor, selection: any) => {
-                const typedSelection: {
-                    ranges:[{ head: CodeMirror.Position; anchor: CodeMirror.Position; }]
-                } = selection;
-                this.presenceManager.send(typedSelection.ranges);
+            'cursorActivity',
+            (instance: CodeMirror.Editor) => {
+                const selection = this.doc.listSelections();
+                console.log(selection)
+                this.presenceManager.send(selection);
             });
         
         this.presenceManager.on("newPresence", (presenceInfo: IPresenceInfo) => {
@@ -158,13 +154,13 @@ class CodeMirrorPresenceManager extends EventEmitter {
                 css: `background-color: rgba(${presenceInfo.color.rgb.r}, ${presenceInfo.color.rgb.g}, ${presenceInfo.color.rgb.b}, 0.3)`,
             };
 
-            presenceInfo.location.forEach(location => {
-                const head = this.doc.indexFromPos(location.head);
-                const anchor = this.doc.indexFromPos(location.anchor);
+            presenceInfo.location.forEach(range => {
+                const head = this.doc.indexFromPos(range.head);
+                const anchor = this.doc.indexFromPos(range.anchor);
                 if (head > anchor) {
-                    this.lastMarker = this.doc.markText(location.anchor, location.head, style);
+                    this.lastMarker = this.doc.markText(range.anchor, range.head, style);
                 } else {
-                    this.lastMarker = this.doc.markText(location.head, location.anchor, style);
+                    this.lastMarker = this.doc.markText(range.head, range.anchor, style);
                 }
             });
 
@@ -172,27 +168,23 @@ class CodeMirrorPresenceManager extends EventEmitter {
             const widget = document.createElement("span");
             widget.id = `cursor-${presenceInfo.userId}`;
             widget.style.width = "1px";
-            widget.style.backgroundColor = presenceInfo.color.name;
+            widget.style.backgroundColor = `rgb(${presenceInfo.color.rgb.r}, ${presenceInfo.color.rgb.g}, ${presenceInfo.color.rgb.b})`;
             widget.style.height = "15px";
             widget.style.marginTop = "-15px";
 
             const dot = document.createElement("span");
             dot.style.height = "4px";
             dot.style.width = "4px";
-            dot.style.backgroundColor = presenceInfo.color.name;
+            dot.style.backgroundColor = `rgb(${presenceInfo.color.rgb.r}, ${presenceInfo.color.rgb.g}, ${presenceInfo.color.rgb.b})`;
             dot.style.borderRadius = "50%";
             dot.style.position = "absolute";
-            dot.style.marginTop = "-1px";
+            dot.style.marginTop = "-2px";
             widget.appendChild(dot);
             
             this.lastWidget = widget;
 
             this.codeMirror.addWidget(presenceInfo.location[0].head, widget, true);
         });
-    }
-
-    public send(location: any) {
-        this.presenceManager.send(location);
     }
 }
 
