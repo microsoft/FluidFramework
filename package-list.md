@@ -52,7 +52,7 @@
 |               |                   |      | @microsoft/fluid-container-definitions     |
 |               |                   |      | @microsoft/fluid-container-loader          |
 |               |                   |      | @microsoft/fluid-container-runtime         |
-|               |                   |      | @microsoft/fluid-core-utils                |
+| ✔             | ✔                 | ✔    | @microsoft/fluid-core-utils                |
 |               |                   |      | @microsoft/fluid-debugger                  |
 |               |                   |      | @microsoft/fluid-driver-base               |
 |               |                   |      | @microsoft/fluid-external-component-loader |

@@ -22,7 +22,7 @@
     "test": "mocha --recursive dist/test",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
     "tsc": "tsc",
-    "tslint": "tslint --project tsconfig.json --format verbose"
+    "tslint": "npm run eslint"
   },
   "dependencies": {
     "@microsoft/fluid-component-core-interfaces": "^0.11.0",
