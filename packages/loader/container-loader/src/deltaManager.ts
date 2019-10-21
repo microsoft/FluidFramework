@@ -454,7 +454,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 // 2) else case: if we got what we asked (to - 1) or more, then time to leave.
                 if (to === undefined ? lastFetch < maxFetchTo - 1 : to - 1 <= lastFetch) {
                     telemetryEvent.end({ lastFetch, totalDeltas: allDeltas.length, requests });
-                    this.emitDelayInfo(retryFor.DELTASTORAGE, -1);
                     return allDeltas;
                 }
 
@@ -480,9 +479,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                     return [];
                 }
                 success = false;
-                if (typeof error === "object" && error !== null && error.retryAfterSeconds !== undefined) {
-                    retryAfter = error.retryAfterSeconds;
-                }
+                retryAfter = this.backOffWaitTimeOnError(error);
             }
 
             let delay: number;
@@ -492,6 +489,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             } else {
                 retry++;
                 delay = retryAfter >= 0 ? retryAfter : Math.min(MaxFetchDelay, MissingFetchDelay * Math.pow(2, retry));
+                this.emitDelayInfo(retryFor.DELTASTORAGE, delay);
 
                 // Chances that we will get something from storage after that many retries is zero.
                 // We wait 10 seconds between most of retries, so that's 16 minutes of waiting!
@@ -522,12 +520,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 success,
             });
 
-            this.emitDelayInfo(retryFor.DELTASTORAGE, delay);
             await waitForConnectedState(delay);
         }
 
         telemetryEvent.cancel({ reason: "container closed" });
-        this.emitDelayInfo(retryFor.DELTASTORAGE, -1);
         return [];
     }
 
@@ -758,10 +754,8 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                         error);
                 }
 
-                let delayNext: number = 0;
-                if (typeof error === "object" && error !== null && error.retryAfterSeconds !== undefined) {
-                    delayNext = error.retryAfterSeconds;
-                } else {
+                let delayNext: number = this.backOffWaitTimeOnError(error);
+                if (delayNext < 0) {
                     delayNext = Math.min(delay * 2, MaxReconnectDelay);
                 }
                 this.emitDelayInfo(retryFor.DELTASTREAM, delayNext);
@@ -791,15 +785,18 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             this.closeOnConnectionError(error);
         } else {
             this.logger.sendTelemetryEvent({ eventName: "DeltaConnectionReconnect", reason }, error);
-            let delayNext: number = 0;
-            if (error !== null && typeof error === "object" && error.retryAfterSeconds !== undefined) {
-                delayNext = error.retryAfterSeconds;
-            } else {
-                delayNext = InitialReconnectDelay;
-            }
+            const delayNext: number = this.backOffWaitTimeOnError(error);
             this.emitDelayInfo(retryFor.DELTASTREAM, delayNext);
-            this.connectCore(reason, delayNext, mode);
+            waitForConnectedState(delayNext).then(() => this.connectCore(reason, InitialReconnectDelay, mode));
         }
+    }
+
+    private backOffWaitTimeOnError(error: any): number {
+        let waitTime = -1;
+        if (error !== null && typeof error === "object" && error.retryAfterSeconds !== undefined) {
+            waitTime = error.retryAfterSeconds;
+        }
+        return waitTime;
     }
 
     private processInitialMessages(
@@ -987,6 +984,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         this.getDeltas(telemetryEventSuffix, from, to).then(
             (messages) => {
+                this.emitDelayInfo(retryFor.DELTASTORAGE, -1);
                 this.fetching = false;
                 this.emit("caughtUp");
                 this.catchUp(telemetryEventSuffix, messages);
@@ -1021,6 +1019,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             clientSeqNumber: number,
             seqNumber: number): Promise<IContentMessage> {
         const messages = await this.getDeltas("fetchContent", seqNumber, seqNumber);
+        this.emitDelayInfo(retryFor.DELTASTORAGE, -1);
         assert.ok(messages.length > 0, "Content not found in DB");
 
         const message = messages[0];
