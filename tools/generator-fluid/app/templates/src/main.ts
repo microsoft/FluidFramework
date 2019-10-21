@@ -1,7 +1,3 @@
-/*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
- * Licensed under the MIT License.
- */
 import {
     PrimedComponent,
     PrimedComponentFactory,
@@ -24,9 +20,10 @@ import {
 export class Clicker extends PrimedComponent implements IComponentHTMLVisual {
     public get IComponentHTMLVisual() { return this; }
 
-        /**
-     * ComponentInitializingFirstTime is where you do setup for your component. This is only called once the first time your component
-     * is created. Anything that happens in componentInitializingFirstTime will happen before any other user will see the component.
+    /**
+     * ComponentInitializingFirstTime is where you do setup for your component. This is only called once the first time
+     * your component is created. Anything that happens in componentInitializingFirstTime will happen before any other
+     * user will see the component.
      */
     protected async componentInitializingFirstTime() {
         this.root.createValueType("clicks", CounterValueType.Name, 0);
@@ -68,8 +65,8 @@ export class Clicker extends PrimedComponent implements IComponentHTMLVisual {
             titleParagraph.textContent = title;
             */
 
-         const counterSpan = document.getElementById("counterSpan");
-         counterSpan.textContent = counter.value.toString();
+            const counterSpan = document.getElementById("counterSpan");
+            counterSpan.textContent = counter.value.toString();
         });
     }
 
