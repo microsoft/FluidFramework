@@ -97,6 +97,6 @@
 |               |                   |      | @microsoft/fluid-shared-object-base        |
 |               |                   |      | @microsoft/fluid-test-runtime-utils        |
 |               |                   |      | @microsoft/fluid-test-snapshots            |
-|               |                   |      | @microsoft/fluid-undo-redo                 |
+| ✔             | ✔                 | ✔    | @microsoft/fluid-undo-redo                 |
 |               |                   |      | @microsoft/fluid-web-code-loader           |
 |               |                   |      | @microsoft/fluid-webpack-component-loader  |

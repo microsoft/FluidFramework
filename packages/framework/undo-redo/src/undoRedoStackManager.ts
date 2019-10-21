@@ -52,6 +52,7 @@ class UndoRedoStack extends Stack<Stack<IRevertable> | undefined> {
 
     public push(item: Stack<IRevertable> | undefined) {
         if (item !== undefined) {
+            // eslint-disable-next-line @typescript-eslint/unbound-method
             item.itemPushedCallback = () => this.callItemPushedCallback;
         }
         super.push(item);
@@ -122,7 +123,7 @@ export class UndoRedoStackManager {
             () => this.eventEmitter.emit("changePushed");
         this.redoStack.itemPushedCallback =
             () => this.eventEmitter.emit("changePushed");
-     }
+    }
 
     public closeCurrentOperation() {
         if (this.mode === UndoRedoMode.None) {

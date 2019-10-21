@@ -81,10 +81,10 @@ export class SharedSegmentSequenceRevertable implements IRevertable {
                     const tg = new TrackingGroup();
                     tg.link(range.segment);
                     current = {
-                            trackingGroup: tg,
-                            propertyDelta: range.propertyDeltas,
-                            operation: event.deltaOperation as MergeTreeDeltaOperationType,
-                        };
+                        trackingGroup: tg,
+                        propertyDelta: range.propertyDeltas,
+                        operation: event.deltaOperation as MergeTreeDeltaOperationType,
+                    };
                     this.tracking.push(current);
                 }
             }
@@ -107,6 +107,7 @@ export class SharedSegmentSequenceRevertable implements IRevertable {
                             break;
 
                         case MergeTreeDeltaType.REMOVE:
+                            // eslint-disable-next-line no-case-declarations
                             const insertSegment = this.sequence.segmentFromSpec(sg.toJSONObject() as IJSONSegment);
                             this.sequence.insertAtReferencePosition(
                                 this.sequence.createPositionReference(sg, 0, ReferenceType.Transient),
@@ -126,8 +127,10 @@ export class SharedSegmentSequenceRevertable implements IRevertable {
                                     tracked.propertyDelta,
                                     undefined);
                             }
+                        // intentional fall-through
+                        // eslint-disable-next-line no-fallthrough
                         default:
-                            throw new Error("operationt type not revertable");
+                            throw new Error("operation type not revertable");
                     }
                 }
             }
