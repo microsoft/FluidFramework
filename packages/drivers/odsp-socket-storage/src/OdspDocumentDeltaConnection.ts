@@ -347,6 +347,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
         }
 
         socketReference.references--;
+        assert(socketReference.delayDeleteTimeout === undefined);
 
         debug(`Removed socketio reference for ${key}. Remaining references: ${socketReference.references}.`);
 
@@ -363,8 +364,6 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
         }
 
         if (socketReference.references === 0) {
-            assert(socketReference.delayDeleteTimeout === undefined);
-
             socketReference.delayDeleteTimeout = setTimeout(() => {
                 OdspDocumentDeltaConnection.socketIoSockets.delete(key);
 
