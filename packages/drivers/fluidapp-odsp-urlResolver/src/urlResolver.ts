@@ -21,13 +21,13 @@ const fluidOfficeServers = [
 
 export class FluidAppOdspUrlResolver implements IUrlResolver {
 
-    public async resolve(request: IRequest): Promise<IResolvedUrl> {
+    public async resolve(request: IRequest): Promise<IResolvedUrl | undefined> {
         const reqUrl = new URL(request.url);
         const server = reqUrl.hostname.toLowerCase();
         if (fluidOfficeServers.indexOf(server) !== -1) {
             const { site, drive, item } = await initializeFluidOffice(reqUrl);
             if (site === undefined || drive === undefined || item === undefined) {
-                return Promise.reject("Cannot resolve the given url!!");
+                return undefined;
             }
             const hashedDocumentId = new sha.sha256().update(`${site}_${drive}_${item}`).digest("hex");
 
@@ -53,7 +53,7 @@ export class FluidAppOdspUrlResolver implements IUrlResolver {
             };
             return response;
         }
-        return Promise.reject("Cannot resolve the given url!!");
+        return undefined;
     }
 }
 
@@ -67,7 +67,7 @@ async function initializeFluidOffice(urlSource: URL) {
     const siteDriveItemMatch = pathname.match(/\/p\/([^\/]*)\/([^\/]*)\/([^\/]*)/);
 
     if (siteDriveItemMatch === null) {
-        return Promise.reject("Unable to parse fluid.office.com URL path");
+        return { site: undefined, drive: undefined, item: undefined};
     }
 
     const site = decodeURIComponent(siteDriveItemMatch[1]);

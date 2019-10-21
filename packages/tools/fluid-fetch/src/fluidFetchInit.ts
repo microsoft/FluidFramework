@@ -208,14 +208,14 @@ async function initializeR11s(server: string, pathname: string, r11sResolvedUrl:
         documentId);
 }
 
-async function resolveUrl(url: string): Promise<IResolvedUrl> {
+async function resolveUrl(url: string): Promise<IResolvedUrl | undefined> {
 
     const resolversList: IUrlResolver[] = [
         new OdspUrlResolver(),
         new FluidAppOdspUrlResolver(),
         new RouterliciousUrlResolver(undefined, () => Promise.resolve(paramJWT), []),
     ];
-    const resolved: IResolvedUrl = await configurableUrlResolver(resolversList, { url });
+    const resolved = await configurableUrlResolver(resolversList, { url });
     return resolved;
 }
 
@@ -240,6 +240,10 @@ export async function fluidFetchInit() {
 
     const server = url.hostname.toLowerCase();
     const resolvedUrl = await resolveUrl(paramURL) as IFluidResolvedUrl;
+    if (!resolvedUrl) {
+        console.log(server);
+        return Promise.reject(`Unknown URL ${paramURL}`);
+    }
     const protocol = new URL(resolvedUrl.url).protocol;
     if (protocol === "fluid-odsp:") {
         const odspResolvedUrl = resolvedUrl as odsp.IOdspResolvedUrl;
@@ -247,6 +251,4 @@ export async function fluidFetchInit() {
     } else if (protocol === "fluid:") {
         return initializeR11s(server, url.pathname, resolvedUrl);
     }
-    console.log(server);
-    return Promise.reject(`Unknown URL ${paramURL}`);
 }

@@ -32,7 +32,7 @@ export class RouterliciousUrlResolver implements IUrlResolver {
         private readonly user?: IAlfredUser) {
     }
 
-    public async resolve(request: IRequest): Promise<IResolvedUrl> {
+    public async resolve(request: IRequest): Promise<IResolvedUrl | undefined> {
         let requestedUrl = request.url;
         if (this.config && request.url.startsWith("/")) {
             requestedUrl = `http://dummy:3000${request.url}`;
@@ -40,69 +40,74 @@ export class RouterliciousUrlResolver implements IUrlResolver {
         const reqUrl = new URL(requestedUrl);
         const server = reqUrl.hostname.toLowerCase();
         if (r11sServers.indexOf(server) !== -1 || (server === "localhost" && reqUrl.port === "3000") || this.config) {
-            const path = reqUrl.pathname.split("/");
-            let tenantId: string;
-            let documentId: string;
-            if (this.config) {
-                tenantId = this.config.tenantId;
-                documentId = this.config.documentId;
-            } else if (path.length >= 4) {
-                tenantId = path[2];
-                documentId = path[3];
-            } else {
-                tenantId = "fluid";
-                documentId = path[2];
-            }
-
-            let token: string;
-            if (!this.getToken) {
-                token = getR11sToken(tenantId, documentId, this.appTenants, this.scopes, this.user);
-            } else {
-                token = await this.getToken();
-            }
-
-            const isLocalHost = server === "localhost" ? true : false;
-
-            const serverSuffix = isLocalHost ? `${server}:3003` : server.substring(4);
-
-            let fluidUrl = "fluid://" +
-                `${this.config ? parse(this.config.serverUrl).host : serverSuffix}/` +
-                `${encodeURIComponent(tenantId)}/` +
-                `${encodeURIComponent(documentId)}`;
-
-            if (reqUrl.search) {
-                // In case of any additional parameters add them back to the url
-                const searchParams = reqUrl.search;
-                if (!!searchParams) {
-                    fluidUrl += searchParams;
+            try {
+                const path = reqUrl.pathname.split("/");
+                let tenantId: string;
+                let documentId: string;
+                if (this.config) {
+                    tenantId = this.config.tenantId;
+                    documentId = this.config.documentId;
+                } else if (path.length >= 4) {
+                    tenantId = path[2];
+                    documentId = path[3];
+                } else {
+                    tenantId = "fluid";
+                    documentId = path[2];
                 }
-            }
 
-            const storageUrl = `${(this.config ? this.config.blobStorageUrl.replace("historian:3000", "localhost:3001")
-                : isLocalHost
-                    ? `http://localhost:3001` : `https://historian.${serverSuffix}`)}/repos/${tenantId}`;
-            const ordererUrl = this.config ? this.config.serverUrl :
-                isLocalHost ?
-                    `http://localhost:3003/` : `https://alfred.${serverSuffix}`;
-            const deltaStorageUrl = this.config ?
-                `${this.config.serverUrl}/deltas/${encodeURIComponent(tenantId)}/${encodeURIComponent(documentId)}` :
+                let token: string;
+                if (!this.getToken) {
+                    token = getR11sToken(tenantId, documentId, this.appTenants, this.scopes, this.user);
+                } else {
+                    token = await this.getToken();
+                }
+
+                const isLocalHost = server === "localhost" ? true : false;
+
+                const serverSuffix = isLocalHost ? `${server}:3003` : server.substring(4);
+
+                let fluidUrl = "fluid://" +
+                    `${this.config ? parse(this.config.serverUrl).host : serverSuffix}/` +
+                    `${encodeURIComponent(tenantId)}/` +
+                    `${encodeURIComponent(documentId)}`;
+
+                if (reqUrl.search) {
+                    // In case of any additional parameters add them back to the url
+                    const searchParams = reqUrl.search;
+                    if (!!searchParams) {
+                        fluidUrl += searchParams;
+                    }
+                }
+
+                const storageUrl =
+                    `${(this.config ? this.config.blobStorageUrl.replace("historian:3000", "localhost:3001")
+                        : isLocalHost
+                            ? `http://localhost:3001` : `https://historian.${serverSuffix}`)}/repos/${tenantId}`;
+                const ordererUrl = this.config ? this.config.serverUrl :
                     isLocalHost ?
-                        `http://localhost:3003/deltas/${tenantId}/${documentId}` :
-                            `https://alfred.${serverSuffix}/deltas/${tenantId}/${documentId}`;
+                        `http://localhost:3003/` : `https://alfred.${serverSuffix}`;
+                const deltaStorageUrl = this.config ?
+                    `${this.config.serverUrl}/deltas/${encodeURIComponent(tenantId)}/${encodeURIComponent(documentId)}`
+                        : isLocalHost ?
+                            `http://localhost:3003/deltas/${tenantId}/${documentId}` :
+                                `https://alfred.${serverSuffix}/deltas/${tenantId}/${documentId}`;
 
-            const resolved: IFluidResolvedUrl = {
-                endpoints: {
-                    storageUrl,
-                    deltaStorageUrl,
-                    ordererUrl,
-                },
-                tokens: { jwt: token },
-                type: "fluid",
-                url: fluidUrl,
-            };
-            return resolved;
+                const resolved: IFluidResolvedUrl = {
+                    endpoints: {
+                        storageUrl,
+                        deltaStorageUrl,
+                        ordererUrl,
+                    },
+                    tokens: { jwt: token },
+                    type: "fluid",
+                    url: fluidUrl,
+                };
+                return resolved;
+            } catch (error) {
+                return undefined;
+            }
         }
-        return Promise.reject("Cannot resolve the given url!!");
+        return undefined;
     }
 }
 

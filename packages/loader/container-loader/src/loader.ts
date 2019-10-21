@@ -201,7 +201,7 @@ export class Loader extends EventEmitter implements ILoader {
             : null;
     }
 
-    private async getResolvedUrl(request: IRequest): Promise<IResolvedUrl> {
+    private async getResolvedUrl(request: IRequest): Promise<IResolvedUrl | undefined> {
         // Resolve the given request to a URL
         // Check for an already resolved URL otherwise make a new request
         const maybeResolvedUrl = this.resolveCache.get(request.url);
@@ -209,11 +209,14 @@ export class Loader extends EventEmitter implements ILoader {
             return maybeResolvedUrl;
         }
 
-        let toCache: IResolvedUrl;
+        let toCache: IResolvedUrl | undefined;
         if (Array.isArray(this.containerHost.resolver)) {
             toCache = await configurableUrlResolver(this.containerHost.resolver, request);
         } else {
             toCache = await this.containerHost.resolver.resolve(request);
+        }
+        if (!toCache) {
+            return undefined;
         }
         if (toCache.type !== "fluid") {
             if (toCache.type === "prague") {
@@ -233,6 +236,9 @@ export class Loader extends EventEmitter implements ILoader {
     ): Promise<{ container: Container, parsed: IParsedUrl }> {
 
         const resolved = await this.getResolvedUrl(request);
+        if (!resolved) {
+            return Promise.reject(`Invalid URL ${request.url}`);
+        }
 
         // Parse URL into components
         const resolvedAsFluid = resolved as IFluidResolvedUrl;
