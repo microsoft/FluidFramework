@@ -383,18 +383,18 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         this.emit("error", error);
     }
 
-    public reloadContext(): void {
-        // pause inbound synchronously
-        this.deltaManager!.inbound.systemPause();
-        this.deltaManager!.inboundSignal.systemPause();
-
-        this.reloadContextCore().then(() => {
-            this.deltaManager!.inbound.systemResume();
-            this.deltaManager!.inboundSignal.systemResume();
+    public reloadContext(): Promise<void> {
+        return this.reloadContextCore().catch((error) => {
+            this.raiseCriticalError(error);
+            throw error;
         });
     }
 
     private async reloadContextCore(): Promise<void> {
+        await Promise.all([
+            this.deltaManager!.inbound.systemPause(),
+            this.deltaManager!.inboundSignal.systemPause()]);
+
         const previousContextState = await this.context!.stop();
 
         let snapshot: ISnapshotTree | undefined;
@@ -415,6 +415,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         };
 
         await this.loadContext(attributes, storage, snapshot);
+
+        await Promise.all([
+            this.deltaManager!.inbound.systemResume(),
+            this.deltaManager!.inboundSignal.systemResume()]);
     }
 
     private async snapshotCore(tagMessage: string, fullTree: boolean = false) {
