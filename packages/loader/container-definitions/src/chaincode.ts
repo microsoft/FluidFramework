@@ -220,7 +220,7 @@ export interface IContainerContext extends EventEmitter, IMessageScheduler, IPro
 
     error(err: any): void;
     requestSnapshot(tagMessage: string): Promise<void>;
-    reloadContext(): void;
+    reloadContext(): Promise<void>;
     refreshBaseSummary(snapshot: ISnapshotTree): void;
 }
 
