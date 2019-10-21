@@ -30,48 +30,95 @@ require("codemirror/mode/javascript/javascript.js");
 
 interface IPresenceInfo {
     userId: string;
-    color: string;
+    color: IColor;
     location: {};
+}
+
+interface IColor {
+    name: string;
+    rgb: {
+        r: number;
+        g: number;
+        b: number;
+    };
 }
 
 /**
  * This should be super generic and only do really generic things.
  * This will only take a dependency on the runtime.
  */
-class PresenceMananger extends EventEmitter {
+class PresenceManager extends EventEmitter {
     private presenceKey: string;
-    private presenceMap: Map<string, {}> = new Map();
+    private presenceMap: Map<string, IPresenceInfo> = new Map();
 
-    public constructor(private runtime: IComponentRuntime, getLocation: () => {}) {
+    public constructor(private runtime: IComponentRuntime) {
         super();
         this.presenceKey = `presence-${runtime.id}`;
 
         runtime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
             if (message.type === this.presenceKey && !local) {
                 console.log(`received new presence signal: ${JSON.stringify(message)}`);
-                this.presenceMap.set(message.clientId, message.content);
                 const presenceInfo = {
                     userId: message.clientId,
-                    color: "orange",
+                    color: this.getColor(message.clientId),
                     location: message.content,
                 };
+                this.presenceMap.set(message.clientId, presenceInfo);
                 this.emit("newPresence", presenceInfo);
             }
         });
 
         // We need to broadcast our position when a new user joins.
-        const quorum = runtime.getQuorum();
-        quorum.on("addMember", (clientId: string) => {
-            if (clientId !== runtime.clientId && runtime.connected) {
-                const location = getLocation();
-                alert(JSON.stringify(location));
-            }
-        });
+        // const quorum = runtime.getQuorum();
+        // quorum.on("addMember", (clientId: string) => {
+        //     if (clientId !== runtime.clientId && runtime.connected) {
+        //         const location = getLocation();
+        //         this.send(location);
+        //     }
+        // });
     }
 
     public send(location: any) {
         console.log(`sending new presence signal: ${JSON.stringify(location)}`);   
         this.runtime.submitSignal(this.presenceKey, location);
+    }
+
+    private getColor(id: string): IColor  {
+        let sum = 0;
+        for (let i = 0; i < id.length; i++) {
+            if (typeof id[i] === "number") {
+                sum += parseInt(id[i]);
+            } 
+        }
+
+        const colorMap: IColor[] = [
+            {
+                name: "blue",
+                rgb: {
+                    r: 0,
+                    g: 0,
+                    b: 255,
+                }
+            },
+            {
+                name: "green",
+                rgb: {
+                    r: 0,
+                    g: 255,
+                    b: 0,
+                }
+            },
+            {
+                name: "blue",
+                rgb: {
+                    r: 255,
+                    g: 0,
+                    b: 0,
+                }
+            },
+        ];
+
+        return colorMap[sum % colorMap.length];
     }
 }
 
@@ -79,7 +126,7 @@ class PresenceMananger extends EventEmitter {
  * This will be the codemirror specific implementation
  */
 class CodeMirrorPresenceManager extends EventEmitter {
-    private presenceManager: PresenceMananger;
+    private presenceManager: PresenceManager;
     private lastMarker:CodeMirror.TextMarker;
     private lastWidget: HTMLSpanElement;
     // private presenceMap: Map<string, {}> = new Map();
@@ -90,7 +137,7 @@ class CodeMirrorPresenceManager extends EventEmitter {
 
     public constructor(private codeMirror: CodeMirror.EditorFromTextArea, runtime: IComponentRuntime) {
         super();
-        this.presenceManager = new PresenceMananger(runtime, this.doc.listSelections.bind(this));
+        this.presenceManager = new PresenceManager(runtime);
         this.codeMirror.on(
             'beforeSelectionChange',
             (instance: CodeMirror.Editor, selection: any) => {
@@ -110,7 +157,7 @@ class CodeMirrorPresenceManager extends EventEmitter {
 
             // Selection highlighting
             const style = {
-                css: "background-color: rgba(255, 165, 0, 0.3)",
+                css: `background-color: rgba(${presenceInfo.color.rgb.r}, ${presenceInfo.color.rgb.g}, ${presenceInfo.color.rgb.b}, 0.3)`,
             }; 
             this.lastMarker = this.doc.markText(presenceInfo.location[0].head, presenceInfo.location[0].anchor, style);
 
@@ -118,7 +165,7 @@ class CodeMirrorPresenceManager extends EventEmitter {
             const widget = document.createElement("span");
             widget.id = "blah";
             widget.style.width = "1px";
-            widget.style.backgroundColor = "orange";
+            widget.style.backgroundColor = presenceInfo.color.name;
             widget.style.height = "15px";
             widget.style.marginTop = "-15px";
             
