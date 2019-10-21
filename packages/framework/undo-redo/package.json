@@ -1,0 +1,67 @@
+{
+  "name": "@microsoft/fluid-undo-redo",
+  "version": "0.11.0",
+  "description": "Undo Redo",
+  "main": "dist/index.js",
+  "module": "lib/index.js",
+  "types": "dist/index.d.ts",
+  "sideEffects": "false",
+  "scripts": {
+    "build": "npm run build:genver && concurrently npm:build:compile npm:tslint",
+    "build:compile": "concurrently npm:tsc npm:build:esnext",
+    "build:docs": "api-extractor run --local",
+    "build:esnext": "tsc --project ./tsconfig.esnext.json",
+    "build:full": "npm run build",
+    "build:full:compile": "npm run build:compile",
+    "build:genver": "node node_modules/@microsoft/fluid-build-common/gen_version.js",
+    "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
+    "tsc": "tsc",
+    "tslint": "tslint --project tsconfig.json --format verbose"
+  },
+  "author": "Microsoft",
+  "repository": "microsoft/FluidFramework",
+  "nyc": {
+    "all": true,
+    "exclude": [
+      "src/test/**/*.ts",
+      "dist/test/**/*.js"
+    ],
+    "include": [
+      "src/**/*.ts",
+      "dist/**/*.js"
+    ],
+    "reporter": [
+      "cobertura",
+      "html",
+      "text"
+    ],
+    "temp-directory": "nyc/.nyc_output",
+    "cache-dir": "nyc/.cache",
+    "report-dir": "nyc/report"
+  },
+  "devDependencies": {
+    "@microsoft/api-extractor": "^7.4.4",
+    "@microsoft/fluid-build-common": "^0.11.0",
+    "@types/debug": "^0.0.31",
+    "@types/diff": "^3.5.1",
+    "@types/mocha": "^5.2.5",
+    "@types/random-js": "^1.0.31",
+    "@types/xmldoc": "^1.1.3",
+    "concurrently": "^4.1.0",
+    "diff": "^3.5.0",
+    "mocha": "^5.2.0",
+    "mocha-junit-reporter": "^1.18.0",
+    "nyc": "^14.1.1",
+    "random-js": "^1.0.8",
+    "rimraf": "^2.6.2",
+    "tslint": "^5.11.0",
+    "typescript": "~3.4.5",
+    "xmldoc": "^1.1.2"
+  },
+  "dependencies": {
+    "@microsoft/fluid-map": "^0.11.0",
+    "@microsoft/fluid-merge-tree": "^0.11.0",
+    "@microsoft/fluid-sequence": "^0.11.0"
+  },
+  "license": "MIT"
+}
