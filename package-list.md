@@ -50,7 +50,7 @@
 |               |                   |      | @microsoft/fluid-component-core-interfaces |
 |               |                   |      | @microsoft/fluid-component-runtime         |
 |               |                   |      | @microsoft/fluid-container-definitions     |
-|               |                   |      | @microsoft/fluid-container-loader          |
+| ✔             | ✔                 | ✔    | @microsoft/fluid-container-loader          |
 |               |                   |      | @microsoft/fluid-container-runtime         |
 | ✔             | ✔                 | ✔    | @microsoft/fluid-core-utils                |
 |               |                   |      | @microsoft/fluid-debugger                  |

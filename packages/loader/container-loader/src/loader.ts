@@ -241,6 +241,7 @@ export class Loader extends EventEmitter implements ILoader {
 
         let toCache: IResolvedUrl | undefined;
         if (Array.isArray(this.containerHost.resolver)) {
+            // tslint:disable-next-line:no-unsafe-any
             toCache = await configurableUrlResolver(this.containerHost.resolver, request);
         } else {
             toCache = await this.containerHost.resolver.resolve(request);
