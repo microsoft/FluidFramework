@@ -107,23 +107,11 @@ export class SummaryManager extends EventEmitter {
     }
 
     public setConnected(clientId: string) {
-        if (this.connected) {
-            return;
-        }
-
-        this.connected = true;
-        this.clientId = clientId;
-        this.refreshSummarizer();
+        this.updateConnected(true, clientId);
     }
 
     public setDisconnected() {
-        if (!this.connected) {
-            return;
-        }
-
-        this.connected = false;
-        this.clientId = undefined;
-        this.refreshSummarizer();
+        this.updateConnected(false);
     }
 
     public on(event: "summarizer", listener: (clientId: string) => void): this;
@@ -132,11 +120,21 @@ export class SummaryManager extends EventEmitter {
         return super.on(event, listener);
     }
 
+    private updateConnected(connected: boolean, clientId?: string) {
+        if (this.connected === connected) {
+            return;
+        }
+
+        this.connected = connected;
+        this.clientId = connected ? clientId : undefined;
+        this.refreshSummarizer();
+    }
+
     private getStopReason(): string | undefined {
         if (!this.connected) {
             return "parentNotConnected";
         } else if (this.clientId !== this.summarizer) {
-            return "parentShouldNotSummarize";
+            return `parentShouldNotSummarize:${this.summarizer}`;
         } else {
             return undefined;
         }
@@ -150,7 +148,9 @@ export class SummaryManager extends EventEmitter {
             this.emit("summarizer", newSummarizerClientId);
         }
 
-        // transition states
+        // transition states depending on shouldSummarize, which is a calculated
+        // property that is only true if this client is connected and has the
+        // computed summarizer client id
         switch (this.state) {
             case SummaryManagerState.Off: {
                 if (this.shouldSummarize) {
@@ -206,7 +206,7 @@ export class SummaryManager extends EventEmitter {
                 this.state = SummaryManagerState.Off;
             }
         }, (error) => {
-            this.logger.sendErrorEvent({ eventName: "CreateSummarizerError" }, error);
+            this.logger.sendErrorEvent({ eventName: "CreateSummarizerError", attempt }, error);
             if (this.shouldSummarize) {
                 this.start(attempt + 1);
             } else {
