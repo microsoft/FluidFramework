@@ -4,7 +4,7 @@
 | :-----------: | :---------------: | :--: | ------------------------------------------ |
 | ✔             | ✔                 | ✔    | @fluid-example/canvas                      |
 | ✔             | ✔                 | ✔    | @fluid-example/clicker                     |
-|               |                   |      | @fluid-example/client-ui-lib               |
+| ✔             | ✔                 | ✔    | @fluid-example/client-ui-lib               |
 | ✔             |                   |      | @fluid-example/diceroller                  |
 | ✔             |                   |      | @fluid-example/flow-intel                  |
 | ✔             |                   |      | @fluid-example/flow-intel-viewer           |
@@ -34,7 +34,7 @@
 |               |                   |      | @fluid-example/table-view                  |
 |               |                   |      | @fluid-example/tiny-web-host               |
 |               |                   |      | @fluid-example/todo                        |
-|               |                   |      | @fluid-example/translator-agent            |
+| ✔             | ✔                 | ✔    | @fluid-example/translator-agent            |
 |               |                   |      | @fluid-example/video-players               |
 |               |                   |      | @fluid-example/webflow                     |
 |               |                   |      | @fluid-internal/client-api                 |
@@ -82,7 +82,7 @@
 | ✔             |                   |      | @microsoft/fluid-runtime-definitions       |
 |               |                   |      | @microsoft/fluid-sequence                  |
 |               |                   |      | @microsoft/fluid-server-agent              |
-|               |                   |      | @microsoft/fluid-server-gateway            |
+| ✔             |                   |      | @microsoft/fluid-server-gateway            |
 | ✔             | ✔                 | ✔    | @microsoft/fluid-server-kafka-orderer      |
 |               |                   |      | @microsoft/fluid-server-lambdas            |
 |               |                   |      | @microsoft/fluid-server-lambdas-driver     |
