@@ -533,22 +533,22 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         const perfEvent = PerformanceEvent.start(this.logger, { eventName: "Load" });
 
-        const storageP = this.service.connectToStorage().then((storage) => {
-            this.storageService = new PrefetchDocumentStorageService(storage);
+        const storage = await this.service.connectToStorage().then((storageService) => {
+            this.storageService = new PrefetchDocumentStorageService(storageService);
             return this.storageService;
         });
 
         // fetch specified snapshot
-        const treeP = storageP.then(() => {
-            if (specifiedVersion === null) {
-                // intentionally do not load from snapshot
-                return undefined;
-            }
-            return this.fetchSnapshotTree(specifiedVersion);
-        });
+        let treeP: Promise<ISnapshotTree | undefined>;
+        if (specifiedVersion === null) {
+            // intentionally do not load from snapshot
+            treeP = Promise.resolve(undefined);
+        } else {
+            treeP = this.fetchSnapshotTree(specifiedVersion);
+        }
 
-        const attributesP = Promise.all([storageP, treeP]).then<IDocumentAttributes>(
-            ([storage, tree]) => {
+        const attributesP = treeP.then<IDocumentAttributes>(
+            (tree) => {
                 if (!tree) {
                     // Have to have a web socket - see code below requiring it!
                     this.connectToDeltaStream();
@@ -574,19 +574,18 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         }
 
         // ...load in the existing quorum
-        const protocolHandlerP = Promise.all([attributesP, storageP, treeP]).then(
-            ([attributes, storage, tree]) => {
+        const protocolHandlerP = Promise.all([attributesP, treeP]).then(
+            ([attributes, tree]) => {
                 // Initialize the protocol handler
                 return this.initializeProtocolState(attributes, storage, tree!);
             });
 
-        const blobManagerP = Promise.all([storageP, treeP]).then(
-            ([storage, tree]) => this.loadBlobManager(storage, tree!));
+        const blobManagerP = treeP.then(
+            (tree) => this.loadBlobManager(storage, tree!));
 
         // Wait for all the loading promises to finish
         return Promise
             .all([
-                storageP,
                 treeP,
                 attributesP,
                 blobManagerP,
@@ -594,7 +593,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                 handlerAttachedP,
             ])
             .then(async ([
-                storage,
                 tree,
                 attributes,
                 blobManager,
