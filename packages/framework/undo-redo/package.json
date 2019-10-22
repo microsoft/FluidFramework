@@ -18,7 +18,7 @@
     "build:full:compile": "npm run build:compile",
     "build:genver": "node node_modules/@microsoft/fluid-build-common/gen_version.js",
     "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
-    "eslint": "eslint --ext=ts,tsx --format codeframe src",
+    "eslint": "eslint --ext=ts,tsx --format stylish src",
     "tsc": "tsc",
     "tslint": "npm run eslint"
   },

@@ -17,7 +17,7 @@
     "build:full:compile": "npm run build:compile",
     "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
     "dev": "npm run build:dev -- --watch",
-    "eslint": "eslint --ext=ts,tsx --format codeframe src",
+    "eslint": "eslint --ext=ts,tsx --format stylish src",
     "publish-local": "npm publish --registry http://localhost:4873",
     "publish-patch-local": "npm version patch && npm run publish-local",
     "publish-wu2": "npm run build && npm publish --registry https://packages.wu2.prague.office-int.com",

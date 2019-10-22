@@ -12,7 +12,7 @@
     "clean": "rimraf dist *.tsbuildinfo package-deps.json *.build.log",
     "deploy": "npm run build && npm version patch && npm run verdaccio && npm run post-deploy",
     "dev": "webpack --env.development",
-    "eslint": "eslint --ext=ts,tsx --format codeframe src",
+    "eslint": "eslint --ext=ts,tsx --format stylish src",
     "start": "webpack-dev-server --config webpack.config.js --package package.json",
     "start:live": "webpack-dev-server --config webpack.config.js --package package.json --env.mode live",
     "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",

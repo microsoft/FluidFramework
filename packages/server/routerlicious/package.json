@@ -25,7 +25,7 @@
     "deli": "node dist/deli/index.js",
     "deli:debug": "node --inspect=0.0.0.0:5858 dist/deli/index.js",
     "docker-run": "docker run --rm -v $(pwd):/usr/src/server -w /usr/src/server node:8.14.0-slim",
-    "eslint": "eslint --ext=ts,tsx --format codeframe src",
+    "eslint": "eslint --ext=ts,tsx --format stylish src",
     "foreman": "node dist/foreman/index.js",
     "foreman:debug": "node --inspect=0.0.0.0:5858 dist/foreman/index.js",
     "paparazzi": "node dist/paparazzi/index.js",
