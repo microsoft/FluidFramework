@@ -33,8 +33,8 @@ export function blockList(nonRetriableCodes: number[]): RetryFilter {
 export const defaultRetryFilter = blockList([400, 404]);
 
 export interface IOdspResponse<T> {
-    body: T;
-    headers: any;
+    content: T;
+    headers: Map<string, string>;
 }
 
 /**
@@ -66,7 +66,7 @@ export function fetchHelper(
         try {
             const res = {
                 headers: response.headers,
-                body: await response.json() as any,
+                content: await response.json() as any,
             };
             return res;
         } catch (e) {

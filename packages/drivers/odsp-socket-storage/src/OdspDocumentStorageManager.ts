@@ -89,7 +89,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
                 return this.fetchWrapper.get<resources.IBlob>(url, blobid, headers);
             });
-            blob = response.body;
+            blob = response.content;
         }
 
         if (blob && this.attributesBlobHandles.has(blobid)) {
@@ -114,7 +114,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             const { url, headers } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/contents${getQueryString({ ref: version.id, path })}`, storageToken);
 
             const response = await this.fetchWrapper.get<resources.IBlob>(url, version.id, headers);
-            return response.body;
+            return response.content;
         });
     }
 
@@ -243,7 +243,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                     const eventInner = PerformanceEvent.start(this.logger, { eventName: "TreesLatest" });
 
                     const response = await this.fetchWrapper.get<IOdspSnapshot>(url, this.documentId, headers);
-                    const { trees, blobs, ops, sha } = response.body;
+                    const { trees, blobs, ops, sha } = response.content;
 
                     if (trees) {
                         this.initTreesCache(trees);
@@ -259,8 +259,8 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                         trees: trees ? trees.length : 0,
                         blobs: blobs ? blobs.length : 0,
                         ops: ops.length,
-                        sprequestguid: response.headers.has("sprequestguid") ? response.headers.get("sprequestguid") : undefined,
-                        contentsize: response.headers.has("content-length") ? response.headers.get("content-length") : undefined,
+                        sprequestguid: response.headers.get("sprequestguid"),
+                        contentsize: response.headers.get("content-length"),
                     };
                     eventInner.end(props);
                     event.end(props);
@@ -280,7 +280,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             // fetch the latest snapshot versions for the document
             const response = await this.fetchWrapper
                 .get<IDocumentStorageGetVersionsResponse>(url, this.documentId, headers);
-            const versionsResponse = response.body;
+            const versionsResponse = response.content;
             if (!versionsResponse) {
                 throwNetworkError("getVersions returned no response", 400);
             }
@@ -366,7 +366,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                 const storageToken = await this.getStorageToken(refresh);
 
                 const response = await fetchSnapshot(this.snapshotUrl!, storageToken, this.appId, this.fetchWrapper, id, this.fetchFullSnapshot);
-                const odspSnapshot: IOdspSnapshot = response.body;
+                const odspSnapshot: IOdspSnapshot = response.content;
                 // odspSnapshot contain "trees" when the request is made for latest or the root of the tree, for all other cases it will contain "tree" which is the fetched tree with the id
                 if (odspSnapshot) {
                     if (odspSnapshot.trees) {
@@ -478,7 +478,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             const postBody = JSON.stringify(snapshot);
 
             const response = await this.fetchWrapper.post<ISnapshotResponse>(url, postBody, headers);
-            return response.body;
+            return response.content;
         });
     }
 

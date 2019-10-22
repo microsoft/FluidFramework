@@ -47,7 +47,7 @@ export class OdspDeltaStorageService implements api.IDocumentDeltaStorageService
             const { url, headers } = getUrlAndHeadersWithAuth(baseUrl, storageToken);
 
             const response = await this.fetchWrapper.get<IDeltaStorageGetResponse>(url, url, headers);
-            const deltaStorageResponse = response.body;
+            const deltaStorageResponse = response.content;
 
             const operations: api.ISequencedDocumentMessage[] | ISequencedDeltaOpMessage[] = deltaStorageResponse.value;
             if (operations.length > 0 && "op" in operations[0]) {

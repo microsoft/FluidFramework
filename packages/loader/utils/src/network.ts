@@ -24,7 +24,7 @@ export function throwNetworkError(
         response?: Response) {
     let message = errorMessage;
     if (response) {
-        message = `${message}, msg = ${response.statusText}, type = ${response.type}`;
+        message = `${message}, msg = ${response.statusText}, type = ${response.type}, sprequestguid = ${response.headers.get("sprequestguid")}`;
     }
     throw new NetworkError(message, statusCode, canRetry);
 }

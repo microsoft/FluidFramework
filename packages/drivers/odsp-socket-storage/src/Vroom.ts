@@ -96,7 +96,7 @@ export async function getSocketStorageDiscovery(
     event.cancel({}, error);
     throw error;
   }
-  socketStorageDiscovery = response.body;
+  socketStorageDiscovery = response.content;
   event.end();
 
   if (socketStorageDiscovery.runtimeTenantId && !socketStorageDiscovery.tenantId) {
