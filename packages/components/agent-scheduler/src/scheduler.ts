@@ -276,6 +276,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
             // A client left the quorum. Iterate and clear tasks held by that client.
             // Ideally a leader should do this cleanup. But it's complicated when a leader itself leaves.
             // Probably okay for now to have every client try to do this.
+            // eslint-disable-next-line @typescript-eslint/no-misused-promises
             quorum.on("removeMember", async (clientId: string) => {
                 if (this.context.hostRuntime.deltaManager.active) {
                     const leftTasks: string[] = [];
@@ -290,6 +291,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
 
             // Listeners for new/released tasks. All clients will try to grab at the same time.
             // May be we want a randomized timer (Something like raft) to reduce chattiness?
+            // eslint-disable-next-line @typescript-eslint/no-misused-promises
             this.scheduler.on("atomicChanged", async (changed: IChanged) => {
                 if (this.context.hostRuntime.deltaManager.active) {
                     const currentClient = this.getTaskClientId(changed.key);
@@ -328,7 +330,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
             // Check to see if this client needs to do this.
             const clearCandidates: string[] = [];
             for (const taskUrl of this.scheduler.keys()) {
-                // tslint:disable-next-line: no-non-null-assertion
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/tslint/config
                 if (!this.runtime.getQuorum().getMembers().has(this.getTaskClientId(taskUrl)!)) {
                     clearCandidates.push(taskUrl);
                 }
@@ -350,6 +352,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
     }
 
     private handleReconnection() {
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises
         this.runtime.on("connected", async () => {
             await this.waitForFullConnection();
             await this.initializeCore();
@@ -407,7 +410,7 @@ export class TaskManager implements ITaskManager {
             return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
         } else {
             const trimmedUrl = request.url.substr(this.url.length);
-            const taskUrl = trimmedUrl.length > 0 && trimmedUrl.charAt(0) === "/"
+            const taskUrl = trimmedUrl.length > 0 && trimmedUrl.startsWith("/")
                 ? trimmedUrl.substr(1)
                 : "";
             if (taskUrl === "" || !this.taskMap.has(taskUrl)) {

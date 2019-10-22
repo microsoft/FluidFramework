@@ -23,7 +23,7 @@
     "publish-wu2": "npm run build && npm publish --registry https://packages.wu2.prague.office-int.com",
     "republish": "docker-compose stop verdaccio && docker-compose rm -f -v verdaccio && docker-compose create --force-recreate verdaccio && docker-compose start verdaccio && npm run publish-local",
     "tsc": "tsc",
-    "tslint": "tslint --project tsconfig.json --format verbose"
+    "tslint": "npm run eslint"
   },
   "dependencies": {
     "@microsoft/fluid-component-core-interfaces": "^0.11.0",
