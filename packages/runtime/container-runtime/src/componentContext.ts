@@ -14,6 +14,7 @@ import {
     IQuorum,
 } from "@microsoft/fluid-container-definitions";
 import {
+    BlobTreeEntry,
     Deferred,
     raiseConnectedEvent,
     readAndParse,
@@ -42,7 +43,6 @@ import { EventEmitter } from "events";
 // tslint:disable-next-line:no-submodule-imports
 import * as uuid from "uuid/v4";
 import { ContainerRuntime } from "./containerRuntime";
-import { BlobTreeEntry } from "./utils";
 
 // Snapshot Format Version to be used in component attributes.
 const currentSnapshotFormatVersion = "0.1";
@@ -177,7 +177,14 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         if (!this.componentRuntimeDeferred) {
             this.componentRuntimeDeferred = new Deferred<IComponentRuntime>();
             const details = await this.getInitialSnapshotDetails();
-            this.summaryTracker.setBaseTree(details.snapshot);
+            if (details.snapshot && !this.summaryTracker.baseTree) {
+                // do not overwrite if refreshed!
+                // local - will always give undefined tree, so never enter here
+                // remote - will give the tree at the time of construction (initial),
+                // which may be older than the refreshed one, but never newer than
+                // the refreshed or one set at constructor (in case of summarizer)
+                this.summaryTracker.setBaseTree(details.snapshot);
+            }
             const packages = details.pkg;
             let registry = this._hostRuntime.IComponentRegistry;
             let factory: ComponentFactoryTypes & Partial<IComponentRegistry>;
@@ -275,6 +282,13 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
      * Notifies the object to take snapshot of a component.
      */
     public async snapshot(fullTree: boolean = false): Promise<ITree> {
+        // base ID still being set means previous snapshot is still valid
+        const baseId = this.summaryTracker.getBaseId();
+        if (baseId && !fullTree) {
+            return { id: baseId, entries: [] };
+        }
+        this.summaryTracker.reset();
+
         await this.realize();
 
         const { pkg } = await this.getInitialSnapshotDetails();
@@ -283,13 +297,6 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
             pkg: JSON.stringify(pkg),
             snapshotFormatVersion: currentSnapshotFormatVersion,
         };
-
-        // base ID still being set means previous snapshot is still valid
-        const baseId = this.summaryTracker.getBaseId();
-        if (baseId && !fullTree) {
-            return { id: baseId, entries: [] };
-        }
-        this.summaryTracker.reset();
 
         const entries = await this.componentRuntime.snapshotInternal(fullTree);
 
@@ -417,6 +424,13 @@ export class RemotedComponentContext extends ComponentContext {
             () => {
                 throw new Error("Already attached");
             });
+
+        if (initSnapshotValue && typeof initSnapshotValue !== "string") {
+            // This will allow the summarizer to avoid calling realize if there
+            // are no changes to the component.  If the initSnapshotValue is a
+            // string, the summarizer cannot avoid calling realize.
+            this.summaryTracker.setBaseTree(initSnapshotValue);
+        }
     }
 
     public generateAttachMessage(): IAttachMessage {

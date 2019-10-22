@@ -12,7 +12,7 @@ describe("Routerlicious Url Resolver", () => {
 
     const token = "dummy";
     it("Should resolve the Routerlicious urls correctly", async () => {
-        const urlResolver = new RouterliciousUrlResolver(undefined, token, []);
+        const urlResolver = new RouterliciousUrlResolver(undefined, () => Promise.resolve(token), []);
         const url: string = "https://www.wu2.prague.office-int.com/loader/fluid/thinkable-list?chaincode=@fluid-example/shared-text@0.11.14146";
         const resolved = (await urlResolver.resolve({ url })) as IFluidResolvedUrl;
         assert.equal(resolved.tokens.jwt, token, "Token does not match");
@@ -23,7 +23,7 @@ describe("Routerlicious Url Resolver", () => {
     });
 
     it("Should resolve the localhost urls correctly", async () => {
-        const urlResolver = new RouterliciousUrlResolver(undefined, token, []);
+        const urlResolver = new RouterliciousUrlResolver(undefined, () => Promise.resolve(token), []);
         const url: string = "http://localhost:3000/loader/fluid/damp-competition?chaincode=@fluid-example/shared-text@^0.11.0";
         const resolved = (await urlResolver.resolve({ url })) as IFluidResolvedUrl;
         assert.equal(resolved.tokens.jwt, token, "Token does not match");

@@ -22,6 +22,7 @@
     "@microsoft/fluid-odsp-utils": "^0.11.0",
     "@microsoft/fluid-protocol-definitions": "^0.11.0",
     "@microsoft/fluid-odsp-urlresolver": "^0.11.0",
+    "@microsoft/fluid-routerlicious-host": "^0.11.0",
     "@microsoft/fluid-fluidapp-odsp-urlresolver": "^0.11.0",
     "@microsoft/fluid-routerlicious-urlresolver": "^0.11.0",
     "@microsoft/fluid-routerlicious-driver": "^0.11.0",

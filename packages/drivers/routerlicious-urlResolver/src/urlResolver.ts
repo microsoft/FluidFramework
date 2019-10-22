@@ -14,7 +14,7 @@ import {
     ScopeType,
 } from "@microsoft/fluid-protocol-definitions";
 import { generateToken, IAlfredTenant } from "@microsoft/fluid-server-services-core";
-import { parse } from "url";
+import { parse, URL } from "url";
 
 const r11sServers = [
     "www.wu2-ppe.prague.office-int.com",
@@ -26,20 +26,27 @@ export class RouterliciousUrlResolver implements IUrlResolver {
 
     constructor(
         private readonly config: IConfig | undefined,
-        private token: string | undefined,
+        private readonly getToken: (() => Promise<string>) | undefined,
         private readonly appTenants: IAlfredTenant[],
         private readonly scopes?: ScopeType[],
         private readonly user?: IAlfredUser) {
     }
 
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
-        const reqUrl = new URL(request.url);
+        let requestedUrl = request.url;
+        if (this.config && request.url.startsWith("/")) {
+            requestedUrl = `http://dummy:3000${request.url}`;
+        }
+        const reqUrl = new URL(requestedUrl);
         const server = reqUrl.hostname.toLowerCase();
-        if (r11sServers.indexOf(server) !== -1 || (server === "localhost" && reqUrl.port === "3000")) {
+        if (r11sServers.indexOf(server) !== -1 || (server === "localhost" && reqUrl.port === "3000") || this.config) {
             const path = reqUrl.pathname.split("/");
-            let tenantId;
-            let documentId;
-            if (path.length >= 4) {
+            let tenantId: string;
+            let documentId: string;
+            if (this.config) {
+                tenantId = this.config.tenantId;
+                documentId = this.config.documentId;
+            } else if (path.length >= 4) {
                 tenantId = path[2];
                 documentId = path[3];
             } else {
@@ -47,8 +54,11 @@ export class RouterliciousUrlResolver implements IUrlResolver {
                 documentId = path[2];
             }
 
-            if (!this.token) {
-                this.token = getR11sToken(tenantId, documentId, this.appTenants, this.scopes, this.user);
+            let token: string;
+            if (!this.getToken) {
+                token = getR11sToken(tenantId, documentId, this.appTenants, this.scopes, this.user);
+            } else {
+                token = await this.getToken();
             }
 
             const isLocalHost = server === "localhost" ? true : false;
@@ -68,9 +78,9 @@ export class RouterliciousUrlResolver implements IUrlResolver {
                 }
             }
 
-            const storageUrl = this.config ? this.config.blobStorageUrl.replace("historian:3000", "localhost:3001") :
-                isLocalHost ?
-                    `http://localhost:3001/repos/${tenantId}` : `https://historian.${serverSuffix}/repos/${tenantId}`;
+            const storageUrl = `${(this.config ? this.config.blobStorageUrl.replace("historian:3000", "localhost:3001")
+                : isLocalHost
+                    ? `http://localhost:3001` : `https://historian.${serverSuffix}`)}/repos/${tenantId}`;
             const ordererUrl = this.config ? this.config.serverUrl :
                 isLocalHost ?
                     `http://localhost:3003/` : `https://alfred.${serverSuffix}`;
@@ -86,7 +96,7 @@ export class RouterliciousUrlResolver implements IUrlResolver {
                     deltaStorageUrl,
                     ordererUrl,
                 },
-                tokens: { jwt: this.token },
+                tokens: { jwt: token },
                 type: "fluid",
                 url: fluidUrl,
             };
@@ -96,7 +106,7 @@ export class RouterliciousUrlResolver implements IUrlResolver {
     }
 }
 
-function getR11sToken(
+export function getR11sToken(
     tenantId: string,
     documentId: string,
     tenants: IAlfredTenant[],
@@ -115,7 +125,7 @@ function getR11sToken(
         throw new Error("Invalid tenant");
 }
 
-interface IAlfredUser extends IUser {
+export interface IAlfredUser extends IUser {
     displayName: string;
     name: string;
 }
@@ -123,4 +133,6 @@ interface IAlfredUser extends IUser {
 export interface IConfig {
     serverUrl: string;
     blobStorageUrl: string;
+    tenantId: string;
+    documentId: string;
 }
