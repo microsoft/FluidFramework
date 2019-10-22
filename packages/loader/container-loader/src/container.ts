@@ -538,33 +538,23 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             return this.storageService;
         });
 
-        // fetch specified snapshot
-        let treeP: Promise<ISnapshotTree | undefined>;
-        if (specifiedVersion === null) {
-            // intentionally do not load from snapshot
-            treeP = Promise.resolve(undefined);
-        } else {
-            treeP = this.fetchSnapshotTree(specifiedVersion);
-        }
+        // fetch specified snapshot, but intentionally do not load from snapshot if specifiedVersion is null
+        const tree = specifiedVersion === null ? undefined : await this.fetchSnapshotTree(specifiedVersion);
 
-        const attributesP = treeP.then<IDocumentAttributes>(
-            (tree) => {
-                if (!tree) {
-                    // Have to have a web socket - see code below requiring it!
-                    this.connectToDeltaStream();
-                    return {
-                        branch: this.id,
-                        minimumSequenceNumber: 0,
-                        sequenceNumber: 0,
-                    };
-                }
-
-                const attributesHash = ".protocol" in tree.trees
-                    ? tree.trees[".protocol"].blobs.attributes
-                    : tree.blobs[".attributes"];
-
-                return readAndParse<IDocumentAttributes>(storage, attributesHash);
+        let attributesP: Promise<IDocumentAttributes>;
+        if (!tree) {
+            attributesP = Promise.resolve({
+                branch: this.id,
+                minimumSequenceNumber: 0,
+                sequenceNumber: 0,
             });
+        } else {
+            const attributesHash = ".protocol" in tree.trees
+                ? tree.trees[".protocol"].blobs.attributes
+                : tree.blobs[".attributes"];
+
+            attributesP = readAndParse<IDocumentAttributes>(storage, attributesHash);
+        }
 
         // ...begin the connection process to the delta stream
         const handlerAttachedP = this.createDeltaManager(attributesP, connect);
@@ -574,26 +564,23 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         }
 
         // ...load in the existing quorum
-        const protocolHandlerP = Promise.all([attributesP, treeP]).then(
-            ([attributes, tree]) => {
+        const protocolHandlerP = attributesP.then(
+            (attributes) => {
                 // Initialize the protocol handler
                 return this.initializeProtocolState(attributes, storage, tree!);
             });
 
-        const blobManagerP = treeP.then(
-            (tree) => this.loadBlobManager(storage, tree!));
+        const blobManagerP = this.loadBlobManager(storage, tree!);
 
         // Wait for all the loading promises to finish
         return Promise
             .all([
-                treeP,
                 attributesP,
                 blobManagerP,
                 protocolHandlerP,
                 handlerAttachedP,
             ])
             .then(async ([
-                tree,
                 attributes,
                 blobManager,
                 protocolHandler]) => {
