@@ -9,7 +9,7 @@ import { ComponentRegistryTypes, IComponentContext, IComponentFactory, IComponen
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { SharedComponent } from "../components/sharedComponent";
 
-export class SharedComponentFactory implements IComponentFactory, IProvideComponentRegistry  {
+export class SharedComponentFactory implements IComponentFactory, IProvideComponentRegistry {
     private readonly sharedObjectRegistry: ISharedObjectRegistry;
 
     constructor(
@@ -48,6 +48,7 @@ export class SharedComponentFactory implements IComponentFactory, IProvideCompon
                 }
 
                 runtime.registerRequestHandler(async (request: IRequest) => {
+                    // eslint-disable-next-line @typescript-eslint/no-misused-promises
                     if (!instanceP) {
                         // Create a new instance of our component on demand
                         instanceP = this.instantiateInstance(runtime, context);
