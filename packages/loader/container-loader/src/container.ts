@@ -530,37 +530,21 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
      * @param connection - options (list of keywords). Accepted options are open & pause.
      */
     private async load(specifiedVersion: string | null | undefined, connection: string): Promise<void> {
-        const connectionValues = connection.split(",");
-
-        const connect = connectionValues.indexOf("open") !== -1;
-        const pause = connectionValues.indexOf("pause") !== -1;
-
         const perfEvent = PerformanceEvent.start(this.logger, { eventName: "Load" });
 
-        const storage = await this.service.connectToStorage().then((storageService) => {
-            this.storageService = new PrefetchDocumentStorageService(storageService);
-            return this.storageService;
-        });
+        this.storageService = await this.getDocumentStorageService();
 
         // fetch specified snapshot, but intentionally do not load from snapshot if specifiedVersion is null
-        const tree = specifiedVersion === null ? undefined : await this.fetchSnapshotTree(specifiedVersion);
+        const maybeSnapshotTree = specifiedVersion === null ? undefined
+            : await this.fetchSnapshotTree(specifiedVersion);
 
-        const blobManagerP = this.loadBlobManager(storage, tree);
+        const blobManagerP = this.loadBlobManager(this.storageService, maybeSnapshotTree);
 
-        let attributes: IDocumentAttributes;
-        if (!tree) {
-            attributes = {
-                branch: this.id,
-                minimumSequenceNumber: 0,
-                sequenceNumber: 0,
-            };
-        } else {
-            const attributesHash = ".protocol" in tree.trees
-                ? tree.trees[".protocol"].blobs.attributes
-                : tree.blobs[".attributes"];
+        const attributes = await this.getDocumentAttributes(this.storageService, maybeSnapshotTree);
 
-            attributes = await readAndParse<IDocumentAttributes>(storage, attributesHash);
-        }
+        const connectionValues = connection.split(",");
+        const connect = connectionValues.indexOf("open") !== -1;
+        const pause = connectionValues.indexOf("pause") !== -1;
 
         // ...begin the connection process to the delta stream
         this.createDeltaManager(attributes, connect);
@@ -571,7 +555,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         // ...load in the existing quorum
         // Initialize the protocol handler
-        const protocolHandlerP = this.initializeProtocolState(attributes, storage, tree!);
+        const protocolHandlerP = this.initializeProtocolState(attributes, this.storageService, maybeSnapshotTree);
 
         // Wait for all the loading promises to finish
         [this.blobManager, this.protocolHandler] = await Promise.all([blobManagerP, protocolHandlerP]);
@@ -580,7 +564,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         // Initialize document details - if loading a snapshot use that - otherwise we need to wait on
         // the initial details
-        if (tree) {
+        if (maybeSnapshotTree) {
             this._existing = true;
             this._parentBranch = attributes.branch !== this.id ? attributes.branch : null;
         } else {
@@ -590,7 +574,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             this._parentBranch = details!.parentBranch;
         }
 
-        await this.loadContext(attributes, storage, tree);
+        await this.loadContext(attributes, this.storageService, maybeSnapshotTree);
 
         this.context!.changeConnectionState(this.connectionState, this.clientId!, this._version);
 
@@ -601,13 +585,37 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             this.resume();
         }
 
-        perfEvent.end({}, tree ? "end" : "end_NoSnapshot");
+        perfEvent.end({}, maybeSnapshotTree ? "end" : "end_NoSnapshot");
+    }
+
+    private async getDocumentStorageService(): Promise<IDocumentStorageService> {
+        const storageService = await this.service.connectToStorage();
+        return new PrefetchDocumentStorageService(storageService);
+    }
+
+    private async getDocumentAttributes(
+        storage: IDocumentStorageService,
+        tree: ISnapshotTree | undefined,
+    ): Promise<IDocumentAttributes> {
+        if (!tree) {
+            return {
+                branch: this.id,
+                minimumSequenceNumber: 0,
+                sequenceNumber: 0,
+            };
+        }
+
+        const attributesHash = ".protocol" in tree.trees
+            ? tree.trees[".protocol"].blobs.attributes
+            : tree.blobs[".attributes"];
+
+        return readAndParse<IDocumentAttributes>(storage, attributesHash);
     }
 
     private async initializeProtocolState(
         attributes: IDocumentAttributes,
         storage: IDocumentStorageService,
-        tree: ISnapshotTree,
+        tree: ISnapshotTree | undefined,
     ): Promise<ProtocolOpHandler> {
         let members: [string, ISequencedClient][] = [];
         let proposals: [number, ISequencedProposal, string[]][] = [];
