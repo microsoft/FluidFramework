@@ -15,7 +15,7 @@ import {
 import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { EventEmitter } from "events";
 
-import { GenericComponentHandle } from "../helpers/genericComponentHandle";
+import { ComponentHandle } from "@microsoft/fluid-component-runtime";
 
 /**
  * This is as bare-bones base class that does basic setup and enables for factory on an initialize call.
@@ -37,7 +37,7 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
         protected readonly context: IComponentContext,
     ) {
         super();
-        this.innerHandle = new GenericComponentHandle(runtime.IComponentHandleContext, this);
+        this.innerHandle = new ComponentHandle(this, this.url, runtime.IComponentHandleContext);
     }
 
     /**
