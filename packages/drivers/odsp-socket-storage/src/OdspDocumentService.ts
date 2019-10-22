@@ -385,7 +385,6 @@ export class OdspDocumentService implements IDocumentService {
                         url2!,
                         20000,
                     ).then((connection) => {
-                        logger.sendTelemetryEvent({ eventName: "UsedAfdUrl" });
                         // Refresh AFD cache
                         const cacheResult = this.writeLocalStorage(lastAfdConnectionTimeMsKey, Date.now().toString());
                         if (cacheResult) {
