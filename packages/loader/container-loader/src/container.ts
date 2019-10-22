@@ -423,7 +423,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         // Pull in the prior version and snapshot tree to store against
         const lastVersion = await this.getVersion(this.id);
 
-        const parents = lastVersion.length > 0 ? [lastVersion[0].id] : [];
+        const parents = lastVersion ? [lastVersion.id] : [];
 
         // Write the full snapshot
         return this.storageService!.write(root, parents, message, "");
@@ -497,8 +497,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return root;
     }
 
-    private getVersion(version: string): Promise<IVersion[]> {
-        return this.storageService!.getVersions(version, 1);
+    private getVersion(version: string): Promise<IVersion> {
+        return this.storageService!.getVersions(version, 1).then((versions) => versions[0]);
     }
 
     private connectToDeltaStream() {
@@ -539,7 +539,13 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         });
 
         // fetch specified snapshot
-        const treeP = storageP.then(() => this.fetchSnapshotTree(specifiedVersion));
+        const treeP = storageP.then(() => {
+            if (specifiedVersion === null) {
+                // intentionally do not load from snapshot
+                return undefined;
+            }
+            return this.fetchSnapshotTree(specifiedVersion);
+        });
 
         const attributesP = Promise.all([storageP, treeP]).then<IDocumentAttributes>(
             ([storage, tree]) => {
@@ -1053,14 +1059,13 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     }
     // tslint:enable no-unsafe-any
 
-    private async fetchSnapshotTree(specifiedVersion: string | null | undefined): Promise<ISnapshotTree | undefined> {
-        if (specifiedVersion === null) {
-            // intentionally do not load from snapshot
-            return undefined;
-        }
-
-        const versions = await this.getVersion(specifiedVersion || this.id);
-        const version = versions ? versions[0] : undefined;
+    /**
+     * Get the most recent snapshot, or a specific version.
+     * @param specifiedVersion - The specific version of the snapshot to retrieve
+     * @returns The snapshot requested, or the latest snapshot if no version was specified
+     */
+    private async fetchSnapshotTree(specifiedVersion?: string): Promise<ISnapshotTree | undefined> {
+        const version = await this.getVersion(specifiedVersion || this.id);
 
         if (version) {
             return await this.storageService!.getSnapshotTree(version) || undefined;
