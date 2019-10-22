@@ -6,7 +6,7 @@
 import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
 import { PerformanceEvent, throwNetworkError } from "@microsoft/fluid-core-utils";
 import { ISocketStorageDiscovery } from "./contracts";
-import { fetchHelper, getWithRetryForTokenRefresh } from "./OdspUtils";
+import { fetchHelper, getWithRetryForTokenRefresh, IOdspResponse } from "./OdspUtils";
 
 function getOrigin(url: string) {
   return new URL(url).origin;
@@ -35,7 +35,7 @@ export async function fetchJoinSession(
   additionalParams: string,
   method: string,
   getVroomToken: (refresh: boolean) => Promise<string | undefined | null>,
-): Promise<ISocketStorageDiscovery> {
+): Promise<IOdspResponse<ISocketStorageDiscovery>> {
   return getWithRetryForTokenRefresh(async (refresh: boolean) => {
     const token = await getVroomToken(refresh);
     if (!token) {
@@ -80,9 +80,9 @@ export async function getSocketStorageDiscovery(
 ): Promise<ISocketStorageDiscovery> {
   const event = PerformanceEvent.start(logger, { eventName: "JoinSession" });
   let socketStorageDiscovery: ISocketStorageDiscovery;
-
+  let response: IOdspResponse<ISocketStorageDiscovery>;
   try {
-    socketStorageDiscovery = await fetchJoinSession(
+    response = await fetchJoinSession(
       appId,
       driveId,
       itemId,
@@ -96,7 +96,7 @@ export async function getSocketStorageDiscovery(
     event.cancel({}, error);
     throw error;
   }
-
+  socketStorageDiscovery = response.content;
   event.end();
 
   if (socketStorageDiscovery.runtimeTenantId && !socketStorageDiscovery.tenantId) {

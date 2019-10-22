@@ -7,6 +7,7 @@ import { IOdspSnapshot } from "./contracts";
 import { IFetchWrapper } from "./fetchWrapper";
 import { getQueryString } from "./getQueryString";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
+import { IOdspResponse } from "./OdspUtils";
 
 /**
  * Fetches a snapshot from the server with a given version id.
@@ -25,7 +26,7 @@ export async function fetchSnapshot(
     storageFetchWrapper: IFetchWrapper,
     versionId: string,
     fetchFullSnapshot: boolean,
-): Promise<IOdspSnapshot> {
+): Promise<IOdspResponse<IOdspSnapshot>> {
     const path = `/trees/${versionId}`;
     let queryParams: { [key: string]: string } = {};
 
