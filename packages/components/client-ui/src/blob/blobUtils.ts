@@ -55,21 +55,21 @@ async function fileToInclusion(file: File): Promise<IGenericBlob> {
 
     switch (baseInclusion.type) {
         case "image": {
-            const blobP = imageHandler(file, baseInclusion as IImageBlob);
+            const blobP = imageHandler(file, baseInclusion);
 
             return Promise.all([arrayBufferP, blobP])
                 .then(([arrayBuffer, blob]) => {
                     const incl: IImageBlob = {
                         content: arrayBuffer,
                         fileName: file.name,
-                        height: (blob as IImageBlob).height,
+                        height: (blob).height,
                         id: gitHashFile(arrayBuffer),
                         size: arrayBuffer.byteLength,
                         type: "image",
                         url: blob.url,
-                        width: (blob as IImageBlob).width,
+                        width: (blob).width,
                     };
-                    return incl as IImageBlob;
+                    return incl;
                 });
         }
         case "video": {
@@ -87,7 +87,7 @@ async function fileToInclusion(file: File): Promise<IGenericBlob> {
                         url: blob.url,
                         width: blob.width,
                     };
-                    return incl as IVideoBlob;
+                    return incl;
                 });
         }
         default: {
