@@ -82,13 +82,14 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         if (!blob) {
             this.checkSnapshotUrl();
 
-            blob = await getWithRetryForTokenRefresh(async (refresh: boolean) => {
+            const response = await getWithRetryForTokenRefresh(async (refresh: boolean) => {
                 const storageToken = await this.getStorageToken(refresh);
 
                 const { url, headers } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/blobs/${blobid}${this.queryString}`, storageToken);
 
                 return this.fetchWrapper.get<resources.IBlob>(url, blobid, headers);
             });
+            blob = response.body;
         }
 
         if (blob && this.attributesBlobHandles.has(blobid)) {
@@ -104,7 +105,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         return blob;
     }
 
-    public getContent(version: api.IVersion, path: string): Promise<resources.IBlob> {
+    public async getContent(version: api.IVersion, path: string): Promise<resources.IBlob> {
         this.checkSnapshotUrl();
 
         return getWithRetryForTokenRefresh(async (refresh: boolean) => {
@@ -112,7 +113,8 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
             const { url, headers } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/contents${getQueryString({ ref: version.id, path })}`, storageToken);
 
-            return this.fetchWrapper.get<resources.IBlob>(url, version.id, headers);
+            const response = await this.fetchWrapper.get<resources.IBlob>(url, version.id, headers);
+            return response.body;
         });
     }
 
@@ -240,7 +242,8 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                     // This event measures only successful cases of getLatest call (no tokens, no retries).
                     const eventInner = PerformanceEvent.start(this.logger, { eventName: "TreesLatest" });
 
-                    const { trees, blobs, ops, sha } = await this.fetchWrapper.get<IOdspSnapshot>(url, this.documentId, headers);
+                    const response = await this.fetchWrapper.get<IOdspSnapshot>(url, this.documentId, headers);
+                    const { trees, blobs, ops, sha } = response.body;
 
                     if (trees) {
                         this.initTreesCache(trees);
@@ -256,6 +259,8 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                         trees: trees ? trees.length : 0,
                         blobs: blobs ? blobs.length : 0,
                         ops: ops.length,
+                        sprequestguid: response.headers.has("sprequestguid") ? response.headers.get("sprequestguid") : undefined,
+                        contentsize: response.headers.has("content-length") ? response.headers.get("content-length") : undefined,
                     };
                     eventInner.end(props);
                     event.end(props);
@@ -273,8 +278,9 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             const { url, headers } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/versions?count=${count}`, storageToken);
 
             // fetch the latest snapshot versions for the document
-            const versionsResponse = await this.fetchWrapper
+            const response = await this.fetchWrapper
                 .get<IDocumentStorageGetVersionsResponse>(url, this.documentId, headers);
+            const versionsResponse = response.body;
             if (!versionsResponse) {
                 throwNetworkError("getVersions returned no response", 400);
             }
@@ -359,7 +365,8 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             tree = await getWithRetryForTokenRefresh(async (refresh: boolean) => {
                 const storageToken = await this.getStorageToken(refresh);
 
-                const odspSnapshot: IOdspSnapshot = await fetchSnapshot(this.snapshotUrl!, storageToken, this.appId, this.fetchWrapper, id, this.fetchFullSnapshot);
+                const response = await fetchSnapshot(this.snapshotUrl!, storageToken, this.appId, this.fetchWrapper, id, this.fetchFullSnapshot);
+                const odspSnapshot: IOdspSnapshot = response.body;
                 // odspSnapshot contain "trees" when the request is made for latest or the root of the tree, for all other cases it will contain "tree" which is the fetched tree with the id
                 if (odspSnapshot) {
                     if (odspSnapshot.trees) {
@@ -470,7 +477,8 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
             const postBody = JSON.stringify(snapshot);
 
-            return this.fetchWrapper.post<ISnapshotResponse>(url, postBody, headers);
+            const response = await this.fetchWrapper.post<ISnapshotResponse>(url, postBody, headers);
+            return response.body;
         });
     }
 
