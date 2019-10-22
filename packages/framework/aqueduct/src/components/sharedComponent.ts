@@ -30,7 +30,10 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
     public get IComponentLoadable() { return this; }
     public get IComponentHandle() { return this.innerHandle; }
 
-    public get handle(): IComponentHandle {return this.innerHandle; }
+    /**
+     * {@inheritDoc IComponentHandle.handle}
+     */
+    public get handle(): IComponentHandle { return this.innerHandle; }
 
     public constructor(
         protected readonly runtime: IComponentRuntime,
@@ -77,6 +80,9 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
 
     // #region IComponentLoadable
 
+    /**
+     * {@inheritDoc IComponentLoadable.url}
+     */
     public get url() { return this.context.id; }
 
     // #endregion IComponentLoadable
