@@ -83,7 +83,7 @@
 |               |                   |      | @microsoft/fluid-sequence                  |
 |               |                   |      | @microsoft/fluid-server-agent              |
 |               |                   |      | @microsoft/fluid-server-gateway            |
-|               |                   |      | @microsoft/fluid-server-kafka-orderer      |
+| ✔             | ✔                 | ✔    | @microsoft/fluid-server-kafka-orderer      |
 |               |                   |      | @microsoft/fluid-server-lambdas            |
 |               |                   |      | @microsoft/fluid-server-lambdas-driver     |
 |               |                   |      | @microsoft/fluid-server-memory-orderer     |

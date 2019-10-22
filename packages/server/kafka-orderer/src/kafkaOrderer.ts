@@ -12,7 +12,6 @@ import {
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
 import * as core from "@microsoft/fluid-server-services-core";
-import * as _ from "lodash";
 
 export class KafkaOrdererConnection implements core.IOrdererConnection {
     public static async create(
