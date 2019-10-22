@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 // tslint:disable: prefer-const
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+import { IComponent, IComponentRouter } from "@microsoft/fluid-component-core-interfaces";
 import { IBlob, IDocumentStorageService, ISnapshotTree } from "@microsoft/fluid-protocol-definitions";
 import {
     ComponentFactoryTypes,
@@ -11,7 +11,6 @@ import {
     IComponentFactory,
     IComponentRegistry,
     IComponentRuntime,
-    IHostRuntime,
 } from "@microsoft/fluid-runtime-definitions";
 import { MockRuntime } from "@microsoft/fluid-test-runtime-utils";
 import * as assert from "assert";
@@ -30,7 +29,7 @@ describe("Component Context Tests", () => {
         beforeEach(async () => {
 
             containerRuntime = {
-                IComponentRegistry: { get: (id: string, runtime: IHostRuntime) => {
+                IComponentRegistry: { get: (id: string, runtime: IComponentRouter) => {
                     const factory = {
                         IComponentFactory: {
                             instantiateComponent: (context: IComponentContext) => undefined,
@@ -81,14 +80,14 @@ describe("Component Context Tests", () => {
 
         it("Supplying array of packages in LocalComponentContext should not create exception", async () => {
             containerRuntime = {
-                IComponentRegistry: { get: (id: string, runtime: IHostRuntime) => {
+                IComponentRegistry: { get: (id: string, runtime: IComponentRouter) => {
                     const factory = {
                         IComponentFactory: {
                             instantiateComponent: (context: IComponentContext) => undefined,
                         },
                         instantiateComponent: (context: IComponentContext) =>  undefined,
                     } as ComponentFactoryTypes & Partial<IComponentRegistry>;
-                    factory.IComponentRegistry = { get: (name: string, rt: IHostRuntime) => {
+                    factory.IComponentRegistry = { get: (name: string, r: IComponentRouter) => {
                         return Promise.resolve(factory);
                     }} as IComponentRegistry;
                     return Promise.resolve(factory);
@@ -128,7 +127,7 @@ describe("Component Context Tests", () => {
         beforeEach(async () => {
 
             containerRuntime = {
-                IComponentRegistry: {get: (id: string, runtime: IHostRuntime) => {
+                IComponentRegistry: {get: (id: string, runtime: IComponentRouter) => {
                     const factory = {
                         IComponentFactory: {
                             instantiateComponent: (context: IComponentContext) => undefined,
