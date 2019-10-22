@@ -124,7 +124,7 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
     private submitRawOperation(messages: core.IRawOperationMessage[]) {
         // Add trace
         messages.forEach((message) => {
-            const operation = message.operation as IDocumentMessage;
+            const operation = message.operation;
             if (operation && operation.traces === undefined) {
                 operation.traces = [];
             } else if (operation && operation.traces && operation.traces.length > 1) {

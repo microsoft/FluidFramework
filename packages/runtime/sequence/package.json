@@ -24,7 +24,7 @@
     "test:newsnapfiles": "node dist/test/createSnapshotFiles.js",
     "testfarm": "node dist/test/testFarm.js",
     "tsc": "tsc",
-    "tslint": "tslint --project tsconfig.json --format verbose"
+    "tslint": "npm run eslint"
   },
   "dependencies": {
     "@microsoft/fluid-core-utils": "^0.11.0",

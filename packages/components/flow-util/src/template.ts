@@ -33,6 +33,7 @@ class Cursor {
 
     public child(index: number) {
         // Calculate the distance to the child from the last child.
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion,@typescript-eslint/no-unnecessary-type-assertion
         let delta = this.element!.childElementCount - index;
 
         if (index < delta) {
@@ -61,6 +62,7 @@ class Cursor {
     private moveTo(transition: ICursorTransition) {
         this.path += `.${transition.property}`;
         this.pathName += transition.suffix;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion,@typescript-eslint/no-unnecessary-type-assertion
         this.element = transition.fn(this.element!);
     }
 }
