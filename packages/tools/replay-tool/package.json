@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
-    "replayTool": "bin/replayTool.js"
+    "replayTool": "bin/replayTool"
   },
   "sideEffects": "false",
   "scripts": {
