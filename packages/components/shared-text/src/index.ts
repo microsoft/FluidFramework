@@ -12,7 +12,12 @@ import * as Snapshotter from "@fluid-example/snapshotter-agent";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IContainerContext, IRuntime, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
 import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
-import { IComponentContext, IComponentFactory, IComponentRegistry } from "@microsoft/fluid-runtime-definitions";
+import {
+    IComponentContext,
+    IComponentFactory,
+    IComponentRegistry,
+    IHostRuntime,
+} from "@microsoft/fluid-runtime-definitions";
 import * as sharedTextComponent from "./component";
 // import { GraphIQLView } from "./graphql";
 import { waitForFullConnection } from "./utils";
@@ -87,6 +92,38 @@ class SharedTextFactoryComponent implements IComponentFactory, IRuntimeFactory {
     public get IComponentFactory() { return this; }
     public get IRuntimeFactory() { return this; }
 
+    /**
+     * A request handler for a container runtime
+     * @param request - The request
+     * @param runtime - Container Runtime instance
+     */
+    private static async containerRequestHandler(request: IRequest, runtime: IHostRuntime) {
+        console.log(request.url);
+
+        // if (request.url === "/graphiql") {
+        //     const runner = (await runtime.request({ url: "/" })).value as sharedTextComponent.SharedTextRunner;
+        //     const sharedText = await runner.getRoot().get<IComponentHandle>("text").get<SharedString>();
+        //     return { status: 200, mimeType: "fluid/component", value: new GraphIQLView(sharedText) };
+        // }
+
+        console.log(request.url);
+        const requestUrl = request.url.length > 0 && request.url.charAt(0) === "/"
+            ? request.url.substr(1)
+            : request.url;
+        const trailingSlash = requestUrl.indexOf("/");
+
+        const componentId = requestUrl
+            ? requestUrl.substr(0, trailingSlash === -1 ? requestUrl.length : trailingSlash)
+            : "text";
+        const component = await runtime.getComponentRuntime(componentId, true);
+
+        return component.request(
+            {
+                headers: request.headers,
+                url: trailingSlash === -1 ? "" : requestUrl.substr(trailingSlash),
+            });
+    }
+
     public instantiateComponent(context: IComponentContext): void {
         return sharedTextComponent.instantiateComponent(context);
     }
@@ -100,7 +137,7 @@ class SharedTextFactoryComponent implements IComponentFactory, IRuntimeFactory {
         const runtime = await ContainerRuntime.load(
             context,
             new MyRegistry(context, this, "https://pragueauspkn-3873244262.azureedge.net"),
-            this.createContainerRequestHandler,
+            [SharedTextFactoryComponent.containerRequestHandler],
             { generateSummaries });
 
         // Registering for tasks to run in headless runner.
@@ -127,39 +164,6 @@ class SharedTextFactoryComponent implements IComponentFactory, IRuntimeFactory {
         }
 
         return runtime;
-    }
-
-    /**
-     * Add create and store a request handler as pat of ContainerRuntime load
-     * @param runtime - Container Runtime instance
-     */
-    private createContainerRequestHandler(runtime: ContainerRuntime) {
-        return async (request: IRequest) => {
-            console.log(request.url);
-
-            // if (request.url === "/graphiql") {
-            //     const runner = (await runtime.request({ url: "/" })).value as sharedTextComponent.SharedTextRunner;
-            //     const sharedText = await runner.getRoot().get<IComponentHandle>("text").get<SharedString>();
-            //     return { status: 200, mimeType: "fluid/component", value: new GraphIQLView(sharedText) };
-            // }
-
-            console.log(request.url);
-            const requestUrl = request.url.length > 0 && request.url.charAt(0) === "/"
-                ? request.url.substr(1)
-                : request.url;
-            const trailingSlash = requestUrl.indexOf("/");
-
-            const componentId = requestUrl
-                ? requestUrl.substr(0, trailingSlash === -1 ? requestUrl.length : trailingSlash)
-                : "text";
-            const component = await runtime.getComponentRuntime(componentId, true);
-
-            return component.request(
-                {
-                    headers: request.headers,
-                    url: trailingSlash === -1 ? "" : requestUrl.substr(trailingSlash),
-                });
-        };
     }
 }
 

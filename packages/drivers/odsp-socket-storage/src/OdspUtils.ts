@@ -5,6 +5,7 @@
 
 import { NetworkError, throwNetworkError } from "@microsoft/fluid-core-utils";
 import { default as fetch, RequestInfo as FetchRequestInfo, RequestInit as FetchRequestInit } from "node-fetch";
+import { IOdspSocketError } from "./contracts";
 
 /**
  * returns true when the request should/can be retried
@@ -82,4 +83,12 @@ export function getWithRetryForTokenRefresh<T>(get: (refresh: boolean) => Promis
         // document being opened, though there maybe really bad user experience (consuming thousands of ops)
         throw e;
     });
+}
+
+export function errorObjectFromOdspError(socketError: IOdspSocketError) {
+    return new NetworkError(
+        socketError.message,
+        socketError.code,
+        defaultRetryFilter(socketError.code), // canRetry
+        socketError.retryAfter);
 }

@@ -48,6 +48,8 @@ export function resolveUrl(
         const endPointConfig: IConfig = {
             blobStorageUrl: config.get("worker:blobStorageUrl"),
             serverUrl: config.get("worker:serverUrl"),
+            tenantId,
+            documentId,
         };
         const resolverList = [new RouterliciousUrlResolver(endPointConfig, undefined, appTenants, scopes, user)];
         const resolvedP = resolveFluidUrl(request.originalUrl, resolverList);

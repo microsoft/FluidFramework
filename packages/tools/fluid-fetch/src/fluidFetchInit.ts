@@ -4,7 +4,7 @@
  */
 
 // tslint:disable:object-literal-sort-keys
-import { BaseTelemetryNullLogger } from "@microsoft/fluid-core-utils";
+import { BaseTelemetryNullLogger, configurableUrlResolver } from "@microsoft/fluid-core-utils";
 import { FluidAppOdspUrlResolver } from "@microsoft/fluid-fluidapp-odsp-urlresolver";
 import * as odsp from "@microsoft/fluid-odsp-driver";
 import { OdspUrlResolver } from "@microsoft/fluid-odsp-urlresolver";
@@ -16,7 +16,6 @@ import {
 } from "@microsoft/fluid-odsp-utils";
 import { IDocumentService, IFluidResolvedUrl, IResolvedUrl, IUrlResolver } from "@microsoft/fluid-protocol-definitions";
 import * as r11s from "@microsoft/fluid-routerlicious-driver";
-import { ConfigurableUrlResolver } from "@microsoft/fluid-routerlicious-host";
 import { RouterliciousUrlResolver } from "@microsoft/fluid-routerlicious-urlresolver";
 import * as child_process from "child_process";
 import * as fs from "fs";
@@ -216,8 +215,7 @@ async function resolveUrl(url: string): Promise<IResolvedUrl> {
         new FluidAppOdspUrlResolver(),
         new RouterliciousUrlResolver(undefined, () => Promise.resolve(paramJWT), []),
     ];
-    const resolver = new ConfigurableUrlResolver(resolversList);
-    const resolved: IResolvedUrl = await resolver.resolve({ url });
+    const resolved: IResolvedUrl = await configurableUrlResolver(resolversList, { url });
     return resolved;
 }
 
