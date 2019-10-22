@@ -43,25 +43,25 @@
 |               |                   |      | @microsoft/fluid-agent-scheduler           |
 |               |                   |      | @microsoft/fluid-aqueduct                  |
 |               |                   |      | @microsoft/fluid-aqueduct-react            |
-|               |                   |      | @microsoft/fluid-base-host                 |
+| ✔             |                   |      | @microsoft/fluid-base-host                 |
 |               |                   |      | @microsoft/fluid-blob-manager              |
 |               |                   |      | @microsoft/fluid-build-common              |
 |               |                   |      | @microsoft/fluid-cell                      |
-|               |                   |      | @microsoft/fluid-component-core-interfaces |
+| ✔             |                   |      | @microsoft/fluid-component-core-interfaces |
 |               |                   |      | @microsoft/fluid-component-runtime         |
-|               |                   |      | @microsoft/fluid-container-definitions     |
+| ✔             |                   |      | @microsoft/fluid-container-definitions     |
 | ✔             | ✔                 | ✔    | @microsoft/fluid-container-loader          |
 |               |                   |      | @microsoft/fluid-container-runtime         |
 | ✔             | ✔                 | ✔    | @microsoft/fluid-core-utils                |
 |               |                   |      | @microsoft/fluid-debugger                  |
-|               |                   |      | @microsoft/fluid-driver-base               |
+| ✔             |                   |      | @microsoft/fluid-driver-base               |
 |               |                   |      | @microsoft/fluid-external-component-loader |
 |               |                   |      | @microsoft/fluid-fetch                     |
 |               |                   |      | @microsoft/fluid-file-driver               |
-|               |                   |      | @microsoft/fluid-fluidapp-odsp-urlresolver |
-|               |                   |      | @microsoft/fluid-framework-interfaces      |
-|               |                   |      | @microsoft/fluid-gitresources              |
-|               |                   |      | @microsoft/fluid-host-service-interfaces   |
+| ✔             |                   |      | @microsoft/fluid-fluidapp-odsp-urlresolver |
+| ✔             |                   |      | @microsoft/fluid-framework-interfaces      |
+| ✔             |                   |      | @microsoft/fluid-gitresources              |
+| ✔             |                   |      | @microsoft/fluid-host-service-interfaces   |
 |               |                   |      | @microsoft/fluid-iframe-driver             |
 |               |                   |      | @microsoft/fluid-ink                       |
 |               |                   |      | @microsoft/fluid-local-test-server         |
@@ -74,12 +74,12 @@
 |               |                   |      | @microsoft/fluid-ordered-collection        |
 | ✔             | ✔                 | ✔    | @microsoft/fluid-protocol-definitions      |
 |               |                   |      | @microsoft/fluid-register-collection       |
-|               |                   |      | @microsoft/fluid-replay-driver             |
+| ✔             |                   |      | @microsoft/fluid-replay-driver             |
 |               |                   |      | @microsoft/fluid-replay-tool               |
 | ✔             | ✔                 | ✔    | @microsoft/fluid-routerlicious-driver      |
-|               |                   |      | @microsoft/fluid-routerlicious-host        |
+| ✔             |                   |      | @microsoft/fluid-routerlicious-host        |
 |               |                   |      | @microsoft/fluid-routerlicious-urlresolver |
-|               |                   |      | @microsoft/fluid-runtime-definitions       |
+| ✔             |                   |      | @microsoft/fluid-runtime-definitions       |
 |               |                   |      | @microsoft/fluid-sequence                  |
 |               |                   |      | @microsoft/fluid-server-agent              |
 |               |                   |      | @microsoft/fluid-server-gateway            |
@@ -89,14 +89,14 @@
 |               |                   |      | @microsoft/fluid-server-memory-orderer     |
 |               |                   |      | @microsoft/fluid-server-routerlicious      |
 |               |                   |      | @microsoft/fluid-server-services           |
-|               |                   |      | @microsoft/fluid-server-services-client    |
-|               |                   |      | @microsoft/fluid-server-services-core      |
-|               |                   |      | @microsoft/fluid-server-services-utils     |
+| ✔             |                   |      | @microsoft/fluid-server-services-client    |
+| ✔             |                   |      | @microsoft/fluid-server-services-core      |
+| ✔             |                   |      | @microsoft/fluid-server-services-utils     |
 |               |                   |      | @microsoft/fluid-server-test-utils         |
 |               |                   |      | @microsoft/fluid-server-tools-core         |
-|               |                   |      | @microsoft/fluid-shared-object-base        |
-|               |                   |      | @microsoft/fluid-test-runtime-utils        |
+| ✔             |                   |      | @microsoft/fluid-shared-object-base        |
+| ✔             |                   |      | @microsoft/fluid-test-runtime-utils        |
 |               |                   |      | @microsoft/fluid-test-snapshots            |
 | ✔             | ✔                 | ✔    | @microsoft/fluid-undo-redo                 |
-|               |                   |      | @microsoft/fluid-web-code-loader           |
+| ✔             |                   |      | @microsoft/fluid-web-code-loader           |
 |               |                   |      | @microsoft/fluid-webpack-component-loader  |

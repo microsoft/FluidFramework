@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable */
 // tslint:disable
 import * as MergeTree from "@microsoft/fluid-merge-tree";
 import { TextSegment, createGroupOp, PropertySet, IMergeTreeOp, MergeTreeTextHelper } from "@microsoft/fluid-merge-tree";

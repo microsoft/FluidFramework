@@ -6,6 +6,7 @@
 import { Request } from "express";
 // In this case we want @types/express-serve-static-core, not express-serve-static-core, and so disable the lint rule
 // tslint:disable-next-line:no-implicit-dependencies
+// eslint-disable-next-line
 import { Params } from "express-serve-static-core";
 import * as _ from "lodash";
 

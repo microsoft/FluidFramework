@@ -50,6 +50,7 @@ interface IHTMLProps {
 /**
  * Embeds a Fluid Component that supports IComponentHTMLVisual
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 class HTMLEmbeddedComponent extends React.Component<IHTMLProps, { }> {
     private readonly ref: React.RefObject<HTMLDivElement>;
 
@@ -83,6 +84,7 @@ interface IReactProps {
  * Embeds a Fluid Component that supports IComponentReactViewable
  */
 // tslint:disable-next-line:function-name
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function ReactEmbeddedComponent(props: IReactProps) {
     return props.component.createJSXElement();
 }

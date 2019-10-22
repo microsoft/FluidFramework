@@ -4,7 +4,6 @@
  */
 
 import { ICollection, MongoManager } from "@microsoft/fluid-server-services-core";
-import * as _ from "lodash";
 import * as moment from "moment";
 
 /**
@@ -95,7 +94,7 @@ export class AccountManager {
             userId,
         };
 
-        await collection.upsert({ _id: id}, account, null);
+        await collection.upsert({ _id: id }, account, null);
     }
 
     /**
