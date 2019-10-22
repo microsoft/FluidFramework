@@ -170,7 +170,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     // TSLint incorrectly believes protocolHandler is not reassigned, but actually it is in load().
     // tslint:disable-next-line:prefer-readonly
     private protocolHandler: ProtocolOpHandler | undefined;
-    private connectionDetailsP: Promise<IConnectionDetails | null> | undefined;
+    private connectionDetailsP: Promise<IConnectionDetails> | undefined;
 
     private firstConnection = true;
     private readonly connectionTransitionTimes: number[] = [];
@@ -557,23 +557,26 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         // Initialize the protocol handler
         const protocolHandlerP = this.initializeProtocolState(attributes, this.storageService, maybeSnapshotTree);
 
-        // Wait for all the loading promises to finish
-        [this.blobManager, this.protocolHandler] = await Promise.all([blobManagerP, protocolHandlerP]);
-
-        perfEvent.reportProgress({}, "beforeContextLoad");
+        let loadDetailsP: Promise<void>;
 
         // Initialize document details - if loading a snapshot use that - otherwise we need to wait on
         // the initial details
         if (maybeSnapshotTree) {
             this._existing = true;
             this._parentBranch = attributes.branch !== this.id ? attributes.branch : null;
+            loadDetailsP = Promise.resolve();
         } else {
-            const details = await this.connectToDeltaStream();
-
-            this._existing = details!.existing;
-            this._parentBranch = details!.parentBranch;
+            loadDetailsP = this.connectToDeltaStream().then((details) => {
+                this._existing = details.existing;
+                this._parentBranch = details.parentBranch;
+            });
         }
 
+        // loadContext directly requires blobManager and protocolHandler to be ready, and eventually calls
+        // instantiateRuntime which will want to know existing state.  Wait for these promises to finish.
+        [this.blobManager, this.protocolHandler] = await Promise.all([blobManagerP, protocolHandlerP, loadDetailsP]);
+
+        perfEvent.reportProgress({}, "beforeContextLoad");
         await this.loadContext(attributes, this.storageService, maybeSnapshotTree);
 
         this.context!.changeConnectionState(this.connectionState, this.clientId!, this._version);
