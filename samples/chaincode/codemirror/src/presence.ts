@@ -138,12 +138,10 @@ export class CodeMirrorPresenceManager extends EventEmitter {
         super();
         this.presenceManager = new PresenceManager(runtime);
 
-        const setSelection = () => {
+        this.codeMirror.on("cursorActivity", () => {
             const selection = this.doc.listSelections();
             this.presenceManager.send(selection);
-        };
-
-        this.codeMirror.on("cursorActivity", () => setSelection());
+        });
         
         this.presenceManager.on("newPresence", (presenceInfo: IPresenceInfo) => {
             if (this.presenceMap.has(presenceInfo.userId)) {
