@@ -16,7 +16,7 @@
     "clean": "rimraf dist *.tsbuildinfo package-deps.json *.build.log",
     "eslint": "eslint --ext=ts,tsx --format stylish src",
     "tsc": "tsc",
-    "tslint": "tslint --project tsconfig.json --format verbose"
+    "tslint": "npm run eslint"
   },
   "dependencies": {
     "@microsoft/fluid-component-core-interfaces": "^0.11.0",
