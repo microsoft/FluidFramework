@@ -146,6 +146,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
     private pendingClientId: string | undefined;
     private loaded = false;
+    // TSLint incorrectly believes blobManager is not reassigned, but actually it is in load().
+    // tslint:disable-next-line:prefer-readonly
     private blobManager: BlobManager | undefined;
 
     // Active chaincode and associated runtime
@@ -165,6 +167,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private context: ContainerContext | undefined;
     private pkg: string | IFluidCodeDetails | undefined;
     private codeQuorumKey;
+    // TSLint incorrectly believes protocolHandler is not reassigned, but actually it is in load().
+    // tslint:disable-next-line:prefer-readonly
     private protocolHandler: ProtocolOpHandler | undefined;
     private connectionDetailsP: Promise<IConnectionDetails | null> | undefined;
 
@@ -570,45 +574,34 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         const protocolHandlerP = this.initializeProtocolState(attributes, storage, tree!);
 
         // Wait for all the loading promises to finish
-        return Promise
-            .all([
-                blobManagerP,
-                protocolHandlerP,
-            ])
-            .then(async ([
-                blobManager,
-                protocolHandler]) => {
+        [this.blobManager, this.protocolHandler] = await Promise.all([blobManagerP, protocolHandlerP]);
 
-                this.protocolHandler = protocolHandler;
-                this.blobManager = blobManager;
+        perfEvent.reportProgress({}, "beforeContextLoad");
 
-                perfEvent.reportProgress({}, "beforeContextLoad");
+        // Initialize document details - if loading a snapshot use that - otherwise we need to wait on
+        // the initial details
+        if (tree) {
+            this._existing = true;
+            this._parentBranch = attributes.branch !== this.id ? attributes.branch : null;
+        } else {
+            const details = await this.connectToDeltaStream();
 
-                // Initialize document details - if loading a snapshot use that - otherwise we need to wait on
-                // the initial details
-                if (tree) {
-                    this._existing = true;
-                    this._parentBranch = attributes.branch !== this.id ? attributes.branch : null;
-                } else {
-                    const details = await this.connectToDeltaStream();
+            this._existing = details!.existing;
+            this._parentBranch = details!.parentBranch;
+        }
 
-                    this._existing = details!.existing;
-                    this._parentBranch = details!.parentBranch;
-                }
+        await this.loadContext(attributes, storage, tree);
 
-                await this.loadContext(attributes, storage, tree);
+        this.context!.changeConnectionState(this.connectionState, this.clientId!, this._version);
 
-                this.context!.changeConnectionState(this.connectionState, this.clientId!, this._version);
+        // Internal context is fully loaded at this point
+        this.loaded = true;
 
-                // Internal context is fully loaded at this point
-                this.loaded = true;
+        if (connect && !pause) {
+            this.resume();
+        }
 
-                if (connect && !pause) {
-                    this.resume();
-                }
-
-                perfEvent.end({}, tree ? "end" : "end_NoSnapshot");
-            });
+        perfEvent.end({}, tree ? "end" : "end_NoSnapshot");
     }
 
     private async initializeProtocolState(
@@ -616,25 +609,17 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         storage: IDocumentStorageService,
         tree: ISnapshotTree,
     ): Promise<ProtocolOpHandler> {
-        let members: [string, ISequencedClient][];
-        let proposals: [number, ISequencedProposal, string[]][];
-        let values: [string, any][];
+        let members: [string, ISequencedClient][] = [];
+        let proposals: [number, ISequencedProposal, string[]][] = [];
+        let values: [string, any][] = [];
 
         if (tree) {
             const baseTree = ".protocol" in tree.trees ? tree.trees[".protocol"] : tree;
-            const snapshot = await Promise.all([
+            [members, proposals, values] = await Promise.all([
                 readAndParse<[string, ISequencedClient][]>(storage, baseTree.blobs.quorumMembers!),
                 readAndParse<[number, ISequencedProposal, string[]][]>(storage, baseTree.blobs.quorumProposals!),
                 readAndParse<[string, ICommittedProposal][]>(storage, baseTree.blobs.quorumValues!),
             ]);
-
-            members = snapshot[0];
-            proposals = snapshot[1];
-            values = snapshot[2];
-        } else {
-            members = [];
-            proposals = [];
-            values = [];
         }
 
         const protocol = new ProtocolOpHandler(
@@ -819,7 +804,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             // Begin fetching any pending deltas once we know the base sequence #. Can this fail?
             // It seems like something, like reconnection, that we would want to retry but otherwise allow
             // the document to load
-            this._deltaManager!.attachOpHandler(
+            this._deltaManager.attachOpHandler(
                 attributes.minimumSequenceNumber,
                 attributes.sequenceNumber,
                 {
@@ -832,7 +817,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                 },
                 true);
         } else {
-            this._deltaManager!.attachOpHandler(
+            this._deltaManager.attachOpHandler(
                 attributes.minimumSequenceNumber,
                 attributes.sequenceNumber,
                 {
