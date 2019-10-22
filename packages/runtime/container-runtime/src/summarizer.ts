@@ -241,12 +241,14 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
                     if (op.type === MessageType.SummaryAck) {
                         this.logger.sendTelemetryEvent({
                             eventName: "SummaryAck",
+                            onBehalfOf: this.onBehalfOfClientId,
                             timePending: Date.now() - this.lastSummaryTime,
                             summarySequenceNumber: ack.summaryProposal.summarySequenceNumber,
                         });
                     } else {
                         this.logger.sendErrorEvent({
                             eventName: "SummaryNack",
+                            onBehalfOf: this.onBehalfOfClientId,
                             timePending: Date.now() - this.lastSummaryTime,
                             summarySequenceNumber: ack.summaryProposal.summarySequenceNumber,
                             message: (ack as ISummaryNack).errorMessage,
