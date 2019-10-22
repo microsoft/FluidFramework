@@ -74,6 +74,7 @@ const stream = split().on("data", (message) => {
 
 async function refreshUser(user: any, accountManager: AccountManager) {
     const accounts = await accountManager.getAccounts(user.sub);
+    // eslint-disable-next-line require-atomic-updates
     user.accounts = accounts;
 
     return user;
@@ -121,6 +122,7 @@ export function create(
         const redisHost = config.get("redis:host");
         const redisPort = config.get("redis:port");
         const redisPass = config.get("redis:pass");
+        // eslint-disable-next-line @typescript-eslint/camelcase
         const options: any = { auth_pass: redisPass };
         if (config.get("redis:tls")) {
             options.tls = {
@@ -173,16 +175,16 @@ export function create(
         passport.use(
             "msa",
             new passportOpenIdConnect.Strategy({
-                    // I believe consumers should make sure we pull the right thing
-                    authorizationURL: "https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize",
-                    callbackURL: "/connect/microsoft/callback",
-                    clientID: msaConfiguration.clientId,
-                    clientSecret: msaConfiguration.secret,
-                    issuer: "https://login.microsoftonline.com/9188040d-6c67-4c5b-b112-36a304b66dad/v2.0",
-                    passReqToCallback: true,
-                    skipUserProfile: true,
-                    tokenURL: "https://login.microsoftonline.com/common/oauth2/v2.0/token",
-                },
+                // I believe consumers should make sure we pull the right thing
+                authorizationURL: "https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize",
+                callbackURL: "/connect/microsoft/callback",
+                clientID: msaConfiguration.clientId,
+                clientSecret: msaConfiguration.secret,
+                issuer: "https://login.microsoftonline.com/9188040d-6c67-4c5b-b112-36a304b66dad/v2.0",
+                passReqToCallback: true,
+                skipUserProfile: true,
+                tokenURL: "https://login.microsoftonline.com/common/oauth2/v2.0/token",
+            },
                 (req, iss, sub, profile, jwtClaims, accessToken, refreshToken, params, done) => {
                     connectAccount(
                         req.user,
@@ -205,7 +207,7 @@ export function create(
     }));
 
     // Get local accounts - used primarily for automated testing
-    const localAccounts = config.get("login:accounts") as { username: string, password: string }[];
+    const localAccounts = config.get("login:accounts") as { username: string; password: string }[];
     passport.use(new passportLocal.Strategy(
         (username, password, done) => {
             for (const localAccount of localAccounts) {

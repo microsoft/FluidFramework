@@ -67,7 +67,7 @@ export function create(
                     },
                     jwtKey);
 
-                const rawPath = request.params[0] as string;
+                const rawPath = request.params[0];
                 const slash = rawPath.indexOf("/");
                 const documentId = rawPath.substring(0, slash !== -1 ? slash : rawPath.length);
                 const path = rawPath.substring(slash !== -1 ? slash : rawPath.length);
@@ -97,7 +97,7 @@ export function create(
                     const entryPoint = request.query.entrypoint;
 
                     let codeDetails: IFluidCodeDetails;
-                    if (chaincode.indexOf("http") === 0) {
+                    if (chaincode.startsWith("http")) {
                         codeDetails = {
                             config: {
                                 [`@gateway:cdn`]: chaincode,
@@ -144,7 +144,7 @@ export function create(
                             (script, index) => {
                                 return {
                                     id: `${pkg.parsed.name}-${index}`,
-                                    url: script.indexOf("http") === 0 ? script : `${pkg.packageUrl}/${script}`,
+                                    url: script.startsWith("http") ? script : `${pkg.packageUrl}/${script}`,
                                 };
                             }),
                     };

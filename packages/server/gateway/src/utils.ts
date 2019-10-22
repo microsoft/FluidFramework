@@ -12,7 +12,7 @@ import * as _ from "lodash";
 
 export interface ICachedPackage {
     entrypoint: string;
-    scripts: { id: string, url: string }[];
+    scripts: { id: string; url: string }[];
 }
 
 /**

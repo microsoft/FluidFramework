@@ -120,10 +120,10 @@ export async function initialize(
         const options = {
             blockUpdateMarkers: true,
             config,
-            tokens: (resolved as IFluidResolvedUrl).tokens,
+            tokens: (resolved).tokens,
         };
         new OuterDocumentServiceFactory(
-            selectDocumentServiceFactoryForProtocol(resolved as IFluidResolvedUrl, factoryMap),
+            selectDocumentServiceFactoryForProtocol(resolved, factoryMap),
             privateSession.frameP,
             options,
             { resolver },

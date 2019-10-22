@@ -55,10 +55,9 @@ async function getInternalComponent(
     scopes: ScopeType[],
 ): Promise<IResolvedUrl> {
     const regex = url.protocol === "fluid:"
-        ? /^\/([^\/]*)\/([^\/]*)(\/?.*)$/
-        : /^\/loader\/([^\/]*)\/([^\/]*)(\/?.*)$/;
-    const match = url.path.match(regex);
-
+        ? /^\/([^/]*)\/([^/]*)(\/?.*)$/
+        : /^\/loader\/([^/]*)\/([^/]*)(\/?.*)$/;
+    const match = regex.exec(url.path);
     if (!match) {
         return getWebComponent(url);
     }
@@ -102,7 +101,7 @@ async function getInternalComponent(
 
 // Checks whether the url belongs to other Fluid endpoints.
 function isExternalComponent(url: string, endpoints: string[]) {
-    return endpoints.indexOf(url) !== -1;
+    return endpoints.includes(url);
 }
 
 export function create(
@@ -128,8 +127,8 @@ export function create(
         const resultP = (alfred.host === url.host || gateway.host === url.host)
             ? getInternalComponent(request, config, url, appTenants, scopes)
             : isExternalComponent(urlPrefix, federatedEndpoints)
-            ? getExternalComponent(request, `${urlPrefix}/api/v1/load`, request.body.url as string, scopes)
-            : getWebComponent(url);
+                ? getExternalComponent(request, `${urlPrefix}/api/v1/load`, request.body.url as string, scopes)
+                : getWebComponent(url);
 
         resultP.then(
             (result) => response.status(200).json(result),

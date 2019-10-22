@@ -13,9 +13,10 @@ export class DocumentFactory implements IDocumentFactory {
 
     public get IDocumentFactory(): IDocumentFactory { return this; }
 
-    constructor(private readonly tenantId: string,
-                private readonly moniker?: string,
-                private readonly url?: string) {
+    constructor(
+        private readonly tenantId: string,
+        private readonly moniker?: string,
+        private readonly url?: string) {
     }
 
     /**
@@ -27,6 +28,7 @@ export class DocumentFactory implements IDocumentFactory {
     }
 
     public async create(chaincode: IFluidCodeDetails): Promise<string> {
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises, no-async-promise-executor
         const monikerP = new Promise(async (resolve) => {
             if (this.moniker) {
                 resolve(this.moniker);

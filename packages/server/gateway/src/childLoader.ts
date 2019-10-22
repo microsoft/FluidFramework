@@ -8,10 +8,12 @@ import { IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
 import { BaseTelemetryNullLogger, Deferred } from "@microsoft/fluid-core-utils";
 import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
-import { IDocumentServiceFactory,
-        IFluidResolvedUrl,
-        IResolvedUrl,
-        ScopeType } from "@microsoft/fluid-protocol-definitions";
+import {
+    IDocumentServiceFactory,
+    IFluidResolvedUrl,
+    IResolvedUrl,
+    ScopeType,
+} from "@microsoft/fluid-protocol-definitions";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
 import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
 import { NodeCodeLoader, NodeWhiteList } from "@microsoft/fluid-server-services";
@@ -95,6 +97,7 @@ class KeyValueLoader {
             new Map<string, IResolvedUrl>([[documentUrl, result.data]]));
 
         const hostConf: IHostConfig = { documentServiceFactory: documentServiceFactories, urlResolver: resolver };
+        // eslint-disable-next-line require-atomic-updates
         config.tokens = (result.data as IFluidResolvedUrl).tokens;
 
         const loader = new Loader(
@@ -142,7 +145,7 @@ class KeyValueLoader {
 
 let cache: IKeyValue;
 
-// TODO (mdaumi): Move this to comlink.
+// eslint-disable-next-line @typescript-eslint/no-misused-promises
 process.on("message", async (message: IIncomingMessage) => {
     if (message.type === "init") {
         const keyValueLoaderP = promiseTimeout(cacheLoadTimeoutMS, KeyValueLoader.load(message.param));

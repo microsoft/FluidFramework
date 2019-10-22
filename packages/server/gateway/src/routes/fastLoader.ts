@@ -63,7 +63,7 @@ export function create(
             },
             jwtKey);
 
-        const rawPath =  request.params[0] as string;
+        const rawPath =  request.params[0];
         const slash = rawPath.indexOf("/");
         const documentId = rawPath.substring(0, slash !== -1 ? slash : rawPath.length);
         const path = rawPath.substring(slash !== -1 ? slash : rawPath.length);

@@ -57,7 +57,7 @@ export class GatewayResourcesFactory implements utils.IResourcesFactory<GatewayR
         const redisCache = new services.RedisCache(redisClient);
 
         // Tenants attached to the apps this service exposes
-        const appTenants = config.get("gateway:tenants") as { id: string, key: string }[];
+        const appTenants = config.get("gateway:tenants") as { id: string; key: string }[];
 
         // This wanst to create stuff
         const port = utils.normalizePort(process.env.PORT || "3000");
