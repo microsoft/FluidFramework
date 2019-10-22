@@ -51,6 +51,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     private static createOpsFromDelta(event: SequenceDeltaEvent): MergeTree.IMergeTreeOp[] {
         const ops: MergeTree.IMergeTreeOp[] = [];
         for (const r of event.ranges) {
+            /* eslint-disable no-case-declarations */
             switch (event.deltaOperation) {
                 case MergeTree.MergeTreeDeltaType.ANNOTATE:
                     const lastAnnotate = ops[ops.length - 1] as MergeTree.IMergeTreeAnnotateMsg;
@@ -90,6 +91,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
 
                 default:
             }
+            /* eslint-enable no-case-declarations */
         }
         return ops;
     }
@@ -540,7 +542,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
 
         const ops: MergeTree.IMergeTreeOp[] = [];
         function transfromOps(event: SequenceDeltaEvent) {
-            ops.push(... SharedSegmentSequence.createOpsFromDelta(event));
+            ops.push(...SharedSegmentSequence.createOpsFromDelta(event));
         }
         const needsTransformation = message.referenceSequenceNumber !== message.sequenceNumber - 1;
         let stashMessage = message;
@@ -587,7 +589,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         // initialize the interval collections
         this.initializeIntervalCollections();
         if (error) {
-            this.logger.sendErrorEvent({eventName: "SequenceLoadFailed" }, error);
+            this.logger.sendErrorEvent({ eventName: "SequenceLoadFailed" }, error);
             this.loadedDeferred.reject(error);
         } else {
             this.isLoaded = true;

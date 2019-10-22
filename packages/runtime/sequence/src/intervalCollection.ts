@@ -273,6 +273,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
         private readonly helpers: IIntervalHelpers<TInterval>) {
 
         this.endIntervalTree =
+            // eslint-disable-next-line @typescript-eslint/unbound-method
             new MergeTree.RedBlackTree<TInterval, TInterval>(helpers.compareEnds);
     }
 

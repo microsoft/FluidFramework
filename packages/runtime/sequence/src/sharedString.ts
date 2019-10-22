@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {} from "@microsoft/fluid-component-core-interfaces";
+import { } from "@microsoft/fluid-component-core-interfaces";
 import * as MergeTree from "@microsoft/fluid-merge-tree";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { EventEmitter } from "events";
@@ -60,6 +60,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
     private readonly mergeTreeTextHelper: MergeTree.MergeTreeTextHelper;
 
     constructor(document: IComponentRuntime, public id: string) {
+        // eslint-disable-next-line @typescript-eslint/unbound-method
         super(document, id, SharedStringFactory.Attributes, SharedStringFactory.segmentFromSpec);
         this.mergeTreeTextHelper = this.client.createTextHelper();
     }
