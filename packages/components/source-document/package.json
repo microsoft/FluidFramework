@@ -17,7 +17,7 @@
     "build:full:compile": "npm run build:compile",
     "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
     "dev": "npm run build:esnext -- --watch",
-    "eslint": "eslint --ext=ts,tsx --fix-dry-run src",
+    "eslint": "eslint --ext=ts,tsx --format codeframe src",
     "test": "mocha -r ts-node/register -r ignore-styles --recursive test/**/*.spec.ts --exit",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml --exit",
     "tsc": "tsc",

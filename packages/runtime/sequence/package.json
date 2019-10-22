@@ -18,7 +18,7 @@
     "build:full:compile": "npm run build:compile",
     "build:genver": "node node_modules/@microsoft/fluid-build-common/gen_version.js",
     "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
-    "eslint": "eslint --ext=ts,tsx --fix-dry-run src",
+    "eslint": "eslint --ext=ts,tsx --format codeframe src",
     "test": "mocha --recursive dist/test/**/*.spec.js",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
     "test:newsnapfiles": "node dist/test/createSnapshotFiles.js",

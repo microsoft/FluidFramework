@@ -17,7 +17,7 @@
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
-    "eslint": "eslint --ext=ts,tsx --fix-dry-run src",
+    "eslint": "eslint --ext=ts,tsx --format codeframe src",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose"
   },

@@ -20,7 +20,7 @@
     "build:full:compile": "concurrently npm:build:compile npm:webpack:min",
     "build:watch": "watch 'npm run tsc && npm run webpack' src",
     "clean": "rimraf dist public/scripts/dist *.tsbuildinfo package-deps.json *.build.log",
-    "eslint": "eslint --ext=ts,tsx --fix-dry-run src",
+    "eslint": "eslint --ext=ts,tsx --format codeframe src",
     "less": "lessc src/stylesheets/style.less public/stylesheets/dist/style.css && lessc src/stylesheets/map.less public/stylesheets/dist/map.css",
     "test": "mocha --recursive dist/test --exit",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",

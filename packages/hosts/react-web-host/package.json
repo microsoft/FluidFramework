@@ -15,7 +15,7 @@
     "build:full:compile": "npm run build:compile",
     "build:webpack": "webpack --env build",
     "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
-    "eslint": "eslint --ext=ts,tsx --fix-dry-run src",
+    "eslint": "eslint --ext=ts,tsx --format codeframe src",
     "start": "webpack-dev-server",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose",
