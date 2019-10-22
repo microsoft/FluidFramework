@@ -73,4 +73,4 @@ export interface ISummaryMessage {
     head: string;
     message: string;
     parents: string[];
-};
+}
