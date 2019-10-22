@@ -116,6 +116,7 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
     private processDeltas() {
         // For grouping to work we must process all local messages immediately and in the single turn.
         // So loop over them until one of the conditions below is false.
+        // eslint-disable-next-line no-constant-condition
         while (true) {
             // Return early if no messages to process, we have become paused, or are already processing a delta
             if (this.q.length === 0 || this._paused || this.processing || this.error) {

@@ -205,6 +205,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
 
     public async prepare(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
         // included for back compat with documents created prior to prepare deprecation
+        // eslint-disable-next-line @typescript-eslint/unbound-method
         if (!this.runtime || !this.runtime.prepare) {
             return Promise.reject("Runtime must query for IMessageHandler to signal it does not implement prepare");
         }
@@ -218,6 +219,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
 
     public async postProcess(message: ISequencedDocumentMessage, local: boolean, context: any): Promise<void> {
         // included for back compat with documents created prior to postProcess deprecation
+        // eslint-disable-next-line @typescript-eslint/unbound-method
         if (!this.runtime || !this.runtime.postProcess) {
             return Promise.reject("Runtime must query for IMessageHandler to signal it does not implement postProcess");
         }

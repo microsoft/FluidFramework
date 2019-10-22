@@ -28,6 +28,7 @@ export class PrefetchDocumentStorageService implements IDocumentStorageService {
 
     public getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
         const p = this.storage.getSnapshotTree(version);
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises
         if (p && this.prefetchEnabled) {
             // We don't care if the prefetch succeed
             // tslint:disable-next-line:no-floating-promises
@@ -103,13 +104,13 @@ export class PrefetchDocumentStorageService implements IDocumentStorageService {
     private prefetchTreeCore(tree: ISnapshotTree, secondary: string[]) {
         for (const blobKey of Object.keys(tree.blobs)) {
             const blob = tree.blobs[blobKey];
-            if (blobKey[0] === "." || blobKey === "header" || blobKey.indexOf("quorum") === 0) {
+            if (blobKey.startsWith(".") || blobKey === "header" || blobKey.startsWith("quorum")) {
                 // We don't care if the prefetch succeed
                 // tslint:disable-next-line:no-floating-promises
                 if (blob !== null) {
                     this.cachedRead(blob);
                 }
-            } else if (blobKey[0] !== "deltas") {
+            } else if (!blobKey.startsWith("deltas")) {
                 if (blob !== null) {
                     secondary.push(blob);
                 }

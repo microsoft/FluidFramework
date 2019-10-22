@@ -106,6 +106,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             request,
             logger);
 
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises, no-async-promise-executor
         return new Promise<Container>(async (res, rej) => {
             let alreadyRaisedError = false;
             const onError = (error) => {
@@ -132,7 +133,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                     }
                     container.ignoreUnhandledConnectonError();
                     onError(error);
-            });
+                });
         });
     }
 
@@ -380,12 +381,12 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
     public reloadContext(): void {
         // pause inbound synchronously
-        this.deltaManager!.inbound.systemPause();
-        this.deltaManager!.inboundSignal.systemPause();
+        this.deltaManager.inbound.systemPause();
+        this.deltaManager.inboundSignal.systemPause();
 
         this.reloadContextCore().then(() => {
-            this.deltaManager!.inbound.systemResume();
-            this.deltaManager!.inboundSignal.systemResume();
+            this.deltaManager.inbound.systemResume();
+            this.deltaManager.inboundSignal.systemResume();
         });
     }
 
@@ -520,7 +521,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private ignoreUnhandledConnectonError() {
         // avoid unhandled promises
         if (this.connectionDetailsP) {
-            this.connectionDetailsP.catch(() => {});
+            this.connectionDetailsP.catch(() => { });
         }
     }
 
@@ -535,8 +536,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
      */
     private async load(specifiedVersion: string | null | undefined, connection: string): Promise<void> {
         const connectionValues = connection.split(",");
-        const connect = connectionValues.indexOf("open") !== -1;
-        const pause = connectionValues.indexOf("pause") !== -1;
+        const connect = connectionValues.includes("open");
+        const pause = connectionValues.includes("pause");
 
         const perfEvent = PerformanceEvent.start(this.logger, { eventName: "Load" });
 
@@ -648,8 +649,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         const protocol = new ProtocolOpHandler(
             attributes.branch,
-            attributes.minimumSequenceNumber!,
-            attributes.sequenceNumber!,
+            attributes.minimumSequenceNumber,
+            attributes.sequenceNumber,
             members,
             proposals,
             values,
@@ -722,7 +723,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
     private async loadCodeFromQuorum(
         quorum: Quorum,
-    ): Promise<{ pkg: IFluidCodeDetails | undefined, chaincode: IRuntimeFactory }> {
+    ): Promise<{ pkg: IFluidCodeDetails | undefined; chaincode: IRuntimeFactory }> {
         // back compat - can remove in 0.7
         const codeQuorumKey = quorum.has("code")
             ? "code"
@@ -894,8 +895,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             this.logger.sendPerformanceEvent({
                 eventName:
                     this.firstConnection
-                    ? "ConnectionStateChange_InitialConnect"
-                    : "ConnectionStateChange_Reconnect",
+                        ? "ConnectionStateChange_InitialConnect"
+                        : "ConnectionStateChange_Reconnect",
                 duration: time - this.connectionTransitionTimes[this.connectionState],
                 reason,
             });
@@ -960,7 +961,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             return;
         }
 
-        this.context!.changeConnectionState(value, this.clientId!, this._version!);
+        this.context!.changeConnectionState(value, this.clientId!, this._version);
 
         this.protocolHandler!.quorum.changeConnectionState(value, this.clientId!);
 
@@ -1046,7 +1047,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private processSignal(message: ISignalMessage) {
         // No clientId indicates a system signal message.
         if (message.clientId === null && this._audience) {
-            const innerContent = message.content as { content: any, type: string };
+            const innerContent = message.content as { content: any; type: string };
             if (innerContent.type === MessageType.ClientJoin) {
                 const newClient = innerContent.content as ISignalClient;
                 this._audience.addMember(newClient.clientId, newClient.client);
@@ -1063,6 +1064,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     // tslint:disable no-unsafe-any
     private getScopes(options: any): string[] {
         return options && options.tokens && options.tokens.jwt ?
+            // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
             (jwtDecode(options.tokens.jwt) as ITokenClaims).scopes : [];
     }
     // tslint:enable no-unsafe-any

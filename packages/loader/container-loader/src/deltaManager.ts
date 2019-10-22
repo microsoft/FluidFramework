@@ -194,7 +194,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this._inboundPending = new DeltaQueue<ISequencedDocumentMessage>(
             (op, callback) => {
                 // Explicitly split the two cases to avoid the async call in the case we are not split
-                if (op!.contents === undefined) {
+                if (op.contents === undefined) {
                     this.fetchOpContent(op).then(
                         (opContents) => {
                             op.contents = opContents.contents;
@@ -238,10 +238,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                             () => {
                                 this.contentCache.set({
                                     clientId: this.connection!.details.clientId,
-                                    clientSequenceNumber: message!.clientSequenceNumber,
-                                    contents: message!.contents as string,
+                                    clientSequenceNumber: message.clientSequenceNumber,
+                                    contents: message.contents as string,
                                 });
-                                message!.contents = undefined;
+                                message.contents = undefined;
                                 this.connection!.submit([message]);
                                 callback();
                             },
@@ -263,7 +263,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this._inboundSignal = new DeltaQueue<ISignalMessage>((message, callback: (error?) => void) => {
             this.handler!.processSignal({
                 clientId: message.clientId,
-                content: JSON.parse(message!.content as string),
+                content: JSON.parse(message.content as string),
             });
             callback();
         });
@@ -430,7 +430,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                     this.deltaStorageP = this.service.connectToDeltaStorage();
                 }
 
-                const deltaStorage = await this.deltaStorageP!;
+                const deltaStorage = await this.deltaStorageP;
 
                 // Grab a chunk of deltas - limit the number fetched to MaxBatchDeltas
                 canRetry = true;
@@ -909,7 +909,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         if (message.sequenceNumber <= this.lastQueuedSequenceNumber) {
             this.logger.sendTelemetryEvent({
                 eventName: "DuplicateMessage",
-                lastQueued: this.lastQueuedSequenceNumber!,
+                lastQueued: this.lastQueuedSequenceNumber,
                 sequenceNumber: message.sequenceNumber,
                 totalDuplicateMessages: ++this.duplicateMsgCount,
             });
