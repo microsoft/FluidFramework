@@ -4,14 +4,13 @@
  */
 
 // tslint:disable: no-console
-import { IComponent, IComponentQueryableLegacy } from "@microsoft/fluid-component-core-interfaces";
+import { IComponent, IComponentQueryableLegacy, IComponentRouter } from "@microsoft/fluid-component-core-interfaces";
 import { IFluidPackage, isFluidPackage } from "@microsoft/fluid-container-definitions";
 import { Deferred } from "@microsoft/fluid-core-utils";
 import {
     ComponentFactoryTypes,
     IComponentFactory,
     IComponentRegistry,
-    IHostRuntime,
 } from "@microsoft/fluid-runtime-definitions";
 
 /**
@@ -42,7 +41,7 @@ export class UrlRegistry implements IComponentRegistry {
 
     public get IComponentRegistry() { return this; }
 
-    public async get(name: string, runtime: IHostRuntime): Promise<ComponentFactoryTypes> {
+    public async get(name: string, router: IComponentRouter): Promise<ComponentFactoryTypes> {
 
         if (!this.urlRegistryMap.has(name)
             && (name.startsWith("http://") || name.startsWith("https://"))) {
@@ -70,7 +69,7 @@ export class UrlRegistry implements IComponentRegistry {
                         componentFactory = fluidExport.IComponentFactory;
                         if (fluidExport.IComponentDefaultFactory) {
                             const registry = fluidExport.IComponentDefaultFactory;
-                            componentFactory =  (await registry.getDefaultFactory(runtime)) as IComponentFactory;
+                            componentFactory =  (await registry.getDefaultFactory(router)) as IComponentFactory;
                         }
                     } else {
                         const queryable = fluidExport as IComponentQueryableLegacy;

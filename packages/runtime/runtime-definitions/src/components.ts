@@ -310,7 +310,8 @@ export interface IHostRuntime extends
     EventEmitter,
     IProvideComponentSerializer,
     IProvideComponentHandleContext,
-    IProvideComponentRegistry {
+    IProvideComponentRegistry,
+    IComponentRouter {
     readonly id: string;
     readonly existing: boolean;
     readonly options: any;

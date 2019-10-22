@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ComponentFactoryTypes, IHostRuntime } from "@microsoft/fluid-runtime-definitions";
+import { IComponentRouter } from "@microsoft/fluid-component-core-interfaces";
+import { ComponentFactoryTypes } from "@microsoft/fluid-runtime-definitions";
 
 declare module "@microsoft/fluid-component-core-interfaces" {
     export interface IComponent extends Readonly<Partial<IProvideComponentDefaultFactory>> {}
@@ -14,5 +15,5 @@ export interface IProvideComponentDefaultFactory {
 }
 
 export interface IComponentDefaultFactory extends IProvideComponentDefaultFactory {
-    getDefaultFactory(runtime: IHostRuntime): Promise<ComponentFactoryTypes>;
+    getDefaultFactory(router: IComponentRouter): Promise<ComponentFactoryTypes>;
 }

@@ -7,9 +7,10 @@ import { AgentSchedulerFactory } from "@microsoft/fluid-agent-scheduler";
 import {
     IComponent,
     IComponentHandleContext,
+    IComponentRouter,
     IComponentSerializer,
     IRequest,
-    IResponse } from "@microsoft/fluid-component-core-interfaces";
+    IResponse} from "@microsoft/fluid-component-core-interfaces";
 import {
     ConnectionState,
     IAudience,
@@ -348,6 +349,7 @@ const schedulerRuntimeRequestHandler: RuntimeRequestHandler =
  * It will define the component level mappings.
  */
 export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRuntime {
+
     /**
      * Load the components from a snapshot and returns the runtime.
      * @param context - Context of the container.
@@ -458,6 +460,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     public get IComponentRegistry(): IComponentRegistry {
         return this.registry;
     }
+    public get IComponentRouter() { return this; }
 
     public readonly IComponentSerializer: IComponentSerializer = new ComponentSerializer();
 
@@ -1395,13 +1398,13 @@ export class WrappedComponentRegistry implements IComponentRegistry {
 
     public get IComponentRegistry() { return this; }
 
-    public async get(name: string, runtime: IHostRuntime): Promise<ComponentFactoryTypes> {
+    public async get(name: string, router: IComponentRouter): Promise<ComponentFactoryTypes> {
         if (name === schedulerId) {
             return this.agentScheduler;
         } else if (this.extraRegistries && this.extraRegistries.has(name)) {
             return this.extraRegistries.get(name);
         } else {
-            return this.registry.get(name, runtime);
+            return this.registry.get(name, router);
         }
     }
 }
