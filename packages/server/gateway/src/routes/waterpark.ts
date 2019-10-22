@@ -10,7 +10,6 @@ import { extractDetails, WebCodeLoader, WhiteList } from "@microsoft/fluid-web-c
 import { Router } from "express";
 import * as safeStringify from "json-stringify-safe";
 import * as jwt from "jsonwebtoken";
-import * as _ from "lodash";
 import * as moniker from "moniker";
 import { Provider } from "nconf";
 import * as winston from "winston";
@@ -117,35 +116,35 @@ export function create(
 
         Promise.all([resolvedP, fullTreeP, pkgP, scriptsP, timingsP])
             .then(([resolved, fullTree, pkg, scripts, timings]) => {
-            if (!pkg) {
-                resolved.url += `${path}`;
-            } else {
-                resolved.url += `?chaincode=${chaincode}`;
-            }
-            winston.info(`render ${tenantId}/${documentId} +${Date.now() - start}`);
+                if (!pkg) {
+                    resolved.url += `${path}`;
+                } else {
+                    resolved.url += `?chaincode=${chaincode}`;
+                }
+                winston.info(`render ${tenantId}/${documentId} +${Date.now() - start}`);
 
-            timings.push(Date.now() - start);
+                timings.push(Date.now() - start);
 
-            response.render(
-                "loader",
-                {
-                    cache: fullTree ? JSON.stringify(fullTree.cache) : undefined,
-                    chaincode: JSON.stringify(pkg),
-                    config: workerConfig,
-                    jwt: jwtToken,
-                    npm: config.get("worker:npm"),
-                    partials: defaultPartials,
-                    resolved: JSON.stringify(resolved),
-                    scripts,
-                    timings: JSON.stringify(timings),
-                    title: documentId,
-                    user: getUserDetails(request),
-                });
-        }, (error) => {
-            response.status(400).end(safeStringify(error, undefined, 2));
-        }).catch((error) => {
-            response.status(500).end(safeStringify(error, undefined, 2));
-        });
+                response.render(
+                    "loader",
+                    {
+                        cache: fullTree ? JSON.stringify(fullTree.cache) : undefined,
+                        chaincode: JSON.stringify(pkg),
+                        config: workerConfig,
+                        jwt: jwtToken,
+                        npm: config.get("worker:npm"),
+                        partials: defaultPartials,
+                        resolved: JSON.stringify(resolved),
+                        scripts,
+                        timings: JSON.stringify(timings),
+                        title: documentId,
+                        user: getUserDetails(request),
+                    });
+            }, (error) => {
+                response.status(400).end(safeStringify(error, undefined, 2));
+            }).catch((error) => {
+                response.status(500).end(safeStringify(error, undefined, 2));
+            });
     });
 
     return router;

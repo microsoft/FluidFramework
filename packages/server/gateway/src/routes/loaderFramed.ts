@@ -10,7 +10,6 @@ import { extractDetails, WebCodeLoader, WhiteList } from "@microsoft/fluid-web-c
 import { Router } from "express";
 import * as safeStringify from "json-stringify-safe";
 import * as jwt from "jsonwebtoken";
-import * as _ from "lodash";
 import { Provider } from "nconf";
 import { parse } from "url";
 import { v4 } from "uuid";
@@ -158,32 +157,32 @@ export function create(
 
                 Promise.all([resolvedP, fullTreeP, pkgP, scriptsP, timingsP])
                     .then(([resolved, fullTree, pkg, scripts, timings]) => {
-                    resolved.url += path + (search ? search : "");
-                    winston.info(`render ${tenantId}/${documentId} +${Date.now() - start}`);
+                        resolved.url += path + (search ? search : "");
+                        winston.info(`render ${tenantId}/${documentId} +${Date.now() - start}`);
 
-                    timings.push(Date.now() - start);
+                        timings.push(Date.now() - start);
 
-                    response.render(
-                        "loaderFramed",
-                        {
-                            cache: fullTree ? JSON.stringify(fullTree.cache) : undefined,
-                            chaincode: JSON.stringify(pkg),
-                            clientId: config.get("login:microsoft").clientId,
-                            config: workerConfig,
-                            jwt: jwtToken,
-                            npm: config.get("worker:npm"),
-                            partials: defaultPartials,
-                            resolved: JSON.stringify(resolved),
-                            scripts,
-                            timings: JSON.stringify(timings),
-                            title: documentId,
-                            user: getUserDetails(request),
-                        });
-                }, (error) => {
-                    response.status(400).end(`ERROR: ${error.stack}\n${safeStringify(error, undefined, 2)}`);
-                }).catch((error) => {
-                    response.status(500).end(`ERROR: ${error.stack}\n${safeStringify(error, undefined, 2)}`);
-                });
+                        response.render(
+                            "loaderFramed",
+                            {
+                                cache: fullTree ? JSON.stringify(fullTree.cache) : undefined,
+                                chaincode: JSON.stringify(pkg),
+                                clientId: config.get("login:microsoft").clientId,
+                                config: workerConfig,
+                                jwt: jwtToken,
+                                npm: config.get("worker:npm"),
+                                partials: defaultPartials,
+                                resolved: JSON.stringify(resolved),
+                                scripts,
+                                timings: JSON.stringify(timings),
+                                title: documentId,
+                                user: getUserDetails(request),
+                            });
+                    }, (error) => {
+                        response.status(400).end(`ERROR: ${error.stack}\n${safeStringify(error, undefined, 2)}`);
+                    }).catch((error) => {
+                        response.status(500).end(`ERROR: ${error.stack}\n${safeStringify(error, undefined, 2)}`);
+                    });
             }
         });
 

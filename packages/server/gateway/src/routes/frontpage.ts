@@ -8,7 +8,6 @@ import { IAlfredTenant } from "@microsoft/fluid-server-services-core";
 import { Router } from "express";
 import * as safeStringify from "json-stringify-safe";
 import * as jwt from "jsonwebtoken";
-import * as _ from "lodash";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import { spoEnsureLoggedIn } from "../gateway-odsp-utils";

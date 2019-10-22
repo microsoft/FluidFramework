@@ -9,6 +9,7 @@ import * as moment from "moment";
 /**
  * User interface
  */
+// eslint-disable-next-line import/export
 export interface IUser {
     id: string;
     details: IUserDetails;
@@ -51,6 +52,7 @@ export interface IAccount {
 /**
  * Interface representing information about a logged in user
  */
+// eslint-disable-next-line import/export
 export interface IUser {
     user: IUser;
     accounts: IAccount[];
