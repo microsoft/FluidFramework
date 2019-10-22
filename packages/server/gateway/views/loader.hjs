@@ -38,7 +38,7 @@
         var scriptIds = [];
         {{/scripts}}
   
-        controllers.loader.initialize(
+        containerP = controllers.loader.initialize(
             window.location.href,
             resolved,
             cache,
@@ -49,6 +49,45 @@
             config,
             clientId,
             user);
+
+        const connectionDiv = document.getElementById("connection-state");
+
+        function quorumState(container) {
+            if (container.getQuorum().getMember(container.clientId)) {
+                return "connected";
+            } else if (container.audience.getMember(container.clientId)) {
+                return "connected (read-only)";
+            } else {
+                return "connected (???)";
+            }
+        }
+
+        containerP.then((container) => {
+            container.on("disconnected", () => {
+                connectionDiv.innerHTML = "disconnected";
+            });
+            container.on("joining", () => {
+                connectionDiv.innerHTML = "joining...";
+            });
+            container.on("connected", () => {
+                connectionDiv.innerHTML = quorumState(container);
+            });
+
+            container.getQuorum().on("addMember", () => {
+                connectionDiv.innerHTML = quorumState(container);
+            });
+            container.getQuorum().on("removeMember", () => {
+                connectionDiv.innerHTML = quorumState(container);
+            });
+
+            container.audience.on("addMember", () => {
+                connectionDiv.innerHTML = quorumState(container);
+            });
+            container.audience.on("removeMember", () => {
+                connectionDiv.innerHTML = quorumState(container);
+            });
+        });
+
     </script>
 {{/scripts}}
 
