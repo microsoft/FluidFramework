@@ -541,47 +541,41 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         // fetch specified snapshot, but intentionally do not load from snapshot if specifiedVersion is null
         const tree = specifiedVersion === null ? undefined : await this.fetchSnapshotTree(specifiedVersion);
 
-        let attributesP: Promise<IDocumentAttributes>;
+        const blobManagerP = this.loadBlobManager(storage, tree);
+
+        let attributes: IDocumentAttributes;
         if (!tree) {
-            attributesP = Promise.resolve({
+            attributes = {
                 branch: this.id,
                 minimumSequenceNumber: 0,
                 sequenceNumber: 0,
-            });
+            };
         } else {
             const attributesHash = ".protocol" in tree.trees
                 ? tree.trees[".protocol"].blobs.attributes
                 : tree.blobs[".attributes"];
 
-            attributesP = readAndParse<IDocumentAttributes>(storage, attributesHash);
+            attributes = await readAndParse<IDocumentAttributes>(storage, attributesHash);
         }
 
         // ...begin the connection process to the delta stream
-        const handlerAttachedP = this.createDeltaManager(attributesP, connect);
+        this.createDeltaManager(attributes, connect);
 
         if (connect && !pause) {
             this.connectToDeltaStream();
         }
 
         // ...load in the existing quorum
-        const protocolHandlerP = attributesP.then(
-            (attributes) => {
-                // Initialize the protocol handler
-                return this.initializeProtocolState(attributes, storage, tree!);
-            });
-
-        const blobManagerP = this.loadBlobManager(storage, tree!);
+        // Initialize the protocol handler
+        const protocolHandlerP = this.initializeProtocolState(attributes, storage, tree!);
 
         // Wait for all the loading promises to finish
         return Promise
             .all([
-                attributesP,
                 blobManagerP,
                 protocolHandlerP,
-                handlerAttachedP,
             ])
             .then(async ([
-                attributes,
                 blobManager,
                 protocolHandler]) => {
 
@@ -702,7 +696,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return protocol;
     }
 
-    private async loadBlobManager(storage: IDocumentStorageService, tree: ISnapshotTree): Promise<BlobManager> {
+    private async loadBlobManager(
+        storage: IDocumentStorageService,
+        tree: ISnapshotTree | undefined,
+    ): Promise<BlobManager> {
         const blobHash = tree && tree.blobs[".blobs"];
         const blobs: IGenericBlob[] = blobHash
             ? await readAndParse<IGenericBlob[]>(storage, blobHash)
@@ -761,7 +758,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return Promise.reject(PackageNotFactoryError);
     }
 
-    private createDeltaManager(attributesP: Promise<IDocumentAttributes>, connect: boolean): Promise<void> {
+    private createDeltaManager(attributes: IDocumentAttributes, connect: boolean): void {
         // Create the DeltaManager and begin listening for connection events
         // tslint:disable-next-line:no-unsafe-any
         const clientDetails = this.options ? (this.options.client as IClient) : null;
@@ -822,39 +819,31 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             // Begin fetching any pending deltas once we know the base sequence #. Can this fail?
             // It seems like something, like reconnection, that we would want to retry but otherwise allow
             // the document to load
-            const handlerAttachedP = attributesP.then((attributes) => {
-                this._deltaManager!.attachOpHandler(
-                    attributes.minimumSequenceNumber,
-                    attributes.sequenceNumber,
-                    {
-                        process: (message, callback) => {
-                            this.processRemoteMessage(message, callback);
-                        },
-                        processSignal: (message) => {
-                            this.processSignal(message);
-                        },
+            this._deltaManager!.attachOpHandler(
+                attributes.minimumSequenceNumber,
+                attributes.sequenceNumber,
+                {
+                    process: (message, callback) => {
+                        this.processRemoteMessage(message, callback);
                     },
-                    true);
-            });
-
-            return handlerAttachedP;
+                    processSignal: (message) => {
+                        this.processSignal(message);
+                    },
+                },
+                true);
         } else {
-            const handlerAttachedP = attributesP.then((attributes) => {
-                this._deltaManager!.attachOpHandler(
-                    attributes.minimumSequenceNumber,
-                    attributes.sequenceNumber,
-                    {
-                        process: (message) => {
-                            throw new Error("Delta manager is offline");
-                        },
-                        processSignal: (message) => {
-                            throw new Error("Delta manager is offline");
-                        },
+            this._deltaManager!.attachOpHandler(
+                attributes.minimumSequenceNumber,
+                attributes.sequenceNumber,
+                {
+                    process: (message) => {
+                        throw new Error("Delta manager is offline");
                     },
-                    false);
-            });
-
-            return handlerAttachedP;
+                    processSignal: (message) => {
+                        throw new Error("Delta manager is offline");
+                    },
+                },
+                false);
         }
     }
 
