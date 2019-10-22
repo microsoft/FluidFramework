@@ -33,7 +33,6 @@ import {
 
 import { EventEmitter } from "events";
 import { IChannel } from ".";
-import { IProvideComponentRegistry } from "./componentRegistry";
 
 /**
  * Represents the runtime for the component. Contains helper functions/state of the component.
@@ -310,7 +309,7 @@ export interface IHostRuntime extends
     EventEmitter,
     IProvideComponentSerializer,
     IProvideComponentHandleContext,
-    IProvideComponentRegistry {
+    IComponentRouter {
     readonly id: string;
     readonly existing: boolean;
     readonly options: any;

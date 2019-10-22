@@ -32,7 +32,6 @@ import {
     ComponentFactoryTypes,
     IAttachMessage,
     IComponentContext,
-    IComponentRegistry,
     IComponentRuntime,
     IEnvelope,
     IHostRuntime,
@@ -43,6 +42,7 @@ import { EventEmitter } from "events";
 // tslint:disable-next-line:no-submodule-imports
 import * as uuid from "uuid/v4";
 import { ContainerRuntime } from "./containerRuntime";
+import { createCatalogRequest } from "./requestHandlers";
 
 // Snapshot Format Version to be used in component attributes.
 const currentSnapshotFormatVersion = "0.1";
@@ -58,6 +58,7 @@ export interface IComponentAttributes {
 }
 
 interface ISnapshotDetails {
+    catalog?: string;
     pkg: string[];
     snapshot: ISnapshotTree;
 }
@@ -185,20 +186,16 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
                 // the refreshed or one set at constructor (in case of summarizer)
                 this.summaryTracker.setBaseTree(details.snapshot);
             }
-            const packages = details.pkg;
-            let registry = this._hostRuntime.IComponentRegistry;
-            let factory: ComponentFactoryTypes & Partial<IComponentRegistry>;
-            for (const pkg of packages) {
-                if (!registry) {
-                    throw new Error("Factory does not supply the component Registry");
-                }
-                factory = await registry.get(pkg);
-                registry = factory.IComponentRegistry;
+            const catalog = details.catalog === undefined ? "container" : details.catalog;
+            const response = await this.hostRuntime.request(createCatalogRequest(catalog, ...details.pkg));
+            if (response.status === 200) {
+                const factory = response.value as ComponentFactoryTypes;
+                // During this call we will invoke the instantiate method - which will call back into us
+                // via the bindRuntime call to resolve componentRuntimeDeferred
+                factory.instantiateComponent(this);
+            } else {
+                throw new Error(JSON.stringify(response));
             }
-
-            // During this call we will invoke the instantiate method - which will call back into us
-            // via the bindRuntime call to resolve componentRuntimeDeferred
-            factory.instantiateComponent(this);
         }
 
         return this.componentRuntimeDeferred.promise;

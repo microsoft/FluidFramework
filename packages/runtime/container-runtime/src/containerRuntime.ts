@@ -71,6 +71,7 @@ import { debug } from "./debug";
 import { DocumentStorageServiceProxy } from "./documentStorageServiceProxy";
 import {
     componentRuntimeRequestHandler,
+    createCatalogRuntimeRequestHandler,
     createLoadableComponentRuntimeRequestHandler,
     RuntimeRequestHandler,
 } from "./requestHandlers";
@@ -368,10 +369,11 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             ? await readAndParse<[string, string[]][]>(context.storage, chunkId)
             : [];
 
-        const runtime = new ContainerRuntime(context, componentRegistry, chunks, runtimeOptions);
+        const runtime = new ContainerRuntime(context, chunks, runtimeOptions);
         runtime.requestHandler = new RuntimeRequestHandlerBuilder();
         runtime.requestHandler.pushHandler(
             createLoadableComponentRuntimeRequestHandler(runtime.summarizer),
+            createCatalogRuntimeRequestHandler("container", componentRegistry),
             schedulerRuntimeRequestHandler,
             ...requestHandlers);
 
@@ -455,9 +457,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this._flushMode;
     }
 
-    public get IComponentRegistry(): IComponentRegistry {
-        return this.registry;
-    }
+    public get IComponentRouter() { return this; }
 
     public readonly IComponentSerializer: IComponentSerializer = new ComponentSerializer();
 
@@ -524,7 +524,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
     private constructor(
         private readonly context: IContainerContext,
-        private readonly registry: IComponentRegistry,
         readonly chunks: [string, string[]][],
         private readonly runtimeOptions: IContainerRuntimeOptions = { generateSummaries: false },
     ) {
@@ -869,6 +868,10 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     // tslint:disable-next-line: function-name
     public async _createComponentWithProps(pkg: string | string[], props: any, id: string): Promise<IComponentRuntime> {
         this.verifyNotClosed();
+        if (id.length < 2) {
+            throw new Error(
+                `Invalid id ${id}. Ids must be atleast 2 characters.`);
+        }
 
         const context = new LocalComponentContext(
             id,
