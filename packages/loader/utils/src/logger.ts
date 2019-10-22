@@ -61,7 +61,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
             // WARNING: Exceptions can contain PII!
             // For example, XHR will throw object derived from Error that contains config information
             // for failed request, including all the headers, and thus - user tokens!
-            const errorAsObject = error as { stack?: string; message?: string, statusCode?: number };
+            const errorAsObject = error as { stack?: string; message?: string; statusCode?: number };
 
             // Extract call stack from exception if available
             // Same for message if there is one (see Error object).
