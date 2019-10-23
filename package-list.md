@@ -71,7 +71,7 @@
 |               |                   |                           |                           | @microsoft/fluid-odsp-driver               |
 |               |                   |                           |                           | @microsoft/fluid-odsp-urlresolver          |
 |               |                   |                           |                           | @microsoft/fluid-odsp-utils                |
-|               |                   |                           |                           | @microsoft/fluid-ordered-collection        |
+| ✔             | ✔                 |                           |                           | @microsoft/fluid-ordered-collection        |
 | ✔             | ✔                 |                           |                           | @microsoft/fluid-protocol-definitions      |
 |               |                   |                           |                           | @microsoft/fluid-register-collection       |
 | ✔             |                   |                           |                           | @microsoft/fluid-replay-driver             |
