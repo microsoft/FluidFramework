@@ -46,6 +46,7 @@ export class UrlRegistry implements IComponentRegistry {
         if (!this.urlRegistryMap.has(name)
             && (name.startsWith("http://") || name.startsWith("https://"))) {
 
+            // eslint-disable-next-line @typescript-eslint/no-misused-promises, no-async-promise-executor
             const entryPointPromise = new Promise<any>(async (resolve, reject) => {
                 if (!this.loadingPackages.has(name)) {
                     this.loadingPackages.set(name, this.loadEntrypoint(name));
@@ -69,7 +70,7 @@ export class UrlRegistry implements IComponentRegistry {
                         componentFactory = fluidExport.IComponentFactory;
                         if (fluidExport.IComponentDefaultFactory) {
                             const registry = fluidExport.IComponentDefaultFactory;
-                            componentFactory =  (await registry.getDefaultFactory()) as IComponentFactory;
+                            componentFactory = (await registry.getDefaultFactory()) as IComponentFactory;
                         }
                     } else {
                         const queryable = fluidExport as IComponentQueryableLegacy;

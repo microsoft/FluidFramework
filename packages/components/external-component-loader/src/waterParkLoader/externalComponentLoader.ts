@@ -113,6 +113,7 @@ export class ExternalComponentLoader extends PrimedComponent
             }
 
             try {
+                // eslint-disable-next-line @typescript-eslint/no-misused-promises
                 if (this.viewComponentP) {
                     const viewComponent = await this.viewComponentP;
                     if (viewComponent && viewComponent.IComponentCollection) {
@@ -122,7 +123,7 @@ export class ExternalComponentLoader extends PrimedComponent
                         componentRuntime.attach();
                         if (component.IComponentCollection !== undefined) {
                             // tslint:disable-next-line: await-promise
-                            component = await component.IComponentCollection.createCollectionItem();
+                            component = component.IComponentCollection.createCollectionItem();
                         }
                         viewComponent.IComponentCollection.createCollectionItem(component.IComponentLoadable);
                     } else {

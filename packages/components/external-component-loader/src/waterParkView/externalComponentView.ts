@@ -32,7 +32,7 @@ export class ExternalComponentView extends PrimedComponent implements IComponent
     private readonly urlToComponent = new Map<string, IComponent>();
     private savedElement: HTMLElement;
 
-    public createCollectionItem<T>(options: T): IComponent  {
+    public createCollectionItem<T>(options: T): IComponent {
         // tslint:disable-next-line: no-string-literal
         const url: string = options["url"];
         if (!url) {
@@ -172,12 +172,13 @@ export class ExternalComponentView extends PrimedComponent implements IComponent
 
         await cacheComponentsByUrl(this.sequence.getItems(0));
 
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises
         this.sequence.on("sequenceDelta", async (event) => {
             if (event.deltaOperation === MergeTreeDeltaType.INSERT) {
                 const items = event.deltaArgs.deltaSegments.reduce<string[]>(
                     (pv, cv) => {
                         if (SubSequence.is(cv.segment)) {
-                            pv.push(... cv.segment.items);
+                            pv.push(...cv.segment.items);
                         }
                         return pv;
                     },
