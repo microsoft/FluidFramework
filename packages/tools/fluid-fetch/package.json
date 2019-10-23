@@ -15,7 +15,7 @@
     "build:full:compile": "npm run build:compile",
     "clean": "rimraf dist *.tsbuildinfo package-deps.json *.build.log",
     "eslint": "eslint --ext=ts,tsx --format stylish src",
-    "tslint": "tslint --project tsconfig.json --format verbose"
+    "tslint": "npm run eslint"
   },
   "dependencies": {
     "@microsoft/fluid-core-utils": "^0.11.0",

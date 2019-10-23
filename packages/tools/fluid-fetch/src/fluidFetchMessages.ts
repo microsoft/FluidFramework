@@ -41,10 +41,10 @@ async function loadChunk(from: number, to: number, deltaStorage: IDocumentDeltaS
     throw new Error("Giving up after 3 attempts to download chunk.");
 }
 
-async function *loadAllSequencedMessages(
-        documentService?: IDocumentService,
-        dir?: string,
-        files?: string[]) {
+async function* loadAllSequencedMessages(
+    documentService?: IDocumentService,
+    dir?: string,
+    files?: string[]) {
     const batch = 2000;
     let lastSeq = 0;
 
@@ -125,9 +125,9 @@ async function *loadAllSequencedMessages(
 }
 
 async function* saveOps(
-        gen, // AsyncGenerator<ISequencedDocumentMessage[]>,
-        dir: string,
-        files: string[]) {
+    gen, // AsyncGenerator<ISequencedDocumentMessage[]>,
+    dir: string,
+    files: string[]) {
     // split into 100K ops
     const chunk = 100 * 1000;
 
@@ -205,9 +205,5 @@ export async function fluidFetchMessages(documentService?: IDocumentService) {
             dumpMessageStats,
             dumpMessages,
             messageTypeFilter);
-    } else {
-        let item;
-        for await (item of generator) {}
     }
-
 }

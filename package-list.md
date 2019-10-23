@@ -56,7 +56,7 @@
 | ✔             | ✔                 | ✔    | @microsoft/fluid-debugger                  |
 | ✔             | ✔                 | ✔    | @microsoft/fluid-driver-base               |
 | ✔             | ✔                 | ✔    | @microsoft/fluid-external-component-loader |
-|               |                   |      | @microsoft/fluid-fetch                     |
+| ✔             |                   |      | @microsoft/fluid-fetch                     |
 |               |                   |      | @microsoft/fluid-file-driver               |
 | ✔             |                   |      | @microsoft/fluid-fluidapp-odsp-urlresolver |
 | ✔             |                   |      | @microsoft/fluid-framework-interfaces      |

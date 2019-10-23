@@ -84,6 +84,7 @@ export function parseArguments() {
             case "--help":
                 printUsage();
                 process.exit(0);
+                break;
             case "--jwt":
                 paramJWT = parseStrArg(i++, "jwt token");
                 break;

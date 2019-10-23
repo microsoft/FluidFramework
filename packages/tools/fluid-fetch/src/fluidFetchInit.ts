@@ -17,6 +17,7 @@ import {
 import { IDocumentService, IFluidResolvedUrl, IResolvedUrl, IUrlResolver } from "@microsoft/fluid-protocol-definitions";
 import * as r11s from "@microsoft/fluid-routerlicious-driver";
 import { RouterliciousUrlResolver } from "@microsoft/fluid-routerlicious-urlresolver";
+// eslint-disable-next-line @typescript-eslint/camelcase
 import * as child_process from "child_process";
 import * as fs from "fs";
 import * as http from "http";
@@ -40,6 +41,7 @@ async function getAuthorizationCode(server: string, clientConfig: IClientConfig)
         + `&response_type=code`
         + `&redirect_uri=${redirectUri}`;
     if (process.platform === "win32") {
+        // eslint-disable-next-line @typescript-eslint/camelcase
         child_process.exec(`start "fluid-fetch" /B "${authUrl}"`);
         message = "Opening browser to get authorization code.  If that doesn't open, please go to this URL manually";
     }
