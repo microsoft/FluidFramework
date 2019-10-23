@@ -56,6 +56,7 @@ export class TestDataStore {
         const resultOut = new Promise<T>((accept) => { acceptResultOut = accept; });
 
         debug(`attaching url = ${url}`);
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises
         container.on("contextChanged", async () => {
             debug(`contextChanged url=${url}`);
             await attach(loader, url, acceptResultOut);

@@ -6,7 +6,6 @@
 import {
     IDocumentService,
     IDocumentServiceFactory,
-    IFluidResolvedUrl,
     IResolvedUrl,
 } from "@microsoft/fluid-protocol-definitions";
 import { TokenProvider } from "@microsoft/fluid-routerlicious-driver";
@@ -23,7 +22,7 @@ export class TestDocumentServiceFactory implements IDocumentServiceFactory {
     /**
      * @param testDeltaConnectionServer - delta connection server for ops
      */
-    constructor(private testDeltaConnectionServer: ITestDeltaConnectionServer) {}
+    constructor(private testDeltaConnectionServer: ITestDeltaConnectionServer) { }
 
     /**
      * Creates and returns a document service for testing using the given resolved
@@ -32,7 +31,7 @@ export class TestDocumentServiceFactory implements IDocumentServiceFactory {
      */
     public createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
         if (resolvedUrl.type !== "fluid") {
-              if (resolvedUrl.type === "prague") {
+            if (resolvedUrl.type === "prague") {
                 // tslint:disable-next-line:max-line-length
                 console.warn("IFluidResolvedUrl type === 'prague' has been deprecated. Please create IFluidResolvedUrls of type 'fluid' in the future.");
             } else {
@@ -48,7 +47,7 @@ export class TestDocumentServiceFactory implements IDocumentServiceFactory {
             return Promise.reject(`Couldn't parse documentId and/or tenantId. [documentId:${documentId}][tenantId:${tenantId}]`);
         }
 
-        const fluidResolvedUrl = resolvedUrl as IFluidResolvedUrl;
+        const fluidResolvedUrl = resolvedUrl;
         const jwtToken = fluidResolvedUrl.tokens.jwt;
         if (!jwtToken) {
             return Promise.reject(`Token was not provided.`);

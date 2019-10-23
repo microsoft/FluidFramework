@@ -262,7 +262,7 @@ export function register(
                     parentBranch: null, // Does not matter for now.
                     serviceConfiguration: {
                         blockSize: 64436,
-                        maxMessageSize:  16 * 1024,
+                        maxMessageSize: 16 * 1024,
                         summary: {
                             idleTime: 5000,
                             maxOps: 1000,
@@ -279,6 +279,7 @@ export function register(
         }
 
         // Note connect is a reserved socket.io word so we use connect_document to represent the connect request
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises
         socket.on("connect_document", async (message: IConnect) => {
             connectDocument(message).then(
                 (connectedMessage) => {
