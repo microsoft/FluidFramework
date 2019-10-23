@@ -16,6 +16,7 @@ import {
 } from "@microsoft/fluid-protocol-definitions";
 import { ISocketStorageDiscovery } from "./contracts";
 import { IFetchWrapper } from "./fetchWrapper";
+import { OdspCache } from "./odspCache";
 import { OdspDeltaStorageService } from "./OdspDeltaStorageService";
 import { OdspDocumentDeltaConnection } from "./OdspDocumentDeltaConnection";
 import { OdspDocumentStorageManager } from "./OdspDocumentStorageManager";
@@ -68,6 +69,7 @@ export class OdspDocumentService implements IDocumentService {
         private readonly storageFetchWrapper: IFetchWrapper,
         private readonly deltasFetchWrapper: IFetchWrapper,
         private readonly socketIOClientP: Promise<SocketIOClientStatic>,
+        private readonly odspCache: OdspCache,
     ) {
         this.getStorageToken = (refresh: boolean) => {
             if (refresh) {
@@ -87,6 +89,8 @@ export class OdspDocumentService implements IDocumentService {
                 siteUrl,
                 logger,
                 this.getStorageToken,
+                this.odspCache,
+                hashedDocumentId,
             ),
         );
     }
@@ -108,6 +112,7 @@ export class OdspDocumentService implements IDocumentService {
             this.getStorageToken,
             this.logger,
             true,
+            this.odspCache,
         );
 
         return new OdspDocumentStorageService(this.storageManager);

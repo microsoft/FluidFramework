@@ -31,6 +31,7 @@ import { fetchSnapshot } from "./fetchSnapshot";
 import { IFetchWrapper } from "./fetchWrapper";
 import { getQueryString } from "./getQueryString";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
+import { OdspCache } from "./odspCache";
 import { getWithRetryForTokenRefresh } from "./OdspUtils";
 
 export class OdspDocumentStorageManager implements IDocumentStorageManager {
@@ -65,6 +66,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         private readonly getStorageToken: (refresh: boolean) => Promise<string | null>,
         private readonly logger: ITelemetryLogger,
         private readonly fetchFullSnapshot: boolean,
+        private readonly odspCache: OdspCache,
     ) {
         this.queryString = getQueryString(queryParams);
         this.appId = queryParams.app_id;
@@ -233,18 +235,33 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
             try {
                 return await getWithRetryForTokenRefresh(async (refresh) => {
-                    const storageToken = await this.getStorageToken(refresh);
+                    const odspCacheKey: string = `${this.documentId}/getlatest`;
+                    let odspSnapshot: IOdspSnapshot = this.odspCache.get(odspCacheKey);
+                    if (!odspSnapshot) {
+                        const storageToken = await this.getStorageToken(refresh);
 
-                    // TODO: This snapshot will return deltas, which we currently aren't using. We need to enable this flag to go down the "optimized"
-                    // snapshot code path. We should leverage the fact that these deltas are returned to speed up the deltas fetch.
-                    const { headers, url } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/trees/latest?deltas=1&channels=1&blobs=2`, storageToken);
+                        // TODO: This snapshot will return deltas, which we currently aren't using. We need to enable this flag to go down the "optimized"
+                        // snapshot code path. We should leverage the fact that these deltas are returned to speed up the deltas fetch.
+                        const { headers, url } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/trees/latest?deltas=1&channels=1&blobs=2`, storageToken);
 
-                    // This event measures only successful cases of getLatest call (no tokens, no retries).
-                    const eventInner = PerformanceEvent.start(this.logger, { eventName: "TreesLatest" });
+                        // This event measures only successful cases of getLatest call (no tokens, no retries).
+                        const eventInner = PerformanceEvent.start(this.logger, { eventName: "TreesLatest" });
 
-                    const response = await this.fetchWrapper.get<IOdspSnapshot>(url, this.documentId, headers);
-                    const { trees, blobs, ops, sha } = response.content;
+                        const response = await this.fetchWrapper.get<IOdspSnapshot>(url, this.documentId, headers);
+                        odspSnapshot = response.content;
+                        this.odspCache.put(odspCacheKey, odspSnapshot, 10000);
 
+                        const props = {
+                            trees: odspSnapshot.trees ? odspSnapshot.trees.length : 0,
+                            blobs: odspSnapshot.blobs ? odspSnapshot.blobs.length : 0,
+                            ops: odspSnapshot.ops.length,
+                            sprequestguid: response.headers.get("sprequestguid"),
+                            contentsize: response.headers.get("content-length"),
+                        };
+                        eventInner.end(props);
+                        event.end(props);
+                    }
+                    const { trees, blobs, ops, sha } = odspSnapshot;
                     if (trees) {
                         this.initTreesCache(trees);
                     }
@@ -254,17 +271,6 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                     }
 
                     this.ops = ops;
-
-                    const props = {
-                        trees: trees ? trees.length : 0,
-                        blobs: blobs ? blobs.length : 0,
-                        ops: ops.length,
-                        sprequestguid: response.headers.get("sprequestguid"),
-                        contentsize: response.headers.get("content-length"),
-                    };
-                    eventInner.end(props);
-                    event.end(props);
-
                     return sha ? [{ id: sha, treeId: undefined! }] : [];
                 });
             } catch (error) {

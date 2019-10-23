@@ -6,6 +6,7 @@
 import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
 import { PerformanceEvent, throwNetworkError } from "@microsoft/fluid-core-utils";
 import { ISocketStorageDiscovery } from "./contracts";
+import { OdspCache } from "./odspCache";
 import { fetchHelper, getWithRetryForTokenRefresh, IOdspResponse } from "./OdspUtils";
 
 function getOrigin(url: string) {
@@ -77,31 +78,36 @@ export async function getSocketStorageDiscovery(
   siteUrl: string,
   logger: ITelemetryLogger,
   getVroomToken: (refresh: boolean) => Promise<string | undefined | null>,
+  odspCache: OdspCache,
+  documentId: string,
 ): Promise<ISocketStorageDiscovery> {
-  const event = PerformanceEvent.start(logger, { eventName: "JoinSession" });
-  let socketStorageDiscovery: ISocketStorageDiscovery;
-  let response: IOdspResponse<ISocketStorageDiscovery>;
-  try {
-    response = await fetchJoinSession(
-      appId,
-      driveId,
-      itemId,
-      siteUrl,
-      "opStream/joinSession",
-      "",
-      "POST",
-      getVroomToken,
-    );
-  } catch (error) {
-    event.cancel({}, error);
-    throw error;
-  }
-  socketStorageDiscovery = response.content;
-  event.end();
+  const odspCacheKey = `${documentId}/joinsession`;
+  let socketStorageDiscovery: ISocketStorageDiscovery = odspCache.get(odspCacheKey);
+  if (!socketStorageDiscovery) {
+    const event = PerformanceEvent.start(logger, { eventName: "JoinSession" });
+    let response: IOdspResponse<ISocketStorageDiscovery>;
+    try {
+      response = await fetchJoinSession(
+        appId,
+        driveId,
+        itemId,
+        siteUrl,
+        "opStream/joinSession",
+        "",
+        "POST",
+        getVroomToken,
+      );
+    } catch (error) {
+      event.cancel({}, error);
+      throw error;
+    }
+    socketStorageDiscovery = response.content;
+    event.end();
 
-  if (socketStorageDiscovery.runtimeTenantId && !socketStorageDiscovery.tenantId) {
-    socketStorageDiscovery.tenantId = socketStorageDiscovery.runtimeTenantId;
+    if (socketStorageDiscovery.runtimeTenantId && !socketStorageDiscovery.tenantId) {
+      socketStorageDiscovery.tenantId = socketStorageDiscovery.runtimeTenantId;
+    }
+    odspCache.put(odspCacheKey, socketStorageDiscovery, 900000);
   }
-
   return socketStorageDiscovery;
 }
