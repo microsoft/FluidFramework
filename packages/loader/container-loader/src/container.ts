@@ -779,8 +779,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                 user: { id: "" },
             };
         if (this.originalRequest.headers && this.originalRequest.headers["fluid-client-type"]) {
-            // tslint:disable-next-line:no-unsafe-any
-            clientDetails.type = this.originalRequest.headers["fluid-client-type"];
+            clientDetails.type = this.originalRequest.headers["fluid-client-type"] as string;
         }
 
         this._deltaManager = new DeltaManager(

@@ -184,7 +184,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         super();
 
         this.clientType = this.client.type;
-        this.systemConnectionMode = (this.client && this.client.mode === "write") ? "write" : "read";
+        this.systemConnectionMode = this.client.mode === "write" ? "write" : "read";
 
         // Inbound message queue
         this._inboundPending = new DeltaQueue<ISequencedDocumentMessage>(
