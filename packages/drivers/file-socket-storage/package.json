@@ -19,7 +19,7 @@
     "clean": "rimraf dist lib *.tsbuildinfo",
     "eslint": "eslint --ext=ts,tsx --format stylish src",
     "tsc": "tsc",
-    "tslint": "tslint --project tsconfig.json --format verbose"
+    "tslint": "npm run eslint"
   },
   "dependencies": {
     "@microsoft/fluid-core-utils": "^0.11.0",
