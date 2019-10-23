@@ -36,7 +36,7 @@ export class LocalChannelStorageService implements IObjectStorageService {
                     break;
 
                 case TreeEntry[TreeEntry.Tree]:
-                    if (path.indexOf(entry.path) === 0) {
+                    if (path.startsWith(entry.path)) {
                         return this.readSyncInternal(path.substr(entry.path.length + 1), entry.value as ITree);
                     }
                     break;

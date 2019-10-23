@@ -41,11 +41,11 @@
 |               |                   |      | @fluid-internal/end-to-end-tests           |
 |               |                   |      | @microsoft/eslint-config-fluid             |
 | ✔             | ✔                 | ✔    | @microsoft/fluid-agent-scheduler           |
-|               |                   |      | @microsoft/fluid-aqueduct                  |
-|               |                   |      | @microsoft/fluid-aqueduct-react            |
+| ✔             |                   |      | @microsoft/fluid-aqueduct                  |
+| ❌             |                   |      | @microsoft/fluid-aqueduct-react            |
 | ✔             |                   |      | @microsoft/fluid-base-host                 |
-|               |                   |      | @microsoft/fluid-blob-manager              |
-|               |                   |      | @microsoft/fluid-build-common              |
+| ✔             |                   |      | @microsoft/fluid-blob-manager              |
+| ⛔             |                   |      | @microsoft/fluid-build-common              |
 |               |                   |      | @microsoft/fluid-cell                      |
 | ✔             |                   |      | @microsoft/fluid-component-core-interfaces |
 |               |                   |      | @microsoft/fluid-component-runtime         |

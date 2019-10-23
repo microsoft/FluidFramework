@@ -38,7 +38,7 @@ export class ChannelStorageService implements IObjectStorageService {
 
         // tslint:disable-next-line: strict-boolean-expressions
         return this.extraBlobs && this.extraBlobs.has(id)
-            // tslint:disable-next-line: no-non-null-assertion
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             ? Promise.resolve(this.extraBlobs.get(id)!)
             : this.storage.read(id);
     }
