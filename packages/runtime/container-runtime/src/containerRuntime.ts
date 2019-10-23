@@ -9,7 +9,8 @@ import {
     IComponentHandleContext,
     IComponentSerializer,
     IRequest,
-    IResponse } from "@microsoft/fluid-component-core-interfaces";
+    IResponse,
+} from "@microsoft/fluid-component-core-interfaces";
 import {
     ConnectionState,
     IAudience,
@@ -278,7 +279,7 @@ class ScheduleManager {
             : this.deltaManager.inbound.systemResume();
 
         // we do not care about "Resumed while waiting to pause" rejections.
-        promise.catch((err) => {});
+        promise.catch((err) => { });
     }
 
     private updatePauseState(sequenceNumber: number) {
@@ -435,6 +436,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     }
 
     public get submitFn(): (type: MessageType, contents: any) => number {
+        // eslint-disable-next-line @typescript-eslint/unbound-method
         return this.submit;
     }
 
@@ -612,7 +614,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
         // tslint:disable-next-line: no-unsafe-any
         if (this.options && this.options.intelligence) {
-            return  {
+            return {
                 // tslint:disable-next-line: no-unsafe-any
                 intelligence: this.options.intelligence,
             } as IComponentTokenProvider;
@@ -781,7 +783,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         const context = this.contexts.get(envelope.address);
         assert(context);
 
-        const innerContent = envelope.contents as { content: any, type: string };
+        const innerContent = envelope.contents as { content: any; type: string };
         const transformed: IInboundSignalMessage = {
             clientId: message.clientId,
             content: innerContent.content,
@@ -1062,8 +1064,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                     // tslint:disable-next-line:no-floating-promises
                     Promise.resolve().then(() => remotedComponentContext.realize());
                 }
-
-            default:
+                break;
+            default: // do nothing
         }
     }
 
@@ -1291,7 +1293,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         const envelope = message.contents as IEnvelope;
         const componentContext = this.contexts.get(envelope.address);
         assert(componentContext);
-        const innerContents = envelope.contents as { content: any, type: string };
+        const innerContents = envelope.contents as { content: any; type: string };
 
         const transformed: ISequencedDocumentMessage = {
             clientId: message.clientId,
@@ -1395,8 +1397,9 @@ export class WrappedComponentRegistry implements IComponentRegistry {
 
     private readonly agentScheduler: AgentSchedulerFactory;
 
-    constructor(private readonly registry: ComponentRegistryTypes,
-                private readonly extraRegistries?: Map<string, Promise<ComponentFactoryTypes>>) {
+    constructor(
+        private readonly registry: ComponentRegistryTypes,
+        private readonly extraRegistries?: Map<string, Promise<ComponentFactoryTypes>>) {
         this.agentScheduler = new AgentSchedulerFactory();
     }
 

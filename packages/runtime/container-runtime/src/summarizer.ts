@@ -142,6 +142,7 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
         this.idleTimer.start();
 
         // listen for summary ops
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises
         this.runtime.deltaManager.inbound.on("op", (op) => this.handleSummaryOp(op as ISequencedDocumentMessage));
 
         this.runtime.on("batchEnd", (error: any, op: ISequencedDocumentMessage) => this.handleOp(error, op));
@@ -176,7 +177,7 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
         eventName: string,
         setter: () => Promise<T>,
         validator: (result: T) => boolean,
-    ): Promise<{ result: T, success: boolean }> {
+    ): Promise<{ result: T; success: boolean }> {
         let result: T;
         let success = true;
         try {
@@ -320,7 +321,7 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
             };
             if (!summaryData.submitted) {
                 // did not send the summary op
-                summarizingEvent.cancel({...telemetryProps, category: "error"});
+                summarizingEvent.cancel({ ...telemetryProps, category: "error" });
                 this.cancelPending();
                 return;
             }
@@ -426,7 +427,7 @@ class Timer {
 
     constructor(
         private readonly defaultHandler: () => void,
-        private readonly defaultTimeout: number) {}
+        private readonly defaultTimeout: number) { }
 
     public start(handler: () => void = this.defaultHandler, timeout: number = this.defaultTimeout) {
         this.clear();

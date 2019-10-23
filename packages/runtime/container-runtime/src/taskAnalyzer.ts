@@ -28,12 +28,12 @@ export function analyzeTasks(
     tasks: string[]): IHelpTasks {
     const robotClients = [...clients].filter((client) => isRobot(client[1]));
     const handledTasks = robotClients.map((robot) => robot[1].client.type);
-    const unhandledTasks = tasks.filter((task) => handledTasks.indexOf(task) === -1);
+    const unhandledTasks = tasks.filter((task) => !handledTasks.includes(task));
     if (unhandledTasks.length > 0) {
         const runnerClient = clients.get(runnerClientId);
         const permission = runnerClient.client && runnerClient.client.permission ? runnerClient.client.permission : [];
-        const allowedTasks = unhandledTasks.filter((task) => permission && permission.indexOf(task) !== -1);
-        const robotNeeded = unhandledTasks.filter((task) => permission && permission.indexOf(task) === -1);
+        const allowedTasks = unhandledTasks.filter((task) => permission && permission.includes(task));
+        const robotNeeded = unhandledTasks.filter((task) => permission && !permission.includes(task));
         return {
             browser: allowedTasks,
             robot: robotNeeded,
