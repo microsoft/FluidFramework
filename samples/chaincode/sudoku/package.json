@@ -1,11 +1,11 @@
 {
     "name": "@fluid-example/sudoku",
-    "version": "0.11.1",
+    "version": "0.11.2",
     "description": "Fluid Sudoku",
     "repository": "microsoft/FluidFramework",
     "license": "MIT",
     "author": "Microsoft",
-    "main": "dist/index.js",
+    "main": "dist/main.bundle.js",
     "module": "lib/index.js",
     "types": "dist/index.d.ts",
     "scripts": {
