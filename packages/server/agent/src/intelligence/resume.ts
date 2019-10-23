@@ -37,7 +37,7 @@ export class ResumeIntelligentSerivce implements IIntelligentService {
     private clientP: Promise<Client>;
     private registry: iothub.Registry;
     private deviceId: string;
-    private messagePromises: {[key: string]: Deferred<any> } = {};
+    private messagePromises: { [key: string]: Deferred<any> } = {};
 
     constructor(private config: IConfig) {
         this.deviceId = config.deviceId;
@@ -53,6 +53,7 @@ export class ResumeIntelligentSerivce implements IIntelligentService {
     }
 
     private async getClient(): Promise<Client> {
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises
         if (!this.clientP) {
             this.clientP = this.createClient(this.config.host, this.config.deviceId);
             this.clientP.catch((error) => {
@@ -110,7 +111,7 @@ export class ResumeIntelligentSerivce implements IIntelligentService {
         client.onDeviceMethod(
             "writeLine",
             (request, response) => {
-                const payload = (request.payload as any) as IResumeResponse;
+                const payload = (request.payload) as IResumeResponse;
 
                 response.send(200, "Input was written to log.", (err) => {
                     if (err) {

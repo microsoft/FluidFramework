@@ -38,7 +38,7 @@ class ResumeAnalyticsIntelligentService implements IIntelligentService {
     private invokeRequest(service: string, data: any): Promise<any> {
         return new Promise<any>((resolve, reject) => {
             const text = data.documents[0].text as string;
-            if (text.indexOf("(bsd & SVr3/r4)") !== -1) {
+            if (text.includes("(bsd & SVr3/r4)")) {
                 /* tslint:disable:insecure-random */
                 const prob = Math.max(this.lastProb, Math.random() * (92 - 80) + 80);
                 this.lastProb = prob;

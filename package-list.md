@@ -81,7 +81,7 @@
 | ✔             | ✔                 |                           |                           | @microsoft/fluid-routerlicious-urlresolver |
 | ✔             |                   |                           |                           | @microsoft/fluid-runtime-definitions       |
 | ✔             | ✔                 |                           |                           | @microsoft/fluid-sequence                  |
-|               |                   |                           |                           | @microsoft/fluid-server-agent              |
+| ✔             | ✔                 |                           |                           | @microsoft/fluid-server-agent              |
 | ✔             |                   |                           |                           | @microsoft/fluid-server-gateway            |
 | ✔             | ✔                 |                           |                           | @microsoft/fluid-server-kafka-orderer      |
 |               |                   |                           |                           | @microsoft/fluid-server-lambdas            |

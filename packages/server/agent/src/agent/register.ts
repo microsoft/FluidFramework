@@ -29,6 +29,7 @@ export function registerToWork(
     documentId: string) {
     if (client.permission && client.permission.length > 0) {
         const rateLimiter = new RateLimiter(RequestWindowMS);
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises
         doc.on("localHelp", async (helpMessage: IHelpMessage) => {
             const filteredTasks = rateLimiter.filter(doc.clientId, helpMessage.tasks);
             await performTasks(
@@ -38,8 +39,8 @@ export function registerToWork(
                 host,
                 filteredTasks,
                 workerConfig).catch((err) => {
-                console.error(err);
-            });
+                    console.error(err);
+                });
         });
         debug(`Registered to perform tasks!`);
     }
@@ -68,7 +69,7 @@ async function performTask(
     config: any) {
     switch (task) {
         case "snapshot":
-            const snapshotWorkP  = new SnapshotWork(
+            const snapshotWorkP = new SnapshotWork(
                 alfred,
                 docId,
                 tenantId,
@@ -80,7 +81,7 @@ async function performTask(
             });
             break;
         case "intel":
-            const intelWorkP  = new IntelWork(
+            const intelWorkP = new IntelWork(
                 alfred,
                 docId,
                 tenantId,
@@ -118,7 +119,7 @@ async function performTask(
                 config,
                 api.getDefaultDocumentServiceFactory());
             translationWorkP.start(task).catch((err) => {
-                    console.log(err);
+                console.log(err);
             });
             break;
         case "chaincode":
