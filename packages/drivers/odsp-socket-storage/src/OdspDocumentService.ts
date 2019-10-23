@@ -319,12 +319,12 @@ export class OdspDocumentService implements IDocumentService {
                 ).then((connection) => {
                     logger.sendTelemetryEvent({ eventName: "UsedAfdUrlDueToCache" });
                     return connection;
-                }).catch((error) => {
+                }).catch((connectionError) => {
                     const endAfd = performance.now();
                     localStorage.removeItem(lastAfdConnectionTimeMsKey);
                     // Retry on non-AFD URL
-                    if (this.canRetryOnError(error)) {
-                        debug(`Socket connection error on AFD URL (cached). Error was [${error}]. Retry on non-AFD URL: ${url}`);
+                    if (this.canRetryOnError(connectionError)) {
+                        debug(`Socket connection error on AFD URL (cached). Error was [${connectionError}]. Retry on non-AFD URL: ${url}`);
 
                         return DocumentDeltaConnection.create(
                             tenantId,
@@ -342,17 +342,21 @@ export class OdspDocumentService implements IDocumentService {
                             });
                             return connection;
                         }).catch((retryError) => {
-                            logger.sendTelemetryEvent({
+                            logger.sendErrorEvent({
                                 eventName: "FailedNonAfdUrlFallback",
+                                error: retryError,
                                 waitOnAfdAttemptMs: endAfd - startAfd,
                             });
                             throw retryError;
                         });
                     } else {
-                        logger.sendTelemetryEvent({ eventName: "FailedAfdUrl-NoNonAfdFallback" });
+                        logger.sendTelemetryEvent({
+                            eventName: "FailedAfdUrl-NoNonAfdFallback",
+                            error: connectionError,
+                        });
                     }
 
-                    throw error;
+                    throw connectionError;
                 });
             }
 
@@ -369,10 +373,10 @@ export class OdspDocumentService implements IDocumentService {
             ).then((connection) => {
                 logger.sendTelemetryEvent({ eventName: "UsedNonAfdUrl" });
                 return connection;
-            }).catch((error) => {
+            }).catch((connectionError) => {
                 const endNonAfd = performance.now();
-                if (hasUrl2 && this.canRetryOnError(error)) {
-                    debug(`Socket connection error on non-AFD URL. Error was [${error}]. Retry on AFD URL: ${url2}`);
+                if (hasUrl2 && this.canRetryOnError(connectionError)) {
+                    debug(`Socket connection error on non-AFD URL. Error was [${connectionError}]. Retry on AFD URL: ${url2}`);
 
                     return DocumentDeltaConnection.create(
                         tenantId,
@@ -398,17 +402,21 @@ export class OdspDocumentService implements IDocumentService {
 
                         return connection;
                     }).catch((retryError) => {
-                        logger.sendTelemetryEvent({
+                        logger.sendErrorEvent({
                             eventName: "FailedAfdUrlFallback",
+                            error: retryError,
                             waitOnNonAfdAttemptMs: endNonAfd - startNonAfd,
                         });
                         throw retryError;
                     });
                 } else {
-                    logger.sendTelemetryEvent({ eventName: "FailedNonAfdUrl-NoAfdFallback" });
+                    logger.sendErrorEvent({
+                        eventName: "FailedNonAfdUrl-NoAfdFallback",
+                        error: connectionError,
+                    });
                 }
 
-                throw error;
+                throw connectionError;
             });
         }
 
