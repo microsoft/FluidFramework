@@ -51,7 +51,6 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     private static createOpsFromDelta(event: SequenceDeltaEvent): MergeTree.IMergeTreeOp[] {
         const ops: MergeTree.IMergeTreeOp[] = [];
         for (const r of event.ranges) {
-            /* eslint-disable no-case-declarations */
             switch (event.deltaOperation) {
                 case MergeTree.MergeTreeDeltaType.ANNOTATE:
                     const lastAnnotate = ops[ops.length - 1] as MergeTree.IMergeTreeAnnotateMsg;
@@ -91,7 +90,6 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
 
                 default:
             }
-            /* eslint-enable no-case-declarations */
         }
         return ops;
     }
