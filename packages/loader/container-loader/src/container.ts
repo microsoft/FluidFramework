@@ -91,7 +91,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
      */
     public static async load(
         id: string,
-        version: string | null | undefined,
         service: IDocumentService,
         codeLoader: ICodeLoader,
         options: any,
@@ -123,7 +122,9 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             };
             container.on("error", onError);
 
-            return container.load(version, request.headers!.connection as string)
+            return container.load(
+                request.headers!.version as string | null | undefined,
+                request.headers!.connection as string)
                 .then(() => {
                     container.removeListener("error", onError);
                     res(container);

@@ -241,7 +241,6 @@ export class Loader extends EventEmitter implements ILoader {
 
         let canCache = true;
         let connection = !parsed.version ? "open" : "close";
-        let version = parsed.version;
         let fromSequenceNumber = -1;
 
         request.headers = request.headers ? request.headers : {};
@@ -262,9 +261,9 @@ export class Loader extends EventEmitter implements ILoader {
             fromSequenceNumber = request.headers["fluid-sequence-number"] as number;
         }
 
-        version = version || request.headers.version as string;
+        request.headers.version = parsed.version || request.headers.version as string;
 
-        debug(`${canCache} ${connection} ${version}`);
+        debug(`${canCache} ${connection} ${parsed.version}`);
         const factory: IDocumentServiceFactory =
             selectDocumentServiceFactoryForProtocol(resolvedAsFluid, this.protocolToDocumentFactoryMap);
 
@@ -272,7 +271,7 @@ export class Loader extends EventEmitter implements ILoader {
 
         let container: Container;
         if (canCache) {
-            const versionedId = version ? `${parsed.id}@${version}` : parsed.id;
+            const versionedId = parsed.version ? `${parsed.id}@${parsed.version}` : parsed.id;
             const maybeContainer = await this.containers.get(versionedId);
             if (maybeContainer) {
                 container = maybeContainer;
@@ -280,7 +279,6 @@ export class Loader extends EventEmitter implements ILoader {
                 const containerP =
                     this.loadContainer(
                         parsed.id,
-                        version,
                         documentService,
                         request,
                         resolved,
@@ -292,7 +290,6 @@ export class Loader extends EventEmitter implements ILoader {
             container =
                 await this.loadContainer(
                     parsed.id,
-                    version,
                     documentService,
                     request,
                     resolved,
@@ -321,7 +318,6 @@ export class Loader extends EventEmitter implements ILoader {
     //   - otherwise, version sha to load snapshot
     private loadContainer(
         id: string,
-        version: string | null | undefined,
         documentService: IDocumentService,
         request: IRequest,
         resolved: IResolvedUrl,
@@ -329,7 +325,6 @@ export class Loader extends EventEmitter implements ILoader {
     ): Promise<Container> {
         const container = Container.load(
             id,
-            version,
             documentService,
             this.codeLoader,
             this.options,
