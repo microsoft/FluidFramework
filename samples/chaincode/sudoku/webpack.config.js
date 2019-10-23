@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+const CopyPlugin = require("copy-webpack-plugin");
 const fluidRoute = require("@microsoft/fluid-webpack-component-loader");
 const path = require("path");
 const merge = require("webpack-merge");
@@ -41,6 +42,15 @@ module.exports = env => {
             devtoolNamespace: componentName,
             libraryTarget: "umd",
         },
+        plugins: [new CopyPlugin([{
+            from: "src/helpers/*.css",
+            to: path.resolve(__dirname, "dist/helpers"),
+            flatten: true,
+            // toType: "file",
+            // transformPath(targetPath, absolutePath) {
+            //   return path.resolve(__dirname, "dist/foo/");
+            // },
+        }])],
         devServer: {
             publicPath: "/dist",
             stats: "minimal",
