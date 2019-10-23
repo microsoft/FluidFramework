@@ -554,6 +554,12 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         const maybeSnapshotTree = specifiedVersion === null ? undefined
             : await this.fetchSnapshotTree(specifiedVersion);
 
+        // if !connect || pause, and there's no tree, then we'll start the websocket connection here (we'll need
+        // the details later)
+        if (!maybeSnapshotTree) {
+            this.connectToDeltaStream();
+        }
+
         const blobManagerP = this.loadBlobManager(this.storageService, maybeSnapshotTree);
 
         const attributes = await this.getDocumentAttributes(this.storageService, maybeSnapshotTree);
