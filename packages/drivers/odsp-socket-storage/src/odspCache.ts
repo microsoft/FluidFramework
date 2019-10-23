@@ -14,16 +14,16 @@ export class OdspCache {
         return this.odspCache.get(key);
     }
 
-    public put(key: string, value: any, time: number) {
+    public put(key: string, value: any, expiryTime: number) {
         this.odspCache.set(key, value);
         // tslint:disable-next-line: no-floating-promises
-        this.gc(key, time);
+        this.gc(key, expiryTime);
     }
 
-    private async gc(key: string, time: number) {
+    private async gc(key: string, expiryTime: number) {
         // tslint:disable-next-line: no-string-based-set-timeout
         const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
-        await delay(time);
+        await delay(expiryTime);
         this.odspCache.delete(key);
     }
 }
