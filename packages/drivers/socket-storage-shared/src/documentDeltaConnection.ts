@@ -70,47 +70,47 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         url: string,
         url2?: string,
         telemetryLogger?: ITelemetryLogger): Promise<IDocumentDeltaConnection> {
-            // tslint:disable-next-line: strict-boolean-expressions
-            const hasUrl2 = !!url2;
+        // tslint:disable-next-line: strict-boolean-expressions
+        const hasUrl2 = !!url2;
 
-            // Create null logger if telemetry logger is not available from caller
-            const logger = telemetryLogger ? telemetryLogger : new TelemetryNullLogger();
+        // Create null logger if telemetry logger is not available from caller
+        const logger = telemetryLogger ? telemetryLogger : new TelemetryNullLogger();
 
-            return this.createImpl(
-                tenantId,
-                id,
-                token,
-                io,
-                client,
-                url,
-                mode,
-                hasUrl2 ? 15000 : 20000,
+        return this.createImpl(
+            tenantId,
+            id,
+            token,
+            io,
+            client,
+            url,
+            mode,
+            hasUrl2 ? 15000 : 20000,
             // tslint:disable-next-line: promise-function-async
-            ).catch((error) => {
+        ).catch((error) => {
                 if (hasUrl2) {
                     // tslint:disable-next-line: no-unsafe-any
                     if (error !== null && typeof error === "object" && error.canRetry) {
-                        debug(`Socket connection error on non-AFD URL. Error was [${error}]. Retry on AFD URL: ${url}`);
-                        logger.sendTelemetryEvent({ eventName: "UseAfdUrl" });
+                    debug(`Socket connection error on non-AFD URL. Error was [${error}]. Retry on AFD URL: ${url}`);
+                    logger.sendTelemetryEvent({ eventName: "UseAfdUrl" });
 
-                        return this.createImpl(
-                            tenantId,
-                            id,
-                            token,
-                            io,
-                            client,
-                            // tslint:disable-next-line: no-non-null-assertion
-                            url2!,
-                            mode,
-                            20000,
-                        );
-                    }
+                    return this.createImpl(
+                        tenantId,
+                        id,
+                        token,
+                        io,
+                        client,
+                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                        url2!,
+                        mode,
+                        20000,
+                    );
                 }
+            }
 
-                logger.sendTelemetryEvent({ eventName: "FailedAfdUrl" });
+            logger.sendTelemetryEvent({ eventName: "FailedAfdUrl" });
 
-                throw error;
-            });
+            throw error;
+        });
     }
 
     /**
