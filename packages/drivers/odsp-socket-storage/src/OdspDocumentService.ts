@@ -306,6 +306,7 @@ export class OdspDocumentService implements IDocumentService {
             if (afdCacheValid && hasUrl2) {
                 debug("Connecting to AFD URL directly due to valid cache.");
                 const startAfd = performance.now();
+
                 return DocumentDeltaConnection.create(
                     tenantId,
                     id,
@@ -317,7 +318,11 @@ export class OdspDocumentService implements IDocumentService {
                     url2!,
                     20000,
                 ).then((connection) => {
-                    logger.sendTelemetryEvent({ eventName: "UsedAfdUrlDueToCache" });
+                    logger.sendTelemetryEvent({
+                        eventName: "UsedAfdUrl",
+                        fromCache: true,
+                    });
+
                     return connection;
                 }).catch((connectionError) => {
                     const endAfd = performance.now();
@@ -336,24 +341,24 @@ export class OdspDocumentService implements IDocumentService {
                             url,
                             20000,
                         ).then((connection) => {
-                            logger.sendTelemetryEvent({
+                            logger.sendPerformanceEvent({
                                 eventName: "UsedNonAfdUrlFallback",
-                                waitOnAfdAttemptMs: endAfd - startAfd,
-                            });
+                                duration: endAfd - startAfd,
+                            }, connectionError);
+
                             return connection;
                         }).catch((retryError) => {
-                            logger.sendErrorEvent({
+                            logger.sendPerformanceEvent({
                                 eventName: "FailedNonAfdUrlFallback",
-                                error: retryError,
-                                waitOnAfdAttemptMs: endAfd - startAfd,
-                            });
+                                duration: endAfd - startAfd,
+                            }, retryError);
+
                             throw retryError;
                         });
                     } else {
-                        logger.sendTelemetryEvent({
+                        logger.sendErrorEvent({
                             eventName: "FailedAfdUrl-NoNonAfdFallback",
-                            error: connectionError,
-                        });
+                        }, connectionError);
                     }
 
                     throw connectionError;
@@ -394,26 +399,26 @@ export class OdspDocumentService implements IDocumentService {
                         if (cacheResult) {
                             debug(`Cached AFD connection time. Expiring in ${new Date(Number(localStorage.getItem(lastAfdConnectionTimeMsKey)) + afdUrlConnectExpirationMs)}`);
                         }
-                        logger.sendTelemetryEvent({
+                        logger.sendPerformanceEvent({
                             eventName: "UsedAfdUrl",
-                            waitOnNonAfdAttemptMs: endNonAfd - startNonAfd,
-                            cachedAfdUrl: cacheResult,
-                        });
+                            duration: endNonAfd - startNonAfd,
+                            refreshedCache: cacheResult,
+                            fromCache: false,
+                        }, connectionError);
 
                         return connection;
                     }).catch((retryError) => {
-                        logger.sendErrorEvent({
+                        logger.sendPerformanceEvent({
                             eventName: "FailedAfdUrlFallback",
-                            error: retryError,
-                            waitOnNonAfdAttemptMs: endNonAfd - startNonAfd,
-                        });
+                            duration: endNonAfd - startNonAfd,
+                        }, retryError);
+
                         throw retryError;
                     });
                 } else {
                     logger.sendErrorEvent({
                         eventName: "FailedNonAfdUrl-NoAfdFallback",
-                        error: connectionError,
-                    });
+                    }, connectionError);
                 }
 
                 throw connectionError;
