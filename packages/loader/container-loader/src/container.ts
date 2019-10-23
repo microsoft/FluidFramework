@@ -96,7 +96,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         codeLoader: ICodeLoader,
         options: any,
         scope: IComponent,
-        connection: string,
         loader: Loader,
         request: IRequest,
         logger?: ITelemetryBaseLogger,
@@ -124,7 +123,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             };
             container.on("error", onError);
 
-            return container.load(version, connection)
+            return container.load(version, request.headers!.connection as string)
                 .then(() => {
                     container.removeListener("error", onError);
                     res(container);

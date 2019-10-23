@@ -25,7 +25,6 @@ import {
 import { EventEmitter } from "events";
 // tslint:disable-next-line:no-var-requires
 const now = require("performance-now") as () => number;
-import * as querystring from "querystring";
 import { parse } from "url";
 import { Container } from "./container";
 import { debug } from "./debug";
@@ -182,15 +181,14 @@ export class Loader extends EventEmitter implements ILoader {
     }
 
     private parseUrl(url: string): IParsedUrl | null {
-        const parsed = parse(url);
-        const qs = querystring.parse(parsed.query!);
+        const parsed = parse(url, true);
         let version: string | null;
 
         // version = null means not use any snapshot.
-        if (qs.version === "null") {
+        if (parsed.query.version === "null") {
             version = null;
         } else {
-            version = qs.version as string;
+            version = parsed.query.version as string;
         }
 
         const regex = /^\/([^\/]*\/[^\/]*)(\/?.*)$/;
@@ -246,24 +244,25 @@ export class Loader extends EventEmitter implements ILoader {
         let version = parsed.version;
         let fromSequenceNumber = -1;
 
-        if (request.headers) {
-            if (request.headers.connect) {
-                // If connection header is pure open or close we will cache it. Otherwise custom load behavior
-                // and so we will not cache the request
-                canCache = request.headers.connect === "open" || request.headers.connect === "close";
-                connection = request.headers.connect as string;
-            }
-
-            if (request.headers["fluid-cache"] === false) {
-                canCache = false;
-            }
-
-            if (request.headers["fluid-sequence-number"]) {
-                fromSequenceNumber = request.headers["fluid-sequence-number"] as number;
-            }
-
-            version = version || request.headers.version as string;
+        request.headers = request.headers ? request.headers : {};
+        if (request.headers.connect) {
+            // If connection header is pure open or close we will cache it. Otherwise custom load behavior
+            // and so we will not cache the request
+            canCache = request.headers.connect === "open" || request.headers.connect === "close";
+            connection = request.headers.connect as string;
+        } else {
+            request.headers.connect = connection;
         }
+
+        if (request.headers["fluid-cache"] === false) {
+            canCache = false;
+        }
+
+        if (request.headers["fluid-sequence-number"]) {
+            fromSequenceNumber = request.headers["fluid-sequence-number"] as number;
+        }
+
+        version = version || request.headers.version as string;
 
         debug(`${canCache} ${connection} ${version}`);
         const factory: IDocumentServiceFactory =
@@ -282,7 +281,6 @@ export class Loader extends EventEmitter implements ILoader {
                     this.loadContainer(
                         parsed.id,
                         version,
-                        connection,
                         documentService,
                         request,
                         resolved,
@@ -295,7 +293,6 @@ export class Loader extends EventEmitter implements ILoader {
                 await this.loadContainer(
                     parsed.id,
                     version,
-                    connection,
                     documentService,
                     request,
                     resolved,
@@ -325,7 +322,6 @@ export class Loader extends EventEmitter implements ILoader {
     private loadContainer(
         id: string,
         version: string | null | undefined,
-        connection: string,
         documentService: IDocumentService,
         request: IRequest,
         resolved: IResolvedUrl,
@@ -338,7 +334,6 @@ export class Loader extends EventEmitter implements ILoader {
             this.codeLoader,
             this.options,
             this.scope,
-            connection,
             this,
             request,
             logger);
