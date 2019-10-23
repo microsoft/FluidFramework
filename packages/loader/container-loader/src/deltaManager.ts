@@ -178,12 +178,12 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
     constructor(
         private readonly service: IDocumentService,
-        private readonly client: IClient | null,
+        private readonly client: IClient,
         private readonly logger: ITelemetryLogger,
         private readonly reconnect: boolean) {
         super();
 
-        this.clientType = (!this.client || !this.client.type) ? Browser : this.client.type;
+        this.clientType = this.client.type;
         this.systemConnectionMode = (this.client && this.client.mode === "write") ? "write" : "read";
 
         // Inbound message queue
@@ -612,7 +612,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         DeltaConnection.connect(
             this.service,
-            this.client!,
+            this.client,
             mode).then(
             (connection) => {
                 this.connection = connection;
