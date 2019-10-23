@@ -99,13 +99,11 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         connection: string,
         loader: Loader,
         request: IRequest,
-        canReconnect: boolean,
         logger?: ITelemetryBaseLogger,
     ): Promise<Container> {
         const container = new Container(
             id,
             options,
-            canReconnect,
             service,
             scope,
             codeLoader,
@@ -142,6 +140,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     }
 
     public subLogger: TelemetryLogger;
+    public readonly canReconnect: boolean;
     private readonly logger: ITelemetryLogger;
 
     private pendingClientId: string | undefined;
@@ -243,7 +242,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     constructor(
         id: string,
         public readonly options: any,
-        public readonly canReconnect: boolean,
         private readonly service: IDocumentService,
         private readonly scope: IComponent,
         private readonly codeLoader: ICodeLoader,
@@ -257,6 +255,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         this._id = decodeURI(documentId);
         this._scopes = this.getScopes(options);
         this._audience = new Audience();
+        this.canReconnect = !(originalRequest.headers && originalRequest.headers["fluid-reconnect"] === false);
 
         // create logger for components to use
         this.subLogger = DebugLogger.mixinDebugLogger(

@@ -242,7 +242,6 @@ export class Loader extends EventEmitter implements ILoader {
         }
 
         let canCache = true;
-        let canReconnect = true;
         let connection = !parsed.version ? "open" : "close";
         let version = parsed.version;
         let fromSequenceNumber = -1;
@@ -257,10 +256,6 @@ export class Loader extends EventEmitter implements ILoader {
 
             if (request.headers["fluid-cache"] === false) {
                 canCache = false;
-            }
-
-            if (request.headers["fluid-reconnect"] === false) {
-                canReconnect = false;
             }
 
             if (request.headers["fluid-sequence-number"]) {
@@ -291,7 +286,6 @@ export class Loader extends EventEmitter implements ILoader {
                         documentService,
                         request,
                         resolved,
-                        canReconnect,
                         this.logger);
                 this.containers.set(versionedId, containerP);
                 container = await containerP;
@@ -305,7 +299,6 @@ export class Loader extends EventEmitter implements ILoader {
                     documentService,
                     request,
                     resolved,
-                    canReconnect,
                     this.logger);
         }
 
@@ -336,7 +329,6 @@ export class Loader extends EventEmitter implements ILoader {
         documentService: IDocumentService,
         request: IRequest,
         resolved: IResolvedUrl,
-        canReconnect: boolean,
         logger?: ITelemetryBaseLogger,
     ): Promise<Container> {
         const container = Container.load(
@@ -349,7 +341,6 @@ export class Loader extends EventEmitter implements ILoader {
             connection,
             this,
             request,
-            canReconnect,
             logger);
 
         return container;
