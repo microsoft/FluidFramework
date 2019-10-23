@@ -505,8 +505,9 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return root;
     }
 
-    private getVersion(version: string): Promise<IVersion> {
-        return this.storageService!.getVersions(version, 1).then((versions) => versions[0]);
+    private async getVersion(version: string): Promise<IVersion> {
+        const versions = await this.storageService!.getVersions(version, 1);
+        return versions[0];
     }
 
     private connectToDeltaStream() {
