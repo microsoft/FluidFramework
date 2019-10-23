@@ -24,7 +24,7 @@
         },
         "ecmaVersion": 2018,
         "sourceType": "module",
-        "project": "./tsconfig.json"
+        "project": "tsconfig.json"
     },
     "plugins": [
         "react",
@@ -36,7 +36,7 @@
         "@typescript-eslint/explicit-function-return-type": "off",
         "@typescript-eslint/no-use-before-define": "off",
         "@typescript-eslint/no-explicit-any": "off",
-        // note you must disable the base rule as it can report incorrect errors
+        // note you must disable the base require-await rule as it can report incorrect errors
         "require-await": "off",
         "@typescript-eslint/require-await": "error",
         "@typescript-eslint/no-unused-vars": [
