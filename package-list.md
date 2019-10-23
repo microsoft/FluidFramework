@@ -78,7 +78,7 @@
 | ✔             | ✔                 |                           |                           | @microsoft/fluid-replay-tool               |
 | ✔             | ✔                 |                           |                           | @microsoft/fluid-routerlicious-driver      |
 | ✔             |                   |                           |                           | @microsoft/fluid-routerlicious-host        |
-|               |                   |                           |                           | @microsoft/fluid-routerlicious-urlresolver |
+| ✔             | ✔                 |                           |                           | @microsoft/fluid-routerlicious-urlresolver |
 | ✔             |                   |                           |                           | @microsoft/fluid-runtime-definitions       |
 |               |                   |                           |                           | @microsoft/fluid-sequence                  |
 |               |                   |                           |                           | @microsoft/fluid-server-agent              |

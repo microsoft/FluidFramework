@@ -20,7 +20,7 @@
     "eslint": "eslint --ext=ts,tsx --format stylish src",
     "test": "mocha --recursive dist/test",
     "tsc": "tsc",
-    "tslint": "tslint --project tsconfig.json --format verbose"
+    "tslint": "npm run eslint"
   },
   "dependencies": {
     "@microsoft/fluid-component-core-interfaces": "^0.11.0",
