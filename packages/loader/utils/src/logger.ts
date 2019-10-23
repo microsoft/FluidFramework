@@ -61,13 +61,13 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
                 stack?: string;
                 message?: string;
                 statusCode?: number;
-                isOnline?: boolean
+                online?: string
             };
 
             event.stack = errorAsObject.stack;
             event.error = errorAsObject.message;
             event.statusCode = errorAsObject.statusCode;
-            event.isOnline = errorAsObject.isOnline;
+            event.online = errorAsObject.online;
         }
 
         // Collect stack if we were not able to extract it from error
