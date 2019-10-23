@@ -92,7 +92,7 @@ export interface IDebuggerController {
 }
 
 const debuggerWindowHtml =
-`<Title>Fluid Debugger</Title>
+    `<Title>Fluid Debugger</Title>
 <body>
 <h3>Fluid Debugger</h3>
 Please select snapshot or file to start with<br/>
@@ -107,7 +107,7 @@ Close debugger window to proceed to live document<br/><br/>
 </body>`;
 
 const debuggerWindowHtml2 =
-`<Title>Fluid Debugger</Title>
+    `<Title>Fluid Debugger</Title>
 <body>
 <h3>Fluid Debugger</h3>
 <div id='versionText'></div>
@@ -124,10 +124,10 @@ Step to move: <input type='number' id='steps' value='1' style='width:50px'/>
 export class DebuggerUI {
     public static create(controller: IDebuggerController): DebuggerUI | null {
         if (
-                typeof window !== "object" ||
-                window === null ||
-                typeof window.document !== "object" ||
-                window.document == null) {
+            typeof window !== "object" ||
+            window === null ||
+            typeof window.document !== "object" ||
+            window.document == null) {
             console.log("Can't create debugger window - not running in browser!");
             return null;
         }
@@ -191,6 +191,7 @@ export class DebuggerUI {
             controller.onVersionSelection(index === 0 ? undefined : this.versions[index - 1]);
         };
 
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises
         fileSnapshot.addEventListener("change", async () => {
             const files = fileSnapshot.files;
             if (files) {

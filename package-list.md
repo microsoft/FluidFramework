@@ -48,12 +48,12 @@
 | ⛔             |                   |      | @microsoft/fluid-build-common              |
 |               |                   |      | @microsoft/fluid-cell                      |
 | ✔             |                   |      | @microsoft/fluid-component-core-interfaces |
-|               |                   |      | @microsoft/fluid-component-runtime         |
+| ✔             | ✔                 | ✔    | @microsoft/fluid-component-runtime         |
 | ✔             |                   |      | @microsoft/fluid-container-definitions     |
 | ✔             | ✔                 | ✔    | @microsoft/fluid-container-loader          |
 |               |                   |      | @microsoft/fluid-container-runtime         |
 | ✔             | ✔                 | ✔    | @microsoft/fluid-core-utils                |
-|               |                   |      | @microsoft/fluid-debugger                  |
+| ✔             | ✔                 | ✔    | @microsoft/fluid-debugger                  |
 | ✔             |                   |      | @microsoft/fluid-driver-base               |
 |               |                   |      | @microsoft/fluid-external-component-loader |
 |               |                   |      | @microsoft/fluid-fetch                     |

@@ -31,7 +31,7 @@ const MaxBatchDeltas = 2000;
  */
 export class DebugReplayController extends ReplayController implements IDebuggerController {
     public static create(
-            createUi: debuggerUIFactory): DebugReplayController | null {
+        createUi: debuggerUIFactory): DebugReplayController | null {
         if (typeof localStorage === "object" && localStorage !== null && localStorage.FluidDebugger) {
             const controller = new DebugReplayController();
             const ui = createUi(controller);
@@ -94,9 +94,9 @@ export class DebugReplayController extends ReplayController implements IDebugger
         const tree = await this.documentStorageService.getSnapshotTree(version);
         const seq = await DebugReplayController.seqFromTree(this.documentStorageService, tree);
         this.resolveStorage(
-                seq,
-                new SnapshotStorage(this.documentStorageService, tree),
-                version);
+            seq,
+            new SnapshotStorage(this.documentStorageService, tree),
+            version);
     }
 
     public onOpButtonClick(steps: number) {
@@ -106,11 +106,12 @@ export class DebugReplayController extends ReplayController implements IDebugger
     }
 
     public onSnapshotFileSelection(file: File) {
-        if (!file.name.match(/^snapshot.*\.json/)) {
+
+        if (!/^snapshot.*\.json/.exec(file.name)) {
             alert(`Incorrect file name: ${file.name}`);
             return;
         }
-        if (file.name.match(/.*_expanded.*/)) {
+        if (/.*_expanded.*/.exec(file.name)) {
             alert(`Incorrect file name - please use non-extended files: ${file.name}`);
             return;
         }
@@ -157,10 +158,10 @@ export class DebugReplayController extends ReplayController implements IDebugger
     }
 
     public async downloadVersionInfo(
-            documentStorageService: IDocumentStorageService,
-            prevRequest: Promise<void>,
-            index: number,
-            version: IVersion): Promise<void> {
+        documentStorageService: IDocumentStorageService,
+        prevRequest: Promise<void>,
+        index: number,
+        version: IVersion): Promise<void> {
 
         if (this.isSelectionMade()) {
             return;
@@ -235,8 +236,8 @@ export class DebugReplayController extends ReplayController implements IDebugger
     }
 
     public async getVersions(
-            versionId: string,
-            count: number): Promise<IVersion[]> {
+        versionId: string,
+        count: number): Promise<IVersion[]> {
         if (this.storage !== undefined) {
             return this.storage.getVersions(versionId, count);
         }
@@ -272,8 +273,9 @@ export class DebugReplayController extends ReplayController implements IDebugger
     }
 
     public async replay(
-            emitter: (op: ISequencedDocumentMessage) => void,
-            fetchedOps: ISequencedDocumentMessage[]): Promise<void> {
+        emitter: (op: ISequencedDocumentMessage) => void,
+        fetchedOps: ISequencedDocumentMessage[]): Promise<void> {
+        // eslint-disable-next-line no-constant-condition
         while (true) {
             if (fetchedOps.length === 0) {
                 this.ui.updateNextOpText([]);
@@ -307,9 +309,9 @@ export class DebugReplayController extends ReplayController implements IDebugger
     }
 
     protected resolveStorage(
-            seq: number,
-            storage: ReadDocumentStorageServiceBase,
-            version?: IVersion | string) {
+        seq: number,
+        storage: ReadDocumentStorageServiceBase,
+        version?: IVersion | string) {
         assert(!this.isSelectionMade());
         assert(storage);
         this.storage = storage;

@@ -8,7 +8,7 @@ import { ReplayDocumentService, ReplayDocumentServiceFactory } from "@microsoft/
 import { DebugReplayController } from "./fluidDebuggerController";
 import { DebuggerUI } from "./fluidDebuggerUI";
 
-// tslint:disable-next-line:no-namespace
+// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace FluidDebugger {
     /**
      * Creates document service wrapper that pops up Debugger window and allows user to play ops one by one.
@@ -17,7 +17,7 @@ export namespace FluidDebugger {
      * @param documentService - original document service to use to fetch ops / snapshots.
      */
     export async function createFromService(
-            documentService: IDocumentService): Promise<IDocumentService> {
+        documentService: IDocumentService): Promise<IDocumentService> {
         const controller = createFluidDebugger();
         if (!controller) {
             return documentService;
@@ -26,7 +26,7 @@ export namespace FluidDebugger {
     }
 
     export async function createFromServiceFactory(
-            documentServiceFactory: IDocumentServiceFactory) {
+        documentServiceFactory: IDocumentServiceFactory) {
         const controller = createFluidDebugger();
         if (!controller) {
             return documentServiceFactory;
