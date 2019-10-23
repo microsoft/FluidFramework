@@ -139,7 +139,7 @@ export class SegmentPropertiesManager {
         return this.pendingRewriteCount > 0 || Object.keys(this.pendingKeyUpdateCount).length > 0;
     }
 
-    public resetPendingPropertiesToOpDetails(): { props: Properties.PropertySet, combiningOp: ICombiningOp } {
+    public resetPendingPropertiesToOpDetails(): { props: Properties.PropertySet; combiningOp: ICombiningOp } {
         let combiningOp: ICombiningOp;
         if (this.pendingRewriteCount > 0) {
             this.pendingRewriteCount = 1;

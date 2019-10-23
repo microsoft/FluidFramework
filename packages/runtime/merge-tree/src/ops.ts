@@ -98,7 +98,7 @@ export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
     relativePos1?: IRelativePosition;
     pos2?: number;
     relativePos2?: IRelativePosition;
-    props: Object;
+    props: Record<string, any>;
     combiningOp?: ICombiningOp;
 }
 
@@ -108,7 +108,7 @@ export interface IMergeTreeGroupMsg extends IMergeTreeDelta {
 }
 
 export interface IJSONSegment {
-    props?: Object;
+    props?: Record<string, any>;
 }
 
 export type IMergeTreeOp = IMergeTreeInsertMsg | IMergeTreeRemoveMsg | IMergeTreeAnnotateMsg | IMergeTreeGroupMsg;

@@ -66,7 +66,7 @@
 | ✔             | ✔                 |                           |                           | @microsoft/fluid-ink                       |
 | ✔             | ✔                 |                           |                           | @microsoft/fluid-local-test-server         |
 | ✔             | ✔                 |                           |                           | @microsoft/fluid-map                       |
-|               |                   |                           |                           | @microsoft/fluid-merge-tree                |
+| ❌             |                   |                           |                           | @microsoft/fluid-merge-tree                |
 | ✔             | ✔                 |                           |                           | @microsoft/fluid-merge-tree-client-replay  |
 |               |                   |                           |                           | @microsoft/fluid-odsp-driver               |
 |               |                   |                           |                           | @microsoft/fluid-odsp-urlresolver          |

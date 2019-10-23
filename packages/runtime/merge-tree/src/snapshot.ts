@@ -69,11 +69,11 @@ export class Snapshot {
     getSeqLengthSegs(allSegments: ops.IJSONSegment[], allLengths: number[], approxSequenceLength: number,
         startIndex = 0): ops.MergeTreeChunk {
 
-        let segs = <ops.IJSONSegment[]>[];
+        const segs = <ops.IJSONSegment[]>[];
         let sequenceLength = 0;
         let segCount = 0;
         while ((sequenceLength < approxSequenceLength) && ((startIndex + segCount) < allSegments.length)) {
-            let pseg = allSegments[startIndex + segCount];
+            const pseg = allSegments[startIndex + segCount];
             segs.push(pseg);
             sequenceLength += allLengths[startIndex + segCount];
             segCount++;
@@ -99,7 +99,7 @@ export class Snapshot {
         context?: IComponentHandleContext,
         bind?: IComponentHandle,
     ): ITree {
-        let chunk1 = this.getSeqLengthSegs(this.segments, this.segmentLengths, Snapshot.sizeOfFirstChunk);
+        const chunk1 = this.getSeqLengthSegs(this.segments, this.segmentLengths, Snapshot.sizeOfFirstChunk);
         let length: number = chunk1.chunkLengthChars;
         let segments: number = chunk1.chunkSegmentCount;
         const tree: ITree = {
@@ -119,7 +119,7 @@ export class Snapshot {
 
         if (chunk1.chunkSegmentCount < chunk1.totalSegmentCount)
         {
-            let chunk2 = this.getSeqLengthSegs(this.segments, this.segmentLengths, this.header.segmentsTotalLength, chunk1.chunkSegmentCount);
+            const chunk2 = this.getSeqLengthSegs(this.segments, this.segmentLengths, this.header.segmentsTotalLength, chunk1.chunkSegmentCount);
             length += chunk2.chunkLengthChars;
             segments += chunk2.chunkSegmentCount;
             tree.entries.push({
@@ -155,7 +155,7 @@ export class Snapshot {
     }
 
     extractSync() {
-        let collabWindow = this.mergeTree.getCollabWindow();
+        const collabWindow = this.mergeTree.getCollabWindow();
         this.seq = collabWindow.minSeq;
         this.header = {
             segmentsTotalLength: this.mergeTree.getLength(this.mergeTree.collabWindow.minSeq,
@@ -165,7 +165,7 @@ export class Snapshot {
 
         const segs = <MergeTree.ISegment[]>[];
         let prev: MergeTree.ISegment | undefined;
-        let extractSegment = (segment: MergeTree.ISegment, pos: number, refSeq: number, clientId: number,
+        const extractSegment = (segment: MergeTree.ISegment, pos: number, refSeq: number, clientId: number,
             start: number, end: number) => {
             if ((segment.seq != UnassignedSequenceNumber) && (segment.seq <= this.seq) &&
                 ((segment.removedSeq === undefined) || (segment.removedSeq == UnassignedSequenceNumber) ||
@@ -215,7 +215,7 @@ export class Snapshot {
         serializer?: IComponentSerializer,
         context?: IComponentHandleContext,
     ): Promise<ops.MergeTreeChunk> {
-        let chunkAsString: string = await storage.read(path);
+        const chunkAsString: string = await storage.read(path);
         return Snapshot.processChunk(chunkAsString, serializer, context);
     }
 

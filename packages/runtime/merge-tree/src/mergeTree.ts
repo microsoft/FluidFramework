@@ -710,10 +710,10 @@ export class ExternalSegment extends BaseSegment {
     }
 }
 
-export let reservedTileLabelsKey = "referenceTileLabels";
-export let reservedRangeLabelsKey = "referenceRangeLabels";
-export let reservedMarkerIdKey = "markerId";
-export let reservedMarkerSimpleTypeKey = "markerSimpleType";
+export const reservedTileLabelsKey = "referenceTileLabels";
+export const reservedRangeLabelsKey = "referenceRangeLabels";
+export const reservedMarkerIdKey = "markerId";
+export const reservedMarkerSimpleTypeKey = "markerSimpleType";
 
 export function refHasTileLabels(refPos: ReferencePosition) {
     return (refPos.refType & ops.ReferenceType.Tile) &&
@@ -1836,7 +1836,7 @@ export class MergeTree {
                     // segment happened by reference sequence number or segment from requesting client
                     if (removalInfo.removedSeq !== undefined) {
                         if ((removalInfo.removedClientId === clientId) ||
-                            (removalInfo.removedClientOverlap && (removalInfo.removedClientOverlap.indexOf(clientId) >= 0)) ||
+                            (removalInfo.removedClientOverlap && (removalInfo.removedClientOverlap.includes(clientId))) ||
                             ((removalInfo.removedSeq !== UnassignedSequenceNumber) && (removalInfo.removedSeq <= refSeq))) {
                             return 0;
                         } else {
@@ -2077,7 +2077,7 @@ export class MergeTree {
                 if (MergeTree.options.zamboniSegments) {
                     this.addToLRUSet(pendingSegment, seq);
                 }
-                if (nodesToUpdate.indexOf(pendingSegment.parent) < 0) {
+                if (!nodesToUpdate.includes(pendingSegment.parent)) {
                     nodesToUpdate.push(pendingSegment.parent);
                 }
             });

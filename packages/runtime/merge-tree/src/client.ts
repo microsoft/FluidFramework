@@ -614,14 +614,14 @@ export class Client {
 // as functions are modified move them above the tslint: disabled waterline and lint them
 
     undoSingleSequenceNumber(undoSegments: IUndoInfo[], redoSegments: IUndoInfo[]) {
-        let len = undoSegments.length;
+        const len = undoSegments.length;
         let index = len - 1;
-        let seq = undoSegments[index].seq;
+        const seq = undoSegments[index].seq;
         if (seq === 0) {
             return 0;
         }
         while (index >= 0) {
-            let undoInfo = undoSegments[index];
+            const undoInfo = undoSegments[index];
             if (seq === undoInfo.seq) {
                 this.mergeTree.cherryPickedUndo(undoInfo);
                 redoSegments.push(undoInfo);
@@ -635,7 +635,7 @@ export class Client {
         return seq;
     }
     historyToPct(pct: number) {
-        let count = this.undoSegments.length + this.redoSegments.length;
+        const count = this.undoSegments.length + this.redoSegments.length;
         let curPct = this.undoSegments.length / count;
         let seq = -1;
         if (curPct >= pct) {
@@ -659,12 +659,12 @@ export class Client {
         return this.undoSingleSequenceNumber(this.redoSegments, this.undoSegments);
     }
     cloneFromSegments() {
-        let clone = new Client(this.specToSegment, this.logger, this.mergeTree.options);
-        let segments = <ISegment[]>[];
-        let newRoot = this.mergeTree.blockClone(this.mergeTree.root, segments);
+        const clone = new Client(this.specToSegment, this.logger, this.mergeTree.options);
+        const segments = <ISegment[]>[];
+        const newRoot = this.mergeTree.blockClone(this.mergeTree.root, segments);
         clone.mergeTree.root = newRoot;
         let undoSeg = <IUndoInfo[]>[];
-        for (let segment of segments) {
+        for (const segment of segments) {
             if (segment.seq !== 0) {
                 undoSeg.push({
                     seq: segment.seq,
@@ -795,7 +795,7 @@ export class Client {
                 this.applyAnnotateRangeOp(opArgs);
                 break;
             case ops.MergeTreeDeltaType.GROUP: {
-                for (let memberOp of op.ops) {
+                for (const memberOp of op.ops) {
                     this.applyRemoteOp({
                         op: memberOp,
                         groupOp: op,
@@ -899,7 +899,7 @@ export class Client {
     }
 
     private getLocalSequenceNumber() {
-        let segWindow = this.getCollabWindow();
+        const segWindow = this.getCollabWindow();
         if (segWindow.collaborating) {
             return UnassignedSequenceNumber;
         }
@@ -908,7 +908,7 @@ export class Client {
         }
     }
     localTransaction(groupOp: ops.IMergeTreeGroupMsg) {
-        for (let op of groupOp.ops) {
+        for (const op of groupOp.ops) {
             const opArgs: IMergeTreeDeltaOpArgs = {
                 op,
                 groupOp,
@@ -927,8 +927,8 @@ export class Client {
         }
     }
     updateConsensusProperty(op: ops.IMergeTreeAnnotateMsg, msg: ISequencedDocumentMessage) {
-        let markerId = op.relativePos1.id;
-        let consensusInfo = this.pendingConsensus.get(markerId);
+        const markerId = op.relativePos1.id;
+        const consensusInfo = this.pendingConsensus.get(markerId);
         if (consensusInfo) {
             consensusInfo.marker.addProperties(op.props, op.combiningOp, msg.sequenceNumber);
         }
@@ -942,7 +942,7 @@ export class Client {
         }
         this.mergeTree.setMinSeq(minSeq);
         if (this.measureOps) {
-            let elapsed = elapsedMicroseconds(clockStart);
+            const elapsed = elapsedMicroseconds(clockStart);
             this.accumWindowTime += elapsed;
             if (elapsed > this.maxWindowTime) {
                 this.maxWindowTime = elapsed;
@@ -956,21 +956,21 @@ export class Client {
     }
 
     getPropertiesAtPosition(pos: number) {
-        let segWindow = this.getCollabWindow();
+        const segWindow = this.getCollabWindow();
         if (this.verboseOps) {
             console.log(`getPropertiesAtPosition cli ${this.getLongClientId(segWindow.clientId)} ref seq ${segWindow.currentSeq}`);
         }
 
         let propertiesAtPosition: Properties.PropertySet;
-        let segoff = this.getContainingSegment(pos);
-        let seg = segoff.segment;
+        const segoff = this.getContainingSegment(pos);
+        const seg = segoff.segment;
         if (seg) {
             propertiesAtPosition = seg.properties;
         }
         return propertiesAtPosition;
     }
     getRangeExtentsOfPosition(pos: number) {
-        let segWindow = this.getCollabWindow();
+        const segWindow = this.getCollabWindow();
         if (this.verboseOps) {
             console.log(`getRangeExtentsOfPosition cli ${this.getLongClientId(segWindow.clientId)} ref seq ${segWindow.currentSeq}`);
         }
@@ -978,8 +978,8 @@ export class Client {
         let posStart: number;
         let posAfterEnd: number;
 
-        let segoff = this.getContainingSegment(pos);
-        let seg = segoff.segment;
+        const segoff = this.getContainingSegment(pos);
+        const seg = segoff.segment;
         if (seg) {
             posStart = this.getPosition(seg);
             posAfterEnd = posStart + seg.cachedLength;
@@ -994,7 +994,7 @@ export class Client {
     }
 
     getLength() {
-        let segmentWindow = this.getCollabWindow();
+        const segmentWindow = this.getCollabWindow();
         return this.mergeTree.getLength(segmentWindow.currentSeq, segmentWindow.clientId);
     }
     startCollaboration(longClientId: string | undefined,  minSeq = 0, branchId = 0) {
@@ -1004,7 +1004,7 @@ export class Client {
     }
     updateCollaboration(longClientId: string) {
         const oldClientId = this.longClientId;
-        let oldData = this.clientNameToIds.get(oldClientId).data;
+        const oldData = this.clientNameToIds.get(oldClientId).data;
         this.longClientId = longClientId;
         this.clientNameToIds.put(longClientId, oldData);
         this.shortClientIdMap[oldData.clientId] = longClientId;

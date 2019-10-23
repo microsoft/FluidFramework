@@ -19,7 +19,7 @@ export enum OverlayNodePosition {
     Root,
 }
 
-export let onodeTypeKey = "onodeType";
+export const onodeTypeKey = "onodeType";
 
 function createTreeMarkerOps(
     treeRangeLabel: string,

@@ -30,7 +30,7 @@ export function loadSegments(content: string, segLimit: number, markers: boolean
                 { [MergeTree.reservedTileLabelsKey]: ["pg"] });
         }
         if (withProps) {
-            if ((paragraph.indexOf("Chapter") >= 0) || (paragraph.indexOf("PRIDE AND PREJ") >= 0)) {
+            if ((paragraph.includes("Chapter")) || (paragraph.includes("PRIDE AND PREJ"))) {
                 if (markers) {
                     pgMarker.addProperties({ header: 2 });
                     segments.push(new TextSegment(paragraph));
