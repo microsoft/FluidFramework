@@ -25,6 +25,7 @@ export class InnerDocumentService implements IDocumentService {
      */
     public static async create(): Promise<InnerDocumentService> {
 
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises, no-async-promise-executor
         return new Promise(async (resolve) => {
             const create = async () => {
                 const outerProxyP = Comlink.wrap(Comlink.windowEndpoint(window.parent)) as Promise<IOuterProxy>;
@@ -35,9 +36,11 @@ export class InnerDocumentService implements IDocumentService {
             const eventListener = async (evt) => {
                 resolve(await create());
             };
-            window.addEventListener("message", eventListener, {once: true});
+            // eslint-disable-next-line @typescript-eslint/no-misused-promises
+            window.addEventListener("message", eventListener, { once: true });
 
             const docService = await create();
+            // eslint-disable-next-line @typescript-eslint/no-misused-promises
             window.removeEventListener("message", eventListener);
             resolve(docService);
         });
@@ -62,6 +65,7 @@ export class InnerDocumentService implements IDocumentService {
      */
     public async connectToDeltaStorage(): Promise<IDocumentDeltaStorageService> {
         return {
+            // eslint-disable-next-line @typescript-eslint/unbound-method
             get: this.outerProxy.get,
         };
     }

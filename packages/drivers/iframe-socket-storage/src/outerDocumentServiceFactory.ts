@@ -20,11 +20,11 @@ import { OuterDocumentService } from "./outerDocumentService";
  */
 export class OuterDocumentServiceFactory implements IDocumentServiceFactory {
     public readonly protocolName = "fluid-outer:";
-    constructor(private readonly documentServiceFactory: IDocumentServiceFactory,
-                private readonly frameP: Promise<HTMLIFrameElement>,
-                private readonly options: any,
-                private readonly containerHost: IHost) {
-
+    constructor(
+        private readonly documentServiceFactory: IDocumentServiceFactory,
+        private readonly frameP: Promise<HTMLIFrameElement>,
+        private readonly options: any,
+        private readonly containerHost: IHost) {
     }
 
     public async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
@@ -41,6 +41,7 @@ export class OuterDocumentServiceFactory implements IDocumentServiceFactory {
         documentServiceP
             .then((documentService) => {
                 return Promise.all([
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                     documentService.connectToDeltaStream(clientDetails!, mode),
                     documentService.connectToDeltaStorage(),
                     documentService.connectToStorage(),

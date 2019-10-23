@@ -90,7 +90,8 @@ export class OuterDocumentService implements IDocumentService {
         this.outerDocumentDeltaConnection = this.createDocumentDeltaConnection(undefined as unknown as IClient);
 
         // Host guarantees that frame and contentwindow are both loaded
-        const iframeContentWindow = frame!.contentWindow!;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const iframeContentWindow = frame.contentWindow!;
 
         const connected = async () => {
             return true;

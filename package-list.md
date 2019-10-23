@@ -62,7 +62,7 @@
 | ✔             |                   |      | @microsoft/fluid-framework-interfaces      |
 | ✔             |                   |      | @microsoft/fluid-gitresources              |
 | ✔             |                   |      | @microsoft/fluid-host-service-interfaces   |
-|               |                   |      | @microsoft/fluid-iframe-driver             |
+| ✔             | ✔                 | ✔    | @microsoft/fluid-iframe-driver             |
 |               |                   |      | @microsoft/fluid-ink                       |
 |               |                   |      | @microsoft/fluid-local-test-server         |
 |               |                   |      | @microsoft/fluid-map                       |

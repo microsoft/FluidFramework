@@ -168,7 +168,7 @@ export class OuterDocumentDeltaConnection extends EventEmitter implements IDocum
         public details: IConnected,
         private readonly connection: IDocumentDeltaConnection,
         private readonly proxiedFunctionsFromInnerFrameP: Promise<IInnerDocumentDeltaConnectionProxy>,
-        ) {
+    ) {
         super();
 
         // This cannot be an await, must be a then
@@ -184,34 +184,40 @@ export class OuterDocumentDeltaConnection extends EventEmitter implements IDocum
 
         this.proxiedFunctionsFromInnerFrameP
             .then((innerProxy) => {
+                // eslint-disable-next-line @typescript-eslint/no-misused-promises
                 this.connection.on("op", async (...args: any[]) => {
                     await innerProxy.forwardEvent("op", args);
                 });
 
+                // eslint-disable-next-line @typescript-eslint/no-misused-promises
                 this.connection.on("op-content", async (...args: any[]) => {
                     await innerProxy.forwardEvent("op-content", args);
                 });
 
+                // eslint-disable-next-line @typescript-eslint/no-misused-promises
                 this.connection.on("signal", async (...args: any[]) => {
                     await innerProxy.forwardEvent("signal", args);
                 });
 
+                // eslint-disable-next-line @typescript-eslint/no-misused-promises
                 this.connection.on("connect_error", async (...args: any[]) => {
                     await innerProxy.forwardEvent("connect_error", args);
                 });
 
+                // eslint-disable-next-line @typescript-eslint/no-misused-promises
                 this.connection.on("connect_timeout", async (...args: any[]) => {
                     await innerProxy.forwardEvent("connect_timeout", args);
                 });
 
+                // eslint-disable-next-line @typescript-eslint/no-misused-promises
                 this.connection.on("connect_document_success", async (...args: any[]) => {
                     await innerProxy.forwardEvent("connect_document_success", args);
                 });
 
+                // eslint-disable-next-line @typescript-eslint/no-misused-promises
                 this.connection.on("connect_document_success", async (...args: any[]) => {
                     await innerProxy.forwardEvent("connect_document_success", args);
                 });
-
             })
             .catch((err) => {
                 console.error(err);
