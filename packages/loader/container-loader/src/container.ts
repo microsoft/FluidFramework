@@ -535,7 +535,18 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
      * @param connection - options (list of keywords). Accepted options are open & pause.
      */
     private async load(specifiedVersion: string | null | undefined, connection: string): Promise<void> {
+        const connectionValues = connection.split(",");
+        const connect = connectionValues.indexOf("open") !== -1;
+        const pause = connectionValues.indexOf("pause") !== -1;
+
         const perfEvent = PerformanceEvent.start(this.logger, { eventName: "Load" });
+
+        // Start websocket connection as soon as possible.  Note that there is no op handler attached yet, but the
+        // DeltaManager is resilient to this and will wait to start processing ops until after it is attached.
+        this.createDeltaManager(connect);
+        if (connect && !pause) {
+            this.connectToDeltaStream();
+        }
 
         this.storageService = await this.getDocumentStorageService();
 
@@ -547,16 +558,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         const attributes = await this.getDocumentAttributes(this.storageService, maybeSnapshotTree);
 
-        const connectionValues = connection.split(",");
-        const connect = connectionValues.indexOf("open") !== -1;
-        const pause = connectionValues.indexOf("pause") !== -1;
-
-        // ...begin the connection process to the delta stream
-        this.createDeltaManager(attributes, connect);
-
-        if (connect && !pause) {
-            this.connectToDeltaStream();
-        }
+        // attach op handlers to start processing ops
+        this.attachDeltaManagerOpHandler(attributes, connect);
 
         // ...load in the existing quorum
         // Initialize the protocol handler
@@ -759,7 +762,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return Promise.reject(PackageNotFactoryError);
     }
 
-    private createDeltaManager(attributes: IDocumentAttributes, connect: boolean): void {
+    private createDeltaManager(connect: boolean): void {
         // Create the DeltaManager and begin listening for connection events
         // tslint:disable-next-line:no-unsafe-any
         const clientDetails = this.options ? (this.options.client as IClient) : null;
@@ -815,12 +818,18 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             this._deltaManager.on("processTime", (time) => {
                 this.emit("processTime", time);
             });
+        }
+    }
 
+    private attachDeltaManagerOpHandler(attributes: IDocumentAttributes, connect: boolean): void {
+        assert(this._deltaManager);
+
+        if (connect) {
             // If we're the outer frame, do we want to do this?
             // Begin fetching any pending deltas once we know the base sequence #. Can this fail?
             // It seems like something, like reconnection, that we would want to retry but otherwise allow
             // the document to load
-            this._deltaManager.attachOpHandler(
+            this._deltaManager!.attachOpHandler(
                 attributes.minimumSequenceNumber,
                 attributes.sequenceNumber,
                 {
@@ -833,7 +842,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                 },
                 true);
         } else {
-            this._deltaManager.attachOpHandler(
+            this._deltaManager!.attachOpHandler(
                 attributes.minimumSequenceNumber,
                 attributes.sequenceNumber,
                 {
