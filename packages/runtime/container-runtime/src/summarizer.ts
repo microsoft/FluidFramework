@@ -213,19 +213,25 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
             // trying to find our broadcast summary op.  So we will essentially defer all
             // Summarize op handling here until deferBroadcast is resolved.
             await this.deferBroadcast.promise;
-            if (!this.pendingSummarySequenceNumber) {
-                // should only be 1 summary op per client with same ref seq number
-                if (op.clientId === this.runtime.clientId && op.referenceSequenceNumber === this.lastSummarySeqNumber) {
-                    this.logger.sendTelemetryEvent({
-                        eventName: "PendingSummaryBroadcast",
-                        timeWaitingForBroadcast: Date.now() - this.lastSummaryTime,
-                        pendingSummarySequenceNumber: op.sequenceNumber,
-                    });
-                    this.pendingSummarySequenceNumber = op.sequenceNumber;
-                    // Now we indicate that we are okay to start listening for the summary ack/nack
-                    // of this summary op, because we have set the pendingSummarySequenceNumber.
-                    this.deferAck.resolve();
-                }
+            // should only be 1 summary op per client with same ref seq number
+            if (!this.pendingSummarySequenceNumber &&
+                    op.clientId === this.runtime.clientId && op.referenceSequenceNumber === this.lastSummarySeqNumber) {
+                this.logger.sendTelemetryEvent({
+                    eventName: "SummarizeOp",
+                    timeWaitingForBroadcast: Date.now() - this.lastSummaryTime,
+                    refSequenceNumber: op.referenceSequenceNumber,
+                    sequenceNumber: op.sequenceNumber,
+                });
+                this.pendingSummarySequenceNumber = op.sequenceNumber;
+                // Now we indicate that we are okay to start listening for the summary ack/nack
+                // of this summary op, because we have set the pendingSummarySequenceNumber.
+                this.deferAck.resolve();
+            } else {
+                this.logger.sendTelemetryEvent({
+                    eventName: "SummarizeOp_otherClient",
+                    refSequenceNumber: op.referenceSequenceNumber,
+                    sequenceNumber: op.sequenceNumber,
+                });
             }
         }
         // listen for the ack/nack of this summary op
@@ -235,51 +241,56 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
             // this deferred object to ensure that our broadcast summary op is handled before our
             // summary ack/nack is handled.
             await this.deferAck.promise;
-            if (this.pendingSummarySequenceNumber) {
-                const ack = op.contents as ISummaryAck | ISummaryNack;
-                if (ack.summaryProposal.summarySequenceNumber === this.pendingSummarySequenceNumber) {
-                    if (op.type === MessageType.SummaryAck) {
-                        this.logger.sendTelemetryEvent({
-                            eventName: "SummaryAck",
-                            onBehalfOf: this.onBehalfOfClientId,
-                            timePending: Date.now() - this.lastSummaryTime,
-                            summarySequenceNumber: ack.summaryProposal.summarySequenceNumber,
-                        });
-                    } else {
-                        this.logger.sendErrorEvent({
-                            eventName: "SummaryNack",
-                            onBehalfOf: this.onBehalfOfClientId,
-                            timePending: Date.now() - this.lastSummaryTime,
-                            summarySequenceNumber: ack.summaryProposal.summarySequenceNumber,
-                            message: (ack as ISummaryNack).errorMessage,
-                        });
-                    }
 
-                    if (op.type === MessageType.SummaryAck) {
-                        // refresh base snapshot
-                        // it might be nice to do this in the container in the future, and maybe for all
-                        // clients, not just the summarizer
-                        const handle = (ack as ISummaryAck).handle;
+            const ack = op.contents as ISummaryAck | ISummaryNack;
+            const ourMessage = this.pendingSummarySequenceNumber &&
+                ack.summaryProposal.summarySequenceNumber === this.pendingSummarySequenceNumber;
 
-                        // we have to call get version to get the treeId for r11s; this isnt needed
-                        // for odsp currently, since their treeId is undefined
-                        const versionsResult = await this.setOrLogError("SummarizerFailedToGetVersion",
-                            () => this.runtime.storage.getVersions(handle, 1),
-                            (versions) => !!(versions && versions.length));
+            const props = {
+                onBehalfOf: ourMessage ? this.onBehalfOfClientId : "unknown",
+                timePending: Date.now() - this.lastSummaryTime,
+                refSequenceNumber: ack.summaryProposal.summarySequenceNumber,
+                sequenceNumber: op.sequenceNumber,
+            };
+            if (op.type === MessageType.SummaryAck) {
+                this.logger.sendTelemetryEvent({
+                    eventName: "SummaryAck",
+                    ...props,
+                    message: `handle: ${(ack as ISummaryAck).handle}`,
+                });
+            } else {
+                this.logger.sendErrorEvent({
+                    eventName: "SummaryNack",
+                    ...props,
+                    message: (ack as ISummaryNack).errorMessage,
+                });
+            }
 
-                        if (versionsResult.success) {
-                            const snapshotResult = await this.setOrLogError("SummarizerFailedToGetSnapshot",
-                                () => this.runtime.storage.getSnapshotTree(versionsResult.result[0]),
-                                (snapshot) => !!snapshot);
+            if (ourMessage) {
+                if (op.type === MessageType.SummaryAck) {
+                    // refresh base snapshot
+                    // it might be nice to do this in the container in the future, and maybe for all
+                    // clients, not just the summarizer
+                    const handle = (ack as ISummaryAck).handle;
 
-                            if (snapshotResult.success) {
-                                this.refreshBaseSummary(snapshotResult.result);
-                            }
+                    // we have to call get version to get the treeId for r11s; this isnt needed
+                    // for odsp currently, since their treeId is undefined
+                    const versionsResult = await this.setOrLogError("SummarizerFailedToGetVersion",
+                        () => this.runtime.storage.getVersions(handle, 1),
+                        (versions) => !!(versions && versions.length));
+
+                    if (versionsResult.success) {
+                        const snapshotResult = await this.setOrLogError("SummarizerFailedToGetSnapshot",
+                            () => this.runtime.storage.getSnapshotTree(versionsResult.result[0]),
+                            (snapshot) => !!snapshot);
+
+                        if (snapshotResult.success) {
+                            this.refreshBaseSummary(snapshotResult.result);
                         }
                     }
-                    this.summaryPending = false;
-                    this.pendingAckTimer.clear();
                 }
+                this.summaryPending = false;
+                this.pendingAckTimer.clear();
             }
         }
     }
@@ -331,7 +342,7 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
             const summaryEndTime = Date.now();
 
             const telemetryProps = {
-                sequenceNumber: summaryData.sequenceNumber,
+                refSequenceNumber: summaryData.sequenceNumber,
                 ...summaryData.summaryStats,
                 summaryMessage: summaryData.summaryMessage,
                 opsSinceLastSummary: summaryData.sequenceNumber - this.lastSummarySeqNumber,
