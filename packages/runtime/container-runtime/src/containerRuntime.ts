@@ -1304,7 +1304,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     }
 
     private subscribeToLeadership() {
-        if (this.context.configuration === undefined || this.context.configuration.canReconnect) {
+        if (this.context.clientType !== "summarizer") {
             this.getScheduler().then((scheduler) => {
                 if (scheduler.leader) {
                     this.updateLeader(true);

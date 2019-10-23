@@ -773,7 +773,21 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private createDeltaManager(attributesP: Promise<IDocumentAttributes>, connect: boolean): Promise<void> {
         // Create the DeltaManager and begin listening for connection events
         // tslint:disable-next-line:no-unsafe-any
-        const clientDetails = this.options ? (this.options.client as IClient) : null;
+        let clientDetails: IClient | null = this.options ? (this.options.client as IClient) : null;
+        if (this.originalRequest.headers && this.originalRequest.headers["fluid-client-type"]) {
+            // tslint:disable-next-line:no-unsafe-any
+            const clientType: string = this.originalRequest.headers["fluid-client-type"];
+            if (clientDetails) {
+                clientDetails.type = clientType;
+            } else {
+                clientDetails = {
+                    type: clientType,
+                    permission: [],
+                    scopes: [],
+                    user: { id: "" },
+                };
+            }
+        }
         this._deltaManager = new DeltaManager(
             this.service,
             clientDetails,
