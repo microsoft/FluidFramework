@@ -13,6 +13,7 @@ import {
     TelemetryEventPropertyType,
 } from "@microsoft/fluid-container-definitions";
 import * as registerDebug from "debug";
+import { NetworkError } from "./network";
 import { pkgName, pkgVersion } from "./packageVersion";
 // tslint:disable-next-line:no-var-requires
 const performanceNow = require("performance-now") as (() => number);
@@ -63,6 +64,12 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
             event.stack = errorAsObject.stack;
             event.error = errorAsObject.message;
             event.statusCode = errorAsObject.statusCode;
+            try {
+                const networkError = error as NetworkError;
+                if (networkError) {
+                    event.otherProperties = networkError.getCustomProperties();
+                }
+            } catch {}
         }
 
         // Collect stack if we were not able to extract it from error

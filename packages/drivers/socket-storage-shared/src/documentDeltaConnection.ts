@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
-import { BatchManager, NetworkError, TelemetryNullLogger } from "@microsoft/fluid-core-utils";
+import { BatchManager, INetworkErrorProperties, NetworkError, TelemetryNullLogger } from "@microsoft/fluid-core-utils";
 import {
     ConnectionMode,
     IClient,
@@ -33,8 +33,7 @@ export function createErrorObject(handler: string, error: any, canRetry = true) 
     // so we do not want it there.
     const errorObj = new NetworkError(
         `socket.io error: ${handler}: ${error}`,
-        undefined,
-        canRetry,
+        [[INetworkErrorProperties.canRetry, canRetry]],
     );
 
     // Add actual error object, for driver to be able to parse it and reason over it.
@@ -88,7 +87,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
             // tslint:disable-next-line: promise-function-async
             ).catch((error) => {
                 if (error instanceof NetworkError && hasUrl2) {
-                    if (error.canRetry) {
+                    if (error.getProperty(INetworkErrorProperties.canRetry)) {
                         debug(`Socket connection error on non-AFD URL. Error was [${error}]. Retry on AFD URL: ${url}`);
                         logger.sendTelemetryEvent({ eventName: "UseAfdUrl" });
 

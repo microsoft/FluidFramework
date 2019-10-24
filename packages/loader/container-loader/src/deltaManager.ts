@@ -10,7 +10,13 @@ import {
     IDeltaQueue,
     ITelemetryLogger,
 } from "@microsoft/fluid-container-definitions";
-import { Deferred, isSystemType, PerformanceEvent } from "@microsoft/fluid-core-utils";
+import {
+    Deferred,
+    INetworkErrorProperties,
+    isSystemType,
+    NetworkError,
+    PerformanceEvent,
+} from "@microsoft/fluid-core-utils";
 import {
     Browser,
     ConnectionMode,
@@ -53,7 +59,12 @@ const DefaultContentBufferSize = 10;
 function canRetryOnError(error: any) {
     // Always retry unless told otherwise.
     // tslint:disable-next-line:no-unsafe-any
-    return error === null || typeof error !== "object" || error.canRetry === undefined || error.canRetry;
+    if (error === null || typeof error !== "object") {
+        return true;
+    } else {
+        const value = NetworkError.checkProperty(error, INetworkErrorProperties.canRetry);
+        return value === undefined || value;
+    }
 }
 enum retryFor {
     DELTASTREAM,
@@ -418,7 +429,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             let deltasRetrievedLast = 0;
             let success = true;
             let canRetry = false;
-            let retryAfter: number = 0;
+            let retryAfter: number = -1;
 
             try {
                 // Connect to the delta storage endpoint
@@ -474,10 +485,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 }
                 success = false;
                 // tslint:disable-next-line: no-unsafe-any
-                if (typeof error === "object" && error !== null && error.retryAfterSeconds !== undefined) {
-                    // tslint:disable-next-line: no-unsafe-any
-                    retryAfter = error.retryAfterSeconds;
-                }
+                retryAfter = NetworkError.checkProperty(error, INetworkErrorProperties.retryAfterSeconds);
             }
 
             retry = deltasRetrievedLast === 0 ? retry + 1 : 0;
@@ -718,10 +726,8 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
                 let delayNext: number = 0;
                 // tslint:disable-next-line: no-unsafe-any
-                if (typeof error === "object" && error !== null && error.retryAfterSeconds !== undefined) {
-                    // tslint:disable-next-line: no-unsafe-any
-                    delayNext = error.retryAfterSeconds;
-                } else {
+                delayNext = NetworkError.checkProperty(error, INetworkErrorProperties.retryAfterSeconds);
+                if (delayNext === undefined) {
                     delayNext = Math.min(delay * 2, MaxReconnectDelay);
                 }
                 this.emitDelayInfo(retryFor.DELTASTREAM, delayNext);
