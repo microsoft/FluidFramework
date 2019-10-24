@@ -1,0 +1,48 @@
+{
+    "scripts": {
+        "sppkg": "npm run sppkg:bundle && npm run sppkg:package",
+        "sppkg:bundle": "npm run sppkg:clean && npm run sppkg:webpack",
+        "sppkg:clean": "rimraf dist/** lib/** sharepoint/**",
+        "sppkg:package": "cpy <%= manifestPath %> dist --rename=<%= componentId %>.manifest.json && gulp package-solution --ship && cpy sharepoint/solution/*.sppkg c:\\packages",
+        "sppkg:webpack": "webpack --env.production"
+    },
+    "dependencies": {
+        "@microsoft/sp-component-base": "1.10.0-dev.32",
+        "@microsoft/sp-core-library": "1.10.0-dev.32",
+        "@microsoft/sp-diagnostics": "1.10.0-dev.32",
+        "@microsoft/sp-dialog": "1.10.0-dev.32",
+        "@microsoft/sp-extension-base": "1.10.0-dev.32",
+        "@microsoft/sp-http": "1.10.0-dev.32",
+        "@microsoft/sp-listview-extensibility": "1.10.0-dev.32",
+        "@microsoft/sp-loader": "1.10.0-dev.32",
+        "@microsoft/sp-lodash-subset": "1.10.0-dev.32",
+        "@microsoft/sp-odata-types": "1.10.0-dev.32",
+        "@microsoft/sp-office-ui-fabric-core": "1.10.0-dev.32",
+        "@microsoft/sp-page-context": "1.10.0-dev.32",
+        "@microsoft/sp-polyfills": "1.10.0-dev.32",
+        "@microsoft/sp-webpart-base": "1.10.0-dev.32",
+        "@ms/mfx-part-base": "0.1.14",
+        "@ms/odsp-utilities-bundle": "5.1.51",
+        "@ms/sp-client-shared": "0.4.40",
+        "@ms/sp-load-themed-styles": "0.1.2",
+        "exports-loader": "^0.6.4",
+        "office-ui-fabric-react": "6.207.0",
+        "raw-loader": "^0.5.1"
+    },
+    "devDependencies": {
+        "@microsoft/rush-stack-compiler-3.3": "^0.4.1",
+        "@microsoft/sp-build-fluid": "0.10.6",
+        "@microsoft/sp-module-interfaces": "1.10.0-dev.32",
+        "@microsoft/sp-tslint-rules": "1.10.0-dev.32",
+        "@microsoft/sp-webpart-workbench": "1.10.0-dev.32",
+        "@ms/sp-telemetry": "0.7.13",
+        "@types/chai": "3.4.34",
+        "@types/mocha": "2.2.38",
+        "@types/react": "16.8.8",
+        "@types/react-dom": "16.8.3",
+        "@types/webpack-env": "1.13.1",
+        "ajv": "5.2.2",
+        "cpy-cli": "^2.0.0",
+        "gulp": "~3.9.1"
+    }
+}

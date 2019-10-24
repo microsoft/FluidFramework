@@ -1,0 +1,7 @@
+{
+    "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/deploy-azure-storage.schema.json",
+    "workingDir": "./dist/",
+    "account": "<!-- STORAGE ACCOUNT NAME -->",
+    "container": "fluid-demo",
+    "accessKey": "<!-- ACCESS KEY -->"
+}

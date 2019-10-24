@@ -7,21 +7,20 @@ const path = require("path");
 const assert = require("yeoman-assert");
 const helpers = require("yeoman-test");
 
-describe("Yo fluid", function () {
+describe("Yo fluid", function() {
     // increasing the timeout, since generation can sometimes exceed the default 2000ms.
     this.timeout(10000);
 
     describe("React", () => {
         describe("With container", () => {
             beforeEach(() => {
-                return helpers.run(path.join(__dirname, "../app/index.js"))
-                    .withPrompts({
-                        name: "foobar",
-                        template: "react",
-                        container: "yes",
-                        description: "Fluid starter project",
-                        path: "./foobar",
-                    });
+                return helpers.run(path.join(__dirname, "../app/index.js")).withPrompts({
+                    name: "foobar",
+                    template: "react",
+                    container: "yes",
+                    description: "Fluid starter project",
+                    path: "./foobar",
+                });
             });
 
             it("Produces the expected files", async () => {
@@ -37,26 +36,23 @@ describe("Yo fluid", function () {
                     "webpack.config.js",
                     "webpack.dev.js",
                     "webpack.prod.js",
-                ]
+                ];
                 assert.file(expectedFiles);
 
-                const unexpectedFiles = [
-                    "src/main.ts",
-                ]
+                const unexpectedFiles = ["src/main.ts"];
                 assert.noFile(unexpectedFiles);
             });
         });
 
         describe("Without container", () => {
             beforeEach(() => {
-                return helpers.run(path.join(__dirname, "../app/index.js"))
-                    .withPrompts({
-                        name: "foobar",
-                        template: "react",
-                        container: "no",
-                        description: "Fluid starter project",
-                        path: "./foobar",
-                    });
+                return helpers.run(path.join(__dirname, "../app/index.js")).withPrompts({
+                    name: "foobar",
+                    template: "react",
+                    container: "no",
+                    description: "Fluid starter project",
+                    path: "./foobar",
+                });
             });
 
             it("Produces the expected files", async () => {
@@ -71,13 +67,10 @@ describe("Yo fluid", function () {
                     "webpack.config.js",
                     "webpack.dev.js",
                     "webpack.prod.js",
-                ]
+                ];
                 assert.file(expectedFiles);
 
-                const unexpectedFiles = [
-                    "src/main.ts",
-                    "src/index.ts",
-                ]
+                const unexpectedFiles = ["src/main.ts", "src/index.ts"];
                 assert.noFile(unexpectedFiles);
             });
         });
@@ -86,14 +79,13 @@ describe("Yo fluid", function () {
     describe("Vanilla", () => {
         describe("With container", () => {
             beforeEach(() => {
-                return helpers.run(path.join(__dirname, "../app/index.js"))
-                    .withPrompts({
-                        name: "foobar",
-                        template: "vanillaJS",
-                        container: "yes",
-                        description: "Fluid starter project",
-                        path: "./foobar",
-                    });
+                return helpers.run(path.join(__dirname, "../app/index.js")).withPrompts({
+                    name: "foobar",
+                    template: "vanillaJS",
+                    container: "yes",
+                    description: "Fluid starter project",
+                    path: "./foobar",
+                });
             });
 
             it("Produces the expected files", async () => {
@@ -109,26 +101,23 @@ describe("Yo fluid", function () {
                     "webpack.config.js",
                     "webpack.dev.js",
                     "webpack.prod.js",
-                ]
+                ];
                 assert.file(expectedFiles);
 
-                const unexpectedFiles = [
-                    "src/main.tsx",
-                ]
+                const unexpectedFiles = ["src/main.tsx"];
                 assert.noFile(unexpectedFiles);
             });
         });
 
         describe("Without container", () => {
             beforeEach(() => {
-                return helpers.run(path.join(__dirname, "../app/index.js"))
-                    .withPrompts({
-                        name: "foobar",
-                        template: "vanillaJS",
-                        container: "no",
-                        description: "Fluid starter project",
-                        path: "./foobar",
-                    });
+                return helpers.run(path.join(__dirname, "../app/index.js")).withPrompts({
+                    name: "foobar",
+                    template: "vanillaJS",
+                    container: "no",
+                    description: "Fluid starter project",
+                    path: "./foobar",
+                });
             });
 
             it("Produces the expected files", async () => {
@@ -143,13 +132,10 @@ describe("Yo fluid", function () {
                     "webpack.config.js",
                     "webpack.dev.js",
                     "webpack.prod.js",
-                ]
+                ];
                 assert.file(expectedFiles);
 
-                const unexpectedFiles = [
-                    "src/main.tsx",
-                    "src/index.ts",
-                ]
+                const unexpectedFiles = ["src/main.tsx", "src/index.ts"];
                 assert.noFile(unexpectedFiles);
             });
         });

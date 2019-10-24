@@ -2,6 +2,7 @@
     "packages/components/client-ui/ext/",
     "packages/server/services-core/src/dockerNames.ts",
     "samples/hackathon/",
-    "tools/generator-fluid/app/templates/package.json",
-    "tools/generator-fluid/app/templates/src/"
+    "tools/generator-fluid/generators/app/templates/package.json",
+    "tools/generator-fluid/generators/app/templates/src/",
+    "tools/generator-fluid/generators/sppkg/templates/"    
 ]

@@ -1,16 +1,13 @@
-import {
-    PrimedComponent,
-    PrimedComponentFactory,
-} from "@microsoft/fluid-aqueduct";
-import {
-    IComponentHTMLVisual,
-} from "@microsoft/fluid-component-core-interfaces";
+import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
+import { IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
 
 /**
  * DiceRoller example using view interfaces and stock component classes.
  */
 export class DiceRoller extends PrimedComponent implements IComponentHTMLVisual {
-    public get IComponentHTMLVisual() { return this; }
+    public get IComponentHTMLVisual() {
+        return this;
+    }
 
     /**
      * ComponentInitializingFirstTime is called only once, it is executed only by the first client to open the
@@ -47,7 +44,6 @@ export class DiceRoller extends PrimedComponent implements IComponentHTMLVisual 
     }
 
     private createComponentDom(host: HTMLElement) {
-
         const diceValue = this.root.get<number>("diceValue");
 
         // Uncomment the block below to create a title in your components DOM
@@ -82,14 +78,11 @@ export class DiceRoller extends PrimedComponent implements IComponentHTMLVisual 
 
     private getDiceChar(value: number) {
         // Unicode 0x2680-0x2685 are the sides of a dice (⚀⚁⚂⚃⚄⚅)
-        return String.fromCodePoint(0x267F + value);
+        return String.fromCodePoint(0x267f + value);
     }
 }
 
 /**
  * This is where you define all your Distributed Data Structures
  */
-export const DiceRollerInstantiationFactory = new PrimedComponentFactory(
-    DiceRoller,
-    [],
-);
+export const DiceRollerInstantiationFactory = new PrimedComponentFactory(DiceRoller, []);

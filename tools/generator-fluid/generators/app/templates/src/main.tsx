@@ -1,10 +1,5 @@
-import {
-    PrimedComponent,
-    PrimedComponentFactory,
-} from "@microsoft/fluid-aqueduct";
-import {
-    IComponentHTMLVisual,
-} from "@microsoft/fluid-component-core-interfaces";
+import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
+import { IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -13,7 +8,9 @@ import * as ReactDOM from "react-dom";
  * Dice roller example using view interfaces and stock component classes.
  */
 export class DiceRoller extends PrimedComponent implements IComponentHTMLVisual {
-    public get IComponentHTMLVisual() { return this; }
+    public get IComponentHTMLVisual() {
+        return this;
+    }
 
     /**
      * ComponentInitializingFirstTime is called only once, it is executed only by the first client to open the
@@ -35,10 +32,10 @@ export class DiceRoller extends PrimedComponent implements IComponentHTMLVisual 
 
             ReactDOM.render(
                 <div>
-                    <span style={{fontSize: 50}}>{this.getDiceChar(diceValue)}</span>
+                    <span style={{ fontSize: 50 }}>{this.getDiceChar(diceValue)}</span>
                     <button onClick={this.rollDice.bind(this)}>Roll</button>
                 </div>,
-                div,
+                div
             );
         };
 
@@ -56,7 +53,7 @@ export class DiceRoller extends PrimedComponent implements IComponentHTMLVisual 
 
     private getDiceChar(value: number) {
         // Unicode 0x2680-0x2685 are the sides of a dice (⚀⚁⚂⚃⚄⚅)
-        return String.fromCodePoint(0x267F + value);
+        return String.fromCodePoint(0x267f + value);
     }
 }
 
@@ -64,7 +61,4 @@ export class DiceRoller extends PrimedComponent implements IComponentHTMLVisual 
  * The PrimedComponentFactory declares the component and defines any additional distributed data structures.
  * To add a SharedSequence, SharedMap, or any other structure, put it in the array below.
  */
-export const DiceRollerInstantiationFactory = new PrimedComponentFactory(
-    DiceRoller,
-    [],
-);
+export const DiceRollerInstantiationFactory = new PrimedComponentFactory(DiceRoller, []);

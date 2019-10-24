@@ -1,8 +1,6 @@
-import {
-    SimpleModuleInstantiationFactory,
-} from "@microsoft/fluid-aqueduct";
+import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 
-import { } from "./main";
+import {} from "./main";
 
 // tslint:disable-next-line: no-var-requires no-require-imports
 const pkg = require("../package.json");
@@ -21,7 +19,5 @@ const componentName = pkg.name as string;
  */
 export const fluidExport = new SimpleModuleInstantiationFactory(
     componentName,
-    new Map([
-        [componentName, Promise.resolve(ComponentInstantiationFactory)],
-    ]),
+    new Map([[componentName, Promise.resolve(ComponentInstantiationFactory)]])
 );

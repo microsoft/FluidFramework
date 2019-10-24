@@ -1,0 +1,4 @@
+# sppkg build/temp files
+lib/
+sharepoint/
+temp/

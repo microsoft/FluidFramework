@@ -1,0 +1,39 @@
+{
+    "$schema": "https://developer.microsoft.com/json-schemas/spfx/client-side-web-part-manifest.schema.json",
+    "id": "<%= componentId %>",
+    "alias": "<%= componentName %>",
+    "componentType": "WebPart",
+    "version": "*",
+    "manifestVersion": 2,
+    "requiresCustomScript": false,
+    "supportedHosts": ["SharePointWebPart"],
+    "experimentalData": {
+        "fluid": true
+    },
+    "preconfiguredEntries": [
+        {
+            "groupId": "5c03119e-3074-46fd-976b-c60198311f70",
+            "group": {
+                "default": "Other"
+            },
+            "title": {
+                "default": "<%= componentFriendlyName %>"
+            },
+            "description": {
+                "default": "<%= componentDescription %>"
+            },
+            "officeFabricIconFontName": "<%= officeFabricIconFontName %>",
+            "properties": {}
+        }
+    ],
+    "loaderConfig": {
+        "entryModuleId": "main",
+        "internalModuleBaseUrls": ["<!-- PATH TO CDN -->/"],
+        "scriptResources": {
+            "fluid.main": {
+                "type": "path",
+                "path": "<%= entrypointFile %>"
+            }
+        }
+    }
+}

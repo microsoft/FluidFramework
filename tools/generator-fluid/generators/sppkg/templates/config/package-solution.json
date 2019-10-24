@@ -1,0 +1,13 @@
+{
+    "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/package-solution.schema.json",
+    "solution": {
+        "name": "<%= componentName %>-client-side-solution",
+        "id": "<%= solutionId %>",
+        "version": "<%= solutionVersion %>",
+        "includeClientSideAssets": true,
+        "skipFeatureDeployment": true
+    },
+    "paths": {
+        "zippedPackage": "solution/<%= componentName %>.sppkg"
+    }
+}
