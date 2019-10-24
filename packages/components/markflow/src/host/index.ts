@@ -48,7 +48,13 @@ export class WebFlow extends PrimedComponent implements IComponentHTMLVisual {
         }
     }
 
-    private get docId() { return this.root.get("docId"); }
+    private get docId() {
+        const componentId = this.root.get("docId");
+        if (!componentId) {
+            return `${this.runtime.id}-doc`;
+        }
+        return componentId;
+    }
 
     private set docId(id: string) {
         this.root.set("docId", id);
