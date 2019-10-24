@@ -26,6 +26,7 @@ import * as MergeTree from "@microsoft/fluid-merge-tree";
 import { IClient, ISequencedDocumentMessage, IUser } from "@microsoft/fluid-protocol-definitions";
 import { IInboundSignalMessage } from "@microsoft/fluid-runtime-definitions";
 import * as Sequence from "@microsoft/fluid-sequence";
+import { SharedSegmentSequenceUndoRedoHandler, UndoRedoStackManager } from "@microsoft/fluid-undo-redo";
 import { blobUploadHandler } from "../blob";
 import { CharacterCodes, Paragraph, Table } from "../text";
 import * as ui from "../ui";
@@ -34,7 +35,6 @@ import * as domutils from "./domutils";
 import { KeyCode } from "./keycode";
 import { PresenceSignal } from "./presenceSignal";
 import { Status } from "./status";
-import { UndoRedoStackManager } from "./undoRedo";
 
 // tslint:disable-next-line:no-var-requires
 const performanceNow = require("performance-now");
@@ -3082,7 +3082,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     // may have been invalidated.
     private modifiedMarkers = [];
 
-    private readonly undoRedoManager = new UndoRedoStackManager();
+    private readonly undoRedoManager: UndoRedoStackManager;
 
     constructor(
         element: HTMLDivElement,
@@ -3120,7 +3120,9 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         this.statusMessage("li", " ");
         this.statusMessage("si", " ");
 
-        this.undoRedoManager.attachSequence(sharedString);
+        this.undoRedoManager = new UndoRedoStackManager();
+        const sequenceHandler = new SharedSegmentSequenceUndoRedoHandler(this.undoRedoManager);
+        sequenceHandler.attachSequence(sharedString);
 
         sharedString.on("sequenceDelta", (event, target) => {
             // For each incoming delta, save any referenced Marker segments.
@@ -4893,10 +4895,10 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                 this.collabDocument.save();
                 break;
             case CharacterCodes.Y:
-                this.undoRedoManager.redo();
+                this.undoRedoManager.undoOperation();
                 break;
             case CharacterCodes.Z:
-                this.undoRedoManager.undo();
+                this.undoRedoManager.redoOperation();
                 break;
             default:
                 console.log(`got command key ${String.fromCharCode(charCode)} code: ${charCode}`);

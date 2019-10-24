@@ -3,10 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent, PrimedComponentFactory, SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
-import { IComponent, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
+import {
+  PrimedComponent,
+  PrimedComponentFactory,
+  SimpleModuleInstantiationFactory,
+} from "@microsoft/fluid-aqueduct";
+import { IComponent, IComponentHandle, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
 import { SharedDirectory } from "@microsoft/fluid-map";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+
 import { Clicker, ClickerName, ClickerWithInitialValue, ClickerWithInitialValueName } from "./internal-components";
 
 // tslint:disable-next-line: no-var-requires no-require-imports
@@ -14,42 +19,47 @@ const pkg = require("../package.json");
 export const PondName = pkg.name as string;
 
 /**
- * Basic Pond example using new interfaces and stock component classes.
+ * Basic Pond example using stock component classes.
+ *
+ * Provides:
+ *  - Component embedding
+ *  - Component creation with initial state
+ *  - Component creation and storage using Handles
  */
 export class Pond extends PrimedComponent implements IComponentHTMLVisual {
+
+  private readonly clickerKey = "clicker";
+  private readonly clickerWithInitialValueKey = "clicker-with-initial-value";
 
   public clicker2Render: IComponentHTMLVisual | undefined;
   public clicker3Render: IComponentHTMLVisual | undefined;
 
   public get IComponentHTMLVisual() { return this; }
 
-  protected async componentInitializingFromExisting() {
-    await this.setupSubComponents();
-  }
   /**
    * Do setup work here
    */
   protected async componentInitializingFirstTime() {
-    await this.createSubComponent("clicker", ClickerName);
-    await this.createSubComponent(
-      "clicker-with-initial-value",
+    await this.createSubComponent<Clicker>(this.clickerKey, ClickerName);
+    await this.createSubComponent<ClickerWithInitialValue>(
+      this.clickerWithInitialValueKey,
       ClickerWithInitialValueName,
       { initialValue: 100 },
     );
-    await this.setupSubComponents();
   }
 
-  async createSubComponent(rootKey: string, pkgName: string, props?: any) {
+  async createSubComponent<T>(rootKey: string, pkgName: string, props?: any) {
     const componentRuntime: IComponentRuntime = await this.context.createSubComponent(pkgName, props);
     componentRuntime.attach();
-    this.root.set(rootKey, componentRuntime.id);
+    const response = componentRuntime.request({url: "/"});
+    this.root.set(rootKey, await this.asComponent<T>(response));
   }
 
-  async setupSubComponents() {
-    const clicker2 = await this.getComponent<IComponent>(this.root.get("clicker"));
+  protected async componentHasInitialized() {
+    const clicker2 = await this.root.get<IComponentHandle>(this.clickerKey).get<IComponent>();
     this.clicker2Render = clicker2.IComponentHTMLVisual;
 
-    const clicker3 = await this.getComponent<IComponent>(this.root.get("clicker-with-initial-value"));
+    const clicker3 = await this.root.get<IComponentHandle>(this.clickerWithInitialValueKey).get<IComponent>();
     this.clicker3Render = clicker3.IComponentHTMLVisual;
   }
 

@@ -21,4 +21,17 @@ describe("Spo Url Resolver", () => {
         assert.equal(resolved.url,
             `fluid-odsp://placeholder/placeholder/${resolved.hashedDocumentId}`, "fluid url does not match");
     });
+
+    it("Should resolve the other tenant spo url correctly", async () => {
+        const urlResolver = new OdspUrlResolver();
+        const url: string = "https://random.sharepoint.com/_api/v2.1/drives/randomDrive/items/randomItem";
+        const resolved = (await urlResolver.resolve({ url })) as IOdspResolvedUrl;
+        assert.equal(resolved.driveId, "randomDrive", "Drive id does not match");
+        assert.equal(resolved.itemId, "randomItem", "Item id does not match");
+        assert.equal(resolved.siteUrl, url, "Site id does not match");
+        assert.equal(resolved.endpoints.snapshotStorageUrl,
+            `${url}/opStream/snapshots`, "SnashotStorageUrl does not match");
+        assert.equal(resolved.url,
+            `fluid-odsp://placeholder/placeholder/${resolved.hashedDocumentId}`, "fluid url does not match");
+    });
 });
