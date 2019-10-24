@@ -25,9 +25,7 @@ export interface ISudokuViewProps {
  */
 export function SudokuView(props: ISudokuViewProps): JSX.Element {
     const [theme, setTheme] = React.useState("default");
-    const handleResetButton = (
-        e: React.MouseEvent<HTMLButtonElement, MouseEvent>
-    ) => {
+    const handleResetButton = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
         props.puzzle.forEach((value: SudokuCell, key: CoordinateString) => {
             if (!value.fixed && value.value !== 0) {
                 value.value = 0;
@@ -36,15 +34,11 @@ export function SudokuView(props: ISudokuViewProps): JSX.Element {
         });
     };
 
-    const loadPuzzle1 = (
-        e: React.MouseEvent<HTMLButtonElement, MouseEvent>
-    ) => {
+    const loadPuzzle1 = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
         loadPuzzle(0, props.puzzle);
     };
 
-    const loadPuzzle2 = (
-        e: React.MouseEvent<HTMLButtonElement, MouseEvent>
-    ) => {
+    const loadPuzzle2 = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
         loadPuzzle(1, props.puzzle);
     };
 
@@ -56,22 +50,11 @@ export function SudokuView(props: ISudokuViewProps): JSX.Element {
                 <div className="sudoku-buttons">
                     <span className="sudoku-theme-select">
                         <label htmlFor="theme-select">Theme: </label>
-                        <select
-                            value={theme}
-                            onChange={onThemeChange}
-                            id="theme-select"
-                            name="theme"
-                        >
-                            <option
-                                aria-selected={theme === "default"}
-                                value="default"
-                            >
+                        <select value={theme} onChange={onThemeChange} id="theme-select" name="theme">
+                            <option aria-selected={theme === "default"} value="default">
                                 Default Theme{" "}
                             </option>
-                            <option
-                                aria-selected={theme === "dark-theme"}
-                                value="dark-theme"
-                            >
+                            <option aria-selected={theme === "dark-theme"} value="dark-theme">
                                 Dark Theme
                             </option>
                         </select>
@@ -103,7 +86,7 @@ function SimpleTable(props: ISudokuViewProps) {
 
     const getCellInputElement = (coord: CoordinateString): HTMLInputElement => {
         return document.getElementById(`${props.clientId}-${coord}`) as HTMLInputElement;
-    }
+    };
 
     const handleInputFocus = (e: React.FocusEvent<HTMLInputElement>) => {
         const coord = e.target.dataset[coordinateDataAttributeName];
@@ -145,8 +128,11 @@ function SimpleTable(props: ISudokuViewProps) {
             case "6":
             case "7":
             case "8":
-                if (cell.fixed) { return; }
-                numericInput(keyString, coord)
+            case "9":
+                if (cell.fixed) {
+                    return;
+                }
+                numericInput(keyString, coord);
                 return;
             default:
                 moveCell(keyString, coord);
@@ -166,12 +152,14 @@ function SimpleTable(props: ISudokuViewProps) {
             cellInputElement.value = keyString;
 
             const toSet = props.puzzle.get<SudokuCell>(coord);
-            if (toSet.fixed) { return; }
+            if (toSet.fixed) {
+                return;
+            }
             toSet.value = valueToSet;
             toSet.isCorrect = valueToSet === toSet.correctValue;
             props.puzzle.set(coord, toSet);
         }
-    }
+    };
 
     const moveCell = (keyString: string, coordIn: string) => {
         const coord = coordIn;
@@ -199,8 +187,7 @@ function SimpleTable(props: ISudokuViewProps) {
 
         const newCell = getCellInputElement(newCoord);
         newCell.focus();
-    }
-
+    };
 
     const renderGridRows = () => {
         const rows = PUZZLE_INDEXES.map(row => {
@@ -227,14 +214,10 @@ function SimpleTable(props: ISudokuViewProps) {
                     }
                 }
 
-                const nada = () => { };
+                const nada = () => {};
                 // const disabled = currentCell.fixed === true;
                 return (
-                    <td
-                        className="sudoku-cell"
-                        key={coord}
-                        style={getCellBorderStyles(coord)}
-                    >
+                    <td className="sudoku-cell" key={coord} style={getCellBorderStyles(coord)}>
                         <input
                             id={`${props.clientId}-${coord}`}
                             className={inputClasses}

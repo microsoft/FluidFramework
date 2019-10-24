@@ -15,7 +15,7 @@ export class Coordinate {
      */
     public static asString = (row: number, column: number): CoordinateString => {
         return `${row},${column}`;
-    }
+    };
 
     /**
      * Returns a 2-item array of individual coordinates as strings.

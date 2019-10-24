@@ -17,9 +17,7 @@ import { ISudokuViewProps, SudokuView } from "./react/sudokuView";
  */
 export const fluidExport = new SimpleModuleInstantiationFactory(
     FluidSudokuName,
-    new Map([
-        [FluidSudokuName, Promise.resolve(FluidSudoku.getFactory())],
-    ]),
+    new Map([[FluidSudokuName, Promise.resolve(FluidSudoku.getFactory())]])
 );
 
-export { ISudokuViewProps, FluidSudoku, FluidSudokuName, SudokuView }
+export { ISudokuViewProps, FluidSudoku, FluidSudokuName, SudokuView };

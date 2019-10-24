@@ -52,11 +52,7 @@ export function loadPuzzle(index: number, puzzleMap: ISharedMap): number[][] {
     for (const row of PUZZLE_INDEXES) {
         for (const col of PUZZLE_INDEXES) {
             const key = Coordinate.asString(row, col);
-            const cell = new SudokuCell(
-                puzzleInput[row][col],
-                solution[row][col],
-                key,
-            );
+            const cell = new SudokuCell(puzzleInput[row][col], solution[row][col], key);
             puzzleMap.set(key, cell);
         }
     }

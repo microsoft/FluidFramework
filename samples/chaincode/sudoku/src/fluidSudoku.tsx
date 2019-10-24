@@ -19,7 +19,8 @@ export const FluidSudokuName = "FluidSudoku";
 /**
  * A collaborative Sudoku component built on the Fluid Framework.
  */
-export class FluidSudoku extends PrimedComponent implements IComponentHTMLVisual, IComponentReactViewable {
+export class FluidSudoku extends PrimedComponent
+    implements IComponentHTMLVisual, IComponentReactViewable {
     public get IComponentHTMLVisual() {
         return this;
     }
@@ -77,9 +78,7 @@ export class FluidSudoku extends PrimedComponent implements IComponentHTMLVisual
         // Our "puzzle" SharedMap is stored as a handle on the "root" SharedDirectory. To get it we must make a
         // synchronous call to get the IComponentHandle, then an asynchronous call to get the ISharedMap from the
         // handle.
-        this.puzzle = await this.root
-            .get<IComponentHandle>(this.sudokuMapKey)
-            .get<ISharedMap>();
+        this.puzzle = await this.root.get<IComponentHandle>(this.sudokuMapKey).get<ISharedMap>();
 
         // Since we're using a Fluid distributed data structure to store our Sudoku data, we need to render whenever a
         // value in our map changes. Recall that distributed data structures can be changed by both local and remote
@@ -99,12 +98,14 @@ export class FluidSudoku extends PrimedComponent implements IComponentHTMLVisual
 
     public createJSXElement(props?: any): JSX.Element {
         if (this.puzzle) {
-            return <SudokuView
-                puzzle={this.puzzle}
-                clientPresence={this.clientPresence}
-                clientId={this.runtime.clientId}
-                setPresence={this.presenceSetter}
-            />;
+            return (
+                <SudokuView
+                    puzzle={this.puzzle}
+                    clientPresence={this.clientPresence}
+                    clientId={this.runtime.clientId}
+                    setPresence={this.presenceSetter}
+                />
+            );
         } else {
             return <div />;
         }
@@ -112,9 +113,7 @@ export class FluidSudoku extends PrimedComponent implements IComponentHTMLVisual
 
     private rerender(): void {
         if (this.domElement) {
-            ReactDOM.render(
-                this.createJSXElement(),
-                this.domElement);
+            ReactDOM.render(this.createJSXElement(), this.domElement);
         }
     }
 
@@ -143,5 +142,5 @@ export class FluidSudoku extends PrimedComponent implements IComponentHTMLVisual
                 this.clientPresence.set(cellCoordinate, this.runtime.clientId);
             }
         }
-    }
+    };
 }
