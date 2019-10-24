@@ -3,6 +3,15 @@
  * Licensed under the MIT License.
  */
 
+export enum HeaderKey {
+    cache = "fluid-cache",
+    clientType = "fluid-client-type",
+    connect = "connect",
+    sequenceNumber = "fluid-sequence-number",
+    reconnect = "fluid-reconnect",
+    version = "version",
+}
+
 export interface IRequest {
     url: string;
     headers?: { [key: string]: any };

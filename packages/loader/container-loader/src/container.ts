@@ -2,7 +2,13 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IComponent, IComponentQueryableLegacy, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
+import {
+    HeaderKey,
+    IComponent,
+    IComponentQueryableLegacy,
+    IRequest,
+    IResponse,
+} from "@microsoft/fluid-component-core-interfaces";
 import {
     ConnectionState,
     ICodeLoader,
@@ -251,7 +257,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         this._id = decodeURI(documentId);
         this._scopes = this.getScopes(options);
         this._audience = new Audience();
-        this.canReconnect = !(originalRequest.headers && originalRequest.headers["fluid-reconnect"] === false);
+        this.canReconnect = !(originalRequest.headers && originalRequest.headers[HeaderKey.reconnect] === false);
 
         // create logger for components to use
         this.subLogger = DebugLogger.mixinDebugLogger(
@@ -777,8 +783,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                 scopes: [],
                 user: { id: "" },
             };
-        if (this.originalRequest.headers && this.originalRequest.headers["fluid-client-type"]) {
-            clientDetails.type = this.originalRequest.headers["fluid-client-type"] as string;
+        if (this.originalRequest.headers && this.originalRequest.headers[HeaderKey.clientType]) {
+            clientDetails.type = this.originalRequest.headers[HeaderKey.clientType] as string;
         }
 
         this._deltaManager = new DeltaManager(

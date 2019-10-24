@@ -4,6 +4,7 @@
  */
 
 import {
+    HeaderKey,
     IComponent,
     IRequest,
     IResponse,
@@ -85,8 +86,8 @@ export class RelativeLoader extends EventEmitter implements ILoader {
         }
 
         const noCache =
-            request.headers["fluid-cache"] === false ||
-            request.headers["fluid-reconnect"] === false;
+            request.headers[HeaderKey.cache] === false ||
+            request.headers[HeaderKey.reconnect] === false;
 
         return !noCache;
     }
@@ -235,20 +236,20 @@ export class Loader extends EventEmitter implements ILoader {
         let fromSequenceNumber = -1;
 
         request.headers = request.headers ? request.headers : {};
-        if (!request.headers.connect) {
-            request.headers.connect = !parsed.version ? "open" : "close";
+        if (!request.headers[HeaderKey.connect]) {
+            request.headers[HeaderKey.connect] = !parsed.version ? "open" : "close";
         }
 
-        if (request.headers["fluid-cache"] === false) {
+        if (request.headers[HeaderKey.cache] === false) {
             canCache = false;
         } else {
             // If connection header is pure open or close we will cache it. Otherwise custom load behavior
             // and so we will not cache the request
-            canCache = request.headers.connect === "open" || request.headers.connect === "close";
+            canCache = request.headers[HeaderKey.connect] === "open" || request.headers[HeaderKey.connect] === "close";
         }
 
-        if (request.headers["fluid-sequence-number"]) {
-            fromSequenceNumber = request.headers["fluid-sequence-number"] as number;
+        if (request.headers[HeaderKey.sequenceNumber]) {
+            fromSequenceNumber = request.headers[HeaderKey.sequenceNumber] as number;
         }
 
         // if set in both query string and headers, use query string
@@ -259,7 +260,7 @@ export class Loader extends EventEmitter implements ILoader {
             request.headers.version = null;
         }
 
-        debug(`${canCache} ${request.headers.connect} ${request.headers.version}`);
+        debug(`${canCache} ${request.headers[HeaderKey.connect]} ${request.headers.version}`);
         const factory: IDocumentServiceFactory =
             selectDocumentServiceFactoryForProtocol(resolvedAsFluid, this.protocolToDocumentFactoryMap);
 
