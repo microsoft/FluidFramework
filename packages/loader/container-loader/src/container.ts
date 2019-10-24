@@ -2,12 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import {
-    IComponent,
-    IComponentQueryableLegacy,
-    IRequest,
-    IResponse,
-} from "@microsoft/fluid-component-core-interfaces";
+import { IComponent, IComponentQueryableLegacy, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import {
     ConnectionState,
     ICodeLoader,
@@ -37,6 +32,7 @@ import {
     TelemetryLogger,
 } from "@microsoft/fluid-core-utils";
 import {
+    Browser,
     FileMode,
     IClient,
     IDocumentAttributes,
@@ -773,7 +769,19 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private createDeltaManager(attributesP: Promise<IDocumentAttributes>, connect: boolean): Promise<void> {
         // Create the DeltaManager and begin listening for connection events
         // tslint:disable-next-line:no-unsafe-any
-        const clientDetails = this.options ? (this.options.client as IClient) : null;
+        const clientDetails: IClient = this.options && this.options.client
+            // tslint:disable-next-line:no-unsafe-any
+            ? (this.options.client as IClient)
+            : {
+                type: Browser,
+                permission: [],
+                scopes: [],
+                user: { id: "" },
+            };
+        if (this.originalRequest.headers && this.originalRequest.headers["fluid-client-type"]) {
+            clientDetails.type = this.originalRequest.headers["fluid-client-type"] as string;
+        }
+
         this._deltaManager = new DeltaManager(
             this.service,
             clientDetails,
