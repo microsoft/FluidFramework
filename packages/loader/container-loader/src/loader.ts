@@ -33,11 +33,11 @@ interface IParsedUrl {
     id: string;
     path: string;
     /**
-     * null means do not use snapshots
+     * null means do not use snapshots, undefined means load latest snapshot
      * otherwise it's version ID passed to IDocumentStorageService.getVersions() to figure out what snapshot to use.
      * If needed, can add undefined which is treated by Container.load() as load latest snapshot.
      */
-    version: string | null;
+    version: string | null | undefined;
 }
 
 export class RelativeLoader extends EventEmitter implements ILoader {
@@ -182,20 +182,12 @@ export class Loader extends EventEmitter implements ILoader {
 
     private parseUrl(url: string): IParsedUrl | null {
         const parsed = parse(url, true);
-        let version: string | null;
-
-        // version = null means not use any snapshot.
-        if (parsed.query.version === "null") {
-            version = null;
-        } else {
-            version = parsed.query.version as string;
-        }
 
         const regex = /^\/([^\/]*\/[^\/]*)(\/?.*)$/;
         const match = parsed.pathname!.match(regex);
 
         return (match && match.length === 3)
-            ? { id: match[1], path: match[2], version }
+            ? { id: match[1], path: match[2], version: parsed.query.version as string }
             : null;
     }
 
@@ -245,9 +237,6 @@ export class Loader extends EventEmitter implements ILoader {
 
         request.headers = request.headers ? request.headers : {};
         if (request.headers.connect) {
-            // If connection header is pure open or close we will cache it. Otherwise custom load behavior
-            // and so we will not cache the request
-            canCache = request.headers.connect === "open" || request.headers.connect === "close";
             connection = request.headers.connect as string;
         } else {
             request.headers.connect = connection;
@@ -261,7 +250,17 @@ export class Loader extends EventEmitter implements ILoader {
             fromSequenceNumber = request.headers["fluid-sequence-number"] as number;
         }
 
+        // if set in both query string and headers, use query string
         request.headers.version = parsed.version || request.headers.version as string;
+
+        // version === null means not use any snapshot.
+        if (request.headers.version === "null") {
+            request.headers.version = null;
+        }
+
+        // If connection header is pure open or close we will cache it. Otherwise custom load behavior
+        // and so we will not cache the request
+        canCache = request.headers.connect === "open" || request.headers.connect === "close";
 
         debug(`${canCache} ${connection} ${parsed.version}`);
         const factory: IDocumentServiceFactory =
@@ -271,7 +270,7 @@ export class Loader extends EventEmitter implements ILoader {
 
         let container: Container;
         if (canCache) {
-            const versionedId = parsed.version ? `${parsed.id}@${parsed.version}` : parsed.id;
+            const versionedId = request.headers.version ? `${parsed.id}@${request.headers.version}` : parsed.id;
             const maybeContainer = await this.containers.get(versionedId);
             if (maybeContainer) {
                 container = maybeContainer;
