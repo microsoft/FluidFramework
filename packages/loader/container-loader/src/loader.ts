@@ -199,11 +199,14 @@ export class Loader extends EventEmitter implements ILoader {
             return maybeResolvedUrl;
         }
 
-        let toCache: IResolvedUrl;
+        let toCache: IResolvedUrl | undefined;
         if (Array.isArray(this.containerHost.resolver)) {
             toCache = await configurableUrlResolver(this.containerHost.resolver, request);
         } else {
             toCache = await this.containerHost.resolver.resolve(request);
+        }
+        if (!toCache) {
+            return Promise.reject(`Invalid URL ${request.url}`);
         }
         if (toCache.type !== "fluid") {
             if (toCache.type === "prague") {
