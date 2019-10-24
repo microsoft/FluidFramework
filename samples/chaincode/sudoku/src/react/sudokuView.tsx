@@ -50,7 +50,11 @@ export function SudokuView(props: ISudokuViewProps): JSX.Element {
                 <div className="sudoku-buttons">
                     <span className="sudoku-theme-select">
                         <label htmlFor="theme-select">Theme: </label>
-                        <select value={theme} onChange={onThemeChange} id="theme-select" name="theme">
+                        <select
+                            value={theme}
+                            onChange={onThemeChange}
+                            id="theme-select"
+                            name="theme">
                             <option aria-selected={theme === "default"} value="default">
                                 Default Theme{" "}
                             </option>
@@ -107,6 +111,7 @@ function SimpleTable(props: ISudokuViewProps) {
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        e.preventDefault();
         let keyString = e.key;
         let coord = e.currentTarget.dataset[coordinateDataAttributeName] as string;
         coord = coord === undefined ? "" : coord;

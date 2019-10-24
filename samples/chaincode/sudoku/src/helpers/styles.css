@@ -65,23 +65,16 @@
     --sudoku-button-border-hover: var(--themeLighter);
 }
 
-body {
-    margin: 0;
-    font-family: Segoe UI Semibold;
-}
-#content {
-    height: 100vh;
-}
-
 .sudoku-wrapper {
     display: inline-block;
 }
 
 .sudoku {
-    height: 100vh;
+    height: 100%;
+    min-height: 447px;
     display: inline-block;
     justify-content: center;
-    padding-top: 20px;
+    padding: 10px;
     background: var(--sudoku-bg);
     color: var(--sudoku-fg);
 }
