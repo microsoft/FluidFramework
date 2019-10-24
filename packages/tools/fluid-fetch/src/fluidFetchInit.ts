@@ -251,4 +251,6 @@ export async function fluidFetchInit() {
     } else if (protocol === "fluid:") {
         return initializeR11s(server, url.pathname, resolvedUrl);
     }
+    console.log(server);
+    return Promise.reject(`Unknown URL ${paramURL}`);
 }
