@@ -63,11 +63,10 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
             // Same for message if there is one (see Error object).
             event.stack = errorAsObject.stack;
             event.error = errorAsObject.message;
-            event.statusCode = errorAsObject.statusCode;
             try {
                 const networkError = error as NetworkError;
                 if (networkError) {
-                    event.otherProperties = networkError.getCustomProperties();
+                    event.networkErrorProperties = networkError.getCustomProperties();
                 }
             } catch {}
         }
