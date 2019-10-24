@@ -4,3 +4,6 @@
  */
 
 export * from "./host";
+export * from "./odspUtils";
+export * from "./urlResolver";
+export * from "./utils";

@@ -21,7 +21,12 @@ import {
 import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
 import { IDocumentFactory } from "@microsoft/fluid-host-service-interfaces";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
-import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import {
+    IComponentContext,
+    IComponentFactory,
+    IComponentRuntime,
+    IHostRuntime,
+} from "@microsoft/fluid-runtime-definitions";
 import * as scribe from "@microsoft/fluid-server-tools-core";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import Axios from "axios";
@@ -447,23 +452,21 @@ class ScribeFactory implements IComponentFactory, IRuntimeFactory {
         const runtime = await ContainerRuntime.load(
             context,
             registry,
-            (containerRuntime) => {
-                return async (request: IRequest) => {
-                    console.log(request.url);
+            [async (request: IRequest, containerRuntime: IHostRuntime) => {
+                console.log(request.url);
 
-                    const requestUrl = request.url.length > 0 && request.url.charAt(0) === "/"
-                        ? request.url.substr(1)
-                        : request.url;
-                    const trailingSlash = requestUrl.indexOf("/");
+                const requestUrl = request.url.length > 0 && request.url.charAt(0) === "/"
+                    ? request.url.substr(1)
+                    : request.url;
+                const trailingSlash = requestUrl.indexOf("/");
 
-                    const componentId = requestUrl
-                        ? requestUrl.substr(0, trailingSlash === -1 ? requestUrl.length : trailingSlash)
-                        : defaultComponentId;
-                    const component = await containerRuntime.getComponentRuntime(componentId, true);
+                const componentId = requestUrl
+                    ? requestUrl.substr(0, trailingSlash === -1 ? requestUrl.length : trailingSlash)
+                    : defaultComponentId;
+                const component = await containerRuntime.getComponentRuntime(componentId, true);
 
-                    return component.request({ url: trailingSlash === -1 ? "" : requestUrl.substr(trailingSlash + 1) });
-                };
-            },
+                return component.request({ url: trailingSlash === -1 ? "" : requestUrl.substr(trailingSlash + 1) });
+            }],
             { generateSummaries: true });
 
         // On first boot create the base component

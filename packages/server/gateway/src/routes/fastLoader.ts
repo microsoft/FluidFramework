@@ -4,6 +4,7 @@
  */
 
 import { IFluidResolvedUrl, ScopeType } from "@microsoft/fluid-protocol-definitions";
+import { getR11sToken, IAlfredUser } from "@microsoft/fluid-routerlicious-urlresolver";
 import { IAlfredTenant, ICache } from "@microsoft/fluid-server-services-core";
 import { Router } from "express";
 import * as safeStringify from "json-stringify-safe";
@@ -11,7 +12,7 @@ import * as jwt from "jsonwebtoken";
 import { Provider } from "nconf";
 import { parse } from "url";
 import * as winston from "winston";
-import { getConfig, getParam, getToken, getUserDetails, IAlfredUser } from "../utils";
+import { getConfig, getParam, getUserDetails } from "../utils";
 import { defaultPartials } from "./partials";
 
 function createLoaderScript(
@@ -77,7 +78,7 @@ export function create(
         } : undefined;
 
         const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
-        const token = getToken(tenantId, documentId, appTenants, scopes, user);
+        const token = getR11sToken(tenantId, documentId, appTenants, scopes, user);
 
         const fluidUrl = "fluid://" +
         `${parse(config.get("worker:serverUrl")).host}/` +

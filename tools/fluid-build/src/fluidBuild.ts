@@ -66,7 +66,7 @@ function versionCheck() {
     const pkg = require(path.join(__dirname, "..", "package.json"));
     const builtVersion = "0.0.2";
     if (pkg.version > builtVersion) {
-        console.log(`WARNING: fluid-build is out of date, please rebuild (built: ${builtVersion}, package: ${pkg.version})\n`);
+        console.warn(`WARNING: fluid-build is out of date, please rebuild (built: ${builtVersion}, package: ${pkg.version})\n`);
     }
 }
 
@@ -81,13 +81,13 @@ async function main() {
 
     const root = options.root;
     if (!root) {
-        console.log(`ERROR: Unknown repo root. Specify it with --root or environment variable _FLUID_ROOT_`);
+        console.error(`ERROR: Unknown repo root. Specify it with --root or environment variable _FLUID_ROOT_`);
         process.exit(-2);
         return;
     }
     const resolvedRoot = path.resolve(root);
     if (!existsSync(resolvedRoot)) {
-        console.log(`ERROR: Repo root '${resolvedRoot}' not exist.`);
+        console.error(`ERROR: Repo root '${resolvedRoot}' not exist.`);
         process.exit(-3);
         return;
     }
@@ -105,17 +105,17 @@ async function main() {
             packages.forEach((pkg) => {
                 if (regExp.test(pkg.name)) {
                     matched = true;
-                    pkg.markForBuild = true;
+                    pkg.setMatched();
                 }
             });
         });
 
         if (!matched) {
-            console.log("ERROR: No package matched");
+            console.error("ERROR: No package matched");
             process.exit(-4)
         }
     } else {
-        packages.forEach((pkg) => pkg.markForBuild = true);
+        packages.forEach((pkg) => pkg.setMatched());
     }
 
     if (options.depcheck) {

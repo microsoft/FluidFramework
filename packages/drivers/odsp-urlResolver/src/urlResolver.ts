@@ -13,19 +13,11 @@ import {
 } from "@microsoft/fluid-protocol-definitions";
 import * as sha from "sha.js";
 
-const odspServers = [
-    "microsoft-my.sharepoint-df.com",
-    "microsoft-my.sharepoint.com",
-    "microsoft.sharepoint-df.com",
-    "microsoft.sharepoint.com",
-];
-
 export class OdspUrlResolver implements IUrlResolver {
 
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
-        const reqUrl = new URL(request.url);
-        const server = reqUrl.hostname.toLowerCase();
-        if (odspServers.indexOf(server) !== -1) {
+        if (isOdspUrl(request.url)) {
+            const reqUrl = new URL(request.url);
             const { site, drive, item } = await initializeODSP(reqUrl);
             if (site === undefined || drive === undefined || item === undefined) {
                 return Promise.reject("Cannot resolve the given url!!");
@@ -39,7 +31,7 @@ export class OdspUrlResolver implements IUrlResolver {
                 const requestURL = new URL(request.url);
                 const searchParams = requestURL.search;
                 if (!!searchParams) {
-                documentUrl += searchParams;
+                    documentUrl += searchParams;
                 }
             }
             const response: IOdspResolvedUrl = {
@@ -57,6 +49,14 @@ export class OdspUrlResolver implements IUrlResolver {
         }
         return Promise.reject("Cannot resolve the given url!!");
     }
+}
+
+export function isOdspUrl(url: string) {
+    const regex = /(.*\.sharepoint(-df)*\.com)\/_api\/v2.1\/drives\/([^\/]*)\/items\/([^\/]*)/;
+    if (url.toLowerCase().match(regex) !== null) {
+        return true;
+    }
+    return false;
 }
 
 function getSnapshotUrl(server: string, drive: string, item: string) {

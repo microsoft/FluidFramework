@@ -12,7 +12,7 @@ describe("Fluid App Url Resolver", () => {
     it("Should resolve the fluid app urls correctly", async () => {
         const urlResolver = new FluidAppOdspUrlResolver();
         // tslint:disable-next-line: max-line-length
-        const resolved = (await urlResolver.resolve({ url: "https://dev.fluid.office.com/p/c3BvOmh0dHBzOi8vbWljcm9zb2Z0LnNoYXJlcG9pbnQtZGYuY29tL3RlYW1zL09mZmljZU9ubGluZVByYWd1ZQ%3D%3D/randomDrive/randomItem/OXO-Dogfood-remaining-items?nav=&e=_Ha3TtNhQEaX-jy2yOQM3A&at=15&scriptVersion=3016031" })) as IOdspResolvedUrl;
+        const resolved = (await urlResolver.resolve({ url: "https://dev.fluidpreview.office.net/p/c3BvOmh0dHBzOi8vbWljcm9zb2Z0LnNoYXJlcG9pbnQtZGYuY29tL3RlYW1zL09mZmljZU9ubGluZVByYWd1ZQ%3D%3D/randomDrive/randomItem/OXO-Dogfood-remaining-items?nav=&e=_Ha3TtNhQEaX-jy2yOQM3A&at=15&scriptVersion=3016031" })) as IOdspResolvedUrl;
         assert.equal(resolved.driveId,
             "randomDrive", "Drive id does not match");
         assert.equal(resolved.itemId, "randomItem", "Item id does not match");

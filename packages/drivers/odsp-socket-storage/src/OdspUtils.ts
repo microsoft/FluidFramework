@@ -5,6 +5,7 @@
 
 import { NetworkError, throwNetworkError } from "@microsoft/fluid-core-utils";
 import { default as fetch, RequestInfo as FetchRequestInfo, RequestInit as FetchRequestInit } from "node-fetch";
+import { IOdspSocketError } from "./contracts";
 
 /**
  * returns true when the request should/can be retried
@@ -31,6 +32,11 @@ export function blockList(nonRetriableCodes: number[]): RetryFilter {
 // export const defaultRetryFilter = allowList([408, 409, 429, 500, 503]);
 export const defaultRetryFilter = blockList([400, 404]);
 
+export interface IOdspResponse<T> {
+    content: T;
+    headers: Map<string, string>;
+}
+
 /**
  * A utility function to do fetch with support for retries
  * @param url - fetch requestInfo, can be a string
@@ -43,7 +49,7 @@ export function fetchHelper(
     retryFilter: RetryFilter = defaultRetryFilter,
 ): Promise<any> {
     // node-fetch and dom has conflicting typing, force them to work by casting for now
-    return fetch(requestInfo as FetchRequestInfo, requestInit as FetchRequestInit).then((fetchResponse) => {
+    return fetch(requestInfo as FetchRequestInfo, requestInit as FetchRequestInit).then(async (fetchResponse) => {
         const response = fetchResponse as any as Response;
         // Let's assume we can retry.
         if (!response) {
@@ -58,7 +64,11 @@ export function fetchHelper(
         // always ends up with this error - I'd guess 1% of op request end up here...
         // It always succeeds on retry.
         try {
-            return response.json() as any;
+            const res = {
+                headers: response.headers,
+                content: await response.json() as any,
+            };
+            return res;
         } catch (e) {
             throwNetworkError(`Error while parsing fetch response`, 400, true, response);
         }
@@ -82,4 +92,12 @@ export function getWithRetryForTokenRefresh<T>(get: (refresh: boolean) => Promis
         // document being opened, though there maybe really bad user experience (consuming thousands of ops)
         throw e;
     });
+}
+
+export function errorObjectFromOdspError(socketError: IOdspSocketError) {
+    return new NetworkError(
+        socketError.message,
+        socketError.code,
+        defaultRetryFilter(socketError.code), // canRetry
+        socketError.retryAfter);
 }

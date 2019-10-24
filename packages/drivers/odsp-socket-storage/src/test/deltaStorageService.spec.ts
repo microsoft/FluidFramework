@@ -66,7 +66,10 @@ describe("DeltaStorageService", () => {
             const fetchWrapperMock: IFetchWrapper = {
                 get: (url: string, _: string, headers: HeadersInit) => new Promise(
                     (resolve, reject) => {
-                        resolve(expectedDeltaFeedResponse);
+                        resolve({
+                            content: expectedDeltaFeedResponse,
+                            headers: new Map(),
+                        });
                     }),
                 post: (url: string, postBody: string, headers: HeadersInit) => new Promise(
                     (resolve, reject) => {
@@ -123,7 +126,10 @@ describe("DeltaStorageService", () => {
             const fetchWrapperMock: IFetchWrapper = {
                 get: (url: string, _: string, headers: HeadersInit) => new Promise(
                     (resolve, reject) => {
-                        resolve(expectedDeltaFeedResponse);
+                        resolve({
+                            content: expectedDeltaFeedResponse,
+                            headers: new Map(),
+                        });
                     }),
                 post: (url: string, postBody: string, headers: HeadersInit) => new Promise(
                     (resolve, reject) => {
