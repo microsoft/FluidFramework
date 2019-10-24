@@ -3,5 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export * from "./clicker";
-export * from "./clickerWithInitialValue";
+module.exports = {
+    mode: "production",
+    devtool: "source-map"
+};
