@@ -40,8 +40,8 @@ export class DiceRoller extends PrimedComponent implements IComponentHTMLVisual 
 
             ReactDOM.render(
                 <div>
-                    <span style={{fontSize: 50}}>{this.getDiceChar(diceValue)}</span>
-                    <button onClick={this.rollDice.bind(this)}>Roll</button>
+                    <span id="roll-value" style={{fontSize: 50}}>{this.getDiceChar(diceValue)}</span>
+                    <button id="roll-button" onClick={this.rollDice.bind(this)}>Roll</button>
                 </div>,
                 div,
             );
