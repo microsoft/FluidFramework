@@ -11,6 +11,7 @@ import {
     IComponentHTMLOptions,
     IComponentHTMLVisual,
     IComponentHandle,
+    IComponentHTMLView,
 } from "@microsoft/fluid-component-core-interfaces";
 import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
@@ -58,6 +59,47 @@ function createTreeMarkerOps(
     ];
 }
 
+class ProseMirrorView implements IComponentHTMLView {
+    private content: HTMLDivElement;
+    private editorView: EditorView;
+    private textArea: HTMLDivElement;
+    private collabManager: FluidCollabManager;
+
+    public constructor(
+        private text: SharedString,
+        private runtime: IComponentRuntime,
+    ) {
+        this.collabManager = new FluidCollabManager(this.text, this.runtime.loader);
+    }
+
+    public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
+        // create base textarea
+        if (!this.textArea) {
+            this.textArea = document.createElement("div");
+            this.textArea.classList.add("editor");
+            this.content = document.createElement("div");
+            this.content.style.display = "none";
+            this.content.innerHTML = "";
+        }
+
+        // reparent if needed
+        if (this.textArea.parentElement !== elm) {
+            this.textArea.remove();
+            this.content.remove();
+            elm.appendChild(this.textArea);
+            elm.appendChild(this.content);
+        }
+
+        if (!this.editorView) {
+            this.collabManager.setupEditor(this.textArea);
+        }
+    }
+
+    public remove() {
+        // Maybe implement this some time.
+    }
+}
+
 export class ProseMirror extends EventEmitter implements IComponentLoadable, IComponentRouter, IComponentHTMLVisual, IProvideRichTextEditor {
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
         const collection = new ProseMirror(runtime, context);
@@ -74,10 +116,8 @@ export class ProseMirror extends EventEmitter implements IComponentLoadable, ICo
     public url: string;
     public text: SharedString;
     private root: ISharedMap;
-    private textArea: HTMLDivElement;
-    private content: HTMLDivElement;
-    private editorView: EditorView;
     private collabManager: FluidCollabManager;
+    private defaultView: ProseMirrorView;
     
     constructor(
         private runtime: IComponentRuntime,
@@ -118,27 +158,16 @@ export class ProseMirror extends EventEmitter implements IComponentLoadable, ICo
         window["easyComponent"] = this;
     }
 
+    public addView(): IComponentHTMLView {
+        return new ProseMirrorView(this.text, this.runtime);
+    }
+
     public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
-        // create base textarea
-        if (!this.textArea) {
-            this.textArea = document.createElement("div");
-            this.textArea.classList.add("editor");
-            this.content = document.createElement("div");
-            this.content.style.display = "none";
-            this.content.innerHTML = "";
+        if (!this.defaultView) {
+            this.defaultView = new ProseMirrorView(this.text, this.runtime);
         }
 
-        // reparent if needed
-        if (this.textArea.parentElement !== elm) {
-            this.textArea.remove();
-            this.content.remove();
-            elm.appendChild(this.textArea);
-            elm.appendChild(this.content);
-        }
-
-        if (!this.editorView) {
-            this.collabManager.setupEditor(this.textArea);
-        }
+        this.defaultView.render(elm, options);
     }
 }
 
