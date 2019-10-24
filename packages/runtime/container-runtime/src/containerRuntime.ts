@@ -40,6 +40,7 @@ import {
     ISignalMessage,
     ISnapshotTree,
     ISummaryConfiguration,
+    ISummaryContent,
     ISummaryTree,
     ITree,
     MessageType,
@@ -1125,7 +1126,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                 return ret;
             }
             const handle = await this.context.storage.uploadSummary(treeWithStats.summaryTree);
-            const summary = {
+            const summary: ISummaryContent = {
                 handle: handle.handle,
                 head: parents[0],
                 message,
