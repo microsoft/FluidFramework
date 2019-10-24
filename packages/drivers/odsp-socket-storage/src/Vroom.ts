@@ -82,7 +82,7 @@ export async function getSocketStorageDiscovery(
   documentId: string,
 ): Promise<ISocketStorageDiscovery> {
   const odspCacheKey = `${documentId}/joinsession`;
-  let socketStorageDiscovery: ISocketStorageDiscovery = odspCache.get(odspCacheKey);
+  let socketStorageDiscovery: ISocketStorageDiscovery = odspCache.get(odspCacheKey, true);
   if (!socketStorageDiscovery) {
     const event = PerformanceEvent.start(logger, { eventName: "JoinSession" });
     let response: IOdspResponse<ISocketStorageDiscovery>;
@@ -107,7 +107,10 @@ export async function getSocketStorageDiscovery(
     if (socketStorageDiscovery.runtimeTenantId && !socketStorageDiscovery.tenantId) {
       socketStorageDiscovery.tenantId = socketStorageDiscovery.runtimeTenantId;
     }
-    odspCache.put(odspCacheKey, socketStorageDiscovery, 900000);
+    // We are storing the joinsession response in cache for 16 mins so that other join session calls in the same timeframe can use this
+    // result. We are choosing 16 mins as the push server could change to different one after 15 mins. So to avoid any race condition,
+    // we are choosing 16 mins.
+    odspCache.put(odspCacheKey, socketStorageDiscovery, 960000);
   }
   return socketStorageDiscovery;
 }

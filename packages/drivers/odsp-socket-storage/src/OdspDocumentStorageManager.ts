@@ -249,6 +249,9 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
                         const response = await this.fetchWrapper.get<IOdspSnapshot>(url, this.documentId, headers);
                         odspSnapshot = response.content;
+                        // We are storing the getLatest response in cache for 10s so that other containers initializing in the same timeframe can use this
+                        // result. We are choosing a small time period as the summarizes are generated frequently and if that is the case then we don't
+                        // want to use the same getLatest result.
                         this.odspCache.put(odspCacheKey, odspSnapshot, 10000);
 
                         const props = {

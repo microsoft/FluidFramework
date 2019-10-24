@@ -10,8 +10,12 @@ export class OdspCache {
         this.odspCache = new Map<string, any>();
     }
 
-    public get(key: string) {
-        return this.odspCache.get(key);
+    public get(key: string, removeKey: boolean = false) {
+        const val = this.odspCache.get(key);
+        if (removeKey && val) {
+            this.odspCache.delete(key);
+        }
+        return val;
     }
 
     public put(key: string, value: any, expiryTime: number) {
@@ -24,6 +28,8 @@ export class OdspCache {
         // tslint:disable-next-line: no-string-based-set-timeout
         const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
         await delay(expiryTime);
-        this.odspCache.delete(key);
+        if (this.odspCache.has(key)) {
+            this.odspCache.delete(key);
+        }
     }
 }
