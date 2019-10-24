@@ -65,7 +65,7 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
     private lastSummarySeqNumber: number;
     private summarizing = false;
     private summaryPending = false;
-    private opSinceSummarize = false;
+    private opSinceSummarizeSeq?: number;
     private pendingSummarySequenceNumber?: number;
     private idleTimer: Timer;
     private pendingAckTimer: Timer;
@@ -158,7 +158,7 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
 
         // initialize values (time is not exact)
         this.lastSummarySeqNumber = this.runtime.deltaManager.initialSequenceNumber;
-        this.lastSummaryTime =  Date.now();
+        this.lastSummaryTime = Date.now();
 
         this.logger.sendTelemetryEvent({
             eventName: "RunningSummarizer",
@@ -180,6 +180,11 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
         this.dispose();
     }
 
+    /**
+     * Stops the summarizer from running.  This will complete
+     * the run promise, and also close the container.
+     * @param reason - reason code for stopping
+     */
     public stop(reason?: string) {
         this.logger.sendTelemetryEvent({
             eventName: "StoppingSummarizer",
@@ -190,10 +195,15 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
         this.runtime.closeFn();
     }
 
+    /**
+     * Disposes of resources after running.  This cleanup will
+     * clear any outstanding timers and reset some of the state
+     * properties.
+     */
     private dispose() {
         this.idleTimer.clear();
         this.summarizeTimer.clear();
-        this.opSinceSummarize = false;
+        this.opSinceSummarizeSeq = undefined;
         this.stopPending();
     }
 
@@ -219,7 +229,7 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
         return { result, success };
     }
 
-    private async handleSystemOp(op: ISequencedDocumentMessage) {
+    private handleSystemOp(op: ISequencedDocumentMessage) {
         switch (op.type) {
             case MessageType.ClientLeave: {
                 const leavingClientId = JSON.parse((op as ISequencedDocumentSystemMessage).data) as string;
@@ -238,29 +248,16 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
                 return;
             }
             case MessageType.Summarize: {
-                // listen for the broadcast of this summary op
-                // only look for broadcast summary op while pending
-                if (this.summaryPending) {
-                    // When pending, we need to wait until the lastSummarySeqNumber is set before
-                    // trying to find our broadcast summary op.  So we will essentially defer all
-                    // Summarize op handling here until deferBroadcast is resolved.
-                    await this.deferBroadcast.promise;
-                    this.handleSummaryOp(op);
-                }
+                this.handleSummaryOp(op).catch((error) => {
+                    this.logger.sendErrorEvent({ eventName: "HandleSummaryOpError" }, error);
+                });
                 return;
             }
             case MessageType.SummaryAck:
             case MessageType.SummaryNack: {
-                // listen for the ack/nack of this summary op
-                // only look for acks/nacks while pending
-                if (this.summaryPending) {
-                    // Since this handler is async, we need to wait until the pendingSummarySequenceNumber is
-                    // set from the broadcast summary op before handling summary acks/nacks.  We use
-                    // this deferred object to ensure that our broadcast summary op is handled before our
-                    // summary ack/nack is handled.
-                    await this.deferAck.promise;
-                    await this.handleSummaryAck(op);
-                }
+                this.handleSummaryAck(op).catch((error) => {
+                    this.logger.sendErrorEvent({ eventName: "HandleSummaryAckError" }, error);
+                });
                 return;
             }
             default: {
@@ -269,7 +266,16 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
         }
     }
 
-    private handleSummaryOp(op: ISequencedDocumentMessage) {
+    private async handleSummaryOp(op: ISequencedDocumentMessage) {
+        // listen for the broadcast of this summary op
+        // only look for broadcast summary op while pending
+        if (!this.summaryPending) {
+            return;
+        }
+        // When pending, we need to wait until the lastSummarySeqNumber is set before
+        // trying to find our broadcast summary op.  So we will essentially defer all
+        // Summarize op handling here until deferBroadcast is resolved.
+        await this.deferBroadcast.promise;
         // can skip check if already found this pending summary sequence number
         if (this.pendingSummarySequenceNumber) {
             return;
@@ -289,6 +295,16 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
     }
 
     private async handleSummaryAck(op: ISequencedDocumentMessage) {
+        // listen for the ack/nack of this summary op
+        // only look for acks/nacks while pending
+        if (!this.summaryPending) {
+            return;
+        }
+        // Since this handler is async, we need to wait until the pendingSummarySequenceNumber is
+        // set from the broadcast summary op before handling summary acks/nacks.  We use
+        // this deferred object to ensure that our broadcast summary op is handled before our
+        // summary ack/nack is handled.
+        await this.deferAck.promise;
         if (!this.pendingSummarySequenceNumber) {
             // never figured out this pending summary sequence number
             return;
@@ -344,9 +360,7 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
         // We are currently summarizing. Don't summarize again.
         if (this.summarizing || this.summaryPending) {
             // Track that an op has come in to restart the idle timer.
-            if (!this.opSinceSummarize) {
-                this.opSinceSummarize = true;
-            }
+            this.opSinceSummarizeSeq = op.sequenceNumber;
             return;
         }
 
@@ -463,6 +477,11 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
         }
     }
 
+    /**
+     * Enters pending state, which means waiting for a summary op to
+     * to be generated, sent, broadcast, and acked/nacked.  This sets
+     * the stages of pending using deferreds.
+     */
     private startPending() {
         this.summaryPending = true;
         this.pendingSummarySequenceNumber = undefined;
@@ -470,6 +489,10 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
         this.deferAck = new Deferred();
     }
 
+    /**
+     * Exits the pending state, which resolves the deferreds,
+     * clears the timeout, and resets the pending state properties.
+     */
     private stopPending() {
         this.summaryPending = false;
         this.pendingAckTimer.clear();
@@ -480,12 +503,12 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
         if (this.deferAck) {
             this.deferAck.resolve();
         }
-        // start idle timer if op came in while pending
-        if (this.opSinceSummarize) {
+        // start idle timer if ops came in while pending
+        if (this.opSinceSummarizeSeq && this.opSinceSummarizeSeq > this.lastSummarySeqNumber) {
             if (this.runtime.connected) {
                 this.idleTimer.start();
             }
-            this.opSinceSummarize = false;
+            this.opSinceSummarizeSeq = undefined;
         }
     }
 }
