@@ -82,6 +82,8 @@ export async function getSocketStorageDiscovery(
   documentId: string,
 ): Promise<ISocketStorageDiscovery> {
   const odspCacheKey = `${documentId}/joinsession`;
+  // It is necessary to invalidate the cache here once we use the previous result because we do not
+  // want to keep using the same expired result. So if we delete it we would ask for new join session result.
   let socketStorageDiscovery: ISocketStorageDiscovery = odspCache.get(odspCacheKey, true);
   if (!socketStorageDiscovery) {
     const event = PerformanceEvent.start(logger, { eventName: "JoinSession" });

@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
+
 export class OdspCache {
     private readonly odspCache: Map<string, any>;
 
@@ -19,6 +21,7 @@ export class OdspCache {
     }
 
     public put(key: string, value: any, expiryTime: number) {
+        assert(!this.odspCache.has(key), "Insertion rejected because cache already has that key!!");
         this.odspCache.set(key, value);
         // tslint:disable-next-line: no-floating-promises
         this.gc(key, expiryTime);
