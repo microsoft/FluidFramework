@@ -50,6 +50,8 @@ export class WebFlow extends PrimedComponent implements IComponentHTMLVisual {
 
     private get docId() {
         const componentId = this.root.get("docId");
+        // For backward compatibility, if the component id is not stored on the root, then we get the component id
+        // the way it was stored in previous version.
         if (!componentId) {
             return `${this.runtime.id}-doc`;
         }
