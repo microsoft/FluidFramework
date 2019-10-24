@@ -48,11 +48,12 @@ export class Pond extends PrimedComponent implements IComponentHTMLVisual {
     );
   }
 
-  async createSubComponent<T>(rootKey: string, pkgName: string, props?: any) {
+  async createSubComponent<T extends PrimedComponent>(rootKey: string, pkgName: string, props?: any) {
     const componentRuntime: IComponentRuntime = await this.context.createSubComponent(pkgName, props);
     componentRuntime.attach();
     const response = componentRuntime.request({url: "/"});
-    this.root.set(rootKey, await this.asComponent<T>(response));
+    const responseValue = await this.asComponent<T>(response);
+    this.root.set(rootKey, responseValue.handle);
   }
 
   protected async componentHasInitialized() {
