@@ -121,10 +121,9 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                 alreadyRaisedError = true;
             };
             container.on("error", onError);
-
             return container.load(
                 request.headers!.version as string | null | undefined,
-                request.headers!.connection as string)
+                request.headers!.connect as string)
                 .then(() => {
                     container.removeListener("error", onError);
                     res(container);

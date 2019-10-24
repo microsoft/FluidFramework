@@ -24,7 +24,7 @@ describe("Container", () => {
     let testDeltaConnectionServer: ITestDeltaConnectionServer;
     let testResolver: TestResolver;
     let testResolved: IFluidResolvedUrl;
-    const testRequest: IRequest = { url: "", headers: { connect: "open" }};
+    const testRequest: IRequest = { url: "", headers: { connect: "open" } };
     let service: IDocumentService;
     let codeLoader: API.CodeLoader;
     let loader: Loader;
