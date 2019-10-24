@@ -232,18 +232,19 @@ export class Loader extends EventEmitter implements ILoader {
         }
 
         let canCache = true;
-        let connection = !parsed.version ? "open" : "close";
         let fromSequenceNumber = -1;
 
         request.headers = request.headers ? request.headers : {};
-        if (request.headers.connect) {
-            connection = request.headers.connect as string;
-        } else {
-            request.headers.connect = connection;
+        if (!request.headers.connect) {
+            request.headers.connect = !parsed.version ? "open" : "close";
         }
 
         if (request.headers["fluid-cache"] === false) {
             canCache = false;
+        } else {
+            // If connection header is pure open or close we will cache it. Otherwise custom load behavior
+            // and so we will not cache the request
+            canCache = request.headers.connect === "open" || request.headers.connect === "close";
         }
 
         if (request.headers["fluid-sequence-number"]) {
@@ -258,11 +259,7 @@ export class Loader extends EventEmitter implements ILoader {
             request.headers.version = null;
         }
 
-        // If connection header is pure open or close we will cache it. Otherwise custom load behavior
-        // and so we will not cache the request
-        canCache = request.headers.connect === "open" || request.headers.connect === "close";
-
-        debug(`${canCache} ${connection} ${parsed.version}`);
+        debug(`${canCache} ${request.headers.connect} ${request.headers.version}`);
         const factory: IDocumentServiceFactory =
             selectDocumentServiceFactoryForProtocol(resolvedAsFluid, this.protocolToDocumentFactoryMap);
 
