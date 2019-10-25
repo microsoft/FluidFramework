@@ -5,7 +5,7 @@
 
 import { IProcessMessageResult, ITelemetryLogger } from "@microsoft/fluid-container-definitions";
 import { DebugLogger } from "@microsoft/fluid-core-utils";
-import { IDocumentMessage, MessageType } from "@microsoft/fluid-protocol-definitions";
+import { IClient, IDocumentMessage, MessageType } from "@microsoft/fluid-protocol-definitions";
 import { MockDocumentDeltaConnection, MockDocumentService } from "@microsoft/fluid-test-loader-utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
@@ -59,10 +59,11 @@ describe("Loader", () => {
                     undefined,
                     () => deltaConnection,
                 );
+                const client: Partial<IClient> = { mode: "write" };
 
                 deltaManager = new DeltaManager(
                     service,
-                    null,
+                    client as IClient,
                     logger,
                     false,
                 );
@@ -108,8 +109,9 @@ describe("Loader", () => {
                     assert.strictEqual(runCount, 1);
                 });
 
-                it("Should not update early with successive ops", async () => {
-                    const numberOfInterrupts = 10;
+                it("Should update after first timeout with successive ops", async () => {
+                    const numberOfSuccessiveOps = 10;
+                    assert(expectedTimeout > numberOfSuccessiveOps + 1);
                     let runCount = 0;
 
                     await startDeltaManager();
@@ -121,15 +123,20 @@ describe("Loader", () => {
                     // initial op
                     emitSequentialOp();
 
-                    for (let i = 0; i < numberOfInterrupts; i++) {
-                        clock.tick(expectedTimeout - 1);
+                    for (let i = 0; i < numberOfSuccessiveOps; i++) {
+                        clock.tick(1);
                         emitSequentialOp();
-                        clock.tick(1); // trigger canceled timeout, start new timeout
                     }
-                    clock.tick(expectedTimeout - 1);
+                    // should not run until timeout
+                    clock.tick(expectedTimeout - numberOfSuccessiveOps - 1);
                     assert.strictEqual(runCount, 0);
 
+                    // should run after timeout
                     clock.tick(1);
+                    assert.strictEqual(runCount, 1);
+
+                    // should not run again (make sure no additional timeouts created)
+                    clock.tick(expectedTimeout);
                     assert.strictEqual(runCount, 1);
                 });
 
