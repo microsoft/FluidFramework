@@ -1009,36 +1009,31 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             return;
         }
 
+        // While processing a message, an immediate no-op can be requested.
+        // i.e. to expedite approve or commit phase of quorum.
         if (immediateNoOp) {
+            this.stopSequenceNumberUpdate();
             this.submit(MessageType.NoOp, ImmediateNoOpResponse);
             return;
         }
 
-        switch (message.type as MessageType) {
-            case MessageType.Propose:
-                // On a quorum proposal, immediately send a response to expedite the approval.
-                this.stopSequenceNumberUpdate();
-                this.submit(MessageType.NoOp, ImmediateNoOpResponse);
-                return;
+        // We don't acknowledge no-ops to avoid acknowledgement cycles (i.e. ack the MSN
+        // update, which updates the MSN, then ack the update, etc...).
+        if (message.type === MessageType.NoOp) {
+            return;
+        }
 
-            case MessageType.NoOp:
-                // We don't acknowledge no-ops to avoid acknowledgement cycles (i.e. ack the MSN
-                // update, which updates the MSN, then ack the update, etc...).
-                return;
-
-            default:
-                // We will queue a message to update our reference sequence number upon receiving a server
-                // operation. This allows the server to know our true reference sequence number and be able to
-                // correctly update the minimum sequence number (MSN).
-                if (this.updateSequenceNumberTimer === undefined) {
-                    // Clear an update in 100 ms
-                    this.updateSequenceNumberTimer = setTimeout(() => {
-                        this.updateSequenceNumberTimer = undefined;
-                        if (this.active) {
-                            this.submit(MessageType.NoOp, null);
-                        }
-                    }, 100);
+        // We will queue a message to update our reference sequence number upon receiving a server
+        // operation. This allows the server to know our true reference sequence number and be able to
+        // correctly update the minimum sequence number (MSN).
+        if (this.updateSequenceNumberTimer === undefined) {
+            // Clear an update in 100 ms
+            this.updateSequenceNumberTimer = setTimeout(() => {
+                this.updateSequenceNumberTimer = undefined;
+                if (this.active) {
+                    this.submit(MessageType.NoOp, null);
                 }
+            }, 100);
         }
     }
 
