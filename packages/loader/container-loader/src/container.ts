@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 import {
-    HeaderKey,
     IComponent,
     IComponentQueryableLegacy,
     IRequest,
@@ -67,7 +66,7 @@ import { ContainerContext } from "./containerContext";
 import { debug } from "./debug";
 import { DeltaManager } from "./deltaManager";
 import { DeltaManagerProxy } from "./deltaManagerProxy";
-import { Loader, RelativeLoader } from "./loader";
+import { LoaderHeader, Loader, RelativeLoader } from "./loader";
 import { NullChaincode } from "./nullRuntime";
 import { pkgName, pkgVersion } from "./packageVersion";
 import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
@@ -265,7 +264,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         this._id = decodeURI(documentId);
         this._scopes = this.getScopes(options);
         this._audience = new Audience();
-        this.canReconnect = !(originalRequest.headers && originalRequest.headers[HeaderKey.reconnect] === false);
+        this.canReconnect = !(originalRequest.headers && originalRequest.headers[LoaderHeader.reconnect] === false);
 
         // create logger for components to use
         this.subLogger = DebugLogger.mixinDebugLogger(
@@ -781,8 +780,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                 scopes: [],
                 user: { id: "" },
             };
-        if (this.originalRequest.headers && this.originalRequest.headers[HeaderKey.clientType]) {
-            clientDetails.type = this.originalRequest.headers[HeaderKey.clientType] as string;
+        if (this.originalRequest.headers && this.originalRequest.headers[LoaderHeader.clientType]) {
+            clientDetails.type = this.originalRequest.headers[LoaderHeader.clientType] as string;
         }
 
         this._deltaManager = new DeltaManager(

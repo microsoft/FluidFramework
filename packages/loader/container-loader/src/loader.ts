@@ -4,7 +4,6 @@
  */
 
 import {
-    HeaderKey,
     IComponent,
     IRequest,
     IResponse,
@@ -39,6 +38,15 @@ interface IParsedUrl {
      * If needed, can add undefined which is treated by Container.load() as load latest snapshot.
      */
     version: string | null | undefined;
+}
+
+export enum LoaderHeader {
+    cache = "fluid-cache",
+    clientType = "fluid-client-type",
+    connect = "connect",
+    sequenceNumber = "fluid-sequence-number",
+    reconnect = "fluid-reconnect",
+    version = "version",
 }
 
 export class RelativeLoader extends EventEmitter implements ILoader {
@@ -86,8 +94,8 @@ export class RelativeLoader extends EventEmitter implements ILoader {
         }
 
         const noCache =
-            request.headers[HeaderKey.cache] === false ||
-            request.headers[HeaderKey.reconnect] === false;
+            request.headers[LoaderHeader.cache] === false ||
+            request.headers[LoaderHeader.reconnect] === false;
 
         return !noCache;
     }
@@ -239,20 +247,20 @@ export class Loader extends EventEmitter implements ILoader {
         let fromSequenceNumber = -1;
 
         request.headers = request.headers ? request.headers : {};
-        if (!request.headers[HeaderKey.connect]) {
-            request.headers[HeaderKey.connect] = !parsed.version ? "open" : "close";
+        if (!request.headers[LoaderHeader.connect]) {
+            request.headers[LoaderHeader.connect] = !parsed.version ? "open" : "close";
         }
 
-        if (request.headers[HeaderKey.cache] === false) {
+        if (request.headers[LoaderHeader.cache] === false) {
             canCache = false;
         } else {
             // If connection header is pure open or close we will cache it. Otherwise custom load behavior
             // and so we will not cache the request
-            canCache = request.headers[HeaderKey.connect] === "open" || request.headers[HeaderKey.connect] === "close";
+            canCache = request.headers[LoaderHeader.connect] === "open" || request.headers[LoaderHeader.connect] === "close";
         }
 
-        if (request.headers[HeaderKey.sequenceNumber]) {
-            fromSequenceNumber = request.headers[HeaderKey.sequenceNumber] as number;
+        if (request.headers[LoaderHeader.sequenceNumber]) {
+            fromSequenceNumber = request.headers[LoaderHeader.sequenceNumber] as number;
         }
 
         // if set in both query string and headers, use query string
@@ -263,7 +271,7 @@ export class Loader extends EventEmitter implements ILoader {
             request.headers.version = null;
         }
 
-        debug(`${canCache} ${request.headers[HeaderKey.connect]} ${request.headers.version}`);
+        debug(`${canCache} ${request.headers[LoaderHeader.connect]} ${request.headers.version}`);
         const factory: IDocumentServiceFactory =
             selectDocumentServiceFactoryForProtocol(resolvedAsFluid, this.protocolToDocumentFactoryMap);
 
