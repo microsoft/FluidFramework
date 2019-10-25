@@ -175,7 +175,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             return this.connection.details.claims.documentId;
         }
         return undefined;
-   }
+    }
 
     constructor(
         private readonly service: IDocumentService,
@@ -228,29 +228,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         // within an array *must* fit within the maxMessageSize and are guaranteed to be ordered sequentially.
         this._outbound = new DeltaQueue<IDocumentMessage[]>(
             (messages, callback: (error?) => void) => {
-                if (this.shouldSplit(messages)) {
-                    messages.forEach((message) => {
-                        debug(`Splitting content from envelope.`);
-                        this.connection!.submitAsync([message]).then(
-                            () => {
-                                this.contentCache.set({
-                                    clientId: this.connection!.details.clientId,
-                                    clientSequenceNumber: message!.clientSequenceNumber,
-                                    contents: message!.contents as string,
-                                });
-                                message!.contents = undefined;
-                                this.connection!.submit([message]);
-                                callback();
-                            },
-                            (error) => {
-                                callback(error);
-                            });
-                    });
-                } else {
-                    this.connection!.submit(messages);
-                    callback();
-                }
-            });
+                this.connection!.submit(messages);
+                callback();
+            },
+        );
 
         this._outbound.on("error", (error) => {
             this.emit("error", error);
@@ -566,17 +547,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             this.pongCount = 0;
             this.socketLatency = 0;
         }
-    }
-
-    private shouldSplit(contents: IDocumentMessage[]): boolean {
-        // Disabling message splitting - there is no compelling reason to use it.
-        // Container.submitMessage should chunk messages properly.
-        // Content can still be 2x size of maxMessageSize due to character escaping.
-        const splitSize = this.maxMessageSize * 2;
-        this.logger.debugAssert(
-            !contents || contents.length <= splitSize,
-            { eventName: "Splitting should not happen" });
-        return false;
     }
 
     // Specific system level message attributes are need to be looked at by the server.
