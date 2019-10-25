@@ -24,7 +24,7 @@ import { OdspDocumentStorageService } from "./OdspDocumentStorageService";
 import { defaultRetryFilter } from "./OdspUtils";
 import { getSocketStorageDiscovery } from "./Vroom";
 
-const afdUrlConnectExpirationMs = 8 * 60 * 60 * 1000; // 8 hours
+const afdUrlConnectExpirationMs = 6 * 60 * 60 * 1000; // 6 hours
 const lastAfdConnectionTimeMsKey = "LastAfdConnectionTimeMs";
 const localStorageTestKey = "LocalStorageTestKey";
 
@@ -269,6 +269,7 @@ export class OdspDocumentService implements IDocumentService {
      * @param url - websocket URL
      * @param url2 - alternate websocket URL
      */
+    // tslint:disable-next-line: max-func-body-length
     private async connectToDeltaStreamWithRetry(
         tenantId: string,
         id: string,
@@ -304,7 +305,8 @@ export class OdspDocumentService implements IDocumentService {
             // Use AFD URL if in cache
             if (afdCacheValid && hasUrl2) {
                 debug("Connecting to AFD URL directly due to valid cache.");
-                logger.sendTelemetryEvent({ eventName: "UseAfdUrl-Cached" });
+                const startAfd = performance.now();
+
                 return DocumentDeltaConnection.create(
                     tenantId,
                     id,
@@ -315,9 +317,55 @@ export class OdspDocumentService implements IDocumentService {
                     // tslint:disable-next-line: no-non-null-assertion
                     url2!,
                     20000,
-                );
+                ).then((connection) => {
+                    logger.sendTelemetryEvent({
+                        eventName: "UsedAfdUrl",
+                        fromCache: true,
+                    });
+
+                    return connection;
+                }).catch((connectionError) => {
+                    const endAfd = performance.now();
+                    localStorage.removeItem(lastAfdConnectionTimeMsKey);
+                    // Retry on non-AFD URL
+                    if (this.canRetryOnError(connectionError)) {
+                        debug(`Socket connection error on AFD URL (cached). Error was [${connectionError}]. Retry on non-AFD URL: ${url}`);
+
+                        return DocumentDeltaConnection.create(
+                            tenantId,
+                            id,
+                            token,
+                            io,
+                            client,
+                            mode,
+                            url,
+                            20000,
+                        ).then((connection) => {
+                            logger.sendPerformanceEvent({
+                                eventName: "UsedNonAfdUrlFallback",
+                                duration: endAfd - startAfd,
+                            }, connectionError);
+
+                            return connection;
+                        }).catch((retryError) => {
+                            logger.sendPerformanceEvent({
+                                eventName: "FailedNonAfdUrlFallback",
+                                duration: endAfd - startAfd,
+                            }, retryError);
+
+                            throw retryError;
+                        });
+                    } else {
+                        logger.sendErrorEvent({
+                            eventName: "FailedAfdUrl-NoNonAfdFallback",
+                        }, connectionError);
+                    }
+
+                    throw connectionError;
+                });
             }
 
+            const startNonAfd = performance.now();
             return DocumentDeltaConnection.create(
                 tenantId,
                 id,
@@ -327,10 +375,13 @@ export class OdspDocumentService implements IDocumentService {
                 mode,
                 url,
                 hasUrl2 ? 15000 : 20000,
-            // tslint:disable-next-line: promise-function-async
-            ).catch((error) => {
-                if (hasUrl2 && this.canRetryOnError(error)) {
-                    debug(`Socket connection error on non-AFD URL. Error was [${error}]. Retry on AFD URL: ${url}`);
+            ).then((connection) => {
+                logger.sendTelemetryEvent({ eventName: "UsedNonAfdUrl" });
+                return connection;
+            }).catch((connectionError) => {
+                const endNonAfd = performance.now();
+                if (hasUrl2 && this.canRetryOnError(connectionError)) {
+                    debug(`Socket connection error on non-AFD URL. Error was [${connectionError}]. Retry on AFD URL: ${url2}`);
 
                     return DocumentDeltaConnection.create(
                         tenantId,
@@ -343,19 +394,34 @@ export class OdspDocumentService implements IDocumentService {
                         url2!,
                         20000,
                     ).then((connection) => {
-                            logger.sendTelemetryEvent({ eventName: "UseAfdUrl" });
-                            logger.sendTelemetryEvent({ eventName: "CacheAfdUrl" });
-                            // Refresh AFD cache
-                            if (this.writeLocalStorage(lastAfdConnectionTimeMsKey, Date.now().toString())) {
-                                debug(`Cached AFD connection time. Expiring in ${new Date(Number(localStorage.getItem(lastAfdConnectionTimeMsKey)) + afdUrlConnectExpirationMs)}`);
-                            }
-                            return connection;
-                        },
-                    );
+                        // Refresh AFD cache
+                        const cacheResult = this.writeLocalStorage(lastAfdConnectionTimeMsKey, Date.now().toString());
+                        if (cacheResult) {
+                            debug(`Cached AFD connection time. Expiring in ${new Date(Number(localStorage.getItem(lastAfdConnectionTimeMsKey)) + afdUrlConnectExpirationMs)}`);
+                        }
+                        logger.sendPerformanceEvent({
+                            eventName: "UsedAfdUrl",
+                            duration: endNonAfd - startNonAfd,
+                            refreshedCache: cacheResult,
+                            fromCache: false,
+                        }, connectionError);
+
+                        return connection;
+                    }).catch((retryError) => {
+                        logger.sendPerformanceEvent({
+                            eventName: "FailedAfdUrlFallback",
+                            duration: endNonAfd - startNonAfd,
+                        }, retryError);
+
+                        throw retryError;
+                    });
+                } else {
+                    logger.sendErrorEvent({
+                        eventName: "FailedNonAfdUrl-NoAfdFallback",
+                    }, connectionError);
                 }
 
-                logger.sendTelemetryEvent({ eventName: "FailedAfdUrl" });
-                throw error;
+                throw connectionError;
             });
         }
 
