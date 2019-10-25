@@ -316,6 +316,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             if (this.pending.length > 0) {
                 this.catchUp("DocumentOpen", []);
             } else {
+                // tslint:disable-next-line:no-floating-promises
                 this.fetchMissingDeltas("DocumentOpen", sequenceNumber);
             }
         }
@@ -837,11 +838,12 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             // Check that the messages are arriving in the expected order
             if (message.sequenceNumber !== this.lastQueuedSequenceNumber + 1) {
                 // tslint:disable-next-line: max-line-length
-                debug(`DeltaManager: enque Messages *Out of* Order Message ${message.sequenceNumber} - last ${this.lastQueuedSequenceNumber}`);
+                debug(`DeltaManager: enqueueMessages *Out of* Order Message ${message.sequenceNumber} - last ${this.lastQueuedSequenceNumber}`);
 
+                // tslint:disable-next-line:no-floating-promises
                 this.handleOutOfOrderMessage(message);
             } else {
-                debug("DeltaManager: enque Messages In Order Message");
+                debug("DeltaManager: enqueueMessages In Order Message");
                 this.lastQueuedSequenceNumber = message.sequenceNumber;
                 this._inbound.push(message);
             }
@@ -910,7 +912,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     /**
      * Handles an out of order message retrieved from the server
      */
-    private handleOutOfOrderMessage(message: ISequencedDocumentMessage) {
+    private async handleOutOfOrderMessage(message: ISequencedDocumentMessage): Promise<void> {
         if (message.sequenceNumber <= this.lastQueuedSequenceNumber) {
             this.logger.sendTelemetryEvent({
                 eventName: "DuplicateMessage",
@@ -922,13 +924,13 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         }
 
         this.pending.push(message);
-        this.fetchMissingDeltas("OutOfOrderMessage", this.lastQueuedSequenceNumber, message.sequenceNumber);
+        await this.fetchMissingDeltas("OutOfOrderMessage", this.lastQueuedSequenceNumber, message.sequenceNumber);
     }
 
     /**
      * Retrieves the missing deltas between the given sequence numbers
      */
-    private fetchMissingDeltas(telemetryEventSuffix: string, from: number, to?: number) {
+    private async fetchMissingDeltas(telemetryEventSuffix: string, from: number, to?: number): Promise<void> {
         // Exit out early if we're already fetching deltas
         if (this.fetching) {
             return;
@@ -936,13 +938,12 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         if (this.closed) {
             this.logger.sendTelemetryEvent({eventName: "fetchMissingDeltasClosedConnection" });
-            return [];
+            return;
         }
 
         this.fetching = true;
 
-        // tslint:disable-next-line:no-floating-promises
-        this.getDeltas(telemetryEventSuffix, from, to).then(
+        await this.getDeltas(telemetryEventSuffix, from, to).then(
             (messages) => {
                 this.fetching = false;
                 this.emit("caughtUp");
