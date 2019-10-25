@@ -8,6 +8,7 @@ import { IDocumentService, IDocumentServiceFactory, IResolvedUrl } from "@micros
 import { IOdspResolvedUrl } from "./contracts";
 import { FetchWrapper, IFetchWrapper } from "./fetchWrapper";
 import { getSocketIo } from "./getSocketIo";
+import { OdspCache } from "./odspCache";
 import { OdspDocumentService } from "./OdspDocumentService";
 
 /**
@@ -33,6 +34,7 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
     private readonly logger: ITelemetryBaseLogger,
     private readonly storageFetchWrapper: IFetchWrapper = new FetchWrapper(),
     private readonly deltasFetchWrapper: IFetchWrapper = new FetchWrapper(),
+    private readonly odspCache: OdspCache = new OdspCache(),
   ) {}
 
   public async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
@@ -50,6 +52,7 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
       this.storageFetchWrapper,
       this.deltasFetchWrapper,
       Promise.resolve(getSocketIo()),
+      this.odspCache,
     );
   }
 }
