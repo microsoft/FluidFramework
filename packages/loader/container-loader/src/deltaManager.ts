@@ -34,8 +34,6 @@ import { DeltaConnection } from "./deltaConnection";
 import { DeltaQueue } from "./deltaQueue";
 import { logNetworkFailure, waitForConnectedState } from "./networkUtils";
 
-// tslint:disable:no-floating-promises - disabling per-file rather than full subdirectory
-
 // tslint:disable-next-line:no-var-requires
 const performanceNow = require("performance-now") as (() => number);
 
@@ -272,8 +270,11 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         });
 
         // Require the user to start the processing
+        // tslint:disable-next-line:no-floating-promises
         this._inbound.pause();
+        // tslint:disable-next-line:no-floating-promises
         this._outbound.pause();
+        // tslint:disable-next-line:no-floating-promises
         this._inboundSignal.pause();
     }
 
@@ -304,7 +305,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         // We are ready to process inbound messages
         if (resume) {
+            // tslint:disable-next-line:no-floating-promises
             this._inbound.systemResume();
+            // tslint:disable-next-line:no-floating-promises
             this._inboundSignal.systemResume();
 
             // If we have pending ops from web socket, then we can use that to start download
@@ -523,11 +526,16 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             this.connecting = undefined;
         }
 
+        // tslint:disable-next-line:no-floating-promises
         this._inbound.clear();
+        // tslint:disable-next-line:no-floating-promises
         this._outbound.clear();
+        // tslint:disable-next-line:no-floating-promises
         this._inboundSignal.clear();
 
+        // tslint:disable-next-line:no-floating-promises
         this._inbound.systemPause();
+        // tslint:disable-next-line:no-floating-promises
         this._inboundSignal.systemPause();
 
         // Drop pending messages - this will ensure catchUp() does not go into infinite loop
@@ -622,6 +630,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 // back-compat for newer clients and old server. If the server does not have mode, we reset to write.
                 this.connectionMode = connection.details.mode ? connection.details.mode : "write";
 
+                // tslint:disable-next-line:no-floating-promises
                 this._outbound.systemResume();
 
                 this.emitDelayInfo(retryFor.DELTASTREAM, -1);
@@ -728,6 +737,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                     delayNext = Math.min(delay * 2, MaxReconnectDelay);
                 }
                 this.emitDelayInfo(retryFor.DELTASTREAM, delayNext);
+                // tslint:disable-next-line:no-floating-promises
                 waitForConnectedState(delayNext).then(() => this.connectCore(reason, delayNext, mode));
             });
     }
@@ -743,7 +753,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this.connection = undefined;
         this.connectionMode = "read";
 
+        // tslint:disable-next-line:no-floating-promises
         this._outbound.systemPause();
+        // tslint:disable-next-line:no-floating-promises
         this._outbound.clear();
         this.emit("disconnect", reason);
 
@@ -929,6 +941,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         this.fetching = true;
 
+        // tslint:disable-next-line:no-floating-promises
         this.getDeltas(telemetryEventSuffix, from, to).then(
             (messages) => {
                 this.fetching = false;
