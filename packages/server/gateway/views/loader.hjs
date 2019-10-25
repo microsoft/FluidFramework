@@ -52,14 +52,9 @@
 
         const connectionDiv = document.getElementById("connection-state");
 
-        function quorumState(container) {
-            if (container.getQuorum().getMember(container.clientId)) {
-                return "connected";
-            } else if (container.audience.getMember(container.clientId)) {
-                return "connected (read-only)";
-            } else {
-                return "connected (???)";
-            }
+        function getConnMode(container) {
+            const connMode = container.deltaManager.connectionMode;
+            return connMode === "write" ? "connected" : `connected (${connMode}-only)`;
         }
 
         containerP.then((container) => {
@@ -70,21 +65,21 @@
                 connectionDiv.innerHTML = "joining...";
             });
             container.on("connected", () => {
-                connectionDiv.innerHTML = quorumState(container);
+                connectionDiv.innerHTML = getConnMode(container);
             });
 
             container.getQuorum().on("addMember", () => {
-                connectionDiv.innerHTML = quorumState(container);
+                connectionDiv.innerHTML = getConnMode(container);
             });
             container.getQuorum().on("removeMember", () => {
-                connectionDiv.innerHTML = quorumState(container);
+                connectionDiv.innerHTML = getConnMode(container);
             });
 
             container.audience.on("addMember", () => {
-                connectionDiv.innerHTML = quorumState(container);
+                connectionDiv.innerHTML = getConnMode(container);
             });
             container.audience.on("removeMember", () => {
-                connectionDiv.innerHTML = quorumState(container);
+                connectionDiv.innerHTML = getConnMode(container);
             });
         });
 
