@@ -48,9 +48,11 @@ To deploy, use
     npm run deploy
 
 
-To view your component, you can go to the URL
+To view your component, you can go to the URL:
 
-    https://www.wu2-ppe.prague.office-int.com/waterpark?chaincode={pkg.name}@{pkg.version};
+    https://www.wu2.prague.office-int.com/waterpark
+
+And specifiy your component in the input box in the format: {pkg.name}@{pkg.version}, and click add componenent.
 
 This link is then shareable and, in an expanding list of components, embeddable!
 
