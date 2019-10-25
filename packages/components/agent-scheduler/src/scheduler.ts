@@ -369,7 +369,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
                 "fluid-cache": false,
                 "fluid-reconnect": false,
                 "fluid-sequence-number": this.context.deltaManager.referenceSequenceNumber,
-                "execution-context": worker ? "thread" : "self",
+                "execution-context": worker ? "worker" : undefined,
             },
             url,
         };

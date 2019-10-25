@@ -27,8 +27,10 @@ interface IProxyLoader extends ILoader, IComponentRunnable {
     stop(reason?: string): Promise<void>;
 }
 
-// Proxies request to web worker loader.
-export class WorkerLoader implements ILoader, IComponentRunnable, IComponentRouter {
+/**
+ * Proxies requests to web worker loader.
+ */
+export class WebWorkerLoader implements ILoader, IComponentRunnable, IComponentRouter {
     public static async load(
         id: string,
         version: string | null | undefined,
@@ -48,7 +50,7 @@ export class WorkerLoader implements ILoader, IComponentRunnable, IComponentRout
             fromSequenceNumber,
             canReconnect,
         );
-        return new WorkerLoader(proxyLoader);
+        return new WebWorkerLoader(proxyLoader);
     }
 
     constructor(private readonly proxy: Comlink.Remote<IProxyLoader>) {

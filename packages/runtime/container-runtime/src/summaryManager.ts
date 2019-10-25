@@ -8,7 +8,6 @@ import { IContainerContext, ITelemetryLogger } from "@microsoft/fluid-container-
 import { ChildLogger, Heap, IComparer, IHeapNode } from "@microsoft/fluid-core-utils";
 import { ISequencedClient } from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
-import { ISummarizer } from "./summarizer";
 
 interface ITrackedClient {
     clientId: string;
@@ -32,7 +31,7 @@ export class SummaryManager extends EventEmitter {
     private readonly heapMembers = new Map<string, IHeapNode<ITrackedClient>>();
     private connected = false;
     private clientId: string;
-    private runningSummarizer?: ISummarizer;
+    private runningSummarizer?: IComponentRunnable;
     private readonly logger: ITelemetryLogger;
 
     public get summarizer() {
@@ -138,7 +137,7 @@ export class SummaryManager extends EventEmitter {
             const doneP = this.createSummarizer()
                 .then((summarizer) => {
                     if (this.shouldSummarize) {
-                        this.runningSummarizer = summarizer as ISummarizer;
+                        this.runningSummarizer = summarizer;
                         return summarizer.run(this.clientId);
                     }
                 });
@@ -168,7 +167,7 @@ export class SummaryManager extends EventEmitter {
                 "fluid-cache": false,
                 "fluid-reconnect": false,
                 "fluid-sequence-number": this.context.deltaManager.referenceSequenceNumber,
-                "execution-context": this.enableWorker ? "thread" : "self",
+                "execution-context": this.enableWorker ? "worker" : undefined,
             },
             url: "/_summarizer",
         };
@@ -176,14 +175,14 @@ export class SummaryManager extends EventEmitter {
         const response = await loader.request(request);
 
         if (response.status !== 200 || response.mimeType !== "fluid/component") {
-            return Promise.reject<ISummarizer>("Invalid summarizer route");
+            return Promise.reject<IComponentRunnable>("Invalid summarizer route");
         }
 
         const rawComponent = response.value as IComponent;
         const summarizer = rawComponent.IComponentRunnable;
 
         if (!summarizer) {
-            return Promise.reject<IComponentRunnable>("Component does not implement ISummarizer");
+            return Promise.reject<IComponentRunnable>("Component does not implement IComponentRunnable");
         }
 
         return summarizer;

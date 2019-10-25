@@ -12,6 +12,7 @@ import {
     ICodeLoader,
     IHost,
     ILoader,
+    IProxyLoaderFactory,
     ITelemetryBaseLogger,
 } from "@microsoft/fluid-container-definitions";
 import { Deferred } from "@microsoft/fluid-core-utils";
@@ -29,7 +30,6 @@ import * as querystring from "querystring";
 import { parse } from "url";
 import { Container } from "./container";
 import { debug } from "./debug";
-import { WorkerLoader } from "./workerLoader";
 
 interface IParsedUrl {
     id: string;
@@ -68,7 +68,7 @@ export class RelativeLoader extends EventEmitter implements ILoader {
 
     public async request(request: IRequest): Promise<IResponse> {
         if (request.url.indexOf("/") === 0) {
-            if (this.useThread(request)) {
+            if (this.needExecutionContext(request)) {
                 return this.loader.requestWorker(this.baseRequest.url, request);
             } else {
                 const container = this.canUseCache(request)
@@ -97,17 +97,8 @@ export class RelativeLoader extends EventEmitter implements ILoader {
         return !noCache;
     }
 
-    private useThread(request: IRequest): boolean {
-        if (!request.headers) {
-            return false;
-        }
-        if (request.headers["execution-context"]) {
-            const requestContext = request.headers["execution-context"] as string;
-            if (requestContext === "thread") {
-                return true;
-            }
-        }
-        return false;
+    private needExecutionContext(request: IRequest): boolean {
+        return (request.headers !== undefined && request.headers["execution-context"] !== undefined);
     }
 }
 
@@ -166,6 +157,7 @@ export class Loader extends EventEmitter implements ILoader {
         private readonly codeLoader: ICodeLoader,
         private readonly options: any,
         private readonly scope: IComponent,
+        private readonly proxyLoaderFactories: Map<string, IProxyLoaderFactory>,
         private readonly logger?: ITelemetryBaseLogger,
     ) {
         super();
@@ -200,25 +192,36 @@ export class Loader extends EventEmitter implements ILoader {
     }
 
     public async requestWorker(baseUrl: string, request: IRequest): Promise<IResponse> {
-        const resolved = await this.getResolvedUrl({ url: baseUrl, headers: request.headers });
-        const resolvedAsFluid = resolved as IFluidResolvedUrl;
-        const parsed = this.parseUrl(resolvedAsFluid.url);
-        if (!parsed) {
-            return Promise.reject(`Invalid URL ${resolvedAsFluid.url}`);
-        }
-        const {canReconnect, connection, fromSequenceNumber, version} =
-            this.parseHeader(parsed, { url: baseUrl, headers: request.headers });
 
-        const workerLoader = await WorkerLoader.load(
-            parsed!.id,
-            version,
-            connection,
-            this.options,
-            resolvedAsFluid,
-            fromSequenceNumber,
-            canReconnect,
-        );
-        return workerLoader.request(request);
+        // Currently the loader only supports web worker environment. Eventually we will
+        // detect environment and bring appropiate loader (e.g., worker_thread for node).
+        const supportedEnvironment = "webworker";
+        const proxyLoaderFactory = this.proxyLoaderFactories.get(supportedEnvironment);
+
+        // If the loader does not support any other environment, request falls back to current loader.
+        if (!proxyLoaderFactory) {
+            const container = await this.resolve({ url: baseUrl, headers: request.headers });
+            return container.request(request);
+        } else {
+            const resolved = await this.getResolvedUrl({ url: baseUrl, headers: request.headers });
+            const resolvedAsFluid = resolved as IFluidResolvedUrl;
+            const parsed = this.parseUrl(resolvedAsFluid.url);
+            if (!parsed) {
+                return Promise.reject(`Invalid URL ${resolvedAsFluid.url}`);
+            }
+            const {canReconnect, connection, fromSequenceNumber, version} =
+                this.parseHeader(parsed, { url: baseUrl, headers: request.headers });
+            const proxyLoader = await proxyLoaderFactory.createProxyLoader(
+                parsed!.id,
+                version,
+                connection,
+                this.options,
+                resolvedAsFluid,
+                fromSequenceNumber,
+                canReconnect,
+            );
+            return proxyLoader.request(request);
+        }
     }
 
     private parseUrl(url: string): IParsedUrl | null {

@@ -9,7 +9,7 @@ import {
     IComponentQueryableLegacy,
     IRequest,
 } from "@microsoft/fluid-component-core-interfaces";
-import { ICodeWhiteList } from "@microsoft/fluid-container-definitions";
+import { ICodeWhiteList, IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
 import {
     IFluidResolvedUrl,
@@ -121,6 +121,7 @@ export async function createWebLoader(
     config: any,
     scope: IComponent,
     hostConf: IHostConfig,
+    proxyLoaderFactories: Map<string, IProxyLoaderFactory>,
     whiteList?: ICodeWhiteList,
 ): Promise<Loader> {
 
@@ -153,7 +154,8 @@ export async function createWebLoader(
         hostConf.documentServiceFactory,
         codeLoader,
         config,
-        scope);
+        scope,
+        proxyLoaderFactories);
 }
 
 /**
@@ -179,6 +181,7 @@ export async function start(
     scope: IComponent,
     div: HTMLDivElement,
     hostConf: IHostConfig,
+    proxyLoaderFactories: Map<string, IProxyLoaderFactory>,
 ): Promise<Container> {
     const loader = await createWebLoader(
         resolved,
@@ -187,6 +190,7 @@ export async function start(
         config,
         scope,
         hostConf,
+        proxyLoaderFactories,
         new WhiteList(),
         );
 

@@ -52,8 +52,7 @@
     "double-ended-queue": "^2.1.0-0",
     "jwt-decode": "^2.2.0",
     "lodash": "^4.17.11",
-    "performance-now": "^2.1.0",
-    "comlink": "^4.0.5"
+    "performance-now": "^2.1.0"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.4.4",

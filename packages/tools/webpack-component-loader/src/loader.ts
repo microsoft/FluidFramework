@@ -6,7 +6,12 @@
 import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 import { IHostConfig, start as startCore } from "@microsoft/fluid-base-host";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { IFluidModule, IFluidPackage, IPackage, isFluidPackage } from "@microsoft/fluid-container-definitions";
+import {
+    IFluidModule,
+    IFluidPackage,
+    IPackage,
+    IProxyLoaderFactory,
+    isFluidPackage } from "@microsoft/fluid-container-definitions";
 import {
     ITestDeltaConnectionServer,
     TestDeltaConnectionServer,
@@ -238,6 +243,7 @@ export async function start(
         {},
         double ? leftDiv : div,
         hostConf,
+        new Map<string, IProxyLoaderFactory>(),
     );
 
     let start2Promise: Promise<any> = Promise.resolve();
@@ -258,6 +264,7 @@ export async function start(
             {},
             rightDiv,
             hostConf2,
+            new Map<string, IProxyLoaderFactory>(),
         );
     }
     await Promise.all([start1Promise, start2Promise]);
