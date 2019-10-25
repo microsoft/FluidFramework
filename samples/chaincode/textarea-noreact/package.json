@@ -1,7 +1,7 @@
 {
-  "name": "@chaincode/textarea-noreact",
+  "name": "@fluid-example/textarea-noreact",
   "description": "Collaborative HTML <textarea> that uses aqueduct but no React.",
-  "version": "0.10.2",
+  "version": "0.10.4",
   "author": "Microsoft",
   "repository": "microsoft/FluidFramework",
   "main": "dist/index.js",
@@ -14,20 +14,19 @@
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
-    "start": "prague-dev-server --config webpack.config.js --package package.json --pragueHost https://www.wu2.prague.office-int.com --tenantId cocky-ramanujan --tenantSecret 3e439fcb58228d3f8f7deb55399d978c",
-    "start:local": "prague-dev-server --config webpack.config.js --package package.json",
+    "start": "webpack-dev-server --config webpack.config.js --package package.json",
+    "start:live": "webpack-dev-server --config webpack.config.js --package package.json --env.mode live",
+    "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
     "verdaccio": "npm publish --registry https://packages.wu2.prague.office-int.com",
     "deploy": "npm run build && npm version patch && npm run verdaccio && npm run post-deploy",
-    "post-deploy": "getUrl -p",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose",
-    "webpack": "webpack --env=\"production\"",
-    "webpack:dev": "webpack --env=\"development\""
+    "webpack": "webpack --env.production",
+    "webpack:dev": "webpack --env.development"
   },
   "devDependencies": {
-    "@microsoft/fluid-build-common": "^0.9.0",
-    "@prague/prague-dev-server": "~3.9.1",
-    "@prague/url-generator": "^1.0.4",
+    "@microsoft/fluid-build-common": "^0.10.0",
+    "@microsoft/fluid-webpack-component-loader": "^0.10.0",
     "@types/node": "^10.14.6",
     "concurrently": "^4.1.0",
     "ts-loader": "^4.5.0",
@@ -36,19 +35,30 @@
     "typescript": "~3.4.5",
     "webpack": "4.16.5",
     "webpack-cli": "3.1.0",
+    "webpack-dev-server": "^3.8.0",
     "webpack-merge": "4.1.4"
   },
   "dependencies": {
-    "@prague/aqueduct": "^0.9.0",
-    "@prague/component-core-interfaces": "^0.9.0",
-    "@prague/component-runtime": "^0.9.0",
-    "@prague/container-definitions": "^0.9.0",
-    "@prague/framework-definitions": "^0.9.0",
-    "@prague/map": "^0.9.0",
-    "@prague/runtime-definitions": "^0.9.0",
-    "@prague/sequence": "^0.9.0",
-    "@prague/shared-object-common": "^0.9.0",
-    "@prague/utils": "^0.9.0"
+    "@microsoft/fluid-aqueduct": "^0.10.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.10.0",
+    "@microsoft/fluid-component-runtime": "^0.10.0",
+    "@microsoft/fluid-container-definitions": "^0.10.0",
+    "@microsoft/fluid-framework-interfaces": "^0.10.0",
+    "@microsoft/fluid-map": "^0.10.0",
+    "@microsoft/fluid-runtime-definitions": "^0.10.0",
+    "@microsoft/fluid-sequence": "^0.10.0",
+    "@microsoft/fluid-shared-object-base": "^0.10.0",
+    "@microsoft/fluid-core-utils": "^0.10.0"
+  },
+  "fluid": {
+    "browser": {
+      "umd": {
+        "files": [
+          "dist/main.bundle.js"
+        ],
+        "library": "main"
+      }
+    }
   },
   "license": "MIT"
 }

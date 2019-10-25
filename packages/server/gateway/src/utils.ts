@@ -3,18 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IUser, ScopeType } from "@microsoft/fluid-protocol-definitions";
-import { generateToken, IAlfredTenant } from "@microsoft/fluid-server-services-core";
 import { Request } from "express";
 // In this case we want @types/express-serve-static-core, not express-serve-static-core, and so disable the lint rule
 // tslint:disable-next-line:no-implicit-dependencies
 import { Params } from "express-serve-static-core";
 import * as _ from "lodash";
-
-export interface IAlfredUser extends IUser {
-    displayName: string;
-    name: string;
-}
 
 export interface ICachedPackage {
     entrypoint: string;
@@ -41,21 +34,6 @@ export function getConfig(
     updatedConfig.historianApi = true;
 
     return JSON.stringify(updatedConfig);
-}
-
-export function getToken(
-    tenantId: string,
-    documentId: string,
-    tenants: IAlfredTenant[],
-    scopes: ScopeType[],
-    user?: IAlfredUser): string {
-    for (const tenant of tenants) {
-        if (tenantId === tenant.id) {
-            return generateToken(tenantId, documentId, tenant.key, scopes, user);
-        }
-    }
-
-    throw new Error("Invalid tenant");
 }
 
 export function getParam(params: Params, key: string) {

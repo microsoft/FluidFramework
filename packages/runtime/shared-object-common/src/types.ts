@@ -19,11 +19,6 @@ export interface IProvideSharedObject {
  */
 export interface ISharedObject extends IProvideSharedObject, IChannel {
     /**
-     * Marker to clearly identify the object as a shared object
-     */
-    __sharedObject__: boolean;
-
-    /**
      * Attaches an event listener for the given event
      */
     on(event: string | symbol, listener: (...args: any[]) => void): this;
@@ -34,27 +29,32 @@ export interface ISharedObject extends IProvideSharedObject, IChannel {
     removeListener(event: string | symbol, listener: (...args: any[]) => void): this;
 
     /**
-     * Registers the given shared object to its containing runtime
+     * Registers the given shared object to its containing component runtime, causing it to attach once
+     * the runtime attaches.
      */
     register(): void;
 
     /**
-     * Returns whether the given shared object is local
+     * Returns whether the given shared object is local.
+     * @returns True if the given shared object is local
      */
     isLocal(): boolean;
 
     /**
-     * True if the channel has been registered.
+     * Returns whether the given shared object is registered.
+     * @returns True if the given shared object is registered
      */
     isRegistered(): boolean;
 
     /**
-     * Snapshots the object
+     * Gets a form of the object that can be serialized.
+     * @returns A tree representing the snapshot of the shared object
      */
     snapshot(): ITree;
 
     /**
-     * Enables the channel to send and receive ops
+     * Enables the channel to send and receive ops.
+     * @param services - Services to connect to
      */
     connect(services: ISharedObjectServices): void;
 }

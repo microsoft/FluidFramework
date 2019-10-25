@@ -36,6 +36,7 @@ COPY packages/components/blob-manager/package*.json packages/components/blob-man
 COPY packages/components/canvas/package*.json packages/components/canvas/
 COPY packages/components/clicker/package*.json packages/components/clicker/
 COPY packages/components/client-ui/package*.json packages/components/client-ui/
+COPY packages/components/dice-roller/package*.json packages/components/dice-roller/
 COPY packages/components/external-component-loader/package*.json packages/components/external-component-loader/
 COPY packages/components/image-collection/package*.json packages/components/image-collection/
 COPY packages/components/pond/package*.json packages/components/pond/
@@ -68,9 +69,13 @@ COPY packages/drivers/routerlicious-host/package*.json packages/drivers/routerli
 COPY packages/drivers/routerlicious-socket-storage/package*.json packages/drivers/routerlicious-socket-storage/
 COPY packages/drivers/iframe-socket-storage/package*.json packages/drivers/iframe-socket-storage/
 COPY packages/drivers/socket-storage-shared/package*.json packages/drivers/socket-storage-shared/
+COPY packages/drivers/odsp-urlResolver/package*.json packages/drivers/odsp-urlResolver/
+COPY packages/drivers/fluidapp-odsp-urlResolver/package*.json packages/drivers/fluidapp-odsp-urlResolver/
+COPY packages/drivers/routerlicious-urlResolver/package*.json packages/drivers/routerlicious-urlResolver/
 COPY packages/framework/aqueduct/package*.json packages/framework/aqueduct/
 COPY packages/framework/aqueduct-react/package*.json packages/framework/aqueduct-react/
 COPY packages/framework/framework-definitions/package*.json packages/framework/framework-definitions/
+COPY packages/framework/undo-redo/package*.json packages/framework/undo-redo/
 COPY packages/loader/component-core-interfaces/package*.json packages/loader/component-core-interfaces/
 COPY packages/loader/container-definitions/package*.json packages/loader/container-definitions/
 COPY packages/loader/container-loader/package*.json packages/loader/container-loader/
@@ -117,6 +122,7 @@ COPY packages/tools/fluid-fetch/package*.json packages/tools/fluid-fetch/
 COPY packages/tools/replay-tool/package*.json packages/tools/replay-tool/
 COPY packages/tools/webpack-component-loader/package*.json packages/tools/webpack-component-loader/
 COPY packages/tools/merge-tree-client-replay/package*.json packages/tools/merge-tree-client-replay/
+COPY packages/test/end-to-end/package*.json packages/test/end-to-end/
 
 # Copy over chaincode npmrc and package.json to dynamically install packages.
 COPY server/routerlicious/chaincode/* /tmp/chaincode/

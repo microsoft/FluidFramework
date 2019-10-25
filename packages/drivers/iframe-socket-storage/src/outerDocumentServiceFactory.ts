@@ -5,7 +5,14 @@
 
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IHost } from "@microsoft/fluid-container-definitions";
-import { ConnectionMode, IClient, IDocumentService, IDocumentServiceFactory, IResolvedUrl } from "@microsoft/fluid-protocol-definitions";
+import { configurableUrlResolver } from "@microsoft/fluid-core-utils";
+import {
+    ConnectionMode,
+    IClient,
+    IDocumentService,
+    IDocumentServiceFactory,
+    IResolvedUrl,
+} from "@microsoft/fluid-protocol-definitions";
 import { OuterDocumentService } from "./outerDocumentService";
 
 /**
@@ -47,6 +54,15 @@ export class OuterDocumentServiceFactory implements IDocumentServiceFactory {
     }
 
     public async createDocumentServiceFromRequest(request: IRequest): Promise<IDocumentService> {
-        return this.createDocumentService(await this.containerHost.resolver.resolve(request));
+        let resolved: IResolvedUrl | undefined;
+        if (Array.isArray(this.containerHost.resolver)) {
+            resolved = await configurableUrlResolver(this.containerHost.resolver, request);
+        } else {
+            resolved = await this.containerHost.resolver.resolve(request);
+        }
+        if (!resolved) {
+            return Promise.reject(`Invalid Url ${request.url}`);
+        }
+        return this.createDocumentService(resolved);
     }
 }

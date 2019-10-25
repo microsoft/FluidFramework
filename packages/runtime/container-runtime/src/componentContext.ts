@@ -13,7 +13,13 @@ import {
     ILoader,
     IQuorum,
 } from "@microsoft/fluid-container-definitions";
-import { Deferred, raiseConnectedEvent, readAndParse } from "@microsoft/fluid-core-utils";
+import {
+    BlobTreeEntry,
+    Deferred,
+    raiseConnectedEvent,
+    readAndParse,
+    SummaryTracker,
+} from "@microsoft/fluid-core-utils";
 import {
     IDocumentMessage,
     IDocumentStorageService,
@@ -23,8 +29,10 @@ import {
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
 import {
+    ComponentFactoryTypes,
     IAttachMessage,
     IComponentContext,
+    IComponentRegistry,
     IComponentRuntime,
     IEnvelope,
     IHostRuntime,
@@ -32,11 +40,25 @@ import {
 } from "@microsoft/fluid-runtime-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";
+// tslint:disable-next-line:no-submodule-imports
+import * as uuid from "uuid/v4";
 import { ContainerRuntime } from "./containerRuntime";
-import { BlobTreeEntry } from "./utils";
+
+// Snapshot Format Version to be used in component attributes.
+const currentSnapshotFormatVersion = "0.1";
+
+/**
+ * Added IComponentAttributes similar to IChannelAttributues which will tell
+ * the attributes of a component like the package, snapshotFormatVersion to
+ * take different decisions based on a particular snapshotForamtVersion.
+ */
+export interface IComponentAttributes {
+    pkg: string;
+    readonly snapshotFormatVersion?: string;
+}
 
 interface ISnapshotDetails {
-    pkg: string;
+    pkg: string[];
     snapshot: ISnapshotTree;
 }
 
@@ -114,18 +136,15 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
     }
 
     public get baseSnapshot(): ISnapshotTree {
-        return this._baseSnapshot;
+        return this.summaryTracker.baseTree;
     }
 
-    // Tracks the base snapshot ID. If no ops effect this component then the id value can be returned on a
-    // snapshot call
-    protected baseId = null;
     protected componentRuntime: IComponentRuntime;
+    protected readonly summaryTracker = new SummaryTracker();
     private closed = false;
     private loaded = false;
     private pending: ISequencedDocumentMessage[] = [];
     private componentRuntimeDeferred: Deferred<IComponentRuntime>;
-    private _baseSnapshot: ISnapshotTree;
 
     constructor(
         private readonly _hostRuntime: ContainerRuntime,
@@ -138,17 +157,44 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         super();
     }
 
-    public createComponent(pkgOrId: string, pkg?: string): Promise<IComponentRuntime> {
+    public async createComponent(pkgOrId: string, pkg?: string | string[]): Promise<IComponentRuntime> {
         return this.hostRuntime.createComponent(pkgOrId, pkg);
+    }
+
+    public async createSubComponent(pkg: string, props?: any): Promise<IComponentRuntime> {
+        const details = await this.getInitialSnapshotDetails();
+        const packagePath: string[] = [...details.pkg];
+        // A factory could not contain the registry for itself. So do not add a package in
+        // path if it is same as the last one.
+        if (packagePath.length > 0 && pkg !== packagePath[packagePath.length - 1]) {
+            packagePath.push(pkg);
+        }
+        const pkgId = uuid();
+        return this.hostRuntime._createComponentWithProps(packagePath, props, pkgId);
     }
 
     public async realize(): Promise<IComponentRuntime> {
         if (!this.componentRuntimeDeferred) {
             this.componentRuntimeDeferred = new Deferred<IComponentRuntime>();
-            const details = await this.getSnapshotDetails();
-            this._baseSnapshot = details.snapshot;
-            this.baseId = details.snapshot ? details.snapshot.id : null;
-            const factory = await this._hostRuntime.IComponentRegistry.get(details.pkg);
+            const details = await this.getInitialSnapshotDetails();
+            if (details.snapshot && !this.summaryTracker.baseTree) {
+                // do not overwrite if refreshed!
+                // local - will always give undefined tree, so never enter here
+                // remote - will give the tree at the time of construction (initial),
+                // which may be older than the refreshed one, but never newer than
+                // the refreshed or one set at constructor (in case of summarizer)
+                this.summaryTracker.setBaseTree(details.snapshot);
+            }
+            const packages = details.pkg;
+            let registry = this._hostRuntime.IComponentRegistry;
+            let factory: ComponentFactoryTypes & Partial<IComponentRegistry>;
+            for (const pkg of packages) {
+                if (!registry) {
+                    throw new Error("Factory does not supply the component Registry");
+                }
+                factory = await registry.get(pkg);
+                registry = factory.IComponentRegistry;
+            }
 
             // During this call we will invoke the instantiate method - which will call back into us
             // via the bindRuntime call to resolve componentRuntimeDeferred
@@ -181,17 +227,13 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         raiseConnectedEvent(this, value, clientId);
     }
 
-    // Called after a snapshot to update the base ID
-    public updateBaseId(id: string) {
-        this.baseId = id;
-    }
-
     public process(message: ISequencedDocumentMessage, local: boolean): void {
         this.verifyNotClosed();
 
+        // component has been modified and will need to regenerate its snapshot
+        this.summaryTracker.invalidate();
+
         if (this.loaded) {
-            // component has been modified and will need to regenerate its snapshot
-            this.baseId = null;
             return this.componentRuntime.process(message, local);
         } else {
             assert(!local);
@@ -239,24 +281,28 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
     /**
      * Notifies the object to take snapshot of a component.
      */
-    public async snapshot(): Promise<ITree> {
+    public async snapshot(fullTree: boolean = false): Promise<ITree> {
+        // base ID still being set means previous snapshot is still valid
+        const baseId = this.summaryTracker.getBaseId();
+        if (baseId && !fullTree) {
+            return { id: baseId, entries: [] };
+        }
+        this.summaryTracker.reset();
+
         await this.realize();
 
-        const { pkg } = await this.getSnapshotDetails();
+        const { pkg } = await this.getInitialSnapshotDetails();
 
-        const componentAttributes = { pkg };
+        const componentAttributes: IComponentAttributes = {
+            pkg: JSON.stringify(pkg),
+            snapshotFormatVersion: currentSnapshotFormatVersion,
+        };
 
-        const entries = await this.componentRuntime.snapshotInternal();
-        const snapshot = { entries, id: undefined };
+        const entries = await this.componentRuntime.snapshotInternal(fullTree);
 
-        snapshot.entries.push(new BlobTreeEntry(".component", JSON.stringify(componentAttributes)));
+        entries.push(new BlobTreeEntry(".component", JSON.stringify(componentAttributes)));
 
-        // base ID still being set means previous snapshot is still valid
-        if (this.baseId) {
-            snapshot.id = this.baseId;
-        }
-
-        return snapshot;
+        return { entries, id: baseId };
     }
 
     public async request(request: IRequest): Promise<IResponse> {
@@ -289,15 +335,19 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
 
     /**
      * Updates the leader.
-     * @param clientId - Client id of the new leader.
+     * @param leadership - Whether this client is the new leader or not.
      */
-    public updateLeader(clientId: string) {
+    public updateLeader(leadership: boolean) {
         // Leader events are ignored if the component is not yet loaded
         if (!this.loaded) {
             return;
         }
+        if (leadership) {
+            this.emit("leader", this.clientId);
+        } else {
+            this.emit("notleader", this.clientId);
+        }
 
-        this.emit("leader", clientId);
     }
 
     public bindRuntime(componentRuntime: IComponentRuntime): void {
@@ -307,7 +357,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
 
         if (this.pending.length > 0) {
             // component has been modified and will need to regenerate its snapshot
-            this.baseId = null;
+            this.summaryTracker.invalidate();
 
             // Apply all pending ops
             for (const op of this.pending) {
@@ -327,7 +377,13 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
 
     public abstract generateAttachMessage(): IAttachMessage;
 
-    protected abstract getSnapshotDetails(): Promise<ISnapshotDetails>;
+    public refreshBaseSummary(snapshot: ISnapshotTree) {
+        this.summaryTracker.setBaseTree(snapshot);
+        // need to notify runtime of the update
+        this.emit("refreshBaseSummary", snapshot);
+    }
+
+    protected abstract getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
 
     private submitOp(type: MessageType, content: any): number {
         this.verifyNotClosed();
@@ -353,11 +409,11 @@ export class RemotedComponentContext extends ComponentContext {
 
     constructor(
         id: string,
-        private readonly snapshotValue: ISnapshotTree | string,
+        private readonly initSnapshotValue: ISnapshotTree | string,
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
         scope: IComponent,
-        private readonly type?: string,
+        private readonly pkg?: string[],
     ) {
         super(
             runtime,
@@ -368,36 +424,57 @@ export class RemotedComponentContext extends ComponentContext {
             () => {
                 throw new Error("Already attached");
             });
+
+        if (initSnapshotValue && typeof initSnapshotValue !== "string") {
+            // This will allow the summarizer to avoid calling realize if there
+            // are no changes to the component.  If the initSnapshotValue is a
+            // string, the summarizer cannot avoid calling realize.
+            this.summaryTracker.setBaseTree(initSnapshotValue);
+        }
     }
 
     public generateAttachMessage(): IAttachMessage {
         throw new Error("Cannot attach remote component");
     }
 
-    protected async getSnapshotDetails(): Promise<ISnapshotDetails> {
+    // Only refers to the initial snapshot value, not necessarily the baseSnapshot.
+    // This should only be called during realize to get the baseSnapshot,
+    // or it can be called at any time to get the pkg, but that assumes the
+    // pkg can never change for a component.
+    protected async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
         if (!this.details) {
             let tree: ISnapshotTree;
 
-            if (typeof this.snapshotValue === "string") {
-                const commit = (await this.storage.getVersions(this.snapshotValue, 1))[0];
+            if (typeof this.initSnapshotValue === "string") {
+                const commit = (await this.storage.getVersions(this.initSnapshotValue, 1))[0];
                 tree = await this.storage.getSnapshotTree(commit);
             } else {
-                tree = this.snapshotValue;
+                tree = this.initSnapshotValue;
             }
 
             if (tree === null || tree.blobs[".component"] === undefined) {
                 this.details = {
-                    pkg: this.type,
+                    pkg: this.pkg,
                     snapshot: tree,
                 };
             } else {
                 // Need to rip through snapshot and use that to populate extraBlobs
-                const { pkg } = await readAndParse<{ pkg: string }>(
+                const { pkg, snapshotFormatVersion } =
+                    await readAndParse<IComponentAttributes>(
                     this.storage,
                     tree.blobs[".component"]);
 
+                let pkgFromSnapshot: string[];
+                // Use the snapshotFormatVersion to determine how the pkg is encoded in the snapshot.
+                // For snapshotFormatVersion = "0.1", pkg is jsonified, otherwise it is just a string.
+                if (snapshotFormatVersion && snapshotFormatVersion === currentSnapshotFormatVersion) {
+                    pkgFromSnapshot = JSON.parse(pkg) as string[];
+                } else {
+                    pkgFromSnapshot = [pkg];
+                }
+
                 this.details = {
-                    pkg,
+                    pkg: pkgFromSnapshot,
                     snapshot: tree,
                 };
             }
@@ -410,7 +487,7 @@ export class RemotedComponentContext extends ComponentContext {
 export class LocalComponentContext extends ComponentContext {
     constructor(
         id: string,
-        private readonly pkg: string,
+        private readonly pkg: string[],
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
         scope: IComponent,
@@ -421,7 +498,10 @@ export class LocalComponentContext extends ComponentContext {
     }
 
     public generateAttachMessage(): IAttachMessage {
-        const componentAttributes = { pkg: this.pkg };
+        const componentAttributes: IComponentAttributes = {
+            pkg: JSON.stringify(this.pkg),
+            snapshotFormatVersion: currentSnapshotFormatVersion,
+        };
 
         const entries = this.componentRuntime.getAttachSnapshot();
         const snapshot = { entries, id: undefined };
@@ -429,20 +509,18 @@ export class LocalComponentContext extends ComponentContext {
         snapshot.entries.push(new BlobTreeEntry(".component", JSON.stringify(componentAttributes)));
 
         // base ID still being set means previous snapshot is still valid
-        if (this.baseId) {
-            snapshot.id = this.baseId;
-        }
+        snapshot.id = this.summaryTracker.getBaseId();
 
         const message: IAttachMessage = {
             id: this.id,
             snapshot,
-            type: this.pkg,
+            type: this.pkg[this.pkg.length - 1],
         };
 
         return message;
     }
 
-    protected async getSnapshotDetails(): Promise<ISnapshotDetails> {
+    protected async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
         return {
             pkg: this.pkg,
             snapshot: undefined,

@@ -1,5 +1,40 @@
 # 0.11 Breaking Changes
 
+- [SequenceEvent start/end replaced with first/last](#SequenceEvent-startend-replaced-with-firstlast)
+- [Undefined keys and subdirectory names on SharedMap and SharedDirectory throw](#Undefined-keys-and-subdirectory-names-on-SharedMap-and-SharedDirectory-throw)
+- [SharedComponent extends IComponentHandles](#SharedComponent-extends-IComponentHandles)
+
+## SequenceEvent start/end replaced with first/last
+The `start` and `end` members of SequenceEvent (and SequenceDeltaEvent) have been replaced with `first` and `last`, which return the first and last range, respectively. The values equivalent to `start` and `end` can be obtained with `first.position` and `last.position + last.segment.cachedLength`.
+
+## Undefined keys and subdirectory names on SharedMap and SharedDirectory throw
+Previously, attempting to set `undefined` as a key on a SharedMap or SharedDirectory, or creating a subdirectory with name `undefined` would appear to succeed but would cause inconsistencies in snapshotting.  This will now throw immediately upon trying to set an `undefined` key or subdirectory name.
+
+## SharedComponent extends IComponentHandles
+
+You can now store SharedComponent components as handles on SharedMap and SharedDirectory. The `@fluid-example/pond` in our component samples shows how to create and store components as handles. This makes storing SharedComponents the same as storing SharedObjects.
+
+Component handles that are stored on a SharedObject will become attached when the SharedObject is attached. If the SharedObject is already attached it will become attached right away.
+
+> Note: Components can currently still be created and retrieved via the container. This is not technically a breaking change.
+
+### Creating and Storing a Component
+
+Below we create a new component and store it directly in the root SharedDirectory
+
+```typescript
+    const clickerRuntime = await this.context.createComponent(ClickerName);
+    const response = clickerRuntime.request({url: "/"});
+    const clicker = await this.asComponent<Clicker>(response);
+
+    this.root.set(this.clickerKey, clicker.handle);
+```
+
+Below we are retrieving the Component from the root map.
+
+```typescript
+const clicker = await this.root.get<IComponentHandle>(this.clickerKey).get<IComponent>();
+```
 
 # 0.10 Breaking Changes
 
@@ -11,6 +46,8 @@
 - [MergeTree Client No Longer Public on Sequence](#MergeTree-Client-No-Longer-Public-on-Sequence)
 - [`.createValueType` replaces third argument to `.set`](#.createValueType-replaces-third-argument-to-.set)
 - [Package rename](#package-rename)
+- [Support for IPraguePackage removed](#support-for-IPraguePackage-removed)
+- [`IComponentForge` no longer necessary](#icomponentforge-no-longer-necessary)
 
 
 ## `@fluid-example/tiny-web-host` prague -> fluid changes
@@ -153,6 +190,26 @@ old name | new name
 @prague/host-service-interfaces	| @microsoft/fluid-host-service-interfaces
 @prague/auspkn | @fluid-internal/auspkn
 @prague/service | @fluid-internal/server-service
+
+## Support for IPraguePackage removed
+Support for IPraguePackage and the `"prague"` entry in `package.json` has been removed. It has been replaced by IFluidPackage and a `"fluid"` entry in `package.json`:
+
+```
+"fluid": {
+    "browser": {
+      "umd": {
+        "files": [
+          "dist/main.bundle.js"
+        ],
+        "library": "main"
+      }
+    }
+  },
+```
+
+## `IComponentForge` no longer necessary
+
+`IComponentForge` is no longer necessary. If you use Aqueduct for your component, Component initialization will be done automatically on creation, so no need to call `IComponentForge.forge` explicitly any more.  If you implement IComponentForge, simply remove it.
 
 # 0.9 Breaking Changes (August 26, 2019)
 

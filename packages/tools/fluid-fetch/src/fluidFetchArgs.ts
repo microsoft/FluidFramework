@@ -7,40 +7,43 @@ import { URL } from "url";
 
 export let dumpMessages = false;
 export let dumpMessageStats = false;
-export let dumpChannelStats = false;
-export let dumpDataTypeStats = false;
 export let dumpSnapshotStats = false;
 export let dumpSnapshotTrees = false;
-export let dumpSnapshotBlobs = false;
 export let dumpSnapshotVersions = false;
-export let dumpTotalStats = false;
 export let paramSnapshotVersionIndex: number | undefined;
 export let paramNumSnapshotVersions = 10;
 
 export let paramForceRefreshToken = false;
 
 export let paramSave: string | undefined;
+export function setParamSave(url: string) {
+    paramURL = url;
+}
 export const messageTypeFilter = new Set<string>();
 
 export let paramURL: string | undefined;
 export let paramJWT: string;
+
+export let connectToWebSocket = false;
+
+export let localDataOnly = false;
 
 const optionsArray =
     [
         ["--dump:rawmessage", "dump all messages"],
         ["--dump:snapshotVersion", "dump a list of snapshot version"],
         ["--dump:snapshotTree", "dump the snapshot trees"],
-        ["--dump:snapshotBlob", "dump the contents of snapshot blobs"],
         ["--forceRefreshToken", "Force refresh token (SPO only)"],
-        ["--stat:message", "show a table of message type counts and size"],
+        ["--stat:message", "show message type, channel type, data type statistics"],
         ["--stat:snapshot", "show a table of snapshot path and blob size"],
-        ["--stat:dataType", "show a table of data type"],
-        ["--stat:channel", "show a table of channel"],
+        ["--stat", "Show both messages & snapshot stats"],
         ["--filter:messageType <type>", "filter message by <type>"],
         ["--jwt <token>", "token to be used for routerlicious URLs"],
         ["--numSnapshotVersions <number>", "Number of versions to load (default:10)"],
         ["--snapshotVersionIndex <number>", "Index of the version to dump"],
         ["--saveDir <outdir>", "Save data of the snapshots and messages"],
+        ["--websocket", "Connect to web socket to download initial messages"],
+        ["--local", "Do not connect to storage, use earlier downloaded data. Requires --saveDir."],
     ];
 
 export function printUsage() {
@@ -62,14 +65,9 @@ export function parseArguments() {
             case "--stat:message":
                 dumpMessageStats = true;
                 break;
-            case "--stat:channel":
-                dumpChannelStats = true;
-                break;
-            case "--stat:dataType":
-                dumpDataTypeStats = true;
-                break;
             case "--stat":
-                dumpTotalStats = true;
+                dumpMessageStats = true;
+                dumpSnapshotStats = true;
                 break;
             case "--filter:messageType":
                 messageTypeFilter.add(parseStrArg(i++, "type name for messageType filter"));
@@ -82,9 +80,6 @@ export function parseArguments() {
                 break;
             case "--dump:snapshotTree":
                 dumpSnapshotTrees = true;
-                break;
-            case "--dump:snapshotBlob":
-                dumpSnapshotBlobs = true;
                 break;
             case "--help":
                 printUsage();
@@ -103,6 +98,12 @@ export function parseArguments() {
                 break;
             case "--saveDir":
                 paramSave = parseStrArg(i++, "save data path");
+                break;
+            case "--websocket":
+                connectToWebSocket = true;
+                break;
+            case "--local":
+                localDataOnly = true;
                 break;
             default:
                 try {

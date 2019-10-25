@@ -4,7 +4,14 @@
  */
 
 import { ConnectionState } from "@microsoft/fluid-container-definitions";
-import { IDocumentStorageService, ISequencedDocumentMessage, ITree, MessageType } from "@microsoft/fluid-protocol-definitions";
+import { SummaryTracker } from "@microsoft/fluid-core-utils";
+import {
+    IDocumentStorageService,
+    ISequencedDocumentMessage,
+    ISnapshotTree,
+    ITree,
+    MessageType,
+} from "@microsoft/fluid-protocol-definitions";
 import { IChannel, IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import * as assert from "assert";
 import { createServiceEndpoints, IChannelContext, snapshotChannel } from "./channelContext";
@@ -18,7 +25,7 @@ export class LocalChannelContext implements IChannelContext {
     public readonly channel: IChannel;
     private attached = false;
     private connection: ChannelDeltaConnection | undefined;
-    private baseId: string | null = null;
+    private readonly summaryTracker = new SummaryTracker();
 
     constructor(
         id: string,
@@ -57,19 +64,24 @@ export class LocalChannelContext implements IChannelContext {
 
     public processOp(message: ISequencedDocumentMessage, local: boolean): void {
         assert(this.attached);
+        this.summaryTracker.invalidate();
 
-        // Clear base id since the channel is now dirty
-        this.baseId = null;
         // tslint:disable-next-line: no-non-null-assertion
         this.connection!.process(message, local);
     }
 
-    public async snapshot(): Promise<ITree> {
+    public async snapshot(fullTree: boolean = false): Promise<ITree> {
+        const baseId = this.summaryTracker.getBaseId();
+        if (baseId !== null && !fullTree) {
+            return { id: baseId, entries: [] };
+        }
+        this.summaryTracker.reset();
+
         return this.getAttachSnapshot();
     }
 
     public getAttachSnapshot(): ITree {
-        return snapshotChannel(this.channel, this.baseId);
+        return snapshotChannel(this.channel, this.summaryTracker.getBaseId());
     }
 
     public attach(): void {
@@ -86,5 +98,9 @@ export class LocalChannelContext implements IChannelContext {
         this.channel.connect(services);
 
         this.attached = true;
+    }
+
+    public refreshBaseSummary(snapshot: ISnapshotTree) {
+        this.summaryTracker.setBaseTree(snapshot);
     }
 }

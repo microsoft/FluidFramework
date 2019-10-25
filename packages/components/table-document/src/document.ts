@@ -6,19 +6,18 @@
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { ICombiningOp, IntervalType, LocalReference, PropertySet } from "@microsoft/fluid-merge-tree";
-import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { IComponentContext, IComponentRuntime, JsonablePrimitive } from "@microsoft/fluid-runtime-definitions";
 import {
     positionToRowCol,
     rowColToPosition,
     SharedNumberSequence,
     SparseMatrix,
-    UnboxedOper,
 } from "@microsoft/fluid-sequence";
+import { createSheetlet, ISheetlet } from "@tiny-calc/micro";
 import * as assert from "assert";
 import { CellRange } from "./cellrange";
 import { TableSliceType } from "./ComponentTypes";
 import { debug } from "./debug";
-import { createSheetlet, ISheetlet } from "./sheetlet";
 import { TableSlice } from "./slice";
 import { ITable } from "./table";
 
@@ -70,11 +69,11 @@ export class TableDocument extends PrimedComponent implements ITable {
         }
     }
 
-    public getCellValue(row: number, col: number): UnboxedOper {
+    public getCellValue(row: number, col: number): JsonablePrimitive {
         return this[loadCellTextSym](row, col);
     }
 
-    public setCellValue(row: number, col: number, value: UnboxedOper) {
+    public setCellValue(row: number, col: number, value: JsonablePrimitive) {
         this.workbook.setCellText(row, col, value);
     }
 
@@ -171,25 +170,27 @@ export class TableDocument extends PrimedComponent implements ITable {
         this.maybeCols.on("op", (...args: any[]) => this.emit("op", ...args));
         this.maybeRows.on("op", (...args: any[]) => this.emit("op", ...args));
 
+        this.matrix.on("sequenceDelta", (e, t) => this.emit("sequenceDelta", e, t));
+        this.maybeCols.on("sequenceDelta", (e, t) => this.emit("sequenceDelta", e, t));
+        this.maybeRows.on("sequenceDelta", (e, t) => this.emit("sequenceDelta", e, t));
+
+        // tslint:disable-next-line:no-this-assignment
+        const table = this;
         this.maybeWorkbook = createSheetlet({
-            rows: () => this.numRows,
-            columns: () => this.numCols,
-            loadCellText: (row, col) => this[loadCellTextSym](row, col),
-            storeCellText: (row, col, value) => {
-                this[storeCellTextSym](row, col, value);
-            },
-            loadCellData: (row, col) => this[loadCellSym](row, col),
-            storeCellData: (row, col, value) => {
-                this[storeCellSym](row, col, value);
-            },
+            get numRows() { return table.numRows; },
+            get numCols() { return table.numCols; },
+            loadCellText(row, col) { return table[loadCellTextSym](row, col); },
+            storeCellText(row, col, value) { table[storeCellTextSym](row, col, value); },
+            loadCellData(row, col) { return table[loadCellSym](row, col); },
+            storeCellData(row, col, value) { table[storeCellSym](row, col, value); },
         });
     }
 
-    private [loadCellTextSym](row: number, col: number): UnboxedOper {
-        return this.matrix.getItem(row, col);
+    private [loadCellTextSym](row: number, col: number): JsonablePrimitive {
+        return this.matrix.getItem(row, col) as JsonablePrimitive;
     }
 
-    private [storeCellTextSym](row: number, col: number, value: UnboxedOper) {
+    private [storeCellTextSym](row: number, col: number, value: JsonablePrimitive) {
         this.matrix.setItems(row, col, [value]);
     }
 

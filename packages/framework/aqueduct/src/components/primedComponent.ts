@@ -33,9 +33,6 @@ export abstract class PrimedComponent extends SharedComponent {
     /**
      * The root directory will either be ready or will return an error. If an error is thrown
      * the root has not been correctly created/set.
-     *
-     * If you are overriding `componentInitializingFirstTime()` ensure you are calling `await super.componentInitializingFirstTime()` first.
-     * If you are overriding `componentInitializingFromExisting()` ensure you are calling `await super.componentInitializingFromExisting()` first.
      */
     public get root(): ISharedDirectory {
         if (!this.internalRoot) {
@@ -87,9 +84,6 @@ export abstract class PrimedComponent extends SharedComponent {
     }
 
     private getUninitializedErrorString(item: string) {
-        return `${item} must be initialized before being accessed.
-            Ensure you are calling await super.componentInitializingFirstTime()
-            and/or await super.componentInitializingFromExisting() if you are
-            overriding either.`;
+        return `${item} must be initialized before being accessed.`;
     }
 }

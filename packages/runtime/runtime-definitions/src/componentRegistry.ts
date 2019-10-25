@@ -17,5 +17,5 @@ export interface IProvideComponentRegistry {
 }
 
 export interface IComponentRegistry extends IProvideComponentRegistry {
-    get(name: string): Promise<ComponentFactoryTypes> | undefined;
+    get(name: string, cdn?: string): Promise<ComponentFactoryTypes> | undefined;
 }

@@ -4,13 +4,16 @@
  */
 
 import { IHostConfig, start } from "@microsoft/fluid-base-host";
-import { IDocumentServiceFactory, IResolvedUrl } from "@microsoft/fluid-protocol-definitions";
+import { BaseTelemetryNullLogger, configurableUrlResolver } from "@microsoft/fluid-core-utils";
+import { FluidAppOdspUrlResolver } from "@microsoft/fluid-fluidapp-odsp-urlresolver";
+import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
+import { OdspUrlResolver } from "@microsoft/fluid-odsp-urlresolver";
+import { IDocumentServiceFactory, IFluidResolvedUrl, IResolvedUrl } from "@microsoft/fluid-protocol-definitions";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
 import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
+import { RouterliciousUrlResolver } from "@microsoft/fluid-routerlicious-urlresolver";
 import { IResolvedPackage } from "@microsoft/fluid-web-code-loader";
-import * as UrlParse from "url-parse";
-import { resolveUrl } from "./urlResolver";
-
+import { IOdspTokenApi, IRouterliciousTokenApi, ITokenApis } from "./utils";
 // tslint:disable-next-line: no-var-requires no-require-imports
 const packageJson = require("../package.json");
 
@@ -29,154 +32,145 @@ const appTenants = [
  *
  * This function purposefully does not expose all functionality.
  *
- * @param url - Url of the Fluid component to be loaded (spo and spo-df will both be loaded against odsp)
- * @param getToken - A function that either returns an SPO token, or a Routerlicious tenant token
+ * @param url - Url of the Fluid component to be loaded
  * @param div - The div to load the component into
- * @param appId - The SPO appId. If no SPO AppId available, a consistent and descriptive app name is acceptable
+ * @param pkg - A resolved package with cdn links. Overrides a query paramter.
+ * @param getToken - A function that either returns an SPO token, or a Routerlicious tenant token
  * @param clientId - The SPO clientId
  * @param clientSecret - The SPO clientSecret
- * @param pkg - A resolved package with cdn links. Overrides a query paramter.
  * @param scriptIds - the script tags the chaincode are attached to the view with
  */
 export async function loadFluidComponent(
     url: string,
-    getToken: () => Promise<string>,
     div: HTMLDivElement,
-    appId: string,
-    clientId: string,
-    secret: string,
+    tokenApiConfig: ITokenApis,
+    clientId?: string,
+    clientSecret?: string,
     pkg?: IResolvedPackage,
     scriptIds?: string[],
 ): Promise<any> {
 
     let componentP: Promise<any>;
+    let resolved: IResolvedUrl;
     if (isRouterliciousUrl(url)) {
-        componentP = startWrapper(url, getToken, div, clientId, secret, pkg, scriptIds);
+        const routerliciousApiConfig = tokenApiConfig as IRouterliciousTokenApi;
+        if (routerliciousApiConfig) {
+            const resolver = new RouterliciousUrlResolver(undefined, undefined, appTenants);
+            resolved = await resolver.resolve({ url });
+        } else {
+            throw new Error("No token api supplied!!");
+        }
     } else if (isSpoUrl(url)) {
-        throw new Error("Office.com URLs are not yet supported.");
+        const odspApiConfig = tokenApiConfig as IOdspTokenApi;
+        if (odspApiConfig && odspApiConfig.getStorageToken && odspApiConfig.getWebsocketToken) {
+            const resolverList = [
+                new OdspUrlResolver(),
+                new FluidAppOdspUrlResolver(),
+            ];
+            resolved = await configurableUrlResolver(resolverList, { url });
+        } else {
+            throw new Error("No token api supplied!!");
+        }
     } else {
         throw new Error("Non-Compatible Url.");
     }
+    componentP =
+        loadContainer(url, resolved as IFluidResolvedUrl, tokenApiConfig, div, clientId, clientSecret, pkg, scriptIds);
     return componentP;
 }
 
-async function startWrapper(
+async function loadContainer(
     href: string,
-    getToken: () => Promise<string>,
+    resolved: IFluidResolvedUrl,
+    tokenApiConfig: ITokenApis,
     div: HTMLDivElement,
     clientId: string,
     secret: string,
     pkg?: IResolvedPackage,
     scriptIds?: string[],
 ): Promise<any> {
-    const parsedUrl = fluidUrlParser(href);
-    const config = {
-        blobStorageUrl: parsedUrl.storageUrl,
-        clientId,
-        deltaStorageUrl: parsedUrl.deltaStorageUrl,
-        secret,
-        serverUrl: parsedUrl.ordererUrl,
-    };
 
-    // tslint:disable-next-line: no-unsafe-any
-    const [resolvedP, fullTreeP] =
-        resolveUrl(config, appTenants, parsedUrl.tenant, parsedUrl.container, getToken) as any;
-
-    return Promise.all([resolvedP, fullTreeP])
-        .then(async ([resolved, fullTree]) => {
-            const documentServiceFactory: IDocumentServiceFactory = new RouterliciousDocumentServiceFactory(
-                false,
-                new DefaultErrorTracking(),
-                false,
-                true,
-                undefined);
-
-            const resolver = new ContainerUrlResolver(
-                document.location.origin,
-                await getToken(),
-                new Map<string, IResolvedUrl>([[href, resolved as IResolvedUrl]]));
-
-            const hostConf: IHostConfig = {
-                documentServiceFactory,
-                urlResolver: resolver,
-            };
-            // tslint:disable-next-line: no-unsafe-any
-            return start(
-                href,
-                // tslint:disable-next-line: no-unsafe-any
-                resolved, // resolved, IResolvedUrl,
-                pkg, // pkg, IResolvedPackage, (gateway/routes/loader has an example (pkgP))
-                scriptIds, // scriptIds, string[], defines the id of the script tag added to the page
-                npm, // string,
-                {},
-                {},
-                div,
-                hostConf,
-            );
-        }, (error) => {
-            throw error;
-        }).catch((error) => {
-            throw error;
-        });
-}
-
-function fluidUrlParser(href: string) {
-    const url = UrlParse(href, true);
-    const pathParts = url.pathname.split("/");
-
-    const container = pathParts[3];
-    const tenant = pathParts[2];
-    const storageUrl = `https://${url.host.replace("www", "historian")}/repos/${tenant}`;
-    const ordererUrl = `https://${url.host.replace("www", "alfred")}`;
-    const deltaStorageUrl = `${ordererUrl}/deltas/${tenant}/${container}`;
-    return {
-        container,
-        deltaStorageUrl,
-        ordererUrl,
-        storageUrl,
-        tenant,
-    };
-}
-
-const spoRegex = "^http(s)?:\/\/\\w{0,12}\.www\.office\.com\/content\/bohemia\?.*";
-const routerliciousRegex = "^(http(s)?:\/\/)?www\..{3,9}\.prague\.office-int\.com\/loader\/.*";
-
-/**
- * Simple function to test if a URL is a valid SPO or Routerlicious Fluid link
- *
- * @param url - Url to Test
- */
-export function isFluidURL(url: string): boolean {
-    if (isRouterliciousUrl(url)) {
-        return true;
-    } else if (isSpoUrl(url)) {
-        return true;
+    let documentServiceFactory: IDocumentServiceFactory;
+    const protocol = new URL(resolved.url).protocol;
+    if (protocol === "fluid-odsp:") {
+        const config = tokenApiConfig as IOdspTokenApi;
+        documentServiceFactory = new OdspDocumentServiceFactory(
+            clientId,
+            config.getStorageToken,
+            config.getWebsocketToken,
+            new BaseTelemetryNullLogger());
+    } else if (protocol === "fluid:") {
+        documentServiceFactory = new RouterliciousDocumentServiceFactory(
+            false,
+            new DefaultErrorTracking(),
+            false,
+            true,
+            undefined);
     }
-    return false;
+
+    const resolver = new ContainerUrlResolver(
+        document.location.origin,
+        "",
+        new Map<string, IResolvedUrl>([[href, resolved]]));
+
+    const hostConf: IHostConfig = {
+        documentServiceFactory,
+        urlResolver: resolver,
+    };
+    // tslint:disable-next-line: no-unsafe-any
+    return start(
+        href,
+        // tslint:disable-next-line: no-unsafe-any
+        resolved, // resolved, IResolvedUrl,
+        pkg, // pkg, IResolvedPackage, (gateway/routes/loader has an example (pkgP))
+        scriptIds, // scriptIds, string[], defines the id of the script tag added to the page
+        npm, // string,
+        {},
+        {},
+        div,
+        hostConf,
+    );
 }
+
+const routerliciousRegex = "^(http(s)?:\/\/)?www\..{3,9}\.prague\.office-int\.com\/loader\/.*";
 
 export function isRouterliciousUrl(url: string): boolean {
     return url.match(routerliciousRegex) ? true : false;
 }
 
 export function isSpoUrl(url: string): boolean {
-    return url.match(spoRegex) ? true : false;
+    const reqUrl = new URL(url);
+    for (const server of spoUrls) {
+        if (server === reqUrl.hostname) {
+            return true;
+        }
+    }
+    return false;
 }
+
+const spoUrls = [
+    "microsoft-my.sharepoint-df.com",
+    "microsoft-my.sharepoint.com",
+    "microsoft.sharepoint-df.com",
+    "microsoft.sharepoint.com",
+    "dev.fluid.office.com",
+    "fluidpreview.office.net",
+];
 
 /**
  * Create an IFrame for loading Fluid Components.
  *
  * @param url - Url of the Fluid component to be loaded
- * @param getToken - A function that either returns an SPO token, or a Routerlicious tenant token
  * @param div - The div to load the component into
+ * @param getToken - A function that either returns an SPO token, or a Routerlicious tenant token
  * @param clientId - The SPO clientId.
  * @param secret - The SPO clientSecret.
  * @param libraryName - if loaded from React, this should be "reactLoader"
  */
 export async function loadIFramedFluidComponent(
     url: string,
-    getToken: () => Promise<string>,
     div: HTMLDivElement,
+    tokenApiConfig: ITokenApis = { getToken: () => Promise.resolve("") },
     clientId?: string,
     secret?: string,
     libraryName: string = "tinyWebLoader"): Promise<any> {
@@ -218,8 +212,8 @@ export async function loadIFramedFluidComponent(
                 function start(url, token, appId) {
                     ${libraryName}.loadFluidComponent(
                         url,
-                        () => { "return token"},
                         document.getElementById("componentDiv"),
+                        tokenApiConfig,
                         "clientId",
                         "clientSecret");
                 }
@@ -242,7 +236,7 @@ export async function loadIFramedFluidComponent(
     iframe.onload = async () => {
         iframe.contentWindow.postMessage({
             appId: "app Id",
-            token: await getToken(),
+            token: "dummy token",
             url,
         }, "*");
     };

@@ -56,6 +56,10 @@ function canRetryOnError(error: any) {
     // tslint:disable-next-line:no-unsafe-any
     return error === null || typeof error !== "object" || error.canRetry === undefined || error.canRetry;
 }
+enum retryFor {
+    DELTASTREAM,
+    DELTASTORAGE,
+}
 
 /**
  * Manages the flow of both inbound and outbound messages. This class ensures that shared objects receive delta
@@ -78,9 +82,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
     private inQuorum = false;
 
-    // Flag indicating whether or not we need to update the reference sequence number
-    private updateHasBeenRequested = false;
-    private updateSequenceNumberTimer: any;
+    private updateSequenceNumberTimer: NodeJS.Timeout | undefined;
 
     // The minimum sequence number and last sequence number received from the server
     private minSequenceNumber: number = 0;
@@ -89,6 +91,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     // * lastQueuedSequenceNumber is the last queued sequence number
     private lastQueuedSequenceNumber: number = 0;
     private baseSequenceNumber: number = 0;
+
+    // the sequence number we initially loaded from
+    private initSequenceNumber: number = 0;
 
     private readonly _inboundPending: DeltaQueue<ISequencedDocumentMessage>;
     private readonly _inbound: DeltaQueue<ISequencedDocumentMessage>;
@@ -116,6 +121,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     private connectRepeatCount = 0;
     private connectStartTime = 0;
 
+    private deltaStorageDelay: number | undefined;
+    private deltaStreamDelay: number | undefined;
+
     // collab window tracking.
     // Start with 50 not to record anything below 50 (= 30 + 20).
     private collabWindowMax = 30;
@@ -130,6 +138,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
     public get inboundSignal(): IDeltaQueue<ISignalMessage> {
         return this._inboundSignal;
+    }
+
+    public get initialSequenceNumber(): number {
+        return this.initSequenceNumber;
     }
 
     public get referenceSequenceNumber(): number {
@@ -158,15 +170,22 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
          return this.inQuorum && this.connectionMode === "write";
     }
 
+    public get socketDocumentId(): string | undefined {
+        if (this.connection) {
+            return this.connection.details.claims.documentId;
+        }
+        return undefined;
+   }
+
     constructor(
         private readonly service: IDocumentService,
-        private readonly client: IClient | null,
+        private readonly client: IClient,
         private readonly logger: ITelemetryLogger,
         private readonly reconnect: boolean) {
         super();
 
-        this.clientType = (!this.client || !this.client.type) ? Browser : this.client.type;
-        this.systemConnectionMode = (this.client && this.client.mode === "write") ? "write" : "read";
+        this.clientType = this.client.type;
+        this.systemConnectionMode = this.client.mode === "write" ? "write" : "read";
 
         // Inbound message queue
         this._inboundPending = new DeltaQueue<ISequencedDocumentMessage>(
@@ -239,9 +258,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         // Inbound signal queue
         this._inboundSignal = new DeltaQueue<ISignalMessage>((message, callback: (error?) => void) => {
-            // tslint:disable no-unsafe-any
-            message!.content = JSON.parse(message!.content);
-            this.handler!.processSignal(message!);
+            this.handler!.processSignal({
+                clientId: message.clientId,
+                content: JSON.parse(message!.content as string),
+            });
             callback();
         });
 
@@ -270,6 +290,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             resume: boolean) {
         debug("Attached op handler", sequenceNumber);
 
+        this.initSequenceNumber = sequenceNumber;
         this.baseSequenceNumber = sequenceNumber;
         this.minSequenceNumber = minSequenceNumber;
         this.lastQueuedSequenceNumber = sequenceNumber;
@@ -377,15 +398,17 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         }
     }
 
-    public async getDeltas(reason: string, fromInitial: number, to?: number): Promise<ISequencedDocumentMessage[]> {
+    public async getDeltas(
+            telemetryEventSuffix: string,
+            fromInitial: number,
+            to?: number): Promise<ISequencedDocumentMessage[]> {
         let retry: number = 0;
         let from: number = fromInitial;
         const allDeltas: ISequencedDocumentMessage[] = [];
 
         const telemetryEvent = PerformanceEvent.start(this.logger, {
-            eventName: "GetDeltas",
+            eventName: `GetDeltas_${telemetryEventSuffix}`,
             from,
-            reason,
             to,
         });
 
@@ -396,6 +419,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             let deltasRetrievedLast = 0;
             let success = true;
             let canRetry = false;
+            let retryAfter: number = 0;
 
             try {
                 // Connect to the delta storage endpoint
@@ -426,6 +450,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 // 2) else case: if we got what we asked (to - 1) or more, then time to leave.
                 if (to === undefined ? lastFetch < maxFetchTo - 1 : to - 1 <= lastFetch) {
                     telemetryEvent.end({ lastFetch, totalDeltas: allDeltas.length, retries: retry });
+                    this.emitDelayInfo(retryFor.DELTASTORAGE, -1);
                     return allDeltas;
                 }
 
@@ -436,7 +461,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 logNetworkFailure(
                     this.logger,
                     {
-                        eventName: "GetDeltasError",
+                        eventName: "GetDeltas_Error",
                         fetchTo,
                         from,
                         retry: retry + 1,
@@ -449,10 +474,15 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                     return [];
                 }
                 success = false;
+                // tslint:disable-next-line: no-unsafe-any
+                if (typeof error === "object" && error !== null && error.retryAfterSeconds !== undefined) {
+                    // tslint:disable-next-line: no-unsafe-any
+                    retryAfter = error.retryAfterSeconds;
+                }
             }
 
             retry = deltasRetrievedLast === 0 ? retry + 1 : 0;
-            const delay = Math.min(
+            const delay = retryAfter >= 0 ? retryAfter : Math.min(
                 MaxFetchDelay,
                 retry !== 0 ? MissingFetchDelay * Math.pow(2, retry) : 0);
 
@@ -465,12 +495,13 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 success,
             });
 
+            this.emitDelayInfo(retryFor.DELTASTORAGE, delay);
             await waitForConnectedState(delay);
         }
 
         // Might need to change to non-error event
         this.logger.sendErrorEvent({eventName: "GetDeltasClosedConnection" });
-
+        this.emitDelayInfo(retryFor.DELTASTORAGE, -1);
         return [];
     }
 
@@ -555,6 +586,22 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         }
     }
 
+    private emitDelayInfo(retryEndpoint: number, delay: number) {
+        // delay === 0 means the corresponding endpoint has connected properly
+        // and we do not need to emit any delay to app.
+        if (retryEndpoint === retryFor.DELTASTORAGE) {
+            this.deltaStorageDelay = delay;
+        } else if (retryEndpoint === retryFor.DELTASTREAM) {
+            this.deltaStreamDelay = delay;
+        }
+        if (this.deltaStreamDelay && this.deltaStorageDelay) {
+            const delayTime = Math.max(this.deltaStorageDelay, this.deltaStreamDelay);
+            if (delayTime >= 0) {
+                this.emit("connectionDelay", delayTime);
+            }
+        }
+    }
+
     private connectCore(reason: string, delay: number, mode: ConnectionMode): void {
         if (this.closed) {
             return;
@@ -566,7 +613,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         DeltaConnection.connect(
             this.service,
-            this.client!,
+            this.client,
             mode).then(
             (connection) => {
                 this.connection = connection;
@@ -575,11 +622,12 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
                 this._outbound.systemResume();
 
+                this.emitDelayInfo(retryFor.DELTASTREAM, -1);
                 this.clientSequenceNumber = 0;
                 this.clientSequenceNumberObserved = 0;
 
                 // If we retried more than once, log an event about how long it took
-                if (this.connectRepeatCount > 2) {
+                if (this.connectRepeatCount > 1) {
                     this.logger.sendTelemetryEvent({
                             attempts: this.connectRepeatCount,
                             duration: (performanceNow() - this.connectStartTime).toFixed(0),
@@ -618,11 +666,12 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
                 //  Connection mode is always read on disconnect/error unless the system mode was write.
                 connection.on("disconnect", (disconnectReason) => {
-                    const reconnectionMode = this.systemConnectionMode === "write" ? "write" : "read";
+                    // Note: we might get multiple disconnect calls on same socket, as early disconnect notification
+                    // ("server_disconnect", ODSP-specific) is mapped to "disconnect"
                     this.reconnectOnError(
                         `Reconnecting on disconnect: ${disconnectReason}`,
                         connection,
-                        reconnectionMode);
+                        this.systemConnectionMode);
                 });
 
                 connection.on("error", (error) => {
@@ -630,8 +679,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                     // We are getting transport errors from WebSocket here, right before or after "disconnect".
                     // This happens only in Firefox.
                     logNetworkFailure(this.logger, {eventName: "DeltaConnectionError"}, error);
-                    const reconnectionMode = this.systemConnectionMode === "write" ? "write" : "read";
-                    this.reconnectOnError("Reconnecting on error", connection, reconnectionMode, error);
+                    this.reconnectOnError("Reconnecting on error", connection, this.systemConnectionMode, error);
                 });
 
                 connection.on("pong", (latency: number) => {
@@ -669,7 +717,15 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                         error);
                 }
 
-                const delayNext = Math.min(delay * 2, MaxReconnectDelay);
+                let delayNext: number = 0;
+                // tslint:disable-next-line: no-unsafe-any
+                if (typeof error === "object" && error !== null && error.retryAfterSeconds !== undefined) {
+                    // tslint:disable-next-line: no-unsafe-any
+                    delayNext = error.retryAfterSeconds;
+                } else {
+                    delayNext = Math.min(delay * 2, MaxReconnectDelay);
+                }
+                this.emitDelayInfo(retryFor.DELTASTREAM, delayNext);
                 waitForConnectedState(delayNext).then(() => this.connectCore(reason, delayNext, mode));
             });
     }
@@ -678,7 +734,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         // we quite often get protocol errors before / after observing nack/disconnect
         // we do not want to run through same sequence twice.
         if (connection !== this.connection) {
-            this.logger.sendTelemetryEvent({eventName: "DeltaConnectionReconnectIgnored", reason});
             return;
         }
 
@@ -696,7 +751,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         if (this.clientType !== Browser || !this.reconnect || this.closed || !canRetryOnError(error)) {
             this.closeOnConnectionError(error);
         } else {
-            this.logger.sendTelemetryEvent({eventName: "DeltaConnectionReconnect", reason});
+            this.logger.sendTelemetryEvent({ eventName: "DeltaConnectionReconnect", reason }, error);
             this.connectCore(reason, InitialReconnectDelay, mode);
         }
     }
@@ -718,7 +773,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             }
         }
         if (messages && messages.length > 0) {
-            this.catchUp("enqueInitalOps", messages);
+            this.catchUp("InitalOps", messages);
         }
     }
 
@@ -767,6 +822,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         for (const message of messages) {
             // Check that the messages are arriving in the expected order
             if (message.sequenceNumber !== this.lastQueuedSequenceNumber + 1) {
+                // tslint:disable-next-line: max-line-length
                 debug(`DeltaManager: enque Messages *Out of* Order Message ${message.sequenceNumber} - last ${this.lastQueuedSequenceNumber}`);
 
                 this.handleOutOfOrderMessage(message);
@@ -827,14 +883,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 if (result.error) {
                     callback(result.error);
                 } else {
-                    // We will queue a message to update our reference sequence number upon receiving a server
-                    // operation. This allows the server to know our true reference sequence number and be able to
-                    // correctly update the minimum sequence number (MSN). We don't acknowledge other message types
-                    // similarly (like a min sequence number update) to avoid acknowledgement cycles (i.e. ack the MSN
-                    // update, which updates the MSN, then ack the update, etc...).
-                    if (message.type === MessageType.Operation || result.immediateNoOp) {
-                        this.updateSequenceNumber(result.immediateNoOp === true);
-                    }
+                    this.scheduleSequenceNumberUpdate(message, result.immediateNoOp === true);
 
                     const endTime = Date.now();
                     this.emit("processTime", endTime - startTime);
@@ -859,16 +908,15 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         }
 
         this.pending.push(message);
-        this.fetchMissingDeltas("HandleOutOfOrderMessage", this.lastQueuedSequenceNumber, message.sequenceNumber);
+        this.fetchMissingDeltas("OutOfOrderMessage", this.lastQueuedSequenceNumber, message.sequenceNumber);
     }
 
     /**
      * Retrieves the missing deltas between the given sequence numbers
      */
-    private fetchMissingDeltas(reason: string, from: number, to?: number) {
+    private fetchMissingDeltas(telemetryEventSuffix: string, from: number, to?: number) {
         // Exit out early if we're already fetching deltas
         if (this.fetching) {
-            this.logger.sendTelemetryEvent({eventName: "fetchMissingDeltasAlreadyFetching", from: from!, reason});
             return;
         }
 
@@ -879,11 +927,11 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         this.fetching = true;
 
-        this.getDeltas(reason, from, to).then(
+        this.getDeltas(telemetryEventSuffix, from, to).then(
             (messages) => {
                 this.fetching = false;
                 this.emit("caughtUp");
-                this.catchUp(reason, messages);
+                this.catchUp(telemetryEventSuffix, messages);
             });
     }
 
@@ -925,16 +973,15 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         return {
             clientId: message.clientId,
             clientSequenceNumber: message.clientSequenceNumber,
-            contents: message.contents,
+            contents: message.contents as string,
         };
     }
 
-    private catchUp(reason: string, messages: ISequencedDocumentMessage[]): void {
+    private catchUp(telemetryEventSuffix: string, messages: ISequencedDocumentMessage[]): void {
         this.logger.sendPerformanceEvent({
-            eventName: "CatchUp",
+            eventName: `CatchUp_${telemetryEventSuffix}`,
             messageCount: messages.length,
             pendingCount: this.pending.length,
-            reason,
         });
 
         // Apply current operations
@@ -952,11 +999,13 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     }
 
     /**
-     * Acks the server to update the reference sequence number
+     * Schedules as ack to the server to update the reference sequence number
      */
-    private updateSequenceNumber(immediateNoOp: boolean): void {
-        // Exit early for readonly clients. They don't take part in the minimum sequence number calculation.
+    private scheduleSequenceNumberUpdate(message: ISequencedDocumentMessage, immediateNoOp: boolean): void {
+        // Exit early for inactive (not in quorum or not writers) clients.
+        // They don't take part in the minimum sequence number calculation.
         if (!this.active) {
+            this.stopSequenceNumberUpdate();
             return;
         }
 
@@ -965,34 +1014,39 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             return;
         }
 
-        // If an update has already been requested then mark this fact. We will wait until no updates have
-        // been requested before sending the updated sequence number.
-        if (this.updateSequenceNumberTimer) {
-            this.updateHasBeenRequested = true;
-            return;
+        switch (message.type as MessageType) {
+            case MessageType.Propose:
+                // On a quorum proposal, immediately send a response to expedite the approval.
+                this.stopSequenceNumberUpdate();
+                this.submit(MessageType.NoOp, ImmediateNoOpResponse);
+                return;
+
+            case MessageType.NoOp:
+                // We don't acknowledge no-ops to avoid acknowledgement cycles (i.e. ack the MSN
+                // update, which updates the MSN, then ack the update, etc...).
+                return;
+
+            default:
+                // We will queue a message to update our reference sequence number upon receiving a server
+                // operation. This allows the server to know our true reference sequence number and be able to
+                // correctly update the minimum sequence number (MSN).
+                if (this.updateSequenceNumberTimer === undefined) {
+                    // Clear an update in 100 ms
+                    this.updateSequenceNumberTimer = setTimeout(() => {
+                        this.updateSequenceNumberTimer = undefined;
+                        if (this.active) {
+                            this.submit(MessageType.NoOp, null);
+                        }
+                    }, 100);
+                }
         }
-
-        // Clear an update in 100 ms
-        this.updateSequenceNumberTimer = setTimeout(() => {
-            this.updateSequenceNumberTimer = undefined;
-
-            // If a second update wasn't requested then send an update message. Otherwise defer this until we
-            // stop processing new messages.
-            if (!this.updateHasBeenRequested) {
-                this.submit(MessageType.NoOp, null);
-            } else {
-                this.updateHasBeenRequested = false;
-                this.updateSequenceNumber(false);
-            }
-        }, 100);
     }
 
     private stopSequenceNumberUpdate(): void {
         if (this.updateSequenceNumberTimer) {
+            // tslint:disable-next-line: no-unsafe-any
             clearTimeout(this.updateSequenceNumberTimer);
         }
-
-        this.updateHasBeenRequested = false;
         this.updateSequenceNumberTimer = undefined;
     }
 }

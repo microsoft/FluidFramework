@@ -5,7 +5,7 @@
 
 import * as React from 'react';
 import { DocumentCardBasicExample } from './card';
-import { ISharedMap } from '@prague/map';
+import { ISharedMap } from '@microsoft/fluid-map';
 
 export interface IDocumentListProps {
     values: ISharedMap;

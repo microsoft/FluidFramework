@@ -8,14 +8,14 @@ const path = require("path");
 const merge = require("webpack-merge");
 
 const pkg = require("./package.json");
-const chaincodeName = pkg.name.slice(1);
+const componentName = pkg.name.slice(1);
 
 module.exports = env => {
     const isProduction = env && env.production;
 
     return merge({
         entry: {
-            main: "./src/index.ts"
+            main: "<%= entryFilePath %>",
         },
         resolve: {
             extensions: [".ts", ".tsx", ".js"],
@@ -23,7 +23,7 @@ module.exports = env => {
         module: {
             rules: [{
                 test: /\.tsx?$/,
-                loader: "ts-loader"
+                loader: "ts-loader",
             }]
         },
         output: {
@@ -32,8 +32,8 @@ module.exports = env => {
             library: "[name]",
             // https://github.com/webpack/webpack/issues/5767
             // https://github.com/webpack/webpack/issues/7939
-            devtoolNamespace: chaincodeName,
-            libraryTarget: "umd"
+            devtoolNamespace: componentName,
+            libraryTarget: "umd",
         },
         devServer: {
             publicPath: '/dist',

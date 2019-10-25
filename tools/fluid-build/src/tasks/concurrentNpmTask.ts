@@ -15,7 +15,7 @@ export class ConcurrentNPMTask extends NPMTask {
     };
 
     protected async runTask(q: AsyncPriorityQueue<TaskExec>): Promise<BuildResult> {
-        logVerbose(`Begin Concurrent Child Tasks: ${this.node.pkg.nameColored} - ${this.command}`);
+        this.logVerboseTask(`Begin Concurrent Child Tasks`);
         const taskP = new Array<Promise<BuildResult>>();
         for (const task of this.subTasks) {
             taskP.push(task.run(q));
@@ -31,7 +31,7 @@ export class ConcurrentNPMTask extends NPMTask {
                 retResult = BuildResult.Success;
             }
         }
-        logVerbose(`End Concurrent Child Tasks: ${this.node.pkg.nameColored} - ${this.command}`);
+        this.logVerboseTask(`End Concurrent Child Tasks`);
         return retResult;
     }
 }
