@@ -6,7 +6,8 @@
 import { IHostConfig, start } from "@microsoft/fluid-base-host";
 import { BaseTelemetryNullLogger, configurableUrlResolver } from "@microsoft/fluid-core-utils";
 import { FluidAppOdspUrlResolver } from "@microsoft/fluid-fluidapp-odsp-urlresolver";
-import { OdspDocumentServiceFactory, OdspUrlResolver } from "@microsoft/fluid-odsp-driver";
+import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
+import { OdspUrlResolver } from "@microsoft/fluid-odsp-urlresolver";
 import { IDocumentServiceFactory, IFluidResolvedUrl, IResolvedUrl } from "@microsoft/fluid-protocol-definitions";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
 import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
