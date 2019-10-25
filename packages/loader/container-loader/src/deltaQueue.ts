@@ -49,10 +49,9 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
         this.isDisposed = true;
     }
 
-    public clear() {
+    public async clear(): Promise<void> {
         this.q.clear();
-        // tslint:disable-next-line:no-floating-promises
-        this.updatePause();
+        return this.updatePause();
     }
 
     public peek(): T | undefined {
@@ -69,27 +68,27 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
         this.processDeltas();
     }
 
-    public pause(): Promise<void> {
+    public async pause(): Promise<void> {
         this.userPause = true;
         return this.updatePause();
     }
 
-    public resume(): Promise<void> {
+    public async resume(): Promise<void> {
         this.userPause = false;
         return this.updatePause();
     }
 
-    public systemPause(): Promise<void> {
+    public async systemPause(): Promise<void> {
         this.sysPause = true;
         return this.updatePause();
     }
 
-    public systemResume(): Promise<void> {
+    public async systemResume(): Promise<void> {
         this.sysPause = false;
         return this.updatePause();
     }
 
-    private updatePause(): Promise<void> {
+    private async updatePause(): Promise<void> {
         const paused = this.sysPause || this.userPause;
         if (paused !== this._paused) {
             if (paused) {
