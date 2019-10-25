@@ -42,10 +42,25 @@ interface IParsedUrl {
 
 export enum LoaderHeader {
     cache = "fluid-cache",
+
+    /**
+     * type of client; defaults to "browser"
+     */
     clientType = "fluid-client-type",
+
+    /**
+     * connection options (list of keywords). Accepted options are open & pause.
+     */
     connect = "connect",
     sequenceNumber = "fluid-sequence-number",
     reconnect = "fluid-reconnect",
+
+    /**
+     * One of the following:
+     * null or "null": use ops, no snapshots
+     * undefined: fetch latest snapshot
+     * otherwise, version sha to load snapshot
+     */
     version = "version",
 }
 
@@ -256,7 +271,8 @@ export class Loader extends EventEmitter implements ILoader {
         } else {
             // If connection header is pure open or close we will cache it. Otherwise custom load behavior
             // and so we will not cache the request
-            canCache = request.headers[LoaderHeader.connect] === "open" || request.headers[LoaderHeader.connect] === "close";
+            canCache = request.headers[LoaderHeader.connect] === "open"
+                || request.headers[LoaderHeader.connect] === "close";
         }
 
         if (request.headers[LoaderHeader.sequenceNumber]) {
@@ -320,10 +336,6 @@ export class Loader extends EventEmitter implements ILoader {
         return { container, parsed };
     }
 
-    // @param version -one of the following
-    //   - null: use ops, no snapshots
-    //   - undefined - fetch latest snapshot
-    //   - otherwise, version sha to load snapshot
     private loadContainer(
         id: string,
         documentService: IDocumentService,
