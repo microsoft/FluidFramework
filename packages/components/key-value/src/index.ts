@@ -128,7 +128,7 @@ export class KeyValueFactoryComponent implements IRuntimeFactory, IComponentFact
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
         const runtime = await ContainerRuntime.load(
             context,
-            new Map([[ComponentName, Promise.resolve(this)]]),
+            [[ComponentName, Promise.resolve(this)]],
             [KeyValueFactoryComponent.containerRequestHandler],
         );
 

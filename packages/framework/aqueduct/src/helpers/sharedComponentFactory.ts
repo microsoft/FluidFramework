@@ -5,26 +5,31 @@
 
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { ComponentRuntime, ISharedObjectRegistry } from "@microsoft/fluid-component-runtime";
-import { ComponentRegistryTypes, IComponentContext, IComponentFactory, IComponentRegistry, IComponentRuntime, IProvideComponentRegistry } from "@microsoft/fluid-runtime-definitions";
+import { CompositComponentRegistry } from "@microsoft/fluid-container-runtime";
+import { IComponentContext, IComponentFactory, IComponentRegistry, IComponentRuntime, IProvideComponentRegistry, NamedComponentRegistryEntries } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { SharedComponent } from "../components/sharedComponent";
 
-export class SharedComponentFactory implements IComponentFactory, IProvideComponentRegistry  {
+export class SharedComponentFactory implements IComponentFactory, Partial<IProvideComponentRegistry>  {
     private readonly sharedObjectRegistry: ISharedObjectRegistry;
+    private readonly registry: IComponentRegistry | undefined;
 
     constructor(
         private readonly ctor: new (runtime: IComponentRuntime, context: IComponentContext) => SharedComponent,
         sharedObjects: ReadonlyArray<ISharedObjectFactory>,
-        private readonly componentRegistry: ComponentRegistryTypes,
+        registryEntries?: NamedComponentRegistryEntries,
         private readonly onDemandInstantiation = true,
     ) {
+        if (registryEntries !== undefined) {
+            this.registry = new CompositComponentRegistry(registryEntries);
+        }
         this.sharedObjectRegistry = new Map(sharedObjects.map((ext) => [ext.type, ext]));
     }
 
     public get IComponentFactory() { return this; }
 
-    public get IComponentRegistry(): IComponentRegistry {
-        return this.componentRegistry as IComponentRegistry;
+    public get IComponentRegistry() {
+        return this.registry;
     }
 
     /**

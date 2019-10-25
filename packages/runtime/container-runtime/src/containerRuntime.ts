@@ -50,8 +50,6 @@ import {
     SummaryType,
 } from "@microsoft/fluid-protocol-definitions";
 import {
-    ComponentFactoryTypes,
-    ComponentRegistryTypes,
     FlushMode,
     IAttachMessage,
     IComponentRegistry,
@@ -60,6 +58,7 @@ import {
     IHelpMessage,
     IHostRuntime,
     IInboundSignalMessage,
+    NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";
@@ -67,6 +66,7 @@ import { EventEmitter } from "events";
 import * as uuid from "uuid/v4";
 import { ComponentContext, LocalComponentContext, RemotedComponentContext } from "./componentContext";
 import { ComponentHandleContext } from "./componentHandleContext";
+import { CompositComponentRegistry } from "./compositComponentRegistry";
 import { debug } from "./debug";
 import { DocumentStorageServiceProxy } from "./documentStorageServiceProxy";
 import {
@@ -357,11 +357,11 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
      */
     public static async load(
         context: IContainerContext,
-        registry: ComponentRegistryTypes,
+        registryEntries: NamedComponentRegistryEntries,
         requestHandlers: RuntimeRequestHandler[] = [],
         runtimeOptions?: IContainerRuntimeOptions,
     ): Promise<ContainerRuntime> {
-        const componentRegistry = new WrappedComponentRegistry(registry);
+        const componentRegistry = new ContainerRuntimeComponentRegistry(registryEntries);
 
         const chunkId = context.baseSnapshot.blobs[".chunks"];
         const chunks = chunkId
@@ -1384,24 +1384,15 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 }
 
 // Wraps the provided list of packages and augments with some system level services.
-export class WrappedComponentRegistry implements IComponentRegistry {
+class ContainerRuntimeComponentRegistry extends CompositComponentRegistry {
 
-    private readonly agentScheduler: AgentSchedulerFactory;
+    constructor(...components: NamedComponentRegistryEntries[]) {
 
-    constructor(private readonly registry: ComponentRegistryTypes,
-                private readonly extraRegistries?: Map<string, Promise<ComponentFactoryTypes>>) {
-        this.agentScheduler = new AgentSchedulerFactory();
+        super(
+            ...components,
+            [
+                [schedulerId, Promise.resolve(new AgentSchedulerFactory())],
+            ]);
     }
 
-    public get IComponentRegistry() { return this; }
-
-    public async get(name: string): Promise<ComponentFactoryTypes> {
-        if (name === schedulerId) {
-            return this.agentScheduler;
-        } else if (this.extraRegistries && this.extraRegistries.has(name)) {
-            return this.extraRegistries.get(name);
-        } else {
-            return this.registry.get(name);
-        }
-    }
 }

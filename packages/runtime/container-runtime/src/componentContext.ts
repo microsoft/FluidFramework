@@ -29,10 +29,10 @@ import {
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
 import {
-    ComponentFactoryTypes,
+    ComponentRegistryEntry,
     IAttachMessage,
     IComponentContext,
-    IComponentRegistry,
+    IComponentFactory,
     IComponentRuntime,
     IEnvelope,
     IHostRuntime,
@@ -187,13 +187,15 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
             }
             const packages = details.pkg;
             let registry = this._hostRuntime.IComponentRegistry;
-            let factory: ComponentFactoryTypes & Partial<IComponentRegistry>;
+            let entry: ComponentRegistryEntry;
+            let factory: IComponentFactory;
             for (const pkg of packages) {
                 if (!registry) {
                     throw new Error("Factory does not supply the component Registry");
                 }
-                factory = await registry.get(pkg);
-                registry = factory.IComponentRegistry;
+                entry = await registry.get(pkg);
+                factory = entry.IComponentFactory;
+                registry = entry.IComponentRegistry;
             }
 
             // During this call we will invoke the instantiate method - which will call back into us

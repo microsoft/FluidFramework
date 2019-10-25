@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { IContainerContext, IRuntime, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
-import { IComponentDefaultFactory } from "@microsoft/fluid-framework-interfaces";
-import { ComponentFactoryTypes, ComponentRegistryTypes, IComponentContext, IComponentFactory } from "@microsoft/fluid-runtime-definitions";
+import { CompositComponentRegistry } from "@microsoft/fluid-container-runtime";
+import { IProvideComponentDefaultFactoryName } from "@microsoft/fluid-framework-interfaces";
+import { IComponentRegistry, IProvideComponentRegistry, NamedComponentRegistryEntries } from "@microsoft/fluid-runtime-definitions";
 import { SimpleContainerRuntimeFactory } from "./simpleContainerRuntimeFactory";
 
 /**
@@ -18,48 +18,26 @@ import { SimpleContainerRuntimeFactory } from "./simpleContainerRuntimeFactory";
  *  IComponentRegistry: instantiates a component registry that include the default component and sub-components
  */
 export class SimpleModuleInstantiationFactory implements
-    IComponent,
+    IProvideComponentRegistry,
     IRuntimeFactory,
-    IComponentDefaultFactory,
-    IComponentFactory {
+    IProvideComponentDefaultFactoryName {
+
+    private readonly registry: IComponentRegistry;
 
     constructor(
         private readonly defaultComponentName: string,
-        private readonly registry: ComponentRegistryTypes) {
+        private readonly registryEntries: NamedComponentRegistryEntries) {
+        this.registry = new CompositComponentRegistry(registryEntries);
     }
-
-    public get IComponentFactory() { return this; }
-    public get IComponentRegistry() { return this; }
+    public get IComponentRegistry() { return this.registry; }
     public get IRuntimeFactory() { return this; }
-    public get IComponentDefaultFactory() { return this; }
-
-    public async getDefaultFactory() {
-        return this.registry.get(this.defaultComponentName)!;
-    }
-
-    public get(name: string): Promise<ComponentFactoryTypes> | undefined {
-        return this.registry.get(name);
-    }
-
-    public instantiateComponent(context: IComponentContext): void {
-        const factoryP = this.get(this.defaultComponentName);
-        if (factoryP === undefined) {
-            throw new Error(`No component factory for ${this.defaultComponentName}`);
-        }
-        factoryP.then(
-            (factory) => {
-                factory.instantiateComponent(context);
-            },
-            (error) => {
-                context.error(error);
-            });
-    }
+    public get IProvideComponentDefaultFactory() { return this.defaultComponentName; }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
         return SimpleContainerRuntimeFactory.instantiateRuntime(
             context,
             this.defaultComponentName,
-            this.registry,
+            this.registryEntries,
             true,
         );
     }

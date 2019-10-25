@@ -77,10 +77,9 @@ function wrapComponentPackage(packageName: string, packageJson: IFluidPackage) {
 
     const runtimeFactory = new SimpleModuleInstantiationFactory(
         packageName,
-        new Map([
+        [
             [packageName, Promise.resolve(componentFactory)],
-        ]),
-    );
+        ]);
     // tslint:disable-next-line:no-string-literal
     window["componentMain"] = {
         fluidExport: runtimeFactory,

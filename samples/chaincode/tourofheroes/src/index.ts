@@ -9,7 +9,7 @@ import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aquedu
 import { IContainerContext, IRuntime, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
 import { IComponentHTMLVisual, IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
-import { ComponentFactoryTypes, IComponentContext, IComponentFactory, IComponentRegistry } from '@microsoft/fluid-runtime-definitions';
+import { IComponentFactory, IComponentContext, IComponentFactory, IComponentRegistry } from '@microsoft/fluid-runtime-definitions';
 import * as GraphiQL from "graphiql";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -141,7 +141,7 @@ class TourOfHeroesContainerInstantiationFactory implements IRuntimeFactory, ICom
     public get IComponentRegistry() { return this; }
     public get IRuntimeFactory() { return this; }
 
-    public get(name: string): Promise<ComponentFactoryTypes> | undefined {
+    public get(name: string): Promise<IComponentFactory> | undefined {
         if (name === TourOfHeroesType) {
             return Promise.resolve(TourOfHeroesInstantiationFactory);
         }

@@ -9,7 +9,7 @@ import {
     RequestParser,
     RuntimeRequestHandler,
 } from "@microsoft/fluid-container-runtime";
-import { ComponentRegistryTypes, IHostRuntime } from "@microsoft/fluid-runtime-definitions";
+import { IHostRuntime, NamedComponentRegistryEntries } from "@microsoft/fluid-runtime-definitions";
 
 export class SimpleContainerRuntimeFactory {
     public static readonly defaultComponentId = "default";
@@ -20,14 +20,14 @@ export class SimpleContainerRuntimeFactory {
     public static async instantiateRuntime(
         context: IContainerContext,
         chaincode: string,
-        registry: ComponentRegistryTypes,
+        registryEntries: NamedComponentRegistryEntries,
         generateSummaries: boolean = false,
         requestHandlers: RuntimeRequestHandler[] = [],
     ): Promise<ContainerRuntime> {
         // debug(`instantiateRuntime(chaincode=${chaincode},registry=${JSON.stringify(registry)})`);
         const runtime = await ContainerRuntime.load(
             context,
-            registry,
+            registryEntries,
             [
                 defaultComponentRuntimeRequestHandler,
                 ...requestHandlers,

@@ -6,12 +6,10 @@
 import { PrimedComponent, PrimedComponentFactory, SimpleContainerRuntimeFactory } from "@microsoft/fluid-aqueduct";
 import { IComponentHandle, IComponentLoadable, IComponentRunnable } from "@microsoft/fluid-component-core-interfaces";
 import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
-import { WrappedComponentRegistry } from "@microsoft/fluid-container-runtime";
 import {
     IComponentContext,
-    IComponentFactory,
-    IComponentRegistry,
     IComponentRuntime,
+    NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
 import { SharedString, SparseMatrix } from "@microsoft/fluid-sequence";
 import { ISharedObject } from "@microsoft/fluid-shared-object-base";
@@ -161,25 +159,10 @@ export class TestHost {
      * @param deltaConnectionServer - delta connection server for the ops
      */
     constructor(
-        private readonly componentRegistry: ReadonlyArray<[string, Promise<IComponentFactory>]> | IComponentRegistry,
+        private readonly componentRegistry: NamedComponentRegistryEntries,
         deltaConnectionServer?: ITestDeltaConnectionServer,
     ) {
         this.deltaConnectionServer = deltaConnectionServer || TestDeltaConnectionServer.create();
-
-        let storeComponentRegistry: WrappedComponentRegistry | Map<string, Promise<IComponentFactory>>;
-        if (Array.isArray(componentRegistry)) {
-            storeComponentRegistry = new Map(componentRegistry.concat([
-                [
-                    TestRootComponent.type,
-                    Promise.resolve(TestRootComponent.getFactory()),
-                ],
-            ]));
-        } else {
-            const extraRegistryMap: Map<string, Promise<IComponentFactory>> =
-                new Map([[TestRootComponent.type, Promise.resolve(TestRootComponent.getFactory())]]);
-            storeComponentRegistry =
-                new WrappedComponentRegistry(componentRegistry as IComponentRegistry, extraRegistryMap);
-        }
 
         const store = new TestDataStore(
             new TestCodeLoader([
@@ -189,7 +172,10 @@ export class TestHost {
                     instantiateRuntime: (context) => SimpleContainerRuntimeFactory.instantiateRuntime(
                         context,
                         TestRootComponent.type,
-                        storeComponentRegistry),
+                        [
+                            ...componentRegistry,
+                            [TestRootComponent.type, Promise.resolve(TestRootComponent.getFactory())],
+                        ]),
                 }],
             ]),
             new TestDocumentServiceFactory(this.deltaConnectionServer),
