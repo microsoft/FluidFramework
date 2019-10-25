@@ -209,6 +209,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
             return Promise.reject("Runtime must query for IMessageHandler to signal it does not implement prepare");
         }
 
+        // tslint:disable-next-line:no-floating-promises
         this.runtime.prepare(message, local);
     }
 

@@ -72,6 +72,7 @@ export class DeltaQueueProxy<T> extends EventForwarder implements IDeltaQueue<T>
 
     private updateResume(): Promise<void> {
         if (!this.systemPaused && !this.localPaused) {
+            // tslint:disable-next-line:no-floating-promises
             this.queue.resume();
         }
 

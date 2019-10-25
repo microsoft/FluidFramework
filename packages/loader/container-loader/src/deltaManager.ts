@@ -33,6 +33,9 @@ import { debug } from "./debug";
 import { DeltaConnection } from "./deltaConnection";
 import { DeltaQueue } from "./deltaQueue";
 import { logNetworkFailure, waitForConnectedState } from "./networkUtils";
+
+// tslint:disable:no-floating-promises - disabling per-file rather than full subdirectory
+
 // tslint:disable-next-line:no-var-requires
 const performanceNow = require("performance-now") as (() => number);
 

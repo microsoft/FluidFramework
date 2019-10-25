@@ -51,6 +51,7 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
 
     public clear() {
         this.q.clear();
+        // tslint:disable-next-line:no-floating-promises
         this.updatePause();
     }
 

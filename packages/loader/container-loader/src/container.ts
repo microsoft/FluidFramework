@@ -68,6 +68,8 @@ import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService
 import { isSystemMessage, ProtocolOpHandler } from "./protocol";
 import { Quorum, QuorumProxy } from "./quorum";
 
+// tslint:disable:no-floating-promises - disabling per-file rather than full subdirectory
+
 // tslint:disable-next-line:no-var-requires
 const performanceNow = require("performance-now") as (() => number);
 
