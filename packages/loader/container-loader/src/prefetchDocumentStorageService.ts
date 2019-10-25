@@ -95,8 +95,7 @@ export class PrefetchDocumentStorageService implements IDocumentStorageService {
 
         for (const blob of secondary) {
             // We don't care if the prefetch succeed
-            // tslint:disable-next-line:no-floating-promises
-            this.cachedRead(blob);
+            this.cachedRead(blob).catch();
         }
     }
 
@@ -106,8 +105,7 @@ export class PrefetchDocumentStorageService implements IDocumentStorageService {
             if (blobKey[0] === "." || blobKey === "header" || blobKey.indexOf("quorum") === 0) {
                 if (blob !== null) {
                     // We don't care if the prefetch succeed
-                    // tslint:disable-next-line:no-floating-promises
-                    this.cachedRead(blob);
+                    this.cachedRead(blob).catch();
                 }
             } else if (blobKey[0] !== "deltas") {
                 if (blob !== null) {
