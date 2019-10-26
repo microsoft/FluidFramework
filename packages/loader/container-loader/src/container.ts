@@ -975,48 +975,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     }
 
     private processRemoteMessage(message: ISequencedDocumentMessage, callback: (err?: any) => void) {
-        if (this.context!.legacyMessaging) {
-            this.processRemoteMessageLegacy(message).then(
-                () => { callback(); },
-                (error) => { callback(error); });
-        } else {
-            this.processRemoteMessageNew(message);
-            callback();
-        }
-    }
-
-    private async processRemoteMessageLegacy(message: ISequencedDocumentMessage) {
-        const local = this._clientId === message.clientId;
-        let context;
-
-        // Forward non system messages to the loaded runtime for processing
-        if (!isSystemMessage(message)) {
-            context = await this.context!.prepare(message, local);
-
-            this.context!.process(message, local, context);
-        }
-
-        switch (message.type) {
-            case MessageType.BlobUploaded:
-                // tslint:disable-next-line:no-floating-promises
-                this.blobManager!.addBlob(message.contents as IGenericBlob);
-                this.emit(MessageType.BlobUploaded, message.contents);
-                break;
-
-            default:
-        }
-
-        // Allow the protocol handler to process the message
-        this.protocolHandler!.processMessage(message, local);
-
-        this.emit("op", message);
-
-        if (!isSystemMessage(message)) {
-            await this.context!.postProcess(message, local, context);
-        }
-    }
-
-    private processRemoteMessageNew(message: ISequencedDocumentMessage) {
         const local = this._clientId === message.clientId;
 
         // Forward non system messages to the loaded runtime for processing
@@ -1028,6 +986,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         this.protocolHandler!.processMessage(message, local);
 
         this.emit("op", message);
+        callback();
     }
 
     private submitSignal(message: any) {

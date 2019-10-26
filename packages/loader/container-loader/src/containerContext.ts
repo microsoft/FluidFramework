@@ -140,16 +140,12 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
     }
 
     public get IMessageScheduler() {
-        this.legacyMessaging = false;
         return this;
     }
 
     public get baseSnapshot() {
         return this._baseSnapshot;
     }
-
-    // Back compat flag - can remove in 0.6
-    public legacyMessaging = true;
 
     private runtime: IRuntime | undefined;
 
