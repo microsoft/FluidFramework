@@ -9,7 +9,7 @@ describe("foo", () => {
     await page.goto(PATH, { waitUntil: "load" });
   });
 
-  it("should return bar", async () => {
+  it("page loads", async () => {
     const foo = await page.evaluate(() => {
       console.log("foo");
       return "bar";
