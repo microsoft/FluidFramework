@@ -72,6 +72,7 @@ COPY packages/drivers/socket-storage-shared/package*.json packages/drivers/socke
 COPY packages/drivers/odsp-urlResolver/package*.json packages/drivers/odsp-urlResolver/
 COPY packages/drivers/fluidapp-odsp-urlResolver/package*.json packages/drivers/fluidapp-odsp-urlResolver/
 COPY packages/drivers/routerlicious-urlResolver/package*.json packages/drivers/routerlicious-urlResolver/
+COPY packages/drivers/execution-context-loader/package*.json packages/drivers/execution-context-loader/
 COPY packages/framework/aqueduct/package*.json packages/framework/aqueduct/
 COPY packages/framework/aqueduct-react/package*.json packages/framework/aqueduct-react/
 COPY packages/framework/framework-definitions/package*.json packages/framework/framework-definitions/
