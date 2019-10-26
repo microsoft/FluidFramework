@@ -4,4 +4,3 @@
  */
 
 export * from "./urlResolver";
-export * from "./configurableUrlResolver";

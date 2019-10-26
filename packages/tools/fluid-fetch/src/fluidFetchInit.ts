@@ -4,7 +4,7 @@
  */
 
 // tslint:disable:object-literal-sort-keys
-import { BaseTelemetryNullLogger } from "@microsoft/fluid-core-utils";
+import { BaseTelemetryNullLogger, configurableUrlResolver } from "@microsoft/fluid-core-utils";
 import { FluidAppOdspUrlResolver } from "@microsoft/fluid-fluidapp-odsp-urlresolver";
 import * as odsp from "@microsoft/fluid-odsp-driver";
 import { OdspUrlResolver } from "@microsoft/fluid-odsp-urlresolver";
@@ -16,7 +16,6 @@ import {
 } from "@microsoft/fluid-odsp-utils";
 import { IDocumentService, IFluidResolvedUrl, IResolvedUrl, IUrlResolver } from "@microsoft/fluid-protocol-definitions";
 import * as r11s from "@microsoft/fluid-routerlicious-driver";
-import { ConfigurableUrlResolver } from "@microsoft/fluid-routerlicious-host";
 import { RouterliciousUrlResolver } from "@microsoft/fluid-routerlicious-urlresolver";
 import * as child_process from "child_process";
 import * as fs from "fs";
@@ -209,15 +208,14 @@ async function initializeR11s(server: string, pathname: string, r11sResolvedUrl:
         documentId);
 }
 
-async function resolveUrl(url: string): Promise<IResolvedUrl> {
+async function resolveUrl(url: string): Promise<IResolvedUrl | undefined> {
 
     const resolversList: IUrlResolver[] = [
         new OdspUrlResolver(),
         new FluidAppOdspUrlResolver(),
         new RouterliciousUrlResolver(undefined, () => Promise.resolve(paramJWT), []),
     ];
-    const resolver = new ConfigurableUrlResolver(resolversList);
-    const resolved: IResolvedUrl = await resolver.resolve({ url });
+    const resolved = await configurableUrlResolver(resolversList, { url });
     return resolved;
 }
 
@@ -242,6 +240,10 @@ export async function fluidFetchInit() {
 
     const server = url.hostname.toLowerCase();
     const resolvedUrl = await resolveUrl(paramURL) as IFluidResolvedUrl;
+    if (!resolvedUrl) {
+        console.log(server);
+        return Promise.reject(`Unknown URL ${paramURL}`);
+    }
     const protocol = new URL(resolvedUrl.url).protocol;
     if (protocol === "fluid-odsp:") {
         const odspResolvedUrl = resolvedUrl as odsp.IOdspResolvedUrl;

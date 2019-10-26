@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentRouter, IComponentRunnable, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
+import {
+    IComponentLoadable,
+    IComponentRouter,
+    IComponentRunnable,
+    IRequest,
+    IResponse } from "@microsoft/fluid-component-core-interfaces";
 import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
 import { ChildLogger, Deferred, PerformanceEvent } from "@microsoft/fluid-core-utils";
 import {
@@ -35,10 +40,11 @@ interface IOpSummaryDetails {
     message: string;
 }
 
-export class Summarizer implements IComponentRouter, IComponentRunnable {
+export class Summarizer implements IComponentRouter, IComponentRunnable, IComponentLoadable {
 
     public get IComponentRouter() { return this; }
     public get IComponentRunnable() { return this; }
+    public get IComponentLoadable() { return this; }
 
     private lastSummaryTime: number;
     private lastSummarySeqNumber: number;

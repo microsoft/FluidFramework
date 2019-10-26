@@ -26,7 +26,7 @@ const protocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
 /**
  * Error raising for socket.io issues
  */
-function createErrorObject(handler: string, error: any, canRetry = true) {
+export function createErrorObject(handler: string, error: any, canRetry = true) {
     // Note: we assume error object is a string here.
     // If it's not (and it's an object), we would not get its content.
     // That is likely Ok, as it may contain PII that will get logged to telemetry,
@@ -134,14 +134,9 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         mode: ConnectionMode,
         timeoutMs: number): Promise<IDocumentDeltaConnection> {
 
-        // Note on multiplex = false:
-        // Temp fix to address issues on SPO. Scriptor hits same URL for Fluid & Notifications.
-        // As result Socket.io reuses socket (as there is no collision on namespaces).
-        // ODSP does not currently supports multiple namespaces on same socket :(
         const socket = io(
             url,
             {
-                multiplex: false,
                 query: {
                     documentId: id,
                     tenantId,

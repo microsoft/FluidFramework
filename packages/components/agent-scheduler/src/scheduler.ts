@@ -62,7 +62,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
     public get IAgentScheduler() { return this; }
     public get IComponentRouter() { return this; }
 
-    public url = "/_tasks";
+    public url = "_tasks";
 
     private _leader = false;
 
@@ -439,7 +439,7 @@ export class TaskManager implements ITaskManager {
             const urlWithSlash = componentUrl.startsWith("/") ? componentUrl : `/${componentUrl}`;
             try {
                 await this.scheduler.pick(
-                    `${urlWithSlash}${this.url}/${taskId}`,
+                    `${urlWithSlash}/${this.url}/${taskId}`,
                     worker !== undefined ? worker : false);
             } catch (err) {
                 debug(err as string); // Just log the error. It will be attempted again.

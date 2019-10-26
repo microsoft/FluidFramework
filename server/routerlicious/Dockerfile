@@ -75,6 +75,7 @@ COPY packages/drivers/routerlicious-urlResolver/package*.json packages/drivers/r
 COPY packages/framework/aqueduct/package*.json packages/framework/aqueduct/
 COPY packages/framework/aqueduct-react/package*.json packages/framework/aqueduct-react/
 COPY packages/framework/framework-definitions/package*.json packages/framework/framework-definitions/
+COPY packages/framework/undo-redo/package*.json packages/framework/undo-redo/
 COPY packages/loader/component-core-interfaces/package*.json packages/loader/component-core-interfaces/
 COPY packages/loader/container-definitions/package*.json packages/loader/container-definitions/
 COPY packages/loader/container-loader/package*.json packages/loader/container-loader/
@@ -82,6 +83,7 @@ COPY packages/loader/gitresources/package*.json packages/loader/gitresources/
 COPY packages/loader/loader-web/package*.json packages/loader/loader-web/
 COPY packages/loader/protocol-definitions/package*.json packages/loader/protocol-definitions/
 COPY packages/loader/utils/package*.json packages/loader/utils/
+COPY packages/loader/test-loader-utils/package*.json packages/loader/test-loader-utils/
 COPY packages/hosts/base-host/package*.json packages/hosts/base-host/
 COPY packages/hosts/host-service-interfaces/package*.json packages/hosts/host-service-interfaces/
 COPY packages/hosts/tiny-web-host/package*.json packages/hosts/tiny-web-host/

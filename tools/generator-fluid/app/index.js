@@ -9,7 +9,7 @@ var chalk = require("chalk");
 
 /**
  * Go to the Yeoman Website to find out more about their generators in general.
- * 
+ *
  * All functions **without** a _ to start are run sequentially from the start to end of the document.
  * Functions **with** a _ can be called as helper functions.
  */
@@ -119,13 +119,6 @@ module.exports = class extends Generator {
       delete packageJson.devDependencies["@types/react-dom"];
       delete packageJson.dependencies["react"];
       delete packageJson.dependencies["react-dom"];
-    }
-
-    // Update start scripts for non-container case
-    if (this.answers.container === "no") {
-      packageJson.scripts["start"] += " --env.component";
-      packageJson.scripts["start:live"] += " --env.component";
-      packageJson.scripts["start:localhost"] += " --env.component";
     }
 
     this.fs.writeJSON(

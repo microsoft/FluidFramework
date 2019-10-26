@@ -31,12 +31,9 @@ class WorkerLoader implements ILoader, IComponentRunnable {
 
     constructor(
         private readonly id: string,
-        private readonly version: string | null | undefined,
-        private readonly connection: string,
         private readonly options: any,
         private readonly resolved: IFluidResolvedUrl,
-        private readonly fromSequenceNumber: number,
-        private readonly canReconnect: boolean) {
+        private readonly fromSequenceNumber: number) {
         }
 
     public async request(request: IRequest): Promise<IResponse> {
@@ -61,15 +58,12 @@ class WorkerLoader implements ILoader, IComponentRunnable {
         const documentService: IDocumentService = await factory.createDocumentService(this.resolved);
         this.container = await Container.load(
             this.id,
-            this.version,
             documentService,
             new WebCodeLoader(),
             this.options,
             { },
-            this.connection,
             (this as unknown) as Loader,
             request,
-            this.canReconnect,
             new BaseTelemetryNullLogger());
 
         // tslint:disable no-non-null-assertion

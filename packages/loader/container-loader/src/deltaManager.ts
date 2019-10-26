@@ -8,6 +8,7 @@ import {
     IDeltaHandlerStrategy,
     IDeltaManager,
     IDeltaQueue,
+    IProcessMessageResult,
     ITelemetryLogger,
 } from "@microsoft/fluid-container-definitions";
 import { Deferred, isSystemType, PerformanceEvent } from "@microsoft/fluid-core-utils";
@@ -81,9 +82,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
     private inQuorum = false;
 
-    // Flag indicating whether or not we need to update the reference sequence number
-    private updateHasBeenRequested = false;
-    private updateSequenceNumberTimer: any;
+    private updateSequenceNumberTimer: NodeJS.Timeout | undefined;
 
     // The minimum sequence number and last sequence number received from the server
     private minSequenceNumber: number = 0;
@@ -180,13 +179,13 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
     constructor(
         private readonly service: IDocumentService,
-        private readonly client: IClient | null,
+        private readonly client: IClient,
         private readonly logger: ITelemetryLogger,
         private readonly reconnect: boolean) {
         super();
 
-        this.clientType = (!this.client || !this.client.type) ? Browser : this.client.type;
-        this.systemConnectionMode = (this.client && this.client.mode === "write") ? "write" : "read";
+        this.clientType = this.client.type;
+        this.systemConnectionMode = this.client.mode === "write" ? "write" : "read";
 
         // Inbound message queue
         this._inboundPending = new DeltaQueue<ISequencedDocumentMessage>(
@@ -259,9 +258,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         // Inbound signal queue
         this._inboundSignal = new DeltaQueue<ISignalMessage>((message, callback: (error?) => void) => {
-            // tslint:disable no-unsafe-any
-            message!.content = JSON.parse(message!.content);
-            this.handler!.processSignal(message!);
+            this.handler!.processSignal({
+                clientId: message.clientId,
+                content: JSON.parse(message!.content as string),
+            });
             callback();
         });
 
@@ -474,7 +474,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                     return [];
                 }
                 success = false;
+                // tslint:disable-next-line: no-unsafe-any
                 if (typeof error === "object" && error !== null && error.retryAfterSeconds !== undefined) {
+                    // tslint:disable-next-line: no-unsafe-any
                     retryAfter = error.retryAfterSeconds;
                 }
             }
@@ -611,7 +613,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         DeltaConnection.connect(
             this.service,
-            this.client!,
+            this.client,
             mode).then(
             (connection) => {
                 this.connection = connection;
@@ -716,7 +718,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 }
 
                 let delayNext: number = 0;
+                // tslint:disable-next-line: no-unsafe-any
                 if (typeof error === "object" && error !== null && error.retryAfterSeconds !== undefined) {
+                    // tslint:disable-next-line: no-unsafe-any
                     delayNext = error.retryAfterSeconds;
                 } else {
                     delayNext = Math.min(delay * 2, MaxReconnectDelay);
@@ -875,19 +879,11 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         this.handler!.process(
             message,
-            (err?: any) => {
-                if (err) {
-                    callback(err);
+            (result: IProcessMessageResult) => {
+                if (result.error) {
+                    callback(result.error);
                 } else {
-                    // We will queue a message to update our reference sequence number upon receiving a server
-                    // operation. This allows the server to know our true reference sequence number and be able to
-                    // correctly update the minimum sequence number (MSN). We don't acknowledge other message types
-                    // similarly (like a min sequence number update) to avoid acknowledgement cycles (i.e. ack the MSN
-                    // update, which updates the MSN, then ack the update, etc...).
-                    if (message.type === MessageType.Operation ||
-                      message.type === MessageType.Propose) {
-                      this.updateSequenceNumber(message.type);
-                    }
+                    this.scheduleSequenceNumberUpdate(message, result.immediateNoOp === true);
 
                     const endTime = Date.now();
                     this.emit("processTime", endTime - startTime);
@@ -977,7 +973,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         return {
             clientId: message.clientId,
             clientSequenceNumber: message.clientSequenceNumber,
-            contents: message.contents,
+            contents: message.contents as string,
         };
     }
 
@@ -1003,48 +999,49 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     }
 
     /**
-     * Acks the server to update the reference sequence number
+     * Schedules as ack to the server to update the reference sequence number
      */
-    private updateSequenceNumber(type: MessageType): void {
-        // Exit early for inactive clients. They don't take part in the minimum sequence number calculation.
+    private scheduleSequenceNumberUpdate(message: ISequencedDocumentMessage, immediateNoOp: boolean): void {
+        // Exit early for inactive (not in quorum or not writers) clients.
+        // They don't take part in the minimum sequence number calculation.
         if (!this.active) {
+            this.stopSequenceNumberUpdate();
             return;
         }
 
-        // On a quorum proposal, immediately send a response to expedite the approval.
-        if (type === MessageType.Propose) {
+        // While processing a message, an immediate no-op can be requested.
+        // i.e. to expedite approve or commit phase of quorum.
+        if (immediateNoOp) {
+            this.stopSequenceNumberUpdate();
             this.submit(MessageType.NoOp, ImmediateNoOpResponse);
             return;
         }
 
-        // If an update has already been requested then mark this fact. We will wait until no updates have
-        // been requested before sending the updated sequence number.
-        if (this.updateSequenceNumberTimer) {
-            this.updateHasBeenRequested = true;
+        // We don't acknowledge no-ops to avoid acknowledgement cycles (i.e. ack the MSN
+        // update, which updates the MSN, then ack the update, etc...).
+        if (message.type === MessageType.NoOp) {
             return;
         }
 
-        // Clear an update in 100 ms
-        this.updateSequenceNumberTimer = setTimeout(() => {
-            this.updateSequenceNumberTimer = undefined;
-
-            // If a second update wasn't requested then send an update message. Otherwise defer this until we
-            // stop processing new messages.
-            if (!this.updateHasBeenRequested) {
-                this.submit(MessageType.NoOp, null);
-            } else {
-                this.updateHasBeenRequested = false;
-                this.updateSequenceNumber(type);
-            }
-        }, 100);
+        // We will queue a message to update our reference sequence number upon receiving a server
+        // operation. This allows the server to know our true reference sequence number and be able to
+        // correctly update the minimum sequence number (MSN).
+        if (this.updateSequenceNumberTimer === undefined) {
+            // Clear an update in 100 ms
+            this.updateSequenceNumberTimer = setTimeout(() => {
+                this.updateSequenceNumberTimer = undefined;
+                if (this.active) {
+                    this.submit(MessageType.NoOp, null);
+                }
+            }, 100);
+        }
     }
 
     private stopSequenceNumberUpdate(): void {
         if (this.updateSequenceNumberTimer) {
+            // tslint:disable-next-line: no-unsafe-any
             clearTimeout(this.updateSequenceNumberTimer);
         }
-
-        this.updateHasBeenRequested = false;
         this.updateSequenceNumberTimer = undefined;
     }
 }

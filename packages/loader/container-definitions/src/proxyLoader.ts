@@ -17,10 +17,7 @@ export interface IProxyLoaderFactory {
      */
     createProxyLoader(
         id: string,
-        version: string | null | undefined,
-        connection: string,
         options: any,
         resolved: IFluidResolvedUrl,
-        fromSequenceNumber: number,
-        canReconnect: boolean): Promise<ILoader>;
+        fromSequenceNumber: number): Promise<ILoader>;
 }

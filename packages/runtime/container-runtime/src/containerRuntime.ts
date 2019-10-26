@@ -69,6 +69,13 @@ import { ComponentContext, LocalComponentContext, RemotedComponentContext } from
 import { ComponentHandleContext } from "./componentHandleContext";
 import { debug } from "./debug";
 import { DocumentStorageServiceProxy } from "./documentStorageServiceProxy";
+import {
+    componentRuntimeRequestHandler,
+    createLoadableComponentRuntimeRequestHandler,
+    RuntimeRequestHandler,
+} from "./requestHandlers";
+import { RequestParser } from "./requestParser";
+import { RuntimeRequestHandlerBuilder } from "./runtimeRequestHandlerBuilder";
 import { Summarizer } from "./summarizer";
 import { SummaryManager } from "./summaryManager";
 import { ISummaryStats, SummaryTreeConverter } from "./summaryTreeConverter";
@@ -330,6 +337,15 @@ function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
     }
 }
 
+export const schedulerId = "_scheduler";
+const schedulerRuntimeRequestHandler: RuntimeRequestHandler =
+    async (request: RequestParser, runtime: IHostRuntime) => {
+        if (request.pathParts.length > 0 && request.pathParts[0] === schedulerId) {
+            return componentRuntimeRequestHandler(request, runtime);
+        }
+        return undefined;
+    };
+
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the component level mappings.
@@ -339,13 +355,13 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
      * Load the components from a snapshot and returns the runtime.
      * @param context - Context of the container.
      * @param registry - Mapping to the components.
-     * @param createRequestHandler - create a request handler to handle container requests
+     * @param requestHandlers - Request handlers for the container runtime
      * @param runtimeOptions - Additional options to be passed to the runtime
      */
     public static async load(
         context: IContainerContext,
         registry: ComponentRegistryTypes,
-        createRequestHandler?: (runtime: ContainerRuntime) => ((request: IRequest) => Promise<IResponse>),
+        requestHandlers: RuntimeRequestHandler[] = [],
         runtimeOptions?: IContainerRuntimeOptions,
     ): Promise<ContainerRuntime> {
         const componentRegistry = new WrappedComponentRegistry(registry);
@@ -356,11 +372,15 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             : [];
 
         const runtime = new ContainerRuntime(context, componentRegistry, chunks, runtimeOptions);
-        runtime.requestHandler = createRequestHandler(runtime);
+        runtime.requestHandler = new RuntimeRequestHandlerBuilder();
+        runtime.requestHandler.pushHandler(
+            createLoadableComponentRuntimeRequestHandler(runtime.summarizer),
+            schedulerRuntimeRequestHandler,
+            ...requestHandlers);
 
         // Create all internal components in first load.
         if (!context.existing) {
-            await runtime.createComponent("_scheduler", "_scheduler")
+            await runtime.createComponent(schedulerId, schedulerId)
                 .then((componentRuntime) => componentRuntime.attach());
         }
 
@@ -489,7 +509,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     private readonly summarizer: Summarizer;
     private readonly deltaSender: IDeltaSender | undefined;
     private readonly scheduleManager: ScheduleManager;
-    private requestHandler: (request: IRequest) => Promise<IResponse>;
+    private requestHandler: RuntimeRequestHandlerBuilder;
 
     // Local copy of incomplete received chunks.
     private readonly chunkMap: Map<string, string[]>;
@@ -609,23 +629,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
      * @param request - Request made to the handler.
      */
     public async request(request: IRequest): Promise<IResponse> {
-        // system routes
-        if (request.url === this.summarizer.url) {
-            return { status: 200, mimeType: "fluid/component", value: this.summarizer };
-        }
-
-        if (request.url === "/_scheduler") {
-            const component = await this.getComponentRuntime("_scheduler", true);
-            return component.request({ url: "" });
-        }
-
-        // If no app specified handler has been specified then this is a 404
-        if (!this.requestHandler) {
-            return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
-        }
-
         // Otherwise defer to the app to handle the request
-        return this.requestHandler(request);
+        return this.requestHandler.handleRequest(request, this);
     }
 
     /**
@@ -1303,7 +1308,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     }
 
     private subscribeToLeadership() {
-        if (this.context.configuration === undefined || this.context.configuration.canReconnect) {
+        if (this.context.clientType !== "summarizer") {
             this.getScheduler().then((scheduler) => {
                 if (scheduler.leader) {
                     this.updateLeader(true);
@@ -1326,7 +1331,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     }
 
     private async getScheduler() {
-        const schedulerRuntime = await this.getComponentRuntime("_scheduler", true);
+        const schedulerRuntime = await this.getComponentRuntime(schedulerId, true);
         const schedulerResponse = await schedulerRuntime.request({ url: "" });
         const schedulerComponent = schedulerResponse.value as IComponent;
         return schedulerComponent.IAgentScheduler;
@@ -1395,7 +1400,7 @@ export class WrappedComponentRegistry implements IComponentRegistry {
     public get IComponentRegistry() { return this; }
 
     public async get(name: string): Promise<ComponentFactoryTypes> {
-        if (name === "_scheduler") {
+        if (name === schedulerId) {
             return this.agentScheduler;
         } else if (this.extraRegistries && this.extraRegistries.has(name)) {
             return this.extraRegistries.get(name);

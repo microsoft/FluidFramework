@@ -17,12 +17,9 @@ import * as Comlink from "comlink";
 interface IProxyLoader extends ILoader, IComponentRunnable {
     // tslint:disable no-misused-new
     new(id: string,
-        version: string | null | undefined,
-        connection: string,
         options: any,
         resolved: IFluidResolvedUrl,
-        fromSequenceNumber: number,
-        canReconnect: boolean): IProxyLoader;
+        fromSequenceNumber: number): IProxyLoader;
 
     stop(reason?: string): Promise<void>;
 }
@@ -33,22 +30,16 @@ interface IProxyLoader extends ILoader, IComponentRunnable {
 export class WebWorkerLoader implements ILoader, IComponentRunnable, IComponentRouter {
     public static async load(
         id: string,
-        version: string | null | undefined,
-        connection: string,
         options: any,
         resolved: IFluidResolvedUrl,
         fromSequenceNumber: number,
-        canReconnect: boolean,
     ) {
         const ProxyLoader = Comlink.wrap<IProxyLoader>(new Worker("/public/scripts/dist/worker.min.js"));
         const proxyLoader = await new ProxyLoader(
             id,
-            version,
-            connection,
             options,
             resolved,
             fromSequenceNumber,
-            canReconnect,
         );
         return new WebWorkerLoader(proxyLoader);
     }

@@ -132,7 +132,7 @@ export class SummaryManager extends EventEmitter {
         }
 
         // Make sure that the summarizer client does not load another summarizer.
-        if (this.context.configuration === undefined || this.context.configuration.canReconnect) {
+        if (this.context.clientType !== "summarizer") {
             // Create and run the new summarizer. On disconnect if we should still summarize launch another instance.
             const doneP = this.createSummarizer()
                 .then((summarizer) => {
@@ -165,6 +165,7 @@ export class SummaryManager extends EventEmitter {
         const request: IRequest = {
             headers: {
                 "fluid-cache": false,
+                "fluid-client-type": "summarizer",
                 "fluid-reconnect": false,
                 "fluid-sequence-number": this.context.deltaManager.referenceSequenceNumber,
                 "execution-context": this.enableWorker ? "worker" : undefined,
