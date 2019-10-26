@@ -210,7 +210,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this._inbound = new DeltaQueue<ISequencedDocumentMessage>(
             (op, callback) => {
                 try {
-                    this.processMessage(op, callback);
+                    this.processInboundMessage(op, callback);
                 } catch (error) {
                     callback(error);
                 }
@@ -820,7 +820,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         }
     }
 
-    private processMessage(message: ISequencedDocumentMessage, callback: (err?: any) => void): void {
+    private processInboundMessage(message: ISequencedDocumentMessage, callback: (err?: any) => void): void {
         const startTime = Date.now();
 
         if (this.connection && this.connection.details.clientId === message.clientId) {
