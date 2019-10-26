@@ -105,15 +105,11 @@ export class ProtocolOpHandler {
                 break;
 
             case MessageType.Summarize:
-                // can parse seq# from content.message
-                const content = message.contents as ISummaryContent;
-                // message:"Summary @1186:1183"
-                const refSequenceNumber = content.message.match("/@(.*):/");
                 this.logger.sendTelemetryEvent({
                     eventName: "Summarize",
-                    message: content,
-                    sequenceNumber: message.sequenceNumber,
-                    refSequenceNumber: refSequenceNumber ? refSequenceNumber[1] : undefined,
+                    message: message.contents as ISummaryContent,
+                    summarySequenceNumber: message.sequenceNumber,
+                    refSequenceNumber: message.referenceSequenceNumber,
                 });
                 break;
 
@@ -123,7 +119,7 @@ export class ProtocolOpHandler {
                     eventName: "SummaryAck",
                     message: `handle: ${ack.handle}`,
                     sequenceNumber: message.sequenceNumber,
-                    refSequenceNumber: ack.summaryProposal.summarySequenceNumber,
+                    summarySequenceNumber: ack.summaryProposal.summarySequenceNumber,
                 });
                 break;
 
@@ -133,7 +129,7 @@ export class ProtocolOpHandler {
                     eventName: "SummaryNack",
                     message: nack.errorMessage,
                     sequenceNumber: message.sequenceNumber,
-                    refSequenceNumber: nack.summaryProposal.summarySequenceNumber,
+                    summarySequenceNumber: nack.summaryProposal.summarySequenceNumber,
                 });
                 break;
 

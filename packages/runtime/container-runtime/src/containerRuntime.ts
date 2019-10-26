@@ -1112,7 +1112,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             };
 
             if (!this.connected) {
-                generateSummaryEvent.cancel({reason: "Disconnected"});
+                generateSummaryEvent.cancel({reason: "disconnected"});
                 return ret;
             }
             // TODO in the future we can have stored the latest summary by listening to the summary ack message
@@ -1127,7 +1127,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             generateSummaryEvent.reportProgress({}, "generatedTree");
 
             if (!this.connected) {
-                generateSummaryEvent.cancel({reason: "Disconnected"});
+                generateSummaryEvent.cancel({reason: "disconnected"});
                 return ret;
             }
             const handle = await this.context.storage.uploadSummary(treeWithStats.summaryTree);
@@ -1140,7 +1140,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             generateSummaryEvent.reportProgress({}, "uploadedTree");
 
             if (!this.connected) {
-                generateSummaryEvent.cancel({reason: "Disconnected"});
+                generateSummaryEvent.cancel({reason: "disconnected"});
                 return ret;
             }
             // if summarizer loses connection it will never reconnect

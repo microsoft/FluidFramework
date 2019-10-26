@@ -219,7 +219,7 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
                 this.logger.sendTelemetryEvent({
                     eventName: "SummarizeOp",
                     timeWaitingForBroadcast: Date.now() - this.lastSummaryTime,
-                    refSequenceNumber: op.referenceSequenceNumber,
+                    summarySequenceNumber: op.referenceSequenceNumber,
                     sequenceNumber: op.sequenceNumber,
                 });
                 this.pendingSummarySequenceNumber = op.sequenceNumber;
@@ -229,7 +229,7 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
             } else {
                 this.logger.sendTelemetryEvent({
                     eventName: "SummarizeOp_otherClient",
-                    refSequenceNumber: op.referenceSequenceNumber,
+                    summarySequenceNumber: op.referenceSequenceNumber,
                     sequenceNumber: op.sequenceNumber,
                 });
             }
