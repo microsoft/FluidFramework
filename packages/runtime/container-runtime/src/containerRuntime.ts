@@ -1013,7 +1013,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                     snapshotTree,
                     this,
                     new DocumentStorageServiceProxy(this.storage, flatBlobs),
-                    this.context.scope);
+                    this.context.scope,
+                    [attachMessage.type]);
 
                 break;
 
