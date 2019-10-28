@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
-import { DebugLogger, SinglePromise } from "@microsoft/fluid-core-utils";
+import { DebugLogger, SinglePromise, TelemetryLogger } from "@microsoft/fluid-core-utils";
 import {
     ConnectionMode,
     IClient,
@@ -36,6 +36,8 @@ export class OdspDocumentService implements IDocumentService {
     private websocketEndpointP: Promise<ISocketStorageDiscovery> | undefined;
 
     private storageManager?: OdspDocumentStorageManager;
+
+    private readonly subLogger: TelemetryLogger;
 
     private readonly getStorageToken: (refresh: boolean) => Promise<string | null>;
 
@@ -72,7 +74,7 @@ export class OdspDocumentService implements IDocumentService {
         private readonly odspCache: OdspCache,
     ) {
 
-        this.logger = DebugLogger.mixinDebugLogger(
+        this.subLogger = DebugLogger.mixinDebugLogger(
             "fluid:telemetry",
             {
                 documentId: hashedDocumentId,
@@ -84,7 +86,7 @@ export class OdspDocumentService implements IDocumentService {
                 // Potential perf issue:
                 // Host should optimize and provide non-expired tokens on all critical paths.
                 // Exceptions: race conditions around expiration, revoked tokens, host that does not care (fluid-fetcher)
-                this.logger.sendTelemetryEvent({eventName: "StorageTokenRefresh"});
+                this.subLogger.sendTelemetryEvent({eventName: "StorageTokenRefresh"});
             }
             return getStorageToken(this.siteUrl, refresh);
         };
@@ -118,7 +120,7 @@ export class OdspDocumentService implements IDocumentService {
             latestSha,
             this.storageFetchWrapper,
             this.getStorageToken,
-            this.logger,
+            this.subLogger,
             true,
             this.odspCache,
         );
@@ -139,7 +141,7 @@ export class OdspDocumentService implements IDocumentService {
               // any other requests are result of catching up on missing ops and are coming after websocket is established (or reconnected),
               // and thus we already have fresh join session call.
               // That said, tools like Fluid-fetcher will hit it, so that's valid code path.
-              this.logger.sendErrorEvent({ eventName: "ExtraJoinSessionCall" });
+              this.subLogger.sendErrorEvent({ eventName: "ExtraJoinSessionCall" });
 
               this.websocketEndpointP = this.websocketEndpointRequestThrottler.response;
             }
@@ -177,7 +179,7 @@ export class OdspDocumentService implements IDocumentService {
             mode,
             websocketEndpoint.deltaStreamSocketUrl,
             websocketEndpoint.deltaStreamSocketUrl2,
-            this.logger,
+            this.subLogger,
         );
     }
 
