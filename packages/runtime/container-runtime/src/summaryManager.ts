@@ -5,6 +5,7 @@
 
 import { IComponent, IComponentRunnable, IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IContainerContext, ITelemetryLogger } from "@microsoft/fluid-container-definitions";
+import { LoaderHeader } from "@microsoft/fluid-container-loader";
 import { ChildLogger, Heap, IComparer, IHeapNode } from "@microsoft/fluid-core-utils";
 import { ISequencedClient } from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
@@ -160,16 +161,16 @@ export class SummaryManager extends EventEmitter {
         this.logger.sendTelemetryEvent({ eventName: "CreatingSummarizer" });
 
         const loader = this.context.loader;
+        const headers = {};
+        headers[LoaderHeader.cache] = false;
+        headers[LoaderHeader.clientType] = "summarizer";
+        headers[LoaderHeader.reconnect] = false;
+        headers[LoaderHeader.sequenceNumber] = this.context.deltaManager.referenceSequenceNumber;
+        headers["execution-context"] = this.enableWorker ? "worker" : undefined;
 
         // TODO eventually we may wish to spawn an execution context from which to run this
         const request: IRequest = {
-            headers: {
-                "fluid-cache": false,
-                "fluid-client-type": "summarizer",
-                "fluid-reconnect": false,
-                "fluid-sequence-number": this.context.deltaManager.referenceSequenceNumber,
-                "execution-context": this.enableWorker ? "worker" : undefined,
-            },
+            headers,
             url: "/_summarizer",
         };
 

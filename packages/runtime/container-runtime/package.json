@@ -42,6 +42,7 @@
     "@microsoft/fluid-agent-scheduler": "^0.11.0",
     "@microsoft/fluid-component-core-interfaces": "^0.11.0",
     "@microsoft/fluid-container-definitions": "^0.11.0",
+    "@microsoft/fluid-container-loader": "^0.11.0",
     "@microsoft/fluid-core-utils": "^0.11.0",
     "@microsoft/fluid-protocol-definitions": "^0.11.0",
     "@microsoft/fluid-runtime-definitions": "^0.11.0",
