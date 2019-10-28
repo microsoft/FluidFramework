@@ -97,7 +97,7 @@ export class BadgeView extends React.Component<IBadgeViewProps, IBadgeViewState>
                 },
             };
 
-            // Add to the badge options
+      // add to the badge options
             this.props.optionsMap.set(this.state.customText, newItem);
 
             this._setCurrent(newItem);
@@ -114,14 +114,14 @@ export class BadgeView extends React.Component<IBadgeViewProps, IBadgeViewState>
 
     private _setCurrent(newItem: IBadgeType): void {
         if (newItem.key !== this.state.current.key) {
-            // Save current value into history
+      // save current value into history
             const len = this.props.historySequence.getItemCount();
             this.props.historySequence.insert(len, [{
                 value: newItem,
                 timestamp: new Date(),
             }]);
 
-            // Set new value
+      // set new value
             this.props.currentCell.set(newItem);
         }
     }
@@ -167,7 +167,7 @@ export class BadgeView extends React.Component<IBadgeViewProps, IBadgeViewState>
     private _onRenderCard(): JSX.Element {
         const history = [];
 
-        // Add items to history in reverse order
+    // add items to history in reverse order
         this.props.historySequence.getItems(0).forEach((x) => {
             history.unshift(
                 <ActivityItem
@@ -197,7 +197,7 @@ export class BadgeView extends React.Component<IBadgeViewProps, IBadgeViewState>
     }
 
     public render(): JSX.Element {
-        // Calculate colors
+    // calculate colors
         const color = getColorFromString(this.state.current.iconProps.style.color);
         const colorHover = getColorFromHSV({
             h: color.h,

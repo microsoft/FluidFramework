@@ -89,17 +89,17 @@ export class Badge extends PrimedComponent implements IComponentHTMLVisual, ICom
      * before any other user will see the component.
      */
     protected async componentInitializingFirstTime() {
-        // Create a cell to represent the Badge's current state
+    // create a cell to represent the Badge's current state
         const current = SharedCell.create(this.runtime);
         current.set(this.defaultOptions[0]);
         this.root.set(this.currentId, current.handle);
 
-        // Create a map to represent the options for the Badge
+    // create a map to represent the options for the Badge
         const options = SharedMap.create(this.runtime);
         this.defaultOptions.forEach((v) => options.set(v.key, v));
         this.root.set(this.optionsId, options.handle);
 
-        // Create a sequence to store the badge's history
+    // create a sequence to store the badge's history
         const history = SharedObjectSequence.create<IHistory<IBadgeType>>(this.runtime);
         history.insert(0, [{
             value: current.get(),
