@@ -46,19 +46,10 @@ interface ISummaryNackMessage extends ISequencedDocumentMessage {
 interface ISummary {
     readonly clientId: string;
     readonly refSequenceNumber: number;
-    isBroadcast(): this is IBroadcastSummary;
-    isAckedNacked(): this is IAckNackedSummary;
+    isBroadcast(): boolean;
+    isAckedNacked(): boolean;
     waitBroadcast(): Promise<ISummaryMessage>;
     waitAckNack(): Promise<ISummaryAckMessage | ISummaryNackMessage>;
-}
-
-interface IBroadcastSummary extends ISummary {
-    readonly summaryOp: ISummaryMessage;
-}
-
-interface IAckNackedSummary extends ISummary {
-    readonly summaryOp: ISummaryMessage;
-    readonly summaryAckNack: ISummaryAckMessage | ISummaryNackMessage;
 }
 
 enum SummaryState {
@@ -68,7 +59,7 @@ enum SummaryState {
     Nacked = -1,
 }
 
-class Summary implements IBroadcastSummary, IAckNackedSummary {
+class Summary implements ISummary {
     public static createLocal(clientId: string, refSequenceNumber: number) {
         return new Summary(clientId, refSequenceNumber);
     }
@@ -93,10 +84,10 @@ class Summary implements IBroadcastSummary, IAckNackedSummary {
         public readonly clientId: string,
         public readonly refSequenceNumber: number) {}
 
-    public isBroadcast(): this is IBroadcastSummary {
+    public isBroadcast(): boolean {
         return this.state !== SummaryState.Local;
     }
-    public isAckedNacked(): this is IAckNackedSummary {
+    public isAckedNacked(): boolean {
         return this.state === SummaryState.Acked || this.state === SummaryState.Nacked;
     }
 
@@ -117,14 +108,14 @@ class Summary implements IBroadcastSummary, IAckNackedSummary {
     }
 
     public async waitBroadcast(): Promise<ISummaryMessage> {
-        if (!this.isBroadcast) {
+        if (!this.isBroadcast()) {
             await this.defSummaryOp.promise;
         }
         return this._summaryOp;
     }
 
     public async waitAckNack(): Promise<ISummaryAckMessage | ISummaryNackMessage> {
-        if (!this.isAckedNacked) {
+        if (!this.isAckedNacked()) {
             await this.defSummaryAck.promise;
         }
         return this._summaryAckNack;
@@ -140,17 +131,30 @@ class SummaryDds {
     private readonly ackedSummaries = new Map<number, Summary>();
     // key: summarySeqNum
     private readonly nacks = new Map<number, ISummaryNackMessage>();
-    private readonly initialAck = new Deferred<ISummaryAckMessage>();
+    private readonly initialAck = new Deferred<ISummaryAckMessage | undefined>();
 
     private initialized = false;
     public get isInitialized() { return this.initialized; }
 
     public constructor(
         public readonly initialSequenceNumber: number,
-        private readonly logger: ITelemetryLogger) {}
+        private readonly logger: ITelemetryLogger,
+    ) {
+        if (this.initialSequenceNumber === 0) {
+            this.initialized = true;
+            this.initialAck.resolve();
+        }
+    }
 
-    public waitInitialAck(): Promise<ISummaryAckMessage> {
+    public waitInitialized(): Promise<ISummaryAckMessage | undefined> {
         return this.initialAck.promise;
+    }
+
+    public async waitFlushed(): Promise<void> {
+        while (this.pendingSummaries.size > 0) {
+            const promises = Array.from(this.pendingSummaries, ([, summary]) => summary.waitAckNack());
+            await Promise.all(promises);
+        }
     }
 
     public addLocalSummary(clientId: string, refSequenceNumber: number): ISummary {
@@ -227,20 +231,26 @@ class SummaryDds {
     }
 }
 
+interface ISummaryAttempt {
+    readonly refSequenceNumber: number;
+    readonly summaryTime: number;
+}
+
 export class Summarizer implements IComponentRouter, IComponentLoadable, IComponentRunnable {
     public get IComponentRouter() { return this; }
     public get IComponentRunnable() { return this; }
     public get IComponentLoadable() { return this; }
 
-    private summarizeCount: number = 0;
-    private lastSummaryTime: number;
-    private lastSummaryRefSeqNumber: number;
-    private lastOpSeqNumber: number;
     private summarizing = false;
+    private summarizeCount: number = 0;
+    private lastOpSeqNumber: number;
+    private pendingCancelDeferred: Deferred<void>;
+    private lastAttemptedSummary: ISummaryAttempt;
+    private lastSuccessfulSummary: ISummaryAttempt;
+
     private idleTimer: Timer;
     private pendingAckTimer: Timer;
     private readonly summarizeTimer: Timer;
-    private pendingCancelDeferred: Deferred<void>;
     private readonly runDeferred = new Deferred<void>();
     private readonly logger: ITelemetryLogger;
     private configuration: ISummaryConfiguration;
@@ -325,23 +335,28 @@ export class Summarizer implements IComponentRouter, IComponentLoadable, ICompon
                 this.logger.sendErrorEvent({
                     eventName: "SummaryAckWaitTimeout",
                     maxAckWaitTime: this.configuration.maxAckWaitTime,
-                    refSequenceNumber: this.lastSummaryRefSeqNumber,
+                    refSequenceNumber: this.lastAttemptedSummary.refSequenceNumber,
                 });
                 this.pendingCancelDeferred.resolve();
             }, this.configuration.maxAckWaitTime);
 
         // initialize values and first ack (time is not exact)
-        const initialAck = await this.summaryDds.waitInitialAck();
+        const maybeInitialAck = await this.summaryDds.waitInitialized();
 
-        this.lastSummaryRefSeqNumber = this.summaryDds.initialSequenceNumber;
-        this.lastSummaryTime = initialAck.timestamp;
+        this.lastSuccessfulSummary = {
+            refSequenceNumber: this.summaryDds.initialSequenceNumber,
+            summaryTime: maybeInitialAck ? maybeInitialAck.timestamp : Date.now(),
+        };
 
         this.logger.sendTelemetryEvent({
             eventName: "RunningSummarizer",
             onBehalfOf,
             initSummarySeqNumber: this.summaryDds.initialSequenceNumber,
-            initHandle: initialAck.contents.handle,
+            initHandle: maybeInitialAck ? maybeInitialAck.contents.handle : undefined,
         });
+
+        this.pendingAckTimer.start();
+        await Promise.race([this.summaryDds.waitFlushed(), this.pendingCancelDeferred.promise]);
 
         // start the timer after connecting to the document
         this.idleTimer.start();
@@ -446,8 +461,8 @@ export class Summarizer implements IComponentRouter, IComponentLoadable, ICompon
 
         // check if we should summarize
         let summaryMessage = message;
-        const timeSinceLastSummary = Date.now() - this.lastSummaryTime;
-        const opCountSinceLastSummary = this.lastOpSeqNumber - this.lastSummaryRefSeqNumber;
+        const opCountSinceLastSummary = this.lastOpSeqNumber - this.lastSuccessfulSummary.refSequenceNumber;
+        const timeSinceLastSummary = Date.now() - this.lastSuccessfulSummary.summaryTime;
 
         if (message) {
             summaryMessage = message;
@@ -466,7 +481,6 @@ export class Summarizer implements IComponentRouter, IComponentLoadable, ICompon
         // generateSummary could take some time
         // mark that we are currently summarizing to prevent concurrent summarizing
         this.summarizing = true;
-        this.summarizeCount++;
         this.summarizeTimer.start();
 
         // tslint:disable-next-line: no-floating-promises
@@ -478,21 +492,22 @@ export class Summarizer implements IComponentRouter, IComponentLoadable, ICompon
     }
 
     private async summarize(message: string) {
-        const thisSummarizeCount = this.summarizeCount;
         const summarizingEvent = PerformanceEvent.start(this.logger, {
             eventName: "Summarizing",
             message,
-            summarizeCount: thisSummarizeCount,
-            timeSinceLastSummary: Date.now() - this.lastSummaryTime,
+            summarizeCount: ++this.summarizeCount,
+            timeSinceLastAttempt: Date.now() - this.lastAttemptedSummary.summaryTime,
+            timeSinceLastSummary: Date.now() - this.lastSuccessfulSummary.summaryTime,
         });
 
         const summaryData = await this.generateSummary();
         this.summarizeTimer.clear();
 
         const telemetryProps = {
-            sequenceNumber: summaryData.sequenceNumber,
+            refSequenceNumber: summaryData.sequenceNumber,
             ...summaryData.summaryStats,
-            opsSinceLastSummary: summaryData.sequenceNumber - this.lastSummaryRefSeqNumber,
+            opsSinceLastAttempt: summaryData.sequenceNumber - this.lastAttemptedSummary.refSequenceNumber,
+            opsSinceLastSummary: summaryData.sequenceNumber - this.lastSuccessfulSummary.refSequenceNumber,
         };
         if (!summaryData.submitted) {
             // did not send the summary op
@@ -502,12 +517,14 @@ export class Summarizer implements IComponentRouter, IComponentLoadable, ICompon
 
         summarizingEvent.end(telemetryProps);
 
-        this.lastSummaryTime = Date.now();
-        this.lastSummaryRefSeqNumber = summaryData.sequenceNumber;
+        this.lastAttemptedSummary = {
+            refSequenceNumber: summaryData.sequenceNumber,
+            summaryTime: Date.now(),
+        };
 
         this.pendingCancelDeferred = new Deferred<void>();
         this.pendingAckTimer.start();
-        const summary = this.summaryDds.addLocalSummary(this.runtime.clientId, this.lastSummaryRefSeqNumber);
+        const summary = this.summaryDds.addLocalSummary(this.runtime.clientId, summaryData.sequenceNumber);
 
         // wait for broadcast
         const summaryOp = await Promise.race([summary.waitBroadcast(), this.pendingCancelDeferred.promise]);
@@ -516,7 +533,7 @@ export class Summarizer implements IComponentRouter, IComponentLoadable, ICompon
         }
         this.logger.sendTelemetryEvent({
             eventName: "SummaryOp",
-            timeWaitingForBroadcast: Date.now() - this.lastSummaryTime,
+            timeWaiting: Date.now() - this.lastAttemptedSummary.summaryTime,
             refSequenceNumber: summaryOp.referenceSequenceNumber,
             summarySequenceNumber: summaryOp.sequenceNumber,
             handle: summaryOp.contents.handle,
@@ -530,16 +547,16 @@ export class Summarizer implements IComponentRouter, IComponentLoadable, ICompon
         this.logger.sendTelemetryEvent({
             eventName: ackNack.type === MessageType.SummaryAck ? "SummaryAck" : "SummaryNack",
             category: ackNack.type === MessageType.SummaryAck ? "generic" : "error",
-            timePending: Date.now() - this.lastSummaryTime,
+            timeWaiting: Date.now() - this.lastAttemptedSummary.summaryTime,
             summarySequenceNumber: ackNack.contents.summaryProposal.summarySequenceNumber,
             message: ackNack.type === MessageType.SummaryNack ? ackNack.contents.errorMessage : undefined,
             handle: ackNack.type === MessageType.SummaryAck ? ackNack.contents.handle : undefined,
         });
 
-        // refresh base snapshot
-        // it might be nice to do this in the container in the future, and maybe for all
-        // clients, not just the summarizer
+        // update for success
         if (ackNack.type === MessageType.SummaryAck) {
+            this.lastSuccessfulSummary = this.lastAttemptedSummary;
+
             // we have to call get version to get the treeId for r11s; this isnt needed
             // for odsp currently, since their treeId is undefined
             const versionsResult = await this.setOrLogError("SummarizerFailedToGetVersion",
@@ -552,6 +569,9 @@ export class Summarizer implements IComponentRouter, IComponentLoadable, ICompon
                     (snapshot) => !!snapshot);
 
                 if (snapshotResult.success) {
+                    // refresh base summary
+                    // it might be nice to do this in the container in the future, and maybe for all
+                    // clients, not just the summarizer
                     this.refreshBaseSummary(snapshotResult.result);
                 }
             }
