@@ -189,32 +189,24 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         // Inbound message queue
         this._inboundPending = new DeltaQueue<ISequencedDocumentMessage>(
-            (op, successCallback, errorCallback) => {
+            (op) => {
                 // Explicitly split the two cases to avoid the async call in the case we are not split
                 if (op.contents === undefined) {
-                    this.fetchOpContent(op).then(
+                    return this.fetchOpContent(op).then(
                         (opContents) => {
                             op.contents = opContents.contents;
                             this._inbound.push(op);
-                            successCallback();
-                        },
-                        (error) => {
-                            errorCallback(error);
                         });
                 } else {
                     this._inbound.push(op);
-                    successCallback();
+                    return undefined;
                 }
             });
 
         this._inbound = new DeltaQueue<ISequencedDocumentMessage>(
-            (op, successCallback, errorCallback) => {
-                try {
-                    this.processInboundMessage(op);
-                    successCallback();
-                } catch (error) {
-                    errorCallback(error);
-                }
+            (op) => {
+                this.processInboundMessage(op);
+                return undefined;
             });
 
         this._inboundPending.on("error", (error) => {
@@ -228,9 +220,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         // Outbound message queue. The outbound queue is represented as a queue of an array of ops. Ops contained
         // within an array *must* fit within the maxMessageSize and are guaranteed to be ordered sequentially.
         this._outbound = new DeltaQueue<IDocumentMessage[]>(
-            (messages, successCallback: () => void) => {
+            (messages) => {
                 this.connection!.submit(messages);
-                successCallback();
+                return undefined;
             },
         );
 
@@ -239,12 +231,12 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         });
 
         // Inbound signal queue
-        this._inboundSignal = new DeltaQueue<ISignalMessage>((message, successCallback: () => void) => {
+        this._inboundSignal = new DeltaQueue<ISignalMessage>((message) => {
             this.handler!.processSignal({
                 clientId: message.clientId,
                 content: JSON.parse(message!.content as string),
             });
-            successCallback();
+            return undefined;
         });
 
         this._inboundSignal.on("error", (error) => {
