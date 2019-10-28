@@ -55,9 +55,8 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
         this.isDisposed = true;
     }
 
-    public async clear(): Promise<void> {
+    public clear(): void {
         this.q.clear();
-        return this.updatePause();
     }
 
     public peek(): T | undefined {
