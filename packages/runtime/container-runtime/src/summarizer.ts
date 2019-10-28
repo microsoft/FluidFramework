@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentLoadable } from "@microsoft/fluid-component-core-interfaces";
+import {
+    IComponentLoadable,
+    IComponentRouter,
+    IComponentRunnable,
+    IRequest,
+    IResponse } from "@microsoft/fluid-component-core-interfaces";
 import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
 import { ChildLogger, Deferred, PerformanceEvent } from "@microsoft/fluid-core-utils";
 import {
@@ -35,31 +40,10 @@ interface IOpSummaryDetails {
     message: string;
 }
 
-declare module "@microsoft/fluid-component-core-interfaces" {
-    export interface IComponent extends Readonly<Partial<IProvideSummarizer>> { }
-}
+export class Summarizer implements IComponentRouter, IComponentRunnable, IComponentLoadable {
 
-export interface IProvideSummarizer {
-    readonly ISummarizer: ISummarizer;
-}
-
-export interface ISummarizer extends IProvideSummarizer {
-    /**
-     * Runs the summarizer on behalf of another clientId. In this case it will only run so long as the given
-     * clientId is the elected summarizer and will stop once it is not.
-     */
-    run(onBehalfOf: string): Promise<void>;
-
-    /**
-     * Stops the summarizer by closing its container and resolving its run promise.
-     * @param reason - reason for stopping
-     */
-    stop(reason?: string): void;
-}
-
-export class Summarizer implements IComponentLoadable, ISummarizer {
-
-    public get ISummarizer() { return this; }
+    public get IComponentRouter() { return this; }
+    public get IComponentRunnable() { return this; }
     public get IComponentLoadable() { return this; }
 
     private lastSummaryTime: number;
@@ -178,6 +162,14 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
         });
         this.runDeferred.resolve();
         this.runtime.closeFn();
+    }
+
+    public async request(request: IRequest): Promise<IResponse> {
+        return {
+            mimeType: "fluid/component",
+            status: 200,
+            value: this,
+        };
     }
 
     private async setOrLogError<T>(

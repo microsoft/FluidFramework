@@ -12,6 +12,7 @@ import {
     ICodeLoader,
     IHost,
     ILoader,
+    IProxyLoaderFactory,
     ITelemetryBaseLogger,
 } from "@microsoft/fluid-container-definitions";
 import { configurableUrlResolver, Deferred } from "@microsoft/fluid-core-utils";
@@ -90,10 +91,14 @@ export class RelativeLoader extends EventEmitter implements ILoader {
 
     public async request(request: IRequest): Promise<IResponse> {
         if (request.url.indexOf("/") === 0) {
-            const container = this.canUseCache(request)
+            if (this.needExecutionContext(request)) {
+                return this.loader.requestWorker(this.baseRequest.url, request);
+            } else {
+                const container = this.canUseCache(request)
                 ? await this.containerDeferred.promise
                 : await this.loader.resolve({ url: this.baseRequest.url, headers: request.headers });
-            return container.request(request);
+                return container.request(request);
+            }
         }
 
         return this.loader.request(request);
@@ -113,6 +118,10 @@ export class RelativeLoader extends EventEmitter implements ILoader {
             request.headers[LoaderHeader.reconnect] === false;
 
         return !noCache;
+    }
+
+    private needExecutionContext(request: IRequest): boolean {
+        return (request.headers !== undefined && request.headers["execution-context"] !== undefined);
     }
 }
 
@@ -171,6 +180,7 @@ export class Loader extends EventEmitter implements ILoader {
         private readonly codeLoader: ICodeLoader,
         private readonly options: any,
         private readonly scope: IComponent,
+        private readonly proxyLoaderFactories: Map<string, IProxyLoaderFactory>,
         private readonly logger?: ITelemetryBaseLogger,
     ) {
         super();
@@ -202,6 +212,36 @@ export class Loader extends EventEmitter implements ILoader {
 
         const resolved = await this.resolveCore(request);
         return resolved.container.request({ url: resolved.parsed.path });
+    }
+
+    public async requestWorker(baseUrl: string, request: IRequest): Promise<IResponse> {
+
+        // Currently the loader only supports web worker environment. Eventually we will
+        // detect environment and bring appropiate loader (e.g., worker_thread for node).
+        const supportedEnvironment = "webworker";
+        const proxyLoaderFactory = this.proxyLoaderFactories.get(supportedEnvironment);
+
+        // If the loader does not support any other environment, request falls back to current loader.
+        if (!proxyLoaderFactory) {
+            const container = await this.resolve({ url: baseUrl, headers: request.headers });
+            return container.request(request);
+        } else {
+            const resolved = await this.getResolvedUrl({ url: baseUrl, headers: request.headers });
+            const resolvedAsFluid = resolved as IFluidResolvedUrl;
+            const parsed = this.parseUrl(resolvedAsFluid.url);
+            if (!parsed) {
+                return Promise.reject(`Invalid URL ${resolvedAsFluid.url}`);
+            }
+            const { fromSequenceNumber } =
+                this.parseHeader(parsed, { url: baseUrl, headers: request.headers });
+            const proxyLoader = await proxyLoaderFactory.createProxyLoader(
+                parsed!.id,
+                this.options,
+                resolvedAsFluid,
+                fromSequenceNumber,
+            );
+            return proxyLoader.request(request);
+        }
     }
 
     private parseUrl(url: string): IParsedUrl | null {
@@ -258,34 +298,8 @@ export class Loader extends EventEmitter implements ILoader {
             return Promise.reject(`Invalid URL ${resolvedAsFluid.url}`);
         }
 
-        let canCache = true;
-        let fromSequenceNumber = -1;
-
         request.headers = request.headers ? request.headers : {};
-        if (!request.headers[LoaderHeader.connect]) {
-            request.headers[LoaderHeader.connect] = !parsed.version ? "open" : "close";
-        }
-
-        if (request.headers[LoaderHeader.cache] === false) {
-            canCache = false;
-        } else {
-            // If connection header is pure open or close we will cache it. Otherwise custom load behavior
-            // and so we will not cache the request
-            canCache = request.headers[LoaderHeader.connect] === "open"
-                || request.headers[LoaderHeader.connect] === "close";
-        }
-
-        if (request.headers[LoaderHeader.sequenceNumber]) {
-            fromSequenceNumber = request.headers[LoaderHeader.sequenceNumber] as number;
-        }
-
-        // if set in both query string and headers, use query string
-        request.headers.version = parsed.version || request.headers.version as string;
-
-        // version === null means not use any snapshot.
-        if (request.headers.version === "null") {
-            request.headers.version = null;
-        }
+        const {canCache, fromSequenceNumber } = this.parseHeader(parsed, request);
 
         debug(`${canCache} ${request.headers[LoaderHeader.connect]} ${request.headers.version}`);
         const factory: IDocumentServiceFactory =
@@ -334,6 +348,42 @@ export class Loader extends EventEmitter implements ILoader {
         }
 
         return { container, parsed };
+
+    }
+
+    private parseHeader(parsed: IParsedUrl, request: IRequest) {
+        let canCache = true;
+        let fromSequenceNumber = -1;
+
+        request.headers = request.headers ? request.headers : {};
+        if (!request.headers[LoaderHeader.connect]) {
+            request.headers[LoaderHeader.connect] = !parsed.version ? "open" : "close";
+        }
+
+        if (request.headers[LoaderHeader.cache] === false) {
+            canCache = false;
+        } else {
+            // If connection header is pure open or close we will cache it. Otherwise custom load behavior
+            // and so we will not cache the request
+            canCache = request.headers[LoaderHeader.connect] === "open"
+                || request.headers[LoaderHeader.connect] === "close";
+        }
+
+        if (request.headers[LoaderHeader.sequenceNumber]) {
+            fromSequenceNumber = request.headers[LoaderHeader.sequenceNumber] as number;
+        }
+
+        // if set in both query string and headers, use query string
+        request.headers[LoaderHeader.version] = parsed.version || request.headers[LoaderHeader.version] as string;
+
+        // version === null means not use any snapshot.
+        if (request.headers[LoaderHeader.version] === "null") {
+            request.headers[LoaderHeader.version] = null;
+        }
+        return {
+            canCache,
+            fromSequenceNumber,
+        };
     }
 
     private loadContainer(

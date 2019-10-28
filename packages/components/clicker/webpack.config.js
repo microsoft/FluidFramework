@@ -30,9 +30,15 @@ module.exports = env => {
             // https://github.com/webpack/webpack/issues/5767
             // https://github.com/webpack/webpack/issues/7939            
             devtoolNamespace: "chaincode/counter",
+            // This is required to run webpacked code in webworker/node
+            // https://github.com/webpack/webpack/issues/6522 
+            globalObject: "(typeof self !== 'undefined' ? self : this)",
             libraryTarget: "umd"
         },
         devServer: {
+            headers: {
+                'Access-Control-Allow-Origin': '*'
+            },
             publicPath: '/dist',
             before: (app, server) => fluidRoute.before(app, server),
             after: (app, server) => fluidRoute.after(app, server, __dirname, env),

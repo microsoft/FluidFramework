@@ -4,6 +4,7 @@
  */
 import { IHostConfig } from "@microsoft/fluid-base-host";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+import { IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
 import { BaseTelemetryNullLogger, Deferred } from "@microsoft/fluid-core-utils";
 import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
@@ -102,6 +103,7 @@ class KeyValueLoader {
             new NodeCodeLoader(packageUrl, installLocation, waitTimeoutMS, new NodeWhiteList()),
             config,
             {},
+            new Map<string, IProxyLoaderFactory>(),
         );
 
         const container = await loader.resolve({ url: documentUrl });
@@ -140,6 +142,7 @@ class KeyValueLoader {
 
 let cache: IKeyValue;
 
+// TODO (mdaumi): Move this to comlink.
 process.on("message", async (message: IIncomingMessage) => {
     if (message.type === "init") {
         const keyValueLoaderP = promiseTimeout(cacheLoadTimeoutMS, KeyValueLoader.load(message.param));
