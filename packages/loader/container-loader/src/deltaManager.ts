@@ -95,7 +95,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     // the sequence number we initially loaded from
     private initSequenceNumber: number = 0;
 
-    private readonly _inboundPending: DeltaQueue<ISequencedDocumentMessage>;
     private readonly _inbound: DeltaQueue<ISequencedDocumentMessage>;
     private readonly _inboundSignal: DeltaQueue<ISignalMessage>;
     private readonly _outbound: DeltaQueue<IDocumentMessage[]>;
@@ -187,31 +186,11 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this.clientType = this.client.type;
         this.systemConnectionMode = this.client.mode === "write" ? "write" : "read";
 
-        // Inbound message queue
-        this._inboundPending = new DeltaQueue<ISequencedDocumentMessage>(
-            (op) => {
-                // Explicitly split the two cases to avoid the async call in the case we are not split
-                if (op.contents === undefined) {
-                    return this.fetchOpContent(op).then(
-                        (opContents) => {
-                            op.contents = opContents.contents;
-                            this._inbound.push(op);
-                        });
-                } else {
-                    this._inbound.push(op);
-                    return undefined;
-                }
-            });
-
         this._inbound = new DeltaQueue<ISequencedDocumentMessage>(
             (op) => {
                 this.processInboundMessage(op);
                 return undefined;
             });
-
-        this._inboundPending.on("error", (error) => {
-            this.emit("error", error);
-        });
 
         this._inbound.on("error", (error) => {
             this.emit("error", error);
@@ -738,11 +717,11 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             messages: ISequencedDocumentMessage[] | undefined,
             contents: IContentMessage[] | undefined,
             signals: ISignalMessage[] | undefined): void {
-        this.enqueInitalOps(messages, contents);
-        this.enqueInitalSignals(signals);
+        this.enqueueInitialOps(messages, contents);
+        this.enqueueInitialSignals(signals);
     }
 
-    private enqueInitalOps(
+    private enqueueInitialOps(
             messages: ISequencedDocumentMessage[] | undefined,
             contents: IContentMessage[] | undefined): void {
         if (contents && contents.length > 0) {
@@ -755,35 +734,12 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         }
     }
 
-    private enqueInitalSignals(signals: ISignalMessage[] | undefined): void {
+    private enqueueInitialSignals(signals: ISignalMessage[] | undefined): void {
         if (signals && signals.length > 0) {
             for (const signal of signals) {
                 this._inboundSignal.push(signal);
             }
         }
-    }
-
-    private async fetchOpContent(op: ISequencedDocumentMessage): Promise<IContentMessage> {
-        let result: IContentMessage;
-        const opContent = this.contentCache.peek(op.clientId);
-
-        if (!opContent || opContent.clientSequenceNumber > op.clientSequenceNumber) {
-            result = await this.waitForContent(op.clientId, op.clientSequenceNumber, op.sequenceNumber);
-        } else if (opContent.clientSequenceNumber < op.clientSequenceNumber) {
-            let nextContent = this.contentCache.get(op.clientId);
-            while (nextContent && nextContent.clientSequenceNumber < op.clientSequenceNumber) {
-                nextContent = this.contentCache.get(op.clientId);
-            }
-
-            assert(nextContent, "No content found");
-            assert.equal(op.clientSequenceNumber, nextContent!.clientSequenceNumber, "Invalid op content order");
-
-            result = nextContent!;
-        } else {
-            result = this.contentCache.get(op.clientId)!;
-        }
-
-        return result;
     }
 
     private enqueueMessages(messages: ISequencedDocumentMessage[]): void {
@@ -903,48 +859,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 this.emit("caughtUp");
                 this.catchUp(telemetryEventSuffix, messages);
             });
-    }
-
-    private async waitForContent(
-            clientId: string,
-            clientSeqNumber: number,
-            seqNumber: number,
-    ): Promise<IContentMessage> {
-        const lateContentHandler = (clId: string) => {
-            if (clientId === clId) {
-                const lateContent = this.contentCache.peek(clId);
-                if (lateContent && lateContent.clientSequenceNumber === clientSeqNumber) {
-                    this.contentCache.removeListener("content", lateContentHandler);
-                    debug(`Late content fetched from buffer ${clientId}: ${clientSeqNumber}`);
-                    return this.contentCache.get(clientId);
-                }
-            }
-        };
-
-        this.contentCache.on("content", lateContentHandler);
-        const content = await this.fetchContent(clientId, clientSeqNumber, seqNumber);
-        this.contentCache.removeListener("content", lateContentHandler);
-
-        return content;
-    }
-
-    private async fetchContent(
-            clientId: string,
-            clientSeqNumber: number,
-            seqNumber: number): Promise<IContentMessage> {
-        const messages = await this.getDeltas("fetchContent", seqNumber, seqNumber);
-        assert.ok(messages.length > 0, "Content not found in DB");
-
-        const message = messages[0];
-        assert.equal(message.clientId, clientId, "Invalid fetched content");
-        assert.equal(message.clientSequenceNumber, clientSeqNumber, "Invalid fetched content");
-
-        debug(`Late content fetched from DB ${clientId}: ${clientSeqNumber}`);
-        return {
-            clientId: message.clientId,
-            clientSequenceNumber: message.clientSequenceNumber,
-            contents: message.contents as string,
-        };
     }
 
     private catchUp(telemetryEventSuffix: string, messages: ISequencedDocumentMessage[]): void {
