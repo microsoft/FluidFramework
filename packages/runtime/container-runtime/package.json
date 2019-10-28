@@ -1,7 +1,7 @@
 {
   "name": "@microsoft/fluid-container-runtime",
   "version": "0.11.0",
-  "description": "Prague runtime API",
+  "description": "Fluid runtime API",
   "main": "dist/index.js",
   "module": "lib/index.js",
   "types": "dist/index.d.ts",

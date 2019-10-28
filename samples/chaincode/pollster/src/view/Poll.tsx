@@ -4,7 +4,7 @@
  */
 
 import * as React from 'react';
-import { ISharedMap } from '@prague/map';
+import { ISharedMap } from '@microsoft/fluid-map';
 import { OptionsList } from './PollOption';
 import { ControlledInput } from './Input';
 import { PollQuestion } from './PollQuestion';

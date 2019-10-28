@@ -5,10 +5,12 @@
 
 import {
     ICommittedProposal,
+    IProcessMessageResult,
     IProposal,
     ISequencedProposal,
     ITelemetryLogger,
 } from "@microsoft/fluid-container-definitions";
+import { DebugLogger } from "@microsoft/fluid-core-utils";
 import {
     IClientJoin,
     IDocumentAttributes,
@@ -22,7 +24,6 @@ import {
     MessageType,
     SummaryType,
 } from "@microsoft/fluid-protocol-definitions";
-import { debug } from "./debug";
 import { Quorum } from "./quorum";
 
 export interface IScribeProtocolState {
@@ -61,16 +62,26 @@ export class ProtocolOpHandler {
         values: [string, ICommittedProposal][],
         sendProposal: (key: string, value: any) => number,
         sendReject: (sequenceNumber: number) => void,
-        private readonly logger?: ITelemetryLogger,
+        private readonly logger: ITelemetryLogger = DebugLogger.create("fluid:ProtocolHandler"),
     ) {
-        this.quorum = new Quorum(minimumSequenceNumber, members, proposals, values, sendProposal, sendReject, logger);
+        this.quorum = new Quorum(
+            minimumSequenceNumber,
+            members,
+            proposals,
+            values,
+            sendProposal,
+            sendReject,
+            logger,
+        );
     }
 
     public close() {
         this.quorum.close();
     }
 
-    public processMessage(message: ISequencedDocumentMessage, local: boolean) {
+    public processMessage(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult {
+        let immediateNoOp = false;
+
         switch (message.type) {
             case MessageType.ClientJoin:
                 const systemJoinMessage = message as ISequencedDocumentSystemMessage;
@@ -97,6 +108,9 @@ export class ProtocolOpHandler {
                     message.sequenceNumber,
                     local,
                     message.clientSequenceNumber);
+
+                // On a quorum proposal, immediately send a response to expedite the approval.
+                immediateNoOp = true;
                 break;
 
             case MessageType.Reject:
@@ -105,33 +119,24 @@ export class ProtocolOpHandler {
                 break;
 
             case MessageType.Summarize:
-                if (this.logger) {
-                    this.logger.sendTelemetryEvent({
-                        eventName: "Summarize",
-                        summaryContent: message.contents as ISummaryContent,
-                    });
-                }
-                debug("MessageType.Summarize", message.contents);
+                this.logger.sendTelemetryEvent({
+                    eventName: "Summarize",
+                    summaryContent: message.contents as ISummaryContent,
+                });
                 break;
 
             case MessageType.SummaryAck:
-                if (this.logger) {
-                    this.logger.sendTelemetryEvent({
-                        eventName: "SummaryAck",
-                        summaryAck: message.contents as ISummaryAck,
-                    });
-                }
-                debug("MessageType.SummaryAck", message.contents);
+                this.logger.sendTelemetryEvent({
+                    eventName: "SummaryAck",
+                    summaryAck: message.contents as ISummaryAck,
+                });
                 break;
 
             case MessageType.SummaryNack:
-                if (this.logger) {
-                    this.logger.sendTelemetryEvent({
-                        eventName: "SummaryNack",
-                        summaryNack: message.contents as ISummaryNack,
-                    });
-                }
-                debug("MessageType.SummaryNack", message.contents);
+                this.logger.sendTelemetryEvent({
+                    eventName: "SummaryNack",
+                    summaryNack: message.contents as ISummaryNack,
+                });
                 break;
 
             default:
@@ -143,7 +148,9 @@ export class ProtocolOpHandler {
 
         // Notify the quorum of the MSN from the message. We rely on it to handle duplicate values but may
         // want to move that logic to this class.
-        this.quorum.updateMinimumSequenceNumber(message);
+        immediateNoOp = this.quorum.updateMinimumSequenceNumber(message) || immediateNoOp;
+
+        return { immediateNoOp };
     }
 
     public getProtocolState(): IScribeProtocolState {

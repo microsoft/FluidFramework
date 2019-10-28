@@ -11,6 +11,7 @@ interface FastBuildOptions {
     timer: boolean;
     logtime: boolean;
     clean: boolean;
+    matchedOnly: boolean
     buildScript: string;
     build?: boolean;
     vscode: boolean;
@@ -31,6 +32,7 @@ export const options: FastBuildOptions = {
     timer: false,
     clean: false,
     args: [],
+    matchedOnly: true,
     root: process.env["_FLUID_ROOT_"],
     buildScript: "build",
     vscode: false,
@@ -42,33 +44,35 @@ export const options: FastBuildOptions = {
 function printUsage() {
     console.log(
         `
-Usage: fluid-build <options> [<npm script>] [<package regexp> ...]
-  [<npm script>]         Name of the npm script to run (default: build)
+Usage: fluid-build <options> [<package regexp> ...]
   [<package regexp> ...] Regexp to match the package name (default: all packages)
 Options:
-  -c --clean             Same as running build script 'clean', implies -f if -s or -r is specified
-  -f --force             Force build everything and ignore dependency check
-  -? --help              Print this message
-     --logtime           Display the current time on every status message for logging
-  -r --rebuild           Clean and build
-     --root              Root directory of the fluid repo (default: env _FLUID_ROOT_)
-  -s --script <name>     NPM script to execute (default:build)
-     --timer             Time separate phases
-  -v --verbose           Verbose messages
-     --vscode            Output error message to work with default problem matcher in vscode
+  -c --clean          Same as running build script 'clean' on matched packages (all if package regexp is not specified)
+  -d --dep            Apply actions (clean/force/rebuild) to matched packages and their dependent packages
+  -f --force          Force build and ignore dependency check on matched packages (all if package regexp is not specified)
+  -? --help           Print this message
+     --logtime        Display the current time on every status message for logging
+  -r --rebuild        Clean and build on matched packages (all if package regexp is not specified)
+     --root <path>    Root directory of the fluid repo (default: env _FLUID_ROOT_)
+  -s --script <name>  NPM script to execute (default:build)
+     --timer          Time separate phases
+  -v --verbose        Verbose messages
+     --vscode         Output error message to work with default problem matcher in vscode
 `);
+}
+
+function setClean(build: boolean) {
+    options.force = true;
+    options.clean = true;
+    if (build || options.build === undefined) {
+        options.build = build;
+    }
 }
 
 export function parseOptions(argv: string[]) {
     let error = false;
     for (let i = 2; i < process.argv.length; i++) {
         const arg = process.argv[i];
-
-        // Build script or package name
-        if (!arg.startsWith("-")) {
-            options.args.push(arg);
-            continue;
-        }
 
         if (arg === "-?" || arg === "--help") {
             printUsage();
@@ -80,18 +84,18 @@ export function parseOptions(argv: string[]) {
             continue;
         }
 
-        if (arg === "-r" || arg === "--rebuild") {
-            options.clean = true;
-            options.build = true;
+        if (arg === "-d" || arg === "--dep") {
+            options.matchedOnly = false;
             continue;
         }
 
-        if (arg === "-c" || arg === "--clean" || arg === "clean") {
-            options.clean = true;
-            options.force = true;
-            if (options.build === undefined) {
-                options.build = false;
-            }
+        if (arg === "-r" || arg === "--rebuild") {
+            setClean(true);
+            continue;
+        }
+
+        if (arg === "-c" || arg === "--clean") {
+            setClean(false);
             continue;
         }
 
@@ -106,7 +110,7 @@ export function parseOptions(argv: string[]) {
                 options.build = true;
                 continue;
             }
-            console.log("ERROR: Missing argument for --script");
+            console.error("ERROR: Missing argument for --script");
             error = true;
             break;
         }
@@ -126,7 +130,7 @@ export function parseOptions(argv: string[]) {
                 options.root = process.argv[++i];
                 continue;
             }
-            console.log("ERROR: Missing argument for --root");
+            console.error("ERROR: Missing argument for --root");
             error = true;
             break;
         }
@@ -159,6 +163,12 @@ export function parseOptions(argv: string[]) {
 
         if (arg === "--showExec") {
             options.showExec = true;
+            continue;
+        }
+
+        // Package regexp
+        if (!arg.startsWith("-")) {
+            options.args.push(arg);
             continue;
         }
 

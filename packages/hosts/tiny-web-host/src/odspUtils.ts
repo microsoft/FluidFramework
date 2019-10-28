@@ -14,12 +14,29 @@ const spoTenants = new Map<string, string>([
 
 const pushSrv = "pushchannel.1drv.ms";
 
+export function isSpoPushServer(server: string) {
+    return pushSrv === server ? true : false;
+}
+
+export function getSpoPushServer() {
+    return pushSrv;
+}
+
 export function isSpoTenant(tenantId: string) {
     return spoTenants.has(tenantId);
 }
 
 export function getSpoServer(tenantId: string) {
     return spoTenants.get(tenantId);
+}
+
+export function isSpoServer(server: string) {
+    for (const item of spoTenants.values()) {
+        if (item === server) {
+            return true;
+        }
+    }
+    return false;
 }
 
 export async function spoGetResolvedUrl(
@@ -50,7 +67,9 @@ export async function spoGetResolvedUrl(
     const encodedDrive = encodeURIComponent(drive);
     const encodedItem = encodeURIComponent(item);
     const path = "";
-    const request = { url: `https://${server}/?driveId=${encodedDrive}&itemId=${encodedItem}&path=${encodeURIComponent(path)}` };
+    const request = {
+        url: `https://${server}/?driveId=${encodedDrive}&itemId=${encodedItem}&path=${encodeURIComponent(path)}`,
+    };
     const resolved = await odspUrlResolver.resolve(request) as IFluidResolvedUrl;
     // For now pass the token via the resolved url, so that we can fake the token call back for the driver.
     resolved.tokens.storageToken = tokens.accessToken;

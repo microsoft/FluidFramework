@@ -3,7 +3,15 @@
  * Licensed under the MIT License.
  */
 import { IConnect, IConnected } from "@microsoft/fluid-driver-base";
-import { ConnectionMode, IClient, IContentMessage, IDocumentMessage, ISignalMessage, ITokenClaims, MessageType } from "@microsoft/fluid-protocol-definitions";
+import {
+    ConnectionMode,
+    IClient,
+    IContentMessage,
+    IDocumentMessage,
+    ISignalMessage,
+    ITokenClaims,
+    MessageType,
+} from "@microsoft/fluid-protocol-definitions";
 import {
     LocalNodeFactory,
     LocalOrderer,

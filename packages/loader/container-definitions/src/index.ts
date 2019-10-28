@@ -11,3 +11,4 @@ export * from "./deltas";
 export * from "./disposable";
 export * from "./loader";
 export * from "./logger";
+export * from "./proxyLoader";

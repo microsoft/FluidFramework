@@ -148,3 +148,52 @@ export function buildHierarchy(flatTree: git.ITree): ISnapshotTree {
 
     return root;
 }
+
+/**
+ * Basic implementation of a blob ITreeEntry
+ */
+export class BlobTreeEntry implements ITreeEntry {
+    public readonly mode = FileMode.File;
+    public readonly type = TreeEntry[TreeEntry.Blob];
+    public readonly value: IBlob;
+
+    /**
+     * Creates a blob ITreeEntry
+     * @param path - path of entry
+     * @param contents - blob contents
+     * @param encoding - encoding of contents; defaults to utf-8
+     */
+    constructor(public readonly path: string, contents: string, encoding: string = "utf-8") {
+        this.value = { contents, encoding };
+    }
+}
+
+/**
+ * Basic implementation of a commit ITreeEntry
+ */
+export class CommitTreeEntry implements ITreeEntry {
+    public readonly mode = FileMode.Commit;
+    public readonly type = TreeEntry[TreeEntry.Commit];
+
+    /**
+     * Creates a commit ITreeEntry
+     * @param path - path of entry
+     * @param value - commit value
+     */
+    constructor(public readonly path: string, public readonly value: string) {}
+}
+
+/**
+ * Basic implementation of a tree ITreeEntry
+ */
+export class TreeTreeEntry implements ITreeEntry {
+    public readonly mode = FileMode.Directory;
+    public readonly type = TreeEntry[TreeEntry.Tree];
+
+    /**
+     * Creates a tree ITreeEntry
+     * @param path - path of entry
+     * @param value - subtree
+     */
+    constructor(public readonly path: string, public readonly value: ITree) {}
+}

@@ -11,39 +11,24 @@ import {
     IComponentHTMLOptions,
     IComponentHTMLVisual,
     IComponentHandle,
-} from "@prague/component-core-interfaces";
-import { ComponentRuntime } from "@prague/component-runtime";
-import { ISharedMap, SharedMap } from "@prague/map";
+    IComponentHTMLView,
+} from "@microsoft/fluid-component-core-interfaces";
+import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
+import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import {
     IMergeTreeInsertMsg,
     ReferenceType,
     reservedRangeLabelsKey,
     MergeTreeDeltaType,
     createMap,
-    TextSegment,
-    Marker,
-} from "@prague/merge-tree";
-import { IComponentContext, IComponentFactory, IComponentRuntime } from "@prague/runtime-definitions";
-import { SharedString } from "@prague/sequence";
-import { ISharedObjectFactory } from "@prague/shared-object-common";
-import * as assert from "assert";
+} from "@microsoft/fluid-merge-tree";
+import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { SharedString } from "@microsoft/fluid-sequence";
+import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { EventEmitter } from "events";
-import { EditorState } from "prosemirror-state";
 import { EditorView } from "prosemirror-view";
-import { Schema, NodeSpec } from "prosemirror-model";
-import { addListNodes } from "prosemirror-schema-list";
-import { exampleSetup } from "prosemirror-example-setup";
-import { FluidCollabPlugin } from "./fluidPlugin";
-import { schema } from "./fluidSchema";
-
-require("prosemirror-view/style/prosemirror.css");
-require("prosemirror-menu/style/menu.css");
-require("prosemirror-example-setup/style/style.css");
-require("./style.css");
-
-import OrderedMap = require('orderedmap');
-
-const nodeTypeKey = "nodeType";
+import { nodeTypeKey } from "./fluidBridge";
+import { FluidCollabManager, IProvideRichTextEditor } from "./fluidCollabManager";
 
 function createTreeMarkerOps(
     treeRangeLabel: string,
@@ -74,14 +59,48 @@ function createTreeMarkerOps(
     ];
 }
 
-interface IProseMirrorNode {
-    [key: string]: any;
-    type: string,
-    content?: IProseMirrorNode[],
-    marks?: any[],
+class ProseMirrorView implements IComponentHTMLView {
+    private content: HTMLDivElement;
+    private editorView: EditorView;
+    private textArea: HTMLDivElement;
+    private collabManager: FluidCollabManager;
+
+    public constructor(
+        private text: SharedString,
+        private runtime: IComponentRuntime,
+    ) {
+        this.collabManager = new FluidCollabManager(this.text, this.runtime.loader);
+    }
+
+    public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
+        // create base textarea
+        if (!this.textArea) {
+            this.textArea = document.createElement("div");
+            this.textArea.classList.add("editor");
+            this.content = document.createElement("div");
+            this.content.style.display = "none";
+            this.content.innerHTML = "";
+        }
+
+        // reparent if needed
+        if (this.textArea.parentElement !== elm) {
+            this.textArea.remove();
+            this.content.remove();
+            elm.appendChild(this.textArea);
+            elm.appendChild(this.content);
+        }
+
+        if (!this.editorView) {
+            this.collabManager.setupEditor(this.textArea);
+        }
+    }
+
+    public remove() {
+        // Maybe implement this some time.
+    }
 }
 
-export class ProseMirror extends EventEmitter implements IComponentLoadable, IComponentRouter, IComponentHTMLVisual {
+export class ProseMirror extends EventEmitter implements IComponentLoadable, IComponentRouter, IComponentHTMLVisual, IProvideRichTextEditor {
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
         const collection = new ProseMirror(runtime, context);
         await collection.initialize();
@@ -92,14 +111,14 @@ export class ProseMirror extends EventEmitter implements IComponentLoadable, ICo
     public get IComponentLoadable() { return this; }
     public get IComponentRouter() { return this; }
     public get IComponentHTMLVisual() { return this; }
+    public get IRichTextEditor() { return this.collabManager; }
 
     public url: string;
     public text: SharedString;
     private root: ISharedMap;
-    private textArea: HTMLDivElement;
-    private content: HTMLDivElement;
-    private editorView: EditorView;
-
+    private collabManager: FluidCollabManager;
+    private defaultView: ProseMirrorView;
+    
     constructor(
         private runtime: IComponentRuntime,
         /* private */ context: IComponentContext,
@@ -126,9 +145,6 @@ export class ProseMirror extends EventEmitter implements IComponentLoadable, ICo
             text.groupOperation({ ops, type: MergeTreeDeltaType.GROUP });
             text.insertText(1, "Hello, world!");
 
-            // text.annotateRange(4, 6, { bold: true });
-            // text.annotateRange(5, 6, { yellow: "mello" });
-
             this.root.set("text", text.handle);
             this.root.register();
         }
@@ -136,134 +152,22 @@ export class ProseMirror extends EventEmitter implements IComponentLoadable, ICo
         this.root = await this.runtime.getChannel("root") as ISharedMap;
         this.text = await this.root.get<IComponentHandle>("text").get<SharedString>();
 
+        this.collabManager = new FluidCollabManager(this.text, this.runtime.loader);
+
         // access for debugging
-        window["easyText"] = this.text;
+        window["easyComponent"] = this;
+    }
+
+    public addView(): IComponentHTMLView {
+        return new ProseMirrorView(this.text, this.runtime);
     }
 
     public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
-        // create base textarea
-        if (!this.textArea) {
-            this.textArea = document.createElement("div");
-            this.textArea.classList.add("editor");
-            this.content = document.createElement("div");
-            this.content.style.display = "none";
-            this.content.innerHTML = "";
+        if (!this.defaultView) {
+            this.defaultView = new ProseMirrorView(this.text, this.runtime);
         }
 
-        // reparent if needed
-        if (this.textArea.parentElement !== elm) {
-            this.textArea.remove();
-            this.content.remove();
-            elm.appendChild(this.textArea);
-            elm.appendChild(this.content);
-        }
-
-        if (!this.editorView) {
-            this.setupEditor();
-        }
-    }
-
-    private setupEditor() {
-        // Initialize the base ProseMirror JSON data structure
-        const nodeStack = new Array<IProseMirrorNode>();
-        nodeStack.push({ type: "doc", content: [] });
-
-        this.text.walkSegments((segment) => {
-            let top = nodeStack[nodeStack.length - 1];
-
-            if (TextSegment.is(segment)) {
-                const nodeJson: IProseMirrorNode = {
-                    type: "text",
-                    text: segment.text,
-                };
-
-                if (segment.properties) {
-                    nodeJson.marks = [];
-                    for (const propertyKey of Object.keys(segment.properties)) {
-                        nodeJson.marks.push({
-                            type: propertyKey,
-                            value: segment.properties[propertyKey],
-                        })
-                    }
-                }
-
-                top.content.push(nodeJson);
-            } else if (Marker.is(segment)) {
-                // TODO are marks applied to the structural nodes as well? Or just inner text?
-
-                const nodeType = segment.properties[nodeTypeKey];
-                switch (segment.refType) {
-                    case ReferenceType.NestBegin:
-                        // Create the new node, add it to the top's content, and push it on the stack
-                        const newNode = { type: nodeType, content: [] };
-                        top.content.push(newNode);
-                        nodeStack.push(newNode);
-                        break;
-
-                    case ReferenceType.NestEnd:
-                        const popped = nodeStack.pop();
-                        assert(popped.type === nodeType);
-                        break;
-
-                    case ReferenceType.Simple:
-                        // TODO consolidate the text segment and simple references
-                        const nodeJson: IProseMirrorNode = {
-                            type: segment.properties["type"],
-                            attrs: segment.properties["attrs"],
-                        };
-
-                        if (segment.properties) {
-                            nodeJson.marks = [];
-                            for (const propertyKey of Object.keys(segment.properties)) {
-                                if (propertyKey !== "type" && propertyKey !== "attrs") {
-                                    nodeJson.marks.push({
-                                        type: propertyKey,
-                                        value: segment.properties[propertyKey],
-                                    });
-                                }
-                            }
-                        }
-
-                        top.content.push(nodeJson);
-                        break;
-
-                    default:
-                        // throw for now when encountering something unknown
-                        throw new Error("Unknown marker");
-                }
-            }
-
-            return true;
-        });
-
-        const doc = nodeStack.pop();
-        console.log(JSON.stringify(doc, null, 2));
-
-        const fluidSchema = new Schema({
-            nodes: addListNodes(schema.spec.nodes as OrderedMap<NodeSpec>, "paragraph block*", "block"),
-            marks: schema.spec.marks
-        });
-
-        const fluidDoc = fluidSchema.nodeFromJSON(doc);
-
-        // initialize the prosemirror schema from the sequence
-        console.log(JSON.stringify(fluidDoc.toJSON(), null, 2));
-
-        const fluidPlugin = new FluidCollabPlugin(this.text, fluidSchema);
-
-        const state = EditorState.create({
-            doc: fluidDoc,
-            plugins: exampleSetup({ schema: fluidSchema }).concat(fluidPlugin.plugin),
-        });
-
-        this.editorView = new EditorView(
-            this.textArea,
-            {
-                state,
-            });
-        fluidPlugin.attachView(this.editorView);
-
-        window["easyView"] = this.editorView;
+        this.defaultView.render(elm, options);
     }
 }
 
@@ -282,17 +186,13 @@ class ProseMirrorFactory implements IComponentFactory {
             context,
             dataTypes,
             (runtime) => {
-                const progressCollectionP = ProseMirror.load(runtime, context);
+                const proseMirrorP = ProseMirror.load(runtime, context);
                 runtime.registerRequestHandler(async (request: IRequest) => {
-                    const progressCollection = await progressCollectionP;
-                    return progressCollection.request(request);
+                    const proseMirror = await proseMirrorP;
+                    return proseMirror.request(request);
                 });
             });
     }
 }
 
 export const fluidExport = new ProseMirrorFactory();
-
-export function instantiateComponent(context: IComponentContext): void {
-    fluidExport.instantiateComponent(context);
-}

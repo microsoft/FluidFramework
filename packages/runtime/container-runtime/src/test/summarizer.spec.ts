@@ -4,8 +4,10 @@
  */
 
 import { IDeltaManager, IDeltaQueue, ITelemetryLogger } from "@microsoft/fluid-container-definitions";
+import { Deferred } from "@microsoft/fluid-core-utils";
 import {
     IDocumentMessage,
+    IDocumentStorageService,
     ISequencedDocumentMessage,
     ISummaryConfiguration,
     ISummaryProposal,
@@ -37,43 +39,58 @@ describe("Runtime", () => {
                     maxAckWaitTime: 600000, // 10 min
                 };
                 const testSummaryOpSeqNum = -13;
+                let refreshBaseSummaryDeferred: Deferred<void>;
+                let shouldDeferGenerateSummary: boolean = false;
+                let deferGenerateSummary: Deferred<void>;
 
                 before(() => {
                     clock = sinon.useFakeTimers();
                 });
 
                 beforeEach(() => {
+                    shouldDeferGenerateSummary = false;
                     clock.reset();
                     runCount = 0;
                     lastSeq = 0;
+                    refreshBaseSummaryDeferred = new Deferred();
                     emitter = new EventEmitter();
                     summarizer = new Summarizer(
                         "",
                         {
                             on: (event, listener) => emitter.on(event, listener),
-                            off: (event, listener) => emitter.off(event, listener),
+                            off: (event, listener) => emitter.removeListener(event, listener),
                             connected: true,
                             summarizerClientId,
                             deltaManager: {
-                                referenceSequenceNumber: 0,
+                                initialSequenceNumber: 0,
                                 inbound: emitter as IDeltaQueue<ISequencedDocumentMessage>,
                             } as IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
                             logger: {
                                 send: (event) => {},
                                 sendTelemetryEvent: (event) => {},
                             } as ITelemetryLogger,
+                            storage: {
+                                getSnapshotTree: () => Promise.resolve({}),
+                                getVersions: (versionId, count) => Promise.resolve([{}]),
+                            } as IDocumentStorageService,
                         } as ContainerRuntime,
-                        summaryConfig,
+                        () => summaryConfig,
                         async () => {
                             emitter.emit(generateSummaryEvent);
+                            if (shouldDeferGenerateSummary) {
+                                deferGenerateSummary = new Deferred<void>();
+                                await deferGenerateSummary.promise;
+                            }
                             return {
                                 sequenceNumber: lastSeq,
+                                submitted: true,
                                 treeNodeCount: 0,
                                 blobNodeCount: 0,
                                 handleNodeCount: 0,
                                 totalBlobSize: 0,
                             };
                         },
+                        () => { refreshBaseSummaryDeferred.resolve(); },
                     );
 
                     summarizer.run(summarizerClientId).catch((reason) => assert.fail(JSON.stringify(reason)));
@@ -119,6 +136,10 @@ describe("Runtime", () => {
                         summarySequenceNumber: testSummaryOpSeqNum,
                     };
                     emitter.emit(summaryOpEvent, { contents: { summaryProposal }, type });
+
+                    // wait for refresh base summary to complete
+                    await refreshBaseSummaryDeferred.promise;
+                    refreshBaseSummaryDeferred = new Deferred();
                 }
 
                 it("Should summarize after configured number of ops when not pending", async () => {
@@ -210,7 +231,7 @@ describe("Runtime", () => {
                     assert.strictEqual(runCount, 1);
 
                     // should not run because still pending
-                    clock.tick(summaryConfig.maxAckWaitTime);
+                    clock.tick(summaryConfig.maxAckWaitTime - 1);
                     await emitNextOp(summaryConfig.maxOps + 1);
                     assert.strictEqual(runCount, 1);
 
@@ -225,6 +246,34 @@ describe("Runtime", () => {
                     await emitAck();
                     await emitNextOp();
                     assert.strictEqual(runCount, 3);
+                });
+
+                it("Should not cause pending ack timeouts using older summary time", async () => {
+                    shouldDeferGenerateSummary = true;
+                    await emitNextOp();
+
+                    // should do first summary fine
+                    await emitNextOp(summaryConfig.maxOps);
+                    assert.strictEqual(runCount, 1);
+                    deferGenerateSummary.resolve();
+                    await emitAck();
+
+                    // pass time that should not count towards the next max ack wait time
+                    clock.tick(summaryConfig.maxAckWaitTime);
+
+                    // subsequent summary should not cancel pending!
+                    await emitNextOp(summaryConfig.maxOps + 1);
+                    assert.strictEqual(runCount, 2);
+                    await emitNextOp(); // fine
+                    clock.tick(1); // next op will exceed maxAckWaitTime from first summary
+                    await emitNextOp(); // not fine, nay cancel pending too soon
+                    deferGenerateSummary.resolve();
+
+                    // we should not generate another summary without previous ack
+                    await emitNextOp(); // flush finish summarizing
+                    await emitNextOp(summaryConfig.maxOps + 1);
+                    assert.strictEqual(runCount, 2);
+                    deferGenerateSummary.resolve();
                 });
             });
         });

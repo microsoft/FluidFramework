@@ -4,7 +4,7 @@
  */
 
 import { ConnectionState } from "@microsoft/fluid-container-definitions";
-import { readAndParse } from "@microsoft/fluid-core-utils";
+import { readAndParse, SummaryTracker } from "@microsoft/fluid-core-utils";
 import {
     IDocumentStorageService,
     ISequencedDocumentMessage,
@@ -28,7 +28,7 @@ type RequiredIChannelAttributes = Pick<IChannelAttributes, "type"> & Partial<ICh
 
 export class RemoteChannelContext implements IChannelContext {
     private connection: ChannelDeltaConnection | undefined;
-    private baseId: string | null = null;
+    private readonly summaryTracker = new SummaryTracker();
     private isLoaded = false;
     private pending: ISequencedDocumentMessage[] | undefined = [];
     private channelP: Promise<IChannel> | undefined;
@@ -40,12 +40,13 @@ export class RemoteChannelContext implements IChannelContext {
         private readonly storageService: IDocumentStorageService,
         private readonly submitFn: (type: MessageType, content: any) => number,
         private readonly id: string,
-        private readonly tree: ISnapshotTree,
+        baseSnapshot: ISnapshotTree,
         private readonly registry: ISharedObjectRegistry,
         private readonly extraBlobs: Map<string, string>,
         private readonly branch: string,
         private readonly attributes: RequiredIChannelAttributes | undefined,
     ) {
+        this.summaryTracker.setBaseTree(baseSnapshot);
     }
 
     public getChannel(): Promise<IChannel> {
@@ -72,9 +73,9 @@ export class RemoteChannelContext implements IChannelContext {
     }
 
     public processOp(message: ISequencedDocumentMessage, local: boolean): void {
+        this.summaryTracker.invalidate();
+
         if (this.isLoaded) {
-            // Clear base id since the channel is now dirty
-            this.baseId = null;
             // tslint:disable-next-line: no-non-null-assertion
             this.connection!.process(message, local);
         } else {
@@ -84,9 +85,29 @@ export class RemoteChannelContext implements IChannelContext {
         }
     }
 
-    public async snapshot(): Promise<ITree> {
+    public async snapshot(fullTree: boolean = false): Promise<ITree> {
+        const baseId = this.summaryTracker.getBaseId();
+        if (baseId !== null && !fullTree) {
+            return { id: baseId, entries: [] };
+        }
+        this.summaryTracker.reset();
         const channel = await this.getChannel();
-        return snapshotChannel(channel, this.baseId);
+        return snapshotChannel(channel, baseId);
+    }
+
+    public refreshBaseSummary(snapshot: ISnapshotTree) {
+        this.summaryTracker.setBaseTree(snapshot);
+    }
+
+    private getAttributesFromBaseTree(): Promise<RequiredIChannelAttributes> {
+        const baseTree = this.summaryTracker.baseTree;
+        if (baseTree) {
+            return readAndParse<RequiredIChannelAttributes>(
+                this.storageService,
+                baseTree.blobs[".attributes"]);
+        } else {
+            throw new Error("Null base summary tree should not be possible for remote channel.");
+        }
     }
 
     private async loadChannel(): Promise<IChannel> {
@@ -95,9 +116,7 @@ export class RemoteChannelContext implements IChannelContext {
         // Create the channel if it hasn't already been passed in the constructor
         const { type, snapshotFormatVersion, packageVersion } = this.attributes
             ? this.attributes
-            : await readAndParse<RequiredIChannelAttributes>(
-                this.storageService,
-                this.tree.blobs[".attributes"]);
+            : await this.getAttributesFromBaseTree();
 
         // Pass the transformedMessages - but the object really should be storing this
         const factory = this.registry.get(type);
@@ -119,7 +138,7 @@ export class RemoteChannelContext implements IChannelContext {
             this.componentContext.connectionState,
             this.submitFn,
             this.storageService,
-            this.tree,
+            this.summaryTracker.baseTree === null ? undefined : this.summaryTracker.baseTree,
             this.extraBlobs);
         this.channel = await factory.load(
             this.runtime,

@@ -19,6 +19,8 @@ export class GatewayResources implements utils.IResources {
         public redisConfig: any,
         public alfred: Alfred,
         public cache: core.ICache,
+        public mongoManager: core.MongoManager,
+        public accountsCollectionName: string,
         public appTenants: core.IAlfredTenant[],
         public port: any,
     ) {
@@ -34,6 +36,21 @@ export class GatewayResourcesFactory implements utils.IResourcesFactory<GatewayR
     public async create(config: Provider): Promise<GatewayResources> {
         // Producer used to publish messages
         const redisConfig = config.get("redis");
+
+        // Database connection
+        const mongoUrl = config.get("mongo:endpoint") as string;
+        const mongoFactory = new services.MongoDbFactory(mongoUrl);
+        const mongoManager = new core.MongoManager(mongoFactory);
+        const accountsCollectionName = config.get("mongo:collectionNames:accounts");
+
+        // create the index on the documents collection
+        const db = await mongoManager.getDatabase();
+        const documentsCollection = db.collection<core.IDocument>(accountsCollectionName);
+        await documentsCollection.createIndex(
+            {
+                userId: 1,
+            },
+            false);
 
         // Redis connection
         const redisClient = redis.createClient(redisConfig.port, redisConfig.host);
@@ -56,6 +73,8 @@ export class GatewayResourcesFactory implements utils.IResourcesFactory<GatewayR
             redisConfig,
             alfred,
             redisCache,
+            mongoManager,
+            accountsCollectionName,
             appTenants,
             port);
     }
@@ -68,6 +87,8 @@ export class GatewayRunnerFactory implements utils.IRunnerFactory<GatewayResourc
             resources.config,
             resources.port,
             resources.cache,
+            resources.mongoManager,
+            resources.accountsCollectionName,
             resources.alfred,
             resources.appTenants);
     }

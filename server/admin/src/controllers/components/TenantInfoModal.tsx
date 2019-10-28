@@ -42,7 +42,7 @@ export class TenantInfoModal extends React.Component<ITenantInfoProps, {}> {
               <p><b>Key:</b> {key}</p>
               <p><b>Orderer:</b> {orderer}</p>
               <p><b>Storage:</b> {storage}</p>
-              <a href="https://github.com/Microsoft/Prague/blob/master/admin/INSTRUCTION.md" target="_blank">
+              <a href="https://github.com/microsoft/FluidFramework/blob/master/server/admin/INSTRUCTION.md" target="_blank">
                 Getting started with Fluid API
               </a>
             </Modal>

@@ -5,6 +5,14 @@
 
 import * as api from "@fluid-internal/client-api";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
+import {
+    DocumentDeltaEventManager,
+    ITestDeltaConnectionServer,
+    TestDeltaConnectionServer,
+    TestDocumentServiceFactory,
+    TestHost,
+    TestResolver,
+} from "@microsoft/fluid-local-test-server";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import { IntervalType, LocalReference } from "@microsoft/fluid-merge-tree";
 import { IBlob } from "@microsoft/fluid-protocol-definitions";
@@ -16,14 +24,6 @@ import {
     SharedStringFactory,
 } from "@microsoft/fluid-sequence";
 import * as assert from "assert";
-import {
-    DocumentDeltaEventManager,
-    ITestDeltaConnectionServer,
-    TestDeltaConnectionServer,
-    TestDocumentServiceFactory,
-    TestHost,
-    TestResolver,
-} from "@microsoft/fluid-local-test-server";
 
 const assertIntervalsHelper = (
     sharedString: SharedString,
@@ -296,7 +296,7 @@ describe("SharedInterval", () => {
             // LocalIntervalCollection serializes as an array of ISerializedInterval, let's get the first comment
             const serializedInterval1FromSnapshot =
                 // tslint:disable-next-line: no-unsafe-any
-                (parsedSnapshot.comments.value as ISerializedInterval[])[0];
+                (parsedSnapshot["intervalCollections/comments"].value as ISerializedInterval[])[0];
             // The "story" is the ILocalValue of the handle pointing to the SharedString
             const handleLocalValueFromSnapshot = serializedInterval1FromSnapshot.properties.story as { type: string };
             assert.equal(handleLocalValueFromSnapshot.type, "__fluid_handle__");

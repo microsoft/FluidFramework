@@ -7,9 +7,6 @@
 /* tslint:disable:no-backbone-get-set-outside-model  */
 import * as api from "@fluid-internal/client-api";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { ISharedDirectory, ISharedMap, SharedDirectory, SharedMap } from "@microsoft/fluid-map";
-import { MessageType } from "@microsoft/fluid-protocol-definitions";
-import * as assert from "assert";
 import {
     DocumentDeltaEventManager,
     ITestDeltaConnectionServer,
@@ -17,6 +14,9 @@ import {
     TestDocumentServiceFactory,
     TestResolver,
 } from "@microsoft/fluid-local-test-server";
+import { ISharedDirectory, ISharedMap, SharedDirectory, SharedMap } from "@microsoft/fluid-map";
+import { MessageType } from "@microsoft/fluid-protocol-definitions";
+import * as assert from "assert";
 
 describe("Directory", () => {
     const id = "fluid://test.com/test/test";

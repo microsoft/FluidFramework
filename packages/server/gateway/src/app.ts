@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { getRandomName, IAlfredTenant, ICache } from "@microsoft/fluid-server-services-core";
+import { getRandomName, IAlfredTenant, ICache, MongoManager } from "@microsoft/fluid-server-services-core";
 import * as bodyParser from "body-parser";
 import * as compression from "compression";
 import * as connectRedis from "connect-redis";
@@ -20,8 +20,10 @@ import * as passportLocal from "passport-local";
 import * as passportOpenIdConnect from "passport-openidconnect";
 import * as path from "path";
 import * as redis from "redis";
+import * as favicon from "serve-favicon";
 import * as expiry from "static-expiry";
 import * as winston from "winston";
+import { AccountManager } from "./accounts";
 import { saveSpoTokens } from "./gateway-odsp-utils";
 import { IAlfred } from "./interfaces";
 import * as gatewayRoutes from "./routes";
@@ -70,11 +72,45 @@ const stream = split().on("data", (message) => {
     winston.info(message);
 });
 
+async function refreshUser(user: any, accountManager: AccountManager) {
+    const accounts = await accountManager.getAccounts(user.sub);
+    user.accounts = accounts;
+
+    return user;
+}
+
+function connectAccount(
+    user: any,
+    accountManager: AccountManager,
+    provider: string,
+    providerId: string,
+    accessToken: string,
+    expires: number,
+    refreshToken: string,
+    done: (error: any, user?: any) => void) {
+
+    const expiration = accountManager.getTokenExpiration(expires);
+    const userP = accountManager
+        .linkAccount(provider, providerId, accessToken, expiration, refreshToken, user.sub)
+        .then(() => refreshUser(user, accountManager));
+
+    userP.then(
+        (newUser) => {
+            done(null, newUser);
+        },
+        (error) => {
+            console.log(error);
+            done(error, null);
+        });
+}
+
 export function create(
     config: Provider,
     alfred: IAlfred,
     tenants: IAlfredTenant[],
     cache: ICache,
+    mongoManager: MongoManager,
+    accountsCollectionName: string,
 ) {
     // Create a redis session store.
     let sessionStore;
@@ -94,6 +130,8 @@ export function create(
         const redisClient = redis.createClient(redisPort, redisHost, options);
         sessionStore = new redisStore({ client: redisClient });
     }
+
+    const accountManager = new AccountManager(mongoManager, accountsCollectionName);
 
     // Maximum REST request size
     const requestSize = config.get("gateway:restJsonSize");
@@ -117,10 +155,46 @@ export function create(
             (req, iss, sub, profile, jwtClaims, accessToken, refreshToken, params, done) => {
                 saveSpoTokens(req, params, accessToken, refreshToken);
                 const userData = { ...jwtClaims, accessToken };
-                return done(null, userData);
+                connectAccount(
+                    userData,
+                    accountManager,
+                    "microsoft",
+                    sub,
+                    accessToken,
+                    params.expires_in,
+                    refreshToken,
+                    done);
             },
         ),
     );
+
+    const msaConfiguration = config.get("login:linkedAccounts:msa");
+    if (msaConfiguration) {
+        passport.use(
+            "msa",
+            new passportOpenIdConnect.Strategy({
+                    // I believe consumers should make sure we pull the right thing
+                    authorizationURL: "https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize",
+                    callbackURL: "/connect/microsoft/callback",
+                    clientID: msaConfiguration.clientId,
+                    clientSecret: msaConfiguration.secret,
+                    issuer: "https://login.microsoftonline.com/9188040d-6c67-4c5b-b112-36a304b66dad/v2.0",
+                    passReqToCallback: true,
+                    skipUserProfile: true,
+                    tokenURL: "https://login.microsoftonline.com/common/oauth2/v2.0/token",
+                },
+                (req, iss, sub, profile, jwtClaims, accessToken, refreshToken, params, done) => {
+                    connectAccount(
+                        req.user,
+                        accountManager,
+                        "msa",
+                        sub,
+                        accessToken,
+                        params.expires_in,
+                        refreshToken,
+                        done);
+                }));
+    }
 
     const opts = {
         jwtFromRequest: passportJWT.ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -166,6 +240,7 @@ export function create(
     app.set("view engine", "hjs");
 
     app.use(compression());
+    app.use(favicon(path.join(__dirname, "../public", "favicon.ico")));
     // TODO we probably want to switch morgan to use the common format in prod
     app.use(morgan(config.get("logger:morganFormat"), { stream }));
 

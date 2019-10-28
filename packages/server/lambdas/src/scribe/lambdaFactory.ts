@@ -86,7 +86,8 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             scribe.protocolState.proposals,
             scribe.protocolState.values,
             () => -1,
-            () => { return; });
+            () => { return; },
+        );
 
         winston.info(`Proposals ${tenantId}/${documentId}: ${JSON.stringify(document)}`);
 
