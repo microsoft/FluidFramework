@@ -6,7 +6,12 @@
 import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 import { IHostConfig, start as startCore } from "@microsoft/fluid-base-host";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { IFluidModule, IFluidPackage, IPackage, isFluidPackage } from "@microsoft/fluid-container-definitions";
+import {
+    IFluidModule,
+    IFluidPackage,
+    IPackage,
+    IProxyLoaderFactory,
+    isFluidPackage } from "@microsoft/fluid-container-definitions";
 import {
     ITestDeltaConnectionServer,
     TestDeltaConnectionServer,
@@ -34,7 +39,6 @@ export interface IRouteOptions {
     tenantSecret?: string;
     bearerSecret?: string;
     npm?: string;
-    component?: string;
     single?: boolean;
 }
 
@@ -68,32 +72,33 @@ async function loadScripts(files: string[], origin: string) {
     return Promise.all(scriptLoadP);
 }
 
-function wrapComponentPackage(packageName: string, packageJson: IFluidPackage) {
+function wrapIfComponentPackage(packageName: string, packageJson: IFluidPackage) {
     // Wrap the core component in a runtime
     // tslint:disable-next-line:no-string-literal
-    const loadedComponentRaw = window["main"];
+    const loadedComponentRaw = window[packageJson.fluid.browser.umd.library];
     const fluidModule = loadedComponentRaw as IFluidModule;
-    const componentFactory = fluidModule.fluidExport.IComponentFactory;
+    if (fluidModule.fluidExport.IRuntimeFactory === undefined) {
+        const componentFactory = fluidModule.fluidExport.IComponentFactory;
 
-    const runtimeFactory = new SimpleModuleInstantiationFactory(
-        packageName,
-        new Map([
-            [packageName, Promise.resolve(componentFactory)],
-        ]),
-    );
-    // tslint:disable-next-line:no-string-literal
-    window["componentMain"] = {
-        fluidExport: runtimeFactory,
-    };
+        const runtimeFactory = new SimpleModuleInstantiationFactory(
+            packageName,
+            new Map([
+                [packageName, Promise.resolve(componentFactory)],
+            ]),
+        );
+        // tslint:disable-next-line:no-string-literal
+        window["componentMain"] = {
+            fluidExport: runtimeFactory,
+        };
 
-    packageJson.fluid.browser.umd.library = "componentMain";
-    packageJson.name = `${packageJson.name}-dev-server`;
+        packageJson.fluid.browser.umd.library = "componentMain";
+        packageJson.name = `${packageJson.name}-dev-server`;
+    }
 }
 
 async function getResolvedPackage(
     packageJson: IPackage,
     scriptIds: string[],
-    component = false,
 ): Promise<IResolvedPackage> {
     // Start the creation of pkg.
     if (!packageJson) {
@@ -112,9 +117,7 @@ async function getResolvedPackage(
         scriptIds.push(scriptId);
     });
 
-    if (component) {
-        wrapComponentPackage(legacyPackage, packageJson);
-    }
+    wrapIfComponentPackage(legacyPackage, packageJson);
 
     return {
         pkg: packageJson,
@@ -181,7 +184,7 @@ export async function start(
 
     // Create Package
     const scriptIds: string[] = [];
-    const pkg = await getResolvedPackage(packageJson, scriptIds, !!options.component);
+    const pkg = await getResolvedPackage(packageJson, scriptIds);
 
     // Construct a request
     const req: IRequest = {
@@ -238,6 +241,7 @@ export async function start(
         {},
         double ? leftDiv : div,
         hostConf,
+        new Map<string, IProxyLoaderFactory>(),
     );
 
     let start2Promise: Promise<any> = Promise.resolve();
@@ -258,6 +262,7 @@ export async function start(
             {},
             rightDiv,
             hostConf2,
+            new Map<string, IProxyLoaderFactory>(),
         );
     }
     await Promise.all([start1Promise, start2Promise]);

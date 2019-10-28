@@ -5,6 +5,7 @@
 
 import * as API from "@fluid-internal/client-api";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
 import {
     ITestDeltaConnectionServer,
@@ -24,7 +25,7 @@ describe("Container", () => {
     let testDeltaConnectionServer: ITestDeltaConnectionServer;
     let testResolver: TestResolver;
     let testResolved: IFluidResolvedUrl;
-    const testRequest: IRequest = { url: "" };
+    const testRequest: IRequest = { url: "", headers: { connect: "open" } };
     let service: IDocumentService;
     let codeLoader: API.CodeLoader;
     let loader: Loader;
@@ -40,7 +41,7 @@ describe("Container", () => {
         codeLoader = new API.CodeLoader({ generateSummaries: false });
         const options = {};
 
-        loader = new Loader(host, serviceFactory, codeLoader, options, {});
+        loader = new Loader(host, serviceFactory, codeLoader, options, {}, new Map<string, IProxyLoaderFactory>());
     });
 
     it("Load container successfully", async () => {
@@ -48,15 +49,12 @@ describe("Container", () => {
         try {
             await Container.load(
                 "tenantId/documentId",
-                undefined,
                 service,
                 codeLoader,
                 {},
                 {},
-                "open",
                 loader,
-                testRequest,
-                true);
+                testRequest);
             success = true;
         } catch (error) {
             success = false;
@@ -72,15 +70,12 @@ describe("Container", () => {
             };
             await Container.load(
                 "tenantId/documentId",
-                undefined,
                 service,
                 codeLoader,
                 {},
                 {},
-                "open",
                 loader,
-                testRequest,
-                true);
+                testRequest);
         } catch (error) {
             success = error as boolean;
         }
@@ -95,15 +90,12 @@ describe("Container", () => {
             };
             await Container.load(
                 "tenantId/documentId",
-                undefined,
                 service,
                 codeLoader,
                 {},
                 {},
-                "open",
                 loader,
-                testRequest,
-                true);
+                testRequest);
         } catch (error) {
             success = error as boolean;
         }

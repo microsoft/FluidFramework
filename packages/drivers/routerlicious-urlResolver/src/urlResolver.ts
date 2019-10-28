@@ -32,7 +32,7 @@ export class RouterliciousUrlResolver implements IUrlResolver {
         private readonly user?: IAlfredUser) {
     }
 
-    public async resolve(request: IRequest): Promise<IResolvedUrl> {
+    public async resolve(request: IRequest): Promise<IResolvedUrl | undefined> {
         let requestedUrl = request.url;
         if (this.config && request.url.startsWith("/")) {
             requestedUrl = `http://dummy:3000${request.url}`;
@@ -78,15 +78,16 @@ export class RouterliciousUrlResolver implements IUrlResolver {
                 }
             }
 
-            const storageUrl = `${(this.config ? this.config.blobStorageUrl.replace("historian:3000", "localhost:3001")
-                : isLocalHost
-                    ? `http://localhost:3001` : `https://historian.${serverSuffix}`)}/repos/${tenantId}`;
+            const storageUrl =
+                `${(this.config ? this.config.blobStorageUrl.replace("historian:3000", "localhost:3001")
+                    : isLocalHost
+                        ? `http://localhost:3001` : `https://historian.${serverSuffix}`)}/repos/${tenantId}`;
             const ordererUrl = this.config ? this.config.serverUrl :
                 isLocalHost ?
                     `http://localhost:3003/` : `https://alfred.${serverSuffix}`;
             const deltaStorageUrl = this.config ?
-                `${this.config.serverUrl}/deltas/${encodeURIComponent(tenantId)}/${encodeURIComponent(documentId)}` :
-                    isLocalHost ?
+                `${this.config.serverUrl}/deltas/${encodeURIComponent(tenantId)}/${encodeURIComponent(documentId)}`
+                    : isLocalHost ?
                         `http://localhost:3003/deltas/${tenantId}/${documentId}` :
                             `https://alfred.${serverSuffix}/deltas/${tenantId}/${documentId}`;
 
@@ -102,7 +103,7 @@ export class RouterliciousUrlResolver implements IUrlResolver {
             };
             return resolved;
         }
-        return Promise.reject("Cannot resolve the given url!!");
+        return undefined;
     }
 }
 

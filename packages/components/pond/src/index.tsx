@@ -9,8 +9,8 @@ import {
   SimpleModuleInstantiationFactory,
 } from "@microsoft/fluid-aqueduct";
 import { IComponent, IComponentHandle, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
-// tslint:disable-next-line: no-implicit-dependencies no-submodule-imports
-import * as uuid from "uuid/v4";
+import { SharedDirectory } from "@microsoft/fluid-map";
+import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 
 import { Clicker, ClickerName, ClickerWithInitialValue, ClickerWithInitialValueName } from "./internal-components";
 
@@ -40,24 +40,20 @@ export class Pond extends PrimedComponent implements IComponentHTMLVisual {
    * Do setup work here
    */
   protected async componentInitializingFirstTime() {
-    // create the clicker component
-    const clickerRuntime = await this.context.createComponent(ClickerName);
-    const response = clickerRuntime.request({url: "/"});
-    const clicker = await this.asComponent<Clicker>(response);
+    await this.createSubComponent<Clicker>(this.clickerKey, ClickerName);
+    await this.createSubComponent<ClickerWithInitialValue>(
+      this.clickerWithInitialValueKey,
+      ClickerWithInitialValueName,
+      { initialValue: 100 },
+    );
+  }
 
-    // create the clickerWithInitialValue
-    // Note: we have to use the props to ensure we are passing the initial value
-    const clickerWithInitialValueRuntime =
-      await this.context.hostRuntime._createComponentWithProps(
-        ClickerWithInitialValueName,
-        { initialValue: 100 },
-        uuid(), // The componentId doesn't matter because we are saving the component handle
-      );
-    const clickerWithInitialValueResponse = clickerWithInitialValueRuntime.request({url: "/"});
-    const clickerWithInitialValue = await this.asComponent<ClickerWithInitialValue>(clickerWithInitialValueResponse);
-
-    this.root.set(this.clickerKey, clicker.handle);
-    this.root.set(this.clickerWithInitialValueKey, clickerWithInitialValue.handle);
+  async createSubComponent<T extends PrimedComponent>(rootKey: string, pkgName: string, props?: any) {
+    const componentRuntime: IComponentRuntime = await this.context.createSubComponent(pkgName, props);
+    componentRuntime.attach();
+    const response = componentRuntime.request({url: "/"});
+    const responseValue = await this.asComponent<T>(response);
+    this.root.set(rootKey, responseValue.handle);
   }
 
   protected async componentHasInitialized() {
@@ -119,8 +115,11 @@ export class Pond extends PrimedComponent implements IComponentHTMLVisual {
 
   private static readonly factory = new PrimedComponentFactory(
       Pond,
-      [],
-      new Map(),
+      [SharedDirectory.getFactory()],
+      new Map([
+        [ClickerName, Promise.resolve(Clicker.getFactory())],
+        [ClickerWithInitialValueName, Promise.resolve(ClickerWithInitialValue.getFactory())],
+      ]),
   );
 }
 
@@ -130,6 +129,4 @@ export const fluidExport = new SimpleModuleInstantiationFactory(
   PondName,
   new Map([
     [PondName, Promise.resolve(Pond.getFactory())],
-    [ClickerName, Promise.resolve(Clicker.getFactory())],
-    [ClickerWithInitialValueName, Promise.resolve(ClickerWithInitialValue.getFactory())],
   ]));

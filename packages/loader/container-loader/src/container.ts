@@ -13,6 +13,7 @@ import {
     IFluidCodeDetails,
     IFluidModule,
     IGenericBlob,
+    IProcessMessageResult,
     IQuorum,
     IRuntimeFactory,
     ISequencedProposal,
@@ -87,21 +88,17 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
      */
     public static async load(
         id: string,
-        version: string | null | undefined,
         service: IDocumentService,
         codeLoader: ICodeLoader,
         options: any,
         scope: IComponent,
-        connection: string,
         loader: Loader,
         request: IRequest,
-        canReconnect: boolean,
         logger?: ITelemetryBaseLogger,
     ): Promise<Container> {
         const container = new Container(
             id,
             options,
-            canReconnect,
             service,
             scope,
             codeLoader,
@@ -122,7 +119,9 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             };
             container.on("error", onError);
 
-            return container.load(version, connection)
+            return container.load(
+                request.headers!.version as string | null | undefined,
+                request.headers!.connect as string)
                 .then(() => {
                     container.removeListener("error", onError);
                     res(container);
@@ -138,10 +137,15 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     }
 
     public subLogger: TelemetryLogger;
+    public readonly canReconnect: boolean;
     private readonly logger: ITelemetryLogger;
 
     private pendingClientId: string | undefined;
     private loaded = false;
+    // TSLint incorrectly believes blobManager is not reassigned, but actually it is in load().
+    // Known bug: https://github.com/palantir/tslint/issues/3803
+    // Fixed in ESLint: https://github.com/typescript-eslint/typescript-eslint/issues/946
+    // tslint:disable-next-line:prefer-readonly
     private blobManager: BlobManager | undefined;
 
     // Active chaincode and associated runtime
@@ -161,8 +165,12 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private context: ContainerContext | undefined;
     private pkg: string | IFluidCodeDetails | undefined;
     private codeQuorumKey;
+    // TSLint incorrectly believes protocolHandler is not reassigned, but actually it is in load().
+    // Known bug: https://github.com/palantir/tslint/issues/3803
+    // Fixed in ESLint: https://github.com/typescript-eslint/typescript-eslint/issues/946
+    // tslint:disable-next-line:prefer-readonly
     private protocolHandler: ProtocolOpHandler | undefined;
-    private connectionDetailsP: Promise<IConnectionDetails | null> | undefined;
+    private connectionDetailsP: Promise<IConnectionDetails> | undefined;
 
     private firstConnection = true;
     private readonly connectionTransitionTimes: number[] = [];
@@ -239,7 +247,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     constructor(
         id: string,
         public readonly options: any,
-        public readonly canReconnect: boolean,
         private readonly service: IDocumentService,
         private readonly scope: IComponent,
         private readonly codeLoader: ICodeLoader,
@@ -253,6 +260,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         this._id = decodeURI(documentId);
         this._scopes = this.getScopes(options);
         this._audience = new Audience();
+        this.canReconnect = !(originalRequest.headers && originalRequest.headers["fluid-reconnect"] === false);
 
         // create logger for components to use
         this.subLogger = DebugLogger.mixinDebugLogger(
@@ -419,7 +427,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         // Pull in the prior version and snapshot tree to store against
         const lastVersion = await this.getVersion(this.id);
 
-        const parents = lastVersion.length > 0 ? [lastVersion[0].id] : [];
+        const parents = lastVersion ? [lastVersion.id] : [];
 
         // Write the full snapshot
         return this.storageService!.write(root, parents, message, "");
@@ -493,8 +501,9 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return root;
     }
 
-    private getVersion(version: string): Promise<IVersion[]> {
-        return this.storageService!.getVersions(version, 1);
+    private async getVersion(version: string): Promise<IVersion> {
+        const versions = await this.storageService!.getVersions(version, 1);
+        return versions[0];
     }
 
     private connectToDeltaStream() {
@@ -523,129 +532,115 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
      */
     private async load(specifiedVersion: string | null | undefined, connection: string): Promise<void> {
         const connectionValues = connection.split(",");
-
         const connect = connectionValues.indexOf("open") !== -1;
         const pause = connectionValues.indexOf("pause") !== -1;
 
         const perfEvent = PerformanceEvent.start(this.logger, { eventName: "Load" });
 
-        const storageP = this.service.connectToStorage().then((storage) => {
-            this.storageService = new PrefetchDocumentStorageService(storage);
-            return this.storageService;
-        });
-
-        // fetch specified snapshot
-        const treeP = storageP.then(() => this.fetchSnapshotTree(specifiedVersion));
-
-        const attributesP = Promise.all([storageP, treeP]).then<IDocumentAttributes>(
-            ([storage, tree]) => {
-                if (!tree) {
-                    // Have to have a web socket - see code below requiring it!
-                    this.connectToDeltaStream();
-                    return {
-                        branch: this.id,
-                        minimumSequenceNumber: 0,
-                        sequenceNumber: 0,
-                    };
-                }
-
-                const attributesHash = ".protocol" in tree.trees
-                    ? tree.trees[".protocol"].blobs.attributes
-                    : tree.blobs[".attributes"];
-
-                return readAndParse<IDocumentAttributes>(storage, attributesHash);
-            });
-
-        // ...begin the connection process to the delta stream
-        const handlerAttachedP = this.createDeltaManager(attributesP, connect);
-
+        // Start websocket connection as soon as possible.  Note that there is no op handler attached yet, but the
+        // DeltaManager is resilient to this and will wait to start processing ops until after it is attached.
+        this.createDeltaManager(connect);
         if (connect && !pause) {
             this.connectToDeltaStream();
         }
 
+        this.storageService = await this.getDocumentStorageService();
+
+        // fetch specified snapshot, but intentionally do not load from snapshot if specifiedVersion is null
+        const maybeSnapshotTree = specifiedVersion === null ? undefined
+            : await this.fetchSnapshotTree(specifiedVersion);
+
+        // if !connect || pause, and there's no tree, then we'll start the websocket connection here (we'll need
+        // the details later)
+        if (!maybeSnapshotTree) {
+            this.connectToDeltaStream();
+        }
+
+        const blobManagerP = this.loadBlobManager(this.storageService, maybeSnapshotTree);
+
+        const attributes = await this.getDocumentAttributes(this.storageService, maybeSnapshotTree);
+
+        // attach op handlers to start processing ops
+        this.attachDeltaManagerOpHandler(attributes, connect);
+
         // ...load in the existing quorum
-        const protocolHandlerP = Promise.all([attributesP, storageP, treeP]).then(
-            ([attributes, storage, tree]) => {
-                // Initialize the protocol handler
-                return this.initializeProtocolState(attributes, storage, tree!);
+        // Initialize the protocol handler
+        const protocolHandlerP = this.initializeProtocolState(attributes, this.storageService, maybeSnapshotTree);
+
+        let loadDetailsP: Promise<void>;
+
+        // Initialize document details - if loading a snapshot use that - otherwise we need to wait on
+        // the initial details
+        if (maybeSnapshotTree) {
+            this._existing = true;
+            this._parentBranch = attributes.branch !== this.id ? attributes.branch : null;
+            loadDetailsP = Promise.resolve();
+        } else {
+            loadDetailsP = this.connectToDeltaStream().then((details) => {
+                this._existing = details.existing;
+                this._parentBranch = details.parentBranch;
             });
+        }
 
-        const blobManagerP = Promise.all([storageP, treeP]).then(
-            ([storage, tree]) => this.loadBlobManager(storage, tree!));
+        // loadContext directly requires blobManager and protocolHandler to be ready, and eventually calls
+        // instantiateRuntime which will want to know existing state.  Wait for these promises to finish.
+        [this.blobManager, this.protocolHandler] = await Promise.all([blobManagerP, protocolHandlerP, loadDetailsP]);
 
-        // Wait for all the loading promises to finish
-        return Promise
-            .all([
-                storageP,
-                treeP,
-                attributesP,
-                blobManagerP,
-                protocolHandlerP,
-                handlerAttachedP,
-            ])
-            .then(async ([
-                storage,
-                tree,
-                attributes,
-                blobManager,
-                protocolHandler]) => {
+        perfEvent.reportProgress({}, "beforeContextLoad");
+        await this.loadContext(attributes, this.storageService, maybeSnapshotTree);
 
-                this.protocolHandler = protocolHandler;
-                this.blobManager = blobManager;
+        this.context!.changeConnectionState(this.connectionState, this.clientId!, this._version);
 
-                perfEvent.reportProgress({}, "beforeContextLoad");
+        // Internal context is fully loaded at this point
+        this.loaded = true;
 
-                // Initialize document details - if loading a snapshot use that - otherwise we need to wait on
-                // the initial details
-                if (tree) {
-                    this._existing = true;
-                    this._parentBranch = attributes.branch !== this.id ? attributes.branch : null;
-                } else {
-                    const details = await this.connectToDeltaStream();
+        if (connect && !pause) {
+            this.resume();
+        }
 
-                    this._existing = details!.existing;
-                    this._parentBranch = details!.parentBranch;
-                }
+        perfEvent.end({}, maybeSnapshotTree ? "end" : "end_NoSnapshot");
+    }
 
-                await this.loadContext(attributes, storage, tree);
+    private async getDocumentStorageService(): Promise<IDocumentStorageService> {
+        const storageService = await this.service.connectToStorage();
+        return new PrefetchDocumentStorageService(storageService);
+    }
 
-                this.context!.changeConnectionState(this.connectionState, this.clientId!, this._version);
+    private async getDocumentAttributes(
+        storage: IDocumentStorageService,
+        tree: ISnapshotTree | undefined,
+    ): Promise<IDocumentAttributes> {
+        if (!tree) {
+            return {
+                branch: this.id,
+                minimumSequenceNumber: 0,
+                sequenceNumber: 0,
+            };
+        }
 
-                // Internal context is fully loaded at this point
-                this.loaded = true;
+        const attributesHash = ".protocol" in tree.trees
+            ? tree.trees[".protocol"].blobs.attributes
+            : tree.blobs[".attributes"];
 
-                if (connect && !pause) {
-                    this.resume();
-                }
-
-                perfEvent.end({}, tree ? "end" : "end_NoSnapshot");
-            });
+        return readAndParse<IDocumentAttributes>(storage, attributesHash);
     }
 
     private async initializeProtocolState(
         attributes: IDocumentAttributes,
         storage: IDocumentStorageService,
-        tree: ISnapshotTree,
+        tree: ISnapshotTree | undefined,
     ): Promise<ProtocolOpHandler> {
-        let members: [string, ISequencedClient][];
-        let proposals: [number, ISequencedProposal, string[]][];
-        let values: [string, any][];
+        let members: [string, ISequencedClient][] = [];
+        let proposals: [number, ISequencedProposal, string[]][] = [];
+        let values: [string, any][] = [];
 
         if (tree) {
             const baseTree = ".protocol" in tree.trees ? tree.trees[".protocol"] : tree;
-            const snapshot = await Promise.all([
+            [members, proposals, values] = await Promise.all([
                 readAndParse<[string, ISequencedClient][]>(storage, baseTree.blobs.quorumMembers!),
                 readAndParse<[number, ISequencedProposal, string[]][]>(storage, baseTree.blobs.quorumProposals!),
                 readAndParse<[string, ICommittedProposal][]>(storage, baseTree.blobs.quorumValues!),
             ]);
-
-            members = snapshot[0];
-            proposals = snapshot[1];
-            values = snapshot[2];
-        } else {
-            members = [];
-            proposals = [];
-            values = [];
         }
 
         const protocol = new ProtocolOpHandler(
@@ -707,7 +702,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return protocol;
     }
 
-    private async loadBlobManager(storage: IDocumentStorageService, tree: ISnapshotTree): Promise<BlobManager> {
+    private async loadBlobManager(
+        storage: IDocumentStorageService,
+        tree: ISnapshotTree | undefined,
+    ): Promise<BlobManager> {
         const blobHash = tree && tree.blobs[".blobs"];
         const blobs: IGenericBlob[] = blobHash
             ? await readAndParse<IGenericBlob[]>(storage, blobHash)
@@ -766,7 +764,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return Promise.reject(PackageNotFactoryError);
     }
 
-    private createDeltaManager(attributesP: Promise<IDocumentAttributes>, connect: boolean): Promise<void> {
+    private createDeltaManager(connect: boolean): void {
         // Create the DeltaManager and begin listening for connection events
         // tslint:disable-next-line:no-unsafe-any
         const clientDetails: IClient = this.options && this.options.client
@@ -834,44 +832,42 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             this._deltaManager.on("processTime", (time) => {
                 this.emit("processTime", time);
             });
+        }
+    }
 
+    private attachDeltaManagerOpHandler(attributes: IDocumentAttributes, connect: boolean): void {
+        assert(this._deltaManager);
+
+        if (connect) {
             // If we're the outer frame, do we want to do this?
             // Begin fetching any pending deltas once we know the base sequence #. Can this fail?
             // It seems like something, like reconnection, that we would want to retry but otherwise allow
             // the document to load
-            const handlerAttachedP = attributesP.then((attributes) => {
-                this._deltaManager!.attachOpHandler(
-                    attributes.minimumSequenceNumber,
-                    attributes.sequenceNumber,
-                    {
-                        process: (message, callback) => {
-                            this.processRemoteMessage(message, callback);
-                        },
-                        processSignal: (message) => {
-                            this.processSignal(message);
-                        },
+            this._deltaManager!.attachOpHandler(
+                attributes.minimumSequenceNumber,
+                attributes.sequenceNumber,
+                {
+                    process: (message, callback) => {
+                        this.processRemoteMessage(message, callback);
                     },
-                    true);
-            });
-
-            return handlerAttachedP;
+                    processSignal: (message) => {
+                        this.processSignal(message);
+                    },
+                },
+                true);
         } else {
-            const handlerAttachedP = attributesP.then((attributes) => {
-                this._deltaManager!.attachOpHandler(
-                    attributes.minimumSequenceNumber,
-                    attributes.sequenceNumber,
-                    {
-                        process: (message) => {
-                            throw new Error("Delta manager is offline");
-                        },
-                        processSignal: (message) => {
-                            throw new Error("Delta manager is offline");
-                        },
+            this._deltaManager!.attachOpHandler(
+                attributes.minimumSequenceNumber,
+                attributes.sequenceNumber,
+                {
+                    process: (message) => {
+                        throw new Error("Delta manager is offline");
                     },
-                    false);
-            });
-
-            return handlerAttachedP;
+                    processSignal: (message) => {
+                        throw new Error("Delta manager is offline");
+                    },
+                },
+                false);
         }
     }
 
@@ -977,18 +973,21 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return this._deltaManager!.submit(type, contents, batch, metadata);
     }
 
-    private processRemoteMessage(message: ISequencedDocumentMessage, callback: (err?: any) => void) {
+    private processRemoteMessage(
+        message: ISequencedDocumentMessage,
+        callback: (result: IProcessMessageResult) => void,
+    ) {
         if (this.context!.legacyMessaging) {
             this.processRemoteMessageLegacy(message).then(
-                () => { callback(); },
-                (error) => { callback(error); });
+                (result) => { callback(result); },
+                (error) => { callback({ error }); });
         } else {
-            this.processRemoteMessageNew(message);
-            callback();
+            const result = this.processRemoteMessageNew(message);
+            callback(result);
         }
     }
 
-    private async processRemoteMessageLegacy(message: ISequencedDocumentMessage) {
+    private async processRemoteMessageLegacy(message: ISequencedDocumentMessage): Promise<IProcessMessageResult> {
         const local = this._clientId === message.clientId;
         let context;
 
@@ -1010,16 +1009,18 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         }
 
         // Allow the protocol handler to process the message
-        this.protocolHandler!.processMessage(message, local);
+        const result = this.protocolHandler!.processMessage(message, local);
 
         this.emit("op", message);
 
         if (!isSystemMessage(message)) {
             await this.context!.postProcess(message, local, context);
         }
+
+        return result;
     }
 
-    private processRemoteMessageNew(message: ISequencedDocumentMessage) {
+    private processRemoteMessageNew(message: ISequencedDocumentMessage): IProcessMessageResult {
         const local = this._clientId === message.clientId;
 
         // Forward non system messages to the loaded runtime for processing
@@ -1028,9 +1029,11 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         }
 
         // Allow the protocol handler to process the message
-        this.protocolHandler!.processMessage(message, local);
+        const result = this.protocolHandler!.processMessage(message, local);
 
         this.emit("op", message);
+
+        return result;
     }
 
     private submitSignal(message: any) {
@@ -1061,14 +1064,13 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     }
     // tslint:enable no-unsafe-any
 
-    private async fetchSnapshotTree(specifiedVersion: string | null | undefined): Promise<ISnapshotTree | undefined> {
-        if (specifiedVersion === null) {
-            // intentionally do not load from snapshot
-            return undefined;
-        }
-
-        const versions = await this.getVersion(specifiedVersion || this.id);
-        const version = versions ? versions[0] : undefined;
+    /**
+     * Get the most recent snapshot, or a specific version.
+     * @param specifiedVersion - The specific version of the snapshot to retrieve
+     * @returns The snapshot requested, or the latest snapshot if no version was specified
+     */
+    private async fetchSnapshotTree(specifiedVersion?: string): Promise<ISnapshotTree | undefined> {
+        const version = await this.getVersion(specifiedVersion || this.id);
 
         if (version) {
             return await this.storageService!.getSnapshotTree(version) || undefined;
