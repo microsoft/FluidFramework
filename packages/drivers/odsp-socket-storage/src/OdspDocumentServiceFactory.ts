@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { ITelemetryBaseLogger } from "@microsoft/fluid-container-definitions";
-import { ChildLogger, DebugLogger } from "@microsoft/fluid-core-utils";
+import { ChildLogger } from "@microsoft/fluid-core-utils";
 import { IDocumentService, IDocumentServiceFactory, IResolvedUrl } from "@microsoft/fluid-protocol-definitions";
 import { IOdspResolvedUrl } from "./contracts";
 import { FetchWrapper, IFetchWrapper } from "./fetchWrapper";
@@ -37,13 +37,6 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
 
   public async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
     const odspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
-    const subLogger = DebugLogger.mixinDebugLogger(
-      "fluid:telemetry",
-      {
-          documentId: odspResolvedUrl.hashedDocumentId,
-      },
-      this.logger);
-
     return new OdspDocumentService(
       this.appId,
       odspResolvedUrl.hashedDocumentId,
@@ -53,7 +46,7 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
       odspResolvedUrl.endpoints.snapshotStorageUrl,
       this.getStorageToken,
       this.getWebsocketToken,
-      ChildLogger.create(subLogger, "fluid:telemetry:OdspDriver"),
+      ChildLogger.create(this.logger, "fluid:telemetry:OdspDriver"),
       this.storageFetchWrapper,
       this.deltasFetchWrapper,
       Promise.resolve(getSocketIo()),

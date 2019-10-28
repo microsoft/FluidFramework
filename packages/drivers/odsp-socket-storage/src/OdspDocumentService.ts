@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
-import { SinglePromise } from "@microsoft/fluid-core-utils";
+import { ChildLogger, DebugLogger, SinglePromise } from "@microsoft/fluid-core-utils";
 import {
     ConnectionMode,
     IClient,
@@ -69,6 +69,16 @@ export class OdspDocumentService implements IDocumentService {
         private readonly deltasFetchWrapper: IFetchWrapper,
         private readonly socketIOClientP: Promise<SocketIOClientStatic>,
     ) {
+
+        const subLogger = DebugLogger.mixinDebugLogger(
+            "fluid:telemetry",
+            {
+                documentId: hashedDocumentId,
+            },
+            this.logger);
+
+        this.logger = ChildLogger.create(subLogger);
+
         this.getStorageToken = (refresh: boolean) => {
             if (refresh) {
                 // Potential perf issue:
