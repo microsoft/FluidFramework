@@ -191,7 +191,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this._inboundPending = new DeltaQueue<ISequencedDocumentMessage>(
             (op, successCallback, errorCallback) => {
                 // Explicitly split the two cases to avoid the async call in the case we are not split
-                if (op!.contents === undefined) {
+                if (op.contents === undefined) {
                     this.fetchOpContent(op).then(
                         (opContents) => {
                             op.contents = opContents.contents;
@@ -210,7 +210,8 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this._inbound = new DeltaQueue<ISequencedDocumentMessage>(
             (op, successCallback, errorCallback) => {
                 try {
-                    this.processInboundMessage(op, successCallback, errorCallback);
+                    this.processInboundMessage(op);
+                    successCallback();
                 } catch (error) {
                     errorCallback(error);
                 }
@@ -822,8 +823,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
     private processInboundMessage(
         message: ISequencedDocumentMessage,
-        successCallback: () => void,
-        errorCallback: (err: any) => void,
     ): void {
         const startTime = Date.now();
 
@@ -867,20 +866,12 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             this.logger.sendTelemetryEvent({ eventName: "MSNWindow", value: msnDistance });
         }
 
-        this.handler!.process(
-            message,
-            (err?: any) => {
-                if (err) {
-                    errorCallback(err);
-                } else {
-                    this.scheduleSequenceNumberUpdate(message);
+        this.handler!.process(message);
 
-                    const endTime = Date.now();
-                    this.emit("processTime", endTime - startTime);
+        this.scheduleSequenceNumberUpdate(message);
 
-                    successCallback();
-                }
-            });
+        const endTime = Date.now();
+        this.emit("processTime", endTime - startTime);
     }
 
     /**

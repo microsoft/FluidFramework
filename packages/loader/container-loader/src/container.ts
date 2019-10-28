@@ -848,8 +848,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                 attributes.minimumSequenceNumber,
                 attributes.sequenceNumber,
                 {
-                    process: (message, callback) => {
-                        this.processRemoteMessage(message, callback);
+                    process: (message) => {
+                        this.processRemoteMessage(message);
                     },
                     processSignal: (message) => {
                         this.processSignal(message);
@@ -974,7 +974,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return this._deltaManager!.submit(type, contents, batch, metadata);
     }
 
-    private processRemoteMessage(message: ISequencedDocumentMessage, callback: (err?: any) => void) {
+    private processRemoteMessage(message: ISequencedDocumentMessage) {
         const local = this._clientId === message.clientId;
 
         // Forward non system messages to the loaded runtime for processing
@@ -986,7 +986,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         this.protocolHandler!.processMessage(message, local);
 
         this.emit("op", message);
-        callback();
     }
 
     private submitSignal(message: any) {
