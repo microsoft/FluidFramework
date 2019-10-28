@@ -13,4 +13,8 @@ describe("Snapshots", function() {
     it("Stress Test", async () => {
         return processContent(Mode.Stress);
     });
+
+    // it("Backward Compat", async () => {
+    //     return processContent(Mode.Compare);
+    // });
 });
