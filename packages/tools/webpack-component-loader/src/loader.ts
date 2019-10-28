@@ -174,6 +174,15 @@ function getNpm(options: IRouteOptions): string {
     return options.npm;
 }
 
+// Invoked by `start()` when the 'double' option is enabled to create the side-by-side panes.
+function makeSideBySideDiv() {
+    const div = document.createElement("div");
+    div.style.flexGrow = "1";
+    div.style.border = "1px solid lightgray";
+    div.style.position = "relative";                // Make the new <div> a CSS stacking context.
+    return div;
+}
+
 export async function start(
     documentId: string,
     packageJson: IPackage,
@@ -222,12 +231,8 @@ export async function start(
     let leftDiv: HTMLDivElement;
     let rightDiv: HTMLDivElement;
     if (double) {
-        leftDiv = document.createElement("div");
-        leftDiv.style.flexGrow = "1";
-        leftDiv.style.border = "1px solid lightgray";
-        rightDiv = document.createElement("div");
-        rightDiv.style.flexGrow = "1";
-        rightDiv.style.border = "1px solid lightgray";
+        leftDiv = makeSideBySideDiv();
+        rightDiv = makeSideBySideDiv();
         div.append(leftDiv, rightDiv);
     }
 
