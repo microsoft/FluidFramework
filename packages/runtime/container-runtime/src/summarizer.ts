@@ -249,7 +249,7 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
             const props = {
                 onBehalfOf: ourMessage ? this.onBehalfOfClientId : "unknown",
                 timePending: Date.now() - this.lastSummaryTime,
-                refSequenceNumber: ack.summaryProposal.summarySequenceNumber,
+                summarySequenceNumber: ack.summaryProposal.summarySequenceNumber,
                 sequenceNumber: op.sequenceNumber,
             };
             if (op.type === MessageType.SummaryAck) {
