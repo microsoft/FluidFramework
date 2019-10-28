@@ -219,8 +219,8 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
                 this.logger.sendTelemetryEvent({
                     eventName: "SummarizeOp",
                     timeWaitingForBroadcast: Date.now() - this.lastSummaryTime,
-                    summarySequenceNumber: op.referenceSequenceNumber,
-                    sequenceNumber: op.sequenceNumber,
+                    refSequenceNumber: op.referenceSequenceNumber,
+                    summarySequenceNumber: op.sequenceNumber,
                 });
                 this.pendingSummarySequenceNumber = op.sequenceNumber;
                 // Now we indicate that we are okay to start listening for the summary ack/nack
@@ -229,8 +229,8 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
             } else {
                 this.logger.sendTelemetryEvent({
                     eventName: "SummarizeOp_otherClient",
-                    summarySequenceNumber: op.referenceSequenceNumber,
-                    sequenceNumber: op.sequenceNumber,
+                    refSequenceNumber: op.referenceSequenceNumber,
+                    summarySequenceNumber: op.sequenceNumber,
                 });
             }
         }
