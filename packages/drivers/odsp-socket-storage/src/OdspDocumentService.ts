@@ -72,14 +72,12 @@ export class OdspDocumentService implements IDocumentService {
         private readonly odspCache: OdspCache,
     ) {
 
-        const subLogger = DebugLogger.mixinDebugLogger(
+        this.logger = DebugLogger.mixinDebugLogger(
             "fluid:telemetry",
             {
                 documentId: hashedDocumentId,
             },
             this.logger);
-
-        this.logger = ChildLogger.create(subLogger);
 
         this.getStorageToken = (refresh: boolean) => {
             if (refresh) {
