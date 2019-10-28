@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
-import { ChildLogger, DebugLogger, SinglePromise } from "@microsoft/fluid-core-utils";
+import { DebugLogger, SinglePromise } from "@microsoft/fluid-core-utils";
 import {
     ConnectionMode,
     IClient,
