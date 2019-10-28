@@ -5,6 +5,7 @@
 
 import * as API from "@fluid-internal/client-api";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
 import {
     ITestDeltaConnectionServer,
@@ -40,7 +41,7 @@ describe("Container", () => {
         codeLoader = new API.CodeLoader({ generateSummaries: false });
         const options = {};
 
-        loader = new Loader(host, serviceFactory, codeLoader, options, {});
+        loader = new Loader(host, serviceFactory, codeLoader, options, {}, new Map<string, IProxyLoaderFactory>());
     });
 
     it("Load container successfully", async () => {

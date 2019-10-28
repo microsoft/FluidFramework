@@ -13,6 +13,7 @@ import {
     IFluidCodeDetails,
     IFluidModule,
     IGenericBlob,
+    IProcessMessageResult,
     IQuorum,
     IRuntimeFactory,
     ISequencedProposal,
@@ -849,7 +850,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                 attributes.sequenceNumber,
                 {
                     process: (message) => {
-                        this.processRemoteMessage(message);
+                        return this.processRemoteMessage(message);
                     },
                     processSignal: (message) => {
                         this.processSignal(message);
@@ -974,7 +975,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return this._deltaManager!.submit(type, contents, batch, metadata);
     }
 
-    private processRemoteMessage(message: ISequencedDocumentMessage) {
+    private processRemoteMessage(message: ISequencedDocumentMessage): IProcessMessageResult {
         const local = this._clientId === message.clientId;
 
         // Forward non system messages to the loaded runtime for processing
@@ -983,9 +984,11 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         }
 
         // Allow the protocol handler to process the message
-        this.protocolHandler!.processMessage(message, local);
+        const result = this.protocolHandler!.processMessage(message, local);
 
         this.emit("op", message);
+
+        return result;
     }
 
     private submitSignal(message: any) {

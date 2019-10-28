@@ -125,6 +125,9 @@ export interface IContainerRuntimeOptions {
     // Experimental flag that will generate summaries if connected to a service that supports them.
     // Will eventually become the default and snapshots will be deprecated
     generateSummaries: boolean;
+
+    // Experimental flag that will execute tasks in web worker if connected to a service that supports them.
+    enableWorker?: boolean;
 }
 
 interface IRuntimeMessageMetadata {
@@ -526,7 +529,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         private readonly context: IContainerContext,
         private readonly registry: IComponentRegistry,
         readonly chunks: [string, string[]][],
-        private readonly runtimeOptions: IContainerRuntimeOptions = { generateSummaries: false },
+        private readonly runtimeOptions: IContainerRuntimeOptions = { generateSummaries: false, enableWorker: false },
     ) {
         super();
 
@@ -599,6 +602,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         this.summaryManager = new SummaryManager(
             context,
             this.runtimeOptions.generateSummaries || this.loadedFromSummary,
+            this.runtimeOptions.enableWorker,
             this.logger);
         if (this.context.connectionState === ConnectionState.Connected) {
             this.summaryManager.setConnected(this.context.clientId);
