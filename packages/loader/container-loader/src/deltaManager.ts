@@ -813,9 +813,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         }
     }
 
-    private processInboundMessage(
-        message: ISequencedDocumentMessage,
-    ): void {
+    private processInboundMessage(message: ISequencedDocumentMessage): void {
         const startTime = Date.now();
 
         if (this.connection && this.connection.details.clientId === message.clientId) {
