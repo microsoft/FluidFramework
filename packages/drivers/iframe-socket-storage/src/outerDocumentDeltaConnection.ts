@@ -26,7 +26,7 @@ export interface IInnerDocumentDeltaConnectionProxy {
 
 export interface IOuterDocumentDeltaConnection {
     add(a: number, b: number): Promise<number>;
-    getDetails(callback: (connection: IConnected) => void): Promise<void>;
+    getDetails(): IConnected;
     submit(messages: IDocumentMessage[]): Promise<void>;
     submitSignal(message: IDocumentMessage): Promise<void>;
 }
@@ -225,7 +225,7 @@ export class OuterDocumentDeltaConnection extends EventEmitter implements IDocum
             return a + b;
         }
 
-        const getDetails = async () => this.details;
+        const getDetails = () => this.details;
 
         const submit = async (messages: IDocumentMessage[]) => {
             this.connection.submit(messages);

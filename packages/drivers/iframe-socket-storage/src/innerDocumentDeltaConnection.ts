@@ -23,7 +23,7 @@ import { EventEmitter } from "events";
 
 export interface IOuterDocumentDeltaConnectionProxy {
     handshake: Deferred<any>;
-    getDetails(): Promise<IConnected>;
+    getDetails(): IConnected;
     submit(messages: IDocumentMessage[]): Promise<void>;
     submitSignal(message: IDocumentMessage): Promise<void>;
     add(a: number, b: number): Promise<number>;
@@ -38,9 +38,9 @@ export class InnerDocumentDeltaConnection extends EventEmitter implements IDocum
      *
      * @param id - document ID
      */
-    public static async create(
+    public static create(
         connection: IConnected,
-        outerProxy: IOuterDocumentDeltaConnectionProxy): Promise<IDocumentDeltaConnection> {
+        outerProxy: IOuterDocumentDeltaConnectionProxy): IDocumentDeltaConnection {
 
         // tslint:disable-next-line: no-unsafe-any
         const deltaConnection = new InnerDocumentDeltaConnection(connection, outerProxy);

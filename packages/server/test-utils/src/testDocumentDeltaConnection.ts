@@ -30,7 +30,7 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
             client: IClient,
             webSocketServer: core.IWebSocketServer,
             mode: ConnectionMode,
-            callback: (connection: IDocumentDeltaConnection) => void) {
+            callback: (connection: IDocumentDeltaConnection) => void): Promise<void> {
         const socket = (webSocketServer as TestWebSocketServer).createConnection();
 
         const connectMessage: IConnect = {
@@ -42,7 +42,7 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
             versions: testProtocolVersions,
         };
 
-        return new Promise<IConnected>((resolve, reject) => {
+        return new Promise<void>((resolve, reject) => {
             // Listen for ops sent before we receive a response to connect_document
             const queuedMessages: ISequencedDocumentMessage[] = [];
             const queuedContents: IContentMessage[] = [];

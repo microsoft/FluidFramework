@@ -68,7 +68,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
             mode: ConnectionMode,
             url: string,
             timeoutMs: number,
-            callback: (connection: IDocumentDeltaConnection) => void) {
+            callback: (connection: IDocumentDeltaConnection) => void): Promise<void> {
         // Note on multiplex = false:
         // Temp fix to address issues on SPO. Scriptor hits same URL for Fluid & Notifications.
         // As result Socket.io reuses socket (as there is no collision on namespaces).
@@ -95,7 +95,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
             versions: protocolVersions,
         };
 
-        return new Promise<IConnected>((resolve, reject) => {
+        return new Promise<void>((resolve, reject) => {
             // Listen for ops sent before we receive a response to connect_document
             const queuedMessages: ISequencedDocumentMessage[] = [];
             const queuedContents: IContentMessage[] = [];
@@ -122,7 +122,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
             // Listen for connection issues
             socket.on("connect_error", (error) => {
                 debug(`Socket connection error: [${error}]`);
-                    reject(createErrorObject("connect_error", error));
+                reject(createErrorObject("connect_error", error));
             });
 
             // Listen for timeouts
@@ -180,7 +180,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
                 debug(`Error in documentDeltaConection: ${error}`);
                 // This includes "Invalid namespace" error, which we consider critical (reconnecting will not help)
                 socket.disconnect();
-                    reject(createErrorObject("error", error, error !== "Invalid namespace"));
+                reject(createErrorObject("error", error, error !== "Invalid namespace"));
             }));
 
             socket.on("connect_document_error", ((error) => {
@@ -188,7 +188,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
                 // In this case we disconnect the socket and indicate that we were unable to create the
                 // DocumentDeltaConnection.
                 socket.disconnect();
-                    reject(createErrorObject("connect_document_error", error));
+                reject(createErrorObject("connect_document_error", error));
             }));
 
             socket.emit("connect_document", connectMessage);

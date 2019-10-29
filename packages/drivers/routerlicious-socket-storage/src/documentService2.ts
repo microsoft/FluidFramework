@@ -47,7 +47,7 @@ export class DocumentService2 extends DocumentService {
     public async connectToDeltaStream(
             client: api.IClient,
             mode: api.ConnectionMode,
-            callback: (connection: api.IDocumentDeltaConnection) => void) {
+            callback: (connection: api.IDocumentDeltaConnection) => void): Promise<void> {
         return WSDeltaConnection.create(
             this.tenantId,
             this.documentId,

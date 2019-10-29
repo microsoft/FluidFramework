@@ -169,7 +169,7 @@ export class OdspDocumentService implements IDocumentService {
     public async connectToDeltaStream(
             client: IClient,
             mode: ConnectionMode,
-            callback: (connection: IDocumentDeltaConnection) => void) {
+            callback: (connection: IDocumentDeltaConnection) => void): Promise<void> {
         // We should refresh our knowledge before attempting to reconnect
         this.websocketEndpointP = this.websocketEndpointRequestThrottler.response;
 
@@ -300,8 +300,8 @@ export class OdspDocumentService implements IDocumentService {
             client: IClient,
             mode: ConnectionMode,
             url: string,
-            url2?: string,
-            callback: (connection: IDocumentDeltaConnection) => void) {
+            url2: string | undefined,
+            callback: (connection: IDocumentDeltaConnection) => void): Promise<void> {
         // tslint:disable-next-line: strict-boolean-expressions
         const hasUrl2 = !!url2;
 
@@ -325,7 +325,7 @@ export class OdspDocumentService implements IDocumentService {
                 // tslint:disable-next-line: no-non-null-assertion
                 url2!,
                 20000,
-                (connection: IDocumentDeltaConnection) {
+                (connection) => {
                     logger.sendTelemetryEvent({
                         eventName: "UsedAfdUrl",
                         fromCache: true,
@@ -352,13 +352,13 @@ export class OdspDocumentService implements IDocumentService {
                         mode,
                         url,
                         20000,
-                        (connection: IDocumentDeltaConnection) {
+                        (connection) => {
                             logger.sendPerformanceEvent({
                                 eventName: "UsedNonAfdUrlFallback",
                                 duration: endAfd - startAfd,
                             }, connectionError);
                             callback(connection);
-                        }).catch(retryError => {
+                        }).catch((retryError) => {
                             logger.sendPerformanceEvent({
                                 eventName: "FailedNonAfdUrlFallback",
                                 duration: endAfd - startAfd,
@@ -379,7 +379,7 @@ export class OdspDocumentService implements IDocumentService {
             mode,
             url,
             hasUrl2 ? 15000 : 20000,
-            (connection: IDocumentDeltaConnection) {
+            (connection) => {
                 logger.sendTelemetryEvent({ eventName: "UsedNonAfdUrl" });
                 callback(connection);
             }).catch((connectionError) => {
@@ -388,7 +388,7 @@ export class OdspDocumentService implements IDocumentService {
                     logger.sendErrorEvent({
                         eventName: "FailedNonAfdUrl-NoAfdFallback",
                     }, connectionError);
-                        throw connectionError;
+                    throw connectionError;
                 }
                 debug(`Socket connection error on non-AFD URL. Error was [${connectionError}]. Retry on AFD URL: ${url2}`);
 
@@ -402,7 +402,7 @@ export class OdspDocumentService implements IDocumentService {
                     // tslint:disable-next-line: no-non-null-assertion
                     url2!,
                     20000,
-                    (connection: IDocumentDeltaConnection) {
+                    (connection) => {
                         // Refresh AFD cache
                         const cacheResult = this.writeLocalStorage(lastAfdConnectionTimeMsKey, Date.now().toString());
                         if (cacheResult) {
@@ -415,7 +415,7 @@ export class OdspDocumentService implements IDocumentService {
                             fromCache: false,
                         }, connectionError);
                         callback(connection);
-                    }).catch(retryError => {
+                    }).catch((retryError) => {
                         logger.sendPerformanceEvent({
                             eventName: "FailedAfdUrlFallback",
                             duration: endNonAfd - startNonAfd,

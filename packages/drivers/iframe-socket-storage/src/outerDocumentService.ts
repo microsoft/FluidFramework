@@ -57,16 +57,17 @@ export class OuterDocumentService implements IDocumentService {
             },
         };
 
-        const [storage, deltaStorage, deltaConnection] = await Promise.all([
+        let deltaConnection: IDocumentDeltaConnection | undefined;
+        const [storage, deltaStorage] = await Promise.all([
             documentService.connectToStorage(),
             documentService.connectToDeltaStorage(),
-            documentService.connectToDeltaStream(client, mode),
+            documentService.connectToDeltaStream(client, mode, (connection) => { deltaConnection = connection; }),
         ]);
 
         return new OuterDocumentService(
             storage as DocumentStorageService,
             deltaStorage,
-            deltaConnection,
+            deltaConnection!,
             frame,
         );
     }
@@ -137,7 +138,7 @@ export class OuterDocumentService implements IDocumentService {
     public async connectToDeltaStream(
             client: IClient,
             mode: ConnectionMode,
-            callback: (connection: IDocumentDeltaConnection) => void) {
+            callback: (connection: IDocumentDeltaConnection) => void): Promise<void> {
         callback(this.createDocumentDeltaConnection(client));
     }
 

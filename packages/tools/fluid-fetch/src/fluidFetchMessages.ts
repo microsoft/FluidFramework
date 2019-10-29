@@ -55,7 +55,7 @@ async function loadAllSequencedMessages(
     console.log("Retrieving messages from web socket");
     timeStart = Date.now();
     const mode: ConnectionMode = "write";
-    let deltaStream: IDocumentDeltaConnection;
+    let deltaStream: IDocumentDeltaConnection | undefined;
     await documentService.connectToDeltaStream(client, mode, (connection) => {
         deltaStream = connection;
     });

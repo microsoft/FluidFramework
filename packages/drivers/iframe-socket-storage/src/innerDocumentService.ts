@@ -74,10 +74,8 @@ export class InnerDocumentService implements IDocumentService {
     public async connectToDeltaStream(
             client: IClient,
             mode: ConnectionMode,
-            callback: (connectionArg: IDocumentDeltaConnection) => void) {
-        return this.outerProxy.getDetails((connection) => {
-            callback(InnerDocumentDeltaConnection.create(connection, this.outerProxy));
-        });
+            callback: (connectionArg: IDocumentDeltaConnection) => void): Promise<void> {
+        callback(InnerDocumentDeltaConnection.create(this.outerProxy.getDetails(), this.outerProxy));
     }
 
     public async branch(): Promise<string> {

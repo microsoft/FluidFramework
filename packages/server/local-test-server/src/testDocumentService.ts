@@ -70,7 +70,7 @@ export class TestDocumentService implements api.IDocumentService {
     public async connectToDeltaStream(
             client: api.IClient,
             mode: api.ConnectionMode,
-            callback: (connection: api.IDocumentDeltaConnection) => void) {
+            callback: (connection: api.IDocumentDeltaConnection) => void): Promise<void> {
         // socketStorage.DocumentDeltaStorageService?
         return TestDocumentDeltaConnection.create(
             this.tenantId,
