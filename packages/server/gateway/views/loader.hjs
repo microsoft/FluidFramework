@@ -38,7 +38,7 @@
         var scriptIds = [];
         {{/scripts}}
   
-        controllers.loader.initialize(
+        containerP = controllers.loader.initialize(
             window.location.href,
             resolved,
             cache,
@@ -49,6 +49,40 @@
             config,
             clientId,
             user);
+
+        const connectionDiv = document.getElementById("connection-state");
+
+        function getConnMode(container) {
+            const connMode = container.deltaManager.connectionMode;
+            return connMode === "write" ? "connected" : `connected (${connMode}-only)`;
+        }
+
+        containerP.then((container) => {
+            container.on("disconnected", () => {
+                connectionDiv.innerHTML = "disconnected";
+            });
+            container.on("joining", () => {
+                connectionDiv.innerHTML = "joining...";
+            });
+            container.on("connected", () => {
+                connectionDiv.innerHTML = getConnMode(container);
+            });
+
+            container.getQuorum().on("addMember", () => {
+                connectionDiv.innerHTML = getConnMode(container);
+            });
+            container.getQuorum().on("removeMember", () => {
+                connectionDiv.innerHTML = getConnMode(container);
+            });
+
+            container.audience.on("addMember", () => {
+                connectionDiv.innerHTML = getConnMode(container);
+            });
+            container.audience.on("removeMember", () => {
+                connectionDiv.innerHTML = getConnMode(container);
+            });
+        });
+
     </script>
 {{/scripts}}
 
