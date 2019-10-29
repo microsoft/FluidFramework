@@ -11,13 +11,14 @@ import {
     IPartitionLambda,
     IRawOperationMessage,
     IRawSingleKafkaMessage,
-    RawOperationType,
 } from "@microsoft/fluid-server-services-core";
+import winston = require("winston");
 
 export class CopierLambda implements IPartitionLambda {
-    private pending = new Map<string, IRawOperationMessage[]>();
+    // Below, one job corresponds to the task of sending one batch to Mongo:
+    private pendingJobs = new Map<string, IRawOperationMessage[][]>();
     private pendingOffset: number;
-    private current = new Map<string, IRawOperationMessage[]>();
+    private currentJobs = new Map<string, IRawOperationMessage[][]>();
 
     constructor(
         private rawOpCollection: ICollection<any>,
@@ -25,26 +26,27 @@ export class CopierLambda implements IPartitionLambda {
     }
 
     public handler(message: IKafkaMessage): void {
-        // Extract list of raw ops from Kafka message:
+        // Extract batch of raw ops from Kafka message:
         const boxcar = extractBoxcar(message);
+        const batch = boxcar.contents;
+        const topic = `${boxcar.tenantId}/${boxcar.documentId}`;
 
-        for (const baseMessage of boxcar.contents) {
-            // If a particular message is a raw op then push it to a `pending`
-            // for eventual addition to Mongo:
-            if (baseMessage.type === RawOperationType) {
-                const value = baseMessage as IRawOperationMessage;
+        winston.info("LOG: handler ->boxcar");
+        winston.info(`boxcar doc id: ${boxcar.documentId}`);
+        winston.info(`boxcar tenant id: ${boxcar.tenantId}`);
+        winston.info(batch);
+        winston.info("LOG: handler ->batch[0]")
+        winston.info(`batch0 doc id: ${(batch[0] as IRawOperationMessage).documentId}`)
+        winston.info(`batch0 tenant id: ${(batch[0] as IRawOperationMessage).tenantId}`)
+        winston.info(`batch0 client id: ${(batch[0] as IRawOperationMessage).clientId}`)
 
-                // Remove traces and serialize content before writing to mongo.
-                value.operation.traces = [];
+        const convertedBatch = batch.map(m => (m as IRawOperationMessage));
 
-                const topic = `${value.tenantId}/${value.documentId}`;
-                if (!this.pending.has(topic)) {
-                    this.pending.set(topic, []);
-                }
-
-                this.pending.get(topic).push(value);
-            }
+        // Write the batch directly to Mongo:
+        if (!this.pendingJobs.has(topic)) {
+            this.pendingJobs.set(topic, []);
         }
+        this.pendingJobs.get(topic).push(convertedBatch);
 
         // Update current offset (will be tied to this batch):
         this.pendingOffset = message.offset;
@@ -52,48 +54,35 @@ export class CopierLambda implements IPartitionLambda {
     }
 
     public close() {
-        this.pending.clear();
-        this.current.clear();
+        this.pendingJobs.clear();
+        this.currentJobs.clear();
 
         return;
     }
 
     private sendPending() {
         // If there is work currently being sent or we have no pending work return early
-        if (this.current.size > 0 || this.pending.size === 0) {
+        if (this.currentJobs.size > 0 || this.pendingJobs.size === 0) {
             return;
         }
 
         // Swap current and pending
-        const temp = this.current;
-        this.current = this.pending;
-        this.pending = temp;
+        const temp = this.currentJobs;
+        this.currentJobs = this.pendingJobs;
+        this.pendingJobs = temp;
         const batchOffset = this.pendingOffset;
 
         const allProcessed = [];
 
-        // Process all the batches + checkpoint
-        for (const [, messages] of this.current) {
-
-            // Add a custom seq. number to each individual message:
-            const orderedMessages = [];
-            // tslint:disable-next-line
-            for (let i = 0; i < messages.length; i++) {
-                const tmp = messages[i] as IRawSingleKafkaMessage;
-                tmp.batchedSequenceNumber = {
-                    batchNumber: batchOffset,
-                    opIndex: i,
-                };
-                orderedMessages.push(tmp);
-            }
-
-            const processP = this.processMongoCore(orderedMessages);
+        // Process all current jobs on all current topics:
+        for (const [, convertedBatch] of this.currentJobs) {
+            const processP = this.processMongoCore(convertedBatch);
             allProcessed.push(processP);
         }
 
         Promise.all(allProcessed).then(
             () => {
-                this.current.clear();
+                this.currentJobs.clear();
                 this.context.checkpoint(batchOffset);
                 this.sendPending();
             },
@@ -102,21 +91,16 @@ export class CopierLambda implements IPartitionLambda {
             });
     }
 
-    private async processMongoCore(kafkaOrderedMessages: IRawSingleKafkaMessage[]): Promise<void> {
-        const insertP = this.insertOp(kafkaOrderedMessages);
-        await Promise.all([insertP]);
-    }
-
-    private async insertOp(kafkaOrderedMessages: IRawSingleKafkaMessage[]) {
-        return this.rawOpCollection
-            .insertMany(kafkaOrderedMessages, false)
+    private async processMongoCore(kafkaBatches: IRawOperationMessage[][]): Promise<void> {
+        await this.rawOpCollection
+            .insertMany(kafkaBatches, false)
             .catch((error) => {
-                // Duplicate key errors are ignored since a replay may cause us to insert twice into Mongo.
-                // All other errors result in a rejected promise.
-                if (error.code !== 11000) {
-                    // Needs to be a full rejection here
-                    return Promise.reject(error);
-                }
-            });
+            // Duplicate key errors are ignored since a replay may cause us to insert twice into Mongo.
+            // All other errors result in a rejected promise.
+            if (error.code !== 11000) {
+                // Needs to be a full rejection here
+                return Promise.reject(error);
+            }
+        });
     }
 }

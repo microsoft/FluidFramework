@@ -6,6 +6,10 @@ The [copier](https://en.wikipedia.org/wiki/Photocopier) is an iconic staple of t
 
 In our case, the copier lambda simply retrieves raw deltas from Kafka and then writes this data to a database for medium/longer-term storage.
 
+## Implementation Note:
+
+The core design problem for copier is getting the total Kafka ordering for these (unticketed) messages back to the user correctly. Here, Kafka batches are written directly to Mongo (unlike Scriptorium, which separates a batch into indvididual messages and use the ticket ordering as a unique index) and then only on user request are all batches available in Mongo grabbed and unweaved into individual messages that are a that point in total Kafka order.
+
 ## Use Cases:
 
 The primary use case for copier is to use the unsequenced deltas to test the Fluid system for potential bugs. For example:

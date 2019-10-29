@@ -49,38 +49,50 @@ export async function getDeltas(
     tenantId: string,
     documentId: string,
     from?: number,
-    to?: number,
-    sequenceNumbersName?: string): Promise<ISequencedDocumentMessage[]> {
+    to?: number): Promise<ISequencedDocumentMessage[]> {
 
     // Create an optional filter to restrict the delta range
     const query: any = { documentId, tenantId };
-    const seqField =
-        sequenceNumbersName ? sequenceNumbersName : "operation.sequenceNumber";
-    winston.info(`hey a request for deltas: ${sequenceNumbersName}`);
-
     if (from !== undefined || to !== undefined) {
-        query[seqField] = {};
+        query["operation.sequenceNumber"] = {};
 
         if (from !== undefined) {
-            query[seqField].$gt = from;
+            query["operation.sequenceNumber"].$gt = from;
         }
 
         if (to !== undefined) {
-            query[seqField].$lt = to;
+            query["operation.sequenceNumber"].$lt = to;
         }
     }
 
     // Query for the deltas and return a filtered version of just the operations field
     const db = await mongoManager.getDatabase();
     const collection = await db.collection<any>(collectionName);
-    const dbDeltas = await collection.find(query, { [seqField] : 1 });
+    const dbDeltas = await collection.find(query, { "operation.sequenceNumber" : 1 });
 
     return dbDeltas.map((delta) => delta.operation);
 }
 
+export async function getRawDeltas(
+    mongoManager: MongoManager,
+    collectionName: string,
+    tenantId?: string,
+    documentId?: string): Promise<ISequencedDocumentMessage[]> {
+
+    // Create an optional filter to restrict the delta range
+    // const query: any = { documentId, tenantId };
+
+    // Query for the deltas and return a filtered version of just the operations field
+    const db = await mongoManager.getDatabase();
+    const collection = await db.collection<any>(collectionName);
+    const dbDeltas = await collection.findAll();
+
+    return dbDeltas;
+}
+
 export function create(config: Provider, mongoManager: MongoManager, appTenants: IAlfredTenant[]): Router {
     const deltasCollectionName = config.get("mongo:collectionNames:deltas");
-    const rawdeltasCollectionName = config.get("mongo:collectionNames:rawdeltas");
+    const rawDeltasCollectionName = config.get("mongo:collectionNames:rawdeltas");
     const router: Router = Router();
 
     function stringToSequenceNumber(value: string): number {
@@ -92,19 +104,14 @@ export function create(config: Provider, mongoManager: MongoManager, appTenants:
      * Retrieves raw (unsequenced) deltas for the given document.
      */
     router.get("/raw/:tenantId?/:id", (request, response, next) => {
-        const from = stringToSequenceNumber(request.query.from);
-        const to = stringToSequenceNumber(request.query.to);
         const tenantId = getParam(request.params, "tenantId") || appTenants[0].id;
 
-        // Query for the deltas and return a filtered version of just the operations field
-        const deltasP = getDeltas(
+        // Query for the raw deltas (no from/to since we want all of them)
+        const deltasP = getRawDeltas(
             mongoManager,
-            rawdeltasCollectionName,
+            rawDeltasCollectionName,
             tenantId,
-            getParam(request.params, "id"),
-            from,
-            to,
-            "batchedSequenceNumber");
+            getParam(request.params, "id"));
 
         deltasP.then(
             (deltas) => {
