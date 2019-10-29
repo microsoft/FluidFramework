@@ -273,7 +273,7 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
                             sequenceNumber: op.sequenceNumber,
                             message: op.type === MessageType.SummaryNack ? (ack as ISummaryNack).errorMessage : `handle: ${(ack as ISummaryAck).handle}`,
                         });
-                    };
+                    }
                 })
                 .catch((error) => {
                     this.logger.sendErrorEvent({ eventName: "HandleSummaryAckError" }, error);
@@ -382,8 +382,6 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
                 if (snapshotResult.success) {
                     this.refreshBaseSummary(snapshotResult.result);
                 }
-                this.summaryPending = false;
-                this.pendingAckTimer.clear();
             }
         }
         this.stopPending();
