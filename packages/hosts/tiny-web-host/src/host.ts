@@ -4,9 +4,11 @@
  */
 
 import { IHostConfig, start } from "@microsoft/fluid-base-host";
+import { IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
 import { BaseTelemetryNullLogger, configurableUrlResolver } from "@microsoft/fluid-core-utils";
 import { FluidAppOdspUrlResolver } from "@microsoft/fluid-fluidapp-odsp-urlresolver";
-import { OdspDocumentServiceFactory, OdspUrlResolver } from "@microsoft/fluid-odsp-driver";
+import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
+import { OdspUrlResolver } from "@microsoft/fluid-odsp-urlresolver";
 import { IDocumentServiceFactory, IFluidResolvedUrl, IResolvedUrl } from "@microsoft/fluid-protocol-definitions";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
 import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
@@ -128,6 +130,7 @@ async function loadContainer(
         {},
         div,
         hostConf,
+        new Map<string, IProxyLoaderFactory>(),
     );
 }
 

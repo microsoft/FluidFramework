@@ -6,6 +6,7 @@
 import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
 import { PerformanceEvent, throwNetworkError } from "@microsoft/fluid-core-utils";
 import { ISocketStorageDiscovery } from "./contracts";
+import { OdspCache } from "./odspCache";
 import { fetchHelper, getWithRetryForTokenRefresh, IOdspResponse } from "./OdspUtils";
 
 function getOrigin(url: string) {
@@ -77,31 +78,41 @@ export async function getSocketStorageDiscovery(
   siteUrl: string,
   logger: ITelemetryLogger,
   getVroomToken: (refresh: boolean) => Promise<string | undefined | null>,
+  odspCache: OdspCache,
+  documentId: string,
 ): Promise<ISocketStorageDiscovery> {
-  const event = PerformanceEvent.start(logger, { eventName: "JoinSession" });
-  let socketStorageDiscovery: ISocketStorageDiscovery;
-  let response: IOdspResponse<ISocketStorageDiscovery>;
-  try {
-    response = await fetchJoinSession(
-      appId,
-      driveId,
-      itemId,
-      siteUrl,
-      "opStream/joinSession",
-      "",
-      "POST",
-      getVroomToken,
-    );
-  } catch (error) {
-    event.cancel({}, error);
-    throw error;
-  }
-  socketStorageDiscovery = response.content;
-  event.end();
+  const odspCacheKey = `${documentId}/joinsession`;
+  // It is necessary to invalidate the cache here once we use the previous result because we do not
+  // want to keep using the same expired result. So if we delete it we would ask for new join session result.
+  let socketStorageDiscovery: ISocketStorageDiscovery = odspCache.get(odspCacheKey, true);
+  if (!socketStorageDiscovery) {
+    const event = PerformanceEvent.start(logger, { eventName: "JoinSession" });
+    let response: IOdspResponse<ISocketStorageDiscovery>;
+    try {
+      response = await fetchJoinSession(
+        appId,
+        driveId,
+        itemId,
+        siteUrl,
+        "opStream/joinSession",
+        "",
+        "POST",
+        getVroomToken,
+      );
+    } catch (error) {
+      event.cancel({}, error);
+      throw error;
+    }
+    socketStorageDiscovery = response.content;
+    event.end();
 
-  if (socketStorageDiscovery.runtimeTenantId && !socketStorageDiscovery.tenantId) {
-    socketStorageDiscovery.tenantId = socketStorageDiscovery.runtimeTenantId;
+    if (socketStorageDiscovery.runtimeTenantId && !socketStorageDiscovery.tenantId) {
+      socketStorageDiscovery.tenantId = socketStorageDiscovery.runtimeTenantId;
+    }
+    // We are storing the joinsession response in cache for 16 mins so that other join session calls in the same timeframe can use this
+    // result. We are choosing 16 mins as the push server could change to different one after 15 mins. So to avoid any race condition,
+    // we are choosing 16 mins.
+    odspCache.put(odspCacheKey, socketStorageDiscovery, 960000);
   }
-
   return socketStorageDiscovery;
 }

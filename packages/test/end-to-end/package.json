@@ -51,6 +51,7 @@
     "@microsoft/fluid-local-test-server": "^0.11.0",
     "@microsoft/fluid-cell": "^0.11.0",
     "@microsoft/fluid-component-core-interfaces": "^0.11.0",
+    "@microsoft/fluid-container-definitions": "0.11.0",
     "@microsoft/fluid-map": "^0.11.0",
     "@microsoft/fluid-ordered-collection": "^0.11.0",
     "@microsoft/fluid-runtime-definitions": "^0.11.0",

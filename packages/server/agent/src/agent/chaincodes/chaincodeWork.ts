@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ICodeLoader, IHost } from "@microsoft/fluid-container-definitions";
+import { ICodeLoader, IHost, IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
 import { Browser, IDocumentServiceFactory } from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
@@ -36,7 +36,8 @@ export class ChaincodeWork extends EventEmitter {
             this.serviceFactory,
             this.codeLoader,
             options,
-            {});
+            {},
+            new Map<string, IProxyLoaderFactory>());
 
         const url =
             `fluid://${parse(this.alfred).host}/` +

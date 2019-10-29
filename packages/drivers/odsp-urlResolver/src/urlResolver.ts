@@ -15,13 +15,16 @@ import * as sha from "sha.js";
 
 export class OdspUrlResolver implements IUrlResolver {
 
-    public async resolve(request: IRequest): Promise<IResolvedUrl> {
+    public async resolve(request: IRequest): Promise<IResolvedUrl | undefined> {
         if (isOdspUrl(request.url)) {
             const reqUrl = new URL(request.url);
-            const { site, drive, item } = await initializeODSP(reqUrl);
-            if (site === undefined || drive === undefined || item === undefined) {
-                return Promise.reject("Cannot resolve the given url!!");
+            const contents = await initializeODSP(reqUrl);
+            if (!contents) {
+                return undefined;
             }
+            const site = contents.site;
+            const drive = contents.drive;
+            const item = contents.item;
             const hashedDocumentId = new sha.sha256().update(`${site}_${drive}_${item}`).digest("hex");
 
             let documentUrl = `fluid-odsp://placeholder/placeholder/${hashedDocumentId}`;
@@ -47,7 +50,7 @@ export class OdspUrlResolver implements IUrlResolver {
 
             return response;
         }
-        return Promise.reject("Cannot resolve the given url!!");
+        return undefined;
     }
 }
 
@@ -64,7 +67,7 @@ function getSnapshotUrl(server: string, drive: string, item: string) {
     return `${siteOrigin}/_api/v2.1/drives/${drive}/items/${item}/opStream/snapshots`;
 }
 
-async function initializeODSP(url: URL): Promise<{site: string, drive: string, item: string}> {
+async function initializeODSP(url: URL) {
 
     const pathname = url.pathname;
 
@@ -73,7 +76,7 @@ async function initializeODSP(url: URL): Promise<{site: string, drive: string, i
         /(.*)\/_api\/v2.1\/drives\/([^\/]*)\/items\/([^\/]*)(.*)/);
 
     if (joinSessionMatch === null) {
-        return Promise.reject("Unable to parse ODSP URL path");
+        return undefined;
     }
     const drive = joinSessionMatch[2];
     const item = joinSessionMatch[3];

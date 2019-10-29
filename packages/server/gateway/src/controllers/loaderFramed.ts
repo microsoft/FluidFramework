@@ -11,11 +11,13 @@ import {
     registerAttach,
 } from "@microsoft/fluid-base-host";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+import { IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
 import {
     createProtocolToFactoryMapping,
     selectDocumentServiceFactoryForProtocol,
 } from "@microsoft/fluid-container-loader";
 import { BaseTelemetryNullLogger } from "@microsoft/fluid-core-utils";
+import { WebWorkerLoaderFactory } from "@microsoft/fluid-execution-context-loader";
 import {
     InnerDocumentServiceFactory,
     InnerUrlResolver,
@@ -73,6 +75,7 @@ export async function initialize(
             config,
             services,
             hostConf,
+            new Map<string, IProxyLoaderFactory>([["webworker", new WebWorkerLoaderFactory()]]),
             new WhiteList(),
             );
 

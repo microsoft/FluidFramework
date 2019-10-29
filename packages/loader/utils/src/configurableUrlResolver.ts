@@ -11,19 +11,17 @@ import { IResolvedUrl, IUrlResolver } from "@microsoft/fluid-protocol-definition
  * @param resolversList - List of url resolvers to be used to resolve the request.
  * @param request - Request to be resolved.
  */
-export async function configurableUrlResolver(resolversList: IUrlResolver[], request: IRequest): Promise<IResolvedUrl> {
+export async function configurableUrlResolver(
+    resolversList: IUrlResolver[],
+    request: IRequest,
+): Promise<IResolvedUrl | undefined> {
     const url = request.url;
     let resolved: IResolvedUrl | undefined;
     for (const resolver of resolversList) {
-        try {
-            resolved = await resolver.resolve({ url });
+        resolved = await resolver.resolve({ url });
+        if (resolved) {
             return resolved;
-        } catch {
-            continue;
         }
     }
-    if (!resolved) {
-        throw new Error("No resolver is able to resolve the given url!!");
-    }
-    return resolved;
+    return undefined;
 }
