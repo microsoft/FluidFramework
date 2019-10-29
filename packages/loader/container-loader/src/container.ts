@@ -520,6 +520,12 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
     /**
      * Load container.
+     *
+     * @param specifiedVersion - one of the following
+     *   - null: use ops, no snapshots
+     *   - undefined - fetch latest snapshot
+     *   - otherwise, version sha to load snapshot
+     * @param connection - options (list of keywords). Accepted options are open & pause.
      */
     private async load(specifiedVersion: string | null | undefined, connection: string): Promise<void> {
         const connectionValues = connection.split(",");
