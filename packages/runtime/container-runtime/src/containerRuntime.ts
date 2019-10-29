@@ -91,6 +91,8 @@ export interface IGeneratedSummaryData {
      */
     submitted: boolean;
 
+    summaryMessage?: ISummaryContent;
+
     summaryStats?: ISummaryStats;
 }
 
@@ -1110,12 +1112,14 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             };
 
             if (!this.connected) {
+                generateSummaryEvent.cancel({reason: "disconnected"});
                 return ret;
             }
             // TODO in the future we can have stored the latest summary by listening to the summary ack message
             // after loading from the beginning of the snapshot
             const versions = await this.context.storage.getVersions(this.id, 1);
             const parents = versions.map((version) => version.id);
+            const parent = parents[0];
             generateSummaryEvent.reportProgress({}, "loadedVersions");
 
             const treeWithStats = await this.summarize(fullTree);
@@ -1123,33 +1127,37 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             generateSummaryEvent.reportProgress({}, "generatedTree");
 
             if (!this.connected) {
+                generateSummaryEvent.cancel({reason: "disconnected"});
                 return ret;
             }
             const handle = await this.context.storage.uploadSummary(treeWithStats.summaryTree);
-            const summary: ISummaryContent = {
+            const summaryMessage: ISummaryContent = {
                 handle: handle.handle,
-                head: parents[0],
+                head: parent,
                 message,
                 parents,
             };
             generateSummaryEvent.reportProgress({}, "uploadedTree");
 
             if (!this.connected) {
+                generateSummaryEvent.cancel({reason: "disconnected"});
                 return ret;
             }
             // if summarizer loses connection it will never reconnect
-            this.submit(MessageType.Summarize, summary);
+            this.submit(MessageType.Summarize, summaryMessage);
+            ret.summaryMessage = summaryMessage;
             ret.submitted = true;
 
             generateSummaryEvent.end({
                 sequenceNumber,
                 submitted: ret.submitted,
                 handle: handle.handle,
+                parent,
                 ...ret.summaryStats,
             });
             return ret;
         } catch (ex) {
-            generateSummaryEvent.cancel({}, ex);
+            generateSummaryEvent.cancel({reason: "exception"}, ex);
             throw ex;
         } finally {
             // Restart the delta manager

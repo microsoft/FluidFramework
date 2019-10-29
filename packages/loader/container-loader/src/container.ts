@@ -635,11 +635,15 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                 assert(!connected || this._deltaManager!.connectionMode === "read");
                 this.propagateConnectionState();
 
+                perfEvent.end({
+                    existing: this._existing,
+                    sequenceNumber: attributes.sequenceNumber,
+                    version: tree ? tree.id : undefined,
+                });
+
                 if (connect && !pause) {
                     this.resume();
                 }
-
-                perfEvent.end({}, tree ? "end" : "end_NoSnapshot");
             });
     }
 

@@ -331,5 +331,5 @@ export interface INetworkError {
     readonly canRetry?: boolean;
     readonly retryAfterSeconds?: number;
     readonly message: string;
-    readonly isOnline?: string;
+    readonly online?: string;
 }

@@ -107,21 +107,29 @@ export class ProtocolOpHandler {
             case MessageType.Summarize:
                 this.logger.sendTelemetryEvent({
                     eventName: "Summarize",
-                    summaryContent: message.contents as ISummaryContent,
+                    message: message.contents as ISummaryContent,
+                    summarySequenceNumber: message.sequenceNumber,
+                    refSequenceNumber: message.referenceSequenceNumber,
                 });
                 break;
 
             case MessageType.SummaryAck:
+                const ack = message.contents as ISummaryAck;
                 this.logger.sendTelemetryEvent({
                     eventName: "SummaryAck",
-                    summaryAck: message.contents as ISummaryAck,
+                    message: `handle: ${ack.handle}`,
+                    sequenceNumber: message.sequenceNumber,
+                    summarySequenceNumber: ack.summaryProposal.summarySequenceNumber,
                 });
                 break;
 
             case MessageType.SummaryNack:
+                const nack = message.contents as ISummaryNack;
                 this.logger.sendTelemetryEvent({
                     eventName: "SummaryNack",
-                    summaryNack: message.contents as ISummaryNack,
+                    message: nack.errorMessage,
+                    sequenceNumber: message.sequenceNumber,
+                    summarySequenceNumber: nack.summaryProposal.summarySequenceNumber,
                 });
                 break;
 
