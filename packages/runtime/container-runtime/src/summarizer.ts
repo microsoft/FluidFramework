@@ -10,7 +10,7 @@ import {
     IRequest,
     IResponse } from "@microsoft/fluid-component-core-interfaces";
 import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
-import { ChildLogger, Deferred, PerformanceEvent } from "@microsoft/fluid-core-utils";
+import { ChildLogger, Deferred, PerformanceEvent, Timer } from "@microsoft/fluid-core-utils";
 import {
     ISequencedDocumentMessage,
     ISequencedDocumentSystemMessage,
@@ -299,8 +299,8 @@ export class Summarizer implements IComponentRouter, IComponentLoadable, ICompon
         });
 
         this.summarizeTimer = new Timer(
-            () => this.summarizeTimerHandler(maxSummarizeTimeoutTime, 1),
-            maxSummarizeTimeoutTime);
+            maxSummarizeTimeoutTime,
+            () => this.summarizeTimerHandler(maxSummarizeTimeoutTime, 1));
     }
 
     public async run(onBehalfOf: string): Promise<void> {
@@ -315,10 +315,11 @@ export class Summarizer implements IComponentRouter, IComponentLoadable, ICompon
         this.configuration = this.configurationGetter();
 
         this.idleTimer = new Timer(
-            () => this.trySummarize("idle"),
-            this.configuration.idleTime);
+            this.configuration.idleTime,
+            () => this.trySummarize("idle"));
 
         this.pendingAckTimer = new Timer(
+            this.configuration.maxAckWaitTime,
             () => {
                 this.logger.sendErrorEvent({
                     eventName: "SummaryAckWaitTimeout",
@@ -328,7 +329,7 @@ export class Summarizer implements IComponentRouter, IComponentLoadable, ICompon
                     timePending: Date.now() - this.lastSentSummary.summaryTime,
                 });
                 this.pendingCancelDeferred.resolve();
-            }, this.configuration.maxAckWaitTime);
+            });
 
         // initialize values and first ack (time is not exact)
         const maybeInitialAck = await this.summaryDds.waitInitialized();
@@ -673,38 +674,7 @@ export class Summarizer implements IComponentRouter, IComponentLoadable, ICompon
         if (count < maxSummarizeTimeoutCount) {
             // double and start a new timer
             const nextTime = time * 2;
-            this.summarizeTimer.start(() => this.summarizeTimerHandler(nextTime, count + 1), nextTime);
+            this.summarizeTimer.start(nextTime, () => this.summarizeTimerHandler(nextTime, count + 1));
         }
-    }
-}
-
-class Timer {
-    public get hasTimer() {
-        return !!this.timer;
-    }
-
-    private timer?: NodeJS.Timeout;
-
-    constructor(
-        private readonly defaultHandler: () => void,
-        private readonly defaultTimeout: number) {}
-
-    public start(handler: () => void = this.defaultHandler, timeout: number = this.defaultTimeout) {
-        this.clear();
-        this.timer = setTimeout(() => this.wrapHandler(handler), timeout);
-    }
-
-    public clear() {
-        if (!this.timer) {
-            return;
-        }
-        clearTimeout(this.timer);
-        this.timer = undefined;
-    }
-
-    private wrapHandler(handler: () => void) {
-        // run clear first, in case the handler decides to start again
-        this.clear();
-        handler();
     }
 }
