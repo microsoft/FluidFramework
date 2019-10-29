@@ -116,7 +116,22 @@ export class ExternalComponentLoader extends PrimedComponent
                 if (this.viewComponentP) {
                     const viewComponent = await this.viewComponentP;
                     if (viewComponent && viewComponent.IComponentCollection) {
-                        const componentRuntime: IComponentRuntime = await this.context.createSubComponent(url);
+                        const reg = await this.context.hostRuntime.IComponentRegistry.get(WaterParkLoaderName);
+                        const urlReg = await reg.IComponentRegistry.get("url");
+                        const pkgReg = await urlReg.IComponentRegistry.get(url) as IComponent;
+                        let componentRuntime: IComponentRuntime;
+                        if (pkgReg.IProvideComponentDefaultFactory) {
+                            componentRuntime = await this.context.hostRuntime.createComponent(
+                                uuid(),
+                                [WaterParkLoaderName, "url", url, pkgReg.IProvideComponentDefaultFactory]);
+                        } else if (pkgReg.IComponentFactory) {
+                            componentRuntime = await this.context.hostRuntime.createComponent(
+                                uuid(),
+                                [WaterParkLoaderName, "url", url]);
+                        } else {
+                            throw new Error(`${url} is not a factory, and does not provide default component name`);
+                        }
+
                         const response: IResponse = await componentRuntime.request({ url: "/" });
                         let component: IComponent = response.value as IComponent;
                         componentRuntime.attach();

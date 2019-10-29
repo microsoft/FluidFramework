@@ -113,16 +113,13 @@ describe("Component Context Tests", () => {
         let scope: IComponent;
         let containerRuntime: ContainerRuntime;
         beforeEach(async () => {
-            let registry: IComponentRegistry;
-            let factory: IComponentFactory;
-            factory = {
-                IComponentFactory: factory,
-                instantiateComponent: (context: IComponentContext) => { context.bindRuntime(new MockRuntime()); },
-            };
-            registry = {
-                IComponentRegistry: registry,
-                get: (pkg) => Promise.resolve(factory),
-            };
+            const factory: { [key: string]: any } = {};
+            factory.IComponentFactory = factory;
+            factory.instantiateComponent = (context: IComponentContext) => { context.bindRuntime(new MockRuntime()); };
+            const registry: { [key: string]: any } = {};
+            registry.IComponentRegistry = registry;
+            registry.get = (pkg) => Promise.resolve(factory);
+
             containerRuntime = { IComponentRegistry: registry } as ContainerRuntime;
         });
 
