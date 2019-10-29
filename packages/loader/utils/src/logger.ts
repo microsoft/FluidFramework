@@ -13,7 +13,6 @@ import {
     TelemetryEventPropertyType,
 } from "@microsoft/fluid-container-definitions";
 import * as registerDebug from "debug";
-import { NetworkError } from "./network";
 import { pkgName, pkgVersion } from "./packageVersion";
 // tslint:disable-next-line:no-var-requires
 const performanceNow = require("performance-now") as (() => number);
@@ -41,8 +40,8 @@ export class BaseTelemetryNullLogger implements ITelemetryBaseLogger {
 export abstract class TelemetryLogger implements ITelemetryLogger {
     public static readonly eventNamespaceSeparator = ":";
 
-    public static formatTick(tick: number): string {
-        return tick.toFixed(0);
+    public static formatTick(tick: number): number {
+        return Math.floor(tick);
     }
 
     public static sanitizePkgName(name: string) {
