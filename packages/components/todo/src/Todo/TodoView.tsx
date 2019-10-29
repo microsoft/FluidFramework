@@ -65,7 +65,10 @@ export class TodoView extends React.Component<TodoViewProps, TodoViewState> {
      */
     public async createNewTodoItem(ev: React.FormEvent<HTMLFormElement>): Promise<void> {
         ev.preventDefault();
-        await this.props.todoModel.addTodoItemComponent({ startingText: this.newTextInput.value });
+        await this.props.todoModel.addTodoItemComponent({
+            startingText: this.newTextInput.value,
+            baseUrl: window.location.href,
+        });
         this.newTextInput.value = "";
     }
 

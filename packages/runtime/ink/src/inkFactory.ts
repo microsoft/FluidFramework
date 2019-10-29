@@ -10,34 +10,39 @@ import { pkgVersion } from "./packageVersion";
 
 /**
  * Factory for Ink.
+ * @sealed
  */
 export class InkFactory implements ISharedObjectFactory {
     /**
-     * Static type identifier.
+     * {@inheritDoc @microsoft/fluid-shared-object-base#ISharedObjectFactory."type"}
      */
     public static Type = "https://graph.microsoft.com/types/ink";
 
+    /**
+     * {@inheritDoc @microsoft/fluid-shared-object-base#ISharedObjectFactory.attributes}
+     */
     public static Attributes: IChannelAttributes = {
         type: InkFactory.Type,
         snapshotFormatVersion: "0.2",
         packageVersion: pkgVersion,
     };
 
+    /**
+     * {@inheritDoc @microsoft/fluid-shared-object-base#ISharedObjectFactory."type"}
+     */
     public get type() {
         return InkFactory.Type;
     }
 
+    /**
+     * {@inheritDoc @microsoft/fluid-shared-object-base#ISharedObjectFactory.attributes}
+     */
     public get attributes() {
         return InkFactory.Attributes;
     }
 
     /**
-     * Creates a new Ink object and loads it with data from the given services.
-     *
-     * @param runtime - The ComponentRuntime that this ink will be associated with
-     * @param id - Unique ID for the new ink
-     * @param services - Services with the object storage to load from
-     * @param branchId - branch ID (not used)
+     * {@inheritDoc @microsoft/fluid-shared-object-base#ISharedObjectFactory.load}
      */
     public async load(
         runtime: IComponentRuntime,
@@ -52,10 +57,7 @@ export class InkFactory implements ISharedObjectFactory {
     }
 
     /**
-     * Creates a new empty Ink object.
-     *
-     * @param runtime - The ComponentRuntime that this ink will be associated with
-     * @param id - Unique ID for the new ink
+     * {@inheritDoc @microsoft/fluid-shared-object-base#ISharedObjectFactory.create}
      */
     public create(runtime: IComponentRuntime, id: string): ISharedObject {
         const ink = new Ink(runtime, id);

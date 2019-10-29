@@ -4,7 +4,9 @@
  */
 
 import * as express from "express";
+import * as fs from "fs";
 import * as moniker from "moniker";
+import * as nconf from "nconf";
 import * as path from "path";
 import WebpackDevServer from "webpack-dev-server";
 import { IRouteOptions } from "./loader";
@@ -15,27 +17,36 @@ export const before = (app: express.Application, server: WebpackDevServer) => {
 };
 
 export const after = (app: express.Application, server: WebpackDevServer, baseDir: string, env: IRouteOptions) => {
-    let options: IRouteOptions;
-    if (!env) {
-        options = { mode: "live" };
-    } else if (env.fluidHost && !(env.tenantId && env.tenantSecret)) {
-        throw new Error("If you provide a host, you must provide a tenantId and tenantSecret");
-    } else if ((env.tenantId || env.tenantSecret) && !(env.tenantId && env.tenantSecret)) {
+    const options: IRouteOptions = env ? env : { mode: "local" };
+    options.mode = options.mode ? options.mode : "local";
+    const config: nconf.Provider = nconf.env("__").file(path.join(baseDir, "config.json"));
+    // tslint:disable: no-unsafe-any
+    options.fluidHost = options.fluidHost ? options.fluidHost : config.get("fluid:webpack:fluidHost");
+    options.tenantId = options.tenantId ? options.tenantId : config.get("fluid:webpack:tenantId");
+    options.tenantSecret = options.tenantSecret ? options.tenantSecret : config.get("fluid:webpack:tenantSecret");
+    options.bearerSecret = options.bearerSecret ? options.bearerSecret : config.get("fluid:webpack:bearerSecret");
+    options.npm = options.npm ? options.npm : config.get("fluid:webpack:npm");
+    // tslint:enable: no-unsafe-any
+
+    console.log(options);
+
+    if (options.mode === "live" && !(options.tenantId && options.tenantSecret)) {
+        throw new Error("You must provide a tenantId and tenantSecret to connect to a live server");
+    } else if ((options.tenantId || options.tenantSecret) && !(options.tenantId && options.tenantSecret)) {
         throw new Error("tenantId and tenantSecret must be provided together");
-    } else {
-        options = env;
     }
 
-    app.get("/*", (req, res) => fluid(req, res, baseDir, options));
+    app.get("/file*", (req, res) => {
+        // tslint:disable-next-line: non-literal-fs-path no-unsafe-any
+        const buffer = fs.readFileSync(req.params[0].substr(1));
+        res.end(buffer);
+    });
+    app.get("/:id*", (req, res) => fluid(req, res, baseDir, options));
 };
 
 const fluid = (req: express.Request, res: express.Response,  baseDir: string, options: IRouteOptions) => {
-    const rawPath = req.params[0];
-    const slash = rawPath.indexOf("/");
-    const documentId = rawPath.substring(
-        0,
-        slash !== -1 ? slash : rawPath.length
-    );
+
+    const documentId = req.params.id;
     // tslint:disable-next-line: non-literal-require
     const packageJson = require(path.join(baseDir, "./package.json"));
 
@@ -48,8 +59,7 @@ const fluid = (req: express.Request, res: express.Response,  baseDir: string, op
     <title>${documentId}</title>
 </head>
 <body>
-    <div style="width: 100%; height: 100%;">
-        <div id="content"></div>
+    <div id="content" style="width: 100%; height: 100%; display: flex">
     </div>
 
     <script src="/node_modules/@microsoft/fluid-webpack-component-loader/dist/fluid-loader.bundle.js"></script>
@@ -57,6 +67,7 @@ const fluid = (req: express.Request, res: express.Response,  baseDir: string, op
         var pkgJson = ${JSON.stringify(packageJson)};
         var options = ${JSON.stringify(options)};
         FluidLoader.start(
+            "${documentId}",
             pkgJson,
             options,
             document.getElementById("content"))

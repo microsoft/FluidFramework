@@ -10,7 +10,7 @@ import { BuildResult, BuildPackage, summarizeBuildResult } from "../../buildGrap
 import { logStatus, logVerbose } from "../../common/logging";
 import { options } from "../../options";
 import { Task, TaskExec } from "../task";
-import { getExecutableFromCommand, writeFileAsync, unlinkAsync, readFileAsync, execAsync, existsSync } from "../../common/utils";
+import { getExecutableFromCommand, writeFileAsync, unlinkAsync, readFileAsync, execAsync, existsSync, ExecAsyncResult } from "../../common/utils";
 import chalk from "chalk";
 
 export abstract class LeafTask extends Task {
@@ -59,7 +59,7 @@ export abstract class LeafTask extends Task {
             logStatus(`[${taskNum}/${totalTask}] ${this.node.pkg.nameColored}: ${this.command}`);
         }
         const startTime = Date.now();
-        if (this.recheckLeafIsUpToDate && await this.checkLeafIsUpToDate()) {
+        if (this.recheckLeafIsUpToDate && !this.forced && await this.checkLeafIsUpToDate()) {
             return this.execDone(startTime, BuildResult.UpToDate);
         }
         const ret = await execAsync(this.command, {
@@ -68,24 +68,33 @@ export abstract class LeafTask extends Task {
         });
 
         if (ret.error) {
-            console.log(`${this.node.pkg.nameColored}: error during command ${this.command}`)
-            let errorMessages = ret.stdout;
-            if (ret.stderr) {
-                errorMessages = `${errorMessages}\n${ret.stderr}`;
-            }
-            errorMessages = errorMessages.trim();
-            if (options.vscode) {
-                errorMessages = this.getVsCodeErrorMessages(errorMessages);
-            } else {
-                errorMessages = errorMessages.replace(/\n/g, `\n${this.node.pkg.nameColored}: `);
-                errorMessages = `${this.node.pkg.nameColored}: ${errorMessages}`;
-            }
-            console.error(errorMessages);
+            console.error(`${this.node.pkg.nameColored}: error during command ${this.command}`)
+            console.error(this.getExecErrors(ret));
             return this.execDone(startTime, BuildResult.Failed);
+        } 
+        if (ret.stderr) {
+            // no error code but still error messages, treat them is non fatal warnings
+            console.warn(`${this.node.pkg.nameColored}: warning during command ${this.command}`);
+            console.warn(this.getExecErrors(ret));
         }
 
         await this.markExecDone();
         return this.execDone(startTime, BuildResult.Success);
+    }
+
+    private getExecErrors(ret: ExecAsyncResult) {
+        let errorMessages = ret.stdout;
+        if (ret.stderr) {
+            errorMessages = `${errorMessages}\n${ret.stderr}`;
+        }
+        errorMessages = errorMessages.trim();
+        if (options.vscode) {
+            errorMessages = this.getVsCodeErrorMessages(errorMessages);
+        } else {
+            errorMessages = errorMessages.replace(/\n/g, `\n${this.node.pkg.nameColored}: `);
+            errorMessages = `${this.node.pkg.nameColored}: ${errorMessages}`;
+        }
+        return errorMessages;
     }
 
     private execDone(startTime: number, status: BuildResult) {
@@ -114,14 +123,14 @@ export abstract class LeafTask extends Task {
     }
 
     protected async runTask(q: AsyncPriorityQueue<TaskExec>): Promise<BuildResult> {
-        logVerbose(`Begin Leaf Task: ${this.node.pkg.nameColored} - ${this.command}`);
+        this.logVerboseTask("Begin Leaf Task");
         const result = await this.buildDependentTask(q);
         if (result === BuildResult.Failed) {
             return BuildResult.Failed;
         }
 
         return new Promise((resolve, reject) => {
-            logVerbose(`Queue Leaf Task: ${this.node.pkg.nameColored} - [${this.parentCount}] ${this.command}`);
+            this.logVerboseTask(`[${this.parentCount}] Queue Leaf Task`);
             q.push({ task: this, resolve }, -this.parentCount);
         });
     }
@@ -133,7 +142,7 @@ export abstract class LeafTask extends Task {
         const leafIsUpToDate = await this.checkDependentTasksIsUpToDate() && await this.checkLeafIsUpToDate();
         if (leafIsUpToDate) {
             this.node.buildContext.taskStats.leafUpToDateCount++;
-            logVerbose(`Skipping Leaf Task: ${this.node.pkg.nameColored} - ${this.command}`);
+            this.logVerboseTask(`Skipping Leaf Task`);
         }
 
         return leafIsUpToDate;
@@ -225,6 +234,10 @@ export abstract class LeafTask extends Task {
     protected logVerboseDependency(child: BuildPackage, dep: string) {
         logVerbose(`Task Dependency: ${this.node.pkg.nameColored} ${this.executable} -> ${child.pkg.nameColored} ${dep}`);
     }
+
+    protected logVerboseTask(msg: string) {
+        logVerbose(`Task: ${this.node.pkg.nameColored} ${this.executable}: ${msg}`);
+    }
 };
 
 export abstract class LeafWithDoneFileTask extends LeafTask {
@@ -244,7 +257,7 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
                     await unlinkAsync(doneFileFullPath);
                 }
             } catch {
-                console.log(`${this.node.pkg.nameColored}: warning: unable to unlink ${doneFileFullPath}`);
+                console.warn(`${this.node.pkg.nameColored}: warning: unable to unlink ${doneFileFullPath}`);
             }
         }
         return leafIsUpToDate;
@@ -257,10 +270,10 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
             if (content !== undefined) {
                 await writeFileAsync(doneFileFullPath, content);
             } else {
-                console.log(`${this.node.pkg.nameColored}: warning: unable to generate content for ${doneFileFullPath}`);
+                console.warn(`${this.node.pkg.nameColored}: warning: unable to generate content for ${doneFileFullPath}`);
             }
         } catch {
-            console.log(`${this.node.pkg.nameColored}: warning: unable to write ${doneFileFullPath}`);
+            console.warn(`${this.node.pkg.nameColored}: warning: unable to write ${doneFileFullPath}`);
         }
     }
 

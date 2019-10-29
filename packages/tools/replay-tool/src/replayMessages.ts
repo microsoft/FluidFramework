@@ -8,6 +8,7 @@ import {
     IRequest,
 } from "@microsoft/fluid-component-core-interfaces";
 import {
+    IProxyLoaderFactory,
     ITelemetryBaseEvent,
     ITelemetryBaseLogger,
 } from "@microsoft/fluid-container-definitions";
@@ -276,7 +277,13 @@ class Document {
 
         // Load the Fluid document
         this.docLogger = ChildLogger.create(new Logger(containerDescription, errorHandler));
-        const loader = new Loader(host, serviceFactory, codeLoader, options, {}, this.docLogger);
+        const loader = new Loader(
+            host,
+            serviceFactory,
+            codeLoader,
+            options, {},
+            new Map<string, IProxyLoaderFactory>(),
+            this.docLogger);
         const container: Container = await loader.resolve({ url: resolved.url });
 
         assert(container.existing); // ReplayFileDeltaConnection.create() guarantees that

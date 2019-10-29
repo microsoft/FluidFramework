@@ -79,10 +79,10 @@ export class NpmDepChecker {
                 }
             } else if (!depCheckRecord.found) {
                 if (this.dev.indexOf(name) != -1) {
-                    console.warn(`${this.pkg.nameColored}: WARNING: misplaced dependency ${name}`);
+                    console.warn(`${this.pkg.nameColored}: warning: misplaced dependency ${name}`);
                     this.pkg.packageJson.devDependencies[name] = this.pkg.packageJson.dependencies[name];
                 } else {
-                    console.warn(`${this.pkg.nameColored}: WARNING: unused dependency ${name}`);
+                    console.warn(`${this.pkg.nameColored}: warning: unused dependency ${name}`);
                 }
                 changed = true;
                 delete this.pkg.packageJson.dependencies[name];
@@ -98,7 +98,7 @@ export class NpmDepChecker {
                 const name = dep.substring("@types/".length);
                 if ((!this.pkg.packageJson.dependencies || this.pkg.packageJson.dependencies[name] === undefined)
                     && (!this.pkg.packageJson.devDependencies || this.pkg.packageJson.devDependencies[name] === undefined)) {
-                    console.warn(`${this.pkg.nameColored}: WARNING: unused type dependency ${dep}`);
+                    console.warn(`${this.pkg.nameColored}: warning: unused type dependency ${dep}`);
                     delete this.pkg.packageJson.devDependencies[dep];
                     delete this.pkg.packageJson.dependencies[dep];
                     changed = true;

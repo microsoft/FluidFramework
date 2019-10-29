@@ -14,7 +14,7 @@ import * as socketStorage from "@microsoft/fluid-routerlicious-driver";
 import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
 import { IQueueMessage } from "@microsoft/fluid-runtime-definitions";
 import * as agent from "@microsoft/fluid-server-agent";
-import { NodeCodeLoader } from "@microsoft/fluid-server-services";
+import { NodeCodeLoader, NodeWhiteList } from "@microsoft/fluid-server-services";
 import * as core from "@microsoft/fluid-server-services-core";
 import * as utils from "@microsoft/fluid-server-services-utils";
 import * as fs from "fs";
@@ -95,13 +95,15 @@ export class PaparazziRunner implements utils.IRunner {
         const alfredUrl = workerConfig.get("alfredUrl");
 
         const serviceFactory = new WorkerDocumentServiceFactory();
-
         this.workerService = new agent.WorkerService(
             serviceFactory,
             this.workerConfig,
             alfredUrl,
             this.initLoadModule(alfredUrl),
-            new NodeCodeLoader(npmRegistry, packagesBase, packageWaitTimeoutMS));
+            new NodeCodeLoader(npmRegistry,
+                                packagesBase,
+                                packageWaitTimeoutMS,
+                                new NodeWhiteList()));
     }
 
     public async start(): Promise<void> {

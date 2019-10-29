@@ -3,13 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent, IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { IContainerContext } from "@microsoft/fluid-container-definitions";
-import { Heap, IComparer, IHeapNode } from "@microsoft/fluid-core-utils";
+import { IComponent, IComponentRunnable, IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { IContainerContext, ITelemetryLogger } from "@microsoft/fluid-container-definitions";
+import { ChildLogger, Heap, IComparer, IHeapNode } from "@microsoft/fluid-core-utils";
 import { ISequencedClient } from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
-import { debug } from "./debug";
-import { ISummarizer } from "./summarizer";
 
 interface ITrackedClient {
     clientId: string;
@@ -33,6 +31,8 @@ export class SummaryManager extends EventEmitter {
     private readonly heapMembers = new Map<string, IHeapNode<ITrackedClient>>();
     private connected = false;
     private clientId: string;
+    private runningSummarizer?: IComponentRunnable;
+    private readonly logger: ITelemetryLogger;
 
     public get summarizer() {
         return this._summarizer;
@@ -42,8 +42,15 @@ export class SummaryManager extends EventEmitter {
         return this.connected && this.clientId === this.summarizer;
     }
 
-    constructor(private readonly context: IContainerContext, private readonly generateSummaries: boolean) {
+    constructor(
+        private readonly context: IContainerContext,
+        private readonly generateSummaries: boolean,
+        private readonly enableWorker: boolean,
+        parentLogger: ITelemetryLogger,
+    ) {
         super();
+
+        this.logger = ChildLogger.create(parentLogger, "SummaryManager");
 
         const members = context.quorum.getMembers();
         for (const [clientId, member] of members) {
@@ -85,6 +92,10 @@ export class SummaryManager extends EventEmitter {
 
         this.connected = false;
         this.clientId = undefined;
+        if (this.runningSummarizer) {
+            this.runningSummarizer.stop("parent disconnected");
+            this.runningSummarizer = undefined;
+        }
     }
 
     private addHeapNode(clientId: string, client: ISequencedClient) {
@@ -98,6 +109,10 @@ export class SummaryManager extends EventEmitter {
      */
     private computeSummarizer(force = false) {
         const clientId = this.heap.count() > 0 ? this.heap.peek().value.clientId : undefined;
+
+        // Do not start if we are already the summarizer, unless force is passed.
+        // Force will be passed if we think we are not already summarizing, which might
+        // happen if we are not yet connected the first time through computeSummarizer.
         if (!force && clientId === this._summarizer) {
             return;
         }
@@ -105,6 +120,7 @@ export class SummaryManager extends EventEmitter {
         this._summarizer = clientId;
         this.emit("summarizer", clientId);
 
+        // do not start if we are not the summarizer or not connected
         if (this._summarizer !== this.clientId || !this.connected) {
             return;
         }
@@ -116,11 +132,12 @@ export class SummaryManager extends EventEmitter {
         }
 
         // Make sure that the summarizer client does not load another summarizer.
-        if (this.context.configuration === undefined || this.context.configuration.canReconnect) {
+        if (this.context.clientType !== "summarizer") {
             // Create and run the new summarizer. On disconnect if we should still summarize launch another instance.
             const doneP = this.createSummarizer()
                 .then((summarizer) => {
                     if (this.shouldSummarize) {
+                        this.runningSummarizer = summarizer;
                         return summarizer.run(this.clientId);
                     }
                 });
@@ -128,10 +145,10 @@ export class SummaryManager extends EventEmitter {
                 () => {
                     // In the future we will respawn the summarizer - for now we simply stop
                     // this.computeSummarizer(this.connected)
-                    debug("summary generation complete");
+                    this.logger.sendTelemetryEvent({ eventName: "RunningSummarizerCompleted" });
                 },
                 (error) => {
-                    debug("summary generation error", error);
+                    this.logger.sendErrorEvent({ eventName: "RunningSummarizerFailed" }, error);
                 });
         }
 
@@ -140,7 +157,7 @@ export class SummaryManager extends EventEmitter {
     private async createSummarizer() {
         // We have been elected the summarizer. Some day we may be able to summarize with a live document but for
         // now we play it safe and launch a second copy.
-        debug(`${this.clientId} elected summarizer`);
+        this.logger.sendTelemetryEvent({ eventName: "CreatingSummarizer" });
 
         const loader = this.context.loader;
 
@@ -148,8 +165,10 @@ export class SummaryManager extends EventEmitter {
         const request: IRequest = {
             headers: {
                 "fluid-cache": false,
+                "fluid-client-type": "summarizer",
                 "fluid-reconnect": false,
                 "fluid-sequence-number": this.context.deltaManager.referenceSequenceNumber,
+                "execution-context": this.enableWorker ? "worker" : undefined,
             },
             url: "/_summarizer",
         };
@@ -157,14 +176,14 @@ export class SummaryManager extends EventEmitter {
         const response = await loader.request(request);
 
         if (response.status !== 200 || response.mimeType !== "fluid/component") {
-            return Promise.reject<ISummarizer>("Invalid summarizer route");
+            return Promise.reject<IComponentRunnable>("Invalid summarizer route");
         }
 
         const rawComponent = response.value as IComponent;
-        const summarizer = rawComponent.ISummarizer;
+        const summarizer = rawComponent.IComponentRunnable;
 
         if (!summarizer) {
-            return Promise.reject<ISummarizer>("Component does not implement ISummarizer");
+            return Promise.reject<IComponentRunnable>("Component does not implement IComponentRunnable");
         }
 
         return summarizer;

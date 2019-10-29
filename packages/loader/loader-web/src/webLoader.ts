@@ -5,10 +5,12 @@
 
 import {
     ICodeLoader,
+    ICodeWhiteList,
     IFluidCodeDetails,
     IFluidPackage,
     IPackage,
     IPackageConfig,
+    isFluidPackage,
 } from "@microsoft/fluid-container-definitions";
 import * as fetch from "isomorphic-fetch";
 
@@ -18,6 +20,12 @@ export interface IParsedPackage {
     name: string;
     version: string | undefined;
     scope: string;
+}
+
+export interface ISeedable {
+    scriptIds: string[];
+    package: IFluidPackage;
+    config: IPackageConfig;
 }
 
 export interface IResolvedPackage {
@@ -54,6 +62,7 @@ export function extractDetails(value: string): IParsedPackage {
         }
         [full, , scope, pkg, name] = componentsWithoutVersion;
     }
+
     return {
         full,
         name,
@@ -64,57 +73,51 @@ export function extractDetails(value: string): IParsedPackage {
 }
 
 /**
- * Normalize any input into IFluidCodeDetails format
- * @param inputEither - a string, which is pkgName[at]versionNumber or the full code details
- * @param defaultCdn - If !(input is IFluidCodeDetails), this is where we'll look up the cdn
- */
-export function normalize(input: string | IFluidCodeDetails, defaultCdn?: string): IFluidCodeDetails {
-    let source: IFluidCodeDetails;
-    if (typeof input === "string") {
-        const details = extractDetails(input);
-        source = {
-            config: {
-                // tslint:disable-next-line: no-non-null-assertion
-                [`@${details.scope}:cdn`]: defaultCdn!,
-            },
-            package: input,
-        };
-    } else {
-        source = input;
-    }
-
-    return source;
-}
-
-/**
  * Helper class to manage loading of script elements. Only loads a given script once.
  */
 class ScriptManager {
     private readonly loadCache = new Map<string, Promise<void>>();
 
+    // Check whether the script is loaded inside a worker.
+    public get isBrowser(): boolean {
+        // tslint:disable no-typeof-undefined
+        if (typeof window === "undefined") {
+            return false;
+        }
+        return window.document !== undefined;
+    }
     // tslint:disable-next-line:promise-function-async
     public loadScript(scriptUrl: string, scriptId?: string): Promise<void> {
         if (!this.loadCache.has(scriptUrl)) {
             const scriptP = new Promise<void>((resolve, reject) => {
-                const script = document.createElement("script");
-                script.src = scriptUrl;
+                if (this.isBrowser) {
+                    const script = document.createElement("script");
+                    script.src = scriptUrl;
 
-                if (scriptId !== undefined) {
-                    script.id = scriptId;
+                    if (scriptId !== undefined) {
+                        script.id = scriptId;
+                    }
+
+                    // Dynamically added scripts are async by default. By setting async to false, we are enabling the
+                    // scripts to be downloaded in parallel, but executed in order. This ensures that a script is
+                    // executed after all of its dependencies have been loaded and executed.
+                    script.async = false;
+
+                    // call signatures don't match and so need to wrap the method
+                    // tslint:disable-next-line:no-unnecessary-callback-wrapper
+                    script.onload = () => resolve();
+                    script.onerror = () =>
+                        reject(new Error(`Failed to download the script at url: ${scriptUrl}`));
+
+                    document.head.appendChild(script);
+                } else {
+                    import(/* webpackMode: "eager", webpackIgnore: true */ scriptUrl).then(() => {
+                        resolve();
+                    }, () => {
+                        reject(new Error(`Failed to download the script at url: ${scriptUrl}`));
+                    });
                 }
 
-                // Dynamically added scripts are async by default. By setting async to false, we are enabling the
-                // scripts to be downloaded in parallel, but executed in order. This ensures that a script is executed
-                // after all of its dependencies have been loaded and executed.
-                script.async = false;
-
-                // call signatures don't match and so need to wrap the method
-                // tslint:disable-next-line:no-unnecessary-callback-wrapper
-                script.onload = () => resolve();
-                script.onerror = () =>
-                    reject(new Error(`Failed to download the script at url: ${scriptUrl}`));
-
-                document.head.appendChild(script);
             });
 
             this.loadCache.set(scriptUrl, scriptP);
@@ -230,17 +233,15 @@ class FluidPackage {
             packageJson = this.details.details.package;
         }
 
-        if (!("fluid" in packageJson)) {
-            return Promise.reject("Not a fluid package");
+        if (!isFluidPackage(packageJson)) {
+            return Promise.reject(new Error(`Package ${packageJson.name} not a fluid module.`));
         }
-
-        const fluidPackage = packageJson as IFluidPackage;
 
         return {
             details: this.details.details,
             packageUrl: this.details.packageUrl,
             parsed: this.details.parsed,
-            pkg: fluidPackage,
+            pkg: packageJson,
         };
     }
 
@@ -253,7 +254,7 @@ class FluidPackage {
         await Promise.all(this.scriptManager.loadScripts(umdDetails, this.details.packageUrl));
 
         // tslint:disable-next-line:no-unsafe-any
-        return window[umdDetails.library];
+        return this.scriptManager.isBrowser ? window[umdDetails.library] : self[umdDetails.library];
     }
 }
 
@@ -262,38 +263,40 @@ export class WebCodeLoader implements ICodeLoader {
     private readonly resolvedCache = new Map<string, FluidPackage>();
     private readonly scriptManager = new ScriptManager();
 
-    constructor(private readonly baseUrl: string) {
-    }
+    constructor(private readonly whiteList?: ICodeWhiteList) { }
 
-    public seed(pkg: IFluidPackage, config: IPackageConfig, scriptIds: string[]) {
-        const fluidPackage = this.getFluidPackage({ config, package: pkg });
-        fluidPackage.seed(scriptIds);
+    public async seed(seedable: ISeedable) {
+        if (this.whiteList && !(await this.whiteList.testSource(
+            { config: seedable.config, package: seedable.package }))) {
+            throw new Error("Attempted to load invalid package");
+        }
+        const fluidPackage = this.getFluidPackage({ config: seedable.config, package: seedable.package });
+        fluidPackage.seed(seedable.scriptIds);
     }
 
     /**
      * Resolves the input data structures to the resolved details
      */
     // tslint:disable-next-line:promise-function-async disabled to verify function sets cache synchronously
-    public resolve(input: string | IFluidCodeDetails): Promise<IResolvedPackage> {
+    public resolve(input: IFluidCodeDetails): Promise<IResolvedPackage> {
         const fluidPackage = this.getFluidPackage(input);
         return fluidPackage.resolve();
     }
 
     /**
-     * @param source - New: Details of where to find chaincode
-     *                  Old: a string of packageName[at]versionNumber to be looked up
-     * @param details - Duplicate, Details of where to find chaincode
+     * @param source - Details of where to find chaincode
      */
     public async load<T>(
-        source: string | IFluidCodeDetails,
-        details?: IFluidCodeDetails,
+        source: IFluidCodeDetails,
     ): Promise<T> {
-        const input = details ? details : source;
-        const fluidPackage = this.getFluidPackage(input);
+        if (this.whiteList && !(await this.whiteList.testSource(source))) {
+            return Promise.reject("Attempted to load invalid package");
+        }
+        const fluidPackage = this.getFluidPackage(source);
         return fluidPackage.load();
     }
 
-    private getFluidPackage(input: string | IFluidCodeDetails): FluidPackage {
+    private getFluidPackage(input: IFluidCodeDetails): FluidPackage {
         const details = this.getPackageDetails(input);
 
         if (!this.resolvedCache.has(details.packageUrl)) {
@@ -305,9 +308,7 @@ export class WebCodeLoader implements ICodeLoader {
         return this.resolvedCache.get(details.packageUrl)!;
     }
 
-    private getPackageDetails(input: string | IFluidCodeDetails): IPackageDetails {
-        // Only need input the code details, baseURl is for old input format only
-        const details = normalize(input, (typeof input === "string" ? this.baseUrl : undefined));
+    private getPackageDetails(details: IFluidCodeDetails): IPackageDetails {
 
         const fullPkg = typeof details.package === "string"
             ? details.package // just return it if it's a string e.g. "@fluid-example/clicker@0.1.1"

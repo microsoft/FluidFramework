@@ -4,7 +4,12 @@
  */
 
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { ConnectionState, ITelemetryErrorEvent, ITelemetryLogger } from "@microsoft/fluid-container-definitions";
+import {
+    ConnectionState,
+    IComponent,
+    ITelemetryErrorEvent,
+    ITelemetryLogger,
+} from "@microsoft/fluid-container-definitions";
 import { ChildLogger, EventEmitterWithErrorHandling } from "@microsoft/fluid-core-utils";
 import { ISequencedDocumentMessage, ITree, MessageType } from "@microsoft/fluid-protocol-definitions";
 import {
@@ -15,8 +20,6 @@ import {
 } from "@microsoft/fluid-runtime-definitions";
 import * as assert from "assert";
 import * as Deque from "double-ended-queue";
-// tslint:disable-next-line:no-submodule-imports
-import * as uuid from "uuid/v4";
 import { debug } from "./debug";
 import { SharedObjectComponentHandle } from "./handle";
 import { ISharedObject } from "./types";
@@ -26,27 +29,11 @@ import { ISharedObject } from "./types";
  */
 export abstract class SharedObject extends EventEmitterWithErrorHandling implements ISharedObject {
     /**
-     *
      * @param obj - The object to check if it is a SharedObject
      * @returns Returns true if the object is a SharedObject
      */
     public static is(obj: any): obj is SharedObject {
-        if (obj !== undefined
-            && obj !== null
-            && obj.__sharedObject__ === true) {
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * Get an id for a sharedobject for creation
-     *
-     * @param id - user specified id or undefined if it is not specified
-     * @returns generated id if the parameter `id` is undefined, value of `id` otherwise
-     */
-    protected static getIdForCreate(id?: string): string {
-        return id === undefined ? uuid() : id;
+        return obj && !!(obj as IComponent).ISharedObject;
     }
 
     public get ISharedObject() { return this; }
@@ -54,11 +41,8 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
     public get IComponentLoadable() { return this; }
 
     /**
-     * Marker to clearly identify the object as a shared object
+     * The handle referring to this SharedObject
      */
-    // tslint:disable-next-line:variable-name
-    public readonly __sharedObject__ = true;
-
     public readonly handle: IComponentHandle;
 
     /**
@@ -88,21 +72,23 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
 
     /**
      * Gets the connection state
-     *
-     * @returns the state of the connection
+     * @returns The state of the connection
      */
     public get state(): ConnectionState {
         return this._state;
     }
 
+    /**
+     * The loadable URL for this SharedObject
+     */
     public get url(): string {
         return this.handle.path;
     }
 
     /**
-     * @param id - the id of the shared object
-     * @param runtime - the IComponentRuntime which contains the shared object
-     * @param attributes - attributes of the shared object
+     * @param id - The id of the shared object
+     * @param runtime - The IComponentRuntime which contains the shared object
+     * @param attributes - Attributes of the shared object
      */
     constructor(
         public id: string,
@@ -127,9 +113,8 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
     }
 
     /**
-     * Creates a JSON object with information about the shared object
-     *
-     * @returns a JSON object containing the ValueType (always Shared) and the id of the shared object
+     * Creates a JSON object with information about the shared object.
+     * @returns A JSON object containing the ValueType (always Shared) and the id of the shared object
      */
     public toJSON() {
         throw new Error("Only the handle can be converted to JSON");
@@ -138,9 +123,8 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
     /**
      * A shared object, after construction, can either be loaded in the case that it is already part of
      * a shared document. Or later attached if it is being newly added.
-     *
-     * @param branchId - branch ID
-     * @param services - services used by the shared object
+     * @param branchId - Branch ID
+     * @param services - Services used by the shared object
      */
     public async load(
         branchId: string,
@@ -160,12 +144,12 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
      * Initializes the object as a local, non-shared object. This object can become shared after
      * it is attached to the document.
      */
-    public initializeLocal() {
+    public initializeLocal(): void {
         this.initializeLocalCore();
     }
 
     /**
-     * Registers the channel with the runtime. The channel will get attach when the runtime is.
+     * {@inheritDoc ISharedObject.register}
      */
     public register(): void {
         if (this.isRegistered()) {
@@ -183,7 +167,7 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
     }
 
     /**
-     * Enables the channel to send and receive ops
+     * {@inheritDoc ISharedObject.connect}
      */
     public connect(services: ISharedObjectServices) {
         this.services = services;
@@ -191,16 +175,14 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
     }
 
     /**
-     * Returns whether the given shared object is local
-     *
-     * @returns true if the given shared object is local
+     * {@inheritDoc ISharedObject.isLocal}
      */
     public isLocal(): boolean {
         return !this.services;
     }
 
     /**
-     * Returns whether the given shared object is registered
+     * {@inheritDoc ISharedObject.isRegistered}
      */
     public isRegistered(): boolean {
         return (!this.isLocal() || this.registered);
@@ -208,9 +190,8 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
 
     /**
      * Registers a listener on the specified events
-     *
-     * @param event - the event to listen for
-     * @param listener - the listener to register
+     * @param event - The event to listen for
+     * @param listener - The listener to register
      */
     public on(
         event: "pre-op" | "op",
@@ -224,16 +205,13 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
     }
 
     /**
-     * Gets a form of the object that can be serialized.
-     *
-     * @returns a tree representing the snapshot of the shared object
+     * {@inheritDoc ISharedObject.snapshot}
      */
     public abstract snapshot(): ITree;
 
     /**
      * Set the owner of the object if it is an OwnedSharedObject
-     *
-     * @returns the owner of the object if it is an OwnedSharedObject, otherwise undefined
+     * @returns The owner of the object if it is an OwnedSharedObject, otherwise undefined
      */
     protected setOwner(): string | undefined {
         return;
@@ -242,7 +220,7 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
     /**
      * Reads and sets the owner from storage if this is an ownedSharedObject
      *
-     * @param storage - the storage used by the shared object
+     * @param storage - The storage used by the shared object
      */
     protected async getOwnerSnapshot(storage: IObjectStorageService): Promise<void> {
         return;
@@ -250,23 +228,22 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
 
     /**
      * Allows the distributed data type to perform custom loading
-     *
-     * @param branchId - branch ID
-     * @param services - storage used by the shared object
+     * @param branchId - Branch ID
+     * @param services - Storage used by the shared object
      */
     protected abstract loadCore(
         branchId: string,
         services: IObjectStorageService): Promise<void>;
 
     /**
-     * Allows the distributed data type to perform custom local loading
+     * Allows the distributed data type to perform custom local loading.
      */
     protected initializeLocalCore() {
         return;
     }
 
     /**
-     * Allows the distributed data type the ability to perform custom processing once an attach has happened
+     * Allows the distributed data type the ability to perform custom processing once an attach has happened.
      */
     protected abstract registerCore();
 
@@ -279,24 +256,21 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
     }
 
     /**
-     * Derived classes must override this to do custom processing on a remote message
-     *
-     * @param message - the message to prepare
-     * @param local - true if the shared object is local
-     * @param context - additional context for the message
+     * Derived classes must override this to do custom processing on a remote message.
+     * @param message - The message to process
+     * @param local - True if the shared object is local
      */
     protected abstract processCore(message: ISequencedDocumentMessage, local: boolean);
 
     /**
-     * Called when the object has disconnected from the delta stream
+     * Called when the object has disconnected from the delta stream.
      */
     protected abstract onDisconnect();
 
     /**
-     * Processes a message by the local client
-     *
-     * @param content - content of the message
-     * @returns client sequence number
+     * Processes a message by the local client.
+     * @param content - Content of the message
+     * @returns Client sequence number
      */
     protected submitLocalMessage(content: any): number {
         if (this.isLocal()) {
@@ -322,8 +296,7 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
     /**
      * Called when the object has fully connected to the delta stream
      * Default implementation for DDS, override if different behavior is required.
-     *
-     * @param pending - messages received while disconnected
+     * @param pending - Messages received while disconnected
      */
     protected onConnect(pending: any[]) {
         for (const message of pending) {
@@ -337,9 +310,8 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
      * Report ignorable errors in code logic or data integrity to the logger.
      * Hosting app / container may want to optimize out these call sites and make them no-op.
      * It may also show assert dialog in non-production builds of application.
-     *
-     * @param condition - if false, assert is logged
-     * @param message - actual message to log; ideally should be unique message to identify call site
+     * @param condition - If false, assert is logged
+     * @param message - Actual message to log; ideally should be unique message to identify call site
      */
     protected debugAssert(condition: boolean, event: ITelemetryErrorEvent) {
         this.logger.debugAssert(condition, event);
@@ -366,6 +338,10 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
         this.setConnectionState(this.services!.deltaConnection.state);
     }
 
+    /**
+     * Set the state of connection to services.
+     * @param state - The new state of the connection
+     */
     private setConnectionState(state: ConnectionState) {
         if (this._state === state) {
             // Not changing state, nothing the same.
@@ -415,7 +391,9 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
     }
 
     /**
-     * Handles a message being received from the remote delta server
+     * Handles a message being received from the remote delta server.
+     * @param message - The message to process
+     * @param local - Whether the message originated from the local client
      */
     private process(message: ISequencedDocumentMessage, local: boolean) {
         if (message.type === MessageType.Operation && local) {
@@ -427,6 +405,10 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
         this.emit("op", message, local);
     }
 
+    /**
+     * Process an op that originated from the local client (i.e. is in pending state).
+     * @param message - The op to process
+     */
     private processPendingOp(message: ISequencedDocumentMessage) {
         const firstPendingOp = this.pendingOps.peekFront();
 

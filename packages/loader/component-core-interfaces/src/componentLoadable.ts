@@ -24,7 +24,8 @@ export interface IProvideComponentRunnable {
     readonly IComponentRunnable: IComponentRunnable;
 }
 export interface IComponentRunnable {
-    run(): Promise<void>;
+    run(...args: any[]): Promise<void>;
+    stop?(reason?: string): void;
 }
 
 export interface IProvideComponentConfiguration {

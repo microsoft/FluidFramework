@@ -3,13 +3,17 @@
  * Licensed under the MIT License.
  */
 
-// tslint:disable no-string-literal trailing-comma no-shadowed-variable no-submodule-imports no-floating-promises
-
 import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 import { IHostConfig, start as startCore } from "@microsoft/fluid-base-host";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { IFluidModule, IFluidPackage, IPackage } from "@microsoft/fluid-container-definitions";
 import {
+    IFluidModule,
+    IFluidPackage,
+    IPackage,
+    IProxyLoaderFactory,
+    isFluidPackage } from "@microsoft/fluid-container-definitions";
+import {
+    ITestDeltaConnectionServer,
     TestDeltaConnectionServer,
     TestDocumentServiceFactory,
     TestResolver,
@@ -19,10 +23,11 @@ import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@micr
 import { getRandomName } from "@microsoft/fluid-server-services-core";
 import { extractDetails, IResolvedPackage } from "@microsoft/fluid-web-code-loader";
 import * as jwt from "jsonwebtoken";
+// tslint:disable-next-line:no-submodule-imports
 import * as uuid from "uuid/v4";
 import { InsecureUrlResolver } from "./insecureUrlResolver";
 import { SessionStorageDbFactory } from "./sessionStorageTestDb";
-// import * as fetch from "isomorphic-fetch";
+
 export interface IDevServerUser extends IUser {
     name: string;
 }
@@ -32,7 +37,9 @@ export interface IRouteOptions {
     fluidHost?: string;
     tenantId?: string;
     tenantSecret?: string;
-    component?: string;
+    bearerSecret?: string;
+    npm?: string;
+    single?: boolean;
 }
 
 function getUser(): IDevServerUser {
@@ -42,79 +49,83 @@ function getUser(): IDevServerUser {
      };
 }
 
-function modifyFluidPackage(packageJson: IPackage): IFluidPackage {
-    const fluidPackage = packageJson as IFluidPackage;
-
-    // Start by translating the input package to be webpack-dev-server relative URLs
-    for (let i = 0; i < fluidPackage.fluid.browser.umd.files.length; i++) {
-        const value = fluidPackage.fluid.browser.umd.files[i];
-        const updatedUrl = `${window.location.origin}/${value}`;
-        console.log(updatedUrl);
-        fluidPackage.fluid.browser.umd.files[i] = updatedUrl;
-    }
-    return fluidPackage;
-}
-
-async function getPkg(packageJson: IPackage, scriptIds: string[], component = false): Promise<IResolvedPackage> {
-
-    // Start the creation of pkg.
-    if (!packageJson) {
-        return Promise.reject("No package specified");
-    }
-
-    const fluidPackage = modifyFluidPackage(packageJson);
-    const details = extractDetails(`${fluidPackage.name}@${fluidPackage.version}`);
-    const legacyPackage = `${fluidPackage.name}@${fluidPackage.version}`;
-
+async function loadScripts(files: string[], origin: string) {
     // Add script to page, rather than load bundle directly
-    const scriptLoadP: Promise<void>[] = [];
+    const scriptLoadP: Promise<string>[] = [];
     const scriptIdPrefix = "fluidDevServerScriptToLoad";
     let scriptIndex = 0;
-    fluidPackage.fluid.browser.umd.files.forEach((file) => {
+    files.forEach((file: string) => {
         const script = document.createElement("script");
-        script.src = file;
+        // translate URLs to be webpack-dev-server relative URLs
+        script.src = `${origin}/${file}`;
         const scriptId = `${scriptIdPrefix}_${scriptIndex++}`;
         script.id = scriptId;
-        scriptIds.push(scriptId);
 
         scriptLoadP.push(new Promise((resolve) => {
             script.onload = () => {
-                resolve();
+                resolve(scriptId);
             };
         }));
 
         document.body.appendChild(script);
     });
-    await Promise.all(scriptLoadP);
+    return Promise.all(scriptLoadP);
+}
 
-    if (component) {
-        // Wrap the core component in a runtime
-        const loadedComponentRaw = window["main"];
-        const fluidModule = loadedComponentRaw as IFluidModule;
+function wrapIfComponentPackage(packageName: string, packageJson: IFluidPackage) {
+    // Wrap the core component in a runtime
+    // tslint:disable-next-line:no-string-literal
+    const loadedComponentRaw = window[packageJson.fluid.browser.umd.library];
+    const fluidModule = loadedComponentRaw as IFluidModule;
+    if (fluidModule.fluidExport.IRuntimeFactory === undefined) {
         const componentFactory = fluidModule.fluidExport.IComponentFactory;
 
         const runtimeFactory = new SimpleModuleInstantiationFactory(
-            legacyPackage,
+            packageName,
             new Map([
-                [legacyPackage, Promise.resolve(componentFactory)],
+                [packageName, Promise.resolve(componentFactory)],
             ]),
         );
+        // tslint:disable-next-line:no-string-literal
         window["componentMain"] = {
             fluidExport: runtimeFactory,
         };
 
-        fluidPackage.fluid.browser.umd.library = "componentMain";
-        fluidPackage.name = `${fluidPackage.name}-dev-server`;
+        packageJson.fluid.browser.umd.library = "componentMain";
+        packageJson.name = `${packageJson.name}-dev-server`;
+    }
+}
 
+async function getResolvedPackage(
+    packageJson: IPackage,
+    scriptIds: string[],
+): Promise<IResolvedPackage> {
+    // Start the creation of pkg.
+    if (!packageJson) {
+        return Promise.reject(new Error("No package specified"));
     }
 
+    if (!isFluidPackage(packageJson)) {
+        return Promise.reject(new Error(`Package ${packageJson.name} not a fluid module.`));
+    }
+
+    const details = extractDetails(`${packageJson.name}@${packageJson.version}`);
+    const legacyPackage = `${packageJson.name}@${packageJson.version}`;
+
+    const loadedScriptIds = await loadScripts(packageJson.fluid.browser.umd.files, window.location.origin);
+    loadedScriptIds.forEach((scriptId) => {
+        scriptIds.push(scriptId);
+    });
+
+    wrapIfComponentPackage(legacyPackage, packageJson);
+
     return {
-        pkg: fluidPackage,
+        pkg: packageJson,
         details: {
             config: {
                 [`@${details.scope}:cdn`]: window.location.origin,
             },
-            package: fluidPackage,
+            package: packageJson,
         },
         parsed: {
             full: legacyPackage,
@@ -127,10 +138,53 @@ async function getPkg(packageJson: IPackage, scriptIds: string[], component = fa
     };
 }
 
-const bearerSecret = "VBQyoGpEYrTn3XQPtXW3K8fFDd";
+function getUrlResolver(options: IRouteOptions): IUrlResolver {
+    switch (options.mode) {
+        case "localhost":
+            return new InsecureUrlResolver(
+                "http://localhost:3000",
+                "http://localhost:3003",
+                "http://localhost:3001",
+                options.tenantId,
+                options.tenantSecret,
+                getUser(),
+                options.bearerSecret);
 
-// tslint:disable-next-line: max-func-body-length
+        case "live":
+            return new InsecureUrlResolver(
+                options.fluidHost,
+                options.fluidHost.replace("www", "alfred"),
+                options.fluidHost.replace("www", "historian"),
+                options.tenantId,
+                options.tenantSecret,
+                getUser(),
+                options.bearerSecret);
+
+        default: // local
+            return new TestResolver();
+    }
+}
+
+function getNpm(options: IRouteOptions): string {
+    if (options.mode === "localhost") {
+        return "http://localhost:3002";
+    }
+
+    // local, live
+    return options.npm;
+}
+
+// Invoked by `start()` when the 'double' option is enabled to create the side-by-side panes.
+function makeSideBySideDiv() {
+    const div = document.createElement("div");
+    div.style.flexGrow = "1";
+    div.style.border = "1px solid lightgray";
+    div.style.position = "relative";                // Make the new <div> a CSS stacking context.
+    return div;
+}
+
 export async function start(
+    documentId: string,
     packageJson: IPackage,
     options: IRouteOptions,
     div: HTMLDivElement
@@ -139,7 +193,7 @@ export async function start(
 
     // Create Package
     const scriptIds: string[] = [];
-    const pkg = await getPkg(packageJson, scriptIds, !!options.component);
+    const pkg = await getResolvedPackage(packageJson, scriptIds);
 
     // Construct a request
     const req: IRequest = {
@@ -150,44 +204,15 @@ export async function start(
     const config = {
         client: {
             permission: [
-
             ],
             type: "browser",
         },
     };
-    let urlResolver: IUrlResolver;
-    let npm: string;
-    switch (options.mode) {
-        case "localhost":
-            npm = "http://localhost:3002";
-            urlResolver = new InsecureUrlResolver(
-                "http://localhost:3000",
-                "http://localhost:3003",
-                "http://localhost:3001",
-                "fluid",
-                "43cfc3fbf04a97c0921fd23ff10f9e4b",
-                getUser(),
-                bearerSecret);
-            break;
-
-        case "local":
-            urlResolver = new TestResolver();
-            break;
-
-        default: // live
-            npm = "https://pragueauspkn-3873244262.azureedge.net";
-            const host = options.fluidHost ? options.fluidHost : "https://www.wu2.prague.office-int.com";
-            urlResolver = new InsecureUrlResolver(
-                host,
-                host.replace("www", "alfred"),
-                host.replace("www", "historian"),
-                options.tenantId ? options.tenantId : "stoic-gates",
-                options.tenantSecret ? options.tenantSecret : "1a7f744b3c05ddc525965f17a1b58aa0",
-                getUser(),
-                bearerSecret);
-    }
+    const urlResolver = getUrlResolver(options);
+    const npm = getNpm(options);
 
     let documentServiceFactory: IDocumentServiceFactory;
+    let deltaConn: ITestDeltaConnectionServer;
     if (options.mode !== "local") {
         documentServiceFactory = new RouterliciousDocumentServiceFactory(
             false,
@@ -196,25 +221,43 @@ export async function start(
             true,
             undefined,
         );
-        const hostConf: IHostConfig = { documentServiceFactory, urlResolver };
-
-        startCore(
-            url,
-            await urlResolver.resolve(req),
-            pkg,
-            scriptIds,
-            npm,
-            config,
-            {},
-            div,
-            hostConf,
-        );
     } else {
-
-        const deltaConn = TestDeltaConnectionServer.create(new SessionStorageDbFactory(url));
+        deltaConn = TestDeltaConnectionServer.create(new SessionStorageDbFactory(documentId));
         documentServiceFactory = new TestDocumentServiceFactory(deltaConn);
-        const hostConf: IHostConfig = { documentServiceFactory, urlResolver };
-        startCore(
+    }
+    const hostConf: IHostConfig = { documentServiceFactory, urlResolver };
+
+    const double = (options.mode === "local") && !options.single;
+    let leftDiv: HTMLDivElement;
+    let rightDiv: HTMLDivElement;
+    if (double) {
+        leftDiv = makeSideBySideDiv();
+        rightDiv = makeSideBySideDiv();
+        div.append(leftDiv, rightDiv);
+    }
+
+    const start1Promise = startCore(
+        url,
+        await urlResolver.resolve(req),
+        pkg,
+        scriptIds,
+        npm,
+        config,
+        {},
+        double ? leftDiv : div,
+        hostConf,
+        new Map<string, IProxyLoaderFactory>(),
+    );
+
+    let start2Promise: Promise<any> = Promise.resolve();
+    if (double) {
+        // new documentServiceFactory for right div, same everything else
+        const docServFac2: IDocumentServiceFactory = new TestDocumentServiceFactory(deltaConn);
+        const hostConf2 = { documentServiceFactory: docServFac2, urlResolver };
+
+        // startCore will create a new Loader/Container/Component from the startCore above. This is
+        // intentional because we want to emulate two clients collaborating with each other.
+        start2Promise = startCore(
             url,
             await urlResolver.resolve(req),
             pkg,
@@ -222,10 +265,12 @@ export async function start(
             npm,
             config,
             {},
-            div,
-            hostConf,
+            rightDiv,
+            hostConf2,
+            new Map<string, IProxyLoaderFactory>(),
         );
     }
+    await Promise.all([start1Promise, start2Promise]);
 }
 
 export function getUserToken(bearerSecret: string) {

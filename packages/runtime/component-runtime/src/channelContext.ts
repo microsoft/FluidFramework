@@ -4,14 +4,13 @@
  */
 
 import { ConnectionState } from "@microsoft/fluid-container-definitions";
+import { BlobTreeEntry } from "@microsoft/fluid-core-utils";
 import {
-    FileMode,
     IDocumentStorageService,
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITree,
     MessageType,
-    TreeEntry,
 } from "@microsoft/fluid-protocol-definitions";
 import { IChannel, IEnvelope } from "@microsoft/fluid-runtime-definitions";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
@@ -27,6 +26,8 @@ export interface IChannelContext {
     snapshot(fullTree?: boolean): Promise<ITree>;
 
     isRegistered(): boolean;
+
+    refreshBaseSummary(snapshot: ISnapshotTree);
 }
 
 export function createServiceEndpoints(
@@ -52,23 +53,15 @@ export function createServiceEndpoints(
     };
 }
 
-export function snapshotChannel(channel: IChannel, baseId?: string) {
+export function snapshotChannel(channel: IChannel, baseId: string | null) {
     const snapshot = channel.snapshot();
 
     // Add in the object attributes to the returned tree
     const objectAttributes = channel.attributes;
-    snapshot.entries.push({
-        mode: FileMode.File,
-        path: ".attributes",
-        type: TreeEntry[TreeEntry.Blob],
-        value: {
-            contents: JSON.stringify(objectAttributes),
-            encoding: "utf-8",
-        },
-    });
+    snapshot.entries.push(new BlobTreeEntry(".attributes", JSON.stringify(objectAttributes)));
 
     // If baseId exists then the previous snapshot is still valid
-    snapshot.id = baseId === undefined ? null : baseId;
+    snapshot.id = baseId;
 
     return snapshot;
 }

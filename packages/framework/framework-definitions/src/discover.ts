@@ -40,7 +40,7 @@ export interface IProvideComponentDiscoverableInterfaces {
  * i.e. other components in the ecosystem will be able to find and interact with this
  * component based on its functionality alone.
  */
-export interface IComponentDiscoverableInterfaces {
+export interface IComponentDiscoverableInterfaces extends IProvideComponentDiscoverableInterfaces {
     /**
      * The interfaces this component implements that it wants other components to be able
      * to discover.
@@ -59,7 +59,7 @@ export interface IProvideComponentDiscoverInterfaces {
  * Components should expect to be notified of other components when they are loaded, and should
  * not expect for this relationship to be persisted beyond the current session.
  */
-export interface IComponentDiscoverInterfaces {
+export interface IComponentDiscoverInterfaces extends IProvideComponentDiscoverInterfaces {
     /**
      * The interfaces this component cares about, i.e. it wants to be notified when other components
      * that implement any of these interfaces are added to the ecosystem.

@@ -16,8 +16,7 @@ export class SharedObjectSequence<T> extends SharedSequence<T> {
      * @returns newly create shared object sequence (but not attached yet)
      */
     public static create<T>(runtime: IComponentRuntime, id?: string) {
-        return runtime.createChannel(SharedSequence.getIdForCreate(id),
-            SharedObjectSequenceFactory.Type) as SharedObjectSequence<T>;
+        return runtime.createChannel(id, SharedObjectSequenceFactory.Type) as SharedObjectSequence<T>;
     }
 
     /**

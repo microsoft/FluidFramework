@@ -179,8 +179,8 @@ export class TextareaNoReact
 
     // Because we did not make the change we need to manage the remote
     // character insertion.
-    const remoteCaretStart = event.start;
-    const remoteCaretEnd = event.end;
+    const remoteCaretStart = event.first.position;
+    const remoteCaretEnd = event.last.position + event.last.segment.cachedLength;
     const charactersModifiedCount =
       newText.length - this.textareaState.text.length;
 

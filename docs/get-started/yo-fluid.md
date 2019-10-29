@@ -4,11 +4,6 @@ uid: yo-fluid
 
 # yo fluid
 
-> [!WARNING]
-> This documentation is based on an earlier version of the Fluid Framework and is outdated.
->
-> Track the documentation update with [#3499](https://github.com/microsoft/Prague/issues/3499).
-
 [!include[<yo yo yo>](./_yo-fluid-content.md)]
 
 > [!TIP]

@@ -6,8 +6,10 @@
 import { PrimedComponent, PrimedComponentFactory, SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 import { IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
 import { Counter, CounterValueType } from "@microsoft/fluid-map";
+import { ITask } from "@microsoft/fluid-runtime-definitions";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
+import { ClickerAgent } from "./agent";
 
 // tslint:disable-next-line: no-var-requires no-require-imports
 const pkg = require("../package.json");
@@ -25,6 +27,19 @@ export class Clicker extends PrimedComponent implements IComponentHTMLVisual {
    */
   protected async componentInitializingFirstTime() {
     this.root.createValueType("clicks", CounterValueType.Name, 0);
+    if (!this.runtime.connected) {
+      // tslint:disable-next-line
+      await new Promise<void>((resolve) => this.runtime.on("connected", () => resolve()));
+    }
+    this.setupAgent();
+  }
+
+  protected async componentInitializingFromExisting() {
+    if (!this.runtime.connected) {
+      // tslint:disable-next-line
+      await new Promise<void>((resolve) => this.runtime.on("connected", () => resolve()));
+    }
+    this.setupAgent();
   }
 
   // #region IComponentHTMLVisual
@@ -40,6 +55,21 @@ export class Clicker extends PrimedComponent implements IComponentHTMLVisual {
       div,
     );
     return div;
+  }
+
+  public setupAgent() {
+    // tslint:disable no-console
+    const counter: Counter = this.root.get("clicks");
+    const agentTask: ITask = {
+      id: "agent",
+      instance: new ClickerAgent(counter),
+    };
+    this.taskManager.register(agentTask);
+    this.taskManager.pick(this.url, "agent", true).then(() => {
+      console.log(`Picked`);
+    }, (err) => {
+      console.log(err);
+    });
   }
 
   // #endregion IComponentHTMLVisual
@@ -79,7 +109,7 @@ class CounterReactView extends React.Component<p, s> {
   }
 }
 
-// ----- COMPONENT SETUP STUFF -----
+// ----- FACTORY SETUP -----
 
 export const ClickerInstantiationFactory = new PrimedComponentFactory(
   Clicker,

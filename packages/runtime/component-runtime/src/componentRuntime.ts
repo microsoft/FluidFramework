@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentHandle, IComponentHandleContext, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
+import {
+    IComponentHandle,
+    IComponentHandleContext,
+    IRequest,
+    IResponse,
+} from "@microsoft/fluid-component-core-interfaces";
 import {
     ConnectionState,
     IAudience,
@@ -14,14 +19,20 @@ import {
     IQuorum,
     ITelemetryLogger,
 } from "@microsoft/fluid-container-definitions";
-import { buildHierarchy, ChildLogger, Deferred, flatten, raiseConnectedEvent } from "@microsoft/fluid-core-utils";
 import {
-    FileMode,
+    buildHierarchy,
+    ChildLogger,
+    Deferred,
+    flatten,
+    raiseConnectedEvent,
+    TreeTreeEntry,
+} from "@microsoft/fluid-core-utils";
+import {
     IDocumentMessage,
     ISequencedDocumentMessage,
+    ISnapshotTree,
     ITreeEntry,
     MessageType,
-    TreeEntry,
 } from "@microsoft/fluid-protocol-definitions";
 import {
     IAttachMessage,
@@ -34,6 +45,8 @@ import {
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import * as assert from "assert";
 import { EventEmitter } from "events";
+// tslint:disable-next-line:no-submodule-imports
+import * as uuid from "uuid/v4";
 import { IChannelContext } from "./channelContext";
 import { LocalChannelContext } from "./localChannelContext";
 import { RemoteChannelContext } from "./remoteChannelContext";
@@ -231,7 +244,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         return channel;
     }
 
-    public createChannel(id: string, type: string): IChannel {
+    public createChannel(id: string = uuid(), type: string): IChannel {
         this.verifyNotClosed();
 
         const context = new LocalChannelContext(
@@ -459,12 +472,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
                 const snapshot = await value.snapshot(fullTree);
 
                 // And then store the tree
-                return {
-                    mode: FileMode.Directory,
-                    path: key,
-                    type: TreeEntry[TreeEntry.Tree],
-                    value: snapshot,
-                };
+                return new TreeTreeEntry(key, snapshot);
             }));
 
         return entries;
@@ -483,12 +491,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
                 const snapshot = value.getAttachSnapshot();
 
                 // And then store the tree
-                entries.push({
-                    mode: FileMode.Directory,
-                    path: objectId,
-                    type: TreeEntry[TreeEntry.Tree],
-                    value: snapshot,
-                });
+                entries.push(new TreeTreeEntry(objectId, snapshot));
             }
         }
 
@@ -587,6 +590,18 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         this.componentContext.on("notleader", (clientId: string) => {
             this.emit("notleader", clientId);
         });
+        this.componentContext.on("refreshBaseSummary",
+            (snapshot: ISnapshotTree) => this.refreshBaseSummary(snapshot));
+    }
+
+    private refreshBaseSummary(snapshot: ISnapshotTree) {
+        // propogate updated tree to all channels
+        for (const key of Object.keys(snapshot.trees)) {
+            const channel = this.contexts.get(key);
+            if (channel) {
+                channel.refreshBaseSummary(snapshot.trees[key]);
+            }
+        }
     }
 
     private verifyNotClosed() {
