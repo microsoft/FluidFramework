@@ -336,53 +336,7 @@ export class LocalOrderer implements IOrderer {
                 this.deltasKafka,
                 this.setup,
                 this.scribeContext,
-                async (lambdaSetup, context) => {
-                    // Scribe lambda
-                    const [
-                        documentCollection,
-                        scribeMessagesCollection,
-                        protocolHead,
-                        scribeMessages,
-                    ] = await Promise.all([
-                        lambdaSetup.documentCollectionP(),
-                        lambdaSetup.scribeDeltaCollectionP(),
-                        lambdaSetup.protocolHeadP(),
-                        lambdaSetup.scribeMessagesP(),
-                    ]);
-
-                    const scribe = this.details.value.scribe
-                        ? typeof this.details.value.scribe === "string" ?
-                            JSON.parse(this.details.value.scribe) :
-                            this.details.value.scribe
-                        : DefaultScribe;
-                    const lastState = scribe.protocolState
-                        ? scribe.protocolState
-                        : { members: [], proposals: [], values: [] };
-
-                    const protocolHandler = new ProtocolOpHandler(
-                        this.documentId,
-                        scribe.minimumSequenceNumber,
-                        scribe.sequenceNumber,
-                        lastState.members,
-                        lastState.proposals,
-                        lastState.values,
-                        () => -1,
-                        () => { return; });
-
-                    return new ScribeLambda(
-                        context,
-                        documentCollection,
-                        scribeMessagesCollection,
-                        scribe.tenantId,
-                        scribe.documentId,
-                        scribe,
-                        this.gitManager,
-                        this.rawDeltasKafka,
-                        protocolHandler,
-                        protocolHead,
-                        scribeMessages,
-                        this.scribeNackOnSummarizeException);
-                });
+                (lambdaSetup, context) => this.startScribeLambda(lambdaSetup, context));
         }
 
         this.deliLambda = new LocalLambdaController(
@@ -403,6 +357,54 @@ export class LocalOrderer implements IOrderer {
                     ActivityCheckingTimeout,
                     NoopConsolidationTimeout);
             });
+    }
+
+    private async startScribeLambda(setup: ILocalOrdererSetup, context: IContext) {
+        // Scribe lambda
+        const [
+            documentCollection,
+            scribeMessagesCollection,
+            protocolHead,
+            scribeMessages,
+        ] = await Promise.all([
+            setup.documentCollectionP(),
+            setup.scribeDeltaCollectionP(),
+            setup.protocolHeadP(),
+            setup.scribeMessagesP(),
+        ]);
+
+        const scribe = this.details.value.scribe
+            ? typeof this.details.value.scribe === "string" ?
+                JSON.parse(this.details.value.scribe) :
+                this.details.value.scribe
+            : DefaultScribe;
+        const lastState = scribe.protocolState
+            ? scribe.protocolState
+            : { members: [], proposals: [], values: [] };
+
+        const protocolHandler = new ProtocolOpHandler(
+            this.documentId,
+            scribe.minimumSequenceNumber,
+            scribe.sequenceNumber,
+            lastState.members,
+            lastState.proposals,
+            lastState.values,
+            () => -1,
+            () => { return; });
+
+        return new ScribeLambda(
+            context,
+            documentCollection,
+            scribeMessagesCollection,
+            scribe.tenantId,
+            scribe.documentId,
+            scribe,
+            this.gitManager,
+            this.rawDeltasKafka,
+            protocolHandler,
+            protocolHead,
+            scribeMessages,
+            this.scribeNackOnSummarizeException);
     }
 
     private startLambdas() {

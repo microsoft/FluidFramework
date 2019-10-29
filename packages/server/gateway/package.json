@@ -58,6 +58,7 @@
     "@microsoft/fluid-container-definitions": "^0.11.0",
     "@microsoft/fluid-container-loader": "^0.11.0",
     "@microsoft/fluid-core-utils": "^0.11.0",
+    "@microsoft/fluid-execution-context-loader": "^0.11.0",
     "@microsoft/fluid-gitresources": "^0.11.0",
     "@microsoft/fluid-host-service-interfaces": "^0.11.0",
     "@microsoft/fluid-iframe-driver": "^0.11.0",
@@ -114,6 +115,7 @@
     "serve-favicon": "^2.5.0",
     "split": "^1.0.0",
     "static-expiry": "0.0.11",
+    "comlink": "^4.0.2",
     "uuid": "^3.3.2",
     "winston": "^3.1.0"
   },

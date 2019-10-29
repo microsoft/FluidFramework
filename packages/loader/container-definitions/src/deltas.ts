@@ -31,15 +31,19 @@ export interface IConnectionDetails {
     serviceConfiguration: IServiceConfiguration;
 }
 
+export interface IProcessMessageResult {
+    error?: any;
+    immediateNoOp?: boolean;
+}
+
 /**
  * Interface used to define a strategy for handling incoming delta messages
  */
 export interface IDeltaHandlerStrategy {
     /**
-     * Processes the message. The return value from prepare is passed in the context parameter.
-     * @param context - Deprecated: will be removed in a future release
+     * Processes the message.
      */
-    process: (message: ISequencedDocumentMessage, callback: (err?: any) => void) => void;
+    process: (message: ISequencedDocumentMessage, callback: (result: IProcessMessageResult) => void) => void;
 
     /**
      * Processes the signal.

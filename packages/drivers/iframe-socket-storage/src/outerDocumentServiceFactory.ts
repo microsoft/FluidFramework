@@ -54,11 +54,15 @@ export class OuterDocumentServiceFactory implements IDocumentServiceFactory {
     }
 
     public async createDocumentServiceFromRequest(request: IRequest): Promise<IDocumentService> {
+        let resolved: IResolvedUrl | undefined;
         if (Array.isArray(this.containerHost.resolver)) {
-            const resolved = await configurableUrlResolver(this.containerHost.resolver, request);
-            return this.createDocumentService(resolved);
+            resolved = await configurableUrlResolver(this.containerHost.resolver, request);
         } else {
-            return this.createDocumentService(await this.containerHost.resolver.resolve(request));
+            resolved = await this.containerHost.resolver.resolve(request);
         }
+        if (!resolved) {
+            return Promise.reject(`Invalid Url ${request.url}`);
+        }
+        return this.createDocumentService(resolved);
     }
 }
