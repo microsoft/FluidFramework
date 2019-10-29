@@ -53,6 +53,7 @@ export enum LoaderHeader {
      * connection options (list of keywords). Accepted options are open & pause.
      */
     connect = "connect",
+    executionContext = "execution-context",
     sequenceNumber = "fluid-sequence-number",
     reconnect = "fluid-reconnect",
 
@@ -63,6 +64,20 @@ export enum LoaderHeader {
      * otherwise, version sha to load snapshot
      */
     version = "version",
+}
+export interface ILoaderHeader {
+    [LoaderHeader.cache]: boolean;
+    [LoaderHeader.clientType]: string;
+    [LoaderHeader.connect]: string;
+    [LoaderHeader.executionContext]: string;
+    [LoaderHeader.sequenceNumber]: number;
+    [LoaderHeader.reconnect]: boolean;
+    [LoaderHeader.version]: string | undefined | null;
+}
+
+declare module "@microsoft/fluid-component-core-interfaces" {
+    export interface IRequestHeader extends Partial<ILoaderHeader> {
+    }
 }
 
 export class RelativeLoader extends EventEmitter implements ILoader {
@@ -121,7 +136,7 @@ export class RelativeLoader extends EventEmitter implements ILoader {
     }
 
     private needExecutionContext(request: IRequest): boolean {
-        return (request.headers !== undefined && request.headers["execution-context"] !== undefined);
+        return (request.headers !== undefined && request.headers[LoaderHeader.executionContext] !== undefined);
     }
 }
 
@@ -301,7 +316,7 @@ export class Loader extends EventEmitter implements ILoader {
         request.headers = request.headers ? request.headers : {};
         const {canCache, fromSequenceNumber } = this.parseHeader(parsed, request);
 
-        debug(`${canCache} ${request.headers[LoaderHeader.connect]} ${request.headers.version}`);
+        debug(`${canCache} ${request.headers[LoaderHeader.connect]} ${request.headers[LoaderHeader.version]}`);
         const factory: IDocumentServiceFactory =
             selectDocumentServiceFactoryForProtocol(resolvedAsFluid, this.protocolToDocumentFactoryMap);
 
@@ -309,7 +324,9 @@ export class Loader extends EventEmitter implements ILoader {
 
         let container: Container;
         if (canCache) {
-            const versionedId = request.headers.version ? `${parsed.id}@${request.headers.version}` : parsed.id;
+            const versionedId = request.headers[LoaderHeader.version]
+                ? `${parsed.id}@${request.headers[LoaderHeader.version]}`
+                : parsed.id;
             const maybeContainer = await this.containers.get(versionedId);
             if (maybeContainer) {
                 container = maybeContainer;
@@ -369,12 +386,13 @@ export class Loader extends EventEmitter implements ILoader {
                 || request.headers[LoaderHeader.connect] === "close";
         }
 
-        if (request.headers[LoaderHeader.sequenceNumber]) {
-            fromSequenceNumber = request.headers[LoaderHeader.sequenceNumber] as number;
+        const headerSeqNum = request.headers[LoaderHeader.sequenceNumber];
+        if (headerSeqNum) {
+            fromSequenceNumber = headerSeqNum;
         }
 
         // if set in both query string and headers, use query string
-        request.headers[LoaderHeader.version] = parsed.version || request.headers[LoaderHeader.version] as string;
+        request.headers[LoaderHeader.version] = parsed.version || request.headers[LoaderHeader.version];
 
         // version === null means not use any snapshot.
         if (request.headers[LoaderHeader.version] === "null") {

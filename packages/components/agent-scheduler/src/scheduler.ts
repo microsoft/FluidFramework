@@ -365,14 +365,13 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
     }
 
     private async runTask(url: string, worker: boolean) {
-        const headers = {};
-        headers[LoaderHeader.cache] = false;
-        headers[LoaderHeader.reconnect] = false;
-        headers[LoaderHeader.sequenceNumber] = this.context.deltaManager.referenceSequenceNumber;
-        headers["execution-context"] = worker ? "worker" : undefined;
-
         const request: IRequest = {
-            headers,
+            headers: {
+                [LoaderHeader.cache]: false,
+                [LoaderHeader.reconnect]: false,
+                [LoaderHeader.sequenceNumber]: this.context.deltaManager.referenceSequenceNumber,
+                [LoaderHeader.executionContext]: worker ? "worker" : undefined,
+            },
             url,
         };
         const response = await this.runtime.loader.request(request);

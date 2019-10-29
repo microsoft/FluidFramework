@@ -161,16 +161,16 @@ export class SummaryManager extends EventEmitter {
         this.logger.sendTelemetryEvent({ eventName: "CreatingSummarizer" });
 
         const loader = this.context.loader;
-        const headers = {};
-        headers[LoaderHeader.cache] = false;
-        headers[LoaderHeader.clientType] = "summarizer";
-        headers[LoaderHeader.reconnect] = false;
-        headers[LoaderHeader.sequenceNumber] = this.context.deltaManager.referenceSequenceNumber;
-        headers["execution-context"] = this.enableWorker ? "worker" : undefined;
 
         // TODO eventually we may wish to spawn an execution context from which to run this
         const request: IRequest = {
-            headers,
+            headers: {
+                [LoaderHeader.cache]: false,
+                [LoaderHeader.clientType]: "summarizer",
+                [LoaderHeader.reconnect]: false,
+                [LoaderHeader.sequenceNumber]: this.context.deltaManager.referenceSequenceNumber,
+                [LoaderHeader.executionContext]: this.enableWorker ? "worker" : undefined,
+            },
             url: "/_summarizer",
         };
 

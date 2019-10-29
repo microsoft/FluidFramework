@@ -118,9 +118,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             };
             container.on("error", onError);
 
-            return container.load(
-                request.headers!.version as string | null | undefined,
-                request.headers!.connect as string)
+            return container.load(request.headers![LoaderHeader.version], request.headers![LoaderHeader.connect]!)
                 .then(() => {
                     container.removeListener("error", onError);
                     res(container);
@@ -769,8 +767,9 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                 scopes: [],
                 user: { id: "" },
             };
-        if (this.originalRequest.headers && this.originalRequest.headers[LoaderHeader.clientType]) {
-            clientDetails.type = this.originalRequest.headers[LoaderHeader.clientType] as string;
+        const headerClientType = this.originalRequest.headers![LoaderHeader.clientType];
+        if (headerClientType) {
+            clientDetails.type = headerClientType;
         }
 
         this._deltaManager = new DeltaManager(
