@@ -1012,12 +1012,15 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                     snapshotTree = buildHierarchy(flattened);
                 }
 
+                // Include the type of attach message which is the pkg of the component to be
+                // used by RemotedComponentContext in case it is not in the snapshot.
                 remotedComponentContext = new RemotedComponentContext(
                     attachMessage.id,
                     snapshotTree,
                     this,
                     new DocumentStorageServiceProxy(this.storage, flatBlobs),
-                    this.context.scope);
+                    this.context.scope,
+                    [attachMessage.type]);
 
                 break;
 
