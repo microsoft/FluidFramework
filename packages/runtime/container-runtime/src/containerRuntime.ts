@@ -93,15 +93,31 @@ interface IBufferedChunk {
     content: string;
 }
 
+/**
+ * Base interface for all possible results of generate summary attempt.
+ */
 export interface IGeneratedSummaryData {
-    sequenceNumber: number;
+    referenceSequenceNumber: number;
 
     /**
      * true if the summary op was submitted
      */
     submitted: boolean;
 
+    /**
+     * computed stats of generated summary tree
+     */
     summaryStats?: ISummaryStats;
+
+    /**
+     * only set if uploaded to storage
+     */
+    handle?: string;
+
+    /**
+     * only set if submitted summary op
+     */
+    clientSequenceNumber?: number;
 }
 
 // Consider idle 5s of no activity. And snapshot if a minute has gone by with no snapshot.
@@ -1103,26 +1119,25 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
         try {
             await this.scheduleManager.pause();
-            const sequenceNumber = this.deltaManager.referenceSequenceNumber;
 
             const ret: IGeneratedSummaryData = {
-                sequenceNumber,
+                referenceSequenceNumber: this.deltaManager.referenceSequenceNumber,
                 submitted: false,
-                summaryStats: undefined,
             };
 
             if (!this.connected) {
+                // if summarizer loses connection it will never reconnect
                 return ret;
             }
             // TODO in the future we can have stored the latest summary by listening to the summary ack message
             // after loading from the beginning of the snapshot
             const versions = await this.context.storage.getVersions(this.id, 1);
             const parents = versions.map((version) => version.id);
-            generateSummaryEvent.reportProgress({}, "loadedVersions");
+            generateSummaryEvent.reportProgress({ refSequenceNumber: ret.referenceSequenceNumber }, "loadedVersions");
 
             const treeWithStats = await this.summarize(fullTree);
             ret.summaryStats = treeWithStats.summaryStats;
-            generateSummaryEvent.reportProgress({}, "generatedTree");
+            generateSummaryEvent.reportProgress({ ...ret.summaryStats }, "generatedTree");
 
             if (!this.connected) {
                 return ret;
@@ -1134,20 +1149,19 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                 message,
                 parents,
             };
-            generateSummaryEvent.reportProgress({}, "uploadedTree");
+            ret.handle = handle.handle;
+            generateSummaryEvent.reportProgress({ handle: ret.handle }, "uploadedTree");
 
             if (!this.connected) {
                 return ret;
             }
-            // if summarizer loses connection it will never reconnect
-            this.submit(MessageType.Summarize, summary);
+
+            ret.clientSequenceNumber = this.submit(MessageType.Summarize, summary);
             ret.submitted = true;
 
             generateSummaryEvent.end({
-                sequenceNumber,
                 submitted: ret.submitted,
-                handle: handle.handle,
-                ...ret.summaryStats,
+                clientSequenceNumber: ret.clientSequenceNumber,
             });
             return ret;
         } catch (ex) {

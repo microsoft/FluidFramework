@@ -435,9 +435,11 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
             const summaryEndTime = Date.now();
 
             const telemetryProps = {
-                sequenceNumber: summaryData.sequenceNumber,
+                refSequenceNumber: summaryData.referenceSequenceNumber,
+                handle: summaryData.handle,
+                clientSequenceNumber: summaryData.clientSequenceNumber,
                 ...summaryData.summaryStats,
-                opsSinceLastSummary: summaryData.sequenceNumber - this.lastSummarySeqNumber,
+                opsSinceLastSummary: summaryData.referenceSequenceNumber - this.lastSummarySeqNumber,
                 timeSinceLastSummary: summaryEndTime - this.lastSummaryTime,
             };
             if (!summaryData.submitted) {
@@ -450,7 +452,7 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
             summarizingEvent.end(telemetryProps);
 
             this.lastSummaryTime = summaryEndTime;
-            this.lastSummarySeqNumber = summaryData.sequenceNumber;
+            this.lastSummarySeqNumber = summaryData.referenceSequenceNumber;
 
             // Because summarizing is async, the incoming op stream will be resumed before
             // we update our lastSummarySeqNumber.  We use this to defer the broadcast listeners

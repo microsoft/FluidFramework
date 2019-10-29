@@ -82,7 +82,7 @@ describe("Runtime", () => {
                                 await deferGenerateSummary.promise;
                             }
                             return {
-                                sequenceNumber: lastSeq,
+                                referenceSequenceNumber: lastSeq,
                                 submitted: true,
                                 treeNodeCount: 0,
                                 blobNodeCount: 0,

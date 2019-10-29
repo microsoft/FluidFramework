@@ -45,7 +45,9 @@ interface ISummaryNackMessage extends ISequencedDocumentMessage {
 
 interface ISummary {
     readonly clientId: string;
-    readonly refSequenceNumber: number;
+    readonly clientSequenceNumber: number;
+    readonly summaryOp?: ISummaryMessage;
+    readonly summaryAckNack?: ISummaryAckMessage | ISummaryNackMessage;
     isBroadcast(): boolean;
     isAckedNacked(): boolean;
     waitBroadcast(): Promise<ISummaryMessage>;
@@ -60,11 +62,11 @@ enum SummaryState {
 }
 
 class Summary implements ISummary {
-    public static createLocal(clientId: string, refSequenceNumber: number) {
-        return new Summary(clientId, refSequenceNumber);
+    public static createLocal(clientId: string, clientSequenceNumber: number) {
+        return new Summary(clientId, clientSequenceNumber);
     }
     public static createFromOp(op: ISummaryMessage) {
-        const summary = new Summary(op.clientId, op.referenceSequenceNumber);
+        const summary = new Summary(op.clientId, op.clientSequenceNumber);
         summary.broadcast(op);
         return summary;
     }
@@ -82,7 +84,7 @@ class Summary implements ISummary {
 
     private constructor(
         public readonly clientId: string,
-        public readonly refSequenceNumber: number) {}
+        public readonly clientSequenceNumber: number) {}
 
     public isBroadcast(): boolean {
         return this.state !== SummaryState.Local;
@@ -123,7 +125,7 @@ class Summary implements ISummary {
 }
 
 class SummaryDds {
-    // key: refSeqNum
+    // key: clientSeqNum
     private readonly localSummaries = new Map<number, Summary>();
     // key: summarySeqNum
     private readonly pendingSummaries = new Map<number, Summary>();
@@ -150,6 +152,13 @@ class SummaryDds {
         return this.initialAck.promise;
     }
 
+    public getLatestPending(): ISummary | undefined {
+        if (this.pendingSummaries.size > 0) {
+            const maxSeq = Array.from(this.pendingSummaries.keys()).reduce((prev, curr) => Math.max(prev, curr));
+            return this.pendingSummaries.get(maxSeq);
+        }
+    }
+
     public async waitFlushed(): Promise<void> {
         while (this.pendingSummaries.size > 0) {
             const promises = Array.from(this.pendingSummaries, ([, summary]) => summary.waitAckNack());
@@ -157,9 +166,9 @@ class SummaryDds {
         }
     }
 
-    public addLocalSummary(clientId: string, refSequenceNumber: number): ISummary {
-        const summary = Summary.createLocal(clientId, refSequenceNumber);
-        this.localSummaries.set(summary.refSequenceNumber, summary);
+    public addLocalSummary(clientId: string, clientSequenceNumber: number): ISummary {
+        const summary = Summary.createLocal(clientId, clientSequenceNumber);
+        this.localSummaries.set(summary.clientSequenceNumber, summary);
         return summary;
     }
 
@@ -184,17 +193,17 @@ class SummaryDds {
     }
 
     private handleSummaryOp(op: ISummaryMessage) {
-        let summary = this.localSummaries.get(op.referenceSequenceNumber);
+        let summary = this.localSummaries.get(op.clientSequenceNumber);
         if (summary && summary.clientId === op.clientId) {
             summary.broadcast(op);
-            this.localSummaries.delete(op.referenceSequenceNumber);
+            this.localSummaries.delete(op.clientSequenceNumber);
         } else {
             summary = Summary.createFromOp(op);
         }
         this.pendingSummaries.set(op.sequenceNumber, summary);
 
         // initialize
-        if (!this.initialized && summary.refSequenceNumber === this.initialSequenceNumber) {
+        if (!this.initialized && summary.summaryOp.referenceSequenceNumber === this.initialSequenceNumber) {
             summary.waitAckNack().then((ackNack) => this.checkInitialized(ackNack)).catch((error) => {
                 this.logger.sendErrorEvent({ eventName: "ErrorCheckingInitialized" }, error);
             });
@@ -234,6 +243,7 @@ class SummaryDds {
 interface ISummaryAttempt {
     readonly refSequenceNumber: number;
     readonly summaryTime: number;
+    summarySequenceNumber?: number;
 }
 
 export class Summarizer implements IComponentRouter, IComponentLoadable, IComponentRunnable {
@@ -245,8 +255,8 @@ export class Summarizer implements IComponentRouter, IComponentLoadable, ICompon
     private summarizeCount: number = 0;
     private lastOpSeqNumber: number;
     private pendingCancelDeferred: Deferred<void>;
-    private lastAttemptedSummary: ISummaryAttempt;
-    private lastSuccessfulSummary: ISummaryAttempt;
+    private lastSentSummary: ISummaryAttempt;
+    private lastAckedSummary: ISummaryAttempt;
 
     private idleTimer: Timer;
     private pendingAckTimer: Timer;
@@ -296,30 +306,8 @@ export class Summarizer implements IComponentRouter, IComponentLoadable, ICompon
     public async run(onBehalfOf: string): Promise<void> {
         this.onBehalfOfClientId = onBehalfOf;
 
-        if (!this.runtime.connected) {
-            if (!this.everConnected) {
-                const waitConnected = new Promise((resolve) => this.runtime.once("connected", resolve));
-                await Promise.race([waitConnected, this.runDeferred.promise]);
-                if (!this.runtime.connected) {
-                    // if still not connected, no need to start running
-                    this.logger.sendTelemetryEvent({ eventName: "NeverConnectedBeforeRun", onBehalfOf });
-                    return;
-                }
-            } else {
-                // we will not try to reconnect, so we are done running
-                this.logger.sendTelemetryEvent({ eventName: "DisconnectedBeforeRun", onBehalfOf });
-                return;
-            }
-        }
-
-        if (this.runtime.summarizerClientId !== onBehalfOf) {
-            // this calculated summarizer differs from parent
-            // parent SummaryManager should prevent this from happening
-            this.logger.sendErrorEvent({
-                eventName: "ParentIsNotSummarizer",
-                onBehalfOf,
-                expectedSummarizer: this.runtime.summarizerClientId,
-            });
+        const shouldRun = await this.waitConnected();
+        if (!shouldRun) {
             return;
         }
 
@@ -335,7 +323,9 @@ export class Summarizer implements IComponentRouter, IComponentLoadable, ICompon
                 this.logger.sendErrorEvent({
                     eventName: "SummaryAckWaitTimeout",
                     maxAckWaitTime: this.configuration.maxAckWaitTime,
-                    refSequenceNumber: this.lastAttemptedSummary.refSequenceNumber,
+                    refSequenceNumber: this.lastSentSummary.refSequenceNumber,
+                    summarySequenceNumber: this.lastSentSummary.summarySequenceNumber,
+                    timePending: Date.now() - this.lastSentSummary.summaryTime,
                 });
                 this.pendingCancelDeferred.resolve();
             }, this.configuration.maxAckWaitTime);
@@ -343,9 +333,12 @@ export class Summarizer implements IComponentRouter, IComponentLoadable, ICompon
         // initialize values and first ack (time is not exact)
         const maybeInitialAck = await this.summaryDds.waitInitialized();
 
-        this.lastSuccessfulSummary = {
+        this.lastAckedSummary = {
             refSequenceNumber: this.summaryDds.initialSequenceNumber,
             summaryTime: maybeInitialAck ? maybeInitialAck.timestamp : Date.now(),
+            summarySequenceNumber: maybeInitialAck
+                ? maybeInitialAck.contents.summaryProposal.summarySequenceNumber
+                : undefined,
         };
 
         this.logger.sendTelemetryEvent({
@@ -355,8 +348,23 @@ export class Summarizer implements IComponentRouter, IComponentLoadable, ICompon
             initHandle: maybeInitialAck ? maybeInitialAck.contents.handle : undefined,
         });
 
-        this.pendingAckTimer.start();
-        await Promise.race([this.summaryDds.waitFlushed(), this.pendingCancelDeferred.promise]);
+        // wait no longer than ack timeout for all pending
+        let latestPending = this.summaryDds.getLatestPending();
+        if (latestPending) {
+            this.pendingCancelDeferred = new Deferred<void>();
+            this.pendingAckTimer.start();
+            while (latestPending) {
+                this.lastSentSummary = {
+                    refSequenceNumber: latestPending.summaryOp.referenceSequenceNumber,
+                    summaryTime: latestPending.summaryOp.timestamp,
+                    summarySequenceNumber: latestPending.summaryOp.sequenceNumber,
+                };
+                const ackNack = await Promise.race([latestPending.waitAckNack(), this.pendingCancelDeferred.promise]);
+
+                latestPending = ackNack ? this.summaryDds.getLatestPending() : undefined;
+            }
+            this.pendingAckTimer.clear();
+        }
 
         // start the timer after connecting to the document
         this.idleTimer.start();
@@ -393,6 +401,42 @@ export class Summarizer implements IComponentRouter, IComponentLoadable, ICompon
             status: 200,
             value: this,
         };
+    }
+
+    private async waitConnected(): Promise<boolean> {
+        if (!this.runtime.connected) {
+            if (!this.everConnected) {
+                const waitConnected = new Promise((resolve) => this.runtime.once("connected", resolve));
+                await Promise.race([waitConnected, this.runDeferred.promise]);
+                if (!this.runtime.connected) {
+                    // if still not connected, no need to start running
+                    this.logger.sendTelemetryEvent({
+                        eventName: "NeverConnectedBeforeRun",
+                        onBehalfOf: this.onBehalfOfClientId,
+                    });
+                    return false;
+                }
+            } else {
+                // we will not try to reconnect, so we are done running
+                this.logger.sendTelemetryEvent({
+                    eventName: "DisconnectedBeforeRun",
+                    onBehalfOf: this.onBehalfOfClientId,
+                });
+                return false;
+            }
+        }
+
+        if (this.runtime.summarizerClientId !== this.onBehalfOfClientId) {
+            // this calculated summarizer differs from parent
+            // parent SummaryManager should prevent this from happening
+            this.logger.sendErrorEvent({
+                eventName: "ParentIsNotSummarizer",
+                onBehalfOf: this.onBehalfOfClientId,
+                expectedSummarizer: this.runtime.summarizerClientId,
+            });
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -460,9 +504,9 @@ export class Summarizer implements IComponentRouter, IComponentLoadable, ICompon
         }
 
         // check if we should summarize
-        let summaryMessage = message;
-        const opCountSinceLastSummary = this.lastOpSeqNumber - this.lastSuccessfulSummary.refSequenceNumber;
-        const timeSinceLastSummary = Date.now() - this.lastSuccessfulSummary.summaryTime;
+        let summaryMessage: string | undefined;
+        const opCountSinceLastSummary = this.lastOpSeqNumber - this.lastAckedSummary.refSequenceNumber;
+        const timeSinceLastSummary = Date.now() - this.lastAckedSummary.summaryTime;
 
         if (message) {
             summaryMessage = message;
@@ -492,48 +536,33 @@ export class Summarizer implements IComponentRouter, IComponentLoadable, ICompon
     }
 
     private async summarize(message: string) {
-        const summarizingEvent = PerformanceEvent.start(this.logger, {
-            eventName: "Summarizing",
-            message,
-            summarizeCount: ++this.summarizeCount,
-            timeSinceLastAttempt: Date.now() - this.lastAttemptedSummary.summaryTime,
-            timeSinceLastSummary: Date.now() - this.lastSuccessfulSummary.summaryTime,
-        });
-
-        const summaryData = await this.generateSummary();
-        this.summarizeTimer.clear();
-
-        const telemetryProps = {
-            refSequenceNumber: summaryData.sequenceNumber,
-            ...summaryData.summaryStats,
-            opsSinceLastAttempt: summaryData.sequenceNumber - this.lastAttemptedSummary.refSequenceNumber,
-            opsSinceLastSummary: summaryData.sequenceNumber - this.lastSuccessfulSummary.refSequenceNumber,
-        };
+        // wait to generate and send summary
+        const summaryData = await this.generateAndSendSummary(message);
         if (!summaryData.submitted) {
             // did not send the summary op
-            summarizingEvent.cancel({...telemetryProps, category: "error"});
             return;
         }
+        // must be set if submitted
+        assert(summaryData.clientSequenceNumber);
 
-        summarizingEvent.end(telemetryProps);
-
-        this.lastAttemptedSummary = {
-            refSequenceNumber: summaryData.sequenceNumber,
+        this.lastSentSummary = {
+            refSequenceNumber: summaryData.referenceSequenceNumber,
             summaryTime: Date.now(),
         };
 
         this.pendingCancelDeferred = new Deferred<void>();
         this.pendingAckTimer.start();
-        const summary = this.summaryDds.addLocalSummary(this.runtime.clientId, summaryData.sequenceNumber);
+        const summary = this.summaryDds.addLocalSummary(this.runtime.clientId, summaryData.clientSequenceNumber);
 
         // wait for broadcast
         const summaryOp = await Promise.race([summary.waitBroadcast(), this.pendingCancelDeferred.promise]);
         if (!summaryOp) {
             return;
         }
+        this.lastSentSummary.summarySequenceNumber = summaryOp.sequenceNumber;
         this.logger.sendTelemetryEvent({
             eventName: "SummaryOp",
-            timeWaiting: Date.now() - this.lastAttemptedSummary.summaryTime,
+            timeWaiting: Date.now() - this.lastSentSummary.summaryTime,
             refSequenceNumber: summaryOp.referenceSequenceNumber,
             summarySequenceNumber: summaryOp.sequenceNumber,
             handle: summaryOp.contents.handle,
@@ -547,7 +576,7 @@ export class Summarizer implements IComponentRouter, IComponentLoadable, ICompon
         this.logger.sendTelemetryEvent({
             eventName: ackNack.type === MessageType.SummaryAck ? "SummaryAck" : "SummaryNack",
             category: ackNack.type === MessageType.SummaryAck ? "generic" : "error",
-            timeWaiting: Date.now() - this.lastAttemptedSummary.summaryTime,
+            timeWaiting: Date.now() - this.lastSentSummary.summaryTime,
             summarySequenceNumber: ackNack.contents.summaryProposal.summarySequenceNumber,
             message: ackNack.type === MessageType.SummaryNack ? ackNack.contents.errorMessage : undefined,
             handle: ackNack.type === MessageType.SummaryAck ? ackNack.contents.handle : undefined,
@@ -555,25 +584,60 @@ export class Summarizer implements IComponentRouter, IComponentLoadable, ICompon
 
         // update for success
         if (ackNack.type === MessageType.SummaryAck) {
-            this.lastSuccessfulSummary = this.lastAttemptedSummary;
+            await this.handleSuccessfulSummary(ackNack);
+        }
+    }
 
-            // we have to call get version to get the treeId for r11s; this isnt needed
-            // for odsp currently, since their treeId is undefined
-            const versionsResult = await this.setOrLogError("SummarizerFailedToGetVersion",
-                () => this.runtime.storage.getVersions(ackNack.contents.handle, 1),
-                (versions) => !!(versions && versions.length));
+    private async generateAndSendSummary(message: string): Promise<IGeneratedSummaryData | undefined> {
+        const summarizingEvent = PerformanceEvent.start(this.logger, {
+            eventName: "Summarizing",
+            message,
+            summarizeCount: ++this.summarizeCount,
+            timeSinceLastAttempt: Date.now() - this.lastSentSummary.summaryTime,
+            timeSinceLastSummary: Date.now() - this.lastAckedSummary.summaryTime,
+        });
 
-            if (versionsResult.success) {
-                const snapshotResult = await this.setOrLogError("SummarizerFailedToGetSnapshot",
-                    () => this.runtime.storage.getSnapshotTree(versionsResult.result[0]),
-                    (snapshot) => !!snapshot);
+        // wait for generate/send summary
+        const summaryData = await this.generateSummary();
+        this.summarizeTimer.clear();
 
-                if (snapshotResult.success) {
-                    // refresh base summary
-                    // it might be nice to do this in the container in the future, and maybe for all
-                    // clients, not just the summarizer
-                    this.refreshBaseSummary(snapshotResult.result);
-                }
+        const telemetryProps = {
+            refSequenceNumber: summaryData.referenceSequenceNumber,
+            handle: summaryData.handle,
+            clientSequenceNumber: summaryData.clientSequenceNumber,
+            ...summaryData.summaryStats,
+            opsSinceLastAttempt: summaryData.referenceSequenceNumber - this.lastSentSummary.refSequenceNumber,
+            opsSinceLastSummary: summaryData.referenceSequenceNumber - this.lastAckedSummary.refSequenceNumber,
+        };
+
+        if (summaryData.submitted) {
+            summarizingEvent.end(telemetryProps);
+        } else {
+            summarizingEvent.cancel({...telemetryProps, category: "error"});
+        }
+
+        return summaryData;
+    }
+
+    private async handleSuccessfulSummary(ack: ISummaryAckMessage) {
+        this.lastAckedSummary = this.lastSentSummary;
+
+        // we have to call get version to get the treeId for r11s; this isnt needed
+        // for odsp currently, since their treeId is undefined
+        const versionsResult = await this.setOrLogError("SummarizerFailedToGetVersion",
+            () => this.runtime.storage.getVersions(ack.contents.handle, 1),
+            (versions) => !!(versions && versions.length));
+
+        if (versionsResult.success) {
+            const snapshotResult = await this.setOrLogError("SummarizerFailedToGetSnapshot",
+                () => this.runtime.storage.getSnapshotTree(versionsResult.result[0]),
+                (snapshot) => !!snapshot);
+
+            if (snapshotResult.success) {
+                // refresh base summary
+                // it might be nice to do this in the container in the future, and maybe for all
+                // clients, not just the summarizer
+                this.refreshBaseSummary(snapshotResult.result);
             }
         }
     }
