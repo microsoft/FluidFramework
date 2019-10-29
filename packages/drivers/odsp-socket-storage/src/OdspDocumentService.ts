@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
-import { SinglePromise, TelemetryNullLogger } from "@microsoft/fluid-core-utils";
+import { DebugLogger, SinglePromise, TelemetryLogger, TelemetryNullLogger } from "@microsoft/fluid-core-utils";
 import {
     ConnectionMode,
     IClient,
@@ -42,6 +42,8 @@ export class OdspDocumentService implements IDocumentService {
 
     private storageManager?: OdspDocumentStorageManager;
 
+    private readonly logger: TelemetryLogger;
+
     private readonly getStorageToken: (refresh: boolean) => Promise<string | null>;
 
     private readonly localStorageAvailable: boolean;
@@ -72,12 +74,20 @@ export class OdspDocumentService implements IDocumentService {
         private readonly snapshotStorageUrl: string,
         getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
         readonly getWebsocketToken: () => Promise<string | null>,
-        private readonly logger: ITelemetryLogger,
+        logger: ITelemetryLogger,
         private readonly storageFetchWrapper: IFetchWrapper,
         private readonly deltasFetchWrapper: IFetchWrapper,
         private readonly socketIOClientP: Promise<SocketIOClientStatic>,
         private readonly odspCache: OdspCache,
     ) {
+
+        this.logger = DebugLogger.mixinDebugLogger(
+            "fluid:telemetry",
+            {
+                documentId: hashedDocumentId,
+            },
+            logger);
+
         this.getStorageToken = (refresh: boolean) => {
             if (refresh) {
                 // Potential perf issue:
