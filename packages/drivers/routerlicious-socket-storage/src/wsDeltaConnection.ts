@@ -17,6 +17,7 @@ import {
     ISignalMessage,
     ITokenClaims,
 } from "@microsoft/fluid-protocol-definitions";
+import * as assert from "assert";
 import { EventEmitter } from "events";
 import * as ws from "isomorphic-ws";
 import * as url from "url";
@@ -45,6 +46,13 @@ export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaCon
         client: IClient,
         urlStr: string,
         mode: ConnectionMode): Promise<IDocumentDeltaConnection> {
+
+        // This code is currently not used.
+        // If we ever switch to using raw sockets, we need to implement early op handlers similar to how
+        // DocumentDeltaConnection class implements them.
+        // Due to asynchrony / continuations, we have to keep early handlers and accumulate ops until
+        // caller asks for initialMessages / initialContents / initialSignals
+        assert(false, "non implemented functionality in WSDeltaConnection, see comment in code above");
 
         return new Promise<IDocumentDeltaConnection>((resolve, reject) => {
             const connection = new WSDeltaConnection(tenantId, id, token, client, urlStr, mode);
