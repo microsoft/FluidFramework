@@ -95,29 +95,30 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
             versions: protocolVersions,
         };
 
+        // Listen for ops sent before we receive a response to connect_document
+        const queuedMessages: ISequencedDocumentMessage[] = [];
+        const queuedContents: IContentMessage[] = [];
+        const queuedSignals: ISignalMessage[] = [];
+
+        const earlyOpHandler = (documentId: string, msgs: ISequencedDocumentMessage[]) => {
+            debug("Queued early ops", msgs.length);
+            queuedMessages.push(...msgs);
+        };
+        socket.on("op", earlyOpHandler);
+
+        const earlyContentHandler = (msg: IContentMessage) => {
+            debug("Queued early contents");
+            queuedContents.push(msg);
+        };
+        socket.on("op-content", earlyContentHandler);
+
+        const earlySignalHandler = (msg: ISignalMessage) => {
+            debug("Queued early signals");
+            queuedSignals.push(msg);
+        };
+        socket.on("signal", earlySignalHandler);
+
         return new Promise<void>((resolve, reject) => {
-            // Listen for ops sent before we receive a response to connect_document
-            const queuedMessages: ISequencedDocumentMessage[] = [];
-            const queuedContents: IContentMessage[] = [];
-            const queuedSignals: ISignalMessage[] = [];
-
-            const earlyOpHandler = (documentId: string, msgs: ISequencedDocumentMessage[]) => {
-                debug("Queued early ops", msgs.length);
-                queuedMessages.push(...msgs);
-            };
-            socket.on("op", earlyOpHandler);
-
-            const earlyContentHandler = (msg: IContentMessage) => {
-                debug("Queued early contents");
-                queuedContents.push(msg);
-            };
-            socket.on("op-content", earlyContentHandler);
-
-            const earlySignalHandler = (msg: ISignalMessage) => {
-                debug("Queued early signals");
-                queuedSignals.push(msg);
-            };
-            socket.on("signal", earlySignalHandler);
 
             // Listen for connection issues
             socket.on("connect_error", (error) => {
@@ -127,7 +128,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
 
             // Listen for timeouts
             socket.on("connect_timeout", () => {
-                    reject(createErrorObject("connect_timeout", "Socket connection timed out"));
+                reject(createErrorObject("connect_timeout", "Socket connection timed out"));
             });
 
             socket.on("connect_document_success", (response: IConnected) => {
@@ -172,8 +173,12 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
                     response.initialSignals.push(...queuedSignals);
                 }
 
-                callback(new DocumentDeltaConnection(socket, id, response));
-                resolve();
+                try {
+                    callback(new DocumentDeltaConnection(socket, id, response));
+                    resolve();
+                } catch (error) {
+                    reject(error);
+                }
             });
 
             socket.on("error", ((error) => {
