@@ -14,14 +14,15 @@
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
-    "start": "webpack-dev-server --config webpack.config.js --package package.json",
+    "start": "webpack-dev-server --config webpack.config.js --package package.json --env.mode local",
     "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
     "start:live": "webpack-dev-server --config webpack.config.js --package package.json --env.mode live",
     "deploy": "npm publish --registry https://packages.wu2.prague.office-int.com",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose",
     "webpack": "webpack --env.production",
-    "webpack:dev": "webpack --env.development"
+    "webpack:dev": "webpack --env.development",
+    "test": "jest"
   },
   "fluid": {
     "browser": {
@@ -46,6 +47,10 @@
   "devDependencies": {
     "@microsoft/fluid-build-common": "^0.11.0",
     "@microsoft/fluid-webpack-component-loader": "^0.11.0",
+    "@types/jest": "22.2.3",
+    "@types/puppeteer": "1.3.0",
+    "@types/jest-environment-puppeteer": "2.2.0",
+    "@types/expect-puppeteer": "2.2.1",
     "@types/node": "^10.12.12",
     "@types/react": "^16.7.7",
     "@types/react-dom": "^16.0.11",
@@ -57,6 +62,9 @@
     "webpack": "^4.8.2",
     "webpack-cli": "^3.1.2",
     "webpack-dev-server": "^3.8.0",
-    "webpack-merge": "^4.1.2"
+    "webpack-merge": "^4.1.2",
+    "jest": "^24.9.0",
+    "jest-puppeteer": "^4.3.0",
+    "puppeteer": "^1.20.0"
   }
 }
