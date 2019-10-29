@@ -14,22 +14,18 @@ export class ComponentRegistry implements IComponentRegistry {
 
     public get IComponentRegistry() { return this; }
 
-    constructor(...namedEntries: NamedComponentRegistryEntries[]) {
+    constructor(namedEntries: NamedComponentRegistryEntries) {
 
         const mapEntries: [string, Promise<ComponentRegistryEntry>][] = [];
         for (const entry of namedEntries) {
             if (entry !== undefined) {
-                mapEntries.push(...entry);
+                mapEntries.push(entry);
             }
         }
         this.map = new Map(mapEntries);
     }
 
     public async get(name: string): Promise<ComponentRegistryEntry | undefined> {
-        if (this.map.has(name)) {
-            return this.map.get(name);
-        }
-
-        return undefined;
+        return this.map.get(name);
     }
 }

@@ -1393,13 +1393,12 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 // Wraps the provided list of packages and augments with some system level services.
 class ContainerRuntimeComponentRegistry extends ComponentRegistry {
 
-    constructor(...components: NamedComponentRegistryEntries[]) {
+    constructor(namedEntries: NamedComponentRegistryEntries) {
 
-        super(
-            ...components,
-            [
-                [schedulerId, Promise.resolve(new AgentSchedulerFactory())],
-            ]);
+        super([
+            ...namedEntries,
+            [schedulerId, Promise.resolve(new AgentSchedulerFactory())],
+        ]);
     }
 
 }
