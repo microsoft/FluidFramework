@@ -265,6 +265,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         // create logger for components to use
         this.subLogger = DebugLogger.mixinDebugLogger(
             "fluid:telemetry",
+            logger,
             {
                 documentId: this.id,
                 package: {
@@ -274,12 +275,13 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             },
             {
                 clientId: () => this.clientId,
-                socketDocumentId: () => this._deltaManager!.socketDocumentId,
+                socketDocumentId: () => {
+                    return this._deltaManager ? this._deltaManager.socketDocumentId : undefined;
+                },
                 pendingClientId: () => {
                     return this._connectionState === ConnectionState.Connecting ? this.pendingClientId : undefined;
                 },
-            },
-            logger);
+            });
 
         // Prefix all events in this file with container-loader
         this.logger = ChildLogger.create(this.subLogger, "Container");

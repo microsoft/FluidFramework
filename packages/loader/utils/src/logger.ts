@@ -215,13 +215,11 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
                     continue;
                 }
                 const getter = this.propertyGetters[key];
-                try {
-                    const value = getter();
-                    if (value !== undefined) {
-                        newEvent[key] = value;
-                    }
-                } catch {
-                    // if a default value exists on properties it will remain
+
+                // if this throws, hopefully it is handled elsewhere
+                const value = getter();
+                if (value !== undefined) {
+                    newEvent[key] = value;
                 }
             }
         }
@@ -377,9 +375,9 @@ export class DebugLogger extends TelemetryLogger {
      */
     public static mixinDebugLogger(
         namespace: string,
+        baseLogger?: ITelemetryBaseLogger,
         properties?: object,
-        propertyGetters?: ITelemetryPropertyGetters,
-        baseLogger?: ITelemetryBaseLogger): TelemetryLogger {
+        propertyGetters?: ITelemetryPropertyGetters): TelemetryLogger {
         if (!baseLogger) {
             return DebugLogger.create(namespace, properties, propertyGetters);
         }
