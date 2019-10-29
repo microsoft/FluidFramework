@@ -6,6 +6,7 @@
 import {
     ConnectionMode,
     IClient,
+    IDocumentDeltaConnection,
     IDocumentService,
     ISequencedDocumentMessage,
     MessageType,
@@ -54,7 +55,13 @@ async function loadAllSequencedMessages(
     console.log("Retrieving messages from web socket");
     timeStart = Date.now();
     const mode: ConnectionMode = "write";
-    const deltaStream = await documentService.connectToDeltaStream(client, mode);
+    let deltaStream: IDocumentDeltaConnection;
+    await documentService.connectToDeltaStream(client, mode, (connection) => {
+        deltaStream = connection;
+    });
+    if (!deltaStream) {
+        throw new Error("Error in logic: deltaStream is empty");
+    }
     const initialMessages = deltaStream.initialMessages;
     deltaStream.disconnect();
     console.log(`${Math.floor((Date.now() - timeStart) / 1000)} seconds to connect to web socket`);

@@ -60,15 +60,15 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
      */
     // tslint:disable-next-line: max-func-body-length
     public static async create(
-        tenantId: string,
-        id: string,
-        token: string | null,
-        io: SocketIOClientStatic,
-        client: IClient,
-        mode: ConnectionMode,
-        url: string,
-        timeoutMs: number = 20000): Promise<IDocumentDeltaConnection> {
-
+            tenantId: string,
+            id: string,
+            token: string | null,
+            io: SocketIOClientStatic,
+            client: IClient,
+            mode: ConnectionMode,
+            url: string,
+            timeoutMs: number,
+            callback: (connection: IDocumentDeltaConnection) => void) {
         // Note on multiplex = false:
         // Temp fix to address issues on SPO. Scriptor hits same URL for Fluid & Notifications.
         // As result Socket.io reuses socket (as there is no collision on namespaces).
@@ -95,7 +95,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
             versions: protocolVersions,
         };
 
-        const connection = await new Promise<IConnected>((resolve, reject) => {
+        return new Promise<IConnected>((resolve, reject) => {
             // Listen for ops sent before we receive a response to connect_document
             const queuedMessages: ISequencedDocumentMessage[] = [];
             const queuedContents: IContentMessage[] = [];
@@ -122,12 +122,12 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
             // Listen for connection issues
             socket.on("connect_error", (error) => {
                 debug(`Socket connection error: [${error}]`);
-                reject(createErrorObject("connect_error", error));
+                    reject(createErrorObject("connect_error", error));
             });
 
             // Listen for timeouts
             socket.on("connect_timeout", () => {
-                reject(createErrorObject("connect_timeout", "Socket connection timed out"));
+                    reject(createErrorObject("connect_timeout", "Socket connection timed out"));
             });
 
             socket.on("connect_document_success", (response: IConnected) => {
@@ -172,14 +172,15 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
                     response.initialSignals.push(...queuedSignals);
                 }
 
-                resolve(response);
+                callback(new DocumentDeltaConnection(socket, id, response));
+                resolve();
             });
 
             socket.on("error", ((error) => {
                 debug(`Error in documentDeltaConection: ${error}`);
                 // This includes "Invalid namespace" error, which we consider critical (reconnecting will not help)
                 socket.disconnect();
-                reject(createErrorObject("error", error, error !== "Invalid namespace"));
+                    reject(createErrorObject("error", error, error !== "Invalid namespace"));
             }));
 
             socket.on("connect_document_error", ((error) => {
@@ -187,16 +188,11 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
                 // In this case we disconnect the socket and indicate that we were unable to create the
                 // DocumentDeltaConnection.
                 socket.disconnect();
-                reject(createErrorObject("connect_document_error", error));
+                    reject(createErrorObject("connect_document_error", error));
             }));
 
             socket.emit("connect_document", connectMessage);
         });
-
-        // tslint:disable-next-line:no-unnecessary-local-variable
-        const deltaConnection = new DocumentDeltaConnection(socket, id, connection);
-
-        return deltaConnection;
     }
 
     private readonly submitManager: BatchManager<IDocumentMessage[]>;

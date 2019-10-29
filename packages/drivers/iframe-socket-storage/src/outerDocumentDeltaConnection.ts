@@ -26,7 +26,7 @@ export interface IInnerDocumentDeltaConnectionProxy {
 
 export interface IOuterDocumentDeltaConnection {
     add(a: number, b: number): Promise<number>;
-    getDetails(): Promise<IConnected>;
+    getDetails(callback: (connection: IConnected) => void): Promise<void>;
     submit(messages: IDocumentMessage[]): Promise<void>;
     submitSignal(message: IDocumentMessage): Promise<void>;
 }

@@ -298,7 +298,10 @@ export interface IDocumentService {
     /**
      * Subscribes to the document delta stream
      */
-    connectToDeltaStream(client: IClient, mode: ConnectionMode): Promise<IDocumentDeltaConnection>;
+    connectToDeltaStream(
+        client: IClient,
+        mode: ConnectionMode,
+        callback: (connection: IDocumentDeltaConnection) => void): Promise<void>;
 
     /**
      * Creates a branch of the document with the given ID. Returns the new ID.

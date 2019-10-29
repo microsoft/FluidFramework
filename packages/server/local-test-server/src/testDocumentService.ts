@@ -68,8 +68,9 @@ export class TestDocumentService implements api.IDocumentService {
      * @param client - client data
      */
     public async connectToDeltaStream(
-        client: api.IClient,
-        mode: api.ConnectionMode): Promise<api.IDocumentDeltaConnection> {
+            client: api.IClient,
+            mode: api.ConnectionMode,
+            callback: (connection: api.IDocumentDeltaConnection) => void) {
         // socketStorage.DocumentDeltaStorageService?
         return TestDocumentDeltaConnection.create(
             this.tenantId,
@@ -77,7 +78,8 @@ export class TestDocumentService implements api.IDocumentService {
             this.tokenProvider.token,
             client,
             this.testDeltaConnectionServer.webSocketServer,
-            mode);
+            mode,
+            callback);
     }
 
     /**

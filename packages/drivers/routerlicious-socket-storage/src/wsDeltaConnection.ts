@@ -44,13 +44,15 @@ export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaCon
         token: string,
         client: IClient,
         urlStr: string,
-        mode: ConnectionMode): Promise<IDocumentDeltaConnection> {
+        mode: ConnectionMode,
+        callback: (connection: IDocumentDeltaConnection) => void) {
 
         return new Promise<IDocumentDeltaConnection>((resolve, reject) => {
             const connection = new WSDeltaConnection(tenantId, id, token, client, urlStr, mode);
 
             const resolveHandler = () => {
-                resolve(connection);
+                callback(connection);
+                resolve();
                 connection.removeListener("disconnected", rejectHandler);
             };
 

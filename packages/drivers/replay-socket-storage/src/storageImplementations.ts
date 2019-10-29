@@ -146,7 +146,10 @@ export class StaticStorageDocumentService implements IDocumentService {
         return new EmptyDeltaStorageService();
     }
 
-    public async connectToDeltaStream(client: IClient, mode: ConnectionMode): Promise<IDocumentDeltaConnection> {
+    public async connectToDeltaStream(
+            client: IClient,
+            mode: ConnectionMode,
+            callback: (connection: IDocumentDeltaConnection) => void) {
         // We have no delta stream, so make it not return forever...
         // tslint:disable-next-line:promise-must-complete
         return new Promise(() => {});

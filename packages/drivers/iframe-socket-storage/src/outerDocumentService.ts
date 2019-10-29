@@ -69,7 +69,6 @@ export class OuterDocumentService implements IDocumentService {
             deltaConnection,
             frame,
         );
-
     }
 
     private readonly handshake: Deferred<IInnerProxy>;
@@ -135,8 +134,11 @@ export class OuterDocumentService implements IDocumentService {
      *
      * @returns returns the document delta stream service for routerlicious driver.
      */
-    public async connectToDeltaStream(client: IClient, mode: ConnectionMode): Promise<IDocumentDeltaConnection> {
-        return this.createDocumentDeltaConnection(client);
+    public async connectToDeltaStream(
+            client: IClient,
+            mode: ConnectionMode,
+            callback: (connection: IDocumentDeltaConnection) => void) {
+        callback(this.createDocumentDeltaConnection(client));
     }
 
     public async branch(): Promise<string> {

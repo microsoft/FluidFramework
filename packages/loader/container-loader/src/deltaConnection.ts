@@ -20,12 +20,18 @@ import {
 import { EventEmitter } from "events";
 
 export class DeltaConnection extends EventEmitter {
-    public static async connect(
-        service: IDocumentService,
-        client: IClient,
-        mode: ConnectionMode) {
-        const connection = await service.connectToDeltaStream(client, mode);
-        return new DeltaConnection(connection);
+    public async static connect(
+            service: IDocumentService,
+            client: IClient,
+            mode: ConnectionMode,
+            callback: (connection: DeltaConnection) => void,
+            errorCallback: (connection: DeltaConnection) => void) {
+        return service.connectToDeltaStream(
+            client,
+            mode,
+            (connection) => {
+                callback(new DeltaConnection(connection));
+            });
     }
 
     public get details(): IConnectionDetails {

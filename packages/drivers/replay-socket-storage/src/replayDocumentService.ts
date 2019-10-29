@@ -58,9 +58,10 @@ export class ReplayDocumentService implements api.IDocumentService {
      * @returns returns the delta stream service which replay ops from --from to --to arguments.
      */
     public async connectToDeltaStream(
-        client: api.IClient,
-        mode: api.ConnectionMode): Promise<api.IDocumentDeltaConnection> {
-        return this.deltaStorage;
+            client: api.IClient,
+            mode: api.ConnectionMode,
+            callback: (connection: api.IDocumentDeltaConnection) => void) {
+        callback(this.deltaStorage);
     }
 
     public async branch(): Promise<string> {

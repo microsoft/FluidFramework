@@ -24,12 +24,13 @@ import { TestWebSocketServer } from "./testWebServer";
 const testProtocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
 export class TestDocumentDeltaConnection extends EventEmitter implements IDocumentDeltaConnection {
     public static async create(
-        tenantId: string,
-        id: string,
-        token: string,
-        client: IClient,
-        webSocketServer: core.IWebSocketServer,
-        mode: ConnectionMode): Promise<IDocumentDeltaConnection> {
+            tenantId: string,
+            id: string,
+            token: string,
+            client: IClient,
+            webSocketServer: core.IWebSocketServer,
+            mode: ConnectionMode,
+            callback: (connection: IDocumentDeltaConnection) => void) {
         const socket = (webSocketServer as TestWebSocketServer).createConnection();
 
         const connectMessage: IConnect = {
@@ -41,7 +42,7 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
             versions: testProtocolVersions,
         };
 
-        const connection = await new Promise<IConnected>((resolve, reject) => {
+        return new Promise<IConnected>((resolve, reject) => {
             // Listen for ops sent before we receive a response to connect_document
             const queuedMessages: ISequencedDocumentMessage[] = [];
             const queuedContents: IContentMessage[] = [];
@@ -67,7 +68,7 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
 
             // Listen for connection issues
             socket.on("connect_error", (error) => {
-                reject(error);
+                    reject(error);
             });
 
             socket.on("connect_document_success", (response: IConnected) => {
@@ -110,17 +111,14 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
                     response.initialSignals.push(...queuedSignals);
                 }
 
-                resolve(response);
+                callback(new TestDocumentDeltaConnection(socket, id, response));
+                resolve();
             });
 
             socket.on("connect_document_error", reject);
 
             socket.emit("connect_document", connectMessage);
         });
-
-        const deltaConnection = new TestDocumentDeltaConnection(socket, id, connection);
-
-        return Promise.resolve(deltaConnection);
     }
 
     private emitter = new EventEmitter();

@@ -645,8 +645,8 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         DeltaConnection.connect(
             this.service,
             this.client!,
-            mode).then(
-            (connection) => {
+            mode,
+            (connection: DeltaConnection) => {
                 this.connection = connection;
                 // back-compat for newer clients and old server. If the server does not have mode, we reset to write.
                 this.connectionMode = connection.details.mode ? connection.details.mode : "write";
@@ -738,9 +738,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                     connection.details.initialSignals,
                     this.connectFirstConnection);
                 this.connectFirstConnection = false;
-
-            },
-            (error) => {
+            }).catch ((error) => {
                 // Socket.io error when we connect to wrong socket, or hit some multiplexing bug
                 if (!canRetryOnError(error)) {
                     this.closeOnConnectionError(error);
