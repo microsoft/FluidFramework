@@ -18,7 +18,7 @@
     "postinstall:lerna": "lerna bootstrap --hoist --nohoist tslint-microsoft-contrib",
     "postinstall:fluid-build": "cd tools/fluid-build && npm i && npm run build",
     "publish-local": "lerna run publish-local --stream",
-    "test": "lerna run test --stream --no-bail --no-sort",
+    "test": "lerna run test --stream --no-sort",
     "test:report": "lerna run test --stream --no-bail --no-sort -- -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
     "test:coverage": "nyc npm run test:report",
     "test:ci": "npm run test:report;t1=$?;npm run test:copyresults; exit $t1",
