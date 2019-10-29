@@ -15,8 +15,6 @@ module.exports = env => {
         entry: {
             main: './src/index.ts'
         },
-        mode: 'production',
-        devtool: 'source-map',
         module: {
             rules: [
                 {

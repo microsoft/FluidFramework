@@ -58,14 +58,17 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
         return agentScheduler;
     }
 
+    public get IComponentLoadable() { return this; }
     public get IAgentScheduler() { return this; }
     public get IComponentRouter() { return this; }
+
+    public url = "_tasks";
 
     private _leader = false;
 
     // List of all tasks client is capable of running. This is a strict superset of tasks
     // running in the client.
-    private readonly localTasks = new Set<string>();
+    private readonly localTasks = new Map<string, boolean>();
 
     // Set of registered tasks client not capable of running.
     private readonly registeredTasks = new Set<string>();
@@ -111,26 +114,21 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
         return this.registerCore(unregisteredTasks);
     }
 
-    public async pick(...taskUrls: string[]): Promise<void> {
+    public async pick(taskId: string, worker: boolean): Promise<void> {
         if (!this.runtime.connected) {
             return Promise.reject(`Client is not connected`);
         }
-        for (const taskUrl of taskUrls) {
-            if (this.localTasks.has(taskUrl)) {
-                return Promise.reject(`${taskUrl} is already attempted`);
-            }
+
+        if (this.localTasks.has(taskId)) {
+            return Promise.reject(`${taskId} is already attempted`);
         }
 
-        const availableTasks: string[] = [];
-        for (const taskUrl of taskUrls) {
-            this.localTasks.add(taskUrl);
-            // Check the current status and express interest if it's a new one (undefined) or currently unpicked (null).
-            const currentClient = this.getTaskClientId(taskUrl);
-            if (currentClient === undefined || currentClient === null) {
-                availableTasks.push(taskUrl);
-            }
+        this.localTasks.set(taskId, worker);
+        // Check the current status and express interest if it's a new one (undefined) or currently unpicked (null).
+        const currentClient = this.getTaskClientId(taskId);
+        if (currentClient === undefined || currentClient === null) {
+            await this.pickCore([taskId]);
         }
-        await this.pickCore(availableTasks);
     }
 
     public async release(...taskUrls: string[]): Promise<void> {
@@ -222,7 +220,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
                     assert(this.localTasks.has(taskUrl), `Client did not try to pick ${taskUrl}`);
 
                     if (taskUrl !== LeaderTaskId) {
-                        runningP.push(this.runTask(taskUrl));
+                        runningP.push(this.runTask(taskUrl, this.localTasks.get(taskUrl) as boolean));
                         debug(`Picked ${taskUrl}`);
                         this.emit("picked", taskUrl);
                     }
@@ -346,7 +344,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
 
             // Each client expresses interest to be a leader.
             try {
-                await this.pick(LeaderTaskId);
+                await this.pick(LeaderTaskId, false);
 
                 // There must be a leader now.
                 const leaderClientId = this.getTaskClientId(LeaderTaskId);
@@ -365,16 +363,16 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
         });
     }
 
-    private async runTask(url: string) {
-        // TODO eventually we may wish to spawn an execution context from which to run this
+    private async runTask(url: string, worker: boolean) {
         const request: IRequest = {
             headers: {
-                "fluid-cache": true,
+                "fluid-cache": false,
                 "fluid-reconnect": false,
+                "fluid-sequence-number": this.context.deltaManager.referenceSequenceNumber,
+                "execution-context": worker ? "worker" : undefined,
             },
             url,
         };
-
         const response = await this.runtime.loader.request(request);
         if (response.status !== 200 || response.mimeType !== "fluid/component") {
             return Promise.reject<IComponentRunnable>("Invalid agent route");
@@ -397,12 +395,12 @@ export class TaskManager implements ITaskManager {
         return new TaskManager(agentScheduler, context);
     }
 
-    public url = "/_tasks";
-
     public get IAgentScheduler() { return this.scheduler; }
     public get IComponentLoadable() { return this; }
     public get IComponentRouter() { return this; }
     public get ITaskManager() { return this; }
+
+    public get url() { return this.scheduler.url; }
 
     private readonly taskMap = new Map<string, IComponentRunnable>();
     constructor(private readonly scheduler: IAgentScheduler, private readonly context: IComponentContext) {
@@ -425,22 +423,24 @@ export class TaskManager implements ITaskManager {
                 return { status: 200, mimeType: "fluid/component", value: this.taskMap.get(taskUrl) };
             }
         }
-
     }
 
-    public async pick(componentUrl: string, ...tasks: ITask[]): Promise<void> {
+    public register(...tasks: ITask[]): void {
+        for (const task of tasks) {
+            this.taskMap.set(task.id, task.instance);
+        }
+    }
+
+    public async pick(componentUrl: string, taskId: string, worker?: boolean): Promise<void> {
         const configuration = (this.context.hostRuntime as IComponent).IComponentConfiguration;
         if (configuration && !configuration.canReconnect) {
             return Promise.reject("Picking not allowed on secondary copy");
         } else {
             const urlWithSlash = componentUrl.startsWith("/") ? componentUrl : `/${componentUrl}`;
-            const registersP: Promise<void>[] = [];
-            for (const task of tasks) {
-                this.taskMap.set(task.id, task.instance);
-                registersP.push(this.scheduler.pick(`${urlWithSlash}${this.url}/${task.id}`));
-            }
             try {
-                await Promise.all(registersP);
+                await this.scheduler.pick(
+                    `${urlWithSlash}/${this.url}/${taskId}`,
+                    worker !== undefined ? worker : false);
             } catch (err) {
                 debug(err as string); // Just log the error. It will be attempted again.
             }

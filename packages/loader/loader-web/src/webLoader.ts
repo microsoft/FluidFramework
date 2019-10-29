@@ -78,29 +78,46 @@ export function extractDetails(value: string): IParsedPackage {
 class ScriptManager {
     private readonly loadCache = new Map<string, Promise<void>>();
 
+    // Check whether the script is loaded inside a worker.
+    public get isBrowser(): boolean {
+        // tslint:disable no-typeof-undefined
+        if (typeof window === "undefined") {
+            return false;
+        }
+        return window.document !== undefined;
+    }
     // tslint:disable-next-line:promise-function-async
     public loadScript(scriptUrl: string, scriptId?: string): Promise<void> {
         if (!this.loadCache.has(scriptUrl)) {
             const scriptP = new Promise<void>((resolve, reject) => {
-                const script = document.createElement("script");
-                script.src = scriptUrl;
+                if (this.isBrowser) {
+                    const script = document.createElement("script");
+                    script.src = scriptUrl;
 
-                if (scriptId !== undefined) {
-                    script.id = scriptId;
+                    if (scriptId !== undefined) {
+                        script.id = scriptId;
+                    }
+
+                    // Dynamically added scripts are async by default. By setting async to false, we are enabling the
+                    // scripts to be downloaded in parallel, but executed in order. This ensures that a script is
+                    // executed after all of its dependencies have been loaded and executed.
+                    script.async = false;
+
+                    // call signatures don't match and so need to wrap the method
+                    // tslint:disable-next-line:no-unnecessary-callback-wrapper
+                    script.onload = () => resolve();
+                    script.onerror = () =>
+                        reject(new Error(`Failed to download the script at url: ${scriptUrl}`));
+
+                    document.head.appendChild(script);
+                } else {
+                    import(/* webpackMode: "eager", webpackIgnore: true */ scriptUrl).then(() => {
+                        resolve();
+                    }, () => {
+                        reject(new Error(`Failed to download the script at url: ${scriptUrl}`));
+                    });
                 }
 
-                // Dynamically added scripts are async by default. By setting async to false, we are enabling the
-                // scripts to be downloaded in parallel, but executed in order. This ensures that a script is executed
-                // after all of its dependencies have been loaded and executed.
-                script.async = false;
-
-                // call signatures don't match and so need to wrap the method
-                // tslint:disable-next-line:no-unnecessary-callback-wrapper
-                script.onload = () => resolve();
-                script.onerror = () =>
-                    reject(new Error(`Failed to download the script at url: ${scriptUrl}`));
-
-                document.head.appendChild(script);
             });
 
             this.loadCache.set(scriptUrl, scriptP);
@@ -237,7 +254,7 @@ class FluidPackage {
         await Promise.all(this.scriptManager.loadScripts(umdDetails, this.details.packageUrl));
 
         // tslint:disable-next-line:no-unsafe-any
-        return window[umdDetails.library];
+        return this.scriptManager.isBrowser ? window[umdDetails.library] : self[umdDetails.library];
     }
 }
 

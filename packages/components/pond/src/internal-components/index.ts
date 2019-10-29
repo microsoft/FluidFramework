@@ -4,4 +4,4 @@
  */
 
 export * from "./clicker";
-export * from "./clickerWithForge";
+export * from "./clickerWithInitialValue";

@@ -28,9 +28,12 @@ require("./style.css");
 
 require("codemirror/mode/javascript/javascript.js");
 
+import { CodeMirrorPresenceManager } from "./presence";
+
 class CodemirrorView implements IComponentHTMLView {
     private textArea: HTMLTextAreaElement;
     private codeMirror: CodeMirror.EditorFromTextArea;
+    private presenceManager : CodeMirrorPresenceManager;
     
     // TODO would be nice to be able to distinguish local edits across different uses of a sequence so that when
     // bridging to another model we know which one to update
@@ -39,7 +42,7 @@ class CodemirrorView implements IComponentHTMLView {
 
     private sequenceDeltaCb: any;
 
-    constructor(private text: SharedString) {
+    constructor(private text: SharedString, private runtime: IComponentRuntime) {
     }
 
     public remove(): void {
@@ -49,6 +52,11 @@ class CodemirrorView implements IComponentHTMLView {
         if (this.sequenceDeltaCb) {
             this.text.removeListener("sequenceDelta", this.sequenceDeltaCb);
             this.sequenceDeltaCb = undefined;
+        }
+
+        if (this.presenceManager) {
+            this.presenceManager.removeAllListeners();
+            this.presenceManager = undefined;
         }
     }
     
@@ -77,6 +85,8 @@ class CodemirrorView implements IComponentHTMLView {
                 mode: "text/typescript",
                 viewportMargin: Infinity,
             });
+        
+        this.presenceManager = new CodeMirrorPresenceManager(this.codeMirror, this.runtime);
 
         const { parallelText } = this.text.getTextAndMarkers("pg");
         const text = parallelText.join("\n");
@@ -190,7 +200,7 @@ export class CodeMirrorComponent
     public url: string;
     private text: SharedString;
     private root: ISharedMap;
-    
+
     private defaultView: CodemirrorView;
 
     constructor(
@@ -198,7 +208,6 @@ export class CodeMirrorComponent
         /* private */ context: IComponentContext,
     ) {
         super();
-
         this.url = context.id;
     }
 
@@ -230,12 +239,12 @@ export class CodeMirrorComponent
     }
 
     public addView(scope: IComponent): IComponentHTMLView {
-        return new CodemirrorView(this.text);
+        return new CodemirrorView(this.text, this.runtime);
     }
 
     public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
         if (!this.defaultView) {
-            this.defaultView = new CodemirrorView(this.text);
+            this.defaultView = new CodemirrorView(this.text, this.runtime);
         }
 
         this.defaultView.render(elm, options);

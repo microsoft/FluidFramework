@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ICodeLoader, IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
+import { ICodeLoader, IFluidCodeDetails, IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
 import { IDocumentServiceFactory, IUrlResolver } from "@microsoft/fluid-protocol-definitions";
 import { debug } from "./debug";
@@ -39,7 +39,8 @@ export class TestDataStore {
             this.documentServiceFactory,
             this.codeLoader,
             { blockUpdateMarkers: true },
-            {});
+            {},
+            new Map<string, IProxyLoaderFactory>());
         const baseUrl = `https://test.com/tenantId/documentId/${encodeURIComponent(componentId)}`;
         const url = `${baseUrl}${
             // Ensure '/' separator when concatenating 'baseUrl' and 'path'.

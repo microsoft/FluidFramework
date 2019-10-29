@@ -14,6 +14,7 @@ import {
     IComponentLoadable,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentCollection } from "@microsoft/fluid-framework-interfaces";
+import { ISharedDirectory } from "@microsoft/fluid-map";
 import { TST } from "@microsoft/fluid-merge-tree";
 import * as styles from "./index.css";
 
@@ -36,12 +37,13 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
     private viewport: HTMLElement;
 
     constructor(
-        private readonly createAndAttachComponent: (id: string, pkg: string, props?: any) => Promise<IComponent>,
+        private readonly createSubComponent: (id: string, pkg: string, props?: any) => Promise<IComponent>,
         private readonly docP: Promise<FlowDocument>,
         private readonly mathP: Promise<IComponentCollection>,
         private readonly videosP: Promise<IComponentCollection>,
         private readonly imagesP: Promise<IComponentCollection>,
         private readonly intelViewer: IComponentHTMLVisual,
+        private readonly root: ISharedDirectory,
     ) {}
 
     // #region IComponentHTMLView
@@ -82,8 +84,8 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
             const insertComponent = (type: string, componentOptions: object, style?: string, classList?: string[]) => {
                 const position = editor.selection.end;
                 const url = randomId();
-                this.createAndAttachComponent(url, type);
-                doc.insertComponent(position, `/${url}`, componentOptions, style, classList);
+                this.createSubComponent(url, type);
+                doc.insertComponent(position, `/${this.root.get(url)}`, componentOptions, style, classList);
             };
 
             const insertComponentFromCollection = (factory: IComponentCollection, componentOptions: object, style?: string, classList?: string[]) => {

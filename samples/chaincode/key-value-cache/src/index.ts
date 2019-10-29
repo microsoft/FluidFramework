@@ -21,6 +21,7 @@ import {
     IComponentContext,
     IComponentFactory,
     IComponentRuntime,
+    IHostRuntime,
 } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 
@@ -47,8 +48,8 @@ declare module "@microsoft/fluid-component-core-interfaces" {
 
 class KeyValue implements IKeyValue, IComponent, IComponentRouter {
 
-    public static async load(runtime: IComponentRuntime) {
-        const kevValue = new KeyValue(runtime);
+    public static async load(runtime: IComponentRuntime, context: IComponentContext) {
+        const kevValue = new KeyValue(runtime, context);
         await kevValue.initialize();
 
         return kevValue;
@@ -59,7 +60,7 @@ class KeyValue implements IKeyValue, IComponent, IComponentRouter {
 
     private root: ISharedMap;
 
-    constructor(private readonly runtime: IComponentRuntime) {
+    constructor(private readonly runtime: IComponentRuntime, private context: IComponentContext) {
     }
 
     public set(key: string, value: any): void {
@@ -93,13 +94,40 @@ class KeyValue implements IKeyValue, IComponent, IComponentRouter {
         } else {
             this.root = await this.runtime.getChannel("root") as ISharedMap;
         }
+        if (this.context.leader) {
+            console.log(`INITIAL LEADER`);
+        } else {
+            this.context.on("leader", () => {
+                console.log(`LEADER NOW`);
+            });
+        }
     }
 }
 
-class KeyValueFactoryComponent implements IRuntimeFactory, IComponentFactory {
+export class KeyValueFactoryComponent implements IRuntimeFactory, IComponentFactory {
 
     public get IRuntimeFactory() { return this; }
     public get IComponentFactory() { return this; }
+
+    /**
+     * A request handler for a container runtime
+     * @param request - The request
+     * @param runtime - Container Runtime instance
+     */
+    private static async containerRequestHandler(request: IRequest, runtime: IHostRuntime): Promise<IResponse> {
+        const requestUrl = request.url.length > 0 && request.url.charAt(0) === "/"
+            ? request.url.substr(1)
+            : request.url;
+        const trailingSlash = requestUrl.indexOf("/");
+        const componentId = requestUrl
+            ? decodeURIComponent(requestUrl.substr(0, trailingSlash === -1 ? requestUrl.length : trailingSlash))
+            : ComponentName;
+        console.log(componentId);
+        const pathForComponent = trailingSlash !== -1 ? requestUrl.substr(trailingSlash) : requestUrl;
+        const component = await runtime.getComponentRuntime(componentId, true);
+        return component.request({ url: pathForComponent });
+
+    }
 
     public instantiateComponent(context: IComponentContext): void {
         const dataTypes = new Map<string, ISharedObjectFactory>();
@@ -110,7 +138,7 @@ class KeyValueFactoryComponent implements IRuntimeFactory, IComponentFactory {
             context,
             dataTypes,
             (runtime) => {
-                const keyValueP = KeyValue.load(runtime);
+                const keyValueP = KeyValue.load(runtime, context);
                 runtime.registerRequestHandler(async (request: IRequest) => {
                     const keyValue = await keyValueP;
                     return keyValue.request(request);
@@ -122,8 +150,7 @@ class KeyValueFactoryComponent implements IRuntimeFactory, IComponentFactory {
         const runtime = await ContainerRuntime.load(
             context,
             new Map([[ComponentName, Promise.resolve(this)]]),
-            this.createContainerRequestHandler,
-            { generateSummaries: true }
+            [KeyValueFactoryComponent.containerRequestHandler],
         );
 
         if (!runtime.existing) {
@@ -132,26 +159,6 @@ class KeyValueFactoryComponent implements IRuntimeFactory, IComponentFactory {
         }
 
         return runtime;
-    }
-
-    /**
-     * Add create and store a request handler as pat of ContainerRuntime load
-     * @param runtime - Container Runtime instance
-     */
-    private createContainerRequestHandler(runtime: ContainerRuntime) {
-        return async (request: IRequest) => {
-            const requestUrl = request.url.length > 0 && request.url.charAt(0) === "/"
-                ? request.url.substr(1)
-                : request.url;
-            const trailingSlash = requestUrl.indexOf("/");
-            const componentId = requestUrl
-                ? decodeURIComponent(requestUrl.substr(0, trailingSlash === -1 ? requestUrl.length : trailingSlash))
-                : ComponentName;
-            console.log(componentId);
-            const pathForComponent = trailingSlash !== -1 ? requestUrl.substr(trailingSlash) : requestUrl;
-            const component = await runtime.getComponentRuntime(componentId, true);
-            return component.request({ url: pathForComponent });
-        };
     }
 }
 

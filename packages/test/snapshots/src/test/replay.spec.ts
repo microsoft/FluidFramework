@@ -14,7 +14,7 @@ describe("Snapshots", function() {
         return processContent(Mode.Stress);
     });
 
-    it("Backward Compat", async () => {
-        return processContent(Mode.Compare);
-    });
+    // it("Backward Compat", async () => {
+    //     return processContent(Mode.Compare);
+    // });
 });

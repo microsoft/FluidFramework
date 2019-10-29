@@ -68,6 +68,7 @@
     "@microsoft/fluid-runtime-definitions": "^0.11.0",
     "@microsoft/fluid-sequence": "^0.11.0",
     "@microsoft/fluid-shared-object-base": "^0.11.0",
+    "@microsoft/fluid-undo-redo": "^0.11.0",
     "debug": "^4.1.1",
     "geocoder": "^0.2.3",
     "performance-now": "^2.1.0",
