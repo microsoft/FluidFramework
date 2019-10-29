@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 const copydir = require("copy-dir");
 const deepmerge = require("deepmerge");
 const fs = require("fs");
