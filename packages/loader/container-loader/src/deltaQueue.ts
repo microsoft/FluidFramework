@@ -41,11 +41,10 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
     }
 
     /**
-     * @param worker - A callback that will start processing the delta.  Either returns a promise for completion of the
-     * processing, or undefined if processing completed synchronously.
+     * @param worker - A callback to process a delta.
      */
     constructor(
-        private readonly worker: (delta: T) => Promise<void> | undefined,
+        private readonly worker: (delta: T) => void,
     ) {
         super();
     }
@@ -70,7 +69,6 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
     public push(task: T) {
         this.q.push(task);
         this.emit("push", task);
-        // tslint:disable-next-line:no-floating-promises
         this.processDeltas();
     }
 
@@ -111,7 +109,6 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
                 }
 
                 this._paused = false;
-                // tslint:disable-next-line:no-floating-promises
                 this.processDeltas();
                 this.emit("resume");
             }
@@ -120,56 +117,41 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
         return this.pauseDeferred ? this.pauseDeferred.promise : Promise.resolve();
     }
 
-    private async processDeltas() {
+    private processDeltas() {
         // For grouping to work we must process all local messages immediately and in the single turn.
-        // So loop over them until one of the conditions below is false.
-        while (true) {
-            // Return early if no messages to process, we have become paused, or are already processing a delta
-            if (this.q.length === 0 || this._paused || this.processing || this.error) {
-                return;
-            }
-
-            // Get the next message in the queue, set processing flag since the stack might yield for async processing.
+        // So loop over them until no messages to process, we have become paused, or are already processing a delta.
+        while (!(this.q.length === 0 || this._paused || this.processing || this.error)) {
+            // Get the next message in the queue, set processing flag in case we are reentrant.
             this.processing = true;
             const next = this.q.shift();
             this.emit("pre-op", next);
 
-            // Start processing the message, which may require async operations.  If so, this will return a promise.
-            let maybeProcessingPromise: Promise<void> | undefined;
+            // Process the message.
             try {
-                maybeProcessingPromise = this.worker(next!);
-            } catch (err) {
-                this.handleDeltaError(err);
+                this.worker(next!);
+
+                this.processing = false;
+
+                // Signal any pending messages
+                if (this.pauseDeferred) {
+                    this.pauseDeferred.resolve();
+                    this.pauseDeferred = undefined;
+                }
+
+                this.emit("op", next);
+            } catch (error) {
+                this.processing = false;
+
+                // Signal any pending messages
+                if (this.pauseDeferred) {
+                    this.pauseDeferred.reject(error);
+                    this.pauseDeferred = undefined;
+                }
+
+                this.error = error;
+                this.emit("error", error);
+                this.q.clear();
             }
-
-            // If we got a promise back when we started processing, we need to wait for it to complete.
-            if (maybeProcessingPromise) {
-                await maybeProcessingPromise.catch(this.handleDeltaError);
-            }
-
-            this.processing = false;
-
-            // Signal any pending messages
-            if (this.pauseDeferred) {
-                this.pauseDeferred.resolve();
-                this.pauseDeferred = undefined;
-            }
-
-            this.emit("op", next);
         }
-    }
-
-    private handleDeltaError(error) {
-        this.processing = false;
-
-        // Signal any pending messages
-        if (this.pauseDeferred) {
-            this.pauseDeferred.reject(error);
-            this.pauseDeferred = undefined;
-        }
-
-        this.error = error;
-        this.emit("error", error);
-        this.q.clear();
     }
 }

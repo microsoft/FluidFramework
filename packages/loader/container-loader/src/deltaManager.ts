@@ -189,7 +189,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this._inbound = new DeltaQueue<ISequencedDocumentMessage>(
             (op) => {
                 this.processInboundMessage(op);
-                return undefined;
             });
 
         this._inbound.on("error", (error) => {
@@ -201,7 +200,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this._outbound = new DeltaQueue<IDocumentMessage[]>(
             (messages) => {
                 this.connection!.submit(messages);
-                return undefined;
             },
         );
 
@@ -215,7 +213,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 clientId: message.clientId,
                 content: JSON.parse(message!.content as string),
             });
-            return undefined;
         });
 
         this._inboundSignal.on("error", (error) => {
