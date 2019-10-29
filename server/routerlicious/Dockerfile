@@ -116,6 +116,7 @@ COPY packages/server/services-core/package*.json packages/server/services-core/
 COPY packages/server/services-utils/package*.json packages/server/services-utils/
 COPY packages/utils/odsp-utils/package*.json packages/utils/odsp-utils/
 COPY packages/utils/build-common/package*.json packages/utils/build-common/
+COPY packages/utils/eslint-config-fluid/package*.json packages/utils/eslint-config-fluid/
 COPY packages/server/test-utils/package*.json packages/server/test-utils/
 COPY packages/server/tools-core/package*.json packages/server/tools-core/
 COPY packages/test/snapshots/package*.json packages/test/snapshots/
