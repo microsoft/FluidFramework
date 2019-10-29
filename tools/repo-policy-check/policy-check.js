@@ -122,7 +122,7 @@ const handlers = [
             try {
                 json = JSON.parse(readFile(file));
             } catch (err) {
-                return 'Error parsing JSON file: ' + file;
+                return { resolved: false, message: 'Error parsing JSON file: ' + file };
             }
 
             let ret = [];
@@ -144,7 +144,7 @@ const handlers = [
             try {
                 json = JSON.parse(readFile(file));
             } catch (err) {
-                return 'Error parsing JSON file: ' + file;
+                return { resolved: false, message: 'Error parsing JSON file: ' + file };
             }
 
             let resolved = true;
