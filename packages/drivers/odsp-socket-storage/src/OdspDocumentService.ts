@@ -83,10 +83,8 @@ export class OdspDocumentService implements IDocumentService {
 
         this.logger = DebugLogger.mixinDebugLogger(
             "fluid:telemetry",
-            {
-                documentId: hashedDocumentId,
-            },
-            logger);
+            logger,
+            { documentId: hashedDocumentId });
 
         this.getStorageToken = (refresh: boolean) => {
             if (refresh) {
