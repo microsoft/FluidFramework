@@ -647,19 +647,11 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             this.client!,
             mode).then(
             (connection) => {
-                if (this.closed) {
-                    connection.close();
-                    return;
-                }
                 this.connection = connection;
                 // back-compat for newer clients and old server. If the server does not have mode, we reset to write.
                 this.connectionMode = connection.details.mode ? connection.details.mode : "write";
 
-                this._outbound.systemResume();
-
                 this.emitDelayInfo(retryFor.DELTASTREAM, -1);
-                this.clientSequenceNumber = 0;
-                this.clientSequenceNumberObserved = 0;
 
                 // If we retried more than once, log an event about how long it took
                 if (this.connectRepeatCount > 1) {
@@ -670,6 +662,18 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                         });
                 }
                 this.connectRepeatCount = 0;
+
+                if (this.closed) {
+                    // Raise proper events, Log telemetry event and close connection.
+                    this.reconnectOnError(`Disconnect on close`, connection, this.systemConnectionMode);
+                    assert(!connection.connected); // check we indeed closed it!
+                    return;
+                }
+
+                this._outbound.systemResume();
+
+                this.clientSequenceNumber = 0;
+                this.clientSequenceNumberObserved = 0;
 
                 // If first connection resolve the promise with the details
                 if (this.connecting) {

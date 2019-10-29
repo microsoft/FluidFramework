@@ -316,9 +316,9 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             this.protocolHandler.close();
         }
 
-        this.removeAllListeners();
-
         this.emit("closed");
+
+        this.removeAllListeners();
     }
 
     public async request(path: IRequest): Promise<IResponse> {

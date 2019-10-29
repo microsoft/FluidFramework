@@ -22,8 +22,8 @@ export class NetworkError extends Error implements INetworkError {
 
 export function throwNetworkError(
         errorMessage: string,
-        statusCode?: number,
-        canRetry: boolean = false,
+        statusCode: number,
+        canRetry: boolean,
         response?: Response) {
     let message = errorMessage;
     if (response) {
