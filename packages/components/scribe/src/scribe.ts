@@ -492,6 +492,7 @@ class ScribeFactory implements IComponentFactory, IRuntimeFactory {
         ComponentRuntime.load(
             context,
             dataTypes,
+            undefined,
             (runtime) => {
                 const progressCollectionP = Scribe.load(runtime, context);
                 runtime.registerRequestHandler(async (request: IRequest) => {

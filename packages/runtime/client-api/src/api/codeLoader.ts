@@ -63,6 +63,7 @@ class Chaincode implements IComponentFactory {
         ComponentRuntime.load(
             context,
             modules,
+            undefined,
             (runtime) => {
                 // Initialize core data structures
                 let root: map.ISharedMap;

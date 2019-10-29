@@ -116,6 +116,7 @@ export class KeyValueFactoryComponent implements IRuntimeFactory, IComponentFact
         ComponentRuntime.load(
             context,
             dataTypes,
+            undefined,
             (runtime) => {
                 const keyValueP = KeyValue.load(runtime);
                 runtime.registerRequestHandler(async (request: IRequest) => {

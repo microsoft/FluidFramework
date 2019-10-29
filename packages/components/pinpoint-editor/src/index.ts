@@ -22,6 +22,7 @@ class PinpointMapsFactory implements IComponentFactory {
         ComponentRuntime.load(
             context,
             modules,
+            undefined,
             (runtime) => {
                 const runnerP = PinpointRunner.load(runtime, context);
                 runtime.registerRequestHandler(async (request: IRequest) => {

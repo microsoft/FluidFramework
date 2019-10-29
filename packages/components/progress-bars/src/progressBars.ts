@@ -247,6 +247,7 @@ class ProgressBarsFactory implements IComponentFactory {
         ComponentRuntime.load(
             context,
             dataTypes,
+            undefined,
             (runtime) => {
                 const progressCollectionP = ProgressCollection.load(runtime, context);
                 runtime.registerRequestHandler(async (request: IRequest) => {

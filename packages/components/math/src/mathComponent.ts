@@ -714,6 +714,7 @@ export class MathFactoryComponent implements IComponentFactory {
         ComponentRuntime.load(
             context,
             dataTypes,
+            undefined,
             (runtime) => {
                 const mathCollectionP = MathCollection.load(runtime, context);
                 runtime.registerRequestHandler(async (request: IRequest) => {

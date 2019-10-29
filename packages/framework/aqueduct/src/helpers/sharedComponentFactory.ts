@@ -43,6 +43,7 @@ export class SharedComponentFactory implements IComponentFactory, Partial<IProvi
         ComponentRuntime.load(
             context,
             this.sharedObjectRegistry,
+            this.registry,
             (runtime: ComponentRuntime) => {
                 let instanceP: Promise<SharedComponent>;
                 // For new runtime, we need to force the component instance to be create
