@@ -119,9 +119,9 @@ export class ExternalComponentLoader extends PrimedComponent
                         const urlReg = await this.runtime.IComponentRegistry.get("url");
                         const pkgReg = await urlReg.IComponentRegistry.get(url) as IComponent;
                         let componentRuntime: IComponentRuntime;
-                        if (pkgReg.IProvideComponentDefaultFactoryName) {
+                        if (pkgReg.IComponentDefaultFactoryName) {
                             componentRuntime = await this.context.createSubComponent(
-                                ["url", url, pkgReg.IProvideComponentDefaultFactoryName]);
+                                ["url", url, pkgReg.IComponentDefaultFactoryName.getDefaultFactoryName()]);
                         } else if (pkgReg.IComponentFactory) {
                             componentRuntime = await this.context.createSubComponent(
                                 ["url", url]);

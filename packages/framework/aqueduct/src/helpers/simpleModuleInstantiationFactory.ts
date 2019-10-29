@@ -5,7 +5,7 @@
 
 import { IContainerContext, IRuntime, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
 import { ComponentRegistry } from "@microsoft/fluid-container-runtime";
-import { IProvideComponentDefaultFactoryName } from "@microsoft/fluid-framework-interfaces";
+import { IComponentDefaultFactoryName } from "@microsoft/fluid-framework-interfaces";
 import { IComponentRegistry, IProvideComponentRegistry, NamedComponentRegistryEntries } from "@microsoft/fluid-runtime-definitions";
 import { SimpleContainerRuntimeFactory } from "./simpleContainerRuntimeFactory";
 
@@ -20,7 +20,7 @@ import { SimpleContainerRuntimeFactory } from "./simpleContainerRuntimeFactory";
 export class SimpleModuleInstantiationFactory implements
     IProvideComponentRegistry,
     IRuntimeFactory,
-    IProvideComponentDefaultFactoryName {
+    IComponentDefaultFactoryName {
 
     private readonly registry: IComponentRegistry;
 
@@ -31,7 +31,9 @@ export class SimpleModuleInstantiationFactory implements
     }
     public get IComponentRegistry() { return this.registry; }
     public get IRuntimeFactory() { return this; }
-    public get IProvideComponentDefaultFactoryName() { return this.defaultComponentName; }
+    public get IComponentDefaultFactoryName() { return this; }
+
+    public getDefaultFactoryName() { return this.defaultComponentName; }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
         return SimpleContainerRuntimeFactory.instantiateRuntime(
