@@ -9,19 +9,40 @@ import {
     IComponentRunnable,
 } from "@microsoft/fluid-component-core-interfaces";
 
+/**
+ * Definition of a Task.
+ */
 export interface ITask {
+    /**
+     * id of the task
+     */
     id: string;
+
+    /**
+     * Instance of the task that implements IComponentRunnable
+     */
     instance: IComponentRunnable;
 }
 
 export interface IProvideTaskManager {
     readonly ITaskManager: ITaskManager;
 }
+
 /**
- * Wrapper on top of IAgentScheduler.
+ * Task manager enables app to register and pick tasks.
  */
 export interface ITaskManager extends IProvideTaskManager, IComponentLoadable, IComponentRouter {
-    pick(componentUrl: string, ...tasks: ITask[]): Promise<void>;
+    /**
+     * Registers tasks task so that the client can run the task later.
+     */
+    register(...tasks: ITask[]): void;
+
+    /**
+     * Pick a task that was registered prior.
+     *
+     * @param worker - Flag that will execute tasks in web worker if connected to a service that supports them.
+     */
+    pick(componentUrl: string, taskId: string, worker?: boolean): Promise<void>;
 }
 
 export interface IProvideAgentScheduler {
@@ -31,7 +52,7 @@ export interface IProvideAgentScheduler {
 /**
  * Agent scheduler distributes a set of tasks/variables across connected clients.
  */
-export interface IAgentScheduler extends IProvideAgentScheduler, IComponentRouter {
+export interface IAgentScheduler extends IProvideAgentScheduler, IComponentRouter, IComponentLoadable {
     /**
      * Whether this instance is the leader.
      */
@@ -51,8 +72,10 @@ export interface IAgentScheduler extends IProvideAgentScheduler, IComponentRoute
      * Resolves when the tasks are assigned to one of the connected clients.
      *
      * This method should only be called once per task. Duplicate calls will be rejected.
+     *
+     * @param worker - Flag that will execute tasks in web worker if connected to a service that supports them.
      */
-    pick(...taskUrls: string[]): Promise<void>;
+    pick(taskId: string, worker: boolean): Promise<void>;
 
     /**
      * Releases a set of tasks for other clients to grab. Resolves when the tasks are released.
