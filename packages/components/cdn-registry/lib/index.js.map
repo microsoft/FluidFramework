@@ -1,1 +1,0 @@
-{"version":3,"file":"index.js","sourceRoot":"","sources":["../src/index.ts"],"names":[],"mappings":"AAAA;;;;GAIG;AAEH,cAAc,eAAe,CAAC","sourcesContent":["/*!\n * Copyright (c) Microsoft Corporation. All rights reserved.\n * Licensed under the MIT License.\n *\n */\n\nexport * from \"./cdnRegistry\";\n"]}
