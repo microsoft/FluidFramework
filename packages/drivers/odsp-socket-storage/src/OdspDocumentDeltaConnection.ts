@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
-import { INetworkErrorProperties, NetworkError, TelemetryNullLogger } from "@microsoft/fluid-core-utils";
+import { NetworkError, TelemetryNullLogger } from "@microsoft/fluid-core-utils";
 import { createErrorObject, DocumentDeltaConnection, IConnect, IConnected } from "@microsoft/fluid-driver-base";
 import {
     ConnectionMode,
@@ -75,7 +75,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
             telemetryLogger,
         ).catch((error) => {
             if (error instanceof NetworkError && hasUrl2) {
-                if (error.getProperty(INetworkErrorProperties.canRetry)) {
+                if ((error as any).canRetry) {
                     debug(`Socket connection error on non-AFD URL. Error was [${error}]. Retry on AFD URL: ${url}`);
                     telemetryLogger.sendTelemetryEvent({ eventName: "UseAfdUrl" });
 
@@ -161,7 +161,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
                 // Test if it's NetworkError with IOdspSocketError.
                 // Note that there might be no IOdspSocketError on it in case we hit socket.io protocol errors!
                 // So we test canRetry property first - if it false, that means protocol is broken and reconnecting will not help.
-                if (errorObject instanceof NetworkError && errorObject.getProperty(INetworkErrorProperties.canRetry)) {
+                if (errorObject instanceof NetworkError && (errorObject as any).canRetry) {
                     const socketError: IOdspSocketError = (errorObject as any).socketError;
                     if (typeof socketError === "object" && socketError !== null) {
                         reject(errorObjectFromOdspError(socketError));

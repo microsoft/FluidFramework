@@ -12,9 +12,7 @@ import {
 } from "@microsoft/fluid-container-definitions";
 import {
     Deferred,
-    INetworkErrorProperties,
     isSystemType,
-    NetworkError,
     PerformanceEvent,
 } from "@microsoft/fluid-core-utils";
 import {
@@ -59,12 +57,7 @@ const DefaultContentBufferSize = 10;
 function canRetryOnError(error: any) {
     // Always retry unless told otherwise.
     // tslint:disable-next-line:no-unsafe-any
-    if (error === null || typeof error !== "object") {
-        return true;
-    } else {
-        const value = NetworkError.checkProperty(error, INetworkErrorProperties.canRetry);
-        return value === undefined || value;
-    }
+    return error === null || typeof error !== "object" || error.canRetry === undefined || error.canRetry;
 }
 enum retryFor {
     DELTASTREAM,
@@ -485,7 +478,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 }
                 success = false;
                 // tslint:disable-next-line: no-unsafe-any
-                retryAfter = NetworkError.checkProperty(error, INetworkErrorProperties.retryAfterSeconds);
+                if (typeof error === "object" && error !== null && error.retryAfterSeconds !== undefined) {
+                    // tslint:disable-next-line: no-unsafe-any
+                    retryAfter = error.retryAfterSeconds;
+                }
             }
 
             retry = deltasRetrievedLast === 0 ? retry + 1 : 0;
@@ -726,8 +722,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
                 let delayNext: number = 0;
                 // tslint:disable-next-line: no-unsafe-any
-                delayNext = NetworkError.checkProperty(error, INetworkErrorProperties.retryAfterSeconds);
-                if (delayNext === undefined) {
+                if (typeof error === "object" && error !== null && error.retryAfterSeconds !== undefined) {
+                    // tslint:disable-next-line: no-unsafe-any
+                    delayNext = error.retryAfterSeconds;
+                } else {
                     delayNext = Math.min(delay * 2, MaxReconnectDelay);
                 }
                 this.emitDelayInfo(retryFor.DELTASTREAM, delayNext);

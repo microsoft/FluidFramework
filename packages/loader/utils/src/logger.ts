@@ -63,12 +63,11 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
             // Same for message if there is one (see Error object).
             event.stack = errorAsObject.stack;
             event.error = errorAsObject.message;
-            try {
-                const networkError = error as NetworkError;
-                if (networkError) {
-                    event.networkErrorProperties = networkError.getCustomProperties();
-                }
-            } catch {}
+            // tslint:disable-next-line: no-unsafe-any
+            if (error.getCustomProperties) {
+                // tslint:disable-next-line: no-parameter-reassignment no-unsafe-any
+                event = { ...event, ...error.getCustomProperties() };
+            }
         }
 
         // Collect stack if we were not able to extract it from error

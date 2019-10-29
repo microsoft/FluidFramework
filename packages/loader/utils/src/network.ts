@@ -8,36 +8,29 @@ import { INetworkError } from "@microsoft/fluid-protocol-definitions";
  * Network error error class - used to communicate all  network errors
  */
 export class NetworkError extends Error implements INetworkError {
-    public static checkProperty(error: any, key: string) {
-        try {
-            if (error && typeof error === "object") {
-                const networkError = error as NetworkError;
-                return networkError.getProperty(key);
-            }
-        } catch {}
-    }
 
     private readonly customProperties = new Map<string, any>();
 
     constructor(
             errorMessage: string,
             customProperties: any[][]) {
-      super(errorMessage);
-      for (const [key, val] of customProperties) {
-          this.customProperties.set(key as string, val);
-      }
+        super(errorMessage);
+        for (const [key, val] of customProperties) {
+            Object.defineProperty(NetworkError.prototype, key as string, {
+                get: () => {
+                    return val;
+                },
+            });
+            this.customProperties.set(key as string, val);
+        }
     }
 
     public getCustomProperties() {
-        return this.customProperties;
-    }
-
-    public getProperty(key: string) {
-        return this.customProperties.get(key);
-    }
-
-    public putProperty(key: string, value: any) {
-        this.customProperties.set(key, value);
+        const prop = {};
+        for (const [key, value] of this.customProperties) {
+            prop[key] = value;
+        }
+        return prop;
     }
 }
 
