@@ -6,7 +6,7 @@
 import { ReplayArgs, ReplayTool } from "@microsoft/fluid-replay-tool";
 import * as fs from "fs";
 
-const fileLocation: string = "content";
+const fileLocation: string = "content/snapshotTestContent";
 
 export enum Mode {
     Write,   // write out files
@@ -113,6 +113,7 @@ export async function processContent(mode: Mode, concurrently = true) {
         });
 
         promises.push(work);
+
     }
 
     return Promise.all(promises);

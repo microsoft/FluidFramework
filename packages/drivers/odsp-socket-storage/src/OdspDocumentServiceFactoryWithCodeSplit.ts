@@ -7,6 +7,7 @@ import { ChildLogger } from "@microsoft/fluid-core-utils";
 import { IDocumentService, IDocumentServiceFactory, IResolvedUrl } from "@microsoft/fluid-protocol-definitions";
 import { IOdspResolvedUrl } from "./contracts";
 import { FetchWrapper, IFetchWrapper } from "./fetchWrapper";
+import { OdspCache } from "./odspCache";
 import { OdspDocumentService } from "./OdspDocumentService";
 
 /**
@@ -35,6 +36,7 @@ export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentService
     private readonly logger: ITelemetryBaseLogger,
     private readonly storageFetchWrapper: IFetchWrapper = new FetchWrapper(),
     private readonly deltasFetchWrapper: IFetchWrapper = new FetchWrapper(),
+    private readonly odspCache: OdspCache = new OdspCache(),
   ) {}
 
   public async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
@@ -52,6 +54,7 @@ export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentService
       this.storageFetchWrapper,
       this.deltasFetchWrapper,
       import("./getSocketIo").then((m) => m.getSocketIo()),
+      this.odspCache,
     );
   }
 }

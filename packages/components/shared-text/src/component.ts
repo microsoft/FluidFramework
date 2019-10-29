@@ -269,14 +269,15 @@ class TaskScheduler {
     public start() {
         const hostTokens = (this.componentContext.hostRuntime as IComponent).IComponentTokenProvider;
         const intelTokens = hostTokens && hostTokens.intelligence
-            ? hostTokens.intelligence.textAnalytics
-            : undefined;
+        ? hostTokens.intelligence.textAnalytics
+        : undefined;
         const intelTask: ITask = {
             id: "intel",
             instance: new TextAnalyzer(this.sharedString, this.insightsMap, intelTokens),
         };
-        this.taskManager.pick(this.componentUrl, intelTask).then(() => {
-            console.log(`Picked intel task`);
+        this.taskManager.register(intelTask);
+        this.taskManager.pick(this.componentUrl, "intel").then(() => {
+            console.log(`Picked text analyzer`);
         }, (err) => {
             console.log(err);
         });

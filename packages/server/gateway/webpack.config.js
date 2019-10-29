@@ -123,9 +123,24 @@ module.exports = env => {
                     openAnalyzer: false,
                     generateStatsFile: true,
                     statsFilename: 'controllers.stats.json'
-                  })
+                })
+            ],
+        },
+        {
+            entry: {
+                worker: "./src/controllers/workerLoader.ts"
+            },
+            plugins: [
+                new BundleAnalyzerPlugin({
+                    analyzerMode: 'static',
+                    reportFilename: 'worker.stats.html',
+                    openAnalyzer: false,
+                    generateStatsFile: true,
+                    statsFilename: 'worker.stats.json'
+                })
             ],
         }];
 
-    return bundles.map((bundle) => merge(envOptions, defaultOptions, bundle));
+    // Always minify worker bundle for easy lookup.
+    return bundles.map((bundle) => merge(bundle.entry.worker ? prod : envOptions, defaultOptions, bundle));
 };

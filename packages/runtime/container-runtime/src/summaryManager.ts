@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent, IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { IComponent, IComponentRunnable, IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IContainerContext, ITelemetryLogger } from "@microsoft/fluid-container-definitions";
 import { ChildLogger, Heap, IComparer, IHeapNode } from "@microsoft/fluid-core-utils";
 import { ISequencedClient } from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
-import { ISummarizer } from "./summarizer";
 
 interface ITrackedClient {
     clientId: string;
@@ -32,7 +31,7 @@ export class SummaryManager extends EventEmitter {
     private readonly heapMembers = new Map<string, IHeapNode<ITrackedClient>>();
     private connected = false;
     private clientId: string;
-    private runningSummarizer?: ISummarizer;
+    private runningSummarizer?: IComponentRunnable;
     private readonly logger: ITelemetryLogger;
 
     public get summarizer() {
@@ -46,6 +45,7 @@ export class SummaryManager extends EventEmitter {
     constructor(
         private readonly context: IContainerContext,
         private readonly generateSummaries: boolean,
+        private readonly enableWorker: boolean,
         parentLogger: ITelemetryLogger,
     ) {
         super();
@@ -132,7 +132,7 @@ export class SummaryManager extends EventEmitter {
         }
 
         // Make sure that the summarizer client does not load another summarizer.
-        if (this.context.configuration === undefined || this.context.configuration.canReconnect) {
+        if (this.context.clientType !== "summarizer") {
             // Create and run the new summarizer. On disconnect if we should still summarize launch another instance.
             const doneP = this.createSummarizer()
                 .then((summarizer) => {
@@ -165,8 +165,10 @@ export class SummaryManager extends EventEmitter {
         const request: IRequest = {
             headers: {
                 "fluid-cache": false,
+                "fluid-client-type": "summarizer",
                 "fluid-reconnect": false,
                 "fluid-sequence-number": this.context.deltaManager.referenceSequenceNumber,
+                "execution-context": this.enableWorker ? "worker" : undefined,
             },
             url: "/_summarizer",
         };
@@ -174,14 +176,14 @@ export class SummaryManager extends EventEmitter {
         const response = await loader.request(request);
 
         if (response.status !== 200 || response.mimeType !== "fluid/component") {
-            return Promise.reject<ISummarizer>("Invalid summarizer route");
+            return Promise.reject<IComponentRunnable>("Invalid summarizer route");
         }
 
         const rawComponent = response.value as IComponent;
-        const summarizer = rawComponent.ISummarizer;
+        const summarizer = rawComponent.IComponentRunnable;
 
         if (!summarizer) {
-            return Promise.reject<ISummarizer>("Component does not implement ISummarizer");
+            return Promise.reject<IComponentRunnable>("Component does not implement IComponentRunnable");
         }
 
         return summarizer;

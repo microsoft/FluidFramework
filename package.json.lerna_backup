@@ -1,0 +1,83 @@
+{
+  "name": "root",
+  "private": true,
+  "scripts": {
+    "build": "npm run policy-check && npm run build:genver && npm run build:compile && npm run tslint && npm run build:docs",
+    "build:ci": "npm run build:genver && lerna run build:full:compile --stream",
+    "build:compile": "lerna run build:compile --stream",
+    "build:docs": "npm run clean:docs && lerna run build:docs --stream --parallel && npm run build:gendocs",
+    "build:gendocs": "api-documenter yaml -i packages/_api-extractor-temp/doc-models -o docs/api",
+    "build:genver": "lerna run build:genver --stream --parallel",
+    "build:fast": "node ./tools/fluid-build/dist/fluidBuild.js --root .",
+    "build:full": "npm run build:genver && npm run build:full:compile && npm run tslint && npm run build:docs",
+    "build:full:compile": "lerna run build:full:compile --stream",
+    "clean": "lerna run clean --stream --parallel && npm run clean:docs && npm run clean:nyc",
+    "clean:docs": "rimraf packages/_api-extractor-temp docs/api/*/**",
+    "clean:nyc": "rimraf nyc/**",
+    "postinstall": "npm run postinstall:lerna && (npm run postinstall:fluid-build || true) && (npm run postinstall:r11s || true)",
+    "postinstall:lerna": "lerna bootstrap --hoist --nohoist tslint-microsoft-contrib",
+    "postinstall:fluid-build": "cd tools/fluid-build && npm i && npm run build",
+    "publish-local": "lerna run publish-local --stream",
+    "test": "lerna run test --stream  --no-sort",
+    "test:report": "lerna run test --stream --no-bail --no-sort -- -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
+    "test:coverage": "nyc npm run test:report",
+    "test:ci": "npm run test:report;t1=$?;npm run test:copyresults; exit $t1",
+    "test:ci:coverage": "npm run test:coverage;t1=$?;npm run test:copyresults; exit $t1",
+    "test:copyresults": "copyfiles --exclude \"**/node_modules/**\" \"**/nyc/**\" nyc",
+    "test:full": "npm run test:ci:coverage",
+    "test:fromroot": "mocha \"packages/**/dist/test/**/*.spec.js\" --exit",
+    "tsc": "lerna run tsc --stream",
+    "tslint": "lerna run tslint --no-sort --stream",
+    "watch": "concurrently \"npm run watch:tsc\" \"npm run watch:esnext\" \"npm run watch:webpack\"",
+    "watch:esnext": "lerna run --parallel build:esnext -- -- --watch",
+    "watch:tsc": "lerna run --parallel tsc -- -- --watch",
+    "watch:webpack": "lerna run --parallel webpack -- -- --watch",
+    "webpack": "lerna run --parallel webpack --stream",
+    "build:r11s": "cd server/routerlicious && npm run build",
+    "clean:r11s": "cd server/routerlicious && npm run clean",
+    "postinstall:r11s": "cd server/routerlicious && npm run registryAuth",
+    "restart": "cd server/routerlicious && npm run restart",
+    "start": "cd server/routerlicious && npm run start",
+    "start:debug": "cd server/routerlicious && npm run start:debug",
+    "stop": "cd server/routerlicious && npm run stop",
+    "stop:full": "cd server/routerlicious && npm run stop:full",
+    "policy-check": "cd tools/repo-policy-check && npm run policy-check",
+    "policy-check:full": "cd tools/repo-policy-check && npm install && npm run policy-check",
+    "bump-version": "lerna version minor --no-push --no-git-tag-version && npm run build:genver"
+  },
+  "devDependencies": {
+    "@microsoft/api-documenter": "^7.4.6",
+    "@microsoft/api-extractor": "^7.4.4",
+    "concurrently": "^4.1.0",
+    "copyfiles": "^2.1.0",
+    "lerna": "^3.14.1",
+    "nyc": "^14.1.1",
+    "rimraf": "^2.6.2",
+    "typescript": "~3.4.5"
+  },
+  "dependencies": {},
+  "nyc": {
+    "all": true,
+    "exclude": [
+      "packages/**/src/test/**/*.ts",
+      "packages/**/dist/test/**/*.js",
+      "**/*.bundle.js",
+      "packages/components/**",
+      "packages/server/gateway/public/**"
+    ],
+    "include": [
+      "packages/**/src/**/*.ts",
+      "packages/**/dist/**/*.js"
+    ],
+    "reporter": [
+      "cobertura",
+      "html",
+      "text"
+    ],
+    "temp-directory": "nyc/.nyc_output",
+    "cache-dir": "nyc/.cache",
+    "report-dir": "nyc/report"
+  },
+  "author": "Microsoft",
+  "license": "MIT"
+}

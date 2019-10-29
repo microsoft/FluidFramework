@@ -12,6 +12,5 @@ export const fluidExport = new SimpleModuleInstantiationFactory(
     WebFlowType,
     new Map([
         [WebFlowType, import(/* webpackChunkName: "webflow", webpackPreload: true */ "./host").then((m) => m.webFlowFactory)],
-        [FlowDocumentType, import(/* webpackChunkName: "flowdoc", webpackPreload: true */ "./document").then((m) => m.flowDocumentFactory)],
     ]),
 );

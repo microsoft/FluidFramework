@@ -16,7 +16,8 @@ describe("Loader", () => {
                 [],
                 [],
                 (key, value) => 0,
-                (value) => { return; });
+                (value) => { return; },
+            );
         });
 
         describe(".propose()", async () => {
