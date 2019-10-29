@@ -8,5 +8,5 @@ declare module "@microsoft/fluid-component-core-interfaces" {
 }
 
 export interface IProvideComponentDefaultFactoryName {
-    readonly IProvideComponentDefaultFactory: string;
+    readonly IProvideComponentDefaultFactoryName: string;
 }

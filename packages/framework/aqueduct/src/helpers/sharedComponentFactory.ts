@@ -5,7 +5,7 @@
 
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { ComponentRuntime, ISharedObjectRegistry } from "@microsoft/fluid-component-runtime";
-import { CompositComponentRegistry } from "@microsoft/fluid-container-runtime";
+import { ComponentRegistry } from "@microsoft/fluid-container-runtime";
 import { IComponentContext, IComponentFactory, IComponentRegistry, IComponentRuntime, IProvideComponentRegistry, NamedComponentRegistryEntries } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { SharedComponent } from "../components/sharedComponent";
@@ -21,7 +21,7 @@ export class SharedComponentFactory implements IComponentFactory, Partial<IProvi
         private readonly onDemandInstantiation = true,
     ) {
         if (registryEntries !== undefined) {
-            this.registry = new CompositComponentRegistry(registryEntries);
+            this.registry = new ComponentRegistry(registryEntries);
         }
         this.sharedObjectRegistry = new Map(sharedObjects.map((ext) => [ext.type, ext]));
     }

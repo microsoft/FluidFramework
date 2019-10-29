@@ -120,10 +120,10 @@ export class ExternalComponentLoader extends PrimedComponent
                         const urlReg = await reg.IComponentRegistry.get("url");
                         const pkgReg = await urlReg.IComponentRegistry.get(url) as IComponent;
                         let componentRuntime: IComponentRuntime;
-                        if (pkgReg.IProvideComponentDefaultFactory) {
+                        if (pkgReg.IProvideComponentDefaultFactoryName) {
                             componentRuntime = await this.context.hostRuntime.createComponent(
                                 uuid(),
-                                [WaterParkLoaderName, "url", url, pkgReg.IProvideComponentDefaultFactory]);
+                                [WaterParkLoaderName, "url", url, pkgReg.IProvideComponentDefaultFactoryName]);
                         } else if (pkgReg.IComponentFactory) {
                             componentRuntime = await this.context.hostRuntime.createComponent(
                                 uuid(),

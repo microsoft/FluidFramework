@@ -67,9 +67,9 @@ class MyRegistry implements IComponentRegistry {
     public get IComponentRegistry() {return this; }
 
     public async get(name: string): Promise<IComponentFactory> {
-        const config = {
-                cdn: this.defaultRegistry,
-            };
+        const scope = `${name.split("/")[0]}:cdn`;
+        const config = {};
+        config[scope] = this.defaultRegistry;
 
         const codeDetails = {
             package: name,

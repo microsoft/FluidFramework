@@ -66,7 +66,7 @@ import { EventEmitter } from "events";
 import * as uuid from "uuid/v4";
 import { ComponentContext, LocalComponentContext, RemotedComponentContext } from "./componentContext";
 import { ComponentHandleContext } from "./componentHandleContext";
-import { CompositComponentRegistry } from "./compositComponentRegistry";
+import { ComponentRegistry } from "./componentRegistry";
 import { debug } from "./debug";
 import { DocumentStorageServiceProxy } from "./documentStorageServiceProxy";
 import {
@@ -1391,7 +1391,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 }
 
 // Wraps the provided list of packages and augments with some system level services.
-class ContainerRuntimeComponentRegistry extends CompositComponentRegistry {
+class ContainerRuntimeComponentRegistry extends ComponentRegistry {
 
     constructor(...components: NamedComponentRegistryEntries[]) {
 

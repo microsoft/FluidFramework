@@ -7,4 +7,4 @@ export * from "./containerRuntime";
 export * from "./summaryTreeConverter";
 export * from "./requestHandlers";
 export * from "./requestParser";
-export * from "./compositComponentRegistry";
+export * from "./componentRegistry";
