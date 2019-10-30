@@ -124,9 +124,8 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     private deltaStorageDelay: number | undefined;
     private deltaStreamDelay: number | undefined;
 
-    // collab window tracking.
-    // Start with 50 not to record anything below 50 (= 30 + 20).
-    private collabWindowMax = 30;
+    // collab window tracking. This is timestamp of %1000 message.
+    private lastMessageTimeForTelemetry: number | undefined;
 
     public get inbound(): IDeltaQueue<ISequencedDocumentMessage> {
         return this._inbound;
@@ -870,11 +869,20 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         assert.equal(message.sequenceNumber, this.baseSequenceNumber + 1);
         this.baseSequenceNumber = message.sequenceNumber;
 
-        // record collab window max size, in 20 increments.
+        // record collab window max size after every 2000th op.
         const msnDistance = this.baseSequenceNumber - this.minSequenceNumber;
-        if (this.collabWindowMax + 20 < msnDistance) {
-            this.collabWindowMax = msnDistance;
-            this.logger.sendTelemetryEvent({ eventName: "MSNWindow", value: msnDistance });
+        if (message.sequenceNumber % 2000 === 0) {
+            this.logger.sendTelemetryEvent({
+                eventName: "MSNWindow",
+                seqNumber: message.sequenceNumber,
+                value: msnDistance,
+                timeDelta: this.lastMessageTimeForTelemetry ?
+                    message.timestamp - this.lastMessageTimeForTelemetry : undefined,
+            });
+        }
+
+        if (message.sequenceNumber % 1000 === 0) {
+            this.lastMessageTimeForTelemetry = message.timestamp;
         }
 
         this.handler!.process(

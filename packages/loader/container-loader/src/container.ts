@@ -876,7 +876,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         // Add couple IDs here
         this.subLogger.setProperties({
             clientId: this.clientId,
-            socketDocumentId: this._deltaManager!.socketDocumentId,
+            socketDocumentId: value === ConnectionState.Connecting ? this._deltaManager!.socketDocumentId : undefined,
             pendingClientId: value === ConnectionState.Connecting ? this.pendingClientId : undefined,
         });
 

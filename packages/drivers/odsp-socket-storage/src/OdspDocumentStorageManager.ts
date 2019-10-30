@@ -259,6 +259,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                             blobs: odspSnapshot.blobs ? odspSnapshot.blobs.length : 0,
                             ops: odspSnapshot.ops.length,
                             sprequestguid: response.headers.get("sprequestguid"),
+                            sprequestduration: response.headers.get("sprequestduration"),
                             contentsize: response.headers.get("content-length"),
                         };
                         eventInner.end(props);
@@ -376,6 +377,14 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
                 const response = await fetchSnapshot(this.snapshotUrl!, storageToken, this.appId, this.fetchWrapper, id, this.fetchFullSnapshot);
                 const odspSnapshot: IOdspSnapshot = response.content;
+                if (id === "latest") {
+                    this.logger.sendTelemetryEvent({
+                        eventName: "TreesLatestInGetTree",
+                        sprequestguid: response.headers.get("sprequestguid"),
+                        sprequestduration: response.headers.get("sprequestduration"),
+                        contentsize: response.headers.get("content-length"),
+                    });
+                }
                 // odspSnapshot contain "trees" when the request is made for latest or the root of the tree, for all other cases it will contain "tree" which is the fetched tree with the id
                 if (odspSnapshot) {
                     if (odspSnapshot.trees) {

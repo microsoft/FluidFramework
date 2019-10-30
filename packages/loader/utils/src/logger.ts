@@ -140,8 +140,6 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
         if (event.duration) {
             perfEvent.duration = TelemetryLogger.formatTick(event.duration);
         }
-        const tick = event.tick ? event.tick : performanceNow();
-        perfEvent.tick = TelemetryLogger.formatTick(tick);
 
         this.send(perfEvent);
     }
