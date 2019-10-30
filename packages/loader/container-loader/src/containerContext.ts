@@ -199,15 +199,6 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         return snapshot;
     }
 
-    public async prepare(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
-        // included for back compat with documents created prior to prepare deprecation
-        if (!this.runtime || !this.runtime.prepare) {
-            return Promise.reject("Runtime must query for IMessageHandler to signal it does not implement prepare");
-        }
-
-        return this.runtime.prepare(message, local);
-    }
-
     public process(message: ISequencedDocumentMessage, local: boolean, context: any) {
         this.runtime!.process(message, local, context);
     }
