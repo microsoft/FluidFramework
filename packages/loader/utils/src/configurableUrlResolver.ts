@@ -5,6 +5,7 @@
 
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IResolvedUrl, IUrlResolver } from "@microsoft/fluid-protocol-definitions";
+import { any as promiseAny } from "bluebird";
 
 /**
  * Resolver that takes a list of url resolvers and then try each of them to resolve the url.
@@ -14,14 +15,12 @@ import { IResolvedUrl, IUrlResolver } from "@microsoft/fluid-protocol-definition
 export async function configurableUrlResolver(
     resolversList: IUrlResolver[],
     request: IRequest,
-): Promise<IResolvedUrl | undefined> {
+): Promise<IResolvedUrl> {
     const url = request.url;
-    let resolved: IResolvedUrl | undefined;
+    const resolvedUrlPs: Promise<IResolvedUrl>[] = new Array();
+
     for (const resolver of resolversList) {
-        resolved = await resolver.resolve({ url });
-        if (resolved) {
-            return resolved;
-        }
+        resolvedUrlPs.push(resolver.resolve({ url }));
     }
-    return undefined;
+    return promiseAny(resolvedUrlPs);
 }

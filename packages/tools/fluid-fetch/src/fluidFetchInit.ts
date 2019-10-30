@@ -208,7 +208,7 @@ async function initializeR11s(server: string, pathname: string, r11sResolvedUrl:
         documentId);
 }
 
-async function resolveUrl(url: string): Promise<IResolvedUrl | undefined> {
+async function resolveUrl(url: string): Promise<IResolvedUrl> {
 
     const resolversList: IUrlResolver[] = [
         new OdspUrlResolver(),

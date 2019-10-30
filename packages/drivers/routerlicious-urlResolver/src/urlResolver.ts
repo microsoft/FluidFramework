@@ -32,7 +32,7 @@ export class RouterliciousUrlResolver implements IUrlResolver {
         private readonly user?: IAlfredUser) {
     }
 
-    public async resolve(request: IRequest): Promise<IResolvedUrl | undefined> {
+    public async resolve(request: IRequest): Promise<IResolvedUrl> {
         let requestedUrl = request.url;
         if (this.config && request.url.startsWith("/")) {
             requestedUrl = `http://dummy:3000${request.url}`;
@@ -103,7 +103,7 @@ export class RouterliciousUrlResolver implements IUrlResolver {
             };
             return resolved;
         }
-        return undefined;
+        return Promise.reject("Not a Routerlicious URL");
     }
 }
 

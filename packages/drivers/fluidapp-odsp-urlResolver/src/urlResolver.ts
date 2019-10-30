@@ -21,13 +21,13 @@ const fluidOfficeServers = [
 
 export class FluidAppOdspUrlResolver implements IUrlResolver {
 
-    public async resolve(request: IRequest): Promise<IResolvedUrl | undefined> {
+    public async resolve(request: IRequest): Promise<IResolvedUrl> {
         const reqUrl = new URL(request.url);
         const server = reqUrl.hostname.toLowerCase();
         if (fluidOfficeServers.indexOf(server) !== -1) {
             const contents = await initializeFluidOffice(reqUrl);
             if (!contents) {
-                return undefined;
+                return Promise.reject("Could not initialize Fluid Office Connection Information");
             }
             const site = contents.site;
             const drive = contents.drive;
@@ -56,7 +56,7 @@ export class FluidAppOdspUrlResolver implements IUrlResolver {
             };
             return response;
         }
-        return undefined;
+        return Promise.reject("Not a Fluid Office URL");
     }
 }
 

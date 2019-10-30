@@ -27,5 +27,5 @@ export interface IUrlResolver {
     // Like DNS should be able to cache resolution requests. Then possibly just have a token provider go and do stuff?
     // the expiration of it could be relative to the lifetime of the token? Requests after need to refresh?
     // or do we split the token access from this?
-    resolve(request: IRequest): Promise<IResolvedUrl | undefined>;
+    resolve(request: IRequest): Promise<IResolvedUrl>;
 }

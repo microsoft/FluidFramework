@@ -28,6 +28,7 @@
     "@microsoft/fluid-container-definitions": "^0.11.0",
     "@microsoft/fluid-gitresources": "^0.11.0",
     "@microsoft/fluid-protocol-definitions": "^0.11.0",
+    "bluebird": "^3.7.1",
     "debug": "^4.1.1",
     "lodash": "^4.17.11",
     "performance-now": "^2.1.0",

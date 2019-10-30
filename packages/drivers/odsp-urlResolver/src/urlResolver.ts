@@ -15,12 +15,12 @@ import * as sha from "sha.js";
 
 export class OdspUrlResolver implements IUrlResolver {
 
-    public async resolve(request: IRequest): Promise<IResolvedUrl | undefined> {
+    public async resolve(request: IRequest): Promise<IResolvedUrl> {
         if (isOdspUrl(request.url)) {
             const reqUrl = new URL(request.url);
             const contents = await initializeODSP(reqUrl);
             if (!contents) {
-                return undefined;
+                return Promise.reject("Could not initialize ODSP Connection Information");
             }
             const site = contents.site;
             const drive = contents.drive;
@@ -50,7 +50,7 @@ export class OdspUrlResolver implements IUrlResolver {
 
             return response;
         }
-        return undefined;
+        return Promise.reject("Not a ODSP URL");
     }
 }
 
