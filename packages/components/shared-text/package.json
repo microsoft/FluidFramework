@@ -2,38 +2,29 @@
   "name": "@fluid-example/shared-text",
   "version": "0.11.0",
   "description": "Shared text",
-  "main": "dist/index.js",
-  "module": "lib/index.js",
-  "types": "dist/index.d.ts",
+  "repository": "microsoft/FluidFramework",
+  "license": "MIT",
+  "author": "Microsoft",
   "sideEffects": [
     "./src/publicpath.ts"
   ],
+  "main": "dist/index.js",
+  "module": "lib/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "build": "npm run build:compile",
     "build:compile": "concurrently npm:tsc npm:build:esnext npm:webpack:dev",
+    "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile && npm run webpack",
     "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
-    "tsc": "tsc",
-    "build:esnext": "tsc --project ./tsconfig.esnext.json",
-    "tslint": "tslint --project tsconfig.json --format verbose",
     "start": "webpack-dev-server --config webpack.config.js --package package.json",
-    "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
     "start:live": "webpack-dev-server --config webpack.config.js --package package.json --env.mode live",
+    "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
+    "tsc": "tsc",
+    "tslint": "tslint --project tsconfig.json --format verbose",
     "webpack": "webpack --env.production",
     "webpack:dev": "webpack --env.development"
-  },
-  "author": "Microsoft",
-  "repository": "microsoft/FluidFramework",
-  "fluid": {
-    "browser": {
-      "umd": {
-        "files": [
-          "dist/main.bundle.js"
-        ],
-        "library": "main"
-      }
-    }
   },
   "dependencies": {
     "@fluid-example/client-ui-lib": "^0.11.0",
@@ -97,5 +88,14 @@
     "webpack-merge": "^4.1.2",
     "webpack-visualizer-plugin": "^0.1.11"
   },
-  "license": "MIT"
+  "fluid": {
+    "browser": {
+      "umd": {
+        "files": [
+          "dist/main.bundle.js"
+        ],
+        "library": "main"
+      }
+    }
+  }
 }
