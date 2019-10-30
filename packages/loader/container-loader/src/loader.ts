@@ -12,6 +12,7 @@ import {
     ICodeLoader,
     IHost,
     ILoader,
+    IProxyLoaderFactory,
     ITelemetryBaseLogger,
 } from "@microsoft/fluid-container-definitions";
 import { configurableUrlResolver, Deferred } from "@microsoft/fluid-core-utils";
@@ -25,7 +26,6 @@ import {
 import { EventEmitter } from "events";
 // tslint:disable-next-line:no-var-requires
 const now = require("performance-now") as () => number;
-import * as querystring from "querystring";
 import { parse } from "url";
 import { Container } from "./container";
 import { debug } from "./debug";
@@ -34,11 +34,11 @@ interface IParsedUrl {
     id: string;
     path: string;
     /**
-     * null means do not use snapshots
+     * null means do not use snapshots, undefined means load latest snapshot
      * otherwise it's version ID passed to IDocumentStorageService.getVersions() to figure out what snapshot to use.
      * If needed, can add undefined which is treated by Container.load() as load latest snapshot.
      */
-    version: string | null;
+    version: string | null | undefined;
 }
 
 export class RelativeLoader extends EventEmitter implements ILoader {
@@ -67,10 +67,14 @@ export class RelativeLoader extends EventEmitter implements ILoader {
 
     public async request(request: IRequest): Promise<IResponse> {
         if (request.url.indexOf("/") === 0) {
-            const container = this.canUseCache(request)
+            if (this.needExecutionContext(request)) {
+                return this.loader.requestWorker(this.baseRequest.url, request);
+            } else {
+                const container = this.canUseCache(request)
                 ? await this.containerDeferred.promise
                 : await this.loader.resolve({ url: this.baseRequest.url, headers: request.headers });
-            return container.request(request);
+                return container.request(request);
+            }
         }
 
         return this.loader.request(request);
@@ -90,6 +94,10 @@ export class RelativeLoader extends EventEmitter implements ILoader {
             request.headers["fluid-reconnect"] === false;
 
         return !noCache;
+    }
+
+    private needExecutionContext(request: IRequest): boolean {
+        return (request.headers !== undefined && request.headers["execution-context"] !== undefined);
     }
 }
 
@@ -148,6 +156,7 @@ export class Loader extends EventEmitter implements ILoader {
         private readonly codeLoader: ICodeLoader,
         private readonly options: any,
         private readonly scope: IComponent,
+        private readonly proxyLoaderFactories: Map<string, IProxyLoaderFactory>,
         private readonly logger?: ITelemetryBaseLogger,
     ) {
         super();
@@ -181,23 +190,44 @@ export class Loader extends EventEmitter implements ILoader {
         return resolved.container.request({ url: resolved.parsed.path });
     }
 
-    private parseUrl(url: string): IParsedUrl | null {
-        const parsed = parse(url);
-        const qs = querystring.parse(parsed.query!);
-        let version: string | null;
+    public async requestWorker(baseUrl: string, request: IRequest): Promise<IResponse> {
 
-        // version = null means not use any snapshot.
-        if (qs.version === "null") {
-            version = null;
+        // Currently the loader only supports web worker environment. Eventually we will
+        // detect environment and bring appropiate loader (e.g., worker_thread for node).
+        const supportedEnvironment = "webworker";
+        const proxyLoaderFactory = this.proxyLoaderFactories.get(supportedEnvironment);
+
+        // If the loader does not support any other environment, request falls back to current loader.
+        if (!proxyLoaderFactory) {
+            const container = await this.resolve({ url: baseUrl, headers: request.headers });
+            return container.request(request);
         } else {
-            version = qs.version as string;
+            const resolved = await this.getResolvedUrl({ url: baseUrl, headers: request.headers });
+            const resolvedAsFluid = resolved as IFluidResolvedUrl;
+            const parsed = this.parseUrl(resolvedAsFluid.url);
+            if (!parsed) {
+                return Promise.reject(`Invalid URL ${resolvedAsFluid.url}`);
+            }
+            const { fromSequenceNumber } =
+                this.parseHeader(parsed, { url: baseUrl, headers: request.headers });
+            const proxyLoader = await proxyLoaderFactory.createProxyLoader(
+                parsed!.id,
+                this.options,
+                resolvedAsFluid,
+                fromSequenceNumber,
+            );
+            return proxyLoader.request(request);
         }
+    }
+
+    private parseUrl(url: string): IParsedUrl | null {
+        const parsed = parse(url, true);
 
         const regex = /^\/([^\/]*\/[^\/]*)(\/?.*)$/;
         const match = parsed.pathname!.match(regex);
 
         return (match && match.length === 3)
-            ? { id: match[1], path: match[2], version }
+            ? { id: match[1], path: match[2], version: parsed.query.version as string }
             : null;
     }
 
@@ -209,11 +239,14 @@ export class Loader extends EventEmitter implements ILoader {
             return maybeResolvedUrl;
         }
 
-        let toCache: IResolvedUrl;
+        let toCache: IResolvedUrl | undefined;
         if (Array.isArray(this.containerHost.resolver)) {
             toCache = await configurableUrlResolver(this.containerHost.resolver, request);
         } else {
             toCache = await this.containerHost.resolver.resolve(request);
+        }
+        if (!toCache) {
+            return Promise.reject(`Invalid URL ${request.url}`);
         }
         if (toCache.type !== "fluid") {
             if (toCache.type === "prague") {
@@ -241,44 +274,16 @@ export class Loader extends EventEmitter implements ILoader {
             return Promise.reject(`Invalid URL ${resolvedAsFluid.url}`);
         }
 
-        let canCache = true;
-        let canReconnect = true;
-        let connection = !parsed.version ? "open" : "close";
-        let version = parsed.version;
-        let fromSequenceNumber = -1;
+        request.headers = request.headers ? request.headers : {};
+        const {canCache, fromSequenceNumber } = this.parseHeader(parsed, request);
 
-        if (request.headers) {
-            if (request.headers.connect) {
-                // If connection header is pure open or close we will cache it. Otherwise custom load behavior
-                // and so we will not cache the request
-                canCache = request.headers.connect === "open" || request.headers.connect === "close";
-                connection = request.headers.connect as string;
-            }
-
-            if (request.headers["fluid-cache"] === false) {
-                canCache = false;
-            }
-
-            if (request.headers["fluid-reconnect"] === false) {
-                canReconnect = false;
-            }
-
-            if (request.headers["fluid-sequence-number"]) {
-                fromSequenceNumber = request.headers["fluid-sequence-number"] as number;
-            }
-
-            version = version || request.headers.version as string;
-        }
-
-        debug(`${canCache} ${connection} ${version}`);
+        debug(`${canCache} ${request.headers.connect} ${request.headers.version}`);
         const factory: IDocumentServiceFactory =
             selectDocumentServiceFactoryForProtocol(resolvedAsFluid, this.protocolToDocumentFactoryMap);
 
-        const documentService: IDocumentService = await factory.createDocumentService(resolvedAsFluid);
-
         let container: Container;
         if (canCache) {
-            const versionedId = version ? `${parsed.id}@${version}` : parsed.id;
+            const versionedId = request.headers.version ? `${parsed.id}@${request.headers.version}` : parsed.id;
             const maybeContainer = await this.containers.get(versionedId);
             if (maybeContainer) {
                 container = maybeContainer;
@@ -286,12 +291,9 @@ export class Loader extends EventEmitter implements ILoader {
                 const containerP =
                     this.loadContainer(
                         parsed.id,
-                        version,
-                        connection,
-                        documentService,
+                        await factory.createDocumentService(resolvedAsFluid),
                         request,
                         resolved,
-                        canReconnect,
                         this.logger);
                 this.containers.set(versionedId, containerP);
                 container = await containerP;
@@ -300,12 +302,9 @@ export class Loader extends EventEmitter implements ILoader {
             container =
                 await this.loadContainer(
                     parsed.id,
-                    version,
-                    connection,
-                    documentService,
+                    await factory.createDocumentService(resolvedAsFluid),
                     request,
                     resolved,
-                    canReconnect,
                     this.logger);
         }
 
@@ -323,6 +322,41 @@ export class Loader extends EventEmitter implements ILoader {
         }
 
         return { container, parsed };
+
+    }
+
+    private parseHeader(parsed: IParsedUrl, request: IRequest) {
+        let canCache = true;
+        let fromSequenceNumber = -1;
+
+        request.headers = request.headers ? request.headers : {};
+        if (!request.headers.connect) {
+            request.headers.connect = !parsed.version ? "open" : "close";
+        }
+
+        if (request.headers["fluid-cache"] === false) {
+            canCache = false;
+        } else {
+            // If connection header is pure open or close we will cache it. Otherwise custom load behavior
+            // and so we will not cache the request
+            canCache = request.headers.connect === "open" || request.headers.connect === "close";
+        }
+
+        if (request.headers["fluid-sequence-number"]) {
+            fromSequenceNumber = request.headers["fluid-sequence-number"] as number;
+        }
+
+        // if set in both query string and headers, use query string
+        request.headers.version = parsed.version || request.headers.version as string;
+
+        // version === null means not use any snapshot.
+        if (request.headers.version === "null") {
+            request.headers.version = null;
+        }
+        return {
+            canCache,
+            fromSequenceNumber,
+        };
     }
 
     // @param version -one of the following
@@ -331,25 +365,19 @@ export class Loader extends EventEmitter implements ILoader {
     //   - otherwise, version sha to load snapshot
     private loadContainer(
         id: string,
-        version: string | null | undefined,
-        connection: string,
         documentService: IDocumentService,
         request: IRequest,
         resolved: IResolvedUrl,
-        canReconnect: boolean,
         logger?: ITelemetryBaseLogger,
     ): Promise<Container> {
         const container = Container.load(
             id,
-            version,
             documentService,
             this.codeLoader,
             this.options,
             this.scope,
-            connection,
             this,
             request,
-            canReconnect,
             logger);
 
         return container;

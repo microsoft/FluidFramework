@@ -9,7 +9,9 @@ import {
     initializeChaincode,
     registerAttach,
 } from "@microsoft/fluid-base-host";
+import { IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
 import { BaseTelemetryNullLogger } from "@microsoft/fluid-core-utils";
+import { WebWorkerLoaderFactory } from "@microsoft/fluid-execution-context-loader";
 import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
 import { IDocumentServiceFactory, IFluidResolvedUrl } from "@microsoft/fluid-protocol-definitions";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
@@ -159,6 +161,7 @@ export async function initialize(
         config,
         services,
         hostConf,
+        new Map<string, IProxyLoaderFactory>([["webworker", new WebWorkerLoaderFactory()]]),
         new WhiteList(),
         );
     documentFactory.resolveLoader(loader);
@@ -177,4 +180,6 @@ export async function initialize(
     if (!container.existing) {
         await initializeChaincode(container, pkg);
     }
+
+    return container;
 }

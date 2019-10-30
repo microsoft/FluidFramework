@@ -5,7 +5,7 @@
 
 import * as cell from "@microsoft/fluid-cell";
 import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
-import { IDeltaManager, IGenericBlob, IHost } from "@microsoft/fluid-container-definitions";
+import { IDeltaManager, IGenericBlob, IHost, IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
 import { IContainerRuntimeOptions } from "@microsoft/fluid-container-runtime";
 import { Deferred } from "@microsoft/fluid-core-utils";
@@ -265,7 +265,7 @@ export async function load(
 
     // Load the Fluid document
     // For legacy purposes we currently fill in a default domain
-    const loader = new Loader(host, serviceFactory, codeLoader, options, {});
+    const loader = new Loader(host, serviceFactory, codeLoader, options, {}, new Map<string, IProxyLoaderFactory>());
     const container = await loader.resolve({ url });
 
     if (!container.existing) {

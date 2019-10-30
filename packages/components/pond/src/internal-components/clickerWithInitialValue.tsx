@@ -90,8 +90,8 @@ class CounterReactView extends React.Component<p, s> {
     render() {
         return (
             <div style={{border: "1px dotted red"}}>
-                <h3>Clicker With Forge</h3>
-                <h5>Forged with initial value of 100. Increments 5.</h5>
+                <h3>Clicker With Initial Value</h3>
+                <h5>Created with initial value of 100. Increments 5.</h5>
                 <div>
                     <span>{this.state.value}</span>
                     <button onClick={() => { this.props.counter.increment(5); }}>+5</button>

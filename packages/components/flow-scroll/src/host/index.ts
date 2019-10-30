@@ -165,7 +165,8 @@ class TaskScheduler {
             id: "intel",
             instance: new TextAnalyzer(this.flowDocument, this.insightsMap, intelTokens),
         };
-        this.taskManager.pick(this.componentUrl, intelTask).then(() => {
+        this.taskManager.register(intelTask);
+        this.taskManager.pick(this.componentUrl, "intel").then(() => {
             console.log(`Picked text analyzer`);
         }, (err) => {
             console.log(err);

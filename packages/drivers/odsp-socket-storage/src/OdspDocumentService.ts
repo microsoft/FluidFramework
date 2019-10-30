@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
-import { SinglePromise } from "@microsoft/fluid-core-utils";
+import { DebugLogger, SinglePromise, TelemetryLogger } from "@microsoft/fluid-core-utils";
 import {
     ConnectionMode,
     IClient,
@@ -16,6 +16,7 @@ import {
 } from "@microsoft/fluid-protocol-definitions";
 import { ISocketStorageDiscovery } from "./contracts";
 import { IFetchWrapper } from "./fetchWrapper";
+import { OdspCache } from "./odspCache";
 import { OdspDeltaStorageService } from "./OdspDeltaStorageService";
 import { OdspDocumentDeltaConnection } from "./OdspDocumentDeltaConnection";
 import { OdspDocumentStorageManager } from "./OdspDocumentStorageManager";
@@ -35,6 +36,8 @@ export class OdspDocumentService implements IDocumentService {
     private websocketEndpointP: Promise<ISocketStorageDiscovery> | undefined;
 
     private storageManager?: OdspDocumentStorageManager;
+
+    private readonly logger: TelemetryLogger;
 
     private readonly getStorageToken: (refresh: boolean) => Promise<string | null>;
 
@@ -64,11 +67,18 @@ export class OdspDocumentService implements IDocumentService {
         private readonly snapshotStorageUrl: string,
         getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
         readonly getWebsocketToken: () => Promise<string | null>,
-        private readonly logger: ITelemetryLogger,
+        logger: ITelemetryLogger,
         private readonly storageFetchWrapper: IFetchWrapper,
         private readonly deltasFetchWrapper: IFetchWrapper,
         private readonly socketIOClientP: Promise<SocketIOClientStatic>,
+        private readonly odspCache: OdspCache,
     ) {
+
+        this.logger = DebugLogger.mixinDebugLogger(
+            "fluid:telemetry",
+            logger,
+            { documentId: hashedDocumentId });
+
         this.getStorageToken = (refresh: boolean) => {
             if (refresh) {
                 // Potential perf issue:
@@ -87,6 +97,8 @@ export class OdspDocumentService implements IDocumentService {
                 siteUrl,
                 logger,
                 this.getStorageToken,
+                this.odspCache,
+                hashedDocumentId,
             ),
         );
     }
@@ -108,6 +120,7 @@ export class OdspDocumentService implements IDocumentService {
             this.getStorageToken,
             this.logger,
             true,
+            this.odspCache,
         );
 
         return new OdspDocumentStorageService(this.storageManager);

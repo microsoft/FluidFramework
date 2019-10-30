@@ -16,6 +16,7 @@
             <img src="/public/images/bindy.svg" style="vertical-align: text-bottom; height: 26px;">
             Fluid
         </a>
+        <div id="connection-state" style="color: #fff"></div>
         <div id="fluid-user">
         </div>
     </nav>

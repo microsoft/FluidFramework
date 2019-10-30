@@ -5,6 +5,7 @@
 
 import {
     ICommittedProposal,
+    IProcessMessageResult,
     IProposal,
     ISequencedProposal,
     ITelemetryLogger,
@@ -63,14 +64,24 @@ export class ProtocolOpHandler {
         sendReject: (sequenceNumber: number) => void,
         private readonly logger: ITelemetryLogger = DebugLogger.create("fluid:ProtocolHandler"),
     ) {
-        this.quorum = new Quorum(minimumSequenceNumber, members, proposals, values, sendProposal, sendReject, logger);
+        this.quorum = new Quorum(
+            minimumSequenceNumber,
+            members,
+            proposals,
+            values,
+            sendProposal,
+            sendReject,
+            logger,
+        );
     }
 
     public close() {
         this.quorum.close();
     }
 
-    public processMessage(message: ISequencedDocumentMessage, local: boolean) {
+    public processMessage(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult {
+        let immediateNoOp = false;
+
         switch (message.type) {
             case MessageType.ClientJoin:
                 const systemJoinMessage = message as ISequencedDocumentSystemMessage;
@@ -97,6 +108,9 @@ export class ProtocolOpHandler {
                     message.sequenceNumber,
                     local,
                     message.clientSequenceNumber);
+
+                // On a quorum proposal, immediately send a response to expedite the approval.
+                immediateNoOp = true;
                 break;
 
             case MessageType.Reject:
@@ -134,7 +148,9 @@ export class ProtocolOpHandler {
 
         // Notify the quorum of the MSN from the message. We rely on it to handle duplicate values but may
         // want to move that logic to this class.
-        this.quorum.updateMinimumSequenceNumber(message);
+        immediateNoOp = this.quorum.updateMinimumSequenceNumber(message) || immediateNoOp;
+
+        return { immediateNoOp };
     }
 
     public getProtocolState(): IScribeProtocolState {
