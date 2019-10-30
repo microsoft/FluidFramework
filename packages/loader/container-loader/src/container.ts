@@ -2,12 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import {
-    IComponent,
-    IComponentQueryableLegacy,
-    IRequest,
-    IResponse,
-} from "@microsoft/fluid-component-core-interfaces";
+import { IComponent, IComponentQueryableLegacy, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import {
     ConnectionState,
     ICodeLoader,
@@ -118,7 +113,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             };
             container.on("error", onError);
 
-            return container.load(request.headers![LoaderHeader.version], request.headers![LoaderHeader.connect]!)
+            const version = request.headers && request.headers[LoaderHeader.version];
+            const connection = request.headers && request.headers[LoaderHeader.connect] || "";
+
+            return container.load(version, connection)
                 .then(() => {
                     container.removeListener("error", onError);
                     res(container);
@@ -782,7 +780,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                 scopes: [],
                 user: { id: "" },
             };
-        const headerClientType = this.originalRequest.headers![LoaderHeader.clientType];
+        const headerClientType = this.originalRequest.headers && this.originalRequest.headers[LoaderHeader.clientType];
         if (headerClientType) {
             clientDetails.type = headerClientType;
         }
