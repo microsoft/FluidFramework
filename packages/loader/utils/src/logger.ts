@@ -144,8 +144,6 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
         if (event.duration) {
             perfEvent.duration = TelemetryLogger.formatTick(event.duration);
         }
-        const tick = event.tick ? event.tick : performanceNow();
-        perfEvent.tick = TelemetryLogger.formatTick(tick);
 
         this.send(perfEvent);
     }
@@ -416,9 +414,8 @@ export class DebugLogger extends TelemetryLogger {
         newEvent.eventName = undefined;
 
         let tick = "";
-        if (newEvent.tick) {
-            tick = `tick=${newEvent.tick}`;
-            newEvent.tick = undefined;
+        if (event.category === "performance") {
+            tick = `tick=${TelemetryLogger.formatTick(performanceNow())}`;
         }
 
         // Extract stack to put it last, but also to avoid escaping '\n' in it by JSON.stringify below
