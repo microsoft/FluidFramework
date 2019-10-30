@@ -288,11 +288,10 @@ export class Loader extends EventEmitter implements ILoader {
             if (maybeContainer) {
                 container = maybeContainer;
             } else {
-                const documentService: IDocumentService = await factory.createDocumentService(resolvedAsFluid);
                 const containerP =
                     this.loadContainer(
                         parsed.id,
-                        documentService,
+                        await factory.createDocumentService(resolvedAsFluid),
                         request,
                         resolved,
                         this.logger);
@@ -300,11 +299,10 @@ export class Loader extends EventEmitter implements ILoader {
                 container = await containerP;
             }
         } else {
-            const documentService: IDocumentService = await factory.createDocumentService(resolvedAsFluid);
             container =
                 await this.loadContainer(
                     parsed.id,
-                    documentService,
+                    await factory.createDocumentService(resolvedAsFluid),
                     request,
                     resolved,
                     this.logger);
