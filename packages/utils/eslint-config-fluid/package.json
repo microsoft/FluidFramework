@@ -7,7 +7,7 @@
   "author": "Microsoft",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "echo Skipping @microsoft/fluid-build-common: No build steps necessary."
   },
   "dependencies": {
     "@typescript-eslint/eslint-plugin": "^2.4.0",
