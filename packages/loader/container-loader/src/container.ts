@@ -275,12 +275,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             },
             {
                 clientId: () => this.clientId,
-                socketDocumentId: () => {
-                    return this._deltaManager ? this._deltaManager.socketDocumentId : undefined;
-                },
-                pendingClientId: () => {
-                    return this._connectionState === ConnectionState.Connecting ? this.pendingClientId : undefined;
-                },
             });
 
         // Prefix all events in this file with container-loader
@@ -906,6 +900,14 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                 reason,
             });
             this.firstConnection = false;
+        }
+
+        if (value === ConnectionState.Connecting) {
+            this.logger.sendTelemetryEvent({
+                eventName: "ConnectionStateChange_Connecting",
+                socketDocumentId: this._deltaManager ? this._deltaManager.socketDocumentId : undefined,
+                pendingClientId: this.pendingClientId,
+            });
         }
     }
 

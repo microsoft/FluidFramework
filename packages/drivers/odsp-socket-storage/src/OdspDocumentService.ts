@@ -162,6 +162,7 @@ export class OdspDocumentService implements IDocumentService {
             this.deltasFetchWrapper,
             this.storageManager ? this.storageManager.ops : undefined,
             this.getStorageToken,
+            this.logger,
         );
     }
 

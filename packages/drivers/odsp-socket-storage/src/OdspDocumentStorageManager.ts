@@ -259,6 +259,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                             blobs: odspSnapshot.blobs ? odspSnapshot.blobs.length : 0,
                             ops: odspSnapshot.ops.length,
                             sprequestguid: response.headers.get("sprequestguid"),
+                            sprequestduration: response.headers.get("sprequestduration"),
                             contentsize: response.headers.get("content-length"),
                         };
                         eventInner.end(props);
