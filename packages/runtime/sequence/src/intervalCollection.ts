@@ -587,7 +587,7 @@ export class IntervalCollectionView<TInterval extends ISerializableInterval> ext
 
     /* tslint:disable:no-unnecessary-override */
     public on(
-        event: "addInterval",
+        event: "addInterval" | "clear",
         listener: (interval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage) => void): this {
         return super.on(event, listener);
     }
