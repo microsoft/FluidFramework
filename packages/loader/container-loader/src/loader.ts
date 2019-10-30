@@ -281,8 +281,6 @@ export class Loader extends EventEmitter implements ILoader {
         const factory: IDocumentServiceFactory =
             selectDocumentServiceFactoryForProtocol(resolvedAsFluid, this.protocolToDocumentFactoryMap);
 
-        const documentService: IDocumentService = await factory.createDocumentService(resolvedAsFluid);
-
         let container: Container;
         if (canCache) {
             const versionedId = request.headers.version ? `${parsed.id}@${request.headers.version}` : parsed.id;
@@ -293,7 +291,7 @@ export class Loader extends EventEmitter implements ILoader {
                 const containerP =
                     this.loadContainer(
                         parsed.id,
-                        documentService,
+                        await factory.createDocumentService(resolvedAsFluid),
                         request,
                         resolved,
                         this.logger);
@@ -304,7 +302,7 @@ export class Loader extends EventEmitter implements ILoader {
             container =
                 await this.loadContainer(
                     parsed.id,
-                    documentService,
+                    await factory.createDocumentService(resolvedAsFluid),
                     request,
                     resolved,
                     this.logger);
