@@ -2,26 +2,27 @@
   "name": "@fluid-example/monaco",
   "version": "0.11.0",
   "description": "Monaco code editor",
+  "license": "MIT",
+  "author": "Microsoft",
+  "sideEffects": "false",
   "main": "dist/index.js",
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
-  "sideEffects": "false",
-  "author": "Microsoft",
   "scripts": {
     "build": "concurrently npm:build:compile npm:tslint",
     "build:compile": "concurrently npm:tsc npm:build:esnext",
+    "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile && npm run webpack",
     "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
-    "tsc": "tsc",
-    "build:esnext": "tsc --project ./tsconfig.esnext.json",
-    "tslint": "tslint --project tsconfig.json --format verbose",
+    "deploy": "npm publish --registry https://packages.wu2.prague.office-int.com",
     "start": "webpack-dev-server --config webpack.config.js --package package.json",
-    "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
     "start:live": "webpack-dev-server --config webpack.config.js --package package.json --env.mode live",
+    "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
+    "tsc": "tsc",
+    "tslint": "tslint --project tsconfig.json --format verbose",
     "webpack": "webpack --env.production",
-    "webpack:dev": "webpack --env.development",
-    "deploy": "npm publish --registry https://packages.wu2.prague.office-int.com"
+    "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
     "@microsoft/fluid-aqueduct": "^0.11.0",
@@ -66,6 +67,5 @@
         "library": "main"
       }
     }
-  },
-  "license": "MIT"
+  }
 }

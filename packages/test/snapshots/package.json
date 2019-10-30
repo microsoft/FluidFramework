@@ -2,8 +2,11 @@
   "name": "@microsoft/fluid-test-snapshots",
   "version": "0.11.0",
   "description": "Comprehensive test of snapshot logic.",
-  "main": "dist/generateSnapshotFiles.js",
+  "repository": "microsoft/FluidFramework",
+  "license": "MIT",
+  "author": "Microsoft",
   "sideEffects": "false",
+  "main": "dist/generateSnapshotFiles.js",
   "types": "dist/generateSnapshotFiles.js",
   "scripts": {
     "build": "concurrently npm:build:compile npm:tslint",
@@ -12,14 +15,12 @@
     "build:full:compile": "npm run build:compile",
     "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
     "test": "node --experimental-worker ../../../node_modules/mocha/bin/_mocha --recursive dist/test",
-    "test:sequential": "node ../../../node_modules/mocha/bin/_mocha --recursive dist/test",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
     "test:generate": "node --experimental-worker dist/generateSnapshotFiles.js",
+    "test:sequential": "node ../../../node_modules/mocha/bin/_mocha --recursive dist/test",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
-  "author": "Microsoft",
-  "repository": "microsoft/FluidFramework",
   "dependencies": {
     "@microsoft/fluid-protocol-definitions": "^0.11.0",
     "@microsoft/fluid-replay-tool": "^0.11.0"
@@ -33,6 +34,5 @@
     "rimraf": "^2.6.2",
     "tslint": "^5.11.0",
     "typescript": "~3.4.5"
-  },
-  "license": "MIT"
+  }
 }

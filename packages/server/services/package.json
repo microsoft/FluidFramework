@@ -2,6 +2,9 @@
   "name": "@microsoft/fluid-server-services",
   "version": "0.11.0",
   "description": "Fluid service lambdas",
+  "repository": "microsoft/FluidFramework",
+  "license": "MIT",
+  "author": "Microsoft",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
@@ -13,24 +16,6 @@
     "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose"
-  },
-  "author": "Microsoft",
-  "repository": "microsoft/FluidFramework",
-  "devDependencies": {
-    "@microsoft/fluid-build-common": "^0.11.0",
-    "@types/amqplib": "^0.5.9",
-    "@types/debug": "^0.0.31",
-    "@types/lodash": "^4.14.118",
-    "@types/minio": "^7.0.1",
-    "@types/mongodb": "^3.1.17",
-    "@types/node": "^10.12.12",
-    "@types/redis": "^2.8.8",
-    "@types/socket.io": "^2.1.1",
-    "@types/socket.io-redis": "^1.0.25",
-    "concurrently": "^4.1.0",
-    "rimraf": "^2.6.2",
-    "tslint": "^5.11.0",
-    "typescript": "~3.4.5"
   },
   "dependencies": {
     "@azure/event-hubs": "^1.0.8",
@@ -55,5 +40,20 @@
     "socket.io-redis": "^5.2.0",
     "winston": "^3.1.0"
   },
-  "license": "MIT"
+  "devDependencies": {
+    "@microsoft/fluid-build-common": "^0.11.0",
+    "@types/amqplib": "^0.5.9",
+    "@types/debug": "^0.0.31",
+    "@types/lodash": "^4.14.118",
+    "@types/minio": "^7.0.1",
+    "@types/mongodb": "^3.1.17",
+    "@types/node": "^10.12.12",
+    "@types/redis": "^2.8.8",
+    "@types/socket.io": "^2.1.1",
+    "@types/socket.io-redis": "^1.0.25",
+    "concurrently": "^4.1.0",
+    "rimraf": "^2.6.2",
+    "tslint": "^5.11.0",
+    "typescript": "~3.4.5"
+  }
 }

@@ -2,10 +2,13 @@
   "name": "@microsoft/fluid-aqueduct-react",
   "version": "0.11.0",
   "description": "React support for the Aqueduct framework.",
+  "repository": "microsoft/FluidFramework",
+  "license": "MIT",
+  "author": "Microsoft",
+  "sideEffects": false,
   "main": "dist/index.js",
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
-  "sideEffects": false,
   "scripts": {
     "build": "concurrently npm:build:compile npm:tslint",
     "build:compile": "concurrently npm:tsc npm:build:esnext",
@@ -17,9 +20,6 @@
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
-  "author": "Microsoft",
-  "repository": "microsoft/FluidFramework",
-  "license": "MIT",
   "dependencies": {
     "@microsoft/fluid-component-core-interfaces": "^0.11.0",
     "@microsoft/fluid-map": "^0.11.0",
