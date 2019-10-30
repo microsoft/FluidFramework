@@ -104,10 +104,7 @@ class CounterReactView extends React.Component<p, s> {
     return (
       <div>
         <span className="clicker-value-class" id={`clicker-value-${Date.now().toString()}`}>{this.state.value}</span>
-        <button
-          className="clicker-button-class"
-          id={`clicker-button-${Date.now().toString()}`}
-          onClick={() => { this.props.counter.increment(1); }}>+</button>
+        <button onClick={() => { this.props.counter.increment(1); }}>+</button>
       </div>
     );
   }

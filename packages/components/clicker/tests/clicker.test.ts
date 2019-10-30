@@ -11,35 +11,33 @@ describe("foo", () => {
       await page.goto(globals.PATH, { waitUntil: "load" });
     });
 
-    it("There's a button that can be clicked", async () => {
+    it("There's a button to be clicked", async () => {
+        await expect(page).toClick("button", { text: "+" });
+    });
+
+    it("Clicking the button updates both users", async () => {
       // roll the dice 5 time to see the output
-      const getValue = async () => {
-        return page.evaluate(() => {
+      const getValue = async (index: number) => {
+        return page.evaluate((i: number) => {
             const clickerElements = document.getElementsByClassName("clicker-value-class");
-            const clicker = document.getElementById(clickerElements[0].id);
+            const clicker = document.getElementById(clickerElements[i].id);
             if (clicker) {
                 return clicker.innerText;
             }
 
             return "";
-        });
+        }, index);
       };
 
-      const preValue = await getValue();
+      const preValue = await getValue(0);
       expect(preValue).toEqual("0");
+      const preValue2 = await getValue(1);
+      expect(preValue2).toEqual("0");
       await expect(page).toClick("button", { text: "+" });
 
-      const postValue = await getValue();
+      const postValue = await getValue(0);
       expect(postValue).toEqual("1");
-    });
-
-    it("Clicking the button 5 times syncs the output", async () => {
-      // roll the dice 5 time to see the output
-      await expect(page).toClick("button", { text: "+" });
+      const postValue2 = await getValue(1);
+      expect(postValue2).toEqual("1");
     });
   });
-
-  // const foo = await page.evaluate(() => {
-  //   console.log("foo");
-  //   return "bar";
-  // });
