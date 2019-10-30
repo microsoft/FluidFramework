@@ -89,7 +89,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
             ).catch((error) => {
                 if (hasUrl2) {
                     // tslint:disable-next-line: no-unsafe-any
-                    if (typeof error === "object" && error.canRetry) {
+                    if (error !== null && typeof error === "object" && error.canRetry) {
                         debug(`Socket connection error on non-AFD URL. Error was [${error}]. Retry on AFD URL: ${url}`);
                         logger.sendTelemetryEvent({ eventName: "UseAfdUrl" });
 

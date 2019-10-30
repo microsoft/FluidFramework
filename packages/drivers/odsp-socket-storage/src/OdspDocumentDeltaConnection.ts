@@ -75,7 +75,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
             telemetryLogger,
         ).catch((error) => {
             if (hasUrl2) {
-                if (typeof error === "object" && error.canRetry) {
+                if (error !== null && typeof error === "object" && error.canRetry) {
                     debug(`Socket connection error on non-AFD URL. Error was [${error}]. Retry on AFD URL: ${url}`);
                     telemetryLogger.sendTelemetryEvent({ eventName: "UseAfdUrl" });
 
@@ -161,7 +161,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
                 // Test if it's NetworkError with IOdspSocketError.
                 // Note that there might be no IOdspSocketError on it in case we hit socket.io protocol errors!
                 // So we test canRetry property first - if it false, that means protocol is broken and reconnecting will not help.
-                if (errorObject.canRetry) {
+                if (errorObject !== null && typeof errorObject === "object" && errorObject.canRetry) {
                     const socketError: IOdspSocketError = errorObject.socketError;
                     if (typeof socketError === "object" && socketError !== null) {
                         reject(errorObjectFromOdspError(socketError));
