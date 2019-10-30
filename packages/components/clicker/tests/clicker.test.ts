@@ -3,18 +3,25 @@
  * Licensed under the MIT License.
  */
 
+import { globals } from "../jest.config";
+
 describe("foo", () => {
 
     beforeEach(async () => {
-      await page.goto(PATH, { waitUntil: "load" });
+      await page.goto(globals.PATH, { waitUntil: "load" });
     });
 
     it("There's a button that can be clicked", async () => {
       // roll the dice 5 time to see the output
       const getValue = async () => {
         return page.evaluate(() => {
-            const clicker = document.getElementById("clicker-value");
-            return clicker.innerText;
+            const clickerElements = document.getElementsByClassName("clicker-value-class");
+            const clicker = document.getElementById(clickerElements[0].id);
+            if (clicker) {
+                return clicker.innerText;
+            }
+
+            return "";
         });
       };
 

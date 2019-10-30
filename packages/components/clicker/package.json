@@ -65,6 +65,7 @@
     "webpack-merge": "^4.1.2",
     "jest": "^24.9.0",
     "jest-puppeteer": "^4.3.0",
-    "puppeteer": "^1.20.0"
+    "puppeteer": "^1.20.0",
+    "ts-jest": "24.1.0"
   }
 }
