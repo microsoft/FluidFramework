@@ -124,7 +124,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     private deltaStorageDelay: number | undefined;
     private deltaStreamDelay: number | undefined;
 
-    // collab window tracking. This is timestamp of %1000 message.
+    // collab window tracking. This is timestamp of %2000 message.
     private lastMessageTimeForTelemetry: number | undefined;
 
     public get inbound(): IDeltaQueue<ISequencedDocumentMessage> {
@@ -873,15 +873,12 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         const msnDistance = this.baseSequenceNumber - this.minSequenceNumber;
         if (message.sequenceNumber % 2000 === 0) {
             this.logger.sendTelemetryEvent({
-                eventName: "MSNWindow",
+                eventName: "OpStats",
                 seqNumber: message.sequenceNumber,
                 value: msnDistance,
                 timeDelta: this.lastMessageTimeForTelemetry ?
                     message.timestamp - this.lastMessageTimeForTelemetry : undefined,
             });
-        }
-
-        if (message.sequenceNumber % 1000 === 0) {
             this.lastMessageTimeForTelemetry = message.timestamp;
         }
 

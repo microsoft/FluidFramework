@@ -275,13 +275,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             },
             {
                 clientId: () => this.clientId,
-                socketDocumentId: () => {
-                    return this._connectionState === ConnectionState.Connecting && this._deltaManager ?
-                        this._deltaManager.socketDocumentId : undefined;
-                },
-                pendingClientId: () => {
-                    return this._connectionState === ConnectionState.Connecting ? this.pendingClientId : undefined;
-                },
             });
 
         // Prefix all events in this file with container-loader
@@ -943,6 +936,11 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         // we know there can no longer be outstanding ops that we sent with the previous client id.
         if (value === ConnectionState.Connecting) {
             this.pendingClientId = context;
+            this.logger.sendTelemetryEvent({
+                eventName: "ConnectingStateStats",
+                socketDocumentId: this._deltaManager ? this._deltaManager.socketDocumentId : undefined,
+                pendingClientId: this.pendingClientId,
+            });
         } else if (value === ConnectionState.Connected) {
             this._clientId = this.pendingClientId;
             this._deltaManager!.updateQuorumJoin();
