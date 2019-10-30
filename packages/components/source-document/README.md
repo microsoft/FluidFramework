@@ -29,6 +29,41 @@ TextDocument will need to include facilities for one or more attached Parsers to
 
 ## Document Language
 
+A candidate language structure might be based around 3 core structures. Let `D` denote a document defined as:
+```
+Define D ::= M | [name]: D | [=C]
+Define C as some minimal expression language.
+```
+- Markdown `M`. Inert data that governs the structure and content of the document. This could be a standard markdown language extended to support `[name]: D` and `[=C]` as sub-nodes.
+- Bindings `[name]: D`. Any structure can be bound to a name and names are scoped. This enables direct addressing of sub-structures within a document. For example
+  ```
+  [members]:
+    * [daniel-l]: Daniel
+        [likes]:
+          * FRP
+          * FluidFramework
+        [location]: Redmond
+    * [jack-w]: Jack
+        [likes]:
+          * Calc
+        [location]: Cambridge, UK
+  ```
+  The url `mydoc/members/daniel-l/likes` returns the list `* FRP, * FluidFramework` interpreted as some component. Design note. There is a close connection between titles and name binders, and without care we could introduce alot of noise and duplication. Perhaps give name binders a default rendering semantics to avoid duplicating identical names and titles.
+- Expressions `[=C]`. A simple language that allows referencing of bound names and calculation across those names. An expression should evaluate to a document component. For example `[=members.daniel-l.likes.length]` returns `2` when evaluated at the top-level. _Name resolution semantics needs some work here._
+
+### Questions to consider.
+- What does any given markdown block "evaluate" to. What is the computational structure of a block when referenced via `[=C]`.
+- What does any given document structure render as.
+- What does any given structure externally resolve to when addressed via url.
+
+### References, Calculation and Update.
+How do we model updates and bidirectional editing? What is the difference between:
+```
+[x]: 4
+[=x+1]
+```
+where someone edits the text 4, and something like slider that bidirectionally updates from the text and from ui controls. Do we model the latter as the slider 'writing' into the document? Do we have 'variable' components that map to a fluid cell? Is the state of a 'variable' just in-memory, where the initial value is seeded from the document. If we want collaborators to see the slider updates then there needs to be some persistence into the document.
+
 ## Embedded Code Blocks
 
 ## Parsing

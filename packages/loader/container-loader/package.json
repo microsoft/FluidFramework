@@ -2,46 +2,28 @@
   "name": "@microsoft/fluid-container-loader",
   "version": "0.11.0",
   "description": "Fluid container loader",
+  "repository": "microsoft/FluidFramework",
+  "license": "MIT",
+  "author": "Microsoft",
+  "sideEffects": "false",
   "main": "dist/index.js",
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
-  "sideEffects": "false",
   "scripts": {
     "build": "npm run build:genver && concurrently npm:build:compile npm:tslint",
     "build:compile": "concurrently npm:tsc npm:build:esnext",
+    "build:docs": "api-extractor run --local",
+    "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
-    "build:docs": "api-extractor run --local",
     "build:genver": "node node_modules/@microsoft/fluid-build-common/gen_version.js",
     "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
-    "tsc": "tsc",
-    "tsc:watch": "tsc --watch",
-    "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "test": "mocha --recursive dist/test",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
+    "tsc": "tsc",
+    "tsc:watch": "tsc --watch",
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
-  "nyc": {
-    "all": true,
-    "exclude": [
-      "src/test/**/*.ts",
-      "dist/test/**/*.js"
-    ],
-    "include": [
-      "src/**/*.ts",
-      "dist/**/*.js"
-    ],
-    "reporter": [
-      "cobertura",
-      "html",
-      "text"
-    ],
-    "temp-directory": "nyc/.nyc_output",
-    "cache-dir": "nyc/.cache",
-    "report-dir": "nyc/report"
-  },
-  "author": "Microsoft",
-  "repository": "microsoft/FluidFramework",
   "dependencies": {
     "@microsoft/fluid-component-core-interfaces": "^0.11.0",
     "@microsoft/fluid-container-definitions": "^0.11.0",
@@ -73,5 +55,23 @@
     "tslint": "^5.11.0",
     "typescript": "~3.4.5"
   },
-  "license": "MIT"
+  "nyc": {
+    "all": true,
+    "exclude": [
+      "src/test/**/*.ts",
+      "dist/test/**/*.js"
+    ],
+    "include": [
+      "src/**/*.ts",
+      "dist/**/*.js"
+    ],
+    "reporter": [
+      "cobertura",
+      "html",
+      "text"
+    ],
+    "temp-directory": "nyc/.nyc_output",
+    "cache-dir": "nyc/.cache",
+    "report-dir": "nyc/report"
+  }
 }
