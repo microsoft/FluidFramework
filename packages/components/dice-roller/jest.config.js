@@ -4,5 +4,8 @@ module.exports = {
     PATH: "http://localhost:8080"
   },
   testMatch: ["**/?(*.)+(spec|test).[t]s"],
-	testPathIgnorePatterns: ['/node_modules/', 'dist']
+  testPathIgnorePatterns: ['/node_modules/', 'dist'],
+  transform: {
+		"^.+\\.ts?$": "ts-jest"
+	},
 };

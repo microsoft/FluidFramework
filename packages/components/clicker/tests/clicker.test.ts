@@ -5,7 +5,7 @@
 
 import { globals } from "../jest.config";
 
-describe("foo", () => {
+describe("clicker", () => {
 
     beforeEach(async () => {
       await page.goto(globals.PATH, { waitUntil: "load" });
@@ -16,7 +16,6 @@ describe("foo", () => {
     });
 
     it("Clicking the button updates both users", async () => {
-      // roll the dice 5 time to see the output
       const getValue = async (index: number) => {
         return page.evaluate((i: number) => {
             const clickerElements = document.getElementsByClassName("clicker-value-class");
