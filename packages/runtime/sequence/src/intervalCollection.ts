@@ -288,6 +288,21 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
             };
     }
 
+    public clear(): void {
+        /* 1) Create new interval trees. This requires them to no longer be readonly
+         * this.endIntervalTree = new MergeTree.RedBlackTree<TInterval, TInterval>(this.helpers.compareEnds);
+         * this.intervalTree = new MergeTree.IntervalTree<TInterval>();
+         */
+        /* 2) Clear out all nodes. This is pretty inefficient
+         * this.intervalTree.intervals.keys().forEach((key) => this.intervalTree.intervals.remove(key));
+         * this.intervalTree.map((interval) => this.intervalTree.remove(interval));
+         */
+        this.intervalTree.intervals.keys().forEach((key) => this.intervalTree.intervals.remove(key));
+        this.intervalTree.map((interval) => this.intervalTree.remove(interval));
+        // 3) Am I doing this right?
+        // this.removeInterval(Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER);
+    }
+
     public map(fn: (interval: TInterval) => void) {
         this.intervalTree.map(fn);
     }
@@ -419,6 +434,17 @@ export class SequenceIntervalCollectionValueType
                     value.addInternal(params, local, op);
                 },
             },
+        ],
+        [
+            "clear",
+            {
+                process: (value, params, local, op) => {
+                    if (local) {
+                        return;
+                    }
+                    value.clearInternal();
+                },
+            },
         ]]);
 }
 
@@ -485,6 +511,17 @@ export class IntervalCollectionValueType
                     value.addInternal(params, local, op);
                 },
             },
+        ],
+        [
+            "clear",
+            {
+                process: (value, params, local, op) => {
+                    if (local) {
+                        return;
+                    }
+                    value.clearInternal();
+                },
+            },
         ]]);
 }
 
@@ -521,6 +558,15 @@ export class IntervalCollectionView<TInterval extends ISerializableInterval> ext
 
     public addConflictResolver(conflictResolver: MergeTree.IntervalConflictResolver<TInterval>): void {
         this.localCollection.addConflictResolver(conflictResolver);
+    }
+
+    public clearInternal(): void {
+        this.localCollection.clear();
+    }
+
+    public clear(): void {
+        this.clearInternal();
+        this.emitter.emit("clear", undefined, undefined);
     }
 
     public findOverlappingIntervals(startPosition: number, endPosition: number): TInterval[] {
@@ -655,6 +701,17 @@ export class IntervalCollection<TInterval extends ISerializableInterval> {
 
     public addConflictResolver(conflictResolver: MergeTree.IntervalConflictResolver<TInterval>): void {
         this.view.addConflictResolver(conflictResolver);
+    }
+
+    public clearInternal(): void {
+        this.view.clearInternal();
+    }
+
+    public clear(): void {
+        if (!this.view) {
+            throw new Error("attach must be called prior to clearing intervals");
+        }
+        this.view.clear();
     }
 
     public async getView(onDeserialize?: DeserializeCallback): Promise<IntervalCollectionView<TInterval>> {
