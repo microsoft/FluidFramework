@@ -3,9 +3,13 @@
  * Licensed under the MIT License.
  */
 
+export interface IRequestHeader {
+    [index: string]: any;
+}
+
 export interface IRequest {
     url: string;
-    headers?: { [key: string]: any };
+    headers?: IRequestHeader;
 }
 
 export interface IResponse {
