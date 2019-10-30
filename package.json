@@ -18,6 +18,7 @@
     "postinstall:lerna": "lerna bootstrap --hoist --nohoist tslint-microsoft-contrib",
     "postinstall:fluid-build": "cd tools/fluid-build && npm i && npm run build",
     "publish-local": "lerna run publish-local --stream",
+    "sort-package-json": "lerna exec -- sort-package-json ./package.json",
     "test": "lerna run test --stream --no-bail --no-sort",
     "test:report": "lerna run test --stream --no-bail --no-sort -- -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
     "test:coverage": "nyc npm run test:report",
@@ -53,6 +54,7 @@
     "lerna": "^3.14.1",
     "nyc": "^14.1.1",
     "rimraf": "^2.6.2",
+    "sort-package-json": "^1.22.1",
     "typescript": "~3.4.5"
   },
   "dependencies": {},
