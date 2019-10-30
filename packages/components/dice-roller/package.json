@@ -22,7 +22,8 @@
     "tslint": "tslint --project tsconfig.json --format verbose",
     "webpack": "webpack --env.production",
     "webpack:dev": "webpack --env.development",
-    "test": "jest"
+    "test": "jest --env=production",
+    "test:browser": "jest --runInBand"
   },
   "fluid": {
     "browser": {
