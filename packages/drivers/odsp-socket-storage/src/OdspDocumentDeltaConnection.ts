@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
-import { NetworkError, TelemetryNullLogger } from "@microsoft/fluid-core-utils";
+import { TelemetryNullLogger } from "@microsoft/fluid-core-utils";
 import { createErrorObject, DocumentDeltaConnection, IConnect, IConnected } from "@microsoft/fluid-driver-base";
 import {
     ConnectionMode,
@@ -134,8 +134,8 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
                 // Test if it's NetworkError with IOdspSocketError.
                 // Note that there might be no IOdspSocketError on it in case we hit socket.io protocol errors!
                 // So we test canRetry property first - if it false, that means protocol is broken and reconnecting will not help.
-                if (errorObject instanceof NetworkError && errorObject.canRetry) {
-                    const socketError: IOdspSocketError = (errorObject as any).socketError;
+                if (errorObject !== null && typeof errorObject === "object" && errorObject.canRetry) {
+                    const socketError: IOdspSocketError = errorObject.socketError;
                     if (typeof socketError === "object" && socketError !== null) {
                         reject(errorObjectFromOdspError(socketError));
                         return;
