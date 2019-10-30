@@ -79,9 +79,9 @@ export function fetchHelper(
 }
 
 export function getWithRetryForTokenRefresh<T>(get: (refresh: boolean) => Promise<T>) {
-    return get(false).catch(async (e: NetworkError) => {
+    return get(false).catch(async (e) => {
         // if the error is 401 or 403 refresh the token and try once more.
-        if (e instanceof NetworkError && ((e as any).statusCode === 401 || (e as any).statusCode === 403)) {
+        if (e.statusCode === 401 || e.statusCode === 403) {
             return get(true);
         }
 

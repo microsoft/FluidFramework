@@ -13,15 +13,15 @@ export class NetworkError extends Error implements INetworkError {
 
     constructor(
             errorMessage: string,
-            customProperties: any[][]) {
+            customProperties: [string, any][]) {
         super(errorMessage);
         for (const [key, val] of customProperties) {
-            Object.defineProperty(NetworkError.prototype, key as string, {
+            Object.defineProperty(NetworkError.prototype, key, {
                 get: () => {
                     return val;
                 },
             });
-            this.customProperties.set(key as string, val);
+            this.customProperties.set(key, val);
         }
     }
 

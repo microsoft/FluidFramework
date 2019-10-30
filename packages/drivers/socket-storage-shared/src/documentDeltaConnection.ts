@@ -31,13 +31,14 @@ export function createErrorObject(handler: string, error: any, canRetry = true) 
     // If it's not (and it's an object), we would not get its content.
     // That is likely Ok, as it may contain PII that will get logged to telemetry,
     // so we do not want it there.
+    /// Also add actual error object(socketError), for driver to be able to parse it and reason over it.
     const errorObj = new NetworkError(
         `socket.io error: ${handler}: ${error}`,
-        [[INetworkErrorProperties.canRetry, canRetry]],
+        [
+            [INetworkErrorProperties.canRetry, canRetry],
+            ["socketError", error],
+        ],
     );
-
-    // Add actual error object, for driver to be able to parse it and reason over it.
-    (errorObj as any).socketError = error;
 
     return errorObj;
 }
@@ -86,8 +87,9 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
                 hasUrl2 ? 15000 : 20000,
             // tslint:disable-next-line: promise-function-async
             ).catch((error) => {
-                if (error instanceof NetworkError && hasUrl2) {
-                    if ((error as any).canRetry) {
+                if (hasUrl2) {
+                    // tslint:disable-next-line: no-unsafe-any
+                    if (typeof error === "object" && error.canRetry) {
                         debug(`Socket connection error on non-AFD URL. Error was [${error}]. Retry on AFD URL: ${url}`);
                         logger.sendTelemetryEvent({ eventName: "UseAfdUrl" });
 
