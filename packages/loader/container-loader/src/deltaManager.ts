@@ -11,7 +11,11 @@ import {
     IProcessMessageResult,
     ITelemetryLogger,
 } from "@microsoft/fluid-container-definitions";
-import { Deferred, isSystemType, PerformanceEvent } from "@microsoft/fluid-core-utils";
+import {
+    Deferred,
+    isSystemType,
+    PerformanceEvent,
+} from "@microsoft/fluid-core-utils";
 import {
     Browser,
     ConnectionMode,
@@ -418,7 +422,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             let deltasRetrievedLast = 0;
             let success = true;
             let canRetry = false;
-            let retryAfter: number = 0;
+            let retryAfter: number = -1;
 
             try {
                 // Connect to the delta storage endpoint

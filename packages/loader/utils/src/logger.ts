@@ -45,8 +45,8 @@ export class BaseTelemetryNullLogger implements ITelemetryBaseLogger {
 export abstract class TelemetryLogger implements ITelemetryLogger {
     public static readonly eventNamespaceSeparator = ":";
 
-    public static formatTick(tick: number): string {
-        return tick.toFixed(0);
+    public static formatTick(tick: number): number {
+        return Math.floor(tick);
     }
 
     public static sanitizePkgName(name: string) {
@@ -67,7 +67,11 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
             // Same for message if there is one (see Error object).
             event.stack = errorAsObject.stack;
             event.error = errorAsObject.message;
-            event.statusCode = errorAsObject.statusCode;
+            // tslint:disable-next-line: no-unsafe-any
+            if (error.getCustomProperties) {
+                // tslint:disable-next-line: no-parameter-reassignment no-unsafe-any
+                event = { ...event, ...error.getCustomProperties() };
+            }
         }
 
         // Collect stack if we were not able to extract it from error
