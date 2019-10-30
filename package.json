@@ -43,13 +43,12 @@
     "test:report": "lerna run test --stream --no-bail --no-sort -- -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
     "tsc": "lerna run tsc --stream",
     "tslint": "lerna run tslint --no-sort --stream",
-    "eslint": "lerna run eslint --no-sort --stream",
+    "update-package-json": "node lerna-exec.js --stream --scope=@microsoft/fluid-cell --ignore @microsoft/fluid-build-common --ignore @microsoft/eslint-config-fluid --ignore @microsoft/fluid-odsp-utils /packages/utils/build-common/update-package-json.js",
     "watch": "concurrently \"npm run watch:tsc\" \"npm run watch:esnext\" \"npm run watch:webpack\"",
     "watch:esnext": "lerna run --parallel build:esnext -- -- --watch",
     "watch:tsc": "lerna run --parallel tsc -- -- --watch",
     "watch:webpack": "lerna run --parallel webpack -- -- --watch",
-    "webpack": "lerna run --parallel webpack --stream",
-    "update-package-json": "node lerna-exec.js --stream --scope=@microsoft/fluid-cell --ignore @microsoft/fluid-build-common --ignore @microsoft/eslint-config-fluid --ignore @microsoft/fluid-odsp-utils /packages/utils/build-common/update-package-json.js"
+    "webpack": "lerna run --parallel webpack --stream"
   },
   "dependencies": {},
   "devDependencies": {
