@@ -11,7 +11,8 @@ declare module "@microsoft/fluid-component-core-interfaces" {
 
 export type ComponentRegistryEntry = Readonly<Partial<IProvideComponentRegistry & IProvideComponentFactory>>;
 
-export type NamedComponentRegistryEntries = Iterable<[string, Promise<ComponentRegistryEntry>]>;
+export type NamedComponentRegistryEntries =
+    Iterable<[string, Promise<ComponentRegistryEntry> | (() => Promise<ComponentRegistryEntry>)]>;
 
 export interface IProvideComponentRegistry {
     IComponentRegistry: IComponentRegistry;

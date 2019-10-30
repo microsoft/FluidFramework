@@ -10,22 +10,28 @@ import {
 
 export class ComponentRegistry implements IComponentRegistry {
 
-    private readonly map: Map<string, Promise<ComponentRegistryEntry>>;
+    private readonly map: Map<string, Promise<ComponentRegistryEntry> | (() => Promise<ComponentRegistryEntry>)>;
 
     public get IComponentRegistry() { return this; }
 
     constructor(namedEntries: NamedComponentRegistryEntries) {
 
-        const mapEntries: [string, Promise<ComponentRegistryEntry>][] = [];
-        for (const entry of namedEntries) {
-            if (entry !== undefined) {
-                mapEntries.push(entry);
-            }
-        }
-        this.map = new Map(mapEntries);
+        this.map =
+        new Map<string, Promise<ComponentRegistryEntry> | (() => Promise<ComponentRegistryEntry>)>(
+            namedEntries);
     }
 
     public async get(name: string): Promise<ComponentRegistryEntry | undefined> {
-        return this.map.get(name);
+
+        if (this.map.has(name)) {
+            const entry = this.map.get(name);
+            if (typeof entry === "function") {
+                return entry();
+            } else {
+                return entry;
+            }
+        }
+
+        return undefined;
     }
 }
