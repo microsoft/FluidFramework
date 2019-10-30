@@ -2,12 +2,15 @@
   "name": "@microsoft/fluid-replay-tool",
   "version": "0.11.0",
   "description": "A tool that lets the user to replay ops.",
+  "repository": "microsoft/FluidFramework",
+  "license": "MIT",
+  "author": "Microsoft",
+  "sideEffects": "false",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
     "replayTool": "bin/replayTool"
   },
-  "sideEffects": "false",
   "scripts": {
     "build": "concurrently npm:build:compile npm:tslint",
     "build:compile": "tsc",
@@ -18,8 +21,6 @@
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
-  "author": "Microsoft",
-  "repository": "microsoft/FluidFramework",
   "dependencies": {
     "@fluid-internal/client-api": "^0.11.0",
     "@microsoft/fluid-component-core-interfaces": "^0.11.0",
@@ -38,6 +39,5 @@
     "rimraf": "^2.6.2",
     "tslint": "^5.11.0",
     "typescript": "~3.4.5"
-  },
-  "license": "MIT"
+  }
 }

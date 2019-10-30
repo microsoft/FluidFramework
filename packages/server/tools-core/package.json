@@ -2,9 +2,12 @@
   "name": "@microsoft/fluid-server-tools-core",
   "version": "0.11.0",
   "description": "Fluid service lambdas",
+  "repository": "microsoft/FluidFramework",
+  "license": "MIT",
+  "author": "Microsoft",
+  "sideEffects": false,
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "sideEffects": false,
   "scripts": {
     "build": "npm run build:genver && concurrently npm:build:compile npm:tslint",
     "build:compile": "npm run tsc",
@@ -14,21 +17,6 @@
     "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose"
-  },
-  "author": "Microsoft",
-  "repository": "microsoft/FluidFramework",
-  "devDependencies": {
-    "@microsoft/fluid-build-common": "^0.11.0",
-    "@types/async": "^2.0.50",
-    "@types/debug": "^0.0.31",
-    "@types/jsonwebtoken": "^8.3.0",
-    "@types/lodash": "^4.14.118",
-    "@types/node": "^10.12.12",
-    "@types/randomstring": "^1.1.6",
-    "concurrently": "^4.1.0",
-    "rimraf": "^2.6.2",
-    "tslint": "^5.11.0",
-    "typescript": "~3.4.5"
   },
   "dependencies": {
     "@fluid-internal/client-api": "^0.11.0",
@@ -49,5 +37,17 @@
     "lodash": "^4.17.11",
     "randomstring": "^1.1.5"
   },
-  "license": "MIT"
+  "devDependencies": {
+    "@microsoft/fluid-build-common": "^0.11.0",
+    "@types/async": "^2.0.50",
+    "@types/debug": "^0.0.31",
+    "@types/jsonwebtoken": "^8.3.0",
+    "@types/lodash": "^4.14.118",
+    "@types/node": "^10.12.12",
+    "@types/randomstring": "^1.1.6",
+    "concurrently": "^4.1.0",
+    "rimraf": "^2.6.2",
+    "tslint": "^5.11.0",
+    "typescript": "~3.4.5"
+  }
 }

@@ -2,62 +2,44 @@
   "name": "@microsoft/fluid-server-routerlicious",
   "version": "0.11.0",
   "description": "Server to assign sequence numbers and route deltas between connected clients",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "repository": "microsoft/FluidFramework",
+  "license": "MIT",
+  "author": "Microsoft",
   "sideEffects": false,
+  "main": "dist/index.js",
+  "browser": {
+    "request": "xhr"
+  },
+  "types": "dist/index.d.ts",
   "scripts": {
-    "clean": "rimraf dist *.tsbuildinfo package-deps.json *.build.log",
+    "alfred": "node dist/alfred/www.js",
+    "alfred:debug": "node --inspect=0.0.0.0:5858 dist/alfred/www.js",
+    "beast": "npm test -- --beast --grep beastTest",
     "build": "concurrently npm:build:compile npm:tslint",
     "build:compile": "npm run tsc",
     "build:full": "npm run build",
     "build:full:compile": "concurrently npm:build:compile",
-    "alfred": "node dist/alfred/www.js",
-    "alfred:debug": "node --inspect=0.0.0.0:5858 dist/alfred/www.js",
+    "clean": "rimraf dist *.tsbuildinfo package-deps.json *.build.log",
+    "copier": "node dist/copier/index.js",
+    "copier:debug": "node --inspect=0.0.0.0:5858 dist/copier/index.js",
     "deli": "node dist/deli/index.js",
     "deli:debug": "node --inspect=0.0.0.0:5858 dist/deli/index.js",
     "docker-run": "docker run --rm -v $(pwd):/usr/src/server -w /usr/src/server node:8.14.0-slim",
+    "foreman": "node dist/foreman/index.js",
+    "foreman:debug": "node --inspect=0.0.0.0:5858 dist/foreman/index.js",
     "paparazzi": "node dist/paparazzi/index.js",
     "paparazzi:debug": "node --inspect=0.0.0.0:5858 dist/paparazzi/index.js",
     "scriptorium": "node dist/scriptorium/index.js",
     "scriptorium:debug": "node --inspect=0.0.0.0:5858 dist/scriptorium/index.js",
-    "copier": "node dist/copier/index.js",
-    "copier:debug": "node --inspect=0.0.0.0:5858 dist/copier/index.js",
-    "foreman": "node dist/foreman/index.js",
-    "foreman:debug": "node --inspect=0.0.0.0:5858 dist/foreman/index.js",
     "test": "mocha --recursive dist/test",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
     "tsc": "tsc",
-    "tslint": "tslint --project tsconfig.json --format verbose",
-    "beast": "npm test -- --beast --grep beastTest"
-  },
-  "author": "Microsoft",
-  "repository": "microsoft/FluidFramework",
-  "browser": {
-    "request": "xhr"
-  },
-  "nyc": {
-    "all": true,
-    "exclude": [
-      "src/test/**/*.ts",
-      "dist/test/**/*.js"
-    ],
-    "include": [
-      "src/**/*.ts",
-      "dist/**/*.js"
-    ],
-    "reporter": [
-      "cobertura",
-      "html",
-      "text"
-    ],
-    "temp-directory": "nyc/.nyc_output",
-    "cache-dir": "nyc/.cache",
-    "report-dir": "nyc/report"
+    "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "dependencies": {
-    "@microsoft/fluid-container-definitions": "^0.11.0",
     "@fluid-internal/client-api": "^0.11.0",
     "@microsoft/fluid-component-core-interfaces": "^0.11.0",
+    "@microsoft/fluid-container-definitions": "^0.11.0",
     "@microsoft/fluid-core-utils": "^0.11.0",
     "@microsoft/fluid-driver-base": "^0.11.0",
     "@microsoft/fluid-gitresources": "^0.11.0",
@@ -148,5 +130,23 @@
     "url-loader": "^1.1.1",
     "ws": "^6.1.2"
   },
-  "license": "MIT"
+  "nyc": {
+    "all": true,
+    "exclude": [
+      "src/test/**/*.ts",
+      "dist/test/**/*.js"
+    ],
+    "include": [
+      "src/**/*.ts",
+      "dist/**/*.js"
+    ],
+    "reporter": [
+      "cobertura",
+      "html",
+      "text"
+    ],
+    "temp-directory": "nyc/.nyc_output",
+    "cache-dir": "nyc/.cache",
+    "report-dir": "nyc/report"
+  }
 }
