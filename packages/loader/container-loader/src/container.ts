@@ -901,6 +901,14 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             });
             this.firstConnection = false;
         }
+
+        if (value === ConnectionState.Connecting) {
+            this.logger.sendTelemetryEvent({
+                eventName: "ConnectionStateChange_Connecting",
+                socketDocumentId: this._deltaManager ? this._deltaManager.socketDocumentId : undefined,
+                pendingClientId: this.pendingClientId,
+            });
+        }
     }
 
     private setConnectionState(value: ConnectionState.Disconnected, reason: string);
@@ -936,11 +944,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         // we know there can no longer be outstanding ops that we sent with the previous client id.
         if (value === ConnectionState.Connecting) {
             this.pendingClientId = context;
-            this.logger.sendTelemetryEvent({
-                eventName: "ConnectingStateStats",
-                socketDocumentId: this._deltaManager ? this._deltaManager.socketDocumentId : undefined,
-                pendingClientId: this.pendingClientId,
-            });
         } else if (value === ConnectionState.Connected) {
             this._clientId = this.pendingClientId;
             this._deltaManager!.updateQuorumJoin();
