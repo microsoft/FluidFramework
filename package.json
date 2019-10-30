@@ -27,7 +27,7 @@
     "postinstall:r11s": "cd server/routerlicious && npm run registryAuth",
     "publish-local": "lerna run publish-local --stream",
     "restart": "cd server/routerlicious && npm run restart",
-    "sort-package-json": "lerna exec -- sort-package-json ./package.json",
+    "sort-package-json": "sort-package-json ./package.json && lerna exec -- sort-package-json ./package.json",
     "start": "cd server/routerlicious && npm run start",
     "start:debug": "cd server/routerlicious && npm run start:debug",
     "stop": "cd server/routerlicious && npm run stop",
