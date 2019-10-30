@@ -94,9 +94,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
     }
 
     public async register(...taskUrls: string[]): Promise<void> {
-        if (!this.runtime.connected) {
-            return Promise.reject(`Client is not connected`);
-        }
+        await this.waitForFullConnection();
         for (const taskUrl of taskUrls) {
             if (this.registeredTasks.has(taskUrl)) {
                 return Promise.reject(`${taskUrl} is already registered`);
@@ -115,10 +113,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
     }
 
     public async pick(taskId: string, worker: boolean): Promise<void> {
-        if (!this.runtime.connected) {
-            return Promise.reject(`Client is not connected`);
-        }
-
+        await this.waitForFullConnection();
         if (this.localTasks.has(taskId)) {
             return Promise.reject(`${taskId} is already attempted`);
         }
@@ -132,9 +127,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
     }
 
     public async release(...taskUrls: string[]): Promise<void> {
-        if (!this.runtime.connected) {
-            return Promise.reject(`Client is not connected`);
-        }
+        await this.waitForFullConnection();
         for (const taskUrl of taskUrls) {
             if (!this.localTasks.has(taskUrl)) {
                 return Promise.reject(`${taskUrl} was never registered`);

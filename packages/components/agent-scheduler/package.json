@@ -1,56 +1,28 @@
 {
   "name": "@microsoft/fluid-agent-scheduler",
-  "description": "Component in charge of distributing agents across instances of a component",
   "version": "0.11.0",
-  "author": "Microsoft",
+  "description": "Component in charge of distributing agents across instances of a component",
   "repository": "microsoft/FluidFramework",
+  "license": "MIT",
+  "author": "Microsoft",
+  "sideEffects": false,
   "main": "dist/index.js",
   "module": "lib/index.js",
-  "sideEffects": false,
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "concurrently npm:build:compile npm:tslint",
     "build:compile": "concurrently npm:tsc npm:build:esnext",
+    "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
-    "tsc": "tsc",
-    "build:esnext": "tsc --project ./tsconfig.esnext.json",
-    "tslint": "tslint --project tsconfig.json --format verbose",
     "dev": "npm run build:dev -- --watch",
     "publish-local": "npm publish --registry http://localhost:4873",
-    "publish-wu2": "npm run build && npm publish --registry https://packages.wu2.prague.office-int.com",
     "publish-patch-local": "npm version patch && npm run publish-local",
-    "republish": "docker-compose stop verdaccio && docker-compose rm -f -v verdaccio && docker-compose create --force-recreate verdaccio && docker-compose start verdaccio && npm run publish-local"
-  },
-  "nyc": {
-    "all": true,
-    "exclude": [
-      "src/test/**/*.ts",
-      "dist/test/**/*.js"
-    ],
-    "include": [
-      "src/**/*.ts",
-      "dist/**/*.js"
-    ],
-    "reporter": [
-      "cobertura",
-      "html",
-      "text"
-    ],
-    "temp-directory": "nyc/.nyc_output",
-    "cache-dir": "nyc/.cache",
-    "report-dir": "nyc/report"
-  },
-  "fluid": {
-    "browser": {
-      "umd": {
-        "files": [
-          "dist/main.bundle.js"
-        ],
-        "library": "main"
-      }
-    }
+    "publish-wu2": "npm run build && npm publish --registry https://packages.wu2.prague.office-int.com",
+    "republish": "docker-compose stop verdaccio && docker-compose rm -f -v verdaccio && docker-compose create --force-recreate verdaccio && docker-compose start verdaccio && npm run publish-local",
+    "tsc": "tsc",
+    "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "dependencies": {
     "@microsoft/fluid-component-core-interfaces": "^0.11.0",
@@ -80,5 +52,33 @@
     "webpack-cli": "^3.1.2",
     "webpack-merge": "^4.1.2"
   },
-  "license": "MIT"
+  "fluid": {
+    "browser": {
+      "umd": {
+        "files": [
+          "dist/main.bundle.js"
+        ],
+        "library": "main"
+      }
+    }
+  },
+  "nyc": {
+    "all": true,
+    "exclude": [
+      "src/test/**/*.ts",
+      "dist/test/**/*.js"
+    ],
+    "include": [
+      "src/**/*.ts",
+      "dist/**/*.js"
+    ],
+    "reporter": [
+      "cobertura",
+      "html",
+      "text"
+    ],
+    "temp-directory": "nyc/.nyc_output",
+    "cache-dir": "nyc/.cache",
+    "report-dir": "nyc/report"
+  }
 }

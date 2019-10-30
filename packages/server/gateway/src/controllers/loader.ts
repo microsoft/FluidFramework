@@ -180,4 +180,6 @@ export async function initialize(
     if (!container.existing) {
         await initializeChaincode(container, pkg);
     }
+
+    return container;
 }

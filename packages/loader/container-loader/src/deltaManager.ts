@@ -11,7 +11,11 @@ import {
     IProcessMessageResult,
     ITelemetryLogger,
 } from "@microsoft/fluid-container-definitions";
-import { Deferred, isSystemType, PerformanceEvent } from "@microsoft/fluid-core-utils";
+import {
+    Deferred,
+    isSystemType,
+    PerformanceEvent,
+} from "@microsoft/fluid-core-utils";
 import {
     Browser,
     ConnectionMode,
@@ -124,9 +128,8 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     private deltaStorageDelay: number | undefined;
     private deltaStreamDelay: number | undefined;
 
-    // collab window tracking.
-    // Start with 50 not to record anything below 50 (= 30 + 20).
-    private collabWindowMax = 30;
+    // collab window tracking. This is timestamp of %2000 message.
+    private lastMessageTimeForTelemetry: number | undefined;
 
     public get inbound(): IDeltaQueue<ISequencedDocumentMessage> {
         return this._inbound;
@@ -419,7 +422,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             let deltasRetrievedLast = 0;
             let success = true;
             let canRetry = false;
-            let retryAfter: number = 0;
+            let retryAfter: number = -1;
 
             try {
                 // Connect to the delta storage endpoint
@@ -870,11 +873,17 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         assert.equal(message.sequenceNumber, this.baseSequenceNumber + 1);
         this.baseSequenceNumber = message.sequenceNumber;
 
-        // record collab window max size, in 20 increments.
+        // record collab window max size after every 2000th op.
         const msnDistance = this.baseSequenceNumber - this.minSequenceNumber;
-        if (this.collabWindowMax + 20 < msnDistance) {
-            this.collabWindowMax = msnDistance;
-            this.logger.sendTelemetryEvent({ eventName: "MSNWindow", value: msnDistance });
+        if (message.sequenceNumber % 2000 === 0) {
+            this.logger.sendTelemetryEvent({
+                eventName: "OpStats",
+                seqNumber: message.sequenceNumber,
+                value: msnDistance,
+                timeDelta: this.lastMessageTimeForTelemetry ?
+                    message.timestamp - this.lastMessageTimeForTelemetry : undefined,
+            });
+            this.lastMessageTimeForTelemetry = message.timestamp;
         }
 
         this.handler!.process(

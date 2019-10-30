@@ -265,6 +265,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         // create logger for components to use
         this.subLogger = DebugLogger.mixinDebugLogger(
             "fluid:telemetry",
+            logger,
             {
                 documentId: this.id,
                 package: {
@@ -272,7 +273,9 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                     version: pkgVersion,
                 },
             },
-            logger);
+            {
+                clientId: () => this.clientId,
+            });
 
         // Prefix all events in this file with container-loader
         this.logger = ChildLogger.create(this.subLogger, "Container");
@@ -872,14 +875,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     }
 
     private logConnectionStateChangeTelemetry(value: ConnectionState, reason: string) {
-        // We do not have good correlation ID to match server activity.
-        // Add couple IDs here
-        this.subLogger.setProperties({
-            clientId: this.clientId,
-            socketDocumentId: this._deltaManager!.socketDocumentId,
-            pendingClientId: value === ConnectionState.Connecting ? this.pendingClientId : undefined,
-        });
-
         // Log actual event
         const time = performanceNow();
         this.connectionTransitionTimes[value] = time;
@@ -905,6 +900,14 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                 reason,
             });
             this.firstConnection = false;
+        }
+
+        if (value === ConnectionState.Connecting) {
+            this.logger.sendTelemetryEvent({
+                eventName: "ConnectionStateChange_Connecting",
+                socketDocumentId: this._deltaManager ? this._deltaManager.socketDocumentId : undefined,
+                pendingClientId: this.pendingClientId,
+            });
         }
     }
 
