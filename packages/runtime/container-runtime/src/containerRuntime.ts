@@ -745,12 +745,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         }
     }
 
-    public prepare(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
-        return this.context.IMessageScheduler
-            ? Promise.reject("Scheduler assumes only process")
-            : Promise.resolve();
-    }
-
     public process(message: ISequencedDocumentMessage, local: boolean) {
         this.verifyNotClosed();
 
