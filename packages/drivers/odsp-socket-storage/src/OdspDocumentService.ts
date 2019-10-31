@@ -22,11 +22,11 @@ import { OdspDeltaStorageService } from "./OdspDeltaStorageService";
 import { OdspDocumentDeltaConnection } from "./OdspDocumentDeltaConnection";
 import { OdspDocumentStorageManager } from "./OdspDocumentStorageManager";
 import { OdspDocumentStorageService } from "./OdspDocumentStorageService";
+import { isLocalStorageAvailable } from "./OdspUtils";
 import { getSocketStorageDiscovery } from "./Vroom";
 
 const afdUrlConnectExpirationMs = 6 * 60 * 60 * 1000; // 6 hours
 const lastAfdConnectionTimeMsKey = "LastAfdConnectionTimeMs";
-const localStorageTestKey = "LocalStorageTestKey";
 
 /**
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected
@@ -109,7 +109,7 @@ export class OdspDocumentService implements IDocumentService {
             ),
         );
 
-        this.localStorageAvailable = this.testLocalStorageAvailability();
+        this.localStorageAvailable = isLocalStorageAvailable();
     }
 
     /**
@@ -196,21 +196,6 @@ export class OdspDocumentService implements IDocumentService {
 
     public getErrorTrackingService(): IErrorTrackingService {
         return { track: () => null };
-    }
-
-    /**
-     * Tests if localStorage is usable.
-     * Should we move this outside to a library?
-     */
-    private testLocalStorageAvailability(): boolean {
-        try {
-            localStorage.setItem(localStorageTestKey, "v");
-            localStorage.removeItem(localStorageTestKey);
-            return true;
-        } catch (e) {
-            debug(`LocalStorage not available due to ${e}`);
-            return false;
-        }
     }
 
     /**
