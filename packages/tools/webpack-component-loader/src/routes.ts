@@ -59,7 +59,7 @@ const fluid = (req: express.Request, res: express.Response,  baseDir: string, op
     <title>${documentId}</title>
 </head>
 <body>
-    <div id="content" style="width: 100%; min-height: 100vh; display: flex; position: relative">
+    <div id="content" style="width: 100%; min-height: 100vh; display: flex; position: relative; overflow: hidden">
     </div>
 
     <script src="/node_modules/@microsoft/fluid-webpack-component-loader/dist/fluid-loader.bundle.js"></script>
