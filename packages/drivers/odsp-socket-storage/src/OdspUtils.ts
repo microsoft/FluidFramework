@@ -104,7 +104,6 @@ export function errorObjectFromOdspError(socketError: IOdspSocketError) {
             [INetworkErrorProperties.retryAfterSeconds, socketError.retryAfter],
         ],
     );
-}
 
 /**
  * Tests if localStorage is usable.
