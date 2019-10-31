@@ -1,7 +1,8 @@
 {{<layout}}
 
 {{$content}}
-    <div id="content"></div>
+    <div id="content" style="flex: 1 1 auto; position: relative; overflow: hidden">
+
 {{/content}}
 
 {{$scripts}}

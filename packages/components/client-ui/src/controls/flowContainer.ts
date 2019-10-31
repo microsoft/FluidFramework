@@ -61,6 +61,7 @@ export class FlowContainer extends ui.Component {
 
         // Title bar at the top
         const titleDiv = document.createElement("div");
+        titleDiv.id = "title-bar";
         this.title = new Title(titleDiv);
         this.title.setTitle(this.collabDocument.id);
         this.title.setBackgroundColor(this.collabDocument.id);
@@ -77,6 +78,7 @@ export class FlowContainer extends ui.Component {
 
         // Layer panel lets us put the canvas on top of the text
         const layerPanelDiv = document.createElement("div");
+        layerPanelDiv.id = "layer-panel";
         this.layerPanel = new LayerPanel(layerPanelDiv);
 
         // Create the correct inking canvas

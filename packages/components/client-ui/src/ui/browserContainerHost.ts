@@ -58,16 +58,17 @@ export class BrowserContainerHost {
 
     private resize() {
         let clientRect;
+        let newSize;
         if (this.parent) {
             clientRect = this.parent.getBoundingClientRect();
+            newSize = Rectangle.fromClientRect(clientRect);
+            // assume parent div is containing block and we want to render at its top-leftmost
+            newSize.x = 0;
+            newSize.y = 0;
         } else {
             clientRect = document.body.getBoundingClientRect();
+            newSize = Rectangle.fromClientRect(clientRect);
         }
-        const newSize = Rectangle.fromClientRect(clientRect);
-        newSize.width -= newSize.x;
-        // newSize.height -= newSize.y;
-        newSize.x = 0;
-        newSize.y = 0;
         newSize.conformElement(this.root.element);
         this.root.resize(newSize);
     }

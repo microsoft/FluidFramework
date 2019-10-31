@@ -12,7 +12,6 @@ export class Title extends ui.Component {
 
     constructor(element: HTMLDivElement) {
         super(element);
-        element.id = "title-bar";
         this.viewportDiv = document.createElement("div");
         this.element.appendChild(this.viewportDiv);
         this.viewportDiv.classList.add("title-bar");
