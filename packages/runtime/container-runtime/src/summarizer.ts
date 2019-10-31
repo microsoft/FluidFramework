@@ -77,8 +77,7 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
             return;
         }
 
-        // need to wait until we are connected to get config
-        const config = this.configurationGetter();
+        this.summaryDds.setClientId(this.runtime.clientId);
 
         // initialize values and first ack (time is not exact)
         const maybeInitialAck = await this.summaryDds.waitInitialized();
@@ -110,7 +109,7 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
             onBehalfOf,
             this.logger,
             this.summaryDds,
-            config,
+            this.configurationGetter(),
             () => this.tryGenerateSummary(),
             (ack) => this.handleSuccessfulSummary(ack),
             initialHeuristics,
@@ -220,13 +219,13 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
     }
 }
 
-interface ISummaryAttempt {
+export interface ISummaryAttempt {
     readonly refSequenceNumber: number;
     readonly summaryTime: number;
     summarySequenceNumber?: number;
 }
 
-class SummarizerHeuristics {
+export class SummarizerHeuristics {
     public lastSent: ISummaryAttempt;
     private _lastAcked: ISummaryAttempt;
     public get lastAcked(): ISummaryAttempt {
@@ -254,7 +253,7 @@ class SummarizerHeuristics {
     }
 }
 
-class RunningSummarizer {
+export class RunningSummarizer {
     public static async start(
         clientId: string,
         onBehalfOfClientId: string,
@@ -449,7 +448,7 @@ class RunningSummarizer {
 
         this.pendingCanceller = new Deferred<void>();
         this.pendingAckTimer.start();
-        const summary = this.summaryDataStructure.addLocalSummary(this.clientId, summaryData.clientSequenceNumber);
+        const summary = this.summaryDataStructure.addLocalSummary(summaryData.clientSequenceNumber);
 
         // wait for broadcast
         const summaryOp = await Promise.race([summary.waitBroadcast(), this.pendingCanceller.promise]);

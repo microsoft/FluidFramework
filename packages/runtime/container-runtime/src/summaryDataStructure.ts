@@ -140,7 +140,9 @@ export class SummaryDataStructure {
     private lastAck?: IAckedSummary;
 
     private initialized = false;
+    private _clientId: string;
     public get isInitialized() { return this.initialized; }
+    public get clientId() { return this._clientId; }
 
     public constructor(
         public readonly initialSequenceNumber: number,
@@ -150,6 +152,11 @@ export class SummaryDataStructure {
             this.initialized = true;
             this.initialAck.resolve();
         }
+    }
+
+    public setClientId(clientId: string) {
+        assert(!this._clientId);
+        this._clientId = clientId;
     }
 
     public waitInitialized(): Promise<IAckedSummary | undefined> {
@@ -164,9 +171,13 @@ export class SummaryDataStructure {
         return this.lastAck;
     }
 
-    public addLocalSummary(clientId: string, clientSequenceNumber: number): ISummary {
-        const summary = Summary.createLocal(clientId, clientSequenceNumber);
-        this.localSummaries.set(summary.clientSequenceNumber, summary);
+    public addLocalSummary(clientSequenceNumber: number): ISummary {
+        assert(this._clientId);
+        let summary = this.localSummaries.get(clientSequenceNumber);
+        if (!summary) {
+            summary = Summary.createLocal(this._clientId, clientSequenceNumber);
+            this.localSummaries.set(summary.clientSequenceNumber, summary);
+        }
         return summary;
     }
 
@@ -192,11 +203,13 @@ export class SummaryDataStructure {
 
     private handleSummaryOp(op: ISummaryMessage) {
         let summary = this.localSummaries.get(op.clientSequenceNumber);
-        if (summary && summary.clientId === op.clientId) {
+        if (summary && summary.clientId === op.clientId && !summary.isBroadcast()) {
             summary.broadcast(op);
-            this.localSummaries.delete(op.clientSequenceNumber);
         } else {
             summary = Summary.createFromOp(op);
+            if (summary.clientId === this._clientId) {
+                this.localSummaries.set(op.clientSequenceNumber, summary);
+            }
         }
         this.pendingSummaries.set(op.sequenceNumber, summary);
 

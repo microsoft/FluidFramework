@@ -3,41 +3,37 @@
  * Licensed under the MIT License.
  */
 
-import { IDeltaManager, IDeltaQueue, ITelemetryLogger } from "@microsoft/fluid-container-definitions";
-import { Deferred } from "@microsoft/fluid-core-utils";
+import { Deferred, TelemetryNullLogger } from "@microsoft/fluid-core-utils";
 import {
-    IDocumentMessage,
-    IDocumentStorageService,
     ISequencedDocumentMessage,
+    ISummaryAck,
     ISummaryConfiguration,
     ISummaryProposal,
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
-import { EventEmitter } from "events";
 import * as sinon from "sinon";
-import { ContainerRuntime } from "../containerRuntime";
-import { Summarizer } from "../summarizer";
+import { RunningSummarizer, SummarizerHeuristics } from "../summarizer";
+import { SummaryDataStructure } from "../summaryDataStructure";
 
 describe("Runtime", () => {
     describe("Container Runtime", () => {
-        describe("Summarizer", () => {
+        describe("RunningSummarizer", () => {
             describe("Summary Schedule", () => {
                 let runCount: number;
                 let clock: sinon.SinonFakeTimers;
-                let emitter: EventEmitter;
-                let summarizer: Summarizer;
+                let summaryDataStructure: SummaryDataStructure;
+                let summarizer: RunningSummarizer;
                 const summarizerClientId = "test";
+                const onBehalfOfClientId = "behalf";
                 let lastSeq = 0;
-                const batchEndEvent = "batchEnd";
-                const generateSummaryEvent = "generateSummary";
-                const summaryOpEvent = "op";
                 const summaryConfig: ISummaryConfiguration = {
                     idleTime: 5000, // 5 sec (idle)
                     maxTime: 5000 * 12, // 1 min (active)
                     maxOps: 1000, // 1k ops (active)
                     maxAckWaitTime: 600000, // 10 min
                 };
+                const testSummaryOpClientSeqNum = -17;
                 const testSummaryOpSeqNum = -13;
                 let refreshBaseSummaryDeferred: Deferred<void>;
                 let shouldDeferGenerateSummary: boolean = false;
@@ -47,42 +43,34 @@ describe("Runtime", () => {
                     clock = sinon.useFakeTimers();
                 });
 
-                beforeEach(() => {
+                beforeEach(async () => {
                     shouldDeferGenerateSummary = false;
                     clock.reset();
                     runCount = 0;
                     lastSeq = 0;
                     refreshBaseSummaryDeferred = new Deferred();
-                    emitter = new EventEmitter();
-                    summarizer = new Summarizer(
-                        "",
-                        {
-                            on: (event, listener) => emitter.on(event, listener),
-                            off: (event, listener) => emitter.removeListener(event, listener),
-                            connected: true,
-                            summarizerClientId,
-                            deltaManager: {
-                                initialSequenceNumber: 0,
-                                inbound: emitter as IDeltaQueue<ISequencedDocumentMessage>,
-                            } as IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-                            logger: {
-                                send: (event) => {},
-                                sendTelemetryEvent: (event) => {},
-                            } as ITelemetryLogger,
-                            storage: {
-                                getSnapshotTree: () => Promise.resolve({}),
-                                getVersions: (versionId, count) => Promise.resolve([{}]),
-                            } as IDocumentStorageService,
-                        } as ContainerRuntime,
-                        () => summaryConfig,
+                    const logger = new TelemetryNullLogger();
+                    summaryDataStructure = new SummaryDataStructure(0, logger);
+                    summaryDataStructure.setClientId(summarizerClientId);
+                    summarizer = await RunningSummarizer.start(
+                        summarizerClientId,
+                        onBehalfOfClientId,
+                        logger,
+                        summaryDataStructure,
+                        summaryConfig,
                         async () => {
-                            emitter.emit(generateSummaryEvent);
+                            runCount++;
+
+                            // immediate broadcast
+                            emitBroadcast();
+
                             if (shouldDeferGenerateSummary) {
                                 deferGenerateSummary = new Deferred<void>();
                                 await deferGenerateSummary.promise;
                             }
                             return {
                                 referenceSequenceNumber: lastSeq,
+                                clientSequenceNumber: testSummaryOpClientSeqNum,
                                 submitted: true,
                                 treeNodeCount: 0,
                                 blobNodeCount: 0,
@@ -90,56 +78,56 @@ describe("Runtime", () => {
                                 totalBlobSize: 0,
                             };
                         },
-                        () => { refreshBaseSummaryDeferred.resolve(); },
+                        async () => { refreshBaseSummaryDeferred.resolve(); },
+                        new SummarizerHeuristics(0, { refSequenceNumber: 0, summaryTime: Date.now() }),
                     );
-
-                    summarizer.run(summarizerClientId).catch((reason) => assert.fail(JSON.stringify(reason)));
-                    listenWithBroadcast();
                 });
 
                 after(() => {
                     clock.restore();
                 });
 
-                function generateNextOp(increment: number = 1): Partial<ISequencedDocumentMessage> {
-                    lastSeq += increment;
-                    return {
-                        sequenceNumber: lastSeq,
-                    };
-                }
-
                 async function emitNextOp(increment: number = 1) {
-                    emitter.emit(batchEndEvent, undefined, generateNextOp(increment));
+                    await flushPromises();
+                    lastSeq += increment;
+                    summarizer.handleOp(undefined, { sequenceNumber: lastSeq } as ISequencedDocumentMessage);
                     await Promise.resolve();
                 }
 
-                function listenWithBroadcast(action?: () => void) {
-                    emitter.on(generateSummaryEvent, () => {
-                        if (action) {
-                            action();
-                        }
-                        runCount++;
-                        emitBroadcast();
-                    });
-                }
-
                 function emitBroadcast() {
-                    emitter.emit(summaryOpEvent, {
+                    summaryDataStructure.handleOp({
                         type: MessageType.Summarize,
+                        clientId: summarizerClientId,
                         referenceSequenceNumber: lastSeq,
+                        clientSequenceNumber: testSummaryOpClientSeqNum,
                         sequenceNumber: testSummaryOpSeqNum,
-                    });
+                        contents: {
+                            handle: "test-broadcast-handle",
+                        },
+                    } as ISequencedDocumentMessage);
                 }
 
                 async function emitAck(type: MessageType = MessageType.SummaryAck) {
                     const summaryProposal: ISummaryProposal = {
                         summarySequenceNumber: testSummaryOpSeqNum,
                     };
-                    emitter.emit(summaryOpEvent, { contents: { summaryProposal }, type });
+                    const contents: ISummaryAck = {
+                        handle: "test-ack-handle",
+                        summaryProposal,
+                    };
+                    summaryDataStructure.handleOp({ contents, type } as ISequencedDocumentMessage);
 
                     // wait for refresh base summary to complete
                     await refreshBaseSummaryDeferred.promise;
                     refreshBaseSummaryDeferred = new Deferred();
+
+                    await Promise.resolve(); // let finally of summarize run
+                }
+
+                async function flushPromises(count: number = 1) {
+                    for (let i = 0; i < count; i++) {
+                        await Promise.resolve();
+                    }
                 }
 
                 it("Should summarize after configured number of ops when not pending", async () => {
@@ -168,18 +156,18 @@ describe("Runtime", () => {
 
                     // too early, should not run yet
                     clock.tick(summaryConfig.idleTime - 1);
-                    await Promise.resolve();
+                    await flushPromises();
                     assert.strictEqual(runCount, 0);
 
                     // now should run
                     clock.tick(1);
-                    await Promise.resolve();
+                    await flushPromises();
                     assert.strictEqual(runCount, 1);
 
                     // should not run, because our summary hasnt been acked/nacked yet
                     await emitNextOp();
                     clock.tick(summaryConfig.idleTime);
-                    await Promise.resolve();
+                    await flushPromises();
                     assert.strictEqual(runCount, 1);
 
                     // should run, because another op has come in, and our summary has been acked
