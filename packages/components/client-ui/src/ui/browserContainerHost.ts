@@ -64,6 +64,10 @@ export class BrowserContainerHost {
             clientRect = document.body.getBoundingClientRect();
         }
         const newSize = Rectangle.fromClientRect(clientRect);
+        newSize.width -= newSize.x;
+        // newSize.height -= newSize.y;
+        newSize.x = 0;
+        newSize.y = 0;
         newSize.conformElement(this.root.element);
         this.root.resize(newSize);
     }

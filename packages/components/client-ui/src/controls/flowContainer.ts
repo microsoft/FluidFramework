@@ -77,7 +77,6 @@ export class FlowContainer extends ui.Component {
 
         // Layer panel lets us put the canvas on top of the text
         const layerPanelDiv = document.createElement("div");
-        layerPanelDiv.id = "layer-panel";
         this.layerPanel = new LayerPanel(layerPanelDiv);
 
         // Create the correct inking canvas

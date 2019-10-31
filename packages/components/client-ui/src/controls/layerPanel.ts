@@ -20,6 +20,7 @@ export class LayerPanel extends ui.Component {
 
     constructor(element: HTMLDivElement) {
         super(element);
+        element.id = "layer-panel";
 
         // Scrollbar
         const scrollBarElement = document.createElement("div");

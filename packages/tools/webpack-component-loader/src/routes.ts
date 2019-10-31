@@ -58,8 +58,12 @@ const fluid = (req: express.Request, res: express.Response,  baseDir: string, op
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${documentId}</title>
 </head>
-<body>
-    <div id="content" style="width: 100%; height: 100%; display: flex">
+<body style="display: flex; min-height: 100vh; flex-direction: column; margin: 0; padding: 0">
+    <nav style="flex: 0 1 auto; height: 50px; background-color: LightGoldenRodYellow">
+        <!-- ${/* tslint:disable-next-line: max-line-length */ true} -->
+        _______________________________________________________________ this is a nav bar _______________________________________________________________
+    </nav>
+    <div id="content" style="flex: 1 1 auto; display: flex; position: relative; overflow: hidden">
     </div>
 
     <script src="/node_modules/@microsoft/fluid-webpack-component-loader/dist/fluid-loader.bundle.js"></script>
