@@ -42,6 +42,9 @@ export class DeltaConnection extends EventEmitter {
     private _nacked = false;
     private _connected = true;
 
+    private readonly forwardEvents = ["op", "op-content", "signal", "error", "pong"];
+    private readonly nonForwardEvents = ["nack", "disconnect"];
+
     private constructor(private readonly connection: IDocumentDeltaConnection) {
         super();
 
@@ -107,7 +110,8 @@ export class DeltaConnection extends EventEmitter {
         // Note that we delay subscribing to op / op-content / signal on purpose, as
         // that is used as a signal in DocumentDeltaConnection to know if anyone has subscribed
         // to these events, and thus stop accumulating ops / signals in early handlers.
-        if (["op", "op-content", "signal", "error", "pong"].indexOf(event) !== -1) {
+        if (this.forwardEvents.indexOf(event) !== -1) {
+            assert(this.connection.listeners(event).length === 0, "re-registration of events is not implemented");
             this.connection.on(
                 event,
                 (...args: any[]) => {
@@ -115,7 +119,7 @@ export class DeltaConnection extends EventEmitter {
                 });
         } else {
             // These are events that we already subscribed to and already emit on object.
-            assert(["nack", "disconnect"].indexOf(event) !== -1);
+            assert(this.nonForwardEvents.indexOf(event) !== -1);
         }
 
         // And then add the listener to our event emitter

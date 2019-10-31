@@ -649,11 +649,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             (connection) => {
                 this.connection = connection;
 
-                // WARNING:
-                // after we ask for connection.details, DocumentDeltaConnection will unregister its early
-                // op / content / signal handlers. Any new ops / signals that are coming in will go to aether
-                // unless we register handlers (synchronously!) right away.
-
                 // back-compat for newer clients and old server. If the server does not have mode, we reset to write.
                 this.connectionMode = connection.details.mode ? connection.details.mode : "write";
 

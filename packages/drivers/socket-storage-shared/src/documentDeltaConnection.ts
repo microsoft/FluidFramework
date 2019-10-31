@@ -298,6 +298,8 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
      * @param listener - listener for the event
      */
     public on(event: string, listener: (...args: any[]) => void): this {
+        assert(this.listeners(event).length === 0, "re-registration of events is not implemented");
+
         // Register for the event on socket.io
         this.socket.on(
             event,
