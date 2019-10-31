@@ -118,7 +118,13 @@ const handlers = [
         name: "npm-package-author-license",
         match: /(^|\/)package\.json/i,
         handler: file => {
-            const json = JSON.parse(readFile(file));
+            let json;
+            try {
+                json = JSON.parse(readFile(file));
+            } catch (err) {
+                return 'Error parsing JSON file: ' + file;
+            }
+
             let ret = [];
 
             if (json.author !== author) {
@@ -134,7 +140,13 @@ const handlers = [
             }
         },
         resolver: file => {
-            let json = JSON.parse(readFile(file));
+            let json;
+            try {
+                json = JSON.parse(readFile(file));
+            } catch (err) {
+                return { resolved: false, message: 'Error parsing JSON file: ' + file };
+            }
+
             let resolved = true;
 
             if (!json.author) {

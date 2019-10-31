@@ -10,7 +10,11 @@ import {
     IDeltaQueue,
     ITelemetryLogger,
 } from "@microsoft/fluid-container-definitions";
-import { Deferred, isSystemType, PerformanceEvent } from "@microsoft/fluid-core-utils";
+import {
+    Deferred,
+    isSystemType,
+    PerformanceEvent,
+} from "@microsoft/fluid-core-utils";
 import {
     Browser,
     ConnectionMode,
@@ -123,9 +127,8 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     private deltaStorageDelay: number | undefined;
     private deltaStreamDelay: number | undefined;
 
-    // collab window tracking.
-    // Start with 50 not to record anything below 50 (= 30 + 20).
-    private collabWindowMax = 30;
+    // collab window tracking. This is timestamp of %2000 message.
+    private lastMessageTimeForTelemetry: number | undefined;
 
     public get inbound(): IDeltaQueue<ISequencedDocumentMessage> {
         return this._inbound;
@@ -375,7 +378,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             let deltasRetrievedLast = 0;
             let success = true;
             let canRetry = false;
-            let retryAfter: number = 0;
+            let retryAfter: number | undefined = -1;
 
             try {
                 // Connect to the delta storage endpoint
@@ -406,7 +409,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 // 2) else case: if we got what we asked (to - 1) or more, then time to leave.
                 if (to === undefined ? lastFetch < maxFetchTo - 1 : to - 1 <= lastFetch) {
                     telemetryEvent.end({ lastFetch, totalDeltas: allDeltas.length, retries: retry });
-                    this.emitDelayInfo(retryFor.DELTASTORAGE, -1);
                     return allDeltas;
                 }
 
@@ -430,15 +432,12 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                     return [];
                 }
                 success = false;
-                // tslint:disable-next-line: no-unsafe-any
-                if (typeof error === "object" && error !== null && error.retryAfterSeconds !== undefined) {
-                    // tslint:disable-next-line: no-unsafe-any
-                    retryAfter = error.retryAfterSeconds;
-                }
+                retryAfter = this.backOffWaitTimeOnError(error);
             }
 
+            let delay: number;
             retry = deltasRetrievedLast === 0 ? retry + 1 : 0;
-            const delay = retryAfter >= 0 ? retryAfter : Math.min(
+            delay = retryAfter && retryAfter >= 0 ? retryAfter : Math.min(
                 MaxFetchDelay,
                 retry !== 0 ? MissingFetchDelay * Math.pow(2, retry) : 0);
 
@@ -457,7 +456,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         // Might need to change to non-error event
         this.logger.sendErrorEvent({eventName: "GetDeltasClosedConnection" });
-        this.emitDelayInfo(retryFor.DELTASTORAGE, -1);
         return [];
     }
 
@@ -537,7 +535,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     }
 
     private emitDelayInfo(retryEndpoint: number, delay: number) {
-        // delay === 0 means the corresponding endpoint has connected properly
+        // delay === -1 means the corresponding endpoint has connected properly
         // and we do not need to emit any delay to app.
         if (retryEndpoint === retryFor.DELTASTORAGE) {
             this.deltaStorageDelay = delay;
@@ -622,7 +620,8 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                     this.reconnectOnError(
                         `Reconnecting on disconnect: ${disconnectReason}`,
                         connection,
-                        this.systemConnectionMode);
+                        this.systemConnectionMode,
+                        disconnectReason);
                 });
 
                 connection.on("error", (error) => {
@@ -668,17 +667,13 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                         error);
                 }
 
-                let delayNext: number = 0;
-                // tslint:disable-next-line: no-unsafe-any
-                if (typeof error === "object" && error !== null && error.retryAfterSeconds !== undefined) {
-                    // tslint:disable-next-line: no-unsafe-any
-                    delayNext = error.retryAfterSeconds;
-                } else {
+                let delayNext = this.backOffWaitTimeOnError(error);
+                if (delayNext === undefined) {
                     delayNext = Math.min(delay * 2, MaxReconnectDelay);
                 }
                 this.emitDelayInfo(retryFor.DELTASTREAM, delayNext);
                 // tslint:disable-next-line:no-floating-promises
-                waitForConnectedState(delayNext).then(() => this.connectCore(reason, delayNext, mode));
+                waitForConnectedState(delayNext).then(() => this.connectCore(reason, delayNext!, mode));
             });
     }
 
@@ -706,8 +701,21 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             this.closeOnConnectionError(error);
         } else {
             this.logger.sendTelemetryEvent({ eventName: "DeltaConnectionReconnect", reason }, error);
-            this.connectCore(reason, InitialReconnectDelay, mode);
+            const delayNext = this.backOffWaitTimeOnError(error);
+            if (delayNext !== undefined) {
+                this.emitDelayInfo(retryFor.DELTASTREAM, delayNext);
+                // tslint:disable-next-line:no-floating-promises
+                waitForConnectedState(delayNext).then(() => this.connectCore(reason, InitialReconnectDelay, mode));
+            } else {
+                this.connectCore(reason, InitialReconnectDelay, mode);
+            }
         }
+    }
+
+    private backOffWaitTimeOnError(error): number | undefined {
+        // tslint:disable-next-line: no-unsafe-any
+        return error !== null && typeof error === "object" && error.retryAfterSeconds ? error.retryAfterSeconds
+            : undefined;
     }
 
     private processInitialMessages(
@@ -802,11 +810,17 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         assert.equal(message.sequenceNumber, this.baseSequenceNumber + 1);
         this.baseSequenceNumber = message.sequenceNumber;
 
-        // record collab window max size, in 20 increments.
+        // record collab window max size after every 2000th op.
         const msnDistance = this.baseSequenceNumber - this.minSequenceNumber;
-        if (this.collabWindowMax + 20 < msnDistance) {
-            this.collabWindowMax = msnDistance;
-            this.logger.sendTelemetryEvent({ eventName: "MSNWindow", value: msnDistance });
+        if (message.sequenceNumber % 2000 === 0) {
+            this.logger.sendTelemetryEvent({
+                eventName: "OpStats",
+                seqNumber: message.sequenceNumber,
+                value: msnDistance,
+                timeDelta: this.lastMessageTimeForTelemetry ?
+                    message.timestamp - this.lastMessageTimeForTelemetry : undefined,
+            });
+            this.lastMessageTimeForTelemetry = message.timestamp;
         }
 
         const result = this.handler!.process(message);
@@ -852,6 +866,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         await this.getDeltas(telemetryEventSuffix, from, to).then(
             (messages) => {
+                this.emitDelayInfo(retryFor.DELTASTORAGE, -1);
                 this.fetching = false;
                 this.emit("caughtUp");
                 this.catchUp(telemetryEventSuffix, messages);

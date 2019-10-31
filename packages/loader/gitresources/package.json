@@ -2,6 +2,8 @@
   "name": "@microsoft/fluid-gitresources",
   "version": "0.11.0",
   "description": "Git resource definitions",
+  "license": "MIT",
+  "author": "Microsoft",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
@@ -19,7 +21,5 @@
     "rimraf": "^2.6.2",
     "tslint": "^5.11.0",
     "typescript": "~3.4.5"
-  },
-  "author": "Microsoft",
-  "license": "MIT"
+  }
 }

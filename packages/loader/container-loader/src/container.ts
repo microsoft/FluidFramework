@@ -62,7 +62,7 @@ import { ContainerContext } from "./containerContext";
 import { debug } from "./debug";
 import { DeltaManager } from "./deltaManager";
 import { DeltaManagerProxy } from "./deltaManagerProxy";
-import { Loader, RelativeLoader } from "./loader";
+import { Loader, LoaderHeader, RelativeLoader } from "./loader";
 import { NullChaincode } from "./nullRuntime";
 import { pkgName, pkgVersion } from "./packageVersion";
 import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
@@ -81,12 +81,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
     /**
      * Load container.
-     *
-     * @param specifiedVersion - one of the following
-     *   - null: use ops, no snapshots
-     *   - undefined - fetch latest snapshot
-     *   - otherwise, version sha to load snapshot
-     * @param connection - options (list of keywords). Accepted options are open & pause.
      */
     public static async load(
         id: string,
@@ -121,9 +115,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             };
             container.on("error", onError);
 
-            return container.load(
-                request.headers!.version as string | null | undefined,
-                request.headers!.connect as string)
+            const version = request.headers && request.headers[LoaderHeader.version];
+            const connection = request.headers && request.headers[LoaderHeader.connect] || "";
+
+            return container.load(version, connection)
                 .then(() => {
                     container.removeListener("error", onError);
                     res(container);
@@ -262,11 +257,12 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         this._id = decodeURI(documentId);
         this._scopes = this.getScopes(options);
         this._audience = new Audience();
-        this.canReconnect = !(originalRequest.headers && originalRequest.headers["fluid-reconnect"] === false);
+        this.canReconnect = !(originalRequest.headers && originalRequest.headers[LoaderHeader.reconnect] === false);
 
         // create logger for components to use
         this.subLogger = DebugLogger.mixinDebugLogger(
             "fluid:telemetry",
+            logger,
             {
                 documentId: this.id,
                 package: {
@@ -274,7 +270,9 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                     version: pkgVersion,
                 },
             },
-            logger);
+            {
+                clientId: () => this.clientId,
+            });
 
         // Prefix all events in this file with container-loader
         this.logger = ChildLogger.create(this.subLogger, "Container");
@@ -778,8 +776,9 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                 scopes: [],
                 user: { id: "" },
             };
-        if (this.originalRequest.headers && this.originalRequest.headers["fluid-client-type"]) {
-            clientDetails.type = this.originalRequest.headers["fluid-client-type"] as string;
+        const headerClientType = this.originalRequest.headers && this.originalRequest.headers[LoaderHeader.clientType];
+        if (headerClientType) {
+            clientDetails.type = headerClientType;
         }
 
         this._deltaManager = new DeltaManager(
@@ -874,14 +873,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     }
 
     private logConnectionStateChangeTelemetry(value: ConnectionState, reason: string) {
-        // We do not have good correlation ID to match server activity.
-        // Add couple IDs here
-        this.subLogger.setProperties({
-            clientId: this.clientId,
-            socketDocumentId: this._deltaManager!.socketDocumentId,
-            pendingClientId: value === ConnectionState.Connecting ? this.pendingClientId : undefined,
-        });
-
         // Log actual event
         const time = performanceNow();
         this.connectionTransitionTimes[value] = time;
@@ -907,6 +898,14 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                 reason,
             });
             this.firstConnection = false;
+        }
+
+        if (value === ConnectionState.Connecting) {
+            this.logger.sendTelemetryEvent({
+                eventName: "ConnectionStateChange_Connecting",
+                socketDocumentId: this._deltaManager ? this._deltaManager.socketDocumentId : undefined,
+                pendingClientId: this.pendingClientId,
+            });
         }
     }
 

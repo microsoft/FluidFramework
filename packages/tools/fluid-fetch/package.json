@@ -2,6 +2,8 @@
   "name": "@microsoft/fluid-fetch",
   "version": "0.11.0",
   "description": "",
+  "license": "MIT",
+  "author": "Microsoft",
   "main": "dist/fluidFetch.js",
   "bin": {
     "fluid-fetch": "bin/fluid-fetch"
@@ -14,18 +16,16 @@
     "clean": "rimraf dist *.tsbuildinfo package-deps.json *.build.log",
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
-  "author": "Microsoft",
-  "license": "MIT",
   "dependencies": {
     "@microsoft/fluid-core-utils": "^0.11.0",
+    "@microsoft/fluid-fluidapp-odsp-urlresolver": "^0.11.0",
     "@microsoft/fluid-odsp-driver": "^0.11.0",
+    "@microsoft/fluid-odsp-urlresolver": "^0.11.0",
     "@microsoft/fluid-odsp-utils": "^0.11.0",
     "@microsoft/fluid-protocol-definitions": "^0.11.0",
-    "@microsoft/fluid-odsp-urlresolver": "^0.11.0",
-    "@microsoft/fluid-routerlicious-host": "^0.11.0",
-    "@microsoft/fluid-fluidapp-odsp-urlresolver": "^0.11.0",
-    "@microsoft/fluid-routerlicious-urlresolver": "^0.11.0",
     "@microsoft/fluid-routerlicious-driver": "^0.11.0",
+    "@microsoft/fluid-routerlicious-host": "^0.11.0",
+    "@microsoft/fluid-routerlicious-urlresolver": "^0.11.0",
     "@microsoft/fluid-runtime-definitions": "^0.11.0"
   },
   "devDependencies": {

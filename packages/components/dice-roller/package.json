@@ -1,9 +1,10 @@
 {
   "name": "@fluid-example/diceroller",
-  "description": "Minimal Fluid component sample to implement a collaborative dice roller.",
   "version": "0.11.0",
-  "author": "Microsoft",
+  "description": "Minimal Fluid component sample to implement a collaborative dice roller.",
   "repository": "microsoft/FluidFramework",
+  "license": "MIT",
+  "author": "Microsoft",
   "main": "dist/index.js",
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
@@ -14,26 +15,15 @@
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
+    "deploy": "npm publish --registry https://packages.wu2.prague.office-int.com",
     "start": "webpack-dev-server --config webpack.config.js --package package.json --env.mode local",
     "start:live": "webpack-dev-server --config webpack.config.js --package package.json --env.mode live",
     "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
-    "deploy": "npm publish --registry https://packages.wu2.prague.office-int.com",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose",
     "webpack": "webpack --env.production",
     "webpack:dev": "webpack --env.development"
   },
-  "fluid": {
-    "browser": {
-      "umd": {
-        "files": [
-          "dist/main.bundle.js"
-        ],
-        "library": "main"
-      }
-    }
-  },
-  "license": "MIT",
   "dependencies": {
     "@microsoft/fluid-aqueduct": "^0.11.0",
     "@microsoft/fluid-component-core-interfaces": "^0.11.0",
@@ -55,5 +45,15 @@
     "webpack-cli": "^3.1.2",
     "webpack-dev-server": "^3.8.0",
     "webpack-merge": "^4.1.2"
+  },
+  "fluid": {
+    "browser": {
+      "umd": {
+        "files": [
+          "dist/main.bundle.js"
+        ],
+        "library": "main"
+      }
+    }
   }
 }
