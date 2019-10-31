@@ -62,12 +62,14 @@ import { ContainerContext } from "./containerContext";
 import { debug } from "./debug";
 import { DeltaManager } from "./deltaManager";
 import { DeltaManagerProxy } from "./deltaManagerProxy";
-import { Loader, RelativeLoader } from "./loader";
+import { Loader, LoaderHeader, RelativeLoader } from "./loader";
 import { NullChaincode } from "./nullRuntime";
 import { pkgName, pkgVersion } from "./packageVersion";
 import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
 import { isSystemMessage, ProtocolOpHandler } from "./protocol";
 import { Quorum, QuorumProxy } from "./quorum";
+
+// tslint:disable:no-floating-promises - disabling per-file rather than full subdirectory
 
 // tslint:disable-next-line:no-var-requires
 const performanceNow = require("performance-now") as (() => number);
@@ -79,12 +81,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
     /**
      * Load container.
-     *
-     * @param specifiedVersion - one of the following
-     *   - null: use ops, no snapshots
-     *   - undefined - fetch latest snapshot
-     *   - otherwise, version sha to load snapshot
-     * @param connection - options (list of keywords). Accepted options are open & pause.
      */
     public static async load(
         id: string,
@@ -119,9 +115,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             };
             container.on("error", onError);
 
-            return container.load(
-                request.headers!.version as string | null | undefined,
-                request.headers!.connect as string)
+            const version = request.headers && request.headers[LoaderHeader.version];
+            const connection = request.headers && request.headers[LoaderHeader.connect] || "";
+
+            return container.load(version, connection)
                 .then(() => {
                     container.removeListener("error", onError);
                     res(container);
@@ -260,11 +257,12 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         this._id = decodeURI(documentId);
         this._scopes = this.getScopes(options);
         this._audience = new Audience();
-        this.canReconnect = !(originalRequest.headers && originalRequest.headers["fluid-reconnect"] === false);
+        this.canReconnect = !(originalRequest.headers && originalRequest.headers[LoaderHeader.reconnect] === false);
 
         // create logger for components to use
         this.subLogger = DebugLogger.mixinDebugLogger(
             "fluid:telemetry",
+            logger,
             {
                 documentId: this.id,
                 package: {
@@ -272,7 +270,9 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                     version: pkgVersion,
                 },
             },
-            logger);
+            {
+                clientId: () => this.clientId,
+            });
 
         // Prefix all events in this file with container-loader
         this.logger = ChildLogger.create(this.subLogger, "Container");
@@ -375,18 +375,18 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         this.emit("error", error);
     }
 
-    public reloadContext(): void {
-        // pause inbound synchronously
-        this.deltaManager!.inbound.systemPause();
-        this.deltaManager!.inboundSignal.systemPause();
-
-        this.reloadContextCore().then(() => {
-            this.deltaManager!.inbound.systemResume();
-            this.deltaManager!.inboundSignal.systemResume();
+    public reloadContext(): Promise<void> {
+        return this.reloadContextCore().catch((error) => {
+            this.raiseCriticalError(error);
+            throw error;
         });
     }
 
     private async reloadContextCore(): Promise<void> {
+        await Promise.all([
+            this.deltaManager!.inbound.systemPause(),
+            this.deltaManager!.inboundSignal.systemPause()]);
+
         const previousContextState = await this.context!.stop();
 
         let snapshot: ISnapshotTree | undefined;
@@ -407,6 +407,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         };
 
         await this.loadContext(attributes, storage, snapshot);
+
+        await Promise.all([
+            this.deltaManager!.inbound.systemResume(),
+            this.deltaManager!.inboundSignal.systemResume()]);
     }
 
     private async snapshotCore(tagMessage: string, fullTree: boolean = false) {
@@ -776,8 +780,9 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                 scopes: [],
                 user: { id: "" },
             };
-        if (this.originalRequest.headers && this.originalRequest.headers["fluid-client-type"]) {
-            clientDetails.type = this.originalRequest.headers["fluid-client-type"] as string;
+        const headerClientType = this.originalRequest.headers && this.originalRequest.headers[LoaderHeader.clientType];
+        if (headerClientType) {
+            clientDetails.type = headerClientType;
         }
 
         this._deltaManager = new DeltaManager(
@@ -847,8 +852,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                 attributes.minimumSequenceNumber,
                 attributes.sequenceNumber,
                 {
-                    process: (message, callback) => {
-                        this.processRemoteMessage(message, callback);
+                    process: (message) => {
+                        return this.processRemoteMessage(message);
                     },
                     processSignal: (message) => {
                         this.processSignal(message);
@@ -872,14 +877,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     }
 
     private logConnectionStateChangeTelemetry(value: ConnectionState, reason: string) {
-        // We do not have good correlation ID to match server activity.
-        // Add couple IDs here
-        this.subLogger.setProperties({
-            clientId: this.clientId,
-            socketDocumentId: this._deltaManager!.socketDocumentId,
-            pendingClientId: value === ConnectionState.Connecting ? this.pendingClientId : undefined,
-        });
-
         // Log actual event
         const time = performanceNow();
         this.connectionTransitionTimes[value] = time;
@@ -905,6 +902,14 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                 reason,
             });
             this.firstConnection = false;
+        }
+
+        if (value === ConnectionState.Connecting) {
+            this.logger.sendTelemetryEvent({
+                eventName: "ConnectionStateChange_Connecting",
+                socketDocumentId: this._deltaManager ? this._deltaManager.socketDocumentId : undefined,
+                pendingClientId: this.pendingClientId,
+            });
         }
     }
 
@@ -973,54 +978,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return this._deltaManager!.submit(type, contents, batch, metadata);
     }
 
-    private processRemoteMessage(
-        message: ISequencedDocumentMessage,
-        callback: (result: IProcessMessageResult) => void,
-    ) {
-        if (this.context!.legacyMessaging) {
-            this.processRemoteMessageLegacy(message).then(
-                (result) => { callback(result); },
-                (error) => { callback({ error }); });
-        } else {
-            const result = this.processRemoteMessageNew(message);
-            callback(result);
-        }
-    }
-
-    private async processRemoteMessageLegacy(message: ISequencedDocumentMessage): Promise<IProcessMessageResult> {
-        const local = this._clientId === message.clientId;
-        let context;
-
-        // Forward non system messages to the loaded runtime for processing
-        if (!isSystemMessage(message)) {
-            context = await this.context!.prepare(message, local);
-
-            this.context!.process(message, local, context);
-        }
-
-        switch (message.type) {
-            case MessageType.BlobUploaded:
-                // tslint:disable-next-line:no-floating-promises
-                this.blobManager!.addBlob(message.contents as IGenericBlob);
-                this.emit(MessageType.BlobUploaded, message.contents);
-                break;
-
-            default:
-        }
-
-        // Allow the protocol handler to process the message
-        const result = this.protocolHandler!.processMessage(message, local);
-
-        this.emit("op", message);
-
-        if (!isSystemMessage(message)) {
-            await this.context!.postProcess(message, local, context);
-        }
-
-        return result;
-    }
-
-    private processRemoteMessageNew(message: ISequencedDocumentMessage): IProcessMessageResult {
+    private processRemoteMessage(message: ISequencedDocumentMessage): IProcessMessageResult {
         const local = this._clientId === message.clientId;
 
         // Forward non system messages to the loaded runtime for processing

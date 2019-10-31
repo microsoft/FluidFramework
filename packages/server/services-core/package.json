@@ -2,6 +2,9 @@
   "name": "@microsoft/fluid-server-services-core",
   "version": "0.11.0",
   "description": "Fluid services core definitions",
+  "repository": "microsoft/FluidFramework",
+  "license": "MIT",
+  "author": "Microsoft",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
@@ -13,16 +16,6 @@
     "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose"
-  },
-  "author": "Microsoft",
-  "repository": "microsoft/FluidFramework",
-  "devDependencies": {
-    "@microsoft/fluid-build-common": "^0.11.0",
-    "concurrently": "^4.1.0",
-    "jsonwebtoken": "^8.4.0",
-    "rimraf": "^2.6.2",
-    "tslint": "^5.11.0",
-    "typescript": "~3.4.5"
   },
   "dependencies": {
     "@microsoft/fluid-container-definitions": "^0.11.0",
@@ -36,5 +29,12 @@
     "debug": "^4.1.1",
     "uuid": "^3.3.2"
   },
-  "license": "MIT"
+  "devDependencies": {
+    "@microsoft/fluid-build-common": "^0.11.0",
+    "concurrently": "^4.1.0",
+    "jsonwebtoken": "^8.4.0",
+    "rimraf": "^2.6.2",
+    "tslint": "^5.11.0",
+    "typescript": "~3.4.5"
+  }
 }

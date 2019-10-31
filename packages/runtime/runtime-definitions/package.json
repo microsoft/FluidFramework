@@ -2,28 +2,21 @@
   "name": "@microsoft/fluid-runtime-definitions",
   "version": "0.11.0",
   "description": "Fluid Runtime definitions",
+  "repository": "microsoft/FluidFramework",
+  "license": "MIT",
+  "author": "Microsoft",
+  "sideEffects": "false",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "sideEffects": "false",
   "scripts": {
     "build": "concurrently npm:build:compile npm:tslint",
     "build:compile": "npm run tsc",
+    "build:docs": "api-extractor run --local",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
-    "build:docs": "api-extractor run --local",
     "clean": "rimraf dist *.tsbuildinfo package-deps.json *.build.log",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose"
-  },
-  "author": "Microsoft",
-  "repository": "microsoft/FluidFramework",
-  "devDependencies": {
-    "@microsoft/api-extractor": "^7.4.4",
-    "@microsoft/fluid-build-common": "^0.11.0",
-    "concurrently": "^4.1.0",
-    "rimraf": "^2.6.2",
-    "tslint": "^5.11.0",
-    "typescript": "~3.4.5"
   },
   "dependencies": {
     "@microsoft/fluid-component-core-interfaces": "^0.11.0",
@@ -31,5 +24,12 @@
     "@microsoft/fluid-protocol-definitions": "^0.11.0",
     "@types/node": "^10.12.12"
   },
-  "license": "MIT"
+  "devDependencies": {
+    "@microsoft/api-extractor": "^7.4.4",
+    "@microsoft/fluid-build-common": "^0.11.0",
+    "concurrently": "^4.1.0",
+    "rimraf": "^2.6.2",
+    "tslint": "^5.11.0",
+    "typescript": "~3.4.5"
+  }
 }
