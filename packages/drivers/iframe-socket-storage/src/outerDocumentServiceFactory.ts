@@ -5,7 +5,7 @@
 
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IHost } from "@microsoft/fluid-container-definitions";
-import { Deferred, configurableUrlResolver } from "@microsoft/fluid-core-utils";
+import { configurableUrlResolver, Deferred } from "@microsoft/fluid-core-utils";
 import {
     ConnectionMode,
     IClient,
@@ -29,7 +29,7 @@ import { IOuterDocumentDeltaConnectionProxy } from "./innerDocumentDeltaConnecti
  */
 export class OuterDocumentServiceFactory implements IDocumentServiceFactory {
     public readonly protocolName = "fluid-outer:";
-    private documentServiceProxy: IDocumentServiceProxy | undefined;
+    private documentServiceProxy: DocumentServiceFactoryProxy | undefined;
 
     constructor(private readonly documentServiceFactory: IDocumentServiceFactory,
                 private readonly frameP: Promise<HTMLIFrameElement>,
@@ -77,7 +77,7 @@ export class OuterDocumentServiceFactory implements IDocumentServiceFactory {
         const iframeContentWindow = frame!.contentWindow!;
 
         iframeContentWindow.window.postMessage("EndpointExposed", "*");
-        Comlink.expose(this.documentServiceProxy, Comlink.windowEndpoint(iframeContentWindow));
+        Comlink.expose(this.documentServiceProxy!.getProxy(), Comlink.windowEndpoint(iframeContentWindow));
     }
 }
 
@@ -89,7 +89,7 @@ export interface ISessionManager {
     add(a: number, b: number): Promise<number>;
 }
 
-export interface IDocumentServiceProxy {
+export interface IDocumentServiceFactoryProxy {
     clients: {
         [clientId: string]: ICombinedDrivers;
     };
@@ -108,10 +108,9 @@ export interface ICombinedDrivers {
 /**
  * Proxy of the Document Service Factory that gets sent to the innerFrame
  */
-export class DocumentServiceFactoryProxy implements IDocumentServiceProxy {
+export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy {
     public clients: { [clientId: string]: ICombinedDrivers };
 
-    // TODO: remove the proxying of these tokens
     private readonly tokens: {
         [name: string]: string;
     };
@@ -156,6 +155,15 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceProxy {
     public async connected(): Promise<void> {
         debug("IFrame Connection Succeeded");
         return;
+    }
+
+    public getProxy(): IDocumentServiceFactoryProxy {
+        return {
+            connected: this.connected,
+            clients: this.clients,
+            // Are tokens are still visible on the scope of this proxied object?
+            createDocumentService: (resolvedUrl: IFluidResolvedUrl) => this.createDocumentService(resolvedUrl),
+        };
     }
 
     private getStorage(storage: IDocumentStorageService): IDocumentStorageService {
@@ -334,4 +342,5 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceProxy {
 
         return outerMethodsToProxy;
     }
+
 }
