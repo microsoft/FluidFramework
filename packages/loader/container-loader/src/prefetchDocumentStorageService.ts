@@ -104,9 +104,9 @@ export class PrefetchDocumentStorageService implements IDocumentStorageService {
         for (const blobKey of Object.keys(tree.blobs)) {
             const blob = tree.blobs[blobKey];
             if (blobKey[0] === "." || blobKey === "header" || blobKey.indexOf("quorum") === 0) {
-                // We don't care if the prefetch succeed
-                // tslint:disable-next-line:no-floating-promises
                 if (blob !== null) {
+                    // We don't care if the prefetch succeed
+                    // tslint:disable-next-line:no-floating-promises
                     this.cachedRead(blob);
                 }
             } else if (blobKey[0] !== "deltas") {

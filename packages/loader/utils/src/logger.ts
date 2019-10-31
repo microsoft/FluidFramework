@@ -45,8 +45,8 @@ export class BaseTelemetryNullLogger implements ITelemetryBaseLogger {
 export abstract class TelemetryLogger implements ITelemetryLogger {
     public static readonly eventNamespaceSeparator = ":";
 
-    public static formatTick(tick: number): string {
-        return tick.toFixed(0);
+    public static formatTick(tick: number): number {
+        return Math.floor(tick);
     }
 
     public static sanitizePkgName(name: string) {
@@ -67,7 +67,11 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
             // Same for message if there is one (see Error object).
             event.stack = errorAsObject.stack;
             event.error = errorAsObject.message;
-            event.statusCode = errorAsObject.statusCode;
+            // tslint:disable-next-line: no-unsafe-any
+            if (error.getCustomProperties) {
+                // tslint:disable-next-line: no-parameter-reassignment no-unsafe-any
+                event = { ...event, ...error.getCustomProperties() };
+            }
         }
 
         // Collect stack if we were not able to extract it from error
@@ -119,7 +123,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
     }
 
     /**
-     * Send am error event with the logger
+     * Send an error telemetry event with the logger
      *
      * @param event - the event to send
      * @param error - optional error object to log
@@ -131,7 +135,8 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
     }
 
     /**
-     * Send error telemetry event
+     * Send a performance telemetry event with the logger
+     *
      * @param event - Event to send
      * @param error - optional error object to log
      */
@@ -144,8 +149,6 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
         if (event.duration) {
             perfEvent.duration = TelemetryLogger.formatTick(event.duration);
         }
-        const tick = event.tick ? event.tick : performanceNow();
-        perfEvent.tick = TelemetryLogger.formatTick(tick);
 
         this.send(perfEvent);
     }
@@ -416,9 +419,8 @@ export class DebugLogger extends TelemetryLogger {
         newEvent.eventName = undefined;
 
         let tick = "";
-        if (newEvent.tick) {
-            tick = `tick=${newEvent.tick}`;
-            newEvent.tick = undefined;
+        if (event.category === "performance") {
+            tick = `tick=${TelemetryLogger.formatTick(performanceNow())}`;
         }
 
         // Extract stack to put it last, but also to avoid escaping '\n' in it by JSON.stringify below

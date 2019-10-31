@@ -19,7 +19,6 @@ import {
     dumpMessages,
     dumpMessageStats,
     messageTypeFilter,
-    paramSave,
 } from "./fluidFetchArgs";
 
 // tslint:disable:non-literal-fs-path
@@ -174,15 +173,15 @@ async function* saveOps(
     }
 }
 
-export async function fluidFetchMessages(documentService?: IDocumentService) {
+export async function fluidFetchMessages(documentService?: IDocumentService, saveDir?: string) {
     const messageStats = dumpMessageStats || dumpMessages;
-    if (!messageStats && (paramSave === undefined || documentService === undefined)) {
+    if (!messageStats && (saveDir === undefined || documentService === undefined)) {
         return;
     }
 
-    const files = !paramSave ?
+    const files = !saveDir ?
         undefined :
-        fs.readdirSync(paramSave)
+        fs.readdirSync(saveDir)
             .filter((file) => {
                 if (!file.startsWith("messages")) {
                     return false;
@@ -193,10 +192,10 @@ export async function fluidFetchMessages(documentService?: IDocumentService) {
                 return a.localeCompare(b);
             });
 
-    let generator = loadAllSequencedMessages(documentService, paramSave, files);
+    let generator = loadAllSequencedMessages(documentService, saveDir, files);
 
-    if (paramSave && files !== undefined && documentService) {
-        generator = saveOps(generator, paramSave, files);
+    if (saveDir && files !== undefined && documentService) {
+        generator = saveOps(generator, saveDir, files);
     }
 
     if (messageStats) {

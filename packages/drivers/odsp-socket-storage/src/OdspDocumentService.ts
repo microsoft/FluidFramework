@@ -139,7 +139,7 @@ export class OdspDocumentService implements IDocumentService {
               // any other requests are result of catching up on missing ops and are coming after websocket is established (or reconnected),
               // and thus we already have fresh join session call.
               // That said, tools like Fluid-fetcher will hit it, so that's valid code path.
-              this.logger.sendErrorEvent({ eventName: "ExtraJoinSessionCall" });
+              this.logger.sendTelemetryEvent({ eventName: "ExtraJoinSessionCall" });
 
               this.websocketEndpointP = this.websocketEndpointRequestThrottler.response;
             }
@@ -153,6 +153,7 @@ export class OdspDocumentService implements IDocumentService {
             this.deltasFetchWrapper,
             this.storageManager ? this.storageManager.ops : undefined,
             this.getStorageToken,
+            this.logger,
         );
     }
 
