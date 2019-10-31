@@ -648,6 +648,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             mode).then(
             (connection) => {
                 this.connection = connection;
+
                 // back-compat for newer clients and old server. If the server does not have mode, we reset to write.
                 this.connectionMode = connection.details.mode ? connection.details.mode : "write";
 

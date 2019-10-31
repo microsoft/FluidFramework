@@ -9,14 +9,12 @@ import {
 import {
     ConnectionMode,
     IClient,
-    IContentMessage,
     IDocumentDeltaConnection,
     IDocumentMessage,
     IDocumentService,
     INack,
-    ISequencedDocumentMessage,
-    ISignalMessage,
 } from "@microsoft/fluid-protocol-definitions";
+import * as assert from "assert";
 import { EventEmitter } from "events";
 
 export class DeltaConnection extends EventEmitter {
@@ -44,6 +42,9 @@ export class DeltaConnection extends EventEmitter {
     private _nacked = false;
     private _connected = true;
 
+    private readonly forwardEvents = ["op", "op-content", "signal", "error", "pong"];
+    private readonly nonForwardEvents = ["nack", "disconnect"];
+
     private constructor(private readonly connection: IDocumentDeltaConnection) {
         super();
 
@@ -51,29 +52,16 @@ export class DeltaConnection extends EventEmitter {
             claims: connection.claims,
             clientId: connection.clientId,
             existing: connection.existing,
-            initialClients: connection.initialClients,
-            initialContents: connection.initialContents,
-            initialMessages: connection.initialMessages,
-            initialSignals: connection.initialSignals,
+            get initialClients() { return connection.initialClients; },
+            get initialContents() { return connection.initialContents; },
+            get initialMessages() { return connection.initialMessages; },
+            get initialSignals() { return connection.initialSignals; },
             maxMessageSize: connection.maxMessageSize,
             mode: connection.mode,
             parentBranch: connection.parentBranch,
             serviceConfiguration: connection.serviceConfiguration,
             version: connection.version,
         };
-
-        // listen for new messages
-        connection.on("op", (documentId: string, messages: ISequencedDocumentMessage[]) => {
-            this.emit("op", documentId, messages);
-        });
-
-        connection.on("op-content", (message: IContentMessage) => {
-            this.emit("op-content", message);
-        });
-
-        connection.on("signal", (signal: ISignalMessage) => {
-            this.emit("signal", signal);
-        });
 
         connection.on("nack", (documentId: string, message: INack[]) => {
             // Mark nacked and also pause any outbound communication
@@ -85,15 +73,6 @@ export class DeltaConnection extends EventEmitter {
         connection.on("disconnect", (reason) => {
             this._connected = false;
             this.emit("disconnect", reason);
-        });
-
-        // Listen for socket.io latency messages
-        connection.on("pong", (latency: number) => {
-            this.emit("pong", latency);
-        });
-
-        connection.on("error", (error) => {
-            this.emit("error", error);
         });
     }
 
@@ -116,5 +95,36 @@ export class DeltaConnection extends EventEmitter {
 
     public submitSignal(message: any): void {
         return this.connection.submitSignal(message);
+    }
+
+    /**
+     * Subscribe to events emitted by the document
+     *
+     * @param event - event emitted by the document to listen to
+     * @param listener - listener for the event
+     */
+    public on(event: string, listener: (...args: any[]) => void): this {
+        // Register for the event on connection
+
+        // A number of events that are pass-through.
+        // Note that we delay subscribing to op / op-content / signal on purpose, as
+        // that is used as a signal in DocumentDeltaConnection to know if anyone has subscribed
+        // to these events, and thus stop accumulating ops / signals in early handlers.
+        if (this.forwardEvents.indexOf(event) !== -1) {
+            assert(this.connection.listeners(event).length === 0, "re-registration of events is not implemented");
+            this.connection.on(
+                event,
+                (...args: any[]) => {
+                    this.emit(event, ...args);
+                });
+        } else {
+            // These are events that we already subscribed to and already emit on object.
+            assert(this.nonForwardEvents.indexOf(event) !== -1);
+        }
+
+        // And then add the listener to our event emitter
+        super.on(event, listener);
+
+        return this;
     }
 }
