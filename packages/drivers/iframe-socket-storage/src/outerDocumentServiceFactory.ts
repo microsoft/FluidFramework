@@ -24,6 +24,22 @@ import * as Comlink from "comlink";
 import { debug } from "./debug";
 import { IOuterDocumentDeltaConnectionProxy } from "./innerDocumentDeltaConnection";
 
+export interface IDocumentServiceFactoryProxy {
+    clients: {
+        [clientId: string]: ICombinedDrivers;
+    };
+
+    createDocumentService(resolvedUrl: IFluidResolvedUrl): Promise<string>;
+    connected(): Promise<void>;
+}
+
+export interface ICombinedDrivers {
+    clientId: string;
+    stream: IOuterDocumentDeltaConnectionProxy;
+    deltaStorage: IDocumentDeltaStorageService;
+    storage: IDocumentStorageService;
+}
+
 /**
  * A converter that remotes a real connection to documentServices to an iframe
  */
@@ -79,30 +95,6 @@ export class OuterDocumentServiceFactory implements IDocumentServiceFactory {
         iframeContentWindow.window.postMessage("EndpointExposed", "*");
         Comlink.expose(this.documentServiceProxy!.getProxy(), Comlink.windowEndpoint(iframeContentWindow));
     }
-}
-
-export interface ISessionManager {
-    connected(): Promise<void>;
-
-    createDocumentService(resolvedUrl: IResolvedUrl): Promise<string>;
-
-    add(a: number, b: number): Promise<number>;
-}
-
-export interface IDocumentServiceFactoryProxy {
-    clients: {
-        [clientId: string]: ICombinedDrivers;
-    };
-
-    createDocumentService(resolvedUrl: IFluidResolvedUrl): Promise<string>;
-    connected(): Promise<void>;
-}
-
-export interface ICombinedDrivers {
-    clientId: string;
-    stream: IOuterDocumentDeltaConnectionProxy;
-    deltaStorage: IDocumentDeltaStorageService;
-    storage: IDocumentStorageService;
 }
 
 /**
