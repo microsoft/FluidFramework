@@ -258,11 +258,18 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         // Inbound signal queue
         this._inboundSignal = new DeltaQueue<ISignalMessage>((message, callback: (error?) => void) => {
-            this.handler!.processSignal({
-                clientId: message.clientId,
-                content: JSON.parse(message!.content as string),
-            });
-            callback();
+            try {
+                this.handler!.processSignal({
+                    clientId: message.clientId,
+                    content: JSON.parse(message!.content as string),
+                });
+                callback();
+            } catch (error) {
+                console.log("\n\n\n\n\n Blow Up");
+                this.handler!.processSignal(message!);
+                callback();
+            }
+
         });
 
         this._inboundSignal.on("error", (error) => {
