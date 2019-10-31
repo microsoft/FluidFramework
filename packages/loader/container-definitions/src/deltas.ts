@@ -32,7 +32,6 @@ export interface IConnectionDetails {
 }
 
 export interface IProcessMessageResult {
-    error?: any;
     immediateNoOp?: boolean;
 }
 
