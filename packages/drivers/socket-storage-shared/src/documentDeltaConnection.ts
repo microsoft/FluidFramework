@@ -113,7 +113,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
 
     private get details(): IConnected {
         if (!this._details) {
-            throw new Error("No details!");
+            throw new Error("Internal error: calling method before _details is initialized!");
         }
         return this._details;
     }
@@ -133,9 +133,9 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
                 this.socket.emit(submitType, this.clientId, work);
             });
 
-        this.socket.on("op", this.earlyOpHandler);
-        this.socket.on("op-content", this.earlyContentHandler);
-        this.socket.on("signal", this.earlySignalHandler);
+        this.socket.on("op", this.earlyOpHandler!);
+        this.socket.on("op-content", this.earlyContentHandler!);
+        this.socket.on("signal", this.earlySignalHandler!);
     }
 
     /**
@@ -212,7 +212,10 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
      * @returns messages sent during the connection
      */
     public get initialMessages(): ISequencedDocumentMessage[] | undefined {
-        this.socket.removeListener("op", this.earlyOpHandler);
+        if (this.earlyOpHandler) {
+            this.socket.removeListener("op", this.earlyOpHandler);
+            this.earlyOpHandler = undefined;
+        }
 
         assert(this.listeners("op").length !== 0, "No op handler is setup!");
 
@@ -236,7 +239,10 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
      * @returns contents sent during the connection
      */
     public get initialContents(): IContentMessage[] | undefined {
-        this.socket.removeListener("op-content", this.earlyContentHandler);
+        if (this.earlyContentHandler) {
+            this.socket.removeListener("op-content", this.earlyContentHandler);
+            this.earlyContentHandler = undefined;
+        }
 
         assert(this.listeners("op-content").length !== 0, "No op-content handler is setup!");
 
@@ -265,7 +271,10 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
      * @returns signals sent during the connection
      */
     public get initialSignals(): ISignalMessage[] | undefined {
-        this.socket.removeListener("signal", this.earlySignalHandler);
+        if (this.earlySignalHandler) {
+            this.socket.removeListener("signal", this.earlySignalHandler);
+            this.earlySignalHandler = undefined;
+        }
 
         assert(this.listeners("signal").length !== 0, "No signal handler is setup!");
 
@@ -359,17 +368,17 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         this.socket.disconnect();
     }
 
-    private readonly earlyOpHandler = (documentId: string, msgs: ISequencedDocumentMessage[]) => {
+    private earlyOpHandler? = (documentId: string, msgs: ISequencedDocumentMessage[]) => {
         debug("Queued early ops", msgs.length);
         this.queuedMessages.push(...msgs);
     }
 
-    private readonly earlyContentHandler = (msg: IContentMessage) => {
+    private earlyContentHandler? = (msg: IContentMessage) => {
         debug("Queued early contents");
         this.queuedContents.push(msg);
     }
 
-    private readonly earlySignalHandler = (msg: ISignalMessage) => {
+    private earlySignalHandler? = (msg: ISignalMessage) => {
         debug("Queued early signals");
         this.queuedSignals.push(msg);
     }
