@@ -32,7 +32,6 @@ export interface IConnectionDetails {
 }
 
 export interface IProcessMessageResult {
-    error?: any;
     immediateNoOp?: boolean;
 }
 
@@ -43,7 +42,7 @@ export interface IDeltaHandlerStrategy {
     /**
      * Processes the message.
      */
-    process: (message: ISequencedDocumentMessage, callback: (result: IProcessMessageResult) => void) => void;
+    process: (message: ISequencedDocumentMessage) => IProcessMessageResult;
 
     /**
      * Processes the signal.
