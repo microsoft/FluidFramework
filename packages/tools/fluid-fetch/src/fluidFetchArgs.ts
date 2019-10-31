@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+// tslint:disable:non-literal-fs-path
+
+import * as fs from "fs";
 import { URL } from "url";
 
 export let dumpMessages = false;
@@ -13,12 +16,9 @@ export let dumpSnapshotVersions = false;
 export let paramSnapshotVersionIndex: number | undefined;
 export let paramNumSnapshotVersions = 10;
 
-export let paramForceRefreshToken = false;
+export let paramForceTokenReauth = false;
 
-export let paramSave: string | undefined;
-export function setParamSave(url: string) {
-    paramURL = url;
-}
+export let paramSaveDir: string | undefined;
 export const messageTypeFilter = new Set<string>();
 
 export let paramURL: string | undefined;
@@ -28,27 +28,29 @@ export let connectToWebSocket = false;
 
 export let localDataOnly = false;
 
+export let paramSite: string | undefined;
+
 const optionsArray =
     [
         ["--dump:rawmessage", "dump all messages"],
         ["--dump:snapshotVersion", "dump a list of snapshot version"],
         ["--dump:snapshotTree", "dump the snapshot trees"],
-        ["--forceRefreshToken", "Force refresh token (SPO only)"],
+        ["--forceTokenReauth", "Force reauthorize token (SPO only)"],
         ["--stat:message", "show message type, channel type, data type statistics"],
         ["--stat:snapshot", "show a table of snapshot path and blob size"],
         ["--stat", "Show both messages & snapshot stats"],
         ["--filter:messageType <type>", "filter message by <type>"],
         ["--jwt <token>", "token to be used for routerlicious URLs"],
         ["--numSnapshotVersions <number>", "Number of versions to load (default:10)"],
-        ["--snapshotVersionIndex <number>", "Index of the version to dump"],
         ["--saveDir <outdir>", "Save data of the snapshots and messages"],
+        ["--snapshotVersionIndex <number>", "Index of the version to dump"],
         ["--websocket", "Connect to web socket to download initial messages"],
         ["--local", "Do not connect to storage, use earlier downloaded data. Requires --saveDir."],
     ];
 
 export function printUsage() {
     console.log("Usage: fluid-fetch [options] URL");
-    console.log("URL: <ODSP joinSession URL>|<Routerlicious URL>");
+    console.log("URL: <ODSP URL>|<Routerlicious URL>");
     console.log("Options:");
     for (const i of optionsArray) {
         console.log(`  ${i[0].padEnd(32)}: ${i[1]}`);
@@ -87,8 +89,8 @@ export function parseArguments() {
             case "--jwt":
                 paramJWT = parseStrArg(i++, "jwt token");
                 break;
-            case "--forceRefreshToken":
-                paramForceRefreshToken = true;
+            case "--forceTokenReauth":
+                paramForceTokenReauth = true;
                 break;
             case "--snapshotVersionIndex":
                 paramSnapshotVersionIndex = parseIntArg(i++, "version index", true);
@@ -97,7 +99,7 @@ export function parseArguments() {
                 paramNumSnapshotVersions = parseIntArg(i++, "number of versions", false);
                 break;
             case "--saveDir":
-                paramSave = parseStrArg(i++, "save data path");
+                paramSaveDir = parseStrArg(i++, "save data path");
                 break;
             case "--websocket":
                 connectToWebSocket = true;
@@ -157,5 +159,23 @@ function parseIntArg(i: number, name: string, allowZero: boolean) {
 function checkArgs() {
     if (paramSnapshotVersionIndex !== undefined) {
         paramNumSnapshotVersions = Math.max(paramSnapshotVersionIndex + 1, paramNumSnapshotVersions);
+    }
+
+    if (!paramURL) {
+        if (paramSaveDir) {
+            const file = `${paramSaveDir}/info.json`;
+            if (fs.existsSync(file)) {
+                const info = JSON.parse(fs.readFileSync(file, { encoding: "utf-8" }));
+                paramURL = info.url;
+            } else {
+                console.log(`Can't find file ${file}`);
+            }
+        }
+
+        if (!paramURL) {
+            console.error("ERROR: Missing URL");
+            printUsage();
+            process.exit(-1);
+        }
     }
 }
