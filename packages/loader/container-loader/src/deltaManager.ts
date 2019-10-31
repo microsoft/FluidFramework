@@ -759,12 +759,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         }
     }
 
-    private backOffWaitTimeOnError(error: any): number | undefined {
-        let waitTime;
-        if (error !== null && typeof error === "object" && error.retryAfterSeconds !== undefined) {
-            waitTime = error.retryAfterSeconds;
-        }
-        return waitTime;
+    private backOffWaitTimeOnError(error): number | undefined {
+        // tslint:disable-next-line: no-unsafe-any
+        return error !== null && typeof error === "object" && error.retryAfterSeconds ? error.retryAfterSeconds
+            : undefined;
     }
 
     private processInitialMessages(
