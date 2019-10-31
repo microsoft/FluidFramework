@@ -16,13 +16,12 @@ import {
     ISignalMessage,
     ITokenClaims,
 } from "@microsoft/fluid-protocol-definitions";
+import * as assert from "assert";
 import { EventEmitter } from "events";
 import { debug } from "./debug";
 import { IConnect, IConnected } from "./messages";
 
 const protocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
-
-// tslint:disable:no-non-null-assertion
 
 /**
  * Error raising for socket.io issues
@@ -96,11 +95,10 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
             token,  // token is going to indicate tenant level information, etc...
             versions: protocolVersions,
         };
-        socket.emit("connect_document", connectMessage);
 
         const deltaConnection = new DocumentDeltaConnection(socket, id);
 
-        await deltaConnection.initialize();
+        await deltaConnection.initialize(connectMessage);
         return deltaConnection;
     }
 
@@ -111,7 +109,14 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
 
     private readonly submitManager: BatchManager<IDocumentMessage[]>;
 
-    private details: IConnected | undefined;
+    private _details: IConnected | undefined;
+
+    private get details(): IConnected {
+        if (!this._details) {
+            throw new Error("No details!");
+        }
+        return this._details;
+    }
 
     /**
      * @param socket - websocket to be used
@@ -139,7 +144,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
      * @returns the client ID
      */
     public get clientId(): string {
-        return this.details!.clientId;
+        return this.details.clientId;
     }
 
     /**
@@ -148,7 +153,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
      * @returns the client mode
      */
     public get mode(): ConnectionMode {
-        return this.details!.mode;
+        return this.details.mode;
     }
 
     /**
@@ -157,7 +162,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
      * @returns client claims
      */
     public get claims(): ITokenClaims {
-        return this.details!.claims;
+        return this.details.claims;
     }
 
     /**
@@ -166,7 +171,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
      * @returns true if the document exists
      */
     public get existing(): boolean {
-        return this.details!.existing;
+        return this.details.existing;
     }
 
     /**
@@ -175,7 +180,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
      * @returns the parent branch
      */
     public get parentBranch(): string | null {
-        return this.details!.parentBranch;
+        return this.details.parentBranch;
     }
 
     /**
@@ -184,21 +189,21 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
      * @returns the maximum size of a message before chunking is required
      */
     public get maxMessageSize(): number {
-        return this.details!.maxMessageSize;
+        return this.details.maxMessageSize;
     }
 
     /**
      * Semver of protocol being used with the service
      */
     public get version(): string {
-        return this.details!.version;
+        return this.details.version;
     }
 
     /**
      * Configuration details provided by the service
      */
     public get serviceConfiguration(): IServiceConfiguration {
-        return this.details!.serviceConfiguration;
+        return this.details.serviceConfiguration;
     }
 
     /**
@@ -209,18 +214,20 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
     public get initialMessages(): ISequencedDocumentMessage[] | undefined {
         this.socket.removeListener("op", this.earlyOpHandler);
 
+        assert(this.listeners("op").length !== 0, "No op handler is setup!");
+
         if (this.queuedMessages.length > 0) {
             // some messages were queued.
             // add them to the list of initialMessages to be processed
-            if (!this.details!.initialMessages) {
-                this.details!.initialMessages = [];
+            if (!this.details.initialMessages) {
+                this.details.initialMessages = [];
             }
 
-            this.details!.initialMessages.push(...this.queuedMessages);
-            this.details!.initialMessages.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
+            this.details.initialMessages.push(...this.queuedMessages);
+            this.details.initialMessages.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
             this.queuedMessages.length = 0;
         }
-        return this.details!.initialMessages;
+        return this.details.initialMessages;
     }
 
     /**
@@ -231,23 +238,25 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
     public get initialContents(): IContentMessage[] | undefined {
         this.socket.removeListener("op-content", this.earlyContentHandler);
 
+        assert(this.listeners("op-content").length !== 0, "No op-content handler is setup!");
+
         if (this.queuedContents.length > 0) {
             // some contents were queued.
             // add them to the list of initialContents to be processed
-            if (!this.details!.initialContents) {
-                this.details!.initialContents = [];
+            if (!this.details.initialContents) {
+                this.details.initialContents = [];
             }
 
-            this.details!.initialContents.push(...this.queuedContents);
+            this.details.initialContents.push(...this.queuedContents);
 
-            this.details!.initialContents.sort((a, b) =>
+            this.details.initialContents.sort((a, b) =>
                 // tslint:disable-next-line:strict-boolean-expressions
                 (a.clientId === b.clientId) ? 0 : ((a.clientId < b.clientId) ? -1 : 1) ||
                     a.clientSequenceNumber - b.clientSequenceNumber);
             this.queuedContents.length = 0;
         }
 
-        return this.details!.initialContents;
+        return this.details.initialContents;
     }
 
     /**
@@ -258,17 +267,19 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
     public get initialSignals(): ISignalMessage[] | undefined {
         this.socket.removeListener("signal", this.earlySignalHandler);
 
+        assert(this.listeners("signal").length !== 0, "No signal handler is setup!");
+
         if (this.queuedSignals.length > 0) {
             // some signals were queued.
             // add them to the list of initialSignals to be processed
-            if (!this.details!.initialSignals) {
-                this.details!.initialSignals = [];
+            if (!this.details.initialSignals) {
+                this.details.initialSignals = [];
             }
 
-            this.details!.initialSignals.push(...this.queuedSignals);
+            this.details.initialSignals.push(...this.queuedSignals);
             this.queuedSignals.length = 0;
         }
-        return this.details!.initialSignals;
+        return this.details.initialSignals;
     }
 
     /**
@@ -277,7 +288,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
      * @returns initial client list sent during the connection
      */
     public get initialClients(): ISignalClient[] {
-        return this.details!.initialClients ? this.details!.initialClients : [];
+        return this.details.initialClients ? this.details.initialClients : [];
     }
 
     /**
@@ -361,8 +372,8 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         this.queuedSignals.push(msg);
     }
 
-    private async initialize() {
-        this.details = await new Promise<IConnected>((resolve, reject) => {
+    private async initialize(connectMessage: IConnect) {
+        this._details = await new Promise<IConnected>((resolve, reject) => {
             // Listen for connection issues
             this.socket.on("connect_error", (error) => {
                 debug(`Socket connection error: [${error}]`);
@@ -392,6 +403,8 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
                 this.socket.disconnect();
                 reject(createErrorObject("connect_document_error", error));
             }));
+
+            this.socket.emit("connect_document", connectMessage);
         });
     }
 }

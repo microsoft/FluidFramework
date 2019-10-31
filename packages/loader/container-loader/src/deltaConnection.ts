@@ -9,14 +9,12 @@ import {
 import {
     ConnectionMode,
     IClient,
-    IContentMessage,
     IDocumentDeltaConnection,
     IDocumentMessage,
     IDocumentService,
     INack,
-    ISequencedDocumentMessage,
-    ISignalMessage,
 } from "@microsoft/fluid-protocol-definitions";
+import * as assert from "assert";
 import { EventEmitter } from "events";
 
 export class DeltaConnection extends EventEmitter {
@@ -29,31 +27,6 @@ export class DeltaConnection extends EventEmitter {
     }
 
     public get details(): IConnectionDetails {
-        // Populate details on demand.
-        // This is required not to miss any ops!
-        // DeltaConnection.connect() is async, and as result there is a time window where runtime has not yet installed
-        // its op handler, and driver already removed its earlyOpHandler.
-        // As result, we raise op events without nobody listening for them!
-        // Given that some storage implementations may have slow propagation of ops form delta stream to storage, that
-        // can affect user experience in rather visible ways.
-        // Work around for it - drivers can continue to accumulate ops until
-        // initialMessages / initialSignals / initialContents are fetched
-        if (this._details === undefined) {
-            this._details = {
-                claims: this.connection.claims,
-                clientId: this.connection.clientId,
-                existing: this.connection.existing,
-                initialClients: this.connection.initialClients,
-                initialContents: this.connection.initialContents,
-                initialMessages: this.connection.initialMessages,
-                initialSignals: this.connection.initialSignals,
-                maxMessageSize: this.connection.maxMessageSize,
-                mode: this.connection.mode,
-                parentBranch: this.connection.parentBranch,
-                serviceConfiguration: this.connection.serviceConfiguration,
-                version: this.connection.version,
-            };
-        }
         return this._details;
     }
 
@@ -65,25 +38,27 @@ export class DeltaConnection extends EventEmitter {
         return this._connected;
     }
 
-    private _details: IConnectionDetails | undefined;
+    private readonly _details: IConnectionDetails;
     private _nacked = false;
     private _connected = true;
 
     private constructor(private readonly connection: IDocumentDeltaConnection) {
         super();
 
-        // listen for new messages
-        connection.on("op", (documentId: string, messages: ISequencedDocumentMessage[]) => {
-            this.emit("op", documentId, messages);
-        });
-
-        connection.on("op-content", (message: IContentMessage) => {
-            this.emit("op-content", message);
-        });
-
-        connection.on("signal", (signal: ISignalMessage) => {
-            this.emit("signal", signal);
-        });
+        this._details = {
+            claims: connection.claims,
+            clientId: connection.clientId,
+            existing: connection.existing,
+            get initialClients() { return connection.initialClients; },
+            get initialContents() { return connection.initialContents; },
+            get initialMessages() { return connection.initialMessages; },
+            get initialSignals() { return connection.initialSignals; },
+            maxMessageSize: connection.maxMessageSize,
+            mode: connection.mode,
+            parentBranch: connection.parentBranch,
+            serviceConfiguration: connection.serviceConfiguration,
+            version: connection.version,
+        };
 
         connection.on("nack", (documentId: string, message: INack[]) => {
             // Mark nacked and also pause any outbound communication
@@ -95,15 +70,6 @@ export class DeltaConnection extends EventEmitter {
         connection.on("disconnect", (reason) => {
             this._connected = false;
             this.emit("disconnect", reason);
-        });
-
-        // Listen for socket.io latency messages
-        connection.on("pong", (latency: number) => {
-            this.emit("pong", latency);
-        });
-
-        connection.on("error", (error) => {
-            this.emit("error", error);
         });
     }
 
@@ -126,5 +92,35 @@ export class DeltaConnection extends EventEmitter {
 
     public submitSignal(message: any): void {
         return this.connection.submitSignal(message);
+    }
+
+    /**
+     * Subscribe to events emitted by the document
+     *
+     * @param event - event emitted by the document to listen to
+     * @param listener - listener for the event
+     */
+    public on(event: string, listener: (...args: any[]) => void): this {
+        // Register for the event on connection
+
+        // A number of events that are pass-through.
+        // Note that we delay subscribing to op / op-content / signal on purpose, as
+        // that is used as a signal in DocumentDeltaConnection to know if anyone has subscribed
+        // to these events, and thus stop accumulating ops / signals in early handlers.
+        if (["op", "op-content", "signal", "error", "pong"].indexOf(event) !== -1) {
+            this.connection.on(
+                event,
+                (...args: any[]) => {
+                    this.emit(event, ...args);
+                });
+        } else {
+            // These are events that we already subscribed to and already emit on object.
+            assert(["nack", "disconnect"].indexOf(event) !== -1);
+        }
+
+        // And then add the listener to our event emitter
+        super.on(event, listener);
+
+        return this;
     }
 }
