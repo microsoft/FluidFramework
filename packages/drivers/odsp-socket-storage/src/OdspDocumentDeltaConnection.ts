@@ -17,6 +17,7 @@ import {
 import * as assert from "assert";
 import { IOdspSocketError } from "./contracts";
 import { debug } from "./debug";
+import { OdspCache } from "./odspCache";
 import { errorObjectFromOdspError } from "./OdspUtils";
 
 const protocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
@@ -41,7 +42,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
      * If url #1 fails to connect, will try url #2 if applicable.
      *
      * @param tenantId - the ID of the tenant
-     * @param id - document ID
+     * @param webSocketId - webSocket ID
      * @param token - authorization token for storage service
      * @param io - websocket library
      * @param client - information about the client
@@ -50,14 +51,16 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
      * @param url2 - alternate websocket URL
      * @param telemetryLogger - optional telemetry logger
      */
-    public static async create(
+    public static async createDeltaConnection(
         tenantId: string,
-        id: string,
+        webSocketId: string,
         token: string | null,
         io: SocketIOClientStatic,
         client: IClient,
         mode: ConnectionMode,
         url: string,
+        documentId: string,
+        odspCache: OdspCache,
         url2?: string,
         telemetryLogger: ITelemetryLogger = new TelemetryNullLogger()): Promise<IDocumentDeltaConnection> {
         // tslint:disable-next-line: strict-boolean-expressions
@@ -65,7 +68,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
 
         return this.createForUrlWithTimeout(
             tenantId,
-            id,
+            webSocketId,
             token,
             io,
             client,
@@ -81,7 +84,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
 
                     return this.createForUrlWithTimeout(
                         tenantId,
-                        id,
+                        webSocketId,
                         token,
                         io,
                         client,
@@ -90,10 +93,13 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
                         mode,
                         20000,
                         telemetryLogger,
-                    );
+                    ).catch((e) => {
+                        odspCache.remove(`${documentId}/joinsession`);
+                        throw e;
+                    });
                 }
             }
-
+            odspCache.remove(`${documentId}/joinsession`);
             telemetryLogger.sendTelemetryEvent({ eventName: "FailedAfdUrl" });
 
             throw error;
@@ -118,7 +124,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
     // tslint:disable-next-line: max-func-body-length
     private static async createForUrlWithTimeout(
         tenantId: string,
-        id: string,
+        webSocketId: string,
         token: string | null,
         io: SocketIOClientStatic,
         client: IClient,
@@ -126,10 +132,10 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
         mode: ConnectionMode,
         timeoutMs: number,
         telemetryLogger: ITelemetryLogger): Promise<IDocumentDeltaConnection> {
-        const socketReferenceKey = `${url},${tenantId},${id}`;
+        const socketReferenceKey = `${url},${tenantId},${webSocketId}`;
 
         const socketReference = OdspDocumentDeltaConnection.getOrCreateSocketIoReference(
-            io, timeoutMs, socketReferenceKey, url, tenantId, id, telemetryLogger);
+            io, timeoutMs, socketReferenceKey, url, tenantId, webSocketId, telemetryLogger);
 
         const socket = socketReference.socket;
         if (!socket) {
@@ -138,7 +144,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
 
         const connectMessage: IConnect = {
             client,
-            id,
+            id: webSocketId,
             mode,
             tenantId,
             token,  // token is going to indicate tenant level information, etc...
@@ -188,8 +194,8 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
                 disconnectAndReject(createErrorObject("error", error, error !== "Invalid namespace"), true);
             };
 
-            const earlyOpHandler = (documentId: string, msgs: ISequencedDocumentMessage[]) => {
-                if (documentId === id) {
+            const earlyOpHandler = (socketId: string, msgs: ISequencedDocumentMessage[]) => {
+                if (socketId === webSocketId) {
                     debug("Queued early ops", msgs.length);
                     queuedMessages.push(...msgs);
                 }
@@ -287,7 +293,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
             socket.emit("connect_document", connectMessage);
         });
 
-        return new OdspDocumentDeltaConnection(socket, id, connection, socketReferenceKey);
+        return new OdspDocumentDeltaConnection(socket, webSocketId, connection, socketReferenceKey);
     }
 
     /**
@@ -400,10 +406,10 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
      */
     constructor(
         socket: SocketIOClient.Socket,
-        documentId: string,
+        webSockeId: string,
         details: IConnected,
         private socketReferenceKey: string | undefined) {
-        super(socket, documentId, details);
+        super(socket, webSockeId, details);
         socket.on("server_disconnect", (socketError: IOdspSocketError) => {
             // Raise it as disconnect.
             // That produces cleaner telemetry (no errors) and keeps protocol simpler (and not driver-specific).

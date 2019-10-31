@@ -168,7 +168,7 @@ export class OdspDocumentService implements IDocumentService {
 
         const [websocketEndpoint, webSocketToken, io] = await Promise.all([this.websocketEndpointP, this.getWebsocketToken(), this.socketIOClientP]);
 
-        return OdspDocumentDeltaConnection.create(
+        return OdspDocumentDeltaConnection.createDeltaConnection(
             websocketEndpoint.tenantId,
             websocketEndpoint.id,
             // This is workaround for fluid-fetcher. Need to have better long term solution
@@ -177,6 +177,8 @@ export class OdspDocumentService implements IDocumentService {
             client,
             mode,
             websocketEndpoint.deltaStreamSocketUrl,
+            this.hashedDocumentId,
+            this.odspCache,
             websocketEndpoint.deltaStreamSocketUrl2,
             this.logger,
         );

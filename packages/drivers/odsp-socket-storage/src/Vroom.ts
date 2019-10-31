@@ -82,9 +82,7 @@ export async function getSocketStorageDiscovery(
   documentId: string,
 ): Promise<ISocketStorageDiscovery> {
   const odspCacheKey = `${documentId}/joinsession`;
-  // It is necessary to invalidate the cache here once we use the previous result because we do not
-  // want to keep using the same expired result. So if we delete it we would ask for new join session result.
-  let socketStorageDiscovery: ISocketStorageDiscovery = odspCache.get(odspCacheKey, true);
+  let socketStorageDiscovery: ISocketStorageDiscovery = odspCache.get(odspCacheKey, false);
   if (!socketStorageDiscovery) {
     const event = PerformanceEvent.start(logger, { eventName: "JoinSession" });
     let response: IOdspResponse<ISocketStorageDiscovery>;
@@ -113,10 +111,8 @@ export async function getSocketStorageDiscovery(
     if (socketStorageDiscovery.runtimeTenantId && !socketStorageDiscovery.tenantId) {
       socketStorageDiscovery.tenantId = socketStorageDiscovery.runtimeTenantId;
     }
-    // We are storing the joinsession response in cache for 16 mins so that other join session calls in the same timeframe can use this
-    // result. We are choosing 16 mins as the push server could change to different one after 15 mins. So to avoid any race condition,
-    // we are choosing 16 mins.
-    odspCache.put(odspCacheKey, socketStorageDiscovery, 960000);
+    // Never expire the joinsession result. On error, the delta connection will invalidate it.
+    odspCache.put(odspCacheKey, socketStorageDiscovery);
   }
   return socketStorageDiscovery;
 }
