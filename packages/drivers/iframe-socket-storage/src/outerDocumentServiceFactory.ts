@@ -161,7 +161,7 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
         return {
             connected: this.connected,
             clients: this.clients,
-            // Are tokens are still visible on the scope of this proxied object?
+            // Continue investigation of scope after feature check in
             createDocumentService: (resolvedUrl: IFluidResolvedUrl) => this.createDocumentService(resolvedUrl),
         };
     }
