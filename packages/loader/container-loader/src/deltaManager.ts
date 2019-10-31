@@ -453,7 +453,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 // 2) else case: if we got what we asked (to - 1) or more, then time to leave.
                 if (to === undefined ? lastFetch < maxFetchTo - 1 : to - 1 <= lastFetch) {
                     telemetryEvent.end({ lastFetch, totalDeltas: allDeltas.length, retries: retry });
-                    this.emitDelayInfo(retryFor.DELTASTORAGE, -1);
                     return allDeltas;
                 }
 
@@ -501,7 +500,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         // Might need to change to non-error event
         this.logger.sendErrorEvent({eventName: "GetDeltasClosedConnection" });
-        this.emitDelayInfo(retryFor.DELTASTORAGE, -1);
         return [];
     }
 
