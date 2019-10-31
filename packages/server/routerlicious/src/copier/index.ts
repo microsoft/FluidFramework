@@ -19,7 +19,8 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
     const db = await mongoManager.getDatabase();
     const collection = db.collection(collectionName);
 
-    // Something?
+    // Each document in the collection is identified by: (Fluid-)document
+    // id, tenant id, and payload (which is handled automatically?).
     await collection.createIndex(
         {
             documentId: 1,

@@ -90,12 +90,12 @@ export interface IBatchedSequenceNumber {
     opIndex: number;
 }
 
-/**
- * A single op received from Kafka.
- */
-export interface IRawSingleKafkaMessage extends IRawOperationMessage {
-    batchedSequenceNumber: IBatchedSequenceNumber;
-}
+// /**
+//  * A single op received from Kafka.
+//  */
+// export interface IRawSingleKafkaMessage extends IRawOperationMessage {
+//     batchedSequenceNumber: IBatchedSequenceNumber;
+// }
 
 // Need to change this name - it isn't necessarily ticketed
 export interface ITicketedMessage extends IMessage {

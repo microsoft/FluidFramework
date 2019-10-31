@@ -10,15 +10,15 @@ import {
     IKafkaMessage,
     IPartitionLambda,
     IRawOperationMessage,
-    IRawSingleKafkaMessage,
 } from "@microsoft/fluid-server-services-core";
+// tslint:disable-next-line
 import winston = require("winston");
 
 export class CopierLambda implements IPartitionLambda {
     // Below, one job corresponds to the task of sending one batch to Mongo:
-    private pendingJobs = new Map<string, IRawOperationMessage[][]>();
+    private pendingJobs = new Map<string, IRawOperationMessage[]>();
     private pendingOffset: number;
-    private currentJobs = new Map<string, IRawOperationMessage[][]>();
+    private currentJobs = new Map<string, IRawOperationMessage[]>();
 
     constructor(
         private rawOpCollection: ICollection<any>,
@@ -32,21 +32,31 @@ export class CopierLambda implements IPartitionLambda {
         const topic = `${boxcar.tenantId}/${boxcar.documentId}`;
 
         winston.info("LOG: handler ->boxcar");
-        winston.info(`boxcar doc id: ${boxcar.documentId}`);
-        winston.info(`boxcar tenant id: ${boxcar.tenantId}`);
-        winston.info(batch);
-        winston.info("LOG: handler ->batch[0]")
-        winston.info(`batch0 doc id: ${(batch[0] as IRawOperationMessage).documentId}`)
-        winston.info(`batch0 tenant id: ${(batch[0] as IRawOperationMessage).tenantId}`)
-        winston.info(`batch0 client id: ${(batch[0] as IRawOperationMessage).clientId}`)
 
-        const convertedBatch = batch.map(m => (m as IRawOperationMessage));
+        // Create a stringified array of IRawOperationMessage objects and pack
+        // it into a single message that can be split apart on reception:
+        const convertedBatch = batch.map((m) => (m as IRawOperationMessage));
+        const jsonBatch = JSON.stringify(convertedBatch);
+        const combinedMessage: IRawOperationMessage = {
+            operation: {
+                contents: jsonBatch,
+                clientSequenceNumber: -1,
+                referenceSequenceNumber: -1,
+                type: undefined,
+            },
+            documentId: boxcar.documentId,
+            tenantId: boxcar.tenantId,
+            clientId: (batch[0] as IRawOperationMessage).clientId,
+            timestamp: undefined,
+            type: undefined,
+        };
+        winston.info(combinedMessage);
 
         // Write the batch directly to Mongo:
         if (!this.pendingJobs.has(topic)) {
             this.pendingJobs.set(topic, []);
         }
-        this.pendingJobs.get(topic).push(convertedBatch);
+        this.pendingJobs.get(topic).push(combinedMessage);
 
         // Update current offset (will be tied to this batch):
         this.pendingOffset = message.offset;
@@ -91,9 +101,12 @@ export class CopierLambda implements IPartitionLambda {
             });
     }
 
-    private async processMongoCore(kafkaBatches: IRawOperationMessage[][]): Promise<void> {
+    private async processMongoCore(kafkaBatches: IRawOperationMessage[]): Promise<void> {
         await this.rawOpCollection
             .insertMany(kafkaBatches, false)
+            .then((whatever) => {
+                winston.info("test");
+            })
             .catch((error) => {
             // Duplicate key errors are ignored since a replay may cause us to insert twice into Mongo.
             // All other errors result in a rejected promise.

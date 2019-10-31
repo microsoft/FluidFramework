@@ -4,7 +4,11 @@
  */
 
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
-import { IAlfredTenant, MongoManager } from "@microsoft/fluid-server-services-core";
+import {
+    IAlfredTenant,
+    IRawOperationMessage,
+    MongoManager,
+} from "@microsoft/fluid-server-services-core";
 import { Router } from "express";
 import { Provider } from "nconf";
 import { getParam } from "../../utils";
@@ -77,17 +81,27 @@ export async function getRawDeltas(
     mongoManager: MongoManager,
     collectionName: string,
     tenantId?: string,
-    documentId?: string): Promise<ISequencedDocumentMessage[]> {
+    documentId?: string): Promise<IRawOperationMessage[]> {
 
     // Create an optional filter to restrict the delta range
-    // const query: any = { documentId, tenantId };
+    const query: any = { documentId, tenantId };
 
+    winston.info("getrawdeltas");
     // Query for the deltas and return a filtered version of just the operations field
     const db = await mongoManager.getDatabase();
     const collection = await db.collection<any>(collectionName);
-    const dbDeltas = await collection.findAll();
+    const dbDump = await collection.find(query, undefined);
 
-    return dbDeltas;
+    winston.info("getrawdeltas after await");
+    winston.info(`dbdump length ${dbDump.length}`);
+
+    // FLatten the array of ordered batches into an array of ordered individual messages:
+    const deltaBatches = dbDump.map((d) => (JSON.parse(d) as IRawOperationMessage[]));
+    const allDeltas = ([] as IRawOperationMessage[]).concat(...deltaBatches);
+
+    winston.info(`allDeltas length ${allDeltas.length}`);
+
+    return allDeltas;
 }
 
 export function create(config: Provider, mongoManager: MongoManager, appTenants: IAlfredTenant[]): Router {
