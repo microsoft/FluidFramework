@@ -41,9 +41,10 @@ export interface ICombinedDrivers {
 }
 
 /**
- * A converter that remotes a real connection to documentServices to an iframe
+ * Creates a proxy outerdocumentservice from either a resolvedURL or a request
+ * Remotes the real connection to an iframe
  */
-export class OuterDocumentServiceFactory implements IDocumentServiceFactory {
+export class DocumentServiceProxyFactory {
     public readonly protocolName = "fluid-outer:";
     private documentServiceProxy: DocumentServiceFactoryProxy | undefined;
 
@@ -54,7 +55,7 @@ export class OuterDocumentServiceFactory implements IDocumentServiceFactory {
 
     }
 
-    public async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
+    public async createDocumentService(resolvedUrl: IResolvedUrl): Promise<void> {
 
         this.documentServiceProxy = new DocumentServiceFactoryProxy(
             this.documentServiceFactory,
@@ -62,12 +63,10 @@ export class OuterDocumentServiceFactory implements IDocumentServiceFactory {
             resolvedUrl as IFluidResolvedUrl,
         );
 
-        await this.createProxy();
-
-        return undefined as unknown as any;
+        return this.createProxy();
     }
 
-    public async createDocumentServiceFromRequest(request: IRequest): Promise<IDocumentService> {
+    public async createDocumentServiceFromRequest(request: IRequest): Promise<void> {
         // Simplify this with either https://github.com/microsoft/FluidFramework/pull/448
         // or https://github.com/microsoft/FluidFramework/issues/447
         const resolvers: IUrlResolver[] = new Array();
