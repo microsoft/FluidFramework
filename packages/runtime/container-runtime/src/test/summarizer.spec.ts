@@ -26,15 +26,15 @@ describe("Runtime", () => {
                 let summarizer: RunningSummarizer;
                 const summarizerClientId = "test";
                 const onBehalfOfClientId = "behalf";
-                let lastSeq = 0;
+                let lastRefSeq = 0;
+                let lastClientSeq = -1000; // negative/decrement for test
+                let lastSummarySeq = 0; // negative/decrement for test
                 const summaryConfig: ISummaryConfiguration = {
                     idleTime: 5000, // 5 sec (idle)
                     maxTime: 5000 * 12, // 1 min (active)
                     maxOps: 1000, // 1k ops (active)
                     maxAckWaitTime: 600000, // 10 min
                 };
-                const testSummaryOpClientSeqNum = -17;
-                const testSummaryOpSeqNum = -13;
                 let refreshBaseSummaryDeferred: Deferred<void>;
                 let shouldDeferGenerateSummary: boolean = false;
                 let deferGenerateSummary: Deferred<void>;
@@ -47,16 +47,15 @@ describe("Runtime", () => {
                     shouldDeferGenerateSummary = false;
                     clock.reset();
                     runCount = 0;
-                    lastSeq = 0;
+                    lastRefSeq = 0;
                     refreshBaseSummaryDeferred = new Deferred();
                     const logger = new TelemetryNullLogger();
                     summaryDataStructure = new SummaryDataStructure(0, logger);
-                    summaryDataStructure.setClientId(summarizerClientId);
                     summarizer = await RunningSummarizer.start(
                         summarizerClientId,
                         onBehalfOfClientId,
                         logger,
-                        summaryDataStructure,
+                        summaryDataStructure.createWatcher(summarizerClientId),
                         summaryConfig,
                         async () => {
                             runCount++;
@@ -69,8 +68,8 @@ describe("Runtime", () => {
                                 await deferGenerateSummary.promise;
                             }
                             return {
-                                referenceSequenceNumber: lastSeq,
-                                clientSequenceNumber: testSummaryOpClientSeqNum,
+                                referenceSequenceNumber: lastRefSeq,
+                                clientSequenceNumber: lastClientSeq,
                                 submitted: true,
                                 treeNodeCount: 0,
                                 blobNodeCount: 0,
@@ -89,8 +88,8 @@ describe("Runtime", () => {
 
                 async function emitNextOp(increment: number = 1) {
                     await flushPromises();
-                    lastSeq += increment;
-                    summarizer.handleOp(undefined, { sequenceNumber: lastSeq } as ISequencedDocumentMessage);
+                    lastRefSeq += increment;
+                    summarizer.handleOp(undefined, { sequenceNumber: lastRefSeq } as ISequencedDocumentMessage);
                     await Promise.resolve();
                 }
 
@@ -98,9 +97,9 @@ describe("Runtime", () => {
                     summaryDataStructure.handleOp({
                         type: MessageType.Summarize,
                         clientId: summarizerClientId,
-                        referenceSequenceNumber: lastSeq,
-                        clientSequenceNumber: testSummaryOpClientSeqNum,
-                        sequenceNumber: testSummaryOpSeqNum,
+                        referenceSequenceNumber: lastRefSeq,
+                        clientSequenceNumber: --lastClientSeq,
+                        sequenceNumber: --lastSummarySeq,
                         contents: {
                             handle: "test-broadcast-handle",
                         },
@@ -109,7 +108,7 @@ describe("Runtime", () => {
 
                 async function emitAck(type: MessageType = MessageType.SummaryAck) {
                     const summaryProposal: ISummaryProposal = {
-                        summarySequenceNumber: testSummaryOpSeqNum,
+                        summarySequenceNumber: lastSummarySeq,
                     };
                     const contents: ISummaryAck = {
                         handle: "test-ack-handle",

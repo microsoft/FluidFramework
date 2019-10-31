@@ -126,23 +126,55 @@ class Summary implements ISummary {
     }
 }
 
-export class SummaryDataStructure {
+export interface IClientSummaryWatcher {
+    watchSummary(clientSequenceNumber: number): ISummary;
+    waitFlushed(): Promise<IAckedSummary | undefined>;
+}
+
+class SummaryWatcher implements IClientSummaryWatcher {
     // key: clientSeqNum
     private readonly localSummaries = new Map<number, Summary>();
+
+    public constructor(
+        public readonly clientId: string,
+        private readonly summaryDataStructure: SummaryDataStructure,
+    ) {}
+
+    public watchSummary(clientSequenceNumber: number): ISummary {
+        let summary = this.localSummaries.get(clientSequenceNumber);
+        if (!summary) {
+            summary = Summary.createLocal(this.clientId, clientSequenceNumber);
+            this.localSummaries.set(summary.clientSequenceNumber, summary);
+        }
+        return summary;
+    }
+
+    public waitFlushed() {
+        return this.summaryDataStructure.waitFlushed();
+    }
+
+    public tryGetSummary(clientSequenceNumber: number) {
+        return this.localSummaries.get(clientSequenceNumber);
+    }
+
+    public setSummary(summary: Summary) {
+        this.localSummaries.set(summary.clientSequenceNumber, summary);
+    }
+}
+
+export class SummaryDataStructure {
+    // key: clientId
+    private readonly summaryWatchers = new Map<string, SummaryWatcher>();
     // key: summarySeqNum
     private readonly pendingSummaries = new Map<number, Summary>();
-    // key: summarySeqNum
     private readonly ackedSummaries = new Map<number, Summary>();
-    // key: summarySeqNum
     private readonly nacks = new Map<number, ISummaryNackMessage>();
     private readonly initialAck = new Deferred<IAckedSummary | undefined>();
 
     private lastAck?: IAckedSummary;
 
     private initialized = false;
-    private _clientId: string;
     public get isInitialized() { return this.initialized; }
-    public get clientId() { return this._clientId; }
 
     public constructor(
         public readonly initialSequenceNumber: number,
@@ -154,9 +186,10 @@ export class SummaryDataStructure {
         }
     }
 
-    public setClientId(clientId: string) {
-        assert(!this._clientId);
-        this._clientId = clientId;
+    public createWatcher(clientId: string): IClientSummaryWatcher {
+        const watcher = new SummaryWatcher(clientId, this);
+        this.summaryWatchers.set(clientId, watcher);
+        return watcher;
     }
 
     public waitInitialized(): Promise<IAckedSummary | undefined> {
@@ -169,16 +202,6 @@ export class SummaryDataStructure {
             await Promise.all(promises);
         }
         return this.lastAck;
-    }
-
-    public addLocalSummary(clientSequenceNumber: number): ISummary {
-        assert(this._clientId);
-        let summary = this.localSummaries.get(clientSequenceNumber);
-        if (!summary) {
-            summary = Summary.createLocal(this._clientId, clientSequenceNumber);
-            this.localSummaries.set(summary.clientSequenceNumber, summary);
-        }
-        return summary;
     }
 
     public handleOp(op: ISequencedDocumentMessage) {
@@ -202,13 +225,22 @@ export class SummaryDataStructure {
     }
 
     private handleSummaryOp(op: ISummaryMessage) {
-        let summary = this.localSummaries.get(op.clientSequenceNumber);
-        if (summary && summary.clientId === op.clientId && !summary.isBroadcast()) {
-            summary.broadcast(op);
-        } else {
+        let summary: Summary | undefined;
+
+        // check if summary already being watched, broadcast if so
+        const watcher = this.summaryWatchers.get(op.clientId);
+        if (watcher) {
+            summary = watcher.tryGetSummary(op.clientSequenceNumber);
+            if (summary) {
+                summary.broadcast(op);
+            }
+        }
+
+        // if not watched, create from op
+        if (!summary) {
             summary = Summary.createFromOp(op);
-            if (summary.clientId === this._clientId) {
-                this.localSummaries.set(op.clientSequenceNumber, summary);
+            if (watcher) {
+                watcher.setSummary(summary);
             }
         }
         this.pendingSummaries.set(op.sequenceNumber, summary);

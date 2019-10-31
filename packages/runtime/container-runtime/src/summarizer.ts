@@ -21,7 +21,7 @@ import {
 import * as assert from "assert";
 import { ContainerRuntime, IGeneratedSummaryData } from "./containerRuntime";
 import { SingleExecutionRunner } from "./singleExecutionRunner";
-import { ISummaryAckMessage, SummaryDataStructure } from "./summaryDataStructure";
+import { IClientSummaryWatcher, ISummaryAckMessage, SummaryDataStructure } from "./summaryDataStructure";
 
 // send some telemetry if generate summary takes too long
 const maxSummarizeTimeoutTime = 20000; // 20 sec
@@ -33,8 +33,8 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
     public get IComponentLoadable() { return this; }
 
     private readonly logger: ITelemetryLogger;
-    private readonly singleRunManager: SingleExecutionRunner;
-    private readonly summaryDds: SummaryDataStructure;
+    private readonly singleRunner: SingleExecutionRunner;
+    private readonly summaryDataStructure: SummaryDataStructure;
     private onBehalfOfClientId: string;
     private runningSummarizer?: RunningSummarizer;
 
@@ -46,17 +46,18 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
         private readonly refreshBaseSummary: (snapshot: ISnapshotTree) => void,
     ) {
         this.logger = ChildLogger.create(this.runtime.logger, "Summarizer");
-        this.singleRunManager = new SingleExecutionRunner(runtime);
-        this.summaryDds = new SummaryDataStructure(
+        this.singleRunner = new SingleExecutionRunner(runtime);
+        this.summaryDataStructure = new SummaryDataStructure(
             this.runtime.deltaManager.initialSequenceNumber,
             this.logger);
-        this.runtime.deltaManager.inbound.on("op", (op) => this.summaryDds.handleOp(op as ISequencedDocumentMessage));
+        this.runtime.deltaManager.inbound.on("op",
+            (op) => this.summaryDataStructure.handleOp(op as ISequencedDocumentMessage));
     }
 
     public async run(onBehalfOf: string): Promise<void> {
         this.onBehalfOfClientId = onBehalfOf;
 
-        const startResult = await this.singleRunManager.waitStart();
+        const startResult = await this.singleRunner.waitStart();
         if (startResult.started === false) {
             this.logger.sendTelemetryEvent({
                 eventName: "NotStarted",
@@ -77,20 +78,18 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
             return;
         }
 
-        this.summaryDds.setClientId(this.runtime.clientId);
-
         // initialize values and first ack (time is not exact)
-        const maybeInitialAck = await this.summaryDds.waitInitialized();
+        const maybeInitialAck = await this.summaryDataStructure.waitInitialized();
 
         this.logger.sendTelemetryEvent({
             eventName: "RunningSummarizer",
             onBehalfOf,
-            initSummarySeqNumber: this.summaryDds.initialSequenceNumber,
+            initSummarySeqNumber: this.summaryDataStructure.initialSequenceNumber,
             initHandle: maybeInitialAck ? maybeInitialAck.summaryAckNack.contents.handle : undefined,
         });
 
         let initialAttempt: ISummaryAttempt = {
-            refSequenceNumber: this.summaryDds.initialSequenceNumber,
+            refSequenceNumber: this.summaryDataStructure.initialSequenceNumber,
             summaryTime: Date.now(),
         };
         if (maybeInitialAck) {
@@ -108,7 +107,7 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
             this.runtime.clientId,
             onBehalfOf,
             this.logger,
-            this.summaryDds,
+            this.summaryDataStructure.createWatcher(this.runtime.clientId),
             this.configurationGetter(),
             () => this.tryGenerateSummary(),
             (ack) => this.handleSuccessfulSummary(ack),
@@ -124,7 +123,7 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
             "batchEnd",
             (error: any, op: ISequencedDocumentMessage) => this.runningSummarizer.handleOp(error, op));
 
-        await this.singleRunManager.waitComplete();
+        await this.singleRunner.waitComplete();
 
         // cleanup after running
         this.dispose();
@@ -141,7 +140,7 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
             onBehalfOf: this.onBehalfOfClientId,
             reason,
         });
-        this.singleRunManager.stop();
+        this.singleRunner.stop();
         this.runtime.closeFn();
     }
 
@@ -258,7 +257,7 @@ export class RunningSummarizer {
         clientId: string,
         onBehalfOfClientId: string,
         logger: ITelemetryLogger,
-        summaryDataStructure: SummaryDataStructure,
+        summaryWatcher: IClientSummaryWatcher,
         configuration: ISummaryConfiguration,
         tryGenerateSummary: () => Promise<IGeneratedSummaryData | undefined>,
         handleSuccessfulSummary: (ack: ISummaryAckMessage) => Promise<void>,
@@ -268,7 +267,7 @@ export class RunningSummarizer {
             clientId,
             onBehalfOfClientId,
             logger,
-            summaryDataStructure,
+            summaryWatcher,
             configuration,
             tryGenerateSummary,
             handleSuccessfulSummary,
@@ -290,7 +289,7 @@ export class RunningSummarizer {
         private readonly clientId: string,
         private readonly onBehalfOfClientId: string,
         private readonly logger: ITelemetryLogger,
-        private readonly summaryDataStructure: SummaryDataStructure,
+        private readonly summaryWatcher: IClientSummaryWatcher,
         private readonly configuration: ISummaryConfiguration,
         private readonly tryGenerateSummary: () => Promise<IGeneratedSummaryData | undefined>,
         private readonly handleSuccessfulSummary: (ack: ISummaryAckMessage) => Promise<void>,
@@ -375,7 +374,7 @@ export class RunningSummarizer {
         this.pendingCanceller = new Deferred<void>();
         this.pendingAckTimer.start();
         const maybeLastAck = await Promise.race([
-            this.summaryDataStructure.waitFlushed(),
+            this.summaryWatcher.waitFlushed(),
             this.pendingCanceller.promise]);
         this.pendingAckTimer.clear();
 
@@ -448,7 +447,7 @@ export class RunningSummarizer {
 
         this.pendingCanceller = new Deferred<void>();
         this.pendingAckTimer.start();
-        const summary = this.summaryDataStructure.addLocalSummary(summaryData.clientSequenceNumber);
+        const summary = this.summaryWatcher.watchSummary(summaryData.clientSequenceNumber);
 
         // wait for broadcast
         const summaryOp = await Promise.race([summary.waitBroadcast(), this.pendingCanceller.promise]);
