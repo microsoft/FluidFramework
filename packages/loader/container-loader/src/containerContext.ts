@@ -232,8 +232,8 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         return;
     }
 
-    public reloadContext() {
-        this.container.reloadContext();
+    public reloadContext(): Promise<void> {
+        return this.container.reloadContext();
     }
 
     private async load() {
