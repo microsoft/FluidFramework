@@ -69,6 +69,8 @@ import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService
 import { isSystemMessage, ProtocolOpHandler } from "./protocol";
 import { Quorum, QuorumProxy } from "./quorum";
 
+// tslint:disable:no-floating-promises - disabling per-file rather than full subdirectory
+
 // tslint:disable-next-line:no-var-requires
 const performanceNow = require("performance-now") as (() => number);
 
@@ -373,18 +375,18 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         this.emit("error", error);
     }
 
-    public reloadContext(): void {
-        // pause inbound synchronously
-        this.deltaManager!.inbound.systemPause();
-        this.deltaManager!.inboundSignal.systemPause();
-
-        this.reloadContextCore().then(() => {
-            this.deltaManager!.inbound.systemResume();
-            this.deltaManager!.inboundSignal.systemResume();
+    public reloadContext(): Promise<void> {
+        return this.reloadContextCore().catch((error) => {
+            this.raiseCriticalError(error);
+            throw error;
         });
     }
 
     private async reloadContextCore(): Promise<void> {
+        await Promise.all([
+            this.deltaManager!.inbound.systemPause(),
+            this.deltaManager!.inboundSignal.systemPause()]);
+
         const previousContextState = await this.context!.stop();
 
         let snapshot: ISnapshotTree | undefined;
@@ -405,6 +407,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         };
 
         await this.loadContext(attributes, storage, snapshot);
+
+        await Promise.all([
+            this.deltaManager!.inbound.systemResume(),
+            this.deltaManager!.inboundSignal.systemResume()]);
     }
 
     private async snapshotCore(tagMessage: string, fullTree: boolean = false) {
@@ -846,8 +852,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                 attributes.minimumSequenceNumber,
                 attributes.sequenceNumber,
                 {
-                    process: (message, callback) => {
-                        this.processRemoteMessage(message, callback);
+                    process: (message) => {
+                        return this.processRemoteMessage(message);
                     },
                     processSignal: (message) => {
                         this.processSignal(message);
@@ -972,54 +978,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return this._deltaManager!.submit(type, contents, batch, metadata);
     }
 
-    private processRemoteMessage(
-        message: ISequencedDocumentMessage,
-        callback: (result: IProcessMessageResult) => void,
-    ) {
-        if (this.context!.legacyMessaging) {
-            this.processRemoteMessageLegacy(message).then(
-                (result) => { callback(result); },
-                (error) => { callback({ error }); });
-        } else {
-            const result = this.processRemoteMessageNew(message);
-            callback(result);
-        }
-    }
-
-    private async processRemoteMessageLegacy(message: ISequencedDocumentMessage): Promise<IProcessMessageResult> {
-        const local = this._clientId === message.clientId;
-        let context;
-
-        // Forward non system messages to the loaded runtime for processing
-        if (!isSystemMessage(message)) {
-            context = await this.context!.prepare(message, local);
-
-            this.context!.process(message, local, context);
-        }
-
-        switch (message.type) {
-            case MessageType.BlobUploaded:
-                // tslint:disable-next-line:no-floating-promises
-                this.blobManager!.addBlob(message.contents as IGenericBlob);
-                this.emit(MessageType.BlobUploaded, message.contents);
-                break;
-
-            default:
-        }
-
-        // Allow the protocol handler to process the message
-        const result = this.protocolHandler!.processMessage(message, local);
-
-        this.emit("op", message);
-
-        if (!isSystemMessage(message)) {
-            await this.context!.postProcess(message, local, context);
-        }
-
-        return result;
-    }
-
-    private processRemoteMessageNew(message: ISequencedDocumentMessage): IProcessMessageResult {
+    private processRemoteMessage(message: ISequencedDocumentMessage): IProcessMessageResult {
         const local = this._clientId === message.clientId;
 
         // Forward non system messages to the loaded runtime for processing

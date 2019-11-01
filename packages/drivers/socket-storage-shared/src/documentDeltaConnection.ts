@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
-import { BatchManager, INetworkErrorProperties, NetworkError, TelemetryNullLogger } from "@microsoft/fluid-core-utils";
+import { BatchManager, INetworkErrorProperties, NetworkError } from "@microsoft/fluid-core-utils";
 import {
     ConnectionMode,
     IClient,
@@ -48,16 +47,16 @@ export function createErrorObject(handler: string, error: any, canRetry = true) 
  */
 export class DocumentDeltaConnection extends EventEmitter implements IDocumentDeltaConnection {
     /**
-     * Create a DocumentDeltaConnection.
-     * If url #1 fails to connect, will try url #2 if applicable.
+     * Create a DocumentDeltaConnection
      *
      * @param tenantId - the ID of the tenant
      * @param id - document ID
      * @param token - authorization token for storage service
      * @param io - websocket library
      * @param client - information about the client
+     * @param mode - connection mode
      * @param url - websocket URL
-     * @param url2 - alternate websocket URL
+     * @param timeoutMs - timeout for socket connection attempt in milliseconds (default: 20000)
      */
     // tslint:disable-next-line: max-func-body-length
     public static async create(
@@ -68,72 +67,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         client: IClient,
         mode: ConnectionMode,
         url: string,
-        url2?: string,
-        telemetryLogger?: ITelemetryLogger): Promise<IDocumentDeltaConnection> {
-            // tslint:disable-next-line: strict-boolean-expressions
-            const hasUrl2 = !!url2;
-
-            // Create null logger if telemetry logger is not available from caller
-            const logger = telemetryLogger ? telemetryLogger : new TelemetryNullLogger();
-
-            return this.createImpl(
-                tenantId,
-                id,
-                token,
-                io,
-                client,
-                url,
-                mode,
-                hasUrl2 ? 15000 : 20000,
-            // tslint:disable-next-line: promise-function-async
-            ).catch((error) => {
-                if (hasUrl2) {
-                    // tslint:disable-next-line: no-unsafe-any
-                    if (error !== null && typeof error === "object" && error.canRetry) {
-                        debug(`Socket connection error on non-AFD URL. Error was [${error}]. Retry on AFD URL: ${url}`);
-                        logger.sendTelemetryEvent({ eventName: "UseAfdUrl" });
-
-                        return this.createImpl(
-                            tenantId,
-                            id,
-                            token,
-                            io,
-                            client,
-                            // tslint:disable-next-line: no-non-null-assertion
-                            url2!,
-                            mode,
-                            20000,
-                        );
-                    }
-                }
-
-                logger.sendTelemetryEvent({ eventName: "FailedAfdUrl" });
-
-                throw error;
-            });
-    }
-
-    /**
-     * Create a DocumentDeltaConnection
-     *
-     * @param tenantId - the ID of the tenant
-     * @param id - document ID
-     * @param token - authorization token for storage service
-     * @param io - websocket library
-     * @param client - information about the client
-     * @param url - websocket URL
-     * @param timeoutMs - timeout for socket connection attempt in milliseconds
-     */
-    // tslint:disable-next-line: max-func-body-length
-    private static async createImpl(
-        tenantId: string,
-        id: string,
-        token: string | null,
-        io: SocketIOClientStatic,
-        client: IClient,
-        url: string,
-        mode: ConnectionMode,
-        timeoutMs: number): Promise<IDocumentDeltaConnection> {
+        timeoutMs: number = 20000): Promise<IDocumentDeltaConnection> {
 
         const socket = io(
             url,

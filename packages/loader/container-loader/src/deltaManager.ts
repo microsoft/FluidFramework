@@ -8,7 +8,6 @@ import {
     IDeltaHandlerStrategy,
     IDeltaManager,
     IDeltaQueue,
-    IProcessMessageResult,
     ITelemetryLogger,
 } from "@microsoft/fluid-container-definitions";
 import {
@@ -38,6 +37,7 @@ import { debug } from "./debug";
 import { DeltaConnection } from "./deltaConnection";
 import { DeltaQueue } from "./deltaQueue";
 import { logNetworkFailure, waitForConnectedState } from "./networkUtils";
+
 // tslint:disable-next-line:no-var-requires
 const performanceNow = require("performance-now") as (() => number);
 
@@ -99,7 +99,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     // the sequence number we initially loaded from
     private initSequenceNumber: number = 0;
 
-    private readonly _inboundPending: DeltaQueue<ISequencedDocumentMessage>;
     private readonly _inbound: DeltaQueue<ISequencedDocumentMessage>;
     private readonly _inboundSignal: DeltaQueue<ISignalMessage>;
     private readonly _outbound: DeltaQueue<IDocumentMessage[]>;
@@ -178,7 +177,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             return this.connection.details.claims.documentId;
         }
         return undefined;
-   }
+    }
 
     constructor(
         private readonly service: IDocumentService,
@@ -190,38 +189,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this.clientType = this.client.type;
         this.systemConnectionMode = this.client.mode === "write" ? "write" : "read";
 
-        // Inbound message queue
-        this._inboundPending = new DeltaQueue<ISequencedDocumentMessage>(
-            (op, callback) => {
-                // Explicitly split the two cases to avoid the async call in the case we are not split
-                if (op!.contents === undefined) {
-                    this.fetchOpContent(op).then(
-                        (opContents) => {
-                            op.contents = opContents.contents;
-                            this._inbound.push(op);
-                            callback();
-                        },
-                        (error) => {
-                            callback(error);
-                        });
-                } else {
-                    this._inbound.push(op);
-                    callback();
-                }
-            });
-
         this._inbound = new DeltaQueue<ISequencedDocumentMessage>(
-            (op, callback) => {
-                try {
-                    this.processMessage(op, callback);
-                } catch (error) {
-                    callback(error);
-                }
+            (op) => {
+                this.processInboundMessage(op);
             });
-
-        this._inboundPending.on("error", (error) => {
-            this.emit("error", error);
-        });
 
         this._inbound.on("error", (error) => {
             this.emit("error", error);
@@ -230,42 +201,21 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         // Outbound message queue. The outbound queue is represented as a queue of an array of ops. Ops contained
         // within an array *must* fit within the maxMessageSize and are guaranteed to be ordered sequentially.
         this._outbound = new DeltaQueue<IDocumentMessage[]>(
-            (messages, callback: (error?) => void) => {
-                if (this.shouldSplit(messages)) {
-                    messages.forEach((message) => {
-                        debug(`Splitting content from envelope.`);
-                        this.connection!.submitAsync([message]).then(
-                            () => {
-                                this.contentCache.set({
-                                    clientId: this.connection!.details.clientId,
-                                    clientSequenceNumber: message!.clientSequenceNumber,
-                                    contents: message!.contents as string,
-                                });
-                                message!.contents = undefined;
-                                this.connection!.submit([message]);
-                                callback();
-                            },
-                            (error) => {
-                                callback(error);
-                            });
-                    });
-                } else {
-                    this.connection!.submit(messages);
-                    callback();
-                }
-            });
+            (messages) => {
+                this.connection!.submit(messages);
+            },
+        );
 
         this._outbound.on("error", (error) => {
             this.emit("error", error);
         });
 
         // Inbound signal queue
-        this._inboundSignal = new DeltaQueue<ISignalMessage>((message, callback: (error?) => void) => {
+        this._inboundSignal = new DeltaQueue<ISignalMessage>((message) => {
             this.handler!.processSignal({
                 clientId: message.clientId,
                 content: JSON.parse(message!.content as string),
             });
-            callback();
         });
 
         this._inboundSignal.on("error", (error) => {
@@ -273,8 +223,11 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         });
 
         // Require the user to start the processing
+        // tslint:disable-next-line:no-floating-promises
         this._inbound.pause();
+        // tslint:disable-next-line:no-floating-promises
         this._outbound.pause();
+        // tslint:disable-next-line:no-floating-promises
         this._inboundSignal.pause();
     }
 
@@ -305,7 +258,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         // We are ready to process inbound messages
         if (resume) {
+            // tslint:disable-next-line:no-floating-promises
             this._inbound.systemResume();
+            // tslint:disable-next-line:no-floating-promises
             this._inboundSignal.systemResume();
 
             // If we have pending ops from web socket, then we can use that to start download
@@ -314,6 +269,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             if (this.pending.length > 0) {
                 this.catchUp("DocumentOpen", []);
             } else {
+                // tslint:disable-next-line:no-floating-promises
                 this.fetchMissingDeltas("DocumentOpen", sequenceNumber);
             }
         }
@@ -422,7 +378,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             let deltasRetrievedLast = 0;
             let success = true;
             let canRetry = false;
-            let retryAfter: number = -1;
+            let retryAfter: number | undefined = -1;
 
             try {
                 // Connect to the delta storage endpoint
@@ -453,7 +409,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 // 2) else case: if we got what we asked (to - 1) or more, then time to leave.
                 if (to === undefined ? lastFetch < maxFetchTo - 1 : to - 1 <= lastFetch) {
                     telemetryEvent.end({ lastFetch, totalDeltas: allDeltas.length, retries: retry });
-                    this.emitDelayInfo(retryFor.DELTASTORAGE, -1);
                     return allDeltas;
                 }
 
@@ -477,15 +432,12 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                     return [];
                 }
                 success = false;
-                // tslint:disable-next-line: no-unsafe-any
-                if (typeof error === "object" && error !== null && error.retryAfterSeconds !== undefined) {
-                    // tslint:disable-next-line: no-unsafe-any
-                    retryAfter = error.retryAfterSeconds;
-                }
+                retryAfter = this.backOffWaitTimeOnError(error);
             }
 
+            let delay: number;
             retry = deltasRetrievedLast === 0 ? retry + 1 : 0;
-            const delay = retryAfter >= 0 ? retryAfter : Math.min(
+            delay = retryAfter && retryAfter >= 0 ? retryAfter : Math.min(
                 MaxFetchDelay,
                 retry !== 0 ? MissingFetchDelay * Math.pow(2, retry) : 0);
 
@@ -504,7 +456,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         // Might need to change to non-error event
         this.logger.sendErrorEvent({eventName: "GetDeltasClosedConnection" });
-        this.emitDelayInfo(retryFor.DELTASTORAGE, -1);
         return [];
     }
 
@@ -524,11 +475,16 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             this.connecting = undefined;
         }
 
+        // tslint:disable-next-line:no-floating-promises
         this._inbound.clear();
+        // tslint:disable-next-line:no-floating-promises
         this._outbound.clear();
+        // tslint:disable-next-line:no-floating-promises
         this._inboundSignal.clear();
 
+        // tslint:disable-next-line:no-floating-promises
         this._inbound.systemPause();
+        // tslint:disable-next-line:no-floating-promises
         this._inboundSignal.systemPause();
 
         // Drop pending messages - this will ensure catchUp() does not go into infinite loop
@@ -560,17 +516,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         }
     }
 
-    private shouldSplit(contents: IDocumentMessage[]): boolean {
-        // Disabling message splitting - there is no compelling reason to use it.
-        // Container.submitMessage should chunk messages properly.
-        // Content can still be 2x size of maxMessageSize due to character escaping.
-        const splitSize = this.maxMessageSize * 2;
-        this.logger.debugAssert(
-            !contents || contents.length <= splitSize,
-            { eventName: "Splitting should not happen" });
-        return false;
-    }
-
     // Specific system level message attributes are need to be looked at by the server.
     // Hence they are separated and promoted as top level attributes.
     private createOutboundMessage(
@@ -590,7 +535,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     }
 
     private emitDelayInfo(retryEndpoint: number, delay: number) {
-        // delay === 0 means the corresponding endpoint has connected properly
+        // delay === -1 means the corresponding endpoint has connected properly
         // and we do not need to emit any delay to app.
         if (retryEndpoint === retryFor.DELTASTORAGE) {
             this.deltaStorageDelay = delay;
@@ -623,6 +568,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 // back-compat for newer clients and old server. If the server does not have mode, we reset to write.
                 this.connectionMode = connection.details.mode ? connection.details.mode : "write";
 
+                // tslint:disable-next-line:no-floating-promises
                 this._outbound.systemResume();
 
                 this.emitDelayInfo(retryFor.DELTASTREAM, -1);
@@ -674,7 +620,8 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                     this.reconnectOnError(
                         `Reconnecting on disconnect: ${disconnectReason}`,
                         connection,
-                        this.systemConnectionMode);
+                        this.systemConnectionMode,
+                        disconnectReason);
                 });
 
                 connection.on("error", (error) => {
@@ -720,16 +667,13 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                         error);
                 }
 
-                let delayNext: number = 0;
-                // tslint:disable-next-line: no-unsafe-any
-                if (typeof error === "object" && error !== null && error.retryAfterSeconds !== undefined) {
-                    // tslint:disable-next-line: no-unsafe-any
-                    delayNext = error.retryAfterSeconds;
-                } else {
+                let delayNext = this.backOffWaitTimeOnError(error);
+                if (delayNext === undefined) {
                     delayNext = Math.min(delay * 2, MaxReconnectDelay);
                 }
                 this.emitDelayInfo(retryFor.DELTASTREAM, delayNext);
-                waitForConnectedState(delayNext).then(() => this.connectCore(reason, delayNext, mode));
+                // tslint:disable-next-line:no-floating-promises
+                waitForConnectedState(delayNext).then(() => this.connectCore(reason, delayNext!, mode));
             });
     }
 
@@ -744,7 +688,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this.connection = undefined;
         this.connectionMode = "read";
 
+        // tslint:disable-next-line:no-floating-promises
         this._outbound.systemPause();
+        // tslint:disable-next-line:no-floating-promises
         this._outbound.clear();
         this.emit("disconnect", reason);
 
@@ -755,19 +701,32 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             this.closeOnConnectionError(error);
         } else {
             this.logger.sendTelemetryEvent({ eventName: "DeltaConnectionReconnect", reason }, error);
-            this.connectCore(reason, InitialReconnectDelay, mode);
+            const delayNext = this.backOffWaitTimeOnError(error);
+            if (delayNext !== undefined) {
+                this.emitDelayInfo(retryFor.DELTASTREAM, delayNext);
+                // tslint:disable-next-line:no-floating-promises
+                waitForConnectedState(delayNext).then(() => this.connectCore(reason, InitialReconnectDelay, mode));
+            } else {
+                this.connectCore(reason, InitialReconnectDelay, mode);
+            }
         }
+    }
+
+    private backOffWaitTimeOnError(error): number | undefined {
+        // tslint:disable-next-line: no-unsafe-any
+        return error !== null && typeof error === "object" && error.retryAfterSeconds ? error.retryAfterSeconds
+            : undefined;
     }
 
     private processInitialMessages(
             messages: ISequencedDocumentMessage[] | undefined,
             contents: IContentMessage[] | undefined,
             signals: ISignalMessage[] | undefined): void {
-        this.enqueInitalOps(messages, contents);
-        this.enqueInitalSignals(signals);
+        this.enqueueInitialOps(messages, contents);
+        this.enqueueInitialSignals(signals);
     }
 
-    private enqueInitalOps(
+    private enqueueInitialOps(
             messages: ISequencedDocumentMessage[] | undefined,
             contents: IContentMessage[] | undefined): void {
         if (contents && contents.length > 0) {
@@ -780,35 +739,12 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         }
     }
 
-    private enqueInitalSignals(signals: ISignalMessage[] | undefined): void {
+    private enqueueInitialSignals(signals: ISignalMessage[] | undefined): void {
         if (signals && signals.length > 0) {
             for (const signal of signals) {
                 this._inboundSignal.push(signal);
             }
         }
-    }
-
-    private async fetchOpContent(op: ISequencedDocumentMessage): Promise<IContentMessage> {
-        let result: IContentMessage;
-        const opContent = this.contentCache.peek(op.clientId);
-
-        if (!opContent || opContent.clientSequenceNumber > op.clientSequenceNumber) {
-            result = await this.waitForContent(op.clientId, op.clientSequenceNumber, op.sequenceNumber);
-        } else if (opContent.clientSequenceNumber < op.clientSequenceNumber) {
-            let nextContent = this.contentCache.get(op.clientId);
-            while (nextContent && nextContent.clientSequenceNumber < op.clientSequenceNumber) {
-                nextContent = this.contentCache.get(op.clientId);
-            }
-
-            assert(nextContent, "No content found");
-            assert.equal(op.clientSequenceNumber, nextContent!.clientSequenceNumber, "Invalid op content order");
-
-            result = nextContent!;
-        } else {
-            result = this.contentCache.get(op.clientId)!;
-        }
-
-        return result;
     }
 
     private enqueueMessages(messages: ISequencedDocumentMessage[]): void {
@@ -826,18 +762,19 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             // Check that the messages are arriving in the expected order
             if (message.sequenceNumber !== this.lastQueuedSequenceNumber + 1) {
                 // tslint:disable-next-line: max-line-length
-                debug(`DeltaManager: enque Messages *Out of* Order Message ${message.sequenceNumber} - last ${this.lastQueuedSequenceNumber}`);
+                debug(`DeltaManager: enqueueMessages *Out of* Order Message ${message.sequenceNumber} - last ${this.lastQueuedSequenceNumber}`);
 
+                // tslint:disable-next-line:no-floating-promises
                 this.handleOutOfOrderMessage(message);
             } else {
-                debug("DeltaManager: enque Messages In Order Message");
+                debug("DeltaManager: enqueueMessages In Order Message");
                 this.lastQueuedSequenceNumber = message.sequenceNumber;
                 this._inbound.push(message);
             }
         }
     }
 
-    private processMessage(message: ISequencedDocumentMessage, callback: (err?: any) => void): void {
+    private processInboundMessage(message: ISequencedDocumentMessage): void {
         const startTime = Date.now();
 
         if (this.connection && this.connection.details.clientId === message.clientId) {
@@ -886,26 +823,17 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             this.lastMessageTimeForTelemetry = message.timestamp;
         }
 
-        this.handler!.process(
-            message,
-            (result: IProcessMessageResult) => {
-                if (result.error) {
-                    callback(result.error);
-                } else {
-                    this.scheduleSequenceNumberUpdate(message, result.immediateNoOp === true);
+        const result = this.handler!.process(message);
+        this.scheduleSequenceNumberUpdate(message, result.immediateNoOp === true);
 
-                    const endTime = Date.now();
-                    this.emit("processTime", endTime - startTime);
-
-                    callback();
-                }
-            });
+        const endTime = Date.now();
+        this.emit("processTime", endTime - startTime);
     }
 
     /**
      * Handles an out of order message retrieved from the server
      */
-    private handleOutOfOrderMessage(message: ISequencedDocumentMessage) {
+    private async handleOutOfOrderMessage(message: ISequencedDocumentMessage): Promise<void> {
         if (message.sequenceNumber <= this.lastQueuedSequenceNumber) {
             this.logger.sendTelemetryEvent({
                 eventName: "DuplicateMessage",
@@ -917,13 +845,13 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         }
 
         this.pending.push(message);
-        this.fetchMissingDeltas("OutOfOrderMessage", this.lastQueuedSequenceNumber, message.sequenceNumber);
+        await this.fetchMissingDeltas("OutOfOrderMessage", this.lastQueuedSequenceNumber, message.sequenceNumber);
     }
 
     /**
      * Retrieves the missing deltas between the given sequence numbers
      */
-    private fetchMissingDeltas(telemetryEventSuffix: string, from: number, to?: number) {
+    private async fetchMissingDeltas(telemetryEventSuffix: string, from: number, to?: number): Promise<void> {
         // Exit out early if we're already fetching deltas
         if (this.fetching) {
             return;
@@ -931,59 +859,18 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         if (this.closed) {
             this.logger.sendTelemetryEvent({eventName: "fetchMissingDeltasClosedConnection" });
-            return [];
+            return;
         }
 
         this.fetching = true;
 
-        this.getDeltas(telemetryEventSuffix, from, to).then(
+        await this.getDeltas(telemetryEventSuffix, from, to).then(
             (messages) => {
+                this.emitDelayInfo(retryFor.DELTASTORAGE, -1);
                 this.fetching = false;
                 this.emit("caughtUp");
                 this.catchUp(telemetryEventSuffix, messages);
             });
-    }
-
-    private async waitForContent(
-            clientId: string,
-            clientSeqNumber: number,
-            seqNumber: number,
-    ): Promise<IContentMessage> {
-        const lateContentHandler = (clId: string) => {
-            if (clientId === clId) {
-                const lateContent = this.contentCache.peek(clId);
-                if (lateContent && lateContent.clientSequenceNumber === clientSeqNumber) {
-                    this.contentCache.removeListener("content", lateContentHandler);
-                    debug(`Late content fetched from buffer ${clientId}: ${clientSeqNumber}`);
-                    return this.contentCache.get(clientId);
-                }
-            }
-        };
-
-        this.contentCache.on("content", lateContentHandler);
-        const content = await this.fetchContent(clientId, clientSeqNumber, seqNumber);
-        this.contentCache.removeListener("content", lateContentHandler);
-
-        return content;
-    }
-
-    private async fetchContent(
-            clientId: string,
-            clientSeqNumber: number,
-            seqNumber: number): Promise<IContentMessage> {
-        const messages = await this.getDeltas("fetchContent", seqNumber, seqNumber);
-        assert.ok(messages.length > 0, "Content not found in DB");
-
-        const message = messages[0];
-        assert.equal(message.clientId, clientId, "Invalid fetched content");
-        assert.equal(message.clientSequenceNumber, clientSeqNumber, "Invalid fetched content");
-
-        debug(`Late content fetched from DB ${clientId}: ${clientSeqNumber}`);
-        return {
-            clientId: message.clientId,
-            clientSequenceNumber: message.clientSequenceNumber,
-            contents: message.contents as string,
-        };
     }
 
     private catchUp(telemetryEventSuffix: string, messages: ISequencedDocumentMessage[]): void {

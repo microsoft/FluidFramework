@@ -48,7 +48,6 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
      * @param client - information about the client
      * @param mode - mode of the client
      * @param url - websocket URL
-     * @param url2 - alternate websocket URL
      * @param telemetryLogger - optional telemetry logger
      */
     public static async createDeltaConnection(
@@ -59,12 +58,8 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
         client: IClient,
         mode: ConnectionMode,
         url: string,
-        documentId: string,
-        odspCache: OdspCache,
-        url2?: string,
+        timeoutMs: number = 20000,
         telemetryLogger: ITelemetryLogger = new TelemetryNullLogger()): Promise<IDocumentDeltaConnection> {
-        // tslint:disable-next-line: strict-boolean-expressions
-        const hasUrl2 = !!url2;
 
         return this.createForUrlWithTimeout(
             tenantId,
@@ -74,36 +69,9 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
             client,
             url,
             mode,
-            hasUrl2 ? 15000 : 20000,
+            timeoutMs,
             telemetryLogger,
-        ).catch((error) => {
-            if (hasUrl2) {
-                if (error !== null && typeof error === "object" && error.canRetry) {
-                    debug(`Socket connection error on non-AFD URL. Error was [${error}]. Retry on AFD URL: ${url}`);
-                    telemetryLogger.sendTelemetryEvent({ eventName: "UseAfdUrl" });
-
-                    return this.createForUrlWithTimeout(
-                        tenantId,
-                        webSocketId,
-                        token,
-                        io,
-                        client,
-                        // tslint:disable-next-line: no-non-null-assertion
-                        url2!,
-                        mode,
-                        20000,
-                        telemetryLogger,
-                    ).catch((e) => {
-                        odspCache.remove(`${documentId}/joinsession`);
-                        throw e;
-                    });
-                }
-            }
-            odspCache.remove(`${documentId}/joinsession`);
-            telemetryLogger.sendTelemetryEvent({ eventName: "FailedAfdUrl" });
-
-            throw error;
-        });
+        );
     }
 
     // Map of all existing socket io sockets. [url, tenantId, documentId] -> socket

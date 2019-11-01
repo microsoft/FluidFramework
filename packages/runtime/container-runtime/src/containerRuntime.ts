@@ -37,6 +37,7 @@ import {
     readAndParse,
 } from "@microsoft/fluid-core-utils";
 import {
+    Browser,
     IChunkedOp,
     IDocumentMessage,
     IDocumentStorageService,
@@ -44,6 +45,7 @@ import {
     ISignalMessage,
     ISnapshotTree,
     ISummaryConfiguration,
+    ISummaryContent,
     ISummaryTree,
     ITree,
     MessageType,
@@ -745,12 +747,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         }
     }
 
-    public prepare(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
-        return this.context.IMessageScheduler
-            ? Promise.reject("Scheduler assumes only process")
-            : Promise.resolve();
-    }
-
     public process(message: ISequencedDocumentMessage, local: boolean) {
         this.verifyNotClosed();
 
@@ -1133,7 +1129,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                 return ret;
             }
             const handle = await this.context.storage.uploadSummary(treeWithStats.summaryTree);
-            const summary = {
+            const summary: ISummaryContent = {
                 handle: handle.handle,
                 head: parents[0],
                 message,
@@ -1311,7 +1307,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     }
 
     private subscribeToLeadership() {
-        if (this.context.clientType !== "summarizer") {
+        if (this.context.clientType === Browser) {
             this.getScheduler().then((scheduler) => {
                 if (scheduler.leader) {
                     this.updateLeader(true);

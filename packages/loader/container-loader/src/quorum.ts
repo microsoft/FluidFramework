@@ -194,8 +194,7 @@ export class Quorum extends EventEmitter implements IQuorum {
      * TODO: Right now we will only submit proposals for connected clients and not attempt to resubmit on any
      * nack/disconnect. The correct answer for this should become more clear as we build scenarios on top of the loader.
      */
-    /* tslint:disable:promise-function-async */
-    public propose(key: string, value: any): Promise<void> {
+    public async propose(key: string, value: any): Promise<void> {
         const clientSequenceNumber = this.sendProposal(key, value);
         if (clientSequenceNumber < 0) {
             if (this.logger) {
