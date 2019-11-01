@@ -6,6 +6,7 @@
 import { INetworkErrorProperties, NetworkError, throwNetworkError } from "@microsoft/fluid-core-utils";
 import { default as fetch, RequestInfo as FetchRequestInfo, RequestInit as FetchRequestInit } from "node-fetch";
 import { IOdspSocketError } from "./contracts";
+import { debug } from "./debug";
 
 /**
  * returns true when the request should/can be retried
@@ -103,4 +104,20 @@ export function errorObjectFromOdspError(socketError: IOdspSocketError) {
             [INetworkErrorProperties.retryAfterSeconds, socketError.retryAfter],
         ],
     );
+}
+
+/**
+ * Tests if localStorage is usable.
+ * Should we move this outside to a library?
+ */
+export function isLocalStorageAvailable(): boolean {
+    const localStorageTestKey = "LocalStorageTestKey";
+    try {
+        localStorage.setItem(localStorageTestKey, "v");
+        localStorage.removeItem(localStorageTestKey);
+        return true;
+    } catch (e) {
+        debug(`LocalStorage not available due to ${e}`);
+        return false;
+    }
 }
