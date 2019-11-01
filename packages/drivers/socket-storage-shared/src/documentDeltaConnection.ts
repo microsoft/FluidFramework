@@ -43,6 +43,12 @@ export function createErrorObject(handler: string, error: any, canRetry = true) 
     return errorObj;
 }
 
+interface IEventListener {
+    event: string;
+    connectionListener: boolean; // true if this event listener only needed while connection is in progress
+    listener(...args: any[]): void;
+}
+
 /**
  * Represents a connection to a stream of delta updates
  */
@@ -105,6 +111,8 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
     private readonly submitManager: BatchManager<IDocumentMessage[]>;
 
     private _details: IConnected | undefined;
+
+    private trackedListeners: IEventListener[] = [];
 
     private get details(): IConnected {
         if (!this._details) {
@@ -210,10 +218,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
      * @returns messages sent during the connection
      */
     public get initialMessages(): ISequencedDocumentMessage[] | undefined {
-        if (this.earlyOpHandler) {
-            this.socket.removeListener("op", this.earlyOpHandler);
-            this.earlyOpHandler = undefined;
-        }
+        this.removeEarlyOpHandler();
 
         assert(this.listeners("op").length !== 0, "No op handler is setup!");
 
@@ -237,10 +242,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
      * @returns contents sent during the connection
      */
     public get initialContents(): IContentMessage[] | undefined {
-        if (this.earlyContentHandler) {
-            this.socket.removeListener("op-content", this.earlyContentHandler);
-            this.earlyContentHandler = undefined;
-        }
+        this.removeEarlyContentsHandler();
 
         assert(this.listeners("op-content").length !== 0, "No op-content handler is setup!");
 
@@ -269,10 +271,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
      * @returns signals sent during the connection
      */
     public get initialSignals(): ISignalMessage[] | undefined {
-        if (this.earlySignalHandler) {
-            this.socket.removeListener("signal", this.earlySignalHandler);
-            this.earlySignalHandler = undefined;
-        }
+        this.removeEarlySignalHandler();
 
         assert(this.listeners("signal").length !== 0, "No signal handler is setup!");
 
@@ -308,7 +307,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         assert(this.listeners(event).length === 0, "re-registration of events is not implemented");
 
         // Register for the event on socket.io
-        this.socket.on(
+        this.addTrackedListener(
             event,
             (...args: any[]) => {
                 this.emit(event, ...args);
@@ -366,35 +365,37 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
      */
     public disconnect(socketProtocolError: boolean = false) {
         this.socket.disconnect();
+        this.removeTrackedListeners(false);
     }
 
     protected async initialize(connectMessage: IConnect) {
         this._details = await new Promise<IConnected>((resolve, reject) => {
             // Listen for connection issues
-            this.socket.on("connect_error", (error) => {
+            this.addConnectionListener("connect_error", (error) => {
                 debug(`Socket connection error: [${error}]`);
                 this.disconnect(true);
                 reject(createErrorObject("connect_error", error));
             });
 
             // Listen for timeouts
-            this.socket.on("connect_timeout", () => {
+            this.addConnectionListener("connect_timeout", () => {
                 this.disconnect(true);
                 reject(createErrorObject("connect_timeout", "Socket connection timed out"));
             });
 
-            this.socket.on("connect_document_success", (response: IConnected) => {
+            this.addConnectionListener("connect_document_success", (response: IConnected) => {
+                this.removeTrackedListeners(true);
                 resolve(response);
             });
 
-            this.socket.on("error", ((error) => {
+            this.addTrackedListener("error", ((error) => {
                 debug(`Error in documentDeltaConection: ${error}`);
                 // This includes "Invalid namespace" error, which we consider critical (reconnecting will not help)
                 this.disconnect(true);
                 reject(createErrorObject("error", error, error !== "Invalid namespace"));
             }));
 
-            this.socket.on("connect_document_error", ((error) => {
+            this.addConnectionListener("connect_document_error", ((error) => {
                 // This is not an error for the socket - it's a protocol error.
                 // In this case we disconnect the socket and indicate that we were unable to create the
                 // DocumentDeltaConnection.
@@ -419,5 +420,54 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
     private earlySignalHandler ? = (msg: ISignalMessage) => {
         debug("Queued early signals");
         this.queuedSignals.push(msg);
+    }
+
+    private removeEarlyOpHandler() {
+        if (this.earlyOpHandler) {
+            this.socket.removeListener("op", this.earlyOpHandler);
+            this.earlyOpHandler = undefined;
+        }
+    }
+
+    private removeEarlyContentsHandler() {
+        if (this.earlyContentHandler) {
+            this.socket.removeListener("op-content", this.earlyContentHandler);
+            this.earlyContentHandler = undefined;
+        }
+    }
+
+    private removeEarlySignalHandler() {
+        if (this.earlySignalHandler) {
+            this.socket.removeListener("signal", this.earlySignalHandler);
+            this.earlySignalHandler = undefined;
+        }
+    }
+
+    private addConnectionListener(event: string, listener: (...args: any[]) => void) {
+        this.socket.on(event, listener);
+        this.trackedListeners.push({event, connectionListener: true, listener});
+    }
+
+    private addTrackedListener(event: string, listener: (...args: any[]) => void) {
+        this.socket.on(event, listener);
+        this.trackedListeners.push({event, connectionListener: true, listener});
+    }
+
+    private removeTrackedListeners(connectionListenerOnly) {
+        const remaining: IEventListener[] = [];
+        for (const {event, connectionListener, listener} of this.trackedListeners) {
+            if (!connectionListenerOnly || connectionListener) {
+                this.socket.off(event, listener);
+            } else {
+                remaining.push({event, connectionListener, listener});
+            }
+        }
+        this.trackedListeners = remaining;
+
+        if (!connectionListenerOnly) {
+            this.removeEarlyOpHandler();
+            this.removeEarlyContentsHandler();
+            this.removeEarlySignalHandler();
+        }
     }
 }
