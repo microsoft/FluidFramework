@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { NetworkError, throwNetworkError } from "@microsoft/fluid-core-utils";
+import { INetworkErrorProperties, NetworkError, throwNetworkError } from "@microsoft/fluid-core-utils";
 import { default as fetch, RequestInfo as FetchRequestInfo, RequestInit as FetchRequestInit } from "node-fetch";
 import { IOdspSocketError } from "./contracts";
+import { debug } from "./debug";
 
 /**
  * returns true when the request should/can be retried
@@ -79,9 +80,9 @@ export function fetchHelper(
 }
 
 export function getWithRetryForTokenRefresh<T>(get: (refresh: boolean) => Promise<T>) {
-    return get(false).catch(async (e: NetworkError) => {
+    return get(false).catch(async (e) => {
         // if the error is 401 or 403 refresh the token and try once more.
-        if (e instanceof NetworkError && (e.statusCode === 401 || e.statusCode === 403)) {
+        if (e.statusCode === 401 || e.statusCode === 403) {
             return get(true);
         }
 
@@ -97,7 +98,26 @@ export function getWithRetryForTokenRefresh<T>(get: (refresh: boolean) => Promis
 export function errorObjectFromOdspError(socketError: IOdspSocketError) {
     return new NetworkError(
         socketError.message,
-        socketError.code,
-        defaultRetryFilter(socketError.code), // canRetry
-        socketError.retryAfter);
+        [
+            [INetworkErrorProperties.statusCode, socketError.code],
+            [INetworkErrorProperties.canRetry, defaultRetryFilter(socketError.code)],
+            [INetworkErrorProperties.retryAfterSeconds, socketError.retryAfter],
+        ],
+    );
+}
+
+/**
+ * Tests if localStorage is usable.
+ * Should we move this outside to a library?
+ */
+export function isLocalStorageAvailable(): boolean {
+    const localStorageTestKey = "LocalStorageTestKey";
+    try {
+        localStorage.setItem(localStorageTestKey, "v");
+        localStorage.removeItem(localStorageTestKey);
+        return true;
+    } catch (e) {
+        debug(`LocalStorage not available due to ${e}`);
+        return false;
+    }
 }

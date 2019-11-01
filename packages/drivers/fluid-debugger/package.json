@@ -2,23 +2,24 @@
   "name": "@microsoft/fluid-debugger",
   "version": "0.11.0",
   "description": "Fluid Debugger - a tool to play through history of a file",
+  "repository": "microsoft/FluidFramework",
+  "license": "MIT",
+  "author": "Microsoft",
+  "sideEffects": "false",
   "main": "dist/index.js",
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
-  "sideEffects": "false",
   "scripts": {
     "build": "concurrently npm:build:compile npm:tslint",
     "build:compile": "concurrently npm:tsc npm:build:esnext",
+    "build:docs": "api-extractor run --local",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
-    "build:docs": "api-extractor run --local",
     "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
-  "author": "Microsoft",
-  "repository": "microsoft/FluidFramework",
   "dependencies": {
     "@microsoft/fluid-core-utils": "^0.11.0",
     "@microsoft/fluid-protocol-definitions": "^0.11.0",
@@ -34,6 +35,5 @@
     "rimraf": "^2.6.2",
     "tslint": "^5.11.0",
     "typescript": "~3.4.5"
-  },
-  "license": "MIT"
+  }
 }

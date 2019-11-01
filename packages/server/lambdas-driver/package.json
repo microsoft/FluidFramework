@@ -2,9 +2,12 @@
   "name": "@microsoft/fluid-server-lambdas-driver",
   "version": "0.11.0",
   "description": "Driver components for the Fluid service lambdas.",
+  "repository": "microsoft/FluidFramework",
+  "license": "MIT",
+  "author": "Microsoft",
+  "sideEffects": false,
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "sideEffects": false,
   "scripts": {
     "build": "concurrently npm:build:compile npm:tslint",
     "build:compile": "npm run tsc",
@@ -15,27 +18,6 @@
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose"
-  },
-  "author": "Microsoft",
-  "repository": "microsoft/FluidFramework",
-  "nyc": {
-    "all": true,
-    "exclude": [
-      "src/test/**/*.ts",
-      "dist/test/**/*.js"
-    ],
-    "include": [
-      "src/**/*.ts",
-      "dist/**/*.js"
-    ],
-    "reporter": [
-      "cobertura",
-      "html",
-      "text"
-    ],
-    "temp-directory": "nyc/.nyc_output",
-    "cache-dir": "nyc/.cache",
-    "report-dir": "nyc/report"
   },
   "dependencies": {
     "@microsoft/fluid-core-utils": "^0.11.0",
@@ -62,5 +44,23 @@
     "tslint": "^5.11.0",
     "typescript": "~3.4.5"
   },
-  "license": "MIT"
+  "nyc": {
+    "all": true,
+    "exclude": [
+      "src/test/**/*.ts",
+      "dist/test/**/*.js"
+    ],
+    "include": [
+      "src/**/*.ts",
+      "dist/**/*.js"
+    ],
+    "reporter": [
+      "cobertura",
+      "html",
+      "text"
+    ],
+    "temp-directory": "nyc/.nyc_output",
+    "cache-dir": "nyc/.cache",
+    "report-dir": "nyc/report"
+  }
 }

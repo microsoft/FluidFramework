@@ -40,7 +40,12 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
         return !this.processing && this.q.length === 0;
     }
 
-    constructor(private readonly worker: (value: T, callback: (error?) => void) => void) {
+    /**
+     * @param worker - A callback to process a delta.
+     */
+    constructor(
+        private readonly worker: (delta: T) => void,
+    ) {
         super();
     }
 
@@ -49,9 +54,8 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
         this.isDisposed = true;
     }
 
-    public clear() {
+    public clear(): void {
         this.q.clear();
-        this.updatePause();
     }
 
     public peek(): T | undefined {
@@ -68,27 +72,27 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
         this.processDeltas();
     }
 
-    public pause(): Promise<void> {
+    public async pause(): Promise<void> {
         this.userPause = true;
         return this.updatePause();
     }
 
-    public resume(): Promise<void> {
+    public async resume(): Promise<void> {
         this.userPause = false;
         return this.updatePause();
     }
 
-    public systemPause(): Promise<void> {
+    public async systemPause(): Promise<void> {
         this.sysPause = true;
         return this.updatePause();
     }
 
-    public systemResume(): Promise<void> {
+    public async systemResume(): Promise<void> {
         this.sysPause = false;
         return this.updatePause();
     }
 
-    private updatePause(): Promise<void> {
+    private async updatePause(): Promise<void> {
         const paused = this.sysPause || this.userPause;
         if (paused !== this._paused) {
             if (paused) {
@@ -115,57 +119,39 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
 
     private processDeltas() {
         // For grouping to work we must process all local messages immediately and in the single turn.
-        // So loop over them until one of the conditions below is false.
-        while (true) {
-            // Return early if no messages to process, we have become paused, or are already processing a delta
-            if (this.q.length === 0 || this._paused || this.processing || this.error) {
-                return;
-            }
-
-            // Process the next message in the queue and then call back into processDeltas once complete
+        // So loop over them until no messages to process, we have become paused, or are already processing a delta.
+        while (!(this.q.length === 0 || this._paused || this.processing || this.error)) {
+            // Get the next message in the queue, set processing flag in case we are reentrant.
             this.processing = true;
             const next = this.q.shift();
             this.emit("pre-op", next);
 
-            // Track when callback is called - whether it is called asynchronously or not.
-            let async = false;
+            // Process the message.
+            try {
+                this.worker(next!);
 
-            const callback = (error) => {
                 this.processing = false;
 
                 // Signal any pending messages
                 if (this.pauseDeferred) {
-                    if (error) {
-                        this.pauseDeferred.reject(error);
-                    } else {
-                        this.pauseDeferred.resolve();
-                    }
+                    this.pauseDeferred.resolve();
                     this.pauseDeferred = undefined;
                 }
 
-                if (error) {
-                    this.error = error;
-                    this.emit("error", error);
-                    this.q.clear();
-                } else {
-                    this.emit("op", next);
-                    // If this callback is called asynchronously, then kick processing of new task
-                    // Otherwise (when called synchronously) doing so would result in re-entrancy and stack overflow.
-                    // So for synchronously called callback we do nothing here and rely on the loop in processDeltas()
-                    // itself to process next message.
-                    if (async) {
-                        this.processDeltas();
-                    }
+                this.emit("op", next);
+            } catch (error) {
+                this.processing = false;
+
+                // Signal any pending messages
+                if (this.pauseDeferred) {
+                    this.pauseDeferred.reject(error);
+                    this.pauseDeferred = undefined;
                 }
-            };
 
-            this.worker(next!, callback);
-
-            // If callback was not called yet, let it know it is called asynchronously.
-            // In such case loop will terminate, because this.processing is still true and we will kick next task
-            // whenever callback is called.
-            // Otherwise looping over will execute next task.
-            async = true;
+                this.error = error;
+                this.emit("error", error);
+                this.q.clear();
+            }
         }
     }
 }
