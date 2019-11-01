@@ -196,7 +196,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      */
     public shipAssert(condition: boolean, event?: ITelemetryErrorEvent): void {
         if (!condition) {
-            const realEvent: ITelemetryErrorEvent = event === undefined ? { eventName: "" } : event;
+            const realEvent: ITelemetryErrorEvent = event === undefined ? { eventName: "Assert" } : event;
             realEvent.isAssert = true;
             realEvent.stack = TelemetryLogger.getStack();
             this.sendErrorEvent(realEvent);
