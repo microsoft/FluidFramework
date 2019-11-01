@@ -186,8 +186,6 @@ export class OdspDocumentService implements IDocumentService {
             client,
             mode,
             websocketEndpoint.deltaStreamSocketUrl,
-            this.hashedDocumentId,
-            this.odspCache,
             websocketEndpoint.deltaStreamSocketUrl2,
         );
     }
@@ -244,7 +242,7 @@ export class OdspDocumentService implements IDocumentService {
     // tslint:disable-next-line: max-func-body-length
     private async connectToDeltaStreamWithRetry(
         tenantId: string,
-        id: string,
+        websocketId: string,
         token: string | null,
         io: SocketIOClientStatic,
         client: IClient,
@@ -281,7 +279,7 @@ export class OdspDocumentService implements IDocumentService {
 
                 return OdspDocumentDeltaConnection.create(
                     tenantId,
-                    id,
+                    websocketId,
                     token,
                     io,
                     client,
@@ -306,7 +304,7 @@ export class OdspDocumentService implements IDocumentService {
 
                         return OdspDocumentDeltaConnection.create(
                             tenantId,
-                            id,
+                            websocketId,
                             token,
                             io,
                             client,
@@ -326,7 +324,7 @@ export class OdspDocumentService implements IDocumentService {
                                 eventName: "FailedNonAfdUrlFallback",
                                 duration: endAfd - startAfd,
                             }, retryError);
-
+                            this.odspCache.remove(`${this.hashedDocumentId}/joinsession`);
                             throw retryError;
                         });
                     } else {
@@ -334,7 +332,7 @@ export class OdspDocumentService implements IDocumentService {
                             eventName: "FailedAfdUrl-NoNonAfdFallback",
                         }, connectionError);
                     }
-
+                    this.odspCache.remove(`${this.hashedDocumentId}/joinsession`);
                     throw connectionError;
                 });
             }
@@ -342,7 +340,7 @@ export class OdspDocumentService implements IDocumentService {
             const startNonAfd = performance.now();
             return OdspDocumentDeltaConnection.create(
                 tenantId,
-                id,
+                websocketId,
                 token,
                 io,
                 client,
@@ -360,7 +358,7 @@ export class OdspDocumentService implements IDocumentService {
 
                     return OdspDocumentDeltaConnection.create(
                         tenantId,
-                        id,
+                        websocketId,
                         token,
                         io,
                         client,
@@ -388,7 +386,7 @@ export class OdspDocumentService implements IDocumentService {
                             eventName: "FailedAfdUrlFallback",
                             duration: endNonAfd - startNonAfd,
                         }, retryError);
-
+                        this.odspCache.remove(`${this.hashedDocumentId}/joinsession`);
                         throw retryError;
                     });
                 } else {
@@ -396,7 +394,7 @@ export class OdspDocumentService implements IDocumentService {
                         eventName: "FailedNonAfdUrl-NoAfdFallback",
                     }, connectionError);
                 }
-
+                this.odspCache.remove(`${this.hashedDocumentId}/joinsession`);
                 throw connectionError;
             });
         }

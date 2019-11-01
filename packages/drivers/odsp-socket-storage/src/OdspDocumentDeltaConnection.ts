@@ -17,7 +17,6 @@ import {
 import * as assert from "assert";
 import { IOdspSocketError } from "./contracts";
 import { debug } from "./debug";
-import { OdspCache } from "./odspCache";
 import { errorObjectFromOdspError } from "./OdspUtils";
 
 const protocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
@@ -50,7 +49,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
      * @param url - websocket URL
      * @param telemetryLogger - optional telemetry logger
      */
-    public static async createDeltaConnection(
+    public static async create(
         tenantId: string,
         webSocketId: string,
         token: string | null,
