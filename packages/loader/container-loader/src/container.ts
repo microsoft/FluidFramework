@@ -172,9 +172,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private firstConnection = true;
     private readonly connectionTransitionTimes: number[] = [];
 
-    private firstConnection = true;
-    private readonly connectionTransitionTimes: number[] = [];
-
     private _closed = false;
 
     public get closed(): boolean {
@@ -914,6 +911,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             from: ConnectionState[oldState],
             duration,
             reason,
+            socketDocumentId: this._deltaManager ? this._deltaManager.socketDocumentId : undefined,
+            pendingClientId: this.pendingClientId,
         });
 
         if (value === ConnectionState.Connected) {
@@ -926,6 +925,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                     this.firstConnection ? "ConnectionStateChange_InitialConnect" : "ConnectionStateChange_Reconnect",
                 duration: time - this.connectionTransitionTimes[ConnectionState.Disconnected],
                 durationCatchUp: time - this.connectionTransitionTimes[ConnectionState.Connecting],
+                reason,
             });
             this.firstConnection = false;
         }

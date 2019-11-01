@@ -328,5 +328,4 @@ export interface IDocumentServiceFactory {
  */
 export interface INetworkError {
     readonly message: string;
-    readonly online?: string;
 }

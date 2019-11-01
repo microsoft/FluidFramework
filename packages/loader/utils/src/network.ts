@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 import { INetworkError } from "@microsoft/fluid-protocol-definitions";
-import { ComponentHandle } from "./componentHandle";
 
 /**
  * Network error error class - used to communicate all  network errors

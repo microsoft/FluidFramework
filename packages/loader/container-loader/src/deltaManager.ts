@@ -60,10 +60,6 @@ function canRetryOnError(error: any) {
     // tslint:disable-next-line:no-unsafe-any
     return error === null || typeof error !== "object" || error.canRetry === undefined || error.canRetry;
 }
-enum retryFor {
-    DELTASTREAM,
-    DELTASTORAGE,
-}
 
 enum retryFor {
     DELTASTREAM,
@@ -451,9 +447,8 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 retry = 0; // start calculating timeout over if we got some ops
             } else {
                 retry++;
-                delay = retryAfter !== undefined ?
+                delay = retryAfter !== undefined && retryAfter >= 0 ?
                     retryAfter : Math.min(MaxFetchDelay, MissingFetchDelay * Math.pow(2, retry));
-                this.emitDelayInfo(retryFor.DELTASTORAGE, delay);
 
                 // Chances that we will get something from storage after that many retries is zero.
                 // We wait 10 seconds between most of retries, so that's 16 minutes of waiting!
@@ -776,8 +771,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     private processInitialMessages(
             messages: ISequencedDocumentMessage[] | undefined,
             contents: IContentMessage[] | undefined,
-            signals: ISignalMessage[] | undefined): void {
-        this.enqueueInitialOps(messages, contents);
+            signals: ISignalMessage[] | undefined,
+            firstConnection: boolean): void {
+        this.enqueueInitialOps(messages, contents, firstConnection);
         this.enqueueInitialSignals(signals);
     }
 
@@ -832,6 +828,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 }
             } else if (message.sequenceNumber !== this.lastQueuedSequenceNumber + 1) {
                 this.pending.push(message);
+                // tslint:disable-next-line:no-floating-promises
                 this.fetchMissingDeltas(telemetryEventSuffix, this.lastQueuedSequenceNumber, message.sequenceNumber);
             } else {
                 this.lastQueuedSequenceNumber = message.sequenceNumber;
@@ -931,7 +928,14 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     }
 
     private catchUp(telemetryEventSuffix: string, messages: ISequencedDocumentMessage[]): void {
-        const props: any = {
+        const props: {
+                eventName: string,
+                messageCount: number,
+                pendingCount: number,
+                from?: number,
+                to?: number,
+                messageGap?: number,
+            } = {
             eventName: `CatchUp_${telemetryEventSuffix}`,
             messageCount: messages.length,
             pendingCount: this.pending.length,

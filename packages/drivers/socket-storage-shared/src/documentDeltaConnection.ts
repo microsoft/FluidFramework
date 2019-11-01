@@ -118,7 +118,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
      * @param documentId - ID of the document
      * @param details - details of the websocket connection
      */
-    constructor(
+    protected constructor(
             private readonly socket: SocketIOClient.Socket,
             public documentId: string) {
         super();

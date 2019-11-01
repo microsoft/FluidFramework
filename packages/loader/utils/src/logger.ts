@@ -65,8 +65,6 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
             const errorAsObject = error as {
                 stack?: string;
                 message?: string;
-                statusCode?: number;
-                online?: string
             };
 
             event.stack = errorAsObject.stack;
@@ -110,10 +108,6 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      * @param event - the event to send
      */
     public abstract send(event: ITelemetryBaseEvent): void;
-
-    public setProperties(properties: object) {
-        this.properties = {...this.properties, ...properties};
-    }
 
     /**
      * Send a telemetry event with the logger

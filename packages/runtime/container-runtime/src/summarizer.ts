@@ -261,9 +261,15 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
                     if (!ownMessage) {
                         const ack = op.contents;
                         this.logger.sendErrorEvent({
-                            eventName: op.type === MessageType.SummaryAck ? "SummaryAckOtherClient" : "SummaryNackOtherClient",
+                            eventName:
+                                op.type === MessageType.SummaryAck ?
+                                "SummaryAckOtherClient" :
+                                "SummaryNackOtherClient",
                             sequenceNumber: op.sequenceNumber,
-                            message: op.type === MessageType.SummaryNack ? (ack as ISummaryNack).errorMessage : `handle: ${(ack as ISummaryAck).handle}`,
+                            message:
+                                op.type === MessageType.SummaryNack ?
+                                (ack as ISummaryNack).errorMessage :
+                                `handle: ${(ack as ISummaryAck).handle}`,
                         });
                     }
                 })
@@ -351,7 +357,10 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
             timePending: Date.now() - this.lastSummaryTime,
             summarySequenceNumber: ack.summaryProposal.summarySequenceNumber,
             sequenceNumber: op.sequenceNumber,
-            message: op.type === MessageType.SummaryNack ? (ack as ISummaryNack).errorMessage : `handle: ${(ack as ISummaryAck).handle}`,
+            message:
+                op.type === MessageType.SummaryNack ?
+                (ack as ISummaryNack).errorMessage :
+                `handle: ${(ack as ISummaryAck).handle}`,
         });
 
         if (op.type === MessageType.SummaryAck) {

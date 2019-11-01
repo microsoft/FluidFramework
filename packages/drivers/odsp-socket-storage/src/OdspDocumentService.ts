@@ -33,17 +33,6 @@ const lastAfdConnectionTimeMsKey = "LastAfdConnectionTimeMs";
  * clients
  */
 export class OdspDocumentService implements IDocumentService {
-    private static errorObjectFromOdspError(socketError: IOdspSocketError) {
-        return new NetworkError(
-            socketError.message,
-            [
-                [INetworkErrorProperties.statusCode, socketError.code],
-                [INetworkErrorProperties.canRetry, defaultRetryFilter(socketError.code)],
-                [INetworkErrorProperties.retryAfterSeconds, socketError.retryAfter],
-            ],
-        );
-    }
-
     // This should be used to make web socket endpoint requests, it ensures we only have one active join session call at a time.
     private readonly websocketEndpointRequestThrottler: SinglePromise<ISocketStorageDiscovery>;
 

@@ -372,11 +372,12 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
      * @param socketReferenceKey - socket reference key
      */
     constructor(
-        socket: SocketIOClient.Socket,
-        documentId: string,
-        details: IConnected,
-        private socketReferenceKey: string | undefined) {
-        super(socket, documentId, details);
+            socket: SocketIOClient.Socket,
+            documentId: string,
+            details: IConnected,
+            private socketReferenceKey: string | undefined) {
+        super(socket, documentId);
+        this._details = details;
         socket.on("server_disconnect", (socketError: IOdspSocketError) => {
             // Raise it as disconnect.
             // That produces cleaner telemetry (no errors) and keeps protocol simpler (and not driver-specific).
