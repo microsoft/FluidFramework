@@ -361,9 +361,49 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
 
     /**
      * Disconnect from the websocket
+     * @param socketProtocolError - true if error happened on socket / socket.io protocol level
+     *  (not on Fluid protocol level)
      */
-    public disconnect() {
+    public disconnect(socketProtocolError: boolean = false) {
         this.socket.disconnect();
+    }
+
+    protected async initialize(connectMessage: IConnect) {
+        this._details = await new Promise<IConnected>((resolve, reject) => {
+            // Listen for connection issues
+            this.socket.on("connect_error", (error) => {
+                debug(`Socket connection error: [${error}]`);
+                this.disconnect(true);
+                reject(createErrorObject("connect_error", error));
+            });
+
+            // Listen for timeouts
+            this.socket.on("connect_timeout", () => {
+                this.disconnect(true);
+                reject(createErrorObject("connect_timeout", "Socket connection timed out"));
+            });
+
+            this.socket.on("connect_document_success", (response: IConnected) => {
+                resolve(response);
+            });
+
+            this.socket.on("error", ((error) => {
+                debug(`Error in documentDeltaConection: ${error}`);
+                // This includes "Invalid namespace" error, which we consider critical (reconnecting will not help)
+                this.disconnect(true);
+                reject(createErrorObject("error", error, error !== "Invalid namespace"));
+            }));
+
+            this.socket.on("connect_document_error", ((error) => {
+                // This is not an error for the socket - it's a protocol error.
+                // In this case we disconnect the socket and indicate that we were unable to create the
+                // DocumentDeltaConnection.
+                this.disconnect(false);
+                reject(createErrorObject("connect_document_error", error));
+            }));
+
+            this.socket.emit("connect_document", connectMessage);
+        });
     }
 
     private earlyOpHandler ? = (documentId: string, msgs: ISequencedDocumentMessage[]) => {
@@ -379,41 +419,5 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
     private earlySignalHandler ? = (msg: ISignalMessage) => {
         debug("Queued early signals");
         this.queuedSignals.push(msg);
-    }
-
-    private async initialize(connectMessage: IConnect) {
-        this._details = await new Promise<IConnected>((resolve, reject) => {
-            // Listen for connection issues
-            this.socket.on("connect_error", (error) => {
-                debug(`Socket connection error: [${error}]`);
-                reject(createErrorObject("connect_error", error));
-            });
-
-            // Listen for timeouts
-            this.socket.on("connect_timeout", () => {
-                reject(createErrorObject("connect_timeout", "Socket connection timed out"));
-            });
-
-            this.socket.on("connect_document_success", (response: IConnected) => {
-                resolve(response);
-            });
-
-            this.socket.on("error", ((error) => {
-                debug(`Error in documentDeltaConection: ${error}`);
-                // This includes "Invalid namespace" error, which we consider critical (reconnecting will not help)
-                this.socket.disconnect();
-                reject(createErrorObject("error", error, error !== "Invalid namespace"));
-            }));
-
-            this.socket.on("connect_document_error", ((error) => {
-                // This is not an error for the socket - it's a protocol error.
-                // In this case we disconnect the socket and indicate that we were unable to create the
-                // DocumentDeltaConnection.
-                this.socket.disconnect();
-                reject(createErrorObject("connect_document_error", error));
-            }));
-
-            this.socket.emit("connect_document", connectMessage);
-        });
     }
 }
