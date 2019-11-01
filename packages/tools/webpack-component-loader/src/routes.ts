@@ -35,7 +35,6 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
     } else if ((options.tenantId || options.tenantSecret) && !(options.tenantId && options.tenantSecret)) {
         throw new Error("tenantId and tenantSecret must be provided together");
     }
-    console.log(options);
 
     app.get("/file*", (req, res) => {
         // tslint:disable-next-line: non-literal-fs-path no-unsafe-any

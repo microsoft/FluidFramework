@@ -262,7 +262,7 @@ export async function start(
             await urlResolver.resolve(req),
             pkg,
             scriptIds,
-            options.npm,
+            npm,
             config,
             {},
             rightDiv,
