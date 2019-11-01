@@ -31,7 +31,9 @@ export function blockList(nonRetriableCodes: number[]): RetryFilter {
 
 // Going safe - only exclude specific codes
 // export const defaultRetryFilter = allowList([408, 409, 429, 500, 503]);
-export const defaultRetryFilter = blockList([404, 406]);
+export const defaultRetryFilter = blockList([400, 404]);
+
+export const socketErrorRetryFilter = blockList([404, 406]);
 
 export interface IOdspResponse<T> {
     content: T;
@@ -100,7 +102,7 @@ export function errorObjectFromOdspError(socketError: IOdspSocketError) {
         socketError.message,
         [
             [INetworkErrorProperties.statusCode, socketError.code],
-            [INetworkErrorProperties.canRetry, defaultRetryFilter(socketError.code)],
+            [INetworkErrorProperties.canRetry, socketErrorRetryFilter(socketError.code)],
             [INetworkErrorProperties.retryAfterSeconds, socketError.retryAfter],
         ],
     );
