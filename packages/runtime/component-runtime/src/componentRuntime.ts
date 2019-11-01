@@ -62,6 +62,13 @@ export interface ISharedObjectRegistry {
  * Base component class
  */
 export class ComponentRuntime extends EventEmitter implements IComponentRuntime, IComponentHandleContext {
+    /**
+     * Loads the component runtime
+     * @param context - The component context
+     * @param sharedObjectRegistry - The registry of shared objects used by this component
+     * @param componentRegistry - The regisitry of component created and used by this component
+     * @param activeCallback - The callback called when the component runtime in active
+     */
     public static load(
         context: IComponentContext,
         sharedObjectRegistry: ISharedObjectRegistry,
