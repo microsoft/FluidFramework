@@ -125,12 +125,14 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
     public async waitIntervalCollection(
         label: string,
     ): Promise<IntervalCollection<TInterval>> {
-        return this.intervalMapKernel.wait<IntervalCollection<TInterval>>(label);
+        return this.intervalMapKernel.wait<IntervalCollection<TInterval>>(
+            this.getIntervalCollectionPath(label));
     }
 
     // TODO: fix race condition on creation by putting type on every operation
     public getIntervalCollection(label: string): IntervalCollection<TInterval> {
-        if (!this.intervalMapKernel.has(label)) {
+        const realLabel = this.getIntervalCollectionPath(label);
+        if (!this.intervalMapKernel.has(realLabel)) {
             this.intervalMapKernel.createValueType(
                 label,
                 IntervalCollectionValueType.Name,
@@ -138,7 +140,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
         }
 
         const sharedCollection =
-            this.intervalMapKernel.get<IntervalCollection<TInterval>>(label);
+            this.intervalMapKernel.get<IntervalCollection<TInterval>>(realLabel);
         return sharedCollection;
     }
 
@@ -195,5 +197,42 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
                 value.register();
             }
         }
+    }
+
+    /**
+     * Creates the full path of the intervalCollection label
+     * @param label - the incoming lable
+     */
+    protected getIntervalCollectionPath(label: string): string {
+        return label;
+    }
+}
+
+/**
+ * A distributed data structure that stores intervals
+ */
+export class SharedIntervalCollection<TInterval extends ISerializableInterval = Interval>
+    extends ASharedIntervalCollection<TInterval> {
+
+    /**
+     * Create a SharedIntervalCollection
+     *
+     * @param runtime - component runtime the new shared map belongs to
+     * @param id - optional name of the shared map
+     * @returns newly create shared map (but not attached yet)
+     */
+    public static create(runtime: IComponentRuntime, id?: string) {
+        return runtime.createChannel(
+            SharedObject.getIdForCreate(id),
+            SharedIntervalCollectionFactory.Type) as SharedIntervalCollection;
+    }
+
+    /**
+     * Get a factory for SharedIntervalCollection to register with the component.
+     *
+     * @returns a factory that creates and load SharedIntervalCollection
+     */
+    public static getFactory(): ISharedObjectFactory {
+        return new SharedIntervalCollectionFactory();
     }
 }
