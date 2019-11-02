@@ -187,7 +187,10 @@ export class OdspDocumentService implements IDocumentService {
             mode,
             websocketEndpoint.deltaStreamSocketUrl,
             websocketEndpoint.deltaStreamSocketUrl2,
-        );
+        ).catch((error) => {
+            this.odspCache.remove(`${this.hashedDocumentId}/joinsession`);
+            throw error;
+        });
     }
 
     public async branch(): Promise<string> {
@@ -324,7 +327,6 @@ export class OdspDocumentService implements IDocumentService {
                                 eventName: "FailedNonAfdUrlFallback",
                                 duration: endAfd - startAfd,
                             }, retryError);
-                            this.odspCache.remove(`${this.hashedDocumentId}/joinsession`);
                             throw retryError;
                         });
                     } else {
@@ -332,7 +334,6 @@ export class OdspDocumentService implements IDocumentService {
                             eventName: "FailedAfdUrl-NoNonAfdFallback",
                         }, connectionError);
                     }
-                    this.odspCache.remove(`${this.hashedDocumentId}/joinsession`);
                     throw connectionError;
                 });
             }
@@ -386,7 +387,6 @@ export class OdspDocumentService implements IDocumentService {
                             eventName: "FailedAfdUrlFallback",
                             duration: endNonAfd - startNonAfd,
                         }, retryError);
-                        this.odspCache.remove(`${this.hashedDocumentId}/joinsession`);
                         throw retryError;
                     });
                 } else {
@@ -394,7 +394,6 @@ export class OdspDocumentService implements IDocumentService {
                         eventName: "FailedNonAfdUrl-NoAfdFallback",
                     }, connectionError);
                 }
-                this.odspCache.remove(`${this.hashedDocumentId}/joinsession`);
                 throw connectionError;
             });
         }

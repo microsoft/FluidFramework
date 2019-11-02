@@ -33,6 +33,7 @@ export function blockList(nonRetriableCodes: number[]): RetryFilter {
 // export const defaultRetryFilter = allowList([408, 409, 429, 500, 503]);
 export const defaultRetryFilter = blockList([400, 404]);
 
+// socket error filter for socket erros where 400 is a special retryable error.
 export const socketErrorRetryFilter = blockList([404, 406]);
 
 export interface IOdspResponse<T> {
