@@ -735,7 +735,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this.connectFirstConnection = false;
     }
 
-    private disconnectFromDeltaStream(reason: string) {
+    private disconnectFromDeltaStream(reason: string, error?: any) {
         const connection = this.connection;
         if (!connection) {
             return;
@@ -750,7 +750,14 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this._outbound.clear();
         this.emit("disconnect", reason);
 
+        // Close the connection and indicate that we are not capable of writing in our current state.
         connection.close();
+        this.connectionMode = "read";
+
+        // Reconnection is only enabled for browser clients.  Close the DeltaManager if reconnection isn't possible.
+        if (this.clientType !== Browser || !this.reconnect || this.closed || !canRetryOnError(error)) {
+            this.close(error);
+        }
     }
 
     /**
@@ -768,14 +775,12 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             return;
         }
 
-        this.disconnectFromDeltaStream(reason);
-        // Reconnection is only enabled for browser clients.
-        if (this.clientType !== Browser || !this.reconnect || this.closed || !canRetryOnError(error)) {
-            this.close(error);
+        this.disconnectFromDeltaStream(reason, error);
+
+        // Disconnecting may put us in closed state if reconnection is not an option, in which case we should bail.
+        if (this.closed) {
             return;
         }
-
-        this.connectionMode = "read";
 
         const delay = this.getRetryDelayFromError(error);
         if (delay !== undefined) {
