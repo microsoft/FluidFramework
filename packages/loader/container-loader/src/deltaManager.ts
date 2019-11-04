@@ -677,7 +677,11 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                     // We are getting transport errors from WebSocket here, right before or after "disconnect".
                     // This happens only in Firefox.
                     logNetworkFailure(this.logger, {eventName: "DeltaConnectionError"}, error);
-                    this.reconnectOnError("Reconnecting on error", connection, this.systemConnectionMode, error);
+                    this.reconnectOnError(
+                        `Reconnecting on error: ${error}`,
+                        connection,
+                        this.systemConnectionMode,
+                        error);
                 });
 
                 connection.on("pong", (latency: number) => {
@@ -750,7 +754,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         if (this.clientType !== Browser || !this.reconnect || this.closed || !canRetryOnError(error)) {
             this.closeOnConnectionError(error);
         } else {
-            this.logger.sendTelemetryEvent({ eventName: "DeltaConnectionReconnect", reason }, error);
             const delayNext = this.backOffWaitTimeOnError(error);
             if (delayNext !== undefined) {
                 this.emitDelayInfo(retryFor.DELTASTREAM, delayNext);
