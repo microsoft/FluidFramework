@@ -120,8 +120,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     private pongCount: number = 0;
     private socketLatency = 0;
 
-    private connectRepeatCount = 0;
-    private connectStartTime = 0;
     private connectFirstConnection = true;
 
     private deltaStorageDelay: number | undefined;
@@ -591,14 +589,13 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     private async connectCore(mode: ConnectionMode): Promise<void> {
         let connection: DeltaConnection | undefined;
         let delay = InitialReconnectDelay;
+        let connectRepeatCount = 0;
+        const connectStartTime = performanceNow();
         while (connection === undefined) {
             if (this.closed) {
                 return;
             }
-            if (this.connectRepeatCount === 0) {
-                this.connectStartTime = performanceNow();
-            }
-            this.connectRepeatCount++;
+            connectRepeatCount++;
 
             try {
                 connection = await DeltaConnection.connect(this.service, this.client, mode);
@@ -611,7 +608,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
                 // Log error once - we get too many errors in logs when we are offline,
                 // and unfortunately there is no reliable way to detect that.
-                if (this.connectRepeatCount === 1) {
+                if (connectRepeatCount === 1) {
                     logNetworkFailure(
                         this.logger,
                         {
@@ -631,6 +628,15 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             }
         }
 
+        // If we retried more than once, log an event about how long it took
+        if (connectRepeatCount > 1) {
+            this.logger.sendTelemetryEvent({
+                attempts: connectRepeatCount,
+                duration: (performanceNow() - connectStartTime).toFixed(0),
+                eventName: "MultipleDeltaConnectionFailures",
+            });
+        }
+
         this.setupNewSuccessfulConnection(connection);
     }
 
@@ -641,16 +647,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this.connectionMode = connection.details.mode ? connection.details.mode : "write";
 
         this.emitDelayInfo(retryFor.DELTASTREAM, -1);
-
-        // If we retried more than once, log an event about how long it took
-        if (this.connectRepeatCount > 1) {
-            this.logger.sendTelemetryEvent({
-                    attempts: this.connectRepeatCount,
-                    duration: (performanceNow() - this.connectStartTime).toFixed(0),
-                    eventName: "MultipleDeltaConnectionFailures",
-                });
-        }
-        this.connectRepeatCount = 0;
 
         if (this.closed) {
             // Raise proper events, Log telemetry event and close connection.
