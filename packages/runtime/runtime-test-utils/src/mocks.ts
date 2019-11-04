@@ -26,6 +26,7 @@ import {
 } from "@microsoft/fluid-core-utils";
 import * as git from "@microsoft/fluid-gitresources";
 import {
+    ClientType,
     IDocumentMessage,
     ISequencedDocumentMessage,
     ITreeEntry,
@@ -180,7 +181,7 @@ export class MockRuntime extends EventEmitter
     public readonly existing: boolean;
     public readonly options: any;
     public clientId: string = uuid();
-    public readonly clientType: string = "browser";
+    public readonly clientType: ClientType = "human";
     public readonly parentBranch: string;
     public readonly path = "";
     public readonly connected: boolean;

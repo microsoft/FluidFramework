@@ -22,7 +22,6 @@ import {
     IMapSetOperation,
 } from "./restHelper";
 
-const Robot = "robot";
 export function create(
     config: Provider,
     producer: core.IProducer,
@@ -86,7 +85,8 @@ function sendJoin(tenantId: string, documentId: string, clientId: string, produc
     const detail: IClient = {
         permission: [],
         scopes: [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
-        type: Robot,
+        type: "agent",
+        capabilities: { interactive: false },
         user: {id: "Rest-Client"},
     };
     const clientDetail: IClientJoin = {

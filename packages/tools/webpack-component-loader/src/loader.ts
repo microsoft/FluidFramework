@@ -18,7 +18,7 @@ import {
     TestDocumentServiceFactory,
     TestResolver,
 } from "@microsoft/fluid-local-test-server";
-import { IDocumentServiceFactory, IUrlResolver, IUser, IClient } from "@microsoft/fluid-protocol-definitions";
+import { IDocumentServiceFactory, IUrlResolver, IUser } from "@microsoft/fluid-protocol-definitions";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
 import { getRandomName } from "@microsoft/fluid-server-services-core";
 import { extractDetails, IResolvedPackage } from "@microsoft/fluid-web-code-loader";
@@ -27,7 +27,6 @@ import * as jwt from "jsonwebtoken";
 import * as uuid from "uuid/v4";
 import { InsecureUrlResolver } from "./insecureUrlResolver";
 import { SessionStorageDbFactory } from "./sessionStorageTestDb";
-import { truncate } from "fs";
 
 export interface IDevServerUser extends IUser {
     name: string;
@@ -201,18 +200,6 @@ export async function start(
         url,
     };
 
-    // Create a config... will allow for snapshotting
-    /*
-    const client: IClient = {
-        type: "human",
-        capabilities: { interactive: true },
-        user: { id: "" },
-        permission: [],
-        scopes: [],
-    };
-    const config = { client };
-    */
-
     const urlResolver = getUrlResolver(options);
     const npm = getNpm(options);
 
@@ -247,7 +234,7 @@ export async function start(
         pkg,
         scriptIds,
         npm,
-        config,
+        {},
         {},
         double ? leftDiv : div,
         hostConf,
@@ -268,7 +255,7 @@ export async function start(
             pkg,
             scriptIds,
             npm,
-            config,
+            {},
             {},
             rightDiv,
             hostConf2,

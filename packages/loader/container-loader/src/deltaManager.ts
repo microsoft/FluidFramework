@@ -16,6 +16,7 @@ import {
     PerformanceEvent,
 } from "@microsoft/fluid-core-utils";
 import {
+    ClientType,
     ConnectionMode,
     ICapabilities,
     IClient,
@@ -73,7 +74,7 @@ enum retryFor {
 export class DeltaManager extends EventEmitter implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
     public get disposed() { return this.isDisposed; }
 
-    public readonly clientType: string;
+    public readonly clientType: ClientType;
     public readonly clientCapabilities: ICapabilities;
     public get IDeltaSender() { return this; }
 

@@ -93,7 +93,7 @@ export class TestDeltaManager
 
     public inboundSignal = new TestDeltaQueue<ISignalMessage>();
 
-    public clientType = "Browser";
+    public clientType = "human";
 
     public version = "^0.1.0";
 
