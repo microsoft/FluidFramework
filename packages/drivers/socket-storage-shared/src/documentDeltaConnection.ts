@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
-import { BatchManager, INetworkErrorProperties, NetworkError, TelemetryNullLogger } from "@microsoft/fluid-core-utils";
+import { BatchManager, INetworkErrorProperties, NetworkError } from "@microsoft/fluid-core-utils";
 import {
     ConnectionMode,
     IClient,
@@ -17,6 +16,7 @@ import {
     ISignalMessage,
     ITokenClaims,
 } from "@microsoft/fluid-protocol-definitions";
+import * as assert from "assert";
 import { EventEmitter } from "events";
 import { debug } from "./debug";
 import { IConnect, IConnected } from "./messages";
@@ -43,21 +43,27 @@ export function createErrorObject(handler: string, error: any, canRetry = true) 
     return errorObj;
 }
 
+interface IEventListener {
+    event: string;
+    connectionListener: boolean; // true if this event listener only needed while connection is in progress
+    listener(...args: any[]): void;
+}
+
 /**
  * Represents a connection to a stream of delta updates
  */
 export class DocumentDeltaConnection extends EventEmitter implements IDocumentDeltaConnection {
     /**
-     * Create a DocumentDeltaConnection.
-     * If url #1 fails to connect, will try url #2 if applicable.
+     * Create a DocumentDeltaConnection
      *
      * @param tenantId - the ID of the tenant
      * @param id - document ID
      * @param token - authorization token for storage service
      * @param io - websocket library
      * @param client - information about the client
+     * @param mode - connection mode
      * @param url - websocket URL
-     * @param url2 - alternate websocket URL
+     * @param timeoutMs - timeout for socket connection attempt in milliseconds (default: 20000)
      */
     // tslint:disable-next-line: max-func-body-length
     public static async create(
@@ -68,72 +74,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         client: IClient,
         mode: ConnectionMode,
         url: string,
-        url2?: string,
-        telemetryLogger?: ITelemetryLogger): Promise<IDocumentDeltaConnection> {
-            // tslint:disable-next-line: strict-boolean-expressions
-            const hasUrl2 = !!url2;
-
-            // Create null logger if telemetry logger is not available from caller
-            const logger = telemetryLogger ? telemetryLogger : new TelemetryNullLogger();
-
-            return this.createImpl(
-                tenantId,
-                id,
-                token,
-                io,
-                client,
-                url,
-                mode,
-                hasUrl2 ? 15000 : 20000,
-            // tslint:disable-next-line: promise-function-async
-            ).catch((error) => {
-                if (hasUrl2) {
-                    // tslint:disable-next-line: no-unsafe-any
-                    if (error !== null && typeof error === "object" && error.canRetry) {
-                        debug(`Socket connection error on non-AFD URL. Error was [${error}]. Retry on AFD URL: ${url}`);
-                        logger.sendTelemetryEvent({ eventName: "UseAfdUrl" });
-
-                        return this.createImpl(
-                            tenantId,
-                            id,
-                            token,
-                            io,
-                            client,
-                            // tslint:disable-next-line: no-non-null-assertion
-                            url2!,
-                            mode,
-                            20000,
-                        );
-                    }
-                }
-
-                logger.sendTelemetryEvent({ eventName: "FailedAfdUrl" });
-
-                throw error;
-            });
-    }
-
-    /**
-     * Create a DocumentDeltaConnection
-     *
-     * @param tenantId - the ID of the tenant
-     * @param id - document ID
-     * @param token - authorization token for storage service
-     * @param io - websocket library
-     * @param client - information about the client
-     * @param url - websocket URL
-     * @param timeoutMs - timeout for socket connection attempt in milliseconds
-     */
-    // tslint:disable-next-line: max-func-body-length
-    private static async createImpl(
-        tenantId: string,
-        id: string,
-        token: string | null,
-        io: SocketIOClientStatic,
-        client: IClient,
-        url: string,
-        mode: ConnectionMode,
-        timeoutMs: number): Promise<IDocumentDeltaConnection> {
+        timeoutMs: number = 20000): Promise<IDocumentDeltaConnection> {
 
         const socket = io(
             url,
@@ -156,111 +97,52 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
             versions: protocolVersions,
         };
 
-        const connection = await new Promise<IConnected>((resolve, reject) => {
-            // Listen for ops sent before we receive a response to connect_document
-            const queuedMessages: ISequencedDocumentMessage[] = [];
-            const queuedContents: IContentMessage[] = [];
-            const queuedSignals: ISignalMessage[] = [];
+        const deltaConnection = new DocumentDeltaConnection(socket, id);
 
-            const earlyOpHandler = (documentId: string, msgs: ISequencedDocumentMessage[]) => {
-                debug("Queued early ops", msgs.length);
-                queuedMessages.push(...msgs);
-            };
-            socket.on("op", earlyOpHandler);
-
-            const earlyContentHandler = (msg: IContentMessage) => {
-                debug("Queued early contents");
-                queuedContents.push(msg);
-            };
-            socket.on("op-content", earlyContentHandler);
-
-            const earlySignalHandler = (msg: ISignalMessage) => {
-                debug("Queued early signals");
-                queuedSignals.push(msg);
-            };
-            socket.on("signal", earlySignalHandler);
-
-            // Listen for connection issues
-            socket.on("connect_error", (error) => {
-                debug(`Socket connection error: [${error}]`);
-                reject(createErrorObject("connect_error", error));
-            });
-
-            // Listen for timeouts
-            socket.on("connect_timeout", () => {
-                reject(createErrorObject("connect_timeout", "Socket connection timed out"));
-            });
-
-            socket.on("connect_document_success", (response: IConnected) => {
-                socket.removeListener("op", earlyOpHandler);
-                socket.removeListener("op-content", earlyContentHandler);
-                socket.removeListener("signal", earlySignalHandler);
-
-                if (queuedMessages.length > 0) {
-                    // some messages were queued.
-                    // add them to the list of initialMessages to be processed
-                    if (!response.initialMessages) {
-                        response.initialMessages = [];
-                    }
-
-                    response.initialMessages.push(...queuedMessages);
-
-                    response.initialMessages.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
-                }
-
-                if (queuedContents.length > 0) {
-                    // some contents were queued.
-                    // add them to the list of initialContents to be processed
-                    if (!response.initialContents) {
-                        response.initialContents = [];
-                    }
-
-                    response.initialContents.push(...queuedContents);
-
-                    response.initialContents.sort((a, b) =>
-                        // tslint:disable-next-line:strict-boolean-expressions
-                        (a.clientId === b.clientId) ? 0 : ((a.clientId < b.clientId) ? -1 : 1) ||
-                            a.clientSequenceNumber - b.clientSequenceNumber);
-                }
-
-                if (queuedSignals.length > 0) {
-                    // some signals were queued.
-                    // add them to the list of initialSignals to be processed
-                    if (!response.initialSignals) {
-                        response.initialSignals = [];
-                    }
-
-                    response.initialSignals.push(...queuedSignals);
-                }
-
-                resolve(response);
-            });
-
-            socket.on("error", ((error) => {
-                debug(`Error in documentDeltaConection: ${error}`);
-                // This includes "Invalid namespace" error, which we consider critical (reconnecting will not help)
-                socket.disconnect();
-                reject(createErrorObject("error", error, error !== "Invalid namespace"));
-            }));
-
-            socket.on("connect_document_error", ((error) => {
-                // This is not an error for the socket - it's a protocol error.
-                // In this case we disconnect the socket and indicate that we were unable to create the
-                // DocumentDeltaConnection.
-                socket.disconnect();
-                reject(createErrorObject("connect_document_error", error));
-            }));
-
-            socket.emit("connect_document", connectMessage);
-        });
-
-        // tslint:disable-next-line:no-unnecessary-local-variable
-        const deltaConnection = new DocumentDeltaConnection(socket, id, connection);
-
+        await deltaConnection.initialize(connectMessage);
         return deltaConnection;
     }
 
+    // Listen for ops sent before we receive a response to connect_document
+    private readonly queuedMessages: ISequencedDocumentMessage[] = [];
+    private readonly queuedContents: IContentMessage[] = [];
+    private readonly queuedSignals: ISignalMessage[] = [];
+
     private readonly submitManager: BatchManager<IDocumentMessage[]>;
+
+    private _details: IConnected | undefined;
+
+    private trackedListeners: IEventListener[] = [];
+
+    private get details(): IConnected {
+        if (!this._details) {
+            throw new Error("Internal error: calling method before _details is initialized!");
+        }
+        return this._details;
+    }
+
+    /**
+     * @param socket - websocket to be used
+     * @param documentId - ID of the document
+     * @param details - details of the websocket connection
+     */
+    protected constructor(
+            private readonly socket: SocketIOClient.Socket,
+            public documentId: string) {
+        super();
+
+        this.submitManager = new BatchManager<IDocumentMessage[]>(
+            (submitType, work) => {
+                this.socket.emit(submitType, this.clientId, work);
+            });
+
+        // tslint:disable-next-line:no-non-null-assertion
+        this.socket.on("op", this.earlyOpHandler!);
+        // tslint:disable-next-line:no-non-null-assertion
+        this.socket.on("op-content", this.earlyContentHandler!);
+        // tslint:disable-next-line:no-non-null-assertion
+        this.socket.on("signal", this.earlySignalHandler!);
+    }
 
     /**
      * Get the ID of the client who is sending the message
@@ -336,6 +218,21 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
      * @returns messages sent during the connection
      */
     public get initialMessages(): ISequencedDocumentMessage[] | undefined {
+        this.removeEarlyOpHandler();
+
+        assert(this.listeners("op").length !== 0, "No op handler is setup!");
+
+        if (this.queuedMessages.length > 0) {
+            // some messages were queued.
+            // add them to the list of initialMessages to be processed
+            if (!this.details.initialMessages) {
+                this.details.initialMessages = [];
+            }
+
+            this.details.initialMessages.push(...this.queuedMessages);
+            this.details.initialMessages.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
+            this.queuedMessages.length = 0;
+        }
         return this.details.initialMessages;
     }
 
@@ -345,6 +242,26 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
      * @returns contents sent during the connection
      */
     public get initialContents(): IContentMessage[] | undefined {
+        this.removeEarlyContentsHandler();
+
+        assert(this.listeners("op-content").length !== 0, "No op-content handler is setup!");
+
+        if (this.queuedContents.length > 0) {
+            // some contents were queued.
+            // add them to the list of initialContents to be processed
+            if (!this.details.initialContents) {
+                this.details.initialContents = [];
+            }
+
+            this.details.initialContents.push(...this.queuedContents);
+
+            this.details.initialContents.sort((a, b) =>
+                // tslint:disable-next-line:strict-boolean-expressions
+                (a.clientId === b.clientId) ? 0 : ((a.clientId < b.clientId) ? -1 : 1) ||
+                    a.clientSequenceNumber - b.clientSequenceNumber);
+            this.queuedContents.length = 0;
+        }
+
         return this.details.initialContents;
     }
 
@@ -354,6 +271,20 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
      * @returns signals sent during the connection
      */
     public get initialSignals(): ISignalMessage[] | undefined {
+        this.removeEarlySignalHandler();
+
+        assert(this.listeners("signal").length !== 0, "No signal handler is setup!");
+
+        if (this.queuedSignals.length > 0) {
+            // some signals were queued.
+            // add them to the list of initialSignals to be processed
+            if (!this.details.initialSignals) {
+                this.details.initialSignals = [];
+            }
+
+            this.details.initialSignals.push(...this.queuedSignals);
+            this.queuedSignals.length = 0;
+        }
         return this.details.initialSignals;
     }
 
@@ -367,31 +298,16 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
     }
 
     /**
-     * @param socket - websocket to be used
-     * @param documentId - ID of the document
-     * @param details - details of the websocket connection
-     */
-    constructor(
-        private readonly socket: SocketIOClient.Socket,
-        public documentId: string,
-        public details: IConnected) {
-        super();
-
-        this.submitManager = new BatchManager<IDocumentMessage[]>(
-            (submitType, work) => {
-                this.socket.emit(submitType, this.details.clientId, work);
-            });
-    }
-
-    /**
      * Subscribe to events emitted by the document
      *
      * @param event - event emitted by the document to listen to
      * @param listener - listener for the event
      */
     public on(event: string, listener: (...args: any[]) => void): this {
+        assert(this.listeners(event).length === 0, "re-registration of events is not implemented");
+
         // Register for the event on socket.io
-        this.socket.on(
+        this.addTrackedListener(
             event,
             (...args: any[]) => {
                 this.emit(event, ...args);
@@ -421,7 +337,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         return new Promise<void>((resolve, reject) => {
             this.socket.emit(
                 "submitContent",
-                this.details.clientId,
+                this.clientId,
                 messages,
                 (error) => {
                     if (error) {
@@ -444,8 +360,114 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
 
     /**
      * Disconnect from the websocket
+     * @param socketProtocolError - true if error happened on socket / socket.io protocol level
+     *  (not on Fluid protocol level)
      */
-    public disconnect() {
+    public disconnect(socketProtocolError: boolean = false) {
         this.socket.disconnect();
+        this.removeTrackedListeners(false);
+    }
+
+    protected async initialize(connectMessage: IConnect) {
+        this._details = await new Promise<IConnected>((resolve, reject) => {
+            // Listen for connection issues
+            this.addConnectionListener("connect_error", (error) => {
+                debug(`Socket connection error: [${error}]`);
+                this.disconnect(true);
+                reject(createErrorObject("connect_error", error));
+            });
+
+            // Listen for timeouts
+            this.addConnectionListener("connect_timeout", () => {
+                this.disconnect(true);
+                reject(createErrorObject("connect_timeout", "Socket connection timed out"));
+            });
+
+            this.addConnectionListener("connect_document_success", (response: IConnected) => {
+                this.removeTrackedListeners(true);
+                resolve(response);
+            });
+
+            this.addTrackedListener("error", ((error) => {
+                debug(`Error in documentDeltaConection: ${error}`);
+                // This includes "Invalid namespace" error, which we consider critical (reconnecting will not help)
+                this.disconnect(true);
+                reject(createErrorObject("error", error, error !== "Invalid namespace"));
+            }));
+
+            this.addConnectionListener("connect_document_error", ((error) => {
+                // This is not an error for the socket - it's a protocol error.
+                // In this case we disconnect the socket and indicate that we were unable to create the
+                // DocumentDeltaConnection.
+                this.disconnect(false);
+                reject(createErrorObject("connect_document_error", error));
+            }));
+
+            this.socket.emit("connect_document", connectMessage);
+        });
+    }
+
+    private earlyOpHandler ? = (documentId: string, msgs: ISequencedDocumentMessage[]) => {
+        debug("Queued early ops", msgs.length);
+        this.queuedMessages.push(...msgs);
+    }
+
+    private earlyContentHandler ? = (msg: IContentMessage) => {
+        debug("Queued early contents");
+        this.queuedContents.push(msg);
+    }
+
+    private earlySignalHandler ? = (msg: ISignalMessage) => {
+        debug("Queued early signals");
+        this.queuedSignals.push(msg);
+    }
+
+    private removeEarlyOpHandler() {
+        if (this.earlyOpHandler) {
+            this.socket.removeListener("op", this.earlyOpHandler);
+            this.earlyOpHandler = undefined;
+        }
+    }
+
+    private removeEarlyContentsHandler() {
+        if (this.earlyContentHandler) {
+            this.socket.removeListener("op-content", this.earlyContentHandler);
+            this.earlyContentHandler = undefined;
+        }
+    }
+
+    private removeEarlySignalHandler() {
+        if (this.earlySignalHandler) {
+            this.socket.removeListener("signal", this.earlySignalHandler);
+            this.earlySignalHandler = undefined;
+        }
+    }
+
+    private addConnectionListener(event: string, listener: (...args: any[]) => void) {
+        this.socket.on(event, listener);
+        this.trackedListeners.push({event, connectionListener: true, listener});
+    }
+
+    private addTrackedListener(event: string, listener: (...args: any[]) => void) {
+        this.socket.on(event, listener);
+        this.trackedListeners.push({event, connectionListener: true, listener});
+    }
+
+    private removeTrackedListeners(connectionListenerOnly) {
+        const remaining: IEventListener[] = [];
+        for (const {event, connectionListener, listener} of this.trackedListeners) {
+            if (!connectionListenerOnly || connectionListener) {
+                this.socket.off(event, listener);
+            } else {
+                remaining.push({event, connectionListener, listener});
+            }
+        }
+        this.trackedListeners = remaining;
+
+        if (!connectionListenerOnly) {
+            this.removeEarlyOpHandler();
+            this.removeEarlyContentsHandler();
+            this.removeEarlySignalHandler();
+        }
     }
 }

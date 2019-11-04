@@ -37,6 +37,7 @@ import {
     readAndParse,
 } from "@microsoft/fluid-core-utils";
 import {
+    Browser,
     IChunkedOp,
     IDocumentMessage,
     IDocumentStorageService,
@@ -100,6 +101,8 @@ export interface IGeneratedSummaryData {
      * true if the summary op was submitted
      */
     submitted: boolean;
+
+    summaryMessage?: ISummaryContent;
 
     summaryStats?: ISummaryStats;
 }
@@ -1112,12 +1115,14 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             };
 
             if (!this.connected) {
+                generateSummaryEvent.cancel({reason: "disconnected"});
                 return ret;
             }
             // TODO in the future we can have stored the latest summary by listening to the summary ack message
             // after loading from the beginning of the snapshot
             const versions = await this.context.storage.getVersions(this.id, 1);
             const parents = versions.map((version) => version.id);
+            const parent = parents[0];
             generateSummaryEvent.reportProgress({}, "loadedVersions");
 
             const treeWithStats = await this.summarize(fullTree);
@@ -1125,33 +1130,37 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             generateSummaryEvent.reportProgress({}, "generatedTree");
 
             if (!this.connected) {
+                generateSummaryEvent.cancel({reason: "disconnected"});
                 return ret;
             }
             const handle = await this.context.storage.uploadSummary(treeWithStats.summaryTree);
-            const summary: ISummaryContent = {
+            const summaryMessage: ISummaryContent = {
                 handle: handle.handle,
-                head: parents[0],
+                head: parent,
                 message,
                 parents,
             };
             generateSummaryEvent.reportProgress({}, "uploadedTree");
 
             if (!this.connected) {
+                generateSummaryEvent.cancel({reason: "disconnected"});
                 return ret;
             }
             // if summarizer loses connection it will never reconnect
-            this.submit(MessageType.Summarize, summary);
+            this.submit(MessageType.Summarize, summaryMessage);
+            ret.summaryMessage = summaryMessage;
             ret.submitted = true;
 
             generateSummaryEvent.end({
                 sequenceNumber,
                 submitted: ret.submitted,
                 handle: handle.handle,
+                parent,
                 ...ret.summaryStats,
             });
             return ret;
         } catch (ex) {
-            generateSummaryEvent.cancel({}, ex);
+            generateSummaryEvent.cancel({reason: "exception"}, ex);
             throw ex;
         } finally {
             // Restart the delta manager
@@ -1306,7 +1315,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     }
 
     private subscribeToLeadership() {
-        if (this.context.clientType !== "summarizer") {
+        if (this.context.clientType === Browser) {
             this.getScheduler().then((scheduler) => {
                 if (scheduler.leader) {
                     this.updateLeader(true);
@@ -1397,13 +1406,13 @@ export class WrappedComponentRegistry implements IComponentRegistry {
 
     public get IComponentRegistry() { return this; }
 
-    public async get(name: string): Promise<ComponentFactoryTypes> {
-        if (name === schedulerId) {
+    public async get(pkgName: string): Promise<ComponentFactoryTypes> {
+        if (pkgName === schedulerId) {
             return this.agentScheduler;
-        } else if (this.extraRegistries && this.extraRegistries.has(name)) {
-            return this.extraRegistries.get(name);
+        } else if (this.extraRegistries && this.extraRegistries.has(pkgName)) {
+            return this.extraRegistries.get(pkgName);
         } else {
-            return this.registry.get(name);
+            return this.registry.get(pkgName);
         }
     }
 }

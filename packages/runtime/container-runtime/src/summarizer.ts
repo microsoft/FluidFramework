@@ -240,14 +240,40 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
                 return;
             }
             case MessageType.Summarize: {
-                this.handleSummaryOp(op).catch((error) => {
+                this.handleSummaryOp(op)
+                .then((ownMessage) => {
+                    if (!ownMessage) {
+                        this.logger.sendErrorEvent({
+                            eventName: "SummarizeOpOtherClient",
+                            summaryPending: this.summaryPending,
+                        });
+                    }
+                })
+                .catch((error) => {
                     this.logger.sendErrorEvent({ eventName: "HandleSummaryOpError" }, error);
                 });
                 return;
             }
             case MessageType.SummaryAck:
             case MessageType.SummaryNack: {
-                this.handleSummaryAck(op).catch((error) => {
+                this.handleSummaryAck(op)
+                .then((ownMessage) => {
+                    if (!ownMessage) {
+                        const ack = op.contents;
+                        this.logger.sendErrorEvent({
+                            eventName:
+                                op.type === MessageType.SummaryAck ?
+                                "SummaryAckOtherClient" :
+                                "SummaryNackOtherClient",
+                            sequenceNumber: op.sequenceNumber,
+                            message:
+                                op.type === MessageType.SummaryNack ?
+                                (ack as ISummaryNack).errorMessage :
+                                `handle: ${(ack as ISummaryAck).handle}`,
+                        });
+                    }
+                })
+                .catch((error) => {
                     this.logger.sendErrorEvent({ eventName: "HandleSummaryAckError" }, error);
                 });
                 return;
@@ -258,11 +284,15 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
         }
     }
 
-    private async handleSummaryOp(op: ISequencedDocumentMessage) {
+    /**
+     * @param op - Summary op
+     * @returns true, if summary Op was for summary issued by that client. False otherwise
+     */
+    private async handleSummaryOp(op: ISequencedDocumentMessage): Promise<boolean> {
         // listen for the broadcast of this summary op
         // only look for broadcast summary op while pending
         if (!this.summaryPending) {
-            return;
+            return false;
         }
         // When pending, we need to wait until the lastSummarySeqNumber is set before
         // trying to find our broadcast summary op.  So we will essentially defer all
@@ -270,27 +300,38 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
         await this.deferBroadcast.promise;
         // can skip check if already found this pending summary sequence number
         if (this.pendingSummarySequenceNumber) {
-            return;
+            return false;
         }
         // should only be 1 summary op per client with same ref seq number
-        if (op.clientId === this.runtime.clientId && op.referenceSequenceNumber === this.lastSummarySeqNumber) {
-            this.logger.sendTelemetryEvent({
-                eventName: "PendingSummaryBroadcast",
-                timeWaitingForBroadcast: Date.now() - this.lastSummaryTime,
-                pendingSummarySequenceNumber: op.sequenceNumber,
-            });
-            this.pendingSummarySequenceNumber = op.sequenceNumber;
-            // Now we indicate that we are okay to start listening for the summary ack/nack
-            // of this summary op, because we have set the pendingSummarySequenceNumber.
-            this.deferAck.resolve();
+        if (op.clientId !== this.runtime.clientId || op.referenceSequenceNumber !== this.lastSummarySeqNumber) {
+            return false;
         }
+
+        this.logger.sendTelemetryEvent({
+            eventName: "SummarizeOp",
+            timeWaitingForBroadcast: Date.now() - this.lastSummaryTime,
+            onBehalfOf: this.onBehalfOfClientId,
+            pendingSummarySequenceNumber: op.sequenceNumber,
+            refSequenceNumber: op.referenceSequenceNumber,
+            summarySequenceNumber: op.sequenceNumber,
+        });
+        this.pendingSummarySequenceNumber = op.sequenceNumber;
+        // Now we indicate that we are okay to start listening for the summary ack/nack
+        // of this summary op, because we have set the pendingSummarySequenceNumber.
+        this.deferAck.resolve();
+
+        return true;
     }
 
+    /**
+     * @param op - Summary ack/nack op
+     * @returns true, if op was for summary issued by that client. False otherwise
+     */
     private async handleSummaryAck(op: ISequencedDocumentMessage) {
         // listen for the ack/nack of this summary op
         // only look for acks/nacks while pending
         if (!this.summaryPending) {
-            return;
+            return false;
         }
         // Since this handler is async, we need to wait until the pendingSummarySequenceNumber is
         // set from the broadcast summary op before handling summary acks/nacks.  We use
@@ -299,22 +340,27 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
         await this.deferAck.promise;
         if (!this.pendingSummarySequenceNumber) {
             // never figured out this pending summary sequence number
-            return;
+            return false;
         }
 
         const ack = op.contents as ISummaryAck | ISummaryNack;
         if (ack.summaryProposal.summarySequenceNumber !== this.pendingSummarySequenceNumber) {
             // different ack/nack
-            return;
+            return false;
         }
 
         // log some telemetry
         this.logger.sendTelemetryEvent({
             eventName: op.type === MessageType.SummaryAck ? "SummaryAck" : "SummaryNack",
             category: op.type === MessageType.SummaryAck ? "generic" : "error",
+            onBehalfOf: this.onBehalfOfClientId,
             timePending: Date.now() - this.lastSummaryTime,
             summarySequenceNumber: ack.summaryProposal.summarySequenceNumber,
-            message: op.type === MessageType.SummaryNack ? (ack as ISummaryNack).errorMessage : undefined,
+            sequenceNumber: op.sequenceNumber,
+            message:
+                op.type === MessageType.SummaryNack ?
+                (ack as ISummaryNack).errorMessage :
+                `handle: ${(ack as ISummaryAck).handle}`,
         });
 
         if (op.type === MessageType.SummaryAck) {
@@ -340,6 +386,7 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
             }
         }
         this.stopPending();
+        return true;
     }
 
     private handleOp(error: any, op: ISequencedDocumentMessage) {
@@ -427,14 +474,15 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
             const summaryEndTime = Date.now();
 
             const telemetryProps = {
-                sequenceNumber: summaryData.sequenceNumber,
+                refSequenceNumber: summaryData.sequenceNumber,
                 ...summaryData.summaryStats,
+                summaryMessage: summaryData.summaryMessage,
                 opsSinceLastSummary: summaryData.sequenceNumber - this.lastSummarySeqNumber,
                 timeSinceLastSummary: summaryEndTime - this.lastSummaryTime,
             };
             if (!summaryData.submitted) {
                 // did not send the summary op
-                summarizingEvent.cancel({...telemetryProps, category: "error"});
+                summarizingEvent.cancel({...telemetryProps });
                 this.stopPending();
                 return;
             }

@@ -8,21 +8,7 @@ import {
     ITelemetryLogger,
 } from "@microsoft/fluid-container-definitions";
 
-export enum OnlineStatus {
-    Offline,
-    Online,
-    Unknown,
-}
-
-// It tells if we have local connection only - we might not have connection to web.
-// No solution for node.js (other than resolve dns names / ping specific sites)
-// Can also use window.addEventListener("online" / "offline")
-export function isOnline(): OnlineStatus {
-    if (typeof navigator === "object" && navigator !== null && typeof navigator.onLine === "boolean") {
-        return navigator.onLine ? OnlineStatus.Online : OnlineStatus.Offline;
-    }
-    return OnlineStatus.Unknown;
-}
+import { isOnline, OnlineStatus } from "@microsoft/fluid-core-utils";
 
 export function logNetworkFailure(logger: ITelemetryLogger, event: ITelemetryErrorEvent, error?: any) {
     const newEvent = {...event};

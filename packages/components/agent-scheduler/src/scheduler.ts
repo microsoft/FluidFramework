@@ -361,6 +361,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
         const request: IRequest = {
             headers: {
                 [LoaderHeader.cache]: false,
+                [LoaderHeader.clientType]: "agent",
                 [LoaderHeader.reconnect]: false,
                 [LoaderHeader.sequenceNumber]: this.context.deltaManager.referenceSequenceNumber,
                 [LoaderHeader.executionContext]: worker ? "worker" : undefined,
