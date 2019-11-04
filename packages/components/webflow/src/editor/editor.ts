@@ -7,6 +7,7 @@ import { Caret as CaretUtil, Direction, getDeltaX, getDeltaY, KeyCode, Scheduler
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { paste } from "../clipboard/paste";
 import { DocSegmentKind, FlowDocument, getDocSegmentKind } from "../document";
+import { ownsNode } from "../util/event";
 import { IFormatterState, RootFormatter } from "../view/formatter";
 import { Layout } from "../view/layout";
 import { Caret } from "./caret";
@@ -78,16 +79,7 @@ export class Editor {
     }
 
     private shouldHandleEvent(e: Event) {
-        const root = this.layout.root;
-        let target = e.target as HTMLElement;
-
-        while (target !== null && target !== root) {
-            if (target.classList.contains(styles.inclusion)) {
-                return false;
-            }
-            target = target.parentElement;
-        }
-        return target === root;
+        return ownsNode(this.root, e.target as Node);
     }
 
     private readonly onKeyDown = (e: KeyboardEvent) => {

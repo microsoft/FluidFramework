@@ -15,6 +15,7 @@ export class NetworkError extends Error implements INetworkError {
             errorMessage: string,
             customProperties: [string, any][]) {
         super(errorMessage);
+        customProperties.push([INetworkErrorProperties.online, OnlineStatus[isOnline()]]);
         for (const [key, val] of customProperties) {
             Object.defineProperty(NetworkError.prototype, key, {
                 get: () => {
@@ -36,8 +37,8 @@ export class NetworkError extends Error implements INetworkError {
 
 export function throwNetworkError(
         errorMessage: string,
-        statusCode?: number,
-        canRetry: boolean = false,
+        statusCode: number,
+        canRetry: boolean,
         response?: Response) {
     let message = errorMessage;
     if (response) {
@@ -55,4 +56,21 @@ export enum INetworkErrorProperties {
     statusCode = "statusCode",
     retryAfterSeconds = "retryAfterSeconds",
     sprequestguid = "sprequestguid",
+    online = "online",
+}
+
+export enum OnlineStatus {
+    Offline,
+    Online,
+    Unknown,
+}
+
+// It tells if we have local connection only - we might not have connection to web.
+// No solution for node.js (other than resolve dns names / ping specific sites)
+// Can also use window.addEventListener("online" / "offline")
+export function isOnline(): OnlineStatus {
+    if (typeof navigator === "object" && navigator !== null && typeof navigator.onLine === "boolean") {
+        return navigator.onLine ? OnlineStatus.Online : OnlineStatus.Offline;
+    }
+    return OnlineStatus.Unknown;
 }
