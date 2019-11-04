@@ -591,6 +591,8 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         let delay = InitialReconnectDelay;
         let connectRepeatCount = 0;
         const connectStartTime = performanceNow();
+
+        // This loop will keep trying to connect until successful, with a delay between each iteration.
         while (connection === undefined) {
             if (this.closed) {
                 return;
@@ -640,6 +642,11 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this.setupNewSuccessfulConnection(connection);
     }
 
+    /**
+     * Once we've successfully gotten a DeltaConnection, we need to set up state, attach event listeners, and process
+     * initial messages.
+     * @param connection - the newly established connection
+     */
     private setupNewSuccessfulConnection(connection: DeltaConnection) {
         this.connection = connection;
 
