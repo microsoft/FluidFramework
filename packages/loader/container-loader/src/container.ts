@@ -522,7 +522,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return versions[0];
     }
 
-    private connectToDeltaStream() {
+    private async connectToDeltaStream() {
         if (!this.connectionDetailsP) {
             this.connectionTransitionTimes[ConnectionState.Disconnected] = performanceNow();
             this.connectionDetailsP = this._deltaManager!.connect();
