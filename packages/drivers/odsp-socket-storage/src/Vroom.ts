@@ -79,17 +79,16 @@ export async function getSocketStorageDiscovery(
   logger: ITelemetryLogger,
   getVroomToken: (refresh: boolean) => Promise<string | undefined | null>,
   odspCache: OdspCache,
-  documentId: string,
+  joinSessionKey: string,
 ): Promise<ISocketStorageDiscovery> {
-  const odspCacheKey = `${documentId}/joinsession`;
   // We invalidate the cache here because we will take the decision to put the joinsession result
   // again based on the last time it was put in the cache. So if the result is valid and used within
   // an hour we put the same result again with updated time so that we keep using the same result for
   // consecutive join session calls because the server moved. If there is nothing in cache or the
   // response was cached an hour ago, then we make the join session call again.
-  const cachedResult: IOdspJoinSessionCachedItem = odspCache.get(odspCacheKey, true);
+  const cachedResult: IOdspJoinSessionCachedItem = odspCache.get(joinSessionKey, true);
   if (cachedResult && Date.now() - cachedResult.timestamp <= 3600000 && cachedResult.content) {
-    odspCache.put(odspCacheKey, { content: cachedResult.content, timestamp: Date.now() });
+    odspCache.put(joinSessionKey, { content: cachedResult.content, timestamp: Date.now() });
     return cachedResult.content;
   }
   let socketStorageDiscovery: ISocketStorageDiscovery;
@@ -122,7 +121,7 @@ export async function getSocketStorageDiscovery(
     socketStorageDiscovery.tenantId = socketStorageDiscovery.runtimeTenantId;
   }
   // Never expire the joinsession result. On error, the delta connection will invalidate it.
-  odspCache.put(odspCacheKey, { content: socketStorageDiscovery, timestamp: Date.now() });
+  odspCache.put(joinSessionKey, { content: socketStorageDiscovery, timestamp: Date.now() });
 
   return socketStorageDiscovery;
 }

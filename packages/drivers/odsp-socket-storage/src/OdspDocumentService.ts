@@ -48,6 +48,8 @@ export class OdspDocumentService implements IDocumentService {
 
     private readonly localStorageAvailable: boolean;
 
+    private joinSessionKey: string;
+
     /**
      * @param appId - app id used for telemetry for network requests
      * @param hashedDocumentId - A unique identifer for the document. The "hashed" here implies that the contents of this string
@@ -81,6 +83,8 @@ export class OdspDocumentService implements IDocumentService {
         private readonly odspCache: OdspCache,
     ) {
 
+        this.joinSessionKey = `${this.hashedDocumentId}/joinsession`;
+
         this.logger = DebugLogger.mixinDebugLogger(
             "fluid:telemetry",
             logger,
@@ -105,7 +109,7 @@ export class OdspDocumentService implements IDocumentService {
                 logger,
                 this.getStorageToken,
                 this.odspCache,
-                hashedDocumentId,
+                this.joinSessionKey,
             ),
         );
 
@@ -188,7 +192,7 @@ export class OdspDocumentService implements IDocumentService {
             websocketEndpoint.deltaStreamSocketUrl,
             websocketEndpoint.deltaStreamSocketUrl2,
         ).catch((error) => {
-            this.odspCache.remove(`${this.hashedDocumentId}/joinsession`);
+            this.odspCache.remove(this.joinSessionKey);
             throw error;
         });
     }
