@@ -48,7 +48,7 @@ export class CopierLambda implements IPartitionLambda {
             tenantId: boxcar.tenantId,
             clientId: (batch[0] as IRawOperationMessage).clientId,
             timestamp: undefined,
-            type: undefined,
+            type: "rawdeltas_batch",
         };
         winston.info(combinedMessage);
 
@@ -108,12 +108,15 @@ export class CopierLambda implements IPartitionLambda {
                 winston.info("test");
             })
             .catch((error) => {
-            // Duplicate key errors are ignored since a replay may cause us to insert twice into Mongo.
-            // All other errors result in a rejected promise.
-            if (error.code !== 11000) {
-                // Needs to be a full rejection here
-                return Promise.reject(error);
-            }
+                // Duplicate key errors are ignored since a replay may cause us to insert twice into Mongo.
+                // All other errors result in a rejected promise.
+
+                winston.info("DUPLICATE KEY ERROR");
+
+                if (error.code !== 11000) {
+                    // Needs to be a full rejection here
+                    return Promise.reject(error);
+                }
         });
     }
 }

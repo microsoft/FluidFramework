@@ -23,8 +23,9 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
     // id, tenant id, and payload (which is handled automatically?).
     await collection.createIndex(
         {
-            documentId: 1,
-            tenantId: 1,
+            "documentId": 1,
+            "operation.contents": 1,
+            "tenantId": 1,
         },
         true);
 
