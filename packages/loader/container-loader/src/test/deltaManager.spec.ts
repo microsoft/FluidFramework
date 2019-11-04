@@ -26,7 +26,7 @@ describe("Loader", () => {
             const submitEvent = "test-submit";
 
             async function startDeltaManager() {
-                await deltaManager.connect("test");
+                await deltaManager.connect();
                 await deltaManager.inbound.resume();
                 await deltaManager.outbound.resume();
                 await deltaManager.inboundSignal.resume();

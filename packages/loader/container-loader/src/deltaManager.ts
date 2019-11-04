@@ -283,7 +283,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this.inQuorum = false;
     }
 
-    public async connect(reason: string): Promise<IConnectionDetails> {
+    public async connect(): Promise<IConnectionDetails> {
         assert(!this.closed);
 
         if (this.connection) {
@@ -293,7 +293,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         if (!this.connecting) {
             this.connecting = new Deferred<IConnectionDetails>();
             // tslint:disable-next-line:no-floating-promises
-            this.connectCore(reason, InitialReconnectDelay, this.connectionMode);
+            this.connectCore(this.connectionMode);
         }
 
         return this.connecting.promise;
@@ -588,9 +588,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         }
     }
 
-    private async connectCore(reason: string, delay: number, mode: ConnectionMode): Promise<void> {
+    private async connectCore(mode: ConnectionMode): Promise<void> {
         let connection: DeltaConnection | undefined;
-        let delayNext = delay;
+        let delay = InitialReconnectDelay;
         while (connection === undefined) {
             if (this.closed) {
                 return;
@@ -622,12 +622,12 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 }
 
                 const retryDelayFromError = this.getRetryDelayFromError(error);
-                delayNext = retryDelayFromError !== undefined ?
+                delay = retryDelayFromError !== undefined ?
                     retryDelayFromError :
                     Math.min(delay * 2, MaxReconnectDelay);
 
-                this.emitDelayInfo(retryFor.DELTASTREAM, delayNext);
-                await waitForConnectedState(delayNext);
+                this.emitDelayInfo(retryFor.DELTASTREAM, delay);
+                await waitForConnectedState(delay);
             }
         }
 
@@ -758,10 +758,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             if (delayNext !== undefined) {
                 this.emitDelayInfo(retryFor.DELTASTREAM, delayNext);
                 // tslint:disable-next-line:no-floating-promises
-                waitForConnectedState(delayNext).then(() => this.connectCore(reason, InitialReconnectDelay, mode));
+                waitForConnectedState(delayNext).then(() => this.connectCore(mode));
             } else {
                 // tslint:disable-next-line:no-floating-promises
-                this.connectCore(reason, InitialReconnectDelay, mode);
+                this.connectCore(mode);
             }
         }
     }
