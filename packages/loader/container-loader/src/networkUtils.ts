@@ -13,6 +13,9 @@ import { isOnline, OnlineStatus } from "@microsoft/fluid-core-utils";
 export function logNetworkFailure(logger: ITelemetryLogger, event: ITelemetryErrorEvent, error?: any) {
     const newEvent = {...event};
     newEvent.online = isOnline();
+    if (error && typeof error === "object" && (error as any).online) {
+        newEvent.online = (error as any).online as string;
+    }
 
     if (typeof navigator === "object" && navigator !== null) {
         const nav = navigator as any;
