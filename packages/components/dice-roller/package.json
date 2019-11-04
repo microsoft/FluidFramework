@@ -23,7 +23,7 @@
     "tslint": "tslint --project tsconfig.json --format verbose",
     "webpack": "webpack --env.production",
     "webpack:dev": "webpack --env.development",
-    "test": "jest",
+    "test": "jest"
   },
   "dependencies": {
     "@microsoft/fluid-aqueduct": "^0.11.0",
