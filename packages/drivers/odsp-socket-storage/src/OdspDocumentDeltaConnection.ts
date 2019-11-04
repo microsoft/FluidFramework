@@ -57,7 +57,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
         timeoutMs: number = 20000,
         telemetryLogger: ITelemetryLogger = new TelemetryNullLogger()): Promise<IDocumentDeltaConnection> {
 
-        const socketReferenceKey = `${url},${tenantId},${id}`;
+        const socketReferenceKey = `${url},${tenantId},${webSocketId}`;
 
         const socketReference = OdspDocumentDeltaConnection.getOrCreateSocketIoReference(
             io, timeoutMs, socketReferenceKey, url, tenantId, webSocketId, telemetryLogger);
