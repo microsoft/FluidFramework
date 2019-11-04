@@ -31,7 +31,7 @@ export function blockList(nonRetriableCodes: number[]): RetryFilter {
 
 // Going safe - only exclude specific codes
 // export const defaultRetryFilter = allowList([408, 409, 429, 500, 503]);
-export const defaultRetryFilter = blockList([400, 404]);
+export const defaultRetryFilter = blockList([400, 401, 403, 404]);
 
 // socket error filter for socket erros where 400 is a special retryable error.
 export const socketErrorRetryFilter = blockList([401, 403, 404, 406]);
