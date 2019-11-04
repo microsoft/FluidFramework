@@ -4,7 +4,7 @@ module.exports = {
     port: 8080
   },
   launch: {
-    dumpio: true,
+    dumpio: true, // output browser console to cmd line
     // slowMo: 500,
     // headless: false,
   },
