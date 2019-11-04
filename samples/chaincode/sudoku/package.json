@@ -1,6 +1,6 @@
 {
     "name": "@fluid-example/sudoku",
-    "version": "0.10.0",
+    "version": "0.11.2",
     "description": "Fluid Sudoku",
     "repository": "microsoft/FluidFramework",
     "license": "MIT",
