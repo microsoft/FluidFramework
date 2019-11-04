@@ -48,7 +48,7 @@ export class OdspDocumentService implements IDocumentService {
 
     private readonly localStorageAvailable: boolean;
 
-    private joinSessionKey: string;
+    private readonly joinSessionKey: string;
 
     /**
      * @param appId - app id used for telemetry for network requests
