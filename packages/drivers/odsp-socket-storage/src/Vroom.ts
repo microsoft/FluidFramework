@@ -40,7 +40,7 @@ export async function fetchJoinSession(
   return getWithRetryForTokenRefresh(async (refresh: boolean) => {
     const token = await getVroomToken(refresh);
     if (!token) {
-      throwNetworkError("Failed to acquire Vroom token", 400);
+      throwNetworkError("Failed to acquire Vroom token", 400, true);
     }
 
     const siteOrigin = getOrigin(siteUrl);
