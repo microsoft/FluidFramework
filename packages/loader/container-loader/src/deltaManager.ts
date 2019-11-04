@@ -438,7 +438,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                     return [];
                 }
                 success = false;
-                retryAfter = this.backOffWaitTimeOnError(error);
+                retryAfter = this.getRetryDelayFromError(error);
             }
 
             let delay: number;
@@ -717,13 +717,14 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                         error);
                 }
 
-                let delayNext = this.backOffWaitTimeOnError(error);
-                if (delayNext === undefined) {
-                    delayNext = Math.min(delay * 2, MaxReconnectDelay);
-                }
+                const retryDelayFromError = this.getRetryDelayFromError(error);
+                const delayNext = retryDelayFromError !== undefined ?
+                    retryDelayFromError :
+                    Math.min(delay * 2, MaxReconnectDelay);
+
                 this.emitDelayInfo(retryFor.DELTASTREAM, delayNext);
                 // tslint:disable-next-line:no-floating-promises
-                waitForConnectedState(delayNext).then(() => this.connectCore(reason, delayNext!, mode));
+                waitForConnectedState(delayNext).then(() => this.connectCore(reason, delayNext, mode));
             });
     }
 
@@ -751,7 +752,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             this.closeOnConnectionError(error);
         } else {
             this.logger.sendTelemetryEvent({ eventName: "DeltaConnectionReconnect", reason }, error);
-            const delayNext = this.backOffWaitTimeOnError(error);
+            const delayNext = this.getRetryDelayFromError(error);
             if (delayNext !== undefined) {
                 this.emitDelayInfo(retryFor.DELTASTREAM, delayNext);
                 // tslint:disable-next-line:no-floating-promises
@@ -762,7 +763,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         }
     }
 
-    private backOffWaitTimeOnError(error): number | undefined {
+    private getRetryDelayFromError(error): number | undefined {
         // tslint:disable-next-line: no-unsafe-any
         return error !== null && typeof error === "object" && error.retryAfterSeconds ? error.retryAfterSeconds
             : undefined;
