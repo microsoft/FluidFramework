@@ -769,20 +769,21 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         }
 
         this.disconnectFromDeltaStream(reason);
-        this.connectionMode = "read";
-
         // Reconnection is only enabled for browser clients.
         if (this.clientType !== Browser || !this.reconnect || this.closed || !canRetryOnError(error)) {
             this.close(error);
-        } else {
-            const delay = this.getRetryDelayFromError(error);
-            if (delay !== undefined) {
-                this.emitDelayInfo(retryFor.DELTASTREAM, delay);
-                await waitForConnectedState(delay);
-            }
-
-            await this.connectCore(mode);
+            return;
         }
+
+        this.connectionMode = "read";
+
+        const delay = this.getRetryDelayFromError(error);
+        if (delay !== undefined) {
+            this.emitDelayInfo(retryFor.DELTASTREAM, delay);
+            await waitForConnectedState(delay);
+        }
+
+        await this.connectCore(mode);
     }
 
     private getRetryDelayFromError(error): number | undefined {
