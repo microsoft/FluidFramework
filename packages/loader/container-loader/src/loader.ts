@@ -17,6 +17,7 @@ import {
 } from "@microsoft/fluid-container-definitions";
 import { configurableUrlResolver, Deferred } from "@microsoft/fluid-core-utils";
 import {
+    ClientType,
     IDocumentService,
     IDocumentServiceFactory,
     IFluidResolvedUrl,
@@ -67,7 +68,7 @@ export enum LoaderHeader {
 }
 export interface ILoaderHeader {
     [LoaderHeader.cache]: boolean;
-    [LoaderHeader.clientType]: string;
+    [LoaderHeader.clientType]: ClientType;
     [LoaderHeader.connect]: string;
     [LoaderHeader.executionContext]: string;
     [LoaderHeader.sequenceNumber]: number;

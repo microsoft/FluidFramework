@@ -5,7 +5,7 @@
 
 import { ICodeLoader, IHost, IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
-import { Browser, IDocumentServiceFactory } from "@microsoft/fluid-protocol-definitions";
+import { IDocumentServiceFactory } from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
 import { parse } from "url";
 import { debug } from "../debug";
@@ -109,7 +109,7 @@ export class ChaincodeWork extends EventEmitter {
     // a browser client connected.
     private noLeader(): boolean {
         for (const client of this.document.getQuorum().getMembers()) {
-            if (!client[1].client || !client[1].client.type || client[1].client.type === Browser) {
+            if (!client[1].client || !client[1].client.capabilities.interactive) {
                 return false;
             }
         }

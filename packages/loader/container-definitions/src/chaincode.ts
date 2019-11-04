@@ -10,6 +10,7 @@ import {
     IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
 import {
+    ICapabilities,
     IDocumentMessage,
     IDocumentStorageService,
     ISequencedDocumentMessage,
@@ -194,6 +195,7 @@ export interface IContainerContext extends EventEmitter, IMessageScheduler, IPro
     readonly configuration: IComponentConfiguration;
     readonly clientId: string | undefined;
     readonly clientType: string;
+    readonly clientCapabilities: ICapabilities;
     readonly parentBranch: string | undefined | null;
     readonly blobManager: IBlobManager | undefined;
     readonly storage: IDocumentStorageService | undefined | null;

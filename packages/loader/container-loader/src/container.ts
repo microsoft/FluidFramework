@@ -33,8 +33,8 @@ import {
     TelemetryLogger,
 } from "@microsoft/fluid-core-utils";
 import {
-    Browser,
     FileMode,
+    ICapabilities,
     IClient,
     IDocumentAttributes,
     IDocumentMessage,
@@ -214,6 +214,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
     public get clientType(): string {
         return this._deltaManager!.clientType;
+    }
+
+    public get clientCapabilities(): ICapabilities {
+        return this._deltaManager!.clientCapabilities;
     }
 
     public get chaincodePackage(): string | IFluidCodeDetails | undefined {
@@ -775,14 +779,21 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             // tslint:disable-next-line:no-unsafe-any
             ? (this.options.client as IClient)
             : {
-                type: Browser,
+                type: "human",
+                capabilities: {interactive: true},
                 permission: [],
                 scopes: [],
                 user: { id: "" },
             };
+
+        // client info from headers overrides client info from loader options
         const headerClientType = this.originalRequest.headers && this.originalRequest.headers[LoaderHeader.clientType];
         if (headerClientType) {
             clientDetails.type = headerClientType;
+            clientDetails.capabilities = {
+                ...clientDetails.capabilities,
+                interactive: headerClientType === "human",
+            };
         }
 
         this._deltaManager = new DeltaManager(

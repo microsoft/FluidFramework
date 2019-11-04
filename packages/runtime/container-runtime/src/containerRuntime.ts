@@ -37,7 +37,6 @@ import {
     readAndParse,
 } from "@microsoft/fluid-core-utils";
 import {
-    Browser,
     IChunkedOp,
     IDocumentMessage,
     IDocumentStorageService,
@@ -1307,7 +1306,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     }
 
     private subscribeToLeadership() {
-        if (this.context.clientType === Browser) {
+        if (this.context.clientCapabilities.interactive) {
             this.getScheduler().then((scheduler) => {
                 if (scheduler.leader) {
                     this.updateLeader(true);

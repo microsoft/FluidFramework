@@ -99,7 +99,8 @@ export class MessageFactory {
             detail: {
                 permission: [],
                 scopes: [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
-                type: "",
+                type: "human",
+                capabilities: { interactive: true },
                 user: null,
             },
         };

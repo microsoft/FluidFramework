@@ -16,8 +16,8 @@ import {
     PerformanceEvent,
 } from "@microsoft/fluid-core-utils";
 import {
-    Browser,
     ConnectionMode,
+    ICapabilities,
     IClient,
     IContentMessage,
     IDocumentDeltaStorageService,
@@ -73,6 +73,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     public get disposed() { return this.isDisposed; }
 
     public readonly clientType: string;
+    public readonly clientCapabilities: ICapabilities;
     public get IDeltaSender() { return this; }
 
     // Current conneciton mode. Initially write.
@@ -187,6 +188,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         super();
 
         this.clientType = this.client.type;
+        this.clientCapabilities = this.client.capabilities;
         this.systemConnectionMode = this.client.mode === "write" ? "write" : "read";
 
         this._inbound = new DeltaQueue<ISequencedDocumentMessage>(
@@ -696,8 +698,8 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         connection.close();
 
-        // Reconnection is only enabled for browser clients.
-        if (this.clientType !== Browser || !this.reconnect || this.closed || !canRetryOnError(error)) {
+        // Reconnection is only enabled for human clients.
+        if (!this.clientCapabilities.interactive || !this.reconnect || this.closed || !canRetryOnError(error)) {
             this.closeOnConnectionError(error);
         } else {
             this.logger.sendTelemetryEvent({ eventName: "DeltaConnectionReconnect", reason }, error);

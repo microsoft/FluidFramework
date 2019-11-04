@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Browser, ISequencedClient } from "@microsoft/fluid-protocol-definitions";
+import { ISequencedClient } from "@microsoft/fluid-protocol-definitions";
 
 export interface IHelpTasks {
     robot: string[];
@@ -42,5 +42,5 @@ export function analyzeTasks(
 }
 
 function isRobot(client: ISequencedClient): boolean {
-    return client.client && client.client.type && client.client.type !== Browser;
+    return client.client && client.client.capabilities && !client.client.capabilities.interactive;
 }
