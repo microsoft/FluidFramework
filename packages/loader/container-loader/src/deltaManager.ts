@@ -286,16 +286,14 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     public async connect(reason: string): Promise<IConnectionDetails> {
         assert(!this.closed);
 
-        if (this.connecting) {
-            assert(!this.connection);
-            return this.connecting.promise;
-        }
         if (this.connection) {
             return this.connection.details;
         }
 
-        this.connecting = new Deferred<IConnectionDetails>();
-        this.connectCore(reason, InitialReconnectDelay, this.connectionMode);
+        if (!this.connecting) {
+            this.connecting = new Deferred<IConnectionDetails>();
+            this.connectCore(reason, InitialReconnectDelay, this.connectionMode);
+        }
 
         return this.connecting.promise;
     }
