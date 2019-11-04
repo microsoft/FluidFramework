@@ -570,11 +570,12 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             this.connecting.reject(error);
             this.connecting = undefined;
         }
+        // Do not raise errors in closed state - we get here as result of closing connection
         // Note: "disconnect" & "nack" do not have error object
-        if (error) {
+        if (!this.closed && error) {
             this.emit("error", error);
         }
-        this.close(true);
+        this.close(!this.closed);
     }
 
     private recordPingTime(latency: number) {
