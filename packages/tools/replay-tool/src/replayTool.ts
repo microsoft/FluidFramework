@@ -35,6 +35,7 @@ const optionsArray = [
  * This is the main class used to take user input to replay ops for debugging purposes.
  */
 class ReplayProcessArgs extends ReplayArgs {
+
     constructor() {
         super();
         this.parseArguments();

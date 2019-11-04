@@ -40,7 +40,7 @@ export async function fetchJoinSession(
   return getWithRetryForTokenRefresh(async (refresh: boolean) => {
     const token = await getVroomToken(refresh);
     if (!token) {
-      throwNetworkError("Failed to acquire Vroom token", 400);
+      throwNetworkError("Failed to acquire Vroom token", 400, true);
     }
 
     const siteOrigin = getOrigin(siteUrl);
@@ -104,7 +104,11 @@ export async function getSocketStorageDiscovery(
       throw error;
     }
     socketStorageDiscovery = response.content;
-    event.end();
+    const props = {
+      sprequestguid: response.headers.get("sprequestguid"),
+      sprequestduration: response.headers.get("sprequestduration"),
+    };
+    event.end(props);
 
     if (socketStorageDiscovery.runtimeTenantId && !socketStorageDiscovery.tenantId) {
       socketStorageDiscovery.tenantId = socketStorageDiscovery.runtimeTenantId;

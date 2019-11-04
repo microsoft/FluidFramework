@@ -1,9 +1,10 @@
 {
   "name": "@fluid-example/clicker",
-  "description": "Minimal Fluid component sample to implement a collaborative counter.",
   "version": "0.11.0",
-  "author": "Microsoft",
+  "description": "Minimal Fluid component sample to implement a collaborative counter.",
   "repository": "microsoft/FluidFramework",
+  "license": "MIT",
+  "author": "Microsoft",
   "main": "dist/index.js",
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
@@ -14,27 +15,16 @@
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
-    "start": "webpack-dev-server --config webpack.config.js --package package.json --env.mode local",
-    "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
-    "start:live": "webpack-dev-server --config webpack.config.js --package package.json --env.mode live",
     "deploy": "npm publish --registry https://packages.wu2.prague.office-int.com",
+    "start": "webpack-dev-server --config webpack.config.js --package package.json",
+    "start:live": "webpack-dev-server --config webpack.config.js --package package.json --env.mode live",
+    "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose",
     "webpack": "webpack --env.production",
     "webpack:dev": "webpack --env.development",
     "test": "jest"
   },
-  "fluid": {
-    "browser": {
-      "umd": {
-        "files": [
-          "dist/main.bundle.js"
-        ],
-        "library": "main"
-      }
-    }
-  },
-  "license": "MIT",
   "dependencies": {
     "@microsoft/fluid-aqueduct": "^0.11.0",
     "@microsoft/fluid-component-core-interfaces": "^0.11.0",
@@ -67,5 +57,15 @@
     "jest-puppeteer": "^4.3.0",
     "puppeteer": "^1.20.0",
     "ts-jest": "24.1.0"
+  },
+  "fluid": {
+    "browser": {
+      "umd": {
+        "files": [
+          "dist/main.bundle.js"
+        ],
+        "library": "main"
+      }
+    }
   }
 }

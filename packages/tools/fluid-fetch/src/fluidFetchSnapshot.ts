@@ -19,7 +19,6 @@ import {
     dumpSnapshotTrees,
     dumpSnapshotVersions,
     paramNumSnapshotVersions,
-    paramSave,
     paramSnapshotVersionIndex,
 } from "./fluidFetchArgs";
 import { latestVersionsId } from "./fluidFetchInit";
@@ -177,8 +176,8 @@ async function dumpSnapshotTree(name: string, blobs: IBlob[]): Promise<ISnapshot
     return {blobCountNew, blobCount: sorted.length, size, sizeNew };
 }
 
-async function saveSnapshot(name: string, blobs: IBlob[]) {
-    const outDir = `${paramSave}/${name}/`;
+async function saveSnapshot(name: string, blobs: IBlob[], saveDir: string) {
+    const outDir = `${saveDir}/${name}/`;
     const mkdir = util.promisify(fs.mkdir);
 
     await mkdir(`${outDir}/decoded`, { recursive: true });
@@ -214,8 +213,8 @@ async function fetchBlobsFromVersion(storage: IDocumentStorageService, version: 
     return fetchBlobsFromSnapshotTree(storage, tree);
 }
 
-export async function fluidFetchSnapshot(documentService?: IDocumentService) {
-    if (!dumpSnapshotStats && !dumpSnapshotTrees && !dumpSnapshotVersions && paramSave === undefined) {
+export async function fluidFetchSnapshot(documentService?: IDocumentService, saveDir?: string) {
+    if (!dumpSnapshotStats && !dumpSnapshotTrees && !dumpSnapshotVersions && saveDir === undefined) {
         return;
     }
 
@@ -243,15 +242,15 @@ export async function fluidFetchSnapshot(documentService?: IDocumentService) {
             console.log(`There are only ${versions.length} snapshots, --snapshotVersionIndex is too large`);
             return;
         }
-        if (paramSave !== undefined) {
+        if (saveDir !== undefined) {
             blobsToDump = await fetchBlobsFromVersion(storage, version);
             const name = version.id;
             console.log(`Saving snapshot ${name}`);
-            await saveSnapshot(name, blobsToDump);
+            await saveSnapshot(name, blobsToDump, saveDir);
         }
     } else {
         version = versions[0];
-        if (paramSave !== undefined && versions.length > 0) {
+        if (saveDir !== undefined && versions.length > 0) {
             // tslint:disable-next-line:max-line-length
             console.log("  Name          |                  Date |       Size |   New Size |  Blobs | New Blobs");
             console.log("-".repeat(86));
@@ -284,7 +283,7 @@ export async function fluidFetchSnapshot(documentService?: IDocumentService) {
 
                 console.log(`${name.padEnd(15)} | ${date} | ${size} | ${sizeNew} | ${blobCount} | ${blobCountNew}`);
 
-                await saveSnapshot(name, blobs);
+                await saveSnapshot(name, blobs, saveDir);
             }
         }
     }

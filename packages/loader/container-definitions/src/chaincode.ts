@@ -163,12 +163,6 @@ export interface IRuntime {
     stop(): Promise<void>;
 
     /**
-     * Prepares the given message for execution
-     * @deprecated being removed and replaced with only process
-     */
-    prepare?(message: ISequencedDocumentMessage, local: boolean): Promise<any>;
-
-    /**
      * Processes the given message
      */
     process(message: ISequencedDocumentMessage, local: boolean, context: any);
@@ -226,7 +220,7 @@ export interface IContainerContext extends EventEmitter, IMessageScheduler, IPro
 
     error(err: any): void;
     requestSnapshot(tagMessage: string): Promise<void>;
-    reloadContext(): void;
+    reloadContext(): Promise<void>;
     refreshBaseSummary(snapshot: ISnapshotTree): void;
 }
 

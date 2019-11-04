@@ -2,10 +2,13 @@
   "name": "@microsoft/fluid-routerlicious-urlresolver",
   "version": "0.11.0",
   "description": "Url Resolver for routerlicious urls.",
+  "repository": "microsoft/prague",
+  "license": "MIT",
+  "author": "Microsoft",
+  "sideEffects": "false",
   "main": "dist/index.js",
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
-  "sideEffects": "false",
   "scripts": {
     "build": "npm run build:genver && concurrently npm:build:compile npm:tslint",
     "build:compile": "concurrently npm:tsc npm:build:esnext",
@@ -14,20 +17,9 @@
     "build:full:compile": "npm run build:compile",
     "build:genver": "node node_modules/@microsoft/fluid-build-common/gen_version.js",
     "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
+    "test": "mocha --recursive dist/test",
     "tsc": "tsc",
-    "tslint": "tslint --project tsconfig.json --format verbose",
-    "test": "mocha --recursive dist/test"
-  },
-  "author": "Microsoft",
-  "repository": "microsoft/prague",
-  "devDependencies": {
-    "@microsoft/fluid-build-common": "^0.11.0",
-    "@types/mocha": "^5.2.5",
-    "concurrently": "^4.1.0",
-    "mocha": "^5.2.0",
-    "rimraf": "^2.6.2",
-    "tslint": "^5.11.0",
-    "typescript": "~3.4.5"
+    "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "dependencies": {
     "@microsoft/fluid-component-core-interfaces": "^0.11.0",
@@ -36,5 +28,13 @@
     "@microsoft/fluid-server-services-core": "^0.11.0",
     "@types/debug": "^0.0.31"
   },
-  "license": "MIT"
+  "devDependencies": {
+    "@microsoft/fluid-build-common": "^0.11.0",
+    "@types/mocha": "^5.2.5",
+    "concurrently": "^4.1.0",
+    "mocha": "^5.2.0",
+    "rimraf": "^2.6.2",
+    "tslint": "^5.11.0",
+    "typescript": "~3.4.5"
+  }
 }
