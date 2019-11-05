@@ -513,7 +513,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         }
 
         if (this.connecting) {
-            this.connecting.reject(error ? error : new Error("Container closed"));
+            this.connecting.reject(error !== undefined ? error : new Error("Container closed"));
             this.connecting = undefined;
         }
 
