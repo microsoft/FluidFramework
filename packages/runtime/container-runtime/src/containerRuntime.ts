@@ -417,7 +417,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this.context.clientId;
     }
 
-    public get clientType(): string {
+    public get clientType(): string | undefined {
         return this.context.clientType;
     }
 
@@ -1314,7 +1314,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     }
 
     private subscribeToLeadership() {
-        if (this.context.clientCapabilities.interactive) {
+        if (this.context.clientDetails.capabilities.interactive) {
             this.getScheduler().then((scheduler) => {
                 if (scheduler.leader) {
                     this.updateLeader(true);

@@ -95,7 +95,7 @@ function checkContainerActivity(container: Container) {
             (window as IWindow).closeContainer();
         } else {
             for (const client of quorum.getMembers()) {
-                if (!client[1].client || !client[1].client.capabilities.interactive) {
+                if (!client[1].client || !client[1].client.details.capabilities.interactive) {
                     return;
                 }
             }

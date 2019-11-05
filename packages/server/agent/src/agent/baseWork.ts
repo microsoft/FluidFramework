@@ -121,7 +121,7 @@ export class BaseWork extends EventEmitter {
     // A leader is any human client connected to the document.
     private noLeader(): boolean {
         for (const client of this.document.getClients()) {
-            if (!client[1].client || !client[1].client.capabilities.interactive) {
+            if (!client[1].client || !client[1].client.details.capabilities.interactive) {
                 return false;
             }
         }

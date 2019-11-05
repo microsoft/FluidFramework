@@ -34,8 +34,8 @@ import {
 } from "@microsoft/fluid-core-utils";
 import {
     FileMode,
-    ICapabilities,
     IClient,
+    IClientDetails,
     IDocumentAttributes,
     IDocumentMessage,
     IDocumentService,
@@ -73,6 +73,8 @@ import { Quorum, QuorumProxy } from "./quorum";
 
 // tslint:disable-next-line:no-var-requires
 const performanceNow = require("performance-now") as (() => number);
+// tslint:disable-next-line:no-var-requires no-submodule-imports
+const merge = require("lodash/merge");
 
 const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
@@ -218,12 +220,12 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return this._scopes;
     }
 
-    public get clientType(): string {
+    public get clientType(): string | undefined {
         return this._deltaManager!.clientType;
     }
 
-    public get clientCapabilities(): ICapabilities {
-        return this._deltaManager!.clientCapabilities;
+    public get clientDetails(): IClientDetails {
+        return this._deltaManager!.clientDetails;
     }
 
     public get chaincodePackage(): string | IFluidCodeDetails | undefined {
@@ -795,30 +797,29 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private createDeltaManager(connect: boolean): void {
         // Create the DeltaManager and begin listening for connection events
         // tslint:disable-next-line:no-unsafe-any
-        const clientDetails: IClient = this.options && this.options.client
+        const client: IClient = this.options && this.options.client
             // tslint:disable-next-line:no-unsafe-any
             ? (this.options.client as IClient)
             : {
-                type: "human",
-                capabilities: {interactive: true},
+                details: {
+                    capabilities: {interactive: true},
+                },
                 permission: [],
                 scopes: [],
                 user: { id: "" },
             };
 
         // client info from headers overrides client info from loader options
-        const headerClientType = this.originalRequest.headers && this.originalRequest.headers[LoaderHeader.clientType];
-        if (headerClientType) {
-            clientDetails.type = headerClientType;
-            clientDetails.capabilities = {
-                ...clientDetails.capabilities,
-                interactive: headerClientType === "human",
-            };
+        const headerClientDetails = this.originalRequest.headers
+            && this.originalRequest.headers[LoaderHeader.clientDetails];
+        if (headerClientDetails) {
+            // tslint:disable-next-line: no-unsafe-any
+            merge(client.details, headerClientDetails);
         }
 
         this._deltaManager = new DeltaManager(
             this.service,
-            clientDetails,
+            client,
             ChildLogger.create(this.subLogger, "DeltaManager"),
             this.canReconnect,
         );
@@ -848,8 +849,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                 this._audience.clear();
 
                 const priorClients = details.initialClients ? details.initialClients : [];
-                for (const client of priorClients) {
-                    this._audience.addMember(client.clientId, client.client);
+                for (const priorClient of priorClients) {
+                    this._audience.addMember(priorClient.clientId, priorClient.client);
                 }
             });
 

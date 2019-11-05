@@ -83,7 +83,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this._hostRuntime.clientId;
     }
 
-    public get clientType(): string {
+    public get clientType(): string | undefined {
         return this._hostRuntime.clientType;
     }
 

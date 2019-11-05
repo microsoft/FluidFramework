@@ -5,6 +5,7 @@
 
 import {
     ConnectionMode,
+    IClientDetails,
     IContentMessage,
     ISequencedDocumentMessage,
     IServiceConfiguration,
@@ -92,7 +93,10 @@ export interface IDeltaManager<T, U> extends EventEmitter, IDeltaSender, IDispos
     initialSequenceNumber: number;
 
     // Type of client
-    clientType: string;
+    clientType: string | undefined;
+
+    // Details of client
+    clientDetails: IClientDetails;
 
     // Protocol version being used to communicate with the service
     version: string;

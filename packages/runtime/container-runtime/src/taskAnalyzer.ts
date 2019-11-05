@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ClientType, ISequencedClient } from "@microsoft/fluid-protocol-definitions";
+import { ISequencedClient } from "@microsoft/fluid-protocol-definitions";
 
 export interface IHelpTasks {
     robot: string[];
@@ -28,7 +28,7 @@ export function analyzeTasks(
     tasks: string[]): IHelpTasks {
     const robotClients = [...clients].filter((client) => isRobot(client[1]));
     const handledTasks = robotClients.map((robot) => robot[1].client.type);
-    const unhandledTasks = tasks.filter((task) => handledTasks.indexOf(task as ClientType) === -1);
+    const unhandledTasks = tasks.filter((task) => handledTasks.indexOf(task) === -1);
     if (unhandledTasks.length > 0) {
         const runnerClient = clients.get(runnerClientId);
         const permission = runnerClient.client && runnerClient.client.permission ? runnerClient.client.permission : [];
@@ -42,5 +42,5 @@ export function analyzeTasks(
 }
 
 function isRobot(client: ISequencedClient): boolean {
-    return client.client && client.client.capabilities && !client.client.capabilities.interactive;
+    return client.client && client.client.details.capabilities && !client.client.details.capabilities.interactive;
 }

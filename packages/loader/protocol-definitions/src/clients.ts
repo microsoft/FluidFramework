@@ -6,20 +6,21 @@
 import { IUser } from "./users";
 
 export type ConnectionMode = "write" | "read";
-export type ClientType = "human" | "summarizer" | "agent";
-export type ClientEnvironment = "browser" | "node";
-export type ClientDevice = "desktop" | "mobile";
 
 export interface ICapabilities {
     interactive: boolean;
 }
+export interface IClientDetails {
+    capabilities: ICapabilities;
+    type?: string;
+    environment?: string;
+    device?: string;
+}
 
 export interface IClient {
     mode?: ConnectionMode;
-    type: ClientType;
-    capabilities: ICapabilities;
-    environment?: ClientEnvironment;
-    device?: ClientDevice;
+    type?: string; // deprecated; please don't use anymore
+    details: IClientDetails;
     permission: string[];
     user: IUser;
     scopes: string[];

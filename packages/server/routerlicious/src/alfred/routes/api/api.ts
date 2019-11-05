@@ -85,8 +85,9 @@ function sendJoin(tenantId: string, documentId: string, clientId: string, produc
     const detail: IClient = {
         permission: [],
         scopes: [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
-        type: "agent",
-        capabilities: { interactive: false },
+        details: {
+            capabilities: { interactive: false },
+        },
         user: {id: "Rest-Client"},
     };
     const clientDetail: IClientJoin = {

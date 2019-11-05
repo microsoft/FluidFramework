@@ -51,8 +51,9 @@ export class OuterDocumentService implements IDocumentService {
         const client: IClient = {
             permission: [],
             scopes: [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
-            type: "human",
-            capabilities: { interactive: true },
+            details: {
+                capabilities: { interactive: true },
+            },
             user: {
                 id: "iframe-user",
             },
