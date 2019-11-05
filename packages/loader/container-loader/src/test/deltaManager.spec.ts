@@ -65,7 +65,8 @@ describe("Loader", () => {
                     service,
                     client as IClient,
                     logger,
-                    false,
+                    false, // reconnect
+                    true, // autoReconnect
                 );
                 deltaManager.attachOpHandler(0, 0, {
                     process(message) {

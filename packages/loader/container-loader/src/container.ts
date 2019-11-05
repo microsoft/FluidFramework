@@ -257,6 +257,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         private readonly loader: Loader,
         private readonly originalRequest: IRequest,
         logger?: ITelemetryBaseLogger,
+        private readonly autoReconnect: boolean = true,
     ) {
         super();
 
@@ -393,6 +394,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             this.raiseCriticalError(error);
             throw error;
         });
+    }
+
+    public reconnectDeltaManager() {
+        this._deltaManager!.manualReconnect();
     }
 
     private async reloadContextCore(): Promise<void> {
@@ -817,6 +822,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             clientDetails,
             ChildLogger.create(this.subLogger, "DeltaManager"),
             this.canReconnect,
+            this.autoReconnect,
         );
 
         if (connect) {
