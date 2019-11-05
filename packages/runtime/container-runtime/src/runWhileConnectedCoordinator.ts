@@ -6,17 +6,29 @@
 import { Deferred } from "@microsoft/fluid-core-utils";
 import { ContainerRuntime } from "./containerRuntime";
 
+/**
+ * Start result indicating that the start was successful.
+ */
 export interface IStartedResult {
     started: true;
 }
+
+/**
+ * Start result indicating that the start was not successful.
+ */
 export interface INotStartedResult {
     started: false;
     message: string;
 }
 
-export class SingleExecutionRunner {
+/**
+ * Helper class to coordinate something that needs to run only while connected.
+ * This provides promises that resolve as it starts or stops.  Stopping happens
+ * when disconnected or if stop() is called.
+ */
+export class RunWhileConnectedCoordinator {
     private everConnected = false;
-    private readonly runComplete = new Deferred<void>();
+    private readonly stopDeferred = new Deferred<void>();
 
     public constructor(private readonly runtime: ContainerRuntime) {
         // try to determine if the runtime has ever been connected
@@ -34,11 +46,16 @@ export class SingleExecutionRunner {
         });
     }
 
+    /**
+     * Starts and waits for a promise which resolves when connected.
+     * The promise will also resolve if stopped either externally or by disconnect.
+     * The return value indicates whether the start is successful or not.
+     */
     public async waitStart(): Promise<IStartedResult | INotStartedResult> {
         if (!this.runtime.connected) {
             if (!this.everConnected) {
                 const waitConnected = new Promise((resolve) => this.runtime.once("connected", resolve));
-                await Promise.race([waitConnected, this.runComplete.promise]);
+                await Promise.race([waitConnected, this.stopDeferred.promise]);
                 if (!this.runtime.connected) {
                     // if still not connected, no need to start running
                     return {
@@ -57,11 +74,17 @@ export class SingleExecutionRunner {
         return { started: true };
     }
 
-    public waitComplete(): Promise<void> {
-        return this.runComplete.promise;
+    /**
+     * Returns a prommise that resolves once stopped either externally or by disconnect.
+     */
+    public waitStopped(): Promise<void> {
+        return this.stopDeferred.promise;
     }
 
+    /**
+     * Stops running.
+     */
     public stop() {
-        this.runComplete.resolve();
+        this.stopDeferred.resolve();
     }
 }

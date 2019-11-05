@@ -20,7 +20,7 @@ import {
 } from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
 import { ContainerRuntime, IGeneratedSummaryData } from "./containerRuntime";
-import { SingleExecutionRunner } from "./singleExecutionRunner";
+import { RunWhileConnectedCoordinator } from "./runWhileConnectedCoordinator";
 import { IClientSummaryWatcher, ISummaryAckMessage, SummaryDataStructure } from "./summaryDataStructure";
 
 // send some telemetry if generate summary takes too long
@@ -33,7 +33,7 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
     public get IComponentLoadable() { return this; }
 
     private readonly logger: ITelemetryLogger;
-    private readonly singleRunner: SingleExecutionRunner;
+    private readonly runCoordinator: RunWhileConnectedCoordinator;
     private readonly summaryDataStructure: SummaryDataStructure;
     private onBehalfOfClientId: string;
     private runningSummarizer?: RunningSummarizer;
@@ -46,7 +46,7 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
         private readonly refreshBaseSummary: (snapshot: ISnapshotTree) => void,
     ) {
         this.logger = ChildLogger.create(this.runtime.logger, "Summarizer");
-        this.singleRunner = new SingleExecutionRunner(runtime);
+        this.runCoordinator = new RunWhileConnectedCoordinator(runtime);
         this.summaryDataStructure = new SummaryDataStructure(
             this.runtime.deltaManager.initialSequenceNumber,
             this.logger);
@@ -57,7 +57,7 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
     public async run(onBehalfOf: string): Promise<void> {
         this.onBehalfOfClientId = onBehalfOf;
 
-        const startResult = await this.singleRunner.waitStart();
+        const startResult = await this.runCoordinator.waitStart();
         if (startResult.started === false) {
             this.logger.sendTelemetryEvent({
                 eventName: "NotStarted",
@@ -123,7 +123,7 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
             "batchEnd",
             (error: any, op: ISequencedDocumentMessage) => this.runningSummarizer.handleOp(error, op));
 
-        await this.singleRunner.waitComplete();
+        await this.runCoordinator.waitStopped();
 
         // cleanup after running
         this.dispose();
@@ -140,7 +140,7 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
             onBehalfOf: this.onBehalfOfClientId,
             reason,
         });
-        this.singleRunner.stop();
+        this.runCoordinator.stop();
         this.runtime.closeFn();
     }
 
