@@ -38,7 +38,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
      * If url #1 fails to connect, will try url #2 if applicable.
      *
      * @param tenantId - the ID of the tenant
-     * @param id - document ID
+     * @param webSocketId - webSocket ID
      * @param token - authorization token for storage service
      * @param io - websocket library
      * @param client - information about the client
@@ -48,7 +48,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
      */
     public static async create(
         tenantId: string,
-        id: string,
+        webSocketId: string,
         token: string | null,
         io: SocketIOClientStatic,
         client: IClient,
@@ -57,10 +57,10 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
         timeoutMs: number = 20000,
         telemetryLogger: ITelemetryLogger = new TelemetryNullLogger()): Promise<IDocumentDeltaConnection> {
 
-        const socketReferenceKey = `${url},${tenantId},${id}`;
+        const socketReferenceKey = `${url},${tenantId},${webSocketId}`;
 
         const socketReference = OdspDocumentDeltaConnection.getOrCreateSocketIoReference(
-            io, timeoutMs, socketReferenceKey, url, tenantId, id, telemetryLogger);
+            io, timeoutMs, socketReferenceKey, url, tenantId, webSocketId, telemetryLogger);
 
         const socket = socketReference.socket;
         if (!socket) {
@@ -69,14 +69,14 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
 
         const connectMessage: IConnect = {
             client,
-            id,
+            id: webSocketId,
             mode,
             tenantId,
             token,  // token is going to indicate tenant level information, etc...
             versions: protocolVersions,
         };
 
-        const deltaConnection = new OdspDocumentDeltaConnection(socket, id, socketReferenceKey);
+        const deltaConnection = new OdspDocumentDeltaConnection(socket, webSocketId, socketReferenceKey);
 
         try {
             await deltaConnection.initialize(connectMessage);
