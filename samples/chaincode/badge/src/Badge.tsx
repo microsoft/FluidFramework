@@ -15,18 +15,9 @@ import { SharedColors } from "@uifabric/fluent-theme/lib/fluent/FluentColors";
 import { IIconProps } from "office-ui-fabric-react/lib/Icon";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
+import { IBadgeType } from "./IBadgeType";
 import { BadgeView } from "./BadgeView";
-
-export interface IBadgeType {
-    key: string;
-    text: string;
-    iconProps: IIconProps;
-}
-
-export interface IHistory<T> {
-    value: T;
-    timestamp: Date;
-}
+import { IHistory } from "./IHistory";
 
 export class Badge extends PrimedComponent implements IComponentHTMLVisual, IComponentReactViewable {
     currentCell: SharedCell;
@@ -85,11 +76,13 @@ export class Badge extends PrimedComponent implements IComponentHTMLVisual, ICom
     ];
 
     /**
-     * This is only called once the first time your component is created. Anything that happens in create will happen
-     * before any other user will see the component.
+     * ComponentInitializingFirstTime is called only once, it is executed only by the first client to open the component
+     * and all work will resolve before the view is presented to any user.
+     *
+     * This method is used to perform component setup, which can include setting an initial schema or initial values.
      */
     protected async componentInitializingFirstTime() {
-    // create a cell to represent the Badge's current state
+        // create a cell to represent the Badge"s current state
         const current = SharedCell.create(this.runtime);
         current.set(this.defaultOptions[0]);
         this.root.set(this.currentId, current.handle);
@@ -99,7 +92,7 @@ export class Badge extends PrimedComponent implements IComponentHTMLVisual, ICom
         this.defaultOptions.forEach((v) => options.set(v.key, v));
         this.root.set(this.optionsId, options.handle);
 
-    // create a sequence to store the badge's history
+        // create a sequence to store the badge"s history
         const history = SharedObjectSequence.create<IHistory<IBadgeType>>(this.runtime);
         history.insert(0, [{
             value: current.get(),
