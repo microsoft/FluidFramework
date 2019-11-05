@@ -752,7 +752,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         connection.close();
 
         // Reconnection is only enabled for human clients.
-        if (!this.clientDetails.capabilities.interactive || !this.reconnect || this.closed || !canRetryOnError(error)) {
+        if (!this.reconnect || this.closed || !canRetryOnError(error)) {
             this.close(error);
         } else {
             const delayNext = this.getRetryDelayFromError(error);
