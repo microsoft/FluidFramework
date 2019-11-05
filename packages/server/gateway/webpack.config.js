@@ -88,6 +88,7 @@ module.exports = env => {
                 }
             ]
         },
+        target: 'node',
         stats: {
             timings: true,
             colors: true,
