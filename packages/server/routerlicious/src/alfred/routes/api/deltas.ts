@@ -12,8 +12,6 @@ import {
 import { Router } from "express";
 import { Provider } from "nconf";
 import { getParam } from "../../utils";
-// tslint:disable-next-line
-import winston = require("winston");
 
 const sequenceNumber = "sequenceNumber";
 
@@ -86,14 +84,10 @@ export async function getRawDeltas(
     // Create an optional filter to restrict the delta range
     const query: any = { documentId, tenantId };
 
-    winston.info("getrawdeltas");
     // Query for the deltas and return a filtered version of just the operations field
     const db = await mongoManager.getDatabase();
     const collection = await db.collection<any>(collectionName);
     const dbDump: IRawOperationMessage[] = await collection.find(query, undefined);
-
-    winston.info("getrawdeltas after await");
-    winston.info(`dbdump length ${dbDump.length}`);
 
     // Strip "combined" ops down to their essence as arrays of individual ops:
     const arrayOfArrays: IRawOperationMessage[][] =
@@ -101,8 +95,6 @@ export async function getRawDeltas(
 
     // Flatten the ordered array of arrays into one ordered array of ops:
     const allDeltas = ([] as IRawOperationMessage[]).concat(...arrayOfArrays);
-
-    winston.info(`allDeltas length ${allDeltas.length}`);
 
     return allDeltas;
 }
@@ -136,7 +128,6 @@ export function create(config: Provider, mongoManager: MongoManager, appTenants:
                 response.status(200).json(deltas);
             },
             (error) => {
-                winston.info("HTTP 500 error from raw deltas bro");
                 response.status(500).json(error);
             });
     });

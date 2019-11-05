@@ -11,8 +11,6 @@ import {
     IPartitionLambda,
     IRawOperationMessage,
 } from "@microsoft/fluid-server-services-core";
-// tslint:disable-next-line
-import winston = require("winston");
 
 export class CopierLambda implements IPartitionLambda {
     // Below, one job corresponds to the task of sending one batch to Mongo:
@@ -31,8 +29,6 @@ export class CopierLambda implements IPartitionLambda {
         const batch = boxcar.contents;
         const topic = `${boxcar.tenantId}/${boxcar.documentId}`;
 
-        winston.info("LOG: handler ->boxcar");
-
         // Create a stringified array of IRawOperationMessage objects and pack
         // it into a single message that can be split apart on reception:
         const convertedBatch = batch.map((m) => (m as IRawOperationMessage));
@@ -50,7 +46,6 @@ export class CopierLambda implements IPartitionLambda {
             timestamp: undefined,
             type: "rawdeltas_batch",
         };
-        winston.info(combinedMessage);
 
         // Write the batch directly to Mongo:
         if (!this.pendingJobs.has(topic)) {
@@ -104,15 +99,9 @@ export class CopierLambda implements IPartitionLambda {
     private async processMongoCore(kafkaBatches: IRawOperationMessage[]): Promise<void> {
         await this.rawOpCollection
             .insertMany(kafkaBatches, false)
-            .then((whatever) => {
-                winston.info("test");
-            })
             .catch((error) => {
                 // Duplicate key errors are ignored since a replay may cause us to insert twice into Mongo.
                 // All other errors result in a rejected promise.
-
-                winston.info("DUPLICATE KEY ERROR");
-
                 if (error.code !== 11000) {
                     // Needs to be a full rejection here
                     return Promise.reject(error);
