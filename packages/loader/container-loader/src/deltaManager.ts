@@ -475,7 +475,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 if (!canRetry || !canRetryOnError(error)) {
                     // It's game over scenario.
                     telemetryEvent.cancel({category: "error"}, error);
-                    this.closeOnConnectionError(error);
+                    this.close(error);
                     return [];
                 }
                 success = false;
@@ -506,7 +506,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                         deltasRetrievedTotal: allDeltas.length,
                         replayFrom: from,
                         to });
-                    this.closeOnConnectionError(new Error("Failed to retrieve ops from storage: giving up after too many retries"));
+                    this.close(new Error("Failed to retrieve ops from storage: giving up after too many retries"));
                     return [];
                 }
             }
@@ -531,22 +531,28 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     /**
      * Closes the connection and clears inbound & outbound queues.
      */
-    public close(closeOnError = false): void {
+    public close(error?: any): void {
         if (this.closed) {
             return;
         }
         this.closed = true;
 
-        this.logger.sendTelemetryEvent({ eventName: "ContainerClose", closeOnError });
+        // Note: "disconnect" & "nack" do not have error object
+        if (error) {
+            this.emit("error", error);
+        }
+
+        this.logger.sendTelemetryEvent({ eventName: "ContainerClose" }, error);
 
         this.stopSequenceNumberUpdate();
+
         if (this.connection) {
             this.connection.close();
             this.connection = undefined;
         }
 
         if (this.connecting) {
-            this.connecting.reject(new Error("Container closed"));
+            this.connecting.reject(error !== undefined ? error : new Error("Container closed"));
             this.connecting = undefined;
         }
 
@@ -563,18 +569,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this.removeAllListeners();
 
         this.emit("closed");
-    }
-
-    private closeOnConnectionError(error: any) {
-        if (this.connecting) {
-            this.connecting.reject(error);
-            this.connecting = undefined;
-        }
-        // Note: "disconnect" & "nack" do not have error object
-        if (error) {
-            this.emit("error", error);
-        }
-        this.close(true);
     }
 
     private recordPingTime(latency: number) {
@@ -744,7 +738,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             (error) => {
                 // Socket.io error when we connect to wrong socket, or hit some multiplexing bug
                 if (!canRetryOnError(error)) {
-                    this.closeOnConnectionError(error);
+                    this.close(error);
                     return;
                 }
 
@@ -788,7 +782,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         // Reconnection is only enabled for browser clients.
         if (this.clientType !== Browser || !this.reconnect || this.closed || !canRetryOnError(error)) {
-            this.closeOnConnectionError(error);
+            this.close(error);
         } else {
             this.logger.sendTelemetryEvent({ eventName: "DeltaConnectionReconnect", reason }, error);
             const delayNext = this.backOffWaitTimeOnError(error);
