@@ -20,11 +20,17 @@ export class OdspCache {
         return val;
     }
 
-    public put(key: string, value: any, expiryTime: number) {
+    public remove(key: string) {
+        return this.odspCache.delete(key);
+    }
+
+    public put(key: string, value: any, expiryTime?: number) {
         assert(!this.odspCache.has(key), "Insertion rejected because cache already has that key!!");
         this.odspCache.set(key, value);
-        // tslint:disable-next-line: no-floating-promises
-        this.gc(key, expiryTime);
+        if (expiryTime) {
+            // tslint:disable-next-line: no-floating-promises
+            this.gc(key, expiryTime);
+        }
     }
 
     private async gc(key: string, expiryTime: number) {
