@@ -14,37 +14,47 @@ import {
 } from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
 
-export interface ISummaryMessage extends ISequencedDocumentMessage {
+/**
+ * Interface for summary op messages with typed contents.
+ */
+export interface ISummaryOpMessage extends ISequencedDocumentMessage {
     type: MessageType.Summarize;
     contents: ISummaryContent;
 }
 
+/**
+ * Interface for summary ack messages with typed contents.
+ */
 export interface ISummaryAckMessage extends ISequencedDocumentMessage {
     type: MessageType.SummaryAck;
     contents: ISummaryAck;
 }
 
+/**
+ * Interface for summary nack messages with typed contents.
+ */
 export interface ISummaryNackMessage extends ISequencedDocumentMessage {
     type: MessageType.SummaryNack;
     contents: ISummaryNack;
 }
 
+/**
+ * A single summary which can be tracked as it goes through its life cycle.
+ * The life cycle is: Local to Broadcast to Acked/Nacked.
+ */
 export interface ISummary {
     readonly clientId: string;
     readonly clientSequenceNumber: number;
-    readonly summaryOp?: ISummaryMessage;
-    readonly summaryAckNack?: ISummaryAckMessage | ISummaryNackMessage;
-    isBroadcast(): boolean;
-    isAckedNacked(): boolean;
-    waitBroadcast(): Promise<ISummaryMessage>;
+    waitBroadcast(): Promise<ISummaryOpMessage>;
     waitAckNack(): Promise<ISummaryAckMessage | ISummaryNackMessage>;
 }
 
+/**
+ * A single summary which has already been acked by the server.
+ */
 export interface IAckedSummary extends ISummary {
-    readonly summaryOp: ISummaryMessage;
+    readonly summaryOp: ISummaryOpMessage;
     readonly summaryAckNack: ISummaryAckMessage;
-    isBroadcast(): true;
-    isAckedNacked(): true;
 }
 
 enum SummaryState {
@@ -58,7 +68,7 @@ class Summary implements ISummary {
     public static createLocal(clientId: string, clientSequenceNumber: number) {
         return new Summary(clientId, clientSequenceNumber);
     }
-    public static createFromOp(op: ISummaryMessage) {
+    public static createFromOp(op: ISummaryOpMessage) {
         const summary = new Summary(op.clientId, op.clientSequenceNumber);
         summary.broadcast(op);
         return summary;
@@ -66,7 +76,7 @@ class Summary implements ISummary {
 
     private state = SummaryState.Local;
 
-    private _summaryOp?: ISummaryMessage;
+    private _summaryOp?: ISummaryOpMessage;
     private _summaryAckNack?: ISummaryAckMessage | ISummaryNackMessage;
 
     private readonly defSummaryOp = new Deferred<void>();
@@ -79,27 +89,15 @@ class Summary implements ISummary {
         public readonly clientId: string,
         public readonly clientSequenceNumber: number) {}
 
-    public isBroadcast(): boolean {
-        return this.state !== SummaryState.Local;
-    }
-    public isAckedNacked(): boolean {
-        return this.state === SummaryState.Acked || this.state === SummaryState.Nacked;
-    }
-    public isAcked(): this is IAckedSummary {
+    public hasBeenAcked(): this is IAckedSummary {
         return this.state === SummaryState.Acked;
     }
 
-    public broadcast(op: ISummaryMessage) {
+    public broadcast(op: ISummaryOpMessage) {
         assert(this.state === SummaryState.Local);
         this._summaryOp = op;
         this.defSummaryOp.resolve();
         this.state = SummaryState.Broadcast;
-        return true;
-    }
-
-    public ack(op: ISummaryAckMessage): this is IAckedSummary {
-        assert.strictEqual(op.type, MessageType.SummaryAck);
-        this.ackNack(op);
         return true;
     }
 
@@ -111,21 +109,20 @@ class Summary implements ISummary {
         return true;
     }
 
-    public async waitBroadcast(): Promise<ISummaryMessage> {
-        if (!this.isBroadcast()) {
-            await this.defSummaryOp.promise;
-        }
+    public async waitBroadcast(): Promise<ISummaryOpMessage> {
+        await this.defSummaryOp.promise;
         return this._summaryOp;
     }
 
     public async waitAckNack(): Promise<ISummaryAckMessage | ISummaryNackMessage> {
-        if (!this.isAckedNacked()) {
-            await this.defSummaryAck.promise;
-        }
+        await this.defSummaryAck.promise;
         return this._summaryAckNack;
     }
 }
 
+/**
+ * Watches summaries created by a specific client.
+ */
 export interface IClientSummaryWatcher {
     watchSummary(clientSequenceNumber: number): ISummary;
     waitFlushed(): Promise<IAckedSummary | undefined>;
@@ -162,6 +159,11 @@ class SummaryWatcher implements IClientSummaryWatcher {
     }
 }
 
+/**
+ * Data structure that looks at the op stream to track summaries as they
+ * are broadcast, acked and nacked.
+ * It provides functionality for watching specific summaries.
+ */
 export class SummaryDataStructure {
     // key: clientId
     private readonly summaryWatchers = new Map<string, SummaryWatcher>();
@@ -186,16 +188,30 @@ export class SummaryDataStructure {
         }
     }
 
+    /**
+     * Creates and returns a summary watcher for a specific client.
+     * This will allow for local sent summaries to be better tracked.
+     * @param clientId - client id for watcher
+     */
     public createWatcher(clientId: string): IClientSummaryWatcher {
         const watcher = new SummaryWatcher(clientId, this);
         this.summaryWatchers.set(clientId, watcher);
         return watcher;
     }
 
+    /**
+     * Returns a promise that resolves once the summary ack for the
+     * summary loaded from has been processed.
+     * Resolves immediately if not loaded from a summary.
+     */
     public waitInitialized(): Promise<IAckedSummary | undefined> {
         return this.initialAck.promise;
     }
 
+    /**
+     * Returns a promise that resolves once all pending summary ops
+     * have been acked or nacked.
+     */
     public async waitFlushed(): Promise<IAckedSummary | undefined> {
         while (this.pendingSummaries.size > 0) {
             const promises = Array.from(this.pendingSummaries, ([, summary]) => summary.waitAckNack());
@@ -204,10 +220,14 @@ export class SummaryDataStructure {
         return this.lastAck;
     }
 
+    /**
+     * Handler for ops; only handles ops relating to summaries.
+     * @param op - op message to handle
+     */
     public handleOp(op: ISequencedDocumentMessage) {
         switch (op.type) {
             case MessageType.Summarize: {
-                this.handleSummaryOp(op as ISummaryMessage);
+                this.handleSummaryOp(op as ISummaryOpMessage);
                 return;
             }
             case MessageType.SummaryAck: {
@@ -224,7 +244,7 @@ export class SummaryDataStructure {
         }
     }
 
-    private handleSummaryOp(op: ISummaryMessage) {
+    private handleSummaryOp(op: ISummaryOpMessage) {
         let summary: Summary | undefined;
 
         // check if summary already being watched, broadcast if so
@@ -281,7 +301,7 @@ export class SummaryDataStructure {
         if (this.initialized) {
             return;
         }
-        if (summary.isAcked()) {
+        if (summary.hasBeenAcked()) {
             this.initialized = true;
             this.initialAck.resolve(summary);
         }
