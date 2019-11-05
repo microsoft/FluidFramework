@@ -279,7 +279,6 @@ export class VideoPlayerFactoryComponent implements IComponentFactory {
         ComponentRuntime.load(
             context,
             dataTypes,
-            undefined,
             (runtime) => {
                 const progressCollectionP = VideoPlayerCollection.load(runtime, context);
                 runtime.registerRequestHandler(async (request: IRequest) => {

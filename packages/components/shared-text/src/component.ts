@@ -305,7 +305,6 @@ export function instantiateComponent(context: IComponentContext): void {
     ComponentRuntime.load(
         context,
         modules,
-        undefined,
         (runtime) => {
             const runnerP = SharedTextRunner.load(runtime, context);
             runtime.registerRequestHandler(async (request: IRequest) => {

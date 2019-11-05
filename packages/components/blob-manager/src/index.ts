@@ -128,7 +128,6 @@ export function instantiateComponent(context: IComponentContext): void {
     ComponentRuntime.load(
         context,
         modules,
-        undefined,
         (runtime) => {
             runtime.registerRequestHandler(async (request: IRequest) => {
                 return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };

@@ -161,7 +161,6 @@ export class ImageCollectionFactoryComponent implements IComponentFactory {
         ComponentRuntime.load(
             context,
             dataTypes,
-            undefined,
             (runtime) => {
                 const progressCollectionP = ImageCollection.load(runtime, context);
                 runtime.registerRequestHandler(async (request: IRequest) => {

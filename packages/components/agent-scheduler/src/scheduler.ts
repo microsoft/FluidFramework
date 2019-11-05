@@ -457,7 +457,6 @@ export class AgentSchedulerFactory implements IComponentFactory {
         ComponentRuntime.load(
             context,
             dataTypes,
-            undefined,
             (runtime) => {
                 const taskManagerP = TaskManager.load(runtime, context);
                 runtime.registerRequestHandler(async (request: IRequest) => {

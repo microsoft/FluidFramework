@@ -271,7 +271,6 @@ class SharedMapVisualizerFactory implements IComponentFactory, IRuntimeFactory {
         ComponentRuntime.load(
             context,
             dataTypes,
-            undefined,
             (runtime) => {
                 const progressCollectionP = ProgressCollection.load(runtime, context);
                 runtime.registerRequestHandler(async (request: IRequest) => {
