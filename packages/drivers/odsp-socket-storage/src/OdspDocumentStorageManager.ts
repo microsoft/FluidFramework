@@ -229,29 +229,22 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         if (this.firstVersionCall && count === 1 && (blobid === null || blobid === this.documentId)) {
             this.firstVersionCall = false;
 
-            // This event measures whole process end-to-end, including token refresh and retries.
-            const event = PerformanceEvent.start(this.logger, { eventName: "TreesLatestFull" });
+            return getWithRetryForTokenRefresh(async (refresh) => {
+                const odspCacheKey: string = `${this.documentId}/getlatest`;
+                let odspSnapshot: IOdspSnapshot = this.odspCache.get(odspCacheKey);
+                if (!odspSnapshot) {
+                    const storageToken = await this.getStorageToken(refresh);
 
-            try {
-                return await getWithRetryForTokenRefresh(async (refresh) => {
-                    const odspCacheKey: string = `${this.documentId}/getlatest`;
-                    let odspSnapshot: IOdspSnapshot = this.odspCache.get(odspCacheKey);
-                    if (!odspSnapshot) {
-                        const storageToken = await this.getStorageToken(refresh);
+                    // TODO: This snapshot will return deltas, which we currently aren't using. We need to enable this flag to go down the "optimized"
+                    // snapshot code path. We should leverage the fact that these deltas are returned to speed up the deltas fetch.
+                    const { headers, url } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/trees/latest?deltas=1&channels=1&blobs=2`, storageToken);
 
-                        // TODO: This snapshot will return deltas, which we currently aren't using. We need to enable this flag to go down the "optimized"
-                        // snapshot code path. We should leverage the fact that these deltas are returned to speed up the deltas fetch.
-                        const { headers, url } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/trees/latest?deltas=1&channels=1&blobs=2`, storageToken);
+                    // This event measures only successful cases of getLatest call (no tokens, no retries).
+                    const event = PerformanceEvent.start(this.logger, { eventName: "TreesLatest" });
 
-                        // This event measures only successful cases of getLatest call (no tokens, no retries).
-                        const eventInner = PerformanceEvent.start(this.logger, { eventName: "TreesLatest" });
-
+                    try {
                         const response = await this.fetchWrapper.get<IOdspSnapshot>(url, this.documentId, headers);
                         odspSnapshot = response.content;
-                        // We are storing the getLatest response in cache for 10s so that other containers initializing in the same timeframe can use this
-                        // result. We are choosing a small time period as the summarizes are generated frequently and if that is the case then we don't
-                        // want to use the same getLatest result.
-                        this.odspCache.put(odspCacheKey, odspSnapshot, 10000);
 
                         const props = {
                             trees: odspSnapshot.trees ? odspSnapshot.trees.length : 0,
@@ -261,25 +254,29 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                             sprequestduration: response.headers.get("sprequestduration"),
                             contentsize: response.headers.get("content-length"),
                         };
-                        eventInner.end(props);
                         event.end(props);
-                    }
-                    const { trees, blobs, ops, sha } = odspSnapshot;
-                    if (trees) {
-                        this.initTreesCache(trees);
-                    }
-
-                    if (blobs) {
-                        this.initBlobsCache(blobs);
+                    } catch (error) {
+                        event.cancel({}, error);
+                        throw error;
                     }
 
-                    this.ops = ops;
-                    return sha ? [{ id: sha, treeId: undefined! }] : [];
-                });
-            } catch (error) {
-                event.cancel({}, error);
-                throw error;
-            }
+                    // We are storing the getLatest response in cache for 10s so that other containers initializing in the same timeframe can use this
+                    // result. We are choosing a small time period as the summarizes are generated frequently and if that is the case then we don't
+                    // want to use the same getLatest result.
+                    this.odspCache.put(odspCacheKey, odspSnapshot, 10000);
+                }
+                const { trees, blobs, ops, sha } = odspSnapshot;
+                if (trees) {
+                    this.initTreesCache(trees);
+                }
+
+                if (blobs) {
+                    this.initBlobsCache(blobs);
+                }
+
+                this.ops = ops;
+                return sha ? [{ id: sha, treeId: undefined! }] : [];
+            });
         }
 
         return getWithRetryForTokenRefresh(async (refresh) => {

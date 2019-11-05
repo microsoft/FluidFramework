@@ -272,7 +272,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             logger,
             {
                 documentId: this.id,
-                canReconnect: this.canReconnect, // differentiating summarizer container from main container
+                clientType: this.client.type, // differentiating summarizer container from main container
                 packageName: TelemetryLogger.sanitizePkgName(pkgName),
                 packageVersion: pkgVersion,
             },
@@ -789,8 +789,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return Promise.reject(PackageNotFactoryError);
     }
 
-    private createDeltaManager(connect: boolean): void {
-        // Create the DeltaManager and begin listening for connection events
+    private get client() {
         // tslint:disable-next-line:no-unsafe-any
         const clientDetails: IClient = this.options && this.options.client
             // tslint:disable-next-line:no-unsafe-any
@@ -805,6 +804,13 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         if (headerClientType) {
             clientDetails.type = headerClientType;
         }
+        return clientDetails;
+    }
+
+    private createDeltaManager(connect: boolean): void {
+        // Create the DeltaManager and begin listening for connection events
+        // tslint:disable-next-line:no-unsafe-any
+        const clientDetails = this.client;
 
         this._deltaManager = new DeltaManager(
             this.service,
@@ -916,14 +922,13 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             pendingClientId: this.pendingClientId,
         });
 
-        if (value === ConnectionState.Connected) {
+        if (value === ConnectionState.Connected && this.firstConnection) {
             // We just logged event with disconnected/connecting -> connected time
             // Log extra event recording disconnected -> connected time, as well as provide some extra info.
             // We can group that info in previous event, but it's easier to analyze telemetry if these are
             // two separate events (actually - three!).
             this.logger.sendPerformanceEvent({
-                eventName:
-                    this.firstConnection ? "ConnectionStateChange_InitialConnect" : "ConnectionStateChange_Reconnect",
+                eventName: "ConnectionStateChange_InitialConnect",
                 duration: time - this.connectionTransitionTimes[ConnectionState.Disconnected],
                 durationCatchUp: time - this.connectionTransitionTimes[ConnectionState.Connecting],
                 reason,
