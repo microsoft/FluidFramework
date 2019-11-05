@@ -542,7 +542,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             this.emit("error", error);
         }
 
-        this.logger.sendTelemetryEvent({ eventName: "ContainerClose", closeOnError });
+        this.logger.sendTelemetryEvent({ eventName: "ContainerClose" }, error);
 
         this.stopSequenceNumberUpdate();
 
