@@ -32,7 +32,6 @@ import {
     Deferred,
     flatten,
     isSystemType,
-    PerformanceEvent,
     raiseConnectedEvent,
     readAndParse,
 } from "@microsoft/fluid-core-utils";
@@ -1115,11 +1114,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             return;
         }
 
-        const generateSummaryEvent = PerformanceEvent.start(this.logger, {
-            eventName: "GenerateSummary",
-            fullTree,
-        });
-
         try {
             await this.scheduleManager.pause();
 
@@ -1130,24 +1124,22 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
             if (!this.connected) {
                 // if summarizer loses connection it will never reconnect
-                generateSummaryEvent.cancel({reason: "disconnected"});
                 return ret;
             }
+
             // TODO in the future we can have stored the latest summary by listening to the summary ack message
             // after loading from the beginning of the snapshot
             const versions = await this.context.storage.getVersions(this.id, 1);
             const parents = versions.map((version) => version.id);
-            generateSummaryEvent.reportProgress({ refSequenceNumber: ret.referenceSequenceNumber }, "loadedVersions");
             const parent = parents[0];
 
             const treeWithStats = await this.summarize(fullTree);
             ret.summaryStats = treeWithStats.summaryStats;
-            generateSummaryEvent.reportProgress({ ...ret.summaryStats }, "generatedTree");
 
             if (!this.connected) {
-                generateSummaryEvent.cancel({reason: "disconnected"});
                 return ret;
             }
+
             const handle = await this.context.storage.uploadSummary(treeWithStats.summaryTree);
             const summaryMessage: ISummaryContent = {
                 handle: handle.handle,
@@ -1156,25 +1148,16 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                 parents,
             };
             ret.handle = handle.handle;
-            generateSummaryEvent.reportProgress({ handle: ret.handle, parent }, "uploadedTree");
 
             if (!this.connected) {
-                generateSummaryEvent.cancel({reason: "disconnected"});
                 return ret;
             }
-            // if summarizer loses connection it will never reconnect
+
             ret.clientSequenceNumber = this.submit(MessageType.Summarize, summaryMessage);
             ret.summaryMessage = summaryMessage;
             ret.submitted = true;
 
-            generateSummaryEvent.end({
-                submitted: ret.submitted,
-                clientSequenceNumber: ret.clientSequenceNumber,
-            });
             return ret;
-        } catch (ex) {
-            generateSummaryEvent.cancel({reason: "exception"}, ex);
-            throw ex;
         } finally {
             // Restart the delta manager
             this.scheduleManager.resume();

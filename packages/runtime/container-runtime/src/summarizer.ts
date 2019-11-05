@@ -494,7 +494,14 @@ export class RunningSummarizer {
         });
 
         // wait for generate/send summary
-        const summaryData = await this.tryGenerateSummary();
+        let summaryData: IGeneratedSummaryData | undefined;
+        try {
+            summaryData = await this.tryGenerateSummary();
+        } catch (error) {
+            summarizingEvent.cancel({}, error);
+            return;
+        }
+
         this.summarizeTimer.clear();
 
         if (!summaryData) {
