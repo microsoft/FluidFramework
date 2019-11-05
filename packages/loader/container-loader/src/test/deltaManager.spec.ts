@@ -59,7 +59,7 @@ describe("Loader", () => {
                     undefined,
                     () => deltaConnection,
                 );
-                const client: Partial<IClient> = { mode: "write" };
+                const client: Partial<IClient> = { mode: "write", details: { capabilities: { interactive: true } } };
 
                 deltaManager = new DeltaManager(
                     service,
