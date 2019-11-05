@@ -40,7 +40,7 @@ export class SimpleContainerRuntimeFactory {
         if (!runtime.existing) {
             // debug(`createAndAttachComponent(chaincode=${chaincode})`);
             // tslint:disable-next-line: no-floating-promises
-            this.createAndAttachComponent(runtime, this.defaultComponentId, chaincode);
+            SimpleContainerRuntimeFactory.createAndAttachComponent(runtime, SimpleContainerRuntimeFactory.defaultComponentId, chaincode);
         }
 
         return runtime;

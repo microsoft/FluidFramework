@@ -10,7 +10,7 @@ import {
 
 export class ComponentRegistry implements IComponentRegistry {
 
-    private readonly map: Map<string, Promise<ComponentRegistryEntry> >;
+    private readonly map: Map<string, Promise<ComponentRegistryEntry>>;
 
     public get IComponentRegistry() { return this; }
 

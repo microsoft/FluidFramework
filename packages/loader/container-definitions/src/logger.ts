@@ -40,24 +40,21 @@ export interface ITelemetryBaseLogger {
  */
 export interface ITelemetryGenericEvent extends ITelemetryProperties {
     eventName: string;
+    category?: TelemetryEventCategory;
 }
 
 /**
  * Error telemetry event.
  * Maps to category = "error"
  */
-export interface ITelemetryErrorEvent extends ITelemetryProperties {
-    eventName: string;
-}
+export type ITelemetryErrorEvent = ITelemetryGenericEvent;
 
 /**
  * Performance telemetry event.
  * Maps to category = "performance"
  */
-export interface ITelemetryPerformanceEvent extends ITelemetryProperties {
-    eventName: string;
-    duration?: number;            // Duration of event (optional)
-    tick?: number;                // Event time, relative to start of page load. Filled in by logger if not specified.
+export interface ITelemetryPerformanceEvent extends ITelemetryGenericEvent {
+    duration?: number; // Duration of event (optional)
 }
 
 /**
