@@ -43,7 +43,7 @@ export class OdspUrlResolver implements IUrlResolver {
 
   public async resolve(request: IRequest): Promise<IResolvedUrl> {
     const { siteUrl, driveId, itemId, path } = this.decodeOdspUrl(request.url);
-    const hashedDocumentId = new sha.sha256().update(`${siteUrl}_${driveId}_${itemId}`).digest("hex");
+    const hashedDocumentId = new sha.sha256().update(`${driveId}_${itemId}`).digest("hex");
 
     let documentUrl = `fluid-odsp://placeholder/placeholder/${hashedDocumentId}/${removeBeginningSlash(path)}`;
 

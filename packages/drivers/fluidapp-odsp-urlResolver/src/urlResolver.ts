@@ -32,7 +32,7 @@ export class FluidAppOdspUrlResolver implements IUrlResolver {
             const site = contents.site;
             const drive = contents.drive;
             const item = contents.item;
-            const hashedDocumentId = new sha.sha256().update(`${site}_${drive}_${item}`).digest("hex");
+            const hashedDocumentId = new sha.sha256().update(`${drive}_${item}`).digest("hex");
 
             let documentUrl = `fluid-odsp://placeholder/placeholder/${hashedDocumentId}`;
 
