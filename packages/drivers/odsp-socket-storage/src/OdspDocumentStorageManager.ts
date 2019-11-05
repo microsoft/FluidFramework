@@ -12,7 +12,6 @@ import {
 } from "@microsoft/fluid-core-utils";
 import * as resources from "@microsoft/fluid-gitresources";
 import { getWithRetryForTokenRefresh } from "@microsoft/fluid-odsp-utils";
-import { getWithRetryForTokenRefresh } from "@microsoft/fluid-odsp-utils";
 import * as api from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
 import {
