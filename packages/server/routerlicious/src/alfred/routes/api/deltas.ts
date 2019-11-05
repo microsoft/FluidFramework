@@ -113,7 +113,6 @@ export function create(config: Provider, mongoManager: MongoManager, appTenants:
      * Retrieves raw (unsequenced) deltas for the given document.
      */
     router.get("/raw/:tenantId?/:id", (request, response, next) => {
-        console.log("Raw Deltas \n\n\n\n\nn\n");
         const tenantId = getParam(request.params, "tenantId") || appTenants[0].id;
 
         // Query for the raw deltas (no from/to since we want all of them)
