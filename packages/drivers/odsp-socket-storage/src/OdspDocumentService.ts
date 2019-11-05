@@ -25,7 +25,7 @@ import { OdspDocumentStorageService } from "./OdspDocumentStorageService";
 import { isLocalStorageAvailable } from "./OdspUtils";
 import { getSocketStorageDiscovery } from "./Vroom";
 
-// tslint:disable-next-line:no-var-requires
+// tslint:disable-next-line:no-require-imports no-var-requires
 const performanceNow = require("performance-now") as (() => number);
 
 const afdUrlConnectExpirationMs = 6 * 60 * 60 * 1000; // 6 hours
