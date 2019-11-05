@@ -22,7 +22,7 @@
 
             <ul class="list-unstyled">
                 <li><a href="https://docs.google.com/document/d/1Ed3_Bgmfj4L1tvjjh8geSHNZMbh_X6SaRd1uZGSQSio/edit" target="_blank">Google Docs Pride and Prejudice</a></li>
-                <li><a href="/loader/fluid/{{sharedTextMoniker}}?chaincode=@chaincode/shared-text@{{version}}&template=pp.txt" target="_blank">Prague Pride and Prejudice</a></li>
+                <li><a href="/loader/fluid/{{sharedTextMoniker}}?chaincode=@fluid-example/shared-text@{{version}}&template=pp.txt" target="_blank">Prague Pride and Prejudice</a></li>
             </ul>
 
             <h2>Augmentation Loop</h2>
@@ -36,8 +36,8 @@
                 Open one link in the left browser and the other in the right. Ctrl+B will bold text and Ctrl+U will underline.
             </p>
             <ul class="list-unstyled">
-                <li><a href="/loader/fluid/{{translateMoniker}}?chaincode=@chaincode/shared-text@{{version}}&languageFrom=en&languageTo=el" target="_blank">Greek</a></li>
-                <li><a href="/loader/fluid/{{translateMoniker}}?chaincode=@chaincode/shared-text@{{version}}&languageFrom=en&languageTo=es" target="_blank">Spanish</a></li>
+                <li><a href="/loader/fluid/{{translateMoniker}}?chaincode=@fluid-example/shared-text@{{version}}&languageFrom=en&languageTo=el" target="_blank">Greek</a></li>
+                <li><a href="/loader/fluid/{{translateMoniker}}?chaincode=@fluid-example/shared-text@{{version}}&languageFrom=en&languageTo=es" target="_blank">Spanish</a></li>
             </ul>
 
             <h3>Automatic</h3>
@@ -47,7 +47,7 @@
                 otherwise the browser may stop it from running JavaScript which will pause the demo.
             </p>
             <ul class="list-unstyled">
-                <li><a href="/loader/fluid/{{scribeMoniker}}?chaincode=@chaincode/scribe@{{version}}&language=el,es&speed=100&text=/public/literature/translate-demo.txt" target="_blank">Scribe</a></li>
+                <li><a href="/loader/fluid/{{scribeMoniker}}?chaincode=@fluid-example/scribe@{{version}}&language=el,es&speed=100&text=/public/literature/translate-demo.txt" target="_blank">Scribe</a></li>
             </ul>
 
             <h2>Feature Differentiation</h2>
@@ -71,7 +71,7 @@
             </p>
 
             <ul class="list-unstyled">
-                <li><a href="/loader/fluid/{{emptyMoniker}}?chaincode=@chaincode/shared-text@{{version}}" target="_blank">Starter Document</a></li>
+                <li><a href="/loader/fluid/{{emptyMoniker}}?chaincode=@fluid-example/shared-text@{{version}}" target="_blank">Starter Document</a></li>
             </ul>
         </div>
 

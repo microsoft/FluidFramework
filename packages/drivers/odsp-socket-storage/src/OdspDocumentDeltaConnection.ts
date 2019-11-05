@@ -5,14 +5,11 @@
 
 import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
 import { TelemetryNullLogger } from "@microsoft/fluid-core-utils";
-import { createErrorObject, DocumentDeltaConnection, IConnect, IConnected } from "@microsoft/fluid-driver-base";
+import { DocumentDeltaConnection, IConnect } from "@microsoft/fluid-driver-base";
 import {
     ConnectionMode,
     IClient,
-    IContentMessage,
     IDocumentDeltaConnection,
-    ISequencedDocumentMessage,
-    ISignalMessage,
 } from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
 import { IOdspSocketError } from "./contracts";
@@ -41,95 +38,29 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
      * If url #1 fails to connect, will try url #2 if applicable.
      *
      * @param tenantId - the ID of the tenant
-     * @param id - document ID
+     * @param webSocketId - webSocket ID
      * @param token - authorization token for storage service
      * @param io - websocket library
      * @param client - information about the client
      * @param mode - mode of the client
      * @param url - websocket URL
-     * @param url2 - alternate websocket URL
      * @param telemetryLogger - optional telemetry logger
      */
     public static async create(
         tenantId: string,
-        id: string,
+        webSocketId: string,
         token: string | null,
         io: SocketIOClientStatic,
         client: IClient,
         mode: ConnectionMode,
         url: string,
-        url2?: string,
+        timeoutMs: number = 20000,
         telemetryLogger: ITelemetryLogger = new TelemetryNullLogger()): Promise<IDocumentDeltaConnection> {
-        // tslint:disable-next-line: strict-boolean-expressions
-        const hasUrl2 = !!url2;
 
-        return this.createForUrlWithTimeout(
-            tenantId,
-            id,
-            token,
-            io,
-            client,
-            url,
-            mode,
-            hasUrl2 ? 15000 : 20000,
-            telemetryLogger,
-        ).catch((error) => {
-            if (hasUrl2) {
-                if (error !== null && typeof error === "object" && error.canRetry) {
-                    debug(`Socket connection error on non-AFD URL. Error was [${error}]. Retry on AFD URL: ${url}`);
-                    telemetryLogger.sendTelemetryEvent({ eventName: "UseAfdUrl" });
-
-                    return this.createForUrlWithTimeout(
-                        tenantId,
-                        id,
-                        token,
-                        io,
-                        client,
-                        // tslint:disable-next-line: no-non-null-assertion
-                        url2!,
-                        mode,
-                        20000,
-                        telemetryLogger,
-                    );
-                }
-            }
-
-            telemetryLogger.sendTelemetryEvent({ eventName: "FailedAfdUrl" });
-
-            throw error;
-        });
-    }
-
-    // Map of all existing socket io sockets. [url, tenantId, documentId] -> socket
-    private static readonly socketIoSockets: Map<string, ISocketReference> = new Map();
-
-    /**
-     * Create a OdspDocumentDeltaConnection to the specific url
-     *
-     * @param tenantId - the ID of the tenant
-     * @param id - document ID
-     * @param token - authorization token for storage service
-     * @param io - websocket library
-     * @param client - information about the client
-     * @param url - websocket URL
-     * @param timeoutMs - timeout for socket connection attempt in milliseconds
-     * @param telemetryLogger - telemetry logger
-     */
-    // tslint:disable-next-line: max-func-body-length
-    private static async createForUrlWithTimeout(
-        tenantId: string,
-        id: string,
-        token: string | null,
-        io: SocketIOClientStatic,
-        client: IClient,
-        url: string,
-        mode: ConnectionMode,
-        timeoutMs: number,
-        telemetryLogger: ITelemetryLogger): Promise<IDocumentDeltaConnection> {
-        const socketReferenceKey = `${url},${tenantId},${id}`;
+        const socketReferenceKey = `${url},${tenantId},${webSocketId}`;
 
         const socketReference = OdspDocumentDeltaConnection.getOrCreateSocketIoReference(
-            io, timeoutMs, socketReferenceKey, url, tenantId, id, telemetryLogger);
+            io, timeoutMs, socketReferenceKey, url, tenantId, webSocketId, telemetryLogger);
 
         const socket = socketReference.socket;
         if (!socket) {
@@ -138,157 +69,35 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
 
         const connectMessage: IConnect = {
             client,
-            id,
+            id: webSocketId,
             mode,
             tenantId,
             token,  // token is going to indicate tenant level information, etc...
             versions: protocolVersions,
         };
 
-        // tslint:disable-next-line: max-func-body-length
-        const connection = await new Promise<IConnected>((resolve, reject) => {
-            // Listen for ops sent before we receive a response to connect_document
-            const queuedMessages: ISequencedDocumentMessage[] = [];
-            const queuedContents: IContentMessage[] = [];
-            const queuedSignals: ISignalMessage[] = [];
+        const deltaConnection = new OdspDocumentDeltaConnection(socket, webSocketId, socketReferenceKey);
 
-            let cleanupListeners: () => void;
-
-            const disconnectAndReject = (errorObject: any, isFatalError?: boolean) => {
-                cleanupListeners();
-                OdspDocumentDeltaConnection.removeSocketIoReference(socketReferenceKey, isFatalError);
-
-                // Test if it's NetworkError with IOdspSocketError.
-                // Note that there might be no IOdspSocketError on it in case we hit socket.io protocol errors!
-                // So we test canRetry property first - if it false, that means protocol is broken and reconnecting will not help.
-                if (errorObject !== null && typeof errorObject === "object" && errorObject.canRetry) {
-                    const socketError: IOdspSocketError = errorObject.socketError;
-                    if (typeof socketError === "object" && socketError !== null) {
-                        reject(errorObjectFromOdspError(socketError));
-                        return;
-                    }
+        try {
+            await deltaConnection.initialize(connectMessage);
+        } catch (errorObject) {
+            // Test if it's NetworkError with IOdspSocketError.
+            // Note that there might be no IOdspSocketError on it in case we hit socket.io protocol errors!
+            // So we test canRetry property first - if it false, that means protocol is broken and reconnecting will not help.
+            if (errorObject !== null && typeof errorObject === "object" && errorObject.canRetry) {
+                const socketError: IOdspSocketError = errorObject.socketError;
+                if (typeof socketError === "object" && socketError !== null) {
+                    throw errorObjectFromOdspError(socketError);
                 }
+            }
+            throw errorObject;
+        }
 
-                reject(errorObject);
-            };
-
-            const connectErrorHandler = (error) => {
-                debug(`Socket connection error: [${error}]`);
-                disconnectAndReject(createErrorObject("connect_error", error), true);
-            };
-
-            const connectTimeoutHandler = () => {
-                disconnectAndReject(createErrorObject("connect_timeout", "Socket connection timed out"), true);
-            };
-
-            const errorHandler = (error) => {
-                debug(`Error in documentDeltaConection: ${error}`);
-
-                // This includes "Invalid namespace" error, which we consider critical (reconnecting will not help)
-                disconnectAndReject(createErrorObject("error", error, error !== "Invalid namespace"), true);
-            };
-
-            const earlyOpHandler = (documentId: string, msgs: ISequencedDocumentMessage[]) => {
-                if (documentId === id) {
-                    debug("Queued early ops", msgs.length);
-                    queuedMessages.push(...msgs);
-                }
-            };
-
-            const earlyOpContentHandler = (msg: IContentMessage) => {
-                debug("Queued early contents");
-                queuedContents.push(msg);
-            };
-
-            const earlySignalHandler = (msg: ISignalMessage) => {
-                debug("Queued early signals");
-                queuedSignals.push(msg);
-            };
-
-            const connectDocumentSuccessHandler = (response: IConnected) => {
-                if (queuedMessages.length > 0) {
-                    // some messages were queued.
-                    // add them to the list of initialMessages to be processed
-                    if (!response.initialMessages) {
-                        response.initialMessages = [];
-                    }
-
-                    response.initialMessages.push(...queuedMessages);
-
-                    response.initialMessages.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
-                }
-
-                if (queuedContents.length > 0) {
-                    // some contents were queued.
-                    // add them to the list of initialContents to be processed
-                    if (!response.initialContents) {
-                        response.initialContents = [];
-                    }
-
-                    response.initialContents.push(...queuedContents);
-
-                    response.initialContents.sort((a, b) =>
-                        // tslint:disable-next-line:strict-boolean-expressions
-                        (a.clientId === b.clientId) ? 0 : ((a.clientId < b.clientId) ? -1 : 1) ||
-                            a.clientSequenceNumber - b.clientSequenceNumber);
-                }
-
-                if (queuedSignals.length > 0) {
-                    // some signals were queued.
-                    // add them to the list of initialSignals to be processed
-                    if (!response.initialSignals) {
-                        response.initialSignals = [];
-                    }
-
-                    response.initialSignals.push(...queuedSignals);
-                }
-
-                cleanupListeners();
-                resolve(response);
-            };
-
-            const connectDocumentErrorHandler = (error) => {
-                // This is not an error for the socket - it's a protocol error.
-                // In this case we disconnect the socket and indicate that we were unable to create the
-                // OdspDocumentDeltaConnection.
-                disconnectAndReject(createErrorObject("connect_document_error", error));
-            };
-
-            // Cleanup all the listeners we add
-            cleanupListeners = () => {
-                socket.removeListener("error", errorHandler);
-                socket.removeListener("connect_error", connectErrorHandler);
-                socket.removeListener("connect_timeout", connectTimeoutHandler);
-                socket.removeListener("op", earlyOpHandler);
-                socket.removeListener("op-content", earlyOpContentHandler);
-                socket.removeListener("signal", earlySignalHandler);
-                socket.removeListener("connect_document_success", connectDocumentSuccessHandler);
-                socket.removeListener("connect_document_error", connectDocumentErrorHandler);
-            };
-
-            // Listen for socket.io errors
-            socket.on("error", errorHandler);
-
-            // Listen for connection issues
-            socket.on("connect_error", connectErrorHandler);
-
-            // Listen for timeouts
-            socket.on("connect_timeout", connectTimeoutHandler);
-
-            // Listen for early ops and signals
-            socket.on("op", earlyOpHandler);
-            socket.on("op-content", earlyOpContentHandler);
-            socket.on("signal", earlySignalHandler);
-
-            // Listen for connect document events
-            socket.on("connect_document_success", connectDocumentSuccessHandler);
-            socket.on("connect_document_error", connectDocumentErrorHandler);
-
-            socket.emit("connect_document", connectMessage);
-        });
-
-        return new OdspDocumentDeltaConnection(socket, id, connection, socketReferenceKey);
+        return deltaConnection;
     }
+
+    // Map of all existing socket io sockets. [url, tenantId, documentId] -> socket
+    private static readonly socketIoSockets: Map<string, ISocketReference> = new Map();
 
     /**
      * Gets or create a socket io connection for the given key
@@ -334,6 +143,12 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
                     transports: ["websocket"],
                     timeout: timeoutMs,
                 });
+
+            socket.on("server_disconnect", (socketError: IOdspSocketError) => {
+                // Raise it as disconnect.
+                // That produces cleaner telemetry (no errors) and keeps protocol simpler (and not driver-specific).
+                socket.emit("disconnect", errorObjectFromOdspError(socketError));
+            });
 
             socketReference = {
                 socket,
@@ -399,22 +214,16 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
      * @param socketReferenceKey - socket reference key
      */
     constructor(
-        socket: SocketIOClient.Socket,
-        documentId: string,
-        details: IConnected,
-        private socketReferenceKey: string | undefined) {
-        super(socket, documentId, details);
-        socket.on("server_disconnect", (socketError: IOdspSocketError) => {
-            // Raise it as disconnect.
-            // That produces cleaner telemetry (no errors) and keeps protocol simpler (and not driver-specific).
-            this.emit("disconnect", errorObjectFromOdspError(socketError));
-        });
+            socket: SocketIOClient.Socket,
+            documentId: string,
+            private socketReferenceKey: string | undefined) {
+        super(socket, documentId);
     }
 
     /**
      * Disconnect from the websocket
      */
-    public disconnect() {
+    public disconnect(socketProtocolError: boolean = false) {
         if (this.socketReferenceKey === undefined) {
             throw new Error("Invalid socket reference key");
         }

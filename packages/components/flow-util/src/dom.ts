@@ -40,15 +40,15 @@ export class Dom {
     public static replaceFirstChild(parent: Node, newChild: Node) {
         const oldChild = parent.firstChild;
         if (oldChild) {
-            this.replaceOrRemoveChild(parent, newChild, oldChild);
+            Dom.replaceOrRemoveChild(parent, newChild, oldChild);
         } else if (newChild) {
-            this.prependChild(parent, newChild);
+            Dom.prependChild(parent, newChild);
         }
     }
 
     public static ensureFirstChild(parent: Node, desiredChild: Node) {
         if (parent.firstChild !== desiredChild) {
-            this.replaceFirstChild(parent, desiredChild);
+            Dom.replaceFirstChild(parent, desiredChild);
         }
     }
 

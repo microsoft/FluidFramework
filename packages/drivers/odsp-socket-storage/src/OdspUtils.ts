@@ -6,6 +6,7 @@
 import { INetworkErrorProperties, NetworkError, throwNetworkError } from "@microsoft/fluid-core-utils";
 import { default as fetch, RequestInfo as FetchRequestInfo, RequestInit as FetchRequestInit } from "node-fetch";
 import { IOdspSocketError } from "./contracts";
+import { debug } from "./debug";
 
 /**
  * returns true when the request should/can be retried
@@ -30,7 +31,10 @@ export function blockList(nonRetriableCodes: number[]): RetryFilter {
 
 // Going safe - only exclude specific codes
 // export const defaultRetryFilter = allowList([408, 409, 429, 500, 503]);
-export const defaultRetryFilter = blockList([400, 404]);
+export const defaultRetryFilter = blockList([400, 401, 403, 404]);
+
+// socket error filter for socket erros where 400 is a special retryable error.
+export const socketErrorRetryFilter = blockList([401, 403, 404, 406]);
 
 export interface IOdspResponse<T> {
     content: T;
@@ -99,8 +103,24 @@ export function errorObjectFromOdspError(socketError: IOdspSocketError) {
         socketError.message,
         [
             [INetworkErrorProperties.statusCode, socketError.code],
-            [INetworkErrorProperties.canRetry, defaultRetryFilter(socketError.code)],
+            [INetworkErrorProperties.canRetry, socketErrorRetryFilter(socketError.code)],
             [INetworkErrorProperties.retryAfterSeconds, socketError.retryAfter],
         ],
     );
+}
+
+/**
+ * Tests if localStorage is usable.
+ * Should we move this outside to a library?
+ */
+export function isLocalStorageAvailable(): boolean {
+    const localStorageTestKey = "LocalStorageTestKey";
+    try {
+        localStorage.setItem(localStorageTestKey, "v");
+        localStorage.removeItem(localStorageTestKey);
+        return true;
+    } catch (e) {
+        debug(`LocalStorage not available due to ${e}`);
+        return false;
+    }
 }
