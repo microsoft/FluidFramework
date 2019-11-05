@@ -171,6 +171,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
     private firstConnection = true;
     private readonly connectionTransitionTimes: number[] = [];
+    private messageCountAfterDisconnection: number | undefined;
 
     private _closed = false;
 
@@ -984,9 +985,17 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
     private propagateConnectionState() {
         assert(this.loaded);
+        if (this._connectionState === ConnectionState.Connected && !this.firstConnection) {
+            this.messageCountAfterDisconnection = 0;
+        }
         this.context!.changeConnectionState(this._connectionState, this.clientId!, this._version!);
         this.protocolHandler!.quorum.changeConnectionState(this._connectionState, this.clientId!);
         raiseConnectedEvent(this, this._connectionState, this.clientId!);
+        if (this.messageCountAfterDisconnection) {
+            this.logger.sendTelemetryEvent(
+                { eventName: "OpsSentOnReconnect", count: this.messageCountAfterDisconnection });
+            this.messageCountAfterDisconnection = undefined;
+        }
     }
 
     private submitMessage(type: MessageType, contents: any, batch?: boolean, metadata?: any): number {
@@ -995,6 +1004,9 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             return -1;
         }
 
+        if (this.messageCountAfterDisconnection) {
+            this.messageCountAfterDisconnection += 1;
+        }
         return this._deltaManager!.submit(type, contents, batch, metadata);
     }
 
