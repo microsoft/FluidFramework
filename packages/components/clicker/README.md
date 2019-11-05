@@ -13,7 +13,7 @@ If you want to run this component follow the following steps:
 ## Testing
 
 ```bash
-    npm run test
+    npm run test:jest
 ```
 
 For in browser testing update `./jest-puppeteer.config.js` to:

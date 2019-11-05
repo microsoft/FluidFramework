@@ -19,7 +19,7 @@
     "start": "webpack-dev-server --config webpack.config.js --package package.json --env.mode local",
     "start:live": "webpack-dev-server --config webpack.config.js --package package.json --env.mode live",
     "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
-    "test": "jest",
+    "test:jest": "jest",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose",
     "webpack": "webpack --env.production",
