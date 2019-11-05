@@ -90,14 +90,17 @@ export async function getRawDeltas(
     // Query for the deltas and return a filtered version of just the operations field
     const db = await mongoManager.getDatabase();
     const collection = await db.collection<any>(collectionName);
-    const dbDump = await collection.find(query, undefined);
+    const dbDump: IRawOperationMessage[] = await collection.find(query, undefined);
 
     winston.info("getrawdeltas after await");
     winston.info(`dbdump length ${dbDump.length}`);
 
-    // FLatten the array of ordered batches into an array of ordered individual messages:
-    const deltaBatches = dbDump.map((d) => (JSON.parse(d) as IRawOperationMessage[]));
-    const allDeltas = ([] as IRawOperationMessage[]).concat(...deltaBatches);
+    // Strip "combined" ops down to their essence as arrays of individual ops:
+    const arrayOfArrays: IRawOperationMessage[][] =
+        dbDump.map((combinedOp) => JSON.parse(combinedOp.operation.contents) as IRawOperationMessage[]);
+
+    // Flatten the ordered array of arrays into one ordered array of ops:
+    const allDeltas = ([] as IRawOperationMessage[]).concat(...arrayOfArrays);
 
     winston.info(`allDeltas length ${allDeltas.length}`);
 
@@ -118,6 +121,7 @@ export function create(config: Provider, mongoManager: MongoManager, appTenants:
      * Retrieves raw (unsequenced) deltas for the given document.
      */
     router.get("/raw/:tenantId?/:id", (request, response, next) => {
+        console.log("Raw Deltas \n\n\n\n\nn\n");
         const tenantId = getParam(request.params, "tenantId") || appTenants[0].id;
 
         // Query for the raw deltas (no from/to since we want all of them)
@@ -132,6 +136,7 @@ export function create(config: Provider, mongoManager: MongoManager, appTenants:
                 response.status(200).json(deltas);
             },
             (error) => {
+                winston.info("HTTP 500 error from raw deltas bro");
                 response.status(500).json(error);
             });
     });

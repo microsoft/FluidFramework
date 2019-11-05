@@ -41,7 +41,7 @@ export class CopierLambda implements IPartitionLambda {
             operation: {
                 contents: jsonBatch,
                 clientSequenceNumber: -1,
-                referenceSequenceNumber: -1,
+                referenceSequenceNumber: message.offset,
                 type: undefined,
             },
             documentId: boxcar.documentId,
