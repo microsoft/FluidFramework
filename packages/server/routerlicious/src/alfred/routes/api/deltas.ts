@@ -7,6 +7,7 @@ import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions
 import {
     IAlfredTenant,
     IRawOperationMessage,
+    IRawOperationMessageBatch,
     MongoManager,
 } from "@microsoft/fluid-server-services-core";
 import { Router } from "express";
@@ -84,14 +85,15 @@ export async function getRawDeltas(
     // Create an optional filter to restrict the delta range
     const query: any = { documentId, tenantId };
 
-    // Query for the deltas and return a filtered version of just the operations field
+    // Query for the raw batches and sort by the index:
     const db = await mongoManager.getDatabase();
     const collection = await db.collection<any>(collectionName);
-    const dbDump: IRawOperationMessage[] = await collection.find(query, undefined);
+    const dbDump: IRawOperationMessageBatch[] =
+        await collection.find(query, { index : 1 });
 
     // Strip "combined" ops down to their essence as arrays of individual ops:
     const arrayOfArrays: IRawOperationMessage[][] =
-        dbDump.map((combinedOp) => JSON.parse(combinedOp.operation.contents) as IRawOperationMessage[]);
+        dbDump.map((messageBatch) => messageBatch.contents);
 
     // Flatten the ordered array of arrays into one ordered array of ops:
     const allDeltas = ([] as IRawOperationMessage[]).concat(...arrayOfArrays);
@@ -99,7 +101,9 @@ export async function getRawDeltas(
     return allDeltas;
 }
 
-export function create(config: Provider, mongoManager: MongoManager, appTenants: IAlfredTenant[]): Router {
+export function create(config: Provider,
+                       mongoManager: MongoManager,
+                       appTenants: IAlfredTenant[]): Router {
     const deltasCollectionName = config.get("mongo:collectionNames:deltas");
     const rawDeltasCollectionName = config.get("mongo:collectionNames:rawdeltas");
     const router: Router = Router();

@@ -19,13 +19,11 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
     const db = await mongoManager.getDatabase();
     const collection = db.collection(collectionName);
 
-    // Each document in the collection is identified by: (Fluid-)document
-    // id, tenant id, and payload (which is handled automatically?).
+    // The rawdeltas collection uses the IRawOperationMessageBatch type, which
+    // is ordered by its index property:
     await collection.createIndex(
         {
-            "documentId": 1,
-            "operation.referenceSequenceNumber": 1,
-            "tenantId": 1,
+            index: 1,
         },
         true);
 

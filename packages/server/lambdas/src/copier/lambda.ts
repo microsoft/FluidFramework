@@ -10,13 +10,14 @@ import {
     IKafkaMessage,
     IPartitionLambda,
     IRawOperationMessage,
+    IRawOperationMessageBatch,
 } from "@microsoft/fluid-server-services-core";
 
 export class CopierLambda implements IPartitionLambda {
     // Below, one job corresponds to the task of sending one batch to Mongo:
-    private pendingJobs = new Map<string, IRawOperationMessage[]>();
+    private pendingJobs = new Map<string, IRawOperationMessageBatch[]>();
     private pendingOffset: number;
-    private currentJobs = new Map<string, IRawOperationMessage[]>();
+    private currentJobs = new Map<string, IRawOperationMessageBatch[]>();
 
     constructor(
         private rawOpCollection: ICollection<any>,
@@ -29,29 +30,17 @@ export class CopierLambda implements IPartitionLambda {
         const batch = boxcar.contents;
         const topic = `${boxcar.tenantId}/${boxcar.documentId}`;
 
-        // Create a stringified array of IRawOperationMessage objects and pack
-        // it into a single message that can be split apart on reception:
-        const convertedBatch = batch.map((m) => (m as IRawOperationMessage));
-        const jsonBatch = JSON.stringify(convertedBatch);
-        const combinedMessage: IRawOperationMessage = {
-            operation: {
-                contents: jsonBatch,
-                clientSequenceNumber: -1,
-                referenceSequenceNumber: message.offset,
-                type: undefined,
-            },
-            documentId: boxcar.documentId,
-            tenantId: boxcar.tenantId,
-            clientId: (batch[0] as IRawOperationMessage).clientId,
-            timestamp: undefined,
-            type: "rawdeltas_batch",
+        // Extract boxcar contents and group the ops into the message batch:
+        const submittedBatch: IRawOperationMessageBatch = {
+            index: message.offset,
+            contents: batch.map((m) => (m as IRawOperationMessage)),
         };
 
         // Write the batch directly to Mongo:
         if (!this.pendingJobs.has(topic)) {
             this.pendingJobs.set(topic, []);
         }
-        this.pendingJobs.get(topic).push(combinedMessage);
+        this.pendingJobs.get(topic).push(submittedBatch);
 
         // Update current offset (will be tied to this batch):
         this.pendingOffset = message.offset;
@@ -80,8 +69,8 @@ export class CopierLambda implements IPartitionLambda {
         const allProcessed = [];
 
         // Process all current jobs on all current topics:
-        for (const [, convertedBatch] of this.currentJobs) {
-            const processP = this.processMongoCore(convertedBatch);
+        for (const [, batch] of this.currentJobs) {
+            const processP = this.processMongoCore(batch);
             allProcessed.push(processP);
         }
 
@@ -96,7 +85,7 @@ export class CopierLambda implements IPartitionLambda {
             });
     }
 
-    private async processMongoCore(kafkaBatches: IRawOperationMessage[]): Promise<void> {
+    private async processMongoCore(kafkaBatches: IRawOperationMessageBatch[]): Promise<void> {
         await this.rawOpCollection
             .insertMany(kafkaBatches, false)
             .catch((error) => {
