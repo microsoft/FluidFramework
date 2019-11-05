@@ -816,13 +816,13 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             // tslint:disable-next-line: no-unsafe-any
             merge(client.details, headerClientDetails);
         }
-        return clientDetails;
+        return client;
     }
 
     private createDeltaManager(connect: boolean): void {
         // Create the DeltaManager and begin listening for connection events
         // tslint:disable-next-line:no-unsafe-any
-        const clientDetails = this.client;
+        const client = this.client;
 
         this._deltaManager = new DeltaManager(
             this.service,
