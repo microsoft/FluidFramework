@@ -12,6 +12,7 @@ import {
     throwNetworkError,
 } from "@microsoft/fluid-core-utils";
 import * as resources from "@microsoft/fluid-gitresources";
+import { getWithRetryForTokenRefresh } from "@microsoft/fluid-odsp-utils";
 import * as api from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
 import {
@@ -32,7 +33,6 @@ import { IFetchWrapper } from "./fetchWrapper";
 import { getQueryString } from "./getQueryString";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { OdspCache } from "./odspCache";
-import { getWithRetryForTokenRefresh } from "./OdspUtils";
 
 export class OdspDocumentStorageManager implements IDocumentStorageManager {
     private readonly blobCache: Map<string, resources.IBlob> = new Map();
