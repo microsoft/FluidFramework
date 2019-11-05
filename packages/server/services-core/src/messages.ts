@@ -85,6 +85,12 @@ export interface IRawOperationMessageBatch {
     // Some ordered index to distinguish different batches. In the Kafka context, it is the Kafka offset.
     index: number;
 
+    // The tenant the message is intended for
+    tenantId: string;
+
+    // The object the message is intended for
+    documentId: string;
+
     contents: IRawOperationMessage[];
 }
 

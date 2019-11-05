@@ -23,7 +23,9 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
     // is ordered by its index property:
     await collection.createIndex(
         {
+            documentId: 1,
             index: 1,
+            tenantId: 1,
         },
         true);
 

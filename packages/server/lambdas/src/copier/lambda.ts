@@ -33,6 +33,8 @@ export class CopierLambda implements IPartitionLambda {
         // Extract boxcar contents and group the ops into the message batch:
         const submittedBatch: IRawOperationMessageBatch = {
             index: message.offset,
+            documentId: boxcar.documentId,
+            tenantId: boxcar.tenantId,
             contents: batch.map((m) => (m as IRawOperationMessage)),
         };
 
