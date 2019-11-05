@@ -171,6 +171,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
     private firstConnection = true;
     private readonly connectionTransitionTimes: number[] = [];
+    private messageCountAfterDisconnection: number = 0;
 
     private _closed = false;
 
@@ -271,7 +272,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             logger,
             {
                 documentId: this.id,
-                canReconnect: this.canReconnect, // differentiating summarizer container from main container
+                clientType: this.client.type, // differentiating summarizer container from main container
                 packageName: TelemetryLogger.sanitizePkgName(pkgName),
                 packageVersion: pkgVersion,
             },
@@ -522,10 +523,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return versions[0];
     }
 
-    private connectToDeltaStream() {
+    private async connectToDeltaStream() {
         if (!this.connectionDetailsP) {
             this.connectionTransitionTimes[ConnectionState.Disconnected] = performanceNow();
-            this.connectionDetailsP = this._deltaManager!.connect("Document loading");
+            this.connectionDetailsP = this._deltaManager!.connect();
         }
         return this.connectionDetailsP;
     }
@@ -788,8 +789,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return Promise.reject(PackageNotFactoryError);
     }
 
-    private createDeltaManager(connect: boolean): void {
-        // Create the DeltaManager and begin listening for connection events
+    private get client() {
         // tslint:disable-next-line:no-unsafe-any
         const clientDetails: IClient = this.options && this.options.client
             // tslint:disable-next-line:no-unsafe-any
@@ -804,6 +804,13 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         if (headerClientType) {
             clientDetails.type = headerClientType;
         }
+        return clientDetails;
+    }
+
+    private createDeltaManager(connect: boolean): void {
+        // Create the DeltaManager and begin listening for connection events
+        // tslint:disable-next-line:no-unsafe-any
+        const clientDetails = this.client;
 
         this._deltaManager = new DeltaManager(
             this.service,
@@ -915,14 +922,13 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             pendingClientId: this.pendingClientId,
         });
 
-        if (value === ConnectionState.Connected) {
+        if (value === ConnectionState.Connected && this.firstConnection) {
             // We just logged event with disconnected/connecting -> connected time
             // Log extra event recording disconnected -> connected time, as well as provide some extra info.
             // We can group that info in previous event, but it's easier to analyze telemetry if these are
             // two separate events (actually - three!).
             this.logger.sendPerformanceEvent({
-                eventName:
-                    this.firstConnection ? "ConnectionStateChange_InitialConnect" : "ConnectionStateChange_Reconnect",
+                eventName: "ConnectionStateChange_InitialConnect",
                 duration: time - this.connectionTransitionTimes[ConnectionState.Disconnected],
                 durationCatchUp: time - this.connectionTransitionTimes[ConnectionState.Connecting],
                 reason,
@@ -984,9 +990,17 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
     private propagateConnectionState() {
         assert(this.loaded);
+        const logOpsOnReconnect: boolean = this._connectionState === ConnectionState.Connected && !this.firstConnection;
+        if (logOpsOnReconnect) {
+            this.messageCountAfterDisconnection = 0;
+        }
         this.context!.changeConnectionState(this._connectionState, this.clientId!, this._version!);
         this.protocolHandler!.quorum.changeConnectionState(this._connectionState, this.clientId!);
         raiseConnectedEvent(this, this._connectionState, this.clientId!);
+        if (logOpsOnReconnect) {
+            this.logger.sendTelemetryEvent(
+                { eventName: "OpsSentOnReconnect", count: this.messageCountAfterDisconnection });
+        }
     }
 
     private submitMessage(type: MessageType, contents: any, batch?: boolean, metadata?: any): number {
@@ -995,6 +1009,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             return -1;
         }
 
+        this.messageCountAfterDisconnection += 1;
         return this._deltaManager!.submit(type, contents, batch, metadata);
     }
 

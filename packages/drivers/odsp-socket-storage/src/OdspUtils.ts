@@ -3,10 +3,48 @@
  * Licensed under the MIT License.
  */
 
-import { INetworkErrorProperties, NetworkError, throwNetworkError } from "@microsoft/fluid-core-utils";
+import { INetworkErrorProperties, NetworkError, OnlineStatus } from "@microsoft/fluid-core-utils";
 import { default as fetch, RequestInfo as FetchRequestInfo, RequestInit as FetchRequestInit } from "node-fetch";
 import { IOdspSocketError } from "./contracts";
 import { debug } from "./debug";
+
+/**
+ * Throws network error - an object with a bunch of network related properties
+ */
+export function throwNetworkError(
+        errorMessage: string,
+        statusCode: number,
+        canRetry: boolean,
+        response?: Response,
+        online?: string) {
+    let message = errorMessage;
+    if (response) {
+        message = `${message}, msg = ${response.statusText}, type = ${response.type}`;
+    }
+    throw new NetworkError(
+        message,
+        [
+            [INetworkErrorProperties.statusCode , statusCode],
+            [INetworkErrorProperties.canRetry, canRetry],
+            [INetworkErrorProperties.sprequestguid, response && response.headers && `${response.headers.get("sprequestguid")}`],
+        ],
+        online,
+    );
+}
+
+/**
+ * Returns network error based on error object from ODSP socket (IOdspSocketError)
+ */
+export function errorObjectFromOdspError(socketError: IOdspSocketError) {
+    return new NetworkError(
+        socketError.message,
+        [
+            [INetworkErrorProperties.statusCode, socketError.code],
+            [INetworkErrorProperties.canRetry, socketErrorRetryFilter(socketError.code)],
+            [INetworkErrorProperties.retryAfterSeconds, socketError.retryAfter],
+        ],
+    );
+}
 
 /**
  * returns true when the request should/can be retried
@@ -78,7 +116,20 @@ export function fetchHelper(
         }
     },
     (error) => {
-        throwNetworkError(`fetch error, likely due to networking / DNS error or no server: ${error}`, 709, true); // can retry?
+        // While we do not know for sure whether computer is offline, this error is not actionable and
+        // is pretty good indicator we are offline. Treating it as offline scenario will make it
+        // easier to see other errors in telemetry.
+        let online: string | undefined;
+        if (error && typeof error === "object" && error.message === "TypeError: Failed to fetch") {
+            online = OnlineStatus[OnlineStatus.Offline];
+        }
+        throwNetworkError(
+            `Fetch error: ${error}`,
+            709,
+            true, // canRetry
+            undefined, // response
+            online,
+        );
     });
 }
 
@@ -96,17 +147,6 @@ export function getWithRetryForTokenRefresh<T>(get: (refresh: boolean) => Promis
         // document being opened, though there maybe really bad user experience (consuming thousands of ops)
         throw e;
     });
-}
-
-export function errorObjectFromOdspError(socketError: IOdspSocketError) {
-    return new NetworkError(
-        socketError.message,
-        [
-            [INetworkErrorProperties.statusCode, socketError.code],
-            [INetworkErrorProperties.canRetry, socketErrorRetryFilter(socketError.code)],
-            [INetworkErrorProperties.retryAfterSeconds, socketError.retryAfter],
-        ],
-    );
 }
 
 /**
