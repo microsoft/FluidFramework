@@ -10,7 +10,7 @@ module.exports = {
   },
   launch: {
     dumpio: true, // output browser console to cmd line
-    // slowMo: 500,
-    // headless: false,
+    // slowMo: 500, // slows down process for easier viewing
+    // headless: false, // run in the browser
   },
 };
