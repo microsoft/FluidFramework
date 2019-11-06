@@ -7,11 +7,11 @@ import {
     IRequest,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IOdspResolvedUrl } from "@microsoft/fluid-odsp-driver";
+import { getHashedDocumentId } from "@microsoft/fluid-odsp-utils";
 import {
     IResolvedUrl,
     IUrlResolver,
 } from "@microsoft/fluid-protocol-definitions";
-import * as sha from "sha.js";
 
 export class OdspUrlResolver implements IUrlResolver {
 
@@ -25,7 +25,7 @@ export class OdspUrlResolver implements IUrlResolver {
             const site = contents.site;
             const drive = contents.drive;
             const item = contents.item;
-            const hashedDocumentId = new sha.sha256().update(`${drive}_${item}`).digest("hex");
+            const hashedDocumentId = getHashedDocumentId(drive, item);
 
             let documentUrl = `fluid-odsp://placeholder/placeholder/${hashedDocumentId}`;
 
