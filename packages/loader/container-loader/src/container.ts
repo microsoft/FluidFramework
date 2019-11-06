@@ -100,8 +100,14 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             codeLoader,
             loader,
             request,
-            logger);
+            logger,
+        );
 
+        // tslint:disable-next-line:no-string-literal
+        if (typeof window === "object" && !window["containerRef"]) {
+            // tslint:disable-next-line:no-string-literal
+            window["containerRef"] = container;
+        }
         return new Promise<Container>(async (res, rej) => {
             let alreadyRaisedError = false;
             const onError = (error) => {
@@ -257,7 +263,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         private readonly loader: Loader,
         private readonly originalRequest: IRequest,
         logger?: ITelemetryBaseLogger,
-        private readonly autoReconnect: boolean = true,
     ) {
         super();
 
@@ -394,6 +399,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             this.raiseCriticalError(error);
             throw error;
         });
+    }
+
+    public disconnectDeltaManager() {
+        this._deltaManager!.manualDisconnect();
     }
 
     public reconnectDeltaManager() {
@@ -822,7 +831,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             clientDetails,
             ChildLogger.create(this.subLogger, "DeltaManager"),
             this.canReconnect,
-            this.autoReconnect,
         );
 
         if (connect) {

@@ -81,6 +81,8 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     // Overwrites the current connection mode to always write.
     private readonly systemConnectionMode: ConnectionMode;
 
+    private autoReconnect: boolean = true;
+
     private isDisposed: boolean = false;
     private pending: ISequencedDocumentMessage[] = [];
     private fetching = false;
@@ -182,7 +184,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         private readonly client: IClient,
         private readonly logger: ITelemetryLogger,
         private readonly reconnect: boolean,
-        private readonly autoReconnect: boolean,
     ) {
         super();
 
@@ -488,11 +489,18 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         return [];
     }
 
+    public async manualDisconnect() {
+        this.autoReconnect = false;
+        this.disconnectFromDeltaStream("Manual disconnect");
+    }
+
     public async manualReconnect() {
         // Disconnecting may put us in closed state if reconnection is not an option, in which case we should bail.
         if (this.closed) {
             return;
         }
+
+        this.autoReconnect = true;
 
         this.logger.sendTelemetryEvent({ eventName: "DeltaConnectionReconnect", reason: "Manual reconnect" });
         await this.connectCore(this.systemConnectionMode);
