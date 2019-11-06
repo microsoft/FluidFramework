@@ -260,8 +260,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     ) {
         super();
 
-        const [, documentId] = id.split("/");
-        this._id = decodeURI(documentId);
+        const [, docId] = id.split("/");
+        this._id = decodeURI(docId);
         this._scopes = this.getScopes(options);
         this._audience = new Audience();
         this.canReconnect = !(originalRequest.headers && originalRequest.headers[LoaderHeader.reconnect] === false);
@@ -271,7 +271,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             "fluid:telemetry",
             logger,
             {
-                documentId: this.id,
+                docId: this.id,
                 clientType: this.client.type, // differentiating summarizer container from main container
                 packageName: TelemetryLogger.sanitizePkgName(pkgName),
                 packageVersion: pkgVersion,
