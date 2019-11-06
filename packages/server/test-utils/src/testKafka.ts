@@ -106,6 +106,10 @@ export class TestProducer implements core.IProducer {
     public close(): Promise<void> {
         return Promise.resolve();
     }
+
+    public on(event: string, listener: (...args: any[]) => void): this {
+        return this;
+    }
 }
 
 /**

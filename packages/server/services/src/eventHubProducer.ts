@@ -64,6 +64,10 @@ export class EventHubProducer implements IProducer {
         return this.client.close();
     }
 
+    public on(event: string, listener: (...args: any[]) => void): this {
+        return this;
+    }
+
     /**
      * Notifies of the need to send pending messages. We defer sending messages to batch together messages
      * to the same partition.

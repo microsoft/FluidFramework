@@ -195,6 +195,12 @@ export function register(
                 const connection = await orderer.connect(socket, clientId, messageClient as IClient, details);
                 connectionsMap.set(clientId, connection);
 
+                // Eventually we will send disconnect reason as headers to client.
+                connection.on("error", (error) => {
+                    winston.info(`Disconnecting socket on connection error`, error);
+                    socket.disconnect(true);
+                });
+
                 connectedMessage = {
                     claims,
                     clientId,
