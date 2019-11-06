@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { IComponent, IComponentLoadable, IResponse } from "@microsoft/fluid-component-core-interfaces";
-import { IHostRuntime } from "@microsoft/fluid-runtime-definitions";
+import { IComponentRegistry, IHostRuntime } from "@microsoft/fluid-runtime-definitions";
 import { RequestParser } from "./requestParser";
 
 /**
@@ -66,5 +66,38 @@ export function createServiceRuntimeRequestHandler(
         }
 
         return undefined;
+    };
+}
+
+export const registryRoutePathRoot = "_registry";
+export function createRegistryRoutingRequestHandler(registry: IComponentRegistry): RuntimeRequestHandler {
+    return async (request: RequestParser, runtime: IHostRuntime): Promise<IResponse> => {
+
+        if (request.pathParts[0] !== registryRoutePathRoot) {
+            return undefined;
+        }
+
+        // We will only process if the request is made directly to _registry and has a pkg header
+        // Since pkg can have `/` characters it's easier to process as a header
+        // User can supply cdn but it's optional
+        if (request.pathParts.length === 1 &&  request.headers.pkg) {
+            const pkg: string = request.headers.pkg as string;
+
+            const factory = await registry.get(pkg);
+            if (factory) {
+                // If the response is an IFactory we need to update the registry name to reflect this registry entry
+                const iFactory = (factory as IComponent).IComponentFactory;
+                if (iFactory && iFactory.registryName && iFactory.registryName !== pkg) {
+                    iFactory.registryName = pkg;
+                }
+                return { status: 200, mimeType: "fluid/component", value: factory };
+            }
+        }
+
+        return {
+            status: 404,
+            mimeType: "text/plain",
+            value: `${request.headers.pkg} not found on registry. Request:[${JSON.stringify(request)}]`,
+        };
     };
 }

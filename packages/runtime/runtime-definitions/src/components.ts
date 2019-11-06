@@ -359,6 +359,14 @@ export interface IHostRuntime extends
      */
     _createComponentWithProps(pkg: string | string[], props: any, id: string): Promise<IComponentRuntime>;
 
+    // /**
+    //  * Used for creating a component when you already have a factory
+    //  */
+    // createComponentDirect(
+    //     pkg: string,
+    //     creationFn: (context: IComponentContext) => void,
+    // ): Promise<IComponentRuntime>;
+
     /**
      * Returns the current quorum.
      */
