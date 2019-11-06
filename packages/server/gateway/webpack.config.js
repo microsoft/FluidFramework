@@ -88,7 +88,11 @@ module.exports = env => {
                 }
             ]
         },
-        target: 'node',
+        node: {
+            fs: "empty",
+            net: "empty",
+            tls: "empty"
+        },
         stats: {
             timings: true,
             colors: true,
