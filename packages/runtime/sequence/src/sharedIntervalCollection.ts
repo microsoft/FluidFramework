@@ -105,6 +105,14 @@ export abstract class ASharedIntervalCollection<TInterval extends ISerializableI
         return this.intervalMapKernel.wait<IntervalCollection<TInterval>>(label);
     }
 
+    public clearIntervalCollection(label: string): void {
+        if (this.intervalMapKernel.has(label)) {
+            const sharedCollection: IntervalCollection<TInterval> =
+                this.intervalMapKernel.get<IntervalCollection<TInterval>>(label);
+            sharedCollection.clear();
+        }
+    }
+
     // TODO: fix race condition on creation by putting type on every operation
     public getIntervalCollection(label: string): IntervalCollection<TInterval> {
         if (!this.intervalMapKernel.has(label)) {
