@@ -9,7 +9,7 @@ export * from "./OdspDeltaStorageService";
 export * from "./OdspDocumentService";
 export * from "./OdspDocumentStorageManager";
 export * from "./contracts";
-export * from "./OdspUrlResolver";
+export * from "./OdspDriverUrlResolver";
 export * from "./fetchSnapshot";
 export * from "./OdspUtils";
 export * from "./Vroom";
