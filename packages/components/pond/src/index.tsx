@@ -50,7 +50,6 @@ export class Pond extends PrimedComponent implements IComponentHTMLVisual {
     };
     const factory = await this.context.hostRuntime.request(factoryRequest);
     if (factory.status === 200) {
-      alert("factory");
       const f = (factory.value as IComponent).IComponentCreator;
       if (f) {
         const c = await f.createComponent(this.context) as Clicker;
@@ -58,11 +57,26 @@ export class Pond extends PrimedComponent implements IComponentHTMLVisual {
       }
     }
 
-    await this.createSubComponent<ClickerWithInitialValue>(
-      this.clickerWithInitialValueKey,
-      ClickerWithInitialValueName,
-      { initialValue: 100 },
-    );
+    // await this.createSubComponent<ClickerWithInitialValue>(
+    //   this.clickerWithInitialValueKey,
+    //   ClickerWithInitialValueName,
+    //   { initialValue: 100 },
+    // );
+    // ...replaced with
+    const factoryRequest2 = {
+      url: "/_registry",
+      headers: {
+        pkg: ClickerWithInitialValueName,
+      },
+    };
+    const factory2 = await this.context.hostRuntime.request(factoryRequest2);
+    if (factory2.status === 200) {
+      const f = (factory2.value as IComponent).IComponentClickerWithInitialValueCreator;
+      if (f) {
+        const c = await f.createClickerComponent({initialValue: 100}, this.context) as Clicker;
+        this.root.set(this.clickerWithInitialValueKey, c.handle);
+      }
+    }
   }
 
   async createSubComponent<T extends PrimedComponent>(rootKey: string, pkgName: string, props?: any) {
@@ -148,4 +162,5 @@ export const fluidExport = new SimpleModuleInstantiationFactory(
     [PondName, Promise.resolve(Pond.getFactory())],
     // TODO: only here because we don't know how to do sub-registry lookup
     [ClickerName, Promise.resolve(Clicker.getFactory())],
+    [ClickerWithInitialValueName, Promise.resolve(ClickerWithInitialValue.getFactory())],
   ]));

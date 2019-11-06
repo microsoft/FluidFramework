@@ -32,7 +32,7 @@ export class SharedComponentFactory implements IComponentFactory, Partial<IProvi
     // TODO: This is here for now but should be piped through.
     public registryName: string = "";
 
-    private readonly sharedObjectRegistry: ISharedObjectRegistry;
+    public readonly sharedObjectRegistry: ISharedObjectRegistry;
     private readonly registry: IComponentRegistry | undefined;
 
     constructor(

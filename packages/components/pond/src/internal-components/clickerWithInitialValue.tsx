@@ -4,14 +4,79 @@
  */
 
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
-import { IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
+import { IComponent, IComponentHTMLVisual, IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
 import { Counter, CounterValueType, ISharedDirectory } from "@microsoft/fluid-map";
+import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
 // tslint:disable-next-line: no-var-requires no-require-imports
 const pkg = require("../../package.json");
 export const ClickerWithInitialValueName = `${pkg.name as string}-clickerWithInitialValue`;
+
+declare module "@microsoft/fluid-component-core-interfaces" {
+    export interface IComponent extends Readonly<Partial<IProvideComponentClickerWithInitialValueCreator>> {
+    }
+}
+
+export interface IProvideComponentClickerWithInitialValueCreator {
+    readonly IComponentClickerWithInitialValueCreator: IComponentClickerWithInitialValueCreator;
+}
+
+/**
+ * A component that implements a collection of components.  Typically, the
+ * components in the collection would be like-typed.
+ */
+export interface IComponentClickerWithInitialValueCreator extends IProvideComponentClickerWithInitialValueCreator {
+    createClickerComponent(
+        props: IClickerWithInitialValueProps,
+        context: IComponentContext): Promise<IComponent>;
+}
+
+export interface IClickerWithInitialValueProps {
+    initialValue: number;
+}
+
+export class ClickerWithInitialValueFactory
+    extends PrimedComponentFactory implements IComponentClickerWithInitialValueCreator {
+
+        public get IComponentClickerWithInitialValueCreator() { return this; }
+
+        public async createClickerComponent(
+            props: IClickerWithInitialValueProps,
+            context: IComponentContext): Promise<IComponent> {
+                const cr = await context.hostRuntime.createComponentDirect(
+                    this.registryName, this.create(props));
+                const response = await cr.request({url: "/"});
+                if (response.status !== 200 || response.mimeType !== "fluid/component") {
+                    throw new Error("Failed to create component");
+                }
+
+                cr.attach();
+                return response.value as IComponent;
+            }
+
+        private create(props: IClickerWithInitialValueProps) {
+            return (context: IComponentContext) => {
+                // Create a new runtime for our component
+                // The runtime is what Fluid uses to create DDS' and route to your component
+                ComponentRuntime.load(
+                    context,
+                    this.sharedObjectRegistry,
+                    (runtime: ComponentRuntime) => {
+                        const clicker = new ClickerWithInitialValue(runtime, context, props);
+                        const clickerP = clicker.initialize();
+
+                        runtime.registerRequestHandler(async (request: IRequest) => {
+                            await clickerP;
+                            return clicker.request(request);
+                        });
+                    },
+                );
+            };
+        }
+}
 
 /**
  * Basic Clicker example using new interfaces and stock component classes.
@@ -20,13 +85,21 @@ export class ClickerWithInitialValue extends PrimedComponent implements ICompone
 
     public get IComponentHTMLVisual() { return this; }
 
+    public constructor(
+        runtime: IComponentRuntime,
+        context: IComponentContext,
+        private readonly props?: IClickerWithInitialValueProps,
+    ) {
+        super(runtime, context);
+    }
+
     /**
      * Do setup work here
      */
-    protected async componentInitializingFirstTime(props?: any) {
+    protected async componentInitializingFirstTime() {
         let startingValue = 0;
-        if (props && props.initialValue) {
-            startingValue = props.initialValue;
+        if (this.props) {
+            startingValue = this.props.initialValue;
         }
 
         this.root.createValueType("clicks", CounterValueType.Name, startingValue);
@@ -51,7 +124,7 @@ export class ClickerWithInitialValue extends PrimedComponent implements ICompone
 
     public static getFactory() { return ClickerWithInitialValue.factory; }
 
-    private static readonly factory = new PrimedComponentFactory(
+    private static readonly factory = new ClickerWithInitialValueFactory(
         ClickerWithInitialValue,
         [],
     );
