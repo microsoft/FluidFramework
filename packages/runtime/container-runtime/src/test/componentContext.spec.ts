@@ -41,7 +41,7 @@ describe("Component Context Tests", () => {
                 new LocalComponentContext("Test1", ["TestComponent1"], containerRuntime, storage, scope, attachCb);
 
             // tslint:disable-next-line: no-floating-promises
-            localComponentContext.realize();
+            localComponentContext.realizeFromRegistry();
             localComponentContext.bindRuntime(new MockRuntime());
             const attachMessage = localComponentContext.generateAttachMessage();
 
@@ -66,7 +66,7 @@ describe("Component Context Tests", () => {
             localComponentContext =
                 new LocalComponentContext("Test1", ["TestComp", "SubComp"], containerRuntime, storage, scope, attachCb);
 
-            await localComponentContext.realize()
+            await localComponentContext.realizeFromRegistry()
             .catch((error) => {
                 exception = true;
             });
@@ -85,7 +85,7 @@ describe("Component Context Tests", () => {
                 new LocalComponentContext("Test1", ["TestComp", "SubComp"], containerRuntime, storage, scope, attachCb);
 
             // tslint:disable-next-line: no-floating-promises
-            localComponentContext.realize();
+            localComponentContext.realizeFromRegistry();
             localComponentContext.bindRuntime(new MockRuntime());
 
             const attachMessage = localComponentContext.generateAttachMessage();

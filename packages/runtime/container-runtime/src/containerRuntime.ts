@@ -50,10 +50,12 @@ import {
     ITree,
     MessageType,
     SummaryType,
+    IVersion,
 } from "@microsoft/fluid-protocol-definitions";
 import {
     FlushMode,
     IAttachMessage,
+    IComponentContext,
     IComponentRegistry,
     IComponentRuntime,
     IEnvelope,
@@ -804,7 +806,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         }
 
         const componentContext = await this.contextsDeferred.get(id).promise;
-        return componentContext.realize();
+        return componentContext.realizeFromRegistry();
     }
 
     public setFlushMode(mode: FlushMode): void {
@@ -887,7 +889,32 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         this.contextsDeferred.set(id, deferred);
         this.contexts.set(id, context);
 
-        return context.realize();
+        return context.realizeFromRegistry();
+    }
+
+        // something like creation scope?
+    // for now this only works for components on the container
+    public async createComponentDirect(
+        pkg: string,
+        creationFn: (context: IComponentContext) => void,
+    ): Promise<IComponentRuntime> {
+        this.verifyNotClosed();
+
+        const id = uuid();
+        const context = new LocalComponentContext(
+            id,
+            Array.isArray(pkg) ? pkg : [pkg],
+            this,
+            this.storage,
+            this.context.scope,
+            (cr: IComponentRuntime) => this.attachComponent(cr),
+            undefined /* TODO: REMOVE PROPS FLOW */);
+
+        const deferred = new Deferred<ComponentContext>();
+        this.contextsDeferred.set(id, deferred);
+        this.contexts.set(id, context);
+
+        return context.realize(creationFn);
     }
 
     public getQuorum(): IQuorum {
@@ -1060,7 +1087,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
                     // equivalent of nextTick() - Prefetch once all current ops have completed
                     // tslint:disable-next-line:no-floating-promises
-                    Promise.resolve().then(() => remotedComponentContext.realize());
+                    Promise.resolve().then(() => remotedComponentContext.realizeFromRegistry());
                 }
 
             default:
@@ -1123,7 +1150,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             // TODO in the future we can have stored the latest summary by listening to the summary ack message
             // after loading from the beginning of the snapshot
             const versions = await this.context.storage.getVersions(this.id, 1);
-            const parents = versions.map((version) => version.id);
+            const parents = versions.map((version: IVersion) => version.id);
             const parent = parents[0];
             generateSummaryEvent.reportProgress({}, "loadedVersions");
 

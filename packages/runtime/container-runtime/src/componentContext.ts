@@ -176,7 +176,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this.hostRuntime._createComponentWithProps(packagePath, props, pkgId);
     }
 
-    public async realize(): Promise<IComponentRuntime> {
+    public async realizeFromRegistry(): Promise<IComponentRuntime> {
         if (!this.componentRuntimeDeferred) {
             this.componentRuntimeDeferred = new Deferred<IComponentRuntime>();
             const details = await this.getInitialSnapshotDetails();
@@ -207,6 +207,19 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
             // During this call we will invoke the instantiate method - which will call back into us
             // via the bindRuntime call to resolve componentRuntimeDeferred
             factory.instantiateComponent(this);
+        }
+
+        return this.componentRuntimeDeferred.promise;
+    }
+
+    /**
+     * Realize by providing a function that knows how to realize the state.
+     * This is different from realize because it doesn't do registry lookup
+     */
+    public async realize(fn: (context: IComponentContext) => void): Promise<IComponentRuntime> {
+        if (!this.componentRuntimeDeferred) {
+            this.componentRuntimeDeferred = new Deferred<IComponentRuntime>();
+            fn(this);
         }
 
         return this.componentRuntimeDeferred.promise;
@@ -297,7 +310,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         }
         this.summaryTracker.reset();
 
-        await this.realize();
+        await this.realizeFromRegistry();
 
         const { pkg } = await this.getInitialSnapshotDetails();
 
@@ -314,7 +327,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        const runtime = await this.realize();
+        const runtime = await this.realizeFromRegistry();
         return runtime.request(request);
     }
 

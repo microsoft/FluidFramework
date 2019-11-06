@@ -27,7 +27,7 @@ export interface IComponentCreator extends IProvideComponentCreator {
     createComponent(context: IComponentContext): Promise<IComponent>;
 }
 
-export class SharedComponentFactory implements IComponentFactory, Partial<IProvideComponentRegistry> {
+export class SharedComponentFactory implements IComponentFactory, Partial<IProvideComponentRegistry>, IComponentCreator {
 
     // TODO: This is here for now but should be piped through.
     public registryName: string = "";
@@ -52,6 +52,8 @@ export class SharedComponentFactory implements IComponentFactory, Partial<IProvi
     public get IComponentRegistry() {
         return this.registry;
     }
+
+    public get IComponentCreator(): IComponentCreator { return this; }
 
     /**
      * This is where we do component setup.
@@ -84,6 +86,17 @@ export class SharedComponentFactory implements IComponentFactory, Partial<IProvi
             },
             this.registry,
         );
+    }
+
+    public async createComponent(context: IComponentContext): Promise<IComponent> {
+        const cr = await context.hostRuntime.createComponentDirect(this.registryName, (c) => { this.instantiateComponent(c); });
+        const response = await cr.request({url: "/"});
+        if (response.status !== 200 || response.mimeType !== "fluid/component") {
+            throw new Error("Failed to create component");
+        }
+
+        cr.attach();
+        return response.value as IComponent;
     }
 
     /**
