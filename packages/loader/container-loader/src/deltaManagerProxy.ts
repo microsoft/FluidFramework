@@ -12,6 +12,7 @@ import {
 } from "@microsoft/fluid-container-definitions";
 import { EventForwarder } from "@microsoft/fluid-core-utils";
 import {
+    IClientDetails,
     IDocumentMessage,
     ISequencedDocumentMessage,
     IServiceConfiguration,
@@ -104,8 +105,12 @@ export class DeltaManagerProxy
         return this.deltaManager.initialSequenceNumber;
     }
 
-    public get clientType(): string {
+    public get clientType(): string | undefined {
         return this.deltaManager.clientType;
+    }
+
+    public get clientDetails(): IClientDetails {
+        return this.deltaManager.clientDetails;
     }
 
     public get version(): string {

@@ -17,6 +17,7 @@ import {
 } from "@microsoft/fluid-container-definitions";
 import { configurableUrlResolver, Deferred } from "@microsoft/fluid-core-utils";
 import {
+    IClientDetails,
     IDocumentService,
     IDocumentServiceFactory,
     IFluidResolvedUrl,
@@ -43,11 +44,7 @@ interface IParsedUrl {
 
 export enum LoaderHeader {
     cache = "fluid-cache",
-
-    /**
-     * type of client; defaults to "browser"
-     */
-    clientType = "fluid-client-type",
+    clientDetails = "fluid-client-type",
 
     /**
      * connection options (list of keywords). Accepted options are open & pause.
@@ -67,7 +64,7 @@ export enum LoaderHeader {
 }
 export interface ILoaderHeader {
     [LoaderHeader.cache]: boolean;
-    [LoaderHeader.clientType]: string;
+    [LoaderHeader.clientDetails]: IClientDetails;
     [LoaderHeader.connect]: string;
     [LoaderHeader.executionContext]: string;
     [LoaderHeader.sequenceNumber]: number;

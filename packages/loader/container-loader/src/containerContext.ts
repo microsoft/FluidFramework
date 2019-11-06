@@ -23,6 +23,7 @@ import {
 } from "@microsoft/fluid-container-definitions";
 import { raiseConnectedEvent } from "@microsoft/fluid-core-utils";
 import {
+    IClientDetails,
     IDocumentAttributes,
     IDocumentMessage,
     IDocumentStorageService,
@@ -90,8 +91,12 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         return this.container.clientId;
     }
 
-    public get clientType(): string {
+    public get clientType(): string | undefined {
         return this.container.clientType;
+    }
+
+    public get clientDetails(): IClientDetails {
+        return this.container.clientDetails;
     }
 
     public get existing(): boolean | undefined {

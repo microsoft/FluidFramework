@@ -16,9 +16,9 @@ import {
     PerformanceEvent,
 } from "@microsoft/fluid-core-utils";
 import {
-    Browser,
     ConnectionMode,
     IClient,
+    IClientDetails,
     IContentMessage,
     IDocumentDeltaStorageService,
     IDocumentMessage,
@@ -73,7 +73,8 @@ enum retryFor {
 export class DeltaManager extends EventEmitter implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
     public get disposed() { return this.isDisposed; }
 
-    public readonly clientType: string;
+    public readonly clientType: string | undefined;
+    public readonly clientDetails: IClientDetails;
     public get IDeltaSender() { return this; }
 
     // Current conneciton mode. Initially write.
@@ -185,6 +186,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         super();
 
         this.clientType = this.client.type;
+        this.clientDetails = this.client.details;
         this.systemConnectionMode = this.client.mode === "write" ? "write" : "read";
 
         this._inbound = new DeltaQueue<ISequencedDocumentMessage>(
@@ -318,7 +320,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         const traces: ITrace[] = [
             {
                 action: "start",
-                service: this.clientType,
+                service: this.clientDetails.type || "unknown",
                 timestamp: Date.now(),
             }];
 
@@ -749,8 +751,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         connection.close();
 
-        // Reconnection is only enabled for browser clients.
-        if (this.clientType !== Browser || !this.reconnect || this.closed || !canRetryOnError(error)) {
+        if (!this.reconnect || this.closed || !canRetryOnError(error)) {
             this.close(error);
         } else {
             const delayNext = this.getRetryDelayFromError(error);
@@ -873,7 +874,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         if (message.traces && message.traces.length > 0) {
             message.traces.push({
                 action: "end",
-                service: this.clientType,
+                service: this.clientDetails.type || "unknown",
                 timestamp: Date.now(),
             });
         }
