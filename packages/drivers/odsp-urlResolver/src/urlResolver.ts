@@ -21,10 +21,7 @@ export class OdspUrlResolver implements IUrlResolver {
             if (!contents) {
                 return undefined;
             }
-            const site = contents.site;
-            const drive = contents.drive;
-            const item = contents.item;
-            const urlToBeResolved = createOdspUrl(site, drive, item, "/");
+            const urlToBeResolved = createOdspUrl(contents.site, contents.drive, contents.item, "/");
             const odspDriverUrlResolver: IUrlResolver = new OdspDriverUrlResolver();
             return odspDriverUrlResolver.resolve({ url: urlToBeResolved });
         }
