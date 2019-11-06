@@ -25,8 +25,7 @@
     "@microsoft/fluid-component-core-interfaces": "^0.12.0",
     "@microsoft/fluid-odsp-driver": "^0.12.0",
     "@microsoft/fluid-protocol-definitions": "^0.12.0",
-    "@types/debug": "^0.0.31",
-    "sha.js": "^2.4.11"
+    "@types/debug": "^0.0.31"
   },
   "devDependencies": {
     "@microsoft/fluid-build-common": "^0.12.0",
