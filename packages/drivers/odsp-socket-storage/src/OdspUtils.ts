@@ -133,22 +133,6 @@ export function fetchHelper(
     });
 }
 
-export function getWithRetryForTokenRefresh<T>(get: (refresh: boolean) => Promise<T>) {
-    return get(false).catch(async (e) => {
-        // if the error is 401 or 403 refresh the token and try once more.
-        if (e.statusCode === 401 || e.statusCode === 403) {
-            return get(true);
-        }
-
-        // All code paths (deltas, blobs, trees) already throw exceptions.
-        // Throwing is better than returning null as most code paths do not return nullable-objects,
-        // and error reporting is better (for example, getDeltas() will log error to telemetry)
-        // getTree() path is the only potential exception where returning null might result in
-        // document being opened, though there maybe really bad user experience (consuming thousands of ops)
-        throw e;
-    });
-}
-
 /**
  * Tests if localStorage is usable.
  * Should we move this outside to a library?

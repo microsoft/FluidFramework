@@ -17,25 +17,15 @@ import { CopierLambda } from "./lambda";
 export class CopierLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
     constructor(
         private mongoManager: MongoManager,
-        private opCollection: ICollection<any>,
-        private contentCollection: ICollection<any>) {
+        private rawOpCollection: ICollection<any>) {
         super();
-        console.log("lambda factory constructor");
     }
 
     public async create(config: Provider, context: IContext): Promise<IPartitionLambda> {
-        // Takes in the io as well as the collection. I can probably keep the same lambda but only ever give it stuff
-        // from a single document
-        console.log("lambda factory create");
-        return new CopierLambda(context); // this.opCollection, this.contentCollection, context);
+        return new CopierLambda(this.rawOpCollection, context);
     }
 
     public async dispose(): Promise<void> {
-        console.log("lambda factory dispose");
         await this.mongoManager.close();
-    }
-
-    public throwaway() {
-        return [this.opCollection, this.contentCollection];
     }
 }

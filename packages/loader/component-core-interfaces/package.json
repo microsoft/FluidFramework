@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-component-core-interfaces",
-  "version": "0.11.0",
+  "version": "0.12.0",
   "description": "Fluid component interfaces",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -23,7 +23,7 @@
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.4.4",
-    "@microsoft/fluid-build-common": "^0.11.0",
+    "@microsoft/fluid-build-common": "^0.12.0",
     "@types/node": "^10.12.12",
     "concurrently": "^4.1.0",
     "rimraf": "^2.6.2",

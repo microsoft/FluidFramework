@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/diceroller",
-  "version": "0.11.0",
+  "version": "0.12.0",
   "description": "Minimal Fluid component sample to implement a collaborative dice roller.",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -26,14 +26,14 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "@microsoft/fluid-aqueduct": "^0.11.0",
-    "@microsoft/fluid-component-core-interfaces": "^0.11.0",
+    "@microsoft/fluid-aqueduct": "^0.12.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.12.0",
     "react": "^16.8.3",
     "react-dom": "^16.8.3"
   },
   "devDependencies": {
-    "@microsoft/fluid-build-common": "^0.11.0",
-    "@microsoft/fluid-webpack-component-loader": "^0.11.0",
+    "@microsoft/fluid-build-common": "^0.12.0",
+    "@microsoft/fluid-webpack-component-loader": "^0.12.0",
     "@types/expect-puppeteer": "2.2.1",
     "@types/jest": "22.2.3",
     "@types/jest-environment-puppeteer": "2.2.0",

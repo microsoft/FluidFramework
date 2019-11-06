@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-server-memory-orderer",
-  "version": "0.11.0",
+  "version": "0.12.0",
   "description": "Fluid ordering services",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -21,12 +21,12 @@
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "dependencies": {
-    "@microsoft/fluid-container-loader": "^0.11.0",
-    "@microsoft/fluid-core-utils": "^0.11.0",
-    "@microsoft/fluid-protocol-definitions": "^0.11.0",
-    "@microsoft/fluid-server-lambdas": "^0.11.0",
-    "@microsoft/fluid-server-services-client": "^0.11.0",
-    "@microsoft/fluid-server-services-core": "^0.11.0",
+    "@microsoft/fluid-container-loader": "^0.12.0",
+    "@microsoft/fluid-core-utils": "^0.12.0",
+    "@microsoft/fluid-protocol-definitions": "^0.12.0",
+    "@microsoft/fluid-server-lambdas": "^0.12.0",
+    "@microsoft/fluid-server-services-client": "^0.12.0",
+    "@microsoft/fluid-server-services-core": "^0.12.0",
     "@types/debug": "^0.0.31",
     "@types/double-ended-queue": "^2.1.0",
     "@types/lodash": "^4.14.118",
@@ -41,7 +41,7 @@
     "ws": "^6.1.2"
   },
   "devDependencies": {
-    "@microsoft/fluid-build-common": "^0.11.0",
+    "@microsoft/fluid-build-common": "^0.12.0",
     "@types/uuid": "^3.4.4",
     "concurrently": "^4.1.0",
     "rimraf": "^2.6.2",

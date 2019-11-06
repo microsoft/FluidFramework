@@ -17,6 +17,7 @@ import {
     IComponentFactory,
     IComponentRegistry,
     IHostRuntime,
+    NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
 import * as sharedTextComponent from "./component";
 // import { GraphIQLView } from "./graphql";
@@ -50,40 +51,32 @@ const DefaultComponentName = "text";
 // };
 // tslint:enable
 
+const defaultRegistryEntries: NamedComponentRegistryEntries = [
+    ["@fluid-example/math", math.then((m) => m.fluidExport)],
+    ["@fluid-example/progress-bars", progressBars.then((m) => m.fluidExport)],
+    ["@fluid-example/video-players", videoPlayers.then((m) => m.fluidExport)],
+    ["@fluid-example/image-collection", images.then((m) => m.fluidExport)],
+    ["@fluid-example/pinpoint-editor", pinpoint.then((m) => m.fluidExport)],
+];
+
 class MyRegistry implements IComponentRegistry {
     constructor(private context: IContainerContext,
-                private readonly sharedTextFactory: SharedTextFactoryComponent,
                 private readonly defaultRegistry: string) {
     }
 
     public get IComponentRegistry() {return this; }
 
-    public async get(name: string, cdn?: string): Promise<IComponentFactory> {
-        if (name === "@fluid-example/shared-text") {
-            return this.sharedTextFactory;
-        } else if (name === "@fluid-example/math") {
-            return math.then((m) => m.fluidExport);
-        } else if (name === "@fluid-example/progress-bars") {
-            return progressBars.then((m) => m.fluidExport);
-        } else if (name === "@fluid-example/video-players") {
-            return videoPlayers.then((m) => m.fluidExport);
-        } else if (name === "@fluid-example/image-collection") {
-            return images.then((m) => m.fluidExport);
-        // } else if (name === "@fluid-example/monaco") {
-        //     return monaco.then((m) => m.fluidExport);
-        } else if (name === "@fluid-example/pinpoint-editor") {
-            return pinpoint.then((m) => m.fluidExport);
-        } else {
-            const scope = `${name.split("/")[0]}:cdn`;
-            const config = {};
-            config[scope] = cdn ? cdn : this.defaultRegistry;
+    public async get(name: string): Promise<IComponentFactory> {
+        const scope = `${name.split("/")[0]}:cdn`;
+        const config = {};
+        config[scope] = this.defaultRegistry;
 
-            const codeDetails = {
-                package: name,
-                config,
-            };
-            return this.context.codeLoader.load<IComponentFactory>(codeDetails);
-        }
+        const codeDetails = {
+            package: name,
+            config,
+        };
+        return this.context.codeLoader.load<IComponentFactory>(codeDetails);
+
     }
 }
 
@@ -136,7 +129,14 @@ class SharedTextFactoryComponent implements IComponentFactory, IRuntimeFactory {
 
         const runtime = await ContainerRuntime.load(
             context,
-            new MyRegistry(context, this, "https://pragueauspkn-3873244262.azureedge.net"),
+            [
+                ... defaultRegistryEntries,
+                ["@fluid-example/shared-text", Promise.resolve(this)],
+                [
+                    "verdaccio",
+                    Promise.resolve(new MyRegistry(context, "https://pragueauspkn-3873244262.azureedge.net")),
+                ],
+            ],
             [SharedTextFactoryComponent.containerRequestHandler],
             { generateSummaries });
 

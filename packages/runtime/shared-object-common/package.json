@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-shared-object-base",
-  "version": "0.11.0",
+  "version": "0.12.0",
   "description": "Fluid document loader",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -22,11 +22,11 @@
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "dependencies": {
-    "@microsoft/fluid-component-core-interfaces": "^0.11.0",
-    "@microsoft/fluid-container-definitions": "^0.11.0",
-    "@microsoft/fluid-core-utils": "^0.11.0",
-    "@microsoft/fluid-protocol-definitions": "^0.11.0",
-    "@microsoft/fluid-runtime-definitions": "^0.11.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.12.0",
+    "@microsoft/fluid-container-definitions": "^0.12.0",
+    "@microsoft/fluid-core-utils": "^0.12.0",
+    "@microsoft/fluid-protocol-definitions": "^0.12.0",
+    "@microsoft/fluid-runtime-definitions": "^0.12.0",
     "@types/debug": "^0.0.31",
     "@types/double-ended-queue": "^2.1.0",
     "@types/node": "^10.12.12",
@@ -35,7 +35,7 @@
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.4.4",
-    "@microsoft/fluid-build-common": "^0.11.0",
+    "@microsoft/fluid-build-common": "^0.12.0",
     "@types/uuid": "^3.4.4",
     "concurrently": "^4.1.0",
     "rimraf": "^2.6.2",
