@@ -74,6 +74,7 @@ import { DocumentStorageServiceProxy } from "./documentStorageServiceProxy";
 import {
     componentRuntimeRequestHandler,
     createLoadableComponentRuntimeRequestHandler,
+    createRegistryRoutingRequestHandler,
     RuntimeRequestHandler,
 } from "./requestHandlers";
 import { RequestParser } from "./requestParser";
@@ -379,6 +380,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         runtime.requestHandler = new RuntimeRequestHandlerBuilder();
         runtime.requestHandler.pushHandler(
             createLoadableComponentRuntimeRequestHandler(runtime.summarizer),
+            createRegistryRoutingRequestHandler(componentRegistry),
             schedulerRuntimeRequestHandler,
             ...requestHandlers);
 

@@ -3,14 +3,35 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { IComponent, IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { ComponentRuntime, ISharedObjectRegistry } from "@microsoft/fluid-component-runtime";
 import { ComponentRegistry } from "@microsoft/fluid-container-runtime";
 import { IComponentContext, IComponentFactory, IComponentRegistry, IComponentRuntime, IProvideComponentRegistry, NamedComponentRegistryEntries } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { SharedComponent } from "../components/sharedComponent";
 
-export class SharedComponentFactory implements IComponentFactory, Partial<IProvideComponentRegistry>  {
+declare module "@microsoft/fluid-component-core-interfaces" {
+    export interface IComponent extends Readonly<Partial<IProvideComponentCreator>> {
+    }
+}
+
+export interface IProvideComponentCreator {
+    readonly IComponentCreator: IComponentCreator;
+}
+
+/**
+ * A component that implements a collection of components.  Typically, the
+ * components in the collection would be like-typed.
+ */
+export interface IComponentCreator extends IProvideComponentCreator {
+    createComponent(context: IComponentContext): Promise<IComponent>;
+}
+
+export class SharedComponentFactory implements IComponentFactory, Partial<IProvideComponentRegistry> {
+
+    // TODO: This is here for now but should be piped through.
+    public registryName: string = "";
+
     private readonly sharedObjectRegistry: ISharedObjectRegistry;
     private readonly registry: IComponentRegistry | undefined;
 

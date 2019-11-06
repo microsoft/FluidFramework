@@ -57,6 +57,22 @@ export class Pond extends PrimedComponent implements IComponentHTMLVisual {
   }
 
   protected async componentHasInitialized() {
+    const factoryRequest = {
+      url: "/_registry",
+      headers: {
+        pkg: ClickerName,
+      },
+    };
+    const factory = await this.context.hostRuntime.request(factoryRequest);
+    if (factory.status === 200) {
+      alert("factory");
+      // const f = (factory.value as IComponent).IComponentCreator;
+      // if (f) {
+      //   const c = await f.createComponent(this.context) as Clicker;
+      //   this.root.set(this.clickerKey, c.handle);
+      // }
+    }
+
     const clicker2 = await this.root.get<IComponentHandle>(this.clickerKey).get<IComponent>();
     this.clicker2Render = clicker2.IComponentHTMLVisual;
 
@@ -129,4 +145,6 @@ export const fluidExport = new SimpleModuleInstantiationFactory(
   PondName,
   new Map([
     [PondName, Promise.resolve(Pond.getFactory())],
+    // TODO: only here because we don't know how to do sub-registry lookup
+    [ClickerName, Promise.resolve(Clicker.getFactory())],
   ]));
