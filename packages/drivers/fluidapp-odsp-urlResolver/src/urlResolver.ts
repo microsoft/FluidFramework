@@ -7,12 +7,11 @@ import {
     IRequest,
 } from "@microsoft/fluid-component-core-interfaces";
 import { fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
-import { IOdspResolvedUrl } from "@microsoft/fluid-odsp-driver";
+import { createOdspUrl, OdspDriverUrlResolver } from "@microsoft/fluid-odsp-driver";
 import {
     IResolvedUrl,
     IUrlResolver,
 } from "@microsoft/fluid-protocol-definitions";
-import * as sha from "sha.js";
 
 const fluidOfficeServers = [
     "dev.fluidpreview.office.net",
@@ -29,40 +28,12 @@ export class FluidAppOdspUrlResolver implements IUrlResolver {
             if (!contents) {
                 return undefined;
             }
-            const site = contents.site;
-            const drive = contents.drive;
-            const item = contents.item;
-            const hashedDocumentId = new sha.sha256().update(`${site}_${drive}_${item}`).digest("hex");
-
-            let documentUrl = `fluid-odsp://placeholder/placeholder/${hashedDocumentId}`;
-
-            if (request.url.length > 0) {
-              // In case of any additional parameters add them back to the url
-              const requestURL = new URL(request.url);
-              const searchParams = requestURL.search;
-              if (!!searchParams) {
-                documentUrl += searchParams;
-              }
-            }
-            const response: IOdspResolvedUrl = {
-              endpoints: { snapshotStorageUrl: getSnapshotUrl(site, drive, item) },
-              tokens: {},
-              type: "fluid",
-              url: documentUrl,
-              hashedDocumentId,
-              siteUrl: site,
-              driveId: drive,
-              itemId: item,
-            };
-            return response;
+            const urlToBeResolved = createOdspUrl(contents.site, contents.drive, contents.item, "");
+            const odspDriverUrlResolver: IUrlResolver = new OdspDriverUrlResolver();
+            return odspDriverUrlResolver.resolve({ url: urlToBeResolved });
         }
         return undefined;
     }
-}
-
-function getSnapshotUrl(server: string, drive: string, item: string) {
-    const siteOrigin = new URL(server).origin;
-    return `${siteOrigin}/_api/v2.1/drives/${drive}/items/${item}/opStream/snapshots`;
 }
 
 async function initializeFluidOffice(urlSource: URL) {
