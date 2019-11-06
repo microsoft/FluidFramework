@@ -101,7 +101,6 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
                 }
 
                 this._paused = true;
-                this.emit("pause");
             } else {
                 if (this.pauseDeferred) {
                     this.pauseDeferred.reject(new Error("Resumed while waiting to pause"));
@@ -110,7 +109,6 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
 
                 this._paused = false;
                 this.processDeltas();
-                this.emit("resume");
             }
         }
 
@@ -124,7 +122,6 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
             // Get the next message in the queue, set processing flag in case we are reentrant.
             this.processing = true;
             const next = this.q.shift();
-            this.emit("pre-op", next);
 
             // Process the message.
             try {
