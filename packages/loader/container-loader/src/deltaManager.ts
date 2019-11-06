@@ -320,7 +320,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         const traces: ITrace[] = [
             {
                 action: "start",
-                service: this.clientDetails.type || "unkown",
+                service: this.clientDetails.type || "unknown",
                 timestamp: Date.now(),
             }];
 
@@ -874,7 +874,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         if (message.traces && message.traces.length > 0) {
             message.traces.push({
                 action: "end",
-                service: this.clientDetails.type || "unkown",
+                service: this.clientDetails.type || "unknown",
                 timestamp: Date.now(),
             });
         }

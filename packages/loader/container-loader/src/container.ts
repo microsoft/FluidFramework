@@ -278,7 +278,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             logger,
             {
                 documentId: this.id,
-                clientType: this.client.type, // differentiating summarizer container from main container
+                clientType: this.client.details.type, // differentiating summarizer container from main container
                 packageName: TelemetryLogger.sanitizePkgName(pkgName),
                 packageVersion: pkgVersion,
             },
