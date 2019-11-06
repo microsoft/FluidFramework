@@ -12,7 +12,7 @@ describe("diceRoller", () => {
   });
 
   it("The page loads and there's a button with Roll", async () => {
-    // roll the dice 5 time to see the output
+    // Validate there is a button that can be clicked
     await expect(page).toClick("button", { text: "Roll" });
   });
 });

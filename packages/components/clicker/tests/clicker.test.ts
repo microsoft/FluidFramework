@@ -19,7 +19,7 @@ describe("clicker", () => {
       const getValue = async (index: number) => {
         return page.evaluate((i: number) => {
             const clickerElements = document.getElementsByClassName("clicker-value-class");
-            const clicker = document.getElementById(clickerElements[i].id);
+            const clicker = clickerElements[i] as HTMLDivElement;
             if (clicker) {
                 return clicker.innerText;
             }
