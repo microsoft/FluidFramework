@@ -38,7 +38,7 @@ function removeBeginningSlash(str: string): string {
   return str;
 }
 
-export class OdspUrlResolver implements IUrlResolver {
+export class OdspDriverUrlResolver implements IUrlResolver {
   constructor() { }
 
   public async resolve(request: IRequest): Promise<IResolvedUrl> {
