@@ -16,6 +16,10 @@ services:
         ports:
             - "5861:5858"
         command: node --inspect=0.0.0.0:5858 dist/kafka-service/index.js scriptorium /usr/src/server/packages/server/routerlicious/dist/scriptorium/index.js
+    copier:
+        ports:
+            - "5867:5858"
+        command: node --inspect=0.0.0.0:5858 dist/kafka-service/index.js copier /usr/src/server/packages/server/routerlicious/dist/copier/index.js
     broadcaster:
         ports:
             - "5865:5858"

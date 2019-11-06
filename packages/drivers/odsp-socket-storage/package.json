@@ -29,9 +29,11 @@
     "@microsoft/fluid-core-utils": "^0.11.0",
     "@microsoft/fluid-driver-base": "^0.11.0",
     "@microsoft/fluid-gitresources": "^0.11.0",
+    "@microsoft/fluid-odsp-utils": "^0.11.0",
     "@microsoft/fluid-protocol-definitions": "^0.11.0",
     "debug": "^4.1.1",
     "node-fetch": "^2.2.1",
+    "performance-now": "^2.1.0",
     "socket.io-client": "^2.1.1"
   },
   "devDependencies": {

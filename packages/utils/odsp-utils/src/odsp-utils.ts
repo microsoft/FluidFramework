@@ -97,19 +97,20 @@ export async function refreshAccessToken(server: string, clientConfig: IClientCo
     return odspTokens;
 }
 
-async function requestWithRefresh(
-    server: string,
-    clientConfig: IClientConfig,
-    tokens: IODSPTokens,
-    requestCallback: (token: string) => Promise<any>): Promise<any> {
+export async function getWithRetryForTokenRefresh<T>(get: (refresh: boolean) => Promise<T>) {
+    return get(false).catch(async (e) => {
+        // if the error is 401 or 403 refresh the token and try once more.
+        if (e.statusCode === 401 || e.statusCode === 403) {
+            return get(true);
+        }
 
-    const result = await requestCallback(tokens.accessToken);
-    if (result.status !== 401 && result.status !== 403) {
-        return result;
-    }
-    // Unauthorized, try to refresh the token
-    const odspTokens = await refreshAccessToken(server, clientConfig, tokens);
-    return requestCallback(odspTokens.accessToken);
+        // All code paths (deltas, blobs, trees) already throw exceptions.
+        // Throwing is better than returning null as most code paths do not return nullable-objects,
+        // and error reporting is better (for example, getDeltas() will log error to telemetry)
+        // getTree() path is the only potential exception where returning null might result in
+        // document being opened, though there maybe really bad user experience (consuming thousands of ops)
+        throw e;
+    });
 }
 
 function getRequestHandler(resolve, reject) {
@@ -130,10 +131,13 @@ async function getAsync(
     url: string,
     headers?: any): Promise<IRequestResult> {
 
-    return requestWithRefresh(server, clientConfig, tokens, async (token: string) => {
+    return getWithRetryForTokenRefresh(async (refresh: boolean) => {
+        let odspTokens: IODSPTokens = tokens;
+        if (refresh) {
+            odspTokens = await refreshAccessToken(server, clientConfig, tokens);
+        }
         return new Promise((resolve, reject) => {
-            // console.log(`GET: ${url}`);
-            request.get({ url, headers, auth: { bearer: token } }, getRequestHandler(resolve, reject));
+            request.get({ url, headers, auth: { bearer: odspTokens.accessToken } }, getRequestHandler(resolve, reject));
         });
     });
 }
@@ -145,10 +149,13 @@ async function putAsync(
     url: string,
     headers?: any): Promise<IRequestResult> {
 
-    return requestWithRefresh(server, clientConfig, tokens, async (token: string) => {
+    return getWithRetryForTokenRefresh(async (refresh: boolean) => {
+        let odspTokens: IODSPTokens = tokens;
+        if (refresh) {
+            odspTokens = await refreshAccessToken(server, clientConfig, tokens);
+        }
         return new Promise((resolve, reject) => {
-            // console.log(`PUT: ${url}`);
-            request.put({ url, headers, auth: { bearer: token } }, getRequestHandler(resolve, reject));
+            request.put({ url, headers, auth: { bearer: odspTokens.accessToken } }, getRequestHandler(resolve, reject));
         });
     });
 }
