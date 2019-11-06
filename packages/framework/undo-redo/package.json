@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-undo-redo",
-  "version": "0.11.0",
+  "version": "0.12.0",
   "description": "Undo Redo",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -22,13 +22,13 @@
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "dependencies": {
-    "@microsoft/fluid-map": "^0.11.0",
-    "@microsoft/fluid-merge-tree": "^0.11.0",
-    "@microsoft/fluid-sequence": "^0.11.0"
+    "@microsoft/fluid-map": "^0.12.0",
+    "@microsoft/fluid-merge-tree": "^0.12.0",
+    "@microsoft/fluid-sequence": "^0.12.0"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.4.4",
-    "@microsoft/fluid-build-common": "^0.11.0",
+    "@microsoft/fluid-build-common": "^0.12.0",
     "@types/debug": "^0.0.31",
     "@types/diff": "^3.5.1",
     "@types/mocha": "^5.2.5",

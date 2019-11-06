@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/key-value",
-  "version": "0.11.0",
+  "version": "0.12.0",
   "description": "Chaincode representing a key-value pair",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -25,18 +25,18 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "@microsoft/fluid-component-core-interfaces": "^0.11.0",
-    "@microsoft/fluid-component-runtime": "^0.11.0",
-    "@microsoft/fluid-container-definitions": "^0.11.0",
-    "@microsoft/fluid-container-runtime": "^0.11.0",
-    "@microsoft/fluid-map": "^0.11.0",
-    "@microsoft/fluid-runtime-definitions": "^0.11.0",
-    "@microsoft/fluid-shared-object-base": "^0.11.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.12.0",
+    "@microsoft/fluid-component-runtime": "^0.12.0",
+    "@microsoft/fluid-container-definitions": "^0.12.0",
+    "@microsoft/fluid-container-runtime": "^0.12.0",
+    "@microsoft/fluid-map": "^0.12.0",
+    "@microsoft/fluid-runtime-definitions": "^0.12.0",
+    "@microsoft/fluid-shared-object-base": "^0.12.0",
     "debug": "^4.1.1"
   },
   "devDependencies": {
-    "@microsoft/fluid-build-common": "^0.11.0",
-    "@microsoft/fluid-webpack-component-loader": "^0.11.0",
+    "@microsoft/fluid-build-common": "^0.12.0",
+    "@microsoft/fluid-webpack-component-loader": "^0.12.0",
     "@types/node": "^10.12.12",
     "rimraf": "^2.6.2",
     "source-map-loader": "^0.2.4",

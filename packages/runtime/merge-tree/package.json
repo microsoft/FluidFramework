@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-merge-tree",
-  "version": "0.11.0",
+  "version": "0.12.0",
   "description": "Merge tree",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -24,15 +24,15 @@
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "dependencies": {
-    "@microsoft/fluid-component-core-interfaces": "^0.11.0",
-    "@microsoft/fluid-container-definitions": "^0.11.0",
-    "@microsoft/fluid-core-utils": "^0.11.0",
-    "@microsoft/fluid-protocol-definitions": "^0.11.0",
-    "@microsoft/fluid-runtime-definitions": "^0.11.0"
+    "@microsoft/fluid-component-core-interfaces": "^0.12.0",
+    "@microsoft/fluid-container-definitions": "^0.12.0",
+    "@microsoft/fluid-core-utils": "^0.12.0",
+    "@microsoft/fluid-protocol-definitions": "^0.12.0",
+    "@microsoft/fluid-runtime-definitions": "^0.12.0"
   },
   "devDependencies": {
-    "@microsoft/fluid-build-common": "^0.11.0",
-    "@microsoft/fluid-test-runtime-utils": "^0.11.0",
+    "@microsoft/fluid-build-common": "^0.12.0",
+    "@microsoft/fluid-test-runtime-utils": "^0.12.0",
     "@types/diff": "^3.5.1",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.12.12",
