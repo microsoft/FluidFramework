@@ -292,6 +292,11 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
         this.intervalTree.map(fn);
     }
 
+    public deleteInterval(intervalToRemove: TInterval): void {
+        this.intervalTree.remove(intervalToRemove);
+        this.endIntervalTree.remove(intervalToRemove);
+    }
+
     public findOverlappingIntervals(startPosition: number, endPosition: number) {
         if (!this.intervalTree.intervals.isEmpty()) {
             const transientInterval =
@@ -419,6 +424,17 @@ export class SequenceIntervalCollectionValueType
                     value.addInternal(params, local, op);
                 },
             },
+        ],
+        [
+            "delete",
+            {
+                process: (value, params, local, op) => {
+                    if (local) {
+                        return;
+                    }
+                    value.deleteIntervalInternal(params);
+                },
+            },
         ]]);
 }
 
@@ -485,6 +501,17 @@ export class IntervalCollectionValueType
                     value.addInternal(params, local, op);
                 },
             },
+        ],
+        [
+            "delete",
+            {
+                process: (value, params, local, op) => {
+                    if (local) {
+                        return;
+                    }
+                    value.deleteIntervalInternal(params);
+                },
+            },
         ]]);
 }
 
@@ -541,7 +568,7 @@ export class IntervalCollectionView<TInterval extends ISerializableInterval> ext
 
     /* tslint:disable:no-unnecessary-override */
     public on(
-        event: "addInterval",
+        event: "addInterval" | "delete",
         listener: (interval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage) => void): this {
         return super.on(event, listener);
     }
@@ -590,6 +617,15 @@ export class IntervalCollectionView<TInterval extends ISerializableInterval> ext
         this.emit("addInterval", interval, local, op);
 
         return this;
+    }
+
+    public deleteInterval(intervalToRemove: TInterval) {
+        this.deleteIntervalInternal(intervalToRemove);
+        this.emitter.emit("delete", undefined, intervalToRemove);
+    }
+
+    public deleteIntervalInternal(intervalToRemove: TInterval) {
+        this.localCollection.deleteInterval(intervalToRemove);
     }
 
     public serializeInternal() {
@@ -680,6 +716,17 @@ export class IntervalCollection<TInterval extends ISerializableInterval> {
         }
 
         return this.view.addInternal(serializedInterval, local, op);
+    }
+
+    public deleteIntervalInternal(intervalToRemove: TInterval): void {
+        this.view.deleteIntervalInternal(intervalToRemove);
+    }
+
+    public deleteInterval(intervalToRemove: TInterval): void {
+        if (!this.view) {
+            throw new Error("attach must be called prior to deleting intervals");
+        }
+        this.view.deleteInterval(intervalToRemove);
     }
 
     public serializeInternal() {
