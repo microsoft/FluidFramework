@@ -42,16 +42,22 @@ export class Pond extends PrimedComponent implements IComponentHTMLVisual {
   protected async componentInitializingFirstTime() {
     // await this.createSubComponent<Clicker>(this.clickerKey, ClickerName);
     // ...replaced with
+
+    // craft the factory request
     const factoryRequest = {
       url: "/_registry",
       headers: {
         pkg: ClickerName,
       },
     };
+
+    // request the factory
     const factory = await this.context.hostRuntime.request(factoryRequest);
     if (factory.status === 200) {
+      // If the factory exist we'll see if it supports component creator pattern
       const f = (factory.value as IComponent).IComponentCreator;
       if (f) {
+        // If it support the pattern we will create the component and set it to the root as a handle
         const c = await f.createComponent(this.context) as Clicker;
         this.root.set(this.clickerKey, c.handle);
       }
