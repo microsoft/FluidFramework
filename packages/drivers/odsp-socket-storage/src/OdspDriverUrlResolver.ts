@@ -4,8 +4,8 @@
  */
 
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { getHashedDocumentId } from "@microsoft/fluid-odsp-utils";
 import { IResolvedUrl, IUrlResolver } from "@microsoft/fluid-protocol-definitions";
-import * as sha from "sha.js";
 import { IOdspResolvedUrl } from "./contracts";
 
 function getSnapshotUrl(siteUrl: string, driveId: string, itemId: string) {
@@ -38,12 +38,12 @@ function removeBeginningSlash(str: string): string {
   return str;
 }
 
-export class OdspUrlResolver implements IUrlResolver {
+export class OdspDriverUrlResolver implements IUrlResolver {
   constructor() { }
 
   public async resolve(request: IRequest): Promise<IResolvedUrl> {
     const { siteUrl, driveId, itemId, path } = this.decodeOdspUrl(request.url);
-    const hashedDocumentId = new sha.sha256().update(`${siteUrl}_${driveId}_${itemId}`).digest("hex");
+    const hashedDocumentId = getHashedDocumentId(driveId, itemId);
 
     let documentUrl = `fluid-odsp://placeholder/placeholder/${hashedDocumentId}/${removeBeginningSlash(path)}`;
 

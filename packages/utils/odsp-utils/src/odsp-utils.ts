@@ -4,6 +4,7 @@
  */
 
 import * as request from "request";
+import * as sha from "sha.js";
 
 export interface IODSPTokens {
     accessToken: string;
@@ -157,6 +158,10 @@ async function putAsync(
             request.put({ url, headers, auth: { bearer: odspTokens.accessToken } }, getRequestHandler(resolve, reject));
         });
     });
+}
+
+export function getHashedDocumentId(driveId: string, itemId: string): string {
+    return new sha.sha256().update(`${driveId}_${itemId}`).digest("base64");
 }
 
 interface IODSPUser {
