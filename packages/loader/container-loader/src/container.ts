@@ -62,7 +62,7 @@ import { ContainerContext } from "./containerContext";
 import { debug } from "./debug";
 import { DeltaManager } from "./deltaManager";
 import { DeltaManagerProxy } from "./deltaManagerProxy";
-import { Loader, LoaderHeader, RelativeLoader } from "./loader";
+import { IConnectFlags, Loader, LoaderHeader, RelativeLoader } from "./loader";
 import { NullChaincode } from "./nullRuntime";
 import { pkgName, pkgVersion } from "./packageVersion";
 import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
@@ -118,7 +118,11 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             container.on("error", onError);
 
             const version = request.headers && request.headers[LoaderHeader.version];
-            const connection = request.headers && request.headers[LoaderHeader.connect] || "";
+            let connection = request.headers && request.headers[LoaderHeader.connect];
+            connection = connection || {
+                open: true,
+                pause: false,
+            };
 
             return container.load(version, connection)
                 .then(() => {
@@ -553,17 +557,17 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
      *   - otherwise, version sha to load snapshot
      * @param connection - options (list of keywords). Accepted options are open & pause.
      */
-    private async load(specifiedVersion: string | null | undefined, connection: string): Promise<void> {
-        const connectionValues = connection.split(",");
-        const connect = connectionValues.indexOf("open") !== -1;
-        const pause = connectionValues.indexOf("pause") !== -1;
+    private async load(specifiedVersion: string | null | undefined, connection: IConnectFlags): Promise<void> {
+        // const connectionValues = connection.split(",");
+        // const connect = connectionValues.indexOf("open") !== -1;
+        // const pause = connectionValues.indexOf("pause") !== -1;
 
         const perfEvent = PerformanceEvent.start(this.logger, { eventName: "Load" });
 
         // Start websocket connection as soon as possible.  Note that there is no op handler attached yet, but the
         // DeltaManager is resilient to this and will wait to start processing ops until after it is attached.
-        this.createDeltaManager(connect);
-        if (connect && !pause) {
+        this.createDeltaManager(connection.open);
+        if (connection.open && !connection.pause) {
             this.connectToDeltaStream();
         }
 
@@ -573,7 +577,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         const maybeSnapshotTree = specifiedVersion === null ? undefined
             : await this.fetchSnapshotTree(specifiedVersion);
 
-        // if !connect || pause, and there's no tree, then we'll start the websocket connection here (we'll need
+        // if !open || pause, and there's no tree, then we'll start the websocket connection here (we'll need
         // the details later)
         if (!maybeSnapshotTree) {
             this.connectToDeltaStream();
@@ -584,7 +588,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         const attributes = await this.getDocumentAttributes(this.storageService, maybeSnapshotTree);
 
         // attach op handlers to start processing ops
-        this.attachDeltaManagerOpHandler(attributes, connect);
+        this.attachDeltaManagerOpHandler(attributes, connection.open);
 
         // ...load in the existing quorum
         // Initialize the protocol handler
@@ -627,7 +631,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             version: maybeSnapshotTree ? maybeSnapshotTree.id : undefined,
         });
 
-        if (connect && !pause) {
+        if (connection.open && !connection.pause) {
             this.resume();
         }
     }

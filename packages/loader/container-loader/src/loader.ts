@@ -42,6 +42,11 @@ interface IParsedUrl {
     version: string | null | undefined;
 }
 
+export interface IConnectFlags {
+    open: boolean;
+    pause: boolean;
+}
+
 export enum LoaderHeader {
     cache = "fluid-cache",
     clientDetails = "fluid-client-type",
@@ -65,7 +70,7 @@ export enum LoaderHeader {
 export interface ILoaderHeader {
     [LoaderHeader.cache]: boolean;
     [LoaderHeader.clientDetails]: IClientDetails;
-    [LoaderHeader.connect]: string;
+    [LoaderHeader.connect]: IConnectFlags;
     [LoaderHeader.executionContext]: string;
     [LoaderHeader.sequenceNumber]: number;
     [LoaderHeader.reconnect]: boolean;
@@ -369,7 +374,11 @@ export class Loader extends EventEmitter implements ILoader {
 
         request.headers = request.headers ? request.headers : {};
         if (!request.headers[LoaderHeader.connect]) {
-            request.headers[LoaderHeader.connect] = !parsed.version ? "open" : "close";
+            // request.headers[LoaderHeader.connect] = !parsed.version ? "open" : "close";
+            request.headers[LoaderHeader.connect] = {
+                open: !!parsed.version,
+                pause: false,
+            };
         }
 
         if (request.headers[LoaderHeader.cache] === false) {
@@ -377,8 +386,10 @@ export class Loader extends EventEmitter implements ILoader {
         } else {
             // If connection header is pure open or close we will cache it. Otherwise custom load behavior
             // and so we will not cache the request
-            canCache = request.headers[LoaderHeader.connect] === "open"
-                || request.headers[LoaderHeader.connect] === "close";
+            // canCache = request.headers[LoaderHeader.connect] === "open"
+            //     || request.headers[LoaderHeader.connect] === "close";
+            const connHeaders = request.headers[LoaderHeader.connect];
+            canCache = !!(connHeaders && connHeaders.pause);
         }
 
         const headerSeqNum = request.headers[LoaderHeader.sequenceNumber];
