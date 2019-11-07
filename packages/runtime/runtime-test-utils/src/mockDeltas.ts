@@ -130,11 +130,6 @@ export class MockDeltaManager extends EventEmitter
         return;
     }
 
-    public async getDeltas(
-        reason: string, from: number, to?: number): Promise<ISequencedDocumentMessage[]> {
-        return [];
-    }
-
     public attachOpHandler(
         minSequenceNumber: number,
         sequenceNumber: number,
