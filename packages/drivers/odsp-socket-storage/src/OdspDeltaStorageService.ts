@@ -4,12 +4,12 @@
  */
 
 import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
+import { getWithRetryForTokenRefresh } from "@microsoft/fluid-odsp-utils";
 import * as api from "@microsoft/fluid-protocol-definitions";
 import { IDeltaStorageGetResponse, ISequencedDeltaOpMessage } from "./contracts";
 import { IFetchWrapper } from "./fetchWrapper";
 import { getQueryString } from "./getQueryString";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
-import { getWithRetryForTokenRefresh } from "./OdspUtils";
 
 /**
  * Provides access to the underlying delta storage on the server for sharepoint driver.

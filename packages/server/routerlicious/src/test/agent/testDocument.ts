@@ -11,6 +11,7 @@ import {
 } from "@microsoft/fluid-container-definitions";
 import * as utils from "@microsoft/fluid-core-utils";
 import {
+    IClientDetails,
     IDocumentMessage,
     ISequencedDocumentMessage,
     IServiceConfiguration,
@@ -93,7 +94,8 @@ export class TestDeltaManager
 
     public inboundSignal = new TestDeltaQueue<ISignalMessage>();
 
-    public clientType = "Browser";
+    public clientType = "";
+    public clientDetails: IClientDetails = { capabilities: { interactive: true} };
 
     public version = "^0.1.0";
 

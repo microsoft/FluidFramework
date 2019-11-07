@@ -26,7 +26,7 @@ describe("Loader", () => {
             const submitEvent = "test-submit";
 
             async function startDeltaManager() {
-                await deltaManager.connect("test");
+                await deltaManager.connect();
                 await deltaManager.inbound.resume();
                 await deltaManager.outbound.resume();
                 await deltaManager.inboundSignal.resume();
@@ -59,7 +59,7 @@ describe("Loader", () => {
                     undefined,
                     () => deltaConnection,
                 );
-                const client: Partial<IClient> = { mode: "write" };
+                const client: Partial<IClient> = { mode: "write", details: { capabilities: { interactive: true } } };
 
                 deltaManager = new DeltaManager(
                     service,

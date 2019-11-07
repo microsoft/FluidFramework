@@ -5,12 +5,22 @@
 
 import { IUser } from "./users";
 
-export const Browser = "browser";
 export type ConnectionMode = "write" | "read";
+
+export interface ICapabilities {
+    interactive: boolean;
+}
+export interface IClientDetails {
+    capabilities: ICapabilities;
+    type?: string;
+    environment?: string;
+    device?: string;
+}
 
 export interface IClient {
     mode?: ConnectionMode;
-    type: string;
+    type?: string; // deprecated; please don't use anymore
+    details: IClientDetails;
     permission: string[];
     user: IUser;
     scopes: string[];

@@ -24,5 +24,3 @@ export interface IComponentFactory extends IProvideComponentFactory {
      */
     instantiateComponent(context: IComponentContext): void;
 }
-
-export type ComponentFactoryTypes = IComponentFactory | { instantiateComponent(context: IComponentContext): void; };

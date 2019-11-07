@@ -195,7 +195,7 @@ export class SummaryManager extends EventEmitter {
             return;
         }
 
-        if (this.context.clientType === "summarizer") {
+        if (this.context.clientDetails.type === "summarizer") {
             // Make sure that the summarizer client does not load another summarizer.
             return;
         }
@@ -248,7 +248,10 @@ export class SummaryManager extends EventEmitter {
         const request: IRequest = {
             headers: {
                 [LoaderHeader.cache]: false,
-                [LoaderHeader.clientType]: "summarizer",
+                [LoaderHeader.clientDetails]: {
+                    capabilities: { interactive: false },
+                    type: "summarizer",
+                },
                 [LoaderHeader.reconnect]: false,
                 [LoaderHeader.sequenceNumber]: this.context.deltaManager.referenceSequenceNumber,
                 [LoaderHeader.executionContext]: this.enableWorker ? "worker" : undefined,

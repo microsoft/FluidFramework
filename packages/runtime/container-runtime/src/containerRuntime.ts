@@ -37,7 +37,6 @@ import {
     readAndParse,
 } from "@microsoft/fluid-core-utils";
 import {
-    Browser,
     IChunkedOp,
     IDocumentMessage,
     IDocumentStorageService,
@@ -52,8 +51,6 @@ import {
     SummaryType,
 } from "@microsoft/fluid-protocol-definitions";
 import {
-    ComponentFactoryTypes,
-    ComponentRegistryTypes,
     FlushMode,
     IAttachMessage,
     IComponentRegistry,
@@ -62,6 +59,7 @@ import {
     IHelpMessage,
     IHostRuntime,
     IInboundSignalMessage,
+    NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";
@@ -69,6 +67,7 @@ import { EventEmitter } from "events";
 import * as uuid from "uuid/v4";
 import { ComponentContext, LocalComponentContext, RemotedComponentContext } from "./componentContext";
 import { ComponentHandleContext } from "./componentHandleContext";
+import { ComponentRegistry } from "./componentRegistry";
 import { debug } from "./debug";
 import { DocumentStorageServiceProxy } from "./documentStorageServiceProxy";
 import {
@@ -364,11 +363,11 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
      */
     public static async load(
         context: IContainerContext,
-        registry: ComponentRegistryTypes,
+        registryEntries: NamedComponentRegistryEntries,
         requestHandlers: RuntimeRequestHandler[] = [],
         runtimeOptions?: IContainerRuntimeOptions,
     ): Promise<ContainerRuntime> {
-        const componentRegistry = new WrappedComponentRegistry(registry);
+        const componentRegistry = new ContainerRuntimeComponentRegistry(registryEntries);
 
         const chunkId = context.baseSnapshot.blobs[".chunks"];
         const chunks = chunkId
@@ -418,7 +417,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this.context.clientId;
     }
 
-    public get clientType(): string {
+    public get clientType(): string | undefined {
         return this.context.clientType;
     }
 
@@ -1315,7 +1314,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     }
 
     private subscribeToLeadership() {
-        if (this.context.clientType === Browser) {
+        if (this.context.clientDetails.capabilities.interactive) {
             this.getScheduler().then((scheduler) => {
                 if (scheduler.leader) {
                     this.updateLeader(true);
@@ -1395,24 +1394,14 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 }
 
 // Wraps the provided list of packages and augments with some system level services.
-export class WrappedComponentRegistry implements IComponentRegistry {
+class ContainerRuntimeComponentRegistry extends ComponentRegistry {
 
-    private readonly agentScheduler: AgentSchedulerFactory;
+    constructor(namedEntries: NamedComponentRegistryEntries) {
 
-    constructor(private readonly registry: ComponentRegistryTypes,
-                private readonly extraRegistries?: Map<string, Promise<ComponentFactoryTypes>>) {
-        this.agentScheduler = new AgentSchedulerFactory();
+        super([
+            ...namedEntries,
+            [schedulerId, Promise.resolve(new AgentSchedulerFactory())],
+        ]);
     }
 
-    public get IComponentRegistry() { return this; }
-
-    public async get(pkgName: string): Promise<ComponentFactoryTypes> {
-        if (pkgName === schedulerId) {
-            return this.agentScheduler;
-        } else if (this.extraRegistries && this.extraRegistries.has(pkgName)) {
-            return this.extraRegistries.get(pkgName);
-        } else {
-            return this.registry.get(pkgName);
-        }
-    }
 }

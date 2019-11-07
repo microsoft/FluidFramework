@@ -38,7 +38,7 @@ import { IProvideComponentRegistry } from "./componentRegistry";
 /**
  * Represents the runtime for the component. Contains helper functions/state of the component.
  */
-export interface IComponentRuntime extends EventEmitter, IComponentRouter {
+export interface IComponentRuntime extends EventEmitter, IComponentRouter, Partial<IProvideComponentRegistry>  {
     readonly IComponentRouter: IComponentRouter;
 
     readonly IComponentSerializer: IComponentSerializer;
@@ -201,7 +201,7 @@ export interface IComponentContext extends EventEmitter {
     readonly existing: boolean;
     readonly options: any;
     readonly clientId: string;
-    readonly clientType: string;
+    readonly clientType: string | undefined;
     readonly parentBranch: string;
     readonly connected: boolean;
     readonly leader: boolean;
@@ -260,7 +260,7 @@ export interface IComponentContext extends EventEmitter {
      * @param pkg - Package name of the component.
      * @param props - properties to be passed to the instantiateComponent thru the context.
      */
-    createSubComponent(pkg: string, props?: any): Promise<IComponentRuntime>;
+    createSubComponent(pkg: string | string[], props?: any): Promise<IComponentRuntime>;
 
     /**
      * Returns the runtime of the component.
@@ -315,7 +315,7 @@ export interface IHostRuntime extends
     readonly existing: boolean;
     readonly options: any;
     readonly clientId: string;
-    readonly clientType: string;
+    readonly clientType: string | undefined;
     readonly parentBranch: string;
     readonly connected: boolean;
     readonly leader: boolean;

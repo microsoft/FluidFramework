@@ -33,9 +33,9 @@ import {
     TelemetryLogger,
 } from "@microsoft/fluid-core-utils";
 import {
-    Browser,
     FileMode,
     IClient,
+    IClientDetails,
     IDocumentAttributes,
     IDocumentMessage,
     IDocumentService,
@@ -73,6 +73,8 @@ import { Quorum, QuorumProxy } from "./quorum";
 
 // tslint:disable-next-line:no-var-requires
 const performanceNow = require("performance-now") as (() => number);
+// tslint:disable-next-line:no-var-requires no-submodule-imports
+const merge = require("lodash/merge");
 
 const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
@@ -171,6 +173,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
     private firstConnection = true;
     private readonly connectionTransitionTimes: number[] = [];
+    private messageCountAfterDisconnection: number = 0;
 
     private _closed = false;
 
@@ -218,8 +221,12 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return this._scopes;
     }
 
-    public get clientType(): string {
+    public get clientType(): string | undefined {
         return this._deltaManager!.clientType;
+    }
+
+    public get clientDetails(): IClientDetails {
+        return this._deltaManager!.clientDetails;
     }
 
     public get chaincodePackage(): string | IFluidCodeDetails | undefined {
@@ -259,8 +266,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     ) {
         super();
 
-        const [, documentId] = id.split("/");
-        this._id = decodeURI(documentId);
+        const [, docId] = id.split("/");
+        this._id = decodeURI(docId);
         this._scopes = this.getScopes(options);
         this._audience = new Audience();
         this.canReconnect = !(originalRequest.headers && originalRequest.headers[LoaderHeader.reconnect] === false);
@@ -270,8 +277,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             "fluid:telemetry",
             logger,
             {
-                documentId: this.id,
-                canReconnect: this.canReconnect, // differentiating summarizer container from main container
+                docId: this.id,
+                clientType: this.client.details.type, // differentiating summarizer container from main container
                 packageName: TelemetryLogger.sanitizePkgName(pkgName),
                 packageVersion: pkgVersion,
             },
@@ -522,10 +529,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return versions[0];
     }
 
-    private connectToDeltaStream() {
+    private async connectToDeltaStream() {
         if (!this.connectionDetailsP) {
             this.connectionTransitionTimes[ConnectionState.Disconnected] = performanceNow();
-            this.connectionDetailsP = this._deltaManager!.connect("Document loading");
+            this.connectionDetailsP = this._deltaManager!.connect();
         }
         return this.connectionDetailsP;
     }
@@ -788,26 +795,38 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return Promise.reject(PackageNotFactoryError);
     }
 
-    private createDeltaManager(connect: boolean): void {
-        // Create the DeltaManager and begin listening for connection events
+    private get client() {
         // tslint:disable-next-line:no-unsafe-any
-        const clientDetails: IClient = this.options && this.options.client
+        const client: IClient = this.options && this.options.client
             // tslint:disable-next-line:no-unsafe-any
             ? (this.options.client as IClient)
             : {
-                type: Browser,
+                details: {
+                    capabilities: {interactive: true},
+                },
                 permission: [],
                 scopes: [],
                 user: { id: "" },
             };
-        const headerClientType = this.originalRequest.headers && this.originalRequest.headers[LoaderHeader.clientType];
-        if (headerClientType) {
-            clientDetails.type = headerClientType;
+
+        // client info from headers overrides client info from loader options
+        const headerClientDetails = this.originalRequest.headers
+            && this.originalRequest.headers[LoaderHeader.clientDetails];
+        if (headerClientDetails) {
+            // tslint:disable-next-line: no-unsafe-any
+            merge(client.details, headerClientDetails);
         }
+        return client;
+    }
+
+    private createDeltaManager(connect: boolean): void {
+        // Create the DeltaManager and begin listening for connection events
+        // tslint:disable-next-line:no-unsafe-any
+        const client = this.client;
 
         this._deltaManager = new DeltaManager(
             this.service,
-            clientDetails,
+            client,
             ChildLogger.create(this.subLogger, "DeltaManager"),
             this.canReconnect,
         );
@@ -837,8 +856,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                 this._audience.clear();
 
                 const priorClients = details.initialClients ? details.initialClients : [];
-                for (const client of priorClients) {
-                    this._audience.addMember(client.clientId, client.client);
+                for (const priorClient of priorClients) {
+                    this._audience.addMember(priorClient.clientId, priorClient.client);
                 }
             });
 
@@ -915,14 +934,13 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             pendingClientId: this.pendingClientId,
         });
 
-        if (value === ConnectionState.Connected) {
+        if (value === ConnectionState.Connected && this.firstConnection) {
             // We just logged event with disconnected/connecting -> connected time
             // Log extra event recording disconnected -> connected time, as well as provide some extra info.
             // We can group that info in previous event, but it's easier to analyze telemetry if these are
             // two separate events (actually - three!).
             this.logger.sendPerformanceEvent({
-                eventName:
-                    this.firstConnection ? "ConnectionStateChange_InitialConnect" : "ConnectionStateChange_Reconnect",
+                eventName: "ConnectionStateChange_InitialConnect",
                 duration: time - this.connectionTransitionTimes[ConnectionState.Disconnected],
                 durationCatchUp: time - this.connectionTransitionTimes[ConnectionState.Connecting],
                 reason,
@@ -984,9 +1002,17 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
     private propagateConnectionState() {
         assert(this.loaded);
+        const logOpsOnReconnect: boolean = this._connectionState === ConnectionState.Connected && !this.firstConnection;
+        if (logOpsOnReconnect) {
+            this.messageCountAfterDisconnection = 0;
+        }
         this.context!.changeConnectionState(this._connectionState, this.clientId!, this._version!);
         this.protocolHandler!.quorum.changeConnectionState(this._connectionState, this.clientId!);
         raiseConnectedEvent(this, this._connectionState, this.clientId!);
+        if (logOpsOnReconnect) {
+            this.logger.sendTelemetryEvent(
+                { eventName: "OpsSentOnReconnect", count: this.messageCountAfterDisconnection });
+        }
     }
 
     private submitMessage(type: MessageType, contents: any, batch?: boolean, metadata?: any): number {
@@ -995,6 +1021,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             return -1;
         }
 
+        this.messageCountAfterDisconnection += 1;
         return this._deltaManager!.submit(type, contents, batch, metadata);
     }
 

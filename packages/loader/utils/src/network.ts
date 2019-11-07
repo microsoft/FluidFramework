@@ -13,9 +13,10 @@ export class NetworkError extends Error implements INetworkError {
 
     constructor(
             errorMessage: string,
-            customProperties: [string, any][]) {
+            customProperties: [string, any][],
+            online = OnlineStatus[isOnline()]) {
         super(errorMessage);
-        customProperties.push([INetworkErrorProperties.online, OnlineStatus[isOnline()]]);
+        customProperties.push([INetworkErrorProperties.online, online]);
         for (const [key, val] of customProperties) {
             Object.defineProperty(NetworkError.prototype, key, {
                 get: () => {
@@ -33,22 +34,6 @@ export class NetworkError extends Error implements INetworkError {
         }
         return prop;
     }
-}
-
-export function throwNetworkError(
-        errorMessage: string,
-        statusCode: number,
-        canRetry: boolean,
-        response?: Response) {
-    let message = errorMessage;
-    if (response) {
-        message = `${message}, msg = ${response.statusText}, type = ${response.type}`;
-    }
-    throw new NetworkError(message, [
-        [INetworkErrorProperties.statusCode , statusCode],
-        [INetworkErrorProperties.canRetry, canRetry],
-        [INetworkErrorProperties.sprequestguid, response ? `${response.headers.get("sprequestguid")}` : undefined],
-    ]);
 }
 
 export enum INetworkErrorProperties {

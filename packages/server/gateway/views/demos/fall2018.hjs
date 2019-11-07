@@ -16,7 +16,7 @@
             </p>
             <h3>Demo</h3>
             <ul class="list-unstyled">
-                <li><a href="/loader/fluid/{{componentsMoniker}}?chaincode=@chaincode/shared-text@{{version}}&template=pp.txt" target="_blank">Prague Pride and Prejudice</a></li>
+                <li><a href="/loader/fluid/{{componentsMoniker}}?chaincode=@fluid-example/shared-text@{{version}}&template=pp.txt" target="_blank">Prague Pride and Prejudice</a></li>
             </ul>
 
             <p>
@@ -56,7 +56,7 @@
             <h4>Pinpoint Maps</h4>
             <ul class="list-unstyled">
                 <li><a href="https://www.wsj.com/articles/when-napoleon-met-his-waterloo-he-was-out-of-town-1433894903" target="_blank">WSJ Article</a></li>
-                <li><a href="/loader/fluid/{{napoleonMoniker}}?chaincode=@chaincode/shared-text@{{version}}&template=napoleon.txt" target="_blank">Prague Starter Article</a></li>
+                <li><a href="/loader/fluid/{{napoleonMoniker}}?chaincode=@fluid-example/shared-text@{{version}}&template=napoleon.txt" target="_blank">Prague Starter Article</a></li>
                 <li><a href="/loader/fluid/{{pinpointMoniker}}?chaincode=@chaincode/pinpoint-editor@0.6.15" target="_blank">Pinpoint Editor</a></li>
             </ul>
             <p>
@@ -134,7 +134,7 @@
                 The Monaco code editor is also available as a Prague document.
             </p>
             <ul class="list-unstyled">
-                <li><a href="/loader/fluid/{{monacoMoniker}}?chaincode=@chaincode/monaco@{{version}}" target="_blank">Monaco</a></li>
+                <li><a href="/loader/fluid/{{monacoMoniker}}?chaincode=@fluid-example/monaco@{{version}}" target="_blank">Monaco</a></li>
             </ul>
 
             <h2>SharePoint (DEPRECATED)</h2>

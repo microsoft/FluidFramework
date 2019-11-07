@@ -30,11 +30,9 @@ export class TestWebSocket implements core.IWebSocket {
     }
 
     public broadcastToRoom(roomId: string, event: string, ...args: any[]) {
-        throw new Error("Broadcasting not allowed in local-dev-server. Use emit()");
     }
 
     public emitToRoom(roomId: string, event: string, ...args: any[]) {
-        throw new Error("Emitting to room not allowed in local-dev-server. Use emit()");
     }
 
     public removeListener(event: string, listener: (...args: any[]) => void) {

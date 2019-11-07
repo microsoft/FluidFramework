@@ -99,7 +99,9 @@ async function *loadAllSequencedMessages(
         const client: IClient = {
             permission: [],
             scopes: [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
-            type: "browser",
+            details: {
+                capabilities: { interactive: true },
+            },
             user: { id: "blah" },
         };
         console.log("Retrieving messages from web socket");

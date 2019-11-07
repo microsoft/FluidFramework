@@ -29,10 +29,10 @@ import {
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
 import {
-    ComponentFactoryTypes,
+    ComponentRegistryEntry,
     IAttachMessage,
     IComponentContext,
-    IComponentRegistry,
+    IComponentFactory,
     IComponentRuntime,
     IEnvelope,
     IHostRuntime,
@@ -83,7 +83,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this._hostRuntime.clientId;
     }
 
-    public get clientType(): string {
+    public get clientType(): string | undefined {
         return this._hostRuntime.clientType;
     }
 
@@ -161,14 +161,17 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this.hostRuntime.createComponent(pkgOrId, pkg);
     }
 
-    public async createSubComponent(pkg: string, props?: any): Promise<IComponentRuntime> {
+    public async createSubComponent(pkg: string | string[], props?: any): Promise<IComponentRuntime> {
         const details = await this.getInitialSnapshotDetails();
         const packagePath: string[] = [...details.pkg];
-        // A factory could not contain the registry for itself. So do not add a package in
-        // path if it is same as the last one.
-        if (packagePath.length > 0 && pkg !== packagePath[packagePath.length - 1]) {
-            packagePath.push(pkg);
+        const pkgs = Array.isArray(pkg) ? pkg : [pkg];
+        // A factory could not contain the registry for itself. So remove the fist
+        // passed package if it is the same as the last snapshot pkg
+        if (packagePath.length > 0 && pkg === packagePath[packagePath.length - 1]) {
+            pkgs.shift();
         }
+        packagePath.push(... pkgs);
+
         const pkgId = uuid();
         return this.hostRuntime._createComponentWithProps(packagePath, props, pkgId);
     }
@@ -186,14 +189,19 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
                 this.summaryTracker.setBaseTree(details.snapshot);
             }
             const packages = details.pkg;
+            let entry: ComponentRegistryEntry;
             let registry = this._hostRuntime.IComponentRegistry;
-            let factory: ComponentFactoryTypes & Partial<IComponentRegistry>;
+            let factory: IComponentFactory;
             for (const pkg of packages) {
                 if (!registry) {
                     throw new Error("Factory does not supply the component Registry");
                 }
-                factory = await registry.get(pkg);
-                registry = factory.IComponentRegistry;
+                entry = await registry.get(pkg);
+                if (entry === undefined) {
+                    break;
+                }
+                factory = entry.IComponentFactory;
+                registry = entry.IComponentRegistry;
             }
 
             // During this call we will invoke the instantiate method - which will call back into us
