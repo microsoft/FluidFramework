@@ -5,6 +5,7 @@
 
 import {
     ConnectionMode,
+    IClientDetails,
     IContentMessage,
     ISequencedDocumentMessage,
     IServiceConfiguration,
@@ -32,7 +33,6 @@ export interface IConnectionDetails {
 }
 
 export interface IProcessMessageResult {
-    error?: any;
     immediateNoOp?: boolean;
 }
 
@@ -43,7 +43,7 @@ export interface IDeltaHandlerStrategy {
     /**
      * Processes the message.
      */
-    process: (message: ISequencedDocumentMessage, callback: (result: IProcessMessageResult) => void) => void;
+    process: (message: ISequencedDocumentMessage) => IProcessMessageResult;
 
     /**
      * Processes the signal.
@@ -93,7 +93,10 @@ export interface IDeltaManager<T, U> extends EventEmitter, IDeltaSender, IDispos
     initialSequenceNumber: number;
 
     // Type of client
-    clientType: string;
+    clientType: string | undefined;
+
+    // Details of client
+    clientDetails: IClientDetails;
 
     // Protocol version being used to communicate with the service
     version: string;
@@ -140,13 +143,14 @@ export interface IDeltaQueue<T> extends EventEmitter, IDisposable {
 
     /**
      * Pauses processing on the queue
+     * @returns A promise which resolves when processing has been paused.
      */
     pause(): Promise<void>;
 
     /**
      * Resumes processing on the queue
      */
-    resume(): Promise<void>;
+    resume(): void;
 
     /**
      * Peeks at the next message in the queue
@@ -160,11 +164,12 @@ export interface IDeltaQueue<T> extends EventEmitter, IDisposable {
 
     /**
      * System level pause
+     * @returns A promise which resolves when processing has been paused.
      */
     systemPause(): Promise<void>;
 
     /**
      * System level resume
      */
-    systemResume(): Promise<void>;
+    systemResume(): void;
 }

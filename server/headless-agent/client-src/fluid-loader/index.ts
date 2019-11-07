@@ -5,7 +5,7 @@
 
 import { registerAttach } from "@microsoft/fluid-base-host";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
-import { Browser, IFluidResolvedUrl } from "@microsoft/fluid-protocol-definitions";
+import { IFluidResolvedUrl } from "@microsoft/fluid-protocol-definitions";
 import { RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
 import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
 import { WebCodeLoader } from "@microsoft/fluid-web-code-loader";
@@ -95,7 +95,7 @@ function checkContainerActivity(container: Container) {
             (window as IWindow).closeContainer();
         } else {
             for (const client of quorum.getMembers()) {
-                if (!client[1].client || !client[1].client.type || client[1].client.type === Browser) {
+                if (!client[1].client || !client[1].client.details.capabilities.interactive) {
                     return;
                 }
             }

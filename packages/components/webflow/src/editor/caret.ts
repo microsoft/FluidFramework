@@ -7,6 +7,7 @@ import { CaretEventType, Direction, Dom, getDeltaX, getDeltaY, ICaretEvent } fro
 import { LocalReference } from "@microsoft/fluid-merge-tree";
 import { DocSegmentKind, getDocSegmentKind } from "../document";
 import { clamp } from "../util";
+import { ownsNode } from "../util/event";
 import { updateRef } from "../util/localref";
 import { Tag } from "../util/tag";
 import { eotSegment, Layout } from "../view/layout";
@@ -92,6 +93,11 @@ export class Caret {
     }
 
     public sync() {
+        if (!ownsNode(this.layout.root as HTMLElement, document.activeElement)) {
+            debug("  Caret.sync() ignored -- Editor not focused.");
+            return;
+        }
+
         debug("  Caret.sync()");
         const { node: startNode, nodeOffset: startOffset } = this.positionToNodeOffset(this.startRef);
         const { node: endNode, nodeOffset: endOffset } = this.positionToNodeOffset(this.endRef);

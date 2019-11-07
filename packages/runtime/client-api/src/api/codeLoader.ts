@@ -19,7 +19,6 @@ import { ConsensusRegisterCollection } from "@microsoft/fluid-register-collectio
 import {
     IComponentContext,
     IComponentFactory,
-    IComponentRegistry,
     IHostRuntime,
 } from "@microsoft/fluid-runtime-definitions";
 import * as sequence from "@microsoft/fluid-sequence";
@@ -95,18 +94,6 @@ class Chaincode implements IComponentFactory {
     }
 }
 
-class BackCompatLoader implements IComponentRegistry {
-    constructor(private readonly chaincode: Chaincode) {
-    }
-
-    public get IComponentRegistry() { return this; }
-
-    public async get(name: string): Promise<IComponentFactory> {
-        // Back compat loader simply returns a kitchen sink component with all the data types
-        return Promise.resolve(this.chaincode);
-    }
-}
-
 export class ChaincodeFactory implements IRuntimeFactory {
 
     public get IRuntimeFactory() { return this; }
@@ -132,11 +119,10 @@ export class ChaincodeFactory implements IRuntimeFactory {
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
         const chaincode = new Chaincode();
-        const registry = new BackCompatLoader(chaincode);
 
         const runtime = await ContainerRuntime.load(
             context,
-            registry,
+            [["@fluid-internal/client-api", Promise.resolve(chaincode)]],
             [ChaincodeFactory.containerRequestHandler],
             this.runtimeOptions);
 

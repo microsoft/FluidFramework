@@ -26,10 +26,10 @@ describe("Loader", () => {
             const submitEvent = "test-submit";
 
             async function startDeltaManager() {
-                await deltaManager.connect("test");
-                await deltaManager.inbound.resume();
-                await deltaManager.outbound.resume();
-                await deltaManager.inboundSignal.resume();
+                await deltaManager.connect();
+                deltaManager.inbound.resume();
+                deltaManager.outbound.resume();
+                deltaManager.inboundSignal.resume();
                 deltaManager.updateQuorumJoin();
             }
 
@@ -59,7 +59,7 @@ describe("Loader", () => {
                     undefined,
                     () => deltaConnection,
                 );
-                const client: Partial<IClient> = { mode: "write" };
+                const client: Partial<IClient> = { mode: "write", details: { capabilities: { interactive: true } } };
 
                 deltaManager = new DeltaManager(
                     service,
@@ -68,8 +68,8 @@ describe("Loader", () => {
                     false,
                 );
                 deltaManager.attachOpHandler(0, 0, {
-                    process(message, callback) {
-                        callback(intendedResult);
+                    process(message) {
+                        return intendedResult;
                     },
                     processSignal() {},
                 }, true);

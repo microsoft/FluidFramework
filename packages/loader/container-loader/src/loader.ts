@@ -17,6 +17,7 @@ import {
 } from "@microsoft/fluid-container-definitions";
 import { configurableUrlResolver, Deferred } from "@microsoft/fluid-core-utils";
 import {
+    IClientDetails,
     IDocumentService,
     IDocumentServiceFactory,
     IFluidResolvedUrl,
@@ -39,6 +40,41 @@ interface IParsedUrl {
      * If needed, can add undefined which is treated by Container.load() as load latest snapshot.
      */
     version: string | null | undefined;
+}
+
+export enum LoaderHeader {
+    cache = "fluid-cache",
+    clientDetails = "fluid-client-type",
+
+    /**
+     * connection options (list of keywords). Accepted options are open & pause.
+     */
+    connect = "connect",
+    executionContext = "execution-context",
+    sequenceNumber = "fluid-sequence-number",
+    reconnect = "fluid-reconnect",
+
+    /**
+     * One of the following:
+     * null or "null": use ops, no snapshots
+     * undefined: fetch latest snapshot
+     * otherwise, version sha to load snapshot
+     */
+    version = "version",
+}
+export interface ILoaderHeader {
+    [LoaderHeader.cache]: boolean;
+    [LoaderHeader.clientDetails]: IClientDetails;
+    [LoaderHeader.connect]: string;
+    [LoaderHeader.executionContext]: string;
+    [LoaderHeader.sequenceNumber]: number;
+    [LoaderHeader.reconnect]: boolean;
+    [LoaderHeader.version]: string | undefined | null;
+}
+
+declare module "@microsoft/fluid-component-core-interfaces" {
+    export interface IRequestHeader extends Partial<ILoaderHeader> {
+    }
 }
 
 export class RelativeLoader extends EventEmitter implements ILoader {
@@ -90,14 +126,14 @@ export class RelativeLoader extends EventEmitter implements ILoader {
         }
 
         const noCache =
-            request.headers["fluid-cache"] === false ||
-            request.headers["fluid-reconnect"] === false;
+            request.headers[LoaderHeader.cache] === false ||
+            request.headers[LoaderHeader.reconnect] === false;
 
         return !noCache;
     }
 
     private needExecutionContext(request: IRequest): boolean {
-        return (request.headers !== undefined && request.headers["execution-context"] !== undefined);
+        return (request.headers !== undefined && request.headers[LoaderHeader.executionContext] !== undefined);
     }
 }
 
@@ -277,13 +313,15 @@ export class Loader extends EventEmitter implements ILoader {
         request.headers = request.headers ? request.headers : {};
         const {canCache, fromSequenceNumber } = this.parseHeader(parsed, request);
 
-        debug(`${canCache} ${request.headers.connect} ${request.headers.version}`);
+        debug(`${canCache} ${request.headers[LoaderHeader.connect]} ${request.headers[LoaderHeader.version]}`);
         const factory: IDocumentServiceFactory =
             selectDocumentServiceFactoryForProtocol(resolvedAsFluid, this.protocolToDocumentFactoryMap);
 
         let container: Container;
         if (canCache) {
-            const versionedId = request.headers.version ? `${parsed.id}@${request.headers.version}` : parsed.id;
+            const versionedId = request.headers[LoaderHeader.version]
+                ? `${parsed.id}@${request.headers[LoaderHeader.version]}`
+                : parsed.id;
             const maybeContainer = await this.containers.get(versionedId);
             if (maybeContainer) {
                 container = maybeContainer;
@@ -330,28 +368,30 @@ export class Loader extends EventEmitter implements ILoader {
         let fromSequenceNumber = -1;
 
         request.headers = request.headers ? request.headers : {};
-        if (!request.headers.connect) {
-            request.headers.connect = !parsed.version ? "open" : "close";
+        if (!request.headers[LoaderHeader.connect]) {
+            request.headers[LoaderHeader.connect] = !parsed.version ? "open" : "close";
         }
 
-        if (request.headers["fluid-cache"] === false) {
+        if (request.headers[LoaderHeader.cache] === false) {
             canCache = false;
         } else {
             // If connection header is pure open or close we will cache it. Otherwise custom load behavior
             // and so we will not cache the request
-            canCache = request.headers.connect === "open" || request.headers.connect === "close";
+            canCache = request.headers[LoaderHeader.connect] === "open"
+                || request.headers[LoaderHeader.connect] === "close";
         }
 
-        if (request.headers["fluid-sequence-number"]) {
-            fromSequenceNumber = request.headers["fluid-sequence-number"] as number;
+        const headerSeqNum = request.headers[LoaderHeader.sequenceNumber];
+        if (headerSeqNum) {
+            fromSequenceNumber = headerSeqNum;
         }
 
         // if set in both query string and headers, use query string
-        request.headers.version = parsed.version || request.headers.version as string;
+        request.headers[LoaderHeader.version] = parsed.version || request.headers[LoaderHeader.version];
 
         // version === null means not use any snapshot.
-        if (request.headers.version === "null") {
-            request.headers.version = null;
+        if (request.headers[LoaderHeader.version] === "null") {
+            request.headers[LoaderHeader.version] = null;
         }
         return {
             canCache,
@@ -359,10 +399,6 @@ export class Loader extends EventEmitter implements ILoader {
         };
     }
 
-    // @param version -one of the following
-    //   - null: use ops, no snapshots
-    //   - undefined - fetch latest snapshot
-    //   - otherwise, version sha to load snapshot
     private loadContainer(
         id: string,
         documentService: IDocumentService,

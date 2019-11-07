@@ -200,14 +200,6 @@ export async function start(
         url,
     };
 
-    // Create a config... will allow for snapshotting
-    const config = {
-        client: {
-            permission: [
-            ],
-            type: "browser",
-        },
-    };
     const urlResolver = getUrlResolver(options);
     const npm = getNpm(options);
 
@@ -242,7 +234,7 @@ export async function start(
         pkg,
         scriptIds,
         npm,
-        config,
+        {},
         {},
         double ? leftDiv : div,
         hostConf,
@@ -263,7 +255,7 @@ export async function start(
             pkg,
             scriptIds,
             npm,
-            config,
+            {},
             {},
             rightDiv,
             hostConf2,

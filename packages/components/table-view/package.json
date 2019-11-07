@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/table-view",
-  "version": "0.11.0",
+  "version": "0.12.0",
   "description": "Chaincode component that provides a view for a table-document.",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -29,17 +29,17 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "@fluid-example/flow-util-lib": "^0.11.0",
-    "@fluid-example/table-document": "^0.11.0",
-    "@microsoft/fluid-aqueduct": "^0.11.0",
-    "@microsoft/fluid-component-core-interfaces": "^0.11.0",
-    "@microsoft/fluid-container-definitions": "^0.11.0",
-    "@microsoft/fluid-map": "^0.11.0",
-    "@microsoft/fluid-runtime-definitions": "^0.11.0"
+    "@fluid-example/flow-util-lib": "^0.12.0",
+    "@fluid-example/table-document": "^0.12.0",
+    "@microsoft/fluid-aqueduct": "^0.12.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.12.0",
+    "@microsoft/fluid-container-definitions": "^0.12.0",
+    "@microsoft/fluid-map": "^0.12.0",
+    "@microsoft/fluid-runtime-definitions": "^0.12.0"
   },
   "devDependencies": {
-    "@microsoft/fluid-build-common": "^0.11.0",
-    "@microsoft/fluid-webpack-component-loader": "^0.11.0",
+    "@microsoft/fluid-build-common": "^0.12.0",
+    "@microsoft/fluid-webpack-component-loader": "^0.12.0",
     "@types/node": "^10.12.12",
     "concurrently": "^4.1.0",
     "copyfiles": "^2.1.0",

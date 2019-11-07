@@ -61,10 +61,12 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
             // WARNING: Exceptions can contain PII!
             // For example, XHR will throw object derived from Error that contains config information
             // for failed request, including all the headers, and thus - user tokens!
-            const errorAsObject = error as { stack?: string; message?: string, statusCode?: number };
+            // Extract only call stack, message, and couple network-related properties form error object
+            const errorAsObject = error as {
+                stack?: string;
+                message?: string;
+            };
 
-            // Extract call stack from exception if available
-            // Same for message if there is one (see Error object).
             event.stack = errorAsObject.stack;
             event.error = errorAsObject.message;
             // tslint:disable-next-line: no-unsafe-any
@@ -75,7 +77,6 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
         }
 
         // Collect stack if we were not able to extract it from error
-        event.stackFromError = (event.stack !== undefined);
         if (event.stack === undefined && fetchStack) {
             event.stack = TelemetryLogger.getStack();
         }
@@ -115,7 +116,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      * @param error - optional error object to log
      */
     public sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any) {
-        const newEvent: ITelemetryBaseEvent = { ...event, category: "generic" };
+        const newEvent: ITelemetryBaseEvent = { ...event, category: event.category ? event.category : "generic" };
         if (error !== undefined) {
             TelemetryLogger.prepareErrorObject(newEvent, error, false);
         }
@@ -123,7 +124,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
     }
 
     /**
-     * Send am error event with the logger
+     * Send an error telemetry event with the logger
      *
      * @param event - the event to send
      * @param error - optional error object to log
@@ -135,12 +136,16 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
     }
 
     /**
-     * Send error telemetry event
+     * Send a performance telemetry event with the logger
+     *
      * @param event - Event to send
      * @param error - optional error object to log
      */
     public sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void {
-        const perfEvent: ITelemetryBaseEvent = { ...event, category: "performance" };
+        const perfEvent: ITelemetryBaseEvent = {
+            ...event,
+            category: event.category ? event.category : "performance",
+        };
         if (error !== undefined) {
             TelemetryLogger.prepareErrorObject(perfEvent, error, false);
         }
@@ -191,7 +196,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      */
     public shipAssert(condition: boolean, event?: ITelemetryErrorEvent): void {
         if (!condition) {
-            const realEvent: ITelemetryErrorEvent = event === undefined ? { eventName: "" } : event;
+            const realEvent: ITelemetryErrorEvent = event === undefined ? { eventName: "Assert" } : event;
             realEvent.isAssert = true;
             realEvent.stack = TelemetryLogger.getStack();
             this.sendErrorEvent(realEvent);
@@ -200,11 +205,9 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
 
     protected prepareEvent(event: ITelemetryBaseEvent): ITelemetryBaseEvent {
         const newEvent: ITelemetryBaseEvent = { ...this.properties, ...event };
-        if (newEvent.package === undefined) {
-            newEvent.package = {
-                name: TelemetryLogger.sanitizePkgName(pkgName),
-                version: pkgVersion,
-            };
+        if (newEvent.packageVersion === undefined) {
+            newEvent.packageName = TelemetryLogger.sanitizePkgName(pkgName);
+            newEvent.packageVersion = pkgVersion;
         }
         if (this.namespace !== undefined) {
             newEvent.eventName = `${this.namespace}${TelemetryLogger.eventNamespaceSeparator}${newEvent.eventName}`;
@@ -407,7 +410,8 @@ export class DebugLogger extends TelemetryLogger {
      */
     public send(event: ITelemetryBaseEvent): void {
         const newEvent: ITelemetryProperties = this.prepareEvent(event);
-        let logger = newEvent.category === "error" ? this.debugErr : this.debug;
+        const isError = newEvent.category === "error";
+        let logger = isError ? this.debugErr : this.debug;
 
         // Use debug's coloring schema for base of the event
         const index = event.eventName.lastIndexOf(TelemetryLogger.eventNamespaceSeparator);
@@ -439,6 +443,11 @@ export class DebugLogger extends TelemetryLogger {
 
         if (payload === "{}") {
             payload = "";
+        }
+
+        // Force errors out, to help with diagnostics
+        if (isError) {
+            logger.enabled = true;
         }
 
         // print multi-line.

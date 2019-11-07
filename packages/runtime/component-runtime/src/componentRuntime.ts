@@ -38,6 +38,7 @@ import {
     IAttachMessage,
     IChannel,
     IComponentContext,
+    IComponentRegistry,
     IComponentRuntime,
     IEnvelope,
     IInboundSignalMessage,
@@ -61,10 +62,19 @@ export interface ISharedObjectRegistry {
  * Base component class
  */
 export class ComponentRuntime extends EventEmitter implements IComponentRuntime, IComponentHandleContext {
+    /**
+     * Loads the component runtime
+     * @param context - The component context
+     * @param sharedObjectRegistry - The registry of shared objects used by this component
+     * @param activeCallback - The callback called when the component runtime in active
+     * @param componentRegistry - The regisitry of components created and used by this component
+     */
     public static load(
         context: IComponentContext,
-        registry: ISharedObjectRegistry,
+        sharedObjectRegistry: ISharedObjectRegistry,
         activeCallback: (runtime: ComponentRuntime) => void,
+        componentRegistry?: IComponentRegistry,
+
     ): void {
         const logger = ChildLogger.create(context.hostRuntime.logger, undefined, { componentId: context.id });
         const runtime = new ComponentRuntime(
@@ -80,7 +90,8 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
             context.getAudience(),
             context.snapshotFn,
             context.closeFn,
-            registry,
+            sharedObjectRegistry,
+            componentRegistry,
             logger);
 
         context.bindRuntime(runtime);
@@ -105,7 +116,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         return this.componentContext.clientId;
     }
 
-    public get clientType(): string {
+    public get clientType(): string | undefined {
         return this.componentContext.clientType;
     }
 
@@ -128,6 +139,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
     public get IComponentSerializer() { return this.componentContext.hostRuntime.IComponentSerializer; }
 
     public get IComponentHandleContext() { return this; }
+    public get IComponentRegistry() { return this.componentRegistry; }
 
     private readonly contexts = new Map<string, IChannelContext>();
     private readonly contextsDeferred = new Map<string, Deferred<IChannelContext>>();
@@ -152,7 +164,8 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         private readonly audience: IAudience,
         private readonly snapshotFn: (message: string) => Promise<void>,
         private readonly closeFn: () => void,
-        private readonly registry: ISharedObjectRegistry,
+        private readonly sharedObjectRegistry: ISharedObjectRegistry,
+        private readonly componentRegistry: IComponentRegistry | undefined,
         public readonly logger: ITelemetryLogger,
     ) {
         super();
@@ -170,7 +183,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
                     (type, content) => this.submit(type, content),
                     path,
                     tree.trees[path],
-                    this.registry,
+                    this.sharedObjectRegistry,
                     new Map(),
                     componentContext.branch,
                     undefined);
@@ -249,7 +262,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
 
         const context = new LocalChannelContext(
             id,
-            this.registry,
+            this.sharedObjectRegistry,
             type,
             this,
             this.componentContext,
@@ -429,7 +442,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
                         (type, content) => this.submit(type, content),
                         attachMessage.id,
                         snapshotTree,
-                        this.registry,
+                        this.sharedObjectRegistry,
                         flatBlobs,
                         origin,
                         { type: attachMessage.type });

@@ -13,6 +13,7 @@ import {
 } from "@microsoft/fluid-component-core-interfaces";
 import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
 import { ConnectionState } from "@microsoft/fluid-container-definitions";
+import { LoaderHeader } from "@microsoft/fluid-container-loader";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import { ConsensusRegisterCollection } from "@microsoft/fluid-register-collection";
 import {
@@ -359,10 +360,14 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
     private async runTask(url: string, worker: boolean) {
         const request: IRequest = {
             headers: {
-                "fluid-cache": false,
-                "fluid-reconnect": false,
-                "fluid-sequence-number": this.context.deltaManager.referenceSequenceNumber,
-                "execution-context": worker ? "worker" : undefined,
+                [LoaderHeader.cache]: false,
+                [LoaderHeader.clientDetails]: {
+                    capabilities: { interactive: false },
+                    type: "agent",
+                },
+                [LoaderHeader.reconnect]: false,
+                [LoaderHeader.sequenceNumber]: this.context.deltaManager.referenceSequenceNumber,
+                [LoaderHeader.executionContext]: worker ? "worker" : undefined,
             },
             url,
         };

@@ -82,7 +82,7 @@ export class DocumentDeltaEventManager {
     public async processIncoming(...docs: IDocumentDeltaEvent[]): Promise<void> {
         const documents = await this.pauseAndValidateDocs(...docs);
         for (const doc of documents) {
-            await doc.deltaManager.inbound.resume();
+            doc.deltaManager.inbound.resume();
         }
         await this.yieldWhileDocumentsHaveWork(
             documents,
@@ -98,7 +98,7 @@ export class DocumentDeltaEventManager {
     public async processOutgoing(...docs: IDocumentDeltaEvent[]): Promise<void> {
         const documents = await this.pauseAndValidateDocs(...docs);
         for (const doc of documents) {
-            await doc.deltaManager.outbound.resume();
+            doc.deltaManager.outbound.resume();
         }
         await this.yieldWhileDocumentsHaveWork(
             documents,
@@ -169,6 +169,7 @@ export class DocumentDeltaEventManager {
     }
 
     private async resumeDocument(doc: IDocumentDeltaEvent) {
-        await Promise.all([doc.deltaManager.inbound.resume(), doc.deltaManager.outbound.resume()]);
+        doc.deltaManager.inbound.resume();
+        doc.deltaManager.outbound.resume();
     }
 }

@@ -5,139 +5,98 @@
 
 import {
     extractBoxcar,
-    // ICollection,
+    ICollection,
     IContext,
     IKafkaMessage,
     IPartitionLambda,
-    // ISequencedOperationMessage,
-    // SequencedOperationType,
+    IRawOperationMessage,
+    IRawOperationMessageBatch,
 } from "@microsoft/fluid-server-services-core";
-// import * as winston from "winston";
 
 export class CopierLambda implements IPartitionLambda {
-    // private pending = new Map<string, ISequencedOperationMessage[]>();
-    // private pendingOffset: number;
-    // private current = new Map<string, ISequencedOperationMessage[]>();
+    // Below, one job corresponds to the task of sending one batch to Mongo:
+    private pendingJobs = new Map<string, IRawOperationMessageBatch[]>();
+    private pendingOffset: number;
+    private currentJobs = new Map<string, IRawOperationMessageBatch[]>();
 
     constructor(
-        // private opCollection: ICollection<any>,
-        // private contentCollection: ICollection<any>,
+        private rawOpCollection: ICollection<any>,
         protected context: IContext) {
-        console.log("lambda constructor");
     }
 
     public handler(message: IKafkaMessage): void {
+        // Extract batch of raw ops from Kafka message:
         const boxcar = extractBoxcar(message);
-        // tslint:disable-next-line: prefer-template
-        console.log("copier got a message! at doc id: " + boxcar.documentId);
+        const batch = boxcar.contents;
+        const topic = `${boxcar.tenantId}/${boxcar.documentId}`;
 
-        // for (const baseMessage of boxcar.contents) {
-        //     if (baseMessage.type === SequencedOperationType) {
-        //         const value = baseMessage as ISequencedOperationMessage;
+        // Extract boxcar contents and group the ops into the message batch:
+        const submittedBatch: IRawOperationMessageBatch = {
+            index: message.offset,
+            documentId: boxcar.documentId,
+            tenantId: boxcar.tenantId,
+            contents: batch.map((m) => (m as IRawOperationMessage)),
+        };
 
-        //         // Remove traces and serialize content before writing to mongo.
-        //         value.operation.traces = [];
+        // Write the batch directly to Mongo:
+        if (!this.pendingJobs.has(topic)) {
+            this.pendingJobs.set(topic, []);
+        }
+        this.pendingJobs.get(topic).push(submittedBatch);
 
-        //         const topic = `${value.tenantId}/${value.documentId}`;
-        //         if (!this.pending.has(topic)) {
-        //             this.pending.set(topic, []);
-        //         }
-
-        //         this.pending.get(topic).push(value);
-        //     }
-        // }
-
-        // this.pendingOffset = message.offset;
-        // this.sendPending();
+        // Update current offset (will be tied to this batch):
+        this.pendingOffset = message.offset;
+        this.sendPending();
     }
 
     public close() {
-        // this.pending.clear();
-        // this.current.clear();
+        this.pendingJobs.clear();
+        this.currentJobs.clear();
 
         return;
     }
 
-    // private sendPending() {
+    private sendPending() {
         // If there is work currently being sent or we have no pending work return early
-        // if (this.current.size > 0 || this.pending.size === 0) {
-        //     return;
-        // }
+        if (this.currentJobs.size > 0 || this.pendingJobs.size === 0) {
+            return;
+        }
 
-        // // Swap current and pending
-        // const temp = this.current;
-        // this.current = this.pending;
-        // this.pending = temp;
-        // const batchOffset = this.pendingOffset;
+        // Swap current and pending
+        const temp = this.currentJobs;
+        this.currentJobs = this.pendingJobs;
+        this.pendingJobs = temp;
+        const batchOffset = this.pendingOffset;
 
-        // const allProcessed = [];
+        const allProcessed = [];
 
-        // // Process all the batches + checkpoint
-        // for (const [, messages] of this.current) {
-        //     const processP = this.processMongoCore(messages);
-        //     allProcessed.push(processP);
-        // }
+        // Process all current jobs on all current topics:
+        for (const [, batch] of this.currentJobs) {
+            const processP = this.processMongoCore(batch);
+            allProcessed.push(processP);
+        }
 
-        // Promise.all(allProcessed).then(
-        //     () => {
-        //         this.current.clear();
-        //         this.context.checkpoint(batchOffset);
-        //         this.sendPending();
-        //     },
-        //     (error) => {
-        //         winston.error(error);
-        //         this.context.error(error, true);
-        //     });
-    // }
+        Promise.all(allProcessed).then(
+            () => {
+                this.currentJobs.clear();
+                this.context.checkpoint(batchOffset);
+                this.sendPending();
+            },
+            (error) => {
+                this.context.error(error, true);
+            });
+    }
 
-    // private async processMongoCore(messages: ISequencedOperationMessage[]): Promise<void> {
-    //     const insertP = this.insertOp(messages);
-    //     const updateP = this.updateSequenceNumber(messages);
-    //     await Promise.all([insertP, updateP]);
-    // }
-
-    // private async insertOp(messages: ISequencedOperationMessage[]) {
-    //     return this.opCollection
-    //         .insertMany(messages, false)
-    //         .catch((error) => {
-    //             // Duplicate key errors are ignored since a replay may cause us to insert twice into Mongo.
-    //             // All other errors result in a rejected promise.
-    //             if (error.code !== 11000) {
-    //                 // Needs to be a full rejection here
-    //                 return Promise.reject(error);
-    //             }
-    //         });
-    // }
-
-    // private async updateSequenceNumber(messages: ISequencedOperationMessage[]) {
-    //     // TODO: Temporary to back compat with local orderer.
-    //     if (this.contentCollection === undefined) {
-    //         return;
-    //     }
-
-    //     const allUpdates = [];
-    //     for (const message of messages) {
-    //         if (message.operation.contents === undefined) {
-    //             const updateP = this.contentCollection.update(
-    //                 {
-    //                     "clientId": message.operation.clientId,
-    //                     "documentId": message.documentId,
-    //                     "op.clientSequenceNumber": message.operation.clientSequenceNumber,
-    //                     "tenantId": message.tenantId,
-    //                 },
-    //                 {
-    //                     sequenceNumber: message.operation.sequenceNumber,
-    //                 },
-    //                 null).catch((error) => {
-    //                     // Same reason as insertOp.
-    //                     if (error.code !== 11000) {
-    //                         return Promise.reject(error);
-    //                     }
-    //                 });
-    //             allUpdates.push(updateP);
-    //         }
-    //     }
-
-    //     await Promise.all(allUpdates);
-    // }
+    private async processMongoCore(kafkaBatches: IRawOperationMessageBatch[]): Promise<void> {
+        await this.rawOpCollection
+            .insertMany(kafkaBatches, false)
+            .catch((error) => {
+                // Duplicate key errors are ignored since a replay may cause us to insert twice into Mongo.
+                // All other errors result in a rejected promise.
+                if (error.code !== 11000) {
+                    // Needs to be a full rejection here
+                    return Promise.reject(error);
+                }
+        });
+    }
 }

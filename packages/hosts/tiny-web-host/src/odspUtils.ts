@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { OdspUrlResolver } from "@microsoft/fluid-odsp-driver";
-import { getDriveItemByFileName, IClientConfig, IODSPTokens } from "@microsoft/fluid-odsp-utils";
+import { OdspDriverUrlResolver } from "@microsoft/fluid-odsp-driver";
+import { getDriveItemByRootFileName, IClientConfig, IODSPTokens } from "@microsoft/fluid-odsp-utils";
 import { IFluidResolvedUrl } from "@microsoft/fluid-protocol-definitions";
 
 const spoTenants = new Map<string, string>([
@@ -61,8 +61,8 @@ export async function spoGetResolvedUrl(
     const encoded = encodeURIComponent(`${id}.b`);
 
     const filePath = `/r11s/${encoded}`;
-    const { drive, item } = await getDriveItemByFileName(server, "", filePath, clientConfig, tokens, true);
-    const odspUrlResolver = new OdspUrlResolver();
+    const { drive, item } = await getDriveItemByRootFileName(server, "", filePath, clientConfig, tokens, true);
+    const odspUrlResolver = new OdspDriverUrlResolver();
     // TODO: pass path
     const encodedDrive = encodeURIComponent(drive);
     const encodedItem = encodeURIComponent(item);
