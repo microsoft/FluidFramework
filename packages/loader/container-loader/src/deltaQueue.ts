@@ -69,7 +69,7 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
     public push(task: T) {
         this.q.push(task);
         this.emit("push", task);
-        this.processDeltas();
+        this.ensureProcessing();
     }
 
     public async pause(): Promise<void> {
@@ -108,46 +108,43 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
                 }
 
                 this._paused = false;
-                this.processDeltas();
+                this.ensureProcessing();
             }
         }
 
         return this.pauseDeferred ? this.pauseDeferred.promise : Promise.resolve();
     }
 
+    private ensureProcessing() {
+        // guard against reentrancy
+        if (!this.processing) {
+            this.processing = true;
+            this.processDeltas();
+            this.processing = false;
+        }
+    }
+
     private processDeltas() {
         // For grouping to work we must process all local messages immediately and in the single turn.
         // So loop over them until no messages to process, we have become paused, or are already processing a delta.
-        while (!(this.q.length === 0 || this._paused || this.processing || this.error)) {
-            // Get the next message in the queue, set processing flag in case we are reentrant.
-            this.processing = true;
+        while (!(this.q.length === 0 || this._paused || this.error)) {
+            // Get the next message in the queue
             const next = this.q.shift();
 
             // Process the message.
             try {
                 this.worker(next!);
-
-                this.processing = false;
-
-                // Signal any pending messages
-                if (this.pauseDeferred) {
-                    this.pauseDeferred.resolve();
-                    this.pauseDeferred = undefined;
-                }
-
                 this.emit("op", next);
             } catch (error) {
-                this.processing = false;
-
-                // Signal any pending messages
-                if (this.pauseDeferred) {
-                    this.pauseDeferred.reject(error);
-                    this.pauseDeferred = undefined;
-                }
-
                 this.error = error;
                 this.emit("error", error);
-                this.q.clear();
+            }
+
+            // If someone tried to pause on the worker stack, resolving the deferred lets them know that we are
+            // exiting the loop.
+            if (this.pauseDeferred) {
+                this.pauseDeferred.resolve();
+                this.pauseDeferred = undefined;
             }
         }
     }
