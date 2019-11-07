@@ -141,7 +141,7 @@ class SharedTextFactoryComponent implements IComponentFactory, IRuntimeFactory {
             { generateSummaries });
 
         // Registering for tasks to run in headless runner.
-        if (!generateSummaries) {
+        if (generateSummaries === false) {
             runtime.registerTasks(["snapshot", "spell", "translation", "cache"], "1.0");
             waitForFullConnection(runtime).then(() => {
                 // Call snapshot directly from runtime.
