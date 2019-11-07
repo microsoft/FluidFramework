@@ -125,8 +125,6 @@ class SharedTextFactoryComponent implements IComponentFactory, IRuntimeFactory {
      * Instantiates a new chaincode host
      */
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-        const generateSummaries = true;
-
         const runtime = await ContainerRuntime.load(
             context,
             [
@@ -138,19 +136,7 @@ class SharedTextFactoryComponent implements IComponentFactory, IRuntimeFactory {
                 ],
             ],
             [SharedTextFactoryComponent.containerRequestHandler],
-            { generateSummaries });
-
-        // Registering for tasks to run in headless runner.
-        if (generateSummaries === false) {
-            runtime.registerTasks(["snapshot", "spell", "translation", "cache"], "1.0");
-            waitForFullConnection(runtime).then(() => {
-                // Call snapshot directly from runtime.
-                if (runtime.clientType === "snapshot") {
-                    console.log(`@fluid-example/shared-text running ${runtime.clientType}`);
-                    Snapshotter.run(runtime);
-                }
-            });
-        }
+            { generateSummaries: true });
 
         // On first boot create the base component
         if (!runtime.existing) {
