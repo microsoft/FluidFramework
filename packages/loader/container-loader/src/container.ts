@@ -33,9 +33,9 @@ import {
     TelemetryLogger,
 } from "@microsoft/fluid-core-utils";
 import {
-    Browser,
     FileMode,
     IClient,
+    IClientDetails,
     IDocumentAttributes,
     IDocumentMessage,
     IDocumentService,
@@ -73,6 +73,8 @@ import { Quorum, QuorumProxy } from "./quorum";
 
 // tslint:disable-next-line:no-var-requires
 const performanceNow = require("performance-now") as (() => number);
+// tslint:disable-next-line:no-var-requires no-submodule-imports
+const merge = require("lodash/merge");
 
 const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
@@ -219,8 +221,12 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return this._scopes;
     }
 
-    public get clientType(): string {
+    public get clientType(): string | undefined {
         return this._deltaManager!.clientType;
+    }
+
+    public get clientDetails(): IClientDetails {
+        return this._deltaManager!.clientDetails;
     }
 
     public get chaincodePackage(): string | IFluidCodeDetails | undefined {
@@ -260,8 +266,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     ) {
         super();
 
-        const [, documentId] = id.split("/");
-        this._id = decodeURI(documentId);
+        const [, docId] = id.split("/");
+        this._id = decodeURI(docId);
         this._scopes = this.getScopes(options);
         this._audience = new Audience();
         this.canReconnect = !(originalRequest.headers && originalRequest.headers[LoaderHeader.reconnect] === false);
@@ -271,8 +277,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             "fluid:telemetry",
             logger,
             {
-                documentId: this.id,
-                clientType: this.client.type, // differentiating summarizer container from main container
+                docId: this.id,
+                clientType: this.client.details.type, // differentiating summarizer container from main container
                 packageName: TelemetryLogger.sanitizePkgName(pkgName),
                 packageVersion: pkgVersion,
             },
@@ -363,7 +369,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         } finally {
             if (this.deltaManager !== undefined) {
-                await this.deltaManager.inbound.systemResume();
+                this.deltaManager.inbound.systemResume();
             }
         }
     }
@@ -421,9 +427,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         await this.loadContext(attributes, storage, snapshot);
 
-        await Promise.all([
-            this.deltaManager!.inbound.systemResume(),
-            this.deltaManager!.inboundSignal.systemResume()]);
+        this.deltaManager!.inbound.systemResume();
+        this.deltaManager!.inboundSignal.systemResume();
     }
 
     private async snapshotCore(tagMessage: string, fullTree: boolean = false) {
@@ -791,30 +796,36 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
     private get client() {
         // tslint:disable-next-line:no-unsafe-any
-        const clientDetails: IClient = this.options && this.options.client
+        const client: IClient = this.options && this.options.client
             // tslint:disable-next-line:no-unsafe-any
             ? (this.options.client as IClient)
             : {
-                type: Browser,
+                details: {
+                    capabilities: {interactive: true},
+                },
                 permission: [],
                 scopes: [],
                 user: { id: "" },
             };
-        const headerClientType = this.originalRequest.headers && this.originalRequest.headers[LoaderHeader.clientType];
-        if (headerClientType) {
-            clientDetails.type = headerClientType;
+
+        // client info from headers overrides client info from loader options
+        const headerClientDetails = this.originalRequest.headers
+            && this.originalRequest.headers[LoaderHeader.clientDetails];
+        if (headerClientDetails) {
+            // tslint:disable-next-line: no-unsafe-any
+            merge(client.details, headerClientDetails);
         }
-        return clientDetails;
+        return client;
     }
 
     private createDeltaManager(connect: boolean): void {
         // Create the DeltaManager and begin listening for connection events
         // tslint:disable-next-line:no-unsafe-any
-        const clientDetails = this.client;
+        const client = this.client;
 
         this._deltaManager = new DeltaManager(
             this.service,
-            clientDetails,
+            client,
             ChildLogger.create(this.subLogger, "DeltaManager"),
             this.canReconnect,
         );
@@ -844,8 +855,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                 this._audience.clear();
 
                 const priorClients = details.initialClients ? details.initialClients : [];
-                for (const client of priorClients) {
-                    this._audience.addMember(client.clientId, client.client);
+                for (const priorClient of priorClients) {
+                    this._audience.addMember(priorClient.clientId, priorClient.client);
                 }
             });
 

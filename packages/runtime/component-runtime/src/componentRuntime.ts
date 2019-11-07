@@ -116,7 +116,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         return this.componentContext.clientId;
     }
 
-    public get clientType(): string {
+    public get clientType(): string | undefined {
         return this.componentContext.clientType;
     }
 

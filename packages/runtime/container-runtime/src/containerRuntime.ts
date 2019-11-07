@@ -37,7 +37,6 @@ import {
     readAndParse,
 } from "@microsoft/fluid-core-utils";
 import {
-    Browser,
     IChunkedOp,
     IDocumentMessage,
     IDocumentStorageService,
@@ -264,8 +263,6 @@ class ScheduleManager {
     public resume() {
         this.paused = false;
         if (!this.localPaused) {
-            // resume is only flipping the state but isn't concerned with the promise result
-            // tslint:disable-next-line:no-floating-promises
             this.deltaManager.inbound.systemResume();
         }
     }
@@ -277,12 +274,12 @@ class ScheduleManager {
         }
 
         this.localPaused = localPaused;
-        const promise = localPaused || this.paused
-            ? this.deltaManager.inbound.systemPause()
-            : this.deltaManager.inbound.systemResume();
-
-        // we do not care about "Resumed while waiting to pause" rejections.
-        promise.catch((err) => {});
+        if (localPaused || this.paused) {
+            // tslint:disable-next-line:no-floating-promises
+            this.deltaManager.inbound.systemPause();
+        } else {
+            this.deltaManager.inbound.systemResume();
+        }
     }
 
     private updatePauseState(sequenceNumber: number) {
@@ -418,7 +415,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this.context.clientId;
     }
 
-    public get clientType(): string {
+    public get clientType(): string | undefined {
         return this.context.clientType;
     }
 
@@ -1315,7 +1312,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     }
 
     private subscribeToLeadership() {
-        if (this.context.clientType === Browser) {
+        if (this.context.clientDetails.capabilities.interactive) {
             this.getScheduler().then((scheduler) => {
                 if (scheduler.leader) {
                     this.updateLeader(true);

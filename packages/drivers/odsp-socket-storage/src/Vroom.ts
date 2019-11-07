@@ -5,10 +5,9 @@
 
 import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
 import { PerformanceEvent } from "@microsoft/fluid-core-utils";
-import { getWithRetryForTokenRefresh } from "@microsoft/fluid-odsp-utils";
 import { ISocketStorageDiscovery } from "./contracts";
 import { OdspCache } from "./odspCache";
-import { fetchHelper, IOdspResponse, throwNetworkError } from "./OdspUtils";
+import { fetchHelper, getWithRetryForTokenRefresh, IOdspResponse, throwNetworkError } from "./OdspUtils";
 
 function getOrigin(url: string) {
   return new URL(url).origin;

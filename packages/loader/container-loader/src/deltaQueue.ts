@@ -13,23 +13,35 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
     private isDisposed: boolean = false;
     private readonly q = new Deque<T>();
 
-    // We expose access to the DeltaQueue in order to allow users (from the console or code) to be able to pause/resume.
-    // But the internal system itself also sometimes needs to override these changes. The system field takes precedence.
+    /**
+     * Tracks whether the system has requested the queue be paused.
+     */
     private sysPause = true;
+
+    /**
+     * Tracks whether the user of the container has requested the queue be paused.
+     */
     private userPause = false;
 
-    private _paused = true;
-
     private error: any | undefined;
-    private processing = false;
-    private pauseDeferred: Deferred<void> | undefined;
+
+    /**
+     * When processing is ongoing, holds a deferred that will resolve once processing stops.
+     * Undefined when not processing.
+     */
+    private processingDeferred: Deferred<void> | undefined;
 
     public get disposed(): boolean {
         return this.isDisposed;
     }
 
+    /**
+     * @returns True if the queue is paused, false if not.
+     */
     public get paused(): boolean {
-        return this._paused;
+        // The queue can be paused by either the user or by the system (e.g. during snapshotting).  If either requests
+        // a pause, then the queue will pause.
+        return this.sysPause || this.userPause;
     }
 
     public get length(): number {
@@ -37,7 +49,7 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
     }
 
     public get idle(): boolean {
-        return !this.processing && this.q.length === 0;
+        return !this.processingDeferred && this.q.length === 0;
     }
 
     /**
@@ -69,88 +81,72 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
     public push(task: T) {
         this.q.push(task);
         this.emit("push", task);
-        this.processDeltas();
+        this.ensureProcessing();
     }
 
     public async pause(): Promise<void> {
         this.userPause = true;
-        return this.updatePause();
+        // If called from within the processing loop, we are in the middle of processing an op.  Return a promise
+        // that will resolve when processing has actually stopped.
+        if (this.processingDeferred) {
+            return this.processingDeferred.promise;
+        }
     }
 
-    public async resume(): Promise<void> {
+    public resume(): void {
         this.userPause = false;
-        return this.updatePause();
+        if (!this.paused) {
+            this.ensureProcessing();
+        }
     }
 
     public async systemPause(): Promise<void> {
         this.sysPause = true;
-        return this.updatePause();
-    }
-
-    public async systemResume(): Promise<void> {
-        this.sysPause = false;
-        return this.updatePause();
-    }
-
-    private async updatePause(): Promise<void> {
-        const paused = this.sysPause || this.userPause;
-        if (paused !== this._paused) {
-            if (paused) {
-                if (this.processing) {
-                    this.pauseDeferred = new Deferred<void>();
-                }
-
-                this._paused = true;
-                this.emit("pause");
-            } else {
-                if (this.pauseDeferred) {
-                    this.pauseDeferred.reject(new Error("Resumed while waiting to pause"));
-                    this.pauseDeferred = undefined;
-                }
-
-                this._paused = false;
-                this.processDeltas();
-                this.emit("resume");
-            }
+        // If called from within the processing loop, we are in the middle of processing an op.  Return a promise
+        // that will resolve when processing has actually stopped.
+        if (this.processingDeferred) {
+            return this.processingDeferred.promise;
         }
-
-        return this.pauseDeferred ? this.pauseDeferred.promise : Promise.resolve();
     }
 
+    public systemResume(): void {
+        this.sysPause = false;
+        if (!this.paused) {
+            this.ensureProcessing();
+        }
+    }
+
+    /**
+     * There are several actions that may need to kick off delta processing, so we want to guard against
+     * accidental reentrancy.  ensureProcessing can be called safely to start the processing loop if it is
+     * not already started.
+     */
+    private ensureProcessing() {
+        if (!this.processingDeferred) {
+            this.processingDeferred = new Deferred<void>();
+            this.processDeltas();
+            this.processingDeferred.resolve();
+            this.processingDeferred = undefined;
+        }
+    }
+
+    /**
+     * Executes the delta processing loop until a stop condition is reached.
+     */
     private processDeltas() {
         // For grouping to work we must process all local messages immediately and in the single turn.
-        // So loop over them until no messages to process, we have become paused, or are already processing a delta.
-        while (!(this.q.length === 0 || this._paused || this.processing || this.error)) {
-            // Get the next message in the queue, set processing flag in case we are reentrant.
-            this.processing = true;
+        // So loop over them until no messages to process, we have become paused, or hit an error.
+        while (!(this.q.length === 0 || this.paused || this.error)) {
+            // Get the next message in the queue
             const next = this.q.shift();
-            this.emit("pre-op", next);
 
             // Process the message.
             try {
                 this.worker(next!);
-
-                this.processing = false;
-
-                // Signal any pending messages
-                if (this.pauseDeferred) {
-                    this.pauseDeferred.resolve();
-                    this.pauseDeferred = undefined;
-                }
-
                 this.emit("op", next);
             } catch (error) {
-                this.processing = false;
-
-                // Signal any pending messages
-                if (this.pauseDeferred) {
-                    this.pauseDeferred.reject(error);
-                    this.pauseDeferred = undefined;
-                }
-
                 this.error = error;
                 this.emit("error", error);
-                this.q.clear();
             }
         }
     }

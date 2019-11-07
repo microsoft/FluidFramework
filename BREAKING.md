@@ -1,9 +1,18 @@
+# 0.12 Breaking Changes
+
+- [Top-level `type` on `IClient` deprecated](#Top-level-type-on-IClient-deprecated)
+
+## Top-level `type` on `IClient` deprecated
+The `type` field on `IClient` has been deprecated and will be removed in the future. There is now an optional type in the new `details` member of `IClient`. Some of the functionality of the top-level `type` field has been replaced by the `capabilities` member in `IClient.details`, specifically the `interactive` boolean is used to distinguish between human and non-human clients.
+
 # 0.11 Breaking Changes
 
 - [SequenceEvent start/end replaced with first/last](#SequenceEvent-startend-replaced-with-firstlast)
 - [Undefined keys and subdirectory names on SharedMap and SharedDirectory throw](#Undefined-keys-and-subdirectory-names-on-SharedMap-and-SharedDirectory-throw)
 - [SharedComponent extends IComponentHandles](#SharedComponent-extends-IComponentHandles)
 - [Remove ComponentFactoryTypes and ComponentRegistryTypes](#Remove-ComponentFactoryTypes-and-ComponentRegistryTypes)
+- [`ContainerRuntime.load` now takes an array of requestHandlers instead of a createRequestHandler function](#ContainerRuntime.load-now-takes-an-array-of-requestHandlers-instead-of-a-createRequestHandler-function)
+- [`Loader` constructor takes a `Map<string, IProxyLoaderFactory>`](#Loader-constructor-takes-a-Mapstring-IProxyLoaderFactory)
 
 ## SequenceEvent start/end replaced with first/last
 The `start` and `end` members of SequenceEvent (and SequenceDeltaEvent) have been replaced with `first` and `last`, which return the first and last range, respectively. The values equivalent to `start` and `end` can be obtained with `first.position` and `last.position + last.segment.cachedLength`.
@@ -44,6 +53,12 @@ ComponentFactoryTypes are un-used as the non-IComponent pattern has been depreca
 
 ComponentRegistryTypes should no longer be needed, as we now accept NamedComponentRegistryEntries which is compatible with getter version of ComponentRegistryTypes.
 For IComponentRegistrys you should make then named registries in the NamedComponentRegistryEntries.
+
+## `ContainerRuntime.load` now takes an array of requestHandlers instead of a createRequestHandler function
+Instead of passing it a createRequestHandler function, passit an array of requestHandlers.
+
+## `Loader` constructor takes a `Map<string, IProxyLoaderFactory>`
+Pass in a new Map<string, IProxyLoaderFactory>.
 
 # 0.10 Breaking Changes
 

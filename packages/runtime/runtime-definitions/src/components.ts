@@ -201,7 +201,7 @@ export interface IComponentContext extends EventEmitter {
     readonly existing: boolean;
     readonly options: any;
     readonly clientId: string;
-    readonly clientType: string;
+    readonly clientType: string | undefined;
     readonly parentBranch: string;
     readonly connected: boolean;
     readonly leader: boolean;
@@ -315,7 +315,7 @@ export interface IHostRuntime extends
     readonly existing: boolean;
     readonly options: any;
     readonly clientId: string;
-    readonly clientType: string;
+    readonly clientType: string | undefined;
     readonly parentBranch: string;
     readonly connected: boolean;
     readonly leader: boolean;

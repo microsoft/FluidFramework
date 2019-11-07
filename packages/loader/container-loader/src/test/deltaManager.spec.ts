@@ -27,9 +27,9 @@ describe("Loader", () => {
 
             async function startDeltaManager() {
                 await deltaManager.connect();
-                await deltaManager.inbound.resume();
-                await deltaManager.outbound.resume();
-                await deltaManager.inboundSignal.resume();
+                deltaManager.inbound.resume();
+                deltaManager.outbound.resume();
+                deltaManager.inboundSignal.resume();
                 deltaManager.updateQuorumJoin();
             }
 
@@ -59,7 +59,7 @@ describe("Loader", () => {
                     undefined,
                     () => deltaConnection,
                 );
-                const client: Partial<IClient> = { mode: "write" };
+                const client: Partial<IClient> = { mode: "write", details: { capabilities: { interactive: true } } };
 
                 deltaManager = new DeltaManager(
                     service,
