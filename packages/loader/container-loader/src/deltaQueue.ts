@@ -18,8 +18,6 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
     private sysPause = true;
     private userPause = false;
 
-    private _paused = true;
-
     private error: any | undefined;
     private processingDeferred: Deferred<void> | undefined;
 
@@ -28,7 +26,7 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
     }
 
     public get paused(): boolean {
-        return this._paused;
+        return this.sysPause || this.userPause;
     }
 
     public get length(): number {
@@ -73,37 +71,34 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
 
     public async pause(): Promise<void> {
         this.userPause = true;
-        return this.updatePause();
+        // If called from within the processing loop, we are in the middle of processing an op.  Return a promise
+        // that will resolve when processing has actually stopped.
+        if (this.processingDeferred) {
+            return this.processingDeferred.promise;
+        }
     }
 
     public async resume(): Promise<void> {
         this.userPause = false;
-        return this.updatePause();
+        if (!this.paused) {
+            this.ensureProcessing();
+        }
     }
 
     public async systemPause(): Promise<void> {
         this.sysPause = true;
-        return this.updatePause();
+        // If called from within the processing loop, we are in the middle of processing an op.  Return a promise
+        // that will resolve when processing has actually stopped.
+        if (this.processingDeferred) {
+            return this.processingDeferred.promise;
+        }
     }
 
     public async systemResume(): Promise<void> {
         this.sysPause = false;
-        return this.updatePause();
-    }
-
-    private async updatePause(): Promise<void> {
-        const paused = this.sysPause || this.userPause;
-        if (paused !== this._paused) {
-            if (paused) {
-                this._paused = true;
-            } else {
-                this._paused = false;
-                this.ensureProcessing();
-            }
+        if (!this.paused) {
+            this.ensureProcessing();
         }
-
-        // Return the processingDeferred - in the pause case, this will resolve after we exit the processing loop
-        return this.processingDeferred ? this.processingDeferred.promise : Promise.resolve();
     }
 
     private ensureProcessing() {
@@ -119,7 +114,7 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
     private processDeltas() {
         // For grouping to work we must process all local messages immediately and in the single turn.
         // So loop over them until no messages to process, we have become paused, or are already processing a delta.
-        while (!(this.q.length === 0 || this._paused || this.error)) {
+        while (!(this.q.length === 0 || this.paused || this.error)) {
             // Get the next message in the queue
             const next = this.q.shift();
 
