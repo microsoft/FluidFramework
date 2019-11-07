@@ -64,7 +64,7 @@ export class EventHubProducer implements IProducer {
         return this.client.close();
     }
 
-    public on(event: string, listener: (...args: any[]) => void): this {
+    public once(event: "producerError", listener: (...args: any[]) => void): this {
         return this;
     }
 

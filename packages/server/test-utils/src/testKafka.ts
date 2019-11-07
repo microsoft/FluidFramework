@@ -107,7 +107,7 @@ export class TestProducer implements core.IProducer {
         return Promise.resolve();
     }
 
-    public on(event: string, listener: (...args: any[]) => void): this {
+    public once(event: "producerError", listener: (...args: any[]) => void): this {
         return this;
     }
 }

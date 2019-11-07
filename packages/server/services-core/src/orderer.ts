@@ -51,7 +51,7 @@ export interface IOrdererConnection {
     /**
      * Error event Handler.
      */
-    on(event: "error", listener: (...args: any[]) => void): void;
+    once(event: "producerError", listener: (...args: any[]) => void): void;
 
     disconnect(): void;
 }

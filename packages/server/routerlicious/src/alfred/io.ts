@@ -196,7 +196,7 @@ export function register(
                 connectionsMap.set(clientId, connection);
 
                 // Eventually we will send disconnect reason as headers to client.
-                connection.on("error", (error) => {
+                connection.once("producerError", (error) => {
                     winston.info(`Disconnecting socket on connection error`, error);
                     socket.disconnect(true);
                 });

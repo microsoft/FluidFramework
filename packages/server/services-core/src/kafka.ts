@@ -78,7 +78,7 @@ export interface IProducer {
     /**
      * Error event Handler.
      */
-    on(event: "error", listener: (...args: any[]) => void): this;
+    once(event: "producerError", listener: (...args: any[]) => void): this;
 }
 
 export interface IPendingBoxcar {

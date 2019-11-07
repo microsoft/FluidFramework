@@ -83,8 +83,8 @@ export class KafkaNodeProducer implements IProducer {
         await util.promisify(((callback) => client.close(callback)) as any)();
     }
 
-    public on(event: string, listener: (...args: any[]) => void): this {
-        this.events.on(event, listener);
+    public once(event: "producerError", listener: (...args: any[]) => void): this {
+        this.events.once(event, listener);
         return this;
     }
 
@@ -193,7 +193,8 @@ export class KafkaNodeProducer implements IProducer {
 
         this.connecting = this.connected = false;
         debug("Kafka error - closing", error);
-        this.events.emit("error", error);
+        this.events.emit("producerError", error);
+        this.connect();
     }
     /**
      * Ensures that the provided topics are ready
