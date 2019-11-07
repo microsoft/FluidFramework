@@ -374,7 +374,6 @@ export class Loader extends EventEmitter implements ILoader {
 
         request.headers = request.headers ? request.headers : {};
         if (!request.headers[LoaderHeader.connect]) {
-            // request.headers[LoaderHeader.connect] = !parsed.version ? "open" : "close";
             request.headers[LoaderHeader.connect] = {
                 open: !!parsed.version,
                 pause: false,
@@ -386,8 +385,6 @@ export class Loader extends EventEmitter implements ILoader {
         } else {
             // If connection header is pure open or close we will cache it. Otherwise custom load behavior
             // and so we will not cache the request
-            // canCache = request.headers[LoaderHeader.connect] === "open"
-            //     || request.headers[LoaderHeader.connect] === "close";
             const connHeaders = request.headers[LoaderHeader.connect];
             canCache = !!(connHeaders && connHeaders.pause);
         }
