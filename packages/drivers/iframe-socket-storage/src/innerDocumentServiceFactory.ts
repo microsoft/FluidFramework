@@ -3,10 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentService,
-        IDocumentServiceFactory,
-        IFluidResolvedUrl,
-        IResolvedUrl } from "@microsoft/fluid-protocol-definitions";
+import {
+    IDocumentService,
+    IDocumentServiceFactory,
+    IFluidResolvedUrl,
+    IResolvedUrl,
+} from "@microsoft/fluid-protocol-definitions";
 import * as Comlink from "comlink";
 import { InnerDocumentService } from "./innerDocumentService";
 import { IDocumentServiceFactoryProxy } from "./outerDocumentServiceFactory";
@@ -50,7 +52,7 @@ export class InnerDocumentServiceFactory implements IDocumentServiceFactory {
                 await create();
             };
 
-            window.addEventListener("message", evtListener, {once: true});
+            window.addEventListener("message", evtListener, { once: true });
 
             // Attempt to connect, does not connect if innerDocumentServiceFactory
             // is created before outerDocumentServiceFactory

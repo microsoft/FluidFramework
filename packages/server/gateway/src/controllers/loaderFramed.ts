@@ -19,7 +19,7 @@ import {
 import { BaseTelemetryNullLogger } from "@microsoft/fluid-core-utils";
 import { WebWorkerLoaderFactory } from "@microsoft/fluid-execution-context-loader";
 import {
-    DocumentServiceProxyFactory,
+    IFrameDocumentServiceProxyFactory,
     InnerDocumentServiceFactory,
     InnerUrlResolver,
 } from "@microsoft/fluid-iframe-driver";
@@ -122,12 +122,13 @@ export async function initialize(
             config,
             tokens: (resolved as IFluidResolvedUrl).tokens,
         };
-        new DocumentServiceProxyFactory(
+
+        (await IFrameDocumentServiceProxyFactory.create(
             selectDocumentServiceFactoryForProtocol(resolved as IFluidResolvedUrl, factoryMap),
             privateSession.frameP,
             options,
             { resolver },
-            ).createDocumentServiceFromRequest({ url });
+            )).createDocumentServiceFromRequest({ url });
     }
 }
 

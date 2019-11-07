@@ -24,6 +24,18 @@ import * as Comlink from "comlink";
 import { debug } from "./debug";
 import { IOuterDocumentDeltaConnectionProxy } from "./innerDocumentDeltaConnection";
 
+const socketIOEvents = [
+    "op",
+    "nack",
+    "pong",
+    "disconnect",
+    "op-content",
+    "signal",
+    "connect_error",
+    "connect_timeout",
+    "connect_document_success",
+];
+
 export interface IDocumentServiceFactoryProxy {
     clients: {
         [clientId: string]: ICombinedDrivers;
@@ -44,12 +56,21 @@ export interface ICombinedDrivers {
  * Creates a proxy outerdocumentservice from either a resolvedURL or a request
  * Remotes the real connection to an iframe
  */
-export class DocumentServiceProxyFactory {
+export class IFrameDocumentServiceProxyFactory {
+
+    public static async create(documentServiceFactory: IDocumentServiceFactory,
+                               frameP: Promise<HTMLIFrameElement>,
+                               options: any,
+                               containerHost: IHost) {
+        const frame = await frameP;
+        return new IFrameDocumentServiceProxyFactory(documentServiceFactory, frame, options, containerHost);
+    }
+
     public readonly protocolName = "fluid-outer:";
     private documentServiceProxy: DocumentServiceFactoryProxy | undefined;
 
     constructor(private readonly documentServiceFactory: IDocumentServiceFactory,
-                private readonly frameP: Promise<HTMLIFrameElement>,
+                private readonly frame: HTMLIFrameElement,
                 private readonly options: any,
                 private readonly containerHost: IHost) {
 
@@ -86,10 +107,9 @@ export class DocumentServiceProxyFactory {
     }
 
     private async createProxy() {
-        const frame = await this.frameP;
 
         // Host guarantees that frame and contentWindow are both loaded
-        const iframeContentWindow = frame!.contentWindow!;
+        const iframeContentWindow = this.frame!.contentWindow!;
 
         iframeContentWindow.window.postMessage("EndpointExposed", "*");
         Comlink.expose(this.documentServiceProxy!.getProxy(), Comlink.windowEndpoint(iframeContentWindow));
@@ -200,59 +220,22 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
         };
     }
 
-    // tslint:disable-next-line: max-func-body-length
     private getOuterDocumentDeltaConnection(deltaStream: IDocumentDeltaConnection) {
 
-        const pendingOps: {type: string, args: any[]}[] = new Array();
+        const pendingOps: { type: string, args: any[] }[] = new Array();
 
-        deltaStream.on("op", async (...args: any[]) => {
-            pendingOps.push({type: "op", args});
-        });
-
-        deltaStream.on("nack", async (...args: any[]) => {
-            pendingOps.push({type: "nack", args});
-        });
-
-        deltaStream.on("pong", async (...args: any[]) => {
-            pendingOps.push({type: "pong", args});
-        });
-
-        deltaStream.on("disconnect", async (...args: any[]) => {
-            pendingOps.push({type: "disconnect", args});
-        });
-
-        deltaStream.on("op-content", async (...args: any[]) => {
-            pendingOps.push({type: "op", args});
-        });
-
-        deltaStream.on("signal", async (...args: any[]) => {
-            pendingOps.push({type: "signal", args});
-        });
-
-        deltaStream.on("connect_error", async (...args: any[]) => {
-            pendingOps.push({type: "connect_error", args});
-        });
-
-        deltaStream.on("connect_timeout", async (...args: any[]) => {
-            pendingOps.push({type: "connect_timeout", args});
-        });
-
-        deltaStream.on("connect_document_success", async (...args: any[]) => {
-            pendingOps.push({type: "connect_document_success", args});
-        });
-
-        deltaStream.on("connect_document_success", async (...args: any[]) => {
-            pendingOps.push({type: "connect_document_success", args});
-        });
+        for (const event of socketIOEvents) {
+            deltaStream.on(event, async (...args: any[]) => pendingOps.push({ type: event, args }));
+        }
 
         const connection = {
             claims: deltaStream.claims,
             clientId: deltaStream.clientId,
             existing: deltaStream.existing,
-            initialContents: deltaStream.initialContents,
-            initialMessages: deltaStream.initialMessages,
-            initialSignals: deltaStream.initialSignals,
-            initialClients: deltaStream.initialClients,
+            get initialClients() { return deltaStream.initialClients; },
+            get initialContents() { return deltaStream.initialContents; },
+            get initialMessages() { return deltaStream.initialMessages; },
+            get initialSignals() { return deltaStream.initialSignals; },
             maxMessageSize: deltaStream.maxMessageSize,
             mode: deltaStream.mode,
             parentBranch: deltaStream.parentBranch,
@@ -281,47 +264,12 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
                     // tslint:disable-next-line: no-floating-promises
                     innerProxy.forwardEvent(op.type, op.args);
                 }
+
                 deltaStream.removeAllListeners();
 
-                deltaStream.on("op", async (...args: any[]) => {
-                    await innerProxy.forwardEvent("op", args);
-                });
-
-                deltaStream.on("nack", async (...args: any[]) => {
-                    await innerProxy.forwardEvent("nack", args);
-                });
-
-                deltaStream.on("pong", async (...args: any[]) => {
-                    await innerProxy.forwardEvent("pong", args);
-                });
-
-                deltaStream.on("disconnect", async (...args: any[]) => {
-                    await innerProxy.forwardEvent("disconnect", args);
-                });
-
-                deltaStream.on("op-content", async (...args: any[]) => {
-                    await innerProxy.forwardEvent("op-content", args);
-                });
-
-                deltaStream.on("signal", async (...args: any[]) => {
-                    await innerProxy.forwardEvent("signal", args);
-                });
-
-                deltaStream.on("connect_error", async (...args: any[]) => {
-                    await innerProxy.forwardEvent("connect_error", args);
-                });
-
-                deltaStream.on("connect_timeout", async (...args: any[]) => {
-                    await innerProxy.forwardEvent("connect_timeout", args);
-                });
-
-                deltaStream.on("connect_document_success", async (...args: any[]) => {
-                    await innerProxy.forwardEvent("connect_document_success", args);
-                });
-
-                deltaStream.on("connect_document_success", async (...args: any[]) => {
-                    await innerProxy.forwardEvent("connect_document_success", args);
-                });
+                for (const event of socketIOEvents) {
+                    deltaStream.on(event, async (...args: any[]) => { await innerProxy.forwardEvent(event, args); });
+                }
             });
 
         const outerMethodsToProxy: IOuterDocumentDeltaConnectionProxy = {
@@ -333,5 +281,4 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
 
         return outerMethodsToProxy;
     }
-
 }
