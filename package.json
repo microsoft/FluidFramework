@@ -57,7 +57,7 @@
     "lerna": "^3.14.1",
     "nyc": "^14.1.1",
     "rimraf": "^2.6.2",
-    "sort-package-json": "tylerbutler/sort-package-json#master",
+    "sort-package-json": "^1.23.1",
     "typescript": "~3.4.5"
   },
   "nyc": {
