@@ -78,7 +78,7 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
         }
     }
 
-    public async resume(): Promise<void> {
+    public resume(): void {
         this.userPause = false;
         if (!this.paused) {
             this.ensureProcessing();
@@ -94,7 +94,7 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
         }
     }
 
-    public async systemResume(): Promise<void> {
+    public systemResume(): void {
         this.sysPause = false;
         if (!this.paused) {
             this.ensureProcessing();

@@ -256,9 +256,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         // We are ready to process inbound messages
         if (resume) {
-            // tslint:disable-next-line:no-floating-promises
             this._inbound.systemResume();
-            // tslint:disable-next-line:no-floating-promises
             this._inboundSignal.systemResume();
 
             // If we have pending ops from web socket, then we can use that to start download
@@ -655,7 +653,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             return;
         }
 
-        // tslint:disable-next-line:no-floating-promises
         this._outbound.systemResume();
 
         this.clientSequenceNumber = 0;

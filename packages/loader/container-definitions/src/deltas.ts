@@ -145,7 +145,7 @@ export interface IDeltaQueue<T> extends EventEmitter, IDisposable {
     /**
      * Resumes processing on the queue
      */
-    resume(): Promise<void>;
+    resume(): void;
 
     /**
      * Peeks at the next message in the queue
@@ -165,5 +165,5 @@ export interface IDeltaQueue<T> extends EventEmitter, IDisposable {
     /**
      * System level resume
      */
-    systemResume(): Promise<void>;
+    systemResume(): void;
 }
