@@ -27,9 +27,9 @@ describe("Loader", () => {
 
             async function startDeltaManager() {
                 await deltaManager.connect();
-                await deltaManager.inbound.resume();
-                await deltaManager.outbound.resume();
-                await deltaManager.inboundSignal.resume();
+                deltaManager.inbound.resume();
+                deltaManager.outbound.resume();
+                deltaManager.inboundSignal.resume();
                 deltaManager.updateQuorumJoin();
             }
 
