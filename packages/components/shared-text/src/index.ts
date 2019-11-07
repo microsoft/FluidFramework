@@ -7,8 +7,6 @@
 // tslint:disable-next-line:no-import-side-effect
 import "./publicpath";
 
-// import { SharedString } from "@prague/sequence";
-import * as Snapshotter from "@fluid-example/snapshotter-agent";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IContainerContext, IRuntime, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
 import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
@@ -20,8 +18,6 @@ import {
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
 import * as sharedTextComponent from "./component";
-// import { GraphIQLView } from "./graphql";
-import { waitForFullConnection } from "./utils";
 
 const math = import(/* webpackChunkName: "math", webpackPrefetch: true */ "@fluid-example/math");
 // const monaco = import(/* webpackChunkName: "monaco", webpackPrefetch: true */ "@fluid-example/monaco");
