@@ -22,7 +22,7 @@ Prerequisites: [Node (with npm)](https://nodejs.org) installed
 3. Auth with VSTS using vsts-npm-auth (Windows only, Linux/Mac instructions
    [here](https://docs.microsoft.com/en-us/azure/devops/artifacts/npm/npmrc?view=azure-devops&tabs=windows))
 
-    `vsts-npm-auth %USERPROFILE%\.npmrc`
+    `vsts-npm-auth -C %USERPROFILE%\.npmrc`
 
 4. Start installing Fluid packages into your package
 

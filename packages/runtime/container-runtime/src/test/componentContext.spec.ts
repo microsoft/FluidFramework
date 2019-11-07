@@ -6,7 +6,6 @@
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { IBlob, IDocumentStorageService, ISnapshotTree } from "@microsoft/fluid-protocol-definitions";
 import {
-    ComponentFactoryTypes,
     IComponentContext,
     IComponentFactory,
     IComponentRegistry,
@@ -27,18 +26,14 @@ describe("Component Context Tests", () => {
         const attachCb = (mR: IComponentRuntime) => {};
         let containerRuntime: ContainerRuntime;
         beforeEach(async () => {
-
-            containerRuntime = {
-                IComponentRegistry: { get: (id: string) => {
-                    const factory = {
-                        IComponentFactory: {
-                            instantiateComponent: (context: IComponentContext) => undefined,
-                        },
-                        instantiateComponent: (context: IComponentContext) =>  undefined,
-                    } as ComponentFactoryTypes & Partial<IComponentRegistry>;
-                    return Promise.resolve(factory);
-                }},
-            } as ContainerRuntime;
+            let registry: IComponentRegistry;
+            let factory: IComponentFactory;
+            factory = { IComponentFactory: factory,  instantiateComponent: (context: IComponentContext) => { } };
+            registry = {
+                IComponentRegistry: registry,
+                get: (pkg) => Promise.resolve(factory),
+            };
+            containerRuntime = { IComponentRegistry: registry} as ContainerRuntime;
         });
 
         it("Check LocalComponent Attributes", () => {
@@ -79,20 +74,13 @@ describe("Component Context Tests", () => {
         });
 
         it("Supplying array of packages in LocalComponentContext should not create exception", async () => {
-            containerRuntime = {
-                IComponentRegistry: { get: (id: string) => {
-                    const factory = {
-                        IComponentFactory: {
-                            instantiateComponent: (context: IComponentContext) => undefined,
-                        },
-                        instantiateComponent: (context: IComponentContext) =>  undefined,
-                    } as ComponentFactoryTypes & Partial<IComponentRegistry>;
-                    factory.IComponentRegistry = { get: (name: string) => {
-                        return Promise.resolve(factory);
-                    }} as IComponentRegistry;
-                    return Promise.resolve(factory);
-                }},
-            } as ContainerRuntime;
+            const registryWithSubRegistries: {[key: string]: any} = { };
+            registryWithSubRegistries.IComponentFactory = registryWithSubRegistries;
+            registryWithSubRegistries.IComponentRegistry = registryWithSubRegistries;
+            registryWithSubRegistries.get = (pkg) => Promise.resolve(registryWithSubRegistries);
+            registryWithSubRegistries.instantiateComponent = (context: IComponentContext) => { };
+
+            containerRuntime = { IComponentRegistry: registryWithSubRegistries } as ContainerRuntime;
             localComponentContext =
                 new LocalComponentContext("Test1", ["TestComp", "SubComp"], containerRuntime, storage, scope, attachCb);
 
@@ -125,18 +113,14 @@ describe("Component Context Tests", () => {
         let scope: IComponent;
         let containerRuntime: ContainerRuntime;
         beforeEach(async () => {
+            const factory: { [key: string]: any } = {};
+            factory.IComponentFactory = factory;
+            factory.instantiateComponent = (context: IComponentContext) => { context.bindRuntime(new MockRuntime()); };
+            const registry: { [key: string]: any } = {};
+            registry.IComponentRegistry = registry;
+            registry.get = (pkg) => Promise.resolve(factory);
 
-            containerRuntime = {
-                IComponentRegistry: {get: (id: string) => {
-                    const factory = {
-                        IComponentFactory: {
-                            instantiateComponent: (context: IComponentContext) => undefined,
-                        },
-                        instantiateComponent: (context: IComponentContext) => context.bindRuntime(new MockRuntime()),
-                    } as IComponentFactory;
-                    return Promise.resolve(factory);
-                }},
-            } as ContainerRuntime;
+            containerRuntime = { IComponentRegistry: registry } as ContainerRuntime;
         });
 
         it("Check RemotedComponent Attributes", async () => {

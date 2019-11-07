@@ -2,20 +2,13 @@
   "name": "@fluid-example/webflow",
   "version": "0.11.0",
   "description": "Collaborative markdown editor.",
+  "repository": "microsoft/FluidFramework",
+  "license": "MIT",
+  "author": "Microsoft",
+  "sideEffects": false,
   "main": "dist/index.js",
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
-  "sideEffects": false,
-  "fluid": {
-    "browser": {
-      "umd": {
-        "files": [
-          "dist/main.bundle.js"
-        ],
-        "library": "main"
-      }
-    }
-  },
   "scripts": {
     "build": "npm run build:compile",
     "build:compile": "concurrently npm:tsc npm:build:esnext npm:webpack npm:build:copy",
@@ -26,8 +19,8 @@
     "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
     "dev": "npm run build:esnext -- --watch",
     "start": "webpack-dev-server --config webpack.config.js --package package.json",
-    "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
     "start:live": "webpack-dev-server --config webpack.config.js --package package.json --env.mode live",
+    "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
     "test": "mocha -r ts-node/register -r ignore-styles --recursive test/**/*.spec.ts --exit",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml --exit",
     "tsc": "tsc",
@@ -35,9 +28,6 @@
     "webpack": "webpack --env.production",
     "webpack:dev": "webpack --env.development"
   },
-  "author": "Microsoft",
-  "repository": "microsoft/FluidFramework",
-  "license": "MIT",
   "dependencies": {
     "@fluid-example/flow-util-lib": "^0.11.0",
     "@microsoft/fluid-aqueduct": "^0.11.0",
@@ -82,5 +72,15 @@
     "webpack-dev-server": "^3.8.0",
     "webpack-merge": "^4.1.2",
     "webpack-visualizer-plugin": "^0.1.11"
+  },
+  "fluid": {
+    "browser": {
+      "umd": {
+        "files": [
+          "dist/main.bundle.js"
+        ],
+        "library": "main"
+      }
+    }
   }
 }

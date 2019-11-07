@@ -2,9 +2,12 @@
   "name": "@fluid-example/flow-intel",
   "version": "0.11.0",
   "description": "Runs agents on webFlow",
+  "repository": "microsoft/FluidFramework",
+  "license": "MIT",
+  "author": "Microsoft",
+  "sideEffects": false,
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "sideEffects": false,
   "scripts": {
     "build": "concurrently npm:build:compile npm:tslint",
     "build:compile": "npm run tsc",
@@ -14,8 +17,12 @@
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
-  "author": "Microsoft",
-  "repository": "microsoft/FluidFramework",
+  "dependencies": {
+    "@fluid-example/webflow": "^0.11.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.11.0",
+    "@microsoft/fluid-map": "^0.11.0",
+    "request": "^2.88.0"
+  },
   "devDependencies": {
     "@microsoft/fluid-build-common": "^0.11.0",
     "@types/node": "^10.12.12",
@@ -24,12 +31,5 @@
     "rimraf": "^2.6.2",
     "tslint": "^5.11.0",
     "typescript": "~3.4.5"
-  },
-  "dependencies": {
-    "@fluid-example/webflow": "^0.11.0",
-    "@microsoft/fluid-component-core-interfaces": "^0.11.0",
-    "@microsoft/fluid-map": "^0.11.0",
-    "request": "^2.88.0"
-  },
-  "license": "MIT"
+  }
 }

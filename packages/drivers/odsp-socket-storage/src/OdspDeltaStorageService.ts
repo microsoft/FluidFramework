@@ -3,12 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
+import { getWithRetryForTokenRefresh } from "@microsoft/fluid-odsp-utils";
 import * as api from "@microsoft/fluid-protocol-definitions";
 import { IDeltaStorageGetResponse, ISequencedDeltaOpMessage } from "./contracts";
 import { IFetchWrapper } from "./fetchWrapper";
 import { getQueryString } from "./getQueryString";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
-import { getWithRetryForTokenRefresh } from "./OdspUtils";
 
 /**
  * Provides access to the underlying delta storage on the server for sharepoint driver.
@@ -22,6 +23,7 @@ export class OdspDeltaStorageService implements api.IDocumentDeltaStorageService
         private readonly fetchWrapper: IFetchWrapper,
         private ops: ISequencedDeltaOpMessage[] | undefined,
         private readonly getStorageToken: (refresh: boolean) => Promise<string | null>,
+        private readonly logger?: ITelemetryLogger,
     ) {
         this.queryString = getQueryString(queryParams);
     }
@@ -48,7 +50,13 @@ export class OdspDeltaStorageService implements api.IDocumentDeltaStorageService
 
             const response = await this.fetchWrapper.get<IDeltaStorageGetResponse>(url, url, headers);
             const deltaStorageResponse = response.content;
-
+            if (this.logger) {
+                this.logger.sendTelemetryEvent({
+                    eventName: "DeltaStorageOpsFetch",
+                    sprequestguid: response.headers.get("sprequestguid"),
+                    sprequestduration: response.headers.get("sprequestduration"),
+                });
+            }
             const operations: api.ISequencedDocumentMessage[] | ISequencedDeltaOpMessage[] = deltaStorageResponse.value;
             if (operations.length > 0 && "op" in operations[0]) {
                 return (operations as ISequencedDeltaOpMessage[]).map((operation) => operation.op);

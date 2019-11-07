@@ -8,6 +8,7 @@
 export { IComponent } from "./components";
 export * from "./componentLoadable";
 export * from "./componentRender";
+export { IRequestHeader } from "./componentRouter";
 export * from "./componentRouter";
 export * from "./handles";
 export * from "./legacy";

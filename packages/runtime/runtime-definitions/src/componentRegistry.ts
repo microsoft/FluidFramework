@@ -3,19 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { ComponentFactoryTypes } from "./componentFactory";
+import { IProvideComponentFactory } from "./componentFactory";
 
 declare module "@microsoft/fluid-component-core-interfaces" {
     export interface IComponent extends Readonly<Partial<IProvideComponentRegistry>> {}
 }
 
-export type ComponentRegistryTypes =
-    IComponentRegistry | { get(name: string): Promise<ComponentFactoryTypes> | undefined };
+export type ComponentRegistryEntry = Readonly<Partial<IProvideComponentRegistry & IProvideComponentFactory>>;
+
+export type NamedComponentRegistryEntries =
+    Iterable<[string, Promise<ComponentRegistryEntry>]>;
 
 export interface IProvideComponentRegistry {
     IComponentRegistry: IComponentRegistry;
 }
 
 export interface IComponentRegistry extends IProvideComponentRegistry {
-    get(name: string, cdn?: string): Promise<ComponentFactoryTypes> | undefined;
+    get(name: string): Promise<ComponentRegistryEntry | undefined>;
 }

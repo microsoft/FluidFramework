@@ -14,6 +14,7 @@
         "endpoint": "mongodb://mongodb:27017",
         "collectionNames": {
             "deltas": "deltas",
+            "rawdeltas": "rawdeltas",
             "documents": "documents",
             "partitions": "partitions",
             "tenants": "tenants",

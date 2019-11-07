@@ -37,6 +37,7 @@ import {
     readAndParse,
 } from "@microsoft/fluid-core-utils";
 import {
+    Browser,
     IChunkedOp,
     IDocumentMessage,
     IDocumentStorageService,
@@ -44,14 +45,13 @@ import {
     ISignalMessage,
     ISnapshotTree,
     ISummaryConfiguration,
+    ISummaryContent,
     ISummaryTree,
     ITree,
     MessageType,
     SummaryType,
 } from "@microsoft/fluid-protocol-definitions";
 import {
-    ComponentFactoryTypes,
-    ComponentRegistryTypes,
     FlushMode,
     IAttachMessage,
     IComponentRegistry,
@@ -60,6 +60,7 @@ import {
     IHelpMessage,
     IHostRuntime,
     IInboundSignalMessage,
+    NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";
@@ -67,6 +68,7 @@ import { EventEmitter } from "events";
 import * as uuid from "uuid/v4";
 import { ComponentContext, LocalComponentContext, RemotedComponentContext } from "./componentContext";
 import { ComponentHandleContext } from "./componentHandleContext";
+import { ComponentRegistry } from "./componentRegistry";
 import { debug } from "./debug";
 import { DocumentStorageServiceProxy } from "./documentStorageServiceProxy";
 import {
@@ -99,6 +101,8 @@ export interface IGeneratedSummaryData {
      * true if the summary op was submitted
      */
     submitted: boolean;
+
+    summaryMessage?: ISummaryContent;
 
     summaryStats?: ISummaryStats;
 }
@@ -360,11 +364,11 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
      */
     public static async load(
         context: IContainerContext,
-        registry: ComponentRegistryTypes,
+        registryEntries: NamedComponentRegistryEntries,
         requestHandlers: RuntimeRequestHandler[] = [],
         runtimeOptions?: IContainerRuntimeOptions,
     ): Promise<ContainerRuntime> {
-        const componentRegistry = new WrappedComponentRegistry(registry);
+        const componentRegistry = new ContainerRuntimeComponentRegistry(registryEntries);
 
         const chunkId = context.baseSnapshot.blobs[".chunks"];
         const chunks = chunkId
@@ -745,12 +749,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         }
     }
 
-    public prepare(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
-        return this.context.IMessageScheduler
-            ? Promise.reject("Scheduler assumes only process")
-            : Promise.resolve();
-    }
-
     public process(message: ISequencedDocumentMessage, local: boolean) {
         this.verifyNotClosed();
 
@@ -1117,12 +1115,14 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             };
 
             if (!this.connected) {
+                generateSummaryEvent.cancel({reason: "disconnected"});
                 return ret;
             }
             // TODO in the future we can have stored the latest summary by listening to the summary ack message
             // after loading from the beginning of the snapshot
             const versions = await this.context.storage.getVersions(this.id, 1);
             const parents = versions.map((version) => version.id);
+            const parent = parents[0];
             generateSummaryEvent.reportProgress({}, "loadedVersions");
 
             const treeWithStats = await this.summarize(fullTree);
@@ -1130,33 +1130,37 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             generateSummaryEvent.reportProgress({}, "generatedTree");
 
             if (!this.connected) {
+                generateSummaryEvent.cancel({reason: "disconnected"});
                 return ret;
             }
             const handle = await this.context.storage.uploadSummary(treeWithStats.summaryTree);
-            const summary = {
+            const summaryMessage: ISummaryContent = {
                 handle: handle.handle,
-                head: parents[0],
+                head: parent,
                 message,
                 parents,
             };
             generateSummaryEvent.reportProgress({}, "uploadedTree");
 
             if (!this.connected) {
+                generateSummaryEvent.cancel({reason: "disconnected"});
                 return ret;
             }
             // if summarizer loses connection it will never reconnect
-            this.submit(MessageType.Summarize, summary);
+            this.submit(MessageType.Summarize, summaryMessage);
+            ret.summaryMessage = summaryMessage;
             ret.submitted = true;
 
             generateSummaryEvent.end({
                 sequenceNumber,
                 submitted: ret.submitted,
                 handle: handle.handle,
+                parent,
                 ...ret.summaryStats,
             });
             return ret;
         } catch (ex) {
-            generateSummaryEvent.cancel({}, ex);
+            generateSummaryEvent.cancel({reason: "exception"}, ex);
             throw ex;
         } finally {
             // Restart the delta manager
@@ -1311,7 +1315,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     }
 
     private subscribeToLeadership() {
-        if (this.context.clientType !== "summarizer") {
+        if (this.context.clientType === Browser) {
             this.getScheduler().then((scheduler) => {
                 if (scheduler.leader) {
                     this.updateLeader(true);
@@ -1391,24 +1395,14 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 }
 
 // Wraps the provided list of packages and augments with some system level services.
-export class WrappedComponentRegistry implements IComponentRegistry {
+class ContainerRuntimeComponentRegistry extends ComponentRegistry {
 
-    private readonly agentScheduler: AgentSchedulerFactory;
+    constructor(namedEntries: NamedComponentRegistryEntries) {
 
-    constructor(private readonly registry: ComponentRegistryTypes,
-                private readonly extraRegistries?: Map<string, Promise<ComponentFactoryTypes>>) {
-        this.agentScheduler = new AgentSchedulerFactory();
+        super([
+            ...namedEntries,
+            [schedulerId, Promise.resolve(new AgentSchedulerFactory())],
+        ]);
     }
 
-    public get IComponentRegistry() { return this; }
-
-    public async get(name: string): Promise<ComponentFactoryTypes> {
-        if (name === schedulerId) {
-            return this.agentScheduler;
-        } else if (this.extraRegistries && this.extraRegistries.has(name)) {
-            return this.extraRegistries.get(name);
-        } else {
-            return this.registry.get(name);
-        }
-    }
 }

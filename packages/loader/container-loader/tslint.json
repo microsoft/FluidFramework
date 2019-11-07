@@ -4,7 +4,6 @@
         "completed-docs": false,
         "max-func-body-length": false,
         "no-console": false,
-        "no-floating-promises": false,
         "no-non-null-assertion": false,
         "no-null-keyword": false,
         "no-require-imports": false,

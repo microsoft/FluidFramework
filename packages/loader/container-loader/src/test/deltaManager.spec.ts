@@ -26,7 +26,7 @@ describe("Loader", () => {
             const submitEvent = "test-submit";
 
             async function startDeltaManager() {
-                await deltaManager.connect("test");
+                await deltaManager.connect();
                 await deltaManager.inbound.resume();
                 await deltaManager.outbound.resume();
                 await deltaManager.inboundSignal.resume();
@@ -68,8 +68,8 @@ describe("Loader", () => {
                     false,
                 );
                 deltaManager.attachOpHandler(0, 0, {
-                    process(message, callback) {
-                        callback(intendedResult);
+                    process(message) {
+                        return intendedResult;
                     },
                     processSignal() {},
                 }, true);
