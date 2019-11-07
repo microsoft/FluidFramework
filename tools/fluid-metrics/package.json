@@ -2,6 +2,8 @@
   "name": "fluid-metrics",
   "version": "0.1.0",
   "description": "Fluid Metrics",
+  "license": "MIT",
+  "author": "Microsoft",
   "main": "dist/index.js",
   "scripts": {
     "build": "npm run tslint && npm run tsc",
@@ -19,7 +21,5 @@
     "@types/node": "^10.1.2",
     "tslint": "^5.9.1",
     "typescript": "~3.4.5"
-  },
-  "author": "Microsoft",
-  "license": "MIT"
+  }
 }

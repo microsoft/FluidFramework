@@ -2,12 +2,12 @@
   "name": "search-content-extractor",
   "version": "1.0.0",
   "description": "extract search content from snapshot",
+  "license": "MIT",
+  "author": "Microsoft",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "Microsoft",
-  "license": "MIT",
   "dependencies": {
     "@microsoft/fluid-container-definitions": "^0.5.0",
     "@microsoft/fluid-odsp-driver": "^0.5.0",

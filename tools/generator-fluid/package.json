@@ -2,18 +2,18 @@
   "name": "@microsoft/generator-fluid",
   "version": "0.12.0",
   "description": "A yeoman project generator for fluid components",
-  "main": "app/index.js",
-  "scripts": {
-    "test": "mocha --recursive test",
-    "unlink": "npm rm --global generator-fluid",
-    "check": "npm ls --global --depth 0",
-    "link": "npm install && npm link"
-  },
   "keywords": [
     "yeoman-generator"
   ],
-  "author": "Microsoft",
   "license": "MIT",
+  "author": "Microsoft",
+  "main": "app/index.js",
+  "scripts": {
+    "check": "npm ls --global --depth 0",
+    "link": "npm install && npm link",
+    "test": "mocha --recursive test",
+    "unlink": "npm rm --global generator-fluid"
+  },
   "dependencies": {
     "chalk": "^2.4.2",
     "ts-morph": "^4.2.0",
