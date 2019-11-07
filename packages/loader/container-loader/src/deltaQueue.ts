@@ -21,8 +21,7 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
     private _paused = true;
 
     private error: any | undefined;
-    private processing = false;
-    private pauseDeferred: Deferred<void> | undefined;
+    private processingDeferred: Deferred<void> | undefined;
 
     public get disposed(): boolean {
         return this.isDisposed;
@@ -37,7 +36,7 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
     }
 
     public get idle(): boolean {
-        return !this.processing && this.q.length === 0;
+        return !this.processingDeferred && this.q.length === 0;
     }
 
     /**
@@ -96,31 +95,24 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
         const paused = this.sysPause || this.userPause;
         if (paused !== this._paused) {
             if (paused) {
-                if (this.processing) {
-                    this.pauseDeferred = new Deferred<void>();
-                }
-
                 this._paused = true;
             } else {
-                if (this.pauseDeferred) {
-                    this.pauseDeferred.reject(new Error("Resumed while waiting to pause"));
-                    this.pauseDeferred = undefined;
-                }
-
                 this._paused = false;
                 this.ensureProcessing();
             }
         }
 
-        return this.pauseDeferred ? this.pauseDeferred.promise : Promise.resolve();
+        // Return the processingDeferred - in the pause case, this will resolve after we exit the processing loop
+        return this.processingDeferred ? this.processingDeferred.promise : Promise.resolve();
     }
 
     private ensureProcessing() {
         // guard against reentrancy
-        if (!this.processing) {
-            this.processing = true;
+        if (!this.processingDeferred) {
+            this.processingDeferred = new Deferred<void>();
             this.processDeltas();
-            this.processing = false;
+            this.processingDeferred.resolve();
+            this.processingDeferred = undefined;
         }
     }
 
@@ -138,13 +130,6 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
             } catch (error) {
                 this.error = error;
                 this.emit("error", error);
-            }
-
-            // If someone tried to pause on the worker stack, resolving the deferred lets them know that we are
-            // exiting the loop.
-            if (this.pauseDeferred) {
-                this.pauseDeferred.resolve();
-                this.pauseDeferred = undefined;
             }
         }
     }
