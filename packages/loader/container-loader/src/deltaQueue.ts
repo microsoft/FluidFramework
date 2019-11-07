@@ -13,19 +13,34 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
     private isDisposed: boolean = false;
     private readonly q = new Deque<T>();
 
-    // We expose access to the DeltaQueue in order to allow users (from the console or code) to be able to pause/resume.
-    // But the internal system itself also sometimes needs to override these changes. The system field takes precedence.
+    /**
+     * Tracks whether the system has requested the queue be paused.
+     */
     private sysPause = true;
+
+    /**
+     * Tracks whether the user of the container has requested the queue be paused.
+     */
     private userPause = false;
 
     private error: any | undefined;
+
+    /**
+     * When processing is ongoing, holds a deferred that will resolve once processing stops.
+     * Undefined when not processing.
+     */
     private processingDeferred: Deferred<void> | undefined;
 
     public get disposed(): boolean {
         return this.isDisposed;
     }
 
+    /**
+     * @returns True if the queue is paused, false if not.
+     */
     public get paused(): boolean {
+        // The queue can be paused by either the user or by the system (e.g. during snapshotting).  If either requests
+        // a pause, then the queue will pause.
         return this.sysPause || this.userPause;
     }
 
@@ -101,8 +116,12 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
         }
     }
 
+    /**
+     * There are several actions that may need to kick off delta processing, so we want to guard against
+     * accidental reentrancy.  ensureProcessing can be called safely to start the processing loop if it is
+     * not already started.
+     */
     private ensureProcessing() {
-        // guard against reentrancy
         if (!this.processingDeferred) {
             this.processingDeferred = new Deferred<void>();
             this.processDeltas();
@@ -111,9 +130,12 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
         }
     }
 
+    /**
+     * Executes the delta processing loop until a stop condition is reached.
+     */
     private processDeltas() {
         // For grouping to work we must process all local messages immediately and in the single turn.
-        // So loop over them until no messages to process, we have become paused, or are already processing a delta.
+        // So loop over them until no messages to process, we have become paused, or hit an error.
         while (!(this.q.length === 0 || this.paused || this.error)) {
             // Get the next message in the queue
             const next = this.q.shift();
