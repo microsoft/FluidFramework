@@ -11,9 +11,8 @@ import {
     IDocumentService,
     IDocumentStorageService,
 } from "@microsoft/fluid-protocol-definitions";
-import { InnerDocumentDeltaConnection } from "./innerDocumentDeltaConnection";
+import { InnerDocumentDeltaConnection, IOuterDocumentDeltaConnectionProxy } from "./innerDocumentDeltaConnection";
 import { InnerDocumentStorageService } from "./innerDocumentStorageService";
-import { ICombinedDrivers } from "./outerDocumentServiceFactory";
 
 /**
  * The shell of the document Service that we'll use on the inside of an IFrame
@@ -22,13 +21,23 @@ export class InnerDocumentService implements IDocumentService {
     /**
      * Create a new InnerDocumentService
      */
-    public static async create(proxyObject: ICombinedDrivers): Promise<InnerDocumentService> {
+    public static async create(proxyObject: {
+        clientId: string,
+        stream: IOuterDocumentDeltaConnectionProxy,
+        deltaStorage: IDocumentDeltaStorageService,
+        storage: IDocumentStorageService,
+     }): Promise<InnerDocumentService> {
         // tslint:disable-next-line: await-promise
         return new InnerDocumentService(proxyObject, await proxyObject.clientId);
     }
 
-    constructor(private readonly outerProxy: ICombinedDrivers, public clientId: string) {
-    }
+    constructor(private readonly outerProxy: {
+                    clientId: string,
+                    stream: IOuterDocumentDeltaConnectionProxy,
+                    deltaStorage: IDocumentDeltaStorageService,
+                    storage: IDocumentStorageService,
+                },
+                public clientId: string) { }
 
     /**
      * Connects to a storage endpoint for snapshot service.

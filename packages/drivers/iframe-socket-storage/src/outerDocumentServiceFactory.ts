@@ -38,18 +38,16 @@ const socketIOEvents = [
 
 export interface IDocumentServiceFactoryProxy {
     clients: {
-        [clientId: string]: ICombinedDrivers;
+        [clientId: string]: {
+            clientId: string;
+            stream: IOuterDocumentDeltaConnectionProxy;
+            deltaStorage: IDocumentDeltaStorageService;
+            storage: IDocumentStorageService;
+        };
     };
 
     createDocumentService(resolvedUrl: IFluidResolvedUrl): Promise<string>;
     connected(): Promise<void>;
-}
-
-export interface ICombinedDrivers {
-    clientId: string;
-    stream: IOuterDocumentDeltaConnectionProxy;
-    deltaStorage: IDocumentDeltaStorageService;
-    storage: IDocumentStorageService;
 }
 
 /**
@@ -120,7 +118,12 @@ export class IFrameDocumentServiceProxyFactory {
  * Proxy of the Document Service Factory that gets sent to the innerFrame
  */
 export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy {
-    public clients: { [clientId: string]: ICombinedDrivers };
+    public clients: { [clientId: string]: {
+        clientId: string;
+        stream: IOuterDocumentDeltaConnectionProxy;
+        deltaStorage: IDocumentDeltaStorageService;
+        storage: IDocumentStorageService;
+    }};
 
     private readonly tokens: {
         [name: string]: string;
@@ -151,7 +154,7 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
         ]);
 
         const clientId = deltaStream.clientId;
-        const combinedDriver: ICombinedDrivers = {
+        const combinedDriver = {
             clientId,
             stream: this.getOuterDocumentDeltaConnection(deltaStream),
             deltaStorage: this.getDeltaStorage(deltaStorage),
