@@ -375,7 +375,7 @@ export class Loader extends EventEmitter implements ILoader {
         request.headers = request.headers ? request.headers : {};
         if (!request.headers[LoaderHeader.connect]) {
             request.headers[LoaderHeader.connect] = {
-                open: !!parsed.version,
+                open: !parsed.version,
                 pause: false,
             };
         }

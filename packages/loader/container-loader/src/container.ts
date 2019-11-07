@@ -558,10 +558,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
      * @param connection - options (list of keywords). Accepted options are open & pause.
      */
     private async load(specifiedVersion: string | null | undefined, connection: IConnectFlags): Promise<void> {
-        // const connectionValues = connection.split(",");
-        // const connect = connectionValues.indexOf("open") !== -1;
-        // const pause = connectionValues.indexOf("pause") !== -1;
-
         const perfEvent = PerformanceEvent.start(this.logger, { eventName: "Load" });
 
         // Start websocket connection as soon as possible.  Note that there is no op handler attached yet, but the
