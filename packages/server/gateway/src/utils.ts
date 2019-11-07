@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IClient } from "@microsoft/fluid-protocol-definitions";
 import { Request } from "express";
 // In this case we want @types/express-serve-static-core, not express-serve-static-core, and so disable the lint rule
 // tslint:disable-next-line:no-implicit-dependencies
@@ -26,10 +27,13 @@ export function getConfig(
     const updatedConfig = _.cloneDeep(config);
     updatedConfig.tenantId = tenantId;
     updatedConfig.trackError = trackError;
-    updatedConfig.client = {
+    const client: IClient = {
+        details: { capabilities: { interactive: true } },
         permission: [],
-        type: "browser",
+        scopes: [],
+        user: { id: "" },
     };
+    updatedConfig.client = client;
     updatedConfig.blobStorageUrl = updatedConfig.blobStorageUrl.replace("historian:3000", "localhost:3001");
     updatedConfig.historianApi = true;
 

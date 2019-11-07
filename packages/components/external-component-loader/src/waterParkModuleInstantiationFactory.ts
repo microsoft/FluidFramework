@@ -5,7 +5,7 @@
 
 import { SimpleContainerRuntimeFactory, SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 import { IContainerContext, IRuntime } from "@microsoft/fluid-container-definitions";
-import { ComponentRegistryTypes } from "@microsoft/fluid-runtime-definitions";
+import { NamedComponentRegistryEntries } from "@microsoft/fluid-runtime-definitions";
 import * as uuid from "uuid";
 import { ExternalComponentLoader, WaterParkLoaderName } from "./waterParkLoader";
 import { ExternalComponentView, WaterParkViewName } from "./waterParkView";
@@ -17,10 +17,10 @@ import { ExternalComponentView, WaterParkViewName } from "./waterParkView";
 export class WaterParkModuleInstantiationFactory extends SimpleModuleInstantiationFactory {
 
     constructor(
-        private readonly componentRegistry: ComponentRegistryTypes,
+        private readonly entries: NamedComponentRegistryEntries,
         private readonly loaderComponentName: string = WaterParkLoaderName,
         private readonly viewComponentName: string = WaterParkViewName) {
-            super(viewComponentName, componentRegistry);
+            super(viewComponentName, entries);
     }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
@@ -28,7 +28,7 @@ export class WaterParkModuleInstantiationFactory extends SimpleModuleInstantiati
         const runtimeP = SimpleContainerRuntimeFactory.instantiateRuntime(
             context,
             this.viewComponentName,
-            this.componentRegistry,
+            this.entries,
             true,
         );
 

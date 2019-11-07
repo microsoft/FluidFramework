@@ -1,17 +1,17 @@
 {
   "name": "@microsoft/fluid-build-common",
-  "version": "0.11.0",
+  "version": "0.12.0",
   "description": "Package containing common configs",
+  "repository": "microsoft/FluidFramework",
+  "license": "MIT",
+  "author": "Microsoft",
   "sideEffects": "false",
   "scripts": {
     "build": "echo Skipping @microsoft/fluid-build-common: No build steps necessary."
   },
-  "author": "Microsoft",
-  "repository": "microsoft/FluidFramework",
   "devDependencies": {
     "tslint": "^5.11.0",
     "tslint-microsoft-contrib": "^6.0.0",
     "typescript": "~3.4.5"
-  },
-  "license": "MIT"
+  }
 }

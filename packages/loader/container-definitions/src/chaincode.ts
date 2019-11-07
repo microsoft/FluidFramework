@@ -10,6 +10,7 @@ import {
     IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
 import {
+    IClientDetails,
     IDocumentMessage,
     IDocumentStorageService,
     ISequencedDocumentMessage,
@@ -163,12 +164,6 @@ export interface IRuntime {
     stop(): Promise<void>;
 
     /**
-     * Prepares the given message for execution
-     * @deprecated being removed and replaced with only process
-     */
-    prepare?(message: ISequencedDocumentMessage, local: boolean): Promise<any>;
-
-    /**
      * Processes the given message
      */
     process(message: ISequencedDocumentMessage, local: boolean, context: any);
@@ -199,7 +194,8 @@ export interface IContainerContext extends EventEmitter, IMessageScheduler, IPro
     readonly options: any;
     readonly configuration: IComponentConfiguration;
     readonly clientId: string | undefined;
-    readonly clientType: string;
+    readonly clientType: string | undefined;
+    readonly clientDetails: IClientDetails;
     readonly parentBranch: string | undefined | null;
     readonly blobManager: IBlobManager | undefined;
     readonly storage: IDocumentStorageService | undefined | null;
@@ -226,7 +222,7 @@ export interface IContainerContext extends EventEmitter, IMessageScheduler, IPro
 
     error(err: any): void;
     requestSnapshot(tagMessage: string): Promise<void>;
-    reloadContext(): void;
+    reloadContext(): Promise<void>;
     refreshBaseSummary(snapshot: ISnapshotTree): void;
 }
 

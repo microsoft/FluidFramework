@@ -1,21 +1,14 @@
 {
   "name": "@fluid-example/source-document",
-  "version": "0.11.0",
+  "version": "0.12.0",
   "description": "Experiments with incremental parsing.",
+  "repository": "microsoft/FluidFramework",
+  "license": "MIT",
+  "author": "Microsoft",
+  "sideEffects": false,
   "main": "dist/index.js",
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
-  "sideEffects": false,
-  "fluid": {
-    "browser": {
-      "umd": {
-        "files": [
-          "dist/main.bundle.js"
-        ],
-        "library": "main"
-      }
-    }
-  },
   "scripts": {
     "build": "npm run build:compile",
     "build:compile": "concurrently npm:tsc npm:build:esnext",
@@ -29,22 +22,19 @@
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
-  "author": "Microsoft",
-  "repository": "microsoft/FluidFramework",
-  "license": "MIT",
   "dependencies": {
-    "@microsoft/fluid-aqueduct": "^0.11.0",
-    "@microsoft/fluid-component-core-interfaces": "^0.11.0",
-    "@microsoft/fluid-map": "^0.11.0",
-    "@microsoft/fluid-merge-tree": "^0.11.0",
-    "@microsoft/fluid-runtime-definitions": "^0.11.0",
-    "@microsoft/fluid-sequence": "^0.11.0",
+    "@microsoft/fluid-aqueduct": "^0.12.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.12.0",
+    "@microsoft/fluid-map": "^0.12.0",
+    "@microsoft/fluid-merge-tree": "^0.12.0",
+    "@microsoft/fluid-runtime-definitions": "^0.12.0",
+    "@microsoft/fluid-sequence": "^0.12.0",
     "@tiny/types": "^0.0.12772",
     "debug": "^4.1.1"
   },
   "devDependencies": {
-    "@microsoft/fluid-build-common": "^0.11.0",
-    "@microsoft/fluid-local-test-server": "^0.11.0",
+    "@microsoft/fluid-build-common": "^0.12.0",
+    "@microsoft/fluid-local-test-server": "^0.12.0",
     "@types/debug": "^0.0.31",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.12.12",
@@ -58,5 +48,15 @@
     "tslint": "^5.11.0",
     "typescript": "~3.4.5",
     "url-loader": "^1.1.1"
+  },
+  "fluid": {
+    "browser": {
+      "umd": {
+        "files": [
+          "dist/main.bundle.js"
+        ],
+        "library": "main"
+      }
+    }
   }
 }

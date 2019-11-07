@@ -12,6 +12,7 @@ import {
 } from "@microsoft/fluid-container-definitions";
 import { EventForwarder } from "@microsoft/fluid-core-utils";
 import {
+    IClientDetails,
     IDocumentMessage,
     ISequencedDocumentMessage,
     IServiceConfiguration,
@@ -50,32 +51,30 @@ export class DeltaQueueProxy<T> extends EventForwarder implements IDeltaQueue<T>
         return this.queue.toArray();
     }
 
-    public systemPause(): Promise<void> {
+    public async systemPause(): Promise<void> {
         this.systemPaused = true;
         return this.queue.pause();
     }
 
-    public pause(): Promise<void> {
+    public async pause(): Promise<void> {
         this.localPaused = true;
         return this.queue.pause();
     }
 
-    public systemResume(): Promise<void> {
+    public async systemResume(): Promise<void> {
         this.systemPaused = false;
         return this.updateResume();
     }
 
-    public resume(): Promise<void> {
+    public async resume(): Promise<void> {
         this.localPaused = false;
         return this.updateResume();
     }
 
-    private updateResume(): Promise<void> {
+    private async updateResume(): Promise<void> {
         if (!this.systemPaused && !this.localPaused) {
-            this.queue.resume();
+            return this.queue.resume();
         }
-
-        return Promise.resolve();
     }
 }
 
@@ -106,8 +105,12 @@ export class DeltaManagerProxy
         return this.deltaManager.initialSequenceNumber;
     }
 
-    public get clientType(): string {
+    public get clientType(): string | undefined {
         return this.deltaManager.clientType;
+    }
+
+    public get clientDetails(): IClientDetails {
+        return this.deltaManager.clientDetails;
     }
 
     public get version(): string {

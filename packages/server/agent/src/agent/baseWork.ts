@@ -5,7 +5,7 @@
 
 import * as api from "@fluid-internal/client-api";
 import { IHost } from "@microsoft/fluid-container-definitions";
-import { Browser, IDocumentServiceFactory } from "@microsoft/fluid-protocol-definitions";
+import { IDocumentServiceFactory } from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
 import { parse } from "url";
 import { debug } from "./debug";
@@ -118,10 +118,10 @@ export class BaseWork extends EventEmitter {
         this.events.emit("stop", stopEvent);
     }
 
-    // A leader is any browser client connected to the document.
+    // A leader is any interactive client connected to the document.
     private noLeader(): boolean {
         for (const client of this.document.getClients()) {
-            if (!client[1].client || !client[1].client.type || client[1].client.type === Browser) {
+            if (!client[1].client || !client[1].client.details.capabilities.interactive) {
                 return false;
             }
         }

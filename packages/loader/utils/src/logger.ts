@@ -10,12 +10,17 @@ import {
     ITelemetryGenericEvent,
     ITelemetryLogger,
     ITelemetryPerformanceEvent,
+    ITelemetryProperties,
     TelemetryEventPropertyType,
 } from "@microsoft/fluid-container-definitions";
 import * as registerDebug from "debug";
 import { pkgName, pkgVersion } from "./packageVersion";
 // tslint:disable-next-line:no-var-requires
 const performanceNow = require("performance-now") as (() => number);
+
+export interface ITelemetryPropertyGetters {
+    [index: string]: () => TelemetryEventPropertyType;
+}
 
 /**
  * Null logger
@@ -40,8 +45,8 @@ export class BaseTelemetryNullLogger implements ITelemetryBaseLogger {
 export abstract class TelemetryLogger implements ITelemetryLogger {
     public static readonly eventNamespaceSeparator = ":";
 
-    public static formatTick(tick: number): string {
-        return tick.toFixed(0);
+    public static formatTick(tick: number): number {
+        return Math.floor(tick);
     }
 
     public static sanitizePkgName(name: string) {
@@ -56,17 +61,22 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
             // WARNING: Exceptions can contain PII!
             // For example, XHR will throw object derived from Error that contains config information
             // for failed request, including all the headers, and thus - user tokens!
-            const errorAsObject = error as { stack?: string; message?: string, statusCode?: number };
+            // Extract only call stack, message, and couple network-related properties form error object
+            const errorAsObject = error as {
+                stack?: string;
+                message?: string;
+            };
 
-            // Extract call stack from exception if available
-            // Same for message if there is one (see Error object).
             event.stack = errorAsObject.stack;
             event.error = errorAsObject.message;
-            event.statusCode = errorAsObject.statusCode;
+            // tslint:disable-next-line: no-unsafe-any
+            if (error.getCustomProperties) {
+                // tslint:disable-next-line: no-parameter-reassignment no-unsafe-any
+                event = { ...event, ...error.getCustomProperties() };
+            }
         }
 
         // Collect stack if we were not able to extract it from error
-        event.stackFromError = (event.stack !== undefined);
         if (event.stack === undefined && fetchStack) {
             event.stack = TelemetryLogger.getStack();
         }
@@ -88,7 +98,8 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
 
     protected constructor(
         private readonly namespace?: string,
-        private properties?: object) {
+        private readonly properties?: object,
+        private readonly propertyGetters?: ITelemetryPropertyGetters) {
     }
 
     /**
@@ -98,10 +109,6 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      */
     public abstract send(event: ITelemetryBaseEvent): void;
 
-    public setProperties(properties: object) {
-        this.properties = {...this.properties, ...properties};
-    }
-
     /**
      * Send a telemetry event with the logger
      *
@@ -109,7 +116,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      * @param error - optional error object to log
      */
     public sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any) {
-        const newEvent: ITelemetryBaseEvent = { ...event, category: "generic" };
+        const newEvent: ITelemetryBaseEvent = { ...event, category: event.category ? event.category : "generic" };
         if (error !== undefined) {
             TelemetryLogger.prepareErrorObject(newEvent, error, false);
         }
@@ -117,9 +124,10 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
     }
 
     /**
-     * Send am error event with the logger
+     * Send an error telemetry event with the logger
      *
      * @param event - the event to send
+     * @param error - optional error object to log
      */
     public sendErrorEvent(event: ITelemetryErrorEvent, error?: any) {
         const newEvent: ITelemetryBaseEvent = { ...event, category: "error" };
@@ -128,11 +136,16 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
     }
 
     /**
-     * Send error telemetry event
+     * Send a performance telemetry event with the logger
+     *
      * @param event - Event to send
+     * @param error - optional error object to log
      */
     public sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void {
-        const perfEvent: ITelemetryBaseEvent = { ...event, category: "performance" };
+        const perfEvent: ITelemetryBaseEvent = {
+            ...event,
+            category: event.category ? event.category : "performance",
+        };
         if (error !== undefined) {
             TelemetryLogger.prepareErrorObject(perfEvent, error, false);
         }
@@ -140,8 +153,6 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
         if (event.duration) {
             perfEvent.duration = TelemetryLogger.formatTick(event.duration);
         }
-        const tick = event.tick ? event.tick : performanceNow();
-        perfEvent.tick = TelemetryLogger.formatTick(tick);
 
         this.send(perfEvent);
     }
@@ -171,7 +182,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      * Log an debug assert with the logger
      *
      * @param condition - the condition to assert on
-     * @param exception - the message to log if the condition fails
+     * @param event - the event to log if the condition fails
      */
     public debugAssert(condition: boolean, event?: ITelemetryErrorEvent): void {
         this.shipAssert(condition, event);
@@ -181,11 +192,11 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      * Log an ship assert with the logger
      *
      * @param condition - the condition to assert on
-     * @param exception - the message to log if the condition fails
+     * @param event - the event to log if the condition fails
      */
     public shipAssert(condition: boolean, event?: ITelemetryErrorEvent): void {
         if (!condition) {
-            const realEvent: ITelemetryErrorEvent = event === undefined ? { eventName: "" } : event;
+            const realEvent: ITelemetryErrorEvent = event === undefined ? { eventName: "Assert" } : event;
             realEvent.isAssert = true;
             realEvent.stack = TelemetryLogger.getStack();
             this.sendErrorEvent(realEvent);
@@ -194,14 +205,28 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
 
     protected prepareEvent(event: ITelemetryBaseEvent): ITelemetryBaseEvent {
         const newEvent: ITelemetryBaseEvent = { ...this.properties, ...event };
-        if (newEvent.package === undefined) {
-            newEvent.package = {
-                name: TelemetryLogger.sanitizePkgName(pkgName),
-                version: pkgVersion,
-            };
+        if (newEvent.packageVersion === undefined) {
+            newEvent.packageName = TelemetryLogger.sanitizePkgName(pkgName);
+            newEvent.packageVersion = pkgVersion;
         }
         if (this.namespace !== undefined) {
             newEvent.eventName = `${this.namespace}${TelemetryLogger.eventNamespaceSeparator}${newEvent.eventName}`;
+        }
+        // evaluate any getter functions
+        if (this.propertyGetters) {
+            for (const key of Object.keys(this.propertyGetters)) {
+                if (event[key] !== undefined) {
+                    // properties directly on the event take priority
+                    continue;
+                }
+                const getter = this.propertyGetters[key];
+
+                // if this throws, hopefully it is handled elsewhere
+                const value = getter();
+                if (value !== undefined) {
+                    newEvent[key] = value;
+                }
+            }
         }
 
         return newEvent;
@@ -243,23 +268,27 @@ export class ChildLogger extends TelemetryLogger {
      * is created, but it does not sends telemetry events anywhere.
      * @param namespace - Telemetry event name prefix to add to all events
      * @param properties - Base properties to add to all events
+     * @param propertyGetters - Getters to add additional properties to all events
      */
     public static create(
         baseLogger?: ITelemetryBaseLogger,
         namespace?: string,
-        properties?: object): TelemetryLogger {
+        properties?: object,
+        propertyGetters?: ITelemetryPropertyGetters): TelemetryLogger {
 
         return new ChildLogger(
             baseLogger ? baseLogger : new BaseTelemetryNullLogger(),
             namespace,
-            properties);
+            properties,
+            propertyGetters);
     }
 
     constructor(
         protected readonly logger: ITelemetryBaseLogger,
         namespace?: string,
-        properties?: object) {
-        super(namespace, properties);
+        properties?: object,
+        propertyGetters?: ITelemetryPropertyGetters) {
+        super(namespace, properties, propertyGetters);
     }
 
     /**
@@ -284,9 +313,13 @@ export class MultiSinkLogger extends TelemetryLogger {
      * Create multiple sink logger (i.e. logger that sends events to multiple sinks)
      * @param namespace - Telemetry event name prefix to add to all events
      * @param properties - Base properties to add to all events
+     * @param propertyGetters - Getters to add additional properties to all events
      */
-    constructor(namespace?: string, properties?: object) {
-        super(namespace, properties);
+    constructor(
+        namespace?: string,
+        properties?: object,
+        propertyGetters?: ITelemetryPropertyGetters) {
+        super(namespace, properties, propertyGetters);
     }
 
     /**
@@ -320,8 +353,12 @@ export class DebugLogger extends TelemetryLogger {
      * Create debug logger - all events are output to debug npm library
      * @param namespace - Telemetry event name prefix to add to all events
      * @param properties - Base properties to add to all events
+     * @param propertyGetters - Getters to add additional properties to all events
      */
-    public static create(namespace: string, properties?: object): TelemetryLogger {
+    public static create(
+        namespace: string,
+        properties?: object,
+        propertyGetters?: ITelemetryPropertyGetters): TelemetryLogger {
         // setup base logger upfront, such that host can disable it (if needed)
         const debug = registerDebug(namespace);
         debug.enabled = true;
@@ -330,7 +367,7 @@ export class DebugLogger extends TelemetryLogger {
         debugErr.log = console.error.bind(console);
         debugErr.enabled = true;
 
-        return new DebugLogger(debug, debugErr, properties);
+        return new DebugLogger(debug, debugErr, properties, propertyGetters);
     }
 
     /**
@@ -338,19 +375,21 @@ export class DebugLogger extends TelemetryLogger {
      * Returned logger will output events to both newly created debug logger, as well as base logger
      * @param namespace - Telemetry event name prefix to add to all events
      * @param properties - Base properties to add to all events
+     * @param propertyGetters - Getters to add additional properties to all events
      * @param baseLogger - Base logger to output events (in addition to debug logger being created). Can be undefined.
      */
     public static mixinDebugLogger(
         namespace: string,
+        baseLogger?: ITelemetryBaseLogger,
         properties?: object,
-        baseLogger?: ITelemetryBaseLogger): TelemetryLogger {
-        const debugLogger = DebugLogger.create(namespace, properties);
+        propertyGetters?: ITelemetryPropertyGetters): TelemetryLogger {
         if (!baseLogger) {
-            return debugLogger;
+            return DebugLogger.create(namespace, properties, propertyGetters);
         }
-        const multiSinkLogger = new MultiSinkLogger();
-        multiSinkLogger.addLogger(debugLogger);
-        multiSinkLogger.addLogger(ChildLogger.create(baseLogger, namespace, properties));
+
+        const multiSinkLogger = new MultiSinkLogger(undefined, properties, propertyGetters);
+        multiSinkLogger.addLogger(DebugLogger.create(namespace));
+        multiSinkLogger.addLogger(ChildLogger.create(baseLogger, namespace));
 
         return multiSinkLogger;
     }
@@ -359,8 +398,9 @@ export class DebugLogger extends TelemetryLogger {
         private readonly debug: registerDebug.IDebugger,
         private readonly debugErr: registerDebug.IDebugger,
         properties?: object,
+        propertyGetters?: ITelemetryPropertyGetters,
     ) {
-        super(undefined, properties);
+        super(undefined, properties, propertyGetters);
     }
 
     /**
@@ -369,8 +409,9 @@ export class DebugLogger extends TelemetryLogger {
      * @param event - the event to send
      */
     public send(event: ITelemetryBaseEvent): void {
-        const newEvent: { [index: string]: TelemetryEventPropertyType } = this.prepareEvent(event);
-        let logger = newEvent.category === "error" ? this.debugErr : this.debug;
+        const newEvent: ITelemetryProperties = this.prepareEvent(event);
+        const isError = newEvent.category === "error";
+        let logger = isError ? this.debugErr : this.debug;
 
         // Use debug's coloring schema for base of the event
         const index = event.eventName.lastIndexOf(TelemetryLogger.eventNamespaceSeparator);
@@ -381,9 +422,8 @@ export class DebugLogger extends TelemetryLogger {
         newEvent.eventName = undefined;
 
         let tick = "";
-        if (newEvent.tick) {
-            tick = `tick=${newEvent.tick}`;
-            newEvent.tick = undefined;
+        if (event.category === "performance") {
+            tick = `tick=${TelemetryLogger.formatTick(performanceNow())}`;
         }
 
         // Extract stack to put it last, but also to avoid escaping '\n' in it by JSON.stringify below
@@ -403,6 +443,11 @@ export class DebugLogger extends TelemetryLogger {
 
         if (payload === "{}") {
             payload = "";
+        }
+
+        // Force errors out, to help with diagnostics
+        if (isError) {
+            logger.enabled = true;
         }
 
         // print multi-line.

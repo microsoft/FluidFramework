@@ -1,10 +1,13 @@
 {
   "name": "@fluid-example/intelligence-runner-agent",
-  "version": "0.11.0",
+  "version": "0.12.0",
   "description": "Generates insights on distributed data structures",
+  "repository": "microsoft/FluidFramework",
+  "license": "MIT",
+  "author": "Microsoft",
+  "sideEffects": false,
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "sideEffects": false,
   "scripts": {
     "build": "concurrently npm:build:compile npm:tslint",
     "build:compile": "npm run tsc",
@@ -14,23 +17,20 @@
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
-  "author": "Microsoft",
-  "repository": "microsoft/FluidFramework",
+  "dependencies": {
+    "@microsoft/fluid-component-core-interfaces": "^0.12.0",
+    "@microsoft/fluid-map": "^0.12.0",
+    "@microsoft/fluid-protocol-definitions": "^0.12.0",
+    "@microsoft/fluid-sequence": "^0.12.0",
+    "request": "^2.88.0"
+  },
   "devDependencies": {
-    "@microsoft/fluid-build-common": "^0.11.0",
+    "@microsoft/fluid-build-common": "^0.12.0",
     "@types/node": "^10.12.12",
     "@types/request": "^2.47.1",
     "concurrently": "^4.1.0",
     "rimraf": "^2.6.2",
     "tslint": "^5.11.0",
     "typescript": "~3.4.5"
-  },
-  "dependencies": {
-    "@microsoft/fluid-component-core-interfaces": "^0.11.0",
-    "@microsoft/fluid-map": "^0.11.0",
-    "@microsoft/fluid-protocol-definitions": "^0.11.0",
-    "@microsoft/fluid-sequence": "^0.11.0",
-    "request": "^2.88.0"
-  },
-  "license": "MIT"
+  }
 }

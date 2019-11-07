@@ -22,6 +22,7 @@
         "array-type": [true, "array"],
         "linebreak-style": false,
         "export-name": false,
+        "static-this": true,
         "no-console": [
             true,
             "log",

@@ -4,12 +4,10 @@
  */
 
 // tslint:disable: no-console
-import { IComponent, IComponentQueryableLegacy } from "@microsoft/fluid-component-core-interfaces";
-import { IFluidPackage, isFluidPackage } from "@microsoft/fluid-container-definitions";
+import { IFluidModule, IFluidPackage, isFluidPackage } from "@microsoft/fluid-container-definitions";
 import { Deferred } from "@microsoft/fluid-core-utils";
 import {
-    ComponentFactoryTypes,
-    IComponentFactory,
+    ComponentRegistryEntry,
     IComponentRegistry,
 } from "@microsoft/fluid-runtime-definitions";
 
@@ -19,11 +17,11 @@ import {
 export class UrlRegistry implements IComponentRegistry {
     private static readonly WindowKeyPrefix = "FluidExternalComponent";
 
-    private readonly urlRegistryMap = new Map<string, Promise<ComponentFactoryTypes>>();
+    private readonly urlRegistryMap = new Map<string, Promise<ComponentRegistryEntry>>();
     private readonly loadingPackages: Map<string, Promise<any>>;
     private readonly loadingEntrypoints: Map<string, Promise<unknown>>;
 
-    constructor(entries: Map<string, Promise<ComponentFactoryTypes>>) {
+    constructor() {
 
         // stash on the window so multiple instance can coordinate
         const loadingPackagesKey = `${UrlRegistry.WindowKeyPrefix}LoadingPackages`;
@@ -41,7 +39,7 @@ export class UrlRegistry implements IComponentRegistry {
 
     public get IComponentRegistry() { return this; }
 
-    public async get(name: string): Promise<ComponentFactoryTypes> {
+    public async get(name: string): Promise<ComponentRegistryEntry> {
 
         if (!this.urlRegistryMap.has(name)
             && (name.startsWith("http://") || name.startsWith("https://"))) {
@@ -60,39 +58,12 @@ export class UrlRegistry implements IComponentRegistry {
                 }
             });
 
-            this.urlRegistryMap.set(name, entryPointPromise.then(async (entrypoint) => {
-                const fluidExport: IComponent = entrypoint.fluidExport;
-                let componentFactory = entrypoint as IComponentFactory;
-
-                if (fluidExport !== undefined) {
-                    if (fluidExport.IComponentFactory) {
-                        componentFactory = fluidExport.IComponentFactory;
-                        if (fluidExport.IComponentDefaultFactory) {
-                            const registry = fluidExport.IComponentDefaultFactory;
-                            componentFactory =  (await registry.getDefaultFactory()) as IComponentFactory;
-                        }
-                    } else {
-                        const queryable = fluidExport as IComponentQueryableLegacy;
-                        if (queryable.query) {
-                            return queryable.query<IComponentFactory>("IComponentFactory");
-                        }
-                    }
-                }
-
-                if (componentFactory === undefined || componentFactory.instantiateComponent === undefined) {
-                    throw new Error(`UrlRegistry: ${name}: instantiateComponent does not exist on entrypoint`);
-                } else {
-                    return componentFactory;
-                }
-            }));
+            this.urlRegistryMap.set(
+                name,
+                entryPointPromise.then(async (entrypoint: IFluidModule) => entrypoint.fluidExport));
         }
 
-        const factory = await this.urlRegistryMap.get(name);
-        if (factory !== undefined) {
-            return factory;
-        }
-
-        throw new Error(`Unknown package: ${name}`);
+        return this.urlRegistryMap.get(name);
     }
 
     private async loadEntrypoint(name: string): Promise<any> {

@@ -23,6 +23,7 @@ import {
 } from "@microsoft/fluid-container-definitions";
 import { raiseConnectedEvent } from "@microsoft/fluid-core-utils";
 import {
+    IClientDetails,
     IDocumentAttributes,
     IDocumentMessage,
     IDocumentStorageService,
@@ -90,8 +91,12 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         return this.container.clientId;
     }
 
-    public get clientType(): string {
+    public get clientType(): string | undefined {
         return this.container.clientType;
+    }
+
+    public get clientDetails(): IClientDetails {
+        return this.container.clientDetails;
     }
 
     public get existing(): boolean | undefined {
@@ -140,16 +145,12 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
     }
 
     public get IMessageScheduler() {
-        this.legacyMessaging = false;
         return this;
     }
 
     public get baseSnapshot() {
         return this._baseSnapshot;
     }
-
-    // Back compat flag - can remove in 0.6
-    public legacyMessaging = true;
 
     private runtime: IRuntime | undefined;
 
@@ -203,15 +204,6 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         return snapshot;
     }
 
-    public async prepare(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
-        // included for back compat with documents created prior to prepare deprecation
-        if (!this.runtime || !this.runtime.prepare) {
-            return Promise.reject("Runtime must query for IMessageHandler to signal it does not implement prepare");
-        }
-
-        this.runtime.prepare(message, local);
-    }
-
     public process(message: ISequencedDocumentMessage, local: boolean, context: any) {
         this.runtime!.process(message, local, context);
     }
@@ -245,8 +237,8 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         return;
     }
 
-    public reloadContext() {
-        this.container.reloadContext();
+    public reloadContext(): Promise<void> {
+        return this.container.reloadContext();
     }
 
     private async load() {

@@ -1,11 +1,14 @@
 {
   "name": "@microsoft/fluid-driver-base",
-  "version": "0.11.0",
+  "version": "0.12.0",
   "description": "Shared package across different socket-storage implementation",
+  "repository": "microsoft/FluidFramework",
+  "license": "MIT",
+  "author": "Microsoft",
+  "sideEffects": "false",
   "main": "dist/index.js",
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
-  "sideEffects": "false",
   "scripts": {
     "build": "npm run build:genver && concurrently npm:build:compile npm:tslint",
     "build:compile": "concurrently npm:tsc npm:build:esnext",
@@ -18,12 +21,10 @@
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
-  "author": "Microsoft",
-  "repository": "microsoft/FluidFramework",
   "dependencies": {
     "@microsoft/fluid-container-definitions": "^0.10.0",
-    "@microsoft/fluid-core-utils": "^0.11.0",
-    "@microsoft/fluid-protocol-definitions": "^0.11.0",
+    "@microsoft/fluid-core-utils": "^0.12.0",
+    "@microsoft/fluid-protocol-definitions": "^0.12.0",
     "@types/debug": "^0.0.31",
     "@types/node": "^10.12.12",
     "@types/socket.io-client": "^1.4.32",
@@ -32,11 +33,10 @@
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.4.4",
-    "@microsoft/fluid-build-common": "^0.11.0",
+    "@microsoft/fluid-build-common": "^0.12.0",
     "concurrently": "^4.1.0",
     "rimraf": "^2.6.2",
     "tslint": "^5.11.0",
     "typescript": "~3.4.5"
-  },
-  "license": "MIT"
+  }
 }

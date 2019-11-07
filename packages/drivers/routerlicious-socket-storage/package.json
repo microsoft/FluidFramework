@@ -1,11 +1,14 @@
 {
   "name": "@microsoft/fluid-routerlicious-driver",
-  "version": "0.11.0",
+  "version": "0.12.0",
   "description": "Socket.IO + Git implementation of Fluid service API",
+  "repository": "microsoft/FluidFramework",
+  "license": "MIT",
+  "author": "Microsoft",
+  "sideEffects": "false",
   "main": "dist/index.js",
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
-  "sideEffects": "false",
   "scripts": {
     "build": "npm run build:genver && concurrently npm:build:compile npm:tslint",
     "build:compile": "concurrently npm:tsc npm:build:esnext",
@@ -18,11 +21,22 @@
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
-  "author": "Microsoft",
-  "repository": "microsoft/FluidFramework",
+  "dependencies": {
+    "@microsoft/fluid-core-utils": "^0.12.0",
+    "@microsoft/fluid-driver-base": "^0.12.0",
+    "@microsoft/fluid-gitresources": "^0.12.0",
+    "@microsoft/fluid-protocol-definitions": "^0.12.0",
+    "@microsoft/fluid-server-services-client": "^0.12.0",
+    "axios": "^0.18.0",
+    "comlink": "^4.0.2",
+    "debug": "^4.1.1",
+    "isomorphic-ws": "^4.0.1",
+    "jwt-decode": "^2.2.0",
+    "socket.io-client": "^2.1.1"
+  },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.4.4",
-    "@microsoft/fluid-build-common": "^0.11.0",
+    "@microsoft/fluid-build-common": "^0.12.0",
     "@types/debug": "^0.0.31",
     "@types/jwt-decode": "^2.2.1",
     "@types/mocha": "^5.2.5",
@@ -34,19 +48,5 @@
     "rimraf": "^2.6.2",
     "tslint": "^5.11.0",
     "typescript": "~3.4.5"
-  },
-  "dependencies": {
-    "@microsoft/fluid-core-utils": "^0.11.0",
-    "@microsoft/fluid-driver-base": "^0.11.0",
-    "@microsoft/fluid-gitresources": "^0.11.0",
-    "@microsoft/fluid-protocol-definitions": "^0.11.0",
-    "@microsoft/fluid-server-services-client": "^0.11.0",
-    "axios": "^0.18.0",
-    "comlink": "^4.0.2",
-    "debug": "^4.1.1",
-    "isomorphic-ws": "^4.0.1",
-    "jwt-decode": "^2.2.0",
-    "socket.io-client": "^2.1.1"
-  },
-  "license": "MIT"
+  }
 }

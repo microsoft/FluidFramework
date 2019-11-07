@@ -1,12 +1,13 @@
 {
   "name": "@fluid-example/table-document",
+  "version": "0.12.0",
   "description": "Chaincode component containing a table's data",
-  "version": "0.11.0",
-  "author": "Microsoft",
   "repository": "microsoft/FluidFramework",
+  "license": "MIT",
+  "author": "Microsoft",
+  "sideEffects": false,
   "main": "dist/index.js",
   "module": "lib/index.js",
-  "sideEffects": false,
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "concurrently npm:build:compile npm:tslint",
@@ -18,6 +19,26 @@
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
+  "dependencies": {
+    "@microsoft/fluid-aqueduct": "^0.12.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.12.0",
+    "@microsoft/fluid-map": "^0.12.0",
+    "@microsoft/fluid-merge-tree": "^0.12.0",
+    "@microsoft/fluid-runtime-definitions": "^0.12.0",
+    "@microsoft/fluid-sequence": "^0.12.0",
+    "@tiny-calc/micro": "^0.0.14248",
+    "debug": "^4.1.1"
+  },
+  "devDependencies": {
+    "@microsoft/fluid-build-common": "^0.12.0",
+    "@types/debug": "^0.0.31",
+    "@types/node": "^10.12.12",
+    "concurrently": "^4.1.0",
+    "debug": "^4.1.1",
+    "rimraf": "^2.6.2",
+    "tslint": "^5.11.0",
+    "typescript": "~3.4.5"
+  },
   "fluid": {
     "browser": {
       "umd": {
@@ -27,26 +48,5 @@
         "library": "main"
       }
     }
-  },
-  "dependencies": {
-    "@microsoft/fluid-aqueduct": "^0.11.0",
-    "@microsoft/fluid-component-core-interfaces": "^0.11.0",
-    "@microsoft/fluid-map": "^0.11.0",
-    "@microsoft/fluid-merge-tree": "^0.11.0",
-    "@microsoft/fluid-runtime-definitions": "^0.11.0",
-    "@microsoft/fluid-sequence": "^0.11.0",
-    "@tiny-calc/micro": "^0.0.14248",
-    "debug": "^4.1.1"
-  },
-  "devDependencies": {
-    "@microsoft/fluid-build-common": "^0.11.0",
-    "@types/debug": "^0.0.31",
-    "@types/node": "^10.12.12",
-    "concurrently": "^4.1.0",
-    "debug": "^4.1.1",
-    "rimraf": "^2.6.2",
-    "tslint": "^5.11.0",
-    "typescript": "~3.4.5"
-  },
-  "license": "MIT"
+  }
 }

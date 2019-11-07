@@ -13,6 +13,7 @@ import {
 } from "@microsoft/fluid-component-core-interfaces";
 import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
 import { ConnectionState } from "@microsoft/fluid-container-definitions";
+import { LoaderHeader } from "@microsoft/fluid-container-loader";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import { ConsensusRegisterCollection } from "@microsoft/fluid-register-collection";
 import {
@@ -94,9 +95,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
     }
 
     public async register(...taskUrls: string[]): Promise<void> {
-        if (!this.runtime.connected) {
-            return Promise.reject(`Client is not connected`);
-        }
+        await this.waitForFullConnection();
         for (const taskUrl of taskUrls) {
             if (this.registeredTasks.has(taskUrl)) {
                 return Promise.reject(`${taskUrl} is already registered`);
@@ -115,10 +114,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
     }
 
     public async pick(taskId: string, worker: boolean): Promise<void> {
-        if (!this.runtime.connected) {
-            return Promise.reject(`Client is not connected`);
-        }
-
+        await this.waitForFullConnection();
         if (this.localTasks.has(taskId)) {
             return Promise.reject(`${taskId} is already attempted`);
         }
@@ -132,9 +128,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
     }
 
     public async release(...taskUrls: string[]): Promise<void> {
-        if (!this.runtime.connected) {
-            return Promise.reject(`Client is not connected`);
-        }
+        await this.waitForFullConnection();
         for (const taskUrl of taskUrls) {
             if (!this.localTasks.has(taskUrl)) {
                 return Promise.reject(`${taskUrl} was never registered`);
@@ -366,10 +360,14 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
     private async runTask(url: string, worker: boolean) {
         const request: IRequest = {
             headers: {
-                "fluid-cache": false,
-                "fluid-reconnect": false,
-                "fluid-sequence-number": this.context.deltaManager.referenceSequenceNumber,
-                "execution-context": worker ? "worker" : undefined,
+                [LoaderHeader.cache]: false,
+                [LoaderHeader.clientDetails]: {
+                    capabilities: { interactive: false },
+                    type: "agent",
+                },
+                [LoaderHeader.reconnect]: false,
+                [LoaderHeader.sequenceNumber]: this.context.deltaManager.referenceSequenceNumber,
+                [LoaderHeader.executionContext]: worker ? "worker" : undefined,
             },
             url,
         };

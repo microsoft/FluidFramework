@@ -1,24 +1,44 @@
 {
   "name": "@fluid-example/video-players",
+  "version": "0.12.0",
   "description": "Video player collection",
-  "version": "0.11.0",
-  "author": "Microsoft",
   "repository": "microsoft/FluidFramework",
+  "license": "MIT",
+  "author": "Microsoft",
   "main": "dist/index.js",
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "concurrently npm:build:compile npm:tslint",
     "build:compile": "concurrently npm:tsc npm:build:esnext",
+    "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
-    "tsc": "tsc",
-    "build:esnext": "tsc --project ./tsconfig.esnext.json",
-    "tslint": "tslint --project tsconfig.json --format verbose",
     "deploy": "npm publish --registry https://packages.wu2.prague.office-int.com",
+    "tsc": "tsc",
+    "tslint": "tslint --project tsconfig.json --format verbose",
     "webpack": "webpack --env=\"production\"",
     "webpack:dev": "webpack --env=\"development\""
+  },
+  "dependencies": {
+    "@microsoft/fluid-component-core-interfaces": "^0.12.0",
+    "@microsoft/fluid-component-runtime": "^0.12.0",
+    "@microsoft/fluid-framework-interfaces": "^0.12.0",
+    "@microsoft/fluid-map": "^0.12.0",
+    "@microsoft/fluid-runtime-definitions": "^0.12.0",
+    "@microsoft/fluid-shared-object-base": "^0.12.0",
+    "@types/node": "^10.12.12"
+  },
+  "devDependencies": {
+    "@microsoft/fluid-build-common": "^0.12.0",
+    "concurrently": "^4.1.0",
+    "rimraf": "^2.6.2",
+    "tslint": "^5.11.0",
+    "typescript": "~3.4.5",
+    "webpack": "^4.8.2",
+    "webpack-cli": "^3.1.2",
+    "webpack-merge": "^4.1.2"
   },
   "fluid": {
     "browser": {
@@ -29,25 +49,5 @@
         "library": "main"
       }
     }
-  },
-  "dependencies": {
-    "@microsoft/fluid-component-core-interfaces": "^0.11.0",
-    "@microsoft/fluid-component-runtime": "^0.11.0",
-    "@microsoft/fluid-framework-interfaces": "^0.11.0",
-    "@microsoft/fluid-map": "^0.11.0",
-    "@microsoft/fluid-runtime-definitions": "^0.11.0",
-    "@microsoft/fluid-shared-object-base": "^0.11.0",
-    "@types/node": "^10.12.12"
-  },
-  "devDependencies": {
-    "@microsoft/fluid-build-common": "^0.11.0",
-    "concurrently": "^4.1.0",
-    "rimraf": "^2.6.2",
-    "tslint": "^5.11.0",
-    "typescript": "~3.4.5",
-    "webpack": "^4.8.2",
-    "webpack-cli": "^3.1.2",
-    "webpack-merge": "^4.1.2"
-  },
-  "license": "MIT"
+  }
 }

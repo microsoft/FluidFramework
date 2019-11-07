@@ -1,23 +1,16 @@
 {
   "name": "@fluid-example/flow-scroll",
-  "version": "0.11.0",
+  "version": "0.12.0",
   "description": "Collaborative markdown editor.",
-  "main": "dist/index.js",
-  "module": "lib/index.js",
-  "types": "dist/index.d.ts",
+  "repository": "microsoft/FluidFramework",
+  "license": "MIT",
+  "author": "Microsoft",
   "sideEffects": [
     "./src/publicpath.ts"
   ],
-  "fluid": {
-    "browser": {
-      "umd": {
-        "files": [
-          "dist/main.bundle.js"
-        ],
-        "library": "main"
-      }
-    }
-  },
+  "main": "dist/index.js",
+  "module": "lib/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "build": "npm run build:compile",
     "build:compile": "concurrently npm:tsc npm:build:esnext npm:webpack npm:build:copy",
@@ -27,41 +20,38 @@
     "build:full:compile": "npm run build:compile && npm run webpack",
     "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
     "start": "webpack-dev-server --config webpack.config.js --package package.json",
-    "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
     "start:live": "webpack-dev-server --config webpack.config.js --package package.json --env.mode live",
+    "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose",
     "webpack": "webpack --env.production"
   },
-  "author": "Microsoft",
-  "repository": "microsoft/FluidFramework",
-  "license": "MIT",
   "dependencies": {
-    "@fluid-example/flow-intel": "^0.11.0",
-    "@fluid-example/flow-intel-viewer": "^0.11.0",
-    "@fluid-example/flow-util-lib": "^0.11.0",
-    "@fluid-example/image-collection": "^0.11.0",
-    "@fluid-example/math": "^0.11.0",
-    "@fluid-example/pinpoint-editor": "^0.11.0",
-    "@fluid-example/progress-bars": "^0.11.0",
-    "@fluid-example/search-menu": "^0.11.0",
-    "@fluid-example/table-document": "^0.11.0",
-    "@fluid-example/table-view": "^0.11.0",
-    "@fluid-example/video-players": "^0.11.0",
-    "@fluid-example/webflow": "^0.11.0",
-    "@microsoft/fluid-aqueduct": "^0.11.0",
-    "@microsoft/fluid-component-core-interfaces": "^0.11.0",
-    "@microsoft/fluid-container-definitions": "^0.11.0",
-    "@microsoft/fluid-framework-interfaces": "^0.11.0",
-    "@microsoft/fluid-map": "^0.11.0",
-    "@microsoft/fluid-merge-tree": "^0.11.0",
-    "@microsoft/fluid-runtime-definitions": "^0.11.0",
+    "@fluid-example/flow-intel": "^0.12.0",
+    "@fluid-example/flow-intel-viewer": "^0.12.0",
+    "@fluid-example/flow-util-lib": "^0.12.0",
+    "@fluid-example/image-collection": "^0.12.0",
+    "@fluid-example/math": "^0.12.0",
+    "@fluid-example/pinpoint-editor": "^0.12.0",
+    "@fluid-example/progress-bars": "^0.12.0",
+    "@fluid-example/search-menu": "^0.12.0",
+    "@fluid-example/table-document": "^0.12.0",
+    "@fluid-example/table-view": "^0.12.0",
+    "@fluid-example/video-players": "^0.12.0",
+    "@fluid-example/webflow": "^0.12.0",
+    "@microsoft/fluid-aqueduct": "^0.12.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.12.0",
+    "@microsoft/fluid-container-definitions": "^0.12.0",
+    "@microsoft/fluid-framework-interfaces": "^0.12.0",
+    "@microsoft/fluid-map": "^0.12.0",
+    "@microsoft/fluid-merge-tree": "^0.12.0",
+    "@microsoft/fluid-runtime-definitions": "^0.12.0",
     "debug": "^4.1.1"
   },
   "devDependencies": {
-    "@microsoft/fluid-build-common": "^0.11.0",
-    "@microsoft/fluid-local-test-server": "^0.11.0",
-    "@microsoft/fluid-webpack-component-loader": "^0.11.0",
+    "@microsoft/fluid-build-common": "^0.12.0",
+    "@microsoft/fluid-local-test-server": "^0.12.0",
+    "@microsoft/fluid-webpack-component-loader": "^0.12.0",
     "@types/debug": "^0.0.31",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.12.12",
@@ -91,5 +81,15 @@
     "webpack-dev-server": "^3.8.0",
     "webpack-merge": "^4.1.2",
     "webpack-visualizer-plugin": "^0.1.11"
+  },
+  "fluid": {
+    "browser": {
+      "umd": {
+        "files": [
+          "dist/main.bundle.js"
+        ],
+        "library": "main"
+      }
+    }
   }
 }

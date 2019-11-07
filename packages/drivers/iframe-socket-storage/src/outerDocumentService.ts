@@ -51,7 +51,9 @@ export class OuterDocumentService implements IDocumentService {
         const client: IClient = {
             permission: [],
             scopes: [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
-            type: "browser",
+            details: {
+                capabilities: { interactive: true },
+            },
             user: {
                 id: "iframe-user",
             },
@@ -155,24 +157,25 @@ export class OuterDocumentService implements IDocumentService {
             assert((this.deltaConnection as any).socket !== undefined);
             console.log(client);
 
+            const deltaConnection = this.deltaConnection;
             const connection: IConnected = {
-                claims: this.deltaConnection.claims,
-                clientId: this.deltaConnection.clientId,
-                existing: this.deltaConnection.existing,
-                initialContents: this.deltaConnection.initialContents,
-                initialMessages: this.deltaConnection.initialMessages,
-                initialSignals: this.deltaConnection.initialSignals,
-                initialClients: this.deltaConnection.initialClients,
-                maxMessageSize: this.deltaConnection.maxMessageSize,
-                mode: this.deltaConnection.mode,
-                parentBranch: this.deltaConnection.parentBranch,
-                serviceConfiguration: this.deltaConnection.serviceConfiguration,
-                version: this.deltaConnection.version,
+                claims: deltaConnection.claims,
+                clientId: deltaConnection.clientId,
+                existing: deltaConnection.existing,
+                get initialClients() { return deltaConnection.initialClients; },
+                get initialContents() { return deltaConnection.initialContents; },
+                get initialMessages() { return deltaConnection.initialMessages; },
+                get initialSignals() { return deltaConnection.initialSignals; },
+                maxMessageSize: deltaConnection.maxMessageSize,
+                mode: deltaConnection.mode,
+                parentBranch: deltaConnection.parentBranch,
+                serviceConfiguration: deltaConnection.serviceConfiguration,
+                version: deltaConnection.version,
                 supportedVersions: protocolVersions,
             };
 
             this.outerDocumentDeltaConnection = OuterDocumentDeltaConnection.create(
-                this.deltaConnection,
+                deltaConnection,
                 connection,
                 proxiedFunctionsFromInnerFrameP,
             );
