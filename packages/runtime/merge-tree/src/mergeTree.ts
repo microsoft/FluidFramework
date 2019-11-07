@@ -1391,21 +1391,8 @@ export class MergeTree {
             clockStart = clock();
         }
         if (segments.length > 0) {
-            const block = buildMergeBlock(segments);
-
-            // TODO: Why add another root node on top of the root returned by buildMergeBlock?
-            this.root = this.makeBlock(1);
-            this.root.assignChild(block, 0, false);
-            if (MergeTree.blockUpdateMarkers) {
-                const hierRoot = this.root.hierBlock();
-                hierRoot.addNodeReferences(this, block);
-            }
-            if (this.blockUpdateActions) {
-                this.blockUpdateActions.child(this.root, 0);
-            }
-
+            this.root = buildMergeBlock(segments);
             this.nodeUpdateOrdinals(this.root);
-            this.root.cachedLength = block.cachedLength;
         } else {
             this.root = this.makeBlock(0);
             this.root.cachedLength = 0;
