@@ -8,7 +8,7 @@ import { BaseTelemetryNullLogger, configurableUrlResolver } from "@microsoft/flu
 import { FluidAppOdspUrlResolver } from "@microsoft/fluid-fluidapp-odsp-urlresolver";
 import * as odsp from "@microsoft/fluid-odsp-driver";
 import { OdspUrlResolver } from "@microsoft/fluid-odsp-urlresolver";
-import { getHashedDocumentId, IClientConfig, refreshAccessToken } from "@microsoft/fluid-odsp-utils";
+import { IClientConfig, refreshAccessToken } from "@microsoft/fluid-odsp-utils";
 import { IFluidResolvedUrl, IResolvedUrl, IUrlResolver } from "@microsoft/fluid-protocol-definitions";
 import * as r11s from "@microsoft/fluid-routerlicious-driver";
 import { RouterliciousUrlResolver } from "@microsoft/fluid-routerlicious-urlresolver";
@@ -37,7 +37,7 @@ async function initializeODSPCore(
         return;
     }
 
-    const docId = getHashedDocumentId(driveId, itemId);
+    const docId = odsp.getHashedDocumentId(driveId, itemId);
 
     console.log(`Connecting to ODSP:
   server: ${server}
