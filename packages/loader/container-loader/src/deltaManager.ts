@@ -82,8 +82,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
      */
     public autoReconnect: boolean = true;
 
-    // Current connection mode. Initially write.
-    public connectionMode: ConnectionMode = "write";
+    private _connectionMode: ConnectionMode = "write";
     // Overwrites the current connection mode to always write.
     private readonly systemConnectionMode: ConnectionMode;
 
@@ -181,6 +180,13 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             return this.connection.details.claims.documentId;
         }
         return undefined;
+    }
+
+    /**
+     * The current connection mode, initially write.
+     */
+    public get connectionMode(): ConnectionMode {
+        return this._connectionMode;
     }
 
     constructor(
@@ -286,7 +292,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this.inQuorum = false;
     }
 
-    public async connect(): Promise<IConnectionDetails> {
+    public async connect(requestedMode: ConnectionMode = "write"): Promise<IConnectionDetails> {
         assert(!this.closed);
 
         if (this.connection) {
@@ -296,7 +302,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         if (!this.connecting) {
             this.connecting = new Deferred<IConnectionDetails>();
             // tslint:disable-next-line:no-floating-promises
-            this.connectCore(this.connectionMode);
+            this.connectCore(requestedMode);
         }
 
         return this.connecting.promise;
@@ -605,7 +611,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         }
     }
 
-    private async connectCore(mode: ConnectionMode): Promise<void> {
+    private async connectCore(requestedMode: ConnectionMode): Promise<void> {
         let connection: DeltaConnection | undefined;
         let delay = InitialReconnectDelay;
         let connectRepeatCount = 0;
@@ -619,7 +625,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             connectRepeatCount++;
 
             try {
-                connection = await DeltaConnection.connect(this.service, this.client, mode);
+                connection = await DeltaConnection.connect(this.service, this.client, requestedMode);
             } catch (error) {
                 // Socket.io error when we connect to wrong socket, or hit some multiplexing bug
                 if (!canRetryOnError(error)) {
@@ -670,7 +676,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this.connection = connection;
 
         // back-compat for newer clients and old server. If the server does not have mode, we reset to write.
-        this.connectionMode = connection.details.mode ? connection.details.mode : "write";
+        this._connectionMode = connection.details.mode ? connection.details.mode : "write";
 
         this.emitDelayInfo(retryFor.DELTASTREAM, -1);
 
@@ -772,7 +778,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         // avoid any re-entrancy - clear object reference
         this.connection = undefined;
-        this.connectionMode = "read";
+        this._connectionMode = "read";
 
         // tslint:disable-next-line:no-floating-promises
         this._outbound.systemPause();
@@ -787,7 +793,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
      * Disconnect the current connection and reconnect.
      * @param reason - A string describing why we are reconnecting
      * @param connection - The connection that wants to reconnect - no-op if it's different from this.connection
-     * @param mode - Read or write
+     * @param requestedMode - Read or write
      * @param error - The error that prompted the reconnect
      * @param autoReconnect - Whether to attempt reconnection automatically after error handling
      * @returns A promise that resolves when the connection is reestablished or we stop trying
@@ -795,7 +801,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     private async reconnectOnError(
         reason: string,
         connection: DeltaConnection,
-        mode: ConnectionMode,
+        requestedMode: ConnectionMode,
         error?: any,
         autoReconnect: boolean = true,
     ) {
@@ -823,7 +829,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 this.emitDelayInfo(retryFor.DELTASTREAM, delay);
                 await waitForConnectedState(delay);
             }
-            await this.connectCore(mode);
+            await this.connect(requestedMode);
         }
     }
 
