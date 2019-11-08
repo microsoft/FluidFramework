@@ -299,10 +299,66 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             return this.connection.details;
         }
 
+        const connectCore = async () => {
+            let connection: DeltaConnection | undefined;
+            let delay = InitialReconnectDelay;
+            let connectRepeatCount = 0;
+            const connectStartTime = performanceNow();
+
+            // This loop will keep trying to connect until successful, with a delay between each iteration.
+            while (connection === undefined) {
+                if (this.closed) {
+                    return;
+                }
+                connectRepeatCount++;
+
+                try {
+                    connection = await DeltaConnection.connect(this.service, this.client, requestedMode);
+                } catch (error) {
+                    // Socket.io error when we connect to wrong socket, or hit some multiplexing bug
+                    if (!canRetryOnError(error)) {
+                        this.close(error);
+                        return;
+                    }
+
+                    // Log error once - we get too many errors in logs when we are offline,
+                    // and unfortunately there is no reliable way to detect that.
+                    if (connectRepeatCount === 1) {
+                        logNetworkFailure(
+                            this.logger,
+                            {
+                                delay,
+                                eventName: "DeltaConnectionFailureToConnect",
+                            },
+                            error);
+                    }
+
+                    const retryDelayFromError = this.getRetryDelayFromError(error);
+                    delay = retryDelayFromError !== undefined ?
+                        retryDelayFromError :
+                        Math.min(delay * 2, MaxReconnectDelay);
+
+                    this.emitDelayInfo(retryFor.DELTASTREAM, delay);
+                    await waitForConnectedState(delay);
+                }
+            }
+
+            // If we retried more than once, log an event about how long it took
+            if (connectRepeatCount > 1) {
+                this.logger.sendTelemetryEvent({
+                    attempts: connectRepeatCount,
+                    duration: (performanceNow() - connectStartTime).toFixed(0),
+                    eventName: "MultipleDeltaConnectionFailures",
+                });
+            }
+
+            this.setupNewSuccessfulConnection(connection);
+        };
+
         if (!this.connecting) {
             this.connecting = new Deferred<IConnectionDetails>();
             // tslint:disable-next-line:no-floating-promises
-            this.connectCore(requestedMode);
+            connectCore();
         }
 
         return this.connecting.promise;
@@ -313,7 +369,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             return;
         }
 
-        // The prepareFlush event allows listenerse to append metadata to the batch prior to submission.
+        // The prepareFlush event allows listeners to append metadata to the batch prior to submission.
         this.emit("prepareSend", this.messageBuffer);
 
         this._outbound.push(this.messageBuffer);
@@ -609,62 +665,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 this.emit("connectionDelay", delayTime);
             }
         }
-    }
-
-    private async connectCore(requestedMode: ConnectionMode): Promise<void> {
-        let connection: DeltaConnection | undefined;
-        let delay = InitialReconnectDelay;
-        let connectRepeatCount = 0;
-        const connectStartTime = performanceNow();
-
-        // This loop will keep trying to connect until successful, with a delay between each iteration.
-        while (connection === undefined) {
-            if (this.closed) {
-                return;
-            }
-            connectRepeatCount++;
-
-            try {
-                connection = await DeltaConnection.connect(this.service, this.client, requestedMode);
-            } catch (error) {
-                // Socket.io error when we connect to wrong socket, or hit some multiplexing bug
-                if (!canRetryOnError(error)) {
-                    this.close(error);
-                    return;
-                }
-
-                // Log error once - we get too many errors in logs when we are offline,
-                // and unfortunately there is no reliable way to detect that.
-                if (connectRepeatCount === 1) {
-                    logNetworkFailure(
-                        this.logger,
-                        {
-                            delay,
-                            eventName: "DeltaConnectionFailureToConnect",
-                        },
-                        error);
-                }
-
-                const retryDelayFromError = this.getRetryDelayFromError(error);
-                delay = retryDelayFromError !== undefined ?
-                    retryDelayFromError :
-                    Math.min(delay * 2, MaxReconnectDelay);
-
-                this.emitDelayInfo(retryFor.DELTASTREAM, delay);
-                await waitForConnectedState(delay);
-            }
-        }
-
-        // If we retried more than once, log an event about how long it took
-        if (connectRepeatCount > 1) {
-            this.logger.sendTelemetryEvent({
-                attempts: connectRepeatCount,
-                duration: (performanceNow() - connectStartTime).toFixed(0),
-                eventName: "MultipleDeltaConnectionFailures",
-            });
-        }
-
-        this.setupNewSuccessfulConnection(connection);
     }
 
     /**
