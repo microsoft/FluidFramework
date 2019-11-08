@@ -38,6 +38,10 @@ export class TestWebSocket implements core.IWebSocket {
     public removeListener(event: string, listener: (...args: any[]) => void) {
         this.events.removeListener(event, listener);
     }
+
+    public disconnect(close?: boolean) {
+        return;
+    }
 }
 
 export class TestWebSocketServer implements core.IWebSocketServer {
