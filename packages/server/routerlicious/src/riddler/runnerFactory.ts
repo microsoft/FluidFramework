@@ -47,7 +47,7 @@ export class RiddlerResourcesFactory implements utils.IResourcesFactory<RiddlerR
                 try {
                     await getOrCreateRepository(tenant.storage.url, tenant.storage.owner, tenant.storage.repository);
                 } catch (err) {
-                    // This is okay since the repos are alreay created in production.
+                    // This is okay to fail since the repos are alreay created in production.
                     winston.error(`Error creating repos`);
                 }
             }
