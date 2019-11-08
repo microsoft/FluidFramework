@@ -47,6 +47,10 @@ export enum LoaderHeader {
     clientDetails = "fluid-client-type",
 
     executionContext = "execution-context",
+
+    /**
+     * Start the container in a paused, unconnected state. Defaults to false
+     */
     pause = "pause",
     reconnect = "fluid-reconnect",
     sequenceNumber = "fluid-sequence-number",
