@@ -373,7 +373,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         } finally {
             if (this.deltaManager !== undefined) {
-                await this.deltaManager.inbound.systemResume();
+                this.deltaManager.inbound.systemResume();
             }
         }
     }
@@ -431,9 +431,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         await this.loadContext(attributes, storage, snapshot);
 
-        await Promise.all([
-            this.deltaManager!.inbound.systemResume(),
-            this.deltaManager!.inboundSignal.systemResume()]);
+        this.deltaManager!.inbound.systemResume();
+        this.deltaManager!.inboundSignal.systemResume();
     }
 
     private async snapshotCore(tagMessage: string, fullTree: boolean = false) {
