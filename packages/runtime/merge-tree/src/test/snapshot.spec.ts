@@ -23,7 +23,7 @@ describe("snapshot", () => {
 
         const snapshot = new Snapshot(client1.mergeTree, client1.logger);
         snapshot.extractSync();
-        const snapshotTree = snapshot.emit([]);
+        const snapshotTree = snapshot.emit();
         const services = new MockStorage(snapshotTree);
 
         const client2 = new TestClient(undefined);
@@ -56,7 +56,7 @@ describe("snapshot", () => {
             const client2 = clients[i + 1];
             const snapshot = new Snapshot(client1.mergeTree, client1.logger);
             snapshot.extractSync();
-            const snapshotTree = snapshot.emit([]);
+            const snapshotTree = snapshot.emit();
             const services = new MockStorage(snapshotTree);
             const runtime: Partial<IComponentRuntime> = {
                 logger: client2.logger,

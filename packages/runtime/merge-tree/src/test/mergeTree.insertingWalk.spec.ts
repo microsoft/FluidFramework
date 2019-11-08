@@ -37,7 +37,8 @@ const treeFactories: ITestTreeFactory[] = [
                 undefined);
             mergeTree.startCollaboration(
                 localClientId,
-                UniversalSequenceNumber,
+                /* minSeq: */ UniversalSequenceNumber,
+                /* currentSeq: */ UniversalSequenceNumber,
                 branchId);
             return {
                 initialText,
@@ -92,7 +93,8 @@ const treeFactories: ITestTreeFactory[] = [
 
             mergeTree.startCollaboration(
                 localClientId,
-                UniversalSequenceNumber,
+                /* minSeq: */ UniversalSequenceNumber,
+                /* currentSeq: */ UniversalSequenceNumber,
                 branchId);
             return {
                 initialText,
@@ -154,7 +156,8 @@ const treeFactories: ITestTreeFactory[] = [
 
             mergeTree.startCollaboration(
                 localClientId,
-                UniversalSequenceNumber,
+                /* minSeq: */ UniversalSequenceNumber,
+                /* currentSeq: */ UniversalSequenceNumber,
                 branchId);
 
             return {

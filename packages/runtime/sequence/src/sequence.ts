@@ -25,7 +25,6 @@ import {
 import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent";
 import { ISharedIntervalCollection } from "./sharedIntervalCollection";
 // tslint:disable-next-line: no-var-requires no-require-imports no-submodule-imports
-const cloneDeep = require("lodash/cloneDeep");
 
 const snapshotFileName = "header";
 const contentPath = "content";
@@ -48,57 +47,10 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         return this.loadedDeferred.promise;
     }
 
-    private static createOpsFromDelta(event: SequenceDeltaEvent): MergeTree.IMergeTreeOp[] {
-        const ops: MergeTree.IMergeTreeOp[] = [];
-        for (const r of event.ranges) {
-            switch (event.deltaOperation) {
-                case MergeTree.MergeTreeDeltaType.ANNOTATE:
-                    const lastAnnotate = ops[ops.length - 1] as MergeTree.IMergeTreeAnnotateMsg;
-                    const props = {};
-                    for (const key of Object.keys(r.propertyDeltas)) {
-                        props[key] =
-                            r.segment.properties[key] === undefined ? null : r.segment.properties[key];
-                    }
-                    if (lastAnnotate && lastAnnotate.pos2 === r.position &&
-                        MergeTree.matchProperties(lastAnnotate.props, props)) {
-                        lastAnnotate.pos2 += r.segment.cachedLength;
-                    } else {
-                        ops.push(MergeTree.createAnnotateRangeOp(
-                            r.position,
-                            r.position + r.segment.cachedLength,
-                            props,
-                            undefined));
-                    }
-                    break;
-
-                case MergeTree.MergeTreeDeltaType.INSERT:
-                    ops.push(MergeTree.createInsertOp(
-                        r.position,
-                        cloneDeep(r.segment.toJSONObject())));
-                    break;
-
-                case MergeTree.MergeTreeDeltaType.REMOVE:
-                    const lastRem = ops[ops.length - 1] as MergeTree.IMergeTreeRemoveMsg;
-                    if (lastRem && lastRem.pos1 === r.position) {
-                        lastRem.pos2 += r.segment.cachedLength;
-                    } else {
-                        ops.push(MergeTree.createRemoveRangeOp(
-                            r.position,
-                            r.position + r.segment.cachedLength));
-                    }
-                    break;
-
-                default:
-            }
-        }
-        return ops;
-    }
-
     protected client: MergeTree.Client;
     protected isLoaded = false;
     // Deferred that triggers once the object is loaded
     protected loadedDeferred = new Deferred<void>();
-    private messagesSinceMSNChange: ISequencedDocumentMessage[] = [];
     private readonly intervalMapKernel: MapKernel;
     constructor(
         document: IComponentRuntime,
@@ -465,6 +417,8 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
 
         const loader = this.client.createSnapshotLoader(this.runtime);
         try {
+            // LEGACY: For backwards compatibility, we still load and process `tardisMsgs` from the snapshot
+            //         if the array exists.
             const msgs = await loader.initialize(
                 branchId,
                 new ContentObjectStorage(storage));
@@ -498,7 +452,8 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
 
     protected initializeLocalCore() {
         super.initializeLocalCore();
-        assert(MergeTree.Snapshot.EmptyChunk.chunkSequenceNumber === 0);
+        assert(MergeTree.Snapshot.EmptyChunk.chunkMinSequenceNumber === 0
+            && MergeTree.Snapshot.EmptyChunk.chunkCurrentSequenceNumber === 0);
         this.loadFinished();
     }
 
@@ -512,7 +467,6 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         // Required for case where ComponentRuntime.attachChannel() generates snapshot right after loading component.
         // Note that we mock runtime in tests and mock does not have deltamanager implementation.
         if (this.runtime.deltaManager) {
-            this.processMinSequenceNumberChanged(minSeq);
             this.client.updateSeqNumbers(minSeq, this.runtime.deltaManager.referenceSequenceNumber);
 
             // One of the snapshots (from SPO) I observed to have chunk.chunkSequenceNumber > minSeq!
@@ -522,9 +476,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
 
         const snap = this.client.createSnapshotter();
         snap.extractSync();
-        this.messagesSinceMSNChange.forEach((m) => m.minimumSequenceNumber = minSeq);
         const mtSnap = snap.emit(
-            this.messagesSinceMSNChange,
             this.runtime.IComponentSerializer,
             this.runtime.IComponentHandleContext,
             this.handle);
@@ -533,54 +485,15 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     }
 
     private processMergeTreeMsg(rawMessage: ISequencedDocumentMessage) {
-        const message = parseHandles(
-            rawMessage,
-            this.runtime.IComponentSerializer,
-            this.runtime.IComponentHandleContext);
-
-        const ops: MergeTree.IMergeTreeOp[] = [];
-        function transfromOps(event: SequenceDeltaEvent) {
-            ops.push(... SharedSegmentSequence.createOpsFromDelta(event));
-        }
-        const needsTransformation = message.referenceSequenceNumber !== message.sequenceNumber - 1;
-        let stashMessage = message;
-        if (needsTransformation) {
-            stashMessage = cloneDeep(message);
-            stashMessage.referenceSequenceNumber = message.sequenceNumber - 1;
-            this.on("sequenceDelta", transfromOps);
-        }
-
-        this.client.applyMsg(message);
-
-        if (needsTransformation) {
-            this.removeListener("sequenceDelta", transfromOps);
-            stashMessage.contents = ops.length !== 1 ? MergeTree.createGroupOp(...ops) : ops[0];
-        }
-
-        this.messagesSinceMSNChange.push(stashMessage);
-
-        // Do GC every once in a while...
-        if (this.messagesSinceMSNChange.length > 20
-            && this.messagesSinceMSNChange[20].sequenceNumber < message.minimumSequenceNumber) {
-            this.processMinSequenceNumberChanged(message.minimumSequenceNumber);
-        }
-
+        this.client.applyMsg(
+            parseHandles(
+                rawMessage,
+                this.runtime.IComponentSerializer,
+                this.runtime.IComponentHandleContext));
     }
 
     private getIntervalCollectionPath(label: string) {
         return `intervalCollections/${label}`;
-    }
-
-    private processMinSequenceNumberChanged(minSeq: number) {
-        let index = 0;
-        for (; index < this.messagesSinceMSNChange.length; index++) {
-            if (this.messagesSinceMSNChange[index].sequenceNumber > minSeq) {
-                break;
-            }
-        }
-        if (index !== 0) {
-            this.messagesSinceMSNChange = this.messagesSinceMSNChange.slice(index);
-        }
     }
 
     private loadFinished(error?: any) {

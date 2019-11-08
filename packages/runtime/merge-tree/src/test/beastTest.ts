@@ -499,7 +499,6 @@ export function mergeTreeCheckedTest() {
 }
 
 
-type SharedStringJSONSegment = MergeTree.IJSONTextSegment & MergeTree.IJSONMarkerSegment;
 
 // enum AsyncRoundState {
 //     Insert,
@@ -1166,10 +1165,15 @@ export function TestPack(verbose = true) {
                 }
             }
         }
-        let segs = <SharedStringJSONSegment[]>new MergeTree.Snapshot(cli.mergeTree, DebugLogger.create("fluid:snapshot")).extractSync();
+        const segs = new MergeTree.Snapshot(cli.mergeTree, DebugLogger.create("fluid:snapshot")).extractSync();
         if (verbose) {
-            for (let seg of segs) {
-                log(`${specToSegment(seg)}`);
+            for (const seg of segs) {
+                // When 'extractSync()' returns an IJSONSegmentWithMergeInfo, dot through to the IJSONSegment
+                // before passing to 'specToSegment()'.
+                log(`${specToSegment(
+                    typeof seg === "object" && "json" in seg
+                        ? seg.json
+                        : seg)}`);
             }
         }
         cli = new TestClient();

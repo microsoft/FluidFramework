@@ -10,9 +10,10 @@ import {
 } from "@microsoft/fluid-component-core-interfaces";
 import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
 import { ChildLogger, fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
-import { FileMode, ISequencedDocumentMessage, ITree, TreeEntry } from "@microsoft/fluid-protocol-definitions";
+import { FileMode, ITree, TreeEntry } from "@microsoft/fluid-protocol-definitions";
 import { IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
-import { NonCollabClient, UnassignedSequenceNumber } from "./constants";
+import { strict as assert } from "assert";
+import { UnassignedSequenceNumber } from "./constants";
 import * as MergeTree from "./mergeTree";
 import * as ops from "./ops";
 import * as Properties from "./properties";
@@ -24,7 +25,9 @@ interface SnapshotHeader {
     segmentsTotalLength: number;
     indexOffset?: number;
     segmentsOffset?: number;
-    seq: number;
+    seq?: number;               // LEGACY: Old snapshots stored the minSeq here.
+    currentSeq?: number;
+    minSeq?: number;
 }
 
 // first three are index entry
@@ -38,11 +41,15 @@ export interface SnapChunk {
     buffer?: Buffer;
 }
 
+type SegmentSpec = ops.IJSONSegment | ops.IJSONSegmentWithMergeInfo;
 
 export class Snapshot {
 
     public static readonly header = "header";
     public static readonly body = "body";
+
+    // TODO: The 'Snapshot.tardis' tree entry is legacy now that the MergeTree snapshot includes all ACKed
+    //       segments.  (See https://github.com/microsoft/FluidFramework/issues/84)
     public static readonly tardis = "tardis";
 
     // Split snapshot into two entries - headers (small) and body (overflow) for faster loading initial content
@@ -53,23 +60,20 @@ export class Snapshot {
     // blob size can easily be 4x-8x of that number.
     public static readonly sizeOfFirstChunk: number = 10000;
 
-    header: SnapshotHeader;
-    seq: number;
-    buffer: Buffer;
-    pendingChunk: SnapChunk;
-    segments: ops.IJSONSegment[];
-    segmentLengths: number[];
-    logger: ITelemetryLogger;
+    private header: SnapshotHeader;
+    private segments: SegmentSpec[];
+    private segmentLengths: number[];
+    private logger: ITelemetryLogger;
 
     constructor(public mergeTree: MergeTree.MergeTree, logger: ITelemetryLogger, public filename?: string,
         public onCompletion?: () => void) {
         this.logger = ChildLogger.create(logger, "Snapshot");
     }
 
-    getSeqLengthSegs(allSegments: ops.IJSONSegment[], allLengths: number[], approxSequenceLength: number,
+    getSeqLengthSegs(allSegments: SegmentSpec[], allLengths: number[], approxSequenceLength: number,
         startIndex = 0): ops.MergeTreeChunk {
 
-        let segs = <ops.IJSONSegment[]>[];
+        let segs: SegmentSpec[] = [];
         let sequenceLength = 0;
         let segCount = 0;
         while ((sequenceLength < approxSequenceLength) && ((startIndex + segCount) < allSegments.length)) {
@@ -84,7 +88,8 @@ export class Snapshot {
             chunkLengthChars: sequenceLength,
             totalLengthChars: this.header.segmentsTotalLength,
             totalSegmentCount: allSegments.length,
-            chunkSequenceNumber: this.header.seq,
+            chunkMinSequenceNumber: this.header.minSeq, // LEGACY: || this.header.seq,
+            chunkCurrentSequenceNumber: this.header.currentSeq, // LEGACY: || this.header.seq,
             segmentTexts: segs
         }
     }
@@ -94,7 +99,6 @@ export class Snapshot {
      * the summary data rather than JSON.stringify.
      */
     emit(
-        tardisMsgs: ISequencedDocumentMessage[],
         serializer?: IComponentSerializer,
         context?: IComponentHandleContext,
         bind?: IComponentHandle,
@@ -141,12 +145,14 @@ export class Snapshot {
             segments === chunk1.totalSegmentCount,
             { eventName: "emit: mismatch in totalSegmentCount" });
 
+        // TODO: The 'Snapshot.tardis' tree entry is legacy now that the MergeTree snapshot includes all ACKed
+        //       segments.  (See https://github.com/microsoft/FluidFramework/issues/84)
         tree.entries.push({
             mode: FileMode.File,
             path: Snapshot.tardis,
             type: TreeEntry[TreeEntry.Blob],
             value: {
-                contents: serializer ? serializer.stringify(tardisMsgs, context, bind) : JSON.stringify(tardisMsgs),
+                contents: "[]",
                 encoding: "utf-8",
             },
         });
@@ -155,57 +161,99 @@ export class Snapshot {
     }
 
     extractSync() {
-        let collabWindow = this.mergeTree.getCollabWindow();
-        this.seq = collabWindow.minSeq;
+        const mergeTree = this.mergeTree;
+        const { currentSeq, minSeq } = mergeTree.getCollabWindow();
         this.header = {
-            segmentsTotalLength: this.mergeTree.getLength(this.mergeTree.collabWindow.minSeq,
-                NonCollabClient),
-            seq: this.mergeTree.collabWindow.minSeq,
+            segmentsTotalLength: 0,
+            minSeq,
+            currentSeq,
         };
 
-        const segs = <MergeTree.ISegment[]>[];
+        this.segments = [];
+        this.segmentLengths = [];
+
+        // Helper to add the given `SegmentSpec` to the snapshot.
+        const pushSegRaw = (json: SegmentSpec, length: number) => {
+            this.header.segmentsTotalLength += length;
+            this.segments.push(json);
+            this.segmentLengths.push(length);
+        }
+
+        // Helper to serialize the given `segment` and add it to the snapshot (if a segment is provided).
+        const pushSeg = (segment?: MergeTree.ISegment) => {
+            if (segment) { pushSegRaw(segment.toJSONObject(), segment.cachedLength); }
+        }
+
         let prev: MergeTree.ISegment | undefined;
-        let extractSegment = (segment: MergeTree.ISegment, pos: number, refSeq: number, clientId: number,
-            start: number, end: number) => {
-            if ((segment.seq != UnassignedSequenceNumber) && (segment.seq <= this.seq) &&
-                ((segment.removedSeq === undefined) || (segment.removedSeq == UnassignedSequenceNumber) ||
-                    (segment.removedSeq > this.seq))) {
-                if (prev && prev.canAppend(segment) && Properties.matchProperties(prev.properties, segment.properties)) {
+        const extractSegment = (segment: MergeTree.ISegment) => {
+            // Elide segments that do not need to be included in the snapshot.  A segment may be elided if
+            // either condition is true:
+            //   a) The segment has not yet been ACKed.  We do not need to snapshot unACKed segments because
+            //      there is a pending insert op that will deliver the segment on reconnection.
+            //   b) The segment was removed at or below the MSN.  Pending ops can no longer reference this
+            //      segment, and therefore we can discard it.
+            if (segment.seq === UnassignedSequenceNumber || segment.removedSeq <= minSeq) {
+                return true;
+            }
+
+            // Next determine if the snapshot needs to preserve information required for merging the segment
+            // (seq, client, etc.)  This information is only needed if the segment is above the MSN (and doesn't
+            // have a pending remove.)
+            if ((segment.seq <= minSeq)                                     // Segment is below the MSN, and...
+                && (segment.removedSeq === undefined                        // .. Segment has not been removed, or...
+                    || segment.removedSeq === UnassignedSequenceNumber)     // .. Removal op to be delivered on reconnect
+            ) {
+                // This segment is below the MSN, which means that future ops will not reference it.  Attempt to
+                // coalesce the new segment with the previous (if any).
+                if (!prev) {
+                    // We do not have a previous candidate for coalescing.  Make the current segment the new candidate.
+                    prev = segment;
+                } else if (prev.canAppend(segment) && Properties.matchProperties(prev.properties, segment.properties)) {
+                    // We have a compatible pair.  Replace `prev` with the coalesced segment.  Clone to avoid
+                    // modifying the segment instances currently in the MergeTree.
                     prev = prev.clone();
                     prev.append(segment.clone());
                 } else {
-                    if (prev) {
-                        segs.push(prev);
-                    }
+                    // The segment pair could not be coalesced.  Record the `prev` segment in the snapshot
+                    // and make the current segment the new candidate for coalescing.
+                    pushSeg(prev);
                     prev = segment;
                 }
+            } else {
+                // This segment needs to preserve it's metadata as it may be referenced by future ops.  It's ineligible
+                // for coalescing, so emit the 'prev' segment now (if any).
+                pushSeg(prev);
+                prev = undefined;
+
+                const raw: ops.IJSONSegmentWithMergeInfo = { json: segment.toJSONObject() };
+                // If the segment insertion is above the MSN, record the insertion merge info.
+                if (segment.seq > minSeq) {
+                    raw.seq = segment.seq;
+                    raw.client = mergeTree.getLongClientId(segment.clientId);
+                }
+                // We have already dispensed with removed segments below the MSN and removed segments with unassigned
+                // sequence numbers.  Any remaining removal info should be preserved.
+                if (segment.removedSeq !== undefined) {
+                    assert(segment.removedSeq !== UnassignedSequenceNumber && segment.removedSeq > minSeq);
+                    raw.removedSeq = segment.removedSeq;
+                    raw.removedClient = mergeTree.getLongClientId(segment.removedClientId);
+                }
+
+                // Sanity check that we are preserving either the seq < minSeq or a removed segment's info.
+                assert(raw.seq !== undefined  && raw.client !== undefined
+                    || raw.removedSeq !== undefined && raw.removedClient !== undefined);
+
+                // Record the segment with it's required metadata.
+                pushSegRaw(raw, segment.cachedLength);
             }
             return true;
         }
 
-        this.mergeTree.map({ leaf: extractSegment }, this.seq, NonCollabClient);
-        if (prev) {
-            segs.push(prev);
-        }
-
-        this.segments = [];
-        this.segmentLengths = [];
-        let totalLength: number = 0;
-        segs.map((segment) => {
-            totalLength += segment.cachedLength;
-            this.segments.push(segment.toJSONObject());
-            this.segmentLengths.push(segment.cachedLength);
-        });
-
-        // We observed this.header.segmentsTotalLength < totalLength to happen in some cases
-        // When this condition happens, we might not write out all segments in getSeqLengthSegs() when writing out "body"
-        // Issue #1995 tracks following up on the core of the problem.
-        // In the meantime, this code makes sure we will write out all segments properly
-        if (this.header.segmentsTotalLength != totalLength) {
-            this.logger.sendErrorEvent({eventName: "SegmentsTotalLengthMismatch", totalLength, segmentsTotalLength: this.header.segmentsTotalLength});
-            this.header.segmentsTotalLength = totalLength;
-        }
-
+        mergeTree.walkAllSegments(mergeTree.root, extractSegment, this);
+        
+        // If the last segment in the walk was coalescable, push it now.
+        pushSeg(prev);
+        
         return this.segments;
     }
 
@@ -225,7 +273,8 @@ export class Snapshot {
         chunkLengthChars: -1,
         totalLengthChars: -1,
         totalSegmentCount: -1,
-        chunkSequenceNumber: 0,
+        chunkMinSequenceNumber: 0,
+        chunkCurrentSequenceNumber: 0,
         segmentTexts: [],
     }
 

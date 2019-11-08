@@ -49,7 +49,7 @@ export class TestClient extends Client {
     public static async createFromClientSnapshot(client1: TestClient, newLongClientId: string): Promise<TestClient> {
         const snapshot = new Snapshot(client1.mergeTree, DebugLogger.create("fluid:snapshot"));
         snapshot.extractSync();
-        const snapshotTree = snapshot.emit([]);
+        const snapshotTree = snapshot.emit();
         return TestClient.createFromSnapshot(snapshotTree, newLongClientId, client1.specToSegment);
     }
 

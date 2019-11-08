@@ -309,7 +309,7 @@ export class SparseMatrixFactory implements ISharedObjectFactory {
 
     public static Attributes: IChannelAttributes = {
         type: SparseMatrixFactory.Type,
-        snapshotFormatVersion: "0.1",
+        snapshotFormatVersion: "0.2",
         packageVersion: pkgVersion,
     };
 

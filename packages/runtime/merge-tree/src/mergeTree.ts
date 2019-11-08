@@ -1350,6 +1350,9 @@ export class MergeTree {
     }
 
     reloadFromSegments(segments: ISegment[]) {
+        // This code assumes that a later call to `startCollaboration()` will initialize partial lengths.
+        assert(!this.collabWindow.collaborating);
+
         const maxChildren = MaxNodesInBlock - 1;
         const measureReloadTime = false;
 
@@ -1404,11 +1407,11 @@ export class MergeTree {
     }
 
     // for now assume min starts at zero
-    startCollaboration(localClientId: number, minSeq: number, branchId: number) {
+    startCollaboration(localClientId: number, minSeq: number, currentSeq: number, branchId: number) {
         this.collabWindow.clientId = localClientId;
         this.collabWindow.minSeq = minSeq;
         this.collabWindow.collaborating = true;
-        this.collabWindow.currentSeq = minSeq;
+        this.collabWindow.currentSeq = currentSeq;
         this.localBranchId = branchId;
         this.segmentsToScour = new Collections.Heap<LRUSegment>([], LRUSegmentComparer);
         this.pendingSegments = Collections.ListMakeHead<SegmentGroup>();
@@ -1425,12 +1428,12 @@ export class MergeTree {
 
     private addToLRUSet(segment: ISegment, seq: number) {
         // only skip adding segments who's parents are
-        // explitly needing scour, not false or undefined
+        // explicitly needing scour, not false or undefined
         if (segment.parent.needsScour !== true) {
-            // sequence should be always above current.
-            assert(seq > this.collabWindow.currentSeq, "addToLRUSet");
+            // Note: 'seq' may be less than the current sequence number when inserting pre-ACKed
+            //       segments from a snapshot.
             segment.parent.needsScour = true;
-            this.segmentsToScour.add({ segment, maxSeq: seq });
+            this.segmentsToScour.add({ segment, maxSeq: seq });     // TODO: Do we need to adjust 'maxSeq' per the above?
         }
     }
 
@@ -2422,7 +2425,7 @@ export class MergeTree {
         }
     }
 
-    // visit segments starting from node's right siblings, then up to node's parent
+    // visit segments starting from node's left siblings, then up to node's parent
     leftExcursion<TClientData>(node: IMergeNode, leafAction: ISegmentAction<TClientData>) {
         const actions = { leaf: leafAction };
         let go = true;
@@ -3180,6 +3183,25 @@ export class MergeTree {
             go = actions.post(node, pos, refSeq, clientId, start, end, accum);
         }
 
+        return go;
+    }
+
+    // Invokes the leaf action for all segments.  `refSeq` and `clientId` are passed through
+    // to the leaf action, but are not used to prune the walk (i.e., *all* segments are visited
+    // regardless of if they would be visible to the given `clientId` and `refSeq`).
+    walkAllSegments<TClientData>(
+        block: IMergeBlock,
+        action: (segment: ISegment, accum?: TClientData) => boolean,
+        accum?: TClientData,
+    ) {
+        let go = true;
+        const children = block.children;
+        for (let childIndex = 0; go && childIndex < block.childCount; childIndex++) {
+            const child = children[childIndex];
+            go = child.isLeaf()
+                ? action(child, accum)
+                : this.walkAllSegments(child, action, accum);
+        }
         return go;
     }
 

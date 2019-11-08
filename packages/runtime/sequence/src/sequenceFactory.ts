@@ -19,7 +19,7 @@ export class SharedStringFactory implements ISharedObjectFactory {
 
     public static Attributes: IChannelAttributes = {
         type: SharedStringFactory.Type,
-        snapshotFormatVersion: "0.1",
+        snapshotFormatVersion: "0.2",
         packageVersion: pkgVersion,
     };
 
@@ -62,7 +62,7 @@ export class SharedObjectSequenceFactory implements ISharedObjectFactory {
 
     public static Attributes: IChannelAttributes = {
         type: SharedObjectSequenceFactory.Type,
-        snapshotFormatVersion: "0.1",
+        snapshotFormatVersion: "0.2",
         packageVersion: pkgVersion,
     };
 
@@ -108,7 +108,7 @@ export class SharedNumberSequenceFactory implements ISharedObjectFactory {
 
     public static Attributes: IChannelAttributes = {
         type: SharedNumberSequenceFactory.Type,
-        snapshotFormatVersion: "0.1",
+        snapshotFormatVersion: "0.2",
         packageVersion: pkgVersion,
     };
 
