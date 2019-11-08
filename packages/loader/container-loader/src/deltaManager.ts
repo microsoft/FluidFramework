@@ -760,6 +760,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this.connectFirstConnection = false;
     }
 
+    /**
+     * Disconnect the current connection.
+     * @param reason - Text description of disconnect reason to emit with disconnect event
+     */
     private disconnectFromDeltaStream(reason: string) {
         const connection = this.connection;
         if (!connection) {
