@@ -137,10 +137,6 @@ export class ChaincodeFactory implements IRuntimeFactory {
                 });
         }
 
-        if (!this.runtimeOptions.generateSummaries) {
-            runtime.registerTasks(["snapshot", "spell", "intel", "translation"]);
-        }
-
         return runtime;
     }
 }
