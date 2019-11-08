@@ -299,6 +299,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             return this.connection.details;
         }
 
+        if (this.connecting) {
+            return this.connecting.promise;
+        }
+
         const connectCore = async () => {
             let connection: DeltaConnection | undefined;
             let delay = InitialReconnectDelay;
@@ -353,13 +357,16 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             }
 
             this.setupNewSuccessfulConnection(connection);
+
+            if (this.connecting) {
+                this.connecting.resolve(connection.details);
+                this.connecting = undefined;
+            }
         };
 
-        if (!this.connecting) {
-            this.connecting = new Deferred<IConnectionDetails>();
-            // tslint:disable-next-line:no-floating-promises
-            connectCore();
-        }
+        this.connecting = new Deferred<IConnectionDetails>();
+        // tslint:disable-next-line:no-floating-promises
+        connectCore();
 
         return this.connecting.promise;
     }
@@ -691,12 +698,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         this.clientSequenceNumber = 0;
         this.clientSequenceNumberObserved = 0;
-
-        // If first connection resolve the promise with the details
-        if (this.connecting) {
-            this.connecting.resolve(connection.details);
-            this.connecting = undefined;
-        }
 
         connection.on("op", (documentId: string, messages: ISequencedDocumentMessage[]) => {
             if (messages instanceof Array) {
