@@ -119,10 +119,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
             const version = request.headers && request.headers[LoaderHeader.version];
             let connection = request.headers && request.headers[LoaderHeader.connect];
-            connection = connection || {
-                open: true,
-                pause: false,
-            };
+            connection = connection || { open: true, pause: false };
 
             return container.load(version, connection)
                 .then(() => {

@@ -386,7 +386,7 @@ export class Loader extends EventEmitter implements ILoader {
             // If connection header is pure open or close we will cache it. Otherwise custom load behavior
             // and so we will not cache the request
             const connHeaders = request.headers[LoaderHeader.connect];
-            canCache = !!(connHeaders && connHeaders.pause);
+            canCache = !(connHeaders && connHeaders.pause);
         }
 
         const headerSeqNum = request.headers[LoaderHeader.sequenceNumber];
