@@ -4,9 +4,9 @@
  */
 
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { getHashedDocumentId } from "@microsoft/fluid-odsp-utils";
 import { IResolvedUrl, IUrlResolver } from "@microsoft/fluid-protocol-definitions";
 import { IOdspResolvedUrl } from "./contracts";
+import { getHashedDocumentId } from "./OdspUtils";
 
 function getSnapshotUrl(siteUrl: string, driveId: string, itemId: string) {
   const siteOrigin = new URL(siteUrl).origin;
