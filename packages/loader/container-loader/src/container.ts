@@ -550,7 +550,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
      *   - null: use ops, no snapshots
      *   - undefined - fetch latest snapshot
      *   - otherwise, version sha to load snapshot
-     * @param connection - options (list of keywords). Accepted options are open & pause.
+     * @param pause - start the container in a paused state
      */
     private async load(specifiedVersion: string | null | undefined, pause: boolean): Promise<void> {
         const perfEvent = PerformanceEvent.start(this.logger, { eventName: "Load" });
@@ -579,7 +579,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         const attributes = await this.getDocumentAttributes(this.storageService, maybeSnapshotTree);
 
         // attach op handlers to start processing ops
-        this.attachDeltaManagerOpHandler(attributes);
+        this.attachDeltaManagerOpHandler(attributes, specifiedVersion === undefined);
 
         // ...load in the existing quorum
         // Initialize the protocol handler
@@ -872,7 +872,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         });
     }
 
-    private attachDeltaManagerOpHandler(attributes: IDocumentAttributes): void {
+    private attachDeltaManagerOpHandler(attributes: IDocumentAttributes, resume: boolean): void {
         assert(this._deltaManager);
 
         this._deltaManager!.on("closed", () => {
@@ -894,7 +894,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                     this.processSignal(message);
                 },
             },
-            true);
+            resume);
     }
 
     private logConnectionStateChangeTelemetry(value: ConnectionState, oldState: ConnectionState, reason: string) {

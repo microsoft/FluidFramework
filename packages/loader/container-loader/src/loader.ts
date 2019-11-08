@@ -45,7 +45,6 @@ interface IParsedUrl {
 export enum LoaderHeader {
     cache = "fluid-cache",
     clientDetails = "fluid-client-type",
-
     executionContext = "execution-context",
 
     /**
