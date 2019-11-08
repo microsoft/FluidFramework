@@ -1,9 +1,13 @@
 # 0.12 Breaking Changes
 
 - [Top-level `type` on `IClient` deprecated](#Top-level-type-on-IClient-deprecated)
+- [Support for `IFluidResolvedUrl.type` === "prague" removed](#support-for-ifluidresolvedurltype--prague-removed)
 
 ## Top-level `type` on `IClient` deprecated
 The `type` field on `IClient` has been deprecated and will be removed in the future. There is now an optional type in the new `details` member of `IClient`. Some of the functionality of the top-level `type` field has been replaced by the `capabilities` member in `IClient.details`, specifically the `interactive` boolean is used to distinguish between human and non-human clients.
+
+## Support for `IFluidResolvedUrl.type` === "prague" removed
+As previously mentioned, `IFluidResolvedUrl.type` should now be "fluid". Backwards compatibility for type "prague" has now been removed.
 
 # 0.11 Breaking Changes
 
@@ -120,100 +124,100 @@ myMap.createValueType("myKey", CounterValueType.Name, 0);
 ## Package rename
 The following packages have been renamed:
 
-old name | new name
--- | --
-@chaincode/flow-intel | @fluid-example/flow-intel
-@chaincode/flow-intel-viewer | @fluid-example/flow-intel-viewer
-@prague/intelligence-runner | @fluid-example/intelligence-runner-agent
-@prague/snapshotter | @fluid-example/snapshotter-agent
-@prague/spellchecker | @fluid-example/spellchecker-agent
-@prague/translator | @fluid-example/translator-agent
-@component/agent-scheduler | @microsoft/fluid-agent-scheduler
-@component/blob-manager | @microsoft/fluid-blob-manager
-@chaincode/canvas | @fluid-example/canvas
-@chaincode/clicker | @fluid-example/clicker
-@prague/client-ui | @fluid-example/client-ui-lib
-@chaincode/externalcomponentloader | @microsoft/fluid-external-component-loader
-@chaincode/flow-scroll | @fluid-example/flow-scroll
-@prague/flow-util | @fluid-example/flow-util-lib
-@chaincode/image-collection | @fluid-example/image-collection
-@chaincode/key-value | @fluid-example/key-value
-@chaincode/markflow | @fluid-example/markflow
-@chaincode/math | @fluid-example/math
-@chaincode/monaco | @fluid-example/monaco
-@chaincode/owned-map | @fluid-example/owned-map
-@chaincode/pinpoint-editor | @fluid-example/pinpoint-editor
-@chaincode/pond | @fluid-example/pond
-@chaincode/progress-bars | @fluid-example/progress-bars
-@chaincode/scoreboard | @fluid-example/scoreboard
-@chaincode/scribe | @fluid-example/scribe
-@chaincode/search-menu | @fluid-example/search-menu
-@chaincode/shared-map-visualizer | @fluid-example/shared-map-visualizer
-@chaincode/shared-text | @fluid-example/shared-text
-@chaincode/table-document | @fluid-example/table-document
-@prague/table-test | @fluid-example/table-test-lib
-@chaincode/table-view | @fluid-example/table-view
-@chaincode/todo | @fluid-example/todo
-@chaincode/video-players | @fluid-example/video-players
-@chaincode/webflow | @fluid-example/webflow
-@prague/file-socket-storage | @microsoft/fluid-file-driver
-@prague/fluid-debugger | @microsoft/fluid-debugger
-@prague/odsp-socket-storage | @microsoft/fluid-odsp-driver
-@prague/replay-socket-storage | @microsoft/fluid-replay-driver
-@prague/routerlicious-host | @microsoft/fluid-routerlicious-host
-@prague/routerlicious-socket-storage | @microsoft/fluid-routerlicious-driver
-@prague/socket-storage-shared | @microsoft/fluid-driver-base
-@prague/aqueduct | @microsoft/fluid-aqueduct
-@prague/aqueduct-react | @microsoft/fluid-aqueduct-react
-@prague/framework-definitions | @microsoft/fluid-framework-interfaces
-@prague/base-host | @microsoft/fluid-base-host
-@prague/react-web-host | @fluid-example/react-web-host
-@prague/tiny-web-host | @fluid-example/tiny-web-host
-@prague/component-core-interfaces | @microsoft/fluid-component-core-interfaces
-@prague/container-definitions | @microsoft/fluid-container-definitions
-@prague/container-loader | @microsoft/fluid-container-loader
-@prague/gitresources | @microsoft/fluid-gitresources
-@prague/loader-web | @microsoft/fluid-web-code-loader
-@prague/protocol-definitions | @microsoft/fluid-protocol-definitions
-@prague/utils | @microsoft/fluid-core-utils
-@prague/cell | @microsoft/fluid-cell
-@prague/client-api | @fluid-internal/client-api
-@prague/component-runtime | @microsoft/fluid-component-runtime
-@prague/consensus-ordered-collection | @microsoft/fluid-ordered-collection
-@prague/consensus-register-collection | @microsoft/fluid-register-collection
-@prague/container-runtime | @microsoft/fluid-container-runtime
-@prague/map | @microsoft/fluid-map
-@prague/merge-tree | @microsoft/fluid-merge-tree
-@prague/runtime-definitions | @microsoft/fluid-runtime-definitions
-@prague/runtime-test-utils | @microsoft/fluid-test-runtime-utils
-@prague/sequence | @microsoft/fluid-sequence
-@prague/shared-object-common | @microsoft/fluid-shared-object-base
-@prague/stream | @microsoft/fluid-ink
-@prague/agent | @microsoft/fluid-server-agent
-@prague/gateway | @microsoft/fluid-server-gateway
-@prague/kafka-orderer | @microsoft/fluid-server-kafka-orderer
-@prague/lambdas | @microsoft/fluid-server-lambdas
-@prague/lambdas-driver | @microsoft/fluid-server-lambdas-driver
-@prague/local-test-server | @microsoft/fluid-local-test-server
-@prague/memory-orderer | @microsoft/fluid-server-memory-orderer
-@prague/routerlicious | @microsoft/fluid-server-routerlicious
-@prague/services | @microsoft/fluid-server-services
-@prague/services-client | @microsoft/fluid-server-services-client
-@prague/services-core | @microsoft/fluid-server-services-core
-@prague/services-utils | @microsoft/fluid-server-services-utils
-@prague/test-utils | @microsoft/fluid-server-test-utils
-@prague/tools-core | @microsoft/fluid-server-tools-core
-@prague/test-snapshots | @microsoft/fluid-test-snapshots
-@prague/prague-dump | @microsoft/fluid-fetch
-@prague/replay-tool | @microsoft/fluid-replay-tool
-@prague/build-common | @microsoft/fluid-build-common
-@prague/odsp-utils | @microsoft/fluid-odsp-utils
-@prague/generator-fluid	| @microsoft/generator-fluid
-@prague/url-generator	| @fluid-internal/url-generator
-@prague/iframe-socket-storage	| @microsoft/fluid-iframe-driver
-@prague/host-service-interfaces	| @microsoft/fluid-host-service-interfaces
-@prague/auspkn | @fluid-internal/auspkn
-@prague/service | @fluid-internal/server-service
+| old name                              | new name                                   |
+| ------------------------------------- | ------------------------------------------ |
+| @chaincode/flow-intel                 | @fluid-example/flow-intel                  |
+| @chaincode/flow-intel-viewer          | @fluid-example/flow-intel-viewer           |
+| @prague/intelligence-runner           | @fluid-example/intelligence-runner-agent   |
+| @prague/snapshotter                   | @fluid-example/snapshotter-agent           |
+| @prague/spellchecker                  | @fluid-example/spellchecker-agent          |
+| @prague/translator                    | @fluid-example/translator-agent            |
+| @component/agent-scheduler            | @microsoft/fluid-agent-scheduler           |
+| @component/blob-manager               | @microsoft/fluid-blob-manager              |
+| @chaincode/canvas                     | @fluid-example/canvas                      |
+| @chaincode/clicker                    | @fluid-example/clicker                     |
+| @prague/client-ui                     | @fluid-example/client-ui-lib               |
+| @chaincode/externalcomponentloader    | @microsoft/fluid-external-component-loader |
+| @chaincode/flow-scroll                | @fluid-example/flow-scroll                 |
+| @prague/flow-util                     | @fluid-example/flow-util-lib               |
+| @chaincode/image-collection           | @fluid-example/image-collection            |
+| @chaincode/key-value                  | @fluid-example/key-value                   |
+| @chaincode/markflow                   | @fluid-example/markflow                    |
+| @chaincode/math                       | @fluid-example/math                        |
+| @chaincode/monaco                     | @fluid-example/monaco                      |
+| @chaincode/owned-map                  | @fluid-example/owned-map                   |
+| @chaincode/pinpoint-editor            | @fluid-example/pinpoint-editor             |
+| @chaincode/pond                       | @fluid-example/pond                        |
+| @chaincode/progress-bars              | @fluid-example/progress-bars               |
+| @chaincode/scoreboard                 | @fluid-example/scoreboard                  |
+| @chaincode/scribe                     | @fluid-example/scribe                      |
+| @chaincode/search-menu                | @fluid-example/search-menu                 |
+| @chaincode/shared-map-visualizer      | @fluid-example/shared-map-visualizer       |
+| @chaincode/shared-text                | @fluid-example/shared-text                 |
+| @chaincode/table-document             | @fluid-example/table-document              |
+| @prague/table-test                    | @fluid-example/table-test-lib              |
+| @chaincode/table-view                 | @fluid-example/table-view                  |
+| @chaincode/todo                       | @fluid-example/todo                        |
+| @chaincode/video-players              | @fluid-example/video-players               |
+| @chaincode/webflow                    | @fluid-example/webflow                     |
+| @prague/file-socket-storage           | @microsoft/fluid-file-driver               |
+| @prague/fluid-debugger                | @microsoft/fluid-debugger                  |
+| @prague/odsp-socket-storage           | @microsoft/fluid-odsp-driver               |
+| @prague/replay-socket-storage         | @microsoft/fluid-replay-driver             |
+| @prague/routerlicious-host            | @microsoft/fluid-routerlicious-host        |
+| @prague/routerlicious-socket-storage  | @microsoft/fluid-routerlicious-driver      |
+| @prague/socket-storage-shared         | @microsoft/fluid-driver-base               |
+| @prague/aqueduct                      | @microsoft/fluid-aqueduct                  |
+| @prague/aqueduct-react                | @microsoft/fluid-aqueduct-react            |
+| @prague/framework-definitions         | @microsoft/fluid-framework-interfaces      |
+| @prague/base-host                     | @microsoft/fluid-base-host                 |
+| @prague/react-web-host                | @fluid-example/react-web-host              |
+| @prague/tiny-web-host                 | @fluid-example/tiny-web-host               |
+| @prague/component-core-interfaces     | @microsoft/fluid-component-core-interfaces |
+| @prague/container-definitions         | @microsoft/fluid-container-definitions     |
+| @prague/container-loader              | @microsoft/fluid-container-loader          |
+| @prague/gitresources                  | @microsoft/fluid-gitresources              |
+| @prague/loader-web                    | @microsoft/fluid-web-code-loader           |
+| @prague/protocol-definitions          | @microsoft/fluid-protocol-definitions      |
+| @prague/utils                         | @microsoft/fluid-core-utils                |
+| @prague/cell                          | @microsoft/fluid-cell                      |
+| @prague/client-api                    | @fluid-internal/client-api                 |
+| @prague/component-runtime             | @microsoft/fluid-component-runtime         |
+| @prague/consensus-ordered-collection  | @microsoft/fluid-ordered-collection        |
+| @prague/consensus-register-collection | @microsoft/fluid-register-collection       |
+| @prague/container-runtime             | @microsoft/fluid-container-runtime         |
+| @prague/map                           | @microsoft/fluid-map                       |
+| @prague/merge-tree                    | @microsoft/fluid-merge-tree                |
+| @prague/runtime-definitions           | @microsoft/fluid-runtime-definitions       |
+| @prague/runtime-test-utils            | @microsoft/fluid-test-runtime-utils        |
+| @prague/sequence                      | @microsoft/fluid-sequence                  |
+| @prague/shared-object-common          | @microsoft/fluid-shared-object-base        |
+| @prague/stream                        | @microsoft/fluid-ink                       |
+| @prague/agent                         | @microsoft/fluid-server-agent              |
+| @prague/gateway                       | @microsoft/fluid-server-gateway            |
+| @prague/kafka-orderer                 | @microsoft/fluid-server-kafka-orderer      |
+| @prague/lambdas                       | @microsoft/fluid-server-lambdas            |
+| @prague/lambdas-driver                | @microsoft/fluid-server-lambdas-driver     |
+| @prague/local-test-server             | @microsoft/fluid-local-test-server         |
+| @prague/memory-orderer                | @microsoft/fluid-server-memory-orderer     |
+| @prague/routerlicious                 | @microsoft/fluid-server-routerlicious      |
+| @prague/services                      | @microsoft/fluid-server-services           |
+| @prague/services-client               | @microsoft/fluid-server-services-client    |
+| @prague/services-core                 | @microsoft/fluid-server-services-core      |
+| @prague/services-utils                | @microsoft/fluid-server-services-utils     |
+| @prague/test-utils                    | @microsoft/fluid-server-test-utils         |
+| @prague/tools-core                    | @microsoft/fluid-server-tools-core         |
+| @prague/test-snapshots                | @microsoft/fluid-test-snapshots            |
+| @prague/prague-dump                   | @microsoft/fluid-fetch                     |
+| @prague/replay-tool                   | @microsoft/fluid-replay-tool               |
+| @prague/build-common                  | @microsoft/fluid-build-common              |
+| @prague/odsp-utils                    | @microsoft/fluid-odsp-utils                |
+| @prague/generator-fluid               | @microsoft/generator-fluid                 |
+| @prague/url-generator                 | @fluid-internal/url-generator              |
+| @prague/iframe-socket-storage         | @microsoft/fluid-iframe-driver             |
+| @prague/host-service-interfaces       | @microsoft/fluid-host-service-interfaces   |
+| @prague/auspkn                        | @fluid-internal/auspkn                     |
+| @prague/service                       | @fluid-internal/server-service             |
 
 ## Support for IPraguePackage removed
 Support for IPraguePackage and the `"prague"` entry in `package.json` has been removed. It has been replaced by IFluidPackage and a `"fluid"` entry in `package.json`:
