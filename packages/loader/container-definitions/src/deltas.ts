@@ -112,7 +112,7 @@ export interface IDeltaManager<T, U> extends EventEmitter, IDeltaSender, IDispos
 
     close(): void;
 
-    connect(reason: string): Promise<IConnectionDetails>;
+    connect(requestedMode?: ConnectionMode): Promise<IConnectionDetails>;
 
     getDeltas(reason: string, from: number, to?: number): Promise<ISequencedDocumentMessage[]>;
 
