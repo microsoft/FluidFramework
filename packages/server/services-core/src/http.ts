@@ -23,6 +23,8 @@ export interface IWebSocket {
     broadcastToRoom(roomId: string, event: string, ...args: any[]);
 
     emitToRoom(roomId: string, event: string, ...args: any[]);
+
+    disconnect(close?: boolean): void;
 }
 
 export interface IWebServer {
