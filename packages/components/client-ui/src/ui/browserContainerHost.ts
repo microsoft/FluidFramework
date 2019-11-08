@@ -54,6 +54,7 @@ export class BrowserContainerHost {
 
         // Trigger initial resize due to attach
         this.resize();
+        this.resize(); // have to resize twice because we get a weird bounding rect the first time, not sure why
     }
 
     private resize() {
@@ -65,6 +66,14 @@ export class BrowserContainerHost {
             // assume parent div is containing block and we want to render at its top-leftmost
             newSize.x = 0;
             newSize.y = 0;
+
+            // tslint:disable: strict-boolean-expressions
+            const borderWidth = (parseFloat(this.parent.style.borderLeftWidth) || 0)
+                + (parseFloat(this.parent.style.borderRightWidth) || 0);
+            const borderHeight = (parseFloat(this.parent.style.borderTopWidth) || 0)
+                + (parseFloat(this.parent.style.borderBottomWidth) || 0);
+            newSize.width -= borderWidth;
+            newSize.height -= borderHeight;
         } else {
             clientRect = document.body.getBoundingClientRect();
             newSize = Rectangle.fromClientRect(clientRect);

@@ -226,6 +226,8 @@ export class SharedTextRunner
 
         const containerDiv = document.createElement("div");
         containerDiv.id = "flow-container";
+        containerDiv.style.touchAction = "none";
+        containerDiv.style.overflow = "hidden";
         const container = new controls.FlowContainer(
             containerDiv,
             new API.Document(this.runtime, this.context, this.rootView),

@@ -10,7 +10,7 @@
 
     <title>{{ title }}</title>
 </head>
-<body style="display: flex; flex-direction: column; min-height: 100vh; margin: 0; padding: 0">
+<body style="display: flex; flex-direction: column; height: 100vh; margin: 0; padding: 0">
     <nav class="navbar navbar-dark" style="background: #004B8B; flex: 0 1 auto; margin: 0">
         <a class="navbar-brand" href="/">
             <img src="/public/images/bindy.svg" style="vertical-align: text-bottom; height: 26px;">
