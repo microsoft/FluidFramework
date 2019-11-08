@@ -789,6 +789,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
      * @param connection - The connection that wants to reconnect - no-op if it's different from this.connection
      * @param mode - Read or write
      * @param error - The error that prompted the reconnect
+     * @param autoReconnect - Whether to attempt reconnection automatically after error handling
      * @returns A promise that resolves when the connection is reestablished or we stop trying
      */
     private async reconnectOnError(
@@ -796,7 +797,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         connection: DeltaConnection,
         mode: ConnectionMode,
         error?: any,
-        reconnect: boolean = true,
+        autoReconnect: boolean = true,
     ) {
         // we quite often get protocol errors before / after observing nack/disconnect
         // we do not want to run through same sequence twice.
@@ -816,7 +817,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             return;
         }
 
-        if (reconnect) {
+        if (autoReconnect) {
             const delay = this.getRetryDelayFromError(error);
             if (delay !== undefined) {
                 this.emitDelayInfo(retryFor.DELTASTREAM, delay);
