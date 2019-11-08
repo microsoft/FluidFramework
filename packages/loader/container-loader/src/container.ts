@@ -421,6 +421,13 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         });
     }
 
+    /**
+     * Connect the deltaManager.  Useful when the autoConnect flag is set to false.
+     */
+    public async reconnect() {
+        return this._deltaManager!.connect();
+    }
+
     private async reloadContextCore(): Promise<void> {
         await Promise.all([
             this.deltaManager!.inbound.systemPause(),
@@ -1009,7 +1016,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         } else if (value === ConnectionState.Disconnected) {
             // Important as we process our own joinSession message through delta request
             this.pendingClientId = undefined;
-            this.connectionDetailsP = undefined;
         }
 
         // Report telemetry after we set client id!
