@@ -1,7 +1,7 @@
 # 0.12 Breaking Changes
 
 - [Top-level `type` on `IClient` deprecated](#Top-level-type-on-IClient-deprecated)
-- [Support for `IFluidResolvedUrl.type` === "prague" removed](#support-for-ifluidresolvedurltype-prague-removed)
+- [Support for `IFluidResolvedUrl.type` === "prague" removed](#support-for-ifluidresolvedurltype--prague-removed)
 
 ## Top-level `type` on `IClient` deprecated
 The `type` field on `IClient` has been deprecated and will be removed in the future. There is now an optional type in the new `details` member of `IClient`. Some of the functionality of the top-level `type` field has been replaced by the `capabilities` member in `IClient.details`, specifically the `interactive` boolean is used to distinguish between human and non-human clients.
