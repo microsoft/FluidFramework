@@ -42,22 +42,14 @@ interface IParsedUrl {
     version: string | null | undefined;
 }
 
-export interface IConnectFlags {
-    open: boolean;
-    pause: boolean;
-}
-
 export enum LoaderHeader {
     cache = "fluid-cache",
     clientDetails = "fluid-client-type",
 
-    /**
-     * connection options (list of keywords). Accepted options are open & pause.
-     */
-    connect = "connect",
     executionContext = "execution-context",
-    sequenceNumber = "fluid-sequence-number",
+    pause = "pause",
     reconnect = "fluid-reconnect",
+    sequenceNumber = "fluid-sequence-number",
 
     /**
      * One of the following:
@@ -70,7 +62,7 @@ export enum LoaderHeader {
 export interface ILoaderHeader {
     [LoaderHeader.cache]: boolean;
     [LoaderHeader.clientDetails]: IClientDetails;
-    [LoaderHeader.connect]: IConnectFlags;
+    [LoaderHeader.pause]: boolean;
     [LoaderHeader.executionContext]: string;
     [LoaderHeader.sequenceNumber]: number;
     [LoaderHeader.reconnect]: boolean;
@@ -313,7 +305,7 @@ export class Loader extends EventEmitter implements ILoader {
         request.headers = request.headers ? request.headers : {};
         const {canCache, fromSequenceNumber } = this.parseHeader(parsed, request);
 
-        debug(`${canCache} ${request.headers[LoaderHeader.connect]} ${request.headers[LoaderHeader.version]}`);
+        debug(`${canCache} ${request.headers[LoaderHeader.pause]} ${request.headers[LoaderHeader.version]}`);
         const factory: IDocumentServiceFactory =
             selectDocumentServiceFactoryForProtocol(resolvedAsFluid, this.protocolToDocumentFactoryMap);
 
@@ -368,20 +360,10 @@ export class Loader extends EventEmitter implements ILoader {
         let fromSequenceNumber = -1;
 
         request.headers = request.headers ? request.headers : {};
-        if (!request.headers[LoaderHeader.connect]) {
-            request.headers[LoaderHeader.connect] = {
-                open: !parsed.version,
-                pause: false,
-            };
-        }
-
         if (request.headers[LoaderHeader.cache] === false) {
             canCache = false;
         } else {
-            // If connection header is pure open or close we will cache it. Otherwise custom load behavior
-            // and so we will not cache the request
-            const connHeaders = request.headers[LoaderHeader.connect];
-            canCache = !(connHeaders && connHeaders.pause);
+            canCache = !request.headers[LoaderHeader.pause];
         }
 
         const headerSeqNum = request.headers[LoaderHeader.sequenceNumber];
