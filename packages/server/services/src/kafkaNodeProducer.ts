@@ -136,6 +136,7 @@ export class KafkaNodeProducer implements IProducer {
                 (error, data) => {
                     if (error) {
                         this.handleError(error);
+                        boxcar.deferred.reject(error);
                     } else {
                         boxcar.deferred.resolve();
                     }
