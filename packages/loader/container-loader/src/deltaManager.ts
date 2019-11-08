@@ -721,7 +721,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             // ("server_disconnect", ODSP-specific) is mapped to "disconnect"
             // tslint:disable-next-line:no-floating-promises
             this.reconnectOnError(
-                `Reconnecting on disconnect: ${disconnectReason}`,
+                `Got disconnect: ${disconnectReason}, autoReconnect: ${this.autoReconnect}`,
                 connection,
                 this.systemConnectionMode,
                 disconnectReason,
