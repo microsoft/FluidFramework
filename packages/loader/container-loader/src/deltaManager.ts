@@ -77,13 +77,15 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     public readonly clientDetails: IClientDetails;
     public get IDeltaSender() { return this; }
 
-    // Current conneciton mode. Initially write.
+    /**
+     * Controls whether the DeltaManager will automatically reconnect to the delta stream after receiving a disconnect.
+     */
+    public autoReconnect: boolean = true;
+
+    // Current connection mode. Initially write.
     public connectionMode: ConnectionMode = "write";
     // Overwrites the current connection mode to always write.
     private readonly systemConnectionMode: ConnectionMode;
-
-    // tslint:disable-next-line:prefer-readonly - will be writing to this before checkin.
-    private autoReconnect: boolean = true;
 
     private isDisposed: boolean = false;
     private pending: ISequencedDocumentMessage[] = [];
@@ -713,20 +715,18 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             this.reconnectOnError(nackReason, connection, "write");
         });
 
-        //  Connection mode is always read on disconnect/error unless the system mode was write.
+        // Connection mode is always read on disconnect/error unless the system mode was write.
         connection.on("disconnect", (disconnectReason) => {
             // Note: we might get multiple disconnect calls on same socket, as early disconnect notification
             // ("server_disconnect", ODSP-specific) is mapped to "disconnect"
-            if (this.autoReconnect) {
-                // tslint:disable-next-line:no-floating-promises
-                this.reconnectOnError(
-                    `Reconnecting on disconnect: ${disconnectReason}`,
-                    connection,
-                    this.systemConnectionMode,
-                    disconnectReason);
-            } else {
-
-            }
+            // tslint:disable-next-line:no-floating-promises
+            this.reconnectOnError(
+                `Reconnecting on disconnect: ${disconnectReason}`,
+                connection,
+                this.systemConnectionMode,
+                disconnectReason,
+                this.autoReconnect,
+            );
         });
 
         connection.on("error", (error) => {
@@ -787,7 +787,13 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
      * @param error - The error that prompted the reconnect
      * @returns A promise that resolves when the connection is reestablished or we stop trying
      */
-    private async reconnectOnError(reason: string, connection: DeltaConnection, mode: ConnectionMode, error?: any) {
+    private async reconnectOnError(
+        reason: string,
+        connection: DeltaConnection,
+        mode: ConnectionMode,
+        error?: any,
+        reconnect: boolean = true,
+    ) {
         // we quite often get protocol errors before / after observing nack/disconnect
         // we do not want to run through same sequence twice.
         if (connection !== this.connection) {
@@ -806,12 +812,14 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             return;
         }
 
-        const delay = this.getRetryDelayFromError(error);
-        if (delay !== undefined) {
-            this.emitDelayInfo(retryFor.DELTASTREAM, delay);
-            await waitForConnectedState(delay);
+        if (reconnect) {
+            const delay = this.getRetryDelayFromError(error);
+            if (delay !== undefined) {
+                this.emitDelayInfo(retryFor.DELTASTREAM, delay);
+                await waitForConnectedState(delay);
+            }
+            await this.connectCore(mode);
         }
-        await this.connectCore(mode);
     }
 
     private getRetryDelayFromError(error): number | undefined {

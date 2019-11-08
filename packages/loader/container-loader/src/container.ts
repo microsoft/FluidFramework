@@ -254,6 +254,26 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return this._parentBranch;
     }
 
+    /**
+     * Controls whether the container will automatically reconnect to the delta stream after receiving a disconnect.
+     */
+    public set autoReconnect(value: boolean) {
+        if (!this._deltaManager) {
+            throw new Error("Can't set autoReconnect prior to load");
+        }
+        this._deltaManager.autoReconnect = value;
+    }
+
+    /**
+     * Controls whether the container will automatically reconnect to the delta stream after receiving a disconnect.
+     */
+    public get autoReconnect() {
+        if (!this._deltaManager) {
+            throw new Error("Can't access autoReconnect prior to load");
+        }
+        return this._deltaManager.autoReconnect;
+    }
+
     constructor(
         id: string,
         public readonly options: any,
@@ -989,6 +1009,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         } else if (value === ConnectionState.Disconnected) {
             // Important as we process our own joinSession message through delta request
             this.pendingClientId = undefined;
+            this.connectionDetailsP = undefined;
         }
 
         // Report telemetry after we set client id!
