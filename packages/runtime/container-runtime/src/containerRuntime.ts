@@ -126,7 +126,7 @@ const DefaultSummaryConfiguration: ISummaryConfiguration = {
  */
 export interface IContainerRuntimeOptions {
     // Experimental flag that will generate summaries if connected to a service that supports them.
-    // Will eventually become the default and snapshots will be deprecated
+    // This defaults to true and must be explicitly set to false to disable.
     generateSummaries: boolean;
 
     // Experimental flag that will execute tasks in web worker if connected to a service that supports them.
@@ -263,8 +263,6 @@ class ScheduleManager {
     public resume() {
         this.paused = false;
         if (!this.localPaused) {
-            // resume is only flipping the state but isn't concerned with the promise result
-            // tslint:disable-next-line:no-floating-promises
             this.deltaManager.inbound.systemResume();
         }
     }
@@ -276,12 +274,12 @@ class ScheduleManager {
         }
 
         this.localPaused = localPaused;
-        const promise = localPaused || this.paused
-            ? this.deltaManager.inbound.systemPause()
-            : this.deltaManager.inbound.systemResume();
-
-        // we do not care about "Resumed while waiting to pause" rejections.
-        promise.catch((err) => {});
+        if (localPaused || this.paused) {
+            // tslint:disable-next-line:no-floating-promises
+            this.deltaManager.inbound.systemPause();
+        } else {
+            this.deltaManager.inbound.systemResume();
+        }
     }
 
     private updatePauseState(sequenceNumber: number) {
@@ -532,7 +530,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         private readonly context: IContainerContext,
         private readonly registry: IComponentRegistry,
         readonly chunks: [string, string[]][],
-        private readonly runtimeOptions: IContainerRuntimeOptions = { generateSummaries: false, enableWorker: false },
+        private readonly runtimeOptions: IContainerRuntimeOptions = { generateSummaries: true, enableWorker: false },
     ) {
         super();
 
@@ -604,7 +602,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         // Create the SummaryManager and mark the initial state
         this.summaryManager = new SummaryManager(
             context,
-            this.runtimeOptions.generateSummaries || this.loadedFromSummary,
+            this.runtimeOptions.generateSummaries !== false || this.loadedFromSummary,
             this.runtimeOptions.enableWorker,
             this.logger);
         if (this.context.connectionState === ConnectionState.Connected) {

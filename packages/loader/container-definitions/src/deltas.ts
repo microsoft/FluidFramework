@@ -143,13 +143,14 @@ export interface IDeltaQueue<T> extends EventEmitter, IDisposable {
 
     /**
      * Pauses processing on the queue
+     * @returns A promise which resolves when processing has been paused.
      */
     pause(): Promise<void>;
 
     /**
      * Resumes processing on the queue
      */
-    resume(): Promise<void>;
+    resume(): void;
 
     /**
      * Peeks at the next message in the queue
@@ -163,11 +164,12 @@ export interface IDeltaQueue<T> extends EventEmitter, IDisposable {
 
     /**
      * System level pause
+     * @returns A promise which resolves when processing has been paused.
      */
     systemPause(): Promise<void>;
 
     /**
      * System level resume
      */
-    systemResume(): Promise<void>;
+    systemResume(): void;
 }
