@@ -154,7 +154,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         public readonly scope: IComponent,
         public readonly codeLoader: ICodeLoader,
         public readonly chaincode: IRuntimeFactory,
-        private _baseSnapshot: ISnapshotTree | null,
+        private readonly _baseSnapshot: ISnapshotTree | null,
         private readonly attributes: IDocumentAttributes,
         public readonly blobManager: BlobManager | undefined,
         public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
@@ -171,12 +171,6 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
     ) {
         super();
         this.logger = container.subLogger;
-    }
-
-    public refreshBaseSummary(snapshot: ISnapshotTree) {
-        this._baseSnapshot = snapshot;
-        // need to notify runtime of the update
-        this.emit("refreshBaseSummary", snapshot);
     }
 
     public async snapshot(tagMessage: string, fullTree: boolean = false): Promise<ITree | null> {

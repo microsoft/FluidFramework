@@ -303,6 +303,11 @@ export enum FlushMode {
     Manual,
 }
 
+export interface ILatestSummary {
+    readonly handle?: string;
+    readonly referenceSequenceNumber: number;
+}
+
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
  */
@@ -327,6 +332,7 @@ export interface IHostRuntime extends
     readonly loader: ILoader;
     readonly logger: ITelemetryLogger;
     readonly flushMode: FlushMode;
+    readonly latestSummary: ILatestSummary;
     readonly submitFn: (type: MessageType, contents: any) => number;
     readonly submitSignalFn: (contents: any) => void;
     readonly snapshotFn: (message: string) => Promise<void>;

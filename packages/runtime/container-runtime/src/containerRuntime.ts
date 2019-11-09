@@ -26,11 +26,9 @@ import {
 } from "@microsoft/fluid-container-definitions";
 import {
     BlobTreeEntry,
-    buildHierarchy,
     CommitTreeEntry,
     ComponentSerializer,
     Deferred,
-    flatten,
     isSystemType,
     PerformanceEvent,
     raiseConnectedEvent,
@@ -60,6 +58,7 @@ import {
     IHelpMessage,
     IHostRuntime,
     IInboundSignalMessage,
+    ILatestSummary,
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
 import * as assert from "assert";
@@ -70,7 +69,6 @@ import { ComponentContext, LocalComponentContext, RemotedComponentContext } from
 import { ComponentHandleContext } from "./componentHandleContext";
 import { ComponentRegistry } from "./componentRegistry";
 import { debug } from "./debug";
-import { DocumentStorageServiceProxy } from "./documentStorageServiceProxy";
 import {
     componentRuntimeRequestHandler,
     createLoadableComponentRuntimeRequestHandler,
@@ -130,6 +128,19 @@ export interface IContainerRuntimeOptions {
 
 interface IRuntimeMessageMetadata {
     batch?: boolean;
+}
+
+class LatestSummaryTracker implements ILatestSummary {
+    public get handle() { return this._handle; }
+    public get referenceSequenceNumber() { return this._referenceSequenceNumber; }
+
+    private _handle?: string;
+    private _referenceSequenceNumber: number = 0;
+
+    public refresh(handle: string, referenceSequenceNumber: number) {
+        this._handle = handle;
+        this._referenceSequenceNumber = referenceSequenceNumber;
+    }
 }
 
 class ScheduleManager {
@@ -465,6 +476,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     public readonly IComponentHandleContext: IComponentHandleContext;
 
     public readonly logger: ITelemetryLogger;
+    public readonly latestSummary = new LatestSummaryTracker();
     private readonly summaryManager: SummaryManager;
     private readonly summaryTreeConverter = new SummaryTreeConverter();
 
@@ -549,6 +561,10 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             });
         }
 
+        if (context.baseSnapshot.id) {
+            this.latestSummary.refresh(context.baseSnapshot.id, this.deltaManager.initialSequenceNumber);
+        }
+
         // Create a context for each of them
         for (const [key, value] of components) {
             const componentContext = new RemotedComponentContext(key, value, this, this.storage, this.context.scope);
@@ -579,9 +595,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             this.clearPartialChunks(clientId);
         });
 
-        this.context.on("refreshBaseSummary",
-            (snapshot: ISnapshotTree) => this.refreshBaseSummary(snapshot));
-
         // We always create the summarizer in the case that we are asked to generate summaries. But this may
         // want to be on demand instead.
         // Don't use optimizations when generating summaries with a document loaded using snapshots.
@@ -591,7 +604,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             this,
             () => this.summaryConfiguration,
             () => this.generateSummary(!this.loadedFromSummary),
-            (snapshot) => this.context.refreshBaseSummary(snapshot));
+            (handle, referenceSequenceNumber) => this.refreshLatestSummary(handle, referenceSequenceNumber));
 
         // Create the SummaryManager and mark the initial state
         this.summaryManager = new SummaryManager(
@@ -925,16 +938,10 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this.dirtyDocument;
     }
 
-    private refreshBaseSummary(snapshot: ISnapshotTree) {
+    private refreshLatestSummary(handle: string, referenceSequenceNumber: number) {
         // currently only is called from summaries
         this.loadedFromSummary = true;
-        // propogate updated tree to all components
-        for (const key of Object.keys(snapshot.trees)) {
-            if (this.contexts.has(key)) {
-                const component = this.contexts.get(key);
-                component.refreshBaseSummary(snapshot.trees[key]);
-            }
-        }
+        this.latestSummary.refresh(handle, referenceSequenceNumber);
     }
 
     /**
@@ -985,23 +992,12 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                     break;
                 }
 
-                const attachMessage = message.contents as IAttachMessage;
-                const flatBlobs = new Map<string, string>();
-                let snapshotTree: ISnapshotTree = null;
-                if (attachMessage.snapshot) {
-                    const flattened = flatten(attachMessage.snapshot.entries, flatBlobs);
-                    snapshotTree = buildHierarchy(flattened);
-                }
-
-                // Include the type of attach message which is the pkg of the component to be
-                // used by RemotedComponentContext in case it is not in the snapshot.
-                remotedComponentContext = new RemotedComponentContext(
-                    attachMessage.id,
-                    snapshotTree,
+                remotedComponentContext = RemotedComponentContext.createFromAttachMessage(
+                    message.contents as IAttachMessage,
+                    message.sequenceNumber,
                     this,
-                    new DocumentStorageServiceProxy(this.storage, flatBlobs),
-                    this.context.scope,
-                    [attachMessage.type]);
+                    this.storage,
+                    this.context.scope);
 
                 break;
 

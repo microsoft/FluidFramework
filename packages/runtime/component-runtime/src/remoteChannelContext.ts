@@ -4,7 +4,7 @@
  */
 
 import { ConnectionState } from "@microsoft/fluid-container-definitions";
-import { readAndParse, SummaryTracker } from "@microsoft/fluid-core-utils";
+import { readAndParse } from "@microsoft/fluid-core-utils";
 import {
     IDocumentStorageService,
     ISequencedDocumentMessage,
@@ -28,7 +28,6 @@ type RequiredIChannelAttributes = Pick<IChannelAttributes, "type"> & Partial<ICh
 
 export class RemoteChannelContext implements IChannelContext {
     private connection: ChannelDeltaConnection | undefined;
-    private readonly summaryTracker = new SummaryTracker();
     private isLoaded = false;
     private pending: ISequencedDocumentMessage[] | undefined = [];
     private channelP: Promise<IChannel> | undefined;
@@ -40,13 +39,13 @@ export class RemoteChannelContext implements IChannelContext {
         private readonly storageService: IDocumentStorageService,
         private readonly submitFn: (type: MessageType, content: any) => number,
         private readonly id: string,
-        baseSnapshot: ISnapshotTree,
+        private readonly baseSnapshot: ISnapshotTree,
         private readonly registry: ISharedObjectRegistry,
         private readonly extraBlobs: Map<string, string>,
         private readonly branch: string,
         private readonly attributes: RequiredIChannelAttributes | undefined,
+        private latestSequenceNumber: number,
     ) {
-        this.summaryTracker.setBaseTree(baseSnapshot);
     }
 
     public getChannel(): Promise<IChannel> {
@@ -73,7 +72,7 @@ export class RemoteChannelContext implements IChannelContext {
     }
 
     public processOp(message: ISequencedDocumentMessage, local: boolean): void {
-        this.summaryTracker.invalidate();
+        this.latestSequenceNumber = message.sequenceNumber;
 
         if (this.isLoaded) {
             // tslint:disable-next-line: no-non-null-assertion
@@ -86,28 +85,18 @@ export class RemoteChannelContext implements IChannelContext {
     }
 
     public async snapshot(fullTree: boolean = false): Promise<ITree> {
-        const baseId = this.summaryTracker.getBaseId();
-        if (baseId !== null && !fullTree) {
-            return { id: baseId, entries: [] };
+        const latestRefSeq = this.componentContext.hostRuntime.latestSummary.referenceSequenceNumber;
+        if (!fullTree && this.latestSequenceNumber <= latestRefSeq) {
+            return { id: "placeholder", entries: [] };
         }
-        this.summaryTracker.reset();
         const channel = await this.getChannel();
-        return snapshotChannel(channel, baseId);
-    }
-
-    public refreshBaseSummary(snapshot: ISnapshotTree) {
-        this.summaryTracker.setBaseTree(snapshot);
+        return snapshotChannel(channel);
     }
 
     private getAttributesFromBaseTree(): Promise<RequiredIChannelAttributes> {
-        const baseTree = this.summaryTracker.baseTree;
-        if (baseTree) {
-            return readAndParse<RequiredIChannelAttributes>(
-                this.storageService,
-                baseTree.blobs[".attributes"]);
-        } else {
-            throw new Error("Null base summary tree should not be possible for remote channel.");
-        }
+        return readAndParse<RequiredIChannelAttributes>(
+            this.storageService,
+            this.baseSnapshot.blobs[".attributes"]);
     }
 
     private async loadChannel(): Promise<IChannel> {
@@ -138,7 +127,7 @@ export class RemoteChannelContext implements IChannelContext {
             this.componentContext.connectionState,
             this.submitFn,
             this.storageService,
-            this.summaryTracker.baseTree === null ? undefined : this.summaryTracker.baseTree,
+            this.baseSnapshot,
             this.extraBlobs);
         this.channel = await factory.load(
             this.runtime,

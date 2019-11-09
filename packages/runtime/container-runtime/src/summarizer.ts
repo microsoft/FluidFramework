@@ -14,7 +14,6 @@ import { ChildLogger, Deferred, PerformanceEvent } from "@microsoft/fluid-core-u
 import {
     ISequencedDocumentMessage,
     ISequencedDocumentSystemMessage,
-    ISnapshotTree,
     ISummaryAck,
     ISummaryConfiguration,
     ISummaryNack,
@@ -69,7 +68,7 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
         private readonly runtime: ContainerRuntime,
         private readonly configurationGetter: () => ISummaryConfiguration,
         private readonly generateSummary: () => Promise<IGeneratedSummaryData>,
-        private readonly refreshBaseSummary: (snapshot: ISnapshotTree) => void,
+        private readonly refreshLastSummary: (handle: string, referenceSequenceNumber: number) => void,
     ) {
         this.logger = ChildLogger.create(this.runtime.logger, "Summarizer");
 
@@ -197,28 +196,6 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
         this.summarizeTimer.clear();
         this.opSinceSummarizeSeq = undefined;
         this.stopPending();
-    }
-
-    private async setOrLogError<T>(
-        eventName: string,
-        setter: () => Promise<T>,
-        validator: (result: T) => boolean,
-    ): Promise<{ result: T, success: boolean }> {
-        let result: T;
-        let success = true;
-        try {
-            result = await setter();
-        } catch (error) {
-            // send error event for exceptions
-            this.logger.sendErrorEvent({ eventName }, error);
-            success = false;
-        }
-        if (success && !validator(result)) {
-            // send error event when result is invalid
-            this.logger.sendErrorEvent({ eventName });
-            success = false;
-        }
-        return { result, success };
     }
 
     private handleSystemOp(op: ISequencedDocumentMessage) {
@@ -368,22 +345,7 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
             // it might be nice to do this in the container in the future, and maybe for all
             // clients, not just the summarizer
             const handle = (ack as ISummaryAck).handle;
-
-            // we have to call get version to get the treeId for r11s; this isnt needed
-            // for odsp currently, since their treeId is undefined
-            const versionsResult = await this.setOrLogError("SummarizerFailedToGetVersion",
-                () => this.runtime.storage.getVersions(handle, 1),
-                (versions) => !!(versions && versions.length));
-
-            if (versionsResult.success) {
-                const snapshotResult = await this.setOrLogError("SummarizerFailedToGetSnapshot",
-                    () => this.runtime.storage.getSnapshotTree(versionsResult.result[0]),
-                    (snapshot) => !!snapshot);
-
-                if (snapshotResult.success) {
-                    this.refreshBaseSummary(snapshotResult.result);
-                }
-            }
+            this.refreshLastSummary(handle, this.lastSummarySeqNumber);
         }
         this.stopPending();
         return true;

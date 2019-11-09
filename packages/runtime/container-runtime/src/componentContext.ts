@@ -15,10 +15,11 @@ import {
 } from "@microsoft/fluid-container-definitions";
 import {
     BlobTreeEntry,
+    buildHierarchy,
     Deferred,
+    flatten,
     raiseConnectedEvent,
     readAndParse,
-    SummaryTracker,
 } from "@microsoft/fluid-core-utils";
 import {
     IDocumentMessage,
@@ -43,6 +44,7 @@ import { EventEmitter } from "events";
 // tslint:disable-next-line:no-submodule-imports
 import * as uuid from "uuid/v4";
 import { ContainerRuntime } from "./containerRuntime";
+import { DocumentStorageServiceProxy } from "./documentStorageServiceProxy";
 
 // Snapshot Format Version to be used in component attributes.
 const currentSnapshotFormatVersion = "0.1";
@@ -136,14 +138,15 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
     }
 
     public get baseSnapshot(): ISnapshotTree {
-        return this.summaryTracker.baseTree;
+        return this._baseSnapshot;
     }
 
     protected componentRuntime: IComponentRuntime;
-    protected readonly summaryTracker = new SummaryTracker();
+    protected latestSequenceNumber: number = 0;
     private closed = false;
     private loaded = false;
     private pending: ISequencedDocumentMessage[] = [];
+    private _baseSnapshot: ISnapshotTree;
     private componentRuntimeDeferred: Deferred<IComponentRuntime>;
 
     constructor(
@@ -180,14 +183,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         if (!this.componentRuntimeDeferred) {
             this.componentRuntimeDeferred = new Deferred<IComponentRuntime>();
             const details = await this.getInitialSnapshotDetails();
-            if (details.snapshot && !this.summaryTracker.baseTree) {
-                // do not overwrite if refreshed!
-                // local - will always give undefined tree, so never enter here
-                // remote - will give the tree at the time of construction (initial),
-                // which may be older than the refreshed one, but never newer than
-                // the refreshed or one set at constructor (in case of summarizer)
-                this.summaryTracker.setBaseTree(details.snapshot);
-            }
+            this._baseSnapshot = details.snapshot;
             const packages = details.pkg;
             let entry: ComponentRegistryEntry;
             let registry = this._hostRuntime.IComponentRegistry;
@@ -238,8 +234,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
     public process(message: ISequencedDocumentMessage, local: boolean): void {
         this.verifyNotClosed();
 
-        // component has been modified and will need to regenerate its snapshot
-        this.summaryTracker.invalidate();
+        this.latestSequenceNumber = message.sequenceNumber;
 
         if (this.loaded) {
             return this.componentRuntime.process(message, local);
@@ -290,14 +285,9 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
      * Notifies the object to take snapshot of a component.
      */
     public async snapshot(fullTree: boolean = false): Promise<ITree> {
-        // base ID still being set means previous snapshot is still valid
-        const baseId = this.summaryTracker.getBaseId();
-        if (baseId && !fullTree) {
-            return { id: baseId, entries: [] };
+        if (!fullTree && this.latestSequenceNumber <= this.hostRuntime.latestSummary.referenceSequenceNumber) {
+            return { id: "placeholder", entries: [] };
         }
-        this.summaryTracker.reset();
-
-        await this.realize();
 
         const { pkg } = await this.getInitialSnapshotDetails();
 
@@ -306,11 +296,13 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
             snapshotFormatVersion: currentSnapshotFormatVersion,
         };
 
+        await this.realize();
+
         const entries = await this.componentRuntime.snapshotInternal(fullTree);
 
         entries.push(new BlobTreeEntry(".component", JSON.stringify(componentAttributes)));
 
-        return { entries, id: baseId };
+        return { entries, id: null };
     }
 
     public async request(request: IRequest): Promise<IResponse> {
@@ -364,9 +356,6 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         }
 
         if (this.pending.length > 0) {
-            // component has been modified and will need to regenerate its snapshot
-            this.summaryTracker.invalidate();
-
             // Apply all pending ops
             for (const op of this.pending) {
                 componentRuntime.process(op, false);
@@ -384,12 +373,6 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
     }
 
     public abstract generateAttachMessage(): IAttachMessage;
-
-    public refreshBaseSummary(snapshot: ISnapshotTree) {
-        this.summaryTracker.setBaseTree(snapshot);
-        // need to notify runtime of the update
-        this.emit("refreshBaseSummary", snapshot);
-    }
 
     protected abstract getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
 
@@ -413,6 +396,35 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
 }
 
 export class RemotedComponentContext extends ComponentContext {
+    public static createFromAttachMessage(
+        attachMessage: IAttachMessage,
+        attachSequenceNumber: number,
+        runtime: ContainerRuntime,
+        storage: IDocumentStorageService,
+        scope: IComponent,
+    ): RemotedComponentContext {
+        const flatBlobs = new Map<string, string>();
+        let snapshotTree: ISnapshotTree = null;
+        if (attachMessage.snapshot) {
+            const flattened = flatten(attachMessage.snapshot.entries, flatBlobs);
+            snapshotTree = buildHierarchy(flattened);
+        }
+
+        // Include the type of attach message which is the pkg of the component to be
+        // used by RemotedComponentContext in case it is not in the snapshot.
+        const componentContext = new RemotedComponentContext(
+            attachMessage.id,
+            snapshotTree,
+            runtime,
+            new DocumentStorageServiceProxy(storage, flatBlobs),
+            scope,
+            [attachMessage.type]);
+
+        componentContext.latestSequenceNumber = attachSequenceNumber;
+
+        return componentContext;
+    }
+
     private details: ISnapshotDetails;
 
     constructor(
@@ -432,23 +444,12 @@ export class RemotedComponentContext extends ComponentContext {
             () => {
                 throw new Error("Already attached");
             });
-
-        if (initSnapshotValue && typeof initSnapshotValue !== "string") {
-            // This will allow the summarizer to avoid calling realize if there
-            // are no changes to the component.  If the initSnapshotValue is a
-            // string, the summarizer cannot avoid calling realize.
-            this.summaryTracker.setBaseTree(initSnapshotValue);
-        }
     }
 
     public generateAttachMessage(): IAttachMessage {
         throw new Error("Cannot attach remote component");
     }
 
-    // Only refers to the initial snapshot value, not necessarily the baseSnapshot.
-    // This should only be called during realize to get the baseSnapshot,
-    // or it can be called at any time to get the pkg, but that assumes the
-    // pkg can never change for a component.
     protected async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
         if (!this.details) {
             let tree: ISnapshotTree;
@@ -515,9 +516,6 @@ export class LocalComponentContext extends ComponentContext {
         const snapshot = { entries, id: undefined };
 
         snapshot.entries.push(new BlobTreeEntry(".component", JSON.stringify(componentAttributes)));
-
-        // base ID still being set means previous snapshot is still valid
-        snapshot.id = this.summaryTracker.getBaseId();
 
         const message: IAttachMessage = {
             id: this.id,
