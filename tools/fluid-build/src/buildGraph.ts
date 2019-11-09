@@ -12,9 +12,10 @@ import { TaskFactory } from "./tasks/taskFactory";
 import { Timer } from './common/timer';
 import { getExecutableFromCommand, execAsync, unlinkAsync, rmdirAsync, symlinkAsync } from "./common/utils";
 import { FileHashCache } from "./common/fileHashCache";
-import { existsSync, lstatAsync, realpathAsync } from "./common/utils";
+import { mkdirAsync, existsSync, lstatAsync, realpathAsync } from "./common/utils";
 import chalk from "chalk";
 import { options } from "./options";
+import { mkdirSync } from "fs";
 
 export enum BuildResult {
     Success,
@@ -97,7 +98,9 @@ export class BuildPackage {
         for (const dep of this.pkg.dependencies) {
             const depBuildPackage = buildPackages.get(dep);
             if (depBuildPackage) {
+
                 const symlinkPath = path.join(this.pkg.directory, "node_modules", dep);
+                const symlinkDir = path.join(symlinkPath, "..");
                 try {
                     if (existsSync(symlinkPath)) {
                         const stat = await lstatAsync(symlinkPath);
@@ -111,6 +114,9 @@ export class BuildPackage {
                             console.warn(`${this.pkg.nameColored}: warning: replaced existing package ${symlinkPath}`);
                         }
                     } else {
+                        if (!existsSync(symlinkDir)) {
+                            await mkdirAsync(symlinkDir, { recursive: true });
+                        }
                         await symlinkAsync(depBuildPackage.pkg.directory, symlinkPath, "junction");
                     }
                 } catch (e) {

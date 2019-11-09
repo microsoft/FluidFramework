@@ -42,6 +42,7 @@ export const existsSync = fs.existsSync;
 export const realpathAsync = util.promisify(fs.realpath);
 export const rmdirAsync = util.promisify(fs.rmdir);
 export const symlinkAsync = util.promisify(fs.symlink);
+export const mkdirAsync = util.promisify(fs.mkdir);
 
 export interface ExecAsyncResult {
     error: child_process.ExecException | null;

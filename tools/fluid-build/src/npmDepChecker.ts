@@ -15,7 +15,7 @@ interface DepCheckRecord {
 
 export class NpmDepChecker {
     // @types/socket.io-client is references in the tsconfig.json
-    private readonly foundTypes: string[] = ["@types/socket.io-client", "@types/node"];
+    private readonly foundTypes: string[] = ["@types/socket.io-client", "@types/node", "@types/expect-puppeteer", "@types/jest-environment-puppeteer"];
     // hjs is implicitly used
     private readonly ignored = ["hjs", ...this.foundTypes];
     // list of packages that should always in the devDependencies
@@ -99,8 +99,12 @@ export class NpmDepChecker {
                 if ((!this.pkg.packageJson.dependencies || this.pkg.packageJson.dependencies[name] === undefined)
                     && (!this.pkg.packageJson.devDependencies || this.pkg.packageJson.devDependencies[name] === undefined)) {
                     console.warn(`${this.pkg.nameColored}: warning: unused type dependency ${dep}`);
-                    delete this.pkg.packageJson.devDependencies[dep];
-                    delete this.pkg.packageJson.dependencies[dep];
+                    if (this.pkg.packageJson.devDependencies) {
+                        delete this.pkg.packageJson.devDependencies[dep];
+                    }
+                    if (this.pkg.packageJson.dependencies) {
+                        delete this.pkg.packageJson.dependencies[dep];
+                    }
                     changed = true;
                 }
             }
