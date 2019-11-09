@@ -1097,12 +1097,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                 generateSummaryEvent.cancel({reason: "disconnected"});
                 return ret;
             }
-            // TODO in the future we can have stored the latest summary by listening to the summary ack message
-            // after loading from the beginning of the snapshot
-            const versions = await this.context.storage.getVersions(this.id, 1);
-            const parents = versions.map((version) => version.id);
-            const parent = parents[0];
-            generateSummaryEvent.reportProgress({}, "loadedVersions");
 
             const treeWithStats = await this.summarize(fullTree);
             ret.summaryStats = treeWithStats.summaryStats;
@@ -1113,11 +1107,12 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                 return ret;
             }
             const handle = await this.context.storage.uploadSummary(treeWithStats.summaryTree);
+            const parent = this.latestSummary.handle;
             const summaryMessage: ISummaryContent = {
                 handle: handle.handle,
                 head: parent,
                 message,
-                parents,
+                parents: parent ? [parent] : [],
             };
             generateSummaryEvent.reportProgress({}, "uploadedTree");
 
