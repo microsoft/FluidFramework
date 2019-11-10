@@ -22,9 +22,9 @@ interface FastBuildOptions {
     symlink: boolean;
     depcheck: boolean;
     force: boolean;
-    reinstall: boolean;
     install: boolean
     nohoist: boolean;
+    uninstall: boolean
     concurrency: number;
 }
 
@@ -45,9 +45,9 @@ export const options: FastBuildOptions = {
     symlink: false,
     depcheck: false,
     force: false,
-    reinstall: false,
     install: false,
     nohoist: false,
+    uninstall: false,
     concurrency: os.cpus().length, // TODO: argument?
 
 };
@@ -85,7 +85,7 @@ function setBuild(build: boolean) {
 }
 
 function setReinstall(nohoist: boolean) {
-    options.reinstall = true;
+    options.uninstall = true;
     setInstall(nohoist);
 }
 
@@ -95,6 +95,11 @@ function setInstall(nohoist: boolean) {
     if (nohoist) {
         options.symlink = true;
     }
+    setBuild(false);
+}
+
+function setUninstall() {
+    options.uninstall = true;
     setBuild(false);
 }
 
@@ -150,6 +155,11 @@ export function parseOptions(argv: string[]) {
 
         if (arg === "--reinstall:nohoist") {
             setReinstall(true);
+            continue;
+        }
+
+        if (arg === "--uninstall") {
+            setUninstall();
             continue;
         }
 

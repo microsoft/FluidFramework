@@ -3,16 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { AsyncPriorityQueue, AsyncQueue, queue } from "async";
+import { AsyncPriorityQueue, queue } from "async";
 import * as path from "path";
 import { logStatus, logVerbose } from "./common/logging";
 import { Package } from "./npmPackage";
 import { Task, TaskExec } from "./tasks/task";
 import { TaskFactory } from "./tasks/taskFactory";
 import { Timer } from './common/timer';
-import { getExecutableFromCommand, execWithErrorAsync, unlinkAsync, symlinkAsync, rimrafWithErrorAsync, copyFileAsync } from "./common/utils";
+import { getExecutableFromCommand, execWithErrorAsync, ExecAsyncResult } from "./common/utils";
 import { FileHashCache } from "./common/fileHashCache";
-import { mkdirAsync, existsSync, lstatAsync, realpathAsync, ExecAsyncResult } from "./common/utils";
 import chalk from "chalk";
 import { options } from "./options";
 
@@ -92,49 +91,6 @@ export class BuildPackage {
         }
         return this.buildP;
     }
-
-    public async symlink(buildPackages: Map<string, BuildPackage>) {
-        for (const dep of this.pkg.dependencies) {
-            const depBuildPackage = buildPackages.get(dep);
-            if (depBuildPackage) {
-
-                const symlinkPath = path.join(this.pkg.directory, "node_modules", dep);
-                const symlinkDir = path.join(symlinkPath, "..");
-                try {
-                    if (existsSync(symlinkPath)) {
-                        const stat = await lstatAsync(symlinkPath);
-                        if (!stat.isSymbolicLink || await realpathAsync(symlinkPath) !== depBuildPackage.pkg.directory) {
-                            if (stat.isDirectory) {
-                                await rimrafWithErrorAsync(symlinkPath, this.pkg.nameColored);
-                            } else {
-                                await unlinkAsync(symlinkPath);
-                            }
-                            await symlinkAsync(depBuildPackage.pkg.directory, symlinkPath, "junction");
-                            if (!options.nohoist) {
-                                console.warn(`${this.pkg.nameColored}: warning: replaced existing package ${symlinkPath}`);
-                            }
-                        }
-                    } else {
-                        if (!existsSync(symlinkDir)) {
-                            await mkdirAsync(symlinkDir, { recursive: true });
-                        }
-                        await symlinkAsync(depBuildPackage.pkg.directory, symlinkPath, "junction");
-                    }
-                } catch (e) {
-                    throw new Error(`symlink failed on ${symlinkPath}. ${e}`);
-                }
-            }
-        }
-    }
-
-    public async cleanNodeModules() {
-        return rimrafWithErrorAsync(path.join(this.pkg.directory, "node_modules"), this.pkg.nameColored);
-    }
-
-    public async noHoistInstall(repoRoot: string) {
-        await copyFileAsync(path.join(repoRoot, ".npmrc"), path.join(this.pkg.directory, ".npmrc"));
-        return await execWithErrorAsync("npm i", { cwd: this.pkg.directory }, this.pkg.nameColored);
-    }
 }
 
 interface BuildPackageTaskExec<T> {
@@ -190,18 +146,6 @@ export class BuildGraph {
         return summarizeBuildResult(await Promise.all(p));
     }
 
-    public async symlink() {
-        return this.queueExecOnAllPackageCore(buildPackage => buildPackage.symlink(this.buildPackages));
-    }
-
-    public async cleanNodeModules() {
-        return this.queueExecOnAllPackage(buildPackage => buildPackage.cleanNodeModules(), "rimraf node_modules");
-    }
-
-    public async noHoistInstall(repoRoot: string) {
-        return this.queueExecOnAllPackage(buildPackage => buildPackage.noHoistInstall(repoRoot), "npm i");
-    }
-
     public async clean() {
         const cleanP: Promise<ExecAsyncResult>[] = [];
         let numDone = 0;
@@ -231,7 +175,7 @@ export class BuildGraph {
             }
         });
         const results = await Promise.all(cleanP);
-        return results.some(result => result.error);
+        return !results.some(result => result.error);
     }
 
     public get numSkippedTasks(): number {
@@ -309,31 +253,5 @@ export class BuildGraph {
         if (!hasTask) {
             throw new Error(`No task for script ${this.buildScriptName} found`);
         }
-    }
-
-    private async queueExecOnAllPackageCore<T>(exec: (buildPackage: BuildPackage) => Promise<T>, message?: string) {
-        const p: Promise<T>[] = [];
-        let numDone = 0;
-        const timedExec = message ? async (buildPackage: BuildPackage) => {
-            const startTime = Date.now();
-            const result = await exec(buildPackage);
-            const elapsedTime = (Date.now() - startTime) / 1000;
-            logStatus(`[${++numDone}/${p.length}] ${buildPackage.pkg.nameColored}: ${message} - ${elapsedTime.toFixed(3)}s`);
-            return result;
-        } : exec;
-        const q = queue(async (taskExec: BuildPackageTaskExec<T>, callback) => {
-            taskExec.resolve(await timedExec(taskExec.buildPackage));
-            callback();
-        }, options.concurrency)
-        for (const buildPackage of this.buildPackages.values()) {
-            p.push(new Promise(resolve => q.push({ buildPackage, resolve })));
-        }
-        return Promise.all(p);
-
-    }
-
-    private async queueExecOnAllPackage(exec: (buildPackage: BuildPackage) => Promise<ExecAsyncResult>, message?: string) {
-        const results = await this.queueExecOnAllPackageCore(exec, message);
-        return !results.some(result => result.error);
-    }
+    } 
 }

@@ -89,7 +89,8 @@ export class NpmDepChecker {
                 delete this.pkg.packageJson.dependencies[name];
             }
         }
-        return this.depcheckTypes() || changed;
+        changed = this.depcheckTypes() || changed;
+        return this.dupCheck() || changed;
     }
 
     private isInDependencies(name: string) {
@@ -113,6 +114,21 @@ export class NpmDepChecker {
                     }
                     changed = true;
                 }
+            }
+        }
+        return changed;
+    }
+
+    private dupCheck() {
+        if (!this.pkg.packageJson.devDependencies || !this.pkg.packageJson.dependencies) {
+            return false;;
+        }
+        let changed = false;
+        for (const name of Object.keys(this.pkg.packageJson.dependencies)) {
+            if (this.pkg.packageJson.devDependencies[name] != undefined) {
+                console.warn(`${this.pkg.nameColored}: warning: ${name} already in production dependency, deleting dev dependency`);
+                delete this.pkg.packageJson.devDependencies[name];
+                changed = true;
             }
         }
         return changed;
