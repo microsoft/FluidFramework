@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import * as os from "os";
+
 interface FastBuildOptions {
     verbose: boolean;
     nolint: boolean;
@@ -20,6 +22,10 @@ interface FastBuildOptions {
     symlink: boolean;
     depcheck: boolean;
     force: boolean;
+    reinstall: boolean;
+    install: boolean
+    nohoist: boolean;
+    concurrency: number;
 }
 
 // defaults
@@ -39,6 +45,11 @@ export const options: FastBuildOptions = {
     symlink: false,
     depcheck: false,
     force: false,
+    reinstall: false,
+    install: false,
+    nohoist: false,
+    concurrency: os.cpus().length, // TODO: argument?
+
 };
 
 function printUsage() {
@@ -64,9 +75,27 @@ Options:
 function setClean(build: boolean) {
     options.force = true;
     options.clean = true;
+    setBuild(build);
+}
+
+function setBuild(build: boolean) {
     if (build || options.build === undefined) {
         options.build = build;
     }
+}
+
+function setReinstall(nohoist: boolean) {
+    options.reinstall = true;
+    setInstall(nohoist);
+}
+
+function setInstall(nohoist: boolean) {
+    options.install = true;
+    options.nohoist = nohoist;
+    if (nohoist) {
+        options.symlink = true;
+    }
+    setBuild(false);
 }
 
 export function parseOptions(argv: string[]) {
@@ -101,6 +130,26 @@ export function parseOptions(argv: string[]) {
 
         if (arg === "-f" || arg === "--force") {
             options.force = true;
+            continue;
+        }
+
+        if (arg === "--install") {
+            setInstall(false);
+            continue;
+        }
+
+        if (arg === "--install:nohoist") {
+            setInstall(true);
+            continue;
+        }
+
+        if (arg === "--reinstall") {
+            setReinstall(false);
+            continue;
+        }
+
+        if (arg === "--reinstall:nohoist") {
+            setReinstall(true);
             continue;
         }
 
@@ -142,11 +191,13 @@ export function parseOptions(argv: string[]) {
 
         if (arg === "--symlink") {
             options.symlink = true;
+            setBuild(false);
             continue;
         }
 
         if (arg === "--depcheck") {
             options.depcheck = true;
+            setBuild(false);
             continue;
         }
 

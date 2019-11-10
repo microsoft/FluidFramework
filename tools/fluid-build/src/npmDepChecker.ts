@@ -20,7 +20,8 @@ export class NpmDepChecker {
     private readonly ignored = ["hjs", ...this.foundTypes];
     // list of packages that should always in the devDependencies
     private readonly dev = ["@microsoft/fluid-build-common", "nyc", "typescript", "tslint", "mocha-junit-reporter", "mocha"];
-    private records: DepCheckRecord[] = [];
+    private readonly records: DepCheckRecord[] = [];
+    private readonly altTyping = new Map<string, string>([["ws", "isomorphic-ws"]]);
 
     constructor(private readonly pkg: Package, private readonly checkFiles: string[]) {
         if (checkFiles.length !== 0) {
@@ -91,13 +92,18 @@ export class NpmDepChecker {
         return this.depcheckTypes() || changed;
     }
 
+    private isInDependencies(name: string) {
+        return (this.pkg.packageJson.dependencies && this.pkg.packageJson.dependencies[name] !== undefined)
+            || (this.pkg.packageJson.devDependencies && this.pkg.packageJson.devDependencies[name] !== undefined);
+    }
+
     private depcheckTypes() {
         let changed = false;
         for (const dep of this.pkg.dependencies) {
             if (dep.startsWith("@types/") && this.foundTypes.indexOf(dep) === -1) {
                 const name = dep.substring("@types/".length);
-                if ((!this.pkg.packageJson.dependencies || this.pkg.packageJson.dependencies[name] === undefined)
-                    && (!this.pkg.packageJson.devDependencies || this.pkg.packageJson.devDependencies[name] === undefined)) {
+                const altName = this.altTyping.get(name);
+                if (!(this.isInDependencies(name) || (altName && this.isInDependencies(altName)))) {
                     console.warn(`${this.pkg.nameColored}: warning: unused type dependency ${dep}`);
                     if (this.pkg.packageJson.devDependencies) {
                         delete this.pkg.packageJson.devDependencies[dep];
