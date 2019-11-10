@@ -108,7 +108,7 @@ export async function initialize(
 
         config.moniker = (await Axios.get("/api/v1/moniker")).data;
         config.url = url;
-        const iframe = document.getElementById("samsIframe") as HTMLIFrameElement;
+        const iframe = document.getElementById("ifr") as HTMLIFrameElement;
         privateSession.frameP = new Promise<HTMLIFrameElement>((resolve) => {
             iframe.onload = () => {
                 resolve(iframe);

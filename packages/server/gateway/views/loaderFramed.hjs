@@ -2,7 +2,7 @@
 
 {{$content}}
     <div id="content"></div>
-    <iframe style="width:100%;height:100%;" id="samsIframe" sandbox="allow-scripts" srcdoc='
+    <iframe style="width:100%;height:100%;" id="ifr" sandbox="allow-scripts" srcdoc='
         <html>
     <head>
     <script src="{{#hfurl}}/public/scripts/dist/controllers.js{{/hfurl}}"></script>
