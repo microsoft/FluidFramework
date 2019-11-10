@@ -370,10 +370,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
     public resume() {
         assert(this.loaded);
-        // resume processing ops
-        this._deltaManager!.inbound.resume();
-        this._deltaManager!.outbound.resume();
-        this._deltaManager!.inboundSignal.resume();
 
         // Ensure connection to web socket
         this.connectToDeltaStream();
@@ -615,15 +611,29 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         assert(!connected || this._deltaManager!.connectionMode === "read");
         this.propagateConnectionState();
 
+        if (connect) {
+            // resume processing ops
+            // This will result in processing of ops that came with snapshot (getLatest in SPO)
+            // It's preferred to do so early to reduce jigger on screen and also improve op processing speed
+            // (no listeners attached yet)
+            // Note that code relies on synchronous implementation of resume().
+            // If it becomes async (run on next turn), we would still process initial ops before consumer
+            // had a chance to do anything with container (due to this function being async), but
+            // telemetry below would not reflect that.
+            this._deltaManager!.inbound.resume();
+            this._deltaManager!.outbound.resume();
+            this._deltaManager!.inboundSignal.resume();
+            if (!pause) {
+                this.resume();
+            }
+        }
+
         perfEvent.end({
             existing: this._existing,
             sequenceNumber: attributes.sequenceNumber,
+            opsProcessed: this._deltaManager!.referenceSequenceNumber - attributes.sequenceNumber,
             version: maybeSnapshotTree ? maybeSnapshotTree.id : undefined,
         });
-
-        if (connect && !pause) {
-            this.resume();
-        }
     }
 
     private async getDocumentStorageService(): Promise<IDocumentStorageService> {
