@@ -12,7 +12,7 @@ import { debug } from "./debug";
 /**
  * Throws network error - an object with a bunch of network related properties
  */
-export function throwNetworkError(
+export function throwOdspNetworkError(
         errorMessage: string,
         statusCode: number,
         canRetry: boolean,
@@ -125,10 +125,10 @@ export function fetchHelper(
         const response = fetchResponse as any as Response;
         // Let's assume we can retry.
         if (!response) {
-            throwNetworkError(`No response from the server`, 400, true, response);
+            throwOdspNetworkError(`No response from the server`, 400, true, response);
         }
         if (!response.ok || response.status < 200 || response.status >= 300) {
-            throwNetworkError(`Error ${response.status} from the server`, response.status, retryFilter(response.status), response);
+            throwOdspNetworkError(`Error ${response.status} from the server`, response.status, retryFilter(response.status), response);
         }
 
         // .json() can fail and message (that goes into telemetry) would container full request URI, including tokens...
@@ -142,7 +142,7 @@ export function fetchHelper(
             };
             return res;
         } catch (e) {
-            throwNetworkError(`Error while parsing fetch response`, 400, true, response);
+            throwOdspNetworkError(`Error while parsing fetch response`, 400, true, response);
         }
     },
     (error) => {
@@ -153,7 +153,7 @@ export function fetchHelper(
         if (error && typeof error === "object" && error.message === "TypeError: Failed to fetch") {
             online = OnlineStatus[OnlineStatus.Offline];
         }
-        throwNetworkError(
+        throwOdspNetworkError(
             `Fetch error: ${error}`,
             709,
             true, // canRetry
