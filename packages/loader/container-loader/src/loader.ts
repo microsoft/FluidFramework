@@ -43,6 +43,12 @@ interface IParsedUrl {
 }
 
 export enum LoaderHeader {
+    /**
+     * Use cache for this container. If true, we will load a container from cache if one with the same id/version exists
+     * or create a new container and cache it if it does not. If false, always load a new container and don't cache it.
+     * Currently only used to opt-out of caching, as it will default to true but will be false (even if specified as
+     * true) if the reconnect header is false or the pause header is true, since these containers should not be cached.
+     */
     cache = "fluid-cache",
     clientDetails = "fluid-client-type",
     executionContext = "execution-context",
@@ -358,16 +364,23 @@ export class Loader extends EventEmitter implements ILoader {
 
     }
 
+    private canUseCache(request: IRequest): boolean {
+        if (!request.headers) {
+            return true;
+        }
+
+        const noCache =
+            request.headers[LoaderHeader.cache] === false ||
+            request.headers[LoaderHeader.reconnect] === false ||
+            request.headers[LoaderHeader.pause];
+
+        return !noCache;
+    }
+
     private parseHeader(parsed: IParsedUrl, request: IRequest) {
-        let canCache = true;
         let fromSequenceNumber = -1;
 
         request.headers = request.headers ? request.headers : {};
-        if (request.headers[LoaderHeader.cache] === false) {
-            canCache = false;
-        } else {
-            canCache = !request.headers[LoaderHeader.pause];
-        }
 
         const headerSeqNum = request.headers[LoaderHeader.sequenceNumber];
         if (headerSeqNum) {
@@ -382,7 +395,7 @@ export class Loader extends EventEmitter implements ILoader {
             request.headers[LoaderHeader.version] = null;
         }
         return {
-            canCache,
+            canCache: this.canUseCache(request),
             fromSequenceNumber,
         };
     }
