@@ -222,16 +222,6 @@ export class Snapshot {
         return Snapshot.processChunk(chunkAsString, serializer, context);
     }
 
-    public static EmptyChunk: ops.MergeTreeChunk = {
-        chunkStartSegmentIndex: -1,
-        chunkSegmentCount: -1,
-        chunkLengthChars: -1,
-        totalLengthChars: -1,
-        totalSegmentCount: -1,
-        chunkSequenceNumber: 0,
-        segmentTexts: [],
-    }
-
     public static processChunk(
         chunk: string,
         serializer?: IComponentSerializer,
