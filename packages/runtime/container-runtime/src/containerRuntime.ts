@@ -87,12 +87,6 @@ interface ISummaryTreeWithStats {
     summaryTree: ISummaryTree;
 }
 
-interface IBufferedChunk {
-    type: MessageType;
-
-    content: string;
-}
-
 export interface IGeneratedSummaryData {
     sequenceNumber: number;
 
@@ -521,9 +515,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     // on its creation). This is a superset of contexts.
     private readonly contextsDeferred = new Map<string, Deferred<ComponentContext>>();
 
-    // Local copy of sent but unacknowledged chunks.
-    private readonly unackedChunkedMessages: Map<number, IBufferedChunk> = new Map<number, IBufferedChunk>();
-
     private loadedFromSummary: boolean;
 
     private constructor(
@@ -726,8 +717,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                 this.submit(MessageType.Attach, message);
             }
 
-            // Also send any unacked chunk messages
-            this.sendUnackedChunks();
         }
 
         for (const [, componentContext] of this.contexts) {
@@ -982,13 +971,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         // Chunk processing must come first given that we will transform the message to the unchunked version
         // once all pieces are available
         if (message.type === MessageType.ChunkedOp) {
-            const chunkComplete = this.processRemoteChunkedMessage(message);
-            if (chunkComplete && local) {
-                const clientSeqNumber = message.clientSequenceNumber;
-                if (this.unackedChunkedMessages.has(clientSeqNumber)) {
-                    this.unackedChunkedMessages.delete(clientSeqNumber);
-                }
-            }
+            this.processRemoteChunkedMessage(message);
         }
 
         // Old prepare part
@@ -1165,16 +1148,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         }
     }
 
-    private sendUnackedChunks() {
-        for (const message of this.unackedChunkedMessages) {
-            debug(`Resending unacked chunks!`);
-            this.submitChunkedMessage(
-                message[1].type,
-                message[1].content,
-                this.context.deltaManager.maxMessageSize);
-        }
-    }
-
     private processRemoteChunkedMessage(message: ISequencedDocumentMessage): boolean {
         const clientId = message.clientId;
         const chunkedContent = message.contents as IChunkedOp;
@@ -1254,11 +1227,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                 batchBegin ? { batch: true } : undefined);
         } else {
             clientSequenceNumber = this.submitChunkedMessage(type, serializedContent, maxOpSize);
-            this.unackedChunkedMessages.set(clientSequenceNumber,
-                {
-                    content: serializedContent,
-                    type,
-                });
         }
 
         return clientSequenceNumber;

@@ -26,7 +26,8 @@ describe("MergeTree", () => {
         currentSequenceNumber = 0;
         mergeTree.startCollaboration(
             localClientId,
-            currentSequenceNumber,
+            /* minSeq: */ currentSequenceNumber,
+            /* currentSeq: */ currentSequenceNumber,
             branchId);
     });
 
