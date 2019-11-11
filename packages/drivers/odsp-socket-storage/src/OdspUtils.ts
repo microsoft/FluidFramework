@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { INetworkErrorProperties, NetworkError, OnlineStatus } from "@microsoft/fluid-core-utils";
+import { isOnline, NetworkError, OnlineStatus } from "@microsoft/fluid-core-utils";
 import { default as fetch, RequestInfo as FetchRequestInfo, RequestInit as FetchRequestInit } from "node-fetch";
 import * as sha from "sha.js";
 import { IOdspSocketError } from "./contracts";
@@ -22,28 +22,37 @@ export function throwNetworkError(
     if (response) {
         message = `${message}, msg = ${response.statusText}, type = ${response.type}`;
     }
-    throw new NetworkError(
+    throw new OdspNetworkError(
         message,
-        [
-            [INetworkErrorProperties.statusCode , statusCode],
-            [INetworkErrorProperties.canRetry, canRetry],
-            [INetworkErrorProperties.sprequestguid, response && response.headers && `${response.headers.get("sprequestguid")}`],
-        ],
+        statusCode,
+        canRetry,
+        undefined,
+        response && response.headers ? `${response.headers.get("sprequestguid")}` : undefined,
         online,
     );
+}
+
+export class OdspNetworkError extends NetworkError {
+    constructor(
+        errorMessage: string,
+        readonly statusCode: number | undefined,
+        readonly canRetry: boolean,
+        readonly retryAfterSeconds: number | undefined,
+        readonly sprequestguid?: string,
+        readonly online = OnlineStatus[isOnline()]) {
+        super(errorMessage, statusCode, canRetry, retryAfterSeconds, online);
+    }
 }
 
 /**
  * Returns network error based on error object from ODSP socket (IOdspSocketError)
  */
 export function errorObjectFromOdspError(socketError: IOdspSocketError) {
-    return new NetworkError(
+    return new OdspNetworkError(
         socketError.message,
-        [
-            [INetworkErrorProperties.statusCode, socketError.code],
-            [INetworkErrorProperties.canRetry, socketErrorRetryFilter(socketError.code)],
-            [INetworkErrorProperties.retryAfterSeconds, socketError.retryAfter],
-        ],
+        socketError.code,
+        socketErrorRetryFilter(socketError.code),
+        socketError.retryAfter,
     );
 }
 
