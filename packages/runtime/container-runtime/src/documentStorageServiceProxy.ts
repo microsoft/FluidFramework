@@ -7,6 +7,7 @@ import {
     ICreateBlobResponse,
     IDocumentStorageService,
     ISnapshotTree,
+    ISummaryContext,
     ISummaryHandle,
     ISummaryTree,
     ITree,
@@ -58,8 +59,8 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
         return this.storage.getRawUrl(blobId);
     }
 
-    public uploadSummary(commit: ISummaryTree): Promise<ISummaryHandle> {
-        return this.storage.uploadSummary(commit);
+    public uploadSummary(commit: ISummaryTree, context: ISummaryContext): Promise<ISummaryHandle> {
+        return this.storage.uploadSummary(commit, context);
     }
 
     public downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {

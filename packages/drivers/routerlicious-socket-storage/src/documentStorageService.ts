@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { buildHierarchy } from "@microsoft/fluid-core-utils";
+import { buildHierarchy, gitHashFile } from "@microsoft/fluid-core-utils";
 import * as resources from "@microsoft/fluid-gitresources";
 import {
     FileMode,
     ICreateBlobResponse,
     IDocumentStorageService,
     ISnapshotTree,
+    ISummaryContext,
     ISummaryHandle,
     ISummaryTree,
     ITree,
@@ -23,6 +24,8 @@ import * as gitStorage from "@microsoft/fluid-server-services-client";
  * Document access to underlying storage for routerlicious driver.
  */
 export class DocumentStorageService implements IDocumentStorageService  {
+    private readonly cache = new Map<string, Promise<Map<string, string>>>();
+
     public get repositoryUrl(): string {
         return "";
     }
@@ -42,7 +45,9 @@ export class DocumentStorageService implements IDocumentStorageService  {
         }
 
         const tree = await this.manager.getTree(requestVersion.treeId);
-        return buildHierarchy(tree);
+        const snapshotTree = buildHierarchy(tree);
+        this.cache.set(requestVersion.id, this.formCacheFromSnapshot(snapshotTree));
+        return snapshotTree;
     }
 
     public async getVersions(versionId: string, count: number): Promise<IVersion[]> {
@@ -70,8 +75,13 @@ export class DocumentStorageService implements IDocumentStorageService  {
         return commit.then((c) => ({date: c.committer.date, id: c.sha, treeId: c.tree.sha}));
     }
 
-    public async uploadSummary(commit: ISummaryTree): Promise<ISummaryHandle> {
+    public async uploadSummary(commit: ISummaryTree, context: ISummaryContext): Promise<ISummaryHandle> {
+        const cacheKey = context.proposedParentHandle || context.ackedParentHandle;
+        const parentMap = cacheKey ? (await this.cache.get(cacheKey)) : undefined;
+        const newCacheP = this.formCacheFromSummary(commit, parentMap);
+        await newCacheP;
         const handle = await this.writeSummaryObject(commit, [], "");
+        this.cache.set(handle, newCacheP);
         return {
             handle,
             handleType: SummaryType.Tree,
@@ -174,5 +184,88 @@ export class DocumentStorageService implements IDocumentStorageService  {
             default:
                 throw new Error();
         }
+    }
+
+    private async formCacheFromSnapshot(snapshotTree: ISnapshotTree): Promise<Map<string, string>> {
+        const map = new Map<string, string>();
+        this.formCacheFromSnapshotCore(snapshotTree, map, "");
+        return map;
+    }
+
+    private formCacheFromSnapshotCore(snapshotTree: ISnapshotTree, map: Map<string, string>, path: string) {
+        map.set(path, snapshotTree.id!); // non-null assert correct?
+        for (const [key, value] of Object.entries(snapshotTree.blobs)) {
+            map.set(this.formCachePath(path, key), value);
+        }
+        for (const [key, value] of Object.entries(snapshotTree.trees)) {
+            this.formCacheFromSnapshotCore(value, map, this.formCachePath(path, key));
+        }
+        for (const [key, value] of Object.entries(snapshotTree.commits)) {
+            map.set(this.formCachePath(path, key), value);
+        }
+    }
+
+    /**
+     * Forms a map of path to hashes for nodes in a summary tree being uploaded.
+     * It has a side-effect of hydrating the passed in summary tree's handles.
+     * @param summaryTree - summary tree to hydrate and form cache for
+     * @param parentMap - cache of parent summary
+     */
+    private async formCacheFromSummary(
+        summaryTree: ISummaryTree,
+        parentMap: Map<string, string> | undefined,
+    ): Promise<Map<string, string>> {
+        const map = new Map<string, string>();
+        this.formCacheFromSummaryCore(summaryTree, map, "", parentMap);
+        return map;
+    }
+
+    private formCacheFromSummaryCore(
+        summaryTree: ISummaryTree,
+        map: Map<string, string>,
+        path: string,
+        parentMap: Map<string, string> | undefined,
+    ) {
+        for (const [key, value] of Object.entries(summaryTree.tree)) {
+            switch (value.type) {
+                case SummaryType.Blob: {
+                    const buffer = typeof value.content === "string"
+                        ? Buffer.from(value.content, "utf-8")
+                        : value.content;
+                    const hash = gitHashFile(buffer);
+                    map.set(this.formCachePath(path, key), hash);
+                    break;
+                }
+                case SummaryType.Handle: {
+                    const childPath = this.formCachePath(path, key);
+                    const parentHash = parentMap ? parentMap.get(childPath) : undefined;
+                    if (!parentHash) {
+                        // parentMap must be provided if handle is passed
+                        throw Error("Parent summary should be cached if handle is provided.");
+                    }
+
+                    // also responsible for hydrating the current passed summary tree
+                    value.handle = parentHash;
+
+                    map.set(childPath, parentHash);
+                    break;
+                }
+                case SummaryType.Tree: {
+                    this.formCacheFromSummaryCore(value, map, this.formCachePath(path, key), parentMap);
+                    break;
+                }
+                default: {
+                    throw Error("Unexpected summary type");
+                }
+            }
+        }
+        // TODO: compute hashes for directory (tree)
+        // this probably will be at end, because it will depend on hashes of child nodes
+        // map.set(path, gitHashDirectory(...));
+    }
+
+    private formCachePath(part1: string, part2: string) {
+        // TODO: may need to encode?
+        return `${part1}/${part2}`;
     }
 }

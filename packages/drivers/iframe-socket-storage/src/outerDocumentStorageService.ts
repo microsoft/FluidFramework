@@ -8,6 +8,7 @@ import {
     ICreateBlobResponse,
     IDocumentStorageService,
     ISnapshotTree,
+    ISummaryContext,
     ISummaryHandle,
     ISummaryTree,
     ITree,
@@ -62,8 +63,8 @@ export class OuterDocumentStorageService implements IDocumentStorageService {
             return value.content;
         };
 
-        const uploadSummary = async (commit: ISummaryTree) => {
-            return this.storageService.uploadSummary(commit);
+        const uploadSummary = async (commit: ISummaryTree, context: ISummaryContext) => {
+            return this.storageService.uploadSummary(commit, context);
         };
 
         const write = async (tree: ITree, parents: string[], message: string, ref: string) => {
@@ -121,7 +122,7 @@ export class OuterDocumentStorageService implements IDocumentStorageService {
         return Promise.reject(new Error("OuterDocumentStorageService: write not implemented on outer frame"));
     }
 
-    public async uploadSummary(commit: ISummaryTree): Promise<ISummaryHandle> {
+    public async uploadSummary(commit: ISummaryTree, context: ISummaryContext): Promise<ISummaryHandle> {
         return Promise.reject(new Error("OuterDocumentStorageService: uploadSummary not implemented on outer frame"));
     }
 

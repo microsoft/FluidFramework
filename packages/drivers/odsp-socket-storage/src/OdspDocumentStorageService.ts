@@ -12,7 +12,8 @@ import { OdspDocumentStorageManager } from "./OdspDocumentStorageManager";
 export class OdspDocumentStorageService implements api.IDocumentStorageService {
     constructor(private readonly storageManager: OdspDocumentStorageManager) { }
 
-    public uploadSummary(commit: api.ISummaryTree): Promise<api.ISummaryHandle> {
+    public uploadSummary(commit: api.ISummaryTree, context: api.ISummaryContext): Promise<api.ISummaryHandle> {
+        this.hydrateSummaryHandles(commit, context.ackedParentHandle);
         return this.storageManager.uploadSummary(commit);
     }
 
@@ -52,5 +53,24 @@ export class OdspDocumentStorageService implements api.IDocumentStorageService {
 
     public getRawUrl(sha: string): string {
         return this.storageManager.getRawUrl(sha);
+    }
+
+    private hydrateSummaryHandles(commit: api.ISummaryTree, prefix?: string) {
+        for (const [key, value] of Object.entries(commit.tree)) {
+            switch (value.type) {
+                case api.SummaryType.Tree: {
+                    this.hydrateSummaryHandles(value, prefix ? `${prefix}/${key}` : undefined);
+                    break;
+                }
+                case api.SummaryType.Handle: {
+                    if (!prefix) {
+                        throw Error("Expected parent handle");
+                    }
+                    value.handle = `${prefix}/${key}`;
+                    break;
+                }
+                default: {}
+            }
+        }
     }
 }

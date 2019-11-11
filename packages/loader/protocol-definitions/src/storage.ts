@@ -12,7 +12,7 @@ import {
     ISequencedDocumentMessage,
     ISignalMessage,
 } from "./protocol";
-import { ISummaryHandle, ISummaryTree } from "./summary";
+import { ISummaryContext, ISummaryHandle, ISummaryTree } from "./summary";
 import { ITokenClaims, ITokenProvider } from "./tokens";
 import { IResolvedUrl } from "./urlResolver";
 
@@ -184,7 +184,7 @@ export interface IDocumentStorageService {
      * Generates and uploads a packfile that represents the given commit. A driver generated handle to the packfile
      * is returned as a result of this call.
      */
-    uploadSummary(commit: ISummaryTree): Promise<ISummaryHandle>;
+    uploadSummary(commit: ISummaryTree, context: ISummaryContext): Promise<ISummaryHandle>;
 
     /**
      * Retrieves the commit that matches the packfile handle. If the packfile has already been committed and the

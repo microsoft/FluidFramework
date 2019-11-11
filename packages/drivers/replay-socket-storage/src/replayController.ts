@@ -13,7 +13,7 @@ export abstract class ReadDocumentStorageServiceBase implements api.IDocumentSto
     public abstract getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null>;
     public abstract read(blobId: string): Promise<string>;
 
-    public uploadSummary(commit: api.ISummaryTree): Promise<api.ISummaryHandle> {
+    public uploadSummary(commit: api.ISummaryTree, context: api.ISummaryContext): Promise<api.ISummaryHandle> {
         return Promise.reject("Invalid operation");
     }
 

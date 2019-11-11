@@ -16,6 +16,8 @@ import {
     ISequencedDocumentSystemMessage,
     ISummaryAck,
     ISummaryConfiguration,
+    ISummaryContent,
+    ISummaryContext,
     ISummaryNack,
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
@@ -50,6 +52,7 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
     private summaryPending = false;
     private opSinceSummarizeSeq?: number;
     private pendingSummarySequenceNumber?: number;
+    private pendingSummaryHandle?: string;
     private idleTimer: Timer;
     private pendingAckTimer: Timer;
     private readonly summarizeTimer: Timer;
@@ -68,7 +71,7 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
         private readonly runtime: ContainerRuntime,
         private readonly configurationGetter: () => ISummaryConfiguration,
         private readonly generateSummary: () => Promise<IGeneratedSummaryData>,
-        private readonly refreshLastSummary: (handle: string, referenceSequenceNumber: number) => void,
+        private readonly refreshLastSummary: (context: ISummaryContext, referenceSequenceNumber: number) => void,
     ) {
         this.logger = ChildLogger.create(this.runtime.logger, "Summarizer");
 
@@ -293,6 +296,7 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
             summarySequenceNumber: op.sequenceNumber,
         });
         this.pendingSummarySequenceNumber = op.sequenceNumber;
+        this.pendingSummaryHandle = (op.contents as ISummaryContent).handle;
         // Now we indicate that we are okay to start listening for the summary ack/nack
         // of this summary op, because we have set the pendingSummarySequenceNumber.
         this.deferAck.resolve();
@@ -344,8 +348,11 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
             // refresh base snapshot
             // it might be nice to do this in the container in the future, and maybe for all
             // clients, not just the summarizer
-            const handle = (ack as ISummaryAck).handle;
-            this.refreshLastSummary(handle, this.lastSummarySeqNumber);
+            const ackedHandle = (ack as ISummaryAck).handle;
+            this.refreshLastSummary({
+                proposedParentHandle: this.pendingSummaryHandle,
+                ackedParentHandle: ackedHandle,
+            }, this.lastSummarySeqNumber);
         }
         this.stopPending();
         return true;
@@ -487,6 +494,7 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
     private startPending() {
         this.summaryPending = true;
         this.pendingSummarySequenceNumber = undefined;
+        this.pendingSummaryHandle = undefined;
         this.deferBroadcast = new Deferred();
         this.deferAck = new Deferred();
     }

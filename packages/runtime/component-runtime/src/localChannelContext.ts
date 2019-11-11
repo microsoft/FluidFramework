@@ -23,7 +23,6 @@ export class LocalChannelContext implements IChannelContext {
     public readonly channel: IChannel;
     private attached = false;
     private connection: ChannelDeltaConnection | undefined;
-    private latestSequenceNumber: number = 0;
 
     constructor(
         id: string,
@@ -62,8 +61,6 @@ export class LocalChannelContext implements IChannelContext {
 
     public processOp(message: ISequencedDocumentMessage, local: boolean): void {
         assert(this.attached);
-
-        this.latestSequenceNumber = message.sequenceNumber;
 
         // tslint:disable-next-line: no-non-null-assertion
         this.connection!.process(message, local);

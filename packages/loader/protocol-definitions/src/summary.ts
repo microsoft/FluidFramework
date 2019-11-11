@@ -64,3 +64,18 @@ export interface ISummaryCommit {
     // Previous parents to the commit.
     parents: string[];
 }
+
+/**
+ * Context for uploading a summary to storage.
+ */
+export interface ISummaryContext {
+    /**
+     * Parent summary proposed handle (from summary op)
+     */
+    proposedParentHandle?: string;
+
+    /**
+     * Parent summary acked handle (from summary ack)
+     */
+    ackedParentHandle?: string;
+}

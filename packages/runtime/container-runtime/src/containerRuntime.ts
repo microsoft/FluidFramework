@@ -44,6 +44,7 @@ import {
     ISnapshotTree,
     ISummaryConfiguration,
     ISummaryContent,
+    ISummaryContext,
     ISummaryTree,
     ITree,
     MessageType,
@@ -131,14 +132,14 @@ interface IRuntimeMessageMetadata {
 }
 
 class LatestSummaryTracker implements ILatestSummary {
-    public get handle() { return this._handle; }
+    public get context() { return this._context; }
     public get referenceSequenceNumber() { return this._referenceSequenceNumber; }
 
-    private _handle?: string;
+    private _context?: ISummaryContext;
     private _referenceSequenceNumber: number = 0;
 
-    public refresh(handle: string, referenceSequenceNumber: number) {
-        this._handle = handle;
+    public refresh(context: ISummaryContext, referenceSequenceNumber: number) {
+        this._context = context;
         this._referenceSequenceNumber = referenceSequenceNumber;
     }
 }
@@ -562,7 +563,9 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         }
 
         if (context.baseSnapshot.id) {
-            this.latestSummary.refresh(context.baseSnapshot.id, this.deltaManager.initialSequenceNumber);
+            this.latestSummary.refresh(
+                { ackedParentHandle: context.baseSnapshot.id },
+                this.deltaManager.initialSequenceNumber);
         }
 
         // Create a context for each of them
@@ -604,7 +607,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             this,
             () => this.summaryConfiguration,
             () => this.generateSummary(!this.loadedFromSummary),
-            (handle, referenceSequenceNumber) => this.refreshLatestSummary(handle, referenceSequenceNumber));
+            (summContext, referenceSequenceNumber) => this.refreshLatestSummary(summContext, referenceSequenceNumber));
 
         // Create the SummaryManager and mark the initial state
         this.summaryManager = new SummaryManager(
@@ -938,10 +941,10 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this.dirtyDocument;
     }
 
-    private refreshLatestSummary(handle: string, referenceSequenceNumber: number) {
+    private refreshLatestSummary(context: ISummaryContext, referenceSequenceNumber: number) {
         // currently only is called from summaries
         this.loadedFromSummary = true;
-        this.latestSummary.refresh(handle, referenceSequenceNumber);
+        this.latestSummary.refresh(context, referenceSequenceNumber);
     }
 
     /**
@@ -1106,8 +1109,10 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                 generateSummaryEvent.cancel({reason: "disconnected"});
                 return ret;
             }
-            const handle = await this.context.storage.uploadSummary(treeWithStats.summaryTree);
-            const parent = this.latestSummary.handle;
+            const handle = await this.context.storage.uploadSummary(
+                treeWithStats.summaryTree,
+                this.latestSummary.context);
+            const parent = this.latestSummary.context.ackedParentHandle;
             const summaryMessage: ISummaryContent = {
                 handle: handle.handle,
                 head: parent,
