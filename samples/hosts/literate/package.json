@@ -1,7 +1,7 @@
 {
   "name": "@fluid-example/hosts-sample",
   "version": "0.11.0",
-  "description": "Sample Prague container host",
+  "description": "Sample Fluid container host",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc && npm run tslint",

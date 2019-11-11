@@ -141,7 +141,7 @@ const response: IFluidResolvedUrl = {
         storageUrl,
     },
     tokens: { jwt: this.auth(this.tenantId, documentId) },
-    type: "prague",
+    type: "fluid",
     url: documentUrl,
 };
 
@@ -256,8 +256,8 @@ a feature detection pattern can be used to determine what capabilities are expos
 interface serves as a Fluid-specific form of “any” that clients can cast objects to in order to probe for implemented
 component interfaces. For example, if you need to determine the capabilities that a component exposes, you first
 cast the object as an `IComponent`, and then access the property on the `IComponent` that matches the interface you 
-are testing for.  The above check if the component implements `IComponentHTMLVisual`, and use it to get the instance
-that implement the rendering capability.
+are testing for.  The above checks if the component implements `IComponentHTMLVisual`, and uses it to get the instance
+that implements the rendering capability.
 
 ### Quoruming on a code package
 

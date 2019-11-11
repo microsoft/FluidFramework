@@ -31,7 +31,7 @@ const user = {
 } as IUser;
 
 export async function start(url: string, code: string): Promise<void> {
-    // Create the InsecureUrlResolve so we can generate access tokens to connect to Prague documents stored in our
+    // Create the InsecureUrlResolve so we can generate access tokens to connect to Fluid documents stored in our
     // tenant. Note that given we are storing the tenant secret in the clear on the client side this is a security
     // hole but it simplifies setting up this example. To make this clear we named it the InsecureUrlResolver. You would
     // not want to use this in a production environment and would want to protect the secret on your server. To give
@@ -67,7 +67,7 @@ export async function start(url: string, code: string): Promise<void> {
         null,
         new Map<string, IProxyLoaderFactory>());
 
-    // We start by resolving the URL to its underlying Prague document. This gives low-level access which will enable
+    // We start by resolving the URL to its underlying Fluid document. This gives low-level access which will enable
     // us to quorum on code later or detect when the code quorum has changed. In many cases you may not need this
     // behavior and can instead just directly make requests against the document.
     const fluidDocument = await loader.resolve({ url });
