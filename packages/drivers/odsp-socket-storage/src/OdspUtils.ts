@@ -81,7 +81,7 @@ export interface IOdspResponse<T> {
 }
 
 export function getHashedDocumentId(driveId: string, itemId: string): string {
-    return new sha.sha256().update(`${driveId}_${itemId}`).digest("base64");
+    return encodeURIComponent(new sha.sha256().update(`${driveId}_${itemId}`).digest("base64"));
 }
 
 export async function getWithRetryForTokenRefresh<T>(get: (refresh: boolean) => Promise<T>) {
