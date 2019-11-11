@@ -1404,11 +1404,11 @@ export class MergeTree {
     }
 
     // for now assume min starts at zero
-    startCollaboration(localClientId: number, minSeq: number, branchId: number) {
+    startCollaboration(localClientId: number, minSeq: number, currentSeq: number, branchId: number) {
         this.collabWindow.clientId = localClientId;
         this.collabWindow.minSeq = minSeq;
         this.collabWindow.collaborating = true;
-        this.collabWindow.currentSeq = minSeq;
+        this.collabWindow.currentSeq = currentSeq;
         this.localBranchId = branchId;
         this.segmentsToScour = new Collections.Heap<LRUSegment>([], LRUSegmentComparer);
         this.pendingSegments = Collections.ListMakeHead<SegmentGroup>();
@@ -1425,7 +1425,7 @@ export class MergeTree {
 
     private addToLRUSet(segment: ISegment, seq: number) {
         // only skip adding segments who's parents are
-        // explitly needing scour, not false or undefined
+        // explicitly needing scour, not false or undefined
         if (segment.parent.needsScour !== true) {
             // sequence should be always above current.
             assert(seq > this.collabWindow.currentSeq, "addToLRUSet");
@@ -2422,7 +2422,7 @@ export class MergeTree {
         }
     }
 
-    // visit segments starting from node's right siblings, then up to node's parent
+    // visit segments starting from node's left siblings, then up to node's parent
     leftExcursion<TClientData>(node: IMergeNode, leafAction: ISegmentAction<TClientData>) {
         const actions = { leaf: leafAction };
         let go = true;

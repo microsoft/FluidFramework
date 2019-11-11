@@ -493,7 +493,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
             }
         }
 
-        this.client.startCollaboration(this.runtime.clientId, 0);
+        this.client.startCollaboration(this.runtime.clientId);
     }
 
     protected initializeLocalCore() {
