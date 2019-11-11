@@ -1,7 +1,7 @@
 {
-  "name": "@prague/hosts-sample",
-  "version": "0.1.0",
-  "description": "Sample Prague container host",
+  "name": "@fluid-example/hosts-sample",
+  "version": "0.11.0",
+  "description": "Sample Fluid container host",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc && npm run tslint",
@@ -21,11 +21,11 @@
     "webpack-dev-server": "^3.3.1"
   },
   "dependencies": {
-    "@prague/container-definitions": "^0.10.13676",
-    "@prague/container-loader": "^0.10.13676",
-    "@prague/loader-web": "^0.10.13676",
-    "@prague/protocol-definitions": "^0.10.13676",
-    "@prague/routerlicious-socket-storage": "^0.10.13676",
+    "@microsoft/fluid-container-definitions": "^0.11.0",
+    "@microsoft/fluid-container-loader": "^0.11.0",
+    "@microsoft/fluid-protocol-definitions": "^0.11.0",
+    "@microsoft/fluid-routerlicious-driver": "^0.11.0",
+    "@microsoft/fluid-web-code-loader": "^0.11.0",
     "@types/jsonwebtoken": "^8.3.2",
     "jsonwebtoken": "^8.5.1"
   },
