@@ -30,7 +30,7 @@ public:
 		assert(files.size() < fnNil / 2);
 
 		files.push_back(std::make_unique<FileView>(path));
-		return files.size() - 1;
+		return static_cast<FN>(files.size() - 1);
 	}
 
 	
