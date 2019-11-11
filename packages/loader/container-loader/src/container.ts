@@ -899,7 +899,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         });
     }
 
-    private attachDeltaManagerOpHandler(attributes: IDocumentAttributes, resume: boolean): void {
+    private attachDeltaManagerOpHandler(attributes: IDocumentAttributes, catchUp: boolean): void {
         assert(this._deltaManager);
 
         this._deltaManager!.on("closed", () => {
@@ -921,7 +921,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                     this.processSignal(message);
                 },
             },
-            resume);
+            catchUp);
     }
 
     private logConnectionStateChangeTelemetry(value: ConnectionState, oldState: ConnectionState, reason: string) {
