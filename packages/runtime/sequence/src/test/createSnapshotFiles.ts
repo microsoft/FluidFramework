@@ -8,7 +8,12 @@ import { generateStrings } from "./generateSharedStrings";
 
 const filename: string = "src/test/sequenceTestSnapshot";
 let i = 1;
-for (const s of generateStrings()) {
+for (const s of generateStrings(/* newFormat: */ false)) {
     // tslint:disable-next-line:non-literal-fs-path
     fs.writeFileSync(`${filename}${i++}.json`, JSON.stringify(s.snapshot()));
+}
+i = 1;
+for (const s of generateStrings(/* newFormat: */ true)) {
+    // tslint:disable-next-line:non-literal-fs-path
+    fs.writeFileSync(`${filename}${i++}-new.json`, JSON.stringify(s.snapshot()));
 }

@@ -6,7 +6,7 @@
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { MockStorage } from "@microsoft/fluid-test-runtime-utils";
 import * as assert from "assert";
-import { Snapshot } from "../snapshot";
+import { SnapshotLegacy } from "../snapshotlegacy";
 import { TestClient } from "./";
 
 describe("snapshot", () => {
@@ -14,14 +14,14 @@ describe("snapshot", () => {
 
         const client1 = new TestClient();
         client1.startCollaboration("0");
-        for (let i = 0; i < Snapshot.sizeOfFirstChunk; i++) {
+        for (let i = 0; i < SnapshotLegacy.sizeOfFirstChunk; i++) {
             const op = client1.insertTextLocal(client1.getLength(), `${i % 10}`, { segment: i });
             const msg = client1.makeOpMessage(op, i + 1);
             msg.minimumSequenceNumber = i + 1;
             client1.applyMsg(msg);
         }
 
-        const snapshot = new Snapshot(client1.mergeTree, client1.logger);
+        const snapshot = new SnapshotLegacy(client1.mergeTree, client1.logger);
         snapshot.extractSync();
         const snapshotTree = snapshot.emit([]);
         const services = new MockStorage(snapshotTree);
@@ -44,7 +44,7 @@ describe("snapshot", () => {
 
         const clients = [new TestClient(), new TestClient(), new TestClient()];
         clients[0].startCollaboration("0");
-        for (let i = 0; i < Snapshot.sizeOfFirstChunk + 10; i++) {
+        for (let i = 0; i < SnapshotLegacy.sizeOfFirstChunk + 10; i++) {
             const op = clients[0].insertTextLocal(clients[0].getLength(), `${i % 10}`, { segment: i });
             const msg = clients[0].makeOpMessage(op, i + 1);
             msg.minimumSequenceNumber = i + 1;
@@ -54,7 +54,7 @@ describe("snapshot", () => {
         for (let i = 0; i < clients.length - 1; i++) {
             const client1 = clients[i];
             const client2 = clients[i + 1];
-            const snapshot = new Snapshot(client1.mergeTree, client1.logger);
+            const snapshot = new SnapshotLegacy(client1.mergeTree, client1.logger);
             snapshot.extractSync();
             const snapshotTree = snapshot.emit([]);
             const services = new MockStorage(snapshotTree);
@@ -72,7 +72,8 @@ describe("snapshot", () => {
                 `client${client2.longClientId} and client${client1.longClientId} lengths don't match`);
 
             assert.equal(
-                client2.getText(Snapshot.sizeOfFirstChunk - 1), client1.getText(Snapshot.sizeOfFirstChunk - 1));
+                client2.getText(SnapshotLegacy.sizeOfFirstChunk - 1),
+                client1.getText(SnapshotLegacy.sizeOfFirstChunk - 1));
         }
     })
     // tslint:disable-next-line: mocha-no-side-effect-code
