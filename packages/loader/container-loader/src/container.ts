@@ -595,8 +595,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         const maybeSnapshotTree = specifiedVersion === null ? undefined
             : await this.fetchSnapshotTree(specifiedVersion);
 
-        // if !open || pause, and there's no tree, then we'll start the websocket connection here (we'll need
-        // the details later)
+        // if pause, and there's no tree, then we'll start the websocket connection here (we'll need the details later)
         if (!maybeSnapshotTree) {
             this.connectToDeltaStream();
         }
@@ -606,7 +605,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         const attributes = await this.getDocumentAttributes(this.storageService, maybeSnapshotTree);
 
         // attach op handlers to start processing ops
-        this.attachDeltaManagerOpHandler(attributes, specifiedVersion === undefined);
+        this.attachDeltaManagerOpHandler(attributes, !specifiedVersion);
 
         // ...load in the existing quorum
         // Initialize the protocol handler
