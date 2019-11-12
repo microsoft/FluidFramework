@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@prague/component-core-interfaces";
+import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import {
     IFluidResolvedUrl,
     IResolvedUrl,
     ITokenClaims,
     IUrlResolver,
     IUser,
-} from "@prague/protocol-definitions";
+} from "@microsoft/fluid-protocol-definitions";
 import * as jwt from "jsonwebtoken";
 
 /**

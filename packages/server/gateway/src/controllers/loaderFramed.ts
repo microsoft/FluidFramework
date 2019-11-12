@@ -47,7 +47,6 @@ export async function initialize(
     innerSession: boolean = false,
     outerSession: boolean = true,
 ) {
-
     console.log(`Loading ${url}`);
 
     const privateSession: IPrivateSessionInfo = {
@@ -55,8 +54,6 @@ export async function initialize(
         outerSession,
         request: { url },
     };
-    console.log(`Private Session?`);
-    console.log(privateSession);
 
     const services: IHostServices = undefined;
     let documentFactory: DocumentFactory;
@@ -111,7 +108,12 @@ export async function initialize(
 
         config.moniker = (await Axios.get("/api/v1/moniker")).data;
         config.url = url;
-        privateSession.frameP = createFrame(div, createIFrameHTML(resolved, pkg, scriptIds, scope, config, clientId));
+        const iframe = document.getElementById("ifr") as HTMLIFrameElement;
+        privateSession.frameP = new Promise<HTMLIFrameElement>((resolve) => {
+            iframe.onload = () => {
+                resolve(iframe);
+            };
+        });
         const resolver = new ContainerUrlResolver(
             document.location.origin,
             jwt,
@@ -130,74 +132,4 @@ export async function initialize(
             { resolver },
             )).createDocumentServiceFromRequest({ url });
     }
-}
-
-function createFrame(div: HTMLElement, framesrc: string): Promise<HTMLIFrameElement> {
-    const innerDiv = document.createElement("div");
-    innerDiv.id = "content";
-
-    const iframe = document.createElement("iframe");
-    iframe.style.width = "100%";
-    iframe.style.height = "100%";
-    div.style.height = "100vh"; // Remove when done testing
-    iframe.sandbox.add("allow-scripts");
-
-    iframe.srcdoc = framesrc;
-
-    const frameP = new Promise<HTMLIFrameElement>((resolve) => {
-        iframe.onload = () => {
-            resolve(iframe);
-        };
-    });
-
-    div.appendChild(iframe);
-    return frameP;
-}
-
-function createIFrameHTML(resolved: IResolvedUrl,
-                          pkg: IResolvedPackage,
-                          scriptIds: string[],
-                          scope: IComponent,
-                          config: any,
-                          clientId: string): string {
-    const url = window.location.href.split("&privateSession")[0];
-    let santizedResolved: IFluidResolvedUrl;
-
-    if (resolved.type === "fluid") {
-        santizedResolved = {
-            type: resolved.type,
-            endpoints: resolved.endpoints,
-            tokens: undefined,
-            url: resolved.url,
-        };
-    } else {
-        throw new Error("Resolved has not been passed in");
-    }
-
-    return `
-    <html>
-    <head>
-    <script type="text/javascript" src="${document.location.origin}/public/scripts/dist/controllers.js"></script>
-    </head>
-    <body>
-        <div id="content"></div>
-        <script type="text/javascript">
-            controllers.loaderFramed.initialize(
-                "${url}",
-                ${JSON.stringify(santizedResolved)}, // resolved
-                undefined, // cache
-                ${JSON.stringify(pkg)}, // chaincode
-                ${JSON.stringify(scriptIds)}, // scriptIds
-                undefined, // npm
-                undefined, // jwt
-                ${JSON.stringify(config)}, // config
-                ${JSON.stringify(clientId)}, // clientId
-                ${JSON.stringify(scope)}, // scope
-                true, // innerSession
-                false, // outerSession
-                );
-        </script
-    </body>
-    </html>
-    `;
 }

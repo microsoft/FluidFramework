@@ -12,7 +12,8 @@
         "moduleResolution": "node",
         "outDir": "dist",
         "sourceMap": true,
-        "inlineSources": true
+        "inlineSources": true,
+        "types": [],
     },
     "include": [
         "src/**/*.ts"
