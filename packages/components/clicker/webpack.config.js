@@ -28,7 +28,7 @@ module.exports = env => {
             path: path.resolve(__dirname, "dist"),
             library: "[name]",
             // https://github.com/webpack/webpack/issues/5767
-            // https://github.com/webpack/webpack/issues/7939            
+            // https://github.com/webpack/webpack/issues/7939
             devtoolNamespace: "chaincode/counter",
             // This is required to run webpacked code in webworker/node
             // https://github.com/webpack/webpack/issues/6522 
