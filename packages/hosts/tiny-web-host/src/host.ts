@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IHostConfig, start } from "@microsoft/fluid-base-host";
+import { BaseHost, IHostConfig } from "@microsoft/fluid-base-host";
 import { IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
 import { BaseTelemetryNullLogger, configurableUrlResolver } from "@microsoft/fluid-core-utils";
 import { FluidAppOdspUrlResolver } from "@microsoft/fluid-fluidapp-odsp-urlresolver";
@@ -117,7 +117,7 @@ async function loadContainer(
         urlResolver: resolver,
     };
     // tslint:disable-next-line: no-unsafe-any
-    return start(
+    return BaseHost.start(
         href,
         // tslint:disable-next-line: no-unsafe-any
         resolved, // resolved, IResolvedUrl,

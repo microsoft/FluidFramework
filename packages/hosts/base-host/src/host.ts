@@ -7,7 +7,6 @@ import {
     IComponent,
     IComponentHTMLVisual,
     IComponentQueryableLegacy,
-    IRequest,
 } from "@microsoft/fluid-component-core-interfaces";
 import { ICodeWhiteList, IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
@@ -17,31 +16,6 @@ import {
 } from "@microsoft/fluid-protocol-definitions";
 import { IResolvedPackage, WebCodeLoader, WhiteList } from "@microsoft/fluid-web-code-loader";
 import { IHostConfig } from "./hostConfig";
-
-/**
- * Interface to provide the info about the session.
- */
-export interface IPrivateSessionInfo {
-    /**
-     * True if the request is made by outer frame.
-     */
-    outerSession?: boolean;
-
-    /**
-     * True if the request is made by inner frame.
-     */
-    innerSession?: boolean;
-
-    /**
-     * IFrame in which the inner session is loaded.
-     */
-    frameP?: Promise<HTMLIFrameElement>;
-
-    /**
-     * Request to be resolved.
-     */
-    request?: IRequest;
-}
 
 async function attach(loader: Loader, url: string, div: HTMLDivElement) {
     const response = await loader.request({ url });
@@ -70,7 +44,7 @@ async function attach(loader: Loader, url: string, div: HTMLDivElement) {
     }
 }
 
-export async function initializeChaincode(document: Container, pkg: IResolvedPackage): Promise<void> {
+async function initializeChaincode(document: Container, pkg: IResolvedPackage): Promise<void> {
     if (!pkg) {
         return;
     }
@@ -96,7 +70,7 @@ export async function initializeChaincode(document: Container, pkg: IResolvedPac
     console.log(`Code is ${quorum.get("code2")}`);
 }
 
-export async function registerAttach(loader: Loader, container: Container, uri: string, div: HTMLDivElement) {
+async function registerAttach(loader: Loader, container: Container, uri: string, div: HTMLDivElement) {
     container.on("contextChanged", async (value) => {
         await attach(loader, uri, div);
     });
@@ -114,7 +88,7 @@ export async function registerAttach(loader: Loader, container: Container, uri: 
  * @param hostConf - Config specifying the resolver/factory to be used.
  * @param whiteList - functionality to check the validity of code to be loaded.
  */
-export async function createWebLoader(
+async function createWebLoader(
     resolved: IResolvedUrl,
     pkg: IResolvedPackage,
     scriptIds: string[],
@@ -158,53 +132,76 @@ export async function createWebLoader(
         proxyLoaderFactories);
 }
 
-/**
- * Function to load the container from the given url and initialize the chaincode.
- * @param url - Url of the Fluid component to be loaded.
- * @param resolved - A resolved url from a url resolver.
- * @param pkg - A resolved package with cdn links.
- * @param scriptIds - The script tags the chaincode are attached to the view with.
- * @param config - Any config to be provided to loader.
- * @param scope - A component that gives host provided capabilities/configurations
- *  to the component in the container(such as auth).
- * @param div - The div to load the component into.
- * @param hostConf - Config specifying the resolver/factory to be used.
- */
-export async function start(
-    url: string,
-    resolved: IResolvedUrl,
-    pkg: IResolvedPackage,
-    scriptIds: string[],
-    config: any,
-    scope: IComponent,
-    div: HTMLDivElement,
-    hostConf: IHostConfig,
-    proxyLoaderFactories: Map<string, IProxyLoaderFactory>,
-): Promise<Container> {
-    const loader = await createWebLoader(
-        resolved,
-        pkg,
-        scriptIds,
-        config,
-        scope,
-        hostConf,
-        proxyLoaderFactories,
-        new WhiteList(),
-        );
-
-    const container = await loader.resolve({ url });
-    await registerAttach(
-        loader,
-        container,
-        url,
-        div);
-
-    // If this is a new document we will go and instantiate the chaincode. For old documents we assume a legacy
-    // package.
-    if (!container.existing) {
-            await initializeChaincode(container, pkg)
-                .catch((error) => console.error("chaincode error", error));
+export class BaseHost {
+    /**
+     * Function to load the container from the given url and initialize the chaincode.
+     * @param url - Url of the Fluid component to be loaded.
+     * @param resolved - A resolved url from a url resolver.
+     * @param pkg - A resolved package with cdn links.
+     * @param scriptIds - The script tags the chaincode are attached to the view with.
+     * @param config - Any config to be provided to loader.
+     * @param scope - A component that gives host provided capabilities/configurations
+     *  to the component in the container(such as auth).
+     * @param div - The div to load the component into.
+     * @param hostConf - Config specifying the resolver/factory to be used.
+     */
+    public static async start(
+        url: string,
+        resolved: IResolvedUrl,
+        pkg: IResolvedPackage,
+        scriptIds: string[],
+        config: any,
+        scope: IComponent,
+        div: HTMLDivElement,
+        hostConf: IHostConfig,
+        proxyLoaderFactories: Map<string, IProxyLoaderFactory>,
+    ): Promise<Container> {
+        const baseHost = new BaseHost(resolved, pkg, scriptIds, config, scope, hostConf, proxyLoaderFactories);
+        return baseHost.loadAndRender(url, div, pkg);
     }
 
-    return container;
+    private readonly loaderP: Promise<Loader>;
+    public constructor(
+        resolved: IResolvedUrl,
+        seedPackage: IResolvedPackage,
+        scriptIds: string[],
+        config: any,
+        scope: IComponent,
+        hostConfig: IHostConfig,
+        proxyLoaderFactories: Map<string, IProxyLoaderFactory>) {
+
+        this.loaderP = createWebLoader(
+            resolved,
+            seedPackage,
+            scriptIds,
+            config,
+            scope,
+            hostConfig,
+            proxyLoaderFactories,
+            new WhiteList(),
+        );
+    }
+
+    public async getLoader() {
+        return this.loaderP;
+    }
+
+    public async loadAndRender(url: string, div: HTMLDivElement, pkg?: IResolvedPackage) {
+        const loader = await this.getLoader();
+        const container = await loader.resolve({ url });
+        await registerAttach(
+            loader,
+            container,
+            url,
+            div);
+
+        // If this is a new document we will go and instantiate the chaincode. For old documents we assume a legacy
+        // package.
+        if (!container.existing) {
+            await initializeChaincode(container, pkg)
+                .catch((error) => console.error("chaincode error", error));
+        }
+
+        return container;
+    }
 }
