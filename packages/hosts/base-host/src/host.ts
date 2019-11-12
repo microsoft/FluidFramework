@@ -35,7 +35,7 @@ export interface IPrivateSessionInfo {
     /**
      * IFrame in which the inner session is loaded.
      */
-    frameP?: Promise<HTMLIFrameElement>;
+    frame?: HTMLIFrameElement;
 
     /**
      * Request to be resolved.
