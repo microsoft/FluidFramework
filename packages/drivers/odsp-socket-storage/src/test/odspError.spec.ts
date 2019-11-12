@@ -9,9 +9,9 @@ import { OdspNetworkError } from "../OdspUtils";
 describe("Odsp Error", () => {
 
         it("Error Property exists", async () => {
-            const error1 = new OdspNetworkError("Error", 400, true, 100, "sprequestguid");
+            const error1 = new OdspNetworkError("Error", 400, true, 100, "xxx-xxx");
             const errorBag = { ...error1.getCustomProperties() };
-            assert.equal("sprequestguid", errorBag["sprequestguid"], "Property do not match!!");
+            assert.equal("xxx-xxx", errorBag["sprequestguid"], "Property do not match!!");
             assert.equal(true, errorBag["canRetry"], "Property absent!!");
         });
 
