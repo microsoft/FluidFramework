@@ -18,8 +18,6 @@ import { IOdspTokenApi, IRouterliciousTokenApi, ITokenApis } from "./utils";
 // tslint:disable-next-line: no-var-requires no-require-imports
 const packageJson = require("../package.json");
 
-const npm = "https://pragueauspkn-3873244262.azureedge.net";
-
 // This is insecure, but is being used for the time being for ease of use during the hackathon.
 const appTenants = [
     {
@@ -125,7 +123,6 @@ async function loadContainer(
         resolved, // resolved, IResolvedUrl,
         pkg, // pkg, IResolvedPackage, (gateway/routes/loader has an example (pkgP))
         scriptIds, // scriptIds, string[], defines the id of the script tag added to the page
-        npm, // string,
         {},
         {},
         div,

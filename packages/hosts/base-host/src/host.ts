@@ -164,7 +164,6 @@ export async function createWebLoader(
  * @param resolved - A resolved url from a url resolver.
  * @param pkg - A resolved package with cdn links.
  * @param scriptIds - The script tags the chaincode are attached to the view with.
- * @param npm - path from where the packages can be fetched.
  * @param config - Any config to be provided to loader.
  * @param scope - A component that gives host provided capabilities/configurations
  *  to the component in the container(such as auth).
@@ -176,7 +175,6 @@ export async function start(
     resolved: IResolvedUrl,
     pkg: IResolvedPackage,
     scriptIds: string[],
-    npm: string,
     config: any,
     scope: IComponent,
     div: HTMLDivElement,

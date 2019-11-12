@@ -165,15 +165,6 @@ function getUrlResolver(options: IRouteOptions): IUrlResolver {
     }
 }
 
-function getNpm(options: IRouteOptions): string {
-    if (options.mode === "localhost") {
-        return "http://localhost:3002";
-    }
-
-    // local, live
-    return options.npm;
-}
-
 // Invoked by `start()` when the 'double' option is enabled to create the side-by-side panes.
 function makeSideBySideDiv() {
     const div = document.createElement("div");
@@ -201,7 +192,6 @@ export async function start(
     };
 
     const urlResolver = getUrlResolver(options);
-    const npm = getNpm(options);
 
     let documentServiceFactory: IDocumentServiceFactory;
     let deltaConn: ITestDeltaConnectionServer;
@@ -233,7 +223,6 @@ export async function start(
         await urlResolver.resolve(req),
         pkg,
         scriptIds,
-        npm,
         {},
         {},
         double ? leftDiv : div,
@@ -254,7 +243,6 @@ export async function start(
             await urlResolver.resolve(req),
             pkg,
             scriptIds,
-            npm,
             {},
             {},
             rightDiv,

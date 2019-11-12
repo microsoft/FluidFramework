@@ -7,7 +7,7 @@ import { IDocumentServiceFactory, IUrlResolver } from "@microsoft/fluid-protocol
 
 /**
  * Host config that contains a url resolver to resolve the url and then provides a
- * list of document service factories from which one can be selcted based on protocol
+ * list of document service factories from which one can be selected based on protocol
  * of resolved url.
  */
 export interface IHostConfig {
