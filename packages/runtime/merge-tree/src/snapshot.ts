@@ -17,7 +17,7 @@ import { UnassignedSequenceNumber } from "./constants";
 import * as MergeTree from "./mergeTree";
 import * as ops from "./ops";
 import * as Properties from "./properties";
-import { SnapshotLegacy } from "./snapshotLegacy";
+import { SnapshotLegacy } from "./snapshotlegacy";
 
 // tslint:disable
 type SegmentSpec = ops.IJSONSegment | ops.IJSONSegmentWithMergeInfo;
