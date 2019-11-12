@@ -68,7 +68,10 @@ export class SnapshotLoader {
         const branching = branchId === this.runtime.documentId ? 0 : 1;
 
         this.client.startCollaboration(
-            this.runtime.clientId, chunk.chunkSequenceNumber, branching);
+            this.runtime.clientId,
+            /* minSeq: */ chunk.chunkSequenceNumber,
+            /* currentSeq: */ chunk.chunkSequenceNumber,
+            branching);
 
         return chunk;
     }
