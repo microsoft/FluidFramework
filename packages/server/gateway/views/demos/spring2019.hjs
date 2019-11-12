@@ -112,7 +112,7 @@ function getRandomValues(length: number): number[] {
 
 
     <h3>Inking Canvas</h3>
-    <li class="list-unstyled"><a href="/loader/fluid/{{inkMoniker}}?chaincode=@chaincode/canvas@{{version}}" target="_blank">Canvas Chaincode</a></li>
+    <li class="list-unstyled"><a href="/loader/fluid/{{inkMoniker}}?chaincode=@fluid-example/canvas@{{version}}" target="_blank">Canvas Chaincode</a></li>
 </div>
 
 {{/content}}

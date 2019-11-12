@@ -86,16 +86,6 @@ export async function postTokenRequest(server: string, postBody: string): Promis
     });
 }
 
-export async function refreshAccessToken(server: string, clientConfig: IClientConfig, tokens: IODSPTokens) {
-    console.log("Refreshing access token");
-    tokens.accessToken = "";
-    const odspTokens = await postTokenRequest(server,
-        getRefreshAccessTokenBody(server, clientConfig, tokens.refreshToken));
-    tokens.accessToken = odspTokens.accessToken;
-    tokens.refreshToken = odspTokens.refreshToken;
-    return odspTokens;
-}
-
 async function requestWithRefresh(
     server: string,
     clientConfig: IClientConfig,
@@ -109,6 +99,16 @@ async function requestWithRefresh(
     // Unauthorized, try to refresh the token
     const odspTokens = await refreshAccessToken(server, clientConfig, tokens);
     return requestCallback(odspTokens.accessToken);
+}
+
+export async function refreshAccessToken(server: string, clientConfig: IClientConfig, tokens: IODSPTokens) {
+    console.log("Refreshing access token");
+    tokens.accessToken = "";
+    const odspTokens = await postTokenRequest(server,
+        getRefreshAccessTokenBody(server, clientConfig, tokens.refreshToken));
+    tokens.accessToken = odspTokens.accessToken;
+    tokens.refreshToken = odspTokens.refreshToken;
+    return odspTokens;
 }
 
 function getRequestHandler(resolve, reject) {

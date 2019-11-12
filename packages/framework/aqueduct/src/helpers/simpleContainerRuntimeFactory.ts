@@ -9,7 +9,7 @@ import {
     RequestParser,
     RuntimeRequestHandler,
 } from "@microsoft/fluid-container-runtime";
-import { ComponentRegistryTypes, IHostRuntime } from "@microsoft/fluid-runtime-definitions";
+import { IHostRuntime, NamedComponentRegistryEntries } from "@microsoft/fluid-runtime-definitions";
 
 export class SimpleContainerRuntimeFactory {
     public static readonly defaultComponentId = "default";
@@ -20,14 +20,14 @@ export class SimpleContainerRuntimeFactory {
     public static async instantiateRuntime(
         context: IContainerContext,
         chaincode: string,
-        registry: ComponentRegistryTypes,
-        generateSummaries: boolean = false,
+        registryEntries: NamedComponentRegistryEntries,
+        generateSummaries: boolean = true,
         requestHandlers: RuntimeRequestHandler[] = [],
     ): Promise<ContainerRuntime> {
         // debug(`instantiateRuntime(chaincode=${chaincode},registry=${JSON.stringify(registry)})`);
         const runtime = await ContainerRuntime.load(
             context,
-            registry,
+            registryEntries,
             [
                 defaultComponentRuntimeRequestHandler,
                 ...requestHandlers,
@@ -40,7 +40,7 @@ export class SimpleContainerRuntimeFactory {
         if (!runtime.existing) {
             // debug(`createAndAttachComponent(chaincode=${chaincode})`);
             // tslint:disable-next-line: no-floating-promises
-            this.createAndAttachComponent(runtime, this.defaultComponentId, chaincode);
+            SimpleContainerRuntimeFactory.createAndAttachComponent(runtime, SimpleContainerRuntimeFactory.defaultComponentId, chaincode);
         }
 
         return runtime;

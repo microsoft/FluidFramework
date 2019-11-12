@@ -51,8 +51,6 @@ import {
     SummaryType,
 } from "@microsoft/fluid-protocol-definitions";
 import {
-    ComponentFactoryTypes,
-    ComponentRegistryTypes,
     FlushMode,
     IAttachMessage,
     IComponentRegistry,
@@ -61,6 +59,7 @@ import {
     IHelpMessage,
     IHostRuntime,
     IInboundSignalMessage,
+    NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";
@@ -68,6 +67,7 @@ import { EventEmitter } from "events";
 import * as uuid from "uuid/v4";
 import { ComponentContext, LocalComponentContext, RemotedComponentContext } from "./componentContext";
 import { ComponentHandleContext } from "./componentHandleContext";
+import { ComponentRegistry } from "./componentRegistry";
 import { debug } from "./debug";
 import { DocumentStorageServiceProxy } from "./documentStorageServiceProxy";
 import {
@@ -85,12 +85,6 @@ import { analyzeTasks } from "./taskAnalyzer";
 interface ISummaryTreeWithStats {
     summaryStats: ISummaryStats;
     summaryTree: ISummaryTree;
-}
-
-interface IBufferedChunk {
-    type: MessageType;
-
-    content: string;
 }
 
 /**
@@ -142,7 +136,7 @@ const DefaultSummaryConfiguration: ISummaryConfiguration = {
  */
 export interface IContainerRuntimeOptions {
     // Experimental flag that will generate summaries if connected to a service that supports them.
-    // Will eventually become the default and snapshots will be deprecated
+    // This defaults to true and must be explicitly set to false to disable.
     generateSummaries: boolean;
 
     // Experimental flag that will execute tasks in web worker if connected to a service that supports them.
@@ -379,11 +373,11 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
      */
     public static async load(
         context: IContainerContext,
-        registry: ComponentRegistryTypes,
+        registryEntries: NamedComponentRegistryEntries,
         requestHandlers: RuntimeRequestHandler[] = [],
         runtimeOptions?: IContainerRuntimeOptions,
     ): Promise<ContainerRuntime> {
-        const componentRegistry = new WrappedComponentRegistry(registry);
+        const componentRegistry = new ContainerRuntimeComponentRegistry(registryEntries);
 
         const chunkId = context.baseSnapshot.blobs[".chunks"];
         const chunks = chunkId
@@ -539,16 +533,13 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     // on its creation). This is a superset of contexts.
     private readonly contextsDeferred = new Map<string, Deferred<ComponentContext>>();
 
-    // Local copy of sent but unacknowledged chunks.
-    private readonly unackedChunkedMessages: Map<number, IBufferedChunk> = new Map<number, IBufferedChunk>();
-
     private loadedFromSummary: boolean;
 
     private constructor(
         private readonly context: IContainerContext,
         private readonly registry: IComponentRegistry,
         readonly chunks: [string, string[]][],
-        private readonly runtimeOptions: IContainerRuntimeOptions = { generateSummaries: false, enableWorker: false },
+        private readonly runtimeOptions: IContainerRuntimeOptions = { generateSummaries: true, enableWorker: false },
     ) {
         super();
 
@@ -620,7 +611,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         // Create the SummaryManager and mark the initial state
         this.summaryManager = new SummaryManager(
             context,
-            this.runtimeOptions.generateSummaries || this.loadedFromSummary,
+            this.runtimeOptions.generateSummaries !== false || this.loadedFromSummary,
             this.runtimeOptions.enableWorker,
             this.logger);
         if (this.context.connectionState === ConnectionState.Connected) {
@@ -744,8 +735,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                 this.submit(MessageType.Attach, message);
             }
 
-            // Also send any unacked chunk messages
-            this.sendUnackedChunks();
         }
 
         for (const [, componentContext] of this.contexts) {
@@ -1000,13 +989,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         // Chunk processing must come first given that we will transform the message to the unchunked version
         // once all pieces are available
         if (message.type === MessageType.ChunkedOp) {
-            const chunkComplete = this.processRemoteChunkedMessage(message);
-            if (chunkComplete && local) {
-                const clientSeqNumber = message.clientSequenceNumber;
-                if (this.unackedChunkedMessages.has(clientSeqNumber)) {
-                    this.unackedChunkedMessages.delete(clientSeqNumber);
-                }
-            }
+            this.processRemoteChunkedMessage(message);
         }
 
         // Old prepare part
@@ -1164,16 +1147,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         }
     }
 
-    private sendUnackedChunks() {
-        for (const message of this.unackedChunkedMessages) {
-            debug(`Resending unacked chunks!`);
-            this.submitChunkedMessage(
-                message[1].type,
-                message[1].content,
-                this.context.deltaManager.maxMessageSize);
-        }
-    }
-
     private processRemoteChunkedMessage(message: ISequencedDocumentMessage): boolean {
         const clientId = message.clientId;
         const chunkedContent = message.contents as IChunkedOp;
@@ -1253,11 +1226,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                 batchBegin ? { batch: true } : undefined);
         } else {
             clientSequenceNumber = this.submitChunkedMessage(type, serializedContent, maxOpSize);
-            this.unackedChunkedMessages.set(clientSequenceNumber,
-                {
-                    content: serializedContent,
-                    type,
-                });
         }
 
         return clientSequenceNumber;
@@ -1391,24 +1359,14 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 }
 
 // Wraps the provided list of packages and augments with some system level services.
-export class WrappedComponentRegistry implements IComponentRegistry {
+class ContainerRuntimeComponentRegistry extends ComponentRegistry {
 
-    private readonly agentScheduler: AgentSchedulerFactory;
+    constructor(namedEntries: NamedComponentRegistryEntries) {
 
-    constructor(private readonly registry: ComponentRegistryTypes,
-                private readonly extraRegistries?: Map<string, Promise<ComponentFactoryTypes>>) {
-        this.agentScheduler = new AgentSchedulerFactory();
+        super([
+            ...namedEntries,
+            [schedulerId, Promise.resolve(new AgentSchedulerFactory())],
+        ]);
     }
 
-    public get IComponentRegistry() { return this; }
-
-    public async get(pkgName: string): Promise<ComponentFactoryTypes> {
-        if (pkgName === schedulerId) {
-            return this.agentScheduler;
-        } else if (this.extraRegistries && this.extraRegistries.has(pkgName)) {
-            return this.extraRegistries.get(pkgName);
-        } else {
-            return this.registry.get(pkgName);
-        }
-    }
 }

@@ -9,54 +9,24 @@ import { INetworkError } from "@microsoft/fluid-protocol-definitions";
  */
 export class NetworkError extends Error implements INetworkError {
 
-    private readonly customProperties = new Map<string, any>();
-
     constructor(
             errorMessage: string,
-            customProperties: [string, any][]) {
+            readonly statusCode: number | undefined,
+            readonly canRetry: boolean,
+            readonly retryAfterSeconds?: number,
+            readonly online = OnlineStatus[isOnline()]) {
         super(errorMessage);
-        customProperties.push([INetworkErrorProperties.online, OnlineStatus[isOnline()]]);
-        for (const [key, val] of customProperties) {
-            Object.defineProperty(NetworkError.prototype, key, {
-                get: () => {
-                    return val;
-                },
-            });
-            this.customProperties.set(key, val);
-        }
     }
 
     public getCustomProperties() {
         const prop = {};
-        for (const [key, value] of this.customProperties) {
-            prop[key] = value;
+        for (const key of Object.getOwnPropertyNames(this)) {
+            if (this[key]) {
+                prop[key] = this[key];
+            }
         }
         return prop;
     }
-}
-
-export function throwNetworkError(
-        errorMessage: string,
-        statusCode: number,
-        canRetry: boolean,
-        response?: Response) {
-    let message = errorMessage;
-    if (response) {
-        message = `${message}, msg = ${response.statusText}, type = ${response.type}`;
-    }
-    throw new NetworkError(message, [
-        [INetworkErrorProperties.statusCode , statusCode],
-        [INetworkErrorProperties.canRetry, canRetry],
-        [INetworkErrorProperties.sprequestguid, response ? `${response.headers.get("sprequestguid")}` : undefined],
-    ]);
-}
-
-export enum INetworkErrorProperties {
-    canRetry = "canRetry",
-    statusCode = "statusCode",
-    retryAfterSeconds = "retryAfterSeconds",
-    sprequestguid = "sprequestguid",
-    online = "online",
 }
 
 export enum OnlineStatus {

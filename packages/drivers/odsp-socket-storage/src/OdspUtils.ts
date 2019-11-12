@@ -3,10 +3,58 @@
  * Licensed under the MIT License.
  */
 
-import { INetworkErrorProperties, NetworkError, throwNetworkError } from "@microsoft/fluid-core-utils";
+import { isOnline, NetworkError, OnlineStatus } from "@microsoft/fluid-core-utils";
 import { default as fetch, RequestInfo as FetchRequestInfo, RequestInit as FetchRequestInit } from "node-fetch";
+import * as sha from "sha.js";
 import { IOdspSocketError } from "./contracts";
 import { debug } from "./debug";
+
+/**
+ * Throws network error - an object with a bunch of network related properties
+ */
+export function throwOdspNetworkError(
+        errorMessage: string,
+        statusCode: number,
+        canRetry: boolean,
+        response?: Response,
+        online?: string) {
+    let message = errorMessage;
+    if (response) {
+        message = `${message}, msg = ${response.statusText}, type = ${response.type}`;
+    }
+    throw new OdspNetworkError(
+        message,
+        statusCode,
+        canRetry,
+        undefined,
+        response && response.headers ? `${response.headers.get("sprequestguid")}` : undefined,
+        online,
+    );
+}
+
+export class OdspNetworkError extends NetworkError {
+    constructor(
+        errorMessage: string,
+        readonly statusCode: number | undefined,
+        readonly canRetry: boolean,
+        readonly retryAfterSeconds?: number,
+        readonly sprequestguid?: string,
+        readonly online = OnlineStatus[isOnline()]) {
+        super(errorMessage, statusCode, canRetry, retryAfterSeconds, online);
+    }
+}
+
+/**
+ * Returns network error based on error object from ODSP socket (IOdspSocketError)
+ */
+export function errorObjectFromOdspError(socketError: IOdspSocketError) {
+    return new OdspNetworkError(
+        socketError.message,
+        socketError.code,
+        socketErrorRetryFilter(socketError.code),
+        socketError.retryAfter,
+    );
+}
 
 /**
  * returns true when the request should/can be retried
@@ -33,9 +81,32 @@ export function blockList(nonRetriableCodes: number[]): RetryFilter {
 // export const defaultRetryFilter = allowList([408, 409, 429, 500, 503]);
 export const defaultRetryFilter = blockList([400, 401, 403, 404]);
 
+// socket error filter for socket erros where 400 is a special retryable error.
+export const socketErrorRetryFilter = blockList([401, 403, 404, 406]);
+
 export interface IOdspResponse<T> {
     content: T;
     headers: Map<string, string>;
+}
+
+export function getHashedDocumentId(driveId: string, itemId: string): string {
+    return encodeURIComponent(new sha.sha256().update(`${driveId}_${itemId}`).digest("base64"));
+}
+
+export async function getWithRetryForTokenRefresh<T>(get: (refresh: boolean) => Promise<T>) {
+    return get(false).catch(async (e) => {
+        // if the error is 401 or 403 refresh the token and try once more.
+        if (e.statusCode === 401 || e.statusCode === 403) {
+            return get(true);
+        }
+
+        // All code paths (deltas, blobs, trees) already throw exceptions.
+        // Throwing is better than returning null as most code paths do not return nullable-objects,
+        // and error reporting is better (for example, getDeltas() will log error to telemetry)
+        // getTree() path is the only potential exception where returning null might result in
+        // document being opened, though there maybe really bad user experience (consuming thousands of ops)
+        throw e;
+    });
 }
 
 /**
@@ -54,10 +125,10 @@ export function fetchHelper(
         const response = fetchResponse as any as Response;
         // Let's assume we can retry.
         if (!response) {
-            throwNetworkError(`No response from the server`, 400, true, response);
+            throwOdspNetworkError(`No response from the server`, 400, true, response);
         }
         if (!response.ok || response.status < 200 || response.status >= 300) {
-            throwNetworkError(`Error ${response.status} from the server`, response.status, retryFilter(response.status), response);
+            throwOdspNetworkError(`Error ${response.status} from the server`, response.status, retryFilter(response.status), response);
         }
 
         // .json() can fail and message (that goes into telemetry) would container full request URI, including tokens...
@@ -71,39 +142,25 @@ export function fetchHelper(
             };
             return res;
         } catch (e) {
-            throwNetworkError(`Error while parsing fetch response`, 400, true, response);
+            throwOdspNetworkError(`Error while parsing fetch response`, 400, true, response);
         }
     },
     (error) => {
-        throwNetworkError(`fetch error, likely due to networking / DNS error or no server: ${error}`, 709, true); // can retry?
-    });
-}
-
-export function getWithRetryForTokenRefresh<T>(get: (refresh: boolean) => Promise<T>) {
-    return get(false).catch(async (e) => {
-        // if the error is 401 or 403 refresh the token and try once more.
-        if (e.statusCode === 401 || e.statusCode === 403) {
-            return get(true);
+        // While we do not know for sure whether computer is offline, this error is not actionable and
+        // is pretty good indicator we are offline. Treating it as offline scenario will make it
+        // easier to see other errors in telemetry.
+        let online: string | undefined;
+        if (error && typeof error === "object" && error.message === "TypeError: Failed to fetch") {
+            online = OnlineStatus[OnlineStatus.Offline];
         }
-
-        // All code paths (deltas, blobs, trees) already throw exceptions.
-        // Throwing is better than returning null as most code paths do not return nullable-objects,
-        // and error reporting is better (for example, getDeltas() will log error to telemetry)
-        // getTree() path is the only potential exception where returning null might result in
-        // document being opened, though there maybe really bad user experience (consuming thousands of ops)
-        throw e;
+        throwOdspNetworkError(
+            `Fetch error: ${error}`,
+            709,
+            true, // canRetry
+            undefined, // response
+            online,
+        );
     });
-}
-
-export function errorObjectFromOdspError(socketError: IOdspSocketError) {
-    return new NetworkError(
-        socketError.message,
-        [
-            [INetworkErrorProperties.statusCode, socketError.code],
-            [INetworkErrorProperties.canRetry, defaultRetryFilter(socketError.code)],
-            [INetworkErrorProperties.retryAfterSeconds, socketError.retryAfter],
-        ],
-    );
 }
 
 /**

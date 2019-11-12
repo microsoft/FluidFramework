@@ -33,6 +33,7 @@
     "debug": "^4.1.1",
     "node-fetch": "^2.2.1",
     "sha.js": "^2.4.11",
+    "performance-now": "^2.1.0",
     "socket.io-client": "^2.1.1"
   },
   "devDependencies": {
@@ -40,8 +41,8 @@
     "@microsoft/fluid-build-common": "^0.11.0",
     "@microsoft/fluid-core-utils": "^0.11.0",
     "@types/debug": "^0.0.31",
-    "@types/mocha": "^5.2.5",
     "@types/sha.js": "^2.4.0",
+    "@types/mocha": "^5.2.5",
     "concurrently": "^4.1.0",
     "mocha": "^5.2.0",
     "mocha-junit-reporter": "^1.18.0",

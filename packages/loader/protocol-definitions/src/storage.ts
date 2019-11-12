@@ -328,4 +328,8 @@ export interface IDocumentServiceFactory {
  */
 export interface INetworkError {
     readonly message: string;
+    readonly canRetry?: boolean;
+    readonly statusCode?: number;
+    readonly retryAfterSeconds?: number;
+    readonly online: string;
 }

@@ -7,8 +7,6 @@
 // tslint:disable-next-line:no-import-side-effect
 import "./publicpath";
 
-// import { SharedString } from "@prague/sequence";
-import * as Snapshotter from "@fluid-example/snapshotter-agent";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IContainerContext, IRuntime, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
 import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
@@ -17,10 +15,9 @@ import {
     IComponentFactory,
     IComponentRegistry,
     IHostRuntime,
+    NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
 import * as sharedTextComponent from "./component";
-// import { GraphIQLView } from "./graphql";
-import { waitForFullConnection } from "./utils";
 
 const math = import(/* webpackChunkName: "math", webpackPrefetch: true */ "@fluid-example/math");
 // const monaco = import(/* webpackChunkName: "monaco", webpackPrefetch: true */ "@fluid-example/monaco");
@@ -50,40 +47,32 @@ const DefaultComponentName = "text";
 // };
 // tslint:enable
 
+const defaultRegistryEntries: NamedComponentRegistryEntries = [
+    ["@fluid-example/math", math.then((m) => m.fluidExport)],
+    ["@fluid-example/progress-bars", progressBars.then((m) => m.fluidExport)],
+    ["@fluid-example/video-players", videoPlayers.then((m) => m.fluidExport)],
+    ["@fluid-example/image-collection", images.then((m) => m.fluidExport)],
+    ["@fluid-example/pinpoint-editor", pinpoint.then((m) => m.fluidExport)],
+];
+
 class MyRegistry implements IComponentRegistry {
     constructor(private context: IContainerContext,
-                private readonly sharedTextFactory: SharedTextFactoryComponent,
                 private readonly defaultRegistry: string) {
     }
 
     public get IComponentRegistry() {return this; }
 
-    public async get(name: string, cdn?: string): Promise<IComponentFactory> {
-        if (name === "@fluid-example/shared-text") {
-            return this.sharedTextFactory;
-        } else if (name === "@fluid-example/math") {
-            return math.then((m) => m.fluidExport);
-        } else if (name === "@fluid-example/progress-bars") {
-            return progressBars.then((m) => m.fluidExport);
-        } else if (name === "@fluid-example/video-players") {
-            return videoPlayers.then((m) => m.fluidExport);
-        } else if (name === "@fluid-example/image-collection") {
-            return images.then((m) => m.fluidExport);
-        // } else if (name === "@fluid-example/monaco") {
-        //     return monaco.then((m) => m.fluidExport);
-        } else if (name === "@fluid-example/pinpoint-editor") {
-            return pinpoint.then((m) => m.fluidExport);
-        } else {
-            const scope = `${name.split("/")[0]}:cdn`;
-            const config = {};
-            config[scope] = cdn ? cdn : this.defaultRegistry;
+    public async get(name: string): Promise<IComponentFactory> {
+        const scope = `${name.split("/")[0]}:cdn`;
+        const config = {};
+        config[scope] = this.defaultRegistry;
 
-            const codeDetails = {
-                package: name,
-                config,
-            };
-            return this.context.codeLoader.load<IComponentFactory>(codeDetails);
-        }
+        const codeDetails = {
+            package: name,
+            config,
+        };
+        return this.context.codeLoader.load<IComponentFactory>(codeDetails);
+
     }
 }
 
@@ -132,25 +121,17 @@ class SharedTextFactoryComponent implements IComponentFactory, IRuntimeFactory {
      * Instantiates a new chaincode host
      */
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-        const generateSummaries = true;
-
         const runtime = await ContainerRuntime.load(
             context,
-            new MyRegistry(context, this, "https://pragueauspkn-3873244262.azureedge.net"),
-            [SharedTextFactoryComponent.containerRequestHandler],
-            { generateSummaries });
-
-        // Registering for tasks to run in headless runner.
-        if (!generateSummaries) {
-            runtime.registerTasks(["snapshot", "spell", "translation", "cache"], "1.0");
-            waitForFullConnection(runtime).then(() => {
-                // Call snapshot directly from runtime.
-                if (runtime.clientType === "snapshot") {
-                    console.log(`@fluid-example/shared-text running ${runtime.clientType}`);
-                    Snapshotter.run(runtime);
-                }
-            });
-        }
+            [
+                ... defaultRegistryEntries,
+                ["@fluid-example/shared-text", Promise.resolve(this)],
+                [
+                    "verdaccio",
+                    Promise.resolve(new MyRegistry(context, "https://pragueauspkn-3873244262.azureedge.net")),
+                ],
+            ],
+            [SharedTextFactoryComponent.containerRequestHandler]);
 
         // On first boot create the base component
         if (!runtime.existing) {

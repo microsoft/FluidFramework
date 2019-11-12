@@ -25,6 +25,9 @@ import { OdspDocumentStorageService } from "./OdspDocumentStorageService";
 import { isLocalStorageAvailable } from "./OdspUtils";
 import { getSocketStorageDiscovery } from "./Vroom";
 
+// tslint:disable-next-line:no-require-imports no-var-requires
+const performanceNow = require("performance-now") as (() => number);
+
 const afdUrlConnectExpirationMs = 6 * 60 * 60 * 1000; // 6 hours
 const lastAfdConnectionTimeMsKey = "LastAfdConnectionTimeMs";
 
@@ -47,6 +50,8 @@ export class OdspDocumentService implements IDocumentService {
     private readonly getStorageToken: (refresh: boolean) => Promise<string | null>;
 
     private readonly localStorageAvailable: boolean;
+
+    private readonly joinSessionKey: string;
 
     /**
      * @param appId - app id used for telemetry for network requests
@@ -81,10 +86,12 @@ export class OdspDocumentService implements IDocumentService {
         private readonly odspCache: OdspCache,
     ) {
 
+        this.joinSessionKey = `${this.hashedDocumentId}/joinsession`;
+
         this.logger = DebugLogger.mixinDebugLogger(
             "fluid:telemetry",
             logger,
-            { documentId: hashedDocumentId });
+            { docId: hashedDocumentId });
 
         this.getStorageToken = (refresh: boolean) => {
             if (refresh) {
@@ -105,7 +112,7 @@ export class OdspDocumentService implements IDocumentService {
                 logger,
                 this.getStorageToken,
                 this.odspCache,
-                hashedDocumentId,
+                this.joinSessionKey,
             ),
         );
 
@@ -187,7 +194,10 @@ export class OdspDocumentService implements IDocumentService {
             mode,
             websocketEndpoint.deltaStreamSocketUrl,
             websocketEndpoint.deltaStreamSocketUrl2,
-        );
+        ).catch((error) => {
+            this.odspCache.remove(this.joinSessionKey);
+            throw error;
+        });
     }
 
     public async branch(): Promise<string> {
@@ -223,7 +233,6 @@ export class OdspDocumentService implements IDocumentService {
      */
     private canRetryOnError(error: any) {
         // Always retry unless told otherwise.
-        // tslint:disable-next-line:no-unsafe-any
         return error === null || typeof error !== "object" || error.canRetry === undefined || error.canRetry;
     }
 
@@ -242,7 +251,7 @@ export class OdspDocumentService implements IDocumentService {
     // tslint:disable-next-line: max-func-body-length
     private async connectToDeltaStreamWithRetry(
         tenantId: string,
-        id: string,
+        websocketId: string,
         token: string | null,
         io: SocketIOClientStatic,
         client: IClient,
@@ -275,11 +284,11 @@ export class OdspDocumentService implements IDocumentService {
             // Use AFD URL if in cache
             if (afdCacheValid && hasUrl2) {
                 debug("Connecting to AFD URL directly due to valid cache.");
-                const startAfd = performance.now();
+                const startAfd = performanceNow();
 
                 return OdspDocumentDeltaConnection.create(
                     tenantId,
-                    id,
+                    websocketId,
                     token,
                     io,
                     client,
@@ -296,7 +305,7 @@ export class OdspDocumentService implements IDocumentService {
 
                     return connection;
                 }).catch((connectionError) => {
-                    const endAfd = performance.now();
+                    const endAfd = performanceNow();
                     localStorage.removeItem(lastAfdConnectionTimeMsKey);
                     // Retry on non-AFD URL
                     if (this.canRetryOnError(connectionError)) {
@@ -304,7 +313,7 @@ export class OdspDocumentService implements IDocumentService {
 
                         return OdspDocumentDeltaConnection.create(
                             tenantId,
-                            id,
+                            websocketId,
                             token,
                             io,
                             client,
@@ -324,7 +333,6 @@ export class OdspDocumentService implements IDocumentService {
                                 eventName: "FailedNonAfdUrlFallback",
                                 duration: endAfd - startAfd,
                             }, retryError);
-
                             throw retryError;
                         });
                     } else {
@@ -332,15 +340,14 @@ export class OdspDocumentService implements IDocumentService {
                             eventName: "FailedAfdUrl-NoNonAfdFallback",
                         }, connectionError);
                     }
-
                     throw connectionError;
                 });
             }
 
-            const startNonAfd = performance.now();
+            const startNonAfd = performanceNow();
             return OdspDocumentDeltaConnection.create(
                 tenantId,
-                id,
+                websocketId,
                 token,
                 io,
                 client,
@@ -352,13 +359,13 @@ export class OdspDocumentService implements IDocumentService {
                 logger.sendTelemetryEvent({ eventName: "UsedNonAfdUrl" });
                 return connection;
             }).catch((connectionError) => {
-                const endNonAfd = performance.now();
+                const endNonAfd = performanceNow();
                 if (hasUrl2 && this.canRetryOnError(connectionError)) {
                     debug(`Socket connection error on non-AFD URL. Error was [${connectionError}]. Retry on AFD URL: ${url2}`);
 
                     return OdspDocumentDeltaConnection.create(
                         tenantId,
-                        id,
+                        websocketId,
                         token,
                         io,
                         client,
@@ -386,7 +393,6 @@ export class OdspDocumentService implements IDocumentService {
                             eventName: "FailedAfdUrlFallback",
                             duration: endNonAfd - startNonAfd,
                         }, retryError);
-
                         throw retryError;
                     });
                 } else {
@@ -394,7 +400,6 @@ export class OdspDocumentService implements IDocumentService {
                         eventName: "FailedNonAfdUrl-NoAfdFallback",
                     }, connectionError);
                 }
-
                 throw connectionError;
             });
         }

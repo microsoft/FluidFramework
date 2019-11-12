@@ -8,32 +8,26 @@ import * as services from "@microsoft/fluid-server-services";
 import { IPartitionLambdaFactory, MongoManager } from "@microsoft/fluid-server-services-core";
 import { Provider } from "nconf";
 
+// Establish a connection to Mongo, get the 'rawdeltas' collection and invoke
+// the rest of the Copier instantiation:
 export async function create(config: Provider): Promise<IPartitionLambdaFactory> {
     const mongoUrl = config.get("mongo:endpoint") as string;
-    const deltasCollectionName = config.get("mongo:collectionNames:deltas");
+    const collectionName = config.get("mongo:collectionNames:rawdeltas");
     const mongoFactory = new services.MongoDbFactory(mongoUrl);
     const mongoManager = new MongoManager(mongoFactory, false);
 
     const db = await mongoManager.getDatabase();
-    const opCollection = db.collection(deltasCollectionName);
-    await opCollection.createIndex(
+    const collection = db.collection(collectionName);
+
+    // The rawdeltas collection uses the IRawOperationMessageBatch type, which
+    // is ordered by its index property:
+    await collection.createIndex(
         {
-            "documentId": 1,
-            "operation.sequenceNumber": 1,
-            "tenantId": 1,
+            documentId: 1,
+            index: 1,
+            tenantId: 1,
         },
         true);
 
-    const contentCollection = db.collection("content");
-    await contentCollection.createIndex(
-        {
-            documentId: 1,
-            sequenceNumber: 1,
-            tenantId: 1,
-        },
-        false);
-
-    console.log("copier created!");
-
-    return new CopierLambdaFactory(mongoManager, opCollection, contentCollection);
+    return new CopierLambdaFactory(mongoManager, collection);
 }
