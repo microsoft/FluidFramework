@@ -118,9 +118,9 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             container.on("error", onError);
 
             const version = request.headers && request.headers[LoaderHeader.version];
-            const connection = request.headers && request.headers[LoaderHeader.connect] || "";
+            const pause = request.headers && request.headers[LoaderHeader.pause];
 
-            return container.load(version, connection)
+            return container.load(version, !!pause)
                 .then(() => {
                     container.removeListener("error", onError);
                     res(container);
@@ -577,19 +577,15 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
      *   - null: use ops, no snapshots
      *   - undefined - fetch latest snapshot
      *   - otherwise, version sha to load snapshot
-     * @param connection - options (list of keywords). Accepted options are open & pause.
+     * @param pause - start the container in a paused state
      */
-    private async load(specifiedVersion: string | null | undefined, connection: string): Promise<void> {
-        const connectionValues = connection.split(",");
-        const connect = connectionValues.indexOf("open") !== -1;
-        const pause = connectionValues.indexOf("pause") !== -1;
-
+    private async load(specifiedVersion: string | null | undefined, pause: boolean): Promise<void> {
         const perfEvent = PerformanceEvent.start(this.logger, { eventName: "Load" });
 
         // Start websocket connection as soon as possible.  Note that there is no op handler attached yet, but the
         // DeltaManager is resilient to this and will wait to start processing ops until after it is attached.
-        this.createDeltaManager(connect);
-        if (connect && !pause) {
+        this.createDeltaManager();
+        if (!pause) {
             this.connectToDeltaStream();
         }
 
@@ -599,8 +595,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         const maybeSnapshotTree = specifiedVersion === null ? undefined
             : await this.fetchSnapshotTree(specifiedVersion);
 
-        // if !connect || pause, and there's no tree, then we'll start the websocket connection here (we'll need
-        // the details later)
+        // if pause, and there's no tree, then we'll start the websocket connection here (we'll need the details later)
         if (!maybeSnapshotTree) {
             this.connectToDeltaStream();
         }
@@ -610,7 +605,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         const attributes = await this.getDocumentAttributes(this.storageService, maybeSnapshotTree);
 
         // attach op handlers to start processing ops
-        this.attachDeltaManagerOpHandler(attributes, connect);
+        this.attachDeltaManagerOpHandler(attributes, !specifiedVersion);
 
         // ...load in the existing quorum
         // Initialize the protocol handler
@@ -653,7 +648,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             version: maybeSnapshotTree ? maybeSnapshotTree.id : undefined,
         });
 
-        if (connect && !pause) {
+        if (!pause) {
             this.resume();
         }
     }
@@ -845,7 +840,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return client;
     }
 
-    private createDeltaManager(connect: boolean): void {
+    private createDeltaManager(): void {
         // Create the DeltaManager and begin listening for connection events
         // tslint:disable-next-line:no-unsafe-any
         const client = this.client;
@@ -857,92 +852,75 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             this.canReconnect,
         );
 
-        if (connect) {
-            // Open a connection - the DeltaManager will automatically reconnect
-            this._deltaManager.on("connect", (details: IConnectionDetails) => {
+        // Open a connection - the DeltaManager will automatically reconnect
+        this._deltaManager.on("connect", (details: IConnectionDetails) => {
+            this.setConnectionState(
+                ConnectionState.Connecting,
+                "websocket established",
+                details.clientId,
+                details.version,
+                details.claims.scopes,
+                details.serviceConfiguration);
+
+            if (this._deltaManager!.connectionMode === "read") {
                 this.setConnectionState(
-                    ConnectionState.Connecting,
-                    "websocket established",
+                    ConnectionState.Connected,
+                    `joined as readonly`,
                     details.clientId,
-                    details.version,
+                    this._deltaManager!.version,
                     details.claims.scopes,
-                    details.serviceConfiguration);
+                    this._deltaManager!.serviceConfiguration);
+            }
 
-                if (this._deltaManager!.connectionMode === "read") {
-                    this.setConnectionState(
-                        ConnectionState.Connected,
-                        `joined as readonly`,
-                        details.clientId,
-                        this._deltaManager!.version,
-                        details.claims.scopes,
-                        this._deltaManager!.serviceConfiguration);
-                }
+            // back-compat for new client and old server.
+            this._audience.clear();
 
-                // back-compat for new client and old server.
-                this._audience.clear();
+            const priorClients = details.initialClients ? details.initialClients : [];
+            for (const priorClient of priorClients) {
+                this._audience.addMember(priorClient.clientId, priorClient.client);
+            }
+        });
 
-                const priorClients = details.initialClients ? details.initialClients : [];
-                for (const priorClient of priorClients) {
-                    this._audience.addMember(priorClient.clientId, priorClient.client);
-                }
-            });
+        this._deltaManager.on("disconnect", (reason: string) => {
+            this.setConnectionState(ConnectionState.Disconnected, reason);
+        });
 
-            this._deltaManager.on("disconnect", (reason: string) => {
-                this.setConnectionState(ConnectionState.Disconnected, reason);
-            });
+        this._deltaManager.on("error", (error) => {
+            this.raiseCriticalError(error);
+        });
 
-            this._deltaManager.on("error", (error) => {
-                this.raiseCriticalError(error);
-            });
+        this._deltaManager.on("pong", (latency) => {
+            this.emit("pong", latency);
+        });
 
-            this._deltaManager.on("pong", (latency) => {
-                this.emit("pong", latency);
-            });
-
-            this._deltaManager.on("processTime", (time) => {
-                this.emit("processTime", time);
-            });
-        }
+        this._deltaManager.on("processTime", (time) => {
+            this.emit("processTime", time);
+        });
     }
 
-    private attachDeltaManagerOpHandler(attributes: IDocumentAttributes, connect: boolean): void {
+    private attachDeltaManagerOpHandler(attributes: IDocumentAttributes, catchUp: boolean): void {
         assert(this._deltaManager);
 
-        if (connect) {
-            this._deltaManager!.on("closed", () => {
-                this.close();
-            });
+        this._deltaManager!.on("closed", () => {
+            this.close();
+        });
 
-            // If we're the outer frame, do we want to do this?
-            // Begin fetching any pending deltas once we know the base sequence #. Can this fail?
-            // It seems like something, like reconnection, that we would want to retry but otherwise allow
-            // the document to load
-            this._deltaManager!.attachOpHandler(
-                attributes.minimumSequenceNumber,
-                attributes.sequenceNumber,
-                {
-                    process: (message) => {
-                        return this.processRemoteMessage(message);
-                    },
-                    processSignal: (message) => {
-                        this.processSignal(message);
-                    },
+        // If we're the outer frame, do we want to do this?
+        // Begin fetching any pending deltas once we know the base sequence #. Can this fail?
+        // It seems like something, like reconnection, that we would want to retry but otherwise allow
+        // the document to load
+        this._deltaManager!.attachOpHandler(
+            attributes.minimumSequenceNumber,
+            attributes.sequenceNumber,
+            {
+                process: (message) => {
+                    return this.processRemoteMessage(message);
                 },
-                true);
-        } else {
-            this._deltaManager!.attachOpHandler(
-                attributes.minimumSequenceNumber,
-                attributes.sequenceNumber,
-                {
-                    process: (message) => {
-                        throw new Error("Delta manager is offline");
-                    },
-                    processSignal: (message) => {
-                        throw new Error("Delta manager is offline");
-                    },
+                processSignal: (message) => {
+                    this.processSignal(message);
                 },
-                false);
-        }
+            },
+            catchUp);
     }
 
     private logConnectionStateChangeTelemetry(value: ConnectionState, oldState: ConnectionState, reason: string) {

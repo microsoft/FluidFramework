@@ -254,7 +254,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             minSequenceNumber: number,
             sequenceNumber: number,
             handler: IDeltaHandlerStrategy,
-            resume: boolean) {
+            catchUp: boolean) {
         debug("Attached op handler", sequenceNumber);
 
         this.initSequenceNumber = sequenceNumber;
@@ -267,11 +267,11 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this.handler = handler;
         assert(this.handler);
 
-        // We are ready to process inbound messages
-        if (resume) {
-            this._inbound.systemResume();
-            this._inboundSignal.systemResume();
+        this._inbound.systemResume();
+        this._inboundSignal.systemResume();
 
+        // We are ready to process inbound messages
+        if (catchUp) {
             // If we have pending ops from web socket, then we can use that to start download
             // based on missing ops - catchUp() will do just that.
             // Otherwise proactively ask storage for ops

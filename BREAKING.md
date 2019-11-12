@@ -2,12 +2,16 @@
 
 - [Top-level `type` on `IClient` deprecated](#Top-level-type-on-IClient-deprecated)
 - [Support for `IFluidResolvedUrl.type` === "prague" removed](#support-for-ifluidresolvedurltype--prague-removed)
+- [`connect` header replaced with `pause` header; ability to load closed containers removed](#connect-header-replaced-with-pause-header-ability-to-load-closed-containers-removed)
 
 ## Top-level `type` on `IClient` deprecated
 The `type` field on `IClient` has been deprecated and will be removed in the future. There is now an optional type in the new `details` member of `IClient`. Some of the functionality of the top-level `type` field has been replaced by the `capabilities` member in `IClient.details`, specifically the `interactive` boolean is used to distinguish between human and non-human clients.
 
 ## Support for `IFluidResolvedUrl.type` === "prague" removed
 As previously mentioned, `IFluidResolvedUrl.type` should now be "fluid". Backwards compatibility for type "prague" has now been removed.
+
+## `connect` header replaced with `pause` header; ability to load closed containers removed
+The comma-separated string `connect` header has been replaced with the boolean `pause` header. `pause: true` is equivalent to `connect: "open,pause"` and `pause: false` is equivalent to `connect: "open"`. If undefined, container will start unpaused. It is no longer possible to load a closed container. Instead, use a paused container.
 
 # 0.11 Breaking Changes
 
