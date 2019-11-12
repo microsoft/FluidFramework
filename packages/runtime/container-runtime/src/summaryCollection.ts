@@ -170,6 +170,7 @@ export class SummaryCollection {
     // key: summarySeqNum
     private readonly pendingSummaries = new Map<number, Summary>();
     private readonly initialAck = new Deferred<IAckedSummary | undefined>();
+    private refreshWaitNextAck = new Deferred<void>();
 
     private lastAck?: IAckedSummary;
 
@@ -214,6 +215,19 @@ export class SummaryCollection {
         while (this.pendingSummaries.size > 0) {
             const promises = Array.from(this.pendingSummaries, ([, summary]) => summary.waitAckNack());
             await Promise.all(promises);
+        }
+        return this.lastAck;
+    }
+
+    /**
+     * Returns a promise that resolves once a summary is acked that has a reference
+     * sequence number greater than or equal to the passed in sequence number.
+     * Returns the latest acked summary.
+     * @param referenceSequenceNumber - reference sequence number to wait for
+     */
+    public async waitNextAck(referenceSequenceNumber: number): Promise<IAckedSummary> {
+        while (!this.lastAck || this.lastAck.summaryOp.referenceSequenceNumber < referenceSequenceNumber) {
+            await this.refreshWaitNextAck.promise;
         }
         return this.lastAck;
     }
@@ -281,6 +295,8 @@ export class SummaryCollection {
         // track latest ack
         if (!this.lastAck || seq > this.lastAck.summaryAckNack.contents.summaryProposal.summarySequenceNumber) {
             this.lastAck = summary as IAckedSummary;
+            this.refreshWaitNextAck.resolve();
+            this.refreshWaitNextAck = new Deferred<void>();
         }
     }
 
