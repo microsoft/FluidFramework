@@ -9,38 +9,24 @@ import { INetworkError } from "@microsoft/fluid-protocol-definitions";
  */
 export class NetworkError extends Error implements INetworkError {
 
-    private readonly customProperties = new Map<string, any>();
-
     constructor(
             errorMessage: string,
-            customProperties: [string, any][],
-            online = OnlineStatus[isOnline()]) {
+            readonly statusCode: number | undefined,
+            readonly canRetry: boolean,
+            readonly retryAfterSeconds?: number,
+            readonly online = OnlineStatus[isOnline()]) {
         super(errorMessage);
-        customProperties.push([INetworkErrorProperties.online, online]);
-        for (const [key, val] of customProperties) {
-            Object.defineProperty(this, key, {
-                value: val,
-                writable: false,
-            });
-            this.customProperties.set(key, val);
-        }
     }
 
     public getCustomProperties() {
         const prop = {};
-        for (const [key, value] of this.customProperties) {
-            prop[key] = value;
+        for (const key of Object.getOwnPropertyNames(this)) {
+            if (this[key]) {
+                prop[key] = this[key];
+            }
         }
         return prop;
     }
-}
-
-export enum INetworkErrorProperties {
-    canRetry = "canRetry",
-    statusCode = "statusCode",
-    retryAfterSeconds = "retryAfterSeconds",
-    sprequestguid = "sprequestguid",
-    online = "online",
 }
 
 export enum OnlineStatus {
