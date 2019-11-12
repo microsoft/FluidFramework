@@ -18,10 +18,9 @@ export class NetworkError extends Error implements INetworkError {
         super(errorMessage);
         customProperties.push([INetworkErrorProperties.online, online]);
         for (const [key, val] of customProperties) {
-            Object.defineProperty(NetworkError.prototype, key, {
-                get: () => {
-                    return val;
-                },
+            Object.defineProperty(this, key, {
+                value: val,
+                writable: false,
             });
             this.customProperties.set(key, val);
         }
