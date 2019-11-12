@@ -12,3 +12,4 @@ export * from "./summary";
 export * from "./users";
 export * from "./tokens";
 export * from "./scopes";
+export * from "./error";

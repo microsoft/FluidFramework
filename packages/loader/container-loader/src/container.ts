@@ -34,6 +34,7 @@ import {
 } from "@microsoft/fluid-core-utils";
 import {
     Browser,
+    convertErrorToSpecificError,
     FileMode,
     IClient,
     IDocumentAttributes,
@@ -385,7 +386,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     }
 
     public raiseCriticalError(error: any) {
-        this.emit("error", error);
+        this.emit("error", convertErrorToSpecificError(error));
     }
 
     public reloadContext(): Promise<void> {
