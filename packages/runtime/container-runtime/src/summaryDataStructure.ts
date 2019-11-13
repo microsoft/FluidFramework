@@ -128,7 +128,7 @@ export interface IClientSummaryWatcher {
     waitFlushed(): Promise<IAckedSummary | undefined>;
 }
 
-class SummaryWatcher implements IClientSummaryWatcher {
+class ClientSummaryWatcher implements IClientSummaryWatcher {
     // key: clientSeqNum
     private readonly localSummaries = new Map<number, Summary>();
 
@@ -166,11 +166,9 @@ class SummaryWatcher implements IClientSummaryWatcher {
  */
 export class SummaryDataStructure {
     // key: clientId
-    private readonly summaryWatchers = new Map<string, SummaryWatcher>();
+    private readonly summaryWatchers = new Map<string, ClientSummaryWatcher>();
     // key: summarySeqNum
     private readonly pendingSummaries = new Map<number, Summary>();
-    private readonly ackedSummaries = new Map<number, Summary>();
-    private readonly nacks = new Map<number, ISummaryNackMessage>();
     private readonly initialAck = new Deferred<IAckedSummary | undefined>();
 
     private lastAck?: IAckedSummary;
@@ -194,7 +192,7 @@ export class SummaryDataStructure {
      * @param clientId - client id for watcher
      */
     public createWatcher(clientId: string): IClientSummaryWatcher {
-        const watcher = new SummaryWatcher(clientId, this);
+        const watcher = new ClientSummaryWatcher(clientId, this);
         this.summaryWatchers.set(clientId, watcher);
         return watcher;
     }
@@ -279,7 +277,6 @@ export class SummaryDataStructure {
         assert(summary); // we should never see an ack without an op
         summary.ackNack(op);
         this.pendingSummaries.delete(seq);
-        this.ackedSummaries.set(seq, summary);
 
         // track latest ack
         if (!this.lastAck || seq > this.lastAck.summaryAckNack.contents.summaryProposal.summarySequenceNumber) {
@@ -294,7 +291,6 @@ export class SummaryDataStructure {
             summary.ackNack(op);
             this.pendingSummaries.delete(seq);
         }
-        this.nacks.set(seq, op);
     }
 
     private checkInitialized(summary: Summary) {
