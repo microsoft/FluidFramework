@@ -10,7 +10,6 @@ import {
     isSpoServer,
     isSpoTenant,
 } from "@fluid-example/tiny-web-host";
-import { URL } from "url";
 
 export function saveSpoTokens(req, params, accessToken: string, refreshToken: string) {
     if (!req.session.tokens) {

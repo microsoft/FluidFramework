@@ -38,7 +38,6 @@
         var url = "{{ url }}";
         var resolved = {{{ resolved }}};
         var jwt = "";
-        var npm = "{{ npm }}";
         var config = {{{ config }}};
         var clientId = "{{ clientId }}";
 
@@ -48,7 +47,6 @@
             cache,
             chaincode,
             scriptIds,
-            npm,
             jwt,
             config,
             clientId,
@@ -76,7 +74,6 @@
         var url = "{{ url }}";
         var resolved = {{{ resolved }}};
         var jwt = "{{ jwt }}";
-        var npm = "{{ npm }}";
         var config = {{{ config }}};
         var clientId = "{{ clientId }}";
 
@@ -88,7 +85,6 @@
             cache,
             chaincode,
             scriptIds,
-            npm,
             jwt,
             config,
             clientId);
