@@ -5,6 +5,7 @@
 
 import * as utils from "@microsoft/fluid-core-utils";
 import { BoxcarType, IBoxcarMessage, IPendingBoxcar, IProducer } from "@microsoft/fluid-server-services-core";
+import { EventEmitter } from "events";
 import * as kafkaNode from "kafka-node";
 import * as util from "util";
 import { debug } from "./debug";
@@ -28,6 +29,7 @@ export class KafkaNodeProducer implements IProducer {
     private client: any;
     private producer: any;
     private sendPending: NodeJS.Immediate;
+    private events = new EventEmitter();
     private connecting = false;
     private connected = false;
 
@@ -81,6 +83,11 @@ export class KafkaNodeProducer implements IProducer {
         await util.promisify(((callback) => client.close(callback)) as any)();
     }
 
+    public once(event: "producerError", listener: (...args: any[]) => void): this {
+        this.events.once(event, listener);
+        return this;
+    }
+
     /**
      * Notifies of the need to send pending messages. We defer sending messages to batch together messages
      * to the same partition.
@@ -126,7 +133,14 @@ export class KafkaNodeProducer implements IProducer {
             const stringifiedMessage = Buffer.from(JSON.stringify(boxcarMessage));
             this.producer.send(
                 [{ key: boxcar.documentId, messages: stringifiedMessage, topic: this.topic }],
-                (error, data) => error ? boxcar.deferred.reject(error) : boxcar.deferred.resolve());
+                (error, data) => {
+                    if (error) {
+                        this.handleError(error);
+                        boxcar.deferred.reject(error);
+                    } else {
+                        boxcar.deferred.resolve();
+                    }
+                });
         }
     }
 
@@ -179,7 +193,8 @@ export class KafkaNodeProducer implements IProducer {
         }
 
         this.connecting = this.connected = false;
-        debug("Kafka error - attempting reconnect", error);
+        debug("Kafka error - closing", error);
+        this.events.emit("producerError", error);
         this.connect();
     }
     /**

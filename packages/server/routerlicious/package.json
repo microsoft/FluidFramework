@@ -37,8 +37,6 @@
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "dependencies": {
-    "@fluid-internal/client-api": "^0.12.0",
-    "@microsoft/fluid-component-core-interfaces": "^0.12.0",
     "@microsoft/fluid-container-definitions": "^0.12.0",
     "@microsoft/fluid-core-utils": "^0.12.0",
     "@microsoft/fluid-driver-base": "^0.12.0",
@@ -48,7 +46,6 @@
     "@microsoft/fluid-routerlicious-driver": "^0.12.0",
     "@microsoft/fluid-routerlicious-host": "^0.12.0",
     "@microsoft/fluid-runtime-definitions": "^0.12.0",
-    "@microsoft/fluid-sequence": "^0.12.0",
     "@microsoft/fluid-server-agent": "^0.12.0",
     "@microsoft/fluid-server-kafka-orderer": "^0.12.0",
     "@microsoft/fluid-server-lambdas": "^0.12.0",
@@ -58,7 +55,6 @@
     "@microsoft/fluid-server-services-client": "^0.12.0",
     "@microsoft/fluid-server-services-core": "^0.12.0",
     "@microsoft/fluid-server-services-utils": "^0.12.0",
-    "@microsoft/fluid-server-tools-core": "^0.12.0",
     "@types/semver": "^6.0.0",
     "body-parser": "^1.17.1",
     "bytes": "^3.0.0",
@@ -75,7 +71,6 @@
     "moniker": "^0.1.2",
     "morgan": "^1.8.1",
     "nconf": "^0.10.0",
-    "progress": "^2.0.3",
     "redis": "^2.8.0",
     "request": "^2.88.0",
     "semver": "^6.0.0",
@@ -100,7 +95,6 @@
     "@types/morgan": "^1.7.35",
     "@types/nconf": "^0.0.37",
     "@types/node": "^10.12.12",
-    "@types/progress": "^2.0.3",
     "@types/random-js": "^1.0.31",
     "@types/redis": "^2.8.8",
     "@types/request": "^2.47.1",
@@ -127,8 +121,7 @@
     "ts-loader": "^4.5.0",
     "tslint": "^5.11.0",
     "typescript": "~3.4.5",
-    "url-loader": "^1.1.1",
-    "ws": "^6.1.2"
+    "url-loader": "^1.1.1"
   },
   "nyc": {
     "all": true,

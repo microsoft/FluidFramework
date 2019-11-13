@@ -8,8 +8,8 @@ The Fluid loader is all that is needed to load any Fluid document. This example 
 create, initialize, and then make use of the loader. And does so in a literate programming like style to provide
 more detail on each line of the code.
 
-There are other packages which provide simple APIs to make use of the loader. For example @prague/app-datastore or
-@prague/tiny-web-host. These may be better starting options when integrating the loader into your own code. But this
+There are other packages which provide simple APIs to make use of the loader. For example @microsoft/fluid-base-host or
+@fluid-example/tiny-web-host. These may be better starting options when integrating the loader into your own code. But this
 example will show all the steps needed to create and use the Fluid loader. And it still comes in under 200 lines
 of code.
 
@@ -36,11 +36,11 @@ http://localhost:8080/new-document?chaincode=@chaincode/tourofheroes@0.0.5918.
 
 ### Packages
 
-The loader itself only requires two Fluid packages: `@prague/container-definitions` and `@prague/container-loader`.
+The loader itself only requires two Fluid packages: `@microsoft/fluid-container-definitions` and `@microsoft/fluid-container-loader`.
 
-`@prague/container-loader` contains the actual loader itself.
+`@microsoft/fluid-container-loader` contains the actual loader itself.
 
-`@prague/container-definitions` is a set of TypeScript interface definitions that define the behavior of the loader.
+`@microsoft/fluid-container-definitions` is a set of TypeScript interface definitions that define the behavior of the loader.
 These provide the bindings between the loader code itself and the documents loaded by the loader.
 
 ### Creating the Loader
@@ -48,7 +48,7 @@ These provide the bindings between the loader code itself and the documents load
 Creating a loader is a simple process
 
 ```typescript
-import { Loader } from "@prague/container-loader";
+import { Loader } from "@microsoft/fluid-container-loader";
 
 const loader = new Loader(
     { resolver: insecureResolver },
@@ -77,7 +77,7 @@ The primary of these is resolving a URL to its Fluid specific endpoint and acces
 documents are free to define any URL scheme they want to represent a document. But they must then be able to map
 from this URL to a Fluid based url of the form:
 
-`fluid-protocool://service.domain/documentId/path`
+`fluid-protocol://service.domain/documentId/path`
 
 And also provided the required access tokens with this. In the above the protocol part of the URL defines which Fluid
 driver to use to to talk to the server. The domain gives the location of the service. Document ID is the identifier for
@@ -89,7 +89,7 @@ return the resolved Fluid URL with access tokens if these pass.
 
 In this sample we aren't doing any user authentication and are running client side only with the API tokens hard
 coded into the sample. This is NOT a security best practice and is only intended to be used to simplify the loader
-sample. To make this clear we call our URL resovler the `InsecureUrlResolver`. In a production environment the
+sample. To make this clear we call our URL resolver the `InsecureUrlResolver`. In a production environment the
 tenant secret should be protected on the service as you would a database password, SSL private key, etc... and the
 URL resolver would make an authenticated API call against a server API to receive the resulting information.
 
@@ -125,7 +125,7 @@ const documentUrl = `fluid://${new URL(this.ordererUrl).host}` +
     parsedUrl.pathname;
 ```
 
-We can then construct the final `IPragueResolvedUrl` by generating all the endpoints needed by the driver. As well as
+We can then construct the final `IFluidResolvedUrl` by generating all the endpoints needed by the driver. As well as
 crafting a JWT token locally (this is the insecure part) which can be used to connect to these endpoints.
 
 ```typescript
@@ -134,14 +134,14 @@ const deltaStorageUrl =
 
 const storageUrl = `${this.storageUrl}/repos/${encodeURIComponent(this.tenantId)}`;
 
-const response: IPragueResolvedUrl = {
+const response: IFluidResolvedUrl = {
     endpoints: {
         deltaStorageUrl,
         ordererUrl: this.ordererUrl,
         storageUrl,
     },
     tokens: { jwt: this.auth(this.tenantId, documentId) },
-    type: "prague",
+    type: "fluid",
     url: documentUrl,
 };
 
@@ -154,13 +154,13 @@ Similar to how the loader defers certain tasks to the host it also defers how to
 service to a set of driver code. This allows the loader to be agnostic to the wire protocol a Fluid service may
 define so long as code is provided that correctly implements the loader's driver interface.
 
-In this example the Routerlicious driver is used `@prague/routerlicious-socket-storage`. But drivers also exist to
+In this example the Routerlicious driver is used `@microsoft/fluid-routerlicious-driver`. But drivers also exist to
 talk to OneDrive/SharePoint.
 
 Creating this is simple
 
 ```typescript
-import { RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
+import { RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
 
 const documentServicesFactory = new RouterliciousDocumentServiceFactory();
 ```
@@ -230,61 +230,34 @@ A mime type is also provided with the request to distinguish the type of object.
 is a Fluid component. Components implement the attach interface which allow them to participate in the web component
 model. But a document could also return different mime types like static images, videos, etc...
 
-The host can then switch on the mime type and act accordingly. In the case of the component we attach our host
-platform to it which provides access to the DOM and other services. We'll describe those in more detail next.
+The host can then switch on the mime type and act accordingly. In the case of the component, we check if is a viewable 
+and provide it a div for it to render.
 
 ```typescript
 switch (response.mimeType) {
     case "fluid/component":
-        const component = response.value;
-        component.attach(platform);
+        // Check if the component is viewable
+        const component = response.value as IComponent;
+        const viewable = component.IComponentHTMLVisual;
+        if (!viewable) {
+            return;
+        }
+
+        const renderable = viewable.addView ? viewable.addView() : viewable;
+        renderable.render(div, { display: "block" });
         break;
 }
 ```
 
-#### Platforms
+#### IComponent interface
 
-When a host attaches to a component it provides it an `IPlatform`. The return value to the attach call is an `IPlatform`
-that represents the component. This allows the host and component to exchange interfaces which can be used to
-communicate with each other.
-
-The `IPlatform` is defined as
-
-```typescript
-export interface IPlatform extends EventEmitter {
-    queryInterface<T>(id: string): Promise<T>;
-
-    detach();
-}
-```
-
-The `queryInterface` call is used by the host and component to learn about each other. This is an extensible system
-to define new platform level interfaces. Given the web component model highly leverages the existing DOM capabilities
-and we view data binding as collaboration using the distributed data types, we don't expect there to be a lot of
-platform level interfaces. But this system provides the flexibility to add new ones as needed.
-
-This example simply exposes the ability to provide a div to a component. The existing Fluid hosts all expose this
-div capability as well.
-
-```typescript
-export class HostPlatform extends EventEmitter implements IPlatform {
-    constructor(private div: HTMLElement) {
-        super();
-    }
-
-    public async queryInterface(id: string): Promise<any> {
-        if (id === "div") {
-            return this.div;
-        } else {
-            return null;
-        }
-    }
-
-    public async detach() {
-        return;
-    }
-}
-```
+The Fluid component model supports a delegation and feature detection mechanism. As is typical in JavaScript, 
+a feature detection pattern can be used to determine what capabilities are exposed by a component. The `IComponent`
+interface serves as a Fluid-specific form of “any” that clients can cast objects to in order to probe for implemented
+component interfaces. For example, if you need to determine the capabilities that a component exposes, you first
+cast the object as an `IComponent`, and then access the property on the `IComponent` that matches the interface you 
+are testing for.  The above checks if the component implements `IComponentHTMLVisual`, and uses it to get the instance
+that implements the rendering capability.
 
 ### Quoruming on a code package
 
@@ -343,4 +316,4 @@ You can then publish this package to Verdaccio and load it inside of your new lo
 
 When creating your new component also note that the API provides it access to the underlying loader. You can use this
 to follow similar attach steps as above to load components within your component. In this way your component can
-also serve as a host for other Fluid content. It will just provide it's own `IPlatform` interface.
+also serve as a host for other Fluid content.

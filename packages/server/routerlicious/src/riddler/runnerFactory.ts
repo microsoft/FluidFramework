@@ -8,6 +8,7 @@ import { getOrCreateRepository } from "@microsoft/fluid-server-services-client";
 import { MongoManager } from "@microsoft/fluid-server-services-core";
 import * as utils from "@microsoft/fluid-server-services-utils";
 import { Provider } from "nconf";
+import * as winston from "winston";
 import { RiddlerRunner } from "./runner";
 import { ITenantDocument } from "./tenantManager";
 
@@ -43,7 +44,12 @@ export class RiddlerResourcesFactory implements utils.IResourcesFactory<RiddlerR
             // Skip creating anything with credentials - we assume this is external to us and something we can't
             // or don't want to automatically create (i.e. GitHub)
             if (!tenant.storage.credentials) {
-                await getOrCreateRepository(tenant.storage.url, tenant.storage.owner, tenant.storage.repository);
+                try {
+                    await getOrCreateRepository(tenant.storage.url, tenant.storage.owner, tenant.storage.repository);
+                } catch (err) {
+                    // This is okay to fail since the repos are alreay created in production.
+                    winston.error(`Error creating repos`);
+                }
             }
         });
         await Promise.all(upsertP);

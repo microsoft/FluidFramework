@@ -15,12 +15,13 @@ interface DepCheckRecord {
 
 export class NpmDepChecker {
     // @types/socket.io-client is references in the tsconfig.json
-    private readonly foundTypes: string[] = ["@types/socket.io-client", "@types/node"];
+    private readonly foundTypes: string[] = ["@types/socket.io-client", "@types/node", "@types/expect-puppeteer", "@types/jest-environment-puppeteer"];
     // hjs is implicitly used
     private readonly ignored = ["hjs", ...this.foundTypes];
     // list of packages that should always in the devDependencies
     private readonly dev = ["@microsoft/fluid-build-common", "nyc", "typescript", "tslint", "mocha-junit-reporter", "mocha"];
-    private records: DepCheckRecord[] = [];
+    private readonly records: DepCheckRecord[] = [];
+    private readonly altTyping = new Map<string, string>([["ws", "isomorphic-ws"]]);
 
     constructor(private readonly pkg: Package, private readonly checkFiles: string[]) {
         if (checkFiles.length !== 0) {
@@ -88,7 +89,13 @@ export class NpmDepChecker {
                 delete this.pkg.packageJson.dependencies[name];
             }
         }
-        return this.depcheckTypes() || changed;
+        changed = this.depcheckTypes() || changed;
+        return this.dupCheck() || changed;
+    }
+
+    private isInDependencies(name: string) {
+        return (this.pkg.packageJson.dependencies && this.pkg.packageJson.dependencies[name] !== undefined)
+            || (this.pkg.packageJson.devDependencies && this.pkg.packageJson.devDependencies[name] !== undefined);
     }
 
     private depcheckTypes() {
@@ -96,13 +103,32 @@ export class NpmDepChecker {
         for (const dep of this.pkg.dependencies) {
             if (dep.startsWith("@types/") && this.foundTypes.indexOf(dep) === -1) {
                 const name = dep.substring("@types/".length);
-                if ((!this.pkg.packageJson.dependencies || this.pkg.packageJson.dependencies[name] === undefined)
-                    && (!this.pkg.packageJson.devDependencies || this.pkg.packageJson.devDependencies[name] === undefined)) {
+                const altName = this.altTyping.get(name);
+                if (!(this.isInDependencies(name) || (altName && this.isInDependencies(altName)))) {
                     console.warn(`${this.pkg.nameColored}: warning: unused type dependency ${dep}`);
-                    delete this.pkg.packageJson.devDependencies[dep];
-                    delete this.pkg.packageJson.dependencies[dep];
+                    if (this.pkg.packageJson.devDependencies) {
+                        delete this.pkg.packageJson.devDependencies[dep];
+                    }
+                    if (this.pkg.packageJson.dependencies) {
+                        delete this.pkg.packageJson.dependencies[dep];
+                    }
                     changed = true;
                 }
+            }
+        }
+        return changed;
+    }
+
+    private dupCheck() {
+        if (!this.pkg.packageJson.devDependencies || !this.pkg.packageJson.dependencies) {
+            return false;;
+        }
+        let changed = false;
+        for (const name of Object.keys(this.pkg.packageJson.dependencies)) {
+            if (this.pkg.packageJson.devDependencies[name] != undefined) {
+                console.warn(`${this.pkg.nameColored}: warning: ${name} already in production dependency, deleting dev dependency`);
+                delete this.pkg.packageJson.devDependencies[name];
+                changed = true;
             }
         }
         return changed;

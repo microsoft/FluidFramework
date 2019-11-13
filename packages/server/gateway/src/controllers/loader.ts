@@ -3,12 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-    createWebLoader,
-    IHostConfig,
-    initializeChaincode,
-    registerAttach,
-} from "@microsoft/fluid-base-host";
+import { BaseHost, IHostConfig } from "@microsoft/fluid-base-host";
 import { IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
 import { BaseTelemetryNullLogger } from "@microsoft/fluid-core-utils";
 import { WebWorkerLoaderFactory } from "@microsoft/fluid-execution-context-loader";
@@ -17,7 +12,7 @@ import { IDocumentServiceFactory, IFluidResolvedUrl } from "@microsoft/fluid-pro
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
 import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
 import { IGitCache } from "@microsoft/fluid-server-services-client";
-import { IResolvedPackage, WhiteList } from "@microsoft/fluid-web-code-loader";
+import { IResolvedPackage } from "@microsoft/fluid-web-code-loader";
 import Axios from "axios";
 import { DocumentFactory } from "./documentFactory";
 import { MicrosoftGraph } from "./graph";
@@ -99,7 +94,6 @@ export async function initialize(
     cache: IGitCache,
     pkg: IResolvedPackage,
     scriptIds: string[],
-    npm: string,
     jwt: string,
     config: any,
     clientId: string,
@@ -153,33 +147,19 @@ export async function initialize(
     // tslint:disable-next-line
     window["allServices"] = services;
 
-    console.log(`Loading ${url}`);
-    const loader = await createWebLoader(
-        resolved,
-        pkg,
-        scriptIds,
-        config,
-        services,
-        hostConf,
-        new Map<string, IProxyLoaderFactory>([["webworker", new WebWorkerLoaderFactory()]]),
-        new WhiteList(),
-        );
+    const baseHost = new BaseHost(resolved, pkg, scriptIds, config, services, hostConf,
+        new Map<string, IProxyLoaderFactory>([["webworker", new WebWorkerLoaderFactory()]]));
+    const loader = await baseHost.getLoader();
     documentFactory.resolveLoader(loader);
 
+    console.log(`Loading ${url}`);
+
     const div = document.getElementById("content") as HTMLDivElement;
-    const container = await loader.resolve({ url });
+    const container = await baseHost.loadAndRender(url, div, pkg);
 
     container.on("error", (error) => {
         console.error(error);
     });
-
-    registerAttach(loader, container, url, div);
-
-    // If this is a new document we will go and instantiate the chaincode. For old documents we assume a legacy
-    // package.
-    if (!container.existing) {
-        await initializeChaincode(container, pkg);
-    }
 
     return container;
 }

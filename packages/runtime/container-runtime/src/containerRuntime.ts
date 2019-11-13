@@ -37,7 +37,6 @@ import {
     readAndParse,
 } from "@microsoft/fluid-core-utils";
 import {
-    Browser,
     IChunkedOp,
     IDocumentMessage,
     IDocumentStorageService,
@@ -88,12 +87,6 @@ interface ISummaryTreeWithStats {
     summaryTree: ISummaryTree;
 }
 
-interface IBufferedChunk {
-    type: MessageType;
-
-    content: string;
-}
-
 export interface IGeneratedSummaryData {
     sequenceNumber: number;
 
@@ -127,7 +120,7 @@ const DefaultSummaryConfiguration: ISummaryConfiguration = {
  */
 export interface IContainerRuntimeOptions {
     // Experimental flag that will generate summaries if connected to a service that supports them.
-    // Will eventually become the default and snapshots will be deprecated
+    // This defaults to true and must be explicitly set to false to disable.
     generateSummaries: boolean;
 
     // Experimental flag that will execute tasks in web worker if connected to a service that supports them.
@@ -264,8 +257,6 @@ class ScheduleManager {
     public resume() {
         this.paused = false;
         if (!this.localPaused) {
-            // resume is only flipping the state but isn't concerned with the promise result
-            // tslint:disable-next-line:no-floating-promises
             this.deltaManager.inbound.systemResume();
         }
     }
@@ -277,12 +268,12 @@ class ScheduleManager {
         }
 
         this.localPaused = localPaused;
-        const promise = localPaused || this.paused
-            ? this.deltaManager.inbound.systemPause()
-            : this.deltaManager.inbound.systemResume();
-
-        // we do not care about "Resumed while waiting to pause" rejections.
-        promise.catch((err) => {});
+        if (localPaused || this.paused) {
+            // tslint:disable-next-line:no-floating-promises
+            this.deltaManager.inbound.systemPause();
+        } else {
+            this.deltaManager.inbound.systemResume();
+        }
     }
 
     private updatePauseState(sequenceNumber: number) {
@@ -418,7 +409,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this.context.clientId;
     }
 
-    public get clientType(): string {
+    public get clientType(): string | undefined {
         return this.context.clientType;
     }
 
@@ -524,16 +515,13 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     // on its creation). This is a superset of contexts.
     private readonly contextsDeferred = new Map<string, Deferred<ComponentContext>>();
 
-    // Local copy of sent but unacknowledged chunks.
-    private readonly unackedChunkedMessages: Map<number, IBufferedChunk> = new Map<number, IBufferedChunk>();
-
     private loadedFromSummary: boolean;
 
     private constructor(
         private readonly context: IContainerContext,
         private readonly registry: IComponentRegistry,
         readonly chunks: [string, string[]][],
-        private readonly runtimeOptions: IContainerRuntimeOptions = { generateSummaries: false, enableWorker: false },
+        private readonly runtimeOptions: IContainerRuntimeOptions = { generateSummaries: true, enableWorker: false },
     ) {
         super();
 
@@ -605,7 +593,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         // Create the SummaryManager and mark the initial state
         this.summaryManager = new SummaryManager(
             context,
-            this.runtimeOptions.generateSummaries || this.loadedFromSummary,
+            this.runtimeOptions.generateSummaries !== false || this.loadedFromSummary,
             this.runtimeOptions.enableWorker,
             this.logger);
         if (this.context.connectionState === ConnectionState.Connected) {
@@ -729,8 +717,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                 this.submit(MessageType.Attach, message);
             }
 
-            // Also send any unacked chunk messages
-            this.sendUnackedChunks();
         }
 
         for (const [, componentContext] of this.contexts) {
@@ -844,7 +830,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         // If flush mode is already manual we are either
         // nested in another orderSequentially, or
         // the app is flushing manually, in which
-        // case this invokation doesn't own
+        // case this invocation doesn't own
         // flushing.
         if (this.flushMode === FlushMode.Manual) {
             callback();
@@ -939,7 +925,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     private refreshBaseSummary(snapshot: ISnapshotTree) {
         // currently only is called from summaries
         this.loadedFromSummary = true;
-        // propogate updated tree to all components
+        // propagate updated tree to all components
         for (const key of Object.keys(snapshot.trees)) {
             if (this.contexts.has(key)) {
                 const component = this.contexts.get(key);
@@ -985,13 +971,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         // Chunk processing must come first given that we will transform the message to the unchunked version
         // once all pieces are available
         if (message.type === MessageType.ChunkedOp) {
-            const chunkComplete = this.processRemoteChunkedMessage(message);
-            if (chunkComplete && local) {
-                const clientSeqNumber = message.clientSequenceNumber;
-                if (this.unackedChunkedMessages.has(clientSeqNumber)) {
-                    this.unackedChunkedMessages.delete(clientSeqNumber);
-                }
-            }
+            this.processRemoteChunkedMessage(message);
         }
 
         // Old prepare part
@@ -1168,16 +1148,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         }
     }
 
-    private sendUnackedChunks() {
-        for (const message of this.unackedChunkedMessages) {
-            debug(`Resending unacked chunks!`);
-            this.submitChunkedMessage(
-                message[1].type,
-                message[1].content,
-                this.context.deltaManager.maxMessageSize);
-        }
-    }
-
     private processRemoteChunkedMessage(message: ISequencedDocumentMessage): boolean {
         const clientId = message.clientId;
         const chunkedContent = message.contents as IChunkedOp;
@@ -1257,11 +1227,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                 batchBegin ? { batch: true } : undefined);
         } else {
             clientSequenceNumber = this.submitChunkedMessage(type, serializedContent, maxOpSize);
-            this.unackedChunkedMessages.set(clientSequenceNumber,
-                {
-                    content: serializedContent,
-                    type,
-                });
         }
 
         return clientSequenceNumber;
@@ -1315,7 +1280,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     }
 
     private subscribeToLeadership() {
-        if (this.context.clientType === Browser) {
+        if (this.context.clientDetails.capabilities.interactive) {
             this.getScheduler().then((scheduler) => {
                 if (scheduler.leader) {
                     this.updateLeader(true);

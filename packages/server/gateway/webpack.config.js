@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-const path = require('path');
-const webpack = require('webpack');
 const dev = require('./webpack.dev.js');
 const prod = require('./webpack.prod.js');
 const merge = require('webpack-merge');
@@ -88,7 +86,6 @@ module.exports = env => {
                 }
             ]
         },
-        target: 'node',
         stats: {
             timings: true,
             colors: true,

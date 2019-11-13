@@ -48,6 +48,11 @@ export interface IOrdererConnection {
      */
     order(message: IDocumentMessage[]): void;
 
+    /**
+     * Error event Handler.
+     */
+    once(event: "producerError", listener: (...args: any[]) => void): void;
+
     disconnect(): void;
 }
 

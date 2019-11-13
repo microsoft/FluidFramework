@@ -11,7 +11,6 @@ import {
     PerformanceEvent,
 } from "@microsoft/fluid-core-utils";
 import * as resources from "@microsoft/fluid-gitresources";
-import { getWithRetryForTokenRefresh } from "@microsoft/fluid-odsp-utils";
 import * as api from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
 import {
@@ -32,7 +31,7 @@ import { IFetchWrapper } from "./fetchWrapper";
 import { getQueryString } from "./getQueryString";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { OdspCache } from "./odspCache";
-import { throwNetworkError } from "./OdspUtils";
+import { getWithRetryForTokenRefresh, throwOdspNetworkError } from "./OdspUtils";
 
 export class OdspDocumentStorageManager implements IDocumentStorageManager {
     private readonly blobCache: Map<string, resources.IBlob> = new Map();
@@ -289,10 +288,10 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                 .get<IDocumentStorageGetVersionsResponse>(url, this.documentId, headers);
             const versionsResponse = response.content;
             if (!versionsResponse) {
-                throwNetworkError("getVersions returned no response", 400, true);
+                throwOdspNetworkError("getVersions returned no response", 400, true);
             }
             if (!Array.isArray(versionsResponse.value)) {
-                throwNetworkError("getVersions returned non-array response", 400, true);
+                throwOdspNetworkError("getVersions returned non-array response", 400, true);
             }
             return versionsResponse.value.map((version) => {
                 // Parse the date from the message
@@ -359,7 +358,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
     private checkSnapshotUrl() {
         if (!this.snapshotUrl) {
-            throwNetworkError("Method not supported because no snapshotUrl was provided", 400, false);
+            throwOdspNetworkError("Method not supported because no snapshotUrl was provided", 400, false);
         }
     }
 

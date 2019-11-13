@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent } from "@prague/component-core-interfaces";
-import { IFluidCodeDetails } from "@prague/container-definitions";
-import { Container, Loader } from "@prague/container-loader";
+import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
+import { Container, Loader } from "@microsoft/fluid-container-loader";
 import { parse } from "querystring";
 
 /**

@@ -1363,7 +1363,6 @@ export class MergeTree {
                 blockIndex < blockCount;                // If we have more blocks, we also have more nodes to insert
                 blockIndex++                            // Advance to next block in this layer.
             ) {
-                let len = 0;
                 const block = blocks[blockIndex] = this.makeBlock(0);
 
                 // For each child of the current block, insert a node (while we have nodes left)
@@ -1372,23 +1371,14 @@ export class MergeTree {
                     childIndex < maxChildren && nodeIndex < nodes.length;   // While we still have children & nodes left
                     childIndex++, nodeIndex++                               // Advance to next child & node
                 ) {
-                    // Insert the next node as the next child into the current block
-                    const child = nodes[nodeIndex];
-                    const childIndex = this.addNode(block, child);
-
-                    // The below is ~an inlined version of `blockUpdate()` to update the block
-                    // as we insert the children.  It avoids allocs and a 2nd walk of the children.
-                    len += child.cachedLength;
-                    if (MergeTree.blockUpdateMarkers) {
-                        const hierBlock = block.hierBlock();
-                        hierBlock.addNodeReferences(this, child);
-                    }
-                    if (this.blockUpdateActions) {
-                        this.blockUpdateActions.child(block, childIndex);
-                    }
+                    // Insert the next node into the current block
+                    this.addNode(block, nodes[nodeIndex]);
                 }
 
-                block.cachedLength = len;
+                // Calculate this block's info.  Previously this was inlined into the above loop as a micro-optimization,
+                // but it turns out to be negligible in practice since `reloadFromSegments()` is only invoked for the
+                // snapshot header.  The bulk of the segments in long documents are inserted via `insertSegments()`.
+                this.blockUpdate(block);
             }
 
             return blocks.length === 1          // If there is only one block at this layer...
@@ -1401,21 +1391,8 @@ export class MergeTree {
             clockStart = clock();
         }
         if (segments.length > 0) {
-            const block = buildMergeBlock(segments);
-
-            // TODO: Why add another root node on top of the root returned by buildMergeBlock?
-            this.root = this.makeBlock(1);
-            this.root.assignChild(block, 0, false);
-            if (MergeTree.blockUpdateMarkers) {
-                const hierRoot = this.root.hierBlock();
-                hierRoot.addNodeReferences(this, block);
-            }
-            if (this.blockUpdateActions) {
-                this.blockUpdateActions.child(this.root, 0);
-            }
-
+            this.root = buildMergeBlock(segments);
             this.nodeUpdateOrdinals(this.root);
-            this.root.cachedLength = block.cachedLength;
         } else {
             this.root = this.makeBlock(0);
             this.root.cachedLength = 0;
@@ -1427,11 +1404,11 @@ export class MergeTree {
     }
 
     // for now assume min starts at zero
-    startCollaboration(localClientId: number, minSeq: number, branchId: number) {
+    startCollaboration(localClientId: number, minSeq: number, currentSeq: number, branchId: number) {
         this.collabWindow.clientId = localClientId;
         this.collabWindow.minSeq = minSeq;
         this.collabWindow.collaborating = true;
-        this.collabWindow.currentSeq = minSeq;
+        this.collabWindow.currentSeq = currentSeq;
         this.localBranchId = branchId;
         this.segmentsToScour = new Collections.Heap<LRUSegment>([], LRUSegmentComparer);
         this.pendingSegments = Collections.ListMakeHead<SegmentGroup>();
@@ -1448,7 +1425,7 @@ export class MergeTree {
 
     private addToLRUSet(segment: ISegment, seq: number) {
         // only skip adding segments who's parents are
-        // explitly needing scour, not false or undefined
+        // explicitly needing scour, not false or undefined
         if (segment.parent.needsScour !== true) {
             // sequence should be always above current.
             assert(seq > this.collabWindow.currentSeq, "addToLRUSet");
@@ -2445,7 +2422,7 @@ export class MergeTree {
         }
     }
 
-    // visit segments starting from node's right siblings, then up to node's parent
+    // visit segments starting from node's left siblings, then up to node's parent
     leftExcursion<TClientData>(node: IMergeNode, leafAction: ISegmentAction<TClientData>) {
         const actions = { leaf: leafAction };
         let go = true;

@@ -36,12 +36,7 @@ class WorkerDocumentServiceFactory implements IDocumentServiceFactory {
     public createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
 
         if (resolvedUrl.type !== "fluid") {
-              if (resolvedUrl.type === "prague") {
-                // tslint:disable-next-line:max-line-length
-                console.warn("IFluidResolvedUrl type === 'prague' has been deprecated. Please create IFluidResolvedUrls of type 'fluid' in the future.");
-            } else {
-                return Promise.reject("only fluid type urls can be resolved.");
-            }
+            return Promise.reject("only fluid type urls can be resolved.");
         }
 
         const urlAsFluidUrl = resolvedUrl as IFluidResolvedUrl;

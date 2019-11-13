@@ -171,7 +171,6 @@ export function create(
                             clientId: config.get("login:microsoft").clientId,
                             config: workerConfig,
                             jwt: jwtToken,
-                            npm: config.get("worker:npm"),
                             partials: defaultPartials,
                             resolved: JSON.stringify(resolved),
                             scripts,

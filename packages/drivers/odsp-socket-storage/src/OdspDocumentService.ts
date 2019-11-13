@@ -91,7 +91,7 @@ export class OdspDocumentService implements IDocumentService {
         this.logger = DebugLogger.mixinDebugLogger(
             "fluid:telemetry",
             logger,
-            { documentId: hashedDocumentId });
+            { docId: hashedDocumentId });
 
         this.getStorageToken = (refresh: boolean) => {
             if (refresh) {
@@ -233,7 +233,6 @@ export class OdspDocumentService implements IDocumentService {
      */
     private canRetryOnError(error: any) {
         // Always retry unless told otherwise.
-        // tslint:disable-next-line:no-unsafe-any
         return error === null || typeof error !== "object" || error.canRetry === undefined || error.canRetry;
     }
 
