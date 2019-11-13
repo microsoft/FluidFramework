@@ -60,9 +60,10 @@ export class SnapshotLoader {
                 ? this.client.getOrAddShortClientId(spec.client)
                 : NonCollabClient;
 
-            if (spec.seq !== undefined) {
-                seg.seq = spec.seq;
-            }
+            seg.seq = spec.seq !== undefined
+                ? spec.seq
+                : UniversalSequenceNumber;
+
             if (spec.removedSeq !== undefined) {
                 seg.removedSeq = spec.removedSeq;
             }
@@ -71,6 +72,7 @@ export class SnapshotLoader {
             }
         } else {
             seg = this.client.specToSegment(spec);
+            seg.seq = UniversalSequenceNumber;
 
             // `specToSegment()` initializes `seg` with the LocalClientId.  We must overwrite this with
             // `NonCollabClient`.
