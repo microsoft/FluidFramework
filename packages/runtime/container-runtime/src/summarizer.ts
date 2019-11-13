@@ -21,7 +21,7 @@ import {
 import * as assert from "assert";
 import { ContainerRuntime, IGeneratedSummaryData } from "./containerRuntime";
 import { RunWhileConnectedCoordinator } from "./runWhileConnectedCoordinator";
-import { IClientSummaryWatcher, ISummaryAckMessage, SummaryDataStructure } from "./summaryDataStructure";
+import { IClientSummaryWatcher, ISummaryAckMessage, SummaryCollection } from "./summaryCollection";
 
 // send some telemetry if generate summary takes too long
 const maxSummarizeTimeoutTime = 20000; // 20 sec
@@ -34,7 +34,7 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
 
     private readonly logger: ITelemetryLogger;
     private readonly runCoordinator: RunWhileConnectedCoordinator;
-    private readonly summaryDataStructure: SummaryDataStructure;
+    private readonly summaryDataStructure: SummaryCollection;
     private onBehalfOfClientId: string;
     private runningSummarizer?: RunningSummarizer;
 
@@ -47,7 +47,7 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
     ) {
         this.logger = ChildLogger.create(this.runtime.logger, "Summarizer");
         this.runCoordinator = new RunWhileConnectedCoordinator(runtime);
-        this.summaryDataStructure = new SummaryDataStructure(
+        this.summaryDataStructure = new SummaryCollection(
             this.runtime.deltaManager.initialSequenceNumber,
             this.logger);
         this.runtime.deltaManager.inbound.on("op",

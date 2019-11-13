@@ -14,7 +14,7 @@ import {
 import * as assert from "assert";
 import * as sinon from "sinon";
 import { RunningSummarizer, SummarizerHeuristics } from "../summarizer";
-import { SummaryDataStructure } from "../summaryDataStructure";
+import { SummaryCollection } from "../summaryCollection";
 
 describe("Runtime", () => {
     describe("Container Runtime", () => {
@@ -22,7 +22,7 @@ describe("Runtime", () => {
             describe("Summary Schedule", () => {
                 let runCount: number;
                 let clock: sinon.SinonFakeTimers;
-                let summaryDataStructure: SummaryDataStructure;
+                let summaryDataStructure: SummaryCollection;
                 let summarizer: RunningSummarizer;
                 const summarizerClientId = "test";
                 const onBehalfOfClientId = "behalf";
@@ -50,7 +50,7 @@ describe("Runtime", () => {
                     lastRefSeq = 0;
                     refreshBaseSummaryDeferred = new Deferred();
                     const logger = new TelemetryNullLogger();
-                    summaryDataStructure = new SummaryDataStructure(0, logger);
+                    summaryDataStructure = new SummaryCollection(0, logger);
                     summarizer = await RunningSummarizer.start(
                         summarizerClientId,
                         onBehalfOfClientId,

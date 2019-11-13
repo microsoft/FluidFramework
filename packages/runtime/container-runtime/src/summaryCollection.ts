@@ -134,7 +134,7 @@ class ClientSummaryWatcher implements IClientSummaryWatcher {
 
     public constructor(
         public readonly clientId: string,
-        private readonly summaryDataStructure: SummaryDataStructure,
+        private readonly summaryDataStructure: SummaryCollection,
     ) {}
 
     public watchSummary(clientSequenceNumber: number): ISummary {
@@ -164,7 +164,7 @@ class ClientSummaryWatcher implements IClientSummaryWatcher {
  * are broadcast, acked and nacked.
  * It provides functionality for watching specific summaries.
  */
-export class SummaryDataStructure {
+export class SummaryCollection {
     // key: clientId
     private readonly summaryWatchers = new Map<string, ClientSummaryWatcher>();
     // key: summarySeqNum
