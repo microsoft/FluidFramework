@@ -46,7 +46,7 @@ interface IPrivateSessionInfo {
     /**
      * IFrame in which the inner session is loaded.
      */
-    frameP?: Promise<HTMLIFrameElement>;
+    frame?: HTMLIFrameElement;
 
     /**
      * Request to be resolved.
@@ -115,12 +115,8 @@ export async function initialize(
 
         config.moniker = (await Axios.get("/api/v1/moniker")).data;
         config.url = url;
-        const iframe = document.getElementById("ifr") as HTMLIFrameElement;
-        privateSession.frameP = new Promise<HTMLIFrameElement>((resolve) => {
-            iframe.onload = () => {
-                resolve(iframe);
-            };
-        });
+        privateSession.frame = document.getElementById("ifr") as HTMLIFrameElement;
+
         const resolver = new ContainerUrlResolver(
             document.location.origin,
             jwt,
@@ -134,7 +130,7 @@ export async function initialize(
 
         (await IFrameDocumentServiceProxyFactory.create(
             selectDocumentServiceFactoryForProtocol(resolved as IFluidResolvedUrl, factoryMap),
-            privateSession.frameP,
+            privateSession.frame,
             options,
             { resolver },
             )).createDocumentServiceFromRequest({ url });
