@@ -830,7 +830,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         // If flush mode is already manual we are either
         // nested in another orderSequentially, or
         // the app is flushing manually, in which
-        // case this invokation doesn't own
+        // case this invocation doesn't own
         // flushing.
         if (this.flushMode === FlushMode.Manual) {
             callback();
@@ -925,7 +925,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     private refreshBaseSummary(snapshot: ISnapshotTree) {
         // currently only is called from summaries
         this.loadedFromSummary = true;
-        // propogate updated tree to all components
+        // propagate updated tree to all components
         for (const key of Object.keys(snapshot.trees)) {
             if (this.contexts.has(key)) {
                 const component = this.contexts.get(key);
