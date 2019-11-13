@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { buildHierarchy } from "@microsoft/fluid-core-utils";
+import { buildHierarchy, gitHashFile } from "@microsoft/fluid-core-utils";
 import * as resources from "@microsoft/fluid-gitresources";
 import {
     FileMode,
@@ -18,14 +18,13 @@ import {
     SummaryType,
 } from "@microsoft/fluid-protocol-definitions";
 import * as gitStorage from "@microsoft/fluid-server-services-client";
-import * as sha from "sha.js";
 
 /**
  * Document access to underlying storage for routerlicious driver.
  */
 export class DocumentStorageService implements IDocumentStorageService  {
 
-    private readonly blobsPathCache = new Map<string, string>();
+    private readonly blobsPathCache = new Set<string>();
     public get repositoryUrl(): string {
         return "";
     }
@@ -104,15 +103,13 @@ export class DocumentStorageService implements IDocumentStorageService  {
             case SummaryType.Blob:
                 const content = typeof value.content === "string" ? value.content : value.content.toString("base64");
                 const encoding = typeof value.content === "string" ? "utf-8" : "base64";
-                const hash = new sha.sha1().update(content).digest("base64");
-                if (this.blobsPathCache.has(hash)) {
-                    const blobSha = this.blobsPathCache.get(hash)!;
-                    return blobSha;
-                } else {
+                // The gitHashFile would return the same hash as returned by the server as blob.sha
+                const hash = gitHashFile(Buffer.from(content, encoding));
+                if (!this.blobsPathCache.has(hash)) {
                     const blob = await this.manager.createBlob(content, encoding);
-                    this.blobsPathCache.set(hash, blob.sha);
-                    return blob.sha;
+                    this.blobsPathCache.add(blob.sha);
                 }
+                return hash;
             case SummaryType.Commit:
                 const commitTreeHandle = await this.writeSummaryObject(
                     value.tree,
