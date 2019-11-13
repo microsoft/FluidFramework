@@ -6,10 +6,11 @@
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
-import { parseHandles, serializeHandles, ValueType } from "@microsoft/fluid-shared-object-base";
+import { parseHandles, serializableHandles, ValueType } from "@microsoft/fluid-shared-object-base";
 import { EventEmitter } from "events";
 import {
     ISerializableValue,
+    ISerializedValue,
     IValueChanged,
     IValueOpEmitter,
     IValueType,
@@ -119,8 +120,12 @@ type IMapOperation = IMapKeyOperation | IMapClearOperation;
  * Defines the in-memory object structure to be used for the conversion to/from serialized.
  * Directly used in JSON.stringify, direct result from JSON.parse
  */
-interface IMapDataObject {
+export interface IMapDataObjectSerializable {
     [key: string]: ISerializableValue;
+}
+
+export interface IMapDataObjectSerialized {
+    [key: string]: ISerializedValue;
 }
 
 /**
@@ -336,10 +341,10 @@ export class MapKernel {
     public createValueType(key: string, type: string, params: any) {
         const localValue = this.localValueMaker.makeValueType(type, this.makeMapValueOpEmitter(key), params);
 
-        // TODO ideally we could use makeSerializable in this case as well. But the interval
+        // TODO ideally we could use makeSerialized in this case as well. But the interval
         // collection has assumptions of attach being called prior. Given the IComponentSerializer it
         // may be possible to remove custom value type serialization entirely.
-        const transformedValue = serializeHandles(
+        const transformedValue = serializableHandles(
             params,
             this.runtime.IComponentSerializer,
             this.runtime.IComponentHandleContext,
@@ -396,23 +401,37 @@ export class MapKernel {
      * Serializes the data stored in the shared map to a JSON string
      * @returns A JSON string containing serialized map data
      */
-    public serialize(): string {
-        const serializableMapData: IMapDataObject = {};
+    public getSerializedStorage(): IMapDataObjectSerialized {
+        const serializableMapData: IMapDataObjectSerialized = {};
+        this.data.forEach((localValue, key) => {
+            serializableMapData[key] = localValue.makeSerialized(
+                this.runtime.IComponentSerializer,
+                this.runtime.IComponentHandleContext,
+                this.handle);
+        });
+        return serializableMapData;
+    }
+
+    public getSerializableStorage(): IMapDataObjectSerializable {
+        const serializableMapData: IMapDataObjectSerializable = {};
         this.data.forEach((localValue, key) => {
             serializableMapData[key] = localValue.makeSerializable(
                 this.runtime.IComponentSerializer,
                 this.runtime.IComponentHandleContext,
                 this.handle);
         });
-        return JSON.stringify(serializableMapData);
+        return serializableMapData;
+    }
+
+    public serialize(): string {
+        return JSON.stringify(this.getSerializableStorage());
     }
 
     /**
      * Populate the kernel with the given map data.
      * @param data - A JSON string containing serialized map data
      */
-    public populate(data: string): void {
-        const json = JSON.parse(data) as IMapDataObject;
+    public populateFromSerializable(json: IMapDataObjectSerializable): void {
         for (const [key, serializable] of Object.entries(json)) {
             const localValue = {
                 key,
@@ -421,6 +440,10 @@ export class MapKernel {
 
             this.data.set(localValue.key, localValue.value);
         }
+    }
+
+    public populate(json: string): void {
+        this.populateFromSerializable(JSON.parse(json) as IMapDataObjectSerializable);
     }
 
     /**
@@ -683,7 +706,7 @@ export class MapKernel {
      */
     private makeMapValueOpEmitter(key: string): IValueOpEmitter {
         const emit = (opName: string, previousValue: any, params: any) => {
-            const translatedParams = serializeHandles(
+            const translatedParams = serializableHandles(
                 params,
                 this.runtime.IComponentSerializer,
                 this.runtime.IComponentHandleContext,

@@ -29,7 +29,12 @@ import {
     IValueOpEmitter,
     IValueTypeOperationValue,
 } from "./interfaces";
-import { ILocalValue, LocalValueMaker, ValueTypeLocalValue, valueTypes } from "./localValues";
+import {
+    ILocalValue,
+    LocalValueMaker,
+    ValueTypeLocalValue,
+    valueTypes,
+} from "./localValues";
 import { pkgVersion } from "./packageVersion";
 
 // path-browserify only supports posix functionality but doesn't have a path.posix to enforce it.  But we need to
@@ -569,10 +574,7 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
         subdirsToSerialize.set(this.root, serializableDirectoryData);
 
         for (const [currentSubDir, currentSubDirObject] of subdirsToSerialize) {
-            const subDirStorage = currentSubDir.getSerializableStorage();
-            if (subDirStorage) {
-                currentSubDirObject.storage = subDirStorage;
-            }
+            currentSubDirObject.storage = currentSubDir.getSerializableStorage();
 
             for (const [subdirName, subdir] of currentSubDir.subdirectories()) {
                 if (!currentSubDirObject.subdirectories) {
@@ -1023,7 +1025,7 @@ class SubDirectory implements IDirectory {
             params,
         );
 
-        // TODO ideally we could use makeSerializable in this case as well. But the interval
+        // TODO ideally we could use makeSerialized in this case as well. But the interval
         // collection has assumptions of attach being called prior. Given the IComponentSerializer it
         // may be possible to remove custom value type serialization entirely.
         const transformedValue = params

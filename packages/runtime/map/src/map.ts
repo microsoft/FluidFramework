@@ -3,13 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
+import { addBlobToTree, fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
 import {
-    FileMode,
     ISequencedDocumentMessage,
     ITree,
     MessageType,
-    TreeEntry,
 } from "@microsoft/fluid-protocol-definitions";
 import {
     IChannelAttributes,
@@ -29,8 +27,13 @@ import {
 import {
     valueTypes,
 } from "./localValues";
-import { MapKernel } from "./mapKernel";
+import { IMapDataObjectSerializable, IMapDataObjectSerialized, MapKernel } from "./mapKernel";
 import { pkgVersion } from "./packageVersion";
+
+interface IMapSerializationFormat {
+    blobs?: string[];
+    content: IMapDataObjectSerializable;
+}
 
 const snapshotFileName = "header";
 
@@ -49,7 +52,7 @@ export class MapFactory implements ISharedObjectFactory {
      */
     public static readonly Attributes: IChannelAttributes = {
         type: MapFactory.Type,
-        snapshotFormatVersion: "0.1",
+        snapshotFormatVersion: "0.2",
         packageVersion: pkgVersion,
     };
 
@@ -241,27 +244,6 @@ export class SharedMap extends SharedObject implements ISharedMap {
     }
 
     /**
-     * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.snapshot}
-     */
-    public snapshot(): ITree {
-        const tree: ITree = {
-            entries: [
-                {
-                    mode: FileMode.File,
-                    path: snapshotFileName,
-                    type: TreeEntry[TreeEntry.Blob],
-                    value: {
-                        contents: this.serialize(),
-                        encoding: "utf-8",
-                    },
-                },
-            ],
-            id: null,
-        };
-        return tree;
-    }
-
-    /**
      * Registers a listener on the specified events
      */
     public on(
@@ -279,12 +261,118 @@ export class SharedMap extends SharedObject implements ISharedMap {
         return super.on(event, listener);
     }
 
-    /**
-     * Serializes the data stored in the shared map to a JSON string
-     * @returns A JSON string
-     */
+    public getSerializableStorage(): IMapDataObjectSerializable {
+        return this.kernel.getSerializableStorage();
+    }
+
+    public getSerializedStorage(): IMapDataObjectSerialized {
+        return this.kernel.getSerializedStorage();
+    }
+
     public serialize(): string {
         return this.kernel.serialize();
+    }
+
+    /**
+     * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.snapshot}
+     */
+    public snapshot(): ITree {
+        let currentSize = 0;
+        let counter = 0;
+        let headerBlob: IMapDataObjectSerializable = {};
+        const blobs: string[] = [];
+
+        const tree: ITree = {
+            entries: [],
+            id: null,
+        };
+
+        const data = this.getSerializedStorage();
+
+        // If single property exceeds this size, it goes into its own blob
+        const MinValueSizeSeparateSnapshotBlob = 8 * 1024;
+
+        // Maximum blob size for multiple map properties
+        // Should be bigger than MinValueSizeSeparateSnapshotBlob
+        const MaxSnapshotBlobSize = 16 * 1024;
+
+        // Partitioning algorithm:
+        // 1) Split large (over MinValueSizeSeparateSnapshotBlob = 8K) properties into their own blobs.
+        //    Naming (across snapshots) of such blob does not have to be stable across snapshots,
+        //    As de-duping process (in driver) should not care about paths, only content.
+        // 2) Split remaining properties into blobs of MaxSnapshotBlobSize (16K) size.
+        //    This process does not produce stable partitioning. This means
+        //    modification (including addition / deletion) of property can shift properties across blobs
+        //    and result in non-incremental snapshot.
+        //    This can be improved in the future, without being format breaking change, as loading sequence
+        //    loads all blobs at once and partitioning schema has no impact on that process.
+        for (const key of Object.keys(data)) {
+            const value = data[key];
+            if (value.value && value.value.length >= MinValueSizeSeparateSnapshotBlob) {
+                const blobName = `blob${counter}`;
+                counter++;
+                blobs.push(blobName);
+                const content: IMapDataObjectSerializable = {
+                    [key]: {
+                        type: value.type,
+                        value: JSON.parse(value.value),
+                    },
+                };
+                addBlobToTree(tree, blobName, content);
+            } else {
+                currentSize += value.type.length + 21; // approximation cost of property header
+                if (value.value) {
+                    currentSize += value.value.length;
+                }
+
+                if (currentSize > MaxSnapshotBlobSize) {
+                    const blobName = `blob${counter}`;
+                    counter++;
+                    blobs.push(blobName);
+                    addBlobToTree(tree, blobName, headerBlob);
+                    headerBlob = {};
+                    currentSize = 0;
+                }
+                headerBlob[key] = {
+                    type: value.type,
+                    value: value.value === undefined ? undefined : JSON.parse(value.value),
+                };
+
+            }
+        }
+
+        const header: IMapSerializationFormat = {
+            blobs,
+            content: headerBlob,
+        };
+
+        addBlobToTree(tree, snapshotFileName, header);
+
+        return tree;
+    }
+
+    /**
+     * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.loadCore}
+     */
+    protected async loadCore(
+        branchId: string,
+        storage: IObjectStorageService) {
+
+        const header = await storage.read(snapshotFileName);
+
+        const data = fromBase64ToUtf8(header);
+        const json = JSON.parse(data) as object;
+        const newFormat = json as IMapSerializationFormat;
+        if (Array.isArray(newFormat.blobs)) {
+            this.kernel.populateFromSerializable(newFormat.content);
+            await Promise.all(newFormat.blobs.map(async (value) => {
+                const blob = await storage.read(value);
+                const data2 = fromBase64ToUtf8(blob);
+                this.kernel.populateFromSerializable(JSON.parse(data2) as IMapDataObjectSerializable);
+            }));
+        } else {
+            this.kernel.populateFromSerializable(json as IMapDataObjectSerializable);
+        }
     }
 
     /**
@@ -303,19 +391,6 @@ export class SharedMap extends SharedObject implements ISharedMap {
         for (const message of pending) {
             this.kernel.trySubmitMessage(message);
         }
-    }
-
-    /**
-     * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.loadCore}
-     */
-    protected async loadCore(
-        branchId: string,
-        storage: IObjectStorageService) {
-
-        const header = await storage.read(snapshotFileName);
-
-        const data: string = header ? fromBase64ToUtf8(header) : undefined;
-        this.kernel.populate(data);
     }
 
     /**

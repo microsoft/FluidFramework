@@ -18,21 +18,27 @@ import {
     ValueType,
 } from "@microsoft/fluid-shared-object-base";
 import { CounterValueType } from "./counter";
-import { ISerializableValue, IValueOpEmitter, IValueOperation, IValueType } from "./interfaces";
+import {
+    ISerializableValue,
+    ISerializedValue,
+    IValueOpEmitter,
+    IValueOperation,
+    IValueType,
+} from "./interfaces";
 
 /**
  * A local value to be stored in a container type DDS.
  */
-export interface ILocalValue {
+export abstract class ILocalValue {
     /**
      * Type indicator of the value stored within.
      */
-    readonly type: string;
+    public readonly type: string;
 
     /**
      * The in-memory value stored within.
      */
-    readonly value: any;
+    public readonly value: any;
 
     /**
      * Retrieve the serialized form of the value stored within.
@@ -41,11 +47,30 @@ export interface ILocalValue {
      * @param bind - Container type's handle
      * @returns The serialized form of the contained value
      */
-    makeSerializable(
+    public abstract makeSerialized(
         serializer: IComponentSerializer,
         context: IComponentHandleContext,
         bind: IComponentHandle,
-    ): ISerializableValue;
+    ): ISerializedValue;
+
+    /**
+     * Retrieve the serialized form of the value stored within.
+     * @param serializer - Component runtime's serializer
+     * @param context - Component runtime's handle context
+     * @param bind - Container type's handle
+     * @returns The serialized form of the contained value
+     */
+    public makeSerializable(
+        serializer: IComponentSerializer,
+        context: IComponentHandleContext,
+        bind: IComponentHandle,
+    ): ISerializableValue {
+        const value = this.makeSerialized(serializer, context, bind);
+        return {
+            type: value.type,
+            value: value.value && JSON.parse(value.value),
+        };
+    }
 }
 
 /**
@@ -58,12 +83,13 @@ export const valueTypes: ReadonlyArray<IValueType<any>> = [
 /**
  * Manages a contained plain value.  May also contain shared object handles.
  */
-export class PlainLocalValue implements ILocalValue {
+export class PlainLocalValue extends ILocalValue {
     /**
      * Create a new PlainLocalValue.
      * @param value - The value to store, which may contain shared object handles
      */
     constructor(public readonly value: any) {
+        super();
     }
 
     /**
@@ -74,13 +100,13 @@ export class PlainLocalValue implements ILocalValue {
     }
 
     /**
-     * {@inheritDoc ILocalValue.makeSerializable}
+     * {@inheritDoc ILocalValue.makeSerialized}
      */
-    public makeSerializable(
+    public makeSerialized(
         serializer: IComponentSerializer,
         context: IComponentHandleContext,
         bind: IComponentHandle,
-    ): ISerializableValue {
+    ): ISerializedValue {
         // Stringify to convert to the serialized handle values - and then parse in order to create
         // a POJO for the op
         const value = serializeHandles(this.value, serializer, context, bind);
@@ -96,13 +122,14 @@ export class PlainLocalValue implements ILocalValue {
  * SharedLocalValue exists for supporting older documents and is now deprecated.
  * @deprecated
  */
-export class SharedLocalValue implements ILocalValue {
+export class SharedLocalValue extends ILocalValue {
     /**
      * Create a new SharedLocalValue.
      * @param value - The shared object to store
      * @deprecated
      */
     constructor(public readonly value: ISharedObject) {
+        super();
     }
 
     /**
@@ -114,10 +141,10 @@ export class SharedLocalValue implements ILocalValue {
     }
 
     /**
-     * {@inheritDoc ILocalValue.makeSerializable}
+     * {@inheritDoc ILocalValue.makeSerialized}
      * @deprecated
      */
-    public makeSerializable(): ISerializableValue {
+    public makeSerialized(): ISerializedValue {
         return {
             type: this.type,
             value: this.value.id,
@@ -133,13 +160,14 @@ export class SharedLocalValue implements ILocalValue {
  *
  * @alpha
  */
-export class ValueTypeLocalValue implements ILocalValue {
+export class ValueTypeLocalValue extends ILocalValue {
     /**
      * Create a new ValueTypeLocalValue.
      * @param value - The instance of the value type stored within
      * @param valueType - The type object of the value type stored within
      */
     constructor(public readonly value: any, private readonly valueType: IValueType<any>) {
+        super();
     }
 
     /**
@@ -150,13 +178,13 @@ export class ValueTypeLocalValue implements ILocalValue {
     }
 
     /**
-     * {@inheritDoc ILocalValue.makeSerializable}
+     * {@inheritDoc ILocalValue.makeSerialized}
      */
-    public makeSerializable(
+    public makeSerialized(
         serializer: IComponentSerializer,
         context: IComponentHandleContext,
         bind: IComponentHandle,
-    ): ISerializableValue {
+    ): ISerializedValue {
         const storedValueType = this.valueType.factory.store(this.value);
         const value = serializeHandles(storedValueType, serializer, context, bind);
 

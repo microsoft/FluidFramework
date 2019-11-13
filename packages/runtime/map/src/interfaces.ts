@@ -287,6 +287,18 @@ export interface ISerializableValue {
     value: any;
 }
 
+export interface ISerializedValue {
+    /**
+     * A type annotation to help indicate how the value serializes.
+     */
+    type: string;
+
+    /**
+     * The JSONable representation of the value.
+     */
+    value: string;
+}
+
 /**
  * ValueTypes handle ops slightly differently from SharedObjects or plain JS objects.  Since the Map/Directory doesn't
  * know how to handle the ValueType's ops, those ops are instead passed along to the ValueType for processing.

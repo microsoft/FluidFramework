@@ -36,6 +36,7 @@ import {
     IComponentRuntime,
     IDeltaConnection,
     IDeltaHandler,
+    IObjectStorageService,
     ISharedObjectServices,
 } from "@microsoft/fluid-runtime-definitions";
 import { IHistorian } from "@microsoft/fluid-server-services-client";
@@ -434,5 +435,47 @@ export class MockHistorian implements IHistorian {
     public async getFullTree(sha: string): Promise<any> {
         assert(false, "getFullTree");
         return null;
+    }
+}
+
+/**
+ * Mock implementation of IDeltaConnection
+ */
+export class MockEmptyDeltaConnection implements IDeltaConnection {
+    public state = ConnectionState.Disconnected;
+
+    public attach(handler) {
+    }
+
+    public submit(messageContent: any): number {
+        assert(false);
+        return 0;
+    }
+}
+
+/**
+ * Mock implementation of IObjectStorageService
+ */
+export class MockObjectStorageService implements IObjectStorageService {
+    public constructor(private readonly contents: {[key: string]: string}) {
+    }
+
+    public async read(path: string): Promise<string> {
+        const content = this.contents[path];
+        // Do we have such blob?
+        assert(content !== undefined);
+        return fromUtf8ToBase64(content);
+    }
+}
+
+/**
+ * Mock implementation of ISharedObjectServices
+ */
+export class MockSharedObjectServices implements ISharedObjectServices {
+    public deltaConnection = new MockEmptyDeltaConnection();
+    public objectStorage: MockObjectStorageService;
+
+    public constructor(contents: {[key: string]: string}) {
+        this.objectStorage = new MockObjectStorageService(contents);
     }
 }
