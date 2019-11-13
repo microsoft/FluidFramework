@@ -129,7 +129,7 @@ export interface IJSONSegmentWithMergeInfo {
  * Returns true if the given 'spec' is an IJSONSegmentWithMergeInfo.
  */
 export function hasMergeInfo(spec: IJSONSegment | IJSONSegmentWithMergeInfo): spec is IJSONSegmentWithMergeInfo {
-    return spec !== null && typeof spec === "object" && "json" in spec;
+    return !!spec && typeof spec === "object" && "json" in spec;
 }
 
 export type IMergeTreeOp = IMergeTreeInsertMsg | IMergeTreeRemoveMsg | IMergeTreeAnnotateMsg | IMergeTreeGroupMsg;
