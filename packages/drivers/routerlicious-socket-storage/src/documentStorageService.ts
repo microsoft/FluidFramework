@@ -18,6 +18,7 @@ import {
     SummaryType,
 } from "@microsoft/fluid-protocol-definitions";
 import * as gitStorage from "@microsoft/fluid-server-services-client";
+import * as assert from "assert";
 
 /**
  * Document access to underlying storage for routerlicious driver.
@@ -107,6 +108,7 @@ export class DocumentStorageService implements IDocumentStorageService  {
                 const hash = gitHashFile(Buffer.from(content, encoding));
                 if (!this.blobsPathCache.has(hash)) {
                     const blob = await this.manager.createBlob(content, encoding);
+                    assert.equal(hash, blob.sha, "Blob.sha and hash do not match!!");
                     this.blobsPathCache.add(blob.sha);
                 }
                 return hash;
