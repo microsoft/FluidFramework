@@ -222,8 +222,8 @@ export class SummaryCollection {
     /**
      * Returns a promise that resolves once a summary is acked that has a reference
      * sequence number greater than or equal to the passed in sequence number.
-     * Returns the latest acked summary.
      * @param referenceSequenceNumber - reference sequence number to wait for
+     * @returns The latest acked summary
      */
     public async waitNextAck(referenceSequenceNumber: number): Promise<IAckedSummary> {
         while (!this.lastAck || this.lastAck.summaryOp.referenceSequenceNumber < referenceSequenceNumber) {
