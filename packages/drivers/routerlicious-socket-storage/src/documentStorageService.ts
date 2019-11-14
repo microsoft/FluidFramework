@@ -207,9 +207,6 @@ export class DocumentStorageService implements IDocumentStorageService  {
 
     private formCacheFromSnapshotCore(snapshotTree: ISnapshotTree, map: Map<string, string>, path: string) {
         map.set(path, snapshotTree.id!); // non-null assert correct?
-        for (const [key, value] of Object.entries(snapshotTree.blobs)) {
-            map.set(this.formCachePath(path, key), value);
-        }
         for (const [key, value] of Object.entries(snapshotTree.trees)) {
             this.formCacheFromSnapshotCore(value, map, this.formCachePath(path, key));
         }
@@ -219,7 +216,6 @@ export class DocumentStorageService implements IDocumentStorageService  {
     }
 
     private formCachePath(part1: string, part2: string) {
-        // TODO: may need to encode?
         return `${part1}/${encodeURIComponent(part2)}`;
     }
 }
