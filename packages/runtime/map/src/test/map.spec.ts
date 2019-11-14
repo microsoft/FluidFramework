@@ -208,7 +208,26 @@ describe("Routerlicious", () => {
                     assert.equal(serialized, `{"object":{"type":"Plain","value":{"subMapHandle":{"type":"__fluid_handle__","url":"subMap"},"nestedObj":{"subMap2Handle":{"type":"__fluid_handle__","url":"subMap2"}}}}}`);
                 });
 
-                it("serialize format for small maps", async () => {
+                it("old serialization format", async () => {
+                    sharedMap.set("key", "value");
+
+                    const tree = sharedMap.snapshot();
+                    assert(tree.entries.length === 1);
+                    const content = JSON.stringify({
+                        key: {
+                            type: "Plain",
+                            value: "value",
+                        },
+                    });
+                    assert(tree.entries.length === 1);
+                    assert((tree.entries[0].value as IBlob).contents === content);
+
+                    const services = new MockSharedObjectServices({header: content});
+                    const map2 = await factory.load(runtime, "mapId", services, "branchId");
+                    assert(map2.get("key") === "value");
+                });
+
+                it.skip("new serialization format for small maps", async () => {
                     sharedMap.set("key", "value");
 
                     const tree = sharedMap.snapshot();
@@ -230,7 +249,7 @@ describe("Routerlicious", () => {
                     assert(map2.get("key") === "value");
                 });
 
-                it("serialize format for big maps", async () => {
+                it.skip("new serialization format for big maps", async () => {
                     sharedMap.set("key", "value");
 
                     // 40K char string
