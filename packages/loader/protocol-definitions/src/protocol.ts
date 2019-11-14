@@ -182,17 +182,7 @@ export interface ISequencedDocumentSystemMessage extends ISequencedDocumentMessa
     data: string;
 }
 
-export interface IContentMessage {
-
-    clientId: string;
-
-    clientSequenceNumber: number;
-
-    contents: string;
-}
-
 export interface ISignalMessage {
-
     clientId: string;
 
     content: any;
