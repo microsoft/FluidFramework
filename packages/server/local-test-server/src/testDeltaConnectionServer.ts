@@ -6,7 +6,6 @@ import { IConnect, IConnected } from "@microsoft/fluid-driver-base";
 import {
     ConnectionMode,
     IClient,
-    IContentMessage,
     IDocumentMessage,
     ISignalMessage,
     ITokenClaims,
@@ -185,7 +184,6 @@ export function register(
     storage: IDocumentStorage,
     dbFactory: ITestDbFactory) {
 
-    const contentCollection = dbFactory.testDatabase.collection("ops");
     const socketList: IWebSocket[] = [];
     webSocketServer.on("connection", (socket: IWebSocket) => {
         // Map from client IDs on this connection to the object ID and user info.
@@ -316,40 +314,6 @@ export function register(
                     response(null);
                 }
             });
-
-        // Message sent when a new splitted operation is submitted to the router
-        socket.on("submitContent", (clientId: string, message: IDocumentMessage, response) => {
-            // Verify the user has connected on this object id
-            if (!connectionsMap.has(clientId) || !roomMap.has(clientId)) {
-                return response("Invalid client ID", null);
-            }
-
-            const broadCastMessage: IContentMessage = {
-                clientId,
-                clientSequenceNumber: message.clientSequenceNumber,
-                contents: message.contents,
-            };
-
-            const connection = connectionsMap.get(clientId);
-
-            const dbMessage = {
-                clientId,
-                documentId: connection.documentId,
-                op: broadCastMessage,
-                tenantId: connection.tenantId,
-            };
-
-            contentCollection.insertOne(dbMessage).then(() => {
-                socketList.forEach((webSocket: IWebSocket) => {
-                    webSocket.emit("op-content", broadCastMessage);
-                });
-                return response(null);
-            }, (error) => {
-                if (error.code !== 11000) {
-                    return response("Could not write to DB", null);
-                }
-            });
-        });
 
         // Message sent when a new signal is submitted to the router
         socket.on("submitSignal", (clientId: string, contents: any[], response) => {

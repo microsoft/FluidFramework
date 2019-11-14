@@ -283,10 +283,6 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
         debug("dropping the outbound message");
     }
 
-    public async submitAsync(documentMessage: IDocumentMessage[]): Promise<void> {
-        debug("dropping the outbound message and wait for response");
-    }
-
     public async submitSignal(message: any) {
         debug("dropping the outbound signal and wait for response");
     }

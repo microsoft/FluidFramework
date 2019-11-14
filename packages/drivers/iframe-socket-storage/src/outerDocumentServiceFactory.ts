@@ -29,7 +29,6 @@ const socketIOEvents = [
     "nack",
     "pong",
     "disconnect",
-    "op-content",
     "signal",
     "connect_error",
     "connect_timeout",

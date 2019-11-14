@@ -190,10 +190,6 @@ export class ReplayFileDeltaConnection extends EventEmitter implements IDocument
         debug("dropping the outbound message");
     }
 
-    public async submitAsync(documentMessages: IDocumentMessage[]): Promise<void> {
-        debug("dropping the outbound message and wait for response");
-    }
-
     public async submitSignal(message: any) {
         debug("dropping the outbound signal and wait for response");
     }

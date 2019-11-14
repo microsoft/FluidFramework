@@ -180,19 +180,6 @@ export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaCon
         this.submitManager.add("submitSignal", message);
     }
 
-    public async submitAsync(messages: IDocumentMessage[]): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
-            this.socket.send(JSON.stringify(["submitContent", this.details!.clientId, messages]), (error) => {
-                if (error) {
-                    this.emit("error", error);
-                    reject(error);
-                } else {
-                    resolve();
-                }
-            });
-        });
-    }
-
     public disconnect() {
         this.socket.close();
     }

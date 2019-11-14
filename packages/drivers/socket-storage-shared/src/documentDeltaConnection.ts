@@ -295,27 +295,6 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
     }
 
     /**
-     * Submits a new message to the server without queueing
-     *
-     * @param message - message to submit
-     */
-    public async submitAsync(messages: IDocumentMessage[]): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
-            this.socket.emit(
-                "submitContent",
-                this.clientId,
-                messages,
-                (error) => {
-                    if (error) {
-                        reject();
-                    } else {
-                        resolve();
-                    }
-                });
-        });
-    }
-
-    /**
      * Submits a new signal to the server
      *
      * @param message - signal to submit

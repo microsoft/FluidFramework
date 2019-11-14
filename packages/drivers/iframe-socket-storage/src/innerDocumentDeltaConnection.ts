@@ -195,15 +195,6 @@ export class InnerDocumentDeltaConnection extends EventEmitter implements IDocum
     }
 
     /**
-     * Submits a new message to the server without queueing
-     *
-     * @param message - message to submit
-     */
-    public async submitAsync(messages: IDocumentMessage[]): Promise < void > {
-        return this.outerProxy.submit(messages);
-    }
-
-    /**
      * Submits a new signal to the server
      *
      * @param message - signal to submit
