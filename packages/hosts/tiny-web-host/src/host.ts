@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IHostConfig, start } from "@microsoft/fluid-base-host";
+import { BaseHost, IHostConfig } from "@microsoft/fluid-base-host";
 import { IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
 import { BaseTelemetryNullLogger, configurableUrlResolver } from "@microsoft/fluid-core-utils";
 import { FluidAppOdspUrlResolver } from "@microsoft/fluid-fluidapp-odsp-urlresolver";
@@ -17,8 +17,6 @@ import { IResolvedPackage } from "@microsoft/fluid-web-code-loader";
 import { IOdspTokenApi, IRouterliciousTokenApi, ITokenApis } from "./utils";
 // tslint:disable-next-line: no-var-requires no-require-imports
 const packageJson = require("../package.json");
-
-const npm = "https://pragueauspkn-3873244262.azureedge.net";
 
 // This is insecure, but is being used for the time being for ease of use during the hackathon.
 const appTenants = [
@@ -119,13 +117,12 @@ async function loadContainer(
         urlResolver: resolver,
     };
     // tslint:disable-next-line: no-unsafe-any
-    return start(
+    return BaseHost.start(
         href,
         // tslint:disable-next-line: no-unsafe-any
         resolved, // resolved, IResolvedUrl,
         pkg, // pkg, IResolvedPackage, (gateway/routes/loader has an example (pkgP))
         scriptIds, // scriptIds, string[], defines the id of the script tag added to the page
-        npm, // string,
         {},
         {},
         div,

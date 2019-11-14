@@ -3,12 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import { queue } from "async";
 import * as chalk from "chalk";
 import * as fs from "fs";
 import * as path from "path";
-import { logVerbose } from "./common/logging";
-import { globFn, writeFileAsync } from "./common/utils"
+import { logStatus, logVerbose } from "./common/logging";
+import { globFn, copyFileAsync, execWithErrorAsync, existsSync, lstatAsync, mkdirAsync, realpathAsync, rimrafWithErrorAsync, unlinkAsync, symlinkAsync, writeFileAsync, ExecAsyncResult } from "./common/utils"
 import { NpmDepChecker } from "./npmDepChecker";
+import { options } from "./options";
 
 interface IPerson {
     name: string;
@@ -64,23 +66,6 @@ export class Package {
         chalk.default.cyanBright,
         chalk.default.whiteBright,
     ];
-    public static load(dir: string): Array<Package> {
-        const packages = new Array<Package>();
-        const files = fs.readdirSync(dir, { withFileTypes: true });
-        files.map((dirent) => {
-            if (dirent.isDirectory()) {
-                if (dirent.name !== "node_modules") {
-                    packages.push(...Package.load(path.join(dir, dirent.name)));
-                }
-                return;
-            }
-            if (dirent.isFile() && dirent.name === "package.json") {
-                const packageJsonFileName = path.join(dir, "package.json");
-                packages.push(new Package(packageJsonFileName))
-            }
-        });
-        return packages;
-    }
 
     public readonly packageJson: Readonly<IPackage>;
     private readonly packageId = Package.packageCount++;
@@ -139,7 +124,7 @@ export class Package {
 
     public getScript(name: string): string | undefined {
         return this.packageJson.scripts[name];
-    } 
+    }
 
     public async depcheck() {
         let checkFiles: string[];
@@ -160,4 +145,121 @@ export class Package {
     private get color() {
         return Package.chalkColor[this.packageId % Package.chalkColor.length];
     }
+
+    public async cleanNodeModules() {
+        return rimrafWithErrorAsync(path.join(this.directory, "node_modules"), this.nameColored);
+    }
+
+    public async noHoistInstall(repoRoot: string) {
+        const rootNpmRC = path.join(repoRoot, ".npmrc")
+        const npmRC = path.join(this.directory, ".npmrc");
+        const npmCommand = "npm i --no-package-lock --no-shrinkwrap";
+
+        await copyFileAsync(rootNpmRC, npmRC);
+        const result = await execWithErrorAsync(npmCommand, { cwd: this.directory }, this.nameColored);
+        await unlinkAsync(npmRC);
+
+        return result;
+    }
+
+    public async symlink(buildPackages: Map<string, Package>) {
+        for (const dep of this.dependencies) {
+            const depBuildPackage = buildPackages.get(dep);
+            if (depBuildPackage) {
+                const symlinkPath = path.join(this.directory, "node_modules", dep);
+                const symlinkDir = path.join(symlinkPath, "..");
+                try {
+                    if (existsSync(symlinkPath)) {
+                        const stat = await lstatAsync(symlinkPath);
+                        if (!stat.isSymbolicLink || await realpathAsync(symlinkPath) !== depBuildPackage.directory) {
+                            if (stat.isDirectory) {
+                                await rimrafWithErrorAsync(symlinkPath, this.nameColored);
+                            } else {
+                                await unlinkAsync(symlinkPath);
+                            }
+                            await symlinkAsync(depBuildPackage.directory, symlinkPath, "junction");
+                            if (!options.nohoist) {
+                                console.warn(`${this.nameColored}: warning: replaced existing package ${symlinkPath}`);
+                            }
+                        }
+                    } else {
+                        if (!existsSync(symlinkDir)) {
+                            await mkdirAsync(symlinkDir, { recursive: true });
+                        }
+                        await symlinkAsync(depBuildPackage.directory, symlinkPath, "junction");
+                    }
+                } catch (e) {
+                    throw new Error(`symlink failed on ${symlinkPath}. ${e}`);
+                }
+            }
+        }
+    }
 };
+
+interface PackageTaskExec<T> {
+    pkg: Package;
+    resolve: (result: T) => void;
+};
+
+export class Packages {
+
+    public static load(dir: string) {
+        return new Packages(Packages.loadCore(dir));
+    }
+
+    private static loadCore(dir: string) {
+        const packages: Package[] = [];
+        const files = fs.readdirSync(dir, { withFileTypes: true });
+        files.map((dirent) => {
+            if (dirent.isDirectory()) {
+                if (dirent.name !== "node_modules") {
+                    packages.push(...Packages.loadCore(path.join(dir, dirent.name)));
+                }
+                return;
+            }
+            if (dirent.isFile() && dirent.name === "package.json") {
+                const packageJsonFileName = path.join(dir, "package.json");
+                packages.push(new Package(packageJsonFileName))
+            }
+        });
+        return packages;
+    }
+
+    private constructor(public readonly packages: Package[]) {
+    }
+
+    public async cleanNodeModules() {
+        return this.queueExecOnAllPackage(pkg => pkg.cleanNodeModules(), "rimraf node_modules");
+    }
+
+    public async noHoistInstall(repoRoot: string) {
+        return this.queueExecOnAllPackage(pkg => pkg.noHoistInstall(repoRoot), "npm i");
+    }
+
+    public async symlink() {
+        const packageMap = new Map<string, Package>(this.packages.map(pkg => [pkg.name, pkg]));
+        return this.queueExecOnAllPackageCore(pkg => pkg.symlink(packageMap), options.nohoist? "symlink": "")
+    }
+
+    private async queueExecOnAllPackageCore<TResult>(exec: (pkg: Package) => Promise<TResult>, message?: string) {
+        let numDone = 0;
+        const timedExec = message ? async (pkg: Package) => {
+            const startTime = Date.now();
+            const result = await exec(pkg);
+            const elapsedTime = (Date.now() - startTime) / 1000;
+            logStatus(`[${++numDone}/${p.length}] ${pkg.nameColored}: ${message} - ${elapsedTime.toFixed(3)}s`);
+            return result;
+        } : exec;
+        const q = queue(async (taskExec: PackageTaskExec<TResult>, callback) => {
+            taskExec.resolve(await timedExec(taskExec.pkg));
+            callback();
+        }, options.concurrency);
+        const p = this.packages.map(pkg => new Promise<TResult>(resolve => q.push({ pkg, resolve })));
+        return Promise.all(p);
+    }
+
+    private async queueExecOnAllPackage(exec: (pkg: Package) => Promise<ExecAsyncResult>, message?: string) {
+        const results = await this.queueExecOnAllPackageCore(exec, message);
+        return !results.some(result => result.error);
+    }
+}

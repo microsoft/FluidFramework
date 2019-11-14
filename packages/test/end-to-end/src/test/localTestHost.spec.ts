@@ -4,11 +4,11 @@
  */
 
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
+import { DocumentDeltaEventManager, TestHost } from "@microsoft/fluid-local-test-server";
 import { Counter, CounterValueType } from "@microsoft/fluid-map";
 import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SharedString, SharedStringFactory } from "@microsoft/fluid-sequence";
-import * as assert from "assert";
-import { DocumentDeltaEventManager, TestHost } from "../";
+import { strict as assert } from "assert";
 
 /**
  * Implementation of counter component for testing.
@@ -23,7 +23,7 @@ export class TestComponent extends PrimedComponent {
         [],
     );
 
-    private counter: Counter;
+    private counter!: Counter;
 
     constructor(runtime: IComponentRuntime, context: IComponentContext) {
         super(runtime, context);
@@ -61,7 +61,7 @@ describe("TestHost", () => {
         let comp: TestComponent;
 
         beforeEach(async () => {
-            host = new TestHost(testComponents);
+            host = new TestHost(testComponents, [SharedString.getFactory()]);
             comp = await host.createAndAttachComponent("documentId", TestComponent.type);
         });
 
@@ -76,7 +76,7 @@ describe("TestHost", () => {
 
     describe("2 components", () => {
         it("early open / late close", async () => {
-            const host1 = new TestHost(testComponents);
+            const host1 = new TestHost(testComponents, [SharedString.getFactory()]);
             const host2 = host1.clone();
 
             assert(host1.deltaConnectionServer === host2.deltaConnectionServer,
@@ -105,7 +105,7 @@ describe("TestHost", () => {
         });
 
         it("late open / early close", async () => {
-            const host1 = new TestHost(testComponents);
+            const host1 = new TestHost(testComponents, [SharedString.getFactory()]);
             const comp1 = await host1.createAndAttachComponent<TestComponent>("documentId", TestComponent.type);
 
             comp1.increment();
@@ -139,7 +139,7 @@ describe("TestHost", () => {
             let text: SharedString;
 
             beforeEach(async () => {
-                host = new TestHost([]);
+                host = new TestHost([], [SharedString.getFactory()]);
                 text = await host.createType("text", SharedStringFactory.Type);
             });
 
@@ -159,7 +159,7 @@ describe("TestHost", () => {
             let text2: SharedString;
 
             beforeEach(async () => {
-                host1 = new TestHost([]);
+                host1 = new TestHost([], [SharedString.getFactory()]);
                 text1 = await host1.createType("text", SharedStringFactory.Type);
 
                 host2 = host1.clone();
@@ -185,12 +185,11 @@ describe("TestHost", () => {
         });
 
         describe("Controlling component coauth via DocumentDeltaEventManager", () => {
-
             let host1: TestHost;
             let host2: TestHost;
 
             beforeEach(async () => {
-                host1 = new TestHost(testComponents);
+                host1 = new TestHost(testComponents, [SharedString.getFactory()]);
                 host2 = host1.clone();
             });
 

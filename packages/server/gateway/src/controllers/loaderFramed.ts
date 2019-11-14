@@ -4,13 +4,10 @@
  */
 
 import {
-    createWebLoader,
+    BaseHost,
     IHostConfig,
-    initializeChaincode,
-    IPrivateSessionInfo,
-    registerAttach,
 } from "@microsoft/fluid-base-host";
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+import { IComponent, IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
 import {
     createProtocolToFactoryMapping,
@@ -28,10 +25,34 @@ import { IDocumentServiceFactory, IFluidResolvedUrl, IResolvedUrl } from "@micro
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
 import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
 import { IGitCache } from "@microsoft/fluid-server-services-client";
-import { IResolvedPackage, WhiteList } from "@microsoft/fluid-web-code-loader";
+import { IResolvedPackage } from "@microsoft/fluid-web-code-loader";
 import Axios from "axios";
 import { DocumentFactory } from "./documentFactory";
-import { IHostServices } from "./services";
+
+/**
+ * Interface to provide the info about the session.
+ */
+interface IPrivateSessionInfo {
+    /**
+     * True if the request is made by outer frame.
+     */
+    outerSession?: boolean;
+
+    /**
+     * True if the request is made by inner frame.
+     */
+    innerSession?: boolean;
+
+    /**
+     * IFrame in which the inner session is loaded.
+     */
+    frame?: HTMLIFrameElement;
+
+    /**
+     * Request to be resolved.
+     */
+    request?: IRequest;
+}
 
 export async function initialize(
     url: string,
@@ -39,7 +60,6 @@ export async function initialize(
     cache: IGitCache,
     pkg: IResolvedPackage,
     scriptIds: string[],
-    npm: string,
     jwt: string,
     config: any,
     clientId: string,
@@ -47,7 +67,6 @@ export async function initialize(
     innerSession: boolean = false,
     outerSession: boolean = true,
 ) {
-
     console.log(`Loading ${url}`);
 
     const privateSession: IPrivateSessionInfo = {
@@ -55,10 +74,7 @@ export async function initialize(
         outerSession,
         request: { url },
     };
-    console.log(`Private Session?`);
-    console.log(privateSession);
 
-    const services: IHostServices = undefined;
     let documentFactory: DocumentFactory;
 
     const div = document.getElementById("content") as HTMLDivElement;
@@ -68,30 +84,18 @@ export async function initialize(
             documentServiceFactory: new InnerDocumentServiceFactory(),
             urlResolver: new InnerUrlResolver(resolved),
         };
-        const loader = await createWebLoader(
-            resolved,
-            pkg,
-            scriptIds,
-            config,
-            services,
-            hostConf,
-            new Map<string, IProxyLoaderFactory>([["webworker", new WebWorkerLoaderFactory()]]),
-            new WhiteList(),
-            );
+
+        const baseHost = new BaseHost(resolved, pkg, scriptIds, config, scope, hostConf,
+            new Map<string, IProxyLoaderFactory>([["webworker", new WebWorkerLoaderFactory()]]));
+        const loader = await baseHost.getLoader();
 
         documentFactory = new DocumentFactory(config.tenantId,
             config.moniker,
             config.url);
 
         documentFactory.resolveLoader(loader);
-        const container = await loader.resolve({ url });
-        registerAttach(loader, container, url, div);
 
-        // If this is a new document we will go and instantiate the chaincode. For old documents we assume a legacy
-        // package.
-        if (!container.existing) {
-            await initializeChaincode(container, pkg);
-        }
+        await baseHost.loadAndRender(url, div, pkg);
     } else {
         const documentServiceFactories: IDocumentServiceFactory[] = [];
         // TODO: need to be support refresh token
@@ -111,7 +115,8 @@ export async function initialize(
 
         config.moniker = (await Axios.get("/api/v1/moniker")).data;
         config.url = url;
-        privateSession.frameP = createFrame(div, createIFrameHTML(resolved, pkg, scriptIds, scope, config, clientId));
+        privateSession.frame = document.getElementById("ifr") as HTMLIFrameElement;
+
         const resolver = new ContainerUrlResolver(
             document.location.origin,
             jwt,
@@ -125,79 +130,9 @@ export async function initialize(
 
         (await IFrameDocumentServiceProxyFactory.create(
             selectDocumentServiceFactoryForProtocol(resolved as IFluidResolvedUrl, factoryMap),
-            privateSession.frameP,
+            privateSession.frame,
             options,
             { resolver },
             )).createDocumentServiceFromRequest({ url });
     }
-}
-
-function createFrame(div: HTMLElement, framesrc: string): Promise<HTMLIFrameElement> {
-    const innerDiv = document.createElement("div");
-    innerDiv.id = "content";
-
-    const iframe = document.createElement("iframe");
-    iframe.style.width = "100%";
-    iframe.style.height = "100%";
-    div.style.height = "100vh"; // Remove when done testing
-    iframe.sandbox.add("allow-scripts");
-
-    iframe.srcdoc = framesrc;
-
-    const frameP = new Promise<HTMLIFrameElement>((resolve) => {
-        iframe.onload = () => {
-            resolve(iframe);
-        };
-    });
-
-    div.appendChild(iframe);
-    return frameP;
-}
-
-function createIFrameHTML(resolved: IResolvedUrl,
-                          pkg: IResolvedPackage,
-                          scriptIds: string[],
-                          scope: IComponent,
-                          config: any,
-                          clientId: string): string {
-    const url = window.location.href.split("&privateSession")[0];
-    let santizedResolved: IFluidResolvedUrl;
-
-    if (resolved.type === "fluid") {
-        santizedResolved = {
-            type: resolved.type,
-            endpoints: resolved.endpoints,
-            tokens: undefined,
-            url: resolved.url,
-        };
-    } else {
-        throw new Error("Resolved has not been passed in");
-    }
-
-    return `
-    <html>
-    <head>
-    <script type="text/javascript" src="${document.location.origin}/public/scripts/dist/controllers.js"></script>
-    </head>
-    <body>
-        <div id="content"></div>
-        <script type="text/javascript">
-            controllers.loaderFramed.initialize(
-                "${url}",
-                ${JSON.stringify(santizedResolved)}, // resolved
-                undefined, // cache
-                ${JSON.stringify(pkg)}, // chaincode
-                ${JSON.stringify(scriptIds)}, // scriptIds
-                undefined, // npm
-                undefined, // jwt
-                ${JSON.stringify(config)}, // config
-                ${JSON.stringify(clientId)}, // clientId
-                ${JSON.stringify(scope)}, // scope
-                true, // innerSession
-                false, // outerSession
-                );
-        </script
-    </body>
-    </html>
-    `;
 }

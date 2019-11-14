@@ -57,10 +57,9 @@ export interface IDocumentServiceFactoryProxy {
 export class IFrameDocumentServiceProxyFactory {
 
     public static async create(documentServiceFactory: IDocumentServiceFactory,
-                               frameP: Promise<HTMLIFrameElement>,
+                               frame: HTMLIFrameElement,
                                options: any,
                                containerHost: IHost) {
-        const frame = await frameP;
         return new IFrameDocumentServiceProxyFactory(documentServiceFactory, frame, options, containerHost);
     }
 
