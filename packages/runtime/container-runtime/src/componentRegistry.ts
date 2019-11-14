@@ -8,6 +8,8 @@ import {
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
 
+export const DefaultComponentEntryName = "__DEFAULT_COMPONENT_REGISTRY_ENTRY__";
+
 export class ComponentRegistry implements IComponentRegistry {
 
     private readonly map: Map<string, Promise<ComponentRegistryEntry>>;
@@ -23,6 +25,8 @@ export class ComponentRegistry implements IComponentRegistry {
 
         if (this.map.has(name)) {
             return this.map.get(name);
+        } else if (this.map.has(DefaultComponentEntryName)) {
+            return this.map.get(DefaultComponentEntryName);
         }
 
         return undefined;
