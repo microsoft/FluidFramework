@@ -108,7 +108,6 @@ COPY packages/server/kafka-orderer/package*.json packages/server/kafka-orderer/
 COPY packages/server/lambdas-driver/package*.json packages/server/lambdas-driver/
 COPY packages/server/lambdas/package*.json packages/server/lambdas/
 COPY packages/server/local-test-server/package*.json packages/server/local-test-server/
-COPY packages/server/local-test-server-test/package*.json packages/server/local-test-server-test/
 COPY packages/server/memory-orderer/package*.json packages/server/memory-orderer/
 COPY packages/server/routerlicious/package*.json packages/server/routerlicious/
 COPY packages/server/services/package*.json packages/server/services/
