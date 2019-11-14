@@ -7,7 +7,6 @@ import { BatchManager, NetworkError } from "@microsoft/fluid-core-utils";
 import {
     ConnectionMode,
     IClient,
-    IContentMessage,
     IDocumentDeltaConnection,
     IDocumentMessage,
     ISequencedDocumentMessage,
@@ -104,7 +103,6 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
 
     // Listen for ops sent before we receive a response to connect_document
     private readonly queuedMessages: ISequencedDocumentMessage[] = [];
-    private readonly queuedContents: IContentMessage[] = [];
     private readonly queuedSignals: ISignalMessage[] = [];
 
     private readonly submitManager: BatchManager<IDocumentMessage[]>;
@@ -137,8 +135,6 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
 
         // tslint:disable-next-line:no-non-null-assertion
         this.socket.on("op", this.earlyOpHandler!);
-        // tslint:disable-next-line:no-non-null-assertion
-        this.socket.on("op-content", this.earlyContentHandler!);
         // tslint:disable-next-line:no-non-null-assertion
         this.socket.on("signal", this.earlySignalHandler!);
     }
@@ -382,11 +378,6 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         this.queuedMessages.push(...msgs);
     }
 
-    private earlyContentHandler ? = (msg: IContentMessage) => {
-        debug("Queued early contents");
-        this.queuedContents.push(msg);
-    }
-
     private earlySignalHandler ? = (msg: ISignalMessage) => {
         debug("Queued early signals");
         this.queuedSignals.push(msg);
@@ -396,13 +387,6 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         if (this.earlyOpHandler) {
             this.socket.removeListener("op", this.earlyOpHandler);
             this.earlyOpHandler = undefined;
-        }
-    }
-
-    private removeEarlyContentsHandler() {
-        if (this.earlyContentHandler) {
-            this.socket.removeListener("op-content", this.earlyContentHandler);
-            this.earlyContentHandler = undefined;
         }
     }
 
@@ -436,7 +420,6 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
 
         if (!connectionListenerOnly) {
             this.removeEarlyOpHandler();
-            this.removeEarlyContentsHandler();
             this.removeEarlySignalHandler();
         }
     }

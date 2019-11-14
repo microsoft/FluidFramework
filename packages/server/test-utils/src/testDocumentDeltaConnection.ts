@@ -8,7 +8,6 @@ import { debug, IConnect, IConnected } from "@microsoft/fluid-driver-base";
 import {
     ConnectionMode,
     IClient,
-    IContentMessage,
     IDocumentDeltaConnection,
     IDocumentMessage,
     ISequencedDocumentMessage,
@@ -44,7 +43,6 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
         const connection = await new Promise<IConnected>((resolve, reject) => {
             // Listen for ops sent before we receive a response to connect_document
             const queuedMessages: ISequencedDocumentMessage[] = [];
-            const queuedContents: IContentMessage[] = [];
             const queuedSignals: ISignalMessage[] = [];
 
             const earlyOpHandler = (documentId: string, msgs: ISequencedDocumentMessage[]) => {
@@ -52,12 +50,6 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
                 queuedMessages.push(...msgs);
             };
             socket.on("op", earlyOpHandler);
-
-            const earlyContentHandler = (msg: IContentMessage) => {
-                debug("Queued early contents");
-                queuedContents.push(msg);
-            };
-            socket.on("op-content", earlyContentHandler);
 
             const earlySignalHandler = (msg: ISignalMessage) => {
                 debug("Queued early signals");
@@ -72,7 +64,6 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
 
             socket.on("connect_document_success", (response: IConnected) => {
                 socket.removeListener("op", earlyOpHandler);
-                socket.removeListener("op-content", earlyContentHandler);
                 socket.removeListener("signal", earlySignalHandler);
 
                 if (queuedMessages.length > 0) {
