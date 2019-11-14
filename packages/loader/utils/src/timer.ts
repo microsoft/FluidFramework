@@ -10,7 +10,7 @@
  */
 export class Timer {
     /**
-     * Returns true if there is an underlying timeout running.
+     * Returns true if the timer is running.
      */
     public get hasTimer() {
         return !!this.timer;
