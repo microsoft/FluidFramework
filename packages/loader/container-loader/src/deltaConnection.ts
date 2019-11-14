@@ -53,7 +53,6 @@ export class DeltaConnection extends EventEmitter {
             clientId: connection.clientId,
             existing: connection.existing,
             get initialClients() { return connection.initialClients; },
-            get initialContents() { return connection.initialContents; },
             get initialMessages() { return connection.initialMessages; },
             get initialSignals() { return connection.initialSignals; },
             maxMessageSize: connection.maxMessageSize,

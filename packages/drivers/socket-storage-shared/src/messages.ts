@@ -6,7 +6,6 @@
 import {
     ConnectionMode,
     IClient,
-    IContentMessage,
     ISequencedDocumentMessage,
     IServiceConfiguration,
     ISignalClient,
@@ -82,11 +81,6 @@ export interface IConnected {
      * Messages sent during the connection
      */
     initialMessages?: ISequencedDocumentMessage[];
-
-    /**
-     * Contents sent during the connection
-     */
-    initialContents?: IContentMessage[];
 
     /**
      * Signals sent during the connection

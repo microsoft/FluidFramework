@@ -7,7 +7,6 @@ import { EventEmitter } from "events";
 import { ConnectionMode, IClient, ISignalClient } from "./clients";
 import { IServiceConfiguration } from "./config";
 import {
-    IContentMessage,
     IDocumentMessage,
     ISequencedDocumentMessage,
     ISignalMessage,
@@ -241,11 +240,6 @@ export interface IDocumentDeltaConnection extends EventEmitter {
      * Messages sent during the connection
      */
     initialMessages?: ISequencedDocumentMessage[];
-
-    /**
-     * Messages sent during the connection
-     */
-    initialContents?: IContentMessage[];
 
     /**
      * Signals sent during the connection

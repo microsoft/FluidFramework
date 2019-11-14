@@ -87,19 +87,6 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
                     response.initialMessages.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
                 }
 
-                if (queuedContents.length > 0) {
-                    // some contents were queued.
-                    // add them to the list of initialContents to be processed
-                    if (!response.initialContents) {
-                        response.initialContents = [];
-                    }
-
-                    response.initialContents.push(...queuedContents);
-
-                    // tslint:disable max-line-length
-                    response.initialContents.sort((a, b) => (a.clientId === b.clientId) ? 0 : ((a.clientId < b.clientId) ? -1 : 1) || a.clientSequenceNumber - b.clientSequenceNumber);
-                }
-
                 if (queuedSignals.length > 0) {
                     // some signals were queued.
                     // add them to the list of initialSignals to be processed
@@ -152,10 +139,6 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
 
     public get initialMessages(): ISequencedDocumentMessage[] {
         return this.details.initialMessages;
-    }
-
-    public get initialContents(): IContentMessage[] {
-        return this.details.initialContents;
     }
 
     public get initialSignals(): ISignalMessage[] | undefined {

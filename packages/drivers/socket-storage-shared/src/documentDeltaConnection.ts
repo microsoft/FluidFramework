@@ -236,35 +236,6 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
     }
 
     /**
-     * Get contents sent during the connection
-     *
-     * @returns contents sent during the connection
-     */
-    public get initialContents(): IContentMessage[] | undefined {
-        this.removeEarlyContentsHandler();
-
-        assert(this.listeners("op-content").length !== 0, "No op-content handler is setup!");
-
-        if (this.queuedContents.length > 0) {
-            // some contents were queued.
-            // add them to the list of initialContents to be processed
-            if (!this.details.initialContents) {
-                this.details.initialContents = [];
-            }
-
-            this.details.initialContents.push(...this.queuedContents);
-
-            this.details.initialContents.sort((a, b) =>
-                // tslint:disable-next-line:strict-boolean-expressions
-                (a.clientId === b.clientId) ? 0 : ((a.clientId < b.clientId) ? -1 : 1) ||
-                    a.clientSequenceNumber - b.clientSequenceNumber);
-            this.queuedContents.length = 0;
-        }
-
-        return this.details.initialContents;
-    }
-
-    /**
      * Get signals sent during the connection
      *
      * @returns signals sent during the connection

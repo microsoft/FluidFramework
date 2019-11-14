@@ -27,7 +27,6 @@ export class MockDocumentDeltaConnection extends EventEmitter implements IDocume
     public maxMessageSize: number;
     public version: string;
     public initialMessages?: ISequencedDocumentMessage[];
-    public initialContents?: IContentMessage[];
     public initialSignals?: ISignalMessage[];
     public serviceConfiguration: IServiceConfiguration;
 

@@ -7,7 +7,6 @@ import { Deferred } from "@microsoft/fluid-core-utils";
 import { IConnected } from "@microsoft/fluid-driver-base";
 import {
     ConnectionMode,
-    IContentMessage,
     IDocumentDeltaConnection,
     IDocumentMessage,
     ISequencedDocumentMessage,
@@ -120,15 +119,6 @@ export class InnerDocumentDeltaConnection extends EventEmitter implements IDocum
      */
     public get initialMessages(): ISequencedDocumentMessage[] | undefined {
         return this.details.initialMessages;
-    }
-
-    /**
-     * Get contents sent during the connection
-     *
-     * @returns contents sent during the connection
-     */
-    public get initialContents(): IContentMessage[] | undefined {
-        return this.details.initialContents;
     }
 
     /**

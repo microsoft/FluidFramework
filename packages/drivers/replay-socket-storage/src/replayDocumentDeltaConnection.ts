@@ -6,7 +6,6 @@
 import * as messages from "@microsoft/fluid-driver-base";
 import {
     ConnectionMode,
-    IContentMessage,
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
     IDocumentMessage,
@@ -193,7 +192,6 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
             claims: ReplayDocumentDeltaConnection.claims,
             clientId: "",
             existing: true,
-            initialContents: [],
             initialMessages: [],
             initialSignals: [],
             initialClients: [],
@@ -255,10 +253,6 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
 
     public get version(): string {
         return this.details.version;
-    }
-
-    public get initialContents(): IContentMessage[] | undefined {
-        return this.details.initialContents;
     }
 
     public get initialMessages(): ISequencedDocumentMessage[] | undefined {

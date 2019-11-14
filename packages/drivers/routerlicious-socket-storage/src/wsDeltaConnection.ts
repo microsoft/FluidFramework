@@ -8,7 +8,6 @@ import { IConnect, IConnected } from "@microsoft/fluid-driver-base";
 import {
     ConnectionMode,
     IClient,
-    IContentMessage,
     IDocumentDeltaConnection,
     IDocumentMessage,
     ISequencedDocumentMessage,
@@ -98,10 +97,6 @@ export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaCon
 
     public get initialMessages(): ISequencedDocumentMessage[] | undefined {
         return this.details!.initialMessages;
-    }
-
-    public get initialContents(): IContentMessage[] | undefined {
-        return this.details!.initialContents;
     }
 
     public get initialSignals(): ISignalMessage[] | undefined {

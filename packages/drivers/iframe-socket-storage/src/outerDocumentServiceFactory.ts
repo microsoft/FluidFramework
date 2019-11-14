@@ -235,7 +235,6 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
             clientId: deltaStream.clientId,
             existing: deltaStream.existing,
             get initialClients() { return deltaStream.initialClients; },
-            get initialContents() { return deltaStream.initialContents; },
             get initialMessages() { return deltaStream.initialMessages; },
             get initialSignals() { return deltaStream.initialSignals; },
             maxMessageSize: deltaStream.maxMessageSize,
