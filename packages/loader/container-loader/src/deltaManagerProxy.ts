@@ -12,6 +12,7 @@ import {
 } from "@microsoft/fluid-container-definitions";
 import { EventForwarder } from "@microsoft/fluid-core-utils";
 import {
+    ConnectionMode,
     IDocumentMessage,
     ISequencedDocumentMessage,
     IServiceConfiguration,
@@ -143,8 +144,8 @@ export class DeltaManagerProxy
         return this.deltaManager.close();
     }
 
-    public async connect(reason: string): Promise<IConnectionDetails> {
-        return this.deltaManager.connect(reason);
+    public async connect(requestedMode: ConnectionMode): Promise<IConnectionDetails> {
+        return this.deltaManager.connect(requestedMode);
     }
 
     public async getDeltas(
