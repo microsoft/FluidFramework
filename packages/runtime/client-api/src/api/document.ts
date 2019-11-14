@@ -12,7 +12,7 @@ import {
 } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
 import { IContainerRuntimeOptions } from "@prague/container-runtime";
-import { ISharedMap, SharedMap } from "@prague/map";
+import { ISharedDirectory, ISharedMap, SharedDirectory, SharedMap } from "@prague/map";
 import {
     IDocumentMessage,
     IDocumentServiceFactory,
@@ -141,6 +141,13 @@ export class Document extends EventEmitter {
      */
     public createMap(): ISharedMap {
         return SharedMap.create(this.runtime);
+    }
+
+    /**
+     * Creates a new shared directory
+     */
+    public createDirectory(): ISharedDirectory {
+        return SharedDirectory.create(this.runtime);
     }
 
     /**
