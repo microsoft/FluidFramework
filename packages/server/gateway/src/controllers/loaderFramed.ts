@@ -61,7 +61,7 @@ export async function initialize(
     url: string,
     resolved: IFluidResolvedUrl,
     cache: IGitCache,
-    pkg: IResolvedPackage,
+    pkg: IResolvedPackage | undefined,
     scriptIds: string[],
     jwt: string,
     config: any,
@@ -98,13 +98,13 @@ export async function initialize(
 
         documentFactory.resolveLoader(loader);
 
-        await baseHost.loadAndRender(url, div, pkg);
+        await baseHost.loadAndRender(url, div, pkg ? pkg.details : undefined);
     } else {
         const documentServiceFactories: IDocumentServiceFactory[] = [];
         // TODO: need to be support refresh token
         documentServiceFactories.push(new OdspDocumentServiceFactory(
             clientId,
-            (siteUrl: string) => Promise.resolve(resolved.tokens.storageToken) ,
+            (siteUrl: string) => Promise.resolve(resolved.tokens.storageToken),
             () => Promise.resolve(resolved.tokens.socketToken),
             new BaseTelemetryNullLogger()));
 
@@ -136,6 +136,6 @@ export async function initialize(
             privateSession.frame,
             options,
             { resolver },
-            )).createDocumentServiceFromRequest({ url });
+        )).createDocumentServiceFromRequest({ url });
     }
 }

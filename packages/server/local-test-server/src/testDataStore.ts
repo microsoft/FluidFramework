@@ -96,11 +96,11 @@ async function initializeChaincode(container: Container, pkg: IFluidCodeDetails)
     }
 
     // And then make the proposal if a code proposal has not yet been made
-    if (!quorum.has("code2")) {
-        await quorum.propose("code2", pkg);
+    if (!quorum.has("code")) {
+        await quorum.propose("code", pkg);
     }
 
-    debug(`Code is ${quorum.get("code2")}`);
+    debug(`Code is ${quorum.get("code")}`);
 }
 
 async function attach<T>(
