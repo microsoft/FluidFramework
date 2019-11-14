@@ -32,6 +32,7 @@ import {
 import {
     ILocalValue,
     LocalValueMaker,
+    makeSerializable,
     ValueTypeLocalValue,
     valueTypes,
 } from "./localValues";
@@ -993,7 +994,8 @@ class SubDirectory implements IDirectory {
         }
 
         const localValue = this.directory.localValueMaker.fromInMemory(value);
-        const serializableValue = localValue.makeSerializable(
+        const serializableValue = makeSerializable(
+            localValue,
             this.runtime.IComponentSerializer,
             this.runtime.IComponentHandleContext,
             this.directory.handle);
@@ -1375,7 +1377,8 @@ class SubDirectory implements IDirectory {
         }
         const serializedStorage: { [key: string]: ISerializableValue } = {};
         for (const [key, localValue] of this._storage) {
-            serializedStorage[key] = localValue.makeSerializable(
+            serializedStorage[key] = makeSerializable(
+                localValue,
                 this.runtime.IComponentSerializer,
                 this.runtime.IComponentHandleContext,
                 this.directory.handle);

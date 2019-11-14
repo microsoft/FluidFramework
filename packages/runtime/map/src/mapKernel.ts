@@ -19,6 +19,7 @@ import {
 import {
     ILocalValue,
     LocalValueMaker,
+    makeSerializable,
     ValueTypeLocalValue,
 } from "./localValues";
 
@@ -315,7 +316,8 @@ export class MapKernel {
         }
 
         const localValue = this.localValueMaker.fromInMemory(value);
-        const serializableValue = localValue.makeSerializable(
+        const serializableValue = makeSerializable(
+            localValue,
             this.runtime.IComponentSerializer,
             this.runtime.IComponentHandleContext,
             this.handle);
@@ -415,7 +417,8 @@ export class MapKernel {
     public getSerializableStorage(): IMapDataObjectSerializable {
         const serializableMapData: IMapDataObjectSerializable = {};
         this.data.forEach((localValue, key) => {
-            serializableMapData[key] = localValue.makeSerializable(
+            serializableMapData[key] = makeSerializable(
+                localValue,
                 this.runtime.IComponentSerializer,
                 this.runtime.IComponentHandleContext,
                 this.handle);

@@ -29,16 +29,16 @@ import {
 /**
  * A local value to be stored in a container type DDS.
  */
-export abstract class ILocalValue {
+export interface ILocalValue {
     /**
      * Type indicator of the value stored within.
      */
-    public readonly type: string;
+    readonly type: string;
 
     /**
      * The in-memory value stored within.
      */
-    public readonly value: any;
+    readonly value: any;
 
     /**
      * Retrieve the serialized form of the value stored within.
@@ -47,30 +47,23 @@ export abstract class ILocalValue {
      * @param bind - Container type's handle
      * @returns The serialized form of the contained value
      */
-    public abstract makeSerialized(
+    makeSerialized(
         serializer: IComponentSerializer,
         context: IComponentHandleContext,
         bind: IComponentHandle,
     ): ISerializedValue;
+}
 
-    /**
-     * Retrieve the serialized form of the value stored within.
-     * @param serializer - Component runtime's serializer
-     * @param context - Component runtime's handle context
-     * @param bind - Container type's handle
-     * @returns The serialized form of the contained value
-     */
-    public makeSerializable(
+export function makeSerializable(
+        localValue: ILocalValue,
         serializer: IComponentSerializer,
         context: IComponentHandleContext,
-        bind: IComponentHandle,
-    ): ISerializableValue {
-        const value = this.makeSerialized(serializer, context, bind);
-        return {
-            type: value.type,
-            value: value.value && JSON.parse(value.value),
-        };
-    }
+        bind: IComponentHandle): ISerializableValue {
+    const value = localValue.makeSerialized(serializer, context, bind);
+    return {
+        type: value.type,
+        value: value.value && JSON.parse(value.value),
+    };
 }
 
 /**
@@ -83,13 +76,12 @@ export const valueTypes: ReadonlyArray<IValueType<any>> = [
 /**
  * Manages a contained plain value.  May also contain shared object handles.
  */
-export class PlainLocalValue extends ILocalValue {
+export class PlainLocalValue implements ILocalValue {
     /**
      * Create a new PlainLocalValue.
      * @param value - The value to store, which may contain shared object handles
      */
     constructor(public readonly value: any) {
-        super();
     }
 
     /**
@@ -122,14 +114,13 @@ export class PlainLocalValue extends ILocalValue {
  * SharedLocalValue exists for supporting older documents and is now deprecated.
  * @deprecated
  */
-export class SharedLocalValue extends ILocalValue {
+export class SharedLocalValue implements ILocalValue {
     /**
      * Create a new SharedLocalValue.
      * @param value - The shared object to store
      * @deprecated
      */
     constructor(public readonly value: ISharedObject) {
-        super();
     }
 
     /**
@@ -160,14 +151,13 @@ export class SharedLocalValue extends ILocalValue {
  *
  * @alpha
  */
-export class ValueTypeLocalValue extends ILocalValue {
+export class ValueTypeLocalValue implements ILocalValue {
     /**
      * Create a new ValueTypeLocalValue.
      * @param value - The instance of the value type stored within
      * @param valueType - The type object of the value type stored within
      */
     constructor(public readonly value: any, private readonly valueType: IValueType<any>) {
-        super();
     }
 
     /**
