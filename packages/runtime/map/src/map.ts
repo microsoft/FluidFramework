@@ -27,7 +27,7 @@ import {
 import {
     valueTypes,
 } from "./localValues";
-import { IMapDataObjectSerializable, IMapDataObjectSerialized, MapKernel } from "./mapKernel";
+import { IMapDataObjectSerializable, MapKernel } from "./mapKernel";
 import { pkgVersion } from "./packageVersion";
 
 interface IMapSerializationFormat {
@@ -261,18 +261,6 @@ export class SharedMap extends SharedObject implements ISharedMap {
         return super.on(event, listener);
     }
 
-    public getSerializableStorage(): IMapDataObjectSerializable {
-        return this.kernel.getSerializableStorage();
-    }
-
-    public getSerializedStorage(): IMapDataObjectSerialized {
-        return this.kernel.getSerializedStorage();
-    }
-
-    public serialize(): string {
-        return this.kernel.serialize();
-    }
-
     /**
      * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.snapshot}
      */
@@ -287,7 +275,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
             id: null,
         };
 
-        const data = this.getSerializedStorage();
+        const data = this.kernel.getSerializedStorage();
 
         // If single property exceeds this size, it goes into its own blob
         const MinValueSizeSeparateSnapshotBlob = 8 * 1024;
@@ -349,6 +337,10 @@ export class SharedMap extends SharedObject implements ISharedMap {
         addBlobToTree(tree, snapshotFileName, header);
 
         return tree;
+    }
+
+    protected getSerializableStorage(): IMapDataObjectSerializable {
+        return this.kernel.getSerializableStorage();
     }
 
     /**

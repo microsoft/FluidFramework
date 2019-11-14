@@ -11,7 +11,6 @@ import { IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runti
 import { debug } from "./debug";
 import { OwnedMapFactory } from "./ownedMapFactory";
 
-const snapshotFileName = "header";
 const ownerPath = "owner";
 
 /**
@@ -45,20 +44,7 @@ export class OwnedSharedMap extends SharedMap implements ISharedMap {
     }
 
     public snapshot(): ITree {
-        const tree: ITree = {
-            entries: [
-                {
-                    mode: FileMode.File,
-                    path: snapshotFileName,
-                    type: TreeEntry[TreeEntry.Blob],
-                    value: {
-                        contents: this.serialize(),
-                        encoding: "utf-8",
-                    },
-                },
-            ],
-            id: null,
-        };
+        const tree = super.snapshot();
 
         if (this.getOwner()) {
             tree.entries.push({
@@ -95,9 +81,15 @@ export class OwnedSharedMap extends SharedMap implements ISharedMap {
         }
     }
 
-    protected async getOwnerSnapshot(storage: IObjectStorageService): Promise<void> {
+    /**
+     * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.loadCore}
+     */
+    protected async loadCore(
+            branchId: string,
+            storage: IObjectStorageService) {
         const owner = await storage.read(ownerPath);
         this.owner = fromBase64ToUtf8(owner);
+        return super.loadCore(branchId, storage);
     }
 
     protected setOwner(): string | undefined {

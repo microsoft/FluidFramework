@@ -9,7 +9,6 @@ import { MockRuntime, MockSharedObjectServices } from "@microsoft/fluid-test-run
 
 import * as assert from "assert";
 import * as map from "../";
-import { SharedMap } from "../map";
 
 describe("Routerlicious", () => {
     describe("Map", () => {
@@ -159,7 +158,7 @@ describe("Routerlicious", () => {
                     const subMap = factory.create(runtime, "subMap");
                     sharedMap.set("object", subMap.handle);
 
-                    const parsed = (sharedMap as SharedMap).getSerializableStorage();
+                    const parsed = (sharedMap as any).getSerializableStorage();
 
                     sharedMap.forEach((value, key) => {
                         if (!value.IComponentHandle) {
@@ -180,7 +179,7 @@ describe("Routerlicious", () => {
                     const subMap = factory.create(runtime, "subMap");
                     sharedMap.set("object", subMap.handle);
 
-                    const parsed = (sharedMap as SharedMap).getSerializableStorage();
+                    const parsed = (sharedMap as any).getSerializableStorage();
 
                     sharedMap.forEach((value, key) => {
                         if (!value || !value.IComponentHandle) {
@@ -204,7 +203,7 @@ describe("Routerlicious", () => {
                     };
                     sharedMap.set("object", containingObject);
 
-                    const serialized = JSON.stringify((sharedMap as SharedMap).getSerializableStorage());
+                    const serialized = JSON.stringify((sharedMap as any).getSerializableStorage());
                     // tslint:disable-next-line: max-line-length
                     assert.equal(serialized, `{"object":{"type":"Plain","value":{"subMapHandle":{"type":"__fluid_handle__","url":"subMap"},"nestedObj":{"subMap2Handle":{"type":"__fluid_handle__","url":"subMap2"}}}}}`);
                 });
