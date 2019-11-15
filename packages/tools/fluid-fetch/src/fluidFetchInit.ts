@@ -4,12 +4,12 @@
  */
 
 // tslint:disable:object-literal-sort-keys
+import { IFluidResolvedUrl, IResolvedUrl, IUrlResolver } from "@microsoft/fluid-container-definitions";
 import { BaseTelemetryNullLogger, configurableUrlResolver } from "@microsoft/fluid-core-utils";
 import { FluidAppOdspUrlResolver } from "@microsoft/fluid-fluidapp-odsp-urlresolver";
 import * as odsp from "@microsoft/fluid-odsp-driver";
 import { OdspUrlResolver } from "@microsoft/fluid-odsp-urlresolver";
 import { IClientConfig, refreshAccessToken } from "@microsoft/fluid-odsp-utils";
-import { IFluidResolvedUrl, IResolvedUrl, IUrlResolver } from "@microsoft/fluid-protocol-definitions";
 import * as r11s from "@microsoft/fluid-routerlicious-driver";
 import { RouterliciousUrlResolver } from "@microsoft/fluid-routerlicious-urlresolver";
 import { URL } from "url";

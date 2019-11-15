@@ -2,9 +2,12 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ITelemetryBaseLogger } from "@microsoft/fluid-container-definitions";
+import {
+  IDocumentService,
+  IDocumentServiceFactory,
+  IResolvedUrl,
+  ITelemetryBaseLogger } from "@microsoft/fluid-container-definitions";
 import { ChildLogger } from "@microsoft/fluid-core-utils";
-import { IDocumentService, IDocumentServiceFactory, IResolvedUrl } from "@microsoft/fluid-protocol-definitions";
 import { IOdspResolvedUrl } from "./contracts";
 import { FetchWrapper, IFetchWrapper } from "./fetchWrapper";
 import { getSocketIo } from "./getSocketIo";

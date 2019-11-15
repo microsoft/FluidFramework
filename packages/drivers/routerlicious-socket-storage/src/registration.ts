@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentService, IErrorTrackingService } from "@microsoft/fluid-protocol-definitions";
+import { IDocumentService } from "@microsoft/fluid-container-definitions";
+import { IErrorTrackingService } from "@microsoft/fluid-protocol-definitions";
 import { IGitCache } from "@microsoft/fluid-server-services-client";
 import { DocumentService } from "./documentService";
 import { DefaultErrorTracking } from "./errorTracking";

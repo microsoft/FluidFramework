@@ -260,3 +260,28 @@ export interface ISummaryNack extends IServerError {
      */
     summaryProposal: ISummaryProposal;
 }
+
+/**
+ * Represents a message containing tasks.
+ */
+export interface IHelpMessage {
+
+    tasks: string[];
+
+    // Temporary version field for back-compat.
+    version?: string;
+}
+
+/**
+ * Represents a message in task queue to be processed.
+ */
+export interface IQueueMessage {
+
+    message: IHelpMessage;
+
+    tenantId: string;
+
+    documentId: string;
+
+    token: string;
+}

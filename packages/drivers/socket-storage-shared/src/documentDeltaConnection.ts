@@ -3,12 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import { IDocumentDeltaConnection } from "@microsoft/fluid-container-definitions";
 import { BatchManager, NetworkError } from "@microsoft/fluid-core-utils";
 import {
     ConnectionMode,
     IClient,
+    IConnect,
+    IConnected,
     IContentMessage,
-    IDocumentDeltaConnection,
     IDocumentMessage,
     ISequencedDocumentMessage,
     IServiceConfiguration,
@@ -19,7 +21,6 @@ import {
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { debug } from "./debug";
-import { IConnect, IConnected } from "./messages";
 
 const protocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
 

@@ -4,11 +4,15 @@
  */
 
 export * from "./clients";
+export * from "./connection";
+export * from "./consensus";
 export * from "./config";
+export * from "./disposable";
+export * from "./error";
 export * from "./protocol";
-export * from "./urlResolver";
 export * from "./storage";
 export * from "./summary";
 export * from "./users";
 export * from "./tokens";
 export * from "./scopes";
+export * from "./sockets";

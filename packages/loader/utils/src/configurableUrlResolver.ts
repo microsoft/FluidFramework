@@ -4,7 +4,7 @@
  */
 
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { IResolvedUrl, IUrlResolver } from "@microsoft/fluid-protocol-definitions";
+import { IResolvedUrl, IUrlResolver } from "@microsoft/fluid-container-definitions";
 
 /**
  * Resolver that takes a list of url resolvers and then try each of them to resolve the url.

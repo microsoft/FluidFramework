@@ -10,13 +10,11 @@ import {
     IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
 import {
-    ConnectionState,
     IAudience,
     IBlobManager,
     IDeltaManager,
     IGenericBlob,
     ILoader,
-    IQuorum,
     ITelemetryLogger,
 } from "@microsoft/fluid-container-definitions";
 import {
@@ -28,7 +26,9 @@ import {
     TreeTreeEntry,
 } from "@microsoft/fluid-core-utils";
 import {
+    ConnectionState,
     IDocumentMessage,
+    IQuorum,
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITreeEntry,

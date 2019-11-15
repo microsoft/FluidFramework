@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentStorageService, ISnapshotTree } from "@microsoft/fluid-protocol-definitions";
+import { IDocumentStorageService } from "@microsoft/fluid-container-definitions";
+import { ISnapshotTree } from "@microsoft/fluid-protocol-definitions";
 import { IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
 
 export class ChannelStorageService implements IObjectStorageService {

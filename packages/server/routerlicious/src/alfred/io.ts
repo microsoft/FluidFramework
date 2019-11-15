@@ -4,10 +4,11 @@
  */
 
 import { isSystemType } from "@microsoft/fluid-core-utils";
-import { IConnect, IConnected } from "@microsoft/fluid-driver-base";
 import {
     ConnectionMode,
     IClient,
+    IConnect,
+    IConnected,
     IContentMessage,
     IDocumentMessage,
     IDocumentSystemMessage,

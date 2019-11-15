@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IDocumentStorageService } from "@microsoft/fluid-container-definitions";
 import { buildHierarchy, flatten, fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
 import * as api from "@microsoft/fluid-protocol-definitions";
 import { IFileSnapshot, ReadDocumentStorageServiceBase } from "@microsoft/fluid-replay-driver";
@@ -22,7 +23,7 @@ const FileStorageVersionTreeIdUnused = "baad";
 /**
  * Document storage service for the file driver.
  */
-export class FluidFetchReader extends ReadDocumentStorageServiceBase implements api.IDocumentStorageService {
+export class FluidFetchReader extends ReadDocumentStorageServiceBase implements IDocumentStorageService {
     protected docTree: api.ISnapshotTree | null = null;
 
     constructor(private readonly path: string, private readonly versionName?: string) {
@@ -103,13 +104,13 @@ export class FluidFetchReader extends ReadDocumentStorageServiceBase implements 
     }
 }
 
-export interface ISnapshotWriterStorage extends api.IDocumentStorageService {
+export interface ISnapshotWriterStorage extends IDocumentStorageService {
     onCommitHandler(componentName: string, tree: api.ITree): void;
     onSnapshotHandler(snapshot: IFileSnapshot): void;
     reset(): void;
 }
 
-export type ReaderConstructor = new (...args: any[]) => api.IDocumentStorageService;
+export type ReaderConstructor = new (...args: any[]) => IDocumentStorageService;
 // tslint:disable-next-line:max-func-body-length
 export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(Base: TBase) {
     return class extends Base implements ISnapshotWriterStorage {

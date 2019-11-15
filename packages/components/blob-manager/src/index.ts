@@ -5,9 +5,8 @@
 
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
-import { IBlobManager, IGenericBlob } from "@microsoft/fluid-container-definitions";
+import { IBlobManager, IDocumentStorageService, IGenericBlob } from "@microsoft/fluid-container-definitions";
 import { MapFactory } from "@microsoft/fluid-map";
-import { IDocumentStorageService } from "@microsoft/fluid-protocol-definitions";
 import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
 
 // const blobMetaData = this.blobManager!.getBlobMetadata();

@@ -8,12 +8,13 @@ import {
     IComponentHTMLVisual,
     IComponentQueryableLegacy,
 } from "@microsoft/fluid-component-core-interfaces";
-import { ICodeWhiteList, IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
-import { Container, Loader } from "@microsoft/fluid-container-loader";
 import {
+    ICodeWhiteList,
     IFluidResolvedUrl,
+    IProxyLoaderFactory,
     IResolvedUrl,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@microsoft/fluid-container-definitions";
+import { Container, Loader } from "@microsoft/fluid-container-loader";
 import { IResolvedPackage, WebCodeLoader, WhiteList } from "@microsoft/fluid-web-code-loader";
 import { IHostConfig } from "./hostConfig";
 

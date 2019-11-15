@@ -9,8 +9,7 @@ import {
     IRequest,
     IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
-import { IContainer, ILoader } from "@microsoft/fluid-container-definitions";
-import { IFluidResolvedUrl } from "@microsoft/fluid-protocol-definitions";
+import { IContainer, IFluidResolvedUrl, ILoader } from "@microsoft/fluid-container-definitions";
 import * as Comlink from "comlink";
 
 // Proxy loader that proxies request to web worker.

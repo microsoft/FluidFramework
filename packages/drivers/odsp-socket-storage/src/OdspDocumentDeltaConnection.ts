@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
+import { IDocumentDeltaConnection, ITelemetryLogger } from "@microsoft/fluid-container-definitions";
 import { TelemetryNullLogger } from "@microsoft/fluid-core-utils";
-import { DocumentDeltaConnection, IConnect } from "@microsoft/fluid-driver-base";
+import { DocumentDeltaConnection } from "@microsoft/fluid-driver-base";
 import {
     ConnectionMode,
     IClient,
-    IDocumentDeltaConnection,
+    IConnect,
 } from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
 import { IOdspSocketError } from "./contracts";

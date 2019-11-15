@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as api from "@microsoft/fluid-protocol-definitions";
+import * as api from "@microsoft/fluid-container-definitions";
+import { ConnectionMode, IClient } from "@microsoft/fluid-protocol-definitions";
 import * as socketStorage from "@microsoft/fluid-routerlicious-driver";
 import { GitManager } from "@microsoft/fluid-server-services-client";
 import {
@@ -68,8 +69,8 @@ export class TestDocumentService implements api.IDocumentService {
      * @param client - client data
      */
     public async connectToDeltaStream(
-        client: api.IClient,
-        mode: api.ConnectionMode): Promise<api.IDocumentDeltaConnection> {
+        client: IClient,
+        mode: ConnectionMode): Promise<api.IDocumentDeltaConnection> {
         // socketStorage.DocumentDeltaStorageService?
         return TestDocumentDeltaConnection.create(
             this.tenantId,

@@ -4,20 +4,21 @@
  */
 
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { IHost } from "@microsoft/fluid-container-definitions";
-import { configurableUrlResolver, Deferred } from "@microsoft/fluid-core-utils";
 import {
-    ConnectionMode,
-    IClient,
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
-    IDocumentMessage,
     IDocumentService,
     IDocumentServiceFactory,
     IDocumentStorageService,
     IFluidResolvedUrl,
+    IHost,
     IResolvedUrl,
-    IUrlResolver,
+    IUrlResolver } from "@microsoft/fluid-container-definitions";
+import { configurableUrlResolver, Deferred } from "@microsoft/fluid-core-utils";
+import {
+    ConnectionMode,
+    IClient,
+    IDocumentMessage,
     IVersion,
 } from "@microsoft/fluid-protocol-definitions";
 import * as Comlink from "comlink";

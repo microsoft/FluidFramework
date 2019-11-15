@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
-import * as api from "@microsoft/fluid-protocol-definitions";
+import * as api from "@microsoft/fluid-container-definitions";
+import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { IDeltaStorageGetResponse, ISequencedDeltaOpMessage } from "./contracts";
 import { IFetchWrapper } from "./fetchWrapper";
 import { getQueryString } from "./getQueryString";
@@ -23,7 +23,7 @@ export class OdspDeltaStorageService implements api.IDocumentDeltaStorageService
         private readonly fetchWrapper: IFetchWrapper,
         private ops: ISequencedDeltaOpMessage[] | undefined,
         private readonly getStorageToken: (refresh: boolean) => Promise<string | null>,
-        private readonly logger?: ITelemetryLogger,
+        private readonly logger?: api.ITelemetryLogger,
     ) {
         this.queryString = getQueryString(queryParams);
     }
@@ -31,7 +31,7 @@ export class OdspDeltaStorageService implements api.IDocumentDeltaStorageService
     public async get(
         from?: number,
         to?: number,
-    ): Promise<api.ISequencedDocumentMessage[]> {
+    ): Promise<ISequencedDocumentMessage[]> {
         const ops = this.ops;
         this.ops = undefined;
         if (ops !== undefined && from !== undefined) {
@@ -57,12 +57,12 @@ export class OdspDeltaStorageService implements api.IDocumentDeltaStorageService
                     sprequestduration: response.headers.get("sprequestduration"),
                 });
             }
-            const operations: api.ISequencedDocumentMessage[] | ISequencedDeltaOpMessage[] = deltaStorageResponse.value;
+            const operations: ISequencedDocumentMessage[] | ISequencedDeltaOpMessage[] = deltaStorageResponse.value;
             if (operations.length > 0 && "op" in operations[0]) {
                 return (operations as ISequencedDeltaOpMessage[]).map((operation) => operation.op);
             }
 
-            return operations as api.ISequencedDocumentMessage[];
+            return operations as ISequencedDocumentMessage[];
         });
     }
 

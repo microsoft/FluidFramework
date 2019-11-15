@@ -9,7 +9,7 @@ import {
     IDocumentServiceFactory,
     IDocumentStorageService,
     IResolvedUrl,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@microsoft/fluid-container-definitions";
 import { FileDeltaStorageService } from "./fileDeltaStorageService";
 import { FileDocumentService } from "./fileDocumentService";
 

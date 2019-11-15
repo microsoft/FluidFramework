@@ -5,13 +5,13 @@
 
 import {
     IConnectionDetails,
+    IDocumentDeltaConnection,
+    IDocumentService,
 } from "@microsoft/fluid-container-definitions";
 import {
     ConnectionMode,
     IClient,
-    IDocumentDeltaConnection,
     IDocumentMessage,
-    IDocumentService,
     INack,
 } from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";

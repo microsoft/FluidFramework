@@ -2,8 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import { ConnectionState } from "@microsoft/fluid-container-definitions";
+import { ConnectionState } from "@microsoft/fluid-protocol-definitions";
 import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@microsoft/fluid-test-runtime-utils";
 import * as assert from "assert";
 import { ConsensusRegisterCollectionFactory } from "../consensusRegisterCollectionFactory";

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IDocumentDeltaStorageService } from "@microsoft/fluid-container-definitions";
 import * as api from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
 import * as fs from "fs";
@@ -10,7 +11,7 @@ import * as fs from "fs";
 /**
  * Provides access to the underlying delta storage on the local file storage for file driver.
  */
-export class FileDeltaStorageService implements api.IDocumentDeltaStorageService {
+export class FileDeltaStorageService implements IDocumentDeltaStorageService {
 
     private readonly messages: api.ISequencedDocumentMessage[];
     private lastOps: api.ISequencedDocumentMessage[] = [];

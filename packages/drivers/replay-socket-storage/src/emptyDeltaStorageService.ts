@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { IDocumentDeltaStorageService } from "@microsoft/fluid-container-definitions";
 import * as api from "@microsoft/fluid-protocol-definitions";
 
-export class EmptyDeltaStorageService implements api.IDocumentDeltaStorageService {
+export class EmptyDeltaStorageService implements IDocumentDeltaStorageService {
 
     /**
      * Returns ops from the list of ops generated till now.

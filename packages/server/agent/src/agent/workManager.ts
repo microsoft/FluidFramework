@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ICodeLoader, IHost } from "@microsoft/fluid-container-definitions";
+import { ICodeLoader, IDocumentServiceFactory, IHost } from "@microsoft/fluid-container-definitions";
 import * as MergeTree from "@microsoft/fluid-merge-tree";
-import { IDocumentServiceFactory } from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
 import { Provider } from "nconf";
 import { AgentLoader, IAgent } from "./agentLoader";

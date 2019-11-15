@@ -8,7 +8,7 @@ import {
     IDocumentServiceFactory,
     IFluidResolvedUrl,
     IResolvedUrl,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@microsoft/fluid-container-definitions";
 import * as Comlink from "comlink";
 import { InnerDocumentService } from "./innerDocumentService";
 import { IDocumentServiceFactoryProxy } from "./outerDocumentServiceFactory";

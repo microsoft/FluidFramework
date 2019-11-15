@@ -4,10 +4,12 @@
  */
 
 import {
-    ConnectionMode,
-    IClient,
     IDocumentDeltaStorageService,
     IDocumentService,
+} from "@microsoft/fluid-container-definitions";
+import {
+    ConnectionMode,
+    IClient,
     ISequencedDocumentMessage,
     ScopeType,
 } from "@microsoft/fluid-protocol-definitions";

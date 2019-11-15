@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedClient } from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
+import { ISequencedClient } from "./clients";
 import { IDisposable } from "./disposable";
 
 /**
@@ -64,4 +64,8 @@ export interface IProtocolState {
     members: [string, ISequencedClient][];
     proposals: [number, ISequencedProposal, string[]][];
     values: [string, ICommittedProposal][];
+}
+
+export interface IProcessMessageResult {
+    immediateNoOp?: boolean;
 }

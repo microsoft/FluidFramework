@@ -3,9 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { ICodeLoader, IHost, IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
+import {
+    ICodeLoader,
+    IDocumentServiceFactory,
+    IHost,
+    IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
-import { IDocumentServiceFactory } from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
 import { parse } from "url";
 import { debug } from "../debug";

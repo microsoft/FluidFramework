@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { Deferred } from "@microsoft/fluid-core-utils";
 import {
     IDocumentService,
     IDocumentServiceFactory,
     IFluidResolvedUrl,
     IResolvedUrl,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@microsoft/fluid-container-definitions";
+import { Deferred } from "@microsoft/fluid-core-utils";
+import { IQueueMessage } from "@microsoft/fluid-protocol-definitions";
 import * as socketStorage from "@microsoft/fluid-routerlicious-driver";
 import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
-import { IQueueMessage } from "@microsoft/fluid-runtime-definitions";
 import * as agent from "@microsoft/fluid-server-agent";
 import { NodeCodeLoader, NodeWhiteList } from "@microsoft/fluid-server-services";
 import * as core from "@microsoft/fluid-server-services-core";
