@@ -32,7 +32,6 @@ import {
     Deferred,
     flatten,
     isSystemType,
-    PerformanceEvent,
     raiseConnectedEvent,
     readAndParse,
 } from "@microsoft/fluid-core-utils";
@@ -88,8 +87,11 @@ interface ISummaryTreeWithStats {
     summaryTree: ISummaryTree;
 }
 
+/**
+ * Base interface for all possible results of generate summary attempt.
+ */
 export interface IGeneratedSummaryData {
-    sequenceNumber: number;
+    referenceSequenceNumber: number;
 
     /**
      * true if the summary op was submitted
@@ -98,7 +100,20 @@ export interface IGeneratedSummaryData {
 
     summaryMessage?: ISummaryContent;
 
+    /**
+     * computed stats of generated summary tree
+     */
     summaryStats?: ISummaryStats;
+
+    /**
+     * only set if uploaded to storage
+     */
+    handle?: string;
+
+    /**
+     * only set if submitted summary op
+     */
+    clientSequenceNumber?: number;
 }
 
 // Consider idle 5s of no activity. And snapshot if a minute has gone by with no snapshot.
@@ -1082,40 +1097,32 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             return;
         }
 
-        const generateSummaryEvent = PerformanceEvent.start(this.logger, {
-            eventName: "GenerateSummary",
-            fullTree,
-        });
-
         try {
             await this.scheduleManager.pause();
-            const sequenceNumber = this.deltaManager.referenceSequenceNumber;
 
             const ret: IGeneratedSummaryData = {
-                sequenceNumber,
+                referenceSequenceNumber: this.deltaManager.referenceSequenceNumber,
                 submitted: false,
-                summaryStats: undefined,
             };
 
             if (!this.connected) {
-                generateSummaryEvent.cancel({reason: "disconnected"});
+                // if summarizer loses connection it will never reconnect
                 return ret;
             }
+
             // TODO in the future we can have stored the latest summary by listening to the summary ack message
             // after loading from the beginning of the snapshot
             const versions = await this.context.storage.getVersions(this.id, 1);
             const parents = versions.map((version) => version.id);
             const parent = parents[0];
-            generateSummaryEvent.reportProgress({}, "loadedVersions");
 
             const treeWithStats = await this.summarize(fullTree);
             ret.summaryStats = treeWithStats.summaryStats;
-            generateSummaryEvent.reportProgress({}, "generatedTree");
 
             if (!this.connected) {
-                generateSummaryEvent.cancel({reason: "disconnected"});
                 return ret;
             }
+
             const handle = await this.context.storage.uploadSummary(treeWithStats.summaryTree);
             const summaryMessage: ISummaryContent = {
                 handle: handle.handle,
@@ -1123,28 +1130,17 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                 message,
                 parents,
             };
-            generateSummaryEvent.reportProgress({}, "uploadedTree");
+            ret.handle = handle.handle;
 
             if (!this.connected) {
-                generateSummaryEvent.cancel({reason: "disconnected"});
                 return ret;
             }
-            // if summarizer loses connection it will never reconnect
-            this.submit(MessageType.Summarize, summaryMessage);
+
+            ret.clientSequenceNumber = this.submit(MessageType.Summarize, summaryMessage);
             ret.summaryMessage = summaryMessage;
             ret.submitted = true;
 
-            generateSummaryEvent.end({
-                sequenceNumber,
-                submitted: ret.submitted,
-                handle: handle.handle,
-                parent,
-                ...ret.summaryStats,
-            });
             return ret;
-        } catch (ex) {
-            generateSummaryEvent.cancel({reason: "exception"}, ex);
-            throw ex;
         } finally {
             // Restart the delta manager
             this.scheduleManager.resume();
