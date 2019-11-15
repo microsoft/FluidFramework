@@ -8,7 +8,7 @@ import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { TestHost } from "@microsoft/fluid-local-test-server";
 import * as assert from "assert";
 
-const PrimiedType = "@microsoft/fluid-primsedComponent";
+const PrimedType = "@microsoft/fluid-primedComponent";
 
 /**
  * My sample component
@@ -28,7 +28,7 @@ describe("PrimedComponent", () => {
             host = new TestHost([
                 [PrimiedType, Promise.resolve(factory)],
             ]);
-            component = await host.createAndAttachComponent(componentId, PrimiedType);
+            component = await host.createAndAttachComponent(componentId, PrimedType);
         });
 
         afterEach(async () => { await host.close(); });

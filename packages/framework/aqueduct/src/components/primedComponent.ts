@@ -23,7 +23,7 @@ export abstract class PrimedComponent extends SharedComponent {
     private internalRoot: ISharedDirectory | undefined;
     private internalTaskManager: ITaskManager | undefined;
     private readonly rootDirectoryId = "root";
-    private readonly bigBlogs = "blobs/";
+    private readonly bigBlogs = "bigBlobs/";
 
     public async request(request: IRequest): Promise<IResponse> {
         const url = request.url;
