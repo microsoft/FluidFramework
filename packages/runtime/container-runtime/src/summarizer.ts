@@ -46,7 +46,7 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
         public readonly url: string,
         private readonly runtime: ContainerRuntime,
         private readonly configurationGetter: () => ISummaryConfiguration,
-        private readonly generateSummary: () => Promise<IGeneratedSummaryData>,
+        private readonly generateSummaryCore: () => Promise<IGeneratedSummaryData>,
         private readonly refreshBaseSummary: (snapshot: ISnapshotTree) => void,
     ) {
         this.logger = ChildLogger.create(this.runtime.logger, "Summarizer");
@@ -98,7 +98,7 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
             this.logger,
             this.summaryCollection.createWatcher(this.runtime.clientId),
             this.configurationGetter(),
-            () => this.tryGenerateSummary(),
+            () => this.generateSummary(),
             (ack) => this.handleSuccessfulSummary(ack),
             this.runtime.deltaManager.referenceSequenceNumber,
             initialAttempt,
@@ -155,14 +155,14 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
         }
     }
 
-    private async tryGenerateSummary(): Promise<IGeneratedSummaryData | undefined> {
+    private async generateSummary(): Promise<IGeneratedSummaryData | undefined> {
         if (this.onBehalfOfClientId !== this.runtime.summarizerClientId) {
             // we are no longer the summarizer, we should stop ourself
             this.stop("parentNoLongerSummarizer");
             return undefined;
         }
 
-        return this.generateSummary();
+        return this.generateSummaryCore();
     }
 
     private async handleSuccessfulSummary(ack: ISummaryAckMessage): Promise<void> {
@@ -242,7 +242,7 @@ export class RunningSummarizer implements IDisposable {
         logger: ITelemetryLogger,
         summaryWatcher: IClientSummaryWatcher,
         configuration: ISummaryConfiguration,
-        tryGenerateSummary: () => Promise<IGeneratedSummaryData | undefined>,
+        generateSummary: () => Promise<IGeneratedSummaryData | undefined>,
         handleSuccessfulSummary: (ack: ISummaryAckMessage) => Promise<void>,
         lastOpSeqNumber: number,
         firstAck: ISummaryAttempt,
@@ -253,7 +253,7 @@ export class RunningSummarizer implements IDisposable {
             logger,
             summaryWatcher,
             configuration,
-            tryGenerateSummary,
+            generateSummary,
             handleSuccessfulSummary,
             lastOpSeqNumber,
             firstAck);
@@ -278,7 +278,7 @@ export class RunningSummarizer implements IDisposable {
         private readonly logger: ITelemetryLogger,
         private readonly summaryWatcher: IClientSummaryWatcher,
         private readonly configuration: ISummaryConfiguration,
-        private readonly tryGenerateSummary: () => Promise<IGeneratedSummaryData | undefined>,
+        private readonly generateSummary: () => Promise<IGeneratedSummaryData | undefined>,
         private readonly handleSuccessfulSummary: (ack: ISummaryAckMessage) => Promise<void>,
         lastOpSeqNumber: number,
         firstAck: ISummaryAttempt,
@@ -462,7 +462,7 @@ export class RunningSummarizer implements IDisposable {
         // wait for generate/send summary
         let summaryData: IGeneratedSummaryData | undefined;
         try {
-            summaryData = await this.tryGenerateSummary();
+            summaryData = await this.generateSummary();
         } catch (error) {
             summarizingEvent.cancel({}, error);
             return;
