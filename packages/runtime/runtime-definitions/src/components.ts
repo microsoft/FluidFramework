@@ -27,6 +27,7 @@ import {
     IDocumentStorageService,
     ISequencedDocumentMessage,
     ISnapshotTree,
+    ISummaryContext,
     ITreeEntry,
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
@@ -304,7 +305,7 @@ export enum FlushMode {
 }
 
 export interface ILatestSummary {
-    readonly handle?: string;
+    readonly context?: ISummaryContext;
     readonly referenceSequenceNumber: number;
 }
 
