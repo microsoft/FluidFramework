@@ -23,13 +23,13 @@ export abstract class PrimedComponent extends SharedComponent {
     private internalRoot: ISharedDirectory | undefined;
     private internalTaskManager: ITaskManager | undefined;
     private readonly rootDirectoryId = "root";
-    private readonly bigBlogs = "bigBlobs/";
+    private readonly bigBlobs = "bigBlobs/";
 
     public async request(request: IRequest): Promise<IResponse> {
         const url = request.url;
         if (this.internalTaskManager && url.startsWith(this.taskManager.url)) {
             return this.internalTaskManager.request(request);
-        } else if (url.startsWith(this.bigBlogs)) {
+        } else if (url.startsWith(this.bigBlobs)) {
             const value = this.root.get<string>(url);
             if (value === undefined) {
                 return { mimeType: "fluid/component", status: 404, value: `request ${url} not found` };
@@ -70,7 +70,7 @@ export abstract class PrimedComponent extends SharedComponent {
      * In future blobs would be implemented as first class citizen, using blob storage APIs
      */
     public async writeBlob(blob: string): Promise<IComponentHandle> {
-        const path = `${this.bigBlogs}${uuid()}`;
+        const path = `${this.bigBlobs}${uuid()}`;
         this.root.set(path, blob);
         return new BlobHandle(path, this.root, this.runtime.IComponentHandleContext);
     }
