@@ -146,7 +146,7 @@ interface IRuntimeMessageMetadata {
     batch?: boolean;
 }
 
-class LatestSummaryTracker implements ILatestSummary {
+export class LatestSummaryTracker implements ILatestSummary {
     public get context() { return this._context; }
     public get referenceSequenceNumber() { return this._referenceSequenceNumber; }
 
