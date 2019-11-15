@@ -13,7 +13,7 @@ import {
 } from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
 import * as sinon from "sinon";
-import { RunningSummarizer, SummarizerHeuristics } from "../summarizer";
+import { RunningSummarizer } from "../summarizer";
 import { SummaryCollection } from "../summaryCollection";
 
 describe("Runtime", () => {
@@ -22,7 +22,7 @@ describe("Runtime", () => {
             describe("Summary Schedule", () => {
                 let runCount: number;
                 let clock: sinon.SinonFakeTimers;
-                let summaryDataStructure: SummaryCollection;
+                let summaryCollection: SummaryCollection;
                 let summarizer: RunningSummarizer;
                 const summarizerClientId = "test";
                 const onBehalfOfClientId = "behalf";
@@ -49,13 +49,12 @@ describe("Runtime", () => {
                     runCount = 0;
                     lastRefSeq = 0;
                     refreshBaseSummaryDeferred = new Deferred();
-                    const logger = new TelemetryNullLogger();
-                    summaryDataStructure = new SummaryCollection(0, logger);
+                    summaryCollection = new SummaryCollection(0);
                     summarizer = await RunningSummarizer.start(
                         summarizerClientId,
                         onBehalfOfClientId,
-                        logger,
-                        summaryDataStructure.createWatcher(summarizerClientId),
+                        new TelemetryNullLogger(),
+                        summaryCollection.createWatcher(summarizerClientId),
                         summaryConfig,
                         async () => {
                             runCount++;
@@ -78,7 +77,8 @@ describe("Runtime", () => {
                             };
                         },
                         async () => { refreshBaseSummaryDeferred.resolve(); },
-                        new SummarizerHeuristics(0, { refSequenceNumber: 0, summaryTime: Date.now() }),
+                        0,
+                        { refSequenceNumber: 0, summaryTime: Date.now() },
                     );
                 });
 
@@ -94,7 +94,7 @@ describe("Runtime", () => {
                 }
 
                 function emitBroadcast() {
-                    summaryDataStructure.handleOp({
+                    summaryCollection.handleOp({
                         type: MessageType.Summarize,
                         clientId: summarizerClientId,
                         referenceSequenceNumber: lastRefSeq,
@@ -114,7 +114,7 @@ describe("Runtime", () => {
                         handle: "test-ack-handle",
                         summaryProposal,
                     };
-                    summaryDataStructure.handleOp({ contents, type } as ISequencedDocumentMessage);
+                    summaryCollection.handleOp({ contents, type } as ISequencedDocumentMessage);
 
                     // wait for refresh base summary to complete
                     await refreshBaseSummaryDeferred.promise;

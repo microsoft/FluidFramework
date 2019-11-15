@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
+import { IDisposable } from "@microsoft/fluid-container-definitions";
 import { Deferred } from "@microsoft/fluid-core-utils";
 import {
     ISequencedDocumentMessage,
@@ -123,20 +123,31 @@ class Summary implements ISummary {
 /**
  * Watches summaries created by a specific client.
  */
-export interface IClientSummaryWatcher {
+export interface IClientSummaryWatcher extends IDisposable {
     watchSummary(clientSequenceNumber: number): ISummary;
     waitFlushed(): Promise<IAckedSummary | undefined>;
 }
 
+/**
+ * This class watches summaries created by a specific client.
+ * It should be created and managed from a SummaryCollection.
+ */
 class ClientSummaryWatcher implements IClientSummaryWatcher {
     // key: clientSeqNum
     private readonly localSummaries = new Map<number, Summary>();
+    private _disposed = false;
+
+    public get disposed() { return this._disposed; }
 
     public constructor(
         public readonly clientId: string,
-        private readonly summaryDataStructure: SummaryCollection,
+        private readonly summaryCollection: SummaryCollection,
     ) {}
 
+    /**
+     * Watches for a specific sent summary op.
+     * @param clientSequenceNumber - client sequence number of sent summary op
+     */
     public watchSummary(clientSequenceNumber: number): ISummary {
         let summary = this.localSummaries.get(clientSequenceNumber);
         if (!summary) {
@@ -146,16 +157,33 @@ class ClientSummaryWatcher implements IClientSummaryWatcher {
         return summary;
     }
 
+    /**
+     * Waits until all of the pending summaries in the underlying SummaryCollection
+     * are acked/nacked.
+     */
     public waitFlushed() {
-        return this.summaryDataStructure.waitFlushed();
+        return this.summaryCollection.waitFlushed();
     }
 
+    /**
+     * Gets a watched summary or returns undefined if not watched.
+     * @param clientSequenceNumber - client sequence number of sent summary op
+     */
     public tryGetSummary(clientSequenceNumber: number) {
         return this.localSummaries.get(clientSequenceNumber);
     }
 
+    /**
+     * Starts watching a summary made by this client.
+     * @param summary - summary to start watching
+     */
     public setSummary(summary: Summary) {
         this.localSummaries.set(summary.clientSequenceNumber, summary);
+    }
+
+    public dispose() {
+        this.summaryCollection.removeWatcher(this.clientId);
+        this._disposed = true;
     }
 }
 
@@ -169,23 +197,11 @@ export class SummaryCollection {
     private readonly summaryWatchers = new Map<string, ClientSummaryWatcher>();
     // key: summarySeqNum
     private readonly pendingSummaries = new Map<number, Summary>();
-    private readonly initialAck = new Deferred<IAckedSummary | undefined>();
     private refreshWaitNextAck = new Deferred<void>();
 
     private lastAck?: IAckedSummary;
 
-    private initialized = false;
-    public get isInitialized() { return this.initialized; }
-
-    public constructor(
-        public readonly initialSequenceNumber: number,
-        private readonly logger: ITelemetryLogger,
-    ) {
-        if (this.initialSequenceNumber === 0) {
-            this.initialized = true;
-            this.initialAck.resolve();
-        }
-    }
+    public constructor(public readonly initialSequenceNumber: number) {}
 
     /**
      * Creates and returns a summary watcher for a specific client.
@@ -198,13 +214,8 @@ export class SummaryCollection {
         return watcher;
     }
 
-    /**
-     * Returns a promise that resolves once the summary ack for the
-     * summary loaded from has been processed.
-     * Resolves immediately if not loaded from a summary.
-     */
-    public waitInitialized(): Promise<IAckedSummary | undefined> {
-        return this.initialAck.promise;
+    public removeWatcher(clientId: string) {
+        this.summaryWatchers.delete(clientId);
     }
 
     /**
@@ -225,7 +236,7 @@ export class SummaryCollection {
      * @param referenceSequenceNumber - reference sequence number to wait for
      * @returns The latest acked summary
      */
-    public async waitNextAck(referenceSequenceNumber: number): Promise<IAckedSummary> {
+    public async waitSummaryAck(referenceSequenceNumber: number): Promise<IAckedSummary> {
         while (!this.lastAck || this.lastAck.summaryOp.referenceSequenceNumber < referenceSequenceNumber) {
             await this.refreshWaitNextAck.promise;
         }
@@ -276,13 +287,6 @@ export class SummaryCollection {
             }
         }
         this.pendingSummaries.set(op.sequenceNumber, summary);
-
-        // initialize
-        if (!this.initialized && summary.summaryOp.referenceSequenceNumber === this.initialSequenceNumber) {
-            summary.waitAckNack().then(() => this.checkInitialized(summary)).catch((error) => {
-                this.logger.sendErrorEvent({ eventName: "ErrorCheckingInitialized" }, error);
-            });
-        }
     }
 
     private handleSummaryAck(op: ISummaryAckMessage) {
@@ -306,16 +310,6 @@ export class SummaryCollection {
         if (summary) {
             summary.ackNack(op);
             this.pendingSummaries.delete(seq);
-        }
-    }
-
-    private checkInitialized(summary: Summary) {
-        if (this.initialized) {
-            return;
-        }
-        if (summary.hasBeenAcked()) {
-            this.initialized = true;
-            this.initialAck.resolve(summary);
         }
     }
 }
