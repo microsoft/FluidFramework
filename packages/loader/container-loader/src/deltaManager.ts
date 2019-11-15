@@ -19,7 +19,6 @@ import {
     ConnectionMode,
     IClient,
     IClientDetails,
-    IContentMessage,
     IDocumentDeltaStorageService,
     IDocumentMessage,
     IDocumentService,
@@ -32,7 +31,6 @@ import {
 } from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import { ContentCache } from "./contentCache";
 import { debug } from "./debug";
 import { DeltaConnection } from "./deltaConnection";
 import { DeltaQueue } from "./deltaQueue";
@@ -50,8 +48,6 @@ const DefaultChunkSize = 16 * 1024;
 
 // This can be anything other than null
 const ImmediateNoOpResponse = "";
-
-const DefaultContentBufferSize = 10;
 
 // Test if we deal with INetworkError / NetworkError object and if it has enough information to make a call.
 // If in doubt, allow retries.
@@ -117,8 +113,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
     private handler: IDeltaHandlerStrategy | undefined;
     private deltaStorageP: Promise<IDocumentDeltaStorageService> | undefined;
-
-    private readonly contentCache = new ContentCache(DefaultContentBufferSize);
 
     private messageBuffer: IDocumentMessage[] = [];
 
@@ -707,10 +701,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             }
         });
 
-        connection.on("op-content", (message: IContentMessage) => {
-            this.contentCache.set(message);
-        });
-
         connection.on("signal", (message: ISignalMessage) => {
             this._inboundSignal.push(message);
         });
@@ -761,7 +751,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         this.processInitialMessages(
             connection.details.initialMessages,
-            connection.details.initialContents,
             connection.details.initialSignals,
             this.connectFirstConnection);
         this.connectFirstConnection = false;
@@ -842,22 +831,15 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
     private processInitialMessages(
             messages: ISequencedDocumentMessage[] | undefined,
-            contents: IContentMessage[] | undefined,
             signals: ISignalMessage[] | undefined,
             firstConnection: boolean): void {
-        this.enqueueInitialOps(messages, contents, firstConnection);
+        this.enqueueInitialOps(messages, firstConnection);
         this.enqueueInitialSignals(signals);
     }
 
     private enqueueInitialOps(
             messages: ISequencedDocumentMessage[] | undefined,
-            contents: IContentMessage[] | undefined,
             firstConnection: boolean): void {
-        if (contents && contents.length > 0) {
-            for (const content of contents) {
-                this.contentCache.set(content);
-            }
-        }
         if (messages && messages.length > 0) {
             this.catchUp(messages, firstConnection ? "InitialOps" : "ReconnectOps");
         }

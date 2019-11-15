@@ -8,7 +8,6 @@ import { debug, IConnect, IConnected } from "@microsoft/fluid-driver-base";
 import {
     ConnectionMode,
     IClient,
-    IContentMessage,
     IDocumentDeltaConnection,
     IDocumentMessage,
     ISequencedDocumentMessage,
@@ -44,7 +43,6 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
         const connection = await new Promise<IConnected>((resolve, reject) => {
             // Listen for ops sent before we receive a response to connect_document
             const queuedMessages: ISequencedDocumentMessage[] = [];
-            const queuedContents: IContentMessage[] = [];
             const queuedSignals: ISignalMessage[] = [];
 
             const earlyOpHandler = (documentId: string, msgs: ISequencedDocumentMessage[]) => {
@@ -52,12 +50,6 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
                 queuedMessages.push(...msgs);
             };
             socket.on("op", earlyOpHandler);
-
-            const earlyContentHandler = (msg: IContentMessage) => {
-                debug("Queued early contents");
-                queuedContents.push(msg);
-            };
-            socket.on("op-content", earlyContentHandler);
 
             const earlySignalHandler = (msg: ISignalMessage) => {
                 debug("Queued early signals");
@@ -72,7 +64,6 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
 
             socket.on("connect_document_success", (response: IConnected) => {
                 socket.removeListener("op", earlyOpHandler);
-                socket.removeListener("op-content", earlyContentHandler);
                 socket.removeListener("signal", earlySignalHandler);
 
                 if (queuedMessages.length > 0) {
@@ -85,19 +76,6 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
                     response.initialMessages.push(...queuedMessages);
 
                     response.initialMessages.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
-                }
-
-                if (queuedContents.length > 0) {
-                    // some contents were queued.
-                    // add them to the list of initialContents to be processed
-                    if (!response.initialContents) {
-                        response.initialContents = [];
-                    }
-
-                    response.initialContents.push(...queuedContents);
-
-                    // tslint:disable max-line-length
-                    response.initialContents.sort((a, b) => (a.clientId === b.clientId) ? 0 : ((a.clientId < b.clientId) ? -1 : 1) || a.clientSequenceNumber - b.clientSequenceNumber);
                 }
 
                 if (queuedSignals.length > 0) {
@@ -152,10 +130,6 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
 
     public get initialMessages(): ISequencedDocumentMessage[] {
         return this.details.initialMessages;
-    }
-
-    public get initialContents(): IContentMessage[] {
-        return this.details.initialContents;
     }
 
     public get initialSignals(): ISignalMessage[] | undefined {
@@ -229,22 +203,6 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
     public submitSignal(message: any): void {
         this.submitManager.add("submitSignal", message);
         this.submitManager.drain();
-    }
-
-    public async submitAsync(messages: IDocumentMessage[]): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
-            this.socket.emit(
-                "submitContent",
-                this.details.clientId,
-                messages,
-                (error) => {
-                    if (error) {
-                        reject();
-                    } else {
-                        resolve();
-                    }
-                });
-        });
     }
 
     public disconnect() {

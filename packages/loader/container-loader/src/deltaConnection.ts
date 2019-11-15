@@ -42,7 +42,7 @@ export class DeltaConnection extends EventEmitter {
     private _nacked = false;
     private _connected = true;
 
-    private readonly forwardEvents = ["op", "op-content", "signal", "error", "pong"];
+    private readonly forwardEvents = ["op", "signal", "error", "pong"];
     private readonly nonForwardEvents = ["nack", "disconnect"];
 
     private constructor(private readonly connection: IDocumentDeltaConnection) {
@@ -53,7 +53,6 @@ export class DeltaConnection extends EventEmitter {
             clientId: connection.clientId,
             existing: connection.existing,
             get initialClients() { return connection.initialClients; },
-            get initialContents() { return connection.initialContents; },
             get initialMessages() { return connection.initialMessages; },
             get initialSignals() { return connection.initialSignals; },
             maxMessageSize: connection.maxMessageSize,
@@ -89,10 +88,6 @@ export class DeltaConnection extends EventEmitter {
         this.connection.submit(messages);
     }
 
-    public async submitAsync(messages: IDocumentMessage[]): Promise<void> {
-        return this.connection.submitAsync(messages);
-    }
-
     public submitSignal(message: any): void {
         return this.connection.submitSignal(message);
     }
@@ -107,7 +102,7 @@ export class DeltaConnection extends EventEmitter {
         // Register for the event on connection
 
         // A number of events that are pass-through.
-        // Note that we delay subscribing to op / op-content / signal on purpose, as
+        // Note that we delay subscribing to op / signal on purpose, as
         // that is used as a signal in DocumentDeltaConnection to know if anyone has subscribed
         // to these events, and thus stop accumulating ops / signals in early handlers.
         if (this.forwardEvents.indexOf(event) !== -1) {
