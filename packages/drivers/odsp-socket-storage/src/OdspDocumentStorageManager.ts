@@ -510,7 +510,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                     break;
 
                 case api.SummaryType.Handle:
-                    id = `${summaryObject.ackedParentHandle}/${prefix}`;
+                    id = `${summaryObject.ackedParentHandle}/${prefix}/${key}`;
 
                     // TODO: SPO will deprecate this soon
                     if (summaryObject.handleType === api.SummaryType.Commit) {
