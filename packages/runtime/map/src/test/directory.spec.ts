@@ -5,10 +5,33 @@
 
 // tslint:disable:no-console
 
-import { MockRuntime } from "@microsoft/fluid-test-runtime-utils";
+import {
+    IBlob,
+    TreeEntry,
+} from "@microsoft/fluid-protocol-definitions";
+import {
+    MockRuntime,
+    MockSharedObjectServices,
+} from "@microsoft/fluid-test-runtime-utils";
+
 import * as assert from "assert";
 import * as map from "../";
-import { IDirectoryDataObject, SharedDirectory } from "../directory";
+import { SharedDirectory } from "../directory";
+
+async function populate(directory: map.ISharedDirectory, content: object) {
+    const storage = new MockSharedObjectServices({
+        header: JSON.stringify(content),
+    });
+    return (directory as SharedDirectory).load("branchId", storage);
+}
+
+function serialize(directory: map.ISharedDirectory): string {
+    const tree = directory.snapshot();
+    assert(tree.entries.length === 1);
+    assert(tree.entries[0].path === "header");
+    assert(tree.entries[0].type === TreeEntry[TreeEntry.Blob]);
+    return (tree.entries[0].value as IBlob).contents;
+}
 
 describe("Routerlicious", () => {
     describe("Directory", () => {
@@ -110,7 +133,7 @@ describe("Routerlicious", () => {
 
         describe(".serialize", () => {
             it("Should serialize an empty directory as a JSON object", () => {
-                const serialized = (testDirectory as SharedDirectory).serialize();
+                const serialized = serialize(testDirectory);
                 assert.equal(serialized, "{}");
             });
 
@@ -121,7 +144,7 @@ describe("Routerlicious", () => {
                 const subMap = mapFactory.create(runtime, "subMap");
                 testDirectory.set("object", subMap.handle);
 
-                const serialized = (testDirectory as SharedDirectory).serialize();
+                const serialized = serialize(testDirectory);
                 // tslint:disable-next-line:max-line-length
                 const expected = `{"storage":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain","value":"sixth"},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"subMap"}}}}`;
                 assert.equal(serialized, expected);
@@ -139,7 +162,7 @@ describe("Routerlicious", () => {
                     .createSubDirectory("nested3")
                     .set("deepKey2", "deepValue2");
 
-                const serialized = (testDirectory as SharedDirectory).serialize();
+                const serialized = serialize(testDirectory);
                 // tslint:disable-next-line:max-line-length
                 const expected = `{"storage":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain","value":"sixth"},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"subMap"}}},"subdirectories":{"nested":{"storage":{"deepKey1":{"type":"Plain","value":"deepValue1"}},"subdirectories":{"nested2":{"subdirectories":{"nested3":{"storage":{"deepKey2":{"type":"Plain","value":"deepValue2"}}}}}}}}}`;
                 assert.equal(serialized, expected);
@@ -160,7 +183,7 @@ describe("Routerlicious", () => {
                     .createSubDirectory("nested3")
                     .set("deepKey2", "deepValue2");
 
-                const serialized = (testDirectory as SharedDirectory).serialize();
+                const serialized = serialize(testDirectory);
                 // tslint:disable-next-line:max-line-length
                 const expected = `{"storage":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain"},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"subMap"}}},"subdirectories":{"nested":{"storage":{"deepKey1":{"type":"Plain","value":"deepValue1"},"deepKeyUndefined":{"type":"Plain"}},"subdirectories":{"nested2":{"subdirectories":{"nested3":{"storage":{"deepKey2":{"type":"Plain","value":"deepValue2"}}}}}}}}}`;
                 assert.equal(serialized, expected);
@@ -169,7 +192,7 @@ describe("Routerlicious", () => {
 
         describe(".populate", () => {
             it("Should populate the directory from an empty JSON object", async () => {
-                (testDirectory as SharedDirectory).populate(JSON.parse("{}") as IDirectoryDataObject);
+                await populate(testDirectory, {});
                 assert.equal(testDirectory.size, 0, "Failed to initialize to empty directory storage");
                 testDirectory.set("testKey", "testValue");
                 assert.equal(testDirectory.get("testKey"), "testValue", "Failed to set testKey");
@@ -182,9 +205,40 @@ describe("Routerlicious", () => {
             });
 
             it("Should populate the directory from a basic JSON object", async () => {
-                // tslint:disable-next-line:max-line-length
-                const jsonValue = `{"storage":{"testKey":{"type":"Plain","value":"testValue4"},"testKey2":{"type":"Plain","value":"testValue5"}},"subdirectories":{"foo":{"storage":{"testKey":{"type":"Plain","value":"testValue"},"testKey2":{"type":"Plain","value":"testValue2"}}},"bar":{"storage":{"testKey3":{"type":"Plain","value":"testValue3"}}}}}`;
-                (testDirectory as SharedDirectory).populate(JSON.parse(jsonValue) as IDirectoryDataObject);
+                await populate(testDirectory, {
+                    storage: {
+                        testKey: {
+                            type: "Plain",
+                            value: "testValue4",
+                        },
+                        testKey2: {
+                            type: "Plain",
+                            value: "testValue5",
+                        },
+                    },
+                    subdirectories: {
+                        foo: {
+                            storage: {
+                                testKey: {
+                                    type: "Plain",
+                                    value: "testValue",
+                                },
+                                testKey2: {
+                                    type: "Plain",
+                                    value: "testValue2",
+                                },
+                            },
+                        },
+                        bar: {
+                            storage: {
+                                testKey3: {
+                                    type: "Plain",
+                                    value: "testValue3",
+                                },
+                            },
+                        },
+                    },
+                });
                 assert.equal(testDirectory.size, 2, "Failed to initialize directory storage correctly");
                 assert.equal(testDirectory.getWorkingDirectory("/foo").get("testKey"), "testValue");
                 assert.equal(testDirectory.getWorkingDirectory("foo").get("testKey2"), "testValue2");
@@ -203,8 +257,38 @@ describe("Routerlicious", () => {
 
             it("Should populate the directory with undefined values", async () => {
                 // tslint:disable-next-line:max-line-length
-                const jsonValue = `{"storage":{"testKey":{"type":"Plain","value":"testValue4"},"testKey2":{"type":"Plain"}},"subdirectories":{"foo":{"storage":{"testKey":{"type":"Plain","value":"testValue"},"testKey2":{"type":"Plain"}}},"bar":{"storage":{"testKey3":{"type":"Plain","value":"testValue3"}}}}}`;
-                (testDirectory as SharedDirectory).populate(JSON.parse(jsonValue) as IDirectoryDataObject);
+                await populate(testDirectory, {
+                    storage: {
+                        testKey: {
+                            type: "Plain",
+                            value: "testValue4",
+                        },
+                        testKey2: {
+                            type: "Plain",
+                        },
+                    },
+                    subdirectories: {
+                            foo: {
+                                storage: {
+                                    testKey: {
+                                        type: "Plain",
+                                        value: "testValue",
+                                    },
+                                    testKey2: {
+                                        type: "Plain",
+                                    },
+                                },
+                            },
+                            bar: {
+                                storage: {
+                                    testKey3: {
+                                        type: "Plain",
+                                        value: "testValue3",
+                                    },
+                                },
+                            },
+                        },
+                    });
                 assert.equal(testDirectory.size, 2, "Failed to initialize directory storage correctly");
                 assert.equal(testDirectory.getWorkingDirectory("/foo").get("testKey"), "testValue");
                 assert.equal(testDirectory.getWorkingDirectory("foo").get("testKey2"), undefined);
@@ -221,6 +305,36 @@ describe("Routerlicious", () => {
                     "newSubValue",
                     "Failed to set testSubKey",
                 );
+            });
+
+            it.skip("Should populate, serialize and de-serialize directory with long property values", async () => {
+                // 40K word
+                let longWord = "0123456789";
+                for (let i = 0; i < 12; i++) {
+                    longWord = longWord + longWord;
+                }
+                const logWord2 = `${longWord}_2`;
+
+                testDirectory.set("first", "second");
+                testDirectory.set("long1", longWord);
+                const nestedDirectory = testDirectory.createSubDirectory("nested");
+                nestedDirectory.set("deepKey1", "deepValue1");
+                nestedDirectory.set("long2", logWord2);
+
+                const tree = testDirectory.snapshot();
+                assert(tree.entries.length === 3);
+                assert(tree.entries[0].path === "blob0");
+                assert(tree.entries[1].path === "blob1");
+                assert(tree.entries[2].path === "header");
+
+                const testDirectory2 = directoryFactory.create(runtime, "test");
+                const storage = MockSharedObjectServices.createFromTree(tree);
+                await (testDirectory2 as SharedDirectory).load("branchId", storage);
+
+                assert.equal(testDirectory.get("first"), "second");
+                assert.equal(testDirectory.get("long1"), longWord);
+                assert.equal(testDirectory.getWorkingDirectory("/nested").get("deepKey1"), "deepValue1");
+                assert.equal(testDirectory.getWorkingDirectory("/nested").get("long2"), logWord2);
             });
         });
 

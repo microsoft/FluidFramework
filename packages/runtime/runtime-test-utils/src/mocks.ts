@@ -26,10 +26,13 @@ import {
 } from "@microsoft/fluid-core-utils";
 import * as git from "@microsoft/fluid-gitresources";
 import {
+    IBlob,
     IDocumentMessage,
     ISequencedDocumentMessage,
+    ITree,
     ITreeEntry,
     MessageType,
+    TreeEntry,
 } from "@microsoft/fluid-protocol-definitions";
 import {
     IChannel,
@@ -472,6 +475,15 @@ export class MockObjectStorageService implements IObjectStorageService {
  * Mock implementation of ISharedObjectServices
  */
 export class MockSharedObjectServices implements ISharedObjectServices {
+    public static createFromTree(tree: ITree) {
+        const contents: {[key: string]: string} = {};
+        for (const entry of tree.entries) {
+            assert(entry.type === TreeEntry[TreeEntry.Blob]);
+            contents[entry.path] = (entry.value as IBlob).contents;
+        }
+        return new MockSharedObjectServices(contents);
+    }
+
     public deltaConnection = new MockEmptyDeltaConnection();
     public objectStorage: MockObjectStorageService;
 
