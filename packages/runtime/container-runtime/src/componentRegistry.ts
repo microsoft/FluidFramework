@@ -9,7 +9,7 @@ import {
 } from "@microsoft/fluid-runtime-definitions";
 
 /**
- * If there is no entry in the ComponentRegisty for the name provided name
+ * If there is no entry in the ComponentRegisty for the provided name
  * the ComponentRegisty will attempt to get the FallbackComponentRegistryName. If an entry
  * exists in the ComponentRegisty with FallbackComponentRegistryName and that entry is an
  * IComponentRegistry the get call to the original ComponentRegisty will be forwared
