@@ -89,26 +89,26 @@ interface ISummaryTreeWithStats {
 }
 
 export interface IGeneratedSummaryData {
-    summaryStats: ISummaryStats;
-    getVersionDuration?: number;
-    generateDuration?: number;
+    readonly summaryStats: ISummaryStats;
+    readonly getVersionDuration?: number;
+    readonly generateDuration?: number;
 }
 
 export interface IUploadedSummaryData {
-    handle: string;
-    uploadDuration?: number;
+    readonly handle: string;
+    readonly uploadDuration?: number;
 }
 
 export interface IUnsubmittedSummaryData extends Partial<IGeneratedSummaryData>, Partial<IUploadedSummaryData> {
-    referenceSequenceNumber: number;
-    submitted: false;
+    readonly referenceSequenceNumber: number;
+    readonly submitted: false;
 }
 
 export interface ISubmittedSummaryData extends IGeneratedSummaryData, IUploadedSummaryData {
-    referenceSequenceNumber: number;
-    submitted: true;
-    clientSequenceNumber: number;
-    submitOpDuration?: number;
+    readonly referenceSequenceNumber: number;
+    readonly submitted: true;
+    readonly clientSequenceNumber: number;
+    readonly submitOpDuration?: number;
 }
 
 export type GenerateSummaryData = IUnsubmittedSummaryData | ISubmittedSummaryData;

@@ -480,7 +480,7 @@ export class RunningSummarizer implements IDisposable {
             opsSinceLastSummary: summaryData.referenceSequenceNumber - this.heuristics.lastAcked.refSequenceNumber,
         };
         telemetryProps.summaryStats = undefined;
-        summaryData.referenceSequenceNumber = undefined;
+        telemetryProps.referenceSequenceNumber = undefined;
 
         if (summaryData.submitted) {
             summarizingEvent.end(telemetryProps);
