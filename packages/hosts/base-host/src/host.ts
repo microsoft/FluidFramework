@@ -61,8 +61,6 @@ async function initializeChaincode(document: Container, pkg?: IFluidCodeDetails)
 
     // And then make the proposal if a code proposal has not yet been made
     if (!quorum.has("code")) {
-        // We propose both code and code2. code2 is the legacy format of just a string. code is the new object
-        // based format.
         await quorum.propose("code", pkg);
     }
 
