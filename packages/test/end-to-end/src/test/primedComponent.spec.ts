@@ -26,7 +26,7 @@ describe("PrimedComponent", () => {
         beforeEach(async () => {
             const factory = new PrimedComponentFactory(Component, []);
             host = new TestHost([
-                [PrimiedType, Promise.resolve(factory)],
+                [PrimedType, Promise.resolve(factory)],
             ]);
             component = await host.createAndAttachComponent(componentId, PrimedType);
         });
