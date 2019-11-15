@@ -6,7 +6,6 @@
 import {
     ConnectionMode,
     IClientDetails,
-    IContentMessage,
     ISequencedDocumentMessage,
     IServiceConfiguration,
     ISignalClient,
@@ -26,7 +25,6 @@ export interface IConnectionDetails {
     version: string;
     initialClients?: ISignalClient[];
     initialMessages?: ISequencedDocumentMessage[];
-    initialContents?: IContentMessage[];
     initialSignals?: ISignalMessage[];
     maxMessageSize: number;
     serviceConfiguration: IServiceConfiguration;

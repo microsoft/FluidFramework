@@ -7,7 +7,6 @@ import { Deferred } from "@microsoft/fluid-core-utils";
 import { IConnected } from "@microsoft/fluid-driver-base";
 import {
     ConnectionMode,
-    IContentMessage,
     IDocumentDeltaConnection,
     IDocumentMessage,
     ISequencedDocumentMessage,
@@ -123,15 +122,6 @@ export class InnerDocumentDeltaConnection extends EventEmitter implements IDocum
     }
 
     /**
-     * Get contents sent during the connection
-     *
-     * @returns contents sent during the connection
-     */
-    public get initialContents(): IContentMessage[] | undefined {
-        return this.details.initialContents;
-    }
-
-    /**
      * Get signals sent during the connection
      *
      * @returns signals sent during the connection
@@ -202,15 +192,6 @@ export class InnerDocumentDeltaConnection extends EventEmitter implements IDocum
     public submit(messages: IDocumentMessage[]): void {
         // tslint:disable-next-line: no-floating-promises
         this.outerProxy.submit(messages);
-    }
-
-    /**
-     * Submits a new message to the server without queueing
-     *
-     * @param message - message to submit
-     */
-    public async submitAsync(messages: IDocumentMessage[]): Promise < void > {
-        return this.outerProxy.submit(messages);
     }
 
     /**
