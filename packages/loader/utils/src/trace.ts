@@ -16,7 +16,7 @@ export class Trace {
     }
 
     protected lastTick: number;
-    protected constructor(protected readonly startTick: number) {
+    protected constructor(public readonly startTick: number) {
         this.lastTick = startTick;
     }
 
