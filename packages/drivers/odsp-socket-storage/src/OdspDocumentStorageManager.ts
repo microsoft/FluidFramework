@@ -481,7 +481,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
     /**
      * Converts a summary tree to ODSP tree
      */
-    private convertSummaryToSnapshotTree(tree: api.ISummaryTree, prefix = "", depth: number = 0): ISnapshotTree {
+    private convertSummaryToSnapshotTree(tree: api.ISummaryTree, prefix?: string, depth: number = 0): ISnapshotTree {
         const snapshotTree: ISnapshotTree = {
             entries: [],
         }!;
@@ -495,7 +495,8 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
             switch (summaryObject.type) {
                 case api.SummaryType.Tree:
-                    value = this.convertSummaryToSnapshotTree(summaryObject, `${prefix}/${key}`, depth + 1);
+                    const path = prefix ? `${prefix}/${key}` : key;
+                    value = this.convertSummaryToSnapshotTree(summaryObject, path, depth + 1);
                     break;
 
                 case api.SummaryType.Blob:
