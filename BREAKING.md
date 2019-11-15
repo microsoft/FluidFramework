@@ -897,20 +897,3 @@ This package no longer houses interface definitions, but rather has the base cla
 ## Rename IDistributedObjectServices
 Renaming for consistency with the rest of the runtime:
   `IDistributedObjectServices` -> `ISharedObjectServices`
-
-
-The following interfaces have moved:
-
-`IComponent`
-`IComponentLoadable`
-`IComponentRunnable`
-`ISharedComponent`
-`IComponentConfiguration`
-`IComponentTokenProvider`
-`IComponentRouter`
-`IComponentHTMLRender`
-`IComponentHTMLVisual`
-`IComponentHTMLView`
-`IComponentHTMLOptions`
-`IRequest`
-`IResponse`
