@@ -8,7 +8,14 @@ import {
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
 
-export const DefaultComponentEntryName = "__DEFAULT_COMPONENT_REGISTRY_ENTRY__";
+/**
+ * If there is no entry in the ComponentRegisty for the name provided name
+ * the ComponentRegisty will attempt to get the FallbackComponentRegistryName. If an entry
+ * exists in the ComponentRegisty with FallbackComponentRegistryName and that entry is an
+ * IComponentRegistry the get call to the original ComponentRegisty will be forwared
+ * to the IComponentRegistry at the FallbackComponentRegistryName
+ */
+export const FallbackComponentRegistryName = "__FALLBACK_COMPONENT_REGISTRY__";
 
 export class ComponentRegistry implements IComponentRegistry {
 
@@ -17,7 +24,6 @@ export class ComponentRegistry implements IComponentRegistry {
     public get IComponentRegistry() { return this; }
 
     constructor(namedEntries: NamedComponentRegistryEntries) {
-
         this.map = new Map(namedEntries);
     }
 
@@ -25,8 +31,12 @@ export class ComponentRegistry implements IComponentRegistry {
 
         if (this.map.has(name)) {
             return this.map.get(name);
-        } else if (this.map.has(DefaultComponentEntryName)) {
-            return this.map.get(DefaultComponentEntryName);
+        }
+        if (this.map.has(FallbackComponentRegistryName)) {
+            const maybeFallbackRegistry = await this.map.get(FallbackComponentRegistryName);
+            if (maybeFallbackRegistry.IComponentRegistry !== undefined) {
+                return maybeFallbackRegistry.IComponentRegistry.get(name);
+            }
         }
 
         return undefined;
