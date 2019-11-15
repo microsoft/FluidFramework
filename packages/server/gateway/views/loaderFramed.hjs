@@ -1,94 +1,53 @@
-{{<layout}}
-
-{{$content}}
-    <div id="content"></div>
-    <iframe style="width:100%;height:100%;" id="ifr" sandbox="allow-scripts" srcdoc='
-        <html>
-    <head>
-    <script src="{{#hfurl}}/public/scripts/dist/controllers.js{{/hfurl}}"></script>
-    </head>
-    <body>
-        <div style="height:100vh" id="content"></div>
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="{{#hfurl}}/public/scripts/dist/loaderFramed.js{{/hfurl}}"></script>
+</head>
+<body>
+    <div style="height:100vh" id="content"></div>
+    {{#scripts}}
         {{#scripts}}
-            {{#scripts}}
-            <script id="{{id}}" src="{{url}}" async></script>
-            {{/scripts}}
+        <script id="{{id}}" src="{{url}}" async></script>
         {{/scripts}}
-        <script type="text/javascript">
-        
+    {{/scripts}}
+    <script type="text/javascript">
+    
+    {{#scripts}}
+    var scriptIds = [
         {{#scripts}}
-        var scriptIds = [
-            {{#scripts}}
-            "{{id}}",
-            {{/scripts}}
-        ];
+        "{{id}}",
         {{/scripts}}
-        {{^scripts}}
-        var scriptIds = [];
-        {{/scripts}}
+    ];
+    {{/scripts}}
+    {{^scripts}}
+    var scriptIds = [];
+    {{/scripts}}
 
-        var cache = {{{ cache }}};
-        var timings = "{{ timings }}";
-        {{#chaincode}}
-        var chaincode = {{{ chaincode }}};
-        {{/chaincode}}
-        {{^chaincode}}
-        var chaincode;
-        {{/chaincode}}
-        var url = "{{ url }}";
-        var resolved = {{{ resolved }}};
-        var jwt = "";
-        var config = {{{ config }}};
-        var clientId = "{{ clientId }}";
+    var cache = {{{ cache }}};
+    var timings = "{{ timings }}";
+    {{#chaincode}}
+    var chaincode = {{{ chaincode }}};
+    {{/chaincode}}
+    {{^chaincode}}
+    var chaincode;
+    {{/chaincode}}
+    var url = "{{ url }}";
+    var resolved = {{{ resolved }}};
+    var jwt = "";
+    var npm = "{{ npm }}";
+    var config = {{{ config }}};
+    var clientId = "{{ clientId }}";
 
-        controllers.loaderFramed.initialize(
-            window.location.href,
-            resolved,
-            cache,
-            chaincode,
-            scriptIds,
-            jwt,
-            config,
-            clientId,
-            {},
-            true,
-            false);
-        </script>
-
-    </body>
-    </html>
-    '></iframe>
-{{/content}}
-
-{{$scripts}}
-
-    <script>
-        var cache = {{{ cache }}};
-        var timings = "{{ timings }}";
-        {{#chaincode}}
-        var chaincode = {{{ chaincode }}};
-        {{/chaincode}}
-        {{^chaincode}}
-        var chaincode;
-        {{/chaincode}}
-        var url = "{{ url }}";
-        var resolved = {{{ resolved }}};
-        var jwt = "{{ jwt }}";
-        var config = {{{ config }}};
-        var clientId = "{{ clientId }}";
-
-        var scriptIds = [];
-  
-        controllers.loaderFramed.initialize(
-            window.location.href,
-            resolved,
-            cache,
-            chaincode,
-            scriptIds,
-            jwt,
-            config,
-            clientId);
+    loaderFramed.initialize(
+        window.location.href,
+        resolved,
+        chaincode,
+        scriptIds,
+        config,
+        clientId,
+        {},
+        );
     </script>
-{{/scripts}}
 
-{{/layout}}
+</body>
+</html>
