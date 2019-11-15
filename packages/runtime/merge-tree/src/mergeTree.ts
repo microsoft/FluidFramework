@@ -3186,9 +3186,8 @@ export class MergeTree {
         return go;
     }
 
-    // Invokes the leaf action for all segments.  `refSeq` and `clientId` are passed through
-    // to the leaf action, but are not used to prune the walk (i.e., *all* segments are visited
-    // regardless of if they would be visible to the given `clientId` and `refSeq`).
+    // Invokes the leaf action for all segments.  Note that *all* segments are visited
+    // regardless of if they would be visible to the current `clientId` and `refSeq`.
     walkAllSegments<TClientData>(
         block: IMergeBlock,
         action: (segment: ISegment, accum?: TClientData) => boolean,
