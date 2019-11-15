@@ -68,12 +68,15 @@ describe("Runtime", () => {
                             }
                             return {
                                 referenceSequenceNumber: lastRefSeq,
-                                clientSequenceNumber: lastClientSeq,
                                 submitted: true,
-                                treeNodeCount: 0,
-                                blobNodeCount: 0,
-                                handleNodeCount: 0,
-                                totalBlobSize: 0,
+                                summaryStats: {
+                                    treeNodeCount: 0,
+                                    blobNodeCount: 0,
+                                    handleNodeCount: 0,
+                                    totalBlobSize: 0,
+                                },
+                                handle: "test-handle",
+                                clientSequenceNumber: lastClientSeq,
                             };
                         },
                         async () => { refreshBaseSummaryDeferred.resolve(); },
