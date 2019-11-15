@@ -23,17 +23,9 @@ describe("SharedString Snapshot Version", () => {
         filebase = path.join(__dirname, "../../src/test/sequenceTestSnapshot");
     });
 
-    // TODO: Remove 'newFormat' arg once new snapshot format is adopted as default.
-    //       (See https://github.com/microsoft/FluidFramework/issues/84)
-    function getFilename(i: number, newFormat: boolean) {
-        return `${filebase}${i + 1}${newFormat ? "-new" : ""}.json`;
-    }
-
-    // TODO: Remove 'newFormat' arg once new snapshot format is adopted as default.
-    //       (See https://github.com/microsoft/FluidFramework/issues/84)
-    function generateSnapshotRebuildTest(testString: SharedString, i: number, newFormat: boolean) {
+    function generateSnapshotRebuildTest(testString: SharedString, i: number) {
         it(`string ${i + 1}`, async () => {
-            const filename = getFilename(i, newFormat);
+            const filename = `${filebase}${i + 1}.json`;
             assert(fs.existsSync(filename), `test snapshot file does not exist: ${filename}`);
             const data = fs.readFileSync(filename, "utf8");
             const oldsnap = JSON.parse(data);
@@ -46,15 +38,12 @@ describe("SharedString Snapshot Version", () => {
             // load snapshot into sharedString
             const documentId = "fakeId";
             const runtime = new mocks.MockRuntime();
-
-            if (newFormat) {
-                runtime.options.newMergeTreeSnapshotFormat = newFormat;
-            }
             const deltaConnectionFactory = new mocks.MockDeltaConnectionFactory();
 
             const services = {
                 // deltaConnection: new mocks.MockDeltaConnection(runtime),
                 deltaConnection: deltaConnectionFactory.createDeltaConnection(runtime),
+
                 objectStorage: historian,
             };
             const sharedString = new SharedString(runtime, documentId);
@@ -92,13 +81,8 @@ describe("SharedString Snapshot Version", () => {
     function generateSnapshotRebuildTests() {
         describe("Snapshot rebuild", () => {
             let index = 0;
-            for (const str of generateStrings(false)) {
-                generateSnapshotRebuildTest(str, index, /* newFormat: */ false);
-                index++;
-            }
-            index = 0;
-            for (const str of generateStrings(true)) {
-                generateSnapshotRebuildTest(str, index, /* newFormat: */ true);
+            for (const str of generateStrings()) {
+                generateSnapshotRebuildTest(str, index);
                 index++;
             }
         });
@@ -106,9 +90,9 @@ describe("SharedString Snapshot Version", () => {
     // tslint:disable-next-line:mocha-no-side-effect-code
     generateSnapshotRebuildTests();
 
-    function generateSnapshotDiffTest(testString: SharedString, i: number, newFormat: boolean) {
+    function generateSnapshotDiffTest(testString: SharedString, i: number) {
         it(`string ${i + 1}`, async () => {
-            const filename = getFilename(i, newFormat);
+            const filename = `${filebase}${i + 1}.json`;
             assert(fs.existsSync(filename), `test snapshot file does not exist: ${filename}`);
             const data = fs.readFileSync(filename, "utf8");
             const testData = JSON.stringify(testString.snapshot());
@@ -121,13 +105,8 @@ describe("SharedString Snapshot Version", () => {
     function generateSnapshotDiffTests() {
         describe("Snapshot diff", () => {
             let index = 0;
-            for (const str of generateStrings(false)) {
-                generateSnapshotDiffTest(str, index, /* newFormat: */ false);
-                index++;
-            }
-            index = 0;
-            for (const str of generateStrings(true)) {
-                generateSnapshotDiffTest(str, index, /* newFormat: */ true);
+            for (const str of generateStrings()) {
+                generateSnapshotDiffTest(str, index);
                 index++;
             }
         });

@@ -3,24 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { SnapshotLegacy } from "@microsoft/fluid-merge-tree";
+import { SnapshotLegacy as Snapshot } from "@microsoft/fluid-merge-tree";
 import * as mocks from "@microsoft/fluid-test-runtime-utils";
 import { SharedString } from "../sharedString";
 
-// TODO: Remove 'newFormat' arg once new snapshot format is adopted as default.
-//       (See https://github.com/microsoft/FluidFramework/issues/84)
-export function* generateStrings(newFormat: boolean) {
+export function* generateStrings() {
     const documentId = "fakeId";
     const runtime: mocks.MockRuntime = new mocks.MockRuntime();
-    if (newFormat) {
-        runtime.options.newMergeTreeSnapshotFormat = newFormat;
-    }
     const insertText = "text";
 
     let sharedString = new SharedString(runtime, documentId);
     sharedString.initializeLocal();
     // small enough so snapshot won't have body
-    for (let i = 0; i < (SnapshotLegacy.sizeOfFirstChunk / insertText.length) / 2; ++i) {
+    for (let i = 0; i < (Snapshot.sizeOfFirstChunk / insertText.length) / 2; ++i) {
         sharedString.insertText(0, `${insertText}${i}`);
     }
 
@@ -29,7 +24,7 @@ export function* generateStrings(newFormat: boolean) {
     sharedString = new SharedString(runtime, documentId);
     sharedString.initializeLocal();
     // big enough that snapshot will have body
-    for (let i = 0; i < (SnapshotLegacy.sizeOfFirstChunk / insertText.length) * 2; ++i) {
+    for (let i = 0; i < (Snapshot.sizeOfFirstChunk / insertText.length) * 2; ++i) {
         sharedString.insertText(0, `${insertText}${i}`);
     }
 
@@ -38,7 +33,7 @@ export function* generateStrings(newFormat: boolean) {
     sharedString = new SharedString(runtime, documentId);
     sharedString.initializeLocal();
     // very big sharedString
-    for (let i = 0; i < SnapshotLegacy.sizeOfFirstChunk; ++i) {
+    for (let i = 0; i < Snapshot.sizeOfFirstChunk; ++i) {
         sharedString.insertText(0, `${insertText}-${i}`);
     }
 
@@ -47,7 +42,7 @@ export function* generateStrings(newFormat: boolean) {
     sharedString = new SharedString(runtime, documentId);
     sharedString.initializeLocal();
     // sharedString with markers
-    for (let i = 0; i < (SnapshotLegacy.sizeOfFirstChunk / insertText.length) * 2; ++i) {
+    for (let i = 0; i < (Snapshot.sizeOfFirstChunk / insertText.length) * 2; ++i) {
         sharedString.insertText(0, `${insertText}${i}`);
     }
     for (let i = 0; i < sharedString.getLength(); i += 70) {
@@ -64,7 +59,7 @@ export function* generateStrings(newFormat: boolean) {
     sharedString = new SharedString(runtime, documentId);
     sharedString.initializeLocal();
     // sharedString with annotations
-    for (let i = 0; i < (SnapshotLegacy.sizeOfFirstChunk / insertText.length) * 2; ++i) {
+    for (let i = 0; i < (Snapshot.sizeOfFirstChunk / insertText.length) * 2; ++i) {
         sharedString.insertText(0, `${insertText}${i}`);
     }
     for (let i = 0; i < sharedString.getLength(); i += 70) {
