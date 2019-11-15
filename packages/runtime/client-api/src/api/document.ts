@@ -10,7 +10,7 @@ import { Container, Loader } from "@microsoft/fluid-container-loader";
 import { IContainerRuntimeOptions } from "@microsoft/fluid-container-runtime";
 import { Deferred } from "@microsoft/fluid-core-utils";
 import * as ink from "@microsoft/fluid-ink";
-import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
+import { ISharedDirectory, ISharedMap, SharedDirectory, SharedMap } from "@microsoft/fluid-map";
 import {
     IDocumentMessage,
     IDocumentServiceFactory,
@@ -130,6 +130,13 @@ export class Document extends EventEmitter {
      */
     public createMap(): ISharedMap {
         return SharedMap.create(this.runtime);
+    }
+
+    /**
+     * Creates a new shared directory
+     */
+    public createDirectory(): ISharedDirectory {
+        return SharedDirectory.create(this.runtime);
     }
 
     /**
