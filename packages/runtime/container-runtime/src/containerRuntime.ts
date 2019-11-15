@@ -672,7 +672,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
         // Iterate over each component and ask it to snapshot
         const componentVersionsP = Array.from(this.contexts).map(async ([componentId, value]) => {
-            const snapshot = await value.snapshot();
+            const snapshot = await value.snapshot(fullTree);
 
             // If ID exists then previous commit is still valid
             const commit = tree.commits[componentId] as string;
