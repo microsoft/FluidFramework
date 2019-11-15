@@ -13,18 +13,18 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "MergeTree Tests",
-            "cwd": "${workspaceFolder}/packages/runtime/merge-tree",
+            "name": "SourceDocument Tests",
+            "cwd": "${workspaceFolder}/packages/components/source-document",
             "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
             "args": [
                 "-r",
                 "ts-node/register",
                 "--no-timeouts",
-                // "src/test/**/*.spec.ts",
-                "src/test/**/snapshot.spec.ts",
+                "test/**/*.spec.ts",
                 "--exit"
             ],
             "env": {
+                // "DEBUG": "flow:*",
                 "TS_NODE_PROJECT": "tsconfig.json",
             },
             "console": "integratedTerminal",
