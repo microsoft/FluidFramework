@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { default as fetch } from "node-fetch";
+import { default as fetch, RequestInfo as FetchRequestInfo, RequestInit as FetchRequestInit } from "node-fetch";
 
 /**
  * Provides exponential backup functionality.
@@ -88,7 +88,8 @@ function fetchWithRetryImpl(
     retryPolicy: IRetryPolicy,
     tries: Response[],
 ): Promise<IFetchWithRetryResponse> {
-    const promiseArr = [fetch(requestInfo, requestInit)];
+    // node-fetch and dom has conflicting typing, force them to work by casting for now
+    const promiseArr = [fetch(requestInfo as FetchRequestInfo, requestInit as FetchRequestInit) as any as Promise<Response>];
     if (retryPolicy.timeoutMs) {
         const timeoutPromise = delay(retryPolicy.timeoutMs).then(() => {
             // tslint:disable-next-line: no-object-literal-type-assertion
