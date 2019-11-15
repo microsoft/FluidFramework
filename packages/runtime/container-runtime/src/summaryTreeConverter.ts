@@ -6,6 +6,7 @@
 import {
     IBlob,
     ISummaryBlob,
+    ISummaryContext,
     ISummaryTree,
     ITree,
     SummaryObject,
@@ -27,10 +28,15 @@ export interface IConvertedSummaryResults {
 }
 
 export class SummaryTreeConverter {
-    public convertToSummaryTree(snapshot: ITree, fullTree: boolean = false): IConvertedSummaryResults {
+    public convertToSummaryTree(
+        snapshot: ITree,
+        summaryContext: ISummaryContext,
+        fullTree: boolean = false,
+    ): IConvertedSummaryResults {
         const summaryStats = this.mergeStats();
         const summaryTree = this.convertToSummaryTreeCore(
             snapshot,
+            summaryContext,
             summaryStats,
             fullTree);
 
@@ -56,13 +62,15 @@ export class SummaryTreeConverter {
 
     protected convertToSummaryTreeCore(
         snapshot: ITree,
+        summaryContext: ISummaryContext,
         summaryStats: ISummaryStats,
         fullTree: boolean = false,
     ): SummaryTree {
         if (snapshot.id && !fullTree) {
             summaryStats.handleNodeCount++;
             return {
-                handle: snapshot.id,
+                parentHandle: summaryContext.proposedParentHandle || summaryContext.ackedParentHandle,
+                ackedParentHandle: summaryContext.ackedParentHandle,
                 handleType: SummaryType.Tree,
                 type: SummaryType.Handle,
             };
@@ -96,6 +104,7 @@ export class SummaryTreeConverter {
                     case TreeEntry[TreeEntry.Tree]:
                         value = this.convertToSummaryTreeCore(
                             entry.value as ITree,
+                            summaryContext,
                             summaryStats,
                             fullTree);
                         break;
@@ -105,6 +114,7 @@ export class SummaryTreeConverter {
                         // when snapshotting the commits become strings not ITrees
                         value = this.convertToSummaryTreeCore(
                             entry.value as ITree,
+                            summaryContext,
                             summaryStats,
                             fullTree);
                         break;

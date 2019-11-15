@@ -33,8 +33,11 @@ export interface ISummaryHandle {
 
     handleType: SummaryType;
 
-    // Stored handle reference
-    handle: string;
+    // handle to a previous summary
+    parentHandle: string;
+
+    // handle to a previous acked summary
+    ackedParentHandle?: string;
 }
 
 export interface ISummaryBlob {

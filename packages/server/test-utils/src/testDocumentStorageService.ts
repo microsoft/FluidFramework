@@ -34,7 +34,7 @@ export class TestDocumentStorageService implements api.IDocumentStorageService  
         return null;
     }
 
-    public uploadSummary(commit: api.ISummaryTree): Promise<api.ISummaryHandle> {
+    public uploadSummary(commit: api.ISummaryTree): Promise<string> {
         return Promise.reject("Not implemented");
     }
 

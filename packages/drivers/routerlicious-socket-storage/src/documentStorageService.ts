@@ -10,7 +10,6 @@ import {
     ICreateBlobResponse,
     IDocumentStorageService,
     ISnapshotTree,
-    ISummaryContext,
     ISummaryHandle,
     ISummaryTree,
     ITree,
@@ -77,17 +76,11 @@ export class DocumentStorageService implements IDocumentStorageService  {
         return commit.then((c) => ({date: c.committer.date, id: c.sha, treeId: c.tree.sha}));
     }
 
-    public async uploadSummary(commit: ISummaryTree, context: ISummaryContext): Promise<ISummaryHandle> {
-        const cacheKey = context.proposedParentHandle || context.ackedParentHandle;
-        const parentMap = cacheKey ? (await this.cache.get(cacheKey)) : undefined;
+    public async uploadSummary(commit: ISummaryTree): Promise<string> {
         const newCache = new Map<string, string>();
-        const handle = await this.writeSummaryObject(commit, parentMap, newCache, [], "");
+        const handle = await this.writeSummaryObject(commit, newCache, [], "");
         this.cache.set(handle, Promise.resolve(newCache));
-        return {
-            handle,
-            handleType: SummaryType.Tree,
-            type: SummaryType.Handle,
-        };
+        return handle;
     }
 
     public downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {
@@ -105,7 +98,6 @@ export class DocumentStorageService implements IDocumentStorageService  {
 
     private async writeSummaryObject(
         value: SummaryObject,
-        parentCache: Map<string, string> | undefined,
         newCache: Map<string, string>,
         submodule: { path: string; sha: string }[],
         path: string,
@@ -120,7 +112,6 @@ export class DocumentStorageService implements IDocumentStorageService  {
             case SummaryType.Commit:
                 const commitTreeHandle = await this.writeSummaryObject(
                     value.tree,
-                    parentCache,
                     newCache,
                     submodule,
                     path);
@@ -136,12 +127,12 @@ export class DocumentStorageService implements IDocumentStorageService  {
                 return newCommit.sha;
 
             case SummaryType.Handle:
+                const parentCache = await this.cache.get(value.parentHandle);
                 const parentHash = parentCache ? parentCache.get(path) : undefined;
                 if (!parentHash) {
                     throw Error("Parent summary should be cached if handle is provided.");
                 }
-                newCache.set(path, parentHash);
-                return value.handle;
+                return parentHash;
 
             case SummaryType.Tree:
                 const fullTree = value.tree;
@@ -149,7 +140,6 @@ export class DocumentStorageService implements IDocumentStorageService  {
                     const entry = fullTree[key];
                     const pathHandle = await this.writeSummaryObject(
                         entry,
-                        parentCache,
                         newCache,
                         submodule,
                         `${path}/${encodeURIComponent(key)}`);

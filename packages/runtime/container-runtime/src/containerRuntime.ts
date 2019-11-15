@@ -962,6 +962,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             const snapshot = await value.snapshot(fullTree);
             const treeWithStats = this.summaryTreeConverter.convertToSummaryTree(
                 snapshot,
+                this.latestSummary.context,
                 fullTree);
             summaryTree.tree[key] = treeWithStats.summaryTree;
             summaryStats = this.summaryTreeConverter.mergeStats(summaryStats, treeWithStats.summaryStats);
@@ -1109,12 +1110,10 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                 generateSummaryEvent.cancel({reason: "disconnected"});
                 return ret;
             }
-            const handle = await this.context.storage.uploadSummary(
-                treeWithStats.summaryTree,
-                this.latestSummary.context);
+            const handle = await this.context.storage.uploadSummary(treeWithStats.summaryTree);
             const parent = this.latestSummary.context.ackedParentHandle;
             const summaryMessage: ISummaryContent = {
-                handle: handle.handle,
+                handle,
                 head: parent,
                 message,
                 parents: parent ? [parent] : [],
@@ -1133,7 +1132,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             generateSummaryEvent.end({
                 sequenceNumber,
                 submitted: ret.submitted,
-                handle: handle.handle,
                 parent,
                 ...ret.summaryStats,
             });
