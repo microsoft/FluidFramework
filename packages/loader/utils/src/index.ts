@@ -6,6 +6,7 @@
 export * from "./base64Encoding";
 export * from "./batchManager";
 export * from "./blobs";
+export * from "./configurableUrlResolver";
 export * from "./disposal";
 export * from "./eventEmitterWithErrorHandling";
 export * from "./eventForwarder";
@@ -19,5 +20,5 @@ export * from "./safeParser";
 export * from "./serializer";
 export * from "./summaryTracker";
 export * from "./utils";
-export * from "./configurableUrlResolver";
+export * from "./timer";
 export * from "./error";
