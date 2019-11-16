@@ -4,6 +4,8 @@
  */
 
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { IHost } from "@microsoft/fluid-container-definitions";
+import { configurableUrlResolver, Deferred } from "@microsoft/fluid-core-utils";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
@@ -11,10 +13,9 @@ import {
     IDocumentServiceFactory,
     IDocumentStorageService,
     IFluidResolvedUrl,
-    IHost,
     IResolvedUrl,
-    IUrlResolver } from "@microsoft/fluid-container-definitions";
-import { configurableUrlResolver, Deferred } from "@microsoft/fluid-core-utils";
+    IUrlResolver,
+} from "@microsoft/fluid-driver-definitions";
 import {
     ConnectionMode,
     IClient,

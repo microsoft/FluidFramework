@@ -8,16 +8,18 @@ import {
     IRequest,
 } from "@microsoft/fluid-component-core-interfaces";
 import {
-    IDocumentServiceFactory,
-    IFluidResolvedUrl,
     IProxyLoaderFactory,
-    IResolvedUrl,
     ITelemetryBaseEvent,
     ITelemetryBaseLogger,
-    IUrlResolver,
 } from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
 import { ChildLogger, TelemetryLogger } from "@microsoft/fluid-core-utils";
+import {
+    IDocumentServiceFactory,
+    IFluidResolvedUrl,
+    IResolvedUrl,
+    IUrlResolver,
+} from "@microsoft/fluid-driver-definitions";
 import {
     FileDeltaStorageService,
     FileDocumentServiceFactory,

@@ -5,7 +5,8 @@
 
 import { SpellChecker } from "@fluid-example/spellchecker-agent";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { IDocumentServiceFactory, IHost } from "@microsoft/fluid-container-definitions";
+import { IHost } from "@microsoft/fluid-container-definitions";
+import { IDocumentServiceFactory } from "@microsoft/fluid-driver-definitions";
 import * as MergeTree from "@microsoft/fluid-merge-tree";
 import * as Sequence from "@microsoft/fluid-sequence";
 import { BaseWork } from "./baseWork";

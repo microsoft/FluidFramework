@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentService, IHost } from "@microsoft/fluid-container-definitions";
+import { IHost } from "@microsoft/fluid-container-definitions";
+import { IDocumentService } from "@microsoft/fluid-driver-definitions";
 
 export interface IWork {
     /**

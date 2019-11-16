@@ -8,16 +8,17 @@ import {
     IHostConfig,
 } from "@microsoft/fluid-base-host";
 import { IComponent, IRequest } from "@microsoft/fluid-component-core-interfaces";
-import {
-    IDocumentServiceFactory,
-    IFluidResolvedUrl,
-    IProxyLoaderFactory,
-    IResolvedUrl } from "@microsoft/fluid-container-definitions";
+import { IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
 import {
     createProtocolToFactoryMapping,
     selectDocumentServiceFactoryForProtocol,
 } from "@microsoft/fluid-container-loader";
 import { BaseTelemetryNullLogger } from "@microsoft/fluid-core-utils";
+import {
+    IDocumentServiceFactory,
+    IFluidResolvedUrl,
+    IResolvedUrl,
+} from "@microsoft/fluid-driver-definitions";
 import { WebWorkerLoaderFactory } from "@microsoft/fluid-execution-context-loader";
 import {
     IFrameDocumentServiceProxyFactory,

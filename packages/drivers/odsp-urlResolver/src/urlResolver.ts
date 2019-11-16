@@ -4,7 +4,7 @@
  */
 
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { IResolvedUrl, IUrlResolver } from "@microsoft/fluid-container-definitions";
+import { IResolvedUrl, IUrlResolver } from "@microsoft/fluid-driver-definitions";
 import { createOdspUrl, OdspDriverUrlResolver } from "@microsoft/fluid-odsp-driver";
 
 export class OdspUrlResolver implements IUrlResolver {

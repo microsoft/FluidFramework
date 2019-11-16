@@ -7,7 +7,7 @@ import {
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
     IDocumentStorageService,
-} from "@microsoft/fluid-container-definitions";
+} from "@microsoft/fluid-driver-definitions";
 import {
     ConnectionMode,
     IConnected,

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentServiceFactory, IUrlResolver } from "@microsoft/fluid-container-definitions";
+import { IDocumentServiceFactory, IUrlResolver } from "@microsoft/fluid-driver-definitions";
 
 /**
  * Host config that contains a url resolver to resolve the url and then provides a

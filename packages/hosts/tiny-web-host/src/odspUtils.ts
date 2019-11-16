@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidResolvedUrl } from "@microsoft/fluid-container-definitions";
+import { IFluidResolvedUrl } from "@microsoft/fluid-driver-definitions";
 import { OdspDriverUrlResolver } from "@microsoft/fluid-odsp-driver";
 import { getDriveItemByRootFileName, IClientConfig, IODSPTokens } from "@microsoft/fluid-odsp-utils";
 

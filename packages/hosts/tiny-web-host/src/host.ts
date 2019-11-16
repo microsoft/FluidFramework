@@ -4,12 +4,13 @@
  */
 
 import { BaseHost, IHostConfig } from "@microsoft/fluid-base-host";
+import { IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
+import { BaseTelemetryNullLogger, configurableUrlResolver } from "@microsoft/fluid-core-utils";
 import {
     IDocumentServiceFactory,
     IFluidResolvedUrl,
-    IProxyLoaderFactory,
-    IResolvedUrl } from "@microsoft/fluid-container-definitions";
-import { BaseTelemetryNullLogger, configurableUrlResolver } from "@microsoft/fluid-core-utils";
+    IResolvedUrl,
+} from "@microsoft/fluid-driver-definitions";
 import { FluidAppOdspUrlResolver } from "@microsoft/fluid-fluidapp-odsp-urlresolver";
 import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
 import { OdspUrlResolver } from "@microsoft/fluid-odsp-urlresolver";

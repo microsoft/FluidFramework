@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IDeltaStorageService, IDocumentDeltaStorageService } from "@microsoft/fluid-container-definitions";
 import { fromUtf8ToBase64 } from "@microsoft/fluid-core-utils";
+import { IDeltaStorageService, IDocumentDeltaStorageService } from "@microsoft/fluid-driver-definitions";
 import * as api from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
 import Axios from "axios";

@@ -4,7 +4,8 @@
  */
 
 import * as api from "@fluid-internal/client-api";
-import { IDocumentServiceFactory, IHost } from "@microsoft/fluid-container-definitions";
+import { IHost } from "@microsoft/fluid-container-definitions";
+import { IDocumentServiceFactory } from "@microsoft/fluid-driver-definitions";
 import { EventEmitter } from "events";
 import { parse } from "url";
 import { debug } from "./debug";

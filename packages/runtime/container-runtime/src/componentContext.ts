@@ -8,7 +8,6 @@ import {
     IAudience,
     IBlobManager,
     IDeltaManager,
-    IDocumentStorageService,
     IGenericBlob,
     ILoader,
 } from "@microsoft/fluid-container-definitions";
@@ -19,6 +18,7 @@ import {
     readAndParse,
     SummaryTracker,
 } from "@microsoft/fluid-core-utils";
+import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import {
     ConnectionState,
     IDocumentMessage,

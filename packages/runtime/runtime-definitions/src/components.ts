@@ -16,11 +16,11 @@ import {
     IAudience,
     IBlobManager,
     IDeltaManager,
-    IDocumentStorageService,
     IGenericBlob,
     ILoader,
     ITelemetryLogger,
 } from "@microsoft/fluid-container-definitions";
+import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import {
     ConnectionState,
     IDocumentMessage,

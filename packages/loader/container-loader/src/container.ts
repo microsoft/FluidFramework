@@ -8,8 +8,6 @@ import {
     IConnectionDetails,
     IContainer,
     IDeltaManager,
-    IDocumentService,
-    IDocumentStorageService,
     IFluidCodeDetails,
     IFluidModule,
     IGenericBlob,
@@ -30,6 +28,10 @@ import {
     readAndParse,
     TelemetryLogger,
 } from "@microsoft/fluid-core-utils";
+import {
+    IDocumentService,
+    IDocumentStorageService,
+} from "@microsoft/fluid-driver-definitions";
 import {
     ConnectionState,
     FileMode,

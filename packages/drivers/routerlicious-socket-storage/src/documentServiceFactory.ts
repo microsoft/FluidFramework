@@ -6,7 +6,7 @@
 import { IDocumentService,
          IDocumentServiceFactory,
          IFluidResolvedUrl,
-         IResolvedUrl } from "@microsoft/fluid-container-definitions";
+         IResolvedUrl } from "@microsoft/fluid-driver-definitions";
 import { IErrorTrackingService } from "@microsoft/fluid-protocol-definitions";
 import { ICredentials, IGitCache } from "@microsoft/fluid-server-services-client";
 import { parse } from "url";

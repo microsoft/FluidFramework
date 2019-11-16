@@ -7,13 +7,13 @@ import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 import { BaseHost, IHostConfig } from "@microsoft/fluid-base-host";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import {
-    IDocumentServiceFactory,
     IFluidModule,
     IFluidPackage,
     IPackage,
     IProxyLoaderFactory,
     isFluidPackage,
-    IUrlResolver } from "@microsoft/fluid-container-definitions";
+} from "@microsoft/fluid-container-definitions";
+import { IDocumentServiceFactory, IUrlResolver } from "@microsoft/fluid-driver-definitions";
 import {
     ITestDeltaConnectionServer,
     TestDeltaConnectionServer,

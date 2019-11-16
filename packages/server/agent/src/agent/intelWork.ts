@@ -5,7 +5,8 @@
 
 import { TextAnalyzer } from "@fluid-example/intelligence-runner-agent";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { IDocumentServiceFactory, IHost } from "@microsoft/fluid-container-definitions";
+import { IHost } from "@microsoft/fluid-container-definitions";
+import { IDocumentServiceFactory } from "@microsoft/fluid-driver-definitions";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import * as Sequence from "@microsoft/fluid-sequence";
 import { BaseWork } from "./baseWork";

@@ -11,11 +11,10 @@ import {
 import {
     ICodeWhiteList,
     IFluidCodeDetails,
-    IFluidResolvedUrl,
     IProxyLoaderFactory,
-    IResolvedUrl,
 } from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
+import { IFluidResolvedUrl, IResolvedUrl } from "@microsoft/fluid-driver-definitions";
 import { IResolvedPackage, WebCodeLoader, WhiteList } from "@microsoft/fluid-web-code-loader";
 import { IHostConfig } from "./hostConfig";
 
