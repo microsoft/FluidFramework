@@ -583,11 +583,13 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     /**
      * Closes the connection and clears inbound & outbound queues.
      */
-    public close(error?: any): void {
+    public close(errorArg?: any): void {
         if (this.closed) {
             return;
         }
         this.closed = true;
+
+        const error = errorArg !== undefined ? errorArg : new Error("Container closed")
 
         // Note: "disconnect" & "nack" do not have error object
         if (error !== undefined) {
@@ -598,13 +600,11 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         this.stopSequenceNumberUpdate();
 
-        if (this.connection) {
-            this.connection.close();
-            this.connection = undefined;
-        }
+        // This raises "disconnect" event
+        this.disconnectFromDeltaStream("Disconnect on close");
 
         if (this.connecting) {
-            this.connecting.reject(error !== undefined ? error : new Error("Container closed"));
+            this.connecting.reject(error);
             this.connecting = undefined;
         }
 
