@@ -11,6 +11,8 @@ import {
     ITelemetryLogger,
 } from "@microsoft/fluid-container-definitions";
 import {
+    createFileIOOrGeneralError,
+    createGeneralError,
     Deferred,
     isSystemType,
     PerformanceEvent,
@@ -53,7 +55,7 @@ const ImmediateNoOpResponse = "";
 
 const DefaultContentBufferSize = 10;
 
-// Test if we deal with INetworkError / NetworkError object and if it has enough information to make a call.
+// Test if we deal with NetworkError object and if it has enough information to make a call.
 // If in doubt, allow retries.
 function canRetryOnError(error: any) {
     // Always retry unless told otherwise.
@@ -193,7 +195,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             });
 
         this._inbound.on("error", (error) => {
-            this.emit("error", error);
+            this.emit("error", createGeneralError(error));
         });
 
         // Outbound message queue. The outbound queue is represented as a queue of an array of ops. Ops contained
@@ -205,7 +207,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         );
 
         this._outbound.on("error", (error) => {
-            this.emit("error", error);
+            this.emit("error", createGeneralError(error));
         });
 
         // Inbound signal queue
@@ -217,7 +219,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         });
 
         this._inboundSignal.on("error", (error) => {
-            this.emit("error", error);
+            this.emit("error", createGeneralError(error));
         });
 
         // Require the user to start the processing
@@ -497,8 +499,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 retry,
                 success,
             });
-
-            this.emitDelayInfo(retryFor.DELTASTORAGE, delay);
+            if (retryAfter && retryAfter >= 0) {
+                // Emit throttling info only if we get it from error.
+                this.emitDelayInfo(retryFor.DELTASTORAGE, delay);
+            }
             await waitForConnectedState(delay);
         }
 
@@ -518,7 +522,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         // Note: "disconnect" & "nack" do not have error object
         if (error !== undefined) {
-            this.emit("error", error);
+            this.emit("error", createFileIOOrGeneralError(error));
         }
 
         this.logger.sendTelemetryEvent({ eventName: "ContainerClose" }, error);
@@ -595,7 +599,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         if (this.deltaStreamDelay && this.deltaStorageDelay) {
             const delayTime = Math.max(this.deltaStorageDelay, this.deltaStreamDelay);
             if (delayTime >= 0) {
-                this.emit("connectionDelay", delayTime);
+                this.emit("disconnected", delayTime);
             }
         }
     }
@@ -639,7 +643,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                     retryDelayFromError :
                     Math.min(delay * 2, MaxReconnectDelay);
 
-                this.emitDelayInfo(retryFor.DELTASTREAM, delay);
+                if (retryDelayFromError) {
+                    this.emitDelayInfo(retryFor.DELTASTREAM, retryDelayFromError);
+                }
                 await waitForConnectedState(delay);
             }
         }

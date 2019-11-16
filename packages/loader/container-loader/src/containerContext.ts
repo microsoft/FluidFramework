@@ -26,6 +26,7 @@ import {
     IDocumentAttributes,
     IDocumentMessage,
     IDocumentStorageService,
+    IErrorOrWarning,
     ISequencedDocumentMessage,
     IServiceConfiguration,
     ISignalMessage,
@@ -50,7 +51,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         quorum: IQuorum,
         loader: ILoader,
         storage: IDocumentStorageService | null | undefined,
-        errorFn: (err: any) => void,
+        errorFn: (err: IErrorOrWarning) => void,
         submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
         submitSignalFn: (contents: any) => void,
         snapshotFn: (message: string) => Promise<void>,
@@ -161,7 +162,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         public readonly quorum: IQuorum,
         public readonly storage: IDocumentStorageService | undefined | null,
         public readonly loader: ILoader,
-        private readonly errorFn: (err: any) => void,
+        private readonly errorFn: (err: IErrorOrWarning) => void,
         // tslint:disable-next-line:max-line-length
         public readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
         public readonly submitSignalFn: (contents: any) => void,
@@ -224,7 +225,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         return this.snapshotFn(tagMessage);
     }
 
-    public error(err: any): void {
+    public error(err: IErrorOrWarning): void {
         this.errorFn(err);
     }
 

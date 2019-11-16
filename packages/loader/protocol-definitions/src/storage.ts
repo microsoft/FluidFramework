@@ -322,14 +322,3 @@ export interface IDocumentServiceFactory {
      */
     createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService>;
 }
-
-/**
- * Network errors are communicated from the driver to runtime by throwing object implementing INetworkError interface
- */
-export interface INetworkError {
-    readonly message: string;
-    readonly canRetry?: boolean;
-    readonly statusCode?: number;
-    readonly retryAfterSeconds?: number;
-    readonly online: string;
-}

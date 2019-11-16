@@ -20,3 +20,4 @@ export * from "./serializer";
 export * from "./summaryTracker";
 export * from "./utils";
 export * from "./configurableUrlResolver";
+export * from "./error";

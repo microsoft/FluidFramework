@@ -12,6 +12,7 @@ import {
 import {
     IDocumentMessage,
     IDocumentStorageService,
+    IErrorOrWarning,
     ISequencedDocumentMessage,
     IServiceConfiguration,
     ISnapshotTree,
@@ -218,7 +219,7 @@ export interface IContainerContext extends EventEmitter, IMessageScheduler, IPro
      */
     readonly scope: IComponent;
 
-    error(err: any): void;
+    error(err: IErrorOrWarning): void;
     requestSnapshot(tagMessage: string): Promise<void>;
     reloadContext(): Promise<void>;
     refreshBaseSummary(snapshot: ISnapshotTree): void;

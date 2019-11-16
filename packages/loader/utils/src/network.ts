@@ -2,20 +2,23 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { INetworkError } from "@microsoft/fluid-protocol-definitions";
+import { ErrorOrWarningType, IFileIOError, IThrottlingError } from "@microsoft/fluid-protocol-definitions";
 
 /**
  * Network error error class - used to communicate all  network errors
  */
-export class NetworkError extends Error implements INetworkError {
+export class NetworkError extends Error implements Partial<IFileIOError & IThrottlingError> {
 
     constructor(
             errorMessage: string,
-            readonly statusCode: number | undefined,
-            readonly canRetry: boolean,
+            readonly statusCode?: number,
+            readonly canRetry?: boolean,
             readonly retryAfterSeconds?: number,
             readonly online = OnlineStatus[isOnline()]) {
         super(errorMessage);
+        // tslint:disable-next-line: no-string-literal
+        this["containerErrorOrWarningType"] = this.retryAfterSeconds ?
+            ErrorOrWarningType.throttling : ErrorOrWarningType.fileioError;
     }
 
     public getCustomProperties() {

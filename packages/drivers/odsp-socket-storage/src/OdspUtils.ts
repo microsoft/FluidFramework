@@ -35,7 +35,7 @@ export function throwOdspNetworkError(
 export class OdspNetworkError extends NetworkError {
     constructor(
         errorMessage: string,
-        readonly statusCode: number | undefined,
+        readonly statusCode: number,
         readonly canRetry: boolean,
         readonly retryAfterSeconds?: number,
         readonly sprequestguid?: string,

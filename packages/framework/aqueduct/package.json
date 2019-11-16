@@ -26,6 +26,7 @@
     "@microsoft/fluid-container-definitions": "^0.11.0",
     "@microsoft/fluid-container-runtime": "^0.11.0",
     "@microsoft/fluid-framework-interfaces": "^0.11.0",
+    "@microsoft/fluid-core-utils": "^0.11.0",
     "@microsoft/fluid-map": "^0.11.0",
     "@microsoft/fluid-runtime-definitions": "^0.11.0",
     "@microsoft/fluid-shared-object-base": "^0.11.0"

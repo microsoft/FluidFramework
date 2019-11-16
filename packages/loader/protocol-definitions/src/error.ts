@@ -3,59 +3,48 @@
  * Licensed under the MIT License.
  */
 // tslint:disable: no-unsafe-any
-export enum ErrorType {
-    GENERAL_ERROR,
-    FILEIO_ERROR,
-    THROTTLING_ERROR,
-    SERVICE_ERROR,
-    VERSION_ERROR,
-    SUMMARIZING_ERROR,
+export enum ErrorOrWarningType {
+    generalError,
+    fileioError,
+    throttling,
+    serviceWarning,
+    fileVersionError,
+    summarizingWarning,
 }
 
-export interface IError {
-    containerErrorType: ErrorType;
-}
+export type IErrorOrWarning = IGeneralError | IThrottlingError | IFileIOError |
+                IServiceWarning | IFileVersionError | ISummarizingWarning;
 
 export interface IGeneralError {
-    readonly containerErrorType: ErrorType.GENERAL_ERROR;
+    readonly containerErrorOrWarningType: ErrorOrWarningType.generalError;
+    error: any;
 }
 
 export interface IThrottlingError {
-    readonly containerErrorType: ErrorType.THROTTLING_ERROR;
+    readonly containerErrorOrWarningType: ErrorOrWarningType.throttling;
+    readonly message: string;
+    readonly canRetry?: boolean;
+    readonly statusCode?: number;
+    readonly online: string;
+    readonly retryAfterSeconds: number;
 }
 
 export interface IFileIOError {
-    readonly containerErrorType: ErrorType.FILEIO_ERROR;
+    readonly containerErrorOrWarningType: ErrorOrWarningType.fileioError;
+    readonly message: string;
+    readonly canRetry?: boolean;
+    readonly statusCode?: number;
+    readonly online: string;
 }
 
-export function convertErrorToSpecificError(error) {
-    let specificError;
-    if (typeof error === "string") {
-        specificError = {
-            containerErrorType: ErrorType.GENERAL_ERROR,
-            message: error,
-        };
-        return specificError as IGeneralError;
-    } else if (error !== null && typeof error === "object") {
-        if (error.retryAfter >= 0) {
-            specificError = {
-                containerErrorType: ErrorType.THROTTLING_ERROR,
-                ...error,
-            };
-            return specificError as IThrottlingError;
-        } else if (error.statusCode) {
-            specificError = {
-                containerErrorType: ErrorType.FILEIO_ERROR,
-                ...error,
-            };
-            return specificError as IFileIOError;
-        } else {
-            specificError = {
-                containerErrorType: ErrorType.GENERAL_ERROR,
-                ...error,
-            };
-            return specificError as IGeneralError;
-        }
-    }
-    return error;
+export interface IServiceWarning {
+    readonly containerErrorOrWarningType: ErrorOrWarningType.serviceWarning;
+}
+
+export interface IFileVersionError {
+    readonly containerErrorOrWarningType: ErrorOrWarningType.fileVersionError;
+}
+
+export interface ISummarizingWarning {
+    readonly containerErrorOrWarningType: ErrorOrWarningType.summarizingWarning;
 }

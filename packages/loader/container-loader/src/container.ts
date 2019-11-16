@@ -24,6 +24,7 @@ import {
 import {
     buildHierarchy,
     ChildLogger,
+    createGeneralError,
     DebugLogger,
     EventEmitterWithErrorHandling,
     flatten,
@@ -34,13 +35,14 @@ import {
 } from "@microsoft/fluid-core-utils";
 import {
     Browser,
-    convertErrorToSpecificError,
+    ErrorOrWarningType,
     FileMode,
     IClient,
     IDocumentAttributes,
     IDocumentMessage,
     IDocumentService,
     IDocumentStorageService,
+    IErrorOrWarning,
     ISequencedClient,
     ISequencedDocumentMessage,
     IServiceConfiguration,
@@ -385,13 +387,17 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         this.ignoreUnhandledConnectonError();
     }
 
-    public raiseCriticalError(error: any) {
-        this.emit("error", convertErrorToSpecificError(error));
+    public raiseCriticalErrorOrWarning(error: IErrorOrWarning) {
+        if (error.containerErrorOrWarningType === ErrorOrWarningType.serviceWarning ||
+            error.containerErrorOrWarningType === ErrorOrWarningType.summarizingWarning) {
+                this.emit("warning", error);
+            }
+        this.emit("error", error);
     }
 
     public reloadContext(): Promise<void> {
         return this.reloadContextCore().catch((error) => {
-            this.raiseCriticalError(error);
+            this.raiseCriticalErrorOrWarning(createGeneralError(error));
             throw error;
         });
     }
@@ -854,8 +860,12 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                 this.setConnectionState(ConnectionState.Disconnected, reason);
             });
 
-            this._deltaManager.on("error", (error) => {
-                this.raiseCriticalError(error);
+            this._deltaManager.on("error", (error: IErrorOrWarning) => {
+                this.raiseCriticalErrorOrWarning(error);
+            });
+
+            this._deltaManager.on("disconnected", (retryAfterSeconds: number) => {
+                this.emit("disconnected", retryAfterSeconds);
             });
 
             this._deltaManager.on("pong", (latency) => {
@@ -1100,7 +1110,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             new QuorumProxy(this.protocolHandler!.quorum),
             loader,
             storage,
-            (err) => this.raiseCriticalError(err),
+            (err: IErrorOrWarning) => this.raiseCriticalErrorOrWarning(err),
             (type, contents) => this.submitMessage(type, contents),
             (message) => this.submitSignal(message),
             (message) => this.snapshot(message),
