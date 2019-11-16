@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+// tslint:disable no-non-null-assertion
 const MaxBatchSize = 100;
 /**
  * Manages a queue of work to be batch processed at next javascript turn of execution

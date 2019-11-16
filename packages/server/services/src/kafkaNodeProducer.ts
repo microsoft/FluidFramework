@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as utils from "@microsoft/fluid-core-utils";
+import * as utils from "@microsoft/fluid-server-services-client";
 import { BoxcarType, IBoxcarMessage, IPendingBoxcar, IProducer } from "@microsoft/fluid-server-services-core";
 import { EventEmitter } from "events";
 import * as kafkaNode from "kafka-node";

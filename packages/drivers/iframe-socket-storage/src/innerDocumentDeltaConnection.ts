@@ -4,7 +4,6 @@
  */
 
 import { IDocumentDeltaConnection } from "@microsoft/fluid-container-definitions";
-import { Deferred } from "@microsoft/fluid-core-utils";
 import {
     ConnectionMode,
     IConnected,
@@ -16,6 +15,7 @@ import {
     ISignalMessage,
     ITokenClaims,
 } from "@microsoft/fluid-protocol-definitions";
+import { Deferred } from "@microsoft/fluid-server-services-client";
 import * as Comlink from "comlink";
 import { EventEmitter } from "events";
 

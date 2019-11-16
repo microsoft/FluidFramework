@@ -5,7 +5,7 @@
 
 import * as api from "@fluid-internal/client-api";
 import { getFileBlobType, IGenericBlob, IImageBlob, IVideoBlob } from "@microsoft/fluid-container-definitions";
-import { gitHashFile } from "@microsoft/fluid-core-utils";
+import { gitHashFile } from "@microsoft/fluid-server-services-client";
 
 export async function blobUploadHandler(
     dragZone: HTMLDivElement,

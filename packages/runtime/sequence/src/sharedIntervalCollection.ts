@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
 import {
     MapKernel,
 } from "@microsoft/fluid-map";
@@ -16,6 +15,7 @@ import {
     IObjectStorageService,
     ISharedObjectServices,
 } from "@microsoft/fluid-runtime-definitions";
+import { fromBase64ToUtf8 } from "@microsoft/fluid-server-services-client";
 import {
     ISharedObjectFactory, SharedObject,
 } from "@microsoft/fluid-shared-object-base";

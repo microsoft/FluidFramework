@@ -8,7 +8,6 @@ import {
     IDeltaQueue,
     IDocumentStorageService,
     ITelemetryLogger } from "@microsoft/fluid-container-definitions";
-import { Deferred } from "@microsoft/fluid-core-utils";
 import {
     IDocumentMessage,
     ISequencedDocumentMessage,
@@ -16,6 +15,7 @@ import {
     ISummaryProposal,
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
+import { Deferred } from "@microsoft/fluid-server-services-client";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import * as sinon from "sinon";

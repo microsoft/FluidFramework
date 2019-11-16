@@ -4,7 +4,6 @@
  */
 
 import { IDocumentDeltaConnection } from "@microsoft/fluid-container-definitions";
-import { BatchManager } from "@microsoft/fluid-core-utils";
 import { debug } from "@microsoft/fluid-driver-base";
 import {
     ConnectionMode,
@@ -19,6 +18,7 @@ import {
     ISignalMessage,
     ITokenClaims,
 } from "@microsoft/fluid-protocol-definitions";
+import { BatchManager } from "@microsoft/fluid-server-services-client";
 import * as core from "@microsoft/fluid-server-services-core";
 import { EventEmitter } from "events";
 import { TestWebSocketServer } from "./testWebServer";

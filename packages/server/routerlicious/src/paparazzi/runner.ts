@@ -9,12 +9,12 @@ import {
     IFluidResolvedUrl,
     IResolvedUrl,
 } from "@microsoft/fluid-container-definitions";
-import { Deferred } from "@microsoft/fluid-core-utils";
 import { IQueueMessage } from "@microsoft/fluid-protocol-definitions";
 import * as socketStorage from "@microsoft/fluid-routerlicious-driver";
 import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
 import * as agent from "@microsoft/fluid-server-agent";
 import { NodeCodeLoader, NodeWhiteList } from "@microsoft/fluid-server-services";
+import { Deferred } from "@microsoft/fluid-server-services-client";
 import * as core from "@microsoft/fluid-server-services-core";
 import * as utils from "@microsoft/fluid-server-services-utils";
 import * as fs from "fs";

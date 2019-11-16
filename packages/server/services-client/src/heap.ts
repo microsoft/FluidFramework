@@ -4,6 +4,7 @@
  */
 
 // tslint:disable:no-bitwise
+// tslint:disable no-non-null-assertion
 
 /**
  * Interface for a comparere

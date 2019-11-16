@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { safelyParseJSON } from "@microsoft/fluid-core-utils";
+import { safelyParseJSON } from "@microsoft/fluid-server-services-client";
 import { EventEmitter } from "events";
 import * as nconf from "nconf";
 import { IKafkaMessage } from "./kafka";

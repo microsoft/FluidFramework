@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { fromUtf8ToBase64 } from "@microsoft/fluid-core-utils";
 import * as git from "@microsoft/fluid-gitresources";
 import { IClient, IClientJoin, ITokenClaims, ScopeType } from "@microsoft/fluid-protocol-definitions";
+import { fromUtf8ToBase64 } from "@microsoft/fluid-server-services-client";
 import * as core from "@microsoft/fluid-server-services-core";
 import { Request, Response, Router } from "express";
 import * as jwt from "jsonwebtoken";

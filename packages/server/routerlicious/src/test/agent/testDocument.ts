@@ -9,7 +9,6 @@ import {
     IDeltaManager,
     IDeltaQueue,
 } from "@microsoft/fluid-container-definitions";
-import * as utils from "@microsoft/fluid-core-utils";
 import {
     IClientDetails,
     IDocumentMessage,
@@ -19,6 +18,7 @@ import {
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
 import { ISnapshotDocument } from "@microsoft/fluid-server-agent";
+import { Deferred } from "@microsoft/fluid-server-services-client";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 
@@ -27,7 +27,7 @@ export class TestDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
     public paused: boolean;
     public length: number;
     public idle: boolean;
-    private resumeDeferred: utils.Deferred<void>;
+    private resumeDeferred: Deferred<void>;
 
     public dispose() {
         this.disposed = true;
@@ -36,7 +36,7 @@ export class TestDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
     public pause(): Promise<void> {
         if (!this.paused) {
             this.paused = true;
-            this.resumeDeferred = new utils.Deferred<void>();
+            this.resumeDeferred = new Deferred<void>();
         }
 
         return Promise.resolve();

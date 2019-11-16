@@ -19,8 +19,6 @@ import {
 import {
     ComponentSerializer,
     DebugLogger,
-    Deferred,
-    fromUtf8ToBase64,
 } from "@microsoft/fluid-core-utils";
 import * as git from "@microsoft/fluid-gitresources";
 import {
@@ -38,7 +36,7 @@ import {
     IDeltaHandler,
     ISharedObjectServices,
 } from "@microsoft/fluid-runtime-definitions";
-import { IHistorian } from "@microsoft/fluid-server-services-client";
+import { Deferred, fromUtf8ToBase64, IHistorian } from "@microsoft/fluid-server-services-client";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 // tslint:disable-next-line: no-submodule-imports

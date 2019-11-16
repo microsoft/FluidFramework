@@ -4,7 +4,7 @@
  */
 
 import { IDeltaQueue } from "@microsoft/fluid-container-definitions";
-import { Deferred } from "@microsoft/fluid-core-utils";
+import { Deferred } from "@microsoft/fluid-server-services-client";
 import * as assert from "assert";
 import * as Deque from "double-ended-queue";
 import { EventEmitter } from "events";

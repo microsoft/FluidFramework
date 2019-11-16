@@ -4,14 +4,14 @@
  */
 
 import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
+import { PerformanceEvent } from "@microsoft/fluid-core-utils";
+import * as resources from "@microsoft/fluid-gitresources";
+import * as api from "@microsoft/fluid-protocol-definitions";
 import {
     buildHierarchy,
     fromBase64ToUtf8,
     fromUtf8ToBase64,
-    PerformanceEvent,
-} from "@microsoft/fluid-core-utils";
-import * as resources from "@microsoft/fluid-gitresources";
-import * as api from "@microsoft/fluid-protocol-definitions";
+} from "@microsoft/fluid-server-services-client";
 import * as assert from "assert";
 import {
     IDocumentStorageGetVersionsResponse,

@@ -4,7 +4,6 @@
  */
 
 import { ISerializedHandle } from "@microsoft/fluid-component-core-interfaces";
-import { fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
 import {
     FileMode,
     ISequencedDocumentMessage,
@@ -13,6 +12,7 @@ import {
     TreeEntry,
 } from "@microsoft/fluid-protocol-definitions";
 import { IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
+import { fromBase64ToUtf8 } from "@microsoft/fluid-server-services-client";
 import { ISharedObjectFactory, SharedObject, ValueType } from "@microsoft/fluid-shared-object-base";
 import { CellFactory } from "./cellFactory";
 import { debug } from "./debug";

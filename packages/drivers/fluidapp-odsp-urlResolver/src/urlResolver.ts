@@ -10,8 +10,8 @@ import {
     IResolvedUrl,
     IUrlResolver,
 } from "@microsoft/fluid-container-definitions";
-import { fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
 import { createOdspUrl, OdspDriverUrlResolver } from "@microsoft/fluid-odsp-driver";
+import { fromBase64ToUtf8 } from "@microsoft/fluid-server-services-client";
 
 const fluidOfficeServers = [
     "dev.fluidpreview.office.net",

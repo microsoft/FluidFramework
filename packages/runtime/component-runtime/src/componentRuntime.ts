@@ -18,12 +18,8 @@ import {
     ITelemetryLogger,
 } from "@microsoft/fluid-container-definitions";
 import {
-    buildHierarchy,
     ChildLogger,
-    Deferred,
-    flatten,
     raiseConnectedEvent,
-    TreeTreeEntry,
 } from "@microsoft/fluid-core-utils";
 import {
     ConnectionState,
@@ -43,6 +39,14 @@ import {
     IEnvelope,
     IInboundSignalMessage,
 } from "@microsoft/fluid-runtime-definitions";
+
+import {
+    buildHierarchy,
+    Deferred,
+    flatten,
+    TreeTreeEntry,
+} from "@microsoft/fluid-server-services-client";
+
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import * as assert from "assert";
 import { EventEmitter } from "events";

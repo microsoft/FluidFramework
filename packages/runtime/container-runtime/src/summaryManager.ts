@@ -6,8 +6,9 @@
 import { IComponent, IComponentRunnable, IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IContainerContext, ITelemetryLogger } from "@microsoft/fluid-container-definitions";
 import { LoaderHeader } from "@microsoft/fluid-container-loader";
-import { ChildLogger, Heap, IComparer, IHeapNode, PerformanceEvent } from "@microsoft/fluid-core-utils";
+import { ChildLogger, PerformanceEvent } from "@microsoft/fluid-core-utils";
 import { ISequencedClient } from "@microsoft/fluid-protocol-definitions";
+import { Heap, IComparer, IHeapNode } from "@microsoft/fluid-server-services-client";
 import { EventEmitter } from "events";
 
 interface ITrackedClient {

@@ -11,7 +11,6 @@ import {
     IDocumentStorageService,
     IResolvedUrl,
 } from "@microsoft/fluid-container-definitions";
-import { buildHierarchy, flatten } from "@microsoft/fluid-core-utils";
 import {
     ConnectionMode,
     IClient,
@@ -19,6 +18,7 @@ import {
     ITree,
     IVersion,
 } from "@microsoft/fluid-protocol-definitions";
+import { buildHierarchy, flatten } from "@microsoft/fluid-server-services-client";
 import * as assert from "assert";
 import { EmptyDeltaStorageService } from "./emptyDeltaStorageService";
 import { ReadDocumentStorageServiceBase } from "./replayController";

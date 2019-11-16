@@ -4,7 +4,6 @@
  */
 
 import { IDocumentStorageService } from "@microsoft/fluid-container-definitions";
-import { BlobTreeEntry } from "@microsoft/fluid-core-utils";
 import {
     ConnectionState,
     ISequencedDocumentMessage,
@@ -13,6 +12,7 @@ import {
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
 import { IChannel, IEnvelope } from "@microsoft/fluid-runtime-definitions";
+import { BlobTreeEntry } from "@microsoft/fluid-server-services-client";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ChannelStorageService } from "./channelStorageService";
 

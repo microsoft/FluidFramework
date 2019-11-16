@@ -35,6 +35,7 @@
     "@microsoft/fluid-protocol-definitions": "^0.12.0",
     "@microsoft/fluid-runtime-definitions": "^0.12.0",
     "@microsoft/fluid-sequence": "^0.12.0",
+    "@microsoft/fluid-server-services-client": "^0.12.0",
     "azure-iot-device": "^1.7.3",
     "azure-iot-device-mqtt": "^1.7.3",
     "azure-iothub": "^1.7.3",

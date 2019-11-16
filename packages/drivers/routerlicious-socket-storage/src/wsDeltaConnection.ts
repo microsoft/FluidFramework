@@ -4,7 +4,6 @@
  */
 
 import { IDocumentDeltaConnection } from "@microsoft/fluid-container-definitions";
-import { BatchManager } from "@microsoft/fluid-core-utils";
 import {
     ConnectionMode,
     IClient,
@@ -18,6 +17,7 @@ import {
     ISignalMessage,
     ITokenClaims,
 } from "@microsoft/fluid-protocol-definitions";
+import { BatchManager } from "@microsoft/fluid-server-services-client";
 import { EventEmitter } from "events";
 import * as ws from "isomorphic-ws";
 import * as url from "url";

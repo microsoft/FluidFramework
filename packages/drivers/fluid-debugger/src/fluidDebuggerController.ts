@@ -4,7 +4,7 @@
  */
 
 import { IDocumentStorageService } from "@microsoft/fluid-container-definitions";
-import { Deferred, readAndParse } from "@microsoft/fluid-core-utils";
+import { readAndParse } from "@microsoft/fluid-core-utils";
 import {
     IDocumentAttributes,
     ISequencedDocumentMessage,
@@ -19,6 +19,7 @@ import {
     ReplayController,
     SnapshotStorage,
 } from "@microsoft/fluid-replay-driver";
+import { Deferred } from "@microsoft/fluid-server-services-client";
 import * as assert from "assert";
 import { IDebuggerController, IDebuggerUI } from "./fluidDebuggerUI";
 

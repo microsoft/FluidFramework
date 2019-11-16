@@ -7,11 +7,11 @@ import {
     IDocumentService,
     IDocumentStorageService,
 } from "@microsoft/fluid-container-definitions";
-import { fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
 import {
     ISnapshotTree,
     IVersion,
 } from "@microsoft/fluid-protocol-definitions";
+import { fromBase64ToUtf8 } from "@microsoft/fluid-server-services-client";
 import * as assert from "assert";
 import * as fs from "fs";
 import * as util from "util";

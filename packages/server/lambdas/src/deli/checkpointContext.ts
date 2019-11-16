@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IRangeTrackerSnapshot } from "@microsoft/fluid-core-utils";
+import { IRangeTrackerSnapshot } from "@microsoft/fluid-server-services-client";
 import { ICollection, IContext, IDocument } from "@microsoft/fluid-server-services-core";
 import * as winston from "winston";
 

@@ -4,7 +4,7 @@
  */
 
 import { IDocumentDeltaConnection } from "@microsoft/fluid-container-definitions";
-import { BatchManager, NetworkError } from "@microsoft/fluid-core-utils";
+import { NetworkError } from "@microsoft/fluid-core-utils";
 import {
     ConnectionMode,
     IClient,
@@ -18,6 +18,7 @@ import {
     ISignalMessage,
     ITokenClaims,
 } from "@microsoft/fluid-protocol-definitions";
+import { BatchManager } from "@microsoft/fluid-server-services-client";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { debug } from "./debug";

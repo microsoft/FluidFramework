@@ -26,6 +26,7 @@
     "@microsoft/fluid-container-definitions": "^0.12.0",
     "@microsoft/fluid-protocol-definitions": "^0.12.0",
     "@microsoft/fluid-replay-driver": "^0.12.0",
+    "@microsoft/fluid-server-services-client": "^0.12.0",
     "debug": "^4.1.1",
     "lodash": "^4.17.11"
   },

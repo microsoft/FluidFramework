@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { Deferred } from "@microsoft/fluid-core-utils";
 import {
     IClientJoin,
     IConnect,
@@ -15,6 +14,7 @@ import {
 } from "@microsoft/fluid-protocol-definitions";
 import { KafkaOrdererFactory } from "@microsoft/fluid-server-kafka-orderer";
 import * as services from "@microsoft/fluid-server-services";
+import { Deferred } from "@microsoft/fluid-server-services-client";
 import * as core from "@microsoft/fluid-server-services-core";
 import {
     MessageFactory,

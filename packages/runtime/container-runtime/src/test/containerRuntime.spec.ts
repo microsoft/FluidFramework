@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { BlobTreeEntry, TreeTreeEntry } from "@microsoft/fluid-core-utils";
 import {
     ISummaryBlob,
     ISummaryHandle,
@@ -12,6 +11,7 @@ import {
     SummaryObject,
     SummaryType,
 } from "@microsoft/fluid-protocol-definitions";
+import { BlobTreeEntry, TreeTreeEntry } from "@microsoft/fluid-server-services-client";
 import * as assert from "assert";
 import { IConvertedSummaryResults, SummaryTreeConverter } from "../summaryTreeConverter";
 

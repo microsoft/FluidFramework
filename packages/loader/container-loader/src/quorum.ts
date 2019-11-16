@@ -4,7 +4,6 @@
  */
 
 import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
-import { Deferred, doIfNotDisposed, EventForwarder } from "@microsoft/fluid-core-utils";
 import {
     ConnectionState,
     ICommittedProposal,
@@ -14,6 +13,7 @@ import {
     ISequencedDocumentMessage,
     ISequencedProposal,
 } from "@microsoft/fluid-protocol-definitions";
+import { Deferred, doIfNotDisposed, EventForwarder } from "@microsoft/fluid-server-services-client";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { debug } from "./debug";

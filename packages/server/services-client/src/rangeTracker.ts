@@ -6,7 +6,9 @@
 import * as assert from "assert";
 
 // tslint:disable:no-var-requires
-// tslint:disable-next-line:no-submodule-imports
+// tslint:disable:no-submodule-imports
+// tslint:disable no-non-null-assertion
+// tslint:disable no-require-imports
 const cloneDeep = require("lodash/cloneDeep");
 // tslint:enable:no-var-requires
 

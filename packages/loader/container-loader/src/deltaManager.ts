@@ -12,11 +12,7 @@ import {
     IDocumentService,
     ITelemetryLogger,
 } from "@microsoft/fluid-container-definitions";
-import {
-    Deferred,
-    isSystemType,
-    PerformanceEvent,
-} from "@microsoft/fluid-core-utils";
+import { PerformanceEvent } from "@microsoft/fluid-core-utils";
 import {
     ConnectionMode,
     IClient,
@@ -30,6 +26,7 @@ import {
     ITrace,
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
+import { Deferred, isSystemType } from "@microsoft/fluid-server-services-client";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { ContentCache } from "./contentCache";

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ChildLogger, Deferred, fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
+import { ChildLogger } from "@microsoft/fluid-core-utils";
 import { IValueChanged, MapKernel } from "@microsoft/fluid-map";
 import * as MergeTree from "@microsoft/fluid-merge-tree";
 import {
@@ -14,6 +14,7 @@ import {
     TreeEntry,
 } from "@microsoft/fluid-protocol-definitions";
 import { IChannelAttributes, IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
+import { Deferred, fromBase64ToUtf8 } from "@microsoft/fluid-server-services-client";
 import { parseHandles, serializeHandles, SharedObject } from "@microsoft/fluid-shared-object-base";
 import * as assert from "assert";
 import { debug } from "./debug";

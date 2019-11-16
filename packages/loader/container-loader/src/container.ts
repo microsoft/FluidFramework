@@ -20,11 +20,9 @@ import {
     TelemetryEventRaisedOnContainer,
 } from "@microsoft/fluid-container-definitions";
 import {
-    buildHierarchy,
     ChildLogger,
     DebugLogger,
     EventEmitterWithErrorHandling,
-    flatten,
     PerformanceEvent,
     raiseConnectedEvent,
     readAndParse,
@@ -53,6 +51,10 @@ import {
     MessageType,
     TreeEntry,
 } from "@microsoft/fluid-protocol-definitions";
+import {
+    buildHierarchy,
+    flatten,
+} from "@microsoft/fluid-server-services-client";
 import * as assert from "assert";
 import * as jwtDecode from "jwt-decode";
 import { Audience } from "./audience";

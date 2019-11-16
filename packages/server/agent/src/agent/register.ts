@@ -5,8 +5,8 @@
 
 import * as api from "@fluid-internal/client-api";
 import { IHost } from "@microsoft/fluid-container-definitions";
-import { RateLimiter } from "@microsoft/fluid-core-utils";
 import { IClient, IHelpMessage } from "@microsoft/fluid-protocol-definitions";
+import { RateLimiter } from "@microsoft/fluid-server-services-client";
 import { debug } from "./debug";
 import { loadDictionary } from "./dictionaryLoader";
 import { IntelWork } from "./intelWork";

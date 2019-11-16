@@ -30,6 +30,7 @@
     "@microsoft/fluid-driver-base": "^0.12.0",
     "@microsoft/fluid-gitresources": "^0.12.0",
     "@microsoft/fluid-protocol-definitions": "^0.12.0",
+    "@microsoft/fluid-server-services-client": "^0.12.0",
     "debug": "^4.1.1",
     "node-fetch": "^2.2.1",
     "performance-now": "^2.1.0",

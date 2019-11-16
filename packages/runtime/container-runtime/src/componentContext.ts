@@ -13,8 +13,6 @@ import {
     ILoader,
 } from "@microsoft/fluid-container-definitions";
 import {
-    BlobTreeEntry,
-    Deferred,
     raiseConnectedEvent,
     readAndParse,
     SummaryTracker,
@@ -38,6 +36,7 @@ import {
     IHostRuntime,
     IInboundSignalMessage,
 } from "@microsoft/fluid-runtime-definitions";
+import { BlobTreeEntry, Deferred } from "@microsoft/fluid-server-services-client";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 // tslint:disable-next-line:no-submodule-imports

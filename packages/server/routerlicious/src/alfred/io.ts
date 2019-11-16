@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { isSystemType } from "@microsoft/fluid-core-utils";
 import {
     ConnectionMode,
     IClient,
@@ -17,7 +16,7 @@ import {
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
 import * as agent from "@microsoft/fluid-server-agent";
-import { canSummarize, canWrite } from "@microsoft/fluid-server-services-client";
+import { canSummarize, canWrite, isSystemType } from "@microsoft/fluid-server-services-client";
 import * as core from "@microsoft/fluid-server-services-core";
 import {
     createNackMessage,

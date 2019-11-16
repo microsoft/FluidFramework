@@ -9,9 +9,10 @@ import {
     IComponentSerializer,
 } from "@microsoft/fluid-component-core-interfaces";
 import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
-import { ChildLogger, fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
+import { ChildLogger } from "@microsoft/fluid-core-utils";
 import { FileMode, ISequencedDocumentMessage, ITree, TreeEntry } from "@microsoft/fluid-protocol-definitions";
 import { IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
+import { fromBase64ToUtf8 } from "@microsoft/fluid-server-services-client";
 import { NonCollabClient, UnassignedSequenceNumber } from "./constants";
 import * as MergeTree from "./mergeTree";
 import * as ops from "./ops";

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Deferred } from "@microsoft/fluid-core-utils";
+import { Deferred } from "@microsoft/fluid-server-services-client";
 import { Client, Message } from "azure-iot-device";
 import { Mqtt } from "azure-iot-device-mqtt";
 import * as iothub from "azure-iothub";

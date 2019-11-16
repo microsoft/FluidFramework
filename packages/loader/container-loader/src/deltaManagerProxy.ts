@@ -10,7 +10,6 @@ import {
     IDeltaQueue,
     IDeltaSender,
 } from "@microsoft/fluid-container-definitions";
-import { EventForwarder } from "@microsoft/fluid-core-utils";
 import {
     ConnectionMode,
     IClientDetails,
@@ -20,6 +19,7 @@ import {
     ISignalMessage,
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
+import { EventForwarder } from "@microsoft/fluid-server-services-client";
 
 /**
  * Proxy to the real IDeltaQueue - used to restrict access

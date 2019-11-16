@@ -4,9 +4,9 @@
  */
 
 import { IDocumentStorageService } from "@microsoft/fluid-container-definitions";
-import { buildHierarchy, flatten, fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
 import * as api from "@microsoft/fluid-protocol-definitions";
 import { IFileSnapshot, ReadDocumentStorageServiceBase } from "@microsoft/fluid-replay-driver";
+import { buildHierarchy, flatten, fromBase64ToUtf8 } from "@microsoft/fluid-server-services-client";
 import * as assert from "assert";
 import * as fs from "fs";
 

@@ -19,11 +19,12 @@ import {
     IResolvedUrl,
     ITelemetryBaseLogger,
 } from "@microsoft/fluid-container-definitions";
-import { configurableUrlResolver, Deferred } from "@microsoft/fluid-core-utils";
+import { configurableUrlResolver } from "@microsoft/fluid-core-utils";
 import {
     IClientDetails,
     ISequencedDocumentMessage,
 } from "@microsoft/fluid-protocol-definitions";
+import { Deferred } from "@microsoft/fluid-server-services-client";
 import { EventEmitter } from "events";
 // tslint:disable-next-line:no-var-requires
 const now = require("performance-now") as () => number;

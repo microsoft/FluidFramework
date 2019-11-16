@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { isSystemType, RangeTracker } from "@microsoft/fluid-core-utils";
 import {
     IBranchOrigin,
     IClientJoin,
@@ -14,7 +13,7 @@ import {
     ITrace,
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
-import { canSummarize } from "@microsoft/fluid-server-services-client";
+import { canSummarize, isSystemType, RangeTracker } from "@microsoft/fluid-server-services-client";
 import {
     extractBoxcar,
     ICollection,

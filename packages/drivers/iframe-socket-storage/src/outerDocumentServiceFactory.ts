@@ -14,13 +14,14 @@ import {
     IHost,
     IResolvedUrl,
     IUrlResolver } from "@microsoft/fluid-container-definitions";
-import { configurableUrlResolver, Deferred } from "@microsoft/fluid-core-utils";
+import { configurableUrlResolver } from "@microsoft/fluid-core-utils";
 import {
     ConnectionMode,
     IClient,
     IDocumentMessage,
     IVersion,
 } from "@microsoft/fluid-protocol-definitions";
+import { Deferred } from "@microsoft/fluid-server-services-client";
 import * as Comlink from "comlink";
 import { debug } from "./debug";
 import { IOuterDocumentDeltaConnectionProxy } from "./innerDocumentDeltaConnection";

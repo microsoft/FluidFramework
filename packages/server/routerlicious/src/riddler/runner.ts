@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Deferred } from "@microsoft/fluid-core-utils";
+import { Deferred } from "@microsoft/fluid-server-services-client";
 import { MongoManager } from "@microsoft/fluid-server-services-core";
 import * as utils from "@microsoft/fluid-server-services-utils";
 import * as http from "http";

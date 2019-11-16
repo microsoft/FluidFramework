@@ -28,7 +28,8 @@
     "@microsoft/fluid-container-definitions": "^0.12.0",
     "@microsoft/fluid-core-utils": "^0.12.0",
     "@microsoft/fluid-protocol-definitions": "^0.12.0",
-    "@microsoft/fluid-runtime-definitions": "^0.12.0"
+    "@microsoft/fluid-runtime-definitions": "^0.12.0",
+    "@microsoft/fluid-server-services-client": "^0.12.0"
   },
   "devDependencies": {
     "@microsoft/fluid-build-common": "^0.12.0",

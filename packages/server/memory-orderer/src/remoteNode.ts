@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { Deferred } from "@microsoft/fluid-core-utils";
 import { IClient, IDocumentMessage, IServiceConfiguration } from "@microsoft/fluid-protocol-definitions";
+import { Deferred } from "@microsoft/fluid-server-services-client";
 import { INode, IOrderer, IOrdererConnection, IWebSocket, MongoManager } from "@microsoft/fluid-server-services-core";
 import * as assert from "assert";
 import { EventEmitter } from "events";

@@ -10,7 +10,7 @@ import {
     IRequest,
     IResponse } from "@microsoft/fluid-component-core-interfaces";
 import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
-import { ChildLogger, Deferred, PerformanceEvent } from "@microsoft/fluid-core-utils";
+import { ChildLogger, PerformanceEvent } from "@microsoft/fluid-core-utils";
 import {
     ISequencedDocumentMessage,
     ISequencedDocumentSystemMessage,
@@ -20,6 +20,7 @@ import {
     ISummaryNack,
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
+import { Deferred } from "@microsoft/fluid-server-services-client";
 import * as assert from "assert";
 import { ContainerRuntime, IGeneratedSummaryData } from "./containerRuntime";
 

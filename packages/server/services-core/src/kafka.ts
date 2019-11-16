@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as utils from "@microsoft/fluid-core-utils";
+import * as utils from "@microsoft/fluid-server-services-client";
 
 export interface IKafkaMessage {
     topic: string;

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+// tslint:disable no-non-null-assertion
 /**
  * A rate limiter to make sure that a client can only request help for one task within a time window.
  */

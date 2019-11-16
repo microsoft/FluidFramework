@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
 import {
     FileMode,
     ISequencedDocumentMessage,
@@ -12,6 +11,7 @@ import {
     TreeEntry,
 } from "@microsoft/fluid-protocol-definitions";
 import { IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
+import { fromBase64ToUtf8 } from "@microsoft/fluid-server-services-client";
 import { SharedObject } from "@microsoft/fluid-shared-object-base";
 // tslint:disable-next-line:no-submodule-imports
 import * as uuid from "uuid/v4";

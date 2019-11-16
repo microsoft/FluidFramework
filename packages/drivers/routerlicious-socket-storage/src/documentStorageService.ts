@@ -4,7 +4,6 @@
  */
 
 import { IDocumentStorageService } from "@microsoft/fluid-container-definitions";
-import { buildHierarchy, gitHashFile } from "@microsoft/fluid-core-utils";
 import * as resources from "@microsoft/fluid-gitresources";
 import {
     FileMode,
@@ -17,7 +16,7 @@ import {
     SummaryObject,
     SummaryType,
 } from "@microsoft/fluid-protocol-definitions";
-import * as gitStorage from "@microsoft/fluid-server-services-client";
+import * as storage from "@microsoft/fluid-server-services-client";
 import * as assert from "assert";
 
 /**
@@ -30,7 +29,7 @@ export class DocumentStorageService implements IDocumentStorageService  {
         return "";
     }
 
-    constructor(public readonly id: string, public manager: gitStorage.GitManager) {
+    constructor(public readonly id: string, public manager: storage.GitManager) {
     }
 
     public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
@@ -45,7 +44,7 @@ export class DocumentStorageService implements IDocumentStorageService  {
         }
 
         const tree = await this.manager.getTree(requestVersion.treeId);
-        return buildHierarchy(tree);
+        return storage.buildHierarchy(tree);
     }
 
     public async getVersions(versionId: string, count: number): Promise<IVersion[]> {
@@ -105,7 +104,7 @@ export class DocumentStorageService implements IDocumentStorageService  {
                 const content = typeof value.content === "string" ? value.content : value.content.toString("base64");
                 const encoding = typeof value.content === "string" ? "utf-8" : "base64";
                 // The gitHashFile would return the same hash as returned by the server as blob.sha
-                const hash = gitHashFile(Buffer.from(content, encoding));
+                const hash = storage.gitHashFile(Buffer.from(content, encoding));
                 if (!this.blobsPathCache.has(hash)) {
                     const blob = await this.manager.createBlob(content, encoding);
                     assert.equal(hash, blob.sha, "Blob.sha and hash do not match!!");

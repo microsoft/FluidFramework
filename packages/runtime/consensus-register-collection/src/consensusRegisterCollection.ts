@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
 import {
     ConnectionState,
     FileMode,
@@ -17,6 +16,7 @@ import {
     IComponentRuntime,
     IObjectStorageService,
 } from "@microsoft/fluid-runtime-definitions";
+import { fromBase64ToUtf8 } from "@microsoft/fluid-server-services-client";
 import { ISharedObject, SharedObject, ValueType } from "@microsoft/fluid-shared-object-base";
 import * as assert from "assert";
 import { ConsensusRegisterCollectionFactory } from "./consensusRegisterCollectionFactory";

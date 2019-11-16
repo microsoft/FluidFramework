@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
 import { FileMode, ITree, TreeEntry } from "@microsoft/fluid-protocol-definitions";
 import { IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
+import { fromBase64ToUtf8 } from "@microsoft/fluid-server-services-client";
 import { SharedObject, ValueType } from "@microsoft/fluid-shared-object-base";
 import * as assert from "assert";
 import { IConsensusOrderedCollectionValue } from "./values";

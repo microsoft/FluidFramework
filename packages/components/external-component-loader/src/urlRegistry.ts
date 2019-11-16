@@ -5,11 +5,11 @@
 
 // tslint:disable: no-console
 import { IFluidModule, IFluidPackage, isFluidPackage } from "@microsoft/fluid-container-definitions";
-import { Deferred } from "@microsoft/fluid-core-utils";
 import {
     ComponentRegistryEntry,
     IComponentRegistry,
 } from "@microsoft/fluid-runtime-definitions";
+import { Deferred } from "@microsoft/fluid-server-services-client";
 
 /**
  * A component registry that can load component via their url

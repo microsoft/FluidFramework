@@ -24,13 +24,7 @@ import {
     ITelemetryLogger,
 } from "@microsoft/fluid-container-definitions";
 import {
-    BlobTreeEntry,
-    buildHierarchy,
-    CommitTreeEntry,
     ComponentSerializer,
-    Deferred,
-    flatten,
-    isSystemType,
     PerformanceEvent,
     raiseConnectedEvent,
     readAndParse,
@@ -61,6 +55,13 @@ import {
     IInboundSignalMessage,
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
+import {
+    BlobTreeEntry,
+    buildHierarchy,
+    CommitTreeEntry,
+    Deferred,
+    flatten,
+    isSystemType } from "@microsoft/fluid-server-services-client";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 // tslint:disable-next-line:no-submodule-imports

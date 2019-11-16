@@ -36,6 +36,7 @@
     "@microsoft/fluid-runtime-definitions": "^0.12.0",
     "@microsoft/fluid-sequence": "^0.12.0",
     "@microsoft/fluid-shared-object-base": "^0.12.0",
+    "@microsoft/fluid-server-services-client": "^0.12.0",
     "@types/node": "^10.12.12",
     "debug": "^4.1.1",
     "jwt-decode": "^2.2.0"

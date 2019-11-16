@@ -13,7 +13,6 @@ import {
     IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
 import { IContainerRuntimeOptions } from "@microsoft/fluid-container-runtime";
-import { Deferred } from "@microsoft/fluid-core-utils";
 import * as ink from "@microsoft/fluid-ink";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import {
@@ -23,6 +22,7 @@ import {
 } from "@microsoft/fluid-protocol-definitions";
 import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
 import * as sequence from "@microsoft/fluid-sequence";
+import { Deferred } from "@microsoft/fluid-server-services-client";
 import { ISharedObject } from "@microsoft/fluid-shared-object-base";
 import { EventEmitter } from "events";
 import { CodeLoader } from "./codeLoader";
