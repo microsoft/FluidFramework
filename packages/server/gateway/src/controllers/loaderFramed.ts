@@ -34,10 +34,12 @@ export async function initialize(
     const hostConf: IBaseHostConfig = {
         documentServiceFactory: new InnerDocumentServiceFactory(),
         urlResolver: new InnerUrlResolver(resolved),
+        config,
+        scope,
+        proxyLoaderFactories: new Map<string, IProxyLoaderFactory>([["webworker", new WebWorkerLoaderFactory()]]),
     };
 
-    const baseHost = new BaseHost(resolved, pkg, scriptIds, config, scope, hostConf,
-        new Map<string, IProxyLoaderFactory>([["webworker", new WebWorkerLoaderFactory()]]));
+    const baseHost = new BaseHost(hostConf, resolved, pkg, scriptIds);
     const loader = await baseHost.getLoader();
 
     const documentFactory = new DocumentFactory(config.tenantId,

@@ -144,14 +144,19 @@ export async function initialize(
         jwt,
         new Map<string, IFluidResolvedUrl>([[url, resolved]]));
 
-    const hostConf: IBaseHostConfig = { documentServiceFactory: documentServiceFactories, urlResolver: resolver };
+    const hostConfig: IBaseHostConfig = {
+        documentServiceFactory: documentServiceFactories,
+        urlResolver: resolver,
+        config,
+        scope: services,
+        proxyLoaderFactories: new Map<string, IProxyLoaderFactory>([["webworker", new WebWorkerLoaderFactory()]]),
+    };
 
     // Provide access to all loader services from command line for easier testing as we bring more up
     // tslint:disable-next-line
     window["allServices"] = services;
 
-    const baseHost = new BaseHost(resolved, pkg, scriptIds, config, services, hostConf,
-        new Map<string, IProxyLoaderFactory>([["webworker", new WebWorkerLoaderFactory()]]));
+    const baseHost = new BaseHost(hostConfig, resolved, pkg, scriptIds);
     const loader = await baseHost.getLoader();
     documentFactory.resolveLoader(loader);
 

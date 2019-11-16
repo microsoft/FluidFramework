@@ -4,7 +4,6 @@
  */
 
 import { BaseHost, IBaseHostConfig } from "@microsoft/fluid-base-host";
-import { IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
 import { BaseTelemetryNullLogger, configurableUrlResolver } from "@microsoft/fluid-core-utils";
 import {
     IDocumentServiceFactory,
@@ -122,16 +121,13 @@ async function loadContainer(
     };
     // tslint:disable-next-line: no-unsafe-any
     return BaseHost.start(
+        hostConf,
         href,
         // tslint:disable-next-line: no-unsafe-any
         resolved, // resolved, IResolvedUrl,
         pkg, // pkg, IResolvedPackage, (gateway/routes/loader has an example (pkgP))
         scriptIds, // scriptIds, string[], defines the id of the script tag added to the page
-        {},
-        {},
         div,
-        hostConf,
-        new Map<string, IProxyLoaderFactory>(),
     );
 }
 
