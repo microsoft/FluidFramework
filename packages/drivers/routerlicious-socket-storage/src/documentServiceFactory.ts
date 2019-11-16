@@ -3,13 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import {
-    IDocumentService,
-    IDocumentServiceFactory,
-    IErrorTrackingService,
-    IFluidResolvedUrl,
-    IResolvedUrl,
-} from "@microsoft/fluid-protocol-definitions";
+import { IDocumentService,
+         IDocumentServiceFactory,
+         IFluidResolvedUrl,
+         IResolvedUrl } from "@microsoft/fluid-container-definitions";
+import { IErrorTrackingService } from "@microsoft/fluid-protocol-definitions";
 import { ICredentials, IGitCache } from "@microsoft/fluid-server-services-client";
 import { parse } from "url";
 import { DocumentService } from "./documentService";

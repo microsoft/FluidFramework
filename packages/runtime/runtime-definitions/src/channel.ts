@@ -4,8 +4,7 @@
  */
 
 import { IComponentLoadable } from "@microsoft/fluid-component-core-interfaces";
-import { ConnectionState } from "@microsoft/fluid-container-definitions";
-import { ISequencedDocumentMessage, ITree } from "@microsoft/fluid-protocol-definitions";
+import { ConnectionState, ISequencedDocumentMessage, ITree } from "@microsoft/fluid-protocol-definitions";
 import { IChannelAttributes } from "./storage";
 
 declare module "@microsoft/fluid-container-definitions" {

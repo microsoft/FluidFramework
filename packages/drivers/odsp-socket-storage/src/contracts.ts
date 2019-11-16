@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { IResolvedUrlBase } from "@microsoft/fluid-container-definitions";
 import * as resources from "@microsoft/fluid-gitresources";
 import * as api from "@microsoft/fluid-protocol-definitions";
 
-export interface IOdspResolvedUrl extends api.IResolvedUrlBase {
+export interface IOdspResolvedUrl extends IResolvedUrlBase {
     type: "fluid";
 
     // URL to send to fluid, contains the documentId and the path

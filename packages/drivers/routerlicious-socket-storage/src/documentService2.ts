@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IDocumentDeltaConnection } from "@microsoft/fluid-container-definitions";
 import * as api from "@microsoft/fluid-protocol-definitions";
 import { ICredentials } from "@microsoft/fluid-server-services-client";
 import { DocumentService } from "./documentService";
@@ -46,7 +47,7 @@ export class DocumentService2 extends DocumentService {
      */
     public async connectToDeltaStream(
         client: api.IClient,
-        mode: api.ConnectionMode): Promise<api.IDocumentDeltaConnection> {
+        mode: api.ConnectionMode): Promise<IDocumentDeltaConnection> {
         return WSDeltaConnection.create(
             this.tenantId,
             this.documentId,

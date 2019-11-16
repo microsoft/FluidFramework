@@ -3,16 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { buildHierarchy, flatten } from "@microsoft/fluid-core-utils";
 import {
-    ConnectionMode,
-    IClient,
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
     IDocumentService,
     IDocumentServiceFactory,
     IDocumentStorageService,
     IResolvedUrl,
+} from "@microsoft/fluid-container-definitions";
+import { buildHierarchy, flatten } from "@microsoft/fluid-core-utils";
+import {
+    ConnectionMode,
+    IClient,
     ISnapshotTree,
     ITree,
     IVersion,

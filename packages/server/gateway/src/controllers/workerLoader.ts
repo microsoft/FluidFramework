@@ -8,16 +8,16 @@ import {
     IRequest,
     IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
-import { IContainer, ILoader } from "@microsoft/fluid-container-definitions";
-import { Container, Loader } from "@microsoft/fluid-container-loader";
-import { BaseTelemetryNullLogger } from "@microsoft/fluid-core-utils";
-import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
 import {
+    IContainer,
     IDocumentService,
     IDocumentServiceFactory,
     IFluidResolvedUrl,
-    ISequencedDocumentMessage,
-} from "@microsoft/fluid-protocol-definitions";
+    ILoader } from "@microsoft/fluid-container-definitions";
+import { Container, Loader } from "@microsoft/fluid-container-loader";
+import { BaseTelemetryNullLogger } from "@microsoft/fluid-core-utils";
+import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
+import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
 import { WebCodeLoader } from "@microsoft/fluid-web-code-loader";
 import * as Comlink from "comlink";

@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import { IDocumentStorageService } from "@microsoft/fluid-container-definitions";
 import * as api from "@microsoft/fluid-protocol-definitions";
 
 /**
  * Document access to underlying storage. It is default implementation of a storage service.
  * Does not read/write anything.
  */
-export class NullBlobStorageService implements api.IDocumentStorageService  {
+export class NullBlobStorageService implements IDocumentStorageService  {
     public get repositoryUrl(): string {
         throw new Error("Invalid operation");
     }

@@ -8,6 +8,8 @@ import {
     IDeltaHandlerStrategy,
     IDeltaManager,
     IDeltaQueue,
+    IDocumentDeltaStorageService,
+    IDocumentService,
     ITelemetryLogger,
 } from "@microsoft/fluid-container-definitions";
 import {
@@ -20,9 +22,7 @@ import {
     IClient,
     IClientDetails,
     IContentMessage,
-    IDocumentDeltaStorageService,
     IDocumentMessage,
-    IDocumentService,
     IDocumentSystemMessage,
     ISequencedDocumentMessage,
     IServiceConfiguration,

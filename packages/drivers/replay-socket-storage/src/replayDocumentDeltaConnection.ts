@@ -3,14 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import * as messages from "@microsoft/fluid-driver-base";
 import {
-    ConnectionMode,
-    IContentMessage,
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
-    IDocumentMessage,
     IDocumentStorageService,
+} from "@microsoft/fluid-container-definitions";
+import {
+    ConnectionMode,
+    IConnected,
+    IContentMessage,
+    IDocumentMessage,
     ISequencedDocumentMessage,
     IServiceConfiguration,
     ISignalClient,
@@ -189,7 +191,7 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
         documentStorageService: IDocumentDeltaStorageService,
         controller: ReplayController): IDocumentDeltaConnection {
 
-        const connection: messages.IConnected = {
+        const connection: IConnected = {
             claims: ReplayDocumentDeltaConnection.claims,
             clientId: "",
             existing: true,
@@ -280,7 +282,7 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
     public readonly maxMessageSize = ReplayDocumentDeltaConnection.ReplayMaxMessageSize;
 
     constructor(
-        public details: messages.IConnected,
+        public details: IConnected,
     ) {
         super();
     }

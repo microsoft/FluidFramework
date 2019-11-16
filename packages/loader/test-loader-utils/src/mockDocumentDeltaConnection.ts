@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { IDocumentDeltaConnection } from "@microsoft/fluid-container-definitions";
 import {
     ConnectionMode,
     IContentMessage,
-    IDocumentDeltaConnection,
     IDocumentMessage,
     INack,
     ISequencedDocumentMessage,

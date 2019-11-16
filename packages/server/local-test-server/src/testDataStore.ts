@@ -3,9 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { ICodeLoader, IFluidCodeDetails, IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
+import {
+    ICodeLoader,
+    IDocumentServiceFactory,
+    IFluidCodeDetails,
+    IProxyLoaderFactory,
+    IUrlResolver } from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
-import { IDocumentServiceFactory, IUrlResolver } from "@microsoft/fluid-protocol-definitions";
 import { debug } from "./debug";
 
 /**

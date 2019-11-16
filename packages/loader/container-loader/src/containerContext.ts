@@ -10,23 +10,23 @@ import {
     IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
 import {
-    ConnectionState,
     IAudience,
     ICodeLoader,
     IContainerContext,
     IDeltaManager,
+    IDocumentStorageService,
     ILoader,
-    IQuorum,
     IRuntime,
     IRuntimeFactory,
     ITelemetryLogger,
 } from "@microsoft/fluid-container-definitions";
 import { raiseConnectedEvent } from "@microsoft/fluid-core-utils";
 import {
+    ConnectionState,
     IClientDetails,
     IDocumentAttributes,
     IDocumentMessage,
-    IDocumentStorageService,
+    IQuorum,
     ISequencedDocumentMessage,
     IServiceConfiguration,
     ISignalMessage,

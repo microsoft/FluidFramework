@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ConnectionState } from "@microsoft/fluid-container-definitions";
 import { fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
 import {
+    ConnectionState,
     FileMode,
     ISequencedDocumentMessage,
     ITree,

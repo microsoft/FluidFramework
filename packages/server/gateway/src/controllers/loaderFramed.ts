@@ -8,7 +8,11 @@ import {
     IHostConfig,
 } from "@microsoft/fluid-base-host";
 import { IComponent, IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
+import {
+    IDocumentServiceFactory,
+    IFluidResolvedUrl,
+    IProxyLoaderFactory,
+    IResolvedUrl } from "@microsoft/fluid-container-definitions";
 import {
     createProtocolToFactoryMapping,
     selectDocumentServiceFactoryForProtocol,
@@ -21,7 +25,6 @@ import {
     InnerUrlResolver,
 } from "@microsoft/fluid-iframe-driver";
 import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
-import { IDocumentServiceFactory, IFluidResolvedUrl, IResolvedUrl } from "@microsoft/fluid-protocol-definitions";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
 import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
 import { IGitCache } from "@microsoft/fluid-server-services-client";

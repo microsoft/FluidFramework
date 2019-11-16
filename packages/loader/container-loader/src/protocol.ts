@@ -4,19 +4,19 @@
  */
 
 import {
-    ICommittedProposal,
     IProcessMessageResult,
-    IProposal,
-    ISequencedProposal,
     ITelemetryLogger,
 } from "@microsoft/fluid-container-definitions";
 import { DebugLogger } from "@microsoft/fluid-core-utils";
 import {
     IClientJoin,
+    ICommittedProposal,
     IDocumentAttributes,
+    IProposal,
     ISequencedClient,
     ISequencedDocumentMessage,
     ISequencedDocumentSystemMessage,
+    ISequencedProposal,
     ISummaryAck,
     ISummaryContent,
     ISummaryNack,

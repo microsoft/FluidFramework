@@ -4,11 +4,13 @@
  */
 
 import {
-    IClient,
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
     IDocumentService,
     IDocumentStorageService,
+} from "@microsoft/fluid-container-definitions";
+import {
+    IClient,
     IErrorTrackingService,
     ISequencedDocumentMessage,
 } from "@microsoft/fluid-protocol-definitions";

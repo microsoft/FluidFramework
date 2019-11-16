@@ -4,14 +4,15 @@
  */
 import { IHostConfig } from "@microsoft/fluid-base-host";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
-import { IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
+import {
+    IDocumentServiceFactory,
+    IFluidResolvedUrl,
+    IProxyLoaderFactory,
+    IResolvedUrl } from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
 import { BaseTelemetryNullLogger, Deferred } from "@microsoft/fluid-core-utils";
 import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
-import { IDocumentServiceFactory,
-        IFluidResolvedUrl,
-        IResolvedUrl,
-        ScopeType } from "@microsoft/fluid-protocol-definitions";
+import { ScopeType } from "@microsoft/fluid-protocol-definitions";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
 import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
 import { NodeCodeLoader, NodeWhiteList } from "@microsoft/fluid-server-services";

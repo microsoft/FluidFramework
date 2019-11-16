@@ -10,9 +10,10 @@ import {
     IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
 import {
+    ConnectionState,
     IClientDetails,
     IDocumentMessage,
-    IDocumentStorageService,
+    IQuorum,
     ISequencedDocumentMessage,
     IServiceConfiguration,
     ISnapshotTree,
@@ -22,10 +23,10 @@ import {
 import { EventEmitter } from "events";
 import { IAudience } from "./audience";
 import { IBlobManager } from "./blobs";
-import { IQuorum } from "./consensus";
 import { IDeltaManager } from "./deltas";
 import { ICodeLoader, ILoader } from "./loader";
 import { ITelemetryLogger } from "./logger";
+import { IDocumentStorageService } from "./storage";
 
 /**
  * Person definition in a npm script
@@ -95,23 +96,6 @@ export interface IFluidPackage extends IPackage {
 export function isFluidPackage(pkg: IPackage): pkg is IFluidPackage {
     // tslint:disable-next-line: no-unsafe-any
     return pkg.fluid && pkg.fluid.browser && pkg.fluid.browser.umd;
-}
-
-export enum ConnectionState {
-    /**
-     * The document is no longer connected to the delta server
-     */
-    Disconnected,
-
-    /**
-     * The document has an inbound connection but is still pending for outbound deltas
-     */
-    Connecting,
-
-    /**
-     * The document is fully connected
-     */
-    Connected,
 }
 
 /**

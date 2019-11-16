@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IDeltaStorageService, IDocumentDeltaStorageService } from "@microsoft/fluid-container-definitions";
 import { fromUtf8ToBase64 } from "@microsoft/fluid-core-utils";
 import * as api from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
@@ -13,12 +14,12 @@ import { TokenProvider } from "./tokens";
 /**
  * Storage service limited to only being able to fetch documents for a specific document
  */
-export class DocumentDeltaStorageService implements api.IDocumentDeltaStorageService {
+export class DocumentDeltaStorageService implements IDocumentDeltaStorageService {
     constructor(
         private readonly tenantId: string,
         private readonly id: string,
         private readonly tokenProvider: api.ITokenProvider,
-        private readonly storageService: api.IDeltaStorageService) {
+        private readonly storageService: IDeltaStorageService) {
     }
 
     /* tslint:disable:promise-function-async */
@@ -30,7 +31,7 @@ export class DocumentDeltaStorageService implements api.IDocumentDeltaStorageSer
 /**
  * Provides access to the underlying delta storage on the server for routerlicious driver.
  */
-export class DeltaStorageService implements api.IDeltaStorageService {
+export class DeltaStorageService implements IDeltaStorageService {
     constructor(private readonly url: string) {
     }
 

@@ -5,7 +5,12 @@
 
 import * as cell from "@microsoft/fluid-cell";
 import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
-import { IDeltaManager, IGenericBlob, IHost, IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
+import {
+    IDeltaManager,
+    IDocumentServiceFactory,
+    IGenericBlob,
+    IHost,
+    IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
 import { IContainerRuntimeOptions } from "@microsoft/fluid-container-runtime";
 import { Deferred } from "@microsoft/fluid-core-utils";
@@ -13,7 +18,6 @@ import * as ink from "@microsoft/fluid-ink";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import {
     IDocumentMessage,
-    IDocumentServiceFactory,
     ISequencedClient,
     ISequencedDocumentMessage,
 } from "@microsoft/fluid-protocol-definitions";

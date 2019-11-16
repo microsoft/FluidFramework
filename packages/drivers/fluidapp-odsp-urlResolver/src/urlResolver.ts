@@ -6,12 +6,12 @@
 import {
     IRequest,
 } from "@microsoft/fluid-component-core-interfaces";
-import { fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
-import { createOdspUrl, OdspDriverUrlResolver } from "@microsoft/fluid-odsp-driver";
 import {
     IResolvedUrl,
     IUrlResolver,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@microsoft/fluid-container-definitions";
+import { fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
+import { createOdspUrl, OdspDriverUrlResolver } from "@microsoft/fluid-odsp-driver";
 
 const fluidOfficeServers = [
     "dev.fluidpreview.office.net",

@@ -5,7 +5,13 @@
 
 import * as API from "@fluid-internal/client-api";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
+import {
+    IDocumentDeltaStorageService,
+    IDocumentService,
+    IDocumentStorageService,
+    IFluidResolvedUrl,
+    IProxyLoaderFactory,
+} from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
 import {
     ITestDeltaConnectionServer,
@@ -13,12 +19,6 @@ import {
     TestDocumentServiceFactory,
     TestResolver,
 } from "@microsoft/fluid-local-test-server";
-import {
-    IDocumentDeltaStorageService,
-    IDocumentService,
-    IDocumentStorageService,
-    IFluidResolvedUrl,
-} from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
 
 describe("Container", () => {

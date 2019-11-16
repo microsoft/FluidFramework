@@ -1,5 +1,40 @@
 # 0.12 Breaking Changes
 
+The following interfaces/types have been moved to `@microsoft/fluid-protocol-definitions`:
+```
+ConnectionState
+IProposal
+ISequencedProposal
+IApprovedProposal
+ICommittedProposal
+IPendingProposal
+IQuorum
+IProtocolState
+IProcessMessageResult
+IDisposable
+IHelpMessage
+QueueMessage
+IConnect
+IConnected
+```
+
+The following interfaces/types have been moved to `@microsoft/fluid-container-definitions`:
+```
+IDeltaStorageService
+IDocumentDeltaStorageService
+IDocumentStorageService
+IDocumentDeltaConnection
+IDocumentStorageService
+IDocumentService
+IDocumentServiceFactory
+INetworkError
+IResolvedUrl
+IResolvedUrlBase
+IWebResolvedUrl
+IFluidResolvedUrl
+IUrlResolver
+```
+
 - [Top-level `type` on `IClient` deprecated](#Top-level-type-on-IClient-deprecated)
 - [Support for `IFluidResolvedUrl.type` === "prague" removed](#support-for-ifluidresolvedurltype--prague-removed)
 - [`connect` header replaced with `pause` header; ability to load closed containers removed](#connect-header-replaced-with-pause-header-ability-to-load-closed-containers-removed)

@@ -8,9 +8,13 @@ import {
     IRequest,
 } from "@microsoft/fluid-component-core-interfaces";
 import {
+    IDocumentServiceFactory,
+    IFluidResolvedUrl,
     IProxyLoaderFactory,
+    IResolvedUrl,
     ITelemetryBaseEvent,
     ITelemetryBaseLogger,
+    IUrlResolver,
 } from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
 import { ChildLogger, TelemetryLogger } from "@microsoft/fluid-core-utils";
@@ -26,12 +30,8 @@ import {
 } from "@microsoft/fluid-file-driver";
 import {
     IBlob,
-    IDocumentServiceFactory,
-    IFluidResolvedUrl,
-    IResolvedUrl,
     ISequencedDocumentMessage,
     ITree,
-    IUrlResolver,
     TreeEntry,
 } from "@microsoft/fluid-protocol-definitions";
 import {

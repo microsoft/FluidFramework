@@ -3,11 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { IDeltaManager, IDeltaQueue, ITelemetryLogger } from "@microsoft/fluid-container-definitions";
+import {
+    IDeltaManager,
+    IDeltaQueue,
+    IDocumentStorageService,
+    ITelemetryLogger } from "@microsoft/fluid-container-definitions";
 import { Deferred } from "@microsoft/fluid-core-utils";
 import {
     IDocumentMessage,
-    IDocumentStorageService,
     ISequencedDocumentMessage,
     ISummaryConfiguration,
     ISummaryProposal,

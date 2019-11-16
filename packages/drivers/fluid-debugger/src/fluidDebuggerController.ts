@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { IDocumentStorageService } from "@microsoft/fluid-container-definitions";
 import { Deferred, readAndParse } from "@microsoft/fluid-core-utils";
 import {
     IDocumentAttributes,
-    IDocumentStorageService,
     ISequencedDocumentMessage,
     ISnapshotTree,
     IVersion,

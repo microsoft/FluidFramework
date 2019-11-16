@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { IDocumentDeltaConnection } from "@microsoft/fluid-container-definitions";
 import { Deferred } from "@microsoft/fluid-core-utils";
-import { IConnected } from "@microsoft/fluid-driver-base";
 import {
     ConnectionMode,
+    IConnected,
     IContentMessage,
-    IDocumentDeltaConnection,
     IDocumentMessage,
     ISequencedDocumentMessage,
     IServiceConfiguration,

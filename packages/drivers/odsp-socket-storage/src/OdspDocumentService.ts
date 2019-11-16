@@ -3,15 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
-import { DebugLogger, SinglePromise, TelemetryLogger, TelemetryNullLogger } from "@microsoft/fluid-core-utils";
 import {
-    ConnectionMode,
-    IClient,
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
     IDocumentService,
     IDocumentStorageService,
+    ITelemetryLogger } from "@microsoft/fluid-container-definitions";
+import { DebugLogger, SinglePromise, TelemetryLogger, TelemetryNullLogger } from "@microsoft/fluid-core-utils";
+import {
+    ConnectionMode,
+    IClient,
     IErrorTrackingService,
 } from "@microsoft/fluid-protocol-definitions";
 import { ISocketStorageDiscovery } from "./contracts";

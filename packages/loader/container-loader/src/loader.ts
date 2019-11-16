@@ -10,18 +10,18 @@ import {
 } from "@microsoft/fluid-component-core-interfaces";
 import {
     ICodeLoader,
+    IDocumentService,
+    IDocumentServiceFactory,
+    IFluidResolvedUrl,
     IHost,
     ILoader,
     IProxyLoaderFactory,
+    IResolvedUrl,
     ITelemetryBaseLogger,
 } from "@microsoft/fluid-container-definitions";
 import { configurableUrlResolver, Deferred } from "@microsoft/fluid-core-utils";
 import {
     IClientDetails,
-    IDocumentService,
-    IDocumentServiceFactory,
-    IFluidResolvedUrl,
-    IResolvedUrl,
     ISequencedDocumentMessage,
 } from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
