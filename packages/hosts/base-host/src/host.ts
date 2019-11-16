@@ -16,7 +16,7 @@ import {
 import { Container, Loader } from "@microsoft/fluid-container-loader";
 import { IFluidResolvedUrl, IResolvedUrl } from "@microsoft/fluid-driver-definitions";
 import { IResolvedPackage, WebCodeLoader, WhiteList } from "@microsoft/fluid-web-code-loader";
-import { IHostConfig } from "./hostConfig";
+import { IBaseHostConfig } from "./hostConfig";
 
 async function attach(loader: Loader, url: string, div: HTMLDivElement) {
     const response = await loader.request({ url });
@@ -90,7 +90,7 @@ async function createWebLoader(
     scriptIds: string[],
     config: any,
     scope: IComponent,
-    hostConf: IHostConfig,
+    hostConf: IBaseHostConfig,
     proxyLoaderFactories: Map<string, IProxyLoaderFactory>,
     whiteList?: ICodeWhiteList,
 ): Promise<Loader> {
@@ -150,7 +150,7 @@ export class BaseHost {
         config: any,
         scope: IComponent,
         div: HTMLDivElement,
-        hostConf: IHostConfig,
+        hostConf: IBaseHostConfig,
         proxyLoaderFactories: Map<string, IProxyLoaderFactory>,
     ): Promise<Container> {
         const baseHost = new BaseHost(resolved, pkg, scriptIds, config, scope, hostConf, proxyLoaderFactories);
@@ -164,7 +164,7 @@ export class BaseHost {
         scriptIds: string[],
         config: any,
         scope: IComponent,
-        hostConfig: IHostConfig,
+        hostConfig: IBaseHostConfig,
         proxyLoaderFactories: Map<string, IProxyLoaderFactory>) {
 
         this.loaderP = createWebLoader(

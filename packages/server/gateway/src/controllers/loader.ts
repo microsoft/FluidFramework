@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { BaseHost, IHostConfig } from "@microsoft/fluid-base-host";
+import { BaseHost, IBaseHostConfig } from "@microsoft/fluid-base-host";
 import { IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
 import { BaseTelemetryNullLogger } from "@microsoft/fluid-core-utils";
 import {
@@ -144,7 +144,7 @@ export async function initialize(
         jwt,
         new Map<string, IFluidResolvedUrl>([[url, resolved]]));
 
-    const hostConf: IHostConfig = { documentServiceFactory: documentServiceFactories, urlResolver: resolver };
+    const hostConf: IBaseHostConfig = { documentServiceFactory: documentServiceFactories, urlResolver: resolver };
 
     // Provide access to all loader services from command line for easier testing as we bring more up
     // tslint:disable-next-line

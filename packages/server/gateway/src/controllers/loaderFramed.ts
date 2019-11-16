@@ -5,7 +5,7 @@
 
 import {
     BaseHost,
-    IHostConfig,
+    IBaseHostConfig,
 } from "@microsoft/fluid-base-host";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
@@ -31,7 +31,7 @@ export async function initialize(
 
     const div = document.getElementById("content") as HTMLDivElement;
 
-    const hostConf: IHostConfig = {
+    const hostConf: IBaseHostConfig = {
         documentServiceFactory: new InnerDocumentServiceFactory(),
         urlResolver: new InnerUrlResolver(resolved),
     };

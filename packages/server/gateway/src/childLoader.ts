@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IHostConfig } from "@microsoft/fluid-base-host";
+import { IBaseHostConfig } from "@microsoft/fluid-base-host";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
@@ -96,7 +96,7 @@ class KeyValueLoader {
             hostToken,
             new Map<string, IResolvedUrl>([[documentUrl, result.data]]));
 
-        const hostConf: IHostConfig = { documentServiceFactory: documentServiceFactories, urlResolver: resolver };
+        const hostConf: IBaseHostConfig = { documentServiceFactory: documentServiceFactories, urlResolver: resolver };
         config.tokens = (result.data as IFluidResolvedUrl).tokens;
 
         const loader = new Loader(

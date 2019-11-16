@@ -4,7 +4,7 @@
  */
 
 import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
-import { BaseHost, IHostConfig } from "@microsoft/fluid-base-host";
+import { BaseHost, IBaseHostConfig } from "@microsoft/fluid-base-host";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import {
     IFluidModule,
@@ -209,7 +209,7 @@ export async function start(
         deltaConn = TestDeltaConnectionServer.create(new SessionStorageDbFactory(documentId));
         documentServiceFactory = new TestDocumentServiceFactory(deltaConn);
     }
-    const hostConf: IHostConfig = { documentServiceFactory, urlResolver };
+    const hostConf: IBaseHostConfig = { documentServiceFactory, urlResolver };
 
     const double = (options.mode === "local") && !options.single;
     let leftDiv: HTMLDivElement;

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { BaseHost, IHostConfig } from "@microsoft/fluid-base-host";
+import { BaseHost, IBaseHostConfig } from "@microsoft/fluid-base-host";
 import { IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
 import { BaseTelemetryNullLogger, configurableUrlResolver } from "@microsoft/fluid-core-utils";
 import {
@@ -116,7 +116,7 @@ async function loadContainer(
         "",
         new Map<string, IResolvedUrl>([[href, resolved]]));
 
-    const hostConf: IHostConfig = {
+    const hostConf: IBaseHostConfig = {
         documentServiceFactory,
         urlResolver: resolver,
     };
