@@ -589,7 +589,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         }
         this.closed = true;
 
-        const error = errorArg !== undefined ? errorArg : new Error("Container closed")
+        const error = errorArg !== undefined ? errorArg : new Error("Container closed");
 
         // Note: "disconnect" & "nack" do not have error object
         if (error !== undefined) {
