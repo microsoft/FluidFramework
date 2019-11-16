@@ -6,9 +6,10 @@
 import {
     IDeltaManager,
     IDeltaQueue,
-    IDocumentStorageService,
-    ITelemetryLogger } from "@microsoft/fluid-container-definitions";
+    ITelemetryLogger,
+} from "@microsoft/fluid-container-definitions";
 import { Deferred } from "@microsoft/fluid-core-utils";
+import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import {
     IDocumentMessage,
     ISequencedDocumentMessage,
@@ -69,8 +70,8 @@ describe("Runtime", () => {
                                 inbound: emitter as IDeltaQueue<ISequencedDocumentMessage>,
                             } as IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
                             logger: {
-                                send: (event) => {},
-                                sendTelemetryEvent: (event) => {},
+                                send: (event) => { },
+                                sendTelemetryEvent: (event) => { },
                             } as ITelemetryLogger,
                             storage: {
                                 getSnapshotTree: () => Promise.resolve({}),

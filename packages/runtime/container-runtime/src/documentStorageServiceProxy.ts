@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentStorageService } from "@microsoft/fluid-container-definitions";
+import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import {
     ICreateBlobResponse,
     ISnapshotTree,

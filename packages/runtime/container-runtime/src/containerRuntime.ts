@@ -17,7 +17,6 @@ import {
     IContainerContext,
     IDeltaManager,
     IDeltaSender,
-    IDocumentStorageService,
     ILoader,
     IMessageScheduler,
     IRuntime,
@@ -35,6 +34,7 @@ import {
     raiseConnectedEvent,
     readAndParse,
 } from "@microsoft/fluid-core-utils";
+import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import {
     ConnectionState,
     IChunkedOp,

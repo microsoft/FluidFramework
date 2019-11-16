@@ -4,7 +4,7 @@
  */
 // tslint:disable: prefer-const
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
-import { IDocumentStorageService } from "@microsoft/fluid-container-definitions";
+import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import { IBlob, ISnapshotTree } from "@microsoft/fluid-protocol-definitions";
 import {
     IComponentContext,

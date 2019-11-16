@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ICodeLoader, IDocumentServiceFactory, IHost } from "@microsoft/fluid-container-definitions";
+import { ICodeLoader, IHost } from "@microsoft/fluid-container-definitions";
+import { IDocumentServiceFactory } from "@microsoft/fluid-driver-definitions";
 import { EventEmitter } from "events";
 import { Provider } from "nconf";
 import { IDocumentTaskInfo, IWorkManager } from "./definitions";

@@ -5,7 +5,8 @@
 
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
-import { IBlobManager, IDocumentStorageService, IGenericBlob } from "@microsoft/fluid-container-definitions";
+import { IBlobManager, IGenericBlob } from "@microsoft/fluid-container-definitions";
+import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import { MapFactory } from "@microsoft/fluid-map";
 import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
 

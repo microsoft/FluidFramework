@@ -4,7 +4,7 @@
  */
 
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { IFluidResolvedUrl, IResolvedUrl, IUrlResolver } from "@microsoft/fluid-container-definitions";
+import { IFluidResolvedUrl, IResolvedUrl, IUrlResolver } from "@microsoft/fluid-driver-definitions";
 import { ScopeType } from "@microsoft/fluid-protocol-definitions";
 import { generateToken } from "@microsoft/fluid-server-services-core";
 

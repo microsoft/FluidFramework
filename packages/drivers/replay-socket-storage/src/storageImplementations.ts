@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { buildHierarchy, flatten } from "@microsoft/fluid-core-utils";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
@@ -10,8 +11,7 @@ import {
     IDocumentServiceFactory,
     IDocumentStorageService,
     IResolvedUrl,
-} from "@microsoft/fluid-container-definitions";
-import { buildHierarchy, flatten } from "@microsoft/fluid-core-utils";
+} from "@microsoft/fluid-driver-definitions";
 import {
     ConnectionMode,
     IClient,

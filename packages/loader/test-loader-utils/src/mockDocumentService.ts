@@ -8,7 +8,7 @@ import {
     IDocumentDeltaStorageService,
     IDocumentService,
     IDocumentStorageService,
-} from "@microsoft/fluid-container-definitions";
+} from "@microsoft/fluid-driver-definitions";
 import {
     IClient,
     IErrorTrackingService,

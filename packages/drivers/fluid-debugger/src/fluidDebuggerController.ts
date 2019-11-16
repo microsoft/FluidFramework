@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentStorageService } from "@microsoft/fluid-container-definitions";
 import { Deferred, readAndParse } from "@microsoft/fluid-core-utils";
+import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import {
     IDocumentAttributes,
     ISequencedDocumentMessage,
@@ -174,7 +174,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
         if (!this.isSelectionMade()) {
             this.versionCount--;
             this.ui.updateVersionText(this.versionCount);
-            this.ui.updateVerison(index, version, seqV);
+            this.ui.updateVersion(index, version, seqV);
         }
 
     }

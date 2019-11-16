@@ -9,7 +9,7 @@ import {
 import {
     IResolvedUrl,
     IUrlResolver,
-} from "@microsoft/fluid-container-definitions";
+} from "@microsoft/fluid-driver-definitions";
 import Axios from "axios";
 
 export class ContainerUrlResolver implements IUrlResolver {

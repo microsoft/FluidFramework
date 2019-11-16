@@ -14,13 +14,13 @@ import {
     ICodeLoader,
     IContainerContext,
     IDeltaManager,
-    IDocumentStorageService,
     ILoader,
     IRuntime,
     IRuntimeFactory,
     ITelemetryLogger,
 } from "@microsoft/fluid-container-definitions";
 import { raiseConnectedEvent } from "@microsoft/fluid-core-utils";
+import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import {
     ConnectionState,
     IClientDetails,

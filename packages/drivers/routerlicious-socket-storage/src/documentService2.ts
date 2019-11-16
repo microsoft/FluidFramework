@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentDeltaConnection } from "@microsoft/fluid-container-definitions";
+import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
 import * as api from "@microsoft/fluid-protocol-definitions";
 import { ICredentials } from "@microsoft/fluid-server-services-client";
 import { DocumentService } from "./documentService";

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentService, IDocumentServiceFactory } from "@microsoft/fluid-container-definitions";
+import { IDocumentService, IDocumentServiceFactory } from "@microsoft/fluid-driver-definitions";
 import { ReplayDocumentService, ReplayDocumentServiceFactory } from "@microsoft/fluid-replay-driver";
 import { DebugReplayController } from "./fluidDebuggerController";
 import { DebuggerUI } from "./fluidDebuggerUI";

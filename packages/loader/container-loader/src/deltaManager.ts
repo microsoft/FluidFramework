@@ -8,8 +8,6 @@ import {
     IDeltaHandlerStrategy,
     IDeltaManager,
     IDeltaQueue,
-    IDocumentDeltaStorageService,
-    IDocumentService,
     ITelemetryLogger,
 } from "@microsoft/fluid-container-definitions";
 import {
@@ -17,6 +15,10 @@ import {
     isSystemType,
     PerformanceEvent,
 } from "@microsoft/fluid-core-utils";
+import {
+    IDocumentDeltaStorageService,
+    IDocumentService,
+} from "@microsoft/fluid-driver-definitions";
 import {
     ConnectionMode,
     IClient,

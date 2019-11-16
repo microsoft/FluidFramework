@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as api from "@microsoft/fluid-container-definitions";
+import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
+import * as api from "@microsoft/fluid-driver-definitions";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { IDeltaStorageGetResponse, ISequencedDeltaOpMessage } from "./contracts";
 import { IFetchWrapper } from "./fetchWrapper";
@@ -23,7 +24,7 @@ export class OdspDeltaStorageService implements api.IDocumentDeltaStorageService
         private readonly fetchWrapper: IFetchWrapper,
         private ops: ISequencedDeltaOpMessage[] | undefined,
         private readonly getStorageToken: (refresh: boolean) => Promise<string | null>,
-        private readonly logger?: api.ITelemetryLogger,
+        private readonly logger?: ITelemetryLogger,
     ) {
         this.queryString = getQueryString(queryParams);
     }

@@ -5,9 +5,11 @@
 
 import {
     IConnectionDetails,
+} from "@microsoft/fluid-container-definitions";
+import {
     IDocumentDeltaConnection,
     IDocumentService,
-} from "@microsoft/fluid-container-definitions";
+} from "@microsoft/fluid-driver-definitions";
 import {
     ConnectionMode,
     IClient,

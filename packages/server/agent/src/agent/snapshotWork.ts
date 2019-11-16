@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentServiceFactory, IHost } from "@microsoft/fluid-container-definitions";
+import { IHost } from "@microsoft/fluid-container-definitions";
+import { IDocumentServiceFactory } from "@microsoft/fluid-driver-definitions";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { BaseWork } from "./baseWork";
 import { IWork } from "./definitions";
@@ -31,7 +32,7 @@ export class SnapshotWork extends BaseWork implements IWork {
 
     public async start(task: string): Promise<void> {
         await this.loadDocument(
-            { encrypted: undefined, client: { type: "snapshot"} },
+            { encrypted: undefined, client: { type: "snapshot" } },
             this.serviceFactory,
             task);
 

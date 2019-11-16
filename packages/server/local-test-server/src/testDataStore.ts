@@ -5,11 +5,11 @@
 
 import {
     ICodeLoader,
-    IDocumentServiceFactory,
     IFluidCodeDetails,
     IProxyLoaderFactory,
-    IUrlResolver } from "@microsoft/fluid-container-definitions";
+} from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
+import { IDocumentServiceFactory, IUrlResolver } from "@microsoft/fluid-driver-definitions";
 import { debug } from "./debug";
 
 /**

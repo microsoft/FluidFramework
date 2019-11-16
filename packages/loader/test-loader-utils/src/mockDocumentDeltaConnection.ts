@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentDeltaConnection } from "@microsoft/fluid-container-definitions";
+import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
 import {
     ConnectionMode,
     IContentMessage,

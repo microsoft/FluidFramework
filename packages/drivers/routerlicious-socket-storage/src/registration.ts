@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentService } from "@microsoft/fluid-container-definitions";
+import { IDocumentService } from "@microsoft/fluid-driver-definitions";
 import { IErrorTrackingService } from "@microsoft/fluid-protocol-definitions";
 import { IGitCache } from "@microsoft/fluid-server-services-client";
 import { DocumentService } from "./documentService";

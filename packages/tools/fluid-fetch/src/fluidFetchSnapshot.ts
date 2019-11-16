@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
 import {
     IDocumentService,
     IDocumentStorageService,
-} from "@microsoft/fluid-container-definitions";
-import { fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
+} from "@microsoft/fluid-driver-definitions";
 import {
     ISnapshotTree,
     IVersion,

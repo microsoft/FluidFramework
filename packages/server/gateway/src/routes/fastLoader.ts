@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidResolvedUrl } from "@microsoft/fluid-container-definitions";
+import { IFluidResolvedUrl } from "@microsoft/fluid-driver-definitions";
 import { ScopeType } from "@microsoft/fluid-protocol-definitions";
 import { getR11sToken, IAlfredUser } from "@microsoft/fluid-routerlicious-urlresolver";
 import { IAlfredTenant, ICache } from "@microsoft/fluid-server-services-core";

@@ -10,7 +10,7 @@ import {
     IFluidResolvedUrl,
     IResolvedUrl,
     IUrlResolver,
-} from "@microsoft/fluid-container-definitions";
+} from "@microsoft/fluid-driver-definitions";
 import { IUser, ScopeType } from "@microsoft/fluid-protocol-definitions";
 import { generateToken, IAlfredTenant } from "@microsoft/fluid-server-services-core";
 import { parse } from "url";

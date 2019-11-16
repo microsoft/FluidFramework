@@ -18,7 +18,7 @@ IConnect
 IConnected
 ```
 
-The following interfaces/types have been moved to `@microsoft/fluid-container-definitions`:
+The following interfaces/types have been moved to `@microsoft/fluid-driver-definitions`:
 ```
 IDeltaStorageService
 IDocumentDeltaStorageService

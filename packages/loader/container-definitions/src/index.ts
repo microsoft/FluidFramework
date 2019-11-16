@@ -10,5 +10,3 @@ export * from "./deltas";
 export * from "./loader";
 export * from "./logger";
 export * from "./proxyLoader";
-export * from "./storage";
-export * from "./urlResolver";

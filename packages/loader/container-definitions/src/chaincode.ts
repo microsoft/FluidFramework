@@ -9,6 +9,7 @@ import {
     IRequest,
     IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
+import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import {
     ConnectionState,
     IClientDetails,
@@ -26,7 +27,6 @@ import { IBlobManager } from "./blobs";
 import { IDeltaManager } from "./deltas";
 import { ICodeLoader, ILoader } from "./loader";
 import { ITelemetryLogger } from "./logger";
-import { IDocumentStorageService } from "./storage";
 
 /**
  * Person definition in a npm script

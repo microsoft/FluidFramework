@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentDeltaConnection } from "@microsoft/fluid-container-definitions";
 import { BatchManager } from "@microsoft/fluid-core-utils";
+import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
 import {
     ConnectionMode,
     IClient,

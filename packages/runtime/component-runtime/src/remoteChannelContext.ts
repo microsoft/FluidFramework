@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentStorageService } from "@microsoft/fluid-container-definitions";
 import { readAndParse, SummaryTracker } from "@microsoft/fluid-core-utils";
+import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import {
     ConnectionState,
     ISequencedDocumentMessage,
