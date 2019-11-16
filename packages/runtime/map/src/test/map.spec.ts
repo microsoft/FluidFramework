@@ -9,6 +9,7 @@ import { MockRuntime, MockSharedObjectServices } from "@microsoft/fluid-test-run
 
 import * as assert from "assert";
 import * as map from "../";
+import { SharedMap } from "../map";
 
 describe("Routerlicious", () => {
     describe("Map", () => {
@@ -158,7 +159,7 @@ describe("Routerlicious", () => {
                     const subMap = factory.create(runtime, "subMap");
                     sharedMap.set("object", subMap.handle);
 
-                    const parsed = (sharedMap as any).getSerializableStorage();
+                    const parsed = (sharedMap as SharedMap).getSerializableStorage();
 
                     sharedMap.forEach((value, key) => {
                         if (!value.IComponentHandle) {
@@ -179,7 +180,7 @@ describe("Routerlicious", () => {
                     const subMap = factory.create(runtime, "subMap");
                     sharedMap.set("object", subMap.handle);
 
-                    const parsed = (sharedMap as any).getSerializableStorage();
+                    const parsed = (sharedMap as SharedMap).getSerializableStorage();
 
                     sharedMap.forEach((value, key) => {
                         if (!value || !value.IComponentHandle) {

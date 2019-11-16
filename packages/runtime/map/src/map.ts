@@ -352,7 +352,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
         return tree;
     }
 
-    protected getSerializableStorage(): IMapDataObjectSerializable {
+    public getSerializableStorage(): IMapDataObjectSerializable {
         return this.kernel.getSerializableStorage();
     }
 
@@ -372,8 +372,8 @@ export class SharedMap extends SharedObject implements ISharedMap {
             this.kernel.populateFromSerializable(newFormat.content);
             await Promise.all(newFormat.blobs.map(async (value) => {
                 const blob = await storage.read(value);
-                const data2 = fromBase64ToUtf8(blob);
-                this.kernel.populateFromSerializable(JSON.parse(data2) as IMapDataObjectSerializable);
+                const blobData = fromBase64ToUtf8(blob);
+                this.kernel.populateFromSerializable(JSON.parse(blobData) as IMapDataObjectSerializable);
             }));
         } else {
             this.kernel.populateFromSerializable(json as IMapDataObjectSerializable);

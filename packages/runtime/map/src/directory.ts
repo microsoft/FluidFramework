@@ -220,60 +220,80 @@ type IDirectoryOperation = IDirectoryStorageOperation | IDirectorySubDirectoryOp
  * @internal
  */
 export interface IDirectoryDataObject {
-    storage?: { [key: string]: ISerializableValue | string };
+    storage?: { [key: string]: ISerializableValue };
     subdirectories?: { [subdirName: string]: IDirectoryDataObject };
 }
 
-class DirectorySerializer {
-    // Splitting of big properties is currently disabled (via this big number)
-    // Once build with support for reading new snapshot format propagates, we can enable it.
-    private readonly MinValueSizeSeparateSnapshotBlob = 8 * 1024 * 1024 * 1024;
-
-    private readonly tree: ITree = { entries: [], id: null };
-    private counter = 0;
-    private readonly blobs: string[] = [];
-
-    public addBlob(pathName: string, content: object) {
-        addBlobToTree(this.tree, pathName, content);
-    }
-
-    public addBlobCore(content: object): string {
-        const blobName = `blob${this.counter}`;
-        this.counter++;
-        this.blobs.push(blobName);
-        addBlobToTree(this.tree, blobName, content);
-        return blobName;
+interface IDirectoryNewStorageFormat {
+    blobs: string[];
+    content: IDirectoryDataObject;
 }
 
-    public getTree(currentSubDir: SubDirectory) {
-        this.addBlob(snapshotFileName, this.process(currentSubDir));
-        return this.tree;
-    }
+function serializeDirectory(root: SubDirectory): ITree {
+    // Splitting of big properties is currently disabled (via this big number)
+    // Once build with support for reading new snapshot format propagates, we can enable it.
+    const writeNewFormat = false;
+    const MinValueSizeSeparateSnapshotBlob = 8 * 1024;
 
-    private process(currentSubDir: SubDirectory, currentSubDirObject: IDirectoryDataObject = {}) {
+    const tree: ITree = { entries: [], id: null };
+    let counter = 0;
+    const blobs: string[] = [];
+
+    const stack: [SubDirectory, IDirectoryDataObject][] = [];
+    const content: IDirectoryDataObject = {};
+    stack.push([root, content]);
+
+    while (stack.length > 0) {
+        const [currentSubDir, currentSubDirObject] = stack.pop();
         for (const [key, value] of currentSubDir.getSerializedStorage()) {
             if (!currentSubDirObject.storage) {
                 currentSubDirObject.storage = {};
             }
-            let result: ISerializableValue | string = {
+            const result: ISerializableValue = {
                 type: value.type,
                 value: value.value && JSON.parse(value.value) as object,
             };
-            if (value.value && value.value.length >= this.MinValueSizeSeparateSnapshotBlob) {
-                result = this.addBlobCore(result);
+            if (writeNewFormat && value.value && value.value.length >= MinValueSizeSeparateSnapshotBlob) {
+                const extraContent: IDirectoryDataObject = {};
+                let largeContent = extraContent;
+                if (currentSubDir.absolutePath !== posix.sep) {
+                    for (const dir of currentSubDir.absolutePath.substr(1).split(posix.sep)) {
+                        const subDataObject: IDirectoryDataObject = {};
+                        largeContent.subdirectories = { [dir]: subDataObject};
+                        largeContent = subDataObject;
+                    }
+                }
+                largeContent.storage = {[key]: result };
+                const blobName = `blob${counter}`;
+                counter++;
+                blobs.push(blobName);
+                addBlobToTree(tree, blobName, extraContent);
+            } else {
+                currentSubDirObject.storage[key] = result;
             }
-            currentSubDirObject.storage[key] = result;
         }
 
         for (const [subdirName, subdir] of currentSubDir.subdirectories()) {
             if (!currentSubDirObject.subdirectories) {
                 currentSubDirObject.subdirectories = {};
             }
-            currentSubDirObject.subdirectories[subdirName] = {};
-            this.process(subdir as SubDirectory, currentSubDirObject.subdirectories[subdirName]);
+            const subDataObject: IDirectoryDataObject = {};
+            currentSubDirObject.subdirectories[subdirName] = subDataObject;
+            stack.push([subdir as SubDirectory, subDataObject]);
         }
-        return currentSubDirObject;
     }
+
+    if (writeNewFormat) {
+        const newFormat: IDirectoryNewStorageFormat = {
+            blobs,
+            content,
+        };
+        addBlobToTree(tree, snapshotFileName, newFormat);
+    } else {
+        addBlobToTree(tree, snapshotFileName, content);
+    }
+
+    return tree;
 }
 
 /**
@@ -595,8 +615,7 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
      * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.snapshot}
      */
     public snapshot(): ITree {
-        const serializer = new DirectorySerializer();
-        return serializer.getTree(this.root);
+        return serializeDirectory(this.root);
     }
 
     /**
@@ -666,10 +685,20 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
         storage: IObjectStorageService) {
 
         const header = await storage.read(snapshotFileName);
-        const data = header ? JSON.parse(fromBase64ToUtf8(header)) : {};
-        const promises: Promise<void>[] = [];
-        this.populate(storage, this.root, data as IDirectoryDataObject, promises);
-        await Promise.all(promises);
+        const data = JSON.parse(fromBase64ToUtf8(header));
+        const newFormat = data as IDirectoryNewStorageFormat;
+        if (Array.isArray(newFormat.blobs)) {
+            // new storage format
+            this.populate(newFormat.content);
+            await Promise.all(newFormat.blobs.map(async (blob) => {
+                const blobContent = await storage.read(blob);
+                const dataExtra = JSON.parse(fromBase64ToUtf8(blobContent));
+                this.populate(dataExtra as IDirectoryDataObject);
+            }));
+        } else {
+            // old storage format
+            this.populate(data as IDirectoryDataObject);
+        }
     }
 
     /**
@@ -677,41 +706,32 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
      * @param data - A JSON string containing serialized directory data
      * @internal
      */
-    protected populate(
-            storage: IObjectStorageService,
-            currentSubDir: SubDirectory,
-            currentSubDirObject: IDirectoryDataObject,
-            promises: Promise<void>[]) {
-        if (currentSubDirObject.subdirectories) {
-            for (const [subdirName, subdirObject] of Object.entries(currentSubDirObject.subdirectories)) {
-                const newSubDir = new SubDirectory(
-                    this,
-                    this.runtime,
-                    posix.join(currentSubDir.absolutePath, subdirName),
-                );
-                currentSubDir.populateSubDirectory(subdirName, newSubDir);
-                this.populate(storage, newSubDir, subdirObject, promises);
-            }
-        }
-
-        if (currentSubDirObject.storage) {
-            for (const [key, serializableOrBlobName] of Object.entries(currentSubDirObject.storage)) {
-                if (typeof serializableOrBlobName === "string") {
-                    const act = async () => {
-                        const blobContent = await storage.read(serializableOrBlobName);
-                        const localValue = this.makeLocal(
-                            key,
-                            currentSubDir.absolutePath,
-                            JSON.parse(fromBase64ToUtf8(blobContent)) as ISerializableValue,
+    protected populate(data: IDirectoryDataObject) {
+        const stack: [SubDirectory, IDirectoryDataObject][] = [];
+        stack.push([this.root, data]);
+        while (stack.length > 0) {
+            const [currentSubDir, currentSubDirObject] = stack.pop();
+            if (currentSubDirObject.subdirectories) {
+                for (const [subdirName, subdirObject] of Object.entries(currentSubDirObject.subdirectories)) {
+                    let newSubDir = currentSubDir.getSubDirectory(subdirName) as SubDirectory;
+                    if (!newSubDir) {
+                        newSubDir = new SubDirectory(
+                            this,
+                            this.runtime,
+                            posix.join(currentSubDir.absolutePath, subdirName),
                         );
-                        currentSubDir.populateStorage(key, localValue);
-                    };
-                    promises.push(act());
-                } else {
+                        currentSubDir.populateSubDirectory(subdirName, newSubDir);
+                    }
+                    stack.push([newSubDir, subdirObject]);
+                }
+            }
+
+            if (currentSubDirObject.storage) {
+                for (const [key, serializable] of Object.entries(currentSubDirObject.storage)) {
                     const localValue = this.makeLocal(
                         key,
                         currentSubDir.absolutePath,
-                        serializableOrBlobName,
+                        serializable,
                     );
                     currentSubDir.populateStorage(key, localValue);
                 }

@@ -10,7 +10,7 @@ import {
 } from "@microsoft/fluid-component-core-interfaces";
 
 /**
- * Given a mostly-plain object that may have handle objects embedded within, will return a fully-plain object
+ * Given a mostly-plain object that may have handle objects embedded within, return a string representation of an object
  * where the handle objects have been replaced with a serializable form.
  * @param value - The mostly-plain object
  * @param serializer - The serializer that knows how to convert handles into serializable format
@@ -41,7 +41,7 @@ export function serializeHandles(
  * @param bind - Bind any other handles we find in the object against this given handle.
  * @returns The fully-plain object
  */
-export function serializableHandles(
+export function makeHandlesSerializable(
     value: any,
     serializer: IComponentSerializer,
     context: IComponentHandleContext,

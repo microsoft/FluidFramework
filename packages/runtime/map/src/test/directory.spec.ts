@@ -30,7 +30,9 @@ function serialize(directory: map.ISharedDirectory): string {
     assert(tree.entries.length === 1);
     assert(tree.entries[0].path === "header");
     assert(tree.entries[0].type === TreeEntry[TreeEntry.Blob]);
-    return (tree.entries[0].value as IBlob).contents;
+    const contents = (tree.entries[0].value as IBlob).contents;
+    // return JSON.stringify((JSON.parse(contents) as IDirectoryNewStorageFormat).content);
+    return contents;
 }
 
 describe("Routerlicious", () => {
@@ -326,15 +328,18 @@ describe("Routerlicious", () => {
                 assert(tree.entries[0].path === "blob0");
                 assert(tree.entries[1].path === "blob1");
                 assert(tree.entries[2].path === "header");
+                assert((tree.entries[0].value as IBlob).contents.length >= 1024);
+                assert((tree.entries[1].value as IBlob).contents.length >= 1024);
+                assert((tree.entries[2].value as IBlob).contents.length <= 200);
 
                 const testDirectory2 = directoryFactory.create(runtime, "test");
                 const storage = MockSharedObjectServices.createFromTree(tree);
                 await (testDirectory2 as SharedDirectory).load("branchId", storage);
 
-                assert.equal(testDirectory.get("first"), "second");
-                assert.equal(testDirectory.get("long1"), longWord);
-                assert.equal(testDirectory.getWorkingDirectory("/nested").get("deepKey1"), "deepValue1");
-                assert.equal(testDirectory.getWorkingDirectory("/nested").get("long2"), logWord2);
+                assert.equal(testDirectory2.get("first"), "second");
+                assert.equal(testDirectory2.get("long1"), longWord);
+                assert.equal(testDirectory2.getWorkingDirectory("/nested").get("deepKey1"), "deepValue1");
+                assert.equal(testDirectory2.getWorkingDirectory("/nested").get("long2"), logWord2);
             });
         });
 

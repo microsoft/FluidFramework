@@ -6,7 +6,7 @@
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
-import { parseHandles, serializableHandles, ValueType } from "@microsoft/fluid-shared-object-base";
+import { makeHandlesSerializable, parseHandles, ValueType } from "@microsoft/fluid-shared-object-base";
 import { EventEmitter } from "events";
 import {
     ISerializableValue,
@@ -346,7 +346,7 @@ export class MapKernel {
         // TODO ideally we could use makeSerialized in this case as well. But the interval
         // collection has assumptions of attach being called prior. Given the IComponentSerializer it
         // may be possible to remove custom value type serialization entirely.
-        const transformedValue = serializableHandles(
+        const transformedValue = makeHandlesSerializable(
             params,
             this.runtime.IComponentSerializer,
             this.runtime.IComponentHandleContext,
@@ -709,7 +709,7 @@ export class MapKernel {
      */
     private makeMapValueOpEmitter(key: string): IValueOpEmitter {
         const emit = (opName: string, previousValue: any, params: any) => {
-            const translatedParams = serializableHandles(
+            const translatedParams = makeHandlesSerializable(
                 params,
                 this.runtime.IComponentSerializer,
                 this.runtime.IComponentHandleContext,
