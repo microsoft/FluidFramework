@@ -111,7 +111,7 @@
             "type": "node",
             "request": "launch",
             "name": "Local Server Tests",
-            "cwd": "${workspaceFolder}/packages/server/local-test-server",
+            "cwd": "${workspaceFolder}/packages/test/local-test-server",
             "program": "${workspaceFolder}/common/tools/node_modules/mocha/bin/_mocha",
             "args": [
                 "-r",
@@ -346,8 +346,8 @@
             "type": "node",
             "request": "launch",
             "name": "Local Test Server",
-            "cwd": "${workspaceFolder}/packages/server/local-test-server",
-            "program": "${workspaceFolder}/packages/server/local-test-server/node_modules/.bin/_mocha",
+            "cwd": "${workspaceFolder}/packages/test/local-test-server",
+            "program": "${workspaceFolder}/packages/test/local-test-server/node_modules/.bin/_mocha",
             "args": [
                 "--require", "ts-node/register",
                 "-u", "tdd",

@@ -107,7 +107,6 @@ COPY packages/server/gateway/package*.json packages/server/gateway/
 COPY packages/server/kafka-orderer/package*.json packages/server/kafka-orderer/
 COPY packages/server/lambdas-driver/package*.json packages/server/lambdas-driver/
 COPY packages/server/lambdas/package*.json packages/server/lambdas/
-COPY packages/server/local-test-server/package*.json packages/server/local-test-server/
 COPY packages/server/memory-orderer/package*.json packages/server/memory-orderer/
 COPY packages/server/routerlicious/package*.json packages/server/routerlicious/
 COPY packages/server/services/package*.json packages/server/services/
@@ -124,6 +123,7 @@ COPY packages/tools/replay-tool/package*.json packages/tools/replay-tool/
 COPY packages/tools/webpack-component-loader/package*.json packages/tools/webpack-component-loader/
 COPY packages/tools/merge-tree-client-replay/package*.json packages/tools/merge-tree-client-replay/
 COPY packages/test/end-to-end/package*.json packages/test/end-to-end/
+COPY packages/test/local-test-server/package*.json packages/test/local-test-server/
 
 # Copy over chaincode npmrc and package.json to dynamically install packages.
 COPY server/routerlicious/chaincode/* /tmp/chaincode/
