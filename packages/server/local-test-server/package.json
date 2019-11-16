@@ -28,7 +28,6 @@
     "@microsoft/fluid-component-core-interfaces": "^0.12.0",
     "@microsoft/fluid-container-definitions": "^0.12.0",
     "@microsoft/fluid-container-loader": "^0.12.0",
-    "@microsoft/fluid-driver-base": "^0.12.0",
     "@microsoft/fluid-driver-definitions": "^0.12.0",
     "@microsoft/fluid-protocol-definitions": "^0.12.0",
     "@microsoft/fluid-routerlicious-driver": "^0.12.0",

@@ -25,7 +25,6 @@
     "@microsoft/fluid-component-core-interfaces": "^0.12.0",
     "@microsoft/fluid-container-definitions": "^0.12.0",
     "@microsoft/fluid-driver-definitions": "^0.12.0",
-    "@microsoft/fluid-protocol-definitions": "^0.12.0",
     "comlink": "^4.0.2",
     "debug": "^4.1.1"
   },
