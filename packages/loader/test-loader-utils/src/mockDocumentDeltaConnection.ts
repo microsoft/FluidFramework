@@ -5,6 +5,7 @@
 
 import {
     ConnectionMode,
+    IContentMessage,
     IDocumentDeltaConnection,
     IDocumentMessage,
     INack,
@@ -26,6 +27,7 @@ export class MockDocumentDeltaConnection extends EventEmitter implements IDocume
     public maxMessageSize: number;
     public version: string;
     public initialMessages?: ISequencedDocumentMessage[];
+    public initialContents?: IContentMessage[];
     public initialSignals?: ISignalMessage[];
     public serviceConfiguration: IServiceConfiguration;
 
@@ -42,6 +44,9 @@ export class MockDocumentDeltaConnection extends EventEmitter implements IDocume
             this.submitHandler(messages);
         }
     }
+    public async submitAsync(message: IDocumentMessage[]): Promise<void> {
+        this.submit(message);
+    }
     public submitSignal(message: any): void {
         if (this.submitSignalHandler) {
             this.submitSignalHandler(message);
@@ -54,6 +59,9 @@ export class MockDocumentDeltaConnection extends EventEmitter implements IDocume
     // mock methods for raising events
     public emitOp(documentId: string, messages: Partial<ISequencedDocumentMessage>[]) {
         this.emit("op", documentId, messages);
+    }
+    public emitOpContent(message: Partial<IContentMessage>) {
+        this.emit("op-content", message);
     }
     public emitSignal(signal: Partial<ISignalMessage>) {
         this.emit("signal", signal);

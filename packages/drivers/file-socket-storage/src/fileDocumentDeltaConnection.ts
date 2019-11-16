@@ -6,6 +6,7 @@
 import * as messages from "@microsoft/fluid-driver-base";
 import {
     ConnectionMode,
+    IContentMessage,
     IDocumentDeltaConnection,
     IDocumentMessage,
     ISequencedDocumentMessage,
@@ -108,6 +109,7 @@ export class ReplayFileDeltaConnection extends EventEmitter implements IDocument
             claims: Claims,
             clientId: "",
             existing: true,
+            initialContents: [],
             initialMessages: [],
             initialSignals: [],
             initialClients: [],
@@ -170,6 +172,10 @@ export class ReplayFileDeltaConnection extends EventEmitter implements IDocument
         return this.details.version;
     }
 
+    public get initialContents(): IContentMessage[] | undefined {
+        return this.details.initialContents;
+    }
+
     public get initialMessages(): ISequencedDocumentMessage[] | undefined {
         return this.details.initialMessages;
     }
@@ -188,6 +194,10 @@ export class ReplayFileDeltaConnection extends EventEmitter implements IDocument
 
     public submit(documentMessages: IDocumentMessage[]): void {
         debug("dropping the outbound message");
+    }
+
+    public async submitAsync(documentMessages: IDocumentMessage[]): Promise<void> {
+        debug("dropping the outbound message and wait for response");
     }
 
     public async submitSignal(message: any) {

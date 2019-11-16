@@ -8,6 +8,7 @@ import { IConnect, IConnected } from "@microsoft/fluid-driver-base";
 import {
     ConnectionMode,
     IClient,
+    IContentMessage,
     IDocumentMessage,
     IDocumentSystemMessage,
     ISignalMessage,
@@ -293,6 +294,40 @@ export function register(
                     }
                 }
             });
+
+        // Message sent when a new splitted operation is submitted to the router
+        socket.on("submitContent", (clientId: string, message: IDocumentMessage, response) => {
+            // Verify the user has an orderer connection.
+            if (!connectionsMap.has(clientId)) {
+                socket.emit("nack", "", [createNackMessage()]);
+            } else {
+                const broadCastMessage: IContentMessage = {
+                    clientId,
+                    clientSequenceNumber: message.clientSequenceNumber,
+                    contents: message.contents,
+                };
+
+                const connection = connectionsMap.get(clientId);
+
+                const dbMessage = {
+                    clientId,
+                    documentId: connection.documentId,
+                    op: broadCastMessage,
+                    tenantId: connection.tenantId,
+                };
+
+                contentCollection.insertOne(dbMessage).then(
+                    () => {
+                        socket.broadcastToRoom(getRoomId(roomMap.get(clientId)), "op-content", broadCastMessage);
+                        return response(null);
+                    }, (error) => {
+                        if (error.code !== 11000) {
+                            // Needs to be a full rejection here
+                            return response("Could not write to DB", null);
+                        }
+                    });
+            }
+        });
 
         // Message sent when a new signal is submitted to the router
         socket.on(
