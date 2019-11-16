@@ -600,7 +600,7 @@ export class ReplayTool {
 
         const content = await this.generateMainSnapshot(dir, final);
         if (content.snapshot === undefined) {
-            // Snapshots are not created if there is no "code2" proposal
+            // Snapshots are not created if there is no "code" proposal
             // It takes some number of ops to get there (join, propose)
             // Do not report a failure if document is almost empty.
             if (op >= 4) {

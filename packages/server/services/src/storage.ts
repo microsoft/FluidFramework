@@ -101,7 +101,7 @@ export class DocumentStorage implements IDocumentStorage {
                         [string, { value: string }][];
 
                     for (const quorumValue of quorumValues) {
-                        if (quorumValue[0] === "code2") {
+                        if (quorumValue[0] === "code") {
                             code = quorumValue[1].value;
                             break;
                         }
