@@ -6,6 +6,8 @@
 import { IDocumentStorageService } from "@microsoft/fluid-container-definitions";
 import * as api from "@microsoft/fluid-protocol-definitions";
 
+// tslint:disable prefer-readonly
+// tslint:disable promise-function-async
 /**
  * Document storage service for the test driver...just does a default implementation for
  * all the methods

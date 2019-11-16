@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ICodeLoader, ICodeWhiteList, IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
+// TODO: Move NodeCodeLoader somewhere else.
+
+// import { ICodeLoader, ICodeWhiteList, IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
 import { exec } from "child_process";
 import * as fs from "fs";
 import { promisify } from "util";
@@ -14,26 +16,26 @@ const asyncExec = promisify(exec);
 // A sentinel file to indicate install completion.
 const signalFileName = "dummy";
 
-export class NodeWhiteList implements ICodeWhiteList {
+export class NodeWhiteList {
     constructor() {
 
     }
 
-    public async testSource(source: IFluidCodeDetails) {
+    public async testSource(source: any) {
         return Promise.resolve(true);
     }
 }
 
 // tslint:disable non-literal-fs-path
-export class NodeCodeLoader implements ICodeLoader {
+export class NodeCodeLoader {
     constructor(
         private registry: string,
         private packageDirectory: string,
         private waitTimeoutMSec: number,
-        private whiteList: ICodeWhiteList) {
+        private whiteList: any) {
         }
 
-    public async load<T>(pkg: IFluidCodeDetails): Promise<T> {
+    public async load<T>(pkg: any): Promise<T> {
         if (await this.whiteList.testSource(pkg)) {
             let packageName = "";
             if (typeof pkg.package === "string") {

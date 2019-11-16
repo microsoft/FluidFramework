@@ -6,3 +6,6 @@
 export * from "./mockDocumentService";
 export * from "./mockDeltaStorage";
 export * from "./mockDocumentDeltaConnection";
+export * from "./testDeltaStorageService";
+export * from "./testDocumentDeltaConnection";
+export * from "./testDocumentStorageService";

@@ -7,8 +7,6 @@ export * from "./messageFactory";
 export * from "./testClientManager";
 export * from "./testCollection";
 export * from "./testContext";
-export * from "./testDeltaStorageService";
-export * from "./testDocumentDeltaConnection";
 export * from "./testDocumentStorage";
 export * from "./testHistorian";
 export * from "./testKafka";

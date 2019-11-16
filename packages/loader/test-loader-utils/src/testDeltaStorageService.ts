@@ -7,6 +7,8 @@ import * as api from "@microsoft/fluid-container-definitions";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { IDatabaseManager } from "@microsoft/fluid-server-services-core";
 
+// tslint:disable prefer-readonly
+// tslint:disable completed-docs
 export class TestDeltaStorageService implements api.IDocumentDeltaStorageService {
     constructor(
         private tenantId: string,

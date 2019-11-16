@@ -4,7 +4,6 @@
  */
 
 import { IDocumentDeltaConnection } from "@microsoft/fluid-container-definitions";
-import { debug } from "@microsoft/fluid-driver-base";
 import {
     ConnectionMode,
     IClient,
@@ -20,10 +19,15 @@ import {
 } from "@microsoft/fluid-protocol-definitions";
 import { BatchManager } from "@microsoft/fluid-server-services-client";
 import * as core from "@microsoft/fluid-server-services-core";
+import { TestWebSocketServer } from "@microsoft/fluid-server-test-utils";
 import { EventEmitter } from "events";
-import { TestWebSocketServer } from "./testWebServer";
+import { debug } from "./debug";
 
 const testProtocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
+
+// tslint:disable prefer-readonly
+// tslint:disable promise-function-async
+// tslint:disable completed-docs
 export class TestDocumentDeltaConnection extends EventEmitter implements IDocumentDeltaConnection {
     public static async create(
         tenantId: string,
