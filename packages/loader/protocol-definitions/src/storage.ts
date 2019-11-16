@@ -7,6 +7,7 @@ import { EventEmitter } from "events";
 import { ConnectionMode, IClient, ISignalClient } from "./clients";
 import { IServiceConfiguration } from "./config";
 import {
+    IContentMessage,
     IDocumentMessage,
     ISequencedDocumentMessage,
     ISignalMessage,
@@ -242,6 +243,11 @@ export interface IDocumentDeltaConnection extends EventEmitter {
     initialMessages?: ISequencedDocumentMessage[];
 
     /**
+     * Messages sent during the connection
+     */
+    initialContents?: IContentMessage[];
+
+    /**
      * Signals sent during the connection
      */
     initialSignals?: ISignalMessage[];
@@ -260,6 +266,12 @@ export interface IDocumentDeltaConnection extends EventEmitter {
      * Submit a new message to the server
      */
     submit(messages: IDocumentMessage[]): void;
+
+    /**
+     * Async version of the regular submit function.
+     */
+    // TODO why the need for two of these?
+    submitAsync(message: IDocumentMessage[]): Promise<void>;
 
     /**
      * Submit a new signal to the server
