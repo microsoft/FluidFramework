@@ -13,9 +13,6 @@ import {
     ISequencedDocumentMessage,
     ISequencedDocumentSystemMessage,
     ISequencedProposal,
-    ISummaryAck,
-    ISummaryContent,
-    ISummaryNack,
     ISummaryTree,
     MessageType,
     SummaryType,
@@ -116,32 +113,15 @@ export class ProtocolOpHandler extends EventEmitter {
                 break;
 
             case MessageType.Summarize:
-                this.emit("message", {
-                    eventName: "Summarize",
-                    message: message.contents as ISummaryContent,
-                    summarySequenceNumber: message.sequenceNumber,
-                    refSequenceNumber: message.referenceSequenceNumber,
-                });
+                this.emit("Summary", message);
                 break;
 
             case MessageType.SummaryAck:
-                const ack = message.contents as ISummaryAck;
-                this.emit("message", {
-                    eventName: "SummaryAck",
-                    message: `handle: ${ack.handle}`,
-                    sequenceNumber: message.sequenceNumber,
-                    summarySequenceNumber: ack.summaryProposal.summarySequenceNumber,
-                });
+                this.emit("Summary", message);
                 break;
 
             case MessageType.SummaryNack:
-                const nack = message.contents as ISummaryNack;
-                this.emit("message", {
-                    eventName: "SummaryNack",
-                    message: nack.errorMessage,
-                    sequenceNumber: message.sequenceNumber,
-                    summarySequenceNumber: nack.summaryProposal.summarySequenceNumber,
-                });
+                this.emit("Summary", message);
                 break;
 
             default:
@@ -206,7 +186,7 @@ export class ProtocolOpHandler extends EventEmitter {
         return summary;
     }
 
-    public on(event: "message", listener: (message: any) => void): this;
+    public on(event: "Summary", listener: (message: ISequencedDocumentMessage) => void): this;
 
     /* tslint:disable:no-unnecessary-override */
     public on(event: string | symbol, listener: (...args: any[]) => void): this {
