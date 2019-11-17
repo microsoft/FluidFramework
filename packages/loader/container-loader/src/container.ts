@@ -11,7 +11,6 @@ import {
     IFluidCodeDetails,
     IFluidModule,
     IGenericBlob,
-    IProcessMessageResult,
     IRuntimeFactory,
     ITelemetryBaseLogger,
     ITelemetryLogger,
@@ -40,6 +39,7 @@ import {
     ICommittedProposal,
     IDocumentAttributes,
     IDocumentMessage,
+    IProcessMessageResult,
     IQuorum,
     ISequencedClient,
     ISequencedDocumentMessage,
@@ -705,8 +705,19 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             proposals,
             values,
             (key, value) => this.submitMessage(MessageType.Propose, { key, value }),
-            (sequenceNumber) => this.submitMessage(MessageType.Reject, sequenceNumber),
-            ChildLogger.create(this.subLogger, "ProtocolHandler"));
+            (sequenceNumber) => this.submitMessage(MessageType.Reject, sequenceNumber));
+
+        const protocolLogger = ChildLogger.create(this.subLogger, "ProtocolHandler");
+
+        protocol.on("message", (message) => {
+            // tslint:disable-next-line no-unsafe-any
+            protocolLogger.sendTelemetryEvent(message);
+        });
+
+        protocol.quorum.on("error", (error) => {
+            // tslint:disable-next-line no-unsafe-any
+            protocolLogger.sendErrorEvent(error);
+        });
 
         // Track membership changes and update connection state accordingly
         protocol.quorum.on("addMember", (clientId, details) => {
