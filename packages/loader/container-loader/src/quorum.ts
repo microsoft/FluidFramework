@@ -3,18 +3,16 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
+import { Deferred, doIfNotDisposed, EventForwarder } from "@microsoft/fluid-core-utils";
 import {
     ConnectionState,
     ICommittedProposal,
     IPendingProposal,
     IQuorum,
-    ISequencedProposal,
-    ITelemetryLogger,
-} from "@microsoft/fluid-container-definitions";
-import { Deferred, doIfNotDisposed, EventForwarder } from "@microsoft/fluid-core-utils";
-import {
     ISequencedClient,
     ISequencedDocumentMessage,
+    ISequencedProposal,
 } from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";

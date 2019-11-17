@@ -3,10 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import {
-    IDocumentDeltaStorageService,
-    ISequencedDocumentMessage,
-} from "@microsoft/fluid-protocol-definitions";
+import { IDocumentDeltaStorageService } from "@microsoft/fluid-driver-definitions";
+import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 
 /**
  * Mock Document Delta Storage Service for testing

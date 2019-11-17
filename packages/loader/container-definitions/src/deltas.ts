@@ -6,6 +6,8 @@
 import {
     ConnectionMode,
     IClientDetails,
+    IContentMessage,
+    IDisposable,
     ISequencedDocumentMessage,
     IServiceConfiguration,
     ISignalClient,
@@ -14,7 +16,6 @@ import {
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
-import { IDisposable } from "./disposable";
 
 export interface IConnectionDetails {
     clientId: string;
@@ -25,6 +26,7 @@ export interface IConnectionDetails {
     version: string;
     initialClients?: ISignalClient[];
     initialMessages?: ISequencedDocumentMessage[];
+    initialContents?: IContentMessage[];
     initialSignals?: ISignalMessage[];
     maxMessageSize: number;
     serviceConfiguration: IServiceConfiguration;

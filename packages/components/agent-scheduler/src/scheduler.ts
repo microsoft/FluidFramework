@@ -12,9 +12,9 @@ import {
     IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
 import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
-import { ConnectionState } from "@microsoft/fluid-container-definitions";
 import { LoaderHeader } from "@microsoft/fluid-container-loader";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
+import { ConnectionState } from "@microsoft/fluid-protocol-definitions";
 import { ConsensusRegisterCollection } from "@microsoft/fluid-register-collection";
 import {
     IAgentScheduler,

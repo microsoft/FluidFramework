@@ -300,8 +300,8 @@ And then finally if no code has been proposed we go and make the proposal.
 
 ```typescript
 // And then make the proposal if a code proposal has not yet been made
-if (!quorum.has("code2")) {
-    await quorum.propose("code2", pkg);
+if (!quorum.has("code")) {
+    await quorum.propose("code", pkg);
 }
 ```
 

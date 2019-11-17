@@ -182,7 +182,17 @@ export interface ISequencedDocumentSystemMessage extends ISequencedDocumentMessa
     data: string;
 }
 
+export interface IContentMessage {
+
+    clientId: string;
+
+    clientSequenceNumber: number;
+
+    contents: string;
+}
+
 export interface ISignalMessage {
+
     clientId: string;
 
     content: any;
@@ -249,4 +259,29 @@ export interface ISummaryNack extends IServerError {
      * Information about the proposed summary op.
      */
     summaryProposal: ISummaryProposal;
+}
+
+/**
+ * Represents a message containing tasks.
+ */
+export interface IHelpMessage {
+
+    tasks: string[];
+
+    // Temporary version field for back-compat.
+    version?: string;
+}
+
+/**
+ * Represents a message in task queue to be processed.
+ */
+export interface IQueueMessage {
+
+    message: IHelpMessage;
+
+    tenantId: string;
+
+    documentId: string;
+
+    token: string;
 }

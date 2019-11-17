@@ -4,11 +4,13 @@
  */
 
 import { BatchManager } from "@microsoft/fluid-core-utils";
-import { IConnect, IConnected } from "@microsoft/fluid-driver-base";
+import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
 import {
     ConnectionMode,
     IClient,
-    IDocumentDeltaConnection,
+    IConnect,
+    IConnected,
+    IContentMessage,
     IDocumentMessage,
     ISequencedDocumentMessage,
     IServiceConfiguration,
@@ -99,6 +101,10 @@ export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaCon
         return this.details!.initialMessages;
     }
 
+    public get initialContents(): IContentMessage[] | undefined {
+        return this.details!.initialContents;
+    }
+
     public get initialSignals(): ISignalMessage[] | undefined {
         return this.details!.initialSignals;
     }
@@ -178,6 +184,19 @@ export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaCon
     // tslint:disable no-unsafe-any
     public submitSignal(message: any): void {
         this.submitManager.add("submitSignal", message);
+    }
+
+    public async submitAsync(messages: IDocumentMessage[]): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
+            this.socket.send(JSON.stringify(["submitContent", this.details!.clientId, messages]), (error) => {
+                if (error) {
+                    this.emit("error", error);
+                    reject(error);
+                } else {
+                    resolve();
+                }
+            });
+        });
     }
 
     public disconnect() {

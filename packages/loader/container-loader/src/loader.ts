@@ -17,11 +17,13 @@ import {
 } from "@microsoft/fluid-container-definitions";
 import { configurableUrlResolver, Deferred } from "@microsoft/fluid-core-utils";
 import {
-    IClientDetails,
     IDocumentService,
     IDocumentServiceFactory,
     IFluidResolvedUrl,
     IResolvedUrl,
+} from "@microsoft/fluid-driver-definitions";
+import {
+    IClientDetails,
     ISequencedDocumentMessage,
 } from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";

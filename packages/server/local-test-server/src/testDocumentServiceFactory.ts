@@ -8,7 +8,7 @@ import {
     IDocumentServiceFactory,
     IFluidResolvedUrl,
     IResolvedUrl,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@microsoft/fluid-driver-definitions";
 import { TokenProvider } from "@microsoft/fluid-routerlicious-driver";
 import { parse } from "url";
 import { ITestDeltaConnectionServer } from "./testDeltaConnectionServer";

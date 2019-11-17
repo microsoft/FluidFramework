@@ -8,12 +8,13 @@ import {
     IComponentHTMLVisual,
     IComponentQueryableLegacy,
 } from "@microsoft/fluid-component-core-interfaces";
-import { ICodeWhiteList, IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
-import { Container, Loader } from "@microsoft/fluid-container-loader";
 import {
-    IFluidResolvedUrl,
-    IResolvedUrl,
-} from "@microsoft/fluid-protocol-definitions";
+    ICodeWhiteList,
+    IFluidCodeDetails,
+    IProxyLoaderFactory,
+} from "@microsoft/fluid-container-definitions";
+import { Container, Loader } from "@microsoft/fluid-container-loader";
+import { IFluidResolvedUrl, IResolvedUrl } from "@microsoft/fluid-driver-definitions";
 import { IResolvedPackage, WebCodeLoader, WhiteList } from "@microsoft/fluid-web-code-loader";
 import { IHostConfig } from "./hostConfig";
 
@@ -44,7 +45,7 @@ async function attach(loader: Loader, url: string, div: HTMLDivElement) {
     }
 }
 
-async function initializeChaincode(document: Container, pkg: IResolvedPackage): Promise<void> {
+async function initializeChaincode(document: Container, pkg?: IFluidCodeDetails): Promise<void> {
     if (!pkg) {
         return;
     }
@@ -58,16 +59,11 @@ async function initializeChaincode(document: Container, pkg: IResolvedPackage): 
     }
 
     // And then make the proposal if a code proposal has not yet been made
-    if (!quorum.has("code2")) {
-        // We propose both code and code2. code2 is the legacy format of just a string. code is the new object
-        // based format.
-        await Promise.all([
-            quorum.propose("code", pkg.details),
-            quorum.propose("code2", pkg.parsed.full),
-        ]);
+    if (!quorum.has("code")) {
+        await quorum.propose("code", pkg);
     }
 
-    console.log(`Code is ${quorum.get("code2")}`);
+    console.log(`Code is ${quorum.get("code")}`);
 }
 
 async function registerAttach(loader: Loader, container: Container, uri: string, div: HTMLDivElement) {
@@ -90,7 +86,7 @@ async function registerAttach(loader: Loader, container: Container, uri: string,
  */
 async function createWebLoader(
     resolved: IResolvedUrl,
-    pkg: IResolvedPackage,
+    pkg: IResolvedPackage | undefined,
     scriptIds: string[],
     config: any,
     scope: IComponent,
@@ -102,6 +98,7 @@ async function createWebLoader(
     // Create the web loader and prefetch the chaincode we will need
     const codeLoader = new WebCodeLoader(whiteList);
     if (pkg) {
+        // tslint:disable-next-line: strict-boolean-expressions
         if (pkg.pkg) { // this is an IFluidPackage
             await codeLoader.seed({
                 package: pkg.pkg,
@@ -148,7 +145,7 @@ export class BaseHost {
     public static async start(
         url: string,
         resolved: IResolvedUrl,
-        pkg: IResolvedPackage,
+        pkg: IResolvedPackage | undefined,
         scriptIds: string[],
         config: any,
         scope: IComponent,
@@ -157,13 +154,13 @@ export class BaseHost {
         proxyLoaderFactories: Map<string, IProxyLoaderFactory>,
     ): Promise<Container> {
         const baseHost = new BaseHost(resolved, pkg, scriptIds, config, scope, hostConf, proxyLoaderFactories);
-        return baseHost.loadAndRender(url, div, pkg);
+        return baseHost.loadAndRender(url, div, pkg ? pkg.details : undefined);
     }
 
     private readonly loaderP: Promise<Loader>;
     public constructor(
         resolved: IResolvedUrl,
-        seedPackage: IResolvedPackage,
+        seedPackage: IResolvedPackage | undefined,
         scriptIds: string[],
         config: any,
         scope: IComponent,
@@ -186,7 +183,7 @@ export class BaseHost {
         return this.loaderP;
     }
 
-    public async loadAndRender(url: string, div: HTMLDivElement, pkg?: IResolvedPackage) {
+    public async loadAndRender(url: string, div: HTMLDivElement, pkg?: IFluidCodeDetails) {
         const loader = await this.getLoader();
         const container = await loader.resolve({ url });
         await registerAttach(
@@ -197,6 +194,7 @@ export class BaseHost {
 
         // If this is a new document we will go and instantiate the chaincode. For old documents we assume a legacy
         // package.
+        // tslint:disable-next-line: strict-boolean-expressions
         if (!container.existing) {
             await initializeChaincode(container, pkg)
                 .catch((error) => console.error("chaincode error", error));

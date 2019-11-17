@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { INetworkError } from "@microsoft/fluid-protocol-definitions";
+import { INetworkError } from "@microsoft/fluid-driver-definitions";
 
 /**
  * Network error error class - used to communicate all  network errors

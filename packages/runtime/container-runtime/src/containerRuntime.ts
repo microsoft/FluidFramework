@@ -11,7 +11,6 @@ import {
     IRequest,
     IResponse } from "@microsoft/fluid-component-core-interfaces";
 import {
-    ConnectionState,
     IAudience,
     IBlobManager,
     IComponentTokenProvider,
@@ -20,7 +19,6 @@ import {
     IDeltaSender,
     ILoader,
     IMessageScheduler,
-    IQuorum,
     IRuntime,
     ITelemetryLogger,
 } from "@microsoft/fluid-container-definitions";
@@ -36,10 +34,13 @@ import {
     raiseConnectedEvent,
     readAndParse,
 } from "@microsoft/fluid-core-utils";
+import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import {
+    ConnectionState,
     IChunkedOp,
     IDocumentMessage,
-    IDocumentStorageService,
+    IHelpMessage,
+    IQuorum,
     ISequencedDocumentMessage,
     ISignalMessage,
     ISnapshotTree,
@@ -56,7 +57,6 @@ import {
     IComponentRegistry,
     IComponentRuntime,
     IEnvelope,
-    IHelpMessage,
     IHostRuntime,
     IInboundSignalMessage,
     NamedComponentRegistryEntries,

@@ -80,6 +80,7 @@ COPY packages/framework/undo-redo/package*.json packages/framework/undo-redo/
 COPY packages/loader/component-core-interfaces/package*.json packages/loader/component-core-interfaces/
 COPY packages/loader/container-definitions/package*.json packages/loader/container-definitions/
 COPY packages/loader/container-loader/package*.json packages/loader/container-loader/
+COPY packages/loader/driver-definitions/package*.json packages/loader/driver-definitions/
 COPY packages/loader/gitresources/package*.json packages/loader/gitresources/
 COPY packages/loader/loader-web/package*.json packages/loader/loader-web/
 COPY packages/loader/protocol-definitions/package*.json packages/loader/protocol-definitions/

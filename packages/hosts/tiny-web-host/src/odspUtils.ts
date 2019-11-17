@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { IFluidResolvedUrl } from "@microsoft/fluid-driver-definitions";
 import { OdspDriverUrlResolver } from "@microsoft/fluid-odsp-driver";
 import { getDriveItemByRootFileName, IClientConfig, IODSPTokens } from "@microsoft/fluid-odsp-utils";
-import { IFluidResolvedUrl } from "@microsoft/fluid-protocol-definitions";
 
 const spoTenants = new Map<string, string>([
     ["spo", "microsoft-my.sharepoint.com"],

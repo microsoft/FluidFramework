@@ -4,13 +4,11 @@
  */
 
 import {
-    ConnectionMode,
-    IClient,
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
     IDocumentService,
-    IDocumentStorageService,
-} from "@microsoft/fluid-protocol-definitions";
+    IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
+import { ConnectionMode, IClient } from "@microsoft/fluid-protocol-definitions";
 import { InnerDocumentDeltaConnection, IOuterDocumentDeltaConnectionProxy } from "./innerDocumentDeltaConnection";
 import { InnerDocumentStorageService } from "./innerDocumentStorageService";
 

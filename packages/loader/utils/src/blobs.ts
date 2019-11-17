@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import * as git from "@microsoft/fluid-gitresources";
 import {
     FileMode,
     IBlob,
-    IDocumentStorageService,
     ISnapshotTree,
     ITree,
     ITreeEntry,

@@ -4,9 +4,7 @@
  */
 import { IComponent, IComponentQueryableLegacy, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import {
-    ConnectionState,
     ICodeLoader,
-    ICommittedProposal,
     IConnectionDetails,
     IContainer,
     IDeltaManager,
@@ -14,9 +12,7 @@ import {
     IFluidModule,
     IGenericBlob,
     IProcessMessageResult,
-    IQuorum,
     IRuntimeFactory,
-    ISequencedProposal,
     ITelemetryBaseLogger,
     ITelemetryLogger,
     TelemetryEventRaisedOnContainer,
@@ -33,15 +29,21 @@ import {
     TelemetryLogger,
 } from "@microsoft/fluid-core-utils";
 import {
+    IDocumentService,
+    IDocumentStorageService,
+} from "@microsoft/fluid-driver-definitions";
+import {
+    ConnectionState,
     FileMode,
     IClient,
     IClientDetails,
+    ICommittedProposal,
     IDocumentAttributes,
     IDocumentMessage,
-    IDocumentService,
-    IDocumentStorageService,
+    IQuorum,
     ISequencedClient,
     ISequencedDocumentMessage,
+    ISequencedProposal,
     IServiceConfiguration,
     ISignalClient,
     ISignalMessage,

@@ -5,7 +5,8 @@
 
 import { fromUtf8ToBase64 } from "@microsoft/fluid-core-utils";
 import { DocumentDeltaConnection } from "@microsoft/fluid-driver-base";
-import * as api from "@microsoft/fluid-protocol-definitions";
+import * as api from "@microsoft/fluid-driver-definitions";
+import { ConnectionMode, IClient, IErrorTrackingService} from "@microsoft/fluid-protocol-definitions";
 import { GitManager, Historian, ICredentials, IGitCache } from "@microsoft/fluid-server-services-client";
 import Axios from "axios";
 import * as io from "socket.io-client";
@@ -23,7 +24,7 @@ export class DocumentService implements api.IDocumentService {
         protected ordererUrl: string,
         private readonly deltaStorageUrl: string,
         private readonly gitUrl: string,
-        private readonly errorTracking: api.IErrorTrackingService,
+        private readonly errorTracking: IErrorTrackingService,
         private readonly disableCache: boolean,
         private readonly historianApi: boolean,
         private readonly directCredentials: ICredentials | undefined,
@@ -101,8 +102,8 @@ export class DocumentService implements api.IDocumentService {
      * @returns returns the document delta stream service for routerlicious driver.
      */
     public async connectToDeltaStream(
-        client: api.IClient,
-        mode: api.ConnectionMode): Promise<api.IDocumentDeltaConnection> {
+        client: IClient,
+        mode: ConnectionMode): Promise<api.IDocumentDeltaConnection> {
         return DocumentDeltaConnection.create(
             this.tenantId,
             this.documentId,

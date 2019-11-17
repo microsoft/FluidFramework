@@ -11,13 +11,13 @@ import {
 import { IContainer, ILoader } from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
 import { BaseTelemetryNullLogger } from "@microsoft/fluid-core-utils";
-import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
 import {
     IDocumentService,
     IDocumentServiceFactory,
     IFluidResolvedUrl,
-    ISequencedDocumentMessage,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@microsoft/fluid-driver-definitions";
+import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
+import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
 import { WebCodeLoader } from "@microsoft/fluid-web-code-loader";
 import * as Comlink from "comlink";
@@ -34,7 +34,7 @@ class WorkerLoader implements ILoader, IComponentRunnable {
         private readonly options: any,
         private readonly resolved: IFluidResolvedUrl,
         private readonly fromSequenceNumber: number) {
-        }
+    }
 
     public async request(request: IRequest): Promise<IResponse> {
         console.log(`Request inside web worker`);
@@ -61,7 +61,7 @@ class WorkerLoader implements ILoader, IComponentRunnable {
             documentService,
             new WebCodeLoader(),
             this.options,
-            { },
+            {},
             (this as unknown) as Loader,
             request,
             new BaseTelemetryNullLogger());

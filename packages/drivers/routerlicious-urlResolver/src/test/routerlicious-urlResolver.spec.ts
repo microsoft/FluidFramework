@@ -4,7 +4,7 @@
  */
 
 // tslint:disable: max-line-length
-import { IFluidResolvedUrl } from "@microsoft/fluid-protocol-definitions";
+import { IFluidResolvedUrl } from "@microsoft/fluid-driver-definitions";
 import * as assert from "assert";
 import { RouterliciousUrlResolver } from "../urlResolver";
 

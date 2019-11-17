@@ -6,9 +6,12 @@
 import { BaseHost, IHostConfig } from "@microsoft/fluid-base-host";
 import { IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
 import { BaseTelemetryNullLogger } from "@microsoft/fluid-core-utils";
+import {
+    IDocumentServiceFactory,
+    IFluidResolvedUrl,
+} from "@microsoft/fluid-driver-definitions";
 import { WebWorkerLoaderFactory } from "@microsoft/fluid-execution-context-loader";
 import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
-import { IDocumentServiceFactory, IFluidResolvedUrl } from "@microsoft/fluid-protocol-definitions";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
 import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
 import { IGitCache } from "@microsoft/fluid-server-services-client";
@@ -92,7 +95,7 @@ export async function initialize(
     url: string,
     resolved: IFluidResolvedUrl,
     cache: IGitCache,
-    pkg: IResolvedPackage,
+    pkg: IResolvedPackage | undefined,
     scriptIds: string[],
     jwt: string,
     config: any,
@@ -112,7 +115,7 @@ export async function initialize(
         IPackageManager: packageManager,
     };
 
-    if ( user.accounts ) {
+    if (user.accounts) {
         for (const account of user.accounts) {
             if (account.provider === "msa") {
                 const mailServices = new MailServices(account.accessToken);
@@ -155,7 +158,7 @@ export async function initialize(
     console.log(`Loading ${url}`);
 
     const div = document.getElementById("content") as HTMLDivElement;
-    const container = await baseHost.loadAndRender(url, div, pkg);
+    const container = await baseHost.loadAndRender(url, div, pkg ? pkg.details : undefined);
 
     container.on("error", (error) => {
         console.error(error);

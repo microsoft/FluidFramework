@@ -4,9 +4,10 @@
  */
 
 import { Deferred } from "@microsoft/fluid-core-utils";
-import { IConnect, IConnected } from "@microsoft/fluid-driver-base";
 import {
     IClientJoin,
+    IConnect,
+    IConnected,
     IDocumentMessage,
     ISequencedDocumentSystemMessage,
     MessageType,

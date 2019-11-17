@@ -3,9 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { ICodeLoader, IFluidCodeDetails, IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
+import {
+    ICodeLoader,
+    IFluidCodeDetails,
+    IProxyLoaderFactory,
+} from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
-import { IDocumentServiceFactory, IUrlResolver } from "@microsoft/fluid-protocol-definitions";
+import { IDocumentServiceFactory, IUrlResolver } from "@microsoft/fluid-driver-definitions";
 import { debug } from "./debug";
 
 /**
@@ -92,11 +96,11 @@ async function initializeChaincode(container: Container, pkg: IFluidCodeDetails)
     }
 
     // And then make the proposal if a code proposal has not yet been made
-    if (!quorum.has("code2")) {
-        await quorum.propose("code2", pkg);
+    if (!quorum.has("code")) {
+        await quorum.propose("code", pkg);
     }
 
-    debug(`Code is ${quorum.get("code2")}`);
+    debug(`Code is ${quorum.get("code")}`);
 }
 
 async function attach<T>(

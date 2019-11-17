@@ -4,10 +4,13 @@
  */
 
 import { BatchManager, NetworkError } from "@microsoft/fluid-core-utils";
+import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
 import {
     ConnectionMode,
     IClient,
-    IDocumentDeltaConnection,
+    IConnect,
+    IConnected,
+    IContentMessage,
     IDocumentMessage,
     ISequencedDocumentMessage,
     IServiceConfiguration,
@@ -18,7 +21,6 @@ import {
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { debug } from "./debug";
-import { IConnect, IConnected } from "./messages";
 
 const protocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
 
@@ -103,6 +105,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
 
     // Listen for ops sent before we receive a response to connect_document
     private readonly queuedMessages: ISequencedDocumentMessage[] = [];
+    private readonly queuedContents: IContentMessage[] = [];
     private readonly queuedSignals: ISignalMessage[] = [];
 
     private readonly submitManager: BatchManager<IDocumentMessage[]>;
@@ -135,6 +138,8 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
 
         // tslint:disable-next-line:no-non-null-assertion
         this.socket.on("op", this.earlyOpHandler!);
+        // tslint:disable-next-line:no-non-null-assertion
+        this.socket.on("op-content", this.earlyContentHandler!);
         // tslint:disable-next-line:no-non-null-assertion
         this.socket.on("signal", this.earlySignalHandler!);
     }
@@ -232,6 +237,35 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
     }
 
     /**
+     * Get contents sent during the connection
+     *
+     * @returns contents sent during the connection
+     */
+    public get initialContents(): IContentMessage[] | undefined {
+        this.removeEarlyContentsHandler();
+
+        assert(this.listeners("op-content").length !== 0, "No op-content handler is setup!");
+
+        if (this.queuedContents.length > 0) {
+            // some contents were queued.
+            // add them to the list of initialContents to be processed
+            if (!this.details.initialContents) {
+                this.details.initialContents = [];
+            }
+
+            this.details.initialContents.push(...this.queuedContents);
+
+            this.details.initialContents.sort((a, b) =>
+                // tslint:disable-next-line:strict-boolean-expressions
+                (a.clientId === b.clientId) ? 0 : ((a.clientId < b.clientId) ? -1 : 1) ||
+                    a.clientSequenceNumber - b.clientSequenceNumber);
+            this.queuedContents.length = 0;
+        }
+
+        return this.details.initialContents;
+    }
+
+    /**
      * Get signals sent during the connection
      *
      * @returns signals sent during the connection
@@ -292,6 +326,27 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
      */
     public submit(messages: IDocumentMessage[]): void {
         this.submitManager.add("submitOp", messages);
+    }
+
+    /**
+     * Submits a new message to the server without queueing
+     *
+     * @param message - message to submit
+     */
+    public async submitAsync(messages: IDocumentMessage[]): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
+            this.socket.emit(
+                "submitContent",
+                this.clientId,
+                messages,
+                (error) => {
+                    if (error) {
+                        reject();
+                    } else {
+                        resolve();
+                    }
+                });
+        });
     }
 
     /**
@@ -357,6 +412,11 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         this.queuedMessages.push(...msgs);
     }
 
+    private earlyContentHandler ? = (msg: IContentMessage) => {
+        debug("Queued early contents");
+        this.queuedContents.push(msg);
+    }
+
     private earlySignalHandler ? = (msg: ISignalMessage) => {
         debug("Queued early signals");
         this.queuedSignals.push(msg);
@@ -366,6 +426,13 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         if (this.earlyOpHandler) {
             this.socket.removeListener("op", this.earlyOpHandler);
             this.earlyOpHandler = undefined;
+        }
+    }
+
+    private removeEarlyContentsHandler() {
+        if (this.earlyContentHandler) {
+            this.socket.removeListener("op-content", this.earlyContentHandler);
+            this.earlyContentHandler = undefined;
         }
     }
 
@@ -399,6 +466,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
 
         if (!connectionListenerOnly) {
             this.removeEarlyOpHandler();
+            this.removeEarlyContentsHandler();
             this.removeEarlySignalHandler();
         }
     }

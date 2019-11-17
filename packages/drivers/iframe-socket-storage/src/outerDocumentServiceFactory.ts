@@ -7,17 +7,19 @@ import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IHost } from "@microsoft/fluid-container-definitions";
 import { configurableUrlResolver, Deferred } from "@microsoft/fluid-core-utils";
 import {
-    ConnectionMode,
-    IClient,
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
-    IDocumentMessage,
     IDocumentService,
     IDocumentServiceFactory,
     IDocumentStorageService,
     IFluidResolvedUrl,
     IResolvedUrl,
     IUrlResolver,
+} from "@microsoft/fluid-driver-definitions";
+import {
+    ConnectionMode,
+    IClient,
+    IDocumentMessage,
     IVersion,
 } from "@microsoft/fluid-protocol-definitions";
 import * as Comlink from "comlink";
@@ -29,6 +31,7 @@ const socketIOEvents = [
     "nack",
     "pong",
     "disconnect",
+    "op-content",
     "signal",
     "connect_error",
     "connect_timeout",
@@ -234,6 +237,7 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
             clientId: deltaStream.clientId,
             existing: deltaStream.existing,
             get initialClients() { return deltaStream.initialClients; },
+            get initialContents() { return deltaStream.initialContents; },
             get initialMessages() { return deltaStream.initialMessages; },
             get initialSignals() { return deltaStream.initialSignals; },
             maxMessageSize: deltaStream.maxMessageSize,

@@ -17,7 +17,7 @@ export interface IDebuggerUI {
      * Call when new version is downloaded from storage
      * Expect multiple callbacks.
      */
-    updateVerison(index: number, version: IVersion, seqNumber: number): void;
+    updateVersion(index: number, version: IVersion, seqNumber: number): void;
 
     /**
      * Called in response to successful onVersionSelection() or onSnapshotFileSelection() call
@@ -218,7 +218,7 @@ export class DebuggerUI {
         }
     }
 
-    public updateVerison(index: number, version: IVersion, seqNumber: number) {
+    public updateVersion(index: number, version: IVersion, seqNumber: number) {
         if (this.selector) {
             const option = this.selector[index + 1] as HTMLOptionElement;
             option.text = `${option.text},  seq = ${seqNumber}`;
