@@ -33,8 +33,6 @@
     {{/chaincode}}
     var url = "{{ url }}";
     var resolved = {{{ resolved }}};
-    var jwt = "";
-    var npm = "{{ npm }}";
     var config = {{{ config }}};
     var clientId = "{{ clientId }}";
 
