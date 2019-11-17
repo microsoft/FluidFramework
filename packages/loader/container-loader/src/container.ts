@@ -31,6 +31,7 @@ import {
     IDocumentService,
     IDocumentStorageService,
 } from "@microsoft/fluid-driver-definitions";
+import { isSystemMessage, ProtocolOpHandler, Quorum, QuorumProxy } from "@microsoft/fluid-protocol-base";
 import {
     ConnectionState,
     FileMode,
@@ -71,8 +72,6 @@ import { Loader, LoaderHeader, RelativeLoader } from "./loader";
 import { NullChaincode } from "./nullRuntime";
 import { pkgName, pkgVersion } from "./packageVersion";
 import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
-import { isSystemMessage, ProtocolOpHandler } from "./protocol";
-import { Quorum, QuorumProxy } from "./quorum";
 
 // tslint:disable:no-floating-promises - disabling per-file rather than full subdirectory
 

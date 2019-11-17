@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ProtocolOpHandler } from "@microsoft/fluid-container-loader";
+import { ProtocolOpHandler } from "@microsoft/fluid-protocol-base";
 import { IDocumentAttributes } from "@microsoft/fluid-protocol-definitions";
 import { GitManager, Historian } from "@microsoft/fluid-server-services-client";
 import {
