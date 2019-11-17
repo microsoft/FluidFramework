@@ -8,6 +8,7 @@ import {
     IClientDetails,
     IContentMessage,
     IDisposable,
+    IProcessMessageResult,
     ISequencedDocumentMessage,
     IServiceConfiguration,
     ISignalClient,
@@ -30,10 +31,6 @@ export interface IConnectionDetails {
     initialSignals?: ISignalMessage[];
     maxMessageSize: number;
     serviceConfiguration: IServiceConfiguration;
-}
-
-export interface IProcessMessageResult {
-    immediateNoOp?: boolean;
 }
 
 /**

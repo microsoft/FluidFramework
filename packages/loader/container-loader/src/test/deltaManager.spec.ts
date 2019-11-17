@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IProcessMessageResult, ITelemetryLogger } from "@microsoft/fluid-container-definitions";
+import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
 import { DebugLogger } from "@microsoft/fluid-core-utils";
-import { IClient, IDocumentMessage, MessageType } from "@microsoft/fluid-protocol-definitions";
+import { IClient, IDocumentMessage, IProcessMessageResult, MessageType } from "@microsoft/fluid-protocol-definitions";
 import { MockDocumentDeltaConnection, MockDocumentService } from "@microsoft/fluid-test-loader-utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";

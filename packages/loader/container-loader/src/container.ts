@@ -11,7 +11,6 @@ import {
     IFluidCodeDetails,
     IFluidModule,
     IGenericBlob,
-    IProcessMessageResult,
     IRuntimeFactory,
     ITelemetryBaseLogger,
     ITelemetryLogger,
@@ -40,6 +39,7 @@ import {
     ICommittedProposal,
     IDocumentAttributes,
     IDocumentMessage,
+    IProcessMessageResult,
     IQuorum,
     ISequencedClient,
     ISequencedDocumentMessage,
@@ -48,6 +48,9 @@ import {
     ISignalClient,
     ISignalMessage,
     ISnapshotTree,
+    ISummaryAck,
+    ISummaryContent,
+    ISummaryNack,
     ITokenClaims,
     ITree,
     ITreeEntry,
@@ -705,8 +708,47 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             proposals,
             values,
             (key, value) => this.submitMessage(MessageType.Propose, { key, value }),
-            (sequenceNumber) => this.submitMessage(MessageType.Reject, sequenceNumber),
-            ChildLogger.create(this.subLogger, "ProtocolHandler"));
+            (sequenceNumber) => this.submitMessage(MessageType.Reject, sequenceNumber));
+
+        const protocolLogger = ChildLogger.create(this.subLogger, "ProtocolHandler");
+
+        protocol.on("Summary", (message) => {
+            switch (message.type) {
+                case MessageType.Summarize:
+                    protocolLogger.sendTelemetryEvent({
+                        eventName: "Summarize",
+                        message: message.contents as ISummaryContent,
+                        summarySequenceNumber: message.sequenceNumber,
+                        refSequenceNumber: message.referenceSequenceNumber,
+                    });
+                    break;
+                case MessageType.SummaryAck:
+                    const ack = message.contents as ISummaryAck;
+                    protocolLogger.sendTelemetryEvent({
+                        eventName: "SummaryAck",
+                        message: `handle: ${ack.handle}`,
+                        sequenceNumber: message.sequenceNumber,
+                        summarySequenceNumber: ack.summaryProposal.summarySequenceNumber,
+                    });
+                    break;
+                case MessageType.SummaryNack:
+                    const nack = message.contents as ISummaryNack;
+                    protocolLogger.sendTelemetryEvent({
+                        eventName: "SummaryNack",
+                        message: nack.errorMessage,
+                        sequenceNumber: message.sequenceNumber,
+                        summarySequenceNumber: nack.summaryProposal.summarySequenceNumber,
+                    });
+                    break;
+                default:
+            }
+
+        });
+
+        protocol.quorum.on("error", (error) => {
+            // tslint:disable-next-line no-unsafe-any
+            protocolLogger.sendErrorEvent(error);
+        });
 
         // Track membership changes and update connection state accordingly
         protocol.quorum.on("addMember", (clientId, details) => {
