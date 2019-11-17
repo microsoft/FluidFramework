@@ -126,6 +126,34 @@ module.exports = env => {
         },
         {
             entry: {
+                loaderHost: "./src/controllers/loaderHost.ts"
+            },
+            plugins: [
+                new BundleAnalyzerPlugin({
+                    analyzerMode: 'static',
+                    reportFilename: 'loaderHost.stats.html',
+                    openAnalyzer: false,
+                    generateStatsFile: true,
+                    statsFilename: 'loaderHost.stats.json'
+                })
+            ],
+        },
+        {
+            entry: {
+                loaderFramed: "./src/controllers/loaderFramed.ts"
+            },
+            plugins: [
+                new BundleAnalyzerPlugin({
+                    analyzerMode: 'static',
+                    reportFilename: 'loaderFramed.stats.html',
+                    openAnalyzer: false,
+                    generateStatsFile: true,
+                    statsFilename: 'loaderFramed.stats.json'
+                })
+            ],
+        },
+        {
+            entry: {
                 worker: "./src/controllers/workerLoader.ts"
             },
             plugins: [
