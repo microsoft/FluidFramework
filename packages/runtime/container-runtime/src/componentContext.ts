@@ -5,13 +5,11 @@
 
 import { IComponent, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import {
-    ConnectionState,
     IAudience,
     IBlobManager,
     IDeltaManager,
     IGenericBlob,
     ILoader,
-    IQuorum,
 } from "@microsoft/fluid-container-definitions";
 import {
     BlobTreeEntry,
@@ -20,9 +18,11 @@ import {
     readAndParse,
     SummaryTracker,
 } from "@microsoft/fluid-core-utils";
+import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import {
+    ConnectionState,
     IDocumentMessage,
-    IDocumentStorageService,
+    IQuorum,
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITree,

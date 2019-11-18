@@ -3,7 +3,5 @@
  * Licensed under the MIT License.
  */
 
-module.exports = {
-    mode: "development",
-    devtool: "inline-source-map",
-};
+export * from "./storage";
+export * from "./urlResolver";

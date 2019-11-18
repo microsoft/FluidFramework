@@ -962,7 +962,7 @@ struct MergeTree : public IMessageListener
 				m_edits.push_back(ed);
 				int dcpRem = cps[1].AsInt() - cps[0].AsInt();
 				Replace(cps[0], dcpRem, insertMsg.text, ed);
-				RebaseLocalEdits(cps[1], dcpRem + insertMsg.text.length());
+				RebaseLocalEdits(cps[1], static_cast<int>(dcpRem + insertMsg.text.length()));
 			}
 			else
 			{

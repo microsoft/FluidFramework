@@ -17,7 +17,7 @@ export interface IWebResolvedUrl extends IResolvedUrlBase {
 }
 
 export interface IFluidResolvedUrl extends IResolvedUrlBase {
-    type: "fluid" | "prague";
+    type: "fluid";
     url: string;
     tokens: { [name: string]: string };
     endpoints: { [name: string]: string };

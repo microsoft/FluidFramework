@@ -339,7 +339,7 @@
             "env": {
                 "TS_NODE_PROJECT": "${fileDirname}/../../tsconfig.json",
             },
-            "args": ["--no-timeouts", "--exit", "--require", "ts-node\\register","${file}", ],
+            "args": ["--no-timeouts", "--exit", "--require", "ts-node/register","${file}", ],
             "cwd": "${workspaceFolder}"
         },
         {

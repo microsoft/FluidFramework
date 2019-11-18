@@ -18,13 +18,13 @@
   },
   "dependencies": {
     "@microsoft/fluid-core-utils": "^0.12.0",
+    "@microsoft/fluid-driver-definitions": "^0.12.0",
     "@microsoft/fluid-fluidapp-odsp-urlresolver": "^0.12.0",
     "@microsoft/fluid-odsp-driver": "^0.12.0",
     "@microsoft/fluid-odsp-urlresolver": "^0.12.0",
     "@microsoft/fluid-odsp-utils": "^0.12.0",
     "@microsoft/fluid-protocol-definitions": "^0.12.0",
     "@microsoft/fluid-routerlicious-driver": "^0.12.0",
-    "@microsoft/fluid-routerlicious-host": "^0.12.0",
     "@microsoft/fluid-routerlicious-urlresolver": "^0.12.0",
     "@microsoft/fluid-runtime-definitions": "^0.12.0"
   },

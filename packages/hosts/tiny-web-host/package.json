@@ -27,6 +27,7 @@
     "@microsoft/fluid-base-host": "^0.12.0",
     "@microsoft/fluid-container-definitions": "^0.12.0",
     "@microsoft/fluid-core-utils": "^0.12.0",
+    "@microsoft/fluid-driver-definitions": "^0.12.0",
     "@microsoft/fluid-fluidapp-odsp-urlresolver": "^0.12.0",
     "@microsoft/fluid-odsp-driver": "^0.12.0",
     "@microsoft/fluid-odsp-urlresolver": "^0.12.0",
@@ -35,16 +36,13 @@
     "@microsoft/fluid-routerlicious-driver": "^0.12.0",
     "@microsoft/fluid-routerlicious-host": "^0.12.0",
     "@microsoft/fluid-routerlicious-urlresolver": "^0.12.0",
-    "@microsoft/fluid-server-services-core": "^0.12.0",
     "@microsoft/fluid-web-code-loader": "^0.12.0",
-    "jsonwebtoken": "^8.4.0",
-    "url-parse": "^1.4.3"
+    "jsonwebtoken": "^8.4.0"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.4.4",
     "@microsoft/fluid-build-common": "^0.12.0",
     "@types/node": "^10.12.12",
-    "@types/url-parse": "^1.4.1",
     "concurrently": "^4.1.0",
     "rimraf": "^2.6.2",
     "source-map-loader": "^0.2.4",

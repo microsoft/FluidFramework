@@ -9,10 +9,10 @@ import {
     IDocumentServiceFactory,
     IFluidResolvedUrl,
     IResolvedUrl,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@microsoft/fluid-driver-definitions";
+import { IQueueMessage } from "@microsoft/fluid-protocol-definitions";
 import * as socketStorage from "@microsoft/fluid-routerlicious-driver";
 import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
-import { IQueueMessage } from "@microsoft/fluid-runtime-definitions";
 import * as agent from "@microsoft/fluid-server-agent";
 import { NodeCodeLoader, NodeWhiteList } from "@microsoft/fluid-server-services";
 import * as core from "@microsoft/fluid-server-services-core";
@@ -36,12 +36,7 @@ class WorkerDocumentServiceFactory implements IDocumentServiceFactory {
     public createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
 
         if (resolvedUrl.type !== "fluid") {
-              if (resolvedUrl.type === "prague") {
-                // tslint:disable-next-line:max-line-length
-                console.warn("IFluidResolvedUrl type === 'prague' has been deprecated. Please create IFluidResolvedUrls of type 'fluid' in the future.");
-            } else {
-                return Promise.reject("only fluid type urls can be resolved.");
-            }
+            return Promise.reject("only fluid type urls can be resolved.");
         }
 
         const urlAsFluidUrl = resolvedUrl as IFluidResolvedUrl;

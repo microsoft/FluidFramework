@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IQuorumSnapshot, ProtocolOpHandler } from "@microsoft/fluid-container-loader";
 import { ICreateCommitParams, ICreateTreeEntry } from "@microsoft/fluid-gitresources";
+import { IQuorumSnapshot, ProtocolOpHandler } from "@microsoft/fluid-protocol-base";
 import {
     FileMode,
     IDocumentAttributes,

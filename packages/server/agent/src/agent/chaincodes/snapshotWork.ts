@@ -4,7 +4,7 @@
  */
 
 import { ICodeLoader, IHost } from "@microsoft/fluid-container-definitions";
-import { IDocumentServiceFactory } from "@microsoft/fluid-protocol-definitions";
+import { IDocumentServiceFactory } from "@microsoft/fluid-driver-definitions";
 import { IWork } from "../definitions";
 import { ChaincodeWork } from "./chaincodeWork";
 

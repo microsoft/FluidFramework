@@ -5,14 +5,16 @@
 
 import { buildHierarchy, flatten } from "@microsoft/fluid-core-utils";
 import {
-    ConnectionMode,
-    IClient,
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
     IDocumentService,
     IDocumentServiceFactory,
     IDocumentStorageService,
     IResolvedUrl,
+} from "@microsoft/fluid-driver-definitions";
+import {
+    ConnectionMode,
+    IClient,
     ISnapshotTree,
     ITree,
     IVersion,

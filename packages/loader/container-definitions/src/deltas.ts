@@ -7,6 +7,8 @@ import {
     ConnectionMode,
     IClientDetails,
     IContentMessage,
+    IDisposable,
+    IProcessMessageResult,
     ISequencedDocumentMessage,
     IServiceConfiguration,
     ISignalClient,
@@ -15,7 +17,6 @@ import {
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
-import { IDisposable } from "./disposable";
 
 export interface IConnectionDetails {
     clientId: string;
@@ -30,10 +31,6 @@ export interface IConnectionDetails {
     initialSignals?: ISignalMessage[];
     maxMessageSize: number;
     serviceConfiguration: IServiceConfiguration;
-}
-
-export interface IProcessMessageResult {
-    immediateNoOp?: boolean;
 }
 
 /**
@@ -112,7 +109,7 @@ export interface IDeltaManager<T, U> extends EventEmitter, IDeltaSender, IDispos
 
     close(): void;
 
-    connect(reason: string): Promise<IConnectionDetails>;
+    connect(requestedMode?: ConnectionMode): Promise<IConnectionDetails>;
 
     getDeltas(reason: string, from: number, to?: number): Promise<ISequencedDocumentMessage[]>;
 

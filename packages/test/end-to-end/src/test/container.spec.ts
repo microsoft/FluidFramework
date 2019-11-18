@@ -8,24 +8,24 @@ import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
 import {
+    IDocumentDeltaStorageService,
+    IDocumentService,
+    IDocumentStorageService,
+    IFluidResolvedUrl,
+} from "@microsoft/fluid-driver-definitions";
+import {
     ITestDeltaConnectionServer,
     TestDeltaConnectionServer,
     TestDocumentServiceFactory,
     TestResolver,
 } from "@microsoft/fluid-local-test-server";
-import {
-    IDocumentDeltaStorageService,
-    IDocumentService,
-    IDocumentStorageService,
-    IFluidResolvedUrl,
-} from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
 
 describe("Container", () => {
     let testDeltaConnectionServer: ITestDeltaConnectionServer;
     let testResolver: TestResolver;
     let testResolved: IFluidResolvedUrl;
-    const testRequest: IRequest = { url: "", headers: { connect: "open" } };
+    const testRequest: IRequest = { url: "" };
     let service: IDocumentService;
     let codeLoader: API.CodeLoader;
     let loader: Loader;

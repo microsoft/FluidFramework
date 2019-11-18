@@ -3,16 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import {
-    ConnectionMode,
-    IClient,
-    IContentMessage,
-    ISequencedDocumentMessage,
-    IServiceConfiguration,
-    ISignalClient,
-    ISignalMessage,
-    ITokenClaims,
-} from "@microsoft/fluid-protocol-definitions";
+import { ConnectionMode, IClient, ISignalClient } from "./clients";
+import { IServiceConfiguration } from "./config";
+import { IContentMessage, ISequencedDocumentMessage, ISignalMessage } from "./protocol";
+import { ITokenClaims } from "./tokens";
 
 /**
  * Message sent to connect to the given document

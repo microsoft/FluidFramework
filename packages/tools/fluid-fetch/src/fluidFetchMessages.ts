@@ -4,10 +4,12 @@
  */
 
 import {
-    ConnectionMode,
-    IClient,
     IDocumentDeltaStorageService,
     IDocumentService,
+} from "@microsoft/fluid-driver-definitions";
+import {
+    ConnectionMode,
+    IClient,
     ISequencedDocumentMessage,
     ScopeType,
 } from "@microsoft/fluid-protocol-definitions";

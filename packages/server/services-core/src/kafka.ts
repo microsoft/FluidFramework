@@ -74,6 +74,11 @@ export interface IProducer {
      * Closes the underlying connection
      */
     close(): Promise<void>;
+
+    /**
+     * Error event Handler.
+     */
+    once(event: "producerError", listener: (...args: any[]) => void): this;
 }
 
 export interface IPendingBoxcar {

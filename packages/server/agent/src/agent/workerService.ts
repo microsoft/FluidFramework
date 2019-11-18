@@ -4,7 +4,7 @@
  */
 
 import { ICodeLoader, IHost } from "@microsoft/fluid-container-definitions";
-import { IDocumentServiceFactory } from "@microsoft/fluid-protocol-definitions";
+import { IDocumentServiceFactory } from "@microsoft/fluid-driver-definitions";
 import { EventEmitter } from "events";
 import { Provider } from "nconf";
 import { IDocumentTaskInfo, IWorkManager } from "./definitions";

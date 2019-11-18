@@ -111,6 +111,27 @@ export interface IJSONSegment {
     props?: Object;
 }
 
+/**
+ * Used during snapshotting to record the metadata required to merge segments above the MSN
+ * to the raw output of `ISegment.toJSONObject()`.  (Note that IJSONSegment may be a raw
+ * string or array, which is why this interface wraps the original IJSONSegment instead of
+ * extending it.)
+ */
+export interface IJSONSegmentWithMergeInfo {
+    json: IJSONSegment;
+    client?: string;
+    seq?: number;
+    removedClient?: string;
+    removedSeq?: number;
+}
+
+/**
+ * Returns true if the given 'spec' is an IJSONSegmentWithMergeInfo.
+ */
+export function hasMergeInfo(spec: IJSONSegment | IJSONSegmentWithMergeInfo): spec is IJSONSegmentWithMergeInfo {
+    return !!spec && typeof spec === "object" && "json" in spec;
+}
+
 export type IMergeTreeOp = IMergeTreeInsertMsg | IMergeTreeRemoveMsg | IMergeTreeAnnotateMsg | IMergeTreeGroupMsg;
 
 // tslint:disable-next-line:interface-name
@@ -123,6 +144,7 @@ export interface MergeTreeChunk {
     totalLengthChars: number;
     totalSegmentCount: number;
     chunkSequenceNumber: number;
+    chunkMinSequenceNumber?: number;
     // back-compat name: change to segments
-    segmentTexts: IJSONSegment[];
+    segmentTexts: (IJSONSegment | IJSONSegmentWithMergeInfo)[];
 }

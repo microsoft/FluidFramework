@@ -13,18 +13,18 @@ import {
     IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
 import {
-    ConnectionState,
     IAudience,
     IBlobManager,
     IDeltaManager,
     IGenericBlob,
     ILoader,
-    IQuorum,
     ITelemetryLogger,
 } from "@microsoft/fluid-container-definitions";
+import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import {
+    ConnectionState,
     IDocumentMessage,
-    IDocumentStorageService,
+    IQuorum,
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITreeEntry,

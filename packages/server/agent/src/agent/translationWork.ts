@@ -6,8 +6,8 @@
 import { Translator } from "@fluid-example/translator-agent";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { IHost } from "@microsoft/fluid-container-definitions";
+import { IDocumentServiceFactory } from "@microsoft/fluid-driver-definitions";
 import { ISharedMap } from "@microsoft/fluid-map";
-import { IDocumentServiceFactory } from "@microsoft/fluid-protocol-definitions";
 import * as Sequence from "@microsoft/fluid-sequence";
 import { Provider } from "nconf";
 import { BaseWork } from "./baseWork";
@@ -27,7 +27,7 @@ export class TranslationWork extends BaseWork implements IWork {
 
     public async start(task: string): Promise<void> {
         await this.loadDocument(
-            { encrypted: undefined, client: { type: "translation"} },
+            { encrypted: undefined, client: { type: "translation" } },
             this.serviceFactory,
             task);
 

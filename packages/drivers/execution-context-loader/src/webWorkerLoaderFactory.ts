@@ -4,7 +4,7 @@
  */
 
 import { ILoader, IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
-import { IFluidResolvedUrl } from "@microsoft/fluid-protocol-definitions";
+import { IFluidResolvedUrl } from "@microsoft/fluid-driver-definitions";
 import { WebWorkerLoader } from "./webWorkerLoader";
 
 /**

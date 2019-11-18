@@ -4,8 +4,7 @@
  */
 
 import { ISerializedHandle } from "@microsoft/fluid-component-core-interfaces";
-import { ConnectionState } from "@microsoft/fluid-container-definitions";
-import { MessageType } from "@microsoft/fluid-protocol-definitions";
+import { ConnectionState, MessageType } from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
 
 /**

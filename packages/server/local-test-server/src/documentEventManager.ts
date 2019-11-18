@@ -66,7 +66,8 @@ export class DocumentDeltaEventManager {
     public async process(...docs: IDocumentDeltaEvent[]): Promise<void> {
         const documents = await this.pauseAndValidateDocs(...docs);
         for (const doc of documents) {
-            await Promise.all([doc.deltaManager.inbound.resume(), doc.deltaManager.outbound.resume()]);
+            doc.deltaManager.inbound.resume();
+            doc.deltaManager.outbound.resume();
         }
         await this.yieldWhileDocumentsHaveWork(
             documents,
