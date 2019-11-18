@@ -1,0 +1,25 @@
+{
+    "extends": ["@microsoft/fluid-build-common/tslint.json"],
+    "rules": {
+        "await-promise": false,
+        "completed-docs": false,
+        "function-name": false,
+        "max-func-body-length": false,
+        "mocha-no-side-effect-code": false,
+        "no-console": false,
+        "no-duplicate-imports": false,
+        "no-floating-promises": false,
+        "no-null-keyword": false,
+        "no-require-imports": false,
+        "no-suspicious-comment": false,
+        "no-unnecessary-callback-wrapper": false,
+        "no-unnecessary-type-assertion": false,
+        "no-unsafe-any": false,
+        "non-literal-fs-path": false,
+        "prefer-readonly": false,
+        "prefer-template": false,
+        "promise-function-async": false,
+        "restrict-plus-operands": false,
+        "space-within-parens": false
+    }
+}
