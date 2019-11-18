@@ -8,7 +8,7 @@
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "webpack --env=\"development\" && npm run tsc",
+    "build": "webpack --env=\"production\" && npm run tsc",
     "dev": "webpack --env=\"development\"",
     "start": "webpack-dev-server --config webpack.config.js --package package.json",
     "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
@@ -61,8 +61,6 @@
     "@microsoft/fluid-shared-object-base": "^0.10.0",
     "@microsoft/fluid-aqueduct-react": "^0.10.0",
     "@microsoft/fluid-aqueduct": "^0.10.0",
-    "lorem-ipsum": "^2.0.3",
-    "html-to-react": "^1.4.2",
     "prosemirror-example-setup": "^1.0.1",
     "prosemirror-model": "^1.7.2",
     "prosemirror-schema-basic": "^1.0.1",
