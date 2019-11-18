@@ -115,6 +115,7 @@ COPY packages/server/services/package*.json packages/server/services/
 COPY packages/server/services-client/package*.json packages/server/services-client/
 COPY packages/server/services-core/package*.json packages/server/services-core/
 COPY packages/server/services-utils/package*.json packages/server/services-utils/
+COPY packages/server/protocol-base/package*.json packages/server/protocol-base/
 COPY packages/utils/odsp-utils/package*.json packages/utils/odsp-utils/
 COPY packages/utils/build-common/package*.json packages/utils/build-common/
 COPY packages/server/test-utils/package*.json packages/server/test-utils/

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ProtocolOpHandler } from "@microsoft/fluid-container-loader";
+import { ProtocolOpHandler } from "@microsoft/fluid-protocol-base";
 import { IClient, IServiceConfiguration } from "@microsoft/fluid-protocol-definitions";
 import {
     ActivityCheckingTimeout,
