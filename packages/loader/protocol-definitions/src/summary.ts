@@ -30,14 +30,10 @@ export const enum SummaryType {
 
 export interface ISummaryHandle {
     type: SummaryType.Handle;
-
     handleType: SummaryType;
-
-    // handle to a previous summary
-    parentHandle: string;
-
-    // handle to a previous acked summary
-    ackedParentHandle?: string;
+    path: string;
+    proposedParentHandle?: string;
+    ackedParentHandle: string;
 }
 
 export interface ISummaryBlob {

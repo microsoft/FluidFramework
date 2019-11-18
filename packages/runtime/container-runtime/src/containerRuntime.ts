@@ -32,6 +32,7 @@ import {
     isSystemType,
     raiseConnectedEvent,
     readAndParse,
+    TreeTreeEntry,
 } from "@microsoft/fluid-core-utils";
 import {
     Browser,
@@ -966,22 +967,19 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
      * Returns a summary of the runtime at the current sequence number.
      */
     private async summarize(fullTree: boolean = false): Promise<ISummaryTreeWithStats> {
-        const summaryTree: ISummaryTree = {
-            tree: {},
-            type: SummaryType.Tree,
-        };
-        let summaryStats = this.summaryTreeConverter.mergeStats();
-
         // Iterate over each component and ask it to snapshot
+        const tree: ITree = { id: null, entries: [] };
         await Promise.all(Array.from(this.contexts).map(async ([key, value]) => {
             const snapshot = await value.snapshot(fullTree);
-            const treeWithStats = this.summaryTreeConverter.convertToSummaryTree(
-                snapshot,
-                this.latestSummary.context,
-                fullTree);
-            summaryTree.tree[key] = treeWithStats.summaryTree;
-            summaryStats = this.summaryTreeConverter.mergeStats(summaryStats, treeWithStats.summaryStats);
+            tree.entries.push(new TreeTreeEntry(key, snapshot));
         }));
+
+        // convert to summary
+        const treeWithStats = this.summaryTreeConverter.convertToSummaryTree(
+            tree,
+            this.latestSummary.context,
+            fullTree);
+        const summaryTree = treeWithStats.summaryTree as ISummaryTree;
 
         if (this.chunkMap.size > 0) {
             summaryTree.tree[".chunks"] = {
@@ -990,8 +988,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             };
         }
 
-        summaryStats.treeNodeCount++; // add this root tree node
-        return { summaryStats, summaryTree };
+        return { summaryStats: treeWithStats.summaryStats, summaryTree };
     }
 
     private processCore(message: ISequencedDocumentMessage, local: boolean) {
@@ -1118,7 +1115,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             }
 
             const handle = await this.context.storage.uploadSummary(treeWithStats.summaryTree);
-            const parent = this.latestSummary.context.ackedParentHandle;
+            const latestContext = this.latestSummary.context;
+            const parent = latestContext && latestContext.ackedParentHandle;
             const summaryMessage: ISummaryContent = {
                 handle,
                 head: parent,

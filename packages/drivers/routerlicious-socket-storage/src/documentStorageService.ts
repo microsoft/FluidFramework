@@ -103,13 +103,13 @@ export class DocumentStorageService implements IDocumentStorageService  {
         path: string,
     ): Promise<string> {
         switch (value.type) {
-            case SummaryType.Blob:
+            case SummaryType.Blob: {
                 const content = typeof value.content === "string" ? value.content : value.content.toString("base64");
                 const encoding = typeof value.content === "string" ? "utf-8" : "base64";
                 const blob = await this.manager.createBlob(content, encoding);
                 return blob.sha;
-
-            case SummaryType.Commit:
+            }
+            case SummaryType.Commit: {
                 const commitTreeHandle = await this.writeSummaryObject(
                     value.tree,
                     newCache,
@@ -125,16 +125,18 @@ export class DocumentStorageService implements IDocumentStorageService  {
                 submodule.push({ path, sha: newCommit.sha });
 
                 return newCommit.sha;
-
-            case SummaryType.Handle:
-                const parentCache = await this.cache.get(value.parentHandle);
-                const parentHash = parentCache ? parentCache.get(path) : undefined;
-                if (!parentHash) {
-                    throw Error("Parent summary should be cached if handle is provided.");
+            }
+            case SummaryType.Handle: {
+                const refCache = await this.cache.get(value.proposedParentHandle || value.ackedParentHandle)
+                    || await this.cache.get(value.ackedParentHandle);
+                const refHash = refCache && refCache.get(value.path);
+                if (!refHash) {
+                    throw Error("Referenced summary should be cached if handle is provided.");
                 }
-                return parentHash;
-
-            case SummaryType.Tree:
+                newCache.set(path, refHash);
+                return refHash;
+            }
+            case SummaryType.Tree: {
                 const fullTree = value.tree;
                 const entries = await Promise.all(Object.keys(fullTree).map(async (key) => {
                     const entry = fullTree[key];
@@ -155,9 +157,10 @@ export class DocumentStorageService implements IDocumentStorageService  {
                 const treeHandle = await this.manager.createGitTree({ tree: entries });
                 newCache.set(path, treeHandle.sha);
                 return treeHandle.sha;
-
-            default:
+            }
+            default: {
                 return Promise.reject();
+            }
         }
     }
 

@@ -87,8 +87,9 @@ describe("Runtime", () => {
                     // trees with ids should become handles
                     const handle = assertSummaryHandle(summaryTree.tree.h);
                     assert.strictEqual(handle.handleType, SummaryType.Tree);
-                    assert.strictEqual(handle.parentHandle, "test-proposed-parent-handle");
+                    assert.strictEqual(handle.proposedParentHandle, "test-proposed-parent-handle");
                     assert.strictEqual(handle.ackedParentHandle, "test-acked-parent-handle");
+                    assert.strictEqual(handle.path, "/h");
 
                     // subtrees should recurse
                     const subTree = assertSummaryTree(summaryTree.tree.t);

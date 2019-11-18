@@ -481,7 +481,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
     /**
      * Converts a summary tree to ODSP tree
      */
-    private convertSummaryToSnapshotTree(tree: api.ISummaryTree, prefix?: string, depth: number = 0): ISnapshotTree {
+    private convertSummaryToSnapshotTree(tree: api.ISummaryTree): ISnapshotTree {
         const snapshotTree: ISnapshotTree = {
             entries: [],
         }!;
@@ -495,8 +495,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
             switch (summaryObject.type) {
                 case api.SummaryType.Tree:
-                    const path = prefix ? `${prefix}/${key}` : key;
-                    value = this.convertSummaryToSnapshotTree(summaryObject, path, depth + 1);
+                    value = this.convertSummaryToSnapshotTree(summaryObject);
                     break;
 
                 case api.SummaryType.Blob:
@@ -511,7 +510,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                     break;
 
                 case api.SummaryType.Handle:
-                    id = `${summaryObject.ackedParentHandle}/${prefix}/${key}`;
+                    id = `${summaryObject.ackedParentHandle}${summaryObject.path}`;
 
                     // TODO: SPO will deprecate this soon
                     if (summaryObject.handleType === api.SummaryType.Commit) {
