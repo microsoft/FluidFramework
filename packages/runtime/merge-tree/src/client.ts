@@ -997,10 +997,10 @@ export class Client {
         let segmentWindow = this.getCollabWindow();
         return this.mergeTree.getLength(segmentWindow.currentSeq, segmentWindow.clientId);
     }
-    startCollaboration(longClientId: string | undefined,  minSeq = 0, branchId = 0) {
+    startCollaboration(longClientId: string | undefined,  minSeq = 0, currentSeq = 0, branchId = 0) {
         this.longClientId = longClientId ? longClientId : "original";
         this.addLongClientId(this.longClientId , branchId);
-        this.mergeTree.startCollaboration(this.getShortClientId(this.longClientId), minSeq, branchId);
+        this.mergeTree.startCollaboration(this.getShortClientId(this.longClientId), minSeq, currentSeq, branchId);
     }
     updateCollaboration(longClientId: string) {
         const oldClientId = this.longClientId;

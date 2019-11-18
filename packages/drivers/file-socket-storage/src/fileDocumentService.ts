@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as api from "@microsoft/fluid-protocol-definitions";
+import * as api from "@microsoft/fluid-driver-definitions";
+import { ConnectionMode, IClient } from "@microsoft/fluid-protocol-definitions";
 import { FileDeltaStorageService } from "./fileDeltaStorageService";
 
 /**
@@ -33,8 +34,8 @@ export class FileDocumentService implements api.IDocumentService {
      * @returns returns the delta stream service.
      */
     public async connectToDeltaStream(
-        client: api.IClient,
-        mode: api.ConnectionMode): Promise<api.IDocumentDeltaConnection> {
+        client: IClient,
+        mode: ConnectionMode): Promise<api.IDocumentDeltaConnection> {
         return this.deltaConnection;
     }
 

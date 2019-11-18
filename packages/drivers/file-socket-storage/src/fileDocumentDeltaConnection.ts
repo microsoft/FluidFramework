@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import * as messages from "@microsoft/fluid-driver-base";
+import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
 import {
     ConnectionMode,
+    IConnected,
     IContentMessage,
-    IDocumentDeltaConnection,
     IDocumentMessage,
     ISequencedDocumentMessage,
     IServiceConfiguration,
@@ -137,7 +137,7 @@ export class ReplayFileDeltaConnection extends EventEmitter implements IDocument
     public readonly maxMessageSize = ReplayMaxMessageSize;
     private readonly replayer: Replayer;
 
-    public constructor(public details: messages.IConnected, documentDeltaStorageService: FileDeltaStorageService) {
+    public constructor(public details: IConnected, documentDeltaStorageService: FileDeltaStorageService) {
         super();
         this.replayer = new Replayer(
             this,

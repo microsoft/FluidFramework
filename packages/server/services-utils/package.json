@@ -24,7 +24,6 @@
     "debug": "^4.1.1",
     "moniker": "^0.1.2",
     "nconf": "^0.10.0",
-    "raven": "^2.6.4",
     "winston": "^3.1.0"
   },
   "devDependencies": {
@@ -32,7 +31,6 @@
     "@types/debug": "^0.0.31",
     "@types/nconf": "^0.0.37",
     "@types/node": "^10.12.12",
-    "@types/raven": "^2.5.1",
     "concurrently": "^4.1.0",
     "rimraf": "^2.6.2",
     "tslint": "^5.11.0",

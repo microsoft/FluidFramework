@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import * as api from "@microsoft/fluid-protocol-definitions";
 
 /**
  * Document storage service for the test driver...just does a default implementation for
  * all the methods
  */
-export class TestDocumentStorageService implements api.IDocumentStorageService  {
+export class TestDocumentStorageService implements IDocumentStorageService  {
     public get repositoryUrl(): string {
         return "";
     }

@@ -5,11 +5,12 @@
 
 import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
 import { TelemetryNullLogger } from "@microsoft/fluid-core-utils";
-import { DocumentDeltaConnection, IConnect } from "@microsoft/fluid-driver-base";
+import { DocumentDeltaConnection } from "@microsoft/fluid-driver-base";
+import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
 import {
     ConnectionMode,
     IClient,
-    IDocumentDeltaConnection,
+    IConnect,
 } from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
 import { IOdspSocketError } from "./contracts";
@@ -214,9 +215,9 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
      * @param socketReferenceKey - socket reference key
      */
     constructor(
-            socket: SocketIOClient.Socket,
-            documentId: string,
-            private socketReferenceKey: string | undefined) {
+        socket: SocketIOClient.Socket,
+        documentId: string,
+        private socketReferenceKey: string | undefined) {
         super(socket, documentId);
     }
 

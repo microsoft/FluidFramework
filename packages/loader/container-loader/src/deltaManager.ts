@@ -16,13 +16,15 @@ import {
     PerformanceEvent,
 } from "@microsoft/fluid-core-utils";
 import {
+    IDocumentDeltaStorageService,
+    IDocumentService,
+} from "@microsoft/fluid-driver-definitions";
+import {
     ConnectionMode,
     IClient,
     IClientDetails,
     IContentMessage,
-    IDocumentDeltaStorageService,
     IDocumentMessage,
-    IDocumentService,
     IDocumentSystemMessage,
     ISequencedDocumentMessage,
     IServiceConfiguration,
@@ -77,8 +79,12 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     public readonly clientDetails: IClientDetails;
     public get IDeltaSender() { return this; }
 
-    // Current conneciton mode. Initially write.
-    public connectionMode: ConnectionMode = "write";
+    /**
+     * Controls whether the DeltaManager will automatically reconnect to the delta stream after receiving a disconnect.
+     */
+    public autoReconnect: boolean = true;
+
+    private _connectionMode: ConnectionMode = "write";
     // Overwrites the current connection mode to always write.
     private readonly systemConnectionMode: ConnectionMode;
 
@@ -178,6 +184,13 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         return undefined;
     }
 
+    /**
+     * The current connection mode, initially write.
+     */
+    public get connectionMode(): ConnectionMode {
+        return this._connectionMode;
+    }
+
     constructor(
         private readonly service: IDocumentService,
         private readonly client: IClient,
@@ -243,7 +256,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             minSequenceNumber: number,
             sequenceNumber: number,
             handler: IDeltaHandlerStrategy,
-            resume: boolean) {
+            catchUp: boolean) {
         debug("Attached op handler", sequenceNumber);
 
         this.initSequenceNumber = sequenceNumber;
@@ -256,18 +269,16 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this.handler = handler;
         assert(this.handler);
 
-        // We are ready to process inbound messages
-        if (resume) {
-            // tslint:disable-next-line:no-floating-promises
-            this._inbound.systemResume();
-            // tslint:disable-next-line:no-floating-promises
-            this._inboundSignal.systemResume();
+        this._inbound.systemResume();
+        this._inboundSignal.systemResume();
 
+        // We are ready to process inbound messages
+        if (catchUp) {
             // If we have pending ops from web socket, then we can use that to start download
             // based on missing ops - catchUp() will do just that.
             // Otherwise proactively ask storage for ops
             if (this.pending.length > 0) {
-                this.catchUp("DocumentOpen", []);
+                this.catchUp([], "DocumentOpen");
             } else {
                 // tslint:disable-next-line:no-floating-promises
                 this.fetchMissingDeltas("DocumentOpen", sequenceNumber);
@@ -283,18 +294,81 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this.inQuorum = false;
     }
 
-    public async connect(): Promise<IConnectionDetails> {
+    public async connect(requestedMode: ConnectionMode = "write"): Promise<IConnectionDetails> {
         assert(!this.closed);
 
         if (this.connection) {
             return this.connection.details;
         }
 
-        if (!this.connecting) {
-            this.connecting = new Deferred<IConnectionDetails>();
-            // tslint:disable-next-line:no-floating-promises
-            this.connectCore(this.connectionMode);
+        if (this.connecting) {
+            return this.connecting.promise;
         }
+
+        const connectCore = async () => {
+            let connection: DeltaConnection | undefined;
+            let delay = InitialReconnectDelay;
+            let connectRepeatCount = 0;
+            const connectStartTime = performanceNow();
+
+            // This loop will keep trying to connect until successful, with a delay between each iteration.
+            while (connection === undefined) {
+                if (this.closed) {
+                    return;
+                }
+                connectRepeatCount++;
+
+                try {
+                    connection = await DeltaConnection.connect(this.service, this.client, requestedMode);
+                } catch (error) {
+                    // Socket.io error when we connect to wrong socket, or hit some multiplexing bug
+                    if (!canRetryOnError(error)) {
+                        this.close(error);
+                        return;
+                    }
+
+                    // Log error once - we get too many errors in logs when we are offline,
+                    // and unfortunately there is no reliable way to detect that.
+                    if (connectRepeatCount === 1) {
+                        logNetworkFailure(
+                            this.logger,
+                            {
+                                delay,
+                                eventName: "DeltaConnectionFailureToConnect",
+                            },
+                            error);
+                    }
+
+                    const retryDelayFromError = this.getRetryDelayFromError(error);
+                    delay = retryDelayFromError !== undefined ?
+                        retryDelayFromError :
+                        Math.min(delay * 2, MaxReconnectDelay);
+
+                    this.emitDelayInfo(retryFor.DELTASTREAM, delay);
+                    await waitForConnectedState(delay);
+                }
+            }
+
+            // If we retried more than once, log an event about how long it took
+            if (connectRepeatCount > 1) {
+                this.logger.sendTelemetryEvent({
+                    attempts: connectRepeatCount,
+                    duration: (performanceNow() - connectStartTime).toFixed(0),
+                    eventName: "MultipleDeltaConnectionFailures",
+                });
+            }
+
+            this.setupNewSuccessfulConnection(connection);
+
+            if (this.connecting) {
+                this.connecting.resolve(connection.details);
+                this.connecting = undefined;
+            }
+        };
+
+        this.connecting = new Deferred<IConnectionDetails>();
+        // tslint:disable-next-line:no-floating-promises
+        connectCore();
 
         return this.connecting.promise;
     }
@@ -304,7 +378,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             return;
         }
 
-        // The prepareFlush event allows listenerse to append metadata to the batch prior to submission.
+        // The prepareFlush event allows listeners to append metadata to the batch prior to submission.
         this.emit("prepareSend", this.messageBuffer);
 
         this._outbound.push(this.messageBuffer);
@@ -358,11 +432,23 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
     public async getDeltas(
             telemetryEventSuffix: string,
-            fromInitial: number,
+            from: number,
             to?: number): Promise<ISequencedDocumentMessage[]> {
+        const allMessages: ISequencedDocumentMessage[] = [];
+        for await (const messages of this.getDeltasCore(telemetryEventSuffix, from, to)) {
+            allMessages.push(...messages);
+        }
+        return allMessages;
+    }
+
+    public async *getDeltasCore(
+            telemetryEventSuffix: string,
+            fromInitial: number,
+            to?: number) {
         let retry: number = 0;
         let from: number = fromInitial;
-        const allDeltas: ISequencedDocumentMessage[] = [];
+        let deltas: ISequencedDocumentMessage[] = [];
+        let deltasRetrievedTotal = 0;
 
         const telemetryEvent = PerformanceEvent.start(this.logger, {
             eventName: `GetDeltas_${telemetryEventSuffix}`,
@@ -371,6 +457,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         });
 
         let requests = 0;
+        let deltaStorage: IDocumentDeltaStorageService | undefined;
 
         while (!this.closed) {
             const maxFetchTo = from + MaxBatchDeltas;
@@ -383,23 +470,31 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
             try {
                 // Connect to the delta storage endpoint
-                if (!this.deltaStorageP) {
-                    this.deltaStorageP = this.service.connectToDeltaStorage();
+                if (!deltaStorage) {
+                    if (!this.deltaStorageP) {
+                        this.deltaStorageP = this.service.connectToDeltaStorage();
+                    }
+                    deltaStorage = await this.deltaStorageP;
                 }
-
-                const deltaStorage = await this.deltaStorageP!;
 
                 requests++;
 
-                // Grab a chunk of deltas - limit the number fetched to MaxBatchDeltas
+                // Issue async request for deltas - limit the number fetched to MaxBatchDeltas
                 canRetry = true;
-                const deltas = await deltaStorage.get(from, fetchTo);
+                const deltasP = deltaStorage.get(from, fetchTo);
+
+                // Return previously fetched deltas, for processing while we are waiting for new request.
+                if (deltas.length > 0) {
+                    yield deltas;
+                }
+
+                // Now wait for request to come back
+                deltas = await deltasP;
 
                 // Note that server (or driver code) can push here something unexpected, like undefined
                 // Exception thrown as result of it will result in us retrying
-                allDeltas.push(...deltas);
-
                 deltasRetrievedLast = deltas.length;
+                deltasRetrievedTotal += deltasRetrievedLast;
                 const lastFetch = deltasRetrievedLast > 0 ? deltas[deltasRetrievedLast - 1].sequenceNumber : from;
 
                 // If we have no upper bound and fetched less than the max deltas - meaning we got as many as exit -
@@ -411,8 +506,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 //    any more, thus it's time to leave
                 // 2) else case: if we got what we asked (to - 1) or more, then time to leave.
                 if (to === undefined ? lastFetch < maxFetchTo - 1 : to - 1 <= lastFetch) {
-                    telemetryEvent.end({ lastFetch, totalDeltas: allDeltas.length, requests });
-                    return allDeltas;
+                    yield deltas;
+                    telemetryEvent.end({ lastFetch, deltasRetrievedTotal, requests });
+                    return;
                 }
 
                 // Attempt to fetch more deltas. If we didn't receive any in the previous call we up our retry
@@ -434,7 +530,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                     // It's game over scenario.
                     telemetryEvent.cancel({category: "error"}, error);
                     this.close(error);
-                    return [];
+                    return;
                 }
                 success = false;
                 retryAfter = this.getRetryDelayFromError(error);
@@ -460,18 +556,18 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                         reason: "too many retries",
                         retry,
                         requests,
-                        deltasRetrievedTotal: allDeltas.length,
+                        deltasRetrievedTotal,
                         replayFrom: from,
                         to });
                     this.close(new Error("Failed to retrieve ops from storage: giving up after too many retries"));
-                    return [];
+                    return;
                 }
             }
 
             telemetryEvent.reportProgress({
                 delay,
                 deltasRetrievedLast,
-                deltasRetrievedTotal: allDeltas.length,
+                deltasRetrievedTotal,
                 replayFrom: from,
                 requests,
                 retry,
@@ -485,7 +581,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         // Might need to change to non-error event
         this.logger.sendErrorEvent({eventName: "GetDeltasClosedConnection" });
         telemetryEvent.cancel({ reason: "container closed" });
-        return [];
     }
 
     /**
@@ -498,7 +593,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this.closed = true;
 
         // Note: "disconnect" & "nack" do not have error object
-        if (error) {
+        if (error !== undefined) {
             this.emit("error", error);
         }
 
@@ -581,93 +676,30 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         }
     }
 
-    private async connectCore(mode: ConnectionMode): Promise<void> {
-        let connection: DeltaConnection | undefined;
-        let delay = InitialReconnectDelay;
-        let connectRepeatCount = 0;
-        const connectStartTime = performanceNow();
-
-        // This loop will keep trying to connect until successful, with a delay between each iteration.
-        while (connection === undefined) {
-            if (this.closed) {
-                return;
-            }
-            connectRepeatCount++;
-
-            try {
-                connection = await DeltaConnection.connect(this.service, this.client, mode);
-            } catch (error) {
-                // Socket.io error when we connect to wrong socket, or hit some multiplexing bug
-                if (!canRetryOnError(error)) {
-                    this.close(error);
-                    return;
-                }
-
-                // Log error once - we get too many errors in logs when we are offline,
-                // and unfortunately there is no reliable way to detect that.
-                if (connectRepeatCount === 1) {
-                    logNetworkFailure(
-                        this.logger,
-                        {
-                            delay,
-                            eventName: "DeltaConnectionFailureToConnect",
-                        },
-                        error);
-                }
-
-                const retryDelayFromError = this.getRetryDelayFromError(error);
-                delay = retryDelayFromError !== undefined ?
-                    retryDelayFromError :
-                    Math.min(delay * 2, MaxReconnectDelay);
-
-                this.emitDelayInfo(retryFor.DELTASTREAM, delay);
-                await waitForConnectedState(delay);
-            }
-        }
-
-        // If we retried more than once, log an event about how long it took
-        if (connectRepeatCount > 1) {
-            this.logger.sendTelemetryEvent({
-                attempts: connectRepeatCount,
-                duration: (performanceNow() - connectStartTime).toFixed(0),
-                eventName: "MultipleDeltaConnectionFailures",
-            });
-        }
-
-        this.setupNewSuccessfulConnection(connection);
-    }
-
     /**
      * Once we've successfully gotten a DeltaConnection, we need to set up state, attach event listeners, and process
      * initial messages.
-     * @param connection - the newly established connection
+     * @param connection - The newly established connection
      */
     private setupNewSuccessfulConnection(connection: DeltaConnection) {
         this.connection = connection;
 
         // back-compat for newer clients and old server. If the server does not have mode, we reset to write.
-        this.connectionMode = connection.details.mode ? connection.details.mode : "write";
+        this._connectionMode = connection.details.mode ? connection.details.mode : "write";
 
         this.emitDelayInfo(retryFor.DELTASTREAM, -1);
 
         if (this.closed) {
             // Raise proper events, Log telemetry event and close connection.
-            this.reconnectOnError(`Disconnect on close`, connection, this.systemConnectionMode);
+            this.disconnectFromDeltaStream(`Disconnect on close`);
             assert(!connection.connected); // check we indeed closed it!
             return;
         }
 
-        // tslint:disable-next-line:no-floating-promises
         this._outbound.systemResume();
 
         this.clientSequenceNumber = 0;
         this.clientSequenceNumberObserved = 0;
-
-        // If first connection resolve the promise with the details
-        if (this.connecting) {
-            this.connecting.resolve(connection.details);
-            this.connecting = undefined;
-        }
 
         connection.on("op", (documentId: string, messages: ISequencedDocumentMessage[]) => {
             if (messages instanceof Array) {
@@ -688,18 +720,22 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         // Always connect in write mode after getting nacked.
         connection.on("nack", (target: number) => {
             const nackReason = target === -1 ? "Reconnecting to start writing" : "Reconnecting on nack";
+            // tslint:disable-next-line:no-floating-promises
             this.reconnectOnError(nackReason, connection, "write");
         });
 
-        //  Connection mode is always read on disconnect/error unless the system mode was write.
+        // Connection mode is always read on disconnect/error unless the system mode was write.
         connection.on("disconnect", (disconnectReason) => {
             // Note: we might get multiple disconnect calls on same socket, as early disconnect notification
             // ("server_disconnect", ODSP-specific) is mapped to "disconnect"
+            // tslint:disable-next-line:no-floating-promises
             this.reconnectOnError(
-                `Reconnecting on disconnect: ${disconnectReason}`,
+                `Got disconnect: ${disconnectReason}, autoReconnect: ${this.autoReconnect}`,
                 connection,
                 this.systemConnectionMode,
-                disconnectReason);
+                disconnectReason,
+                this.autoReconnect,
+            );
         });
 
         connection.on("error", (error) => {
@@ -707,6 +743,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             // We are getting transport errors from WebSocket here, right before or after "disconnect".
             // This happens only in Firefox.
             logNetworkFailure(this.logger, {eventName: "DeltaConnectionError"}, error);
+            // tslint:disable-next-line:no-floating-promises
             this.reconnectOnError(
                 `Reconnecting on error: ${error}`,
                 connection,
@@ -732,16 +769,19 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this.connectFirstConnection = false;
     }
 
-    private reconnectOnError(reason: string, connection: DeltaConnection, mode: ConnectionMode, error?: any) {
-        // we quite often get protocol errors before / after observing nack/disconnect
-        // we do not want to run through same sequence twice.
-        if (connection !== this.connection) {
+    /**
+     * Disconnect the current connection.
+     * @param reason - Text description of disconnect reason to emit with disconnect event
+     */
+    private disconnectFromDeltaStream(reason: string) {
+        const connection = this.connection;
+        if (!connection) {
             return;
         }
 
         // avoid any re-entrancy - clear object reference
         this.connection = undefined;
-        this.connectionMode = "read";
+        this._connectionMode = "read";
 
         // tslint:disable-next-line:no-floating-promises
         this._outbound.systemPause();
@@ -750,19 +790,49 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this.emit("disconnect", reason);
 
         connection.close();
+    }
 
-        if (!this.reconnect || this.closed || !canRetryOnError(error)) {
+    /**
+     * Disconnect the current connection and reconnect.
+     * @param reason - A string describing why we are reconnecting
+     * @param connection - The connection that wants to reconnect - no-op if it's different from this.connection
+     * @param requestedMode - Read or write
+     * @param error - The error that prompted the reconnect
+     * @param autoReconnect - Whether to attempt reconnection automatically after error handling
+     * @returns A promise that resolves when the connection is reestablished or we stop trying
+     */
+    private async reconnectOnError(
+        reason: string,
+        connection: DeltaConnection,
+        requestedMode: ConnectionMode,
+        error?: any,
+        autoReconnect: boolean = true,
+    ) {
+        // we quite often get protocol errors before / after observing nack/disconnect
+        // we do not want to run through same sequence twice.
+        if (connection !== this.connection) {
+            return;
+        }
+
+        this.disconnectFromDeltaStream(reason);
+
+        // If reconnection is not an option, close the DeltaManager
+        if (!this.reconnect || !canRetryOnError(error)) {
             this.close(error);
-        } else {
-            const delayNext = this.getRetryDelayFromError(error);
-            if (delayNext !== undefined) {
-                this.emitDelayInfo(retryFor.DELTASTREAM, delayNext);
-                // tslint:disable-next-line:no-floating-promises
-                waitForConnectedState(delayNext).then(() => this.connectCore(mode));
-            } else {
-                // tslint:disable-next-line:no-floating-promises
-                this.connectCore(mode);
+        }
+
+        // If closed then we can't reconnect
+        if (this.closed) {
+            return;
+        }
+
+        if (autoReconnect) {
+            const delay = this.getRetryDelayFromError(error);
+            if (delay !== undefined) {
+                this.emitDelayInfo(retryFor.DELTASTREAM, delay);
+                await waitForConnectedState(delay);
             }
+            await this.connect(requestedMode);
         }
     }
 
@@ -791,7 +861,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             }
         }
         if (messages && messages.length > 0) {
-            this.catchUp(firstConnection ? "InitialOps" : "ReconnectOps", messages);
+            this.catchUp(messages, firstConnection ? "InitialOps" : "ReconnectOps");
         }
     }
 
@@ -922,16 +992,14 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         this.fetching = true;
 
-        await this.getDeltas(telemetryEventSuffix, from, to).then(
-            (messages) => {
-                this.emitDelayInfo(retryFor.DELTASTORAGE, -1);
-                this.fetching = false;
-                this.emit("caughtUp");
-                this.catchUp(telemetryEventSuffix, messages);
-            });
+        for await (const messages of this.getDeltasCore(telemetryEventSuffix, from, to)) {
+            this.emitDelayInfo(retryFor.DELTASTORAGE, -1);
+            this.catchUpCore(messages);
+        }
+        this.fetching = false;
     }
 
-    private catchUp(telemetryEventSuffix: string, messages: ISequencedDocumentMessage[]): void {
+    private catchUp(messages: ISequencedDocumentMessage[], telemetryEventSuffix: string): void {
         const props: {
                 eventName: string,
                 messageCount: number,
@@ -950,6 +1018,11 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             props.messageGap = this.handler ? props.from - this.lastQueuedSequenceNumber - 1 : undefined;
         }
         this.logger.sendPerformanceEvent(props);
+
+        this.catchUpCore(messages);
+    }
+
+    private catchUpCore(messages: ISequencedDocumentMessage[], telemetryEventSuffix?: string): void {
 
         // Apply current operations
         this.enqueueMessages(messages, telemetryEventSuffix);

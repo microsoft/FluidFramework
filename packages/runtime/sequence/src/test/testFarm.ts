@@ -883,7 +883,7 @@ export function TestPack(verbose = true) {
             }else{
                 clientsB[i].insertTextLocal(0, initString);
             }
-            clientsB[i].startCollaboration(`FredB${i}`, 0, 1);
+            clientsB[i].startCollaboration(`FredB${i}`, /* minSeq: */ 0, /* currentSeq: */ 0, /* branchId: */ 1);
         }
         for (let i = 0; i < clientCountB; i++) {
             let clientB = clientsB[i];
@@ -898,7 +898,7 @@ export function TestPack(verbose = true) {
         serverA.startCollaboration("theServerA");
         serverA.addClients(clientsA);
         serverA.addListeners([serverB]);
-        serverB.startCollaboration("theServerB", 0, 1);
+        serverB.startCollaboration("theServerB", /* minSeq: */ 0, /* currentSeq: */ 0, /* branchId: */ 1);
         serverB.addClients(clientsB);
         serverB.addUpstreamClients(clientsA);
 

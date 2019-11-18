@@ -1,7 +1,7 @@
 {{<layout}}
 
 {{$content}}
-    <div id="content"></div>
+    <div id="content" style="flex: 1 1 auto; position: relative"></div>
 {{/content}}
 
 {{$scripts}}
@@ -23,7 +23,6 @@
         var url = "{{ url }}";
         var resolved = {{{ resolved }}};
         var jwt = "{{ jwt }}";
-        var npm = "{{ npm }}";
         var config = {{{ config }}};
         var clientId = "{{ clientId }}";
 
@@ -44,7 +43,6 @@
             cache,
             chaincode,
             scriptIds,
-            npm,
             jwt,
             config,
             clientId,

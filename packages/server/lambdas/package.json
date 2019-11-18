@@ -23,14 +23,13 @@
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "dependencies": {
-    "@microsoft/fluid-container-loader": "^0.12.0",
     "@microsoft/fluid-core-utils": "^0.12.0",
     "@microsoft/fluid-gitresources": "^0.12.0",
     "@microsoft/fluid-protocol-definitions": "^0.12.0",
-    "@microsoft/fluid-runtime-definitions": "^0.12.0",
     "@microsoft/fluid-server-services": "^0.12.0",
     "@microsoft/fluid-server-services-client": "^0.12.0",
     "@microsoft/fluid-server-services-core": "^0.12.0",
+    "@microsoft/fluid-protocol-base": "^0.12.0",
     "async": "^2.6.1",
     "double-ended-queue": "^2.1.0-0",
     "lodash": "^4.17.11",

@@ -2,9 +2,14 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { ITelemetryBaseLogger } from "@microsoft/fluid-container-definitions";
 import { ChildLogger } from "@microsoft/fluid-core-utils";
-import { IDocumentService, IDocumentServiceFactory, IResolvedUrl } from "@microsoft/fluid-protocol-definitions";
+import {
+  IDocumentService,
+  IDocumentServiceFactory,
+  IResolvedUrl,
+} from "@microsoft/fluid-driver-definitions";
 import { IOdspResolvedUrl } from "./contracts";
 import { FetchWrapper, IFetchWrapper } from "./fetchWrapper";
 import { getSocketIo } from "./getSocketIo";
@@ -16,7 +21,7 @@ import { OdspDocumentService } from "./OdspDocumentService";
  * use the sharepoint implementation.
  */
 export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
-    public readonly protocolName = "fluid-odsp:";
+  public readonly protocolName = "fluid-odsp:";
   /**
    * @param appId - app id used for telemetry for network requests.
    * @param getStorageToken - function that can provide the storage token for a given site. This is
@@ -35,7 +40,7 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
     private readonly storageFetchWrapper: IFetchWrapper = new FetchWrapper(),
     private readonly deltasFetchWrapper: IFetchWrapper = new FetchWrapper(),
     private readonly odspCache: OdspCache = new OdspCache(),
-  ) {}
+  ) { }
 
   public async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
     const odspResolvedUrl = resolvedUrl as IOdspResolvedUrl;

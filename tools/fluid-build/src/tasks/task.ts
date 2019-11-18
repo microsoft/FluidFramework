@@ -4,7 +4,7 @@
  */
 
 import { priorityQueue, AsyncPriorityQueue } from "async";
-import * as os from "os";
+
 import { BuildResult, BuildPackage } from "../buildGraph";
 
 import { LeafTask } from "./leaf/leafTask";
@@ -21,7 +21,7 @@ export abstract class Task {
         return priorityQueue(async (taskExec: TaskExec, callback) => {
             taskExec.resolve(await taskExec.task.exec());
             callback();
-        }, os.cpus().length); // TODO: argument?
+        }, options.concurrency);
     }
 
     private runP?: Promise<BuildResult>;

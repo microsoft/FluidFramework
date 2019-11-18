@@ -25,6 +25,9 @@ interface SnapshotHeader {
     indexOffset?: number;
     segmentsOffset?: number;
     seq: number;
+    // TODO: Make 'minSeq' non-optional once the new snapshot format becomes the default?
+    //       (See https://github.com/microsoft/FluidFramework/issues/84)
+    minSeq?: number;
 }
 
 // first three are index entry

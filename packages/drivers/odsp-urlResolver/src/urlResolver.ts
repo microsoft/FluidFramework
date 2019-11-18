@@ -3,14 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import {
-    IRequest,
-} from "@microsoft/fluid-component-core-interfaces";
+import { IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { IResolvedUrl, IUrlResolver } from "@microsoft/fluid-driver-definitions";
 import { createOdspUrl, OdspDriverUrlResolver } from "@microsoft/fluid-odsp-driver";
-import {
-    IResolvedUrl,
-    IUrlResolver,
-} from "@microsoft/fluid-protocol-definitions";
 
 export class OdspUrlResolver implements IUrlResolver {
 

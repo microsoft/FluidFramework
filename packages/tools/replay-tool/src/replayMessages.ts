@@ -15,6 +15,12 @@ import {
 import { Container, Loader } from "@microsoft/fluid-container-loader";
 import { ChildLogger, TelemetryLogger } from "@microsoft/fluid-core-utils";
 import {
+    IDocumentServiceFactory,
+    IFluidResolvedUrl,
+    IResolvedUrl,
+    IUrlResolver,
+} from "@microsoft/fluid-driver-definitions";
+import {
     FileDeltaStorageService,
     FileDocumentServiceFactory,
     FileSnapshotWriterClassFactory,
@@ -26,12 +32,8 @@ import {
 } from "@microsoft/fluid-file-driver";
 import {
     IBlob,
-    IDocumentServiceFactory,
-    IFluidResolvedUrl,
-    IResolvedUrl,
     ISequencedDocumentMessage,
     ITree,
-    IUrlResolver,
     TreeEntry,
 } from "@microsoft/fluid-protocol-definitions";
 import {
@@ -600,7 +602,7 @@ export class ReplayTool {
 
         const content = await this.generateMainSnapshot(dir, final);
         if (content.snapshot === undefined) {
-            // Snapshots are not created if there is no "code2" proposal
+            // Snapshots are not created if there is no "code" proposal
             // It takes some number of ops to get there (join, propose)
             // Do not report a failure if document is almost empty.
             if (op >= 4) {

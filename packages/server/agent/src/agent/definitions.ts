@@ -4,7 +4,7 @@
  */
 
 import { IHost } from "@microsoft/fluid-container-definitions";
-import { IDocumentService } from "@microsoft/fluid-protocol-definitions";
+import { IDocumentService } from "@microsoft/fluid-driver-definitions";
 
 export interface IWork {
     /**

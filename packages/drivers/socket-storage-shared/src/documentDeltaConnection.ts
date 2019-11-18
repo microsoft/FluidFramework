@@ -3,12 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { BatchManager, INetworkErrorProperties, NetworkError } from "@microsoft/fluid-core-utils";
+import { BatchManager, NetworkError } from "@microsoft/fluid-core-utils";
+import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
 import {
     ConnectionMode,
     IClient,
+    IConnect,
+    IConnected,
     IContentMessage,
-    IDocumentDeltaConnection,
     IDocumentMessage,
     ISequencedDocumentMessage,
     IServiceConfiguration,
@@ -19,7 +21,6 @@ import {
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { debug } from "./debug";
-import { IConnect, IConnected } from "./messages";
 
 const protocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
 
@@ -31,15 +32,14 @@ export function createErrorObject(handler: string, error: any, canRetry = true) 
     // If it's not (and it's an object), we would not get its content.
     // That is likely Ok, as it may contain PII that will get logged to telemetry,
     // so we do not want it there.
-    /// Also add actual error object(socketError), for driver to be able to parse it and reason over it.
+    // Also add actual error object(socketError), for driver to be able to parse it and reason over it.
     const errorObj = new NetworkError(
         `socket.io error: ${handler}: ${error}`,
-        [
-            [INetworkErrorProperties.canRetry, canRetry],
-            ["socketError", error],
-        ],
+        undefined,
+        canRetry,
     );
 
+    (errorObj as any).socketError = error;
     return errorObj;
 }
 

@@ -10,12 +10,12 @@ import {
     IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
 import {
-    ConnectionState,
     IContainerContext,
     IRuntime,
     IRuntimeFactory,
 } from "@microsoft/fluid-container-definitions";
 import {
+    ConnectionState,
     ISequencedDocumentMessage,
     ISummaryTree,
     ITree,

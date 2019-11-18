@@ -98,7 +98,6 @@ export class Serializer {
                 this.retryTimer = setTimeout(() => this.snapshot(message, required), this.retryTime);
             } else {
                 this.snapshotting = false;
-                // tslint:disable-next-line:no-floating-promises
                 this.runtime.deltaManager.inbound.resume();
             }
         });

@@ -5,7 +5,7 @@
 
 // tslint:disable: no-unsafe-any
 import { configurableUrlResolver } from "@microsoft/fluid-core-utils";
-import { IResolvedUrl, IUrlResolver } from "@microsoft/fluid-protocol-definitions";
+import { IResolvedUrl, IUrlResolver } from "@microsoft/fluid-driver-definitions";
 
 export async function resolveFluidUrl(url: string, resolversList: IUrlResolver[]): Promise<IResolvedUrl> {
     const resolved: IResolvedUrl = await configurableUrlResolver(resolversList, { url });

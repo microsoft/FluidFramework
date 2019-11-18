@@ -7,8 +7,6 @@
 // tslint:disable-next-line:no-import-side-effect
 import "./publicpath";
 
-// import { SharedString } from "@prague/sequence";
-import * as Snapshotter from "@fluid-example/snapshotter-agent";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IContainerContext, IRuntime, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
 import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
@@ -20,8 +18,6 @@ import {
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
 import * as sharedTextComponent from "./component";
-// import { GraphIQLView } from "./graphql";
-import { waitForFullConnection } from "./utils";
 
 const math = import(/* webpackChunkName: "math", webpackPrefetch: true */ "@fluid-example/math");
 // const monaco = import(/* webpackChunkName: "monaco", webpackPrefetch: true */ "@fluid-example/monaco");
@@ -125,8 +121,6 @@ class SharedTextFactoryComponent implements IComponentFactory, IRuntimeFactory {
      * Instantiates a new chaincode host
      */
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-        const generateSummaries = true;
-
         const runtime = await ContainerRuntime.load(
             context,
             [
@@ -137,20 +131,7 @@ class SharedTextFactoryComponent implements IComponentFactory, IRuntimeFactory {
                     Promise.resolve(new MyRegistry(context, "https://pragueauspkn-3873244262.azureedge.net")),
                 ],
             ],
-            [SharedTextFactoryComponent.containerRequestHandler],
-            { generateSummaries });
-
-        // Registering for tasks to run in headless runner.
-        if (!generateSummaries) {
-            runtime.registerTasks(["snapshot", "spell", "translation", "cache"], "1.0");
-            waitForFullConnection(runtime).then(() => {
-                // Call snapshot directly from runtime.
-                if (runtime.clientType === "snapshot") {
-                    console.log(`@fluid-example/shared-text running ${runtime.clientType}`);
-                    Snapshotter.run(runtime);
-                }
-            });
-        }
+            [SharedTextFactoryComponent.containerRequestHandler]);
 
         // On first boot create the base component
         if (!runtime.existing) {

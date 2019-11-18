@@ -20,9 +20,9 @@
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "dependencies": {
-    "@microsoft/fluid-container-definitions": "^0.12.0",
     "@microsoft/fluid-core-utils": "^0.12.0",
     "@microsoft/fluid-driver-base": "^0.12.0",
+    "@microsoft/fluid-driver-definitions": "^0.12.0",
     "@microsoft/fluid-gitresources": "^0.12.0",
     "@microsoft/fluid-protocol-definitions": "^0.12.0",
     "@microsoft/fluid-server-services-client": "^0.12.0",

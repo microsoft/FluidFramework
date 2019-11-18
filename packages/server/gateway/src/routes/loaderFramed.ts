@@ -19,7 +19,6 @@ import { spoEnsureLoggedIn } from "../gateway-odsp-utils";
 import { resolveUrl } from "../gateway-urlresolver";
 import { IAlfred, IKeyValueWrapper } from "../interfaces";
 import { getConfig, getParam, getUserDetails } from "../utils";
-import { defaultPartials } from "./partials";
 
 export function create(
     config: Provider,
@@ -164,7 +163,7 @@ export function create(
                     timings.push(Date.now() - start);
 
                     response.render(
-                        "loaderFramed",
+                        "loaderHost",
                         {
                             cache: fullTree ? JSON.stringify(fullTree.cache) : undefined,
                             chaincode: JSON.stringify(pkg),
@@ -172,7 +171,10 @@ export function create(
                             config: workerConfig,
                             jwt: jwtToken,
                             npm: config.get("worker:npm"),
-                            partials: defaultPartials,
+                            partials: {
+                                layoutFramed: "layoutFramed",
+                                loaderFramed: "loaderFramed",
+                            },
                             resolved: JSON.stringify(resolved),
                             scripts,
                             timings: JSON.stringify(timings),

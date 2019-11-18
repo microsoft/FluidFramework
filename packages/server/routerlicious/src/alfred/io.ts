@@ -4,10 +4,11 @@
  */
 
 import { isSystemType } from "@microsoft/fluid-core-utils";
-import { IConnect, IConnected } from "@microsoft/fluid-driver-base";
 import {
     ConnectionMode,
     IClient,
+    IConnect,
+    IConnected,
     IContentMessage,
     IDocumentMessage,
     IDocumentSystemMessage,
@@ -194,6 +195,12 @@ export function register(
                 const orderer = await orderManager.getOrderer(claims.tenantId, claims.documentId);
                 const connection = await orderer.connect(socket, clientId, messageClient as IClient, details);
                 connectionsMap.set(clientId, connection);
+
+                // Eventually we will send disconnect reason as headers to client.
+                connection.once("producerError", (error) => {
+                    winston.info(`Disconnecting socket on connection error`, error);
+                    socket.disconnect(true);
+                });
 
                 connectedMessage = {
                     claims,
