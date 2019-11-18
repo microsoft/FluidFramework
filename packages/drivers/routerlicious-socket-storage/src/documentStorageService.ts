@@ -25,7 +25,7 @@ import * as assert from "assert";
  */
 export class DocumentStorageService implements IDocumentStorageService  {
 
-    private readonly blobsPathCache = new Set<string>();
+    private readonly blobsShaCache = new Set<string>();
     public get repositoryUrl(): string {
         return "";
     }
@@ -45,7 +45,7 @@ export class DocumentStorageService implements IDocumentStorageService  {
         }
 
         const tree = await this.manager.getTree(requestVersion.treeId);
-        return buildHierarchy(tree, this.blobsPathCache);
+        return buildHierarchy(tree, this.blobsShaCache);
     }
 
     public async getVersions(versionId: string, count: number): Promise<IVersion[]> {
@@ -59,7 +59,7 @@ export class DocumentStorageService implements IDocumentStorageService  {
 
     public async read(blobId: string): Promise<string> {
         const value = await this.manager.getBlob(blobId);
-        this.blobsPathCache.add(value.sha);
+        this.blobsShaCache.add(value.sha);
         return value.content;
     }
 
@@ -107,10 +107,10 @@ export class DocumentStorageService implements IDocumentStorageService  {
                 const encoding = typeof value.content === "string" ? "utf-8" : "base64";
                 // The gitHashFile would return the same hash as returned by the server as blob.sha
                 const hash = gitHashFile(Buffer.from(content, encoding));
-                if (!this.blobsPathCache.has(hash)) {
+                if (!this.blobsShaCache.has(hash)) {
                     const blob = await this.manager.createBlob(content, encoding);
                     assert.strictEqual(hash, blob.sha, "Blob.sha and hash do not match!!");
-                    this.blobsPathCache.add(blob.sha);
+                    this.blobsShaCache.add(blob.sha);
                 }
                 return hash;
             case SummaryType.Commit:

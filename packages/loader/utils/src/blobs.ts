@@ -121,7 +121,7 @@ function flattenCore(path: string, treeEntries: ITreeEntry[], blobMap: Map<strin
  * @param flatTree - a flat tree
  * @returns the hierarchical tree
  */
-export function buildHierarchy(flatTree: git.ITree, blobsPathCache: Set<string> = new Set<string>()): ISnapshotTree {
+export function buildHierarchy(flatTree: git.ITree, blobsShaCache: Set<string> = new Set<string>()): ISnapshotTree {
     const lookup: { [path: string]: ISnapshotTree } = {};
     const root: ISnapshotTree = { id: flatTree.sha, blobs: {}, commits: {}, trees: {} };
     lookup[""] = root;
@@ -141,7 +141,7 @@ export function buildHierarchy(flatTree: git.ITree, blobsPathCache: Set<string> 
             lookup[entry.path] = newTree;
         } else if (entry.type === "blob") {
             node.blobs[decodeURIComponent(entryPathBase)] = entry.sha;
-            blobsPathCache.add(entry.sha);
+            blobsShaCache.add(entry.sha);
         } else if (entry.type === "commit") {
             node.commits[decodeURIComponent(entryPathBase)] = entry.sha;
         }
