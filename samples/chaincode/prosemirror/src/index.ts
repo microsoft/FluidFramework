@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import {
     IContainerContext,
     IRuntime,
@@ -11,16 +10,16 @@ import {
 } from "@microsoft/fluid-container-definitions";
 import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
 import { IComponentFactory, FlushMode } from "@microsoft/fluid-runtime-definitions";
-import { fluidExport as smde } from "./prosemirror";
+import { fluidExport as fluidComponentExport } from "./prosemirror";
 
-const defaultComponent = "@chaincode/prosemirror";
+export const proseMirrorComponentName = "@chaincode/prosemirror";
 
 class ProseMirrorFactory implements IRuntimeFactory {
     public get IRuntimeFactory() { return this; }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
         const registry = new Map<string, Promise<IComponentFactory>>([
-            [defaultComponent, Promise.resolve(smde)],
+            [proseMirrorComponentName, Promise.resolve(fluidComponentExport)],
         ]);
 
         const defaultComponentId = "default";
@@ -28,23 +27,21 @@ class ProseMirrorFactory implements IRuntimeFactory {
         const runtime = await ContainerRuntime.load(
             context,
             registry,
-            (containerRuntime) => {
-                return async (request: IRequest) => {
-                    console.log(request.url);
+            [async (request, containerRuntime) => {
+                console.log(request.url);
 
-                    const requestUrl = request.url.length > 0 && request.url.charAt(0) === "/"
-                        ? request.url.substr(1)
-                        : request.url;
-                    const trailingSlash = requestUrl.indexOf("/");
+                const requestUrl = request.url.length > 0 && request.url.charAt(0) === "/"
+                    ? request.url.substr(1)
+                    : request.url;
+                const trailingSlash = requestUrl.indexOf("/");
 
-                    const componentId = requestUrl
-                        ? requestUrl.substr(0, trailingSlash === -1 ? requestUrl.length : trailingSlash)
-                        : defaultComponentId;
-                    const component = await containerRuntime.getComponentRuntime(componentId, true);
+                const componentId = requestUrl
+                    ? requestUrl.substr(0, trailingSlash === -1 ? requestUrl.length : trailingSlash)
+                    : defaultComponentId;
+                const component = await containerRuntime.getComponentRuntime(componentId, true);
 
-                    return component.request({ url: trailingSlash === -1 ? "" : requestUrl.substr(trailingSlash + 1) });
-                };
-            },
+                return component.request({ url: trailingSlash === -1 ? "" : requestUrl.substr(trailingSlash + 1) });
+            }],
             { generateSummaries: true });
 
         // flush mode to manual to batch operations within a turn
@@ -53,7 +50,7 @@ class ProseMirrorFactory implements IRuntimeFactory {
         // On first boot create the base component
         if (!runtime.existing) {
             await Promise.all([
-                    runtime.createComponent(defaultComponentId, defaultComponent).then((componentRuntime) => {
+                    runtime.createComponent(defaultComponentId, proseMirrorComponentName).then((componentRuntime) => {
                         componentRuntime.attach();
                     }),
                 ])

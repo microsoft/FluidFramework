@@ -22,6 +22,10 @@ import {
     MergeTreeDeltaType,
     createMap,
 } from "@microsoft/fluid-merge-tree";
+import {
+    IProvideComponentRegistry,
+    IComponentRegistry 
+} from "@microsoft/fluid-runtime-definitions";
 import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
@@ -115,9 +119,11 @@ export class ProseMirror extends EventEmitter implements IComponentLoadable, ICo
 
     public url: string;
     public text: SharedString;
+
+    protected defaultView: ProseMirrorView;
+
     private root: ISharedMap;
     private collabManager: FluidCollabManager;
-    private defaultView: ProseMirrorView;
     
     constructor(
         private runtime: IComponentRuntime,
@@ -136,7 +142,7 @@ export class ProseMirror extends EventEmitter implements IComponentLoadable, ICo
         };
     }
 
-    private async initialize() {
+    protected async initialize() {
         if (!this.runtime.existing) {
             this.root = SharedMap.create(this.runtime, "root");
             const text = SharedString.create(this.runtime);
@@ -171,27 +177,42 @@ export class ProseMirror extends EventEmitter implements IComponentLoadable, ICo
     }
 }
 
-class ProseMirrorFactory implements IComponentFactory {
+
+export class ProseMirrorFactory implements IComponentFactory, Partial<IProvideComponentRegistry>  {
+    
     public get IComponentFactory() { return this; }
 
+    public readonly onDemandInstantiation = false;
+
+    private readonly sharedObjectRegistry: Map<string, ISharedObjectFactory>;
+    private readonly registry: IComponentRegistry | undefined;
+
+    constructor(private createComponent: (runtime: IComponentRuntime, context: IComponentContext) => Promise<any> = ProseMirror.load) {
+        this.sharedObjectRegistry = new Map<string, ISharedObjectFactory>();
+    }
+
     public instantiateComponent(context: IComponentContext): void {
-        const dataTypes = new Map<string, ISharedObjectFactory>();
+
         const mapFactory = SharedMap.getFactory();
         const sequenceFactory = SharedString.getFactory();
 
-        dataTypes.set(mapFactory.type, mapFactory);
-        dataTypes.set(sequenceFactory.type, sequenceFactory);
+        this.sharedObjectRegistry.set(mapFactory.type, mapFactory);
+        this.sharedObjectRegistry.set(sequenceFactory.type, sequenceFactory);
 
         ComponentRuntime.load(
             context,
-            dataTypes,
+            this.sharedObjectRegistry,
             (runtime) => {
-                const proseMirrorP = ProseMirror.load(runtime, context);
+                const proseMirrorP = this.createComponent(runtime, context);
                 runtime.registerRequestHandler(async (request: IRequest) => {
                     const proseMirror = await proseMirrorP;
                     return proseMirror.request(request);
                 });
             });
+    }
+
+    public get IComponentRegistry() {
+        return this.registry;
     }
 }
 

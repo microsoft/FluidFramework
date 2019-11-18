@@ -275,7 +275,7 @@ export class FluidCollabManager extends EventEmitter {
         require("prosemirror-view/style/prosemirror.css");
         require("prosemirror-menu/style/menu.css");
         require("prosemirror-example-setup/style/style.css");
-        require("./style.css");
+        require("../style/style.css");
 
         const editorView = new EditorView(
             textArea,
