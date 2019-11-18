@@ -341,6 +341,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             this.protocolHandler.close();
         }
 
+        assert(this.connectionState === ConnectionState.Disconnected, "disconnect event was not raised!");
+
         this.emit("closed");
 
         this.removeAllListeners();

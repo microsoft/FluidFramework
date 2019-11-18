@@ -598,10 +598,8 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         this.stopSequenceNumberUpdate();
 
-        if (this.connection) {
-            this.connection.close();
-            this.connection = undefined;
-        }
+        // This raises "disconnect" event
+        this.disconnectFromDeltaStream("Disconnect on close");
 
         if (this.connecting) {
             this.connecting.reject(error !== undefined ? error : new Error("Container closed"));
