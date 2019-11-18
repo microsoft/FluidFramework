@@ -11,16 +11,21 @@ import {
 } from "@microsoft/fluid-container-definitions";
 import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
 import { IComponentFactory, FlushMode } from "@microsoft/fluid-runtime-definitions";
-import { fluidExport as smde } from "./prosemirror";
+import { fluidExport as fluidComponentExport } from "./prosemirror";
 
-const defaultComponent = "@chaincode/prosemirror";
+export {
+    fluidExport as fluidComponentExport,
+    ProseMirror,
+} from "./prosemirror";
 
-class ProseMirrorFactory implements IRuntimeFactory {
+export const defaultComponent = "@chaincode/prosemirror";
+
+export class ProseMirrorFactory implements IRuntimeFactory {
     public get IRuntimeFactory() { return this; }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
         const registry = new Map<string, Promise<IComponentFactory>>([
-            [defaultComponent, Promise.resolve(smde)],
+            [defaultComponent, Promise.resolve(fluidComponentExport)],
         ]);
 
         const defaultComponentId = "default";
@@ -53,10 +58,10 @@ class ProseMirrorFactory implements IRuntimeFactory {
         // On first boot create the base component
         if (!runtime.existing) {
             await Promise.all([
-                    runtime.createComponent(defaultComponentId, defaultComponent).then((componentRuntime) => {
-                        componentRuntime.attach();
-                    }),
-                ])
+                runtime.createComponent(defaultComponentId, defaultComponent).then((componentRuntime) => {
+                    componentRuntime.attach();
+                }),
+            ])
                 .catch((error) => {
                     context.error(error);
                 });

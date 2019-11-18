@@ -13,6 +13,7 @@ import {
     IComponentHandle,
     IComponentHTMLView,
 } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentReactViewable } from "@microsoft/fluid-aqueduct-react";
 import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import {
@@ -22,13 +23,22 @@ import {
     MergeTreeDeltaType,
     createMap,
 } from "@microsoft/fluid-merge-tree";
-import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { 
+    IComponentContext,
+    IComponentFactory,
+    IComponentRuntime,
+    IProvideComponentRegistry,
+    IComponentRegistry 
+} from "@microsoft/fluid-runtime-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { EventEmitter } from "events";
 import { EditorView } from "prosemirror-view";
 import { nodeTypeKey } from "./fluidBridge";
 import { FluidCollabManager, IProvideRichTextEditor } from "./fluidCollabManager";
+import * as React from "react";
+import * as ReactDOM from "react-dom";
+import { Deferred } from "@microsoft/fluid-core-utils";
 
 function createTreeMarkerOps(
     treeRangeLabel: string,
@@ -100,7 +110,13 @@ class ProseMirrorView implements IComponentHTMLView {
     }
 }
 
-export class ProseMirror extends EventEmitter implements IComponentLoadable, IComponentRouter, IComponentHTMLVisual, IProvideRichTextEditor {
+export class ProseMirror
+    extends EventEmitter
+    implements IComponentLoadable,
+    IComponentRouter,
+    IComponentHTMLVisual,
+    IProvideRichTextEditor,
+    IComponentReactViewable {
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
         const collection = new ProseMirror(runtime, context);
         await collection.initialize();
@@ -112,20 +128,52 @@ export class ProseMirror extends EventEmitter implements IComponentLoadable, ICo
     public get IComponentRouter() { return this; }
     public get IComponentHTMLVisual() { return this; }
     public get IRichTextEditor() { return this.collabManager; }
+    public get IComponentReactViewable() { return this; }
 
     public url: string;
     public text: SharedString;
     private root: ISharedMap;
     private collabManager: FluidCollabManager;
     private defaultView: ProseMirrorView;
-    
+    public createJSXElement: () => JSX.Element
+    private deferred: Deferred<void>;
+
+    public ref: React.RefObject<HTMLDivElement>;
+    public getRef: any;
+    private refElem: HTMLDivElement;
+    private jsxElem: JSX.Element;
+
     constructor(
         private runtime: IComponentRuntime,
         /* private */ context: IComponentContext,
     ) {
         super();
-
+        this.deferred = new Deferred();
         this.url = context.id;
+
+        this.createJSXElement = () => {
+            if (!this.defaultView) {
+                this.defaultView = new ProseMirrorView(this.text, this.runtime);
+            }
+
+            if (!this.jsxElem) {
+                this.jsxElem = (
+                    <div ref={this.getRef} />
+                )
+
+                this.deferred.promise.then(() => {
+                    this.defaultView.render(this.refElem);
+                });
+            }
+
+            return this.jsxElem;
+        };
+
+        this.ref = React.createRef<HTMLDivElement>();
+        this.getRef = (elem) => {
+            this.refElem = elem;
+            this.deferred.resolve();
+        }
     }
 
     public async request(request: IRequest): Promise<IResponse> {
@@ -163,28 +211,36 @@ export class ProseMirror extends EventEmitter implements IComponentLoadable, ICo
     }
 
     public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
-        if (!this.defaultView) {
-            this.defaultView = new ProseMirrorView(this.text, this.runtime);
-        }
-
-        this.defaultView.render(elm, options);
+        ReactDOM.render(
+            this.createJSXElement(),
+            elm,
+        )
     }
 }
 
-class ProseMirrorFactory implements IComponentFactory {
+class ProseMirrorFactory implements IComponentFactory, Partial<IProvideComponentRegistry>  {
     public get IComponentFactory() { return this; }
 
+    public readonly onDemandInstantiation = false;
+
+    private readonly sharedObjectRegistry: Map<string, ISharedObjectFactory>;
+    private readonly registry: IComponentRegistry | undefined;
+
+    constructor() {
+        this.sharedObjectRegistry = new Map<string, ISharedObjectFactory>();
+    }
+
     public instantiateComponent(context: IComponentContext): void {
-        const dataTypes = new Map<string, ISharedObjectFactory>();
+
         const mapFactory = SharedMap.getFactory();
         const sequenceFactory = SharedString.getFactory();
 
-        dataTypes.set(mapFactory.type, mapFactory);
-        dataTypes.set(sequenceFactory.type, sequenceFactory);
+        this.sharedObjectRegistry.set(mapFactory.type, mapFactory);
+        this.sharedObjectRegistry.set(sequenceFactory.type, sequenceFactory);
 
         ComponentRuntime.load(
             context,
-            dataTypes,
+            this.sharedObjectRegistry,
             (runtime) => {
                 const proseMirrorP = ProseMirror.load(runtime, context);
                 runtime.registerRequestHandler(async (request: IRequest) => {
@@ -192,6 +248,10 @@ class ProseMirrorFactory implements IComponentFactory {
                     return proseMirror.request(request);
                 });
             });
+    }
+
+    public get IComponentRegistry() {
+        return this.registry;
     }
 }
 
