@@ -24,6 +24,7 @@ import {
 import {
     buildHierarchy,
     ChildLogger,
+    createFileIOOrGeneralError,
     createGeneralError,
     DebugLogger,
     EventEmitterWithErrorHandling,
@@ -127,11 +128,12 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                     res(container);
                 })
                 .catch((error) => {
+                    const err = createFileIOOrGeneralError(error);
                     if (!alreadyRaisedError) {
-                        container.logCriticalError(error);
+                        container.logCriticalError(err);
                     }
                     container.ignoreUnhandledConnectonError();
-                    onError(error);
+                    onError(err);
             });
         });
     }
