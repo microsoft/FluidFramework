@@ -4,11 +4,11 @@
  */
 
 import { Deferred } from "@microsoft/fluid-core-utils";
-import { IConnected } from "@microsoft/fluid-driver-base";
+import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
 import {
     ConnectionMode,
+    IConnected,
     IContentMessage,
-    IDocumentDeltaConnection,
     IDocumentMessage,
     ISequencedDocumentMessage,
     IServiceConfiguration,
@@ -19,14 +19,11 @@ import {
 import * as Comlink from "comlink";
 import { EventEmitter } from "events";
 
-// tslint:disable: no-non-null-assertion no-console
-
 export interface IOuterDocumentDeltaConnectionProxy {
     handshake: Deferred<any>;
     getDetails(): Promise<IConnected>;
     submit(messages: IDocumentMessage[]): Promise<void>;
     submitSignal(message: IDocumentMessage): Promise<void>;
-    add(a: number, b: number): Promise<number>;
 }
 
 /**
@@ -164,11 +161,6 @@ export class InnerDocumentDeltaConnection extends EventEmitter implements IDocum
         public outerProxy: IOuterDocumentDeltaConnectionProxy) {
         super();
 
-        // Test
-        const multi = (a: number, b: number) => {
-            return a * b;
-        };
-
         this.tempEmitter = new EventEmitter();
 
         const forwardEvent = (event: string, args: any[]) => {
@@ -177,20 +169,10 @@ export class InnerDocumentDeltaConnection extends EventEmitter implements IDocum
         };
 
         const innerProxy = {
-            multi,
             forwardEvent,
         };
 
         outerProxy.handshake.resolve((Comlink.proxy(innerProxy)));
-
-        // Test
-        outerProxy.add(2, 3)
-            .then((addResult) => {
-                console.log(`Inner: 2 + 3 = ${addResult}`);
-            })
-            .catch((err) => {
-                console.error(err);
-            });
     }
 
     /**
@@ -205,7 +187,7 @@ export class InnerDocumentDeltaConnection extends EventEmitter implements IDocum
             event,
             (...args: any[]) => {
                 this.emit(event, ...args);
-                listener(...args); // Need to do: super.on(event, listener) should handle this?
+                listener(...args);
             });
         super.on(event, listener);
 

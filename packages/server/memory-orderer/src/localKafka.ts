@@ -87,4 +87,8 @@ export class LocalKafka implements IProducer {
         this.subscriptions.length = 0;
     }
 
+    public once(event: "producerError", listener: (...args: any[]) => void): this {
+        return this;
+    }
+
 }

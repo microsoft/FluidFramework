@@ -4,10 +4,14 @@
  */
 
 import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
-import { IDocumentMessage, ISequencedDocumentMessage, IUrlResolver } from "@microsoft/fluid-protocol-definitions";
+import { IUrlResolver } from "@microsoft/fluid-driver-definitions";
+import {
+    IDocumentMessage,
+    IQuorum,
+    ISequencedDocumentMessage,
+} from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
 import { IFluidCodeDetails } from "./chaincode";
-import { IQuorum } from "./consensus";
 import { IDeltaManager } from "./deltas";
 
 /**

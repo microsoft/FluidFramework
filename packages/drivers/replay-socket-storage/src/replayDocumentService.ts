@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as api from "@microsoft/fluid-protocol-definitions";
+import * as api from "@microsoft/fluid-driver-definitions";
+import { ConnectionMode, IClient } from "@microsoft/fluid-protocol-definitions";
 import { EmptyDeltaStorageService } from "./emptyDeltaStorageService";
 import { ReplayController } from "./replayController";
 import { ReplayDocumentDeltaConnection } from "./replayDocumentDeltaConnection";
@@ -58,8 +59,8 @@ export class ReplayDocumentService implements api.IDocumentService {
      * @returns returns the delta stream service which replay ops from --from to --to arguments.
      */
     public async connectToDeltaStream(
-        client: api.IClient,
-        mode: api.ConnectionMode): Promise<api.IDocumentDeltaConnection> {
+        client: IClient,
+        mode: ConnectionMode): Promise<api.IDocumentDeltaConnection> {
         return this.deltaStorage;
     }
 

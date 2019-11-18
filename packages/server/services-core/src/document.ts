@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IProtocolState } from "@microsoft/fluid-container-definitions";
 import { IRangeTrackerSnapshot } from "@microsoft/fluid-core-utils";
 import { ICommit, ICommitDetails } from "@microsoft/fluid-gitresources";
+import { IProtocolState } from "@microsoft/fluid-protocol-definitions";
 import { IGitCache } from "@microsoft/fluid-server-services-client";
 
 export interface IDocumentDetails {

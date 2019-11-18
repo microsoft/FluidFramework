@@ -4,21 +4,23 @@
  */
 
 import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
-import { IHostConfig, start as startCore } from "@microsoft/fluid-base-host";
+import { BaseHost, IHostConfig } from "@microsoft/fluid-base-host";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import {
     IFluidModule,
     IFluidPackage,
     IPackage,
     IProxyLoaderFactory,
-    isFluidPackage } from "@microsoft/fluid-container-definitions";
+    isFluidPackage,
+} from "@microsoft/fluid-container-definitions";
+import { IDocumentServiceFactory, IUrlResolver } from "@microsoft/fluid-driver-definitions";
 import {
     ITestDeltaConnectionServer,
     TestDeltaConnectionServer,
     TestDocumentServiceFactory,
     TestResolver,
 } from "@microsoft/fluid-local-test-server";
-import { IDocumentServiceFactory, IUrlResolver, IUser } from "@microsoft/fluid-protocol-definitions";
+import { IUser } from "@microsoft/fluid-protocol-definitions";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
 import { getRandomName } from "@microsoft/fluid-server-services-core";
 import { extractDetails, IResolvedPackage } from "@microsoft/fluid-web-code-loader";
@@ -165,15 +167,6 @@ function getUrlResolver(options: IRouteOptions): IUrlResolver {
     }
 }
 
-function getNpm(options: IRouteOptions): string {
-    if (options.mode === "localhost") {
-        return "http://localhost:3002";
-    }
-
-    // local, live
-    return options.npm;
-}
-
 // Invoked by `start()` when the 'double' option is enabled to create the side-by-side panes.
 function makeSideBySideDiv() {
     const div = document.createElement("div");
@@ -201,7 +194,6 @@ export async function start(
     };
 
     const urlResolver = getUrlResolver(options);
-    const npm = getNpm(options);
 
     let documentServiceFactory: IDocumentServiceFactory;
     let deltaConn: ITestDeltaConnectionServer;
@@ -228,12 +220,11 @@ export async function start(
         div.append(leftDiv, rightDiv);
     }
 
-    const start1Promise = startCore(
+    const start1Promise = BaseHost.start(
         url,
         await urlResolver.resolve(req),
         pkg,
         scriptIds,
-        npm,
         {},
         {},
         double ? leftDiv : div,
@@ -247,14 +238,13 @@ export async function start(
         const docServFac2: IDocumentServiceFactory = new TestDocumentServiceFactory(deltaConn);
         const hostConf2 = { documentServiceFactory: docServFac2, urlResolver };
 
-        // startCore will create a new Loader/Container/Component from the startCore above. This is
+        // BaseHost.start will create a new Loader/Container/Component from the startCore above. This is
         // intentional because we want to emulate two clients collaborating with each other.
-        start2Promise = startCore(
+        start2Promise = BaseHost.start(
             url,
             await urlResolver.resolve(req),
             pkg,
             scriptIds,
-            npm,
             {},
             {},
             rightDiv,

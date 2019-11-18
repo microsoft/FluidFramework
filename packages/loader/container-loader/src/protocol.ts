@@ -4,26 +4,20 @@
  */
 
 import {
+    IClientJoin,
     ICommittedProposal,
+    IDocumentAttributes,
     IProcessMessageResult,
     IProposal,
-    ISequencedProposal,
-    ITelemetryLogger,
-} from "@microsoft/fluid-container-definitions";
-import { DebugLogger } from "@microsoft/fluid-core-utils";
-import {
-    IClientJoin,
-    IDocumentAttributes,
     ISequencedClient,
     ISequencedDocumentMessage,
     ISequencedDocumentSystemMessage,
-    ISummaryAck,
-    ISummaryContent,
-    ISummaryNack,
+    ISequencedProposal,
     ISummaryTree,
     MessageType,
     SummaryType,
 } from "@microsoft/fluid-protocol-definitions";
+import { EventEmitter } from "events";
 import { Quorum } from "./quorum";
 
 export interface IScribeProtocolState {
@@ -50,7 +44,10 @@ export function isSystemMessage(message: ISequencedDocumentMessage) {
     }
 }
 
-export class ProtocolOpHandler {
+/**
+ * Handles protocol specifig ops.
+ */
+export class ProtocolOpHandler extends EventEmitter {
     public readonly quorum: Quorum;
 
     constructor(
@@ -61,18 +58,15 @@ export class ProtocolOpHandler {
         proposals: [number, ISequencedProposal, string[]][],
         values: [string, ICommittedProposal][],
         sendProposal: (key: string, value: any) => number,
-        sendReject: (sequenceNumber: number) => void,
-        private readonly logger: ITelemetryLogger = DebugLogger.create("fluid:ProtocolHandler"),
-    ) {
+        sendReject: (sequenceNumber: number) => void) {
+        super();
         this.quorum = new Quorum(
             minimumSequenceNumber,
             members,
             proposals,
             values,
             sendProposal,
-            sendReject,
-            logger,
-        );
+            sendReject);
     }
 
     public close() {
@@ -119,32 +113,15 @@ export class ProtocolOpHandler {
                 break;
 
             case MessageType.Summarize:
-                this.logger.sendTelemetryEvent({
-                    eventName: "Summarize",
-                    message: message.contents as ISummaryContent,
-                    summarySequenceNumber: message.sequenceNumber,
-                    refSequenceNumber: message.referenceSequenceNumber,
-                });
+                this.emit("Summary", message);
                 break;
 
             case MessageType.SummaryAck:
-                const ack = message.contents as ISummaryAck;
-                this.logger.sendTelemetryEvent({
-                    eventName: "SummaryAck",
-                    message: `handle: ${ack.handle}`,
-                    sequenceNumber: message.sequenceNumber,
-                    summarySequenceNumber: ack.summaryProposal.summarySequenceNumber,
-                });
+                this.emit("Summary", message);
                 break;
 
             case MessageType.SummaryNack:
-                const nack = message.contents as ISummaryNack;
-                this.logger.sendTelemetryEvent({
-                    eventName: "SummaryNack",
-                    message: nack.errorMessage,
-                    sequenceNumber: message.sequenceNumber,
-                    summarySequenceNumber: nack.summaryProposal.summarySequenceNumber,
-                });
+                this.emit("Summary", message);
                 break;
 
             default:
@@ -207,5 +184,12 @@ export class ProtocolOpHandler {
         };
 
         return summary;
+    }
+
+    public on(event: "Summary", listener: (message: ISequencedDocumentMessage) => void): this;
+
+    /* tslint:disable:no-unnecessary-override */
+    public on(event: string | symbol, listener: (...args: any[]) => void): this {
+        return super.on(event, listener);
     }
 }

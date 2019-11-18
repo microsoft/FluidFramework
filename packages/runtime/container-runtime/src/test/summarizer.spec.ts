@@ -3,11 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { IDeltaManager, IDeltaQueue, ITelemetryLogger } from "@microsoft/fluid-container-definitions";
+import {
+    IDeltaManager,
+    IDeltaQueue,
+    ITelemetryLogger,
+} from "@microsoft/fluid-container-definitions";
 import { Deferred } from "@microsoft/fluid-core-utils";
+import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import {
     IDocumentMessage,
-    IDocumentStorageService,
     ISequencedDocumentMessage,
     ISummaryConfiguration,
     ISummaryProposal,
@@ -66,8 +70,8 @@ describe("Runtime", () => {
                                 inbound: emitter as IDeltaQueue<ISequencedDocumentMessage>,
                             } as IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
                             logger: {
-                                send: (event) => {},
-                                sendTelemetryEvent: (event) => {},
+                                send: (event) => { },
+                                sendTelemetryEvent: (event) => { },
                             } as ITelemetryLogger,
                             storage: {
                                 getSnapshotTree: () => Promise.resolve({}),

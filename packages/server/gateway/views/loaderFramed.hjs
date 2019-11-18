@@ -1,54 +1,51 @@
-{{<layout}}
-
-{{$content}}
-    <div id="content"></div>
-{{/content}}
-
-{{$scripts}}
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="{{#hfurl}}/public/scripts/dist/loaderFramed.js{{/hfurl}}"></script>
+</head>
+<body>
+    <div style="height:100vh" id="content"></div>
     {{#scripts}}
         {{#scripts}}
         <script id="{{id}}" src="{{url}}" async></script>
         {{/scripts}}
     {{/scripts}}
-
-    <script>
-        var cache = {{{ cache }}};
-        var timings = "{{ timings }}";
-        {{#chaincode}}
-        var chaincode = {{{ chaincode }}};
-        {{/chaincode}}
-        {{^chaincode}}
-        var chaincode;
-        {{/chaincode}}
-        var url = "{{ url }}";
-        var resolved = {{{ resolved }}};
-        var jwt = "{{ jwt }}";
-        var npm = "{{ npm }}";
-        var config = {{{ config }}};
-        var clientId = "{{ clientId }}";
-
+    <script type="text/javascript">
+    
+    {{#scripts}}
+    var scriptIds = [
         {{#scripts}}
-        var scriptIds = [
-            {{#scripts}}
-            "{{id}}",
-            {{/scripts}}
-        ];
+        "{{id}}",
         {{/scripts}}
-        {{^scripts}}
-        var scriptIds = [];
-        {{/scripts}}
-  
-        controllers.loaderFramed.initialize(
-            window.location.href,
-            resolved,
-            cache,
-            chaincode,
-            scriptIds,
-            npm,
-            jwt,
-            config,
-            clientId);
-    </script>
-{{/scripts}}
+    ];
+    {{/scripts}}
+    {{^scripts}}
+    var scriptIds = [];
+    {{/scripts}}
 
-{{/layout}}
+    var cache = {{{ cache }}};
+    var timings = "{{ timings }}";
+    {{#chaincode}}
+    var chaincode = {{{ chaincode }}};
+    {{/chaincode}}
+    {{^chaincode}}
+    var chaincode;
+    {{/chaincode}}
+    var url = "{{ url }}";
+    var resolved = {{{ resolved }}};
+    var config = {{{ config }}};
+    var clientId = "{{ clientId }}";
+
+    loaderFramed.initialize(
+        window.location.href,
+        resolved,
+        chaincode,
+        scriptIds,
+        config,
+        clientId,
+        {},
+        );
+    </script>
+
+</body>
+</html>

@@ -91,7 +91,8 @@ describe("MergeTree", () => {
             beforeEach(() => {
                 mergeTree.startCollaboration(
                     localClientId,
-                    currentSequenceNumber,
+                    /* minSeq: */ currentSequenceNumber,
+                    /* currentSeq: */ currentSequenceNumber,
                     branchId);
             });
             describe("local first", () => {

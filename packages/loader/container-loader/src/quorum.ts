@@ -3,28 +3,26 @@
  * Licensed under the MIT License.
  */
 
+import { Deferred, doIfNotDisposed, EventForwarder } from "@microsoft/fluid-core-utils";
 import {
     ConnectionState,
     ICommittedProposal,
     IPendingProposal,
     IQuorum,
-    ISequencedProposal,
-    ITelemetryLogger,
-} from "@microsoft/fluid-container-definitions";
-import { Deferred, doIfNotDisposed, EventForwarder } from "@microsoft/fluid-core-utils";
-import {
     ISequencedClient,
     ISequencedDocumentMessage,
+    ISequencedProposal,
 } from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import { debug } from "./debug";
 
 // tslint:disable-next-line: no-submodule-imports no-var-requires
 const cloneDeep = require("lodash/cloneDeep") as <T>(value: T) => T;
 
-// Appends a deferred and rejection count to a sequenced proposal. For locally generated promises this allows us to
-// attach a Deferred which we will resolve once the proposal is either accepted or rejected.
+/**
+ * Appends a deferred and rejection count to a sequenced proposal. For locally generated promises this allows us to
+ * attach a Deferred which we will resolve once the proposal is either accepted or rejected.
+ */
 class PendingProposal implements IPendingProposal, ISequencedProposal {
     public readonly rejections: Set<string>;
     private canReject = true;
@@ -86,9 +84,7 @@ export class Quorum extends EventEmitter implements IQuorum {
         proposals: [number, ISequencedProposal, string[]][],
         values: [string, ICommittedProposal][],
         private readonly sendProposal: (key: string, value: any) => number,
-        private readonly sendReject: (sequenceNumber: number) => void,
-        private readonly logger?: ITelemetryLogger,
-    ) {
+        private readonly sendReject: (sequenceNumber: number) => void) {
         super();
 
         this.members = new Map(members);
@@ -197,9 +193,7 @@ export class Quorum extends EventEmitter implements IQuorum {
     public async propose(key: string, value: any): Promise<void> {
         const clientSequenceNumber = this.sendProposal(key, value);
         if (clientSequenceNumber < 0) {
-            if (this.logger) {
-                this.logger.sendErrorEvent({eventName: "ProposalInDisconnectedState", key });
-            }
+            this.emit("error", {eventName: "ProposalInDisconnectedState", key });
             return Promise.reject(false);
         }
 
@@ -263,6 +257,7 @@ export class Quorum extends EventEmitter implements IQuorum {
         return;
     }
 
+    public on(event: "error", listener: (message: any) => void): this;
     public on(event: "addMember", listener: (clientId: string, details: ISequencedClient) => void): this;
     public on(event: "removeMember", listener: (clientId: string) => void): this;
     public on(event: "addProposal", listener: (proposal: IPendingProposal) => void): this;
@@ -292,11 +287,12 @@ export class Quorum extends EventEmitter implements IQuorum {
      * that the proposal was accepted, then it becomes a committed consensus value.
      * Returns true if immediate no-op is required.
      */
+    // tslint:disable max-func-body-length
     public updateMinimumSequenceNumber(message: ISequencedDocumentMessage): boolean {
         const value = message.minimumSequenceNumber;
         if (this.minimumSequenceNumber !== undefined) {
-            if (value < this.minimumSequenceNumber && this.logger) {
-                this.logger.sendErrorEvent({
+            if (value < this.minimumSequenceNumber) {
+                this.emit("error", {
                     currentValue: this.minimumSequenceNumber,
                     eventName: "QuorumMinSeqNumberError",
                     newValue: value,
@@ -317,7 +313,6 @@ export class Quorum extends EventEmitter implements IQuorum {
         const completed: PendingProposal[] = [];
         for (const [sequenceNumber, proposal] of this.proposals) {
             if (sequenceNumber <= this.minimumSequenceNumber) {
-                debug(`Quorum proposal SN# ${sequenceNumber} Completed`);
                 completed.push(proposal);
             }
         }
@@ -410,6 +405,9 @@ export class Quorum extends EventEmitter implements IQuorum {
     }
 }
 
+/**
+ * Proxies Quorum events.
+ */
 export class QuorumProxy extends EventForwarder implements IQuorum {
     public readonly propose: (key: string, value: any) => Promise<void>;
     public readonly has: (key: string) => boolean;

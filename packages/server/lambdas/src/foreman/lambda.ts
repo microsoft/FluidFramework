@@ -4,8 +4,12 @@
  */
 
 import { RateLimiter } from "@microsoft/fluid-core-utils";
-import { ISequencedDocumentSystemMessage, MessageType, ScopeType } from "@microsoft/fluid-protocol-definitions";
-import { IHelpMessage, IQueueMessage } from "@microsoft/fluid-runtime-definitions";
+import {
+    IHelpMessage,
+    IQueueMessage,
+    ISequencedDocumentSystemMessage,
+    MessageType,
+    ScopeType } from "@microsoft/fluid-protocol-definitions";
 import * as core from "@microsoft/fluid-server-services-core";
 import * as winston from "winston";
 import { SequencedLambda } from "../sequencedLambda";
