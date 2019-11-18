@@ -59,6 +59,7 @@ export class DocumentStorageService implements IDocumentStorageService  {
 
     public async read(blobId: string): Promise<string> {
         const value = await this.manager.getBlob(blobId);
+        this.blobsPathCache.add(value.sha);
         return value.content;
     }
 
@@ -108,7 +109,7 @@ export class DocumentStorageService implements IDocumentStorageService  {
                 const hash = gitHashFile(Buffer.from(content, encoding));
                 if (!this.blobsPathCache.has(hash)) {
                     const blob = await this.manager.createBlob(content, encoding);
-                    assert.equal(hash, blob.sha, "Blob.sha and hash do not match!!");
+                    assert.strictEqual(hash, blob.sha, "Blob.sha and hash do not match!!");
                     this.blobsPathCache.add(blob.sha);
                 }
                 return hash;
