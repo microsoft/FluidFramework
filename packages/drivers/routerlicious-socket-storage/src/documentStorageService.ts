@@ -45,7 +45,7 @@ export class DocumentStorageService implements IDocumentStorageService  {
         }
 
         const tree = await this.manager.getTree(requestVersion.treeId);
-        return buildHierarchy(tree);
+        return buildHierarchy(tree, this.blobsPathCache);
     }
 
     public async getVersions(versionId: string, count: number): Promise<IVersion[]> {
