@@ -475,12 +475,15 @@ export class RemotedComponentContext extends ComponentContext {
                 let pkgFromSnapshot: string[];
                 // Use the snapshotFormatVersion to determine how the pkg is encoded in the snapshot.
                 // For snapshotFormatVersion = "0.1", pkg is jsonified, otherwise it is just a string.
-                if (snapshotFormatVersion && snapshotFormatVersion === currentSnapshotFormatVersion) {
+                if (snapshotFormatVersion === undefined) {
+                    if (pkg.startsWith("[\"") && pkg.endsWith("\"]")) {
+                        pkgFromSnapshot = JSON.parse(pkg) as string[];
+                    } else {
+                        pkgFromSnapshot = [pkg];
+                    }
+                } else if (snapshotFormatVersion === currentSnapshotFormatVersion) {
                     pkgFromSnapshot = JSON.parse(pkg) as string[];
-                } else {
-                    pkgFromSnapshot = [pkg];
                 }
-
                 this.details = {
                     pkg: pkgFromSnapshot,
                     snapshot: tree,
