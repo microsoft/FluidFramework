@@ -54,7 +54,7 @@ function padRight(current: number, next: number, padding: number) {
 export class DrawingContext {
     public canvas = document.createElement("canvas");
     private context: CanvasRenderingContext2D;
-    private lastOperation: ink.IStylusOperation = null;
+    private lastPoint: ink.IInkPoint = null;
     private pen: ink.IPen;
     private canvasOffset: ui.IPoint = { x: 0, y: 0 };
 
@@ -71,21 +71,21 @@ export class DrawingContext {
     }
 
     public clear() {
-        this.lastOperation = null;
+        this.lastPoint = null;
         this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
 
     public startNewStroke(pen: ink.IPen) {
         this.pen = pen;
-        this.lastOperation = null;
+        this.lastPoint = null;
     }
 
     // store instructions used to render itself? i.e. the total path? Or defer to someone else to actually
     // do the re-render with a context?
-    public drawStroke(current: ink.IStylusOperation, stroke: ink.IInkStroke) {
+    public drawStroke(current: ink.IInkPoint, stroke: ink.IInkStroke) {
         assert(this.pen);
 
-        const previous = this.lastOperation || current;
+        const previous = this.lastPoint || current;
         const shapes = getShapes(previous, current, this.pen, SegmentCircleInclusive.End);
 
         if (shapes) {
@@ -111,7 +111,7 @@ export class DrawingContext {
             }
         }
 
-        this.lastOperation = current;
+        this.lastPoint = current;
     }
 
     /**
@@ -201,42 +201,34 @@ export class InkLayer extends Layer {
     constructor(size: ui.ISize, private model: ink.IInk) {
         super(size);
 
-        // Listen for updates and re-render
-        this.model.on("op", (op, local) => {
-            if (local) {
-                return;
-            }
+        this.model.on("clear", (op) => {
+            throw new Error("Clear not supported in OverlayCanvas");
+        });
 
-            const operation = op.contents as ink.IInkOperation;
-            if (operation.type === "clear") {
-                throw new Error("Clear not supported in OverlayCanvas");
-            } else if (operation.type === "createStroke") {
-                this.drawingContext.startNewStroke(operation.pen);
-            } else if (operation.type === "stylus") {
-                const stroke = this.model.getStroke(operation.id);
-                this.drawingContext.drawStroke(operation, stroke);
-            }
+        this.model.on("createStroke", (op) => {
+            this.drawingContext.startNewStroke(op.pen);
+        });
+
+        this.model.on("stylus", (op) => {
+            const stroke = this.model.getStroke(op.id);
+            this.drawingContext.drawStroke(op, stroke);
         });
 
         const strokes = this.model.getStrokes();
         for (const stroke of strokes) {
             this.drawingContext.startNewStroke(stroke.pen);
-            for (const operation of stroke.operations) {
-                this.drawingContext.drawStroke(operation, stroke);
+            for (const point of stroke.points) {
+                this.drawingContext.drawStroke(point, stroke);
             }
         }
     }
 
-    public drawOperation(operation: ink.IInkOperation) {
-        this.model.submitOperation(operation);
-        if (operation.type === "clear") {
-            throw new Error("Clear not supported in OverlayCanvas");
-        } else if (operation.type === "createStroke") {
-            this.drawingContext.startNewStroke(operation.pen);
-        } else if (operation.type === "stylus") {
-            const stroke = this.model.getStroke(operation.id);
-            this.drawingContext.drawStroke(operation, stroke);
-        }
+    public createStroke(pen: ink.IPen) {
+        return this.model.createStroke(pen);
+    }
+
+    public updateStroke(point: ink.IInkPoint, strokeId: string) {
+        return this.model.appendPointToStroke(point, strokeId);
     }
 }
 
@@ -245,7 +237,7 @@ export class InkLayer extends Layer {
  */
 export class OverlayCanvas extends ui.Component {
     private layers: Layer[] = [];
-    private currentStylusActionId: string;
+    private currentStrokeId: string;
     private activePointerId: number;
     private inkEventsEnabled = false;
     private penHovering = false;
@@ -378,18 +370,17 @@ export class OverlayCanvas extends ui.Component {
             this.activePointerId = evt.pointerId;
             this.element.setPointerCapture(this.activePointerId);
 
-            const createOp = ink.Ink.makeCreateStrokeOperation(this.activePen);
-            this.currentStylusActionId = createOp.id;
-            this.activeLayer.drawOperation(createOp);
+            this.currentStrokeId = this.activeLayer.createStroke(this.activePen).id;
+            const layerTranslatedPoint = this.translateToLayer(translatedPoint, this.activeLayer);
+            const inkPoint: ink.IInkPoint = {
+                x: layerTranslatedPoint.x,
+                y: layerTranslatedPoint.y,
+                time: Date.now(),
+                pressure: evt.pressure,
+            };
+            this.activeLayer.updateStroke(inkPoint, this.currentStrokeId);
 
-            const operation = ink.Ink.makeStylusOperation(
-                this.translateToLayer(translatedPoint, this.activeLayer),
-                evt.pressure,
-                this.currentStylusActionId,
-            );
-            this.activeLayer.drawOperation(operation);
-
-            evt.returnValue = false;
+            evt.preventDefault();
         }
     }
 
@@ -397,40 +388,42 @@ export class OverlayCanvas extends ui.Component {
         if (evt.pointerId === this.activePointerId) {
             const translatedPoint = this.translatePoint(this.element, evt);
             this.pointsToRecognize.push(translatedPoint);
-            const operation = ink.Ink.makeStylusOperation(
-                this.translateToLayer(translatedPoint, this.activeLayer),
-                evt.pressure,
-                this.currentStylusActionId);
-            this.activeLayer.drawOperation(operation);
+            const layerTranslatedPoint = this.translateToLayer(translatedPoint, this.activeLayer);
+            const inkPoint: ink.IInkPoint = {
+                x: layerTranslatedPoint.x,
+                y: layerTranslatedPoint.y,
+                time: Date.now(),
+                pressure: evt.pressure,
+            };
+            this.activeLayer.updateStroke(inkPoint, this.currentStrokeId);
 
-            evt.returnValue = false;
+            evt.preventDefault();
         }
-
-        return false;
     }
 
     private handlePointerUp(evt: PointerEvent) {
         if (evt.pointerId === this.activePointerId) {
             const translatedPoint = this.translatePoint(this.element, evt);
             this.pointsToRecognize.push(translatedPoint);
-            evt.returnValue = false;
+            const layerTranslatedPoint = this.translateToLayer(translatedPoint, this.activeLayer);
+            const inkPoint: ink.IInkPoint = {
+                x: layerTranslatedPoint.x,
+                y: layerTranslatedPoint.y,
+                time: Date.now(),
+                pressure: evt.pressure,
+            };
+            this.activeLayer.updateStroke(inkPoint, this.currentStrokeId);
 
-            const operation = ink.Ink.makeStylusOperation(
-                this.translateToLayer(translatedPoint, this.activeLayer),
-                evt.pressure,
-                this.currentStylusActionId);
-            this.currentStylusActionId = undefined;
-
-            this.activeLayer.drawOperation(operation);
+            this.currentStrokeId = undefined;
 
             // Release the event
             this.element.releasePointerCapture(this.activePointerId);
             this.activePointerId = undefined;
 
             this.recognizeShape();
-        }
 
-        return false;
+            evt.preventDefault();
+        }
     }
 
     private recognizeShape() {
