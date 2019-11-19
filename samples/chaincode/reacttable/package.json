@@ -1,0 +1,51 @@
+{
+  "name": "@yo-fluid/reacttable",
+  "version": "0.11.0",
+  "description": "Fluid starter project",
+  "repository": "microsoft/FluidFramework",
+  "author": "Microsoft",
+  "main": "dist/index.js",
+  "module": "lib/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "webpack --env.production && npm run tsc",
+    "deploy": "npm run build && npm version patch && npm run verdaccio",
+    "dev": "webpack --env.development",
+    "start": "webpack-dev-server --config webpack.config.js --package package.json --env.mode local",
+    "start:live": "webpack-dev-server --config webpack.config.js --package package.json --env.mode live",
+    "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
+    "tsc": "tsc",
+    "verdaccio": "npm publish --registry https://packages.wu2.prague.office-int.com",
+    "webpack": "npm run build",
+    "webpack:dev": "npm run dev"
+  },
+  "dependencies": {
+    "@fluid-example/table-document": "^0.11.0",
+    "@microsoft/fluid-aqueduct": "^0.11.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.11.0",
+    "react": "^16.8.3",
+    "react-dom": "^16.8.3",
+    "table": "^5.4.6"
+  },
+  "devDependencies": {
+    "@microsoft/fluid-webpack-component-loader": "^0.11.0",
+    "@types/node": "^10.14.6",
+    "@types/react-dom": "^16.0.11",
+    "ts-loader": "^4.5.0",
+    "typescript": "~3.4.5",
+    "webpack": "4.16.5",
+    "webpack-cli": "3.1.0",
+    "webpack-dev-server": "^3.8.0",
+    "webpack-merge": "4.1.4"
+  },
+  "fluid": {
+    "browser": {
+      "umd": {
+        "files": [
+          "dist/main.bundle.js"
+        ],
+        "library": "main"
+      }
+    }
+  }
+}
