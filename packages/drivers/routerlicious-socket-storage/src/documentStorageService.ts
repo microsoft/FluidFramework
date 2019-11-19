@@ -34,6 +34,10 @@ export class DocumentStorageService implements IDocumentStorageService  {
     constructor(public readonly id: string, public manager: gitStorage.GitManager) {
     }
 
+    /**
+     * Gets a snapshot tree from storage and caches it.
+     * @param version - version of tree to get
+     */
     public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
         let requestVersion = version;
         if (!requestVersion) {
@@ -127,12 +131,23 @@ export class DocumentStorageService implements IDocumentStorageService  {
                 return newCommit.sha;
             }
             case SummaryType.Handle: {
-                const refCache = await this.cache.get(value.proposedParentHandle || value.ackedParentHandle)
+                let refCache = await this.cache.get(value.proposedParentHandle || value.ackedParentHandle)
                     || await this.cache.get(value.ackedParentHandle);
-                const refHash = refCache && refCache.get(value.path);
+                let refHash = refCache && refCache.get(value.path);
+                if (!refHash) {
+                    // This should only happen if a summarizer dies after summary op and a new summarizer loads before
+                    // summary ack. The new summarizer will then load off the latest summary but not have the acked
+                    // summary cached.
+                    console.log("Handle not found in cache");
+                    const version = await this.getVersions(value.ackedParentHandle, 1);
+                    await this.getSnapshotTree(version[0]);
+                    refCache = await this.cache.get(value.ackedParentHandle);
+                    refHash = refCache && refCache.get(value.path);
+                }
                 if (!refHash) {
                     throw Error("Referenced summary should be cached if handle is provided.");
                 }
+
                 newCache.set(path, refHash);
                 return refHash;
             }
