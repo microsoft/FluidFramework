@@ -220,6 +220,7 @@ export class InkLayer extends Layer {
     }
 
     public createStroke(pen: ink.IPen) {
+        this.drawingContext.startNewStroke(pen);
         return this.model.createStroke(pen);
     }
 
@@ -267,9 +268,9 @@ export class OverlayCanvas extends ui.Component {
         this.trackInkEvents(eventTarget);
 
         // Ink handling messages
-        container.addEventListener("pointerdown", (evt) => this.handlePointerDown(evt));
-        container.addEventListener("pointermove", (evt) => this.handlePointerMove(evt));
-        container.addEventListener("pointerup", (evt) => this.handlePointerUp(evt));
+        container.addEventListener("pointerdown", this.handlePointerDown.bind(this));
+        container.addEventListener("pointermove", this.handlePointerMove.bind(this));
+        container.addEventListener("pointerup", this.handlePointerUp.bind(this));
     }
 
     public addLayer(layer: Layer) {
