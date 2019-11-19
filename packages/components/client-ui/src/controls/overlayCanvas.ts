@@ -82,11 +82,11 @@ export class DrawingContext {
 
     // store instructions used to render itself? i.e. the total path? Or defer to someone else to actually
     // do the re-render with a context?
-    public drawStroke(current: ink.IInkPoint, stroke: ink.IInkStroke) {
+    public drawSegmentToNewPoint(endPoint: ink.IInkPoint) {
         assert(this.pen);
 
-        const previous = this.lastPoint || current;
-        const shapes = getShapes(previous, current, this.pen, SegmentCircleInclusive.End);
+        const previous = this.lastPoint || endPoint;
+        const shapes = getShapes(previous, endPoint, this.pen, SegmentCircleInclusive.End);
 
         if (shapes) {
             // Update canvas bounds
@@ -111,7 +111,7 @@ export class DrawingContext {
             }
         }
 
-        this.lastPoint = current;
+        this.lastPoint = endPoint;
     }
 
     /**
@@ -205,20 +205,16 @@ export class InkLayer extends Layer {
             throw new Error("Clear not supported in OverlayCanvas");
         });
 
-        this.model.on("createStroke", (op) => {
-            this.drawingContext.startNewStroke(op.pen);
-        });
-
         this.model.on("stylus", (op) => {
             const stroke = this.model.getStroke(op.id);
-            this.drawingContext.drawStroke(op, stroke);
+            this.drawingContext.drawSegmentToNewPoint(op.point);
         });
 
         const strokes = this.model.getStrokes();
         for (const stroke of strokes) {
             this.drawingContext.startNewStroke(stroke.pen);
             for (const point of stroke.points) {
-                this.drawingContext.drawStroke(point, stroke);
+                this.drawingContext.drawSegmentToNewPoint(point);
             }
         }
     }
