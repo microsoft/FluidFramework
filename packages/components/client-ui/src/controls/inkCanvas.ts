@@ -50,8 +50,8 @@ export class InkCanvas extends ui.Component {
             this.redraw();
         });
 
-        this.model.on("clear", this.executeClear.bind(this));
-        this.model.on("stylus", this.executeStylus.bind(this));
+        this.model.on("clear", this.handleClear.bind(this));
+        this.model.on("stylus", this.handleStylus.bind(this));
 
         // setup canvas
         this.canvasWrapper = document.createElement("div");
@@ -63,10 +63,9 @@ export class InkCanvas extends ui.Component {
         // get context
         this.context = this.canvas.getContext("2d");
 
-        const bb = false;
-        this.canvas.addEventListener("pointerdown", (evt) => this.handlePointerDown(evt), bb);
-        this.canvas.addEventListener("pointermove", (evt) => this.handlePointerMove(evt), bb);
-        this.canvas.addEventListener("pointerup", (evt) => this.handlePointerUp(evt), bb);
+        this.canvas.addEventListener("pointerdown", this.handlePointerDown.bind(this));
+        this.canvas.addEventListener("pointermove", this.handlePointerMove.bind(this));
+        this.canvas.addEventListener("pointerup", this.handlePointerUp.bind(this));
 
         this.currentPen = {
             color: { r: 0, g: 161 / 255, b: 241 / 255, a: 0 },
@@ -110,7 +109,6 @@ export class InkCanvas extends ui.Component {
 
     public clear() {
         this.model.clear();
-        this.executeClear();
     }
 
     /**
@@ -173,7 +171,6 @@ export class InkCanvas extends ui.Component {
             pressure: evt.pressure,
         };
         this.model.appendPointToStroke(inkPt, this.currentStrokeId);
-        this.executeStylus(inkPt, this.currentStrokeId);
     }
 
     private animateStroke(stroke: ink.IInkStroke, operationIndex: number, startTime: number) {
@@ -237,13 +234,14 @@ export class InkCanvas extends ui.Component {
         }
     }
 
-    private executeClear() {
+    private handleClear() {
         this.clearCanvas();
         this.lastStrokeRenderOp = {};
     }
 
-    private executeStylus(point: ink.IInkPoint, dirtyStrokeId: string) {
+    private handleStylus(operation: ink.IStylusOperation) {
         // Render the dirty stroke
+        const dirtyStrokeId = operation.id;
         let index = this.lastStrokeRenderOp[dirtyStrokeId] ? this.lastStrokeRenderOp[dirtyStrokeId] : 0;
 
         const stroke = this.model.getStroke(dirtyStrokeId);
