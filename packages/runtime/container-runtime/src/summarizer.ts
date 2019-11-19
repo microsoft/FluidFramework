@@ -18,8 +18,7 @@ import {
     ISummaryConfiguration,
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
-import * as assert from "assert";
-import { ContainerRuntime, IGeneratedSummaryData } from "./containerRuntime";
+import { ContainerRuntime, GenerateSummaryData } from "./containerRuntime";
 import { RunWhileConnectedCoordinator } from "./runWhileConnectedCoordinator";
 import { IClientSummaryWatcher, ISummaryAckMessage, SummaryCollection } from "./summaryCollection";
 
@@ -46,7 +45,7 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
         public readonly url: string,
         private readonly runtime: ContainerRuntime,
         private readonly configurationGetter: () => ISummaryConfiguration,
-        private readonly generateSummaryCore: () => Promise<IGeneratedSummaryData>,
+        private readonly generateSummaryCore: () => Promise<GenerateSummaryData>,
         private readonly refreshBaseSummary: (snapshot: ISnapshotTree) => void,
     ) {
         this.logger = ChildLogger.create(this.runtime.logger, "Summarizer");
@@ -155,7 +154,7 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
         }
     }
 
-    private async generateSummary(): Promise<IGeneratedSummaryData | undefined> {
+    private async generateSummary(): Promise<GenerateSummaryData | undefined> {
         if (this.onBehalfOfClientId !== this.runtime.summarizerClientId) {
             // we are no longer the summarizer, we should stop ourself
             this.stop("parentNoLongerSummarizer");
@@ -242,7 +241,7 @@ export class RunningSummarizer implements IDisposable {
         logger: ITelemetryLogger,
         summaryWatcher: IClientSummaryWatcher,
         configuration: ISummaryConfiguration,
-        generateSummary: () => Promise<IGeneratedSummaryData | undefined>,
+        generateSummary: () => Promise<GenerateSummaryData | undefined>,
         handleSuccessfulSummary: (ack: ISummaryAckMessage) => Promise<void>,
         lastOpSeqNumber: number,
         firstAck: ISummaryAttempt,
@@ -278,7 +277,7 @@ export class RunningSummarizer implements IDisposable {
         private readonly logger: ITelemetryLogger,
         private readonly summaryWatcher: IClientSummaryWatcher,
         private readonly configuration: ISummaryConfiguration,
-        private readonly generateSummary: () => Promise<IGeneratedSummaryData | undefined>,
+        private readonly generateSummary: () => Promise<GenerateSummaryData | undefined>,
         private readonly handleSuccessfulSummary: (ack: ISummaryAckMessage) => Promise<void>,
         lastOpSeqNumber: number,
         firstAck: ISummaryAttempt,
@@ -404,8 +403,6 @@ export class RunningSummarizer implements IDisposable {
             // did not send the summary op
             return;
         }
-        // must be set if submitted
-        assert(summaryData.clientSequenceNumber);
 
         this.heuristics.lastSent = {
             refSequenceNumber: summaryData.referenceSequenceNumber,
@@ -450,7 +447,7 @@ export class RunningSummarizer implements IDisposable {
         }
     }
 
-    private async generateSummaryWithLogging(message: string): Promise<IGeneratedSummaryData | undefined> {
+    private async generateSummaryWithLogging(message: string): Promise<GenerateSummaryData | undefined> {
         const summarizingEvent = PerformanceEvent.start(this.logger, {
             eventName: "Summarizing",
             message,
@@ -460,7 +457,7 @@ export class RunningSummarizer implements IDisposable {
         });
 
         // wait for generate/send summary
-        let summaryData: IGeneratedSummaryData | undefined;
+        let summaryData: GenerateSummaryData | undefined;
         try {
             summaryData = await this.generateSummary();
         } catch (error) {
@@ -476,13 +473,14 @@ export class RunningSummarizer implements IDisposable {
         }
 
         const telemetryProps = {
-            refSequenceNumber: summaryData.referenceSequenceNumber,
-            handle: summaryData.handle,
-            clientSequenceNumber: summaryData.clientSequenceNumber,
+            ...summaryData,
             ...summaryData.summaryStats,
+            refSequenceNumber: summaryData.referenceSequenceNumber,
             opsSinceLastAttempt: summaryData.referenceSequenceNumber - this.heuristics.lastSent.refSequenceNumber,
             opsSinceLastSummary: summaryData.referenceSequenceNumber - this.heuristics.lastAcked.refSequenceNumber,
         };
+        telemetryProps.summaryStats = undefined;
+        telemetryProps.referenceSequenceNumber = undefined;
 
         if (summaryData.submitted) {
             summarizingEvent.end(telemetryProps);
