@@ -9,14 +9,13 @@ import {
     IComponentQueryableLegacy,
 } from "@microsoft/fluid-component-core-interfaces";
 import {
-    ICodeWhiteList,
     IFluidCodeDetails,
     IProxyLoaderFactory,
 } from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
 import { IFluidResolvedUrl, IResolvedUrl } from "@microsoft/fluid-driver-definitions";
-import { IResolvedPackage, WebCodeLoader, WhiteList } from "@microsoft/fluid-web-code-loader";
-import { IHostConfig } from "./hostConfig";
+import { IResolvedPackage, WebCodeLoader } from "@microsoft/fluid-web-code-loader";
+import { IBaseHostConfig } from "./hostConfig";
 
 async function attach(loader: Loader, url: string, div: HTMLDivElement) {
     const response = await loader.request({ url });
@@ -75,28 +74,20 @@ async function registerAttach(loader: Loader, container: Container, uri: string,
 
 /**
  * Create a loader and return it.
+ * @param hostConfig - Config specifying the resolver/factory to be used.
  * @param resolved - A resolved url from a url resolver.
  * @param pkg - A resolved package with cdn links.
  * @param scriptIds - The script tags the chaincode are attached to the view with.
- * @param config - Any config to be provided to loader.
- * @param scope - A component that gives host provided capabilities/configurations
- *  to the component in the container(such as auth).
- * @param hostConf - Config specifying the resolver/factory to be used.
- * @param whiteList - functionality to check the validity of code to be loaded.
  */
 async function createWebLoader(
+    hostConfig: IBaseHostConfig,
     resolved: IResolvedUrl,
     pkg: IResolvedPackage | undefined,
     scriptIds: string[],
-    config: any,
-    scope: IComponent,
-    hostConf: IHostConfig,
-    proxyLoaderFactories: Map<string, IProxyLoaderFactory>,
-    whiteList?: ICodeWhiteList,
 ): Promise<Loader> {
 
     // Create the web loader and prefetch the chaincode we will need
-    const codeLoader = new WebCodeLoader(whiteList);
+    const codeLoader = new WebCodeLoader(hostConfig.whiteList);
     if (pkg) {
         // tslint:disable-next-line: strict-boolean-expressions
         if (pkg.pkg) { // this is an IFluidPackage
@@ -113,6 +104,9 @@ async function createWebLoader(
         // The load takes in an IFluidCodeDetails
         codeLoader.load(pkg.details).catch((error) => console.error("script load error", error));
     }
+
+    const config = hostConfig.config ? hostConfig.config : {};
+
     // we need to extend options, otherwise we nest properties, like client, too deeply
     //
     // tslint:disable-next-line: no-unsafe-any
@@ -120,9 +114,13 @@ async function createWebLoader(
     // tslint:disable-next-line: no-unsafe-any
     config.tokens = (resolved as IFluidResolvedUrl).tokens;
 
+    const scope = hostConfig.scope ? hostConfig.scope : {};
+    const proxyLoaderFactories = hostConfig.proxyLoaderFactories ?
+        hostConfig.proxyLoaderFactories : new Map<string, IProxyLoaderFactory>();
+
     return new Loader(
-        { resolver: hostConf.urlResolver },
-        hostConf.documentServiceFactory,
+        { resolver: hostConfig.urlResolver },
+        hostConfig.documentServiceFactory,
         codeLoader,
         config,
         scope,
@@ -132,50 +130,38 @@ async function createWebLoader(
 export class BaseHost {
     /**
      * Function to load the container from the given url and initialize the chaincode.
+     * @param hostConfig - Config specifying the resolver/factory and other loader settings to be used.
      * @param url - Url of the Fluid component to be loaded.
      * @param resolved - A resolved url from a url resolver.
      * @param pkg - A resolved package with cdn links.
      * @param scriptIds - The script tags the chaincode are attached to the view with.
-     * @param config - Any config to be provided to loader.
-     * @param scope - A component that gives host provided capabilities/configurations
-     *  to the component in the container(such as auth).
      * @param div - The div to load the component into.
-     * @param hostConf - Config specifying the resolver/factory to be used.
      */
     public static async start(
+        hostConfig: IBaseHostConfig,
         url: string,
         resolved: IResolvedUrl,
         pkg: IResolvedPackage | undefined,
         scriptIds: string[],
-        config: any,
-        scope: IComponent,
         div: HTMLDivElement,
-        hostConf: IHostConfig,
-        proxyLoaderFactories: Map<string, IProxyLoaderFactory>,
     ): Promise<Container> {
-        const baseHost = new BaseHost(resolved, pkg, scriptIds, config, scope, hostConf, proxyLoaderFactories);
+        const baseHost = new BaseHost(hostConfig, resolved, pkg, scriptIds);
         return baseHost.loadAndRender(url, div, pkg ? pkg.details : undefined);
     }
 
     private readonly loaderP: Promise<Loader>;
     public constructor(
+        hostConfig: IBaseHostConfig,
         resolved: IResolvedUrl,
         seedPackage: IResolvedPackage | undefined,
         scriptIds: string[],
-        config: any,
-        scope: IComponent,
-        hostConfig: IHostConfig,
-        proxyLoaderFactories: Map<string, IProxyLoaderFactory>) {
+    ) {
 
         this.loaderP = createWebLoader(
+            hostConfig,
             resolved,
             seedPackage,
             scriptIds,
-            config,
-            scope,
-            hostConfig,
-            proxyLoaderFactories,
-            new WhiteList(),
         );
     }
 

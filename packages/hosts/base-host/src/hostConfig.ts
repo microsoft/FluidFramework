@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+import { ICodeWhiteList, IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
 import { IDocumentServiceFactory, IUrlResolver } from "@microsoft/fluid-driver-definitions";
 
 /**
@@ -10,7 +12,19 @@ import { IDocumentServiceFactory, IUrlResolver } from "@microsoft/fluid-driver-d
  * list of document service factories from which one can be selected based on protocol
  * of resolved url.
  */
-export interface IHostConfig {
+export interface IBaseHostConfig {
     documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[];
     urlResolver: IUrlResolver | IUrlResolver[];
+
+    // Any config to be provided to loader.
+    config?: any;
+
+    // A component that gives host provided capabilities/configurations
+    // to the component in the container(such as auth).
+    scope?: IComponent;
+
+    proxyLoaderFactories?: Map<string, IProxyLoaderFactory>;
+
+    // White List for the code loader
+    whiteList?: ICodeWhiteList;
 }
