@@ -1,6 +1,6 @@
 {
   "name": "@yo-fluid/reacttable",
-  "version": "0.11.0",
+  "version": "0.11.2",
   "description": "Fluid starter project",
   "repository": "microsoft/FluidFramework",
   "author": "Microsoft",
@@ -21,8 +21,11 @@
   },
   "dependencies": {
     "@fluid-example/table-document": "^0.11.0",
+    "@fluid-example/tiny-web-host": "^0.12.16569",
     "@microsoft/fluid-aqueduct": "^0.11.0",
     "@microsoft/fluid-component-core-interfaces": "^0.11.0",
+    "apollo-boost": "^0.4.4",
+    "graphql-tag": "^2.10.1",
     "react": "^16.8.3",
     "react-dom": "^16.8.3",
     "table": "^5.4.6"

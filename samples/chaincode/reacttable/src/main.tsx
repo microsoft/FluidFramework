@@ -12,6 +12,12 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { TableDocType } from ".";
 import { TableDocument } from "@fluid-example/table-document";
+// import { loadFluidComponent, ITokenApis } from "@fluid-example/tiny-web-host";
+// import gql from 'graphql-tag';
+// import ApolloClient from 'apollo-boost';
+/**
+ * https://github.com/apollographql/apollo-tooling - has CodeGen (Code Generation)
+ */
 
 /**
  * Dice roller example using view interfaces and stock component classes.
@@ -27,8 +33,31 @@ export class Reacttable extends PrimedComponent implements IComponentHTMLVisual 
         tabledoc.insertRows(0, 1);
     }
 
+    protected async componentHasInitialized() {
+        // const client = new ApolloClient({
+        //     uri: 'https://graphql.example.com'
+        // //   });
+        // const tkn: ITokenApis = {
+        //     getToken: () => Promise.resolve("h"),
+        // };
+        // const compP = loadFluidComponent(
+        //     "https://www.wu2.prague.office-int.com/loader/fluid/rttabletest?chaincode=@yo-fluid/reacttable@0.11.1",
+        //     undefined as any as HTMLDivElement,
+        //     tkn,
+        //     );
+        // console.log(compP);
+        // const comp = await compP;
+        // console.log(comp);
+
+    }
+
+    public async getTableDoc() {
+        return this.getComponent<TableDocument>("tableDoc");
+    }
+
     public async render(div: HTMLElement) {
-        this.tableDoc = await this.getComponent<TableDocument>("tableDoc");
+        this.tableDoc = await this.getTableDoc(); // await this.getComponent<TableDocument>("tableDoc");
+
         this.logMeta();
 
         const rerender = () => {
