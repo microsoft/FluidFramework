@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IComponent, IComponentQueryableLegacy, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
+import { IComponent, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import {
     ICodeLoader,
     IConnectionDetails,
@@ -840,16 +840,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         const component = await this.codeLoader.load<IRuntimeFactory | IFluidModule>(pkg);
 
         if ("fluidExport" in component) {
-            let factory: IRuntimeFactory | undefined;
-            if (component.fluidExport.IRuntimeFactory) {
-                factory = component.fluidExport.IRuntimeFactory;
-            } else {
-                const queryable = component.fluidExport as IComponentQueryableLegacy;
-                if (queryable.query) {
-                    factory = queryable.query<IRuntimeFactory>("IRuntimeFactory");
-                }
-            }
-
+            const factory = component.fluidExport.IRuntimeFactory;
             return factory ? factory : Promise.reject(PackageNotFactoryError);
         }
 
