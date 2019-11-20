@@ -46,7 +46,7 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
         private readonly runtime: ContainerRuntime,
         private readonly configurationGetter: () => ISummaryConfiguration,
         private readonly generateSummaryCore: () => Promise<GenerateSummaryData>,
-        private readonly refreshLatestSummary: (context: ISummaryContext, referenceSequenceNumber: number) => void,
+        private readonly refreshLatestAck: (context: ISummaryContext, referenceSequenceNumber: number) => void,
     ) {
         this.logger = ChildLogger.create(this.runtime.logger, "Summarizer");
         this.runCoordinator = new RunWhileConnectedCoordinator(runtime);
@@ -101,6 +101,12 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
             this.runtime.deltaManager.referenceSequenceNumber,
             initialAttempt,
         );
+
+        // handle summary acks
+        this.handleSummaryAcks().catch((error) => {
+            this.logger.sendErrorEvent({ eventName: "HandleSummaryAckFatalError" }, error);
+            this.stop("handleAckError");
+        });
 
         // listen for ops
         const systemOpHandler = (op: ISequencedDocumentMessage) => this.runningSummarizer.handleSystemOp(op);
@@ -168,18 +174,19 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
     }
 
     private async handleSummaryAcks() {
-        let refSeq = 0;
+        let refSequenceNumber = this.summaryCollection.initialSequenceNumber;
         while (this.runningSummarizer) {
             try {
-                const ack = await this.summaryCollection.waitSummaryAck(refSeq + 1);
-                refSeq = ack.summaryOp.referenceSequenceNumber;
+                const ack = await this.summaryCollection.waitSummaryAck(refSequenceNumber);
+                refSequenceNumber = ack.summaryOp.referenceSequenceNumber;
 
-                this.refreshLatestSummary({
-                    proposedParentHandle: ack.summaryOp.contents.handle,
-                    ackedParentHandle: ack.summaryAckNack.contents.handle,
-                }, refSeq);
+                this.refreshLatestAck({
+                    proposalHandle: ack.summaryOp.contents.handle,
+                    ackHandle: ack.summaryAckNack.contents.handle,
+                }, refSequenceNumber);
+                refSequenceNumber++;
             } catch (error) {
-                this.logger.sendErrorEvent({ eventName: "HandleSummaryAckError" }, error);
+                this.logger.sendErrorEvent({ eventName: "HandleSummaryAckError", refSequenceNumber }, error);
             }
         }
     }

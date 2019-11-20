@@ -120,7 +120,7 @@ describe("Runtime", () => {
                     };
                     summaryCollection.handleOp({ contents, type } as ISequencedDocumentMessage);
 
-                    await flushPromises(); // let finally of summarize run
+                    await flushPromises(); // let summarize run
                 }
 
                 async function flushPromises(count: number = 1) {
