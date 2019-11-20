@@ -172,11 +172,12 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
         let refSequenceNumber = this.summaryCollection.initialSequenceNumber;
         while (this.runningSummarizer) {
             try {
-                const ack = await this.summaryCollection.waitSummaryAck(refSequenceNumber + 1);
+                const ack = await this.summaryCollection.waitSummaryAck(refSequenceNumber);
                 refSequenceNumber = ack.summaryOp.referenceSequenceNumber;
                 const handle = ack.summaryAckNack.contents.handle;
 
                 await this.refreshLatestAck(handle, refSequenceNumber);
+                refSequenceNumber++;
             } catch (error) {
                 this.logger.sendErrorEvent({ eventName: "HandleSummaryAckError", refSequenceNumber }, error);
             }

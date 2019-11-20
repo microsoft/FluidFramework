@@ -90,7 +90,6 @@ interface ISummaryTreeWithStats {
 
 export interface IGeneratedSummaryData {
     readonly summaryStats: ISummaryStats;
-    readonly getVersionDuration?: number;
     readonly generateDuration?: number;
 }
 
@@ -1110,18 +1109,10 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                 return attemptData;
             }
 
-            // TODO in the future we can have stored the latest summary by listening to the summary ack message
-            // after loading from the beginning of the snapshot
             const trace = Trace.start();
-            const versions = await this.context.storage.getVersions(this.id, 1);
-            const parents = versions.map((version) => version.id);
-            const parent = parents[0];
-            const getVersionDuration = trace.trace().duration;
-
             const treeWithStats = await this.summarize(fullTree);
             const generateData: IGeneratedSummaryData = {
                 summaryStats: treeWithStats.summaryStats,
-                getVersionDuration,
                 generateDuration: trace.trace().duration,
             };
 
@@ -1130,11 +1121,12 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             }
 
             const handle = await this.context.storage.uploadSummary(treeWithStats.summaryTree);
+            const parent = this.latestSummaryAck.handle;
             const summaryMessage: ISummaryContent = {
                 handle: handle.handle,
                 head: parent,
                 message,
-                parents,
+                parents: parent ? [parent] : [],
             };
             const uploadData: IUploadedSummaryData = {
                 handle: handle.handle,
