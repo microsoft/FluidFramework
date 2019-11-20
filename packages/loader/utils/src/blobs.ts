@@ -197,3 +197,16 @@ export class TreeTreeEntry implements ITreeEntry {
      */
     constructor(public readonly path: string, public readonly value: ITree) {}
 }
+
+export function addBlobToTree(tree: ITree, blobName: string, content: object) {
+    tree.entries.push(
+        {
+            mode: FileMode.File,
+            path: blobName,
+            type: TreeEntry[TreeEntry.Blob],
+            value: {
+                contents: JSON.stringify(content),
+                encoding: "utf-8",
+            },
+        });
+}
