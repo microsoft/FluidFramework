@@ -294,7 +294,7 @@ export interface ISerializedValue {
     type: string;
 
     /**
-     * The JSONable representation of the value.
+     * String representation of the value.
      */
     value: string;
 }
