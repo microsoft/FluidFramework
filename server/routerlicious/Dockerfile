@@ -111,7 +111,7 @@ COPY packages/server/lambdas/package*.json packages/server/lambdas/
 COPY packages/server/local-test-server/package*.json packages/server/local-test-server/
 COPY packages/server/memory-orderer/package*.json packages/server/memory-orderer/
 COPY packages/server/routerlicious/package*.json packages/server/routerlicious/
-# COPY packages/server/paparazzi/package*.json packages/server/paparazzi/
+COPY packages/server/paparazzi/package*.json packages/server/paparazzi/
 COPY packages/server/services/package*.json packages/server/services/
 COPY packages/server/services-client/package*.json packages/server/services-client/
 COPY packages/server/services-core/package*.json packages/server/services-core/
