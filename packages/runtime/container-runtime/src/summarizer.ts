@@ -115,10 +115,6 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
         const opHandler = (error: any, op: ISequencedDocumentMessage) => this.runningSummarizer.handleOp(error, op);
         this.runtime.on("batchEnd", opHandler);
 
-        // handle summary acks
-        // tslint:disable-next-line: no-floating-promises
-        this.handleSummaryAcks();
-
         // wait until stopped running
         await this.runCoordinator.waitStopped();
 

@@ -72,8 +72,8 @@ export class SummaryTreeConverter {
             summaryStats.handleNodeCount++;
             return {
                 path,
-                proposedParentHandle: summaryContext.proposedParentHandle,
-                ackedParentHandle: summaryContext.ackedParentHandle,
+                proposedParentHandle: summaryContext.proposalHandle,
+                ackedParentHandle: summaryContext.ackHandle,
                 handleType: SummaryType.Tree,
                 type: SummaryType.Handle,
             };

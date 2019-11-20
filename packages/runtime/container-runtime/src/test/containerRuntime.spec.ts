@@ -71,8 +71,8 @@ describe("Runtime", () => {
                     summaryResults = converter.convertToSummaryTree(
                         inputTree,
                         {
-                            ackedParentHandle: "test-acked-parent-handle",
-                            proposedParentHandle: "test-proposed-parent-handle",
+                            proposalHandle: "test-proposal-handle",
+                            ackHandle: "test-ack-handle",
                         },
                     );
                 });

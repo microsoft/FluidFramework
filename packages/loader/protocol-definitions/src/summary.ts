@@ -71,10 +71,10 @@ export interface ISummaryContext {
     /**
      * Parent summary proposed handle (from summary op)
      */
-    proposedParentHandle?: string;
+    proposalHandle: string;
 
     /**
      * Parent summary acked handle (from summary ack)
      */
-    ackedParentHandle?: string;
+    ackHandle: string;
 }
