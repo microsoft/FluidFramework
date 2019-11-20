@@ -66,12 +66,15 @@ describe("Runtime", () => {
                             }
                             return {
                                 referenceSequenceNumber: lastRefSeq,
-                                clientSequenceNumber: lastClientSeq,
                                 submitted: true,
-                                treeNodeCount: 0,
-                                blobNodeCount: 0,
-                                handleNodeCount: 0,
-                                totalBlobSize: 0,
+                                summaryStats: {
+                                    treeNodeCount: 0,
+                                    blobNodeCount: 0,
+                                    handleNodeCount: 0,
+                                    totalBlobSize: 0,
+                                },
+                                handle: "test-handle",
+                                clientSequenceNumber: lastClientSeq,
                             };
                         },
                         0,
@@ -86,7 +89,11 @@ describe("Runtime", () => {
                 async function emitNextOp(increment: number = 1) {
                     await flushPromises();
                     lastRefSeq += increment;
-                    summarizer.handleOp(undefined, { sequenceNumber: lastRefSeq } as ISequencedDocumentMessage);
+                    const op: Partial<ISequencedDocumentMessage> = {
+                        sequenceNumber: lastRefSeq,
+                        timestamp: Date.now(),
+                    };
+                    summarizer.handleOp(undefined, op as ISequencedDocumentMessage);
                     await Promise.resolve();
                 }
 

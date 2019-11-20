@@ -20,3 +20,4 @@ export * from "./safeParser";
 export * from "./serializer";
 export * from "./utils";
 export * from "./timer";
+export * from "./trace";
