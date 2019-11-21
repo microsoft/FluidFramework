@@ -69,8 +69,8 @@ Ink is an in-progress data structure with the purpose of facilitating collaborat
 - Use PointerEvent.getCoalescedEvents(), along with the bundled coordinate updates to improve rendering fidelity and hang resistance
 
 ## Canvas consolidation
-- Merge InkCanvas and OverlayCanvas
-- Update the Canvas component, FlexView, and FlowContainer to use the merged canvas.
+- Replace client-ui's InkCanvas and OverlayCanvas with ink's InkCanvas, or remove them.
+- Consider splitting the new InkCanvas control into input/output, to enable reuse of input handling across multiple renderers.
 
 ## Wet ink and ink drying
 - Distinguish wet/dry ink in the data model
