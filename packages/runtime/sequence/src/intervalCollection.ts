@@ -426,7 +426,7 @@ export class SequenceIntervalCollectionValueType
             },
         ],
         [
-            "delete",
+            "deleteInterval",
             {
                 process: (value, params, local, op) => {
                     if (local) {
@@ -503,7 +503,7 @@ export class IntervalCollectionValueType
             },
         ],
         [
-            "delete",
+            "deleteInterval",
             {
                 process: (value, params, local, op) => {
                     if (local) {
@@ -568,7 +568,7 @@ export class IntervalCollectionView<TInterval extends ISerializableInterval> ext
 
     /* tslint:disable:no-unnecessary-override */
     public on(
-        event: "addInterval" | "delete",
+        event: "addInterval" | "deleteInterval",
         listener: (interval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage) => void): this {
         return super.on(event, listener);
     }
@@ -621,7 +621,7 @@ export class IntervalCollectionView<TInterval extends ISerializableInterval> ext
 
     public deleteInterval(intervalToRemove: TInterval) {
         this.deleteIntervalInternal(intervalToRemove);
-        this.emitter.emit("delete", undefined, intervalToRemove);
+        this.emitter.emit("deleteInterval", undefined, intervalToRemove);
     }
 
     public deleteIntervalInternal(intervalToRemove: TInterval) {
