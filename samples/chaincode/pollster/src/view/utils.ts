@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedMap } from '@prague/map';
+import { ISharedMap } from '@microsoft/fluid-map';
 
 export type AggregateVotesMap = Map<string /* optionId */, Set<string> /* votersIds */>;
 

@@ -5,6 +5,7 @@
 
 import * as express from "express";
 import * as moniker from "moniker";
+import * as nconf from "nconf";
 import * as path from "path";
 import WebpackDevServer from "webpack-dev-server";
 import { IRouteOptions } from "./loader";
@@ -15,16 +16,22 @@ export const before = (app: express.Application, server: WebpackDevServer) => {
 };
 
 export const after = (app: express.Application, server: WebpackDevServer, baseDir: string, env: IRouteOptions) => {
-    let options: IRouteOptions;
-    if (!env) {
-        options = { mode: "live" };
-    } else if (env.fluidHost && !(env.tenantId && env.tenantSecret)) {
-        throw new Error("If you provide a host, you must provide a tenantId and tenantSecret");
-    } else if ((env.tenantId || env.tenantSecret) && !(env.tenantId && env.tenantSecret)) {
+    const options: IRouteOptions = env ? env : { mode: "local" };
+    const config: nconf.Provider = nconf.env("__").file(path.join(baseDir, "config.json"));
+    // tslint:disable: no-unsafe-any
+    options.fluidHost = options.fluidHost ? options.fluidHost : config.get("fluid:webpack:fluidHost");
+    options.tenantId = options.tenantId ? options.tenantId : config.get("fluid:webpack:tenantId");
+    options.tenantSecret = options.tenantSecret ? options.tenantSecret : config.get("fluid:webpack:tenantSecret");
+    options.bearerSecret = options.bearerSecret ? options.bearerSecret : config.get("fluid:webpack:bearerSecret");
+    options.npm = options.npm ? options.npm : config.get("fluid:webpack:npm");
+    // tslint:enable: no-unsafe-any
+
+    if ((options.mode === "live" || options.mode === undefined) && !(options.tenantId && options.tenantSecret)) {
+        throw new Error("You must provide a tenantId and tenantSecret to connect to a live server");
+    } else if ((options.tenantId || options.tenantSecret) && !(options.tenantId && options.tenantSecret)) {
         throw new Error("tenantId and tenantSecret must be provided together");
-    } else {
-        options = env;
     }
+    console.log(options);
 
     app.get("/*", (req, res) => fluid(req, res, baseDir, options));
 };

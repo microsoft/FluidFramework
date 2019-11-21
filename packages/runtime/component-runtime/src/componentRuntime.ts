@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentHandle, IComponentHandleContext, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
+import {
+    IComponentHandle,
+    IComponentHandleContext,
+    IRequest,
+    IResponse,
+} from "@microsoft/fluid-component-core-interfaces";
 import {
     ConnectionState,
     IAudience,
@@ -19,6 +24,7 @@ import {
     FileMode,
     IDocumentMessage,
     ISequencedDocumentMessage,
+    ISnapshotTree,
     ITreeEntry,
     MessageType,
     TreeEntry,
@@ -34,6 +40,8 @@ import {
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import * as assert from "assert";
 import { EventEmitter } from "events";
+// tslint:disable-next-line:no-submodule-imports
+import * as uuid from "uuid/v4";
 import { IChannelContext } from "./channelContext";
 import { LocalChannelContext } from "./localChannelContext";
 import { RemoteChannelContext } from "./remoteChannelContext";
@@ -231,7 +239,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         return channel;
     }
 
-    public createChannel(id: string, type: string): IChannel {
+    public createChannel(id: string = uuid(), type: string): IChannel {
         this.verifyNotClosed();
 
         const context = new LocalChannelContext(
@@ -447,7 +455,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         this.emit("signal", message, local);
     }
 
-    public async snapshotInternal(): Promise<ITreeEntry[]> {
+    public async snapshotInternal(fullTree: boolean = false): Promise<ITreeEntry[]> {
         // Craft the .attributes file for each shared object
         const entries = await Promise.all(Array.from(this.contexts)
             .filter(([key, value]) => {
@@ -456,7 +464,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
                 return value.isRegistered();
             })
             .map(async ([key, value]) => {
-                const snapshot = await value.snapshot();
+                const snapshot = await value.snapshot(fullTree);
 
                 // And then store the tree
                 return {
@@ -584,6 +592,21 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         this.componentContext.on("leader", (clientId: string) => {
             this.emit("leader", clientId);
         });
+        this.componentContext.on("notleader", (clientId: string) => {
+            this.emit("notleader", clientId);
+        });
+        this.componentContext.on("refreshBaseSummary",
+            (snapshot: ISnapshotTree) => this.refreshBaseSummary(snapshot));
+    }
+
+    private refreshBaseSummary(snapshot: ISnapshotTree) {
+        // propogate updated tree to all channels
+        for (const key of Object.keys(snapshot.trees)) {
+            const channel = this.contexts.get(key);
+            if (channel) {
+                channel.refreshBaseSummary(snapshot.trees[key]);
+            }
+        }
     }
 
     private verifyNotClosed() {

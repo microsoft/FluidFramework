@@ -1,7 +1,7 @@
 {
   "name": "@chaincode/chat-3",
   "description": "Prague Chat with minimal runtime",
-  "version": "0.0.40",
+  "version": "0.10.0",
   "author": "Microsoft",
   "repository": "microsoft/FluidFramework",
   "main": "dist/index.js",
@@ -11,10 +11,22 @@
     "tsc": "tsc",
     "build-webpack": "webpack --env=\"production\"",
     "build": "npm run tsc && npm run tslint && npm run build-webpack",
-    "start": "prague-dev-server --config webpack.config.js --live --package package.json"
+    "start": "webpack-dev-server --config webpack.config.js --package package.json",
+    "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
+    "start:live": "webpack-dev-server --config webpack.config.js --package package.json --env.mode live"
+  },
+  "fluid": {
+    "browser": {
+      "umd": {
+        "files": [
+          "dist/main.bundle.js"
+        ],
+        "library": "main"
+      }
+    }
   },
   "devDependencies": {
-    "@prague/prague-dev-server": "^3.2.5",
+    "@microsoft/fluid-webpack-component-loader": "^0.10.0",
     "@types/node": "^10.11.5",
     "@types/react-dom": "^16.0.11",
     "@types/request": "^2.47.1",
@@ -24,18 +36,13 @@
     "typescript": "^3.0.1",
     "webpack": "^4.16.5",
     "webpack-cli": "^3.1.0",
+    "webpack-dev-server": "^3.8.0",
     "webpack-merge": "^4.1.4"
   },
-  "prague": {
-    "browser": {
-      "entrypoint": "main",
-      "bundle": [
-        "dist/main.bundle.js"
-      ]
-    }
-  },
   "dependencies": {
-    "@prague/container-definitions": "^0.3.6085",
+    "@microsoft/fluid-component-core-interfaces": "^0.10.0",
+    "@microsoft/fluid-container-definitions": "^0.10.0",
+    "@microsoft/fluid-protocol-definitions": "^0.10.0",
     "@stardust-ui/react": "^0.17.0",
     "react": "^16.7.0",
     "react-dom": "^16.7.0",

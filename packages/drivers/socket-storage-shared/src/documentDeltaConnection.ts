@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { BatchManager } from "@microsoft/fluid-core-utils";
+import { BatchManager, NetworkError } from "@microsoft/fluid-core-utils";
 import {
     ConnectionMode,
     IClient,
@@ -25,16 +25,20 @@ const protocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
 /**
  * Error raising for socket.io issues
  */
-function createErrorObject(handler: string, error: any, critical = false) {
+function createErrorObject(handler: string, error: any, canRetry = true) {
     // Note: we assume error object is a string here.
     // If it's not (and it's an object), we would not get its content.
     // That is likely Ok, as it may contain PII that will get logged to telemetry,
     // so we do not want it there.
-    const errorObj = new Error(`socket.io error: ${handler}: ${error}`);
+    const errorObj = new NetworkError(
+        `socket.io error: ${handler}: ${error}`,
+        undefined,
+        canRetry,
+    );
 
-    // Can't use spread here because the error object's properties are not enumerable.
-    // Just add the "critical" property in.
-    (errorObj as any).critical = critical;
+    // Add actual error object, for driver to be able to parse it and reason over it.
+    (errorObj as any).socketError = error;
+
     return errorObj;
 }
 
@@ -171,7 +175,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
                 debug(`Error in documentDeltaConection: ${error}`);
                 // This includes "Invalid namespace" error, which we consider critical (reconnecting will not help)
                 socket.disconnect();
-                reject(createErrorObject("error", error, error === "Invalid namespace"));
+                reject(createErrorObject("error", error, error !== "Invalid namespace"));
             }));
 
             socket.on("connect_document_error", ((error) => {

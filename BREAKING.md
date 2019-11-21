@@ -1,3 +1,6 @@
+# 0.11 Breaking Changes
+
+
 # 0.10 Breaking Changes
 
 - [`@fluid-example/tiny-web-host` prague -> fluid changes](#fluid-exampletiny-web-host-prague---fluid-changes)
@@ -8,6 +11,7 @@
 - [MergeTree Client No Longer Public on Sequence](#MergeTree-Client-No-Longer-Public-on-Sequence)
 - [`.createValueType` replaces third argument to `.set`](#.createValueType-replaces-third-argument-to-.set)
 - [Package rename](#package-rename)
+- [Support for IPraguePackage removed](#support-for-IPraguePackage-removed)
 
 
 ## `@fluid-example/tiny-web-host` prague -> fluid changes
@@ -150,6 +154,22 @@ old name | new name
 @prague/host-service-interfaces	| @microsoft/fluid-host-service-interfaces
 @prague/auspkn | @fluid-internal/auspkn
 @prague/service | @fluid-internal/server-service
+
+## Support for IPraguePackage removed
+Support for IPraguePackage and the `"prague"` entry in `package.json` has been removed. It has been replaced by IFluidPackage and a `"fluid"` entry in `package.json`:
+
+```
+"fluid": {
+    "browser": {
+      "umd": {
+        "files": [
+          "dist/main.bundle.js"
+        ],
+        "library": "main"
+      }
+    }
+  },
+```
 
 # 0.9 Breaking Changes (August 26, 2019)
 

@@ -9,6 +9,19 @@ import * as passport from "passport";
 import { getUserDetails } from "../utils";
 import { defaultPartials } from "./partials";
 
+const microsoftScopes = {
+    scope: [
+        "profile",
+        "email",
+        "openid",
+        "Calendars.ReadWrite",
+        "Mail.ReadWrite",
+        "Mail.Send",
+        "Tasks.ReadWrite",
+        "User.Read",
+    ],
+};
+
 export function create(config: Provider, ensureLoggedIn: any): Router {
     const router: Router = Router();
 
@@ -65,6 +78,19 @@ export function create(config: Provider, ensureLoggedIn: any): Router {
             ],
         },
     ));
+
+    router.get(
+        "/connect/microsoft",
+        ensureLoggedIn(),
+        passport.authenticate("msa", microsoftScopes));
+
+    router.get(
+        "/connect/microsoft/callback",
+        ensureLoggedIn(),
+        passport.authenticate("msa", {
+            failureRedirect: "/",
+            successRedirect: "/",
+        }));
 
     router.get(
         "/auth/callback",

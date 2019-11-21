@@ -8,7 +8,7 @@ import { IDeltaStorageGetResponse, ISequencedDeltaOpMessage } from "./contracts"
 import { IFetchWrapper } from "./fetchWrapper";
 import { getQueryString } from "./getQueryString";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
-import { getWithRetryForTokenRefresh } from "./utils";
+import { getWithRetryForTokenRefresh } from "./OdspUtils";
 
 /**
  * Provides access to the underlying delta storage on the server for sharepoint driver.
@@ -30,11 +30,10 @@ export class OdspDeltaStorageService implements api.IDocumentDeltaStorageService
         from?: number,
         to?: number,
     ): Promise<api.ISequencedDocumentMessage[]> {
-        if (this.ops !== undefined && from !== undefined) {
-            const returnOps = this.ops;
-            this.ops = undefined;
-
-            return returnOps.filter((op) => op.sequenceNumber > from).map((op) => op.op);
+        const ops = this.ops;
+        this.ops = undefined;
+        if (ops !== undefined && from !== undefined) {
+            return ops.filter((op) => op.sequenceNumber > from).map((op) => op.op);
         }
         this.ops = undefined;
 

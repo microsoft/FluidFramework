@@ -35,7 +35,3 @@ class PinpointMapsFactory implements IComponentFactory {
 }
 
 export const fluidExport = new PinpointMapsFactory();
-
-export function instantiateComponent(context: IComponentContext): void {
-    fluidExport.instantiateComponent(context);
-}

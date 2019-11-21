@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
-import { SinglePromise } from "@microsoft/fluid-core-utils";
+import { NetworkError, SinglePromise } from "@microsoft/fluid-core-utils";
 import { DocumentDeltaConnection } from "@microsoft/fluid-driver-base";
 import {
     ConnectionMode,
@@ -15,11 +15,12 @@ import {
     IDocumentStorageService,
     IErrorTrackingService,
 } from "@microsoft/fluid-protocol-definitions";
-import { ISocketStorageDiscovery } from "./contracts";
+import { IOdspSocketError, ISocketStorageDiscovery } from "./contracts";
 import { IFetchWrapper } from "./fetchWrapper";
 import { OdspDeltaStorageService } from "./OdspDeltaStorageService";
 import { OdspDocumentStorageManager } from "./OdspDocumentStorageManager";
 import { OdspDocumentStorageService } from "./OdspDocumentStorageService";
+import { defaultRetryFilter } from "./OdspUtils";
 import { getSocketStorageDiscovery } from "./Vroom";
 
 /**
@@ -27,6 +28,14 @@ import { getSocketStorageDiscovery } from "./Vroom";
  * clients
  */
 export class OdspDocumentService implements IDocumentService {
+    private static errorObjectFromOdspError(socketError: IOdspSocketError) {
+        return new NetworkError(
+            socketError.message,
+            socketError.code,
+            defaultRetryFilter(socketError.code), // canRetry
+            socketError.retryAfter);
+    }
+
     // This should be used to make web socket endpoint requests, it ensures we only have one active join session call at a time.
     private readonly websocketEndpointRequestThrottler: SinglePromise<ISocketStorageDiscovery>;
 
@@ -35,6 +44,8 @@ export class OdspDocumentService implements IDocumentService {
     private websocketEndpointP: Promise<ISocketStorageDiscovery> | undefined;
 
     private storageManager?: OdspDocumentStorageManager;
+
+    private readonly getStorageToken: (refresh: boolean) => Promise<string | null>;
 
     /**
      * @param appId - app id used for telemetry for network requests
@@ -60,13 +71,23 @@ export class OdspDocumentService implements IDocumentService {
         driveId: string,
         itemId: string,
         private readonly snapshotStorageUrl: string,
-        readonly getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
+        getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
         readonly getWebsocketToken: () => Promise<string | null>,
         private readonly logger: ITelemetryLogger,
         private readonly storageFetchWrapper: IFetchWrapper,
         private readonly deltasFetchWrapper: IFetchWrapper,
         private readonly socketIOClientP: Promise<SocketIOClientStatic>,
     ) {
+        this.getStorageToken = (refresh: boolean) => {
+            if (refresh) {
+                // Potential perf issue:
+                // Host should optimize and provide non-expired tokens on all critical paths.
+                // Exceptions: race conditions around expiration, revoked tokens, host that does not care (fluid-fetcher)
+                this.logger.sendTelemetryEvent({eventName: "StorageTokenRefresh"});
+            }
+            return getStorageToken(this.siteUrl, refresh);
+        };
+
         this.websocketEndpointRequestThrottler = new SinglePromise(() =>
             getSocketStorageDiscovery(
                 appId,
@@ -74,7 +95,7 @@ export class OdspDocumentService implements IDocumentService {
                 itemId,
                 siteUrl,
                 logger,
-                getStorageToken,
+                this.getStorageToken,
             ),
         );
     }
@@ -85,7 +106,7 @@ export class OdspDocumentService implements IDocumentService {
      * @returns returns the document storage service for sharepoint driver.
      */
     public async connectToStorage(): Promise<IDocumentStorageService> {
-        const latestSha: string | null | undefined = null;
+        const latestSha: string | null | undefined = undefined;
 
         this.storageManager = new OdspDocumentStorageManager(
             { app_id: this.appId },
@@ -93,7 +114,7 @@ export class OdspDocumentService implements IDocumentService {
             this.snapshotStorageUrl,
             latestSha,
             this.storageFetchWrapper,
-            (refresh: boolean) => this.getStorageToken(this.siteUrl, refresh),
+            this.getStorageToken,
             this.logger,
             true,
         );
@@ -114,7 +135,7 @@ export class OdspDocumentService implements IDocumentService {
               // any other requests are result of catching up on missing ops and are coming after websocket is established (or reconnected),
               // and thus we already have fresh join session call.
               // That said, tools like Fluid-fetcher will hit it, so that's valid code path.
-              this.logger.sendErrorEvent({ eventName: "OdspOpStreamPerf" });
+              this.logger.sendErrorEvent({ eventName: "ExtraJoinSessionCall" });
 
               this.websocketEndpointP = this.websocketEndpointRequestThrottler.response;
             }
@@ -127,7 +148,7 @@ export class OdspDocumentService implements IDocumentService {
             urlProvider,
             this.deltasFetchWrapper,
             this.storageManager ? this.storageManager.ops : undefined,
-            (refresh: boolean) => this.getStorageToken(this.siteUrl, refresh),
+            this.getStorageToken,
         );
     }
 
@@ -150,7 +171,29 @@ export class OdspDocumentService implements IDocumentService {
             io,
             client,
             websocketEndpoint.deltaStreamSocketUrl,
-            mode);
+            mode,
+        ).then((connection) => {
+            connection.on("server_disconnect", (socketError: IOdspSocketError) => {
+                const error = OdspDocumentService.errorObjectFromOdspError(socketError);
+                // Raise it as disconnect.
+                // That produces cleaner telemetry (no errors) and keeps protocol simpler (and not driver-specific).
+                connection.emit("disconnect", error);
+            });
+            return connection;
+        })
+        .catch((error) => {
+            // Test if it's NetworkError with IOdspSocketError.
+            // Note that there might be no IOdspSocketError on it in case we hit socket.io protocol errors!
+            // So we test canRetry property first - if it false, that means protocol is broken and reconnecting will not help.
+            if (error instanceof NetworkError && error.canRetry) {
+                const socketError: IOdspSocketError = (error as any).socketError;
+                if (typeof socketError === "object" && socketError !== null) {
+                    throw OdspDocumentService.errorObjectFromOdspError(socketError);
+                }
+            }
+
+            throw error;
+        });
     }
 
     public async branch(): Promise<string> {

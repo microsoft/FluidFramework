@@ -41,8 +41,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
      * @returns newly create shared string (but not attached yet)
      */
     public static create(runtime: IComponentRuntime, id?: string) {
-        return runtime.createChannel(SharedSegmentSequence.getIdForCreate(id),
-            SharedStringFactory.Type) as SharedString;
+        return runtime.createChannel(id, SharedStringFactory.Type) as SharedString;
     }
 
     /**

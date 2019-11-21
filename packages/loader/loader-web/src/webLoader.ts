@@ -9,7 +9,7 @@ import {
     IFluidPackage,
     IPackage,
     IPackageConfig,
-    IPraguePackage,
+    isFluidPackage,
 } from "@microsoft/fluid-container-definitions";
 import * as fetch from "isomorphic-fetch";
 
@@ -223,7 +223,6 @@ class FluidPackage {
     }
 
     private async resolveCore(): Promise<IResolvedPackage> {
-        // Load or normalize to a Fluid package
         let packageJson: IPackage;
         if (typeof this.details.details.package === "string") {
             const response = await fetch(`${this.details.packageUrl}/package.json`);
@@ -232,28 +231,15 @@ class FluidPackage {
             packageJson = this.details.details.package;
         }
 
-        if (!("fluid" in packageJson || "prague" in packageJson)) {
-            return Promise.reject("Not a fluid package");
-        }
-
-        const fluidPackage = packageJson as IFluidPackage;
-        if (!("fluid" in packageJson)) {
-            const praguePackage = packageJson as IPraguePackage;
-            fluidPackage.fluid = {
-                browser: {
-                    umd: {
-                        files: praguePackage.prague.browser.bundle,
-                        library: praguePackage.prague.browser.entrypoint,
-                    },
-                },
-            };
+        if (!isFluidPackage(packageJson)) {
+            return Promise.reject(new Error(`Package ${packageJson.name} not a fluid module.`));
         }
 
         return {
             details: this.details.details,
             packageUrl: this.details.packageUrl,
             parsed: this.details.parsed,
-            pkg: fluidPackage,
+            pkg: packageJson,
         };
     }
 

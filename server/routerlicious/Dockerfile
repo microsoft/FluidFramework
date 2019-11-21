@@ -36,6 +36,7 @@ COPY packages/components/blob-manager/package*.json packages/components/blob-man
 COPY packages/components/canvas/package*.json packages/components/canvas/
 COPY packages/components/clicker/package*.json packages/components/clicker/
 COPY packages/components/client-ui/package*.json packages/components/client-ui/
+COPY packages/components/dice-roller/package*.json packages/components/dice-roller/
 COPY packages/components/external-component-loader/package*.json packages/components/external-component-loader/
 COPY packages/components/image-collection/package*.json packages/components/image-collection/
 COPY packages/components/pond/package*.json packages/components/pond/
@@ -116,6 +117,7 @@ COPY packages/tools/fluid-fetch/package*.json packages/tools/fluid-fetch/
 COPY packages/tools/replay-tool/package*.json packages/tools/replay-tool/
 COPY packages/tools/webpack-component-loader/package*.json packages/tools/webpack-component-loader/
 COPY packages/tools/merge-tree-client-replay/package*.json packages/tools/merge-tree-client-replay/
+COPY packages/test/end-to-end/package*.json packages/test/end-to-end/
 
 # Copy over chaincode npmrc and package.json to dynamically install packages.
 COPY server/routerlicious/chaincode/* /tmp/chaincode/

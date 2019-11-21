@@ -1,19 +1,19 @@
 # Fluid Generator
 
-Use this tool to quickly bootstrap a counter chaincode example.
+Use this tool to quickly bootstrap a dice roller component example.
 
 To set up, do these one time steps.
 ````bash
 npm install -g yo
 
-cd {path_to_cloned_repo}/Prague/tools/generator-fluid
+cd {path_to_cloned_repo}/tools/generator-fluid
 
 npm install
 npm link
 ````
 
 
-You can now bootstrap a new counter chaincode at any time. 
+You can now bootstrap a new dice roller component at any time. 
 
 Go back to your root directory and try it now.
 ````bash

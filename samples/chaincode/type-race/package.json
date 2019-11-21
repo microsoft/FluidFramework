@@ -1,17 +1,18 @@
 {
-  "name": "@chaincode/type-race",
+  "name": "@fluid-example/type-race",
   "description": "Typing race",
-  "version": "0.0.10",
+  "version": "0.10.0",
   "author": "Microsoft",
   "repository": "microsoft/FluidFramework",
   "main": "dist/index.js",
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "webpack --env=\"production\"",
-    "dev": "webpack --env=\"development\"",
+    "build": "webpack --env.production",
+    "dev": "webpack --env.development",
     "start": "webpack-dev-server --config webpack.config.js --package package.json",
-    "start:local": "webpack-dev-server --config webpack.config.js --package package.json --env.local",
+    "start:live": "webpack-dev-server --config webpack.config.js --package package.json --env.mode live",
+    "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
     "verdaccio": "npm publish --registry https://packages.wu2.prague.office-int.com",
     "deploy": "npm run build && npm version patch && npm run verdaccio && npm run post-deploy",
     "post-deploy": "getUrl -p",
@@ -21,7 +22,7 @@
   },
   "devDependencies": {
     "@microsoft/fluid-webpack-component-loader": "^0.10.0",
-    "@prague/url-generator": "^1.0.4",
+    "@fluid-internal/url-generator": "^1.0.4",
     "@types/node": "^10.14.6",
     "@types/react-dom": "^16.0.11",
     "css-loader": "^3.1.0",
@@ -33,23 +34,25 @@
     "webpack-dev-server": "^3.8.0",
     "webpack-merge": "4.1.4"
   },
-  "prague": {
-    "browser": {
-      "entrypoint": "main",
-      "bundle": [
-        "dist/main.bundle.js"
-      ]
-    }
-  },
   "dependencies": {
-    "@prague/aqueduct": "^0.10.0",
+    "@microsoft/fluid-aqueduct": "^0.10.0",
     "@microsoft/fluid-build-common": "^0.10.0",
-    "@prague/component-runtime": "^0.10.0",
-    "@prague/component-core-interfaces": "^0.10.0",
-    "@prague/map": "^0.10.0",
-    "@prague/shared-object-common": "^0.10.0",
+    "@microsoft/fluid-component-runtime": "^0.10.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.10.0",
+    "@microsoft/fluid-map": "^0.10.0",
+    "@microsoft/fluid-shared-object-base": "^0.10.0",
     "react": "^16.8.3",
     "react-dom": "^16.8.3"
+  },
+  "fluid": {
+    "browser": {
+      "umd": {
+        "files": [
+          "dist/main.bundle.js"
+        ],
+        "library": "main"
+      }
+    }
   },
   "license": "MIT"
 }

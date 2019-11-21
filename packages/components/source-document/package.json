@@ -1,19 +1,11 @@
 {
-  "name": "@chaincode/source-document",
-  "version": "0.10.0",
+  "name": "@fluid-example/source-document",
+  "version": "0.11.0",
   "description": "Experiments with incremental parsing.",
   "main": "dist/index.js",
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
   "sideEffects": false,
-  "prague": {
-    "browser": {
-      "entrypoint": "main",
-      "bundle": [
-        "dist/main.bundle.js"
-      ]
-    }
-  },
   "fluid": {
     "browser": {
       "umd": {
@@ -41,18 +33,18 @@
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "dependencies": {
-    "@microsoft/fluid-aqueduct": "^0.10.0",
-    "@microsoft/fluid-component-core-interfaces": "^0.10.0",
-    "@microsoft/fluid-map": "^0.10.0",
-    "@microsoft/fluid-merge-tree": "^0.10.0",
-    "@microsoft/fluid-sequence": "^0.10.0",
-    "@microsoft/fluid-runtime-definitions": "^0.10.0",
+    "@microsoft/fluid-aqueduct": "^0.11.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.11.0",
+    "@microsoft/fluid-map": "^0.11.0",
+    "@microsoft/fluid-merge-tree": "^0.11.0",
+    "@microsoft/fluid-runtime-definitions": "^0.11.0",
+    "@microsoft/fluid-sequence": "^0.11.0",
     "@tiny/types": "^0.0.12772",
     "debug": "^4.1.1"
   },
   "devDependencies": {
-    "@microsoft/fluid-build-common": "^0.10.0",
-    "@microsoft/fluid-local-test-server": "^0.10.0",
+    "@microsoft/fluid-build-common": "^0.11.0",
+    "@microsoft/fluid-local-test-server": "^0.11.0",
     "@types/debug": "^0.0.31",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.12.12",

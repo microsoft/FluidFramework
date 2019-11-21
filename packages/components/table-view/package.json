@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/table-view",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "description": "Chaincode component that provides a view for a table-document.",
   "main": "dist/index.js",
   "module": "lib/index.js",
@@ -8,14 +8,6 @@
     "./src/publicpath.ts"
   ],
   "types": "dist/index.d.ts",
-  "prague": {
-    "browser": {
-      "entrypoint": "main",
-      "bundle": [
-        "dist/main.bundle.js"
-      ]
-    }
-  },
   "fluid": {
     "browser": {
       "umd": {
@@ -36,8 +28,8 @@
     "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
     "publish-wu2": "npm run build && npm version patch && npm publish --registry https://packages.wu2.prague.office-int.com",
     "start": "webpack-dev-server --config webpack.config.js --package package.json",
-    "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode  localhost",
-    "start:local": "webpack-dev-server --config webpack.config.js --package package.json --env.mode  local",
+    "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
+    "start:live": "webpack-dev-server --config webpack.config.js --package package.json --env.mode live",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose",
     "webpack": "webpack --env.production",
@@ -46,17 +38,17 @@
   "author": "Microsoft",
   "repository": "microsoft/FluidFramework",
   "dependencies": {
-    "@fluid-example/table-document": "^0.10.0",
-    "@microsoft/fluid-aqueduct": "^0.10.0",
-    "@microsoft/fluid-component-core-interfaces": "^0.10.0",
-    "@microsoft/fluid-container-definitions": "^0.10.0",
-    "@fluid-example/flow-util-lib": "^0.10.0",
-    "@microsoft/fluid-map": "^0.10.0",
-    "@microsoft/fluid-runtime-definitions": "^0.10.0"
+    "@fluid-example/flow-util-lib": "^0.11.0",
+    "@fluid-example/table-document": "^0.11.0",
+    "@microsoft/fluid-aqueduct": "^0.11.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.11.0",
+    "@microsoft/fluid-container-definitions": "^0.11.0",
+    "@microsoft/fluid-map": "^0.11.0",
+    "@microsoft/fluid-runtime-definitions": "^0.11.0"
   },
   "devDependencies": {
-    "@microsoft/fluid-webpack-component-loader": "^0.10.0",
-    "@microsoft/fluid-build-common": "^0.10.0",
+    "@microsoft/fluid-build-common": "^0.11.0",
+    "@microsoft/fluid-webpack-component-loader": "^0.11.0",
     "@types/node": "^10.12.12",
     "concurrently": "^4.1.0",
     "copyfiles": "^2.1.0",

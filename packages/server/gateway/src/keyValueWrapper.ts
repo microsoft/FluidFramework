@@ -7,8 +7,9 @@ import { ChildProcess, fork } from "child_process";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import { IIncomingMessage as IOutgoingChildMessage, IOutgoingMessage as IIncomingChildMessage } from "./childLoader";
+import { IKeyValueWrapper } from "./interfaces";
 
-export class KeyValueWrapper {
+export class KeyValueWrapper implements IKeyValueWrapper {
     private readonly kvDeferred = new Deferred<void>();
     private keyValue: ChildProcess;
 
@@ -49,5 +50,11 @@ export class KeyValueWrapper {
                 reject(err);
             });
         });
+    }
+}
+
+export class LocalKeyValueWrapper implements IKeyValueWrapper {
+    public async get(key: string) {
+        return;
     }
 }

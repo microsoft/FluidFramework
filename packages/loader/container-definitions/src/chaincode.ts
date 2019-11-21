@@ -70,20 +70,8 @@ export interface IPackage {
     private?: boolean;
 }
 
-export interface IPraguePackage extends IPackage {
-    // https://stackoverflow.com/questions/10065564/add-custom-metadata-or-config-to-package-json-is-it-valid
-    prague: {
-        browser: {
-            // List of bundled JS files - both local files and ones on a CDN
-            bundle: string[];
-
-            // Global for the entrypoint to the root package
-            entrypoint: string;
-        };
-    };
-}
-
 export interface IFluidPackage extends IPackage {
+    // https://stackoverflow.com/questions/10065564/add-custom-metadata-or-config-to-package-json-is-it-valid
     fluid: {
         browser: {
             [libraryTarget: string]: {
@@ -97,6 +85,15 @@ export interface IFluidPackage extends IPackage {
             };
         };
     };
+}
+
+/**
+ * Check if the package.json defines a fluid module, which requires a `fluid` entry
+ * @param pkg - the package json data to check if it is a fluid package.
+ */
+export function isFluidPackage(pkg: IPackage): pkg is IFluidPackage {
+    // tslint:disable-next-line: no-unsafe-any
+    return pkg.fluid && pkg.fluid.browser && pkg.fluid.browser.umd;
 }
 
 export enum ConnectionState {
@@ -152,7 +149,7 @@ export interface IRuntime {
     /**
      * Snapshots the runtime
      */
-    snapshot(tagMessage: string, generateFullTreeNoOptimizations?: boolean): Promise<ITree | null>;
+    snapshot(tagMessage: string, fullTree?: boolean): Promise<ITree | null>;
 
     /**
      * Notifies the runtime of a change in the connection state
@@ -230,6 +227,7 @@ export interface IContainerContext extends EventEmitter, IMessageScheduler, IPro
     error(err: any): void;
     requestSnapshot(tagMessage: string): Promise<void>;
     reloadContext(): void;
+    refreshBaseSummary(snapshot: ISnapshotTree): void;
 }
 
 export interface IProvideComponentTokenProvider {

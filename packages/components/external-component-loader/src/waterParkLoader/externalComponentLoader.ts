@@ -5,11 +5,11 @@
 
 import { PrimedComponent } from "@microsoft/fluid-aqueduct";
 import { IComponent, IComponentHTMLVisual, IComponentLoadable } from "@microsoft/fluid-component-core-interfaces";
-import { IPraguePackage } from "@microsoft/fluid-container-definitions";
+import { IPackage } from "@microsoft/fluid-container-definitions";
 import * as uuid from "uuid";
 
 // tslint:disable-next-line: no-var-requires no-require-imports
-const pkg = require("../../package.json") as IPraguePackage;
+const pkg = require("../../package.json") as IPackage;
 export const WaterParkLoaderName = `${pkg.name}-loader`;
 
 /**
