@@ -25,6 +25,8 @@ choosing "no" for this option (we'll explain this option further below).
   yes
 ```
 
+<hr />
+
 ## main.tsx/main.ts
 
 After completing the prompts, `yo fluid` will generate your project. `src/main.ts*` file is where the component logic lives.
@@ -273,9 +275,7 @@ const componentName = pkg.name as string;
 
 Finally we use `SimpleModuleInstantiationFactory` to create the `fluidExport`. The factory takes a default component
 name `componentName` that is used to load the default component. It also takes the registry of components pointing to
-the creation factory. In our case just our one component.
-
-`[componentName, Promise.resolve(ExampleFluidComponentInstantiationFactory)]`
+the creation factory. In our case just our one component (`[componentName, Promise.resolve(ExampleFluidComponentInstantiationFactory)]`).
 
 ```typescript
 export const fluidExport = new SimpleModuleInstantiationFactory(
