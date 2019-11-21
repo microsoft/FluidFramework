@@ -1,38 +1,48 @@
 // Copyright (c) Microsoft. All rights reserved. Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 var packageMapping = {
-  "fluid-container-runtime": "runtime",
   "fluid-component-runtime": "runtime",
+  "fluid-container-runtime": "runtime",
   "fluid-runtime-definitions": "runtime",
 
   "fluid-cell": "dds",
+  "fluid-ink": "dds",
   "fluid-map": "dds",
   "fluid-merge-tree": "dds",
-  "fluid-sequence": "dds",
-  "fluid-stream": "dds",
   "fluid-ordered-collection": "dds",
   "fluid-register-collection": "dds",
+  "fluid-sequence": "dds",
   "fluid-shared-object-base": "dds",
+  "fluid-stream": "dds",
 
-  "fluid-component-core-interfaces": "framework",
-  "fluid-aqueduct": "framework",
   "fluid-aqueduct-react": "framework",
+  "fluid-aqueduct": "framework",
+  "fluid-component-core-interfaces": "framework",
   "fluid-framework-definitions": "framework",
+  "fluid-framework-interfaces": "framework",
+  "fluid-undo-redo": "framework",
 
   "fluid-container-definitions": "loader",
   "fluid-container-loader": "loader",
-  "fluid-web-code-loader": "loader",
+  "fluid-execution-context-loader": "loader",
   "fluid-protocol-definitions": "loader",
+  "fluid-web-code-loader": "loader",
 
-  "fluid-routerlicious-driver": "driver",
   "fluid-driver-base": "driver",
-  "fluid-odsp-driver": "driver",
+  "fluid-driver-definitions": "driver",
   "fluid-file-driver": "driver",
+  "fluid-iframe-driver": "driver",
+  "fluid-odsp-driver": "driver",
   "fluid-replay-driver": "driver",
+  "fluid-routerlicious-driver": "driver",
 
   "fluid-base-host": "host",
-  "tiny-web-host": "host",
   "react-web-host": "host",
+  "tiny-web-host": "host",
+
+  "fluid-debugger": "tools",
+  "fluid-merge-tree-client-replay": "tools",
+  "fluid-replay-tool": "tools",
 
   "fluid-core-utils": "misc",
 }
@@ -44,6 +54,7 @@ var groupNames = {
   loader: "Loader",
   driver: "Driver",
   host: "Sample Hosts",
+  tools: "Tools",
   misc: "Misc",
   unknown: "Internal/Deprecated",
 };
