@@ -12,17 +12,11 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { TableDocType } from ".";
 import { TableDocument } from "@fluid-example/table-document";
-// import { loadFluidComponent, ITokenApis } from "@fluid-example/tiny-web-host";
-// import gql from 'graphql-tag';
-// import ApolloClient from 'apollo-boost';
-/**
- * https://github.com/apollographql/apollo-tooling - has CodeGen (Code Generation)
- */
 
 /**
  * Dice roller example using view interfaces and stock component classes.
  */
-export class Reacttable extends PrimedComponent implements IComponentHTMLVisual {
+export class Table extends PrimedComponent implements IComponentHTMLVisual {
     public get IComponentHTMLVisual() { return this; }
 
     public tableDoc: TableDocument;
@@ -34,20 +28,6 @@ export class Reacttable extends PrimedComponent implements IComponentHTMLVisual 
     }
 
     protected async componentHasInitialized() {
-        // const client = new ApolloClient({
-        //     uri: 'https://graphql.example.com'
-        // //   });
-        // const tkn: ITokenApis = {
-        //     getToken: () => Promise.resolve("h"),
-        // };
-        // const compP = loadFluidComponent(
-        //     "https://www.wu2.prague.office-int.com/loader/fluid/rttabletest?chaincode=@yo-fluid/reacttable@0.11.1",
-        //     undefined as any as HTMLDivElement,
-        //     tkn,
-        //     );
-        // console.log(compP);
-        // const comp = await compP;
-        // console.log(comp);
 
     }
 
@@ -56,7 +36,7 @@ export class Reacttable extends PrimedComponent implements IComponentHTMLVisual 
     }
 
     public async render(div: HTMLElement) {
-        this.tableDoc = await this.getTableDoc(); // await this.getComponent<TableDocument>("tableDoc");
+        this.tableDoc = await this.getTableDoc();
 
         this.logMeta();
 
@@ -184,6 +164,6 @@ export class Reacttable extends PrimedComponent implements IComponentHTMLVisual 
  * To add a SharedSequence, SharedMap, or any other structure, put it in the array below.
  */
 export const ReacttableInstantiationFactory = new PrimedComponentFactory(
-    Reacttable,
+    Table,
     [],
 );
