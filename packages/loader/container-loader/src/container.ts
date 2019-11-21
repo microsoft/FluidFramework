@@ -980,15 +980,15 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         this.connectionTransitionTimes[value] = time;
         const duration = time - this.connectionTransitionTimes[oldState];
 
-        let connectionStarter: string;
+        let connectionInitiationReason: string;
         if (value === ConnectionState.Disconnected) {
-            connectionStarter = "Disconnect";
+            connectionInitiationReason = "Disconnect";
         } else if (this.firstConnection) {
-            connectionStarter = "InitialConnect";
+            connectionInitiationReason = "InitialConnect";
         } else if (this.manualReconnectInProgress) {
-            connectionStarter = "ManualReconnect";
+            connectionInitiationReason = "ManualReconnect";
         } else {
-            connectionStarter = "AutoReconnect";
+            connectionInitiationReason = "AutoReconnect";
         }
 
         this.logger.sendPerformanceEvent({
@@ -996,7 +996,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             from: ConnectionState[oldState],
             duration,
             reason,
-            connectionStarter,
+            connectionInitiationReason,
             socketDocumentId: this._deltaManager ? this._deltaManager.socketDocumentId : undefined,
             pendingClientId: this.pendingClientId,
         });
