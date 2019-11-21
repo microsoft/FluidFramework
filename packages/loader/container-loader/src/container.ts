@@ -176,6 +176,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private connectionDetailsP: Promise<IConnectionDetails> | undefined;
 
     private firstConnection = true;
+    private manualReconnectInProgress = false;
     private readonly connectionTransitionTimes: number[] = [];
     private messageCountAfterDisconnection: number = 0;
 
@@ -431,6 +432,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
      * Connect the deltaManager.  Useful when the autoConnect flag is set to false.
      */
     public async reconnect() {
+        // Only track this as a manual reconnection if we are truly the ones kicking it off.
+        if (this._connectionState === ConnectionState.Disconnected) {
+            this.manualReconnectInProgress = true;
+        }
         return this._deltaManager!.connect();
     }
 
@@ -974,27 +979,28 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         this.connectionTransitionTimes[value] = time;
         const duration = time - this.connectionTransitionTimes[oldState];
 
+        let connectionStarter: string;
+        if (this.firstConnection) {
+            connectionStarter = "InitialConnect";
+        } else if (this.manualReconnectInProgress) {
+            connectionStarter = "ManualReconnect";
+        } else {
+            connectionStarter = "AutoReconnect";
+        }
+
         this.logger.sendPerformanceEvent({
             eventName: `ConnectionStateChange_${ConnectionState[value]}`,
             from: ConnectionState[oldState],
             duration,
             reason,
+            connectionStarter,
             socketDocumentId: this._deltaManager ? this._deltaManager.socketDocumentId : undefined,
             pendingClientId: this.pendingClientId,
         });
 
-        if (value === ConnectionState.Connected && this.firstConnection) {
-            // We just logged event with disconnected/connecting -> connected time
-            // Log extra event recording disconnected -> connected time, as well as provide some extra info.
-            // We can group that info in previous event, but it's easier to analyze telemetry if these are
-            // two separate events (actually - three!).
-            this.logger.sendPerformanceEvent({
-                eventName: "ConnectionStateChange_InitialConnect",
-                duration: time - this.connectionTransitionTimes[ConnectionState.Disconnected],
-                durationCatchUp: time - this.connectionTransitionTimes[ConnectionState.Connecting],
-                reason,
-            });
+        if (value === ConnectionState.Connected) {
             this.firstConnection = false;
+            this.manualReconnectInProgress = false;
         }
     }
 
