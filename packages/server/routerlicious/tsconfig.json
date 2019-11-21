@@ -12,6 +12,6 @@
         "types": [ "mocha" ]
     },
     "include": [
-        "src/**/*"
+        "src/**/*",
     ]
 }

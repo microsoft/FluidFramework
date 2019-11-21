@@ -45,7 +45,7 @@ COPY packages/components/shared-map-visualizer/package*.json packages/components
 COPY packages/components/video-players/package*.json packages/components/video-players/
 COPY packages/components/flow-scroll/package*.json packages/components/flow-scroll/
 COPY packages/components/flow-util/package*.json packages/components/flow-util/
-COPY packages/components/key-value/package*.json packages/components/key-value/
+# COPY packages/components/key-value/package*.json packages/components/key-value/
 COPY packages/components/markflow/package*.json packages/components/markflow/
 COPY packages/components/math/package*.json packages/components/math/
 COPY packages/components/monaco/package*.json packages/components/monaco/
@@ -111,6 +111,7 @@ COPY packages/server/lambdas/package*.json packages/server/lambdas/
 COPY packages/server/local-test-server/package*.json packages/server/local-test-server/
 COPY packages/server/memory-orderer/package*.json packages/server/memory-orderer/
 COPY packages/server/routerlicious/package*.json packages/server/routerlicious/
+COPY packages/server/paparazzi/package*.json packages/server/paparazzi/
 COPY packages/server/services/package*.json packages/server/services/
 COPY packages/server/services-client/package*.json packages/server/services-client/
 COPY packages/server/services-core/package*.json packages/server/services-core/

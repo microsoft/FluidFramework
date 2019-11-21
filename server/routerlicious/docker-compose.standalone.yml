@@ -63,7 +63,7 @@ services:
         restart: always
     paparazzi:
         image: prague.azurecr.io/prague:latest
-        command: node dist/paparazzi/index.js
+        command: node ../paparazzi/dist/index.js
         environment:
             - DEBUG=fluid:*
             - worker__intelligence__resume__url=http://alfred:3000/intelligence/resume

@@ -11,4 +11,4 @@ utils.runService(
     new PaparazziResourcesFactory(),
     new PaparazziRunnerFactory(),
     "paparazzi",
-    path.join(__dirname, "../../config/config.json"));
+    path.join(__dirname, "../config.json"));

@@ -21,3 +21,4 @@ export * from "./serializer";
 export * from "./summaryTracker";
 export * from "./utils";
 export * from "./timer";
+export * from "./trace";
