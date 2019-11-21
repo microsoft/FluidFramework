@@ -68,12 +68,15 @@ describe("Runtime", () => {
                             }
                             return {
                                 referenceSequenceNumber: lastRefSeq,
-                                clientSequenceNumber: lastClientSeq,
                                 submitted: true,
-                                treeNodeCount: 0,
-                                blobNodeCount: 0,
-                                handleNodeCount: 0,
-                                totalBlobSize: 0,
+                                summaryStats: {
+                                    treeNodeCount: 0,
+                                    blobNodeCount: 0,
+                                    handleNodeCount: 0,
+                                    totalBlobSize: 0,
+                                },
+                                handle: "test-handle",
+                                clientSequenceNumber: lastClientSeq,
                             };
                         },
                         async () => { refreshBaseSummaryDeferred.resolve(); },
@@ -89,7 +92,11 @@ describe("Runtime", () => {
                 async function emitNextOp(increment: number = 1) {
                     await flushPromises();
                     lastRefSeq += increment;
-                    summarizer.handleOp(undefined, { sequenceNumber: lastRefSeq } as ISequencedDocumentMessage);
+                    const op: Partial<ISequencedDocumentMessage> = {
+                        sequenceNumber: lastRefSeq,
+                        timestamp: Date.now(),
+                    };
+                    summarizer.handleOp(undefined, op as ISequencedDocumentMessage);
                     await Promise.resolve();
                 }
 
@@ -120,7 +127,7 @@ describe("Runtime", () => {
                     await refreshBaseSummaryDeferred.promise;
                     refreshBaseSummaryDeferred = new Deferred();
 
-                    await Promise.resolve(); // let finally of summarize run
+                    await flushPromises(); // let finally of summarize run
                 }
 
                 async function flushPromises(count: number = 1) {
