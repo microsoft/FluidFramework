@@ -30,9 +30,9 @@ import {
     Deferred,
     flatten,
     isSystemType,
-    PerformanceEvent,
     raiseConnectedEvent,
     readAndParse,
+    Trace,
 } from "@microsoft/fluid-core-utils";
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import {
@@ -88,17 +88,29 @@ interface ISummaryTreeWithStats {
 }
 
 export interface IGeneratedSummaryData {
-    sequenceNumber: number;
-
-    /**
-     * true if the summary op was submitted
-     */
-    submitted: boolean;
-
-    summaryMessage?: ISummaryContent;
-
-    summaryStats?: ISummaryStats;
+    readonly summaryStats: ISummaryStats;
+    readonly getVersionDuration?: number;
+    readonly generateDuration?: number;
 }
+
+export interface IUploadedSummaryData {
+    readonly handle: string;
+    readonly uploadDuration?: number;
+}
+
+export interface IUnsubmittedSummaryData extends Partial<IGeneratedSummaryData>, Partial<IUploadedSummaryData> {
+    readonly referenceSequenceNumber: number;
+    readonly submitted: false;
+}
+
+export interface ISubmittedSummaryData extends IGeneratedSummaryData, IUploadedSummaryData {
+    readonly referenceSequenceNumber: number;
+    readonly submitted: true;
+    readonly clientSequenceNumber: number;
+    readonly submitOpDuration?: number;
+}
+
+export type GenerateSummaryData = IUnsubmittedSummaryData | ISubmittedSummaryData;
 
 // Consider idle 5s of no activity. And snapshot if a minute has gone by with no snapshot.
 const IdleDetectionTime = 5000;
@@ -1061,7 +1073,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         deferred.resolve(context);
     }
 
-    private async generateSummary(fullTree: boolean = false): Promise<IGeneratedSummaryData> {
+    private async generateSummary(fullTree: boolean = false): Promise<GenerateSummaryData> {
         const message =
             `Summary @${this.deltaManager.referenceSequenceNumber}:${this.deltaManager.minimumSequenceNumber}`;
 
@@ -1079,40 +1091,38 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             return;
         }
 
-        const generateSummaryEvent = PerformanceEvent.start(this.logger, {
-            eventName: "GenerateSummary",
-            fullTree,
-        });
-
         try {
             await this.scheduleManager.pause();
-            const sequenceNumber = this.deltaManager.referenceSequenceNumber;
 
-            const ret: IGeneratedSummaryData = {
-                sequenceNumber,
+            const attemptData: IUnsubmittedSummaryData = {
+                referenceSequenceNumber: this.deltaManager.referenceSequenceNumber,
                 submitted: false,
-                summaryStats: undefined,
             };
 
             if (!this.connected) {
-                generateSummaryEvent.cancel({reason: "disconnected"});
-                return ret;
+                // if summarizer loses connection it will never reconnect
+                return attemptData;
             }
+
             // TODO in the future we can have stored the latest summary by listening to the summary ack message
             // after loading from the beginning of the snapshot
+            const trace = Trace.start();
             const versions = await this.context.storage.getVersions(this.id, 1);
             const parents = versions.map((version) => version.id);
             const parent = parents[0];
-            generateSummaryEvent.reportProgress({}, "loadedVersions");
+            const getVersionDuration = trace.trace().duration;
 
             const treeWithStats = await this.summarize(fullTree);
-            ret.summaryStats = treeWithStats.summaryStats;
-            generateSummaryEvent.reportProgress({}, "generatedTree");
+            const generateData: IGeneratedSummaryData = {
+                summaryStats: treeWithStats.summaryStats,
+                getVersionDuration,
+                generateDuration: trace.trace().duration,
+            };
 
             if (!this.connected) {
-                generateSummaryEvent.cancel({reason: "disconnected"});
-                return ret;
+                return { ...attemptData, ...generateData };
             }
+
             const handle = await this.context.storage.uploadSummary(treeWithStats.summaryTree);
             const summaryMessage: ISummaryContent = {
                 handle: handle.handle,
@@ -1120,28 +1130,25 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                 message,
                 parents,
             };
-            generateSummaryEvent.reportProgress({}, "uploadedTree");
+            const uploadData: IUploadedSummaryData = {
+                handle: handle.handle,
+                uploadDuration: trace.trace().duration,
+            };
 
             if (!this.connected) {
-                generateSummaryEvent.cancel({reason: "disconnected"});
-                return ret;
+                return { ...attemptData, ...generateData, ...uploadData };
             }
-            // if summarizer loses connection it will never reconnect
-            this.submit(MessageType.Summarize, summaryMessage);
-            ret.summaryMessage = summaryMessage;
-            ret.submitted = true;
 
-            generateSummaryEvent.end({
-                sequenceNumber,
-                submitted: ret.submitted,
-                handle: handle.handle,
-                parent,
-                ...ret.summaryStats,
-            });
-            return ret;
-        } catch (ex) {
-            generateSummaryEvent.cancel({reason: "exception"}, ex);
-            throw ex;
+            const clientSequenceNumber = this.submit(MessageType.Summarize, summaryMessage);
+
+            return {
+                ...attemptData,
+                ...generateData,
+                ...uploadData,
+                submitted: true,
+                clientSequenceNumber,
+                submitOpDuration: trace.trace().duration,
+            };
         } finally {
             // Restart the delta manager
             this.scheduleManager.resume();

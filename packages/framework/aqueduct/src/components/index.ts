@@ -5,3 +5,4 @@
 
 export { PrimedComponent } from "./primedComponent";
 export { SharedComponent } from "./sharedComponent";
+export { BlobHandle } from "./blobHandle";

@@ -13,6 +13,8 @@ import {
 
 /**
  * Handle to a dynamically loaded component
+ * This class is used to represent generic IComponent (through request handler on ComponentRuntime),
+ * as well as shared objects (see ComponentRuntime.request for details)
  */
 export class ComponentHandle implements IComponentHandle {
     public get IComponentRouter() { return this; }

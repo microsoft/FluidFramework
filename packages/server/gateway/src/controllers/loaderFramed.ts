@@ -5,7 +5,7 @@
 
 import {
     BaseHost,
-    IHostConfig,
+    IBaseHostConfig,
 } from "@microsoft/fluid-base-host";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
@@ -31,13 +31,15 @@ export async function initialize(
 
     const div = document.getElementById("content") as HTMLDivElement;
 
-    const hostConf: IHostConfig = {
+    const hostConf: IBaseHostConfig = {
         documentServiceFactory: new InnerDocumentServiceFactory(),
         urlResolver: new InnerUrlResolver(resolved),
+        config,
+        scope,
+        proxyLoaderFactories: new Map<string, IProxyLoaderFactory>([["webworker", new WebWorkerLoaderFactory()]]),
     };
 
-    const baseHost = new BaseHost(resolved, pkg, scriptIds, config, scope, hostConf,
-        new Map<string, IProxyLoaderFactory>([["webworker", new WebWorkerLoaderFactory()]]));
+    const baseHost = new BaseHost(hostConf, resolved, pkg, scriptIds);
     const loader = await baseHost.getLoader();
 
     const documentFactory = new DocumentFactory(config.tenantId,
