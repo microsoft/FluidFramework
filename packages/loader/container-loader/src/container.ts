@@ -932,6 +932,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         });
 
         this._deltaManager.on("disconnect", (reason: string) => {
+            this.manualReconnectInProgress = false;
             this.setConnectionState(ConnectionState.Disconnected, reason);
         });
 
