@@ -10,158 +10,114 @@ import {
     IRequest,
     IResponse } from "@microsoft/fluid-component-core-interfaces";
 import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
-import { ChildLogger, Deferred, PerformanceEvent } from "@microsoft/fluid-core-utils";
+import { ChildLogger, PerformanceEvent, PromiseTimer, Timer } from "@microsoft/fluid-core-utils";
 import {
+    IDisposable,
     ISequencedDocumentMessage,
     ISequencedDocumentSystemMessage,
     ISnapshotTree,
-    ISummaryAck,
     ISummaryConfiguration,
-    ISummaryNack,
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
-import * as assert from "assert";
-import { ContainerRuntime, IGeneratedSummaryData } from "./containerRuntime";
+import { ContainerRuntime, GenerateSummaryData } from "./containerRuntime";
+import { RunWhileConnectedCoordinator } from "./runWhileConnectedCoordinator";
+import { IClientSummaryWatcher, ISummaryAckMessage, SummaryCollection } from "./summaryCollection";
 
 // send some telemetry if generate summary takes too long
 const maxSummarizeTimeoutTime = 20000; // 20 sec
 const maxSummarizeTimeoutCount = 5; // double and resend 5 times
 
 /**
- * Wrapper interface holding summary details for a given op
+ * Summarizer is responsible for coordinating when to send generate and send summaries.
+ * It is the main entry point for summary work.
  */
-interface IOpSummaryDetails {
-    // Whether we should summarize at the given op
-    shouldSummarize: boolean;
-
-    // The message to include with the summarize
-    message: string;
-}
-
 export class Summarizer implements IComponentRouter, IComponentRunnable, IComponentLoadable {
-
     public get IComponentRouter() { return this; }
     public get IComponentRunnable() { return this; }
     public get IComponentLoadable() { return this; }
 
-    private summarizeCount: number = 0;
-    private lastSummaryTime: number;
-    private lastSummarySeqNumber: number;
-    private summarizing = false;
-    private summaryPending = false;
-    private opSinceSummarizeSeq?: number;
-    private pendingSummarySequenceNumber?: number;
-    private idleTimer: Timer;
-    private pendingAckTimer: Timer;
-    private readonly summarizeTimer: Timer;
-    private readonly runDeferred = new Deferred<void>();
     private readonly logger: ITelemetryLogger;
-    private configuration: ISummaryConfiguration;
-
-    private deferBroadcast: Deferred<void>;
-    private deferAck: Deferred<void>;
-
+    private readonly runCoordinator: RunWhileConnectedCoordinator;
+    private readonly summaryCollection: SummaryCollection;
     private onBehalfOfClientId: string;
-    private everConnected = false;
+    private runningSummarizer?: RunningSummarizer;
 
     constructor(
         public readonly url: string,
         private readonly runtime: ContainerRuntime,
         private readonly configurationGetter: () => ISummaryConfiguration,
-        private readonly generateSummary: () => Promise<IGeneratedSummaryData>,
+        private readonly generateSummaryCore: () => Promise<GenerateSummaryData>,
         private readonly refreshBaseSummary: (snapshot: ISnapshotTree) => void,
     ) {
         this.logger = ChildLogger.create(this.runtime.logger, "Summarizer");
-
-        // try to determine if the runtime has ever been connected
-        if (this.runtime.connected) {
-            this.everConnected = true;
-        } else {
-            this.runtime.once("connected", () => this.everConnected = true);
-        }
-        this.runtime.on("disconnected", () => {
-            // sometimes the initial connection state is raised as disconnected
-            if (!this.everConnected) {
-                return;
-            }
-            this.logger.sendTelemetryEvent({ eventName: "SummarizerDisconnected" });
-            this.runDeferred.resolve();
-        });
-
-        this.summarizeTimer = new Timer(
-            () => this.summarizeTimerHandler(maxSummarizeTimeoutTime, 1),
-            maxSummarizeTimeoutTime);
+        this.runCoordinator = new RunWhileConnectedCoordinator(runtime);
+        this.summaryCollection = new SummaryCollection(this.runtime.deltaManager.initialSequenceNumber);
+        this.runtime.deltaManager.inbound.on("op",
+            (op) => this.summaryCollection.handleOp(op as ISequencedDocumentMessage));
     }
 
     public async run(onBehalfOf: string): Promise<void> {
         this.onBehalfOfClientId = onBehalfOf;
 
-        if (!this.runtime.connected) {
-            if (!this.everConnected) {
-                const waitConnected = new Promise((resolve) => this.runtime.once("connected", resolve));
-                await Promise.race([waitConnected, this.runDeferred.promise]);
-                if (!this.runtime.connected) {
-                    // if still not connected, no need to start running
-                    this.logger.sendTelemetryEvent({ eventName: "NeverConnectedBeforeRun", onBehalfOf });
-                    return;
-                }
-            } else {
-                // we will not try to reconnect, so we are done running
-                this.logger.sendTelemetryEvent({ eventName: "DisconnectedBeforeRun", onBehalfOf });
-                return;
-            }
-        }
-
-        if (this.runtime.summarizerClientId !== onBehalfOf) {
-            // this calculated summarizer differs from parent
-            // parent SummaryManager should prevent this from happening
-            this.logger.sendErrorEvent({
-                eventName: "ParentIsNotSummarizer",
+        const startResult = await this.runCoordinator.waitStart();
+        if (startResult.started === false) {
+            this.logger.sendTelemetryEvent({
+                eventName: "NotStarted",
+                message: startResult.message,
                 onBehalfOf,
-                expectedSummarizer: this.runtime.summarizerClientId,
             });
             return;
         }
 
-        // need to wait until we are connected to get config
-        this.configuration = this.configurationGetter();
+        if (this.runtime.summarizerClientId !== this.onBehalfOfClientId) {
+            // this calculated summarizer differs from parent
+            // parent SummaryManager should prevent this from happening
+            this.logger.sendErrorEvent({
+                eventName: "ParentIsNotSummarizer",
+                expectedSummarizer: this.runtime.summarizerClientId,
+                onBehalfOf,
+            });
+            return;
+        }
 
-        this.idleTimer = new Timer(
-            () => this.summarize("idle"),
-            this.configuration.idleTime);
-
-        this.pendingAckTimer = new Timer(
-            () => {
-                this.logger.sendErrorEvent({
-                    eventName: "SummaryAckWaitTimeout",
-                    maxAckWaitTime: this.configuration.maxAckWaitTime,
-                    pendingSummarySequenceNumber: this.pendingSummarySequenceNumber,
-                });
-                this.stopPending();
-            }, this.configuration.maxAckWaitTime);
-
-        // initialize values (time is not exact)
-        this.lastSummarySeqNumber = this.runtime.deltaManager.initialSequenceNumber;
-        this.lastSummaryTime = Date.now();
-
+        // initialize values and first ack (time is not exact)
         this.logger.sendTelemetryEvent({
             eventName: "RunningSummarizer",
             onBehalfOf,
-            initSummarySeqNumber: this.lastSummarySeqNumber,
+            initSummarySeqNumber: this.summaryCollection.initialSequenceNumber,
         });
 
-        // start the timer after connecting to the document
-        this.idleTimer.start();
+        const initialAttempt: ISummaryAttempt = {
+            refSequenceNumber: this.summaryCollection.initialSequenceNumber,
+            summaryTime: Date.now(),
+        };
 
-        // listen for system ops
-        this.runtime.deltaManager.inbound.on("op", (op) => this.handleSystemOp(op as ISequencedDocumentMessage));
+        this.runningSummarizer = await RunningSummarizer.start(
+            this.runtime.clientId,
+            onBehalfOf,
+            this.logger,
+            this.summaryCollection.createWatcher(this.runtime.clientId),
+            this.configurationGetter(),
+            () => this.generateSummary(),
+            (ack) => this.handleSuccessfulSummary(ack),
+            this.runtime.deltaManager.referenceSequenceNumber,
+            initialAttempt,
+        );
 
-        this.runtime.on("batchEnd", (error: any, op: ISequencedDocumentMessage) => this.handleOp(error, op));
+        // listen for ops
+        const systemOpHandler = (op: ISequencedDocumentMessage) => this.runningSummarizer.handleSystemOp(op);
+        this.runtime.deltaManager.inbound.on("op", systemOpHandler);
 
-        await this.runDeferred.promise;
+        const opHandler = (error: any, op: ISequencedDocumentMessage) => this.runningSummarizer.handleOp(error, op);
+        this.runtime.on("batchEnd", opHandler);
+
+        // wait until stopped running
+        await this.runCoordinator.waitStopped();
 
         // cleanup after running
         this.dispose();
+        this.runtime.deltaManager.inbound.removeListener("op", systemOpHandler);
+        this.runtime.removeListener("batchEnd", opHandler);
     }
 
     /**
@@ -175,7 +131,7 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
             onBehalfOf: this.onBehalfOfClientId,
             reason,
         });
-        this.runDeferred.resolve();
+        this.runCoordinator.stop();
         this.runtime.closeFn();
     }
 
@@ -193,10 +149,41 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
      * properties.
      */
     private dispose() {
-        this.idleTimer.clear();
-        this.summarizeTimer.clear();
-        this.opSinceSummarizeSeq = undefined;
-        this.stopPending();
+        if (this.runningSummarizer) {
+            this.runningSummarizer.dispose();
+            this.runningSummarizer = undefined;
+        }
+    }
+
+    private async generateSummary(): Promise<GenerateSummaryData | undefined> {
+        if (this.onBehalfOfClientId !== this.runtime.summarizerClientId) {
+            // we are no longer the summarizer, we should stop ourself
+            this.stop("parentNoLongerSummarizer");
+            return undefined;
+        }
+
+        return this.generateSummaryCore();
+    }
+
+    private async handleSuccessfulSummary(ack: ISummaryAckMessage): Promise<void> {
+        // we have to call get version to get the treeId for r11s; this isnt needed
+        // for odsp currently, since their treeId is undefined
+        const versionsResult = await this.setOrLogError("SummarizerFailedToGetVersion",
+            () => this.runtime.storage.getVersions(ack.contents.handle, 1),
+            (versions) => !!(versions && versions.length));
+
+        if (versionsResult.success) {
+            const snapshotResult = await this.setOrLogError("SummarizerFailedToGetSnapshot",
+                () => this.runtime.storage.getSnapshotTree(versionsResult.result[0]),
+                (snapshot) => !!snapshot);
+
+            if (snapshotResult.success) {
+                // refresh base summary
+                // it might be nice to do this in the container in the future, and maybe for all
+                // clients, not just the summarizer
+                this.refreshBaseSummary(snapshotResult.result);
+            }
+        }
     }
 
     private async setOrLogError<T>(
@@ -220,12 +207,121 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
         }
         return { result, success };
     }
+}
 
-    private handleSystemOp(op: ISequencedDocumentMessage) {
+/**
+ * Data about a summary attempt
+ */
+export interface ISummaryAttempt {
+    /**
+     * Reference sequence number when summary was generated
+     */
+    readonly refSequenceNumber: number;
+
+    /**
+     * Time of summary attempt after it was sent
+     */
+    readonly summaryTime: number;
+
+    /**
+     * Sequence number of summary op
+     */
+    summarySequenceNumber?: number;
+}
+
+/**
+ * An instance of RunningSummarizer manages the heuristics for summarizing.
+ * Until disposed, the instance of RunningSummarizer can assume that it is
+ * in a state of running, meaning it is connected and initialized.  It keeps
+ * track of summaries that it is generating as they are broadcast and acked/nacked.
+ */
+export class RunningSummarizer implements IDisposable {
+    public static async start(
+        clientId: string,
+        onBehalfOfClientId: string,
+        logger: ITelemetryLogger,
+        summaryWatcher: IClientSummaryWatcher,
+        configuration: ISummaryConfiguration,
+        generateSummary: () => Promise<GenerateSummaryData | undefined>,
+        handleSuccessfulSummary: (ack: ISummaryAckMessage) => Promise<void>,
+        lastOpSeqNumber: number,
+        firstAck: ISummaryAttempt,
+    ): Promise<RunningSummarizer> {
+        const summarizer = new RunningSummarizer(
+            clientId,
+            onBehalfOfClientId,
+            logger,
+            summaryWatcher,
+            configuration,
+            generateSummary,
+            handleSuccessfulSummary,
+            lastOpSeqNumber,
+            firstAck);
+
+        await summarizer.waitStart();
+        return summarizer;
+    }
+
+    public get disposed() { return this._disposed; }
+
+    private _disposed = false;
+    private summarizing = false;
+    private summarizeCount: number = 0;
+    private tryWhileSummarizing = false;
+    private readonly summarizeTimer: Timer;
+    private readonly pendingAckTimer: PromiseTimer;
+    private readonly heuristics: SummarizerHeuristics;
+
+    private constructor(
+        private readonly clientId: string,
+        private readonly onBehalfOfClientId: string,
+        private readonly logger: ITelemetryLogger,
+        private readonly summaryWatcher: IClientSummaryWatcher,
+        private readonly configuration: ISummaryConfiguration,
+        private readonly generateSummary: () => Promise<GenerateSummaryData | undefined>,
+        private readonly handleSuccessfulSummary: (ack: ISummaryAckMessage) => Promise<void>,
+        lastOpSeqNumber: number,
+        firstAck: ISummaryAttempt,
+    ) {
+        this.heuristics = new SummarizerHeuristics(
+            configuration,
+            (reason) => this.trySummarize(reason),
+            lastOpSeqNumber,
+            firstAck);
+
+        this.summarizeTimer = new Timer(
+            maxSummarizeTimeoutTime,
+            () => this.summarizeTimerHandler(maxSummarizeTimeoutTime, 1));
+
+        this.pendingAckTimer = new PromiseTimer(
+            this.configuration.maxAckWaitTime,
+            () => {
+                this.logger.sendErrorEvent({
+                    eventName: "SummaryAckWaitTimeout",
+                    maxAckWaitTime: this.configuration.maxAckWaitTime,
+                    refSequenceNumber: this.heuristics.lastSent.refSequenceNumber,
+                    summarySequenceNumber: this.heuristics.lastSent.summarySequenceNumber,
+                    timePending: Date.now() - this.heuristics.lastSent.summaryTime,
+                });
+            });
+
+        // run the heuristics after starting
+        this.heuristics.run();
+    }
+
+    public dispose(): void {
+        this.summaryWatcher.dispose();
+        this.heuristics.dispose();
+        this.summarizeTimer.clear();
+        this.pendingAckTimer.clear();
+        this._disposed = true;
+    }
+
+    public handleSystemOp(op: ISequencedDocumentMessage) {
         switch (op.type) {
             case MessageType.ClientLeave: {
                 const leavingClientId = JSON.parse((op as ISequencedDocumentSystemMessage).data) as string;
-                if (leavingClientId === this.runtime.clientId || leavingClientId === this.onBehalfOfClientId) {
+                if (leavingClientId === this.clientId || leavingClientId === this.onBehalfOfClientId) {
                     // ignore summarizer leave messages, to make sure not to start generating
                     // a summary as the summarizer is leaving
                     return;
@@ -239,269 +335,161 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
                 this.handleOp(undefined, op);
                 return;
             }
-            case MessageType.Summarize: {
-                this.handleSummaryOp(op)
-                .then((ownMessage) => {
-                    if (!ownMessage) {
-                        this.logger.sendErrorEvent({
-                            eventName: "SummarizeOpOtherClient",
-                            summaryPending: this.summaryPending,
-                        });
-                    }
-                })
-                .catch((error) => {
-                    this.logger.sendErrorEvent({ eventName: "HandleSummaryOpError" }, error);
-                });
-                return;
-            }
-            case MessageType.SummaryAck:
-            case MessageType.SummaryNack: {
-                this.handleSummaryAck(op)
-                .then((ownMessage) => {
-                    if (!ownMessage) {
-                        const ack = op.contents;
-                        this.logger.sendErrorEvent({
-                            eventName:
-                                op.type === MessageType.SummaryAck ?
-                                "SummaryAckOtherClient" :
-                                "SummaryNackOtherClient",
-                            sequenceNumber: op.sequenceNumber,
-                            message:
-                                op.type === MessageType.SummaryNack ?
-                                (ack as ISummaryNack).errorMessage :
-                                `handle: ${(ack as ISummaryAck).handle}`,
-                        });
-                    }
-                })
-                .catch((error) => {
-                    this.logger.sendErrorEvent({ eventName: "HandleSummaryAckError" }, error);
-                });
-                return;
-            }
             default: {
                 return;
             }
         }
     }
 
-    /**
-     * @param op - Summary op
-     * @returns true, if summary Op was for summary issued by that client. False otherwise
-     */
-    private async handleSummaryOp(op: ISequencedDocumentMessage): Promise<boolean> {
-        // listen for the broadcast of this summary op
-        // only look for broadcast summary op while pending
-        if (!this.summaryPending) {
-            return false;
-        }
-        // When pending, we need to wait until the lastSummarySeqNumber is set before
-        // trying to find our broadcast summary op.  So we will essentially defer all
-        // Summarize op handling here until deferBroadcast is resolved.
-        await this.deferBroadcast.promise;
-        // can skip check if already found this pending summary sequence number
-        if (this.pendingSummarySequenceNumber) {
-            return false;
-        }
-        // should only be 1 summary op per client with same ref seq number
-        if (op.clientId !== this.runtime.clientId || op.referenceSequenceNumber !== this.lastSummarySeqNumber) {
-            return false;
-        }
-
-        this.logger.sendTelemetryEvent({
-            eventName: "SummarizeOp",
-            timeWaitingForBroadcast: Date.now() - this.lastSummaryTime,
-            onBehalfOf: this.onBehalfOfClientId,
-            pendingSummarySequenceNumber: op.sequenceNumber,
-            refSequenceNumber: op.referenceSequenceNumber,
-            summarySequenceNumber: op.sequenceNumber,
-        });
-        this.pendingSummarySequenceNumber = op.sequenceNumber;
-        // Now we indicate that we are okay to start listening for the summary ack/nack
-        // of this summary op, because we have set the pendingSummarySequenceNumber.
-        this.deferAck.resolve();
-
-        return true;
-    }
-
-    /**
-     * @param op - Summary ack/nack op
-     * @returns true, if op was for summary issued by that client. False otherwise
-     */
-    private async handleSummaryAck(op: ISequencedDocumentMessage) {
-        // listen for the ack/nack of this summary op
-        // only look for acks/nacks while pending
-        if (!this.summaryPending) {
-            return false;
-        }
-        // Since this handler is async, we need to wait until the pendingSummarySequenceNumber is
-        // set from the broadcast summary op before handling summary acks/nacks.  We use
-        // this deferred object to ensure that our broadcast summary op is handled before our
-        // summary ack/nack is handled.
-        await this.deferAck.promise;
-        if (!this.pendingSummarySequenceNumber) {
-            // never figured out this pending summary sequence number
-            return false;
-        }
-
-        const ack = op.contents as ISummaryAck | ISummaryNack;
-        if (ack.summaryProposal.summarySequenceNumber !== this.pendingSummarySequenceNumber) {
-            // different ack/nack
-            return false;
-        }
-
-        // log some telemetry
-        this.logger.sendTelemetryEvent({
-            eventName: op.type === MessageType.SummaryAck ? "SummaryAck" : "SummaryNack",
-            category: op.type === MessageType.SummaryAck ? "generic" : "error",
-            onBehalfOf: this.onBehalfOfClientId,
-            timePending: Date.now() - this.lastSummaryTime,
-            summarySequenceNumber: ack.summaryProposal.summarySequenceNumber,
-            sequenceNumber: op.sequenceNumber,
-            message:
-                op.type === MessageType.SummaryNack ?
-                (ack as ISummaryNack).errorMessage :
-                `handle: ${(ack as ISummaryAck).handle}`,
-        });
-
-        if (op.type === MessageType.SummaryAck) {
-            // refresh base snapshot
-            // it might be nice to do this in the container in the future, and maybe for all
-            // clients, not just the summarizer
-            const handle = (ack as ISummaryAck).handle;
-
-            // we have to call get version to get the treeId for r11s; this isnt needed
-            // for odsp currently, since their treeId is undefined
-            const versionsResult = await this.setOrLogError("SummarizerFailedToGetVersion",
-                () => this.runtime.storage.getVersions(handle, 1),
-                (versions) => !!(versions && versions.length));
-
-            if (versionsResult.success) {
-                const snapshotResult = await this.setOrLogError("SummarizerFailedToGetSnapshot",
-                    () => this.runtime.storage.getSnapshotTree(versionsResult.result[0]),
-                    (snapshot) => !!snapshot);
-
-                if (snapshotResult.success) {
-                    this.refreshBaseSummary(snapshotResult.result);
-                }
-            }
-        }
-        this.stopPending();
-        return true;
-    }
-
-    private handleOp(error: any, op: ISequencedDocumentMessage) {
-        if (error) {
+    public handleOp(error: any, op: ISequencedDocumentMessage) {
+        if (error !== undefined) {
             return;
         }
+        this.heuristics.lastOpSeqNumber = op.sequenceNumber;
 
-        this.idleTimer.clear();
-
-        // We are currently summarizing. Don't summarize again.
-        if (this.summarizing || this.summaryPending) {
-            // Track that an op has come in to restart the idle timer.
-            this.opSinceSummarizeSeq = op.sequenceNumber;
-            return;
-        }
-
-        // Get the summary details for the given op
-        const lastOpSummaryDetails = this.getOpSummaryDetails(op);
-
-        if (lastOpSummaryDetails.shouldSummarize) {
-            // Summarize immediately if requested
-            this.summarize(lastOpSummaryDetails.message);
-        } else {
-            // Otherwise detect when we idle to trigger the snapshot
-            this.idleTimer.start();
-        }
-    }
-
-    private getOpSummaryDetails(op: ISequencedDocumentMessage): IOpSummaryDetails {
+        // check for ops requesting summary
         if (op.type === MessageType.Save) {
-            // Forced summary.
-            return {
-                message: `;${op.clientId}: ${op.contents}`,
-                shouldSummarize: true,
-            };
-        }
-
-        // Summarize if it has been above the max time between summaries.
-        const timeSinceLastSummary = Date.now() - this.lastSummaryTime;
-        const opCountSinceLastSummary = op.sequenceNumber - this.lastSummarySeqNumber;
-
-        if (timeSinceLastSummary > this.configuration.maxTime) {
-            return {
-                message: "maxTime",
-                shouldSummarize: true,
-            };
-        } else if (opCountSinceLastSummary > this.configuration.maxOps) {
-            return {
-                message: "maxOps",
-                shouldSummarize: true,
-            };
+            this.trySummarize(`;${op.clientId}: ${op.contents}`);
         } else {
-            return {
-                message: "",
-                shouldSummarize: false,
-            };
+            this.heuristics.run();
         }
     }
 
-    private summarize(message: string) {
-        // it shouldn't be possible to enter here if already summarizing or pending
-        assert(!this.summarizing && !this.summaryPending);
+    private async waitStart() {
+        // wait no longer than ack timeout for all pending
+        const maybeLastAck = await Promise.race([
+            this.summaryWatcher.waitFlushed(),
+            this.pendingAckTimer.start(),
+        ]);
+        this.pendingAckTimer.clear();
 
-        if (this.onBehalfOfClientId !== this.runtime.summarizerClientId) {
-            // we are no longer the summarizer, we should stop ourself
-            this.stop("parentNoLongerSummarizer");
+        if (maybeLastAck) {
+            this.heuristics.lastSent = {
+                refSequenceNumber: maybeLastAck.summaryOp.referenceSequenceNumber,
+                summaryTime: maybeLastAck.summaryOp.timestamp,
+                summarySequenceNumber: maybeLastAck.summaryOp.sequenceNumber,
+            };
+            this.heuristics.ackLastSent();
+        }
+    }
+
+    private trySummarize(reason: string) {
+        if (this.summarizing) {
+            // we can't summarize if we are already
+            this.tryWhileSummarizing = true;
             return;
         }
 
         // generateSummary could take some time
         // mark that we are currently summarizing to prevent concurrent summarizing
         this.summarizing = true;
-        this.startPending();
-
-        const summarizingEvent = PerformanceEvent.start(this.logger,
-            { eventName: "Summarizing", message, summarizeCount: ++this.summarizeCount });
-
         this.summarizeTimer.start();
 
-        this.generateSummary().finally(() => {
-            // always leave summarizing state
+        // tslint:disable-next-line: no-floating-promises
+        this.summarize(reason).finally(() => {
             this.summarizing = false;
             this.summarizeTimer.clear();
-        }).then((summaryData) => {
-            const summaryEndTime = Date.now();
-
-            const telemetryProps = {
-                refSequenceNumber: summaryData.sequenceNumber,
-                ...summaryData.summaryStats,
-                summaryMessage: summaryData.summaryMessage,
-                opsSinceLastSummary: summaryData.sequenceNumber - this.lastSummarySeqNumber,
-                timeSinceLastSummary: summaryEndTime - this.lastSummaryTime,
-            };
-            if (!summaryData.submitted) {
-                // did not send the summary op
-                summarizingEvent.cancel({...telemetryProps });
-                this.stopPending();
-                return;
+            this.pendingAckTimer.clear();
+            if (this.tryWhileSummarizing) {
+                this.tryWhileSummarizing = false;
+                this.heuristics.run();
             }
-
-            summarizingEvent.end(telemetryProps);
-
-            this.lastSummaryTime = summaryEndTime;
-            this.lastSummarySeqNumber = summaryData.sequenceNumber;
-
-            // Because summarizing is async, the incoming op stream will be resumed before
-            // we update our lastSummarySeqNumber.  We use this to defer the broadcast listeners
-            // until we are sure that no summary ops are handled before lastSummarySeqNumber is
-            // set here.
-            this.deferBroadcast.resolve();
-            this.pendingAckTimer.start();
-        }, (error) => {
-            summarizingEvent.cancel({}, error);
-            this.stopPending();
         });
+    }
+
+    private async summarize(reason: string) {
+        // wait to generate and send summary
+        const summaryData = await this.generateSummaryWithLogging(reason);
+        if (!summaryData.submitted) {
+            // did not send the summary op
+            return;
+        }
+
+        this.heuristics.lastSent = {
+            refSequenceNumber: summaryData.referenceSequenceNumber,
+            summaryTime: Date.now(),
+        };
+
+        const pendingTimeoutP = this.pendingAckTimer.start();
+        const summary = this.summaryWatcher.watchSummary(summaryData.clientSequenceNumber);
+
+        // wait for broadcast
+        const summaryOp = await Promise.race([summary.waitBroadcast(), pendingTimeoutP]);
+        if (!summaryOp) {
+            return;
+        }
+        this.heuristics.lastSent.summarySequenceNumber = summaryOp.sequenceNumber;
+        this.logger.sendTelemetryEvent({
+            eventName: "SummaryOp",
+            timeWaiting: Date.now() - this.heuristics.lastSent.summaryTime,
+            refSequenceNumber: summaryOp.referenceSequenceNumber,
+            summarySequenceNumber: summaryOp.sequenceNumber,
+            handle: summaryOp.contents.handle,
+        });
+
+        // wait for ack/nack
+        const ackNack = await Promise.race([summary.waitAckNack(), pendingTimeoutP]);
+        if (!ackNack) {
+            return;
+        }
+        this.logger.sendTelemetryEvent({
+            eventName: ackNack.type === MessageType.SummaryAck ? "SummaryAck" : "SummaryNack",
+            category: ackNack.type === MessageType.SummaryAck ? "generic" : "error",
+            timeWaiting: Date.now() - this.heuristics.lastSent.summaryTime,
+            summarySequenceNumber: ackNack.contents.summaryProposal.summarySequenceNumber,
+            message: ackNack.type === MessageType.SummaryNack ? ackNack.contents.errorMessage : undefined,
+            handle: ackNack.type === MessageType.SummaryAck ? ackNack.contents.handle : undefined,
+        });
+
+        // update for success
+        if (ackNack.type === MessageType.SummaryAck) {
+            this.heuristics.ackLastSent();
+            await this.handleSuccessfulSummary(ackNack);
+        }
+    }
+
+    private async generateSummaryWithLogging(message: string): Promise<GenerateSummaryData | undefined> {
+        const summarizingEvent = PerformanceEvent.start(this.logger, {
+            eventName: "Summarizing",
+            message,
+            summarizeCount: ++this.summarizeCount,
+            timeSinceLastAttempt: Date.now() - this.heuristics.lastSent.summaryTime,
+            timeSinceLastSummary: Date.now() - this.heuristics.lastAcked.summaryTime,
+        });
+
+        // wait for generate/send summary
+        let summaryData: GenerateSummaryData | undefined;
+        try {
+            summaryData = await this.generateSummary();
+        } catch (error) {
+            summarizingEvent.cancel({}, error);
+            return;
+        }
+
+        this.summarizeTimer.clear();
+
+        if (!summaryData) {
+            summarizingEvent.cancel();
+            return;
+        }
+
+        const telemetryProps = {
+            ...summaryData,
+            ...summaryData.summaryStats,
+            refSequenceNumber: summaryData.referenceSequenceNumber,
+            opsSinceLastAttempt: summaryData.referenceSequenceNumber - this.heuristics.lastSent.refSequenceNumber,
+            opsSinceLastSummary: summaryData.referenceSequenceNumber - this.heuristics.lastAcked.refSequenceNumber,
+        };
+        telemetryProps.summaryStats = undefined;
+        telemetryProps.referenceSequenceNumber = undefined;
+
+        if (summaryData.submitted) {
+            summarizingEvent.end(telemetryProps);
+        } else {
+            summarizingEvent.cancel({...telemetryProps, category: "error"});
+        }
+
+        return summaryData;
     }
 
     private summarizeTimerHandler(time: number, count: number) {
@@ -513,73 +501,74 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
         if (count < maxSummarizeTimeoutCount) {
             // double and start a new timer
             const nextTime = time * 2;
-            this.summarizeTimer.start(() => this.summarizeTimerHandler(nextTime, count + 1), nextTime);
-        }
-    }
-
-    /**
-     * Enters pending state, which means waiting for a summary op to
-     * to be generated, sent, broadcast, and acked/nacked.  This sets
-     * the stages of pending using deferreds.
-     */
-    private startPending() {
-        this.summaryPending = true;
-        this.pendingSummarySequenceNumber = undefined;
-        this.deferBroadcast = new Deferred();
-        this.deferAck = new Deferred();
-    }
-
-    /**
-     * Exits the pending state, which resolves the deferreds,
-     * clears the timeout, and resets the pending state properties.
-     */
-    private stopPending() {
-        this.summaryPending = false;
-        this.pendingAckTimer.clear();
-        // release all deferred summary op/ack/nack handlers
-        if (this.deferBroadcast) {
-            this.deferBroadcast.resolve();
-        }
-        if (this.deferAck) {
-            this.deferAck.resolve();
-        }
-        // start idle timer if ops came in while pending
-        if (this.opSinceSummarizeSeq && this.opSinceSummarizeSeq > this.lastSummarySeqNumber) {
-            if (this.runtime.connected) {
-                this.idleTimer.start();
-            }
-            this.opSinceSummarizeSeq = undefined;
+            this.summarizeTimer.start(nextTime, () => this.summarizeTimerHandler(nextTime, count + 1));
         }
     }
 }
 
-class Timer {
-    public get hasTimer() {
-        return !!this.timer;
+/**
+ * This class contains the heuristics for when to summarize.
+ */
+class SummarizerHeuristics {
+    /**
+     * Last sent summary attempt
+     */
+    public lastSent: ISummaryAttempt;
+    private _lastAcked: ISummaryAttempt;
+
+    /**
+     * Last acked summary attempt
+     */
+    public get lastAcked(): ISummaryAttempt {
+        return this._lastAcked;
     }
 
-    private timer?: NodeJS.Timeout;
+    private readonly idleTimer: Timer;
 
-    constructor(
-        private readonly defaultHandler: () => void,
-        private readonly defaultTimeout: number) {}
-
-    public start(handler: () => void = this.defaultHandler, timeout: number = this.defaultTimeout) {
-        this.clear();
-        this.timer = setTimeout(() => this.wrapHandler(handler), timeout);
+    public constructor(
+        private readonly configuration: ISummaryConfiguration,
+        private readonly trySummarize: (reason: string) => void,
+        /**
+         * Last received op sequence number
+         */
+        public lastOpSeqNumber: number,
+        firstAck: ISummaryAttempt,
+    ) {
+        this.lastSent = firstAck;
+        this._lastAcked = firstAck;
+        this.idleTimer = new Timer(
+            this.configuration.idleTime,
+            () => this.trySummarize("idle"));
     }
 
-    public clear() {
-        if (!this.timer) {
-            return;
+    /**
+     * Mark the last sent summary attempt as acked.
+     */
+    public ackLastSent() {
+        this._lastAcked = this.lastSent;
+    }
+
+    /**
+     * Runs the heuristic to determine if it should try to summarize.
+     */
+    public run() {
+        this.idleTimer.clear();
+        const timeSinceLastSummary = Date.now() - this.lastAcked.summaryTime;
+        const opCountSinceLastSummary = this.lastOpSeqNumber - this.lastAcked.refSequenceNumber;
+
+        if (timeSinceLastSummary > this.configuration.maxTime) {
+            this.trySummarize("maxTime");
+        } else if (opCountSinceLastSummary > this.configuration.maxOps) {
+            this.trySummarize("maxOps");
+        } else {
+            this.idleTimer.start();
         }
-        clearTimeout(this.timer);
-        this.timer = undefined;
     }
 
-    private wrapHandler(handler: () => void) {
-        // run clear first, in case the handler decides to start again
-        this.clear();
-        handler();
+    /**
+     * Disposes of resources.
+     */
+    public dispose() {
+        this.idleTimer.clear();
     }
 }

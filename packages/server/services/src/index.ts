@@ -11,6 +11,7 @@ export * from "./kafkaNodeConsumer";
 export * from "./kafkaNodeProducer";
 export * from "./messageReceiver";
 export * from "./messageSender";
+export * from "./metricClient";
 export * from "./mongodb";
 export * from "./nodeCodeLoader";
 export * from "./redis";

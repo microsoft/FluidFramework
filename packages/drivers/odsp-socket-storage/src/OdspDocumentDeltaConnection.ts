@@ -231,5 +231,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
 
         OdspDocumentDeltaConnection.removeSocketIoReference(this.socketReferenceKey);
         this.socketReferenceKey = undefined;
+
+        this.emit("disconnect", "client closing connection");
     }
 }

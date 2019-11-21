@@ -7,6 +7,7 @@ import * as MergeTree from "@microsoft/fluid-merge-tree";
 import * as fs from "fs";
 import * as path from "path";
 
+// tslint:disable non-literal-fs-path
 const corpusFilenames = ["pp.txt", "huckfinn.txt", "shakespeare.txt", "tomsawyer.txt", "ulysses.txt"];
 
 function shuffle<T>(a: T[]) {

@@ -4,13 +4,12 @@
  */
 
 import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
-import { BaseHost, IHostConfig } from "@microsoft/fluid-base-host";
+import { BaseHost, IBaseHostConfig } from "@microsoft/fluid-base-host";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import {
     IFluidModule,
     IFluidPackage,
     IPackage,
-    IProxyLoaderFactory,
     isFluidPackage,
 } from "@microsoft/fluid-container-definitions";
 import { IDocumentServiceFactory, IUrlResolver } from "@microsoft/fluid-driver-definitions";
@@ -209,7 +208,7 @@ export async function start(
         deltaConn = TestDeltaConnectionServer.create(new SessionStorageDbFactory(documentId));
         documentServiceFactory = new TestDocumentServiceFactory(deltaConn);
     }
-    const hostConf: IHostConfig = { documentServiceFactory, urlResolver };
+    const hostConf: IBaseHostConfig = { documentServiceFactory, urlResolver };
 
     const double = (options.mode === "local") && !options.single;
     let leftDiv: HTMLDivElement;
@@ -221,15 +220,12 @@ export async function start(
     }
 
     const start1Promise = BaseHost.start(
+        hostConf,
         url,
         await urlResolver.resolve(req),
         pkg,
         scriptIds,
-        {},
-        {},
         double ? leftDiv : div,
-        hostConf,
-        new Map<string, IProxyLoaderFactory>(),
     );
 
     let start2Promise: Promise<any> = Promise.resolve();
@@ -241,15 +237,12 @@ export async function start(
         // BaseHost.start will create a new Loader/Container/Component from the startCore above. This is
         // intentional because we want to emulate two clients collaborating with each other.
         start2Promise = BaseHost.start(
+            hostConf2,
             url,
             await urlResolver.resolve(req),
             pkg,
             scriptIds,
-            {},
-            {},
             rightDiv,
-            hostConf2,
-            new Map<string, IProxyLoaderFactory>(),
         );
     }
     await Promise.all([start1Promise, start2Promise]);

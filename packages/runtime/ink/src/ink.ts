@@ -21,9 +21,9 @@ import {
     ICreateStrokeOperation,
     IInk,
     IInkOperation,
+    IInkPoint,
     IInkStroke,
     IPen,
-    IPoint,
     IStylusOperation,
 } from "./interfaces";
 import { InkData, ISerializableInk } from "./snapshot";
@@ -57,60 +57,6 @@ export class Ink extends SharedObject implements IInk {
     }
 
     /**
-     * Generate a new create stroke operation.
-     * @param pen - Description of the pen used to create the stroke
-     * @returns The new create stroke operation
-     */
-    public static makeCreateStrokeOperation(pen: IPen): ICreateStrokeOperation {
-        const id: string = uuid();
-        const time: number = new Date().getTime();
-
-        return {
-            id,
-            pen,
-            time,
-            type: "createStroke",
-        };
-    }
-
-    /**
-     * Generate a new clear operation.
-     * @returns The new clear operation
-     */
-    public static makeClearOperation(): IClearOperation {
-        const time: number = new Date().getTime();
-
-        return {
-            time,
-            type: "clear",
-        };
-    }
-
-    /**
-     * Generate a new stylus operation.  These represent updates to an existing stroke.  To be valid, the id must
-     * match an already-existing stroke.
-     * @param point - Location of the stylus
-     * @param pressure - The pressure applied
-     * @param id - Unique ID of the stroke this operation is associated with
-     * @returns The new stylus operation
-     */
-    public static makeStylusOperation(
-        point: IPoint,
-        pressure: number,
-        id: string,
-    ): IStylusOperation {
-        const time: number = new Date().getTime();
-
-        return {
-            id,
-            point,
-            pressure,
-            time,
-            type: "stylus",
-        };
-    }
-
-    /**
      * The current ink snapshot.
      */
     private inkData: InkData = new InkData();
@@ -125,6 +71,45 @@ export class Ink extends SharedObject implements IInk {
     }
 
     /**
+     * {@inheritDoc IInk.createStroke}
+     */
+    public createStroke(pen: IPen): IInkStroke {
+        const createStrokeOperation: ICreateStrokeOperation = {
+            id: uuid(),
+            pen,
+            time: Date.now(),
+            type: "createStroke",
+        };
+        this.submitLocalMessage(createStrokeOperation);
+        return this.executeCreateStrokeOperation(createStrokeOperation);
+    }
+
+    /**
+     * {@inheritDoc IInk.appendPointToStroke}
+     */
+    public appendPointToStroke(point: IInkPoint, id: string): IInkStroke {
+        const stylusOperation: IStylusOperation = {
+            id,
+            point,
+            type: "stylus",
+        };
+        this.submitLocalMessage(stylusOperation);
+        return this.executeStylusOperation(stylusOperation);
+    }
+
+    /**
+     * {@inheritDoc IInk.clear}
+     */
+    public clear(): void {
+        const clearOperation: IClearOperation = {
+            time: Date.now(),
+            type: "clear",
+        };
+        this.submitLocalMessage(clearOperation);
+        this.executeClearOperation(clearOperation);
+    }
+
+    /**
      * {@inheritDoc IInk.getStrokes}
      */
     public getStrokes(): IInkStroke[] {
@@ -136,14 +121,6 @@ export class Ink extends SharedObject implements IInk {
      */
     public getStroke(key: string): IInkStroke {
         return this.inkData.getStroke(key);
-    }
-
-    /**
-     * {@inheritDoc IInk.submitOperation}
-     */
-    public submitOperation(operation: IInkOperation): void {
-        this.submitLocalMessage(operation);
-        this.processOperation(operation);
     }
 
     /**
@@ -189,7 +166,14 @@ export class Ink extends SharedObject implements IInk {
      */
     protected processCore(message: ISequencedDocumentMessage, local: boolean): void {
         if (message.type === MessageType.Operation && !local) {
-            this.processOperation(message.contents as IInkOperation);
+            const operation = message.contents as IInkOperation;
+            if (operation.type === "clear") {
+                this.executeClearOperation(operation);
+            } else if (operation.type === "createStroke") {
+                this.executeCreateStrokeOperation(operation);
+            } else if (operation.type === "stylus") {
+                this.executeStylusOperation(operation);
+            }
         }
     }
 
@@ -208,49 +192,42 @@ export class Ink extends SharedObject implements IInk {
     }
 
     /**
-     * Check operation type and route appropriately.
-     * @param operation - Operation to process (might be local or remote)
-     */
-    private processOperation(operation: IInkOperation): void {
-        if (operation.type === "clear") {
-            this.processClearOp(operation);
-        } else if (operation.type === "createStroke") {
-            this.processCreateStrokeOp(operation);
-        } else if (operation.type === "stylus") {
-            this.processStylusOp(operation);
-        }
-    }
-
-    /**
-     * Process a clear operation.
+     * Update the model for a clear operation.
      * @param operation - The operation object
      */
-    private processClearOp(operation: IClearOperation): void {
+    private executeClearOperation(operation: IClearOperation): void {
+        this.emit("clear", operation);
         this.inkData.clear();
     }
 
     /**
-     * Process a create stroke operation.
+     * Update the model for a create stroke operation.
      * @param operation - The operation object
+     * @returns The stroke that was created
      */
-    private processCreateStrokeOp(operation: ICreateStrokeOperation): void {
+    private executeCreateStrokeOperation(operation: ICreateStrokeOperation): IInkStroke {
         const stroke: IInkStroke = {
             id: operation.id,
-            operations: [],
+            points: [],
             pen: operation.pen,
         };
         this.inkData.addStroke(stroke);
+        this.emit("createStroke", operation);
+        return stroke;
     }
 
     /**
-     * Process a stylus operation.  These represent updates to an existing stroke.
+     * Update the model for a stylus operation.  These represent updates to an existing stroke.
      * @param operation - The operation object
+     * @returns The stroke that was updated
      */
-    private processStylusOp(operation: IStylusOperation): void {
+    private executeStylusOperation(operation: IStylusOperation): IInkStroke {
         // Need to make sure the stroke is still there (hasn't been cleared) before appending the down/move/up.
         const stroke = this.getStroke(operation.id);
         if (stroke !== undefined) {
-            stroke.operations.push(operation);
+            stroke.points.push(operation.point);
+            this.emit("stylus", operation);
         }
+        return stroke;
     }
 }
