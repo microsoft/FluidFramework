@@ -114,7 +114,7 @@ Component can use to render into. Every time `render(...)` is called we should p
 > [!NOTE]
 > This is the point where React and vanillaJS differ.
 
-#### [React Implementation](#tab/tabid-3)
+#### [React Implementation](#tab/tabid-1)
 We create a `rerender` function that will display our content into the provided `HTMLElement`.
 To get the dice value we use the `get` method on the root, using the same key `diceValue` that
 we created in `componentInitializingFirstTime()`. Because we are using React we will call
@@ -164,7 +164,7 @@ private getDiceChar(value: number) {
 }
 ```
 
-#### [VanillaJS Implementation](#tab/tabid-4)
+#### [VanillaJS Implementation](#tab/tabid-2)
 
 The VanillaJS implementation is similar in many ways to the React version.
 
@@ -200,16 +200,18 @@ this.root.on("valueChanged", () => {
 });
 ```
 
+***
+
 ### Component Instantiation
 
 In order to make our component compatible with the Fluid Framework we must have a way of creating a
 new instance. We require having an instantiation factory because it's required to define all supported
-distributed data structures up from. Defining all the DDSs up front allows for the Fluid Framework to load
+distributed data structures up front. Defining all the DDSs up front allows for the Fluid Framework to load
 from a snapshot without worrying that something might exist in the snapshot that the framework can't understand.
 
 In the example below we use the <xref:@microsoft/fluid-aqueduct!PrimedComponentFactory:class> as a helper to create our
-instantiation factory. As properties we pass in our supported distributed data structures.
-In this scenario we don't use any additional distributed data structures, so we pass an empty array.
+instantiation factory. As properties we pass in our supported distributed data structures. In this scenario we don't use
+any additional distributed data structures, so we pass an empty array.
 
 ```typescript
 [],
@@ -233,7 +235,7 @@ export const fluidExport = new PrimedComponentFactory(
 
 ## Custom container
 
-If you instead chose to customize your container during the yo fluid setup, a couple things change.
+If you instead chose to customize your container during the `yo fluid` setup, a couple things change.
 
 ### Factory export
 
