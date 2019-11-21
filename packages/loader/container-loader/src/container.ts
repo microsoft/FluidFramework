@@ -980,7 +980,9 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         const duration = time - this.connectionTransitionTimes[oldState];
 
         let connectionStarter: string;
-        if (this.firstConnection) {
+        if (value === ConnectionState.Disconnected) {
+            connectionStarter = "Disconnect";
+        } else if (this.firstConnection) {
             connectionStarter = "InitialConnect";
         } else if (this.manualReconnectInProgress) {
             connectionStarter = "ManualReconnect";
