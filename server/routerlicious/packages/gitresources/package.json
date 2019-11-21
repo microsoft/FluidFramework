@@ -1,0 +1,25 @@
+{
+  "name": "@microsoft/fluid-gitresources",
+  "version": "0.12.0",
+  "description": "Git resource definitions",
+  "license": "MIT",
+  "author": "Microsoft",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "concurrently npm:build:compile npm:tslint",
+    "build:compile": "npm run tsc",
+    "build:full": "npm run build",
+    "build:full:compile": "npm run build:compile",
+    "clean": "rimraf dist *.tsbuildinfo package-deps.json *.build.log",
+    "tsc": "tsc",
+    "tslint": "tslint --project tsconfig.json --format verbose"
+  },
+  "devDependencies": {
+    "@microsoft/fluid-build-common": "^0.12.0",
+    "concurrently": "^4.1.0",
+    "rimraf": "^2.6.2",
+    "tslint": "^5.11.0",
+    "typescript": "~3.4.5"
+  }
+}
