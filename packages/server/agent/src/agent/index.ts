@@ -11,7 +11,6 @@ export * from "./baseWork";
 export * from "./snapshotWork";
 export * from "./spellcheckerWork";
 export * from "./intelWork";
-export * from "./metricClient";
 export * from "./agentLoader";
 export * from "./workManager";
 export * from "./utils";

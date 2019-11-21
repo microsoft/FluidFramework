@@ -103,7 +103,7 @@ services:
             context: ../..
             dockerfile: server/routerlicious/Dockerfile
             target: runner
-        command: node dist/paparazzi/index.js
+        command: node ../paparazzi/dist/index.js
         environment:
             - DEBUG=fluid:*
             - worker__intelligence__resume__url=http://alfred:3000/intelligence/resume
