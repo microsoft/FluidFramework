@@ -111,8 +111,8 @@ export class Layout extends EventEmitter {
     }
 
     public remove() {
-        this.doc.off("sequenceDelta", this.onChange);
-        this.doc.off("maintenance", this.onChange);
+        this.doc.removeListener("sequenceDelta", this.onChange);
+        this.doc.removeListener("maintenance", this.onChange);
         Dom.removeAllChildren(this.root);
     }
 
@@ -522,7 +522,7 @@ export class Layout extends EventEmitter {
             this.removeSegment(e.deltaArgs.deltaSegments[1].segment);
         }
 
-        this.invalidate(e.start, e.end);
+        this.invalidate(e.first.position, e.last.position + e.last.segment.cachedLength);
     }
 
     private unionRef(doc: FlowDocument, position: number | undefined, ref: LocalReference | undefined, fn: (a: number, b: number) => number, limit: number) {

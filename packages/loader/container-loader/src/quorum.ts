@@ -194,8 +194,7 @@ export class Quorum extends EventEmitter implements IQuorum {
      * TODO: Right now we will only submit proposals for connected clients and not attempt to resubmit on any
      * nack/disconnect. The correct answer for this should become more clear as we build scenarios on top of the loader.
      */
-    /* tslint:disable:promise-function-async */
-    public propose(key: string, value: any): Promise<void> {
+    public async propose(key: string, value: any): Promise<void> {
         const clientSequenceNumber = this.sendProposal(key, value);
         if (clientSequenceNumber < 0) {
             if (this.logger) {
@@ -289,9 +288,11 @@ export class Quorum extends EventEmitter implements IQuorum {
 
     /**
      * Updates the minimum sequence number. If the MSN advances past the sequence number for any proposal without
-     * a rejection then it becomes an accepted consensus value.
+     * a rejection then it becomes an accepted consensus value.  If the MSN advances past the sequence number
+     * that the proposal was accepted, then it becomes a committed consensus value.
+     * Returns true if immediate no-op is required.
      */
-    public updateMinimumSequenceNumber(message: ISequencedDocumentMessage): void {
+    public updateMinimumSequenceNumber(message: ISequencedDocumentMessage): boolean {
         const value = message.minimumSequenceNumber;
         if (this.minimumSequenceNumber !== undefined) {
             if (value < this.minimumSequenceNumber && this.logger) {
@@ -302,11 +303,12 @@ export class Quorum extends EventEmitter implements IQuorum {
                 });
             }
             if (value <= this.minimumSequenceNumber) {
-                return;
+                return false;
             }
         }
 
         this.minimumSequenceNumber = value;
+        let immediateNoOp = false;
 
         // Accept proposals and reject proposals whose sequenceNumber is <= the minimumSequenceNumber
 
@@ -332,14 +334,13 @@ export class Quorum extends EventEmitter implements IQuorum {
             }
 
             if (approved) {
-                /* tslint:disable:no-object-literal-type-assertion */
-                const committedProposal = {
+                const committedProposal: ICommittedProposal = {
                     approvalSequenceNumber: message.sequenceNumber,
                     commitSequenceNumber: -1,
                     key: proposal.key,
                     sequenceNumber: proposal.sequenceNumber,
                     value: proposal.value,
-                } as ICommittedProposal;
+                };
 
                 // TODO do we want to notify when a proposal doesn't make it to the commit phase - i.e. because
                 // a new proposal was made before it made it to the committed phase? For now we just will never
@@ -347,6 +348,11 @@ export class Quorum extends EventEmitter implements IQuorum {
 
                 this.values.set(committedProposal.key, committedProposal);
                 this.pendingCommit.set(committedProposal.key, committedProposal);
+
+                // send no-op on approval to expedite commit
+                // accept means that all clients have seen the proposal and nobody has rejected it
+                // commit means that all clients have seen that the proposal was accepted by everyone
+                immediateNoOp = true;
 
                 this.emit(
                     "approveProposal",
@@ -385,6 +391,8 @@ export class Quorum extends EventEmitter implements IQuorum {
                     this.pendingCommit.delete(pendingCommit.key);
                 });
         }
+
+        return immediateNoOp;
     }
 
     public changeConnectionState(value: ConnectionState, clientId: string) {

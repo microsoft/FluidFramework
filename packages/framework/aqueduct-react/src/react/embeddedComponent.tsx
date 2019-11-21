@@ -61,7 +61,12 @@ class HTMLEmbeddedComponent extends React.Component<IHTMLProps, { }> {
 
     public async componentDidMount() {
         if (this.ref.current) {
-            this.props.component.render(this.ref.current);
+            if (this.props.component.addView) {
+                const view = this.props.component.addView();
+                view.render(this.ref.current);
+            } else {
+                this.props.component.render(this.ref.current);
+            }
         }
     }
 

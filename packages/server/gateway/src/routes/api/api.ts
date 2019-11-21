@@ -4,6 +4,7 @@
  */
 
 import { IFluidResolvedUrl, IResolvedUrl, IWebResolvedUrl, ScopeType } from "@microsoft/fluid-protocol-definitions";
+import { getR11sToken, IAlfredUser } from "@microsoft/fluid-routerlicious-urlresolver";
 import * as core from "@microsoft/fluid-server-services-core";
 import Axios from "axios";
 import { Request, Router } from "express";
@@ -12,7 +13,6 @@ import * as moniker from "moniker";
 import { Provider } from "nconf";
 import { parse, UrlWithStringQuery } from "url";
 import * as winston from "winston";
-import { getToken, IAlfredUser } from "../../utils";
 
 import passport = require("passport");
 // Although probably the case we want a default behavior here. Maybe just the URL?
@@ -75,7 +75,7 @@ async function getInternalComponent(
         name: request.user.name,
     } : undefined;
 
-    const token = getToken(tenantId, documentId, appTenants, scopes, user);
+    const token = getR11sToken(tenantId, documentId, appTenants, scopes, user);
     const fluidUrl = `fluid://${url.host}/${tenantId}/${documentId}${path}${url.hash ? url.hash : ""}`;
 
     const deltaStorageUrl =

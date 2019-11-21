@@ -12,6 +12,7 @@
         "moduleResolution": "node",
         "outDir": "dist",
         "sourceMap": true,
+        "strict": true,
         "inlineSources": true
     },
     "include": [

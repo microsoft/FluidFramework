@@ -1,9 +1,10 @@
 {
   "name": "@microsoft/fluid-webpack-component-loader",
-  "description": "Component loader for webpack-dev-server",
   "version": "0.11.0",
-  "author": "Microsoft",
+  "description": "Component loader for webpack-dev-server",
   "repository": "microsoft/FluidFramework",
+  "license": "MIT",
+  "author": "Microsoft",
   "main": "dist/index.js",
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
@@ -15,30 +16,11 @@
     "build:full:compile": "npm run build:compile",
     "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
     "deploy": "npm publish --registry https://packages.wu2.prague.office-int.com",
-    "tsc": "tsc",
     "test": "mocha --recursive dist/test --exit",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
+    "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose",
     "webpack": "webpack --color --config webpack.config.js"
-  },
-  "nyc": {
-    "all": true,
-    "exclude": [
-      "src/test/**/*.ts",
-      "dist/test/**/*.js"
-    ],
-    "include": [
-      "src/**/*.ts",
-      "dist/**/*.js"
-    ],
-    "reporter": [
-      "cobertura",
-      "html",
-      "text"
-    ],
-    "temp-directory": "nyc/.nyc_output",
-    "cache-dir": "nyc/.cache",
-    "report-dir": "nyc/report"
   },
   "dependencies": {
     "@microsoft/fluid-aqueduct": "^0.11.0",
@@ -60,19 +42,36 @@
     "webpack-dev-server": "^3.8.0"
   },
   "devDependencies": {
-    "@fluid-internal/url-generator": "^1.0.4",
     "@microsoft/fluid-build-common": "^0.11.0",
+    "@types/mocha": "^5.2.5",
     "@types/node": "^10.12.12",
     "concurrently": "^4.1.0",
+    "mocha": "^5.2.0",
+    "mocha-junit-reporter": "^1.18.0",
+    "nyc": "^14.1.1",
     "ts-loader": "^4.5.0",
     "tslint": "^5.11.0",
     "typescript": "~3.4.5",
     "webpack": "^4.8.2",
-    "webpack-cli": "^3.1.2",
-    "@types/mocha": "^5.2.5",
-    "mocha": "^5.2.0",
-    "mocha-junit-reporter": "^1.18.0",
-    "nyc": "^14.1.1"
+    "webpack-cli": "^3.1.2"
   },
-  "license": "MIT"
+  "nyc": {
+    "all": true,
+    "exclude": [
+      "src/test/**/*.ts",
+      "dist/test/**/*.js"
+    ],
+    "include": [
+      "src/**/*.ts",
+      "dist/**/*.js"
+    ],
+    "reporter": [
+      "cobertura",
+      "html",
+      "text"
+    ],
+    "temp-directory": "nyc/.nyc_output",
+    "cache-dir": "nyc/.cache",
+    "report-dir": "nyc/report"
+  }
 }

@@ -4,7 +4,7 @@
  */
 
 import { OdspUrlResolver } from "@microsoft/fluid-odsp-driver";
-import { getDriveItemByFileName, IClientConfig, IODSPTokens } from "@microsoft/fluid-odsp-utils";
+import { getDriveItemByRootFileName, IClientConfig, IODSPTokens } from "@microsoft/fluid-odsp-utils";
 import { IFluidResolvedUrl } from "@microsoft/fluid-protocol-definitions";
 
 const spoTenants = new Map<string, string>([
@@ -14,12 +14,29 @@ const spoTenants = new Map<string, string>([
 
 const pushSrv = "pushchannel.1drv.ms";
 
+export function isSpoPushServer(server: string) {
+    return pushSrv === server ? true : false;
+}
+
+export function getSpoPushServer() {
+    return pushSrv;
+}
+
 export function isSpoTenant(tenantId: string) {
     return spoTenants.has(tenantId);
 }
 
 export function getSpoServer(tenantId: string) {
     return spoTenants.get(tenantId);
+}
+
+export function isSpoServer(server: string) {
+    for (const item of spoTenants.values()) {
+        if (item === server) {
+            return true;
+        }
+    }
+    return false;
 }
 
 export async function spoGetResolvedUrl(
@@ -44,7 +61,7 @@ export async function spoGetResolvedUrl(
     const encoded = encodeURIComponent(`${id}.b`);
 
     const filePath = `/r11s/${encoded}`;
-    const { drive, item } = await getDriveItemByFileName(server, "", filePath, clientConfig, tokens, true);
+    const { drive, item } = await getDriveItemByRootFileName(server, "", filePath, clientConfig, tokens, true);
     const odspUrlResolver = new OdspUrlResolver();
     // TODO: pass path
     const encodedDrive = encodeURIComponent(drive);

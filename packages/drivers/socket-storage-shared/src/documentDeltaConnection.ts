@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { BatchManager, NetworkError } from "@microsoft/fluid-core-utils";
+import { BatchManager, INetworkErrorProperties, NetworkError } from "@microsoft/fluid-core-utils";
 import {
     ConnectionMode,
     IClient,
@@ -25,19 +25,19 @@ const protocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
 /**
  * Error raising for socket.io issues
  */
-function createErrorObject(handler: string, error: any, canRetry = true) {
+export function createErrorObject(handler: string, error: any, canRetry = true) {
     // Note: we assume error object is a string here.
     // If it's not (and it's an object), we would not get its content.
     // That is likely Ok, as it may contain PII that will get logged to telemetry,
     // so we do not want it there.
+    /// Also add actual error object(socketError), for driver to be able to parse it and reason over it.
     const errorObj = new NetworkError(
         `socket.io error: ${handler}: ${error}`,
-        undefined,
-        canRetry,
+        [
+            [INetworkErrorProperties.canRetry, canRetry],
+            ["socketError", error],
+        ],
     );
-
-    // Add actual error object, for driver to be able to parse it and reason over it.
-    (errorObj as any).socketError = error;
 
     return errorObj;
 }
@@ -54,7 +54,9 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
      * @param token - authorization token for storage service
      * @param io - websocket library
      * @param client - information about the client
+     * @param mode - connection mode
      * @param url - websocket URL
+     * @param timeoutMs - timeout for socket connection attempt in milliseconds (default: 20000)
      */
     // tslint:disable-next-line: max-func-body-length
     public static async create(
@@ -63,23 +65,20 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         token: string | null,
         io: SocketIOClientStatic,
         client: IClient,
+        mode: ConnectionMode,
         url: string,
-        mode: ConnectionMode): Promise<IDocumentDeltaConnection> {
+        timeoutMs: number = 20000): Promise<IDocumentDeltaConnection> {
 
-        // Note on multiplex = false:
-        // Temp fix to address issues on SPO. Scriptor hits same URL for Fluid & Notifications.
-        // As result Socket.io reuses socket (as there is no collision on namespaces).
-        // ODSP does not currently supports multiple namespaces on same socket :(
         const socket = io(
             url,
             {
-                multiplex: false,
                 query: {
                     documentId: id,
                     tenantId,
                 },
                 reconnection: false,
                 transports: ["websocket"],
+                timeout: timeoutMs,
             });
 
         const connectMessage: IConnect = {

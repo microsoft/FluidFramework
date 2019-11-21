@@ -2,61 +2,45 @@
   "name": "@microsoft/fluid-server-gateway",
   "version": "0.11.0",
   "description": "Routerlicious Gateway",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "repository": "microsoft/FluidFramework",
+  "license": "MIT",
+  "author": "Microsoft",
   "sideEffects": false,
+  "main": "dist/index.js",
+  "browser": {
+    "request": "xhr"
+  },
+  "types": "dist/index.d.ts",
   "scripts": {
-    "clean": "rimraf dist public/scripts/dist *.tsbuildinfo package-deps.json *.build.log",
-    "webpack": "parallel-webpack --config webpack.config.js",
-    "webpack:dev": "parallel-webpack --config webpack.config.js",
-    "webpack:watch": "npm run webpack:dev -- --watch",
-    "webpack:min": "parallel-webpack --config webpack.config.js -- --env.target production",
+    "alfred": "node dist/alfred/www.js",
+    "alfred:debug": "node --inspect=0.0.0.0:5858 dist/alfred/www.js",
     "build": "concurrently npm:build:compile npm:tslint",
     "build:compile": "concurrently npm:tsc npm:less npm:webpack",
     "build:full": "concurrently npm:build npm:webpack:min",
     "build:full:compile": "concurrently npm:build:compile npm:webpack:min",
     "build:watch": "watch 'npm run tsc && npm run webpack' src",
+    "clean": "rimraf dist public/scripts/dist *.tsbuildinfo package-deps.json *.build.log",
     "less": "lessc src/stylesheets/style.less public/stylesheets/dist/style.css && lessc src/stylesheets/map.less public/stylesheets/dist/map.css",
-    "alfred": "node dist/alfred/www.js",
-    "alfred:debug": "node --inspect=0.0.0.0:5858 dist/alfred/www.js",
-    "tsc": "tsc",
     "test": "mocha --recursive dist/test --exit",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
-    "tslint": "tslint --project tsconfig.json --format verbose"
-  },
-  "author": "Microsoft",
-  "repository": "microsoft/FluidFramework",
-  "browser": {
-    "request": "xhr"
-  },
-  "nyc": {
-    "all": true,
-    "exclude": [
-      "src/test/**/*.ts",
-      "dist/test/**/*.js"
-    ],
-    "include": [
-      "src/**/*.ts",
-      "dist/**/*.js"
-    ],
-    "reporter": [
-      "cobertura",
-      "html",
-      "text"
-    ],
-    "temp-directory": "nyc/.nyc_output",
-    "cache-dir": "nyc/.cache",
-    "report-dir": "nyc/report"
+    "tsc": "tsc",
+    "tslint": "tslint --project tsconfig.json --format verbose",
+    "webpack": "parallel-webpack --config webpack.config.js",
+    "webpack:dev": "parallel-webpack --config webpack.config.js",
+    "webpack:min": "parallel-webpack --config webpack.config.js -- --env.target production",
+    "webpack:watch": "npm run webpack:dev -- --watch"
   },
   "dependencies": {
     "@fluid-example/client-ui-lib": "^0.11.0",
     "@fluid-example/shared-text": "^0.11.0",
+    "@fluid-example/tiny-web-host": "^0.11.0",
     "@fluid-internal/client-api": "^0.11.0",
     "@microsoft/fluid-base-host": "^0.11.0",
     "@microsoft/fluid-component-core-interfaces": "^0.11.0",
     "@microsoft/fluid-container-definitions": "^0.11.0",
     "@microsoft/fluid-container-loader": "^0.11.0",
     "@microsoft/fluid-core-utils": "^0.11.0",
+    "@microsoft/fluid-execution-context-loader": "^0.11.0",
     "@microsoft/fluid-gitresources": "^0.11.0",
     "@microsoft/fluid-host-service-interfaces": "^0.11.0",
     "@microsoft/fluid-iframe-driver": "^0.11.0",
@@ -69,6 +53,7 @@
     "@microsoft/fluid-replay-driver": "^0.11.0",
     "@microsoft/fluid-routerlicious-driver": "^0.11.0",
     "@microsoft/fluid-routerlicious-host": "^0.11.0",
+    "@microsoft/fluid-routerlicious-urlresolver": "^0.11.0",
     "@microsoft/fluid-runtime-definitions": "^0.11.0",
     "@microsoft/fluid-sequence": "^0.11.0",
     "@microsoft/fluid-server-services": "^0.11.0",
@@ -80,6 +65,7 @@
     "@microsoft/fluid-web-code-loader": "^0.11.0",
     "axios": "^0.18.0",
     "body-parser": "^1.17.1",
+    "comlink": "^4.0.2",
     "compression": "^1.7.2",
     "connect-ensure-login": "^0.1.1",
     "connect-redis": "^3.3.3",
@@ -109,6 +95,7 @@
     "react-dom": "^16.8.3",
     "redis": "^2.8.0",
     "request": "^2.88.0",
+    "serve-favicon": "^2.5.0",
     "split": "^1.0.0",
     "static-expiry": "0.0.11",
     "uuid": "^3.3.2",
@@ -135,6 +122,7 @@
     "@types/passport-local": "^1.0.33",
     "@types/redis": "^2.8.8",
     "@types/request": "^2.47.1",
+    "@types/serve-favicon": "^2.2.28",
     "@types/split": "^0.3.28",
     "@types/uuid": "^3.4.4",
     "@types/ws": "^6.0.1",
@@ -169,5 +157,23 @@
     "ws": "^6.1.2",
     "xhr": "^2.5.0"
   },
-  "license": "MIT"
+  "nyc": {
+    "all": true,
+    "exclude": [
+      "src/test/**/*.ts",
+      "dist/test/**/*.js"
+    ],
+    "include": [
+      "src/**/*.ts",
+      "dist/**/*.js"
+    ],
+    "reporter": [
+      "cobertura",
+      "html",
+      "text"
+    ],
+    "temp-directory": "nyc/.nyc_output",
+    "cache-dir": "nyc/.cache",
+    "report-dir": "nyc/report"
+  }
 }

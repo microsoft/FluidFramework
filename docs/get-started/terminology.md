@@ -18,7 +18,7 @@ See [Containers](xref:concepts#containers)
 
 ## Loader
 
-See <https://github.com/Microsoft/FluidFramework/blob/master/samples/hosts/README.md>
+See <https://github.com/microsoft/FluidFramework/blob/master/samples/hosts/literate/README.md>
 
 ## Quorum
 

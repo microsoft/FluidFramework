@@ -16,19 +16,22 @@ import { IDeltaManager } from "./deltas";
 export interface ICodeLoader {
     /**
      * Loads the package specified by IPackage and returns a promise to its entry point exports.
-     *
-     * details is provided for backwards compatibility. Until 0.7 source will continue to be a string and
-     * details will contain the object. But the loader will be updated to check to see if the object is in
-     * source first.
      */
-    load<T>(source: string | IFluidCodeDetails, details?: IFluidCodeDetails): Promise<T>;
+    load<T>(source: IFluidCodeDetails): Promise<T>;
+}
+
+/**
+ * Code WhiteListing Interface
+ */
+export interface ICodeWhiteList {
+    testSource(source: IFluidCodeDetails): Promise<boolean>;
 }
 
 /**
  * Host provider interfaces
  */
 export interface IHost {
-    resolver: IUrlResolver;
+    resolver: IUrlResolver | IUrlResolver[];
 }
 
 export interface IContainer extends EventEmitter {

@@ -1,10 +1,25 @@
 {
   "name": "@fluid-example/react-web-host",
   "version": "0.11.0",
+  "repository": "microsoft/FluidFramework",
+  "license": "MIT",
+  "author": "Microsoft",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "author": "Microsoft",
-  "repository": "microsoft/FluidFramework",
+  "scripts": {
+    "build": "concurrently npm:build:compile npm:tslint",
+    "build:compile": "concurrently npm:tsc npm:build:esnext",
+    "build:docs": "api-extractor run --local",
+    "build:esnext": "tsc --project ./tsconfig.esnext.json",
+    "build:full": "npm run build",
+    "build:full:compile": "npm run build:compile",
+    "build:webpack": "webpack --env build",
+    "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
+    "start": "webpack-dev-server",
+    "tsc": "tsc",
+    "tslint": "tslint --project tsconfig.json --format verbose",
+    "webpack": "npm run build:webpack"
+  },
   "dependencies": {
     "@fluid-example/tiny-web-host": "^0.11.0",
     "react": "^16.8.3"
@@ -24,20 +39,5 @@
     "webpack-cli": "^3.1.2",
     "webpack-dev-server": "^3.8.0",
     "webpack-merge": "^4.1.2"
-  },
-  "scripts": {
-    "build": "concurrently npm:build:compile npm:tslint",
-    "build:compile": "concurrently npm:tsc npm:build:esnext",
-    "build:full": "npm run build",
-    "build:webpack": "webpack --env build",
-    "build:full:compile": "npm run build:compile",
-    "build:docs": "api-extractor run --local",
-    "start": "webpack-dev-server",
-    "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
-    "tsc": "tsc",
-    "build:esnext": "tsc --project ./tsconfig.esnext.json",
-    "tslint": "tslint --project tsconfig.json --format verbose",
-    "webpack": "npm run build:webpack"
-  },
-  "license": "MIT"
+  }
 }

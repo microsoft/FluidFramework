@@ -338,7 +338,10 @@ export function ordinalToArray(ord: string) {
     return a;
 }
 
+// TODO: `MaxNodesInBlock` may be misnomer.  From a cursory scan of the code, it appears
+//       that blocks only reach `MaxNodesInBlock` temporarily, at which point they split.
 export const MaxNodesInBlock = 8;
+
 export class MergeBlock extends MergeNode implements IMergeBlock {
     static traceOrdinals = false;
     children: IMergeNode[];
@@ -1347,46 +1350,61 @@ export class MergeTree {
     }
 
     reloadFromSegments(segments: ISegment[]) {
-        const segCap = MaxNodesInBlock - 1;
+        const maxChildren = MaxNodesInBlock - 1;
         const measureReloadTime = false;
-        const buildMergeBlock: (nodes: IMergeNode[]) => IMergeBlock = (nodes: IMergeNode[]) => {
-            const nodeCount = Math.ceil(nodes.length / segCap);
-            const blocks: IMergeBlock[] = [];
-            let nodeIndex = 0;
-            for (let i = 0; i < nodeCount; i++) {
+
+        // Starting with the leaf segments, recursively builds the B-Tree layer by layer from the bottom up.
+        const buildMergeBlock = (nodes: IMergeNode[]) => {
+            const blockCount = Math.ceil(nodes.length / maxChildren);   // Compute # blocks require for this level of B-Tree
+            const blocks: IMergeBlock[] = new Array(blockCount);        // Pre-alloc array to collect nodes
+
+            // For each block in this level of the B-Tree...
+            for (let nodeIndex = 0, blockIndex = 0;     // Start with the first block and first node
+                blockIndex < blockCount;                // If we have more blocks, we also have more nodes to insert
+                blockIndex++                            // Advance to next block in this layer.
+            ) {
                 let len = 0;
-                blocks[i] = this.makeBlock(0);
-                for (let j = 0; j < segCap; j++) {
-                    if (nodeIndex < nodes.length) {
-                        const childIndex = this.addNode(blocks[i], nodes[nodeIndex]);
-                        len += nodes[nodeIndex].cachedLength;
-                        if (MergeTree.blockUpdateMarkers) {
-                            const hierBlock = blocks[i].hierBlock();
-                            hierBlock.addNodeReferences(this, nodes[nodeIndex]);
-                        }
-                        if (this.blockUpdateActions) {
-                            this.blockUpdateActions.child(blocks[i], childIndex);
-                        }
-                    } else {
-                        break;
+                const block = blocks[blockIndex] = this.makeBlock(0);
+
+                // For each child of the current block, insert a node (while we have nodes left)
+                // and update the block's info.
+                for (let childIndex = 0;
+                    childIndex < maxChildren && nodeIndex < nodes.length;   // While we still have children & nodes left
+                    childIndex++, nodeIndex++                               // Advance to next child & node
+                ) {
+                    // Insert the next node as the next child into the current block
+                    const child = nodes[nodeIndex];
+                    const childIndex = this.addNode(block, child);
+
+                    // The below is ~an inlined version of `blockUpdate()` to update the block
+                    // as we insert the children.  It avoids allocs and a 2nd walk of the children.
+                    len += child.cachedLength;
+                    if (MergeTree.blockUpdateMarkers) {
+                        const hierBlock = block.hierBlock();
+                        hierBlock.addNodeReferences(this, child);
                     }
-                    nodeIndex++;
+                    if (this.blockUpdateActions) {
+                        this.blockUpdateActions.child(block, childIndex);
+                    }
                 }
-                blocks[i].cachedLength = len;
+
+                block.cachedLength = len;
             }
-            if (blocks.length === 1) {
-                return blocks[0];
-            } else {
-                return buildMergeBlock(blocks);
-            }
+
+            return blocks.length === 1          // If there is only one block at this layer...
+                ? blocks[0]                     // ...then we're done.  Return the root.
+                : buildMergeBlock(blocks);      // ...otherwise recursively build the next layer above blocks.
         };
+
         let clockStart: number | [number, number];
         if (measureReloadTime) {
             clockStart = clock();
         }
         if (segments.length > 0) {
-            this.root = this.makeBlock(1);
             const block = buildMergeBlock(segments);
+
+            // TODO: Why add another root node on top of the root returned by buildMergeBlock?
+            this.root = this.makeBlock(1);
             this.root.assignChild(block, 0, false);
             if (MergeTree.blockUpdateMarkers) {
                 const hierRoot = this.root.hierBlock();
@@ -1395,6 +1413,7 @@ export class MergeTree {
             if (this.blockUpdateActions) {
                 this.blockUpdateActions.child(this.root, 0);
             }
+
             this.nodeUpdateOrdinals(this.root);
             this.root.cachedLength = block.cachedLength;
         } else {

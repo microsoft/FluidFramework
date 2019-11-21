@@ -3,13 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent, IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { IContainerContext } from "@microsoft/fluid-container-definitions";
-import { Heap, IComparer, IHeapNode } from "@microsoft/fluid-core-utils";
+import { IComponent, IComponentRunnable, IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { IContainerContext, ITelemetryLogger } from "@microsoft/fluid-container-definitions";
+import { LoaderHeader } from "@microsoft/fluid-container-loader";
+import { ChildLogger, Heap, IComparer, IHeapNode, PerformanceEvent } from "@microsoft/fluid-core-utils";
 import { ISequencedClient } from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
-import { debug } from "./debug";
-import { ISummarizer } from "./summarizer";
 
 interface ITrackedClient {
     clientId: string;
@@ -27,39 +26,93 @@ class ClientComparer implements IComparer<ITrackedClient> {
     }
 }
 
-export class SummaryManager extends EventEmitter {
-    private _summarizer: string;
+class QuorumHeap {
     private readonly heap = new Heap<ITrackedClient>((new ClientComparer()));
     private readonly heapMembers = new Map<string, IHeapNode<ITrackedClient>>();
+
+    public addClient(clientId: string, client: ISequencedClient) {
+        const heapNode = this.heap.add({ clientId, sequenceNumber: client.sequenceNumber });
+        this.heapMembers.set(clientId, heapNode);
+    }
+
+    public removeClient(clientId: string) {
+        const member = this.heapMembers.get(clientId);
+        if (member) {
+            this.heap.remove(member);
+            this.heapMembers.delete(clientId);
+        }
+    }
+
+    public getFirstClientId(): string | undefined {
+        return this.heap.count() > 0 ? this.heap.peek().value.clientId : undefined;
+    }
+}
+
+enum SummaryManagerState {
+    Off = 0,
+    Starting = 1,
+    Running = 2,
+}
+
+const defaultMaxRestarts = 5;
+
+export class SummaryManager extends EventEmitter {
+    private readonly logger: ITelemetryLogger;
+    private readonly quorumHeap = new QuorumHeap();
+    private summarizerClientId?: string;
+    private clientId?: string;
     private connected = false;
-    private clientId: string;
-    private runningSummarizer?: ISummarizer;
+    private state = SummaryManagerState.Off;
+    private runningSummarizer?: IComponentRunnable;
 
     public get summarizer() {
-        return this._summarizer;
+        return this.summarizerClientId;
     }
 
     private get shouldSummarize() {
         return this.connected && this.clientId === this.summarizer;
     }
 
-    constructor(private readonly context: IContainerContext, private readonly generateSummaries: boolean) {
+    constructor(
+        private readonly context: IContainerContext,
+        private readonly summariesEnabled: boolean,
+        private readonly enableWorker: boolean,
+        parentLogger: ITelemetryLogger,
+        private readonly maxRestarts: number = defaultMaxRestarts,
+    ) {
         super();
 
+        this.logger = ChildLogger.create(parentLogger, "SummaryManager");
+
+        this.connected = context.connected;
+        if (this.connected) {
+            this.clientId = context.clientId;
+        }
+
         const members = context.quorum.getMembers();
-        for (const [clientId, member] of members) {
-            this.addHeapNode(clientId, member);
+        for (const [clientId, client] of members) {
+            this.quorumHeap.addClient(clientId, client);
         }
 
         context.quorum.on("addMember", (clientId: string, details: ISequencedClient) => {
-            this.addHeapNode(clientId, details);
-            this.computeSummarizer();
+            this.quorumHeap.addClient(clientId, details);
+            this.refreshSummarizer();
         });
 
         context.quorum.on("removeMember", (clientId: string) => {
-            this.heap.remove(this.heapMembers.get(clientId));
-            this.computeSummarizer();
+            this.quorumHeap.removeClient(clientId);
+            this.refreshSummarizer();
         });
+
+        this.refreshSummarizer();
+    }
+
+    public setConnected(clientId: string) {
+        this.updateConnected(true, clientId);
+    }
+
+    public setDisconnected() {
+        this.updateConnected(false);
     }
 
     public on(event: "summarizer", listener: (clientId: string) => void): this;
@@ -68,94 +121,137 @@ export class SummaryManager extends EventEmitter {
         return super.on(event, listener);
     }
 
-    public setConnected(clientId: string) {
-        if (this.connected) {
+    private updateConnected(connected: boolean, clientId?: string) {
+        if (this.connected === connected) {
             return;
         }
 
-        this.connected = true;
-        this.clientId = clientId;
-
-        this.computeSummarizer(true);
+        this.connected = connected;
+        this.clientId = connected ? clientId : undefined;
+        this.refreshSummarizer();
     }
 
-    public setDisconnected() {
+    private getStopReason(): string | undefined {
         if (!this.connected) {
-            return;
-        }
-
-        this.connected = false;
-        this.clientId = undefined;
-        if (this.runningSummarizer) {
-            this.runningSummarizer.stop("parent disconnected");
-            this.runningSummarizer = undefined;
+            return "parentNotConnected";
+        } else if (this.clientId !== this.summarizer) {
+            return `parentShouldNotSummarize:${this.summarizer}`;
+        } else {
+            return undefined;
         }
     }
 
-    private addHeapNode(clientId: string, client: ISequencedClient) {
-        const heapNode = this.heap.add({ clientId, sequenceNumber: client.sequenceNumber });
-        this.heapMembers.set(clientId, heapNode);
-    }
-
-    /**
-     * Updates the current summarizer. In the case of force does not exit early in case the summarizer has not changed.
-     * This is used when transitioning to a connected state where we want to start a new summarizer
-     */
-    private computeSummarizer(force = false) {
-        const clientId = this.heap.count() > 0 ? this.heap.peek().value.clientId : undefined;
-        if (!force && clientId === this._summarizer) {
-            return;
+    private refreshSummarizer() {
+        // compute summarizer
+        const newSummarizerClientId = this.quorumHeap.getFirstClientId();
+        if (newSummarizerClientId !== this.summarizerClientId) {
+            this.summarizerClientId = newSummarizerClientId;
+            this.emit("summarizer", newSummarizerClientId);
         }
 
-        this._summarizer = clientId;
-        this.emit("summarizer", clientId);
-
-        if (this._summarizer !== this.clientId || !this.connected) {
-            return;
-        }
-
-        // To maintain back compat with snapshots we will not summarize unless asked. But will still run the
-        // code to elect and detect the summarizer for testing + code coverage.
-        if (!this.generateSummaries) {
-            return;
-        }
-
-        // Make sure that the summarizer client does not load another summarizer.
-        if (this.context.configuration === undefined || this.context.configuration.canReconnect) {
-            // Create and run the new summarizer. On disconnect if we should still summarize launch another instance.
-            const doneP = this.createSummarizer()
-                .then((summarizer) => {
-                    if (this.shouldSummarize) {
-                        this.runningSummarizer = summarizer;
-                        return summarizer.run(this.clientId);
+        // transition states depending on shouldSummarize, which is a calculated
+        // property that is only true if this client is connected and has the
+        // computed summarizer client id
+        switch (this.state) {
+            case SummaryManagerState.Off: {
+                if (this.shouldSummarize) {
+                    this.start();
+                }
+                return;
+            }
+            case SummaryManagerState.Starting: {
+                // cannot take any action until summarizer is created
+                // state transition will occur after creation
+                return;
+            }
+            case SummaryManagerState.Running: {
+                if (!this.shouldSummarize) {
+                    // only need to check defined in case we are between
+                    // finally and then states; stopping should trigger
+                    // a change in states when the running summarizer closes
+                    if (this.runningSummarizer) {
+                        this.runningSummarizer.stop(this.getStopReason());
                     }
-                });
-            doneP.then(
-                () => {
-                    // In the future we will respawn the summarizer - for now we simply stop
-                    // this.computeSummarizer(this.connected)
-                    debug("summary generation complete");
-                },
-                (error) => {
-                    debug("summary generation error", error);
-                });
+                }
+                return;
+            }
+            default: {
+                return;
+            }
         }
-
     }
 
-    private async createSummarizer() {
+    private start(attempt: number = 1) {
+        if (attempt > this.maxRestarts) {
+            this.logger.sendErrorEvent({ eventName: "MaxRestarts", maxRestarts: this.maxRestarts });
+            this.state = SummaryManagerState.Off;
+            return;
+        }
+
+        this.state = SummaryManagerState.Starting;
+
+        // if we should never summarize, lock in starting state
+        if (!this.summariesEnabled) {
+            return;
+        }
+
+        if (this.context.clientType === "summarizer") {
+            // Make sure that the summarizer client does not load another summarizer.
+            return;
+        }
+
+        this.createSummarizer().then((summarizer) => {
+            if (this.shouldSummarize) {
+                this.run(summarizer);
+            } else {
+                summarizer.stop(this.getStopReason());
+                this.state = SummaryManagerState.Off;
+            }
+        }, (error) => {
+            this.logger.sendErrorEvent({ eventName: "CreateSummarizerError", attempt }, error);
+            if (this.shouldSummarize) {
+                this.start(attempt + 1);
+            } else {
+                this.state = SummaryManagerState.Off;
+            }
+        });
+    }
+
+    private run(summarizer: IComponentRunnable) {
+        this.state = SummaryManagerState.Running;
+
+        const runningSummarizerEvent = PerformanceEvent.start(this.logger, { eventName: "RunningSummarizer" });
+        this.runningSummarizer = summarizer;
+        // tslint:disable-next-line: no-floating-promises
+        this.runningSummarizer.run(this.clientId).then(() => {
+            runningSummarizerEvent.end();
+        }, (error) => {
+            runningSummarizerEvent.cancel({}, error);
+        }).finally(() => {
+            this.runningSummarizer = undefined;
+            if (this.shouldSummarize) {
+                this.start();
+            } else {
+                this.state = SummaryManagerState.Off;
+            }
+        });
+    }
+
+    private async createSummarizer(): Promise<IComponentRunnable> {
         // We have been elected the summarizer. Some day we may be able to summarize with a live document but for
         // now we play it safe and launch a second copy.
-        debug(`${this.clientId} elected summarizer`);
+        this.logger.sendTelemetryEvent({ eventName: "CreatingSummarizer" });
 
         const loader = this.context.loader;
 
         // TODO eventually we may wish to spawn an execution context from which to run this
         const request: IRequest = {
             headers: {
-                "fluid-cache": false,
-                "fluid-reconnect": false,
-                "fluid-sequence-number": this.context.deltaManager.referenceSequenceNumber,
+                [LoaderHeader.cache]: false,
+                [LoaderHeader.clientType]: "summarizer",
+                [LoaderHeader.reconnect]: false,
+                [LoaderHeader.sequenceNumber]: this.context.deltaManager.referenceSequenceNumber,
+                [LoaderHeader.executionContext]: this.enableWorker ? "worker" : undefined,
             },
             url: "/_summarizer",
         };
@@ -163,14 +259,14 @@ export class SummaryManager extends EventEmitter {
         const response = await loader.request(request);
 
         if (response.status !== 200 || response.mimeType !== "fluid/component") {
-            return Promise.reject<ISummarizer>("Invalid summarizer route");
+            return Promise.reject<IComponentRunnable>("Invalid summarizer route");
         }
 
         const rawComponent = response.value as IComponent;
-        const summarizer = rawComponent.ISummarizer;
+        const summarizer = rawComponent.IComponentRunnable;
 
         if (!summarizer) {
-            return Promise.reject<ISummarizer>("Component does not implement ISummarizer");
+            return Promise.reject<IComponentRunnable>("Component does not implement IComponentRunnable");
         }
 
         return summarizer;
