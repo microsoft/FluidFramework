@@ -6,17 +6,28 @@
 import { ISharedObject } from "@microsoft/fluid-shared-object-base";
 
 /**
- * X/Y point.
+ * Data about a single point in an ink stroke
  */
-export interface IPoint {
+export interface IInkPoint {
     /**
      * X coordinate
      */
     x: number;
+
     /**
      * Y coordinate
      */
     y: number;
+
+    /**
+     * Time, in milliseconds, that the point was generated on the originating device.
+     */
+    time: number;
+
+    /**
+     * The ink pressure applied (typically from PointerEvent.pressure).
+     */
+    pressure: number;
 }
 
 /**
@@ -49,6 +60,26 @@ export interface IColor {
  */
 export interface IInk extends ISharedObject {
     /**
+     * Create a stroke with the given pen information.
+     * @param pen - The pen information for this stroke
+     * @returns The stroke that was created
+     */
+    createStroke(pen: IPen): IInkStroke;
+
+    /**
+     * Append the given point to the indicated stroke.
+     * @param point - The point to append
+     * @param id - The ID for the stroke to append to
+     * @returns The stroke that was updated
+     */
+    appendPointToStroke(point: IInkPoint, id: string): IInkStroke;
+
+    /**
+     * Clear all strokes.
+     */
+    clear(): void;
+
+    /**
      * Get the collection of strokes stored in this Ink object.
      * @returns the array of strokes
      */
@@ -60,12 +91,6 @@ export interface IInk extends ISharedObject {
      * @returns the requested stroke, or undefined if it does not exist
      */
     getStroke(key: string): IInkStroke;
-
-    /**
-     * Send the op and apply it to the local Ink object as well.
-     * @param operation - op to submit and apply
-     */
-    submitOperation(operation: IInkOperation): void;
 }
 
 /**
@@ -134,19 +159,9 @@ export interface IStylusOperation {
     type: "stylus";
 
     /**
-     * Time, in milliseconds, that the operation occurred on the originating device.
+     * The ink point appended in this operation.
      */
-    time: number;
-
-    /**
-     * The location of the stylus.
-     */
-    point: IPoint;
-
-    /**
-     * The ink pressure applied (typically from PointerEvent.pressure).
-     */
-    pressure: number;
+    point: IInkPoint;
 
     /**
      * ID of the stroke this stylus operation is associated with.
@@ -172,9 +187,9 @@ export interface IInkStroke {
     id: string;
 
     /**
-     * The operations contained within the stroke.
+     * The points contained within the stroke.
      */
-    operations: IStylusOperation[];
+    points: IInkPoint[];
 
     /**
      * Description of the pen used to create the stroke.

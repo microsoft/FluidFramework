@@ -46,14 +46,12 @@ export class InkCanvas extends ui.Component {
     constructor(element: HTMLDivElement, private model: ink.IInk, private image?: CanvasImageSource) {
         super(element);
 
-        this.model.on("op", (op) => {
-            // Update the canvas
-            this.submitAndApplyOp(op.contents, false);
-        });
-
         this.model.on("load", () => {
             this.redraw();
         });
+
+        this.model.on("clear", this.handleClear.bind(this));
+        this.model.on("stylus", this.handleStylus.bind(this));
 
         // setup canvas
         this.canvasWrapper = document.createElement("div");
@@ -65,10 +63,9 @@ export class InkCanvas extends ui.Component {
         // get context
         this.context = this.canvas.getContext("2d");
 
-        const bb = false;
-        this.canvas.addEventListener("pointerdown", (evt) => this.handlePointerDown(evt), bb);
-        this.canvas.addEventListener("pointermove", (evt) => this.handlePointerMove(evt), bb);
-        this.canvas.addEventListener("pointerup", (evt) => this.handlePointerUp(evt), bb);
+        this.canvas.addEventListener("pointerdown", this.handlePointerDown.bind(this));
+        this.canvas.addEventListener("pointermove", this.handlePointerMove.bind(this));
+        this.canvas.addEventListener("pointerup", this.handlePointerUp.bind(this));
 
         this.currentPen = {
             color: { r: 0, g: 161 / 255, b: 241 / 255, a: 0 },
@@ -94,7 +91,7 @@ export class InkCanvas extends ui.Component {
         const strokes = this.model.getStrokes();
 
         // Time of the first operation in stroke 0 is our starting time
-        const startTime = strokes[0].operations[0].time;
+        const startTime = strokes[0].points[0].time;
         for (const stroke of strokes) {
             this.animateStroke(stroke, 0, startTime);
         }
@@ -111,8 +108,7 @@ export class InkCanvas extends ui.Component {
     }
 
     public clear() {
-        const operation = ink.Ink.makeClearOperation();
-        this.submitAndApplyOp(operation, true);
+        this.model.clear();
     }
 
     /**
@@ -131,17 +127,14 @@ export class InkCanvas extends ui.Component {
     private handlePointerDown(evt: PointerEvent) {
         if ((evt.pointerType === "pen") || ((evt.pointerType === "mouse") && (evt.button === 0))) {
             // Create a new stroke
-            const createOp = ink.Ink.makeCreateStrokeOperation(this.currentPen);
-            this.currentStrokeId = createOp.id;
-            this.submitAndApplyOp(createOp, true);
+            this.currentStrokeId = this.model.createStroke(this.currentPen).id;
 
             // Set pen state to be used during this active stroke
             this.penID = evt.pointerId;
-            this.currentStrokeId = createOp.id;
 
             this.appendPointerEventToCurrentStroke(evt);
 
-            evt.returnValue = false;
+            evt.preventDefault();
         }
     }
 
@@ -149,7 +142,7 @@ export class InkCanvas extends ui.Component {
         if (evt.pointerId === this.penID) {
             this.appendPointerEventToCurrentStroke(evt);
 
-            evt.returnValue = false;
+            evt.preventDefault();
         }
 
         return false;
@@ -163,7 +156,7 @@ export class InkCanvas extends ui.Component {
             this.penID = -1;
             this.currentStrokeId = undefined;
 
-            evt.returnValue = false;
+            evt.preventDefault();
         }
 
         return false;
@@ -171,22 +164,23 @@ export class InkCanvas extends ui.Component {
 
     private appendPointerEventToCurrentStroke(evt: PointerEvent) {
         const pt = new EventPoint(this.canvas, evt);
-        const operation = ink.Ink.makeStylusOperation(
-            pt.rawPosition,
-            evt.pressure,
-            this.currentStrokeId,
-        );
-        this.submitAndApplyOp(operation, true);
+        const inkPt = {
+            x: pt.rawPosition.x,
+            y: pt.rawPosition.y,
+            time: Date.now(),
+            pressure: evt.pressure,
+        };
+        this.model.appendPointToStroke(inkPt, this.currentStrokeId);
     }
 
     private animateStroke(stroke: ink.IInkStroke, operationIndex: number, startTime: number) {
-        if (operationIndex >= stroke.operations.length) {
+        if (operationIndex >= stroke.points.length) {
             return;
         }
 
         // Draw the requested stroke
-        const current = stroke.operations[operationIndex];
-        const previous = stroke.operations[Math.max(0, operationIndex - 1)];
+        const current = stroke.points[operationIndex];
+        const previous = stroke.points[Math.max(0, operationIndex - 1)];
         const time = operationIndex === 0
             ? current.time - startTime
             : current.time - previous.time;
@@ -212,8 +206,8 @@ export class InkCanvas extends ui.Component {
 
         const strokes = this.model.getStrokes();
         for (const stroke of strokes) {
-            let previous = stroke.operations[0];
-            for (const current of stroke.operations) {
+            let previous = stroke.points[0];
+            for (const current of stroke.points) {
                 // current === previous === stroke.operations[0] for the down
                 this.drawStroke(stroke, current, previous);
                 previous = current;
@@ -223,8 +217,8 @@ export class InkCanvas extends ui.Component {
 
     private drawStroke(
         stroke: ink.IInkStroke,
-        current: ink.IStylusOperation,
-        previous: ink.IStylusOperation,
+        current: ink.IInkPoint,
+        previous: ink.IInkPoint,
     ) {
         const pen = stroke.pen;
         const shapes = getShapes(previous, current, pen, SegmentCircleInclusive.End);
@@ -240,32 +234,20 @@ export class InkCanvas extends ui.Component {
         }
     }
 
-    private submitAndApplyOp(operation: ink.IInkOperation, submit: boolean) {
-        if (submit) {
-            this.model.submitOperation(operation);
-        }
-
-        if (operation.type === "clear") {
-            this.handleClearOp();
-        } else if (operation.type === "stylus") {
-            this.handleStylusOp(operation);
-        }
-    }
-
-    private handleClearOp() {
+    private handleClear() {
         this.clearCanvas();
         this.lastStrokeRenderOp = {};
     }
 
-    private handleStylusOp(operation: ink.IStylusOperation) {
+    private handleStylus(operation: ink.IStylusOperation) {
         // Render the dirty stroke
         const dirtyStrokeId = operation.id;
         let index = this.lastStrokeRenderOp[dirtyStrokeId] ? this.lastStrokeRenderOp[dirtyStrokeId] : 0;
 
         const stroke = this.model.getStroke(dirtyStrokeId);
-        for (; index < stroke.operations.length; index++) {
+        for (; index < stroke.points.length; index++) {
             // render the stroke
-            this.drawStroke(stroke, stroke.operations[index], stroke.operations[Math.max(0, index - 1)]);
+            this.drawStroke(stroke, stroke.points[index], stroke.points[Math.max(0, index - 1)]);
         }
 
         this.lastStrokeRenderOp[dirtyStrokeId] = index;
