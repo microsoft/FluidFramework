@@ -35,8 +35,8 @@ import { OdspCache } from "./odspCache";
 import { getWithRetryForTokenRefresh, throwOdspNetworkError } from "./OdspUtils";
 
 export class OdspDocumentStorageManager implements IDocumentStorageManager {
-    private readonly blobsShaToPathMap: Map<string, string> = new Map<string, string>();
-    private readonly blobsShaCache: Map<string, string> = new Map();
+    private readonly blobsIdToPathMap: Map<string, string> = new Map<string, string>();
+    private readonly blobsShaToPathCache: Map<string, string> = new Map();
     private readonly blobCache: Map<string, resources.IBlob> = new Map();
     private readonly treesCache: Map<string, resources.ITree> = new Map();
 
@@ -109,8 +109,8 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
         // Populate the cache with paths from sha-to-path mapping.
         const hash = gitHashFile(Buffer.from(blob.content, blob.encoding));
-        if (this.blobsShaToPathMap.has(blob.sha)) {
-            this.blobsShaCache.set(hash, this.blobsShaToPathMap.get(blob.sha)!);
+        if (this.blobsIdToPathMap.has(blob.sha)) {
+            this.blobsShaToPathCache.set(hash, this.blobsIdToPathMap.get(blob.sha)!);
         }
         return blob;
     }
@@ -163,7 +163,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             return null;
         }
 
-        const hierarchicalTree = buildHierarchy(tree, this.blobsShaToPathMap);
+        const hierarchicalTree = buildHierarchy(tree, this.blobsIdToPathMap);
 
         // decode commit paths
         const commits = {};
@@ -433,7 +433,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
             appTree = trees[1];
 
-            hierarchicalProtocolTree = buildHierarchy(protocolTree, this.blobsShaToPathMap);
+            hierarchicalProtocolTree = buildHierarchy(protocolTree, this.blobsIdToPathMap);
 
         } else {
             appTree = await this.readTree(appTreeId);
@@ -445,7 +445,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             throw new Error("Invalid app tree");
         }
 
-        const hierarchicalAppTree = buildHierarchy(appTree, this.blobsShaToPathMap);
+        const hierarchicalAppTree = buildHierarchy(appTree, this.blobsIdToPathMap);
 
         if (hierarchicalProtocolTree.blobs) {
             const attributesBlob = hierarchicalProtocolTree.blobs.attributes;
@@ -528,14 +528,14 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                     const hash = gitHashFile(Buffer.from(content, encoding));
                     // If the cache has the hash of the blob and handle of last summary is also present, then use that to generate complete path for
                     // the given blob.
-                    if (!this.blobsShaCache.has(hash) || !this.lastSummaryHandle) {
+                    if (!this.blobsShaToPathCache.has(hash) || !this.lastSummaryHandle) {
                         value = {
                             content,
                             encoding,
                         };
-                        this.blobsShaCache.set(hash, `${path}/${key}`);
+                        this.blobsShaToPathCache.set(hash, `${path}/${key}`);
                     } else {
-                        id = `${this.lastSummaryHandle}${this.blobsShaCache.get(hash)}`;
+                        id = `${this.lastSummaryHandle}${this.blobsShaToPathCache.get(hash)}`;
                     }
                     break;
 

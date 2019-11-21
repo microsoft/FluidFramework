@@ -119,11 +119,13 @@ function flattenCore(path: string, treeEntries: ITreeEntry[], blobMap: Map<strin
  * Build a tree hierarchy base on a flat tree
  *
  * @param flatTree - a flat tree
+ * @param blobsShaToPathCache - Map with blobs sha as keys for routerlicious driver or blobs id as keys for
+ *  odsp driver and values as path of the blob.
  * @returns the hierarchical tree
  */
 export function buildHierarchy(
     flatTree: git.ITree,
-    blobsShaCache: Map<string, string> = new Map<string, string>()): ISnapshotTree {
+    blobsShaToPathCache: Map<string, string> = new Map<string, string>()): ISnapshotTree {
 
     const lookup: { [path: string]: ISnapshotTree } = {};
     const root: ISnapshotTree = { id: flatTree.sha, blobs: {}, commits: {}, trees: {} };
@@ -144,7 +146,7 @@ export function buildHierarchy(
             lookup[entry.path] = newTree;
         } else if (entry.type === "blob") {
             node.blobs[decodeURIComponent(entryPathBase)] = entry.sha;
-            blobsShaCache.set(entry.sha, `/${entry.path}`);
+            blobsShaToPathCache.set(entry.sha, `/${entry.path}`);
         } else if (entry.type === "commit") {
             node.commits[decodeURIComponent(entryPathBase)] = entry.sha;
         }
