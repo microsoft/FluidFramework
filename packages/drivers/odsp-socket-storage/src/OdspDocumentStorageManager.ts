@@ -8,6 +8,7 @@ import {
     buildHierarchy,
     fromBase64ToUtf8,
     fromUtf8ToBase64,
+    gitHashFile,
     PerformanceEvent,
 } from "@microsoft/fluid-core-utils";
 import * as resources from "@microsoft/fluid-gitresources";
@@ -34,12 +35,15 @@ import { OdspCache } from "./odspCache";
 import { getWithRetryForTokenRefresh, throwOdspNetworkError } from "./OdspUtils";
 
 export class OdspDocumentStorageManager implements IDocumentStorageManager {
+    private readonly blobsShaToPathMap: Map<string, string> = new Map<string, string>();
+    private readonly blobsShaCache: Map<string, string> = new Map();
     private readonly blobCache: Map<string, resources.IBlob> = new Map();
     private readonly treesCache: Map<string, resources.ITree> = new Map();
 
     private readonly attributesBlobHandles: Set<string> = new Set();
 
     private readonly queryString: string;
+    private lastSummaryHandle: string | undefined;
     private readonly appId: string;
 
     private _ops: ISequencedDeltaOpMessage[] | undefined;
@@ -103,6 +107,11 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             blob.content = fromUtf8ToBase64(JSON.stringify(documentAttributes));
         }
 
+        // Populate the cache with paths from sha-to-path mapping.
+        const hash = gitHashFile(Buffer.from(blob.content, blob.encoding));
+        if (this.blobsShaToPathMap.has(blob.sha)) {
+            this.blobsShaCache.set(hash, this.blobsShaToPathMap.get(blob.sha)!);
+        }
         return blob;
     }
 
@@ -154,7 +163,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             return null;
         }
 
-        const hierarchicalTree = buildHierarchy(tree);
+        const hierarchicalTree = buildHierarchy(tree, this.blobsShaToPathMap);
 
         // decode commit paths
         const commits = {};
@@ -326,6 +335,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             throw new Error(`Failed to write summary tree`);
         }
 
+        this.lastSummaryHandle = result.sha;
         return {
             handle: result.sha,
             handleType: api.SummaryType.Tree,
@@ -406,6 +416,9 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         let hierarchicalProtocolTree: api.ISnapshotTree;
         let appTree: resources.ITree | null;
 
+        // This appTreeId is the unacked handle of the last summary generated.
+        this.lastSummaryHandle = appTreeId;
+
         if (typeof (protocolTreeOrId) === "string") {
             // backwards compat for older summaries
             const trees = await Promise.all([
@@ -420,7 +433,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
             appTree = trees[1];
 
-            hierarchicalProtocolTree = buildHierarchy(protocolTree);
+            hierarchicalProtocolTree = buildHierarchy(protocolTree, this.blobsShaToPathMap);
 
         } else {
             appTree = await this.readTree(appTreeId);
@@ -432,7 +445,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             throw new Error("Invalid app tree");
         }
 
-        const hierarchicalAppTree = buildHierarchy(appTree);
+        const hierarchicalAppTree = buildHierarchy(appTree, this.blobsShaToPathMap);
 
         if (hierarchicalProtocolTree.blobs) {
             const attributesBlob = hierarchicalProtocolTree.blobs.attributes;
@@ -465,7 +478,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             };
         }
 
-        const snapshotTree = this.convertSummaryToSnapshotTree(tree);
+        const snapshotTree = this.convertSummaryToSnapshotTree(tree, 0, "");
 
         const snapshot: ISnapshotRequest = {
             entries: snapshotTree.entries!,
@@ -491,7 +504,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
     /**
      * Converts a summary tree to ODSP tree
      */
-    private convertSummaryToSnapshotTree(tree: api.ISummaryTree, depth: number = 0): ISnapshotTree {
+    private convertSummaryToSnapshotTree(tree: api.ISummaryTree, depth: number = 0, path: string): ISnapshotTree {
         const snapshotTree: ISnapshotTree = {
             entries: [],
         }!;
@@ -505,18 +518,25 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
             switch (summaryObject.type) {
                 case api.SummaryType.Tree:
-                    value = this.convertSummaryToSnapshotTree(summaryObject, depth + 1);
+                    value = this.convertSummaryToSnapshotTree(summaryObject, depth + 1, `${path}/${key}`);
                     break;
 
                 case api.SummaryType.Blob:
                     const content = typeof summaryObject.content === "string" ? summaryObject.content : summaryObject.content.toString("base64");
                     const encoding = typeof summaryObject.content === "string" ? "utf-8" : "base64";
 
-                    value = {
-                        content,
-                        encoding,
-                    };
-
+                    const hash = gitHashFile(Buffer.from(content, encoding));
+                    // If the cache has the hash of the blob and handle of last summary is also present, then use that to generate complete path for
+                    // the given blob.
+                    if (!this.blobsShaCache.has(hash) || !this.lastSummaryHandle) {
+                        value = {
+                            content,
+                            encoding,
+                        };
+                        this.blobsShaCache.set(hash, `${path}/${key}`);
+                    } else {
+                        id = `${this.lastSummaryHandle}${this.blobsShaCache.get(hash)}`;
+                    }
                     break;
 
                 case api.SummaryType.Handle:
