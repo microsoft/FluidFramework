@@ -26,11 +26,9 @@ import {
 } from "@microsoft/fluid-container-definitions";
 import {
     BlobTreeEntry,
-    buildHierarchy,
     CommitTreeEntry,
     ComponentSerializer,
     Deferred,
-    flatten,
     isSystemType,
     raiseConnectedEvent,
     readAndParse,
@@ -70,7 +68,6 @@ import { ComponentContext, LocalComponentContext, RemotedComponentContext } from
 import { ComponentHandleContext } from "./componentHandleContext";
 import { ComponentRegistry } from "./componentRegistry";
 import { debug } from "./debug";
-import { DocumentStorageServiceProxy } from "./documentStorageServiceProxy";
 import {
     componentRuntimeRequestHandler,
     createLoadableComponentRuntimeRequestHandler,
@@ -946,7 +943,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         for (const key of Object.keys(snapshot.trees)) {
             if (this.contexts.has(key)) {
                 const component = this.contexts.get(key);
-                component.refreshBaseSummary(snapshot.trees[key]);
+                component.refreshBaseSummary(snapshot.trees[key], this.latestSummaryAck.referenceSequenceNumber);
             }
         }
     }
@@ -999,23 +996,13 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                     break;
                 }
 
-                const attachMessage = message.contents as IAttachMessage;
-                const flatBlobs = new Map<string, string>();
-                let snapshotTree: ISnapshotTree = null;
-                if (attachMessage.snapshot) {
-                    const flattened = flatten(attachMessage.snapshot.entries, flatBlobs);
-                    snapshotTree = buildHierarchy(flattened);
-                }
-
                 // Include the type of attach message which is the pkg of the component to be
                 // used by RemotedComponentContext in case it is not in the snapshot.
-                remotedComponentContext = new RemotedComponentContext(
-                    attachMessage.id,
-                    snapshotTree,
+                remotedComponentContext = RemotedComponentContext.createFromAttachMessage(
+                    message.contents as IAttachMessage,
                     this,
-                    new DocumentStorageServiceProxy(this.storage, flatBlobs),
-                    this.context.scope,
-                    [attachMessage.type]);
+                    this.storage,
+                    this.context.scope);
 
                 break;
 
