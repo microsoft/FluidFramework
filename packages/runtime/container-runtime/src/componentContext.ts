@@ -145,7 +145,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
     }
 
     protected componentRuntime: IComponentRuntime;
-    protected opsSinceAck: ISequencedDocumentMessage[] = [];
+    protected opsSinceBase: ISequencedDocumentMessage[] = [];
     protected pending: ISequencedDocumentMessage[] = [];
     protected readonly summaryTracker = new SummaryTracker();
     protected attachTreeEntries?: ITreeEntry[];
@@ -241,7 +241,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
 
         // component has been modified and will need to regenerate its snapshot
         this.summaryTracker.invalidate();
-        this.opsSinceAck.push(message);
+        this.opsSinceBase.push(message);
 
         if (this.loaded) {
             return this.componentRuntime.process(message, local);
@@ -316,22 +316,11 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
             const entries = await this.componentRuntime.snapshotInternal(fullTree);
 
             entries.push(componentAttributesBlob);
-
             return { entries, id: null };
         } catch (error) {
             this._hostRuntime.logger.sendErrorEvent({ eventName: "ComponentSummarizeFailure", realized }, error);
 
-            // try to make a summary of just the ops and previous base
-            const entries: ITreeEntry[] = [new BlobTreeEntry(".opsSinceBase", JSON.stringify(this.opsSinceAck))];
-            if (this.summaryTracker.baseTree && this.summaryTracker.baseTree.id) {
-                entries.push(new TreeTreeEntry(".baseTree", { id: this.summaryTracker.baseTree.id, entries: [] }));
-            } else if (this._baseSnapshot && this._baseSnapshot.id) {
-                entries.push(new TreeTreeEntry(".baseTree", { id: this._baseSnapshot.id, entries: [] }));
-            } else if (this.attachTreeEntries) {
-                entries.push(new TreeTreeEntry(".baseTree", { id: null, entries: this.attachTreeEntries }));
-            } else {
-                throw Error("No base snapshot tree found.");
-            }
+            const entries = await this.createFailureSnapshot();
 
             entries.push(componentAttributesBlob);
             return { entries, id: null };
@@ -413,8 +402,8 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
     public refreshBaseSummary(snapshot: ISnapshotTree, referenceSequenceNumber: number) {
         this.summaryTracker.setBaseTree(snapshot);
 
-        while (this.opsSinceAck.length > 0 && this.opsSinceAck[0].sequenceNumber <= referenceSequenceNumber) {
-            this.opsSinceAck.shift();
+        while (this.opsSinceBase.length > 0 && this.opsSinceBase[0].sequenceNumber <= referenceSequenceNumber) {
+            this.opsSinceBase.shift();
         }
 
         // need to notify runtime of the update
@@ -439,6 +428,48 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         if (this.closed) {
             throw new Error("Runtime is closed");
         }
+    }
+
+    private async createFailureSnapshot(): Promise<ITreeEntry[]> {
+        // try to make a summary of just the ops and previous base
+        let allOpsSinceBase = this.opsSinceBase;
+        let baseTree: ITree;
+
+        const getBaseSnapshot = async (snapshot: ISnapshotTree) => {
+            if (!snapshot || !snapshot.id) {
+                return false;
+            }
+
+            const prevOpsBlob = snapshot.blobs[".opsSinceBase"];
+            if (prevOpsBlob) {
+                // keep flat
+                const prevBase = snapshot.trees[".baseTree"];
+                assert(prevBase); // .opsSinceBase should always be paired with .baseTree
+                assert(prevBase.id); // any id implies all ids are available in tree
+
+                const prevOps = await readAndParse<ISequencedDocumentMessage[]>(this.storage, prevOpsBlob);
+                allOpsSinceBase = prevOps.concat(allOpsSinceBase);
+                baseTree = { id: prevBase.id, entries: [] };
+            } else {
+                baseTree = { id: snapshot.id, entries: [] };
+            }
+            return true;
+        };
+
+        if (await getBaseSnapshot(this.summaryTracker.baseTree)) {
+            // do nothing
+        } else if (await getBaseSnapshot(this._baseSnapshot)) {
+            // do nothing
+        } else if (this.attachTreeEntries) {
+            baseTree = { id: null, entries: this.attachTreeEntries };
+        } else {
+            throw Error("No base snapshot tree found.");
+        }
+
+        return [
+            new BlobTreeEntry(".opsSinceBase", JSON.stringify(allOpsSinceBase)),
+            new TreeTreeEntry(".baseTree", baseTree),
+        ];
     }
 }
 
@@ -518,18 +549,17 @@ export class RemotedComponentContext extends ComponentContext {
                 tree = this.initSnapshotValue;
             }
 
-            let opsSinceBaseBlob = tree.blobs[".opsSinceBase"];
-            while (opsSinceBaseBlob) {
+            const opsSinceBaseBlob = tree.blobs[".opsSinceBase"];
+            if (opsSinceBaseBlob) {
                 // prepend ops
-                const opsSinceBase = await readAndParse<ISequencedDocumentMessage[]>(this.storage, opsSinceBaseBlob);
-                this.opsSinceAck = opsSinceBase.concat(this.opsSinceAck);
+                const prevOpsSinceBase = await readAndParse<ISequencedDocumentMessage[]>(
+                    this.storage,
+                    opsSinceBaseBlob);
+                this.opsSinceBase = prevOpsSinceBase.concat(this.opsSinceBase);
                 assert(this.pending);
-                this.pending = opsSinceBase.concat(this.pending);
+                this.pending = prevOpsSinceBase.concat(this.pending);
 
                 tree = tree.trees[".baseTree"];
-
-                // recurse until we reach a stable tree
-                opsSinceBaseBlob = tree.blobs[".opsSinceBase"];
             }
 
             // get package
