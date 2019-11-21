@@ -11,7 +11,7 @@ services:
     paparazzi:
         ports:
             - "5860:5858"
-        command: node --inspect=0.0.0.0:5858 dist/paparazzi/index.js
+        command: node --inspect=0.0.0.0:5858 ../paparazzi/dist/index.js
     scriptorium:
         ports:
             - "5861:5858"

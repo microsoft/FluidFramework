@@ -16,7 +16,7 @@ import {
     ITokenClaims,
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
-import * as agent from "@microsoft/fluid-server-agent";
+import * as agent from "@microsoft/fluid-server-services";
 import { canSummarize, canWrite } from "@microsoft/fluid-server-services-client";
 import * as core from "@microsoft/fluid-server-services-core";
 import {
