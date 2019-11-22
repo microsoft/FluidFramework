@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-    IComponent,
-    IComponentHTMLVisual,
-    IComponentQueryableLegacy,
-} from "@microsoft/fluid-component-core-interfaces";
+import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import {
     IFluidCodeDetails,
     IProxyLoaderFactory,
@@ -30,11 +26,8 @@ async function attach(loader: Loader, url: string, div: HTMLDivElement) {
 
     // Check if the component is viewable
     const component = response.value as IComponent;
-    const queryable = component as IComponentQueryableLegacy;
-    let viewable = component.IComponentHTMLVisual;
-    if (!viewable && queryable.query) {
-        viewable = queryable.query<IComponentHTMLVisual>("IComponentHTMLVisual");
-    }
+    const viewable = component.IComponentHTMLVisual;
+
     if (viewable) {
         const renderable =
             viewable.addView ? viewable.addView() : viewable;
