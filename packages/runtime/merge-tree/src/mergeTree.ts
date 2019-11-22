@@ -338,8 +338,10 @@ export function ordinalToArray(ord: string) {
     return a;
 }
 
-// TODO: `MaxNodesInBlock` may be misnomer.  From a cursory scan of the code, it appears
-//       that blocks only reach `MaxNodesInBlock` temporarily, at which point they split.
+// Note that the actual branching factor of the MergeTree is `MaxNodesInBlock - 1`.  This is because
+// the MergeTree always inserts first, then checks for overflow and splits if the child count equals
+// `MaxNodesInBlock`.  (i.e., `MaxNodesInBlock` contains 1 extra slot for temporary storage to
+// facilitate splits.)
 export const MaxNodesInBlock = 8;
 
 export class MergeBlock extends MergeNode implements IMergeBlock {
@@ -1427,13 +1429,14 @@ export class MergeTree {
     }
 
     private addToLRUSet(segment: ISegment, seq: number) {
-        // only skip adding segments who's parents are
-        // explicitly needing scour, not false or undefined
-        if (segment.parent.needsScour !== true) {
-            // Note: 'seq' may be less than the current sequence number when inserting pre-ACKed
-            //       segments from a snapshot.
+        // If the parent node has not yet been marked for scour (i.e., needsScour is not false or undefined),
+        // add the segment and mark the mark the node now.
+
+        // TODO: 'seq' may be less than the current sequence number when inserting pre-ACKed
+        //       segments from a snapshot.  We currently skip these for now.
+        if (segment.parent.needsScour !== true && seq > this.collabWindow.currentSeq) {
             segment.parent.needsScour = true;
-            this.segmentsToScour.add({ segment, maxSeq: seq });     // TODO: Do we need to adjust 'maxSeq' per the above?
+            this.segmentsToScour.add({ segment, maxSeq: seq });
         }
     }
 
