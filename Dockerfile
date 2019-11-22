@@ -102,6 +102,7 @@ COPY packages/runtime/runtime-test-utils/package*.json packages/runtime/runtime-
 COPY packages/runtime/sequence/package*.json packages/runtime/sequence/
 COPY packages/server/agent/package*.json packages/server/agent/
 COPY packages/server/gateway/package*.json packages/server/gateway/
+COPY packages/server/paparazzi/package*.json packages/server/paparazzi/
 COPY packages/server/local-test-server/package*.json packages/server/local-test-server/
 COPY packages/utils/odsp-utils/package*.json packages/utils/odsp-utils/
 COPY packages/utils/build-common/package*.json packages/utils/build-common/

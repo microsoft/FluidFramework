@@ -32,13 +32,12 @@ COPY server/routerlicious/packages/lambdas-driver/package*.json server/routerlic
 COPY server/routerlicious/packages/lambdas/package*.json server/routerlicious/packages/lambdas/
 COPY server/routerlicious/packages/memory-orderer/package*.json server/routerlicious/packages/memory-orderer/
 COPY server/routerlicious/packages/routerlicious/package*.json server/routerlicious/packages/routerlicious/
-COPY server/routerlicious/packages/paparazzi/package*.json server/routerlicious/packages/paparazzi/
 COPY server/routerlicious/packages/services/package*.json server/routerlicious/packages/services/
 COPY server/routerlicious/packages/services-client/package*.json server/routerlicious/packages/services-client/
 COPY server/routerlicious/packages/services-core/package*.json server/routerlicious/packages/services-core/
 COPY server/routerlicious/packages/services-utils/package*.json server/routerlicious/packages/services-utils/
 COPY server/routerlicious/packages/protocol-base/package*.json server/routerlicious/packages/protocol-base/
-COPY server/routerlicious/packages/utils/build-common/package*.json server/routerlicious/packages/packages/utils/build-common/
+COPY packages/utils/build-common/package*.json packages/utils/build-common/
 
 # Copy over chaincode npmrc and package.json to dynamically install packages.
 COPY server/routerlicious/chaincode/* /tmp/chaincode/
