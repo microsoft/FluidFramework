@@ -11,7 +11,6 @@ import {
     IClient,
     IDocumentDeltaConnection,
 } from "@microsoft/fluid-protocol-definitions";
-import * as assert from "assert";
 import { IOdspSocketError } from "./contracts";
 import { debug } from "./debug";
 import { errorObjectFromOdspError } from "./OdspUtils";
@@ -210,9 +209,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
             return;
         }
 
-        assert(socketReference.delayDeleteTimeout === undefined);
-
-        if (socketReference.references === 0) {
+        if (socketReference.references === 0 && socketReference.delayDeleteTimeout === undefined) {
             socketReference.delayDeleteTimeout = setTimeout(() => {
                 OdspDocumentDeltaConnection.socketIoSockets.delete(key);
 
