@@ -717,7 +717,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval> {
         endPosition: number,
     ) {
         if (!this.view) {
-            throw new Error("attach must be called prior to adding intervals");
+            throw new Error("attach must be called prior to deleting intervals");
         }
 
         this.view.delete(startPosition, endPosition);
