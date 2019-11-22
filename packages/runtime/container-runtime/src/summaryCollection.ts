@@ -201,6 +201,8 @@ export class SummaryCollection {
 
     private lastAck?: IAckedSummary;
 
+    public get latestAck() { return this.lastAck; }
+
     public constructor(public readonly initialSequenceNumber: number) {}
 
     /**

@@ -12,6 +12,7 @@ import { NonCollabClient, UniversalSequenceNumber } from "./constants";
 import { ISegment, MergeTree } from "./mergeTree";
 import { hasMergeInfo, IJSONSegment, IJSONSegmentWithMergeInfo, MergeTreeChunk } from "./ops";
 import { Snapshot } from "./snapshot";
+import { SnapshotLegacy } from "./snapshotlegacy";
 
 export class SnapshotLoader {
 
@@ -27,7 +28,7 @@ export class SnapshotLoader {
         const headerP = services.read(Snapshot.header);
         // If loading from a snapshot load tardis messages
         // kick off loading in parallel to loading "body" chunk.
-        const rawMessages = services.read(Snapshot.tardis);
+        const rawMessages = services.read(SnapshotLegacy.tardis);
 
         const header = await headerP;
         assert(header);
@@ -43,8 +44,11 @@ export class SnapshotLoader {
         // tslint:disable-next-line: no-suspicious-comment
         // TODO we shouldn't need to wait on the body being complete to finish initialization.
         // To fully support this we need to be able to process inbound ops for pending segments.
-        // And storing 'blue' segments rather than using Tardis'd ops may be of help.
         await this.loadBody(chunk1, services);
+
+        // tslint:disable-next-line:no-suspicious-comment
+        // TODO: The 'Snapshot.tardis' tree entry is purely for backwards compatibility.
+        //       (See https://github.com/microsoft/FluidFramework/issues/84)
         return this.loadTardis(rawMessages, branch);
     }
 

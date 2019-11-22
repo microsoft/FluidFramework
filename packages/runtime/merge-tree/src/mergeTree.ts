@@ -338,8 +338,10 @@ export function ordinalToArray(ord: string) {
     return a;
 }
 
-// TODO: `MaxNodesInBlock` may be misnomer.  From a cursory scan of the code, it appears
-//       that blocks only reach `MaxNodesInBlock` temporarily, at which point they split.
+// Note that the actual branching factor of the MergeTree is `MaxNodesInBlock - 1`.  This is because
+// the MergeTree always inserts first, then checks for overflow and splits if the child count equals
+// `MaxNodesInBlock`.  (i.e., `MaxNodesInBlock` contains 1 extra slot for temporary storage to
+// facilitate splits.)
 export const MaxNodesInBlock = 8;
 
 export class MergeBlock extends MergeNode implements IMergeBlock {
@@ -1350,6 +1352,9 @@ export class MergeTree {
     }
 
     reloadFromSegments(segments: ISegment[]) {
+        // This code assumes that a later call to `startCollaboration()` will initialize partial lengths.
+        assert(!this.collabWindow.collaborating);
+
         const maxChildren = MaxNodesInBlock - 1;
         const measureReloadTime = false;
 
@@ -1424,11 +1429,12 @@ export class MergeTree {
     }
 
     private addToLRUSet(segment: ISegment, seq: number) {
-        // only skip adding segments who's parents are
-        // explicitly needing scour, not false or undefined
-        if (segment.parent.needsScour !== true) {
-            // sequence should be always above current.
-            assert(seq > this.collabWindow.currentSeq, "addToLRUSet");
+        // If the parent node has not yet been marked for scour (i.e., needsScour is not false or undefined),
+        // add the segment and mark the mark the node now.
+
+        // TODO: 'seq' may be less than the current sequence number when inserting pre-ACKed
+        //       segments from a snapshot.  We currently skip these for now.
+        if (segment.parent.needsScour !== true && seq > this.collabWindow.currentSeq) {
             segment.parent.needsScour = true;
             this.segmentsToScour.add({ segment, maxSeq: seq });
         }
@@ -3180,6 +3186,24 @@ export class MergeTree {
             go = actions.post(node, pos, refSeq, clientId, start, end, accum);
         }
 
+        return go;
+    }
+
+    // Invokes the leaf action for all segments.  Note that *all* segments are visited
+    // regardless of if they would be visible to the current `clientId` and `refSeq`.
+    walkAllSegments<TClientData>(
+        block: IMergeBlock,
+        action: (segment: ISegment, accum?: TClientData) => boolean,
+        accum?: TClientData,
+    ) {
+        let go = true;
+        const children = block.children;
+        for (let childIndex = 0; go && childIndex < block.childCount; childIndex++) {
+            const child = children[childIndex];
+            go = child.isLeaf()
+                ? action(child, accum)
+                : this.walkAllSegments(child, action, accum);
+        }
         return go;
     }
 

@@ -4,7 +4,9 @@
  */
 
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { MockRuntime } from "@microsoft/fluid-test-runtime-utils";
+import { IBlob } from "@microsoft/fluid-protocol-definitions";
+import { MockRuntime, MockSharedObjectServices } from "@microsoft/fluid-test-runtime-utils";
+
 import * as assert from "assert";
 import * as map from "../";
 import { SharedMap } from "../map";
@@ -157,8 +159,7 @@ describe("Routerlicious", () => {
                     const subMap = factory.create(runtime, "subMap");
                     sharedMap.set("object", subMap.handle);
 
-                    const serialized = (sharedMap as SharedMap).serialize();
-                    const parsed = JSON.parse(serialized);
+                    const parsed = (sharedMap as SharedMap).getSerializableStorage();
 
                     sharedMap.forEach((value, key) => {
                         if (!value.IComponentHandle) {
@@ -179,8 +180,7 @@ describe("Routerlicious", () => {
                     const subMap = factory.create(runtime, "subMap");
                     sharedMap.set("object", subMap.handle);
 
-                    const serialized = (sharedMap as SharedMap).serialize();
-                    const parsed = JSON.parse(serialized);
+                    const parsed = (sharedMap as SharedMap).getSerializableStorage();
 
                     sharedMap.forEach((value, key) => {
                         if (!value || !value.IComponentHandle) {
@@ -204,9 +204,100 @@ describe("Routerlicious", () => {
                     };
                     sharedMap.set("object", containingObject);
 
-                    const serialized = (sharedMap as SharedMap).serialize();
+                    const serialized = JSON.stringify((sharedMap as any).getSerializableStorage());
                     // tslint:disable-next-line: max-line-length
                     assert.equal(serialized, `{"object":{"type":"Plain","value":{"subMapHandle":{"type":"__fluid_handle__","url":"subMap"},"nestedObj":{"subMap2Handle":{"type":"__fluid_handle__","url":"subMap2"}}}}}`);
+                });
+
+                it("old serialization format", async () => {
+                    sharedMap.set("key", "value");
+
+                    const tree = sharedMap.snapshot();
+                    assert(tree.entries.length === 1);
+                    const content = JSON.stringify({
+                        key: {
+                            type: "Plain",
+                            value: "value",
+                        },
+                    });
+                    assert(tree.entries.length === 1);
+                    assert((tree.entries[0].value as IBlob).contents === content);
+
+                    const services = new MockSharedObjectServices({header: content});
+                    const map2 = await factory.load(runtime, "mapId", services, "branchId");
+                    assert(map2.get("key") === "value");
+                });
+
+                it.skip("new serialization format for small maps", async () => {
+                    sharedMap.set("key", "value");
+
+                    const tree = sharedMap.snapshot();
+                    assert(tree.entries.length === 1);
+                    const content = JSON.stringify({
+                        blobs: [],
+                        content: {
+                            key: {
+                                type: "Plain",
+                                value: "value",
+                            },
+                        },
+                    });
+                    assert(tree.entries.length === 1);
+                    assert((tree.entries[0].value as IBlob).contents === content);
+
+                    const services = new MockSharedObjectServices({header: content});
+                    const map2 = await factory.load(runtime, "mapId", services, "branchId");
+                    assert(map2.get("key") === "value");
+                });
+
+                it.skip("new serialization format for big maps", async () => {
+                    sharedMap.set("key", "value");
+
+                    // 40K char string
+                    let longString = "01234567890";
+                    for (let i = 0; i < 12; i++) {
+                        longString = longString + longString;
+                    }
+                    sharedMap.set("longValue", longString);
+                    sharedMap.set("zzz", "the end");
+
+                    const tree = sharedMap.snapshot();
+                    assert(tree.entries.length === 2);
+                    const content1 = JSON.stringify({
+                        blobs: ["blob0"],
+                        content: {
+                            key: {
+                                type: "Plain",
+                                value: "value",
+                            },
+                            zzz: {
+                                type: "Plain",
+                                value: "the end",
+                            },
+                        },
+                    });
+                    const content2 = JSON.stringify({
+                        longValue: {
+                            type: "Plain",
+                            value: longString,
+                        },
+                    });
+
+                    assert(tree.entries.length === 2);
+                    assert(tree.entries[1].path === "header");
+                    assert((tree.entries[1].value as IBlob).contents === content1);
+
+                    assert(tree.entries[0].path === "blob0");
+                    assert((tree.entries[0].value as IBlob).contents === content2);
+
+                    const services = new MockSharedObjectServices({
+                        header: content1,
+                        blob0: content2,
+                    });
+                    const map2 = await factory.load(runtime, "mapId", services, "branchId");
+                    assert(map2.get("key") === "value");
+                    assert(map2.get("longValue") === longString);
+                    assert(map2.get("zzz") === "the end");
                 });
             });
 

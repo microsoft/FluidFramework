@@ -16,7 +16,7 @@ import { ISegment, Marker, MergeTree } from "../mergeTree";
 import { createInsertSegmentOp } from "../opBuilder";
 import { IJSONSegment, IMarkerDef, IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops";
 import { PropertySet } from "../properties";
-import { Snapshot } from "../snapshot";
+import { SnapshotLegacy } from "../snapshotlegacy";
 import { MergeTreeTextHelper, TextSegment } from "../textSegment";
 import { nodeOrdinalsHaveIntegrity } from "./testUtils";
 
@@ -47,7 +47,7 @@ export class TestClient extends Client {
     public static useCheckQ = false;
 
     public static async createFromClientSnapshot(client1: TestClient, newLongClientId: string): Promise<TestClient> {
-        const snapshot = new Snapshot(client1.mergeTree, DebugLogger.create("fluid:snapshot"));
+        const snapshot = new SnapshotLegacy(client1.mergeTree, DebugLogger.create("fluid:snapshot"));
         snapshot.extractSync();
         const snapshotTree = snapshot.emit([]);
         return TestClient.createFromSnapshot(snapshotTree, newLongClientId, client1.specToSegment);

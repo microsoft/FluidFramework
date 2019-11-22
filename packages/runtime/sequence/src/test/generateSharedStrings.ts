@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Snapshot } from "@microsoft/fluid-merge-tree";
+import { SnapshotLegacy as Snapshot } from "@microsoft/fluid-merge-tree";
 import * as mocks from "@microsoft/fluid-test-runtime-utils";
 import { SharedString } from "../sharedString";
 
