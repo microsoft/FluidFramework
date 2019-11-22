@@ -24,7 +24,6 @@ const socketReferenceBufferTime = 2000;
 
 interface ISocketReference {
     socket: SocketIOClient.Socket | undefined;
-    socketClosing?: boolean;
     references: number;
     delayDeleteTimeout?: NodeJS.Timeout;
     delayDeleteTimeoutSetTime?: number;
@@ -112,6 +111,14 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
         documentId: string,
         telemetryLogger: ITelemetryLogger): ISocketReference {
         let socketReference = OdspDocumentDeltaConnection.socketIoSockets.get(key);
+
+        // verify the socket is healthy before reusing it
+        if (socketReference && (!socketReference.socket || !socketReference.socket.connected)) {
+            // the socket is in a bad state. fully remove the reference
+            socketReference = undefined;
+            OdspDocumentDeltaConnection.removeSocketIoReference(key, true);
+        }
+
         if (socketReference) {
             telemetryLogger.sendTelemetryEvent({
                 references: socketReference.references,
@@ -145,19 +152,20 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
                     timeout: timeoutMs,
                 });
 
-            const newSocketReference: ISocketReference = {
+            socketReference = {
                 socket,
                 references: 1,
             };
 
             socket.on("server_disconnect", (socketError: IOdspSocketError) => {
+                // the server always closes the socket after sending this message
+                // fully remove the socket reference now
+                OdspDocumentDeltaConnection.removeSocketIoReference(key, true);
+
                 // Raise it as disconnect.
                 // That produces cleaner telemetry (no errors) and keeps protocol simpler (and not driver-specific).
-                newSocketReference.socketClosing = true;
                 socket.emit("disconnect", errorObjectFromOdspError(socketError));
             });
-
-            socketReference = newSocketReference;
 
             OdspDocumentDeltaConnection.socketIoSockets.set(key, socketReference);
             debug(`Created new socketio reference for ${key}`);
@@ -175,26 +183,34 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
     private static removeSocketIoReference(key: string, isFatalError?: boolean) {
         const socketReference = OdspDocumentDeltaConnection.socketIoSockets.get(key);
         if (!socketReference) {
-            // this is expected to happens if we removed the reference due the socket not being connected
+            // this is expected to happen if we removed the reference due the socket not being connected
             return;
         }
 
         socketReference.references--;
-        assert(socketReference.delayDeleteTimeout === undefined);
 
         debug(`Removed socketio reference for ${key}. Remaining references: ${socketReference.references}.`);
 
-        if (isFatalError || socketReference.socketClosing || (socketReference.socket && !socketReference.socket.connected)) {
+        if (isFatalError || (socketReference.socket && !socketReference.socket.connected)) {
             // delete the reference if a fatal error occurred or if the socket is not connected
             if (socketReference.socket) {
                 socketReference.socket.disconnect();
                 socketReference.socket = undefined;
             }
 
+            // clear the pending deletion if there is one
+            if (socketReference.delayDeleteTimeout !== undefined) {
+                clearTimeout(socketReference.delayDeleteTimeout);
+                socketReference.delayDeleteTimeout = undefined;
+                socketReference.delayDeleteTimeoutSetTime = undefined;
+            }
+
             OdspDocumentDeltaConnection.socketIoSockets.delete(key);
             debug(`Deleted socketio reference for ${key}. Is fatal error: ${isFatalError}.`);
             return;
         }
+
+        assert(socketReference.delayDeleteTimeout === undefined);
 
         if (socketReference.references === 0) {
             socketReference.delayDeleteTimeout = setTimeout(() => {
