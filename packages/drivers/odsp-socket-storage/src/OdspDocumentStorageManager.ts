@@ -110,12 +110,6 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             blob.content = fromUtf8ToBase64(JSON.stringify(documentAttributes));
         }
 
-        // Populate the cache with paths from sha-to-path mapping.
-        const path = this.blobsIdToPathMap.get(blob.sha);
-        if (path) {
-            const hash = gitHashFile(Buffer.from(blob.content, blob.encoding));
-            this.blobsShaToPathCache.set(hash, path);
-        }
         return blob;
     }
 
@@ -296,6 +290,14 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
                 if (blobs) {
                     this.initBlobsCache(blobs);
+                    // Populate the cache with paths from sha-to-path mapping.
+                    for (const blob of this.blobCache.values()) {
+                        const path = this.blobsIdToPathMap.get(blob.sha);
+                        if (path) {
+                            const hash = gitHashFile(Buffer.from(blob.content, blob.encoding));
+                            this.blobsShaToPathCache.set(hash, path);
+                        }
+                    }
                 }
 
                 this.ops = ops;
