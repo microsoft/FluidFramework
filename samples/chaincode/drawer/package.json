@@ -1,45 +1,24 @@
 {
   "name": "@fluid-example/drawer",
-  "description": "Fluid document collection",
   "version": "0.10.0",
-  "author": "Microsoft",
+  "description": "Fluid document collection",
   "repository": "microsoft/FluidFramework",
+  "license": "MIT",
+  "author": "Microsoft",
   "main": "dist/index.js",
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "webpack --env=\"production\" && npm run tsc",
+    "deploy": "npm run build && npm version patch && npm run verdaccio && npm run post-deploy",
     "dev": "webpack --env=\"development\"",
     "start": "webpack-dev-server --config webpack.config.js --package package.json",
     "start:live": "webpack-dev-server --config webpack.config.js --package package.json --env.mode live",
     "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
-    "verdaccio": "npm publish --registry https://packages.wu2.prague.office-int.com",
-    "deploy": "npm run build && npm version patch && npm run verdaccio && npm run post-deploy",
     "tsc": "tsc",
+    "verdaccio": "npm publish --registry https://packages.wu2.prague.office-int.com",
     "webpack": "npm run build",
     "webpack:dev": "npm run dev"
-  },
-  "devDependencies": {
-    "@microsoft/fluid-webpack-component-loader": "^0.10.0",
-    "@types/node": "^10.14.6",
-    "css-loader": "^3.2.0",
-    "style-loader": "^1.0.0",
-    "ts-loader": "^4.5.0",
-    "typescript": "~3.4.5",
-    "webpack": "4.16.5",
-    "webpack-cli": "3.1.0",
-    "webpack-dev-server": "^3.8.0",
-    "webpack-merge": "4.1.4"
-  },
-  "fluid": {
-    "browser": {
-      "umd": {
-        "files": [
-          "dist/main.bundle.js"
-        ],
-        "library": "main"
-      }
-    }
   },
   "dependencies": {
     "@microsoft/fluid-build-common": "^0.10.0",
@@ -62,5 +41,26 @@
     "react-dom": "^16.9.0",
     "semver": "^6.3.0"
   },
-  "license": "MIT"
+  "devDependencies": {
+    "@microsoft/fluid-webpack-component-loader": "^0.10.0",
+    "@types/node": "^10.14.6",
+    "css-loader": "^3.2.0",
+    "style-loader": "^1.0.0",
+    "ts-loader": "^4.5.0",
+    "typescript": "~3.4.5",
+    "webpack": "4.16.5",
+    "webpack-cli": "3.1.0",
+    "webpack-dev-server": "^3.8.0",
+    "webpack-merge": "4.1.4"
+  },
+  "fluid": {
+    "browser": {
+      "umd": {
+        "files": [
+          "dist/main.bundle.js"
+        ],
+        "library": "main"
+      }
+    }
+  }
 }

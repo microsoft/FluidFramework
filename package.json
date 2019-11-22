@@ -27,7 +27,7 @@
     "postinstall:r11s": "cd server/routerlicious && npm run registryAuth",
     "publish-local": "lerna run publish-local --stream",
     "restart": "cd server/routerlicious && npm run restart",
-    "sort-package-json": "sort-package-json ./package.json && lerna exec -- sort-package-json ./package.json",
+    "sort-package-json": "sort-package-json && sort-package-json ./{server,tools}/*/package.json && sort-package-json ./samples/*/*/package.json && lerna exec -- sort-package-json ./package.json",
     "start": "cd server/routerlicious && npm run start",
     "start:debug": "cd server/routerlicious && npm run start:debug",
     "stop": "cd server/routerlicious && npm run stop",
@@ -57,7 +57,7 @@
     "lerna": "^3.14.1",
     "nyc": "^14.1.1",
     "rimraf": "^2.6.2",
-    "sort-package-json": "^1.22.1",
+    "sort-package-json": "^1.23.1",
     "typescript": "~3.4.5"
   },
   "nyc": {

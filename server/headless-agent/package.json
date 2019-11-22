@@ -2,6 +2,8 @@
   "name": "headless-chrome",
   "version": "0.1.0",
   "description": "",
+  "license": "MIT",
+  "author": "Microsoft",
   "main": "index.js",
   "scripts": {
     "build": "tsc && tslint 'src/**/*.ts'",
@@ -41,7 +43,5 @@
     "typescript": "~3.4.5",
     "webpack": "^4.17.1",
     "webpack-cli": "^3.1.0"
-  },
-  "author": "Microsoft",
-  "license": "MIT"
+  }
 }
