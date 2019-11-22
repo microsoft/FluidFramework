@@ -26,8 +26,7 @@ import * as gitStorage from "@microsoft/fluid-server-services-client";
 export class DocumentStorageService implements IDocumentStorageService  {
 
     // map of summary handles to maps of paths to hashes
-    private readonly cache = new Map<string, Promise<Map<string, string>>>();
-    private readonly cacheOrder: string[] = [];
+    private readonly cache = new OrderedMapCache<Promise<Map<string, string>>>();
 
     public get repositoryUrl(): string {
         return "";
@@ -54,7 +53,6 @@ export class DocumentStorageService implements IDocumentStorageService  {
         const tree = await this.manager.getTree(requestVersion.treeId);
         const snapshotTree = buildHierarchy(tree);
         this.cache.set(requestVersion.id, new LazyPromise(() => this.formCacheFromSnapshot(snapshotTree)));
-        this.cacheOrder.push(requestVersion.id);
         return snapshotTree;
     }
 
@@ -86,7 +84,8 @@ export class DocumentStorageService implements IDocumentStorageService  {
     public async uploadSummary(summary: ISummaryTree, context: SummaryContext): Promise<string> {
         let prevCache: Map<string, string> | undefined;
         if (context.ackHandle) {
-            prevCache = await this.cache.get(context.ackHandle)
+            this.cache.prune(context.ackHandle);
+            prevCache = await this.cache.get(context.proposalHandle)
                 || await this.cache.get(context.ackHandle);
 
             if (!prevCache) {
@@ -238,5 +237,37 @@ export class DocumentStorageService implements IDocumentStorageService  {
 
     private formCachePath(part1: string, part2: string) {
         return `${part1}/${encodeURIComponent(part2)}`;
+    }
+}
+
+/**
+ * Ordered map with ability to prune old entries
+ */
+class OrderedMapCache<T> {
+
+    private readonly cache = new Map<string, T>();
+    private readonly cacheOrder: string[] = [];
+
+    public get(key: string): T | undefined {
+        return this.cache.get(key);
+    }
+
+    /**
+     *  Set key in cache and put the key as most recently set (even if it's already in the cache)
+     */
+    public set(key: string, value: T) {
+        if (this.cache.has(key)) {
+            this.cacheOrder.splice(this.cacheOrder.indexOf(key), 1);
+        }
+        this.cache.set(key, value);
+        this.cacheOrder.push(key);
+    }
+
+    /**
+     * Delete any elements from cache that were added before the given key. If key is not in cache, does nothing
+     */
+    public prune(key: string) {
+        const deleted = this.cacheOrder.splice(0, this.cacheOrder.lastIndexOf(key));
+        deleted.forEach((k) => this.cache.delete(k));
     }
 }
