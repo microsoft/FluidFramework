@@ -25,8 +25,8 @@ import * as gitStorage from "@microsoft/fluid-server-services-client";
  */
 export class DocumentStorageService implements IDocumentStorageService  {
 
-    // map of summary handles to maps of paths to hashes
-    private readonly cache = new OrderedMapCache<Promise<Map<string, string>>>();
+    private cache: Promise<Map<string, string>> | undefined;
+    private lastAckHandle: string | undefined;
 
     public get repositoryUrl(): string {
         return "";
@@ -52,7 +52,8 @@ export class DocumentStorageService implements IDocumentStorageService  {
 
         const tree = await this.manager.getTree(requestVersion.treeId);
         const snapshotTree = buildHierarchy(tree);
-        this.cache.set(requestVersion.id, new LazyPromise(() => this.formCacheFromSnapshot(snapshotTree)));
+        this.lastAckHandle = requestVersion.id;
+        this.cache = new LazyPromise(() => this.formCacheFromSnapshot(snapshotTree));
         return snapshotTree;
     }
 
@@ -82,29 +83,13 @@ export class DocumentStorageService implements IDocumentStorageService  {
     }
 
     public async uploadSummary(summary: ISummaryTree, context: SummaryContext): Promise<string> {
-        let prevCache: Map<string, string> | undefined;
-        if (context.ackHandle) {
-            this.cache.prune(context.ackHandle);
-            prevCache = await this.cache.get(context.proposalHandle)
-                || await this.cache.get(context.ackHandle);
-
-            if (!prevCache) {
-                // This should only happen if a summarizer dies after summary op and a new summarizer loads before
-                // summary ack. The new summarizer will then load off the latest summary but not have the acked
-                // summary cached.
-                console.log("Handle not found in cache");
-                const version = await this.getVersions(context.ackHandle, 1);
-                await this.getSnapshotTree(version[0]);
-                prevCache = await this.cache.get(context.ackHandle);
-            }
-            if (!prevCache) {
-                throw Error("Parent summary could not be found");
-            }
+        if (context.ackHandle && context.ackHandle !== this.lastAckHandle) {
+            this.lastAckHandle = context.ackHandle;
+            const version = await this.getVersions(context.ackHandle, 1);
+            await this.getSnapshotTree(version[0]);
         }
 
-        const newCache = new Map<string, string>();
-        const handle = await this.writeSummaryObject(summary, prevCache, newCache, [], "");
-        this.cache.set(handle, new LazyPromise(() => Promise.resolve(newCache)));
+        const handle = await this.writeSummaryObject(summary, [], "");
         return handle;
     }
 
@@ -123,8 +108,6 @@ export class DocumentStorageService implements IDocumentStorageService  {
 
     private async writeSummaryObject(
         value: SummaryObject,
-        prevCache: Map<string, string> | undefined,
-        newCache: Map<string, string>,
         submodule: { path: string; sha: string }[],
         path: string,
     ): Promise<string> {
@@ -138,8 +121,6 @@ export class DocumentStorageService implements IDocumentStorageService  {
             case SummaryType.Commit: {
                 const commitTreeHandle = await this.writeSummaryObject(
                     value.tree,
-                    prevCache,
-                    newCache,
                     submodule,
                     path);
                 const newCommit = await this.manager.createCommit({
@@ -154,12 +135,12 @@ export class DocumentStorageService implements IDocumentStorageService  {
                 return newCommit.sha;
             }
             case SummaryType.Handle: {
-                const refHash = prevCache && prevCache.get(value.path);
+                const cache = await this.cache;
+                const refHash = cache && cache.get(value.path);
                 if (!refHash) {
                     throw Error("Referenced summary should be cached if handle is provided.");
                 }
 
-                newCache.set(path, refHash);
                 return refHash;
             }
             case SummaryType.Tree: {
@@ -168,8 +149,6 @@ export class DocumentStorageService implements IDocumentStorageService  {
                     const entry = fullTree[key];
                     const pathHandle = await this.writeSummaryObject(
                         entry,
-                        prevCache,
-                        newCache,
                         submodule,
                         `${path}/${encodeURIComponent(key)}`);
                     const treeEntry: resources.ICreateTreeEntry = {
@@ -182,7 +161,6 @@ export class DocumentStorageService implements IDocumentStorageService  {
                 }));
 
                 const treeHandle = await this.manager.createGitTree({ tree: entries });
-                newCache.set(path, treeHandle.sha);
                 return treeHandle.sha;
             }
             default: {
@@ -237,37 +215,5 @@ export class DocumentStorageService implements IDocumentStorageService  {
 
     private formCachePath(part1: string, part2: string) {
         return `${part1}/${encodeURIComponent(part2)}`;
-    }
-}
-
-/**
- * Ordered map with ability to prune old entries
- */
-class OrderedMapCache<T> {
-
-    private readonly cache = new Map<string, T>();
-    private readonly cacheOrder: string[] = [];
-
-    public get(key: string): T | undefined {
-        return this.cache.get(key);
-    }
-
-    /**
-     *  Set key in cache and put the key as most recently set (even if it's already in the cache)
-     */
-    public set(key: string, value: T) {
-        if (this.cache.has(key)) {
-            this.cacheOrder.splice(this.cacheOrder.indexOf(key), 1);
-        }
-        this.cache.set(key, value);
-        this.cacheOrder.push(key);
-    }
-
-    /**
-     * Delete any elements from cache that were added before the given key. If key is not in cache, does nothing
-     */
-    public prune(key: string) {
-        const deleted = this.cacheOrder.splice(0, this.cacheOrder.lastIndexOf(key));
-        deleted.forEach((k) => this.cache.delete(k));
     }
 }
