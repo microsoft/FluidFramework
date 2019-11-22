@@ -24,6 +24,7 @@ const socketReferenceBufferTime = 2000;
 
 interface ISocketReference {
     socket: SocketIOClient.Socket | undefined;
+    socketClosing?: boolean;
     references: number;
     delayDeleteTimeout?: NodeJS.Timeout;
     delayDeleteTimeoutSetTime?: number;
@@ -144,16 +145,17 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
                     timeout: timeoutMs,
                 });
 
-            socket.on("server_disconnect", (socketError: IOdspSocketError) => {
-                // Raise it as disconnect.
-                // That produces cleaner telemetry (no errors) and keeps protocol simpler (and not driver-specific).
-                socket.emit("disconnect", errorObjectFromOdspError(socketError));
-            });
-
             socketReference = {
                 socket,
                 references: 1,
             };
+
+            socket.on("server_disconnect", (socketError: IOdspSocketError) => {
+                // Raise it as disconnect.
+                // That produces cleaner telemetry (no errors) and keeps protocol simpler (and not driver-specific).
+                socketReference!.socketClosing = true;
+                socket.emit("disconnect", errorObjectFromOdspError(socketError));
+            });
 
             OdspDocumentDeltaConnection.socketIoSockets.set(key, socketReference);
             debug(`Created new socketio reference for ${key}`);
@@ -180,7 +182,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
 
         debug(`Removed socketio reference for ${key}. Remaining references: ${socketReference.references}.`);
 
-        if (isFatalError || (socketReference.socket && !socketReference.socket.connected)) {
+        if (isFatalError || socketReference.socketClosing || (socketReference.socket && !socketReference.socket.connected)) {
             // delete the reference if a fatal error occurred or if the socket is not connected
             if (socketReference.socket) {
                 socketReference.socket.disconnect();
@@ -214,9 +216,9 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
      * @param socketReferenceKey - socket reference key
      */
     constructor(
-            socket: SocketIOClient.Socket,
-            documentId: string,
-            private socketReferenceKey: string | undefined) {
+        socket: SocketIOClient.Socket,
+        documentId: string,
+        private socketReferenceKey: string | undefined) {
         super(socket, documentId);
     }
 
@@ -228,7 +230,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
             throw new Error("Invalid socket reference key");
         }
 
-        OdspDocumentDeltaConnection.removeSocketIoReference(this.socketReferenceKey);
+        OdspDocumentDeltaConnection.removeSocketIoReference(this.socketReferenceKey, socketProtocolError);
         this.socketReferenceKey = undefined;
 
         this.emit("disconnect", "client closing connection");
