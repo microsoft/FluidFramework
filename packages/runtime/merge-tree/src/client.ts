@@ -1012,11 +1012,13 @@ export class Client {
         this.mergeTree.startCollaboration(this.getShortClientId(this.longClientId), minSeq, currentSeq, branchId);
     }
     updateCollaboration(longClientId: string) {
-        const oldClientId = this.longClientId;
-        let oldData = this.clientNameToIds.get(oldClientId).data;
-        this.longClientId = longClientId;
-        this.clientNameToIds.put(longClientId, oldData);
-        this.shortClientIdMap[oldData.clientId] = longClientId;
+        if (this.getCollabWindow().collaborating) {
+            const oldClientId = this.longClientId;
+            let oldData = this.clientNameToIds.get(oldClientId).data;
+            this.longClientId = longClientId;
+            this.clientNameToIds.put(longClientId, oldData);
+            this.shortClientIdMap[oldData.clientId] = longClientId;
+        }
     }
     findTile(startPos: number | undefined, tileLabel: string, preceding = true) {
         const clientId = this.getClientId();
