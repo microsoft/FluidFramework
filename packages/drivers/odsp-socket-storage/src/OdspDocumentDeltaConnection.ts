@@ -145,7 +145,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
                     timeout: timeoutMs,
                 });
 
-            socketReference = {
+            const newSocketReference: ISocketReference = {
                 socket,
                 references: 1,
             };
@@ -153,9 +153,11 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
             socket.on("server_disconnect", (socketError: IOdspSocketError) => {
                 // Raise it as disconnect.
                 // That produces cleaner telemetry (no errors) and keeps protocol simpler (and not driver-specific).
-                socketReference!.socketClosing = true;
+                newSocketReference.socketClosing = true;
                 socket.emit("disconnect", errorObjectFromOdspError(socketError));
             });
+
+            socketReference = newSocketReference;
 
             OdspDocumentDeltaConnection.socketIoSockets.set(key, socketReference);
             debug(`Created new socketio reference for ${key}`);
