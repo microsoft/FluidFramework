@@ -8,11 +8,11 @@ import {
     ICreateBlobResponse,
     IDocumentStorageService,
     ISnapshotTree,
-    ISummaryContext,
     ISummaryHandle,
     ISummaryTree,
     ITree,
     IVersion,
+    SummaryContext,
 } from "@microsoft/fluid-protocol-definitions";
 import { DocumentStorageService } from "@microsoft/fluid-routerlicious-driver";
 
@@ -63,7 +63,7 @@ export class OuterDocumentStorageService implements IDocumentStorageService {
             return value.content;
         };
 
-        const uploadSummary = async (summary: ISummaryTree, context: ISummaryContext) => {
+        const uploadSummary = async (summary: ISummaryTree, context: SummaryContext) => {
             return this.storageService.uploadSummary(summary, context);
         };
 

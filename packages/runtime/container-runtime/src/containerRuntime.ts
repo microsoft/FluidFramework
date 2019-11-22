@@ -45,10 +45,10 @@ import {
     ISnapshotTree,
     ISummaryConfiguration,
     ISummaryContent,
-    ISummaryContext,
     ISummaryTree,
     ITree,
     MessageType,
+    SummaryContext,
     SummaryType,
 } from "@microsoft/fluid-protocol-definitions";
 import {
@@ -147,13 +147,13 @@ export class LatestSummaryTracker implements ILatestSummary {
     public get context() { return this._context; }
     public get referenceSequenceNumber() { return this._referenceSequenceNumber; }
 
-    private _context?: ISummaryContext;
+    private _context: SummaryContext = { proposalHandle: undefined, ackHandle: undefined };
 
     constructor(private _referenceSequenceNumber: number) {}
 
-    public refresh(context: ISummaryContext, referenceSequenceNumber: number) {
+    public refresh(context: SummaryContext, referenceSequenceNumber: number) {
         if (referenceSequenceNumber >= this._referenceSequenceNumber) {
-            this._context = context;
+            this._context = { ...context };
             this._referenceSequenceNumber = referenceSequenceNumber;
         }
     }
@@ -950,7 +950,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this.dirtyDocument;
     }
 
-    private refreshLatestSummary(context: ISummaryContext, referenceSequenceNumber: number) {
+    private refreshLatestSummary(context: SummaryContext, referenceSequenceNumber: number) {
         // currently only is called from summaries
         this.loadedFromSummary = true;
         this.latestSummary.refresh(context, referenceSequenceNumber);
@@ -1111,7 +1111,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             const handle = await this.context.storage.uploadSummary(
                 treeWithStats.summaryTree,
                 this.latestSummary.context);
-            const parent = this.latestSummary.context && this.latestSummary.context.ackHandle;
+            const parent = this.latestSummary.context.ackHandle;
             const summaryMessage: ISummaryContent = {
                 handle,
                 head: parent,

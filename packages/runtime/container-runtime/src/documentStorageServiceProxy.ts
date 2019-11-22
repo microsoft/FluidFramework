@@ -7,11 +7,11 @@ import {
     ICreateBlobResponse,
     IDocumentStorageService,
     ISnapshotTree,
-    ISummaryContext,
     ISummaryHandle,
     ISummaryTree,
     ITree,
     IVersion,
+    SummaryContext,
 } from "@microsoft/fluid-protocol-definitions";
 
 /**
@@ -59,7 +59,7 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
         return this.storage.getRawUrl(blobId);
     }
 
-    public uploadSummary(summary: ISummaryTree, context: ISummaryContext): Promise<string> {
+    public uploadSummary(summary: ISummaryTree, context: SummaryContext): Promise<string> {
         return this.storage.uploadSummary(summary, context);
     }
 

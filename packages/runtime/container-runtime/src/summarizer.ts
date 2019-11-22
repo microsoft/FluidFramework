@@ -15,8 +15,8 @@ import {
     ISequencedDocumentMessage,
     ISequencedDocumentSystemMessage,
     ISummaryConfiguration,
-    ISummaryContext,
     MessageType,
+    SummaryContext,
 } from "@microsoft/fluid-protocol-definitions";
 import { ContainerRuntime, GenerateSummaryData } from "./containerRuntime";
 import { RunWhileConnectedCoordinator } from "./runWhileConnectedCoordinator";
@@ -46,7 +46,7 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
         private readonly runtime: ContainerRuntime,
         private readonly configurationGetter: () => ISummaryConfiguration,
         private readonly generateSummaryCore: () => Promise<GenerateSummaryData>,
-        private readonly refreshLatestAck: (context: ISummaryContext, referenceSequenceNumber: number) => void,
+        private readonly refreshLatestAck: (context: SummaryContext, referenceSequenceNumber: number) => void,
     ) {
         this.logger = ChildLogger.create(this.runtime.logger, "Summarizer");
         this.runCoordinator = new RunWhileConnectedCoordinator(runtime);

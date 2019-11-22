@@ -64,15 +64,23 @@ export interface ISummaryCommit {
 
 /**
  * Context for uploading a summary to storage.
+ * Indicates the previously acked summary.
  */
 export interface ISummaryContext {
     /**
      * Parent summary proposed handle (from summary op)
      */
-    proposalHandle: string;
+    readonly proposalHandle: string;
 
     /**
      * Parent summary acked handle (from summary ack)
      */
-    ackHandle: string;
+    readonly ackHandle: string;
 }
+
+/**
+ * Context for uploading summary to storage.
+ * There may not be an acked summary.
+ */
+export type SummaryContext = ISummaryContext
+    | { proposalHandle: undefined; ackHandle: undefined; };

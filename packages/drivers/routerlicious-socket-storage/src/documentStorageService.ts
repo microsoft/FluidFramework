@@ -10,11 +10,11 @@ import {
     ICreateBlobResponse,
     IDocumentStorageService,
     ISnapshotTree,
-    ISummaryContext,
     ISummaryHandle,
     ISummaryTree,
     ITree,
     IVersion,
+    SummaryContext,
     SummaryObject,
     SummaryType,
 } from "@microsoft/fluid-protocol-definitions";
@@ -83,21 +83,26 @@ export class DocumentStorageService implements IDocumentStorageService  {
         return commit.then((c) => ({date: c.committer.date, id: c.sha, treeId: c.tree.sha}));
     }
 
-    public async uploadSummary(summary: ISummaryTree, context: ISummaryContext): Promise<string> {
-        let prevCache = await this.cache.get(context.proposalHandle || context.ackHandle)
-            || await this.cache.get(context.ackHandle);
-        if (!prevCache) {
-            // This should only happen if a summarizer dies after summary op and a new summarizer loads before
-            // summary ack. The new summarizer will then load off the latest summary but not have the acked
-            // summary cached.
-            console.log("Handle not found in cache");
-            const version = await this.getVersions(context.ackHandle, 1);
-            await this.getSnapshotTree(version[0]);
-            prevCache = await this.cache.get(context.ackHandle);
+    public async uploadSummary(summary: ISummaryTree, context: SummaryContext): Promise<string> {
+        let prevCache: Map<string, string> | undefined;
+        if (context.ackHandle) {
+            prevCache = await this.cache.get(context.ackHandle)
+                || await this.cache.get(context.ackHandle);
+
+            if (!prevCache) {
+                // This should only happen if a summarizer dies after summary op and a new summarizer loads before
+                // summary ack. The new summarizer will then load off the latest summary but not have the acked
+                // summary cached.
+                console.log("Handle not found in cache");
+                const version = await this.getVersions(context.ackHandle, 1);
+                await this.getSnapshotTree(version[0]);
+                prevCache = await this.cache.get(context.ackHandle);
+            }
+            if (!prevCache) {
+                throw Error("Parent summary could not be found");
+            }
         }
-        if (!prevCache) {
-            throw Error("Parent summary could not be found");
-        }
+
         const newCache = new Map<string, string>();
         const handle = await this.writeSummaryObject(summary, prevCache, newCache, [], "");
         this.cache.set(handle, new LazyPromise(() => Promise.resolve(newCache)));
@@ -119,7 +124,7 @@ export class DocumentStorageService implements IDocumentStorageService  {
 
     private async writeSummaryObject(
         value: SummaryObject,
-        prevCache: Map<string, string>,
+        prevCache: Map<string, string> | undefined,
         newCache: Map<string, string>,
         submodule: { path: string; sha: string }[],
         path: string,
@@ -150,7 +155,7 @@ export class DocumentStorageService implements IDocumentStorageService  {
                 return newCommit.sha;
             }
             case SummaryType.Handle: {
-                const refHash = prevCache.get(value.path);
+                const refHash = prevCache && prevCache.get(value.path);
                 if (!refHash) {
                     throw Error("Referenced summary should be cached if handle is provided.");
                 }

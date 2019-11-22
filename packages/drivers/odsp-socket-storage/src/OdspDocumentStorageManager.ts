@@ -318,7 +318,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         return Promise.reject("Not supported");
     }
 
-    public async uploadSummary(summary: api.ISummaryTree, context: api.ISummaryContext): Promise<string> {
+    public async uploadSummary(summary: api.ISummaryTree, context: api.SummaryContext): Promise<string> {
         this.checkSnapshotUrl();
 
         const result = await this.writeSummaryTree(summary, context);
@@ -454,7 +454,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         return summarySnapshotTree;
     }
 
-    private async writeSummaryTree(tree: api.ISummaryTree, context: api.ISummaryContext, depth: number = 0): Promise<ISnapshotResponse> {
+    private async writeSummaryTree(tree: api.ISummaryTree, context: api.SummaryContext, depth: number = 0): Promise<ISnapshotResponse> {
         const snapshotTree = this.convertSummaryToSnapshotTree(tree, context.proposalHandle);
 
         const snapshot: ISnapshotRequest = {
@@ -481,7 +481,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
     /**
      * Converts a summary tree to ODSP tree
      */
-    private convertSummaryToSnapshotTree(tree: api.ISummaryTree, parentHandle: string): ISnapshotTree {
+    private convertSummaryToSnapshotTree(tree: api.ISummaryTree, parentHandle: string | undefined): ISnapshotTree {
         const snapshotTree: ISnapshotTree = {
             entries: [],
         }!;
@@ -510,6 +510,9 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                     break;
 
                 case api.SummaryType.Handle:
+                    if (!parentHandle) {
+                        throw Error("Parent summary does not exist to reference by handle.");
+                    }
                     id = `${parentHandle}${summaryObject.path}`;
 
                     // TODO: SPO will deprecate this soon

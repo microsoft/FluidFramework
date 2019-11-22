@@ -87,7 +87,7 @@ export interface IDocumentStorageManager {
      * Generates and uploads a packfile that represents the given commit. A driver generated handle to the packfile
      * is returned as a result of this call.
      */
-    uploadSummary(summary: api.ISummaryTree, context: api.ISummaryContext): Promise<string>;
+    uploadSummary(summary: api.ISummaryTree, context: api.SummaryContext): Promise<string>;
 
     /**
      * Retrieves the commit that matches the packfile handle. If the packfile has already been committed and the
