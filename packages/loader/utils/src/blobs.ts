@@ -119,8 +119,7 @@ function flattenCore(path: string, treeEntries: ITreeEntry[], blobMap: Map<strin
  * Build a tree hierarchy base on a flat tree
  *
  * @param flatTree - a flat tree
- * @param blobsShaToPathCache - Map with blobs sha as keys for routerlicious driver or blobs id as keys for
- *  odsp driver and values as path of the blob.
+ * @param blobsShaToPathCache - Map with blobs sha as keys and values as path of the blob.
  * @returns the hierarchical tree
  */
 export function buildHierarchy(

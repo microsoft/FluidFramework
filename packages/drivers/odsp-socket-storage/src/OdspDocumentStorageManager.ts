@@ -35,8 +35,9 @@ import { OdspCache } from "./odspCache";
 import { getWithRetryForTokenRefresh, throwOdspNetworkError } from "./OdspUtils";
 
 export class OdspDocumentStorageManager implements IDocumentStorageManager {
-    private readonly blobsIdToPathMap: Map<string, string> = new Map<string, string>();
+    private readonly blobsIdToPathMap: Map<string, string> = new Map();
     private readonly blobsShaToPathCache: Map<string, string> = new Map();
+    private readonly blobsPathToShaMap: Map<string, string> = new Map();
     private readonly blobCache: Map<string, resources.IBlob> = new Map();
     private readonly treesCache: Map<string, resources.ITree> = new Map();
 
@@ -108,9 +109,10 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         }
 
         // Populate the cache with paths from sha-to-path mapping.
-        const hash = gitHashFile(Buffer.from(blob.content, blob.encoding));
-        if (this.blobsIdToPathMap.has(blob.sha)) {
-            this.blobsShaToPathCache.set(hash, this.blobsIdToPathMap.get(blob.sha)!);
+        const path = this.blobsIdToPathMap.get(blob.sha);
+        if (path) {
+            const hash = gitHashFile(Buffer.from(blob.content, blob.encoding));
+            this.blobsShaToPathCache.set(hash, path);
         }
         return blob;
     }
@@ -163,7 +165,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             return null;
         }
 
-        const hierarchicalTree = buildHierarchy(tree, this.blobsIdToPathMap);
+        const hierarchicalTree = buildHierarchy(tree);
 
         // decode commit paths
         const commits = {};
@@ -277,6 +279,17 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                 const { trees, blobs, ops, sha } = odspSnapshot;
                 if (trees) {
                     this.initTreesCache(trees);
+                    this.blobsIdToPathMap.clear();
+                    for (const tree of this.treesCache.values()) {
+                        for (const entry of tree.tree) {
+                            if (entry.type === "blob") {
+                                this.blobsIdToPathMap.set(entry.sha, `/${entry.path}`);
+                            } else if (entry.type === "commit" && entry.path === ".app") {
+                                // This is the unacked handle of the latest summary generated.
+                                this.lastSummaryHandle = entry.sha;
+                            }
+                        }
+                    }
                 }
 
                 if (blobs) {
@@ -416,9 +429,6 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         let hierarchicalProtocolTree: api.ISnapshotTree;
         let appTree: resources.ITree | null;
 
-        // This appTreeId is the unacked handle of the last summary generated.
-        this.lastSummaryHandle = appTreeId;
-
         if (typeof (protocolTreeOrId) === "string") {
             // backwards compat for older summaries
             const trees = await Promise.all([
@@ -433,7 +443,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
             appTree = trees[1];
 
-            hierarchicalProtocolTree = buildHierarchy(protocolTree, this.blobsIdToPathMap);
+            hierarchicalProtocolTree = buildHierarchy(protocolTree);
 
         } else {
             appTree = await this.readTree(appTreeId);
@@ -445,7 +455,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             throw new Error("Invalid app tree");
         }
 
-        const hierarchicalAppTree = buildHierarchy(appTree, this.blobsIdToPathMap);
+        const hierarchicalAppTree = buildHierarchy(appTree);
 
         if (hierarchicalProtocolTree.blobs) {
             const attributesBlob = hierarchicalProtocolTree.blobs.attributes;
@@ -478,7 +488,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             };
         }
 
-        const snapshotTree = this.convertSummaryToSnapshotTree(tree, 0, "");
+        const snapshotTree = this.convertSummaryToSnapshotTree(tree);
 
         const snapshot: ISnapshotRequest = {
             entries: snapshotTree.entries!,
@@ -504,7 +514,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
     /**
      * Converts a summary tree to ODSP tree
      */
-    private convertSummaryToSnapshotTree(tree: api.ISummaryTree, depth: number = 0, path: string): ISnapshotTree {
+    private convertSummaryToSnapshotTree(tree: api.ISummaryTree, depth: number = 0, path: string = ""): ISnapshotTree {
         const snapshotTree: ISnapshotTree = {
             entries: [],
         }!;
@@ -526,16 +536,25 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                     const encoding = typeof summaryObject.content === "string" ? "utf-8" : "base64";
 
                     const hash = gitHashFile(Buffer.from(content, encoding));
+                    let completePath = this.blobsShaToPathCache.get(hash);
                     // If the cache has the hash of the blob and handle of last summary is also present, then use that to generate complete path for
                     // the given blob.
-                    if (!this.blobsShaToPathCache.has(hash) || !this.lastSummaryHandle) {
+                    if (!completePath || !this.lastSummaryHandle) {
                         value = {
                             content,
                             encoding,
                         };
-                        this.blobsShaToPathCache.set(hash, `${path}/${key}`);
+                        completePath = `${path}/${key}`;
+                        const prevSha = this.blobsPathToShaMap.get(completePath);
+                        // This is done to delete entry which has different sha at same complete path. We just delete previous entry even if it is same
+                        // so as to prevent string matching.
+                        if (prevSha) {
+                            this.blobsShaToPathCache.delete(prevSha);
+                        }
+                        this.blobsShaToPathCache.set(hash, completePath);
+                        this.blobsPathToShaMap.set(completePath, hash);
                     } else {
-                        id = `${this.lastSummaryHandle}${this.blobsShaToPathCache.get(hash)}`;
+                        id = `${this.lastSummaryHandle}${completePath}`;
                     }
                     break;
 
