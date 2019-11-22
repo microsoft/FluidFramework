@@ -6,8 +6,6 @@
       items:
         - name: "Build machine set up"
           href: server/build-machine.md
-    - name: "Anatomy of a Distributed Data Structure"
-      href: dds-anatomy.md
     - name: Components
       href: components/README.md
       items:
