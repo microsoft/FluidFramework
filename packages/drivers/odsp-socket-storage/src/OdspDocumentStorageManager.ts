@@ -36,8 +36,10 @@ import { getWithRetryForTokenRefresh, throwOdspNetworkError } from "./OdspUtils"
 
 export class OdspDocumentStorageManager implements IDocumentStorageManager {
     private readonly blobsIdToPathMap: Map<string, string> = new Map();
+    // This cache is associated with mapping sha to path for previous summary which belongs to last summary handle.
     private readonly blobsShaToPathCache: Map<string, string> = new Map();
-    private readonly blobsPathToShaMap: Map<string, string> = new Map();
+    // This cache is associated with mapping sha to path for currently generated summary.
+    private readonly blobsShaToPathCacheLatest: Map<string, string> = new Map();
     private readonly blobCache: Map<string, resources.IBlob> = new Map();
     private readonly treesCache: Map<string, resources.ITree> = new Map();
 
@@ -343,11 +345,15 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
     public async uploadSummary(tree: api.ISummaryTree): Promise<api.ISummaryHandle> {
         this.checkSnapshotUrl();
 
+        this.blobsShaToPathCacheLatest.clear();
         const result = await this.writeSummaryTree(tree);
         if (!result || !result.sha) {
             throw new Error(`Failed to write summary tree`);
         }
-
+        this.blobsShaToPathCache.clear();
+        for (const [key, value] of this.blobsShaToPathCacheLatest) {
+            this.blobsShaToPathCache.set(key, value);
+        }
         this.lastSummaryHandle = result.sha;
         return {
             handle: result.sha,
@@ -545,14 +551,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                             encoding,
                         };
                         completePath = `${path}/${key}`;
-                        const prevSha = this.blobsPathToShaMap.get(completePath);
-                        // This is done to delete entry which has different sha at same complete path. We just delete previous entry even if it is same
-                        // so as to prevent string matching.
-                        if (prevSha) {
-                            this.blobsShaToPathCache.delete(prevSha);
-                        }
-                        this.blobsShaToPathCache.set(hash, completePath);
-                        this.blobsPathToShaMap.set(completePath, hash);
+                        this.blobsShaToPathCacheLatest.set(hash, completePath);
                     } else {
                         id = `${this.lastSummaryHandle}${completePath}`;
                     }
