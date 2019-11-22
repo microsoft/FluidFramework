@@ -178,7 +178,7 @@ export class MockRuntime extends EventEmitter
     public readonly documentId: string;
     public readonly id: string;
     public readonly existing: boolean;
-    public readonly options: any;
+    public readonly options: any = {};
     public clientId: string = uuid();
     public readonly clientType: string = "";
     public readonly parentBranch: string;

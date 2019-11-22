@@ -36,6 +36,7 @@ import * as OpBuilder from "./opBuilder";
 import * as ops from "./ops";
 import * as Properties from "./properties";
 import { Snapshot } from "./snapshot";
+import { SnapshotLegacy } from "./snapshotlegacy";
 import { SnapshotLoader } from "./snapshotLoader";
 import { SortedSegmentSet } from "./sortedSegmentSet";
 import { MergeTreeTextHelper } from "./textSegment";
@@ -886,8 +887,12 @@ export class Client {
         return new MergeTreeTextHelper(this.mergeTree);
     }
 
-    public createSnapshotter() {
-        return new Snapshot(this.mergeTree, this.logger);
+    public createSnapshotter(): SnapshotLegacy {
+        // TODO: Remove once new snapshot format is adopted as default.
+        //       (See https://github.com/microsoft/FluidFramework/issues/84)
+        return this.mergeTree.options.newMergeTreeSnapshotFormat
+            ? new Snapshot(this.mergeTree, this.logger) as unknown as SnapshotLegacy
+            : new SnapshotLegacy(this.mergeTree, this.logger);
     }
 
     public createSnapshotLoader(runtime: IComponentRuntime) {

@@ -498,7 +498,6 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
 
     protected initializeLocalCore() {
         super.initializeLocalCore();
-        assert(MergeTree.Snapshot.EmptyChunk.chunkSequenceNumber === 0);
         this.loadFinished();
     }
 
