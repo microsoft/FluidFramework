@@ -60,13 +60,14 @@ export class TestClient extends Client {
         const services = new MockStorage(snapshotTree);
 
         const client2 = new TestClient(undefined, specToSeg);
-        const loader = client2.createSnapshotLoader(
+        await client2.load(
+            undefined,
             // tslint:disable-next-line: no-object-literal-type-assertion
             {
                 logger: client2.logger,
                 clientId: newLongClientId,
-            } as IComponentRuntime);
-        await loader.initialize(undefined, services);
+            } as IComponentRuntime,
+            services);
         return client2;
     }
 

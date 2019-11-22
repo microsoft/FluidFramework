@@ -463,10 +463,10 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         const data: string = header ? fromBase64ToUtf8(header) : undefined;
         this.intervalMapKernel.populate(data);
 
-        const loader = this.client.createSnapshotLoader(this.runtime);
         try {
-            const msgs = await loader.initialize(
+            const msgs = await this.client.load(
                 branchId,
+                this.runtime,
                 new ContentObjectStorage(storage));
             msgs.forEach((m) => this.processMergeTreeMsg(m));
             this.loadFinished();

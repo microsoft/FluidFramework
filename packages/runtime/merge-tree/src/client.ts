@@ -5,8 +5,8 @@
 
 import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
 import { ISequencedDocumentMessage, MessageType } from "@microsoft/fluid-protocol-definitions";
-import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
-import * as assert from "assert";
+import { IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
+import { strict as assert } from "assert";
 import { IIntegerRange } from "./base";
 import * as Collections from "./collections";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
@@ -895,8 +895,12 @@ export class Client {
             : new SnapshotLegacy(this.mergeTree, this.logger);
     }
 
-    public createSnapshotLoader(runtime: IComponentRuntime) {
-        return new SnapshotLoader(runtime, this, this.mergeTree);
+    public async load(branchId: string, runtime: IComponentRuntime, storage: IObjectStorageService) {
+        const loader = new SnapshotLoader(runtime, this, this.mergeTree);
+
+        // TODO: Remove return value once new snapshot format is adopted as default.
+        //       (See https://github.com/microsoft/FluidFramework/issues/84)
+        return await loader.initialize(branchId, storage);
     }
 
     getStackContext(startPos: number, rangeLabels: string[]) {
