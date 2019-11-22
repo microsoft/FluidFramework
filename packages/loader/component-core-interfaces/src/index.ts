@@ -11,5 +11,4 @@ export * from "./componentRender";
 export { IRequestHeader } from "./componentRouter";
 export * from "./componentRouter";
 export * from "./handles";
-export * from "./legacy";
 export * from "./serializer";

@@ -13,7 +13,7 @@ Welcome to Fluid!
 We built Fluid to make it simpler for developers to build real-time collaborative experiences using Web technology.
 
 Fluid enables distributed, collaborative applications by providing developers with eventually consistent <xref:dds>, a
-flexible component and app model ("Chaincode"), and a reference server implementation ("Routerlicious.")
+flexible component and app model, and a reference server implementation ("Routerlicious.")
 
 Teams across Microsoft are using Fluid for low latency collaboration, zero setup data persistence, and on-by-default
 cross app compatibility. Among other projects, our partner teams are building components for text editing, gaming,

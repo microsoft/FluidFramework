@@ -1,43 +1,20 @@
 {
   "name": "@chaincode/chat-3",
-  "description": "Prague Chat with minimal runtime",
   "version": "0.10.0",
-  "author": "Microsoft",
+  "description": "Prague Chat with minimal runtime",
   "repository": "microsoft/FluidFramework",
+  "license": "MIT",
+  "author": "Microsoft",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "tslint": "tslint 'src/**/*.{ts,tsx}'",
-    "tsc": "tsc",
-    "build-webpack": "webpack --env=\"production\"",
     "build": "npm run tsc && npm run tslint && npm run build-webpack",
+    "build-webpack": "webpack --env=\"production\"",
     "start": "webpack-dev-server --config webpack.config.js --package package.json",
+    "start:live": "webpack-dev-server --config webpack.config.js --package package.json --env.mode live",
     "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
-    "start:live": "webpack-dev-server --config webpack.config.js --package package.json --env.mode live"
-  },
-  "fluid": {
-    "browser": {
-      "umd": {
-        "files": [
-          "dist/main.bundle.js"
-        ],
-        "library": "main"
-      }
-    }
-  },
-  "devDependencies": {
-    "@microsoft/fluid-webpack-component-loader": "^0.10.0",
-    "@types/node": "^10.11.5",
-    "@types/react-dom": "^16.0.11",
-    "@types/request": "^2.47.1",
-    "clean-webpack-plugin": "^0.1.19",
-    "tslint": "^5.11.0",
-    "ts-loader": "^4.4.2",
-    "typescript": "^3.0.1",
-    "webpack": "^4.16.5",
-    "webpack-cli": "^3.1.0",
-    "webpack-dev-server": "^3.8.0",
-    "webpack-merge": "^4.1.4"
+    "tsc": "tsc",
+    "tslint": "tslint 'src/**/*.{ts,tsx}'"
   },
   "dependencies": {
     "@microsoft/fluid-component-core-interfaces": "^0.10.0",
@@ -48,5 +25,28 @@
     "react-dom": "^16.7.0",
     "request": "^2.88.0"
   },
-  "license": "MIT"
+  "devDependencies": {
+    "@microsoft/fluid-webpack-component-loader": "^0.10.0",
+    "@types/node": "^10.11.5",
+    "@types/react-dom": "^16.0.11",
+    "@types/request": "^2.47.1",
+    "clean-webpack-plugin": "^0.1.19",
+    "ts-loader": "^4.4.2",
+    "tslint": "^5.11.0",
+    "typescript": "^3.0.1",
+    "webpack": "^4.16.5",
+    "webpack-cli": "^3.1.0",
+    "webpack-dev-server": "^3.8.0",
+    "webpack-merge": "^4.1.4"
+  },
+  "fluid": {
+    "browser": {
+      "umd": {
+        "files": [
+          "dist/main.bundle.js"
+        ],
+        "library": "main"
+      }
+    }
+  }
 }

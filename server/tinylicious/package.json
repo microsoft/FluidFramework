@@ -2,6 +2,12 @@
   "name": "tinylicious",
   "version": "0.1.0",
   "description": "Tiny routerlicious",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/microsoft/FluidFramework.git"
+  },
+  "license": "MIT",
+  "author": "Microsoft",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
   "scripts": {
@@ -10,29 +16,16 @@
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/microsoft/FluidFramework.git"
-  },
-  "author": "Microsoft",
-  "license": "MIT",
-  "devDependencies": {
-    "@microsoft/fluid-build-common": "^0.10.13634",
-    "@types/node": "^12.7.5",
-    "tslint": "^5.20.0",
-    "tslint-microsoft-contrib": "^6.2.0",
-    "typescript": "^3.6.3"
-  },
   "dependencies": {
+    "@microsoft/fluid-core-utils": "^0.10.13634",
+    "@microsoft/fluid-driver-base": "^0.10.13634",
+    "@microsoft/fluid-gitresources": "^0.10.13634",
+    "@microsoft/fluid-protocol-definitions": "^0.10.13634",
     "@microsoft/fluid-server-memory-orderer": "^0.10.13634",
     "@microsoft/fluid-server-services": "^0.10.13634",
     "@microsoft/fluid-server-services-client": "^0.10.13634",
     "@microsoft/fluid-server-services-core": "^0.10.13634",
     "@microsoft/fluid-server-services-utils": "^0.10.13634",
-    "@microsoft/fluid-gitresources": "^0.10.13634",
-    "@microsoft/fluid-protocol-definitions": "^0.10.13634",
-    "@microsoft/fluid-driver-base": "^0.10.13634",
-    "@microsoft/fluid-core-utils": "^0.10.13634",
     "@types/bytes": "^3.0.0",
     "@types/compression": "0.0.33",
     "@types/cookie-parser": "^1.4.1",
@@ -70,5 +63,12 @@
     "socket.io": "^2.2.0",
     "split": "^1.0.1",
     "winston": "^3.2.1"
+  },
+  "devDependencies": {
+    "@microsoft/fluid-build-common": "^0.10.13634",
+    "@types/node": "^12.7.5",
+    "tslint": "^5.20.0",
+    "tslint-microsoft-contrib": "^6.2.0",
+    "typescript": "^3.6.3"
   }
 }

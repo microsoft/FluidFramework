@@ -1,36 +1,22 @@
 {
   "name": "@fluid-example/musica",
-  "description": "Play music collaboratively",
   "version": "0.10.0",
-  "author": "Microsoft",
+  "description": "Play music collaboratively",
   "repository": "microsoft/FluidFramework",
+  "license": "MIT",
+  "author": "Microsoft",
   "main": "dist/main.bundle.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "webpack --env.production",
+    "deploy": "npm run build && npm version patch && npm run verdaccio && npm run post-deploy",
     "dev": "webpack --env.development",
+    "post-deploy": "node getRoute.js",
     "start": "webpack-dev-server --config webpack.config.js --package package.json",
     "start:live": "webpack-dev-server --config webpack.config.js --package package.json --env.mode live",
     "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
-    "verdaccio": "npm publish --registry https://packages.wu2.prague.office-int.com",
-    "deploy": "npm run build && npm version patch && npm run verdaccio && npm run post-deploy",
-    "post-deploy": "node getRoute.js",
-    "tsc": "tsc"
-  },
-  "devDependencies": {
-    "@babel/plugin-proposal-class-properties": "^7.4.4",
-    "@microsoft/fluid-webpack-component-loader": "^0.10.0",
-    "@types/node": "^10.14.6",
-    "@types/react-dom": "^16.0.11",
-    "@types/react": "^16.8.2",
-    "css-loader": "^1.0.0",
-    "style-loader": "^0.23.0",
-    "ts-loader": "^4.5.0",
-    "typescript": "^3.4.5",
-    "webpack": "4.16.5",
-    "webpack-cli": "3.1.0",
-    "webpack-dev-server": "^3.8.0",
-    "webpack-merge": "4.1.4"
+    "tsc": "tsc",
+    "verdaccio": "npm publish --registry https://packages.wu2.prague.office-int.com"
   },
   "dependencies": {
     "@babel/core": "^7.4.4",
@@ -51,6 +37,21 @@
     "url-loader": "^1.1.2",
     "yarn": "^1.15.2"
   },
+  "devDependencies": {
+    "@babel/plugin-proposal-class-properties": "^7.4.4",
+    "@microsoft/fluid-webpack-component-loader": "^0.10.0",
+    "@types/node": "^10.14.6",
+    "@types/react": "^16.8.2",
+    "@types/react-dom": "^16.0.11",
+    "css-loader": "^1.0.0",
+    "style-loader": "^0.23.0",
+    "ts-loader": "^4.5.0",
+    "typescript": "^3.4.5",
+    "webpack": "4.16.5",
+    "webpack-cli": "3.1.0",
+    "webpack-dev-server": "^3.8.0",
+    "webpack-merge": "4.1.4"
+  },
   "fluid": {
     "browser": {
       "umd": {
@@ -60,6 +61,5 @@
         "library": "main"
       }
     }
-  },
-  "license": "MIT"
+  }
 }

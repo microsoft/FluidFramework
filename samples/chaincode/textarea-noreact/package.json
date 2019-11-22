@@ -1,9 +1,10 @@
 {
   "name": "@fluid-example/textarea-noreact",
-  "description": "Collaborative HTML <textarea> that uses aqueduct but no React.",
   "version": "0.10.4",
-  "author": "Microsoft",
+  "description": "Collaborative HTML <textarea> that uses aqueduct but no React.",
   "repository": "microsoft/FluidFramework",
+  "license": "MIT",
+  "author": "Microsoft",
   "main": "dist/index.js",
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
@@ -11,18 +12,30 @@
     "build": "concurrently npm:build:compile npm:tslint",
     "build:compile": "concurrently npm:tsc npm:build:esnext",
     "build:docs": "api-extractor run --local",
+    "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
-    "build:esnext": "tsc --project ./tsconfig.esnext.json",
+    "deploy": "npm run build && npm version patch && npm run verdaccio && npm run post-deploy",
     "start": "webpack-dev-server --config webpack.config.js --package package.json",
     "start:live": "webpack-dev-server --config webpack.config.js --package package.json --env.mode live",
     "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
-    "verdaccio": "npm publish --registry https://packages.wu2.prague.office-int.com",
-    "deploy": "npm run build && npm version patch && npm run verdaccio && npm run post-deploy",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose",
+    "verdaccio": "npm publish --registry https://packages.wu2.prague.office-int.com",
     "webpack": "webpack --env.production",
     "webpack:dev": "webpack --env.development"
+  },
+  "dependencies": {
+    "@microsoft/fluid-aqueduct": "^0.10.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.10.0",
+    "@microsoft/fluid-component-runtime": "^0.10.0",
+    "@microsoft/fluid-container-definitions": "^0.10.0",
+    "@microsoft/fluid-core-utils": "^0.10.0",
+    "@microsoft/fluid-framework-interfaces": "^0.10.0",
+    "@microsoft/fluid-map": "^0.10.0",
+    "@microsoft/fluid-runtime-definitions": "^0.10.0",
+    "@microsoft/fluid-sequence": "^0.10.0",
+    "@microsoft/fluid-shared-object-base": "^0.10.0"
   },
   "devDependencies": {
     "@microsoft/fluid-build-common": "^0.10.0",
@@ -38,18 +51,6 @@
     "webpack-dev-server": "^3.8.0",
     "webpack-merge": "4.1.4"
   },
-  "dependencies": {
-    "@microsoft/fluid-aqueduct": "^0.10.0",
-    "@microsoft/fluid-component-core-interfaces": "^0.10.0",
-    "@microsoft/fluid-component-runtime": "^0.10.0",
-    "@microsoft/fluid-container-definitions": "^0.10.0",
-    "@microsoft/fluid-framework-interfaces": "^0.10.0",
-    "@microsoft/fluid-map": "^0.10.0",
-    "@microsoft/fluid-runtime-definitions": "^0.10.0",
-    "@microsoft/fluid-sequence": "^0.10.0",
-    "@microsoft/fluid-shared-object-base": "^0.10.0",
-    "@microsoft/fluid-core-utils": "^0.10.0"
-  },
   "fluid": {
     "browser": {
       "umd": {
@@ -59,6 +60,5 @@
         "library": "main"
       }
     }
-  },
-  "license": "MIT"
+  }
 }

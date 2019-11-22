@@ -2,23 +2,15 @@
   "name": "@fluid-example/hosts-sample",
   "version": "0.11.0",
   "description": "Sample Fluid container host",
+  "license": "MIT",
+  "author": "Microsoft",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc && npm run tslint",
+    "start": "webpack-dev-server --config webpack.config.js",
     "tsc": "tsc",
-    "webpack": "webpack --config webpack.config.js",
     "tslint": "tslint 'src/**/*.ts'",
-    "start": "webpack-dev-server --config webpack.config.js"
-  },
-  "author": "Microsoft",
-  "devDependencies": {
-    "source-map-loader": "^0.2.4",
-    "ts-loader": "^5.3.3",
-    "tslint": "^5.15.0",
-    "typescript": "^3.4.3",
-    "webpack": "^4.29.6",
-    "webpack-cli": "^3.3.0",
-    "webpack-dev-server": "^3.3.1"
+    "webpack": "webpack --config webpack.config.js"
   },
   "dependencies": {
     "@microsoft/fluid-container-definitions": "^0.11.0",
@@ -29,5 +21,13 @@
     "@types/jsonwebtoken": "^8.3.2",
     "jsonwebtoken": "^8.5.1"
   },
-  "license": "MIT"
+  "devDependencies": {
+    "source-map-loader": "^0.2.4",
+    "ts-loader": "^5.3.3",
+    "tslint": "^5.15.0",
+    "typescript": "^3.4.3",
+    "webpack": "^4.29.6",
+    "webpack-cli": "^3.3.0",
+    "webpack-dev-server": "^3.3.1"
+  }
 }
