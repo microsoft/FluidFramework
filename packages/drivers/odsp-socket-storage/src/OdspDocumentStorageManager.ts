@@ -318,10 +318,10 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         return Promise.reject("Not supported");
     }
 
-    public async uploadSummary(tree: api.ISummaryTree): Promise<string> {
+    public async uploadSummary(summary: api.ISummaryTree, context: api.ISummaryContext): Promise<string> {
         this.checkSnapshotUrl();
 
-        const result = await this.writeSummaryTree(tree);
+        const result = await this.writeSummaryTree(summary, context);
         if (!result || !result.sha) {
             throw new Error(`Failed to write summary tree`);
         }
@@ -454,8 +454,8 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         return summarySnapshotTree;
     }
 
-    private async writeSummaryTree(tree: api.ISummaryTree, depth: number = 0): Promise<ISnapshotResponse> {
-        const snapshotTree = this.convertSummaryToSnapshotTree(tree);
+    private async writeSummaryTree(tree: api.ISummaryTree, context: api.ISummaryContext, depth: number = 0): Promise<ISnapshotResponse> {
+        const snapshotTree = this.convertSummaryToSnapshotTree(tree, context.proposalHandle);
 
         const snapshot: ISnapshotRequest = {
             entries: snapshotTree.entries!,
@@ -481,7 +481,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
     /**
      * Converts a summary tree to ODSP tree
      */
-    private convertSummaryToSnapshotTree(tree: api.ISummaryTree): ISnapshotTree {
+    private convertSummaryToSnapshotTree(tree: api.ISummaryTree, parentHandle: string): ISnapshotTree {
         const snapshotTree: ISnapshotTree = {
             entries: [],
         }!;
@@ -495,7 +495,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
             switch (summaryObject.type) {
                 case api.SummaryType.Tree:
-                    value = this.convertSummaryToSnapshotTree(summaryObject);
+                    value = this.convertSummaryToSnapshotTree(summaryObject, parentHandle);
                     break;
 
                 case api.SummaryType.Blob:
@@ -510,7 +510,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                     break;
 
                 case api.SummaryType.Handle:
-                    id = `${summaryObject.ackedParentHandle}${summaryObject.path}`;
+                    id = `${parentHandle}${summaryObject.path}`;
 
                     // TODO: SPO will deprecate this soon
                     if (summaryObject.handleType === api.SummaryType.Commit) {

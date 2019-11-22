@@ -7,6 +7,7 @@ import {
     ICreateBlobResponse,
     IDocumentStorageService,
     ISnapshotTree,
+    ISummaryContext,
     ISummaryHandle,
     ISummaryTree,
     ITree,
@@ -49,8 +50,8 @@ export class InnerDocumentStorageService implements IDocumentStorageService  {
         return this.outerStorageService.write(tree, parents, message, ref);
     }
 
-    public async uploadSummary(commit: ISummaryTree): Promise<string> {
-        return this.outerStorageService.uploadSummary(commit);
+    public async uploadSummary(summary: ISummaryTree, context: ISummaryContext): Promise<string> {
+        return this.outerStorageService.uploadSummary(summary, context);
 
     }
 

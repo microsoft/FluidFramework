@@ -32,8 +32,6 @@ export interface ISummaryHandle {
     type: SummaryType.Handle;
     handleType: SummaryType;
     path: string;
-    proposedParentHandle?: string;
-    ackedParentHandle: string;
 }
 
 export interface ISummaryBlob {

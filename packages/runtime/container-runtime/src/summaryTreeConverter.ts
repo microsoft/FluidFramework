@@ -6,7 +6,6 @@
 import {
     IBlob,
     ISummaryBlob,
-    ISummaryContext,
     ISummaryTree,
     ITree,
     SummaryObject,
@@ -30,13 +29,11 @@ export interface IConvertedSummaryResults {
 export class SummaryTreeConverter {
     public convertToSummaryTree(
         snapshot: ITree,
-        summaryContext: ISummaryContext,
         fullTree: boolean = false,
     ): IConvertedSummaryResults {
         const summaryStats = this.mergeStats();
         const summaryTree = this.convertToSummaryTreeCore(
             snapshot,
-            summaryContext,
             summaryStats,
             fullTree,
             "");
@@ -63,7 +60,6 @@ export class SummaryTreeConverter {
 
     protected convertToSummaryTreeCore(
         snapshot: ITree,
-        summaryContext: ISummaryContext,
         summaryStats: ISummaryStats,
         fullTree: boolean = false,
         path: string,
@@ -72,8 +68,6 @@ export class SummaryTreeConverter {
             summaryStats.handleNodeCount++;
             return {
                 path,
-                proposedParentHandle: summaryContext.proposalHandle,
-                ackedParentHandle: summaryContext.ackHandle,
                 handleType: SummaryType.Tree,
                 type: SummaryType.Handle,
             };
@@ -107,7 +101,6 @@ export class SummaryTreeConverter {
                     case TreeEntry[TreeEntry.Tree]: {
                         value = this.convertToSummaryTreeCore(
                             entry.value as ITree,
-                            summaryContext,
                             summaryStats,
                             fullTree,
                             `${path}/${encodeURIComponent(entry.path)}`);
@@ -118,7 +111,6 @@ export class SummaryTreeConverter {
                         // when snapshotting the commits become strings not ITrees
                         value = this.convertToSummaryTreeCore(
                             entry.value as ITree,
-                            summaryContext,
                             summaryStats,
                             fullTree,
                             `${path}/${encodeURIComponent(entry.path)}`);

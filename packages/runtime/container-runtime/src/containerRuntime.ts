@@ -495,7 +495,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     public readonly latestSummary = new LatestSummaryTracker(this.deltaManager.initialSequenceNumber);
     private readonly summaryManager: SummaryManager;
     private readonly summaryTreeConverter = new SummaryTreeConverter();
-    private latestSummaryAck: { handle?: string, referenceSequenceNumber: number };
 
     private tasks: string[] = [];
 
@@ -628,8 +627,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         if (this.context.connectionState === ConnectionState.Connected) {
             this.summaryManager.setConnected(this.context.clientId);
         }
-
-        this.latestSummaryAck = { referenceSequenceNumber: this.deltaManager.initialSequenceNumber };
     }
     public get IComponentTokenProvider() {
 
@@ -971,10 +968,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         }));
 
         // convert to summary
-        const treeWithStats = this.summaryTreeConverter.convertToSummaryTree(
-            tree,
-            this.latestSummary.context,
-            fullTree);
+        const treeWithStats = this.summaryTreeConverter.convertToSummaryTree(tree, fullTree);
         const summaryTree = treeWithStats.summaryTree as ISummaryTree;
 
         if (this.chunkMap.size > 0) {
@@ -1114,7 +1108,9 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                 return { ...attemptData, ...generateData };
             }
 
-            const handle = await this.context.storage.uploadSummary(treeWithStats.summaryTree);
+            const handle = await this.context.storage.uploadSummary(
+                treeWithStats.summaryTree,
+                this.latestSummary.context);
             const parent = this.latestSummary.context && this.latestSummary.context.ackHandle;
             const summaryMessage: ISummaryContent = {
                 handle,
@@ -1355,61 +1351,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                 this.submit(MessageType.RemoteHelp, remoteHelpMessage);
             }
         }
-    }
-
-    private async refreshLatestSummaryAck(handle: string, referenceSequenceNumber: number) {
-        if (referenceSequenceNumber < this.latestSummaryAck.referenceSequenceNumber) {
-            return;
-        } else if (referenceSequenceNumber === this.latestSummaryAck.referenceSequenceNumber) {
-            if (!this.latestSummaryAck.handle) {
-                // when first loading we may not have the ack handle (version)
-                this.latestSummaryAck.handle = handle;
-            }
-            return;
-        }
-
-        this.latestSummaryAck = { handle, referenceSequenceNumber };
-
-        // we have to call get version to get the treeId for r11s; this isnt needed
-        // for odsp currently, since their treeId is undefined
-        const versionsResult = await this.setOrLogError("FailedToGetVersion",
-            () => this.storage.getVersions(handle, 1),
-            (versions) => !!(versions && versions.length));
-
-        if (versionsResult.success) {
-            const snapshotResult = await this.setOrLogError("FailedToGetSnapshot",
-                () => this.storage.getSnapshotTree(versionsResult.result[0]),
-                (snapshot) => !!snapshot);
-
-            if (snapshotResult.success) {
-                // refresh base summary
-                // it might be nice to do this in the container in the future, and maybe for all
-                // clients, not just the summarizer
-                this.context.refreshBaseSummary(snapshotResult.result);
-            }
-        }
-    }
-
-    private async setOrLogError<T>(
-        eventName: string,
-        setter: () => Promise<T>,
-        validator: (result: T) => boolean,
-    ): Promise<{ result: T, success: boolean }> {
-        let result: T;
-        let success = true;
-        try {
-            result = await setter();
-        } catch (error) {
-            // send error event for exceptions
-            this.logger.sendErrorEvent({ eventName }, error);
-            success = false;
-        }
-        if (success && !validator(result)) {
-            // send error event when result is invalid
-            this.logger.sendErrorEvent({ eventName });
-            success = false;
-        }
-        return { result, success };
     }
 }
 

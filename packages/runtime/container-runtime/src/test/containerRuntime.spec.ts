@@ -68,13 +68,7 @@ describe("Runtime", () => {
                             ] }),
                         ],
                     };
-                    summaryResults = converter.convertToSummaryTree(
-                        inputTree,
-                        {
-                            proposalHandle: "test-proposal-handle",
-                            ackHandle: "test-ack-handle",
-                        },
-                    );
+                    summaryResults = converter.convertToSummaryTree(inputTree);
                 });
 
                 it("Should convert correctly", () => {
@@ -87,8 +81,6 @@ describe("Runtime", () => {
                     // trees with ids should become handles
                     const handle = assertSummaryHandle(summaryTree.tree.h);
                     assert.strictEqual(handle.handleType, SummaryType.Tree);
-                    assert.strictEqual(handle.proposedParentHandle, "test-proposed-parent-handle");
-                    assert.strictEqual(handle.ackedParentHandle, "test-acked-parent-handle");
                     assert.strictEqual(handle.path, "/h");
 
                     // subtrees should recurse

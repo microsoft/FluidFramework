@@ -12,8 +12,8 @@ import { OdspDocumentStorageManager } from "./OdspDocumentStorageManager";
 export class OdspDocumentStorageService implements api.IDocumentStorageService {
     constructor(private readonly storageManager: OdspDocumentStorageManager) { }
 
-    public uploadSummary(commit: api.ISummaryTree): Promise<string> {
-        return this.storageManager.uploadSummary(commit);
+    public uploadSummary(summary: api.ISummaryTree, context: api.ISummaryContext): Promise<string> {
+        return this.storageManager.uploadSummary(summary, context);
     }
 
     public downloadSummary(handle: api.ISummaryHandle): Promise<api.ISummaryTree> {
