@@ -35,6 +35,7 @@ import {
     isSystemType,
     raiseConnectedEvent,
     readAndParse,
+    Trace,
 } from "@microsoft/fluid-core-utils";
 import {
     Browser,
@@ -88,34 +89,29 @@ interface ISummaryTreeWithStats {
     summaryTree: ISummaryTree;
 }
 
-/**
- * Base interface for all possible results of generate summary attempt.
- */
 export interface IGeneratedSummaryData {
-    referenceSequenceNumber: number;
-
-    /**
-     * true if the summary op was submitted
-     */
-    submitted: boolean;
-
-    summaryMessage?: ISummaryContent;
-
-    /**
-     * computed stats of generated summary tree
-     */
-    summaryStats?: ISummaryStats;
-
-    /**
-     * only set if uploaded to storage
-     */
-    handle?: string;
-
-    /**
-     * only set if submitted summary op
-     */
-    clientSequenceNumber?: number;
+    readonly summaryStats: ISummaryStats;
+    readonly generateDuration?: number;
 }
+
+export interface IUploadedSummaryData {
+    readonly handle: string;
+    readonly uploadDuration?: number;
+}
+
+export interface IUnsubmittedSummaryData extends Partial<IGeneratedSummaryData>, Partial<IUploadedSummaryData> {
+    readonly referenceSequenceNumber: number;
+    readonly submitted: false;
+}
+
+export interface ISubmittedSummaryData extends IGeneratedSummaryData, IUploadedSummaryData {
+    readonly referenceSequenceNumber: number;
+    readonly submitted: true;
+    readonly clientSequenceNumber: number;
+    readonly submitOpDuration?: number;
+}
+
+export type GenerateSummaryData = IUnsubmittedSummaryData | ISubmittedSummaryData;
 
 // Consider idle 5s of no activity. And snapshot if a minute has gone by with no snapshot.
 const IdleDetectionTime = 5000;
@@ -483,6 +479,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     public readonly logger: ITelemetryLogger;
     private readonly summaryManager: SummaryManager;
     private readonly summaryTreeConverter = new SummaryTreeConverter();
+    private latestSummaryAck: { handle?: string, referenceSequenceNumber: number };
 
     private tasks: string[] = [];
 
@@ -607,7 +604,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             this,
             () => this.summaryConfiguration,
             () => this.generateSummary(!this.loadedFromSummary),
-            (snapshot) => this.context.refreshBaseSummary(snapshot));
+            (handle, refSeq) => this.refreshLatestSummaryAck(handle, refSeq));
 
         // Create the SummaryManager and mark the initial state
         this.summaryManager = new SummaryManager(
@@ -618,6 +615,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         if (this.context.connectionState === ConnectionState.Connected) {
             this.summaryManager.setConnected(this.context.clientId);
         }
+
+        this.latestSummaryAck = { referenceSequenceNumber: this.deltaManager.initialSequenceNumber };
     }
     public get IComponentTokenProvider() {
 
@@ -1080,7 +1079,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         deferred.resolve(context);
     }
 
-    private async generateSummary(fullTree: boolean = false): Promise<IGeneratedSummaryData> {
+    private async generateSummary(fullTree: boolean = false): Promise<GenerateSummaryData> {
         const message =
             `Summary @${this.deltaManager.referenceSequenceNumber}:${this.deltaManager.minimumSequenceNumber}`;
 
@@ -1101,47 +1100,54 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         try {
             await this.scheduleManager.pause();
 
-            const ret: IGeneratedSummaryData = {
+            const attemptData: IUnsubmittedSummaryData = {
                 referenceSequenceNumber: this.deltaManager.referenceSequenceNumber,
                 submitted: false,
             };
 
             if (!this.connected) {
                 // if summarizer loses connection it will never reconnect
-                return ret;
+                return attemptData;
             }
 
-            // TODO in the future we can have stored the latest summary by listening to the summary ack message
-            // after loading from the beginning of the snapshot
-            const versions = await this.context.storage.getVersions(this.id, 1);
-            const parents = versions.map((version) => version.id);
-            const parent = parents[0];
-
+            const trace = Trace.start();
             const treeWithStats = await this.summarize(fullTree);
-            ret.summaryStats = treeWithStats.summaryStats;
+            const generateData: IGeneratedSummaryData = {
+                summaryStats: treeWithStats.summaryStats,
+                generateDuration: trace.trace().duration,
+            };
 
             if (!this.connected) {
-                return ret;
+                return { ...attemptData, ...generateData };
             }
 
             const handle = await this.context.storage.uploadSummary(treeWithStats.summaryTree);
+            const parent = this.latestSummaryAck.handle;
             const summaryMessage: ISummaryContent = {
                 handle: handle.handle,
                 head: parent,
                 message,
-                parents,
+                parents: parent ? [parent] : [],
             };
-            ret.handle = handle.handle;
+            const uploadData: IUploadedSummaryData = {
+                handle: handle.handle,
+                uploadDuration: trace.trace().duration,
+            };
 
             if (!this.connected) {
-                return ret;
+                return { ...attemptData, ...generateData, ...uploadData };
             }
 
-            ret.clientSequenceNumber = this.submit(MessageType.Summarize, summaryMessage);
-            ret.summaryMessage = summaryMessage;
-            ret.submitted = true;
+            const clientSequenceNumber = this.submit(MessageType.Summarize, summaryMessage);
 
-            return ret;
+            return {
+                ...attemptData,
+                ...generateData,
+                ...uploadData,
+                submitted: true,
+                clientSequenceNumber,
+                submitOpDuration: trace.trace().duration,
+            };
         } finally {
             // Restart the delta manager
             this.scheduleManager.resume();
@@ -1356,6 +1362,61 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                 this.submit(MessageType.RemoteHelp, remoteHelpMessage);
             }
         }
+    }
+
+    private async refreshLatestSummaryAck(handle: string, referenceSequenceNumber: number) {
+        if (referenceSequenceNumber < this.latestSummaryAck.referenceSequenceNumber) {
+            return;
+        } else if (referenceSequenceNumber === this.latestSummaryAck.referenceSequenceNumber) {
+            if (!this.latestSummaryAck.handle) {
+                // when first loading we may not have the ack handle (version)
+                this.latestSummaryAck.handle = handle;
+            }
+            return;
+        }
+
+        this.latestSummaryAck = { handle, referenceSequenceNumber };
+
+        // we have to call get version to get the treeId for r11s; this isnt needed
+        // for odsp currently, since their treeId is undefined
+        const versionsResult = await this.setOrLogError("FailedToGetVersion",
+            () => this.storage.getVersions(handle, 1),
+            (versions) => !!(versions && versions.length));
+
+        if (versionsResult.success) {
+            const snapshotResult = await this.setOrLogError("FailedToGetSnapshot",
+                () => this.storage.getSnapshotTree(versionsResult.result[0]),
+                (snapshot) => !!snapshot);
+
+            if (snapshotResult.success) {
+                // refresh base summary
+                // it might be nice to do this in the container in the future, and maybe for all
+                // clients, not just the summarizer
+                this.context.refreshBaseSummary(snapshotResult.result);
+            }
+        }
+    }
+
+    private async setOrLogError<T>(
+        eventName: string,
+        setter: () => Promise<T>,
+        validator: (result: T) => boolean,
+    ): Promise<{ result: T, success: boolean }> {
+        let result: T;
+        let success = true;
+        try {
+            result = await setter();
+        } catch (error) {
+            // send error event for exceptions
+            this.logger.sendErrorEvent({ eventName }, error);
+            success = false;
+        }
+        if (success && !validator(result)) {
+            // send error event when result is invalid
+            this.logger.sendErrorEvent({ eventName });
+            success = false;
+        }
+        return { result, success };
     }
 }
 

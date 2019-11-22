@@ -18,7 +18,13 @@ import {
     ValueType,
 } from "@microsoft/fluid-shared-object-base";
 import { CounterValueType } from "./counter";
-import { ISerializableValue, IValueOpEmitter, IValueOperation, IValueType } from "./interfaces";
+import {
+    ISerializableValue,
+    ISerializedValue,
+    IValueOpEmitter,
+    IValueOperation,
+    IValueType,
+} from "./interfaces";
 
 /**
  * A local value to be stored in a container type DDS.
@@ -41,11 +47,23 @@ export interface ILocalValue {
      * @param bind - Container type's handle
      * @returns The serialized form of the contained value
      */
-    makeSerializable(
+    makeSerialized(
         serializer: IComponentSerializer,
         context: IComponentHandleContext,
         bind: IComponentHandle,
-    ): ISerializableValue;
+    ): ISerializedValue;
+}
+
+export function makeSerializable(
+        localValue: ILocalValue,
+        serializer: IComponentSerializer,
+        context: IComponentHandleContext,
+        bind: IComponentHandle): ISerializableValue {
+    const value = localValue.makeSerialized(serializer, context, bind);
+    return {
+        type: value.type,
+        value: value.value && JSON.parse(value.value),
+    };
 }
 
 /**
@@ -74,13 +92,13 @@ export class PlainLocalValue implements ILocalValue {
     }
 
     /**
-     * {@inheritDoc ILocalValue.makeSerializable}
+     * {@inheritDoc ILocalValue.makeSerialized}
      */
-    public makeSerializable(
+    public makeSerialized(
         serializer: IComponentSerializer,
         context: IComponentHandleContext,
         bind: IComponentHandle,
-    ): ISerializableValue {
+    ): ISerializedValue {
         // Stringify to convert to the serialized handle values - and then parse in order to create
         // a POJO for the op
         const value = serializeHandles(this.value, serializer, context, bind);
@@ -114,10 +132,10 @@ export class SharedLocalValue implements ILocalValue {
     }
 
     /**
-     * {@inheritDoc ILocalValue.makeSerializable}
+     * {@inheritDoc ILocalValue.makeSerialized}
      * @deprecated
      */
-    public makeSerializable(): ISerializableValue {
+    public makeSerialized(): ISerializedValue {
         return {
             type: this.type,
             value: this.value.id,
@@ -150,13 +168,13 @@ export class ValueTypeLocalValue implements ILocalValue {
     }
 
     /**
-     * {@inheritDoc ILocalValue.makeSerializable}
+     * {@inheritDoc ILocalValue.makeSerialized}
      */
-    public makeSerializable(
+    public makeSerialized(
         serializer: IComponentSerializer,
         context: IComponentHandleContext,
         bind: IComponentHandle,
-    ): ISerializableValue {
+    ): ISerializedValue {
         const storedValueType = this.valueType.factory.store(this.value);
         const value = serializeHandles(storedValueType, serializer, context, bind);
 

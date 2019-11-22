@@ -14,14 +14,12 @@ import { ChildLogger, PerformanceEvent, PromiseTimer, Timer } from "@microsoft/f
 import {
     ISequencedDocumentMessage,
     ISequencedDocumentSystemMessage,
-    ISnapshotTree,
     ISummaryConfiguration,
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
-import * as assert from "assert";
-import { ContainerRuntime, IGeneratedSummaryData } from "./containerRuntime";
+import { ContainerRuntime, GenerateSummaryData } from "./containerRuntime";
 import { RunWhileConnectedCoordinator } from "./runWhileConnectedCoordinator";
-import { IClientSummaryWatcher, ISummaryAckMessage, SummaryCollection } from "./summaryCollection";
+import { IClientSummaryWatcher, SummaryCollection } from "./summaryCollection";
 
 // send some telemetry if generate summary takes too long
 const maxSummarizeTimeoutTime = 20000; // 20 sec
@@ -46,8 +44,8 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
         public readonly url: string,
         private readonly runtime: ContainerRuntime,
         private readonly configurationGetter: () => ISummaryConfiguration,
-        private readonly generateSummaryCore: () => Promise<IGeneratedSummaryData>,
-        private readonly refreshBaseSummary: (snapshot: ISnapshotTree) => void,
+        private readonly generateSummaryCore: () => Promise<GenerateSummaryData>,
+        private readonly refreshLatestAck: (handle: string, referenceSequenceNumber: number) => Promise<void>,
     ) {
         this.logger = ChildLogger.create(this.runtime.logger, "Summarizer");
         this.runCoordinator = new RunWhileConnectedCoordinator(runtime);
@@ -99,10 +97,15 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
             this.summaryCollection.createWatcher(this.runtime.clientId),
             this.configurationGetter(),
             () => this.generateSummary(),
-            (ack) => this.handleSuccessfulSummary(ack),
             this.runtime.deltaManager.referenceSequenceNumber,
             initialAttempt,
         );
+
+        // handle summary acks
+        this.handleSummaryAcks().catch((error) => {
+            this.logger.sendErrorEvent({ eventName: "HandleSummaryAckFatalError" }, error);
+            this.stop("handleAckError");
+        });
 
         // listen for ops
         const systemOpHandler = (op: ISequencedDocumentMessage) => this.runningSummarizer.handleSystemOp(op);
@@ -155,7 +158,7 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
         }
     }
 
-    private async generateSummary(): Promise<IGeneratedSummaryData | undefined> {
+    private async generateSummary(): Promise<GenerateSummaryData | undefined> {
         if (this.onBehalfOfClientId !== this.runtime.summarizerClientId) {
             // we are no longer the summarizer, we should stop ourself
             this.stop("parentNoLongerSummarizer");
@@ -165,47 +168,20 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
         return this.generateSummaryCore();
     }
 
-    private async handleSuccessfulSummary(ack: ISummaryAckMessage): Promise<void> {
-        // we have to call get version to get the treeId for r11s; this isnt needed
-        // for odsp currently, since their treeId is undefined
-        const versionsResult = await this.setOrLogError("SummarizerFailedToGetVersion",
-            () => this.runtime.storage.getVersions(ack.contents.handle, 1),
-            (versions) => !!(versions && versions.length));
+    private async handleSummaryAcks() {
+        let refSequenceNumber = this.summaryCollection.initialSequenceNumber;
+        while (this.runningSummarizer) {
+            try {
+                const ack = await this.summaryCollection.waitSummaryAck(refSequenceNumber);
+                refSequenceNumber = ack.summaryOp.referenceSequenceNumber;
+                const handle = ack.summaryAckNack.contents.handle;
 
-        if (versionsResult.success) {
-            const snapshotResult = await this.setOrLogError("SummarizerFailedToGetSnapshot",
-                () => this.runtime.storage.getSnapshotTree(versionsResult.result[0]),
-                (snapshot) => !!snapshot);
-
-            if (snapshotResult.success) {
-                // refresh base summary
-                // it might be nice to do this in the container in the future, and maybe for all
-                // clients, not just the summarizer
-                this.refreshBaseSummary(snapshotResult.result);
+                await this.refreshLatestAck(handle, refSequenceNumber);
+                refSequenceNumber++;
+            } catch (error) {
+                this.logger.sendErrorEvent({ eventName: "HandleSummaryAckError", refSequenceNumber }, error);
             }
         }
-    }
-
-    private async setOrLogError<T>(
-        eventName: string,
-        setter: () => Promise<T>,
-        validator: (result: T) => boolean,
-    ): Promise<{ result: T, success: boolean }> {
-        let result: T;
-        let success = true;
-        try {
-            result = await setter();
-        } catch (error) {
-            // send error event for exceptions
-            this.logger.sendErrorEvent({ eventName }, error);
-            success = false;
-        }
-        if (success && !validator(result)) {
-            // send error event when result is invalid
-            this.logger.sendErrorEvent({ eventName });
-            success = false;
-        }
-        return { result, success };
     }
 }
 
@@ -242,8 +218,7 @@ export class RunningSummarizer implements IDisposable {
         logger: ITelemetryLogger,
         summaryWatcher: IClientSummaryWatcher,
         configuration: ISummaryConfiguration,
-        generateSummary: () => Promise<IGeneratedSummaryData | undefined>,
-        handleSuccessfulSummary: (ack: ISummaryAckMessage) => Promise<void>,
+        generateSummary: () => Promise<GenerateSummaryData | undefined>,
         lastOpSeqNumber: number,
         firstAck: ISummaryAttempt,
     ): Promise<RunningSummarizer> {
@@ -254,7 +229,6 @@ export class RunningSummarizer implements IDisposable {
             summaryWatcher,
             configuration,
             generateSummary,
-            handleSuccessfulSummary,
             lastOpSeqNumber,
             firstAck);
 
@@ -278,8 +252,7 @@ export class RunningSummarizer implements IDisposable {
         private readonly logger: ITelemetryLogger,
         private readonly summaryWatcher: IClientSummaryWatcher,
         private readonly configuration: ISummaryConfiguration,
-        private readonly generateSummary: () => Promise<IGeneratedSummaryData | undefined>,
-        private readonly handleSuccessfulSummary: (ack: ISummaryAckMessage) => Promise<void>,
+        private readonly generateSummary: () => Promise<GenerateSummaryData | undefined>,
         lastOpSeqNumber: number,
         firstAck: ISummaryAttempt,
     ) {
@@ -404,8 +377,6 @@ export class RunningSummarizer implements IDisposable {
             // did not send the summary op
             return;
         }
-        // must be set if submitted
-        assert(summaryData.clientSequenceNumber);
 
         this.heuristics.lastSent = {
             refSequenceNumber: summaryData.referenceSequenceNumber,
@@ -446,11 +417,10 @@ export class RunningSummarizer implements IDisposable {
         // update for success
         if (ackNack.type === MessageType.SummaryAck) {
             this.heuristics.ackLastSent();
-            await this.handleSuccessfulSummary(ackNack);
         }
     }
 
-    private async generateSummaryWithLogging(message: string): Promise<IGeneratedSummaryData | undefined> {
+    private async generateSummaryWithLogging(message: string): Promise<GenerateSummaryData | undefined> {
         const summarizingEvent = PerformanceEvent.start(this.logger, {
             eventName: "Summarizing",
             message,
@@ -460,7 +430,7 @@ export class RunningSummarizer implements IDisposable {
         });
 
         // wait for generate/send summary
-        let summaryData: IGeneratedSummaryData | undefined;
+        let summaryData: GenerateSummaryData | undefined;
         try {
             summaryData = await this.generateSummary();
         } catch (error) {
@@ -476,13 +446,14 @@ export class RunningSummarizer implements IDisposable {
         }
 
         const telemetryProps = {
-            refSequenceNumber: summaryData.referenceSequenceNumber,
-            handle: summaryData.handle,
-            clientSequenceNumber: summaryData.clientSequenceNumber,
+            ...summaryData,
             ...summaryData.summaryStats,
+            refSequenceNumber: summaryData.referenceSequenceNumber,
             opsSinceLastAttempt: summaryData.referenceSequenceNumber - this.heuristics.lastSent.refSequenceNumber,
             opsSinceLastSummary: summaryData.referenceSequenceNumber - this.heuristics.lastAcked.refSequenceNumber,
         };
+        telemetryProps.summaryStats = undefined;
+        telemetryProps.referenceSequenceNumber = undefined;
 
         if (summaryData.submitted) {
             summarizingEvent.end(telemetryProps);

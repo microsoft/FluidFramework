@@ -22,3 +22,4 @@ export * from "./summaryTracker";
 export * from "./utils";
 export * from "./timer";
 export * from "./error";
+export * from "./trace";

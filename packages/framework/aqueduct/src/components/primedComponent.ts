@@ -3,9 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHandle, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import { ISharedDirectory, MapFactory, SharedDirectory } from "@microsoft/fluid-map";
 import { ITaskManager } from "@microsoft/fluid-runtime-definitions";
+// tslint:disable-next-line:no-submodule-imports
+import * as uuid from "uuid/v4";
+import { BlobHandle } from "./blobHandle";
 import { SharedComponent } from "./sharedComponent";
 
 /**
@@ -20,11 +23,18 @@ export abstract class PrimedComponent extends SharedComponent {
     private internalRoot: ISharedDirectory | undefined;
     private internalTaskManager: ITaskManager | undefined;
     private readonly rootDirectoryId = "root";
+    private readonly bigBlobs = "bigBlobs/";
 
     public async request(request: IRequest): Promise<IResponse> {
         const url = request.url;
-        if (this.internalTaskManager && url && url.startsWith(this.taskManager.url)) {
+        if (this.internalTaskManager && url.startsWith(this.taskManager.url)) {
             return this.internalTaskManager.request(request);
+        } else if (url.startsWith(this.bigBlobs)) {
+            const value = this.root.get<string>(url);
+            if (value === undefined) {
+                return { mimeType: "fluid/component", status: 404, value: `request ${url} not found` };
+            }
+            return { mimeType: "fluid/component", status: 200, value };
         } else {
             return super.request(request);
         }
@@ -51,6 +61,18 @@ export abstract class PrimedComponent extends SharedComponent {
         }
 
         return this.internalTaskManager;
+    }
+
+    /**
+     * Temporary implementation of blobs.
+     * Currently blobs are stored as properties on root map and we rely
+     * on map doing proper snapshot blob partitioning to reuse non-changing big properties.
+     * In future blobs would be implemented as first class citizen, using blob storage APIs
+     */
+    public async writeBlob(blob: string): Promise<IComponentHandle> {
+        const path = `${this.bigBlobs}${uuid()}`;
+        this.root.set(path, blob);
+        return new BlobHandle(path, this.root, this.runtime.IComponentHandleContext);
     }
 
     /**

@@ -35,7 +35,6 @@ describe("Runtime", () => {
                     maxOps: 1000, // 1k ops (active)
                     maxAckWaitTime: 600000, // 10 min
                 };
-                let refreshBaseSummaryDeferred: Deferred<void>;
                 let shouldDeferGenerateSummary: boolean = false;
                 let deferGenerateSummary: Deferred<void>;
 
@@ -48,7 +47,6 @@ describe("Runtime", () => {
                     clock.reset();
                     runCount = 0;
                     lastRefSeq = 0;
-                    refreshBaseSummaryDeferred = new Deferred();
                     summaryCollection = new SummaryCollection(0);
                     summarizer = await RunningSummarizer.start(
                         summarizerClientId,
@@ -68,15 +66,17 @@ describe("Runtime", () => {
                             }
                             return {
                                 referenceSequenceNumber: lastRefSeq,
-                                clientSequenceNumber: lastClientSeq,
                                 submitted: true,
-                                treeNodeCount: 0,
-                                blobNodeCount: 0,
-                                handleNodeCount: 0,
-                                totalBlobSize: 0,
+                                summaryStats: {
+                                    treeNodeCount: 0,
+                                    blobNodeCount: 0,
+                                    handleNodeCount: 0,
+                                    totalBlobSize: 0,
+                                },
+                                handle: "test-handle",
+                                clientSequenceNumber: lastClientSeq,
                             };
                         },
-                        async () => { refreshBaseSummaryDeferred.resolve(); },
                         0,
                         { refSequenceNumber: 0, summaryTime: Date.now() },
                     );
@@ -89,7 +89,11 @@ describe("Runtime", () => {
                 async function emitNextOp(increment: number = 1) {
                     await flushPromises();
                     lastRefSeq += increment;
-                    summarizer.handleOp(undefined, { sequenceNumber: lastRefSeq } as ISequencedDocumentMessage);
+                    const op: Partial<ISequencedDocumentMessage> = {
+                        sequenceNumber: lastRefSeq,
+                        timestamp: Date.now(),
+                    };
+                    summarizer.handleOp(undefined, op as ISequencedDocumentMessage);
                     await Promise.resolve();
                 }
 
@@ -116,11 +120,7 @@ describe("Runtime", () => {
                     };
                     summaryCollection.handleOp({ contents, type } as ISequencedDocumentMessage);
 
-                    // wait for refresh base summary to complete
-                    await refreshBaseSummaryDeferred.promise;
-                    refreshBaseSummaryDeferred = new Deferred();
-
-                    await Promise.resolve(); // let finally of summarize run
+                    await flushPromises(); // let summarize run
                 }
 
                 async function flushPromises(count: number = 1) {
