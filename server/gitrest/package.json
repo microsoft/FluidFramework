@@ -2,6 +2,8 @@
   "name": "gitrest",
   "version": "0.1.0",
   "description": "Git REST API",
+  "license": "MIT",
+  "author": "Microsoft",
   "main": "dist/www.js",
   "scripts": {
     "build": "npm run tslint && npm run tsc",
@@ -44,7 +46,5 @@
     "supertest": "^3.4.2",
     "tslint": "^5.12.0",
     "typescript": "~3.4.5"
-  },
-  "author": "Microsoft",
-  "license": "MIT"
+  }
 }

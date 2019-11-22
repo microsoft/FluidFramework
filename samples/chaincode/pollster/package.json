@@ -1,21 +1,31 @@
 {
   "name": "@fluid-example/yopollster",
-  "description": "Example poll component",
   "version": "0.10.0",
-  "author": "Microsoft",
+  "description": "Example poll component",
   "repository": "microsoft/FluidFramework",
+  "license": "MIT",
+  "author": "Microsoft",
   "main": "dist/main.bundle.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "webpack --env.production",
+    "deploy": "npm run build && npm version patch && npm run verdaccio && npm run post-deploy",
     "dev": "webpack --env.development",
+    "post-deploy": "node getRoute.js",
     "start": "webpack-dev-server --config webpack.config.js --package package.json",
     "start:live": "webpack-dev-server --config webpack.config.js --package package.json --env.mode live",
     "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
-    "verdaccio": "npm publish --registry https://packages.wu2.prague.office-int.com",
-    "deploy": "npm run build && npm version patch && npm run verdaccio && npm run post-deploy",
-    "post-deploy": "node getRoute.js",
-    "tsc": "tsc"
+    "tsc": "tsc",
+    "verdaccio": "npm publish --registry https://packages.wu2.prague.office-int.com"
+  },
+  "dependencies": {
+    "@microsoft/fluid-aqueduct": "^0.10.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.10.0",
+    "@microsoft/fluid-container-definitions": "^0.10.0",
+    "@microsoft/fluid-map": "^0.10.0",
+    "office-ui-fabric-react": "^6.185.0",
+    "react": "^16.8.3",
+    "react-dom": "^16.8.3"
   },
   "devDependencies": {
     "@microsoft/fluid-webpack-component-loader": "^0.10.0",
@@ -28,15 +38,6 @@
     "webpack-dev-server": "^3.8.0",
     "webpack-merge": "4.1.4"
   },
-  "dependencies": {
-    "@microsoft/fluid-aqueduct": "^0.10.0",
-    "@microsoft/fluid-component-core-interfaces": "^0.10.0",
-    "@microsoft/fluid-container-definitions": "^0.10.0",
-    "@microsoft/fluid-map": "^0.10.0",
-    "office-ui-fabric-react": "^6.185.0",
-    "react": "^16.8.3",
-    "react-dom": "^16.8.3"
-  },
   "fluid": {
     "browser": {
       "umd": {
@@ -46,6 +47,5 @@
         "library": "main"
       }
     }
-  },
-  "license": "MIT"
+  }
 }

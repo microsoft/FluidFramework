@@ -1,37 +1,24 @@
 {
   "name": "@fluid-example/image-gallery",
-  "description": "Image Gallery with pretty layout",
   "version": "0.10.0",
-  "author": "Microsoft",
+  "description": "Image Gallery with pretty layout",
   "repository": "microsoft/FluidFramework",
+  "license": "MIT",
+  "author": "Microsoft",
   "main": "dist/main.bundle.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "webpack --env.production",
+    "deploy": "npm run build && npm version patch && npm run verdaccio && npm run post-deploy",
     "dev": "webpack --env.development",
+    "post-deploy": "node getRoute.js",
     "start": "webpack-dev-server --config webpack.config.js --package package.json",
     "start:live": "webpack-dev-server --config webpack.config.js --package package.json --env.mode live",
     "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
-    "verdaccio": "npm publish --registry https://packages.wu2.prague.office-int.com",
-    "deploy": "npm run build && npm version patch && npm run verdaccio && npm run post-deploy",
-    "post-deploy": "node getRoute.js",
     "tsc": "tsc",
+    "verdaccio": "npm publish --registry https://packages.wu2.prague.office-int.com",
     "webpack": "npm run build",
     "webpack:dev": "npm run dev"
-  },
-  "devDependencies": {
-    "@microsoft/fluid-webpack-component-loader": "^0.10.0",
-    "@types/node": "10.11.5",
-    "@types/react-dom": "^16.0.11",
-    "@types/react-image-gallery": "^0.8.4",
-    "css-loader": "^2.1.1",
-    "ts-loader": "4.4.2",
-    "typescript": "3.0.1",
-    "typings-for-css-modules-loader": "^1.7.0",
-    "webpack": "4.16.5",
-    "webpack-dev-server": "^3.8.0",
-    "webpack-cli": "3.1.0",
-    "webpack-merge": "4.1.4"
   },
   "dependencies": {
     "@microsoft/fluid-aqueduct": "^0.10.0",
@@ -44,6 +31,20 @@
     "react-image-gallery": "^0.9.1",
     "style-loader": "^0.23.1"
   },
+  "devDependencies": {
+    "@microsoft/fluid-webpack-component-loader": "^0.10.0",
+    "@types/node": "10.11.5",
+    "@types/react-dom": "^16.0.11",
+    "@types/react-image-gallery": "^0.8.4",
+    "css-loader": "^2.1.1",
+    "ts-loader": "4.4.2",
+    "typescript": "3.0.1",
+    "typings-for-css-modules-loader": "^1.7.0",
+    "webpack": "4.16.5",
+    "webpack-cli": "3.1.0",
+    "webpack-dev-server": "^3.8.0",
+    "webpack-merge": "4.1.4"
+  },
   "fluid": {
     "browser": {
       "umd": {
@@ -53,6 +54,5 @@
         "library": "main"
       }
     }
-  },
-  "license": "MIT"
+  }
 }

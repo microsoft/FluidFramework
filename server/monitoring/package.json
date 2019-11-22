@@ -2,6 +2,8 @@
   "name": "fluid-health-monitor",
   "version": "0.0.1",
   "description": "Checks Fluid service health using a script",
+  "license": "MIT",
+  "author": "Microsoft",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc && tslint 'src/**/*.ts'",
@@ -12,8 +14,8 @@
   "dependencies": {
     "@microsoft/fluid-container-definitions": "^0.3.6760",
     "@microsoft/fluid-container-loader": "^0.3.6760",
-    "@microsoft/fluid-routerlicious-host": "^0.3.6760",
     "@microsoft/fluid-routerlicious-driver": "^0.3.6760",
+    "@microsoft/fluid-routerlicious-host": "^0.3.6760",
     "@sentry/node": "^5.6.2",
     "debug": "^4.1.1",
     "jsonwebtoken": "^8.5.1",
@@ -29,7 +31,5 @@
     "@types/uuid": "^3.4.4",
     "tslint": "^5.10.0",
     "typescript": "~3.4.5"
-  },
-  "author": "Microsoft",
-  "license": "MIT"
+  }
 }

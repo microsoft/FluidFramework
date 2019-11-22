@@ -2,6 +2,12 @@
   "name": "@fluid-internal/server-service",
   "version": "0.1.0",
   "description": "Fluid rdkafka and ws based services",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Microsoft/Prague.git"
+  },
+  "license": "MIT",
+  "author": "Microsoft",
   "main": "dist/index.js",
   "scripts": {
     "build": "npm run tsc && npm run tslint",
@@ -11,11 +17,6 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose"
-  },
-  "author": "Microsoft",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/Microsoft/Prague.git"
   },
   "dependencies": {
     "@microsoft/fluid-server-lambdas": "^0.1.4434",
@@ -56,6 +57,5 @@
   "optionalDependencies": {
     "bufferutil": "^4.0.0",
     "utf-8-validate": "^5.0.1"
-  },
-  "license": "MIT"
+  }
 }
