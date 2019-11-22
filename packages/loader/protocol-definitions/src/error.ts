@@ -5,32 +5,36 @@
 // tslint:disable: no-unsafe-any
 export enum ErrorOrWarningType {
     generalError,
-    fileioError,
+    connectionError,
     throttling,
     serviceWarning,
-    fileVersionError,
     summarizingWarning,
 }
 
-export type IErrorOrWarning = IGeneralError | IThrottlingError | IFileIOError |
-                IServiceWarning | IFileVersionError | ISummarizingWarning;
+export function isWarning(error: IErrorOrWarning) {
+    if (error.type === ErrorOrWarningType.serviceWarning ||
+        error.type === ErrorOrWarningType.summarizingWarning) {
+            return true;
+        }
+    return false;
+}
+
+export type IErrorOrWarning = IGeneralError | IThrottlingError | IConnectionError |
+                IServiceWarning | ISummarizingWarning;
 
 export interface IGeneralError {
-    readonly containerErrorOrWarningType: ErrorOrWarningType.generalError;
+    readonly type: ErrorOrWarningType.generalError;
     error: any;
 }
 
 export interface IThrottlingError {
-    readonly containerErrorOrWarningType: ErrorOrWarningType.throttling;
+    readonly type: ErrorOrWarningType.throttling;
     readonly message: string;
-    readonly canRetry?: boolean;
-    readonly statusCode?: number;
-    readonly online: string;
     readonly retryAfterSeconds: number;
 }
 
-export interface IFileIOError {
-    readonly containerErrorOrWarningType: ErrorOrWarningType.fileioError;
+export interface IConnectionError {
+    readonly type: ErrorOrWarningType.connectionError;
     readonly message: string;
     readonly canRetry?: boolean;
     readonly statusCode?: number;
@@ -38,13 +42,9 @@ export interface IFileIOError {
 }
 
 export interface IServiceWarning {
-    readonly containerErrorOrWarningType: ErrorOrWarningType.serviceWarning;
-}
-
-export interface IFileVersionError {
-    readonly containerErrorOrWarningType: ErrorOrWarningType.fileVersionError;
+    readonly type: ErrorOrWarningType.serviceWarning;
 }
 
 export interface ISummarizingWarning {
-    readonly containerErrorOrWarningType: ErrorOrWarningType.summarizingWarning;
+    readonly type: ErrorOrWarningType.summarizingWarning;
 }

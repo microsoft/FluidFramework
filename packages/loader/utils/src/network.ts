@@ -2,23 +2,43 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ErrorOrWarningType, IFileIOError, IThrottlingError } from "@microsoft/fluid-protocol-definitions";
+import { ErrorOrWarningType, IConnectionError, IThrottlingError } from "@microsoft/fluid-protocol-definitions";
 
 /**
  * Network error error class - used to communicate all  network errors
  */
-export class NetworkError extends Error implements Partial<IFileIOError & IThrottlingError> {
+export class NetworkError extends Error implements IConnectionError {
 
     constructor(
             errorMessage: string,
+            readonly type: ErrorOrWarningType.connectionError,
             readonly statusCode?: number,
             readonly canRetry?: boolean,
-            readonly retryAfterSeconds?: number,
             readonly online = OnlineStatus[isOnline()]) {
         super(errorMessage);
-        // tslint:disable-next-line: no-string-literal
-        this["containerErrorOrWarningType"] = this.retryAfterSeconds ?
-            ErrorOrWarningType.throttling : ErrorOrWarningType.fileioError;
+    }
+
+    public getCustomProperties() {
+        const prop = {};
+        for (const key of Object.getOwnPropertyNames(this)) {
+            if (this[key]) {
+                prop[key] = this[key];
+            }
+        }
+        return prop;
+    }
+}
+
+/**
+ * Throttling error class - used to communicate all throttling errors
+ */
+export class ThrottlingError extends Error implements IThrottlingError {
+
+    constructor(
+            errorMessage: string,
+            readonly type: ErrorOrWarningType.throttling,
+            readonly retryAfterSeconds: number) {
+        super(errorMessage);
     }
 
     public getCustomProperties() {

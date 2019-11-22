@@ -6,6 +6,7 @@
 import { BatchManager, NetworkError } from "@microsoft/fluid-core-utils";
 import {
     ConnectionMode,
+    ErrorOrWarningType,
     IClient,
     IContentMessage,
     IDocumentDeltaConnection,
@@ -34,6 +35,7 @@ export function createErrorObject(handler: string, error: any, canRetry = true) 
     // Also add actual error object(socketError), for driver to be able to parse it and reason over it.
     const errorObj = new NetworkError(
         `socket.io error: ${handler}: ${error}`,
+        ErrorOrWarningType.connectionError,
         undefined,
         canRetry,
     );

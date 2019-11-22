@@ -29,7 +29,7 @@ import {
     buildHierarchy,
     CommitTreeEntry,
     ComponentSerializer,
-    createGeneralError,
+    createContainerError,
     Deferred,
     flatten,
     isSystemType,
@@ -902,7 +902,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     }
 
     public error(error: any) {
-        this.context.error(createGeneralError(error));
+        this.context.error(createContainerError(error));
     }
 
     /**

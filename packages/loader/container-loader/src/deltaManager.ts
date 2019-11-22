@@ -11,8 +11,7 @@ import {
     ITelemetryLogger,
 } from "@microsoft/fluid-container-definitions";
 import {
-    createFileIOOrGeneralError,
-    createGeneralError,
+    createContainerError,
     Deferred,
     isSystemType,
     PerformanceEvent,
@@ -205,7 +204,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             });
 
         this._inbound.on("error", (error) => {
-            this.emit("error", createGeneralError(error));
+            this.emit("error", createContainerError(error));
         });
 
         // Outbound message queue. The outbound queue is represented as a queue of an array of ops. Ops contained
@@ -217,7 +216,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         );
 
         this._outbound.on("error", (error) => {
-            this.emit("error", createGeneralError(error));
+            this.emit("error", createContainerError(error));
         });
 
         // Inbound signal queue
@@ -229,7 +228,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         });
 
         this._inboundSignal.on("error", (error) => {
-            this.emit("error", createGeneralError(error));
+            this.emit("error", createContainerError(error));
         });
 
         // Require the user to start the processing
@@ -597,7 +596,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         // Note: "disconnect" & "nack" do not have error object
         if (error !== undefined) {
-            this.emit("error", createFileIOOrGeneralError(error));
+            this.emit("error", createContainerError(error));
         }
 
         this.logger.sendTelemetryEvent({ eventName: "ContainerClose" }, error);
@@ -674,7 +673,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         if (this.deltaStreamDelay && this.deltaStorageDelay) {
             const delayTime = Math.max(this.deltaStorageDelay, this.deltaStreamDelay);
             if (delayTime >= 0) {
-                this.emit("disconnected", delayTime);
+                this.emit("serviceBusy", delayTime);
             }
         }
     }

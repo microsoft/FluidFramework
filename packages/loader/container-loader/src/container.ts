@@ -24,8 +24,7 @@ import {
 import {
     buildHierarchy,
     ChildLogger,
-    createFileIOOrGeneralError,
-    createGeneralError,
+    createContainerError,
     DebugLogger,
     EventEmitterWithErrorHandling,
     flatten,
@@ -36,7 +35,6 @@ import {
 } from "@microsoft/fluid-core-utils";
 import {
     Browser,
-    ErrorOrWarningType,
     FileMode,
     IClient,
     IDocumentAttributes,
@@ -50,6 +48,7 @@ import {
     ISignalClient,
     ISignalMessage,
     ISnapshotTree,
+    isWarning,
     ITokenClaims,
     ITree,
     ITreeEntry,
@@ -128,7 +127,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                     res(container);
                 })
                 .catch((error) => {
-                    const err = createFileIOOrGeneralError(error);
+                    const err = createContainerError(error);
                     if (!alreadyRaisedError) {
                         container.logCriticalError(err);
                     }
@@ -323,6 +322,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     public on(event: "connected" | "contextChanged", listener: (clientId: string) => void): this;
     public on(event: "disconnected" | "joining" | "closed", listener: () => void): this;
     public on(event: "error", listener: (error: any) => void): this;
+    public on(event: "serviceBusy", listener: (retryAfterSeconds: number) => void): this;
     public on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
     public on(event: "pong" | "processTime", listener: (latency: number) => void): this;
     public on(event: MessageType.BlobUploaded, listener: (contents: any) => void): this;
@@ -410,16 +410,16 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     }
 
     public raiseCriticalErrorOrWarning(error: IErrorOrWarning) {
-        if (error.containerErrorOrWarningType === ErrorOrWarningType.serviceWarning ||
-            error.containerErrorOrWarningType === ErrorOrWarningType.summarizingWarning) {
-                this.emit("warning", error);
-            }
+        if (isWarning(error)) {
+            this.emit("warning", error);
+            return;
+        }
         this.emit("error", error);
     }
 
     public reloadContext(): Promise<void> {
         return this.reloadContextCore().catch((error) => {
-            this.raiseCriticalErrorOrWarning(createGeneralError(error));
+            this.raiseCriticalErrorOrWarning(createContainerError(error));
             throw error;
         });
     }
@@ -893,8 +893,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                 this.raiseCriticalErrorOrWarning(error);
             });
 
-            this._deltaManager.on("disconnected", (retryAfterSeconds: number) => {
-                this.emit("disconnected", retryAfterSeconds);
+            this._deltaManager.on("serviceBusy", (retryAfterSeconds: number) => {
+                this.emit("serviceBusy", retryAfterSeconds);
             });
 
             this._deltaManager.on("pong", (latency) => {

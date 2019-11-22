@@ -12,7 +12,7 @@ import { ICodeLoader,
         IRuntime,
         IRuntimeFactory } from "@microsoft/fluid-container-definitions";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@microsoft/fluid-container-runtime";
-import { createGeneralError } from "@microsoft/fluid-core-utils";
+import { createContainerError } from "@microsoft/fluid-core-utils";
 import * as ink from "@microsoft/fluid-ink";
 import * as map from "@microsoft/fluid-map";
 import { ConsensusQueue, ConsensusStack } from "@microsoft/fluid-ordered-collection";
@@ -134,7 +134,7 @@ export class ChaincodeFactory implements IRuntimeFactory {
                     componentRuntime.attach();
                 })
                 .catch((error: any) => {
-                    context.error(createGeneralError(error));
+                    context.error(createContainerError(error));
                 });
         }
 

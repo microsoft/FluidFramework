@@ -3,25 +3,20 @@
  * Licensed under the MIT License.
  */
 // tslint:disable: no-unsafe-any
-import { ErrorOrWarningType, IErrorOrWarning, IGeneralError } from "@microsoft/fluid-protocol-definitions";
+import { ErrorOrWarningType, IErrorOrWarning } from "@microsoft/fluid-protocol-definitions";
+import { NetworkError, ThrottlingError } from "./network";
 
-export function createGeneralError(error: any) {
-    const generalError: IGeneralError = {
-            containerErrorOrWarningType: ErrorOrWarningType.generalError,
-            error,
-        };
-    return generalError;
-}
-
-export function createFileIOOrGeneralError(error: any) {
-    let specificError: IErrorOrWarning;
-    if (error && typeof error === "object" && error.getCustomProperties) {
+export function createContainerError(error: any): IErrorOrWarning {
+    let specificError;
+    if (error instanceof NetworkError || error instanceof ThrottlingError) {
         specificError = {
-            containerErrorOrWarningType: ErrorOrWarningType.fileioError,
             ...error.getCustomProperties(),
         };
-        return specificError;
     } else {
-        return createGeneralError(error);
+        specificError = {
+            type: ErrorOrWarningType.generalError,
+            error,
+        };
     }
+    return specificError;
 }

@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { isOnline, NetworkError, OnlineStatus } from "@microsoft/fluid-core-utils";
+import { isOnline, NetworkError, OnlineStatus, ThrottlingError } from "@microsoft/fluid-core-utils";
+import { ErrorOrWarningType } from "@microsoft/fluid-protocol-definitions";
 import { default as fetch, RequestInfo as FetchRequestInfo, RequestInit as FetchRequestInit } from "node-fetch";
 import * as sha from "sha.js";
 import { IOdspSocketError } from "./contracts";
@@ -26,7 +27,6 @@ export function throwOdspNetworkError(
         message,
         statusCode,
         canRetry,
-        undefined,
         response && response.headers ? `${response.headers.get("sprequestguid")}` : undefined,
         online,
     );
@@ -37,10 +37,9 @@ export class OdspNetworkError extends NetworkError {
         errorMessage: string,
         readonly statusCode: number,
         readonly canRetry: boolean,
-        readonly retryAfterSeconds?: number,
         readonly sprequestguid?: string,
         readonly online = OnlineStatus[isOnline()]) {
-        super(errorMessage, statusCode, canRetry, retryAfterSeconds, online);
+        super(errorMessage, ErrorOrWarningType.connectionError, statusCode, canRetry, online);
     }
 }
 
@@ -48,12 +47,15 @@ export class OdspNetworkError extends NetworkError {
  * Returns network error based on error object from ODSP socket (IOdspSocketError)
  */
 export function errorObjectFromOdspError(socketError: IOdspSocketError) {
-    return new OdspNetworkError(
-        socketError.message,
-        socketError.code,
-        socketErrorRetryFilter(socketError.code),
-        socketError.retryAfter,
-    );
+    if (socketError.retryAfter) {
+        return new ThrottlingError(socketError.message, ErrorOrWarningType.throttling, socketError.retryAfter);
+    } else {
+        return new OdspNetworkError(
+            socketError.message,
+            socketError.code,
+            socketErrorRetryFilter(socketError.code),
+        );
+    }
 }
 
 /**
