@@ -131,8 +131,6 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
 
         this.services = services;
 
-        await this.getOwnerSnapshot(services.objectStorage);
-
         await this.loadCore(
             branchId,
             services.objectStorage);
@@ -213,15 +211,6 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
      * @returns The owner of the object if it is an OwnedSharedObject, otherwise undefined
      */
     protected setOwner(): string | undefined {
-        return;
-    }
-
-    /**
-     * Reads and sets the owner from storage if this is an ownedSharedObject
-     *
-     * @param storage - The storage used by the shared object
-     */
-    protected async getOwnerSnapshot(storage: IObjectStorageService): Promise<void> {
         return;
     }
 
