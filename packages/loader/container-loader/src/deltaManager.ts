@@ -18,6 +18,7 @@ import {
 } from "@microsoft/fluid-core-utils";
 import {
     ConnectionMode,
+    ErrorOrWarningType,
     IClient,
     IContentMessage,
     IDocumentDeltaStorageService,
@@ -27,6 +28,7 @@ import {
     ISequencedDocumentMessage,
     IServiceConfiguration,
     ISignalMessage,
+    IThrottlingError,
     ITrace,
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
@@ -671,7 +673,12 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         if (this.deltaStreamDelay && this.deltaStorageDelay) {
             const delayTime = Math.max(this.deltaStorageDelay, this.deltaStreamDelay);
             if (delayTime >= 0) {
-                this.emit("serviceBusy", delayTime);
+                const throttlingError: IThrottlingError = {
+                    type: ErrorOrWarningType.throttling,
+                    message: "Service busy/throttled.",
+                    retryAfterSeconds: delayTime,
+                };
+                this.emit("serviceBusy", throttlingError);
             }
         }
     }
