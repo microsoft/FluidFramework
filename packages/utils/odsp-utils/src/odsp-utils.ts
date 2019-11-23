@@ -298,7 +298,7 @@ async function getDriveItem(
             return Promise.reject(createRequestError("Unable to get drive/item id from path", getDriveItemResult));
         }
         // try createing the file
-        const contentUri = `${getDriveItemUrl}:/content`;
+        const contentUri = `${getDriveItemUrl}/content`;
         const createResult = await putAsync(server, clientConfig, tokens, contentUri);
         if (createResult.status !== 201) {
             return Promise.reject(createRequestError("Failed to create file", createResult));
