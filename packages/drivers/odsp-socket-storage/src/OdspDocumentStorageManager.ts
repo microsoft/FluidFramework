@@ -36,7 +36,7 @@ import { getWithRetryForTokenRefresh, throwOdspNetworkError } from "./OdspUtils"
 
 export class OdspDocumentStorageManager implements IDocumentStorageManager {
     // This cache is associated with mapping sha to path for previous summary which belongs to last summary handle.
-    private readonly blobsShaToPathCache: Map<string, string> = new Map();
+    private blobsShaToPathCache: Map<string, string> = new Map();
     private readonly blobCache: Map<string, resources.IBlob> = new Map();
     private readonly treesCache: Map<string, resources.ITree> = new Map();
 
@@ -348,12 +348,10 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         if (!result || !result.sha) {
             throw new Error(`Failed to write summary tree`);
         }
-        this.blobsShaToPathCache.clear();
         if (blobsShaToPathCacheLatest) {
-            for (const [key, value] of blobsShaToPathCacheLatest) {
-                this.blobsShaToPathCache.set(key, value);
-            }
+            this.blobsShaToPathCache = blobsShaToPathCacheLatest;
         }
+
         this.lastSummaryHandle = result.sha;
         return {
             handle: result.sha,
@@ -487,11 +485,10 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         return summarySnapshotTree;
     }
 
-    private async writeSummaryTree(tree: api.SummaryTree, depth: number = 0): Promise<{ result: ISnapshotResponse, blobsShaToPathCacheLatest: Map<string, string> | undefined}> {
+    private async writeSummaryTree(tree: api.SummaryTree, depth: number = 0): Promise<{ result: ISnapshotResponse, blobsShaToPathCacheLatest?: Map<string, string>}> {
         if (tree.type === api.SummaryType.Handle) {
             return {
                 result: { sha: tree.handle },
-                blobsShaToPathCacheLatest: undefined,
             };
         }
         // This cache is associated with mapping sha to path for currently generated summary.
