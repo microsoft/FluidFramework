@@ -290,7 +290,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
                 if (blobs) {
                     this.initBlobsCache(blobs);
-                    // Populate the cache with paths from sha-to-path mapping.
+                    // Populate the cache with paths from id-to-path mapping.
                     for (const blob of this.blobCache.values()) {
                         const path = this.blobsIdToPathMap.get(blob.sha);
                         if (path) {
