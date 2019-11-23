@@ -37,8 +37,6 @@ import { getWithRetryForTokenRefresh, throwOdspNetworkError } from "./OdspUtils"
 export class OdspDocumentStorageManager implements IDocumentStorageManager {
     // This cache is associated with mapping sha to path for previous summary which belongs to last summary handle.
     private readonly blobsShaToPathCache: Map<string, string> = new Map();
-    // This cache is associated with mapping sha to path for currently generated summary.
-    private readonly blobsShaToPathCacheLatest: Map<string, string> = new Map();
     private readonly blobCache: Map<string, resources.IBlob> = new Map();
     private readonly treesCache: Map<string, resources.ITree> = new Map();
 
@@ -346,14 +344,15 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
     public async uploadSummary(tree: api.ISummaryTree): Promise<api.ISummaryHandle> {
         this.checkSnapshotUrl();
 
-        this.blobsShaToPathCacheLatest.clear();
-        const result = await this.writeSummaryTree(tree);
+        const { result, blobsShaToPathCacheLatest } = await this.writeSummaryTree(tree);
         if (!result || !result.sha) {
             throw new Error(`Failed to write summary tree`);
         }
         this.blobsShaToPathCache.clear();
-        for (const [key, value] of this.blobsShaToPathCacheLatest) {
-            this.blobsShaToPathCache.set(key, value);
+        if (blobsShaToPathCacheLatest) {
+            for (const [key, value] of blobsShaToPathCacheLatest) {
+                this.blobsShaToPathCache.set(key, value);
+            }
         }
         this.lastSummaryHandle = result.sha;
         return {
@@ -488,14 +487,16 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         return summarySnapshotTree;
     }
 
-    private async writeSummaryTree(tree: api.SummaryTree, depth: number = 0): Promise<ISnapshotResponse> {
+    private async writeSummaryTree(tree: api.SummaryTree, depth: number = 0): Promise<{ result: ISnapshotResponse, blobsShaToPathCacheLatest: Map<string, string> | undefined}> {
         if (tree.type === api.SummaryType.Handle) {
             return {
-                sha: tree.handle,
+                result: { sha: tree.handle },
+                blobsShaToPathCacheLatest: undefined,
             };
         }
-
-        const snapshotTree = this.convertSummaryToSnapshotTree(tree);
+        // This cache is associated with mapping sha to path for currently generated summary.
+        const blobsShaToPathCacheLatest: Map<string, string> = new Map();
+        const snapshotTree = this.convertSummaryToSnapshotTree(tree, blobsShaToPathCacheLatest);
 
         const snapshot: ISnapshotRequest = {
             entries: snapshotTree.entries!,
@@ -514,14 +515,14 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             const postBody = JSON.stringify(snapshot);
 
             const response = await this.fetchWrapper.post<ISnapshotResponse>(url, postBody, headers);
-            return response.content;
+            return { result: response.content, blobsShaToPathCacheLatest };
         });
     }
 
     /**
      * Converts a summary tree to ODSP tree
      */
-    private convertSummaryToSnapshotTree(tree: api.ISummaryTree, depth: number = 0, path: string = ""): ISnapshotTree {
+    private convertSummaryToSnapshotTree(tree: api.ISummaryTree, blobsShaToPathCacheLatest: Map<string, string>, depth: number = 0, path: string = ""): ISnapshotTree {
         const snapshotTree: ISnapshotTree = {
             entries: [],
         }!;
@@ -535,7 +536,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
             switch (summaryObject.type) {
                 case api.SummaryType.Tree:
-                    value = this.convertSummaryToSnapshotTree(summaryObject, depth + 1, `${path}/${key}`);
+                    value = this.convertSummaryToSnapshotTree(summaryObject, blobsShaToPathCacheLatest,  depth + 1, `${path}/${key}`);
                     break;
 
                 case api.SummaryType.Blob:
@@ -552,7 +553,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                             encoding,
                         };
                         completePath = `${path}/${key}`;
-                        this.blobsShaToPathCacheLatest.set(hash, completePath);
+                        blobsShaToPathCacheLatest.set(hash, completePath);
                     } else {
                         id = `${this.lastSummaryHandle}${completePath}`;
                     }
