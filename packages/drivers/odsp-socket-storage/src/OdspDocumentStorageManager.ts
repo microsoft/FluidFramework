@@ -35,7 +35,6 @@ import { OdspCache } from "./odspCache";
 import { getWithRetryForTokenRefresh, throwOdspNetworkError } from "./OdspUtils";
 
 export class OdspDocumentStorageManager implements IDocumentStorageManager {
-    private readonly blobsIdToPathMap: Map<string, string> = new Map();
     // This cache is associated with mapping sha to path for previous summary which belongs to last summary handle.
     private readonly blobsShaToPathCache: Map<string, string> = new Map();
     // This cache is associated with mapping sha to path for currently generated summary.
@@ -273,13 +272,13 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                     this.odspCache.put(odspCacheKey, odspSnapshot, 10000);
                 }
                 const { trees, blobs, ops, sha } = odspSnapshot;
+                const blobsIdToPathMap: Map<string, string> = new Map();
                 if (trees) {
                     this.initTreesCache(trees);
-                    this.blobsIdToPathMap.clear();
                     for (const tree of this.treesCache.values()) {
                         for (const entry of tree.tree) {
                             if (entry.type === "blob") {
-                                this.blobsIdToPathMap.set(entry.sha, `/${entry.path}`);
+                                blobsIdToPathMap.set(entry.sha, `/${entry.path}`);
                             } else if (entry.type === "commit" && entry.path === ".app") {
                                 // This is the unacked handle of the latest summary generated.
                                 this.lastSummaryHandle = entry.sha;
@@ -292,7 +291,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                     this.initBlobsCache(blobs);
                     // Populate the cache with paths from id-to-path mapping.
                     for (const blob of this.blobCache.values()) {
-                        const path = this.blobsIdToPathMap.get(blob.sha);
+                        const path = blobsIdToPathMap.get(blob.sha);
                         if (path) {
                             const hash = gitHashFile(Buffer.from(blob.content, blob.encoding));
                             this.blobsShaToPathCache.set(hash, path);
