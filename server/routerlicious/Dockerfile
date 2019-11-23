@@ -45,12 +45,10 @@ COPY packages/components/shared-map-visualizer/package*.json packages/components
 COPY packages/components/video-players/package*.json packages/components/video-players/
 COPY packages/components/flow-scroll/package*.json packages/components/flow-scroll/
 COPY packages/components/flow-util/package*.json packages/components/flow-util/
-# COPY packages/components/key-value/package*.json packages/components/key-value/
 COPY packages/components/markflow/package*.json packages/components/markflow/
 COPY packages/components/math/package*.json packages/components/math/
 COPY packages/components/monaco/package*.json packages/components/monaco/
 COPY packages/components/owned-map/package*.json packages/components/owned-map/
-COPY packages/components/pinpoint-editor/package*.json packages/components/pinpoint-editor/
 COPY packages/components/scoreboard/package*.json packages/components/scoreboard/
 COPY packages/components/scribe/package*.json packages/components/scribe/
 COPY packages/components/shared-text/package*.json packages/components/shared-text/
