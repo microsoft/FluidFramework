@@ -25,7 +25,9 @@ import * as assert from "assert";
  */
 export class DocumentStorageService implements IDocumentStorageService  {
 
-    private readonly blobsShaCache = new Set<string>();
+    // The values of this cache is useless. We only need the keys. So we are always putting
+    // empty strings as values.
+    private readonly blobsShaCache = new Map<string, string>();
     public get repositoryUrl(): string {
         return "";
     }
@@ -59,7 +61,7 @@ export class DocumentStorageService implements IDocumentStorageService  {
 
     public async read(blobId: string): Promise<string> {
         const value = await this.manager.getBlob(blobId);
-        this.blobsShaCache.add(value.sha);
+        this.blobsShaCache.set(value.sha, "");
         return value.content;
     }
 
@@ -110,7 +112,7 @@ export class DocumentStorageService implements IDocumentStorageService  {
                 if (!this.blobsShaCache.has(hash)) {
                     const blob = await this.manager.createBlob(content, encoding);
                     assert.strictEqual(hash, blob.sha, "Blob.sha and hash do not match!!");
-                    this.blobsShaCache.add(blob.sha);
+                    this.blobsShaCache.set(blob.sha, "");
                 }
                 return hash;
             case SummaryType.Commit:
