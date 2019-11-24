@@ -17,7 +17,7 @@
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "build:genver": "node node_modules/@microsoft/fluid-build-common/gen_version.js",
-    "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
+    "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "test": "mocha --recursive dist/test",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
     "tsc": "tsc",
@@ -34,7 +34,7 @@
     "@microsoft/fluid-protocol-definitions": "^0.12.0",
     "@microsoft/fluid-runtime-definitions": "^0.12.0",
     "@types/debug": "^0.0.31",
-    "@types/node": "^10.12.12",
+    "@types/node": "^10.14.6",
     "@types/uuid": "^3.4.4",
     "debug": "^4.1.1",
     "uuid": "^3.3.2"
@@ -51,7 +51,7 @@
     "nyc": "^14.1.1",
     "rimraf": "^2.6.2",
     "sinon": "^7.4.2",
-    "tslint": "^5.11.0",
+    "tslint": "^5.20.0",
     "typescript": "~3.4.5"
   }
 }

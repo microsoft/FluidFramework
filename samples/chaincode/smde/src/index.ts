@@ -27,8 +27,8 @@ class ProgressBarsFactory implements IRuntimeFactory {
         const runtime = await ContainerRuntime.load(
             context,
             registry,
-            (containerRuntime) => {
-                return async (request: IRequest) => {
+            [
+                async (request: IRequest, containerRuntime) => {
                     console.log(request.url);
 
                     const requestUrl = request.url.length > 0 && request.url.charAt(0) === "/"
@@ -42,8 +42,8 @@ class ProgressBarsFactory implements IRuntimeFactory {
                     const component = await containerRuntime.getComponentRuntime(componentId, true);
 
                     return component.request({ url: trailingSlash === -1 ? "" : requestUrl.substr(trailingSlash + 1) });
-                };
-            },
+                },
+            ],
             { generateSummaries: true });
 
         // flush mode to manual to batch operations within a turn

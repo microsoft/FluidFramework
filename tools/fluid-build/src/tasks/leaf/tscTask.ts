@@ -177,6 +177,9 @@ export class TscTask extends LeafTask {
     }
 
     protected async markExecDone() {
+        if (this.tsBuildInfoFile === undefined) {
+            console.warn(`${this.node.pkg.nameColored}: warning: tsBuildInfo file not found after build, incremental not enabled`);
+        }
         this._tsBuildInfo = undefined;
     }
 };

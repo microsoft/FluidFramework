@@ -14,7 +14,7 @@
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
-    "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
+    "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "deploy": "npm publish --registry https://packages.wu2.prague.office-int.com",
     "start": "webpack-dev-server --config webpack.config.js --package package.json",
     "start:live": "webpack-dev-server --config webpack.config.js --package package.json --env.mode live",
@@ -35,21 +35,21 @@
   "devDependencies": {
     "@microsoft/fluid-build-common": "^0.12.0",
     "@microsoft/fluid-webpack-component-loader": "^0.12.0",
-    "@types/node": "^10.12.12",
+    "@types/node": "^10.14.6",
     "concurrently": "^4.1.0",
     "css-loader": "^1.0.0",
     "less": "~3.9.0",
     "less-loader": "^4.1.0",
     "rimraf": "^2.6.2",
-    "style-loader": "^0.23.0",
-    "ts-loader": "^4.5.0",
-    "tslint": "^5.11.0",
+    "style-loader": "^1.0.0",
+    "ts-loader": "^6.1.2",
+    "tslint": "^5.20.0",
     "typescript": "~3.4.5",
-    "url-loader": "^1.1.1",
-    "webpack": "^4.8.2",
+    "url-loader": "^2.1.0",
+    "webpack": "^4.16.5",
     "webpack-cli": "^3.1.2",
     "webpack-dev-server": "^3.8.0",
-    "webpack-merge": "^4.1.2"
+    "webpack-merge": "^4.1.4"
   },
   "fluid": {
     "browser": {

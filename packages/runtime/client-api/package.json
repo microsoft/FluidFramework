@@ -16,7 +16,7 @@
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
-    "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
+    "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
@@ -37,7 +37,7 @@
     "@microsoft/fluid-runtime-definitions": "^0.12.0",
     "@microsoft/fluid-sequence": "^0.12.0",
     "@microsoft/fluid-shared-object-base": "^0.12.0",
-    "@types/node": "^10.12.12",
+    "@types/node": "^10.14.6",
     "debug": "^4.1.1",
     "jwt-decode": "^2.2.0"
   },
@@ -52,7 +52,7 @@
     "mocha-junit-reporter": "^1.18.0",
     "nyc": "^14.1.1",
     "rimraf": "^2.6.2",
-    "tslint": "^5.11.0",
+    "tslint": "^5.20.0",
     "typescript": "~3.4.5",
     "xmldoc": "^1.1.2"
   },

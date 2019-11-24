@@ -14,7 +14,7 @@
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
-    "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
+    "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "deploy": "npm publish --registry https://packages.wu2.prague.office-int.com",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose",
@@ -27,15 +27,15 @@
   },
   "devDependencies": {
     "@microsoft/fluid-build-common": "^0.12.0",
-    "@types/node": "^10.12.12",
+    "@types/node": "^10.14.6",
     "concurrently": "^4.1.0",
     "rimraf": "^2.6.2",
-    "ts-loader": "^4.5.0",
-    "tslint": "^5.11.0",
+    "ts-loader": "^6.1.2",
+    "tslint": "^5.20.0",
     "typescript": "~3.4.5",
-    "webpack": "^4.8.2",
+    "webpack": "^4.16.5",
     "webpack-cli": "^3.1.2",
-    "webpack-merge": "^4.1.2"
+    "webpack-merge": "^4.1.4"
   },
   "fluid": {
     "browser": {

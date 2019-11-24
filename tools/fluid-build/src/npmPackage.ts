@@ -75,6 +75,7 @@ export class Package {
     constructor(private readonly packageJsonFileName: string) {
         this.packageJson = require(packageJsonFileName);
         logVerbose(`Package Loaded: ${this.nameColored}`);
+        // this.checkScript();
     }
 
     public get name(): string {
@@ -126,6 +127,45 @@ export class Package {
         return this.packageJson.scripts[name];
     }
 
+    public checkScript() {
+        if (this.packageJson.scripts.build) {
+            // These are script rules in the FluidFramework repo
+            const build: string[] = ["build:compile"];
+            const buildCompile: string[] = [];
+            const buildFull: string[] = ["build"];
+            const buildFullCompile: string[] = ["build:compile"];
+            const buildPrefix = this.packageJson.scripts["build:genver"] ? "npm run build:genver && " : "";
+            if (this.packageJson.scripts.tsc) {
+                buildCompile.push("tsc");
+            }
+            if (this.packageJson.scripts["build:esnext"]) {
+                buildCompile.push("build:esnext");
+            }
+
+            if (this.packageJson.scripts["tslint"]) {
+                build.push("tslint");
+            }
+
+            if (this.packageJson.scripts["webpack"]) {
+                buildFull.push("webpack");
+                buildFullCompile.push("webpack");
+            }
+
+            const check = (scriptName: string, parts: string[], prefix = "") => {
+                const expected = prefix + 
+                    (parts.length > 1 ? `concurrently npm:${parts.join(" npm:")}` : `npm run ${parts[0]}`);
+                if (this.packageJson.scripts[scriptName] !== expected) {
+                    console.warn(`${this.nameColored}: warning: non-conformant script ${scriptName}`);
+                    console.warn(`${this.nameColored}: warning:   expect: ${expected}`);
+                    console.warn(`${this.nameColored}: warning:      got: ${this.packageJson.scripts[scriptName]}`);
+                }
+            }
+            check("build", build, buildPrefix);
+            check("build:compile", buildCompile);
+            check("build:full", buildFull);
+            check("build:full:compile", buildFullCompile);
+        }
+    }
     public async depcheck() {
         let checkFiles: string[];
         if (this.packageJson.dependencies) {
@@ -203,8 +243,12 @@ interface PackageTaskExec<T> {
 
 export class Packages {
 
-    public static load(dir: string) {
-        return new Packages(Packages.loadCore(dir));
+    public static load(dirs: string[]) {
+        const packages: Package[] = [];
+        for (const dir of dirs) {
+            packages.push(...Packages.loadCore(dir));
+        }
+        return new Packages(packages);
     }
 
     private static loadCore(dir: string) {
@@ -238,7 +282,7 @@ export class Packages {
 
     public async symlink() {
         const packageMap = new Map<string, Package>(this.packages.map(pkg => [pkg.name, pkg]));
-        return this.queueExecOnAllPackageCore(pkg => pkg.symlink(packageMap), options.nohoist? "symlink": "")
+        return this.queueExecOnAllPackageCore(pkg => pkg.symlink(packageMap), options.nohoist ? "symlink" : "")
     }
 
     private async queueExecOnAllPackageCore<TResult>(exec: (pkg: Package) => Promise<TResult>, message?: string) {

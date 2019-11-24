@@ -8,7 +8,7 @@ import { IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import ImageGallery from "react-image-gallery";
-import "../node_modules/react-image-gallery/styles/css/image-gallery.css";
+import "react-image-gallery/styles/css/image-gallery.css";
 import "./Styles.css";
 import { ISharedMap } from "@microsoft/fluid-map";
 

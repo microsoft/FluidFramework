@@ -14,7 +14,7 @@
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "build:webpack": "webpack --env build",
-    "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
+    "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "electron": "electron ./dist/index.html",
     "electron:test": "electron --inspect=5858 ./dist/index.html",
     "tsc": "tsc",

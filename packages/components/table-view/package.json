@@ -18,7 +18,7 @@
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
-    "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
+    "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "publish-wu2": "npm run build && npm version patch && npm publish --registry https://packages.wu2.prague.office-int.com",
     "start": "webpack-dev-server --config webpack.config.js --package package.json",
     "start:live": "webpack-dev-server --config webpack.config.js --package package.json --env.mode live",
@@ -38,11 +38,11 @@
   "devDependencies": {
     "@microsoft/fluid-build-common": "^0.12.0",
     "@microsoft/fluid-webpack-component-loader": "^0.12.0",
-    "@types/node": "^10.12.12",
+    "@types/node": "^10.14.6",
     "concurrently": "^4.1.0",
     "copyfiles": "^2.1.0",
     "rimraf": "^2.6.2",
-    "tslint": "^5.11.0",
+    "tslint": "^5.20.0",
     "typescript": "~3.4.5",
     "webpack-dev-server": "^3.8.0"
   },
