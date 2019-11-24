@@ -1,6 +1,6 @@
 [
     "packages/components/client-ui/ext/",
-    "packages/server/services-core/src/dockerNames.ts",
+    "server/routerlicious/packages/services-core/src/dockerNames.ts",
     "samples/hackathon/",
     "tools/generator-fluid/app/templates/package.json",
     "tools/generator-fluid/app/templates/src/"

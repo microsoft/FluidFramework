@@ -45,12 +45,10 @@ COPY packages/components/shared-map-visualizer/package*.json packages/components
 COPY packages/components/video-players/package*.json packages/components/video-players/
 COPY packages/components/flow-scroll/package*.json packages/components/flow-scroll/
 COPY packages/components/flow-util/package*.json packages/components/flow-util/
-# COPY packages/components/key-value/package*.json packages/components/key-value/
 COPY packages/components/markflow/package*.json packages/components/markflow/
 COPY packages/components/math/package*.json packages/components/math/
 COPY packages/components/monaco/package*.json packages/components/monaco/
 COPY packages/components/owned-map/package*.json packages/components/owned-map/
-COPY packages/components/pinpoint-editor/package*.json packages/components/pinpoint-editor/
 COPY packages/components/scoreboard/package*.json packages/components/scoreboard/
 COPY packages/components/scribe/package*.json packages/components/scribe/
 COPY packages/components/shared-text/package*.json packages/components/shared-text/
@@ -81,9 +79,7 @@ COPY packages/loader/component-core-interfaces/package*.json packages/loader/com
 COPY packages/loader/container-definitions/package*.json packages/loader/container-definitions/
 COPY packages/loader/container-loader/package*.json packages/loader/container-loader/
 COPY packages/loader/driver-definitions/package*.json packages/loader/driver-definitions/
-COPY packages/loader/gitresources/package*.json packages/loader/gitresources/
 COPY packages/loader/loader-web/package*.json packages/loader/loader-web/
-COPY packages/loader/protocol-definitions/package*.json packages/loader/protocol-definitions/
 COPY packages/loader/utils/package*.json packages/loader/utils/
 COPY packages/loader/test-loader-utils/package*.json packages/loader/test-loader-utils/
 COPY packages/hosts/base-host/package*.json packages/hosts/base-host/
@@ -105,18 +101,8 @@ COPY packages/runtime/runtime-test-utils/package*.json packages/runtime/runtime-
 COPY packages/runtime/sequence/package*.json packages/runtime/sequence/
 COPY packages/server/agent/package*.json packages/server/agent/
 COPY packages/server/gateway/package*.json packages/server/gateway/
-COPY packages/server/kafka-orderer/package*.json packages/server/kafka-orderer/
-COPY packages/server/lambdas-driver/package*.json packages/server/lambdas-driver/
-COPY packages/server/lambdas/package*.json packages/server/lambdas/
 COPY packages/server/local-test-server/package*.json packages/server/local-test-server/
-COPY packages/server/memory-orderer/package*.json packages/server/memory-orderer/
-COPY packages/server/routerlicious/package*.json packages/server/routerlicious/
 COPY packages/server/paparazzi/package*.json packages/server/paparazzi/
-COPY packages/server/services/package*.json packages/server/services/
-COPY packages/server/services-client/package*.json packages/server/services-client/
-COPY packages/server/services-core/package*.json packages/server/services-core/
-COPY packages/server/services-utils/package*.json packages/server/services-utils/
-COPY packages/server/protocol-base/package*.json packages/server/protocol-base/
 COPY packages/utils/odsp-utils/package*.json packages/utils/odsp-utils/
 COPY packages/utils/build-common/package*.json packages/utils/build-common/
 COPY packages/utils/eslint-config-fluid/package*.json packages/utils/eslint-config-fluid/
@@ -183,4 +169,3 @@ RUN npm run webpack
 # Node wasn't designed to be run as PID 1. Tini is a tiny init wrapper. You can also set --init on docker later than
 # 1.13 but Kubernetes is at 1.12 so we prefer tini for now.
 ENTRYPOINT ["/tini", "--"]
-

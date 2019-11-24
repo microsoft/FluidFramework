@@ -383,6 +383,12 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
                 reject(createErrorObject("connect_timeout", "Socket connection timed out"));
             });
 
+            // Listen for disconnects
+            this.addConnectionListener("disconnect", () => {
+                this.disconnect(true);
+                reject(createErrorObject("disconnect", "Socket disconnectd"));
+            });
+
             this.addConnectionListener("connect_document_success", (response: IConnected) => {
                 this.removeTrackedListeners(true);
                 resolve(response);
