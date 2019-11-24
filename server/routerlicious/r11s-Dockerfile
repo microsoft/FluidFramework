@@ -61,11 +61,15 @@ RUN npm install --unsafe-perm
 
 # And now copy over our actual code and build
 COPY server/routerlicious/packages/ server/routerlicious/packages/
+COPY packages/utils/build-common/ packages/utils/build-common/
+
+# Switch to the root folder
+WORKDIR /usr/src/server/server/routerlicious
 
 # Set the version number
 ARG VERSION_BUILDNUMBER=0
 RUN echo $VERSION_BUILDNUMBER
-RUN version=`node tools/build-server-resources/build-version.js`; echo $version; npx lerna version $version --no-git-tag-version --no-push --yes
+RUN version=`node ../../tools/build-server-resources/build-version.js`; echo $version; npx lerna version $version --no-git-tag-version --no-push --yes
 RUN npm run build:ci
 
 # Build that alfred uses
