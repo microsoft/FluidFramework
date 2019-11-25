@@ -114,6 +114,26 @@ COPY packages/tools/replay-tool/package*.json packages/tools/replay-tool/
 COPY packages/tools/webpack-component-loader/package*.json packages/tools/webpack-component-loader/
 COPY packages/tools/merge-tree-client-replay/package*.json packages/tools/merge-tree-client-replay/
 COPY packages/test/end-to-end/package*.json packages/test/end-to-end/
+COPY samples/chaincode/badge/package*.json samples/chaincode/badge/
+COPY samples/chaincode/chat-3/package*.json samples/chaincode/chat-3/
+COPY samples/chaincode/codemirror/package*.json samples/chaincode/codemirror/
+COPY samples/chaincode/containers/monaco/package*.json samples/chaincode/containers/monaco/
+COPY samples/chaincode/draft-js/package*.json samples/chaincode/draft-js/
+COPY samples/chaincode/drawer/package*.json samples/chaincode/drawer/
+COPY samples/chaincode/github-comment/package*.json samples/chaincode/github-comment/
+COPY samples/chaincode/image-gallery/package*.json samples/chaincode/image-gallery/
+COPY samples/chaincode/key-value-cache/package*.json samples/chaincode/key-value-cache/
+COPY samples/chaincode/musica/package*.json samples/chaincode/musica/
+COPY samples/chaincode/persona/package*.json samples/chaincode/persona/
+COPY samples/chaincode/pollster/package*.json samples/chaincode/pollster/
+COPY samples/chaincode/prosemirror/package*.json samples/chaincode/prosemirror/
+COPY samples/chaincode/simple-component-embed/package*.json samples/chaincode/simple-component-embed/	
+COPY samples/chaincode/simple-data-share/package*.json samples/chaincode/simple-data-share/
+COPY samples/chaincode/smde/package*.json samples/chaincode/smde/
+COPY samples/chaincode/sudoku/package*.json  samples/chaincode/sudoku/
+COPY samples/chaincode/textarea-noreact/package*.json samples/chaincode/textarea-noreact/
+COPY samples/chaincode/tourofheroes/package*.json samples/chaincode/tourofheroes/
+COPY samples/chaincode/type-race/package*.json samples/chaincode/type-race/
 
 # Copy over chaincode npmrc and package.json to dynamically install packages.
 COPY server/routerlicious/chaincode/* /tmp/chaincode/
@@ -137,6 +157,7 @@ RUN npm install --unsafe-perm
 
 # And now copy over our actual code and build
 COPY packages/ packages/
+COPY samples/chaincode/ samples/chaincode/
 
 # Set the version number
 ARG VERSION_BUILDNUMBER=0
