@@ -10,7 +10,7 @@ import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 export enum MatrixOp {
     spliceCols,
     spliceRows,
-    setRange,
+    set,
 }
 
 export interface IMatrixMsg {
@@ -24,7 +24,7 @@ export interface IMatrixSpliceMsg extends IMatrixMsg {
 }
 
 export interface IMatrixCellMsg extends IMatrixMsg {
-    type: MatrixOp.setRange;
+    type: MatrixOp.set;
     row: number;
     col: number;
     value: Jsonable<JsonablePrimitive | IComponentHandle>;

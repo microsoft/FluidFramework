@@ -4,13 +4,13 @@
  */
 
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { ChildLogger } from "@microsoft/fluid-core-utils";
+import { ChildLogger, fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
 import * as MergeTree from "@microsoft/fluid-merge-tree";
-import { Client } from "@microsoft/fluid-merge-tree";
 import {
     FileMode,
     ISequencedDocumentMessage,
     ITree,
+    ITreeEntry,
     TreeEntry,
 } from "@microsoft/fluid-protocol-definitions";
 import {
@@ -20,7 +20,7 @@ import {
     JsonablePrimitive,
 } from "@microsoft/fluid-runtime-definitions";
 import { RunSegment, SharedNumberSequenceFactory } from "@microsoft/fluid-sequence";
-import { parseHandles, serializeHandles, SharedObject } from "@microsoft/fluid-shared-object-base";
+import { makeHandlesSerializable, parseHandles, SharedObject } from "@microsoft/fluid-shared-object-base";
 import { strict as assert } from "assert";
 import { SharedMatrixFactory } from ".";
 import { debug } from "./debug";
@@ -33,12 +33,13 @@ const unallocated = -1 as const;
 const enum SnapshotPath {
     rows = "rows",
     cols = "cols",
+    cells = "cells",
 }
 
 class ContentObjectStorage implements IObjectStorageService {
     constructor(private readonly storage: IObjectStorageService, private readonly path: SnapshotPath) { }
 
-    public read(path: string): Promise<string> {
+    public async read(path: string): Promise<string> {
         return this.storage.read(`${this.path}/${path}`);
     }
 }
@@ -49,14 +50,14 @@ export class SharedMatrix<T extends Jsonable<JsonablePrimitive | IComponentHandl
     public get numCols() { return this.cols.getLength(); }
     public static getFactory() { return new SharedMatrixFactory(); }
 
-    private readonly rows: MergeTree.Client;
-    private readonly rowTable = new HandleTable<number>();
+    private readonly rows: MergeTree.Client;                    // Map logical row to physical storage index (if any)
+    private readonly rowTable = new HandleTable<number>();      // Tracks available storage indices for rows.
 
-    private readonly cols: MergeTree.Client;
-    private readonly colTable = new HandleTable<number>();
+    private readonly cols: MergeTree.Client;                    // Map logical col to physical storage index (if any)
+    private readonly colTable = new HandleTable<number>();      // Tracks available storage indices for cols.
 
-    private readonly cellKeyToValue = new Map<number, T>();
-    private readonly cellKeyToCliSeq = new Map<number, number>();
+    private cellKeyToValue = new Map<number, T>();              // Map of populated cell values.
+    private cellKeyToPendingCliSeq = new Map<number, number>(); // Map 'cliSeq' of pending cell write (if any).
 
     constructor(
         runtime: IComponentRuntime,
@@ -75,19 +76,26 @@ export class SharedMatrix<T extends Jsonable<JsonablePrimitive | IComponentHandl
     }
 
     public getCell(row: number, col: number) {
+        // Map the logical (row, col) to physical storage indices.
         // tslint:disable-next-line:no-parameter-reassignment
         ([row, col] = this.swizzle(row, col, /* alloc: */ false));
+
+        // If either the row or col storage is unallocated, the cell is empty.
         if (row === unallocated || col === unallocated) {
             return undefined;
         }
 
+        // Otherwise, combine the storage indices into a key and retrieve the value from the map.
         return this.cellKeyToValue.get(pointToKey(row, col));
     }
 
     public setCell(row: number, col: number, value: T) {
+        // Write or clear the value in physical storage.
         const key = this.storeCell(row, col, value);
+
+        // And queue a 'set' op.
         this.submitCellMessage(key, {
-            type: MatrixOp.setRange,
+            type: MatrixOp.set,
             row,
             col,
             value,
@@ -95,46 +103,40 @@ export class SharedMatrix<T extends Jsonable<JsonablePrimitive | IComponentHandl
     }
 
     public insertCols(start: number, count: number) {
-        const op = this.cols.insertSegmentLocal(start, new RunSegment(new Array(count).fill(unallocated)));
-        (op as any).target = "cols";
-        this.submitLocalMessage(op);
+        this.insert(this.cols, "cols", start, count);
     }
 
     public insertRows(start: number, count: number) {
-        const op = this.rows.insertSegmentLocal(start, new RunSegment(new Array(count).fill(unallocated)));
-        (op as any).target = "rows";
-        this.submitLocalMessage(op);
+        this.insert(this.rows, "rows", start, count);
     }
 
     public submitCellMessage(key: number, message: IMatrixCellMsg) {
         const clientSequenceNumber = this.submitLocalMessage(message);
         if (clientSequenceNumber !== -1) {
-            this.cellKeyToCliSeq.set(key, clientSequenceNumber);
+            this.cellKeyToPendingCliSeq.set(key, clientSequenceNumber);
         }
     }
 
     public snapshot(): ITree {
-        const tree: ITree = {
+        return {
             entries: [{
                 mode: FileMode.Directory,
                 path: SnapshotPath.rows,
                 type: TreeEntry[TreeEntry.Tree],
-                value: this.rows.snapshot(this.runtime, this.handle),
+                value: this.rows.snapshot(this.runtime, this.handle, []),
             }, {
                 mode: FileMode.Directory,
                 path: SnapshotPath.cols,
                 type: TreeEntry[TreeEntry.Tree],
-                value: this.cols.snapshot(this.runtime, this.handle),
-            }],
+                value: this.cols.snapshot(this.runtime, this.handle, []),
+            }, this.snapshotCells()],
             id: null,
         };
-
-        return tree;
     }
 
     protected submitLocalMessage(message: any) {
         return super.submitLocalMessage(
-            serializeHandles(
+            makeHandlesSerializable(
                 message,
                 this.runtime.IComponentSerializer,
                 this.runtime.IComponentHandleContext,
@@ -166,6 +168,7 @@ export class SharedMatrix<T extends Jsonable<JsonablePrimitive | IComponentHandl
         try {
             await this.rows.load(branchId, this.runtime, new ContentObjectStorage(storage, SnapshotPath.rows));
             await this.cols.load(branchId, this.runtime, new ContentObjectStorage(storage, SnapshotPath.cols));
+            await this.loadCells(await storage.read(SnapshotPath.cells));
         } catch (error) {
             this.logger.sendErrorEvent({eventName: "MatrixLoadFailed" }, error);
         }
@@ -187,12 +190,24 @@ export class SharedMatrix<T extends Jsonable<JsonablePrimitive | IComponentHandl
                 this.rows.applyMsg(msg);
                 break;
             default: {
-                // Early exit if this is the acknowledgement for a local op.
+                assert(contents.type === MatrixOp.set);
+
                 const [row, col] = this.swizzle(contents.row, contents.col, /* alloc */ false);
-                const pendingCliSeq = this.cellKeyToCliSeq.get(pointToKey(row, col));
+                const pendingCliSeq = this.cellKeyToPendingCliSeq.get(pointToKey(row, col));
+
+                // If there is a local set op pending for this cell position...
                 if (pendingCliSeq !== undefined) {
+                    // The incoming set operation either:
+                    //  a) precedes our pending set operation, or...
+                    //  b) is the ACK for our pending set operation
+                    //
+                    // In either case, we keep the current cell value.
+
+                    // If this is the ACK for our pending set op, remove our pending cliSeq # so later
+                    // operations will resume updating the cell.
                     if (local && pendingCliSeq === rawMessage.clientSequenceNumber) {
-                        this.cellKeyToCliSeq.delete(contents.key);
+                        // Then our pending write has been ACKed.  Remove it from the pending map.
+                        this.cellKeyToPendingCliSeq.delete(contents.key);
                     }
                     return;
                 } else {
@@ -207,20 +222,37 @@ export class SharedMatrix<T extends Jsonable<JsonablePrimitive | IComponentHandl
         this.cols.startCollaboration(this.runtime.clientId, 0);
     }
 
+    private insert(dimClient: MergeTree.Client, dimTarget: "rows" | "cols", start: number, count: number) {
+        // Construct a new MergeTree op to insert a new segment with the appropriate number of unallocated rows/cols.
+        // Note that serialized RunSegment will continue to contain unallocated items, even if the RunSegment in
+        // the MergeTree is modified prior to the op being transmitted.
+        const op = dimClient.insertSegmentLocal(start, new RunSegment(new Array(count).fill(unallocated)));
+
+        // Note whether this `op` targets rows or cols.  (See dispatch in `processCore()`)
+        (op as any).target = dimTarget;
+
+        this.submitLocalMessage(op);
+    }
+
     private storeCell(row: number, col: number, value: T) {
         const clear = value === undefined;
 
+        // Map the logical row/col to the allocated storage indicise (if any).
         // tslint:disable-next-line:no-parameter-reassignment
         ([row, col] = this.swizzle(row, col, /* alloc: */ !clear));
 
-        // If either the row or col is unallocated, the cell has already been cleared.
+        // If clearing and either the row and/or col is unallocated, no further work is necessary.
         if (clear && row === unallocated || col === unallocated) {
             return;
         }
 
+        // Otherwise convert the storage indices into a map key and set or delete as appropriate.
         const key = pointToKey(row, col);
         if (clear) {
             this.cellKeyToValue.delete(key);
+
+            // TODO: If we kept track of non-empty cells per row/col, we could unallocate and reuse the
+            //       storage index when the count reaches zero.
         } else {
             this.cellKeyToValue.set(key, value);
         }
@@ -228,7 +260,18 @@ export class SharedMatrix<T extends Jsonable<JsonablePrimitive | IComponentHandl
         return key;
     }
 
-    private swizzle1(client: Client, table: HandleTable<number>, pos: number, alloc: boolean): number {
+    // Maps the given row/col pair to their corresponding storage indices.  If `alloc` is true, storage
+    // indices will be allocated if needed.  Otherwise, returns `unallocated` (i.e., -1) for unallocated
+    // rows/cols.
+    private swizzle(row: number, col: number, alloc: boolean) {
+        return [
+            this.swizzle1(this.rows, this.rowTable, row, alloc),
+            this.swizzle1(this.cols, this.colTable, col, alloc),
+        ];
+    }
+
+    // Helper for `swizzle()` that handles the logical row/col mapping to physical storage in one dimension.
+    private swizzle1(client: MergeTree.Client, table: HandleTable<number>, pos: number, alloc: boolean): number {
         const segmentAndOffset = client.getContainingSegment(pos);
         assert(segmentAndOffset);
         const run = segmentAndOffset.segment as RunSegment;
@@ -240,10 +283,37 @@ export class SharedMatrix<T extends Jsonable<JsonablePrimitive | IComponentHandl
         return p;
     }
 
-    private swizzle(row: number, col: number, alloc: boolean) {
-        return [
-            this.swizzle1(this.rows, this.rowTable, row, alloc),
-            this.swizzle1(this.cols, this.colTable, col, alloc),
+    // Constructs an ITreeEntry for the cell data.
+    private snapshotCells(): ITreeEntry {
+        const chunk = [
+            Array.from(this.cellKeyToValue.entries()),
+            Array.from(this.cellKeyToPendingCliSeq.entries()),
         ];
+
+        const serializer = this.runtime.IComponentSerializer;
+        return {
+            mode: FileMode.File,
+            path: SnapshotPath.cells,
+            type: TreeEntry[TreeEntry.Blob],
+            value: {
+                contents: serializer
+                    ? serializer.stringify(chunk, this.runtime.IComponentHandleContext, this.handle)
+                    : JSON.stringify(chunk),
+                encoding: "utf-8",
+            },
+        };
+    }
+
+    // Loads cell data from the given Base64 encoded chunk.
+    private loadCells(chunk: string) {
+        const utf8 = fromBase64ToUtf8(chunk);
+
+        const serializer = this.runtime.IComponentSerializer;
+        const cellData = serializer
+            ? serializer.parse(utf8, this.runtime.IComponentHandleContext)
+            : JSON.parse(utf8);
+
+        this.cellKeyToValue = new Map(cellData[0]);
+        this.cellKeyToPendingCliSeq = new Map(cellData[1]);
     }
 }

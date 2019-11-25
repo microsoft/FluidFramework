@@ -31,8 +31,7 @@ describe("snapshot", () => {
             logger: client2.logger,
             clientId: "1",
         };
-        const loader = client2.createSnapshotLoader(runtime as IComponentRuntime);
-        await loader.initialize(undefined, services);
+        await client2.load(/* branchId: */ undefined, runtime as IComponentRuntime, services);
 
         assert.equal(client2.getLength(), client1.getLength());
         assert.equal(client2.getText(), client1.getText());
@@ -62,8 +61,7 @@ describe("snapshot", () => {
                 logger: client2.logger,
                 clientId: (i + 1).toString(),
             };
-            const loader = client2.createSnapshotLoader(runtime as IComponentRuntime);
-            await loader.initialize(undefined, services);
+            await client2.load(/* branchId: */ undefined, runtime as IComponentRuntime, services);
 
             const client2Len = client2.getLength();
             assert.equal(

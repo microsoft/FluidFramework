@@ -80,34 +80,71 @@ describe("Matrix", () => {
         describe("empty matrices", () => {
             it("0x0", async () => {
                 expectSize(matrix, /* numRows: */ 0, /* numCols: */ 0);
-                const loadedMatrix = await expect([]);
-                expectSize(loadedMatrix, /* numRows: */ 0, /* numCols: */ 0);
+                expectSize(await expect([]), /* numRows: */ 0, /* numCols: */ 0);
             });
 
             it("0x1", async () => {
                 matrix.insertCols(/* start: */ 0, /* count: */ 1);
                 expectSize(matrix, /* numRows: */ 0, /* numCols: */ 1);
-                const loadedMatrix = await expect([]);
-                expectSize(loadedMatrix, /* numRows: */ 0, /* numCols: */ 1);
+                expectSize(await expect([]), /* numRows: */ 0, /* numCols: */ 1);
             });
 
             it("1x0", async () => {
                 matrix.insertRows(/* start: */ 0, /* count: */ 1);
                 expectSize(matrix, /* numRows: */ 1, /* numCols: */ 0);
-                const loadedMatrix = await expect([[]]);
-                expectSize(loadedMatrix, /* numRows: */ 1, /* numCols: */ 0);
+                expectSize(await expect([[]]), /* numRows: */ 1, /* numCols: */ 0);
             });
         });
 
-        describe("get/set cell", () => {
-            it("works", () => {
-                matrix.insertRows(0, 1);
-                matrix.insertCols(0, 1);
-                assert.deepEqual(extract(matrix), [[undefined]]);
+        it("get/set cell", async () => {
+            matrix.insertRows(0, 1);
+            matrix.insertCols(0, 1);
+            await expect([[undefined]]);
 
-                matrix.setCell(0, 0, 1);
-                assert.deepEqual(extract(matrix), [[ 1 ]]);
-            });
+            matrix.setCell(0, 0, 1);
+            await expect([[1]]);
+        });
+
+        it("column insertion", async () => {
+            matrix.insertRows(0, 1);
+            matrix.insertCols(0, 2);
+            await expect([
+                [undefined, undefined],
+            ]);
+
+            matrix.setCell(0, 0, 0);
+            matrix.setCell(0, 1, 1);
+            await expect([
+                [ 0, 1 ],
+            ]);
+
+            matrix.insertCols(1, 1);
+            await expect([
+                [ 0, undefined, 1 ],
+            ]);
+        });
+
+        it("row insertion", async () => {
+            matrix.insertRows(0, 2);
+            matrix.insertCols(0, 1);
+            await expect([
+                [undefined],
+                [undefined],
+            ]);
+
+            matrix.setCell(0, 0, 0);
+            matrix.setCell(1, 0, 1);
+            await expect([
+                [0],
+                [1],
+            ]);
+
+            matrix.insertRows(1, 1);
+            await expect([
+                [0],
+                [undefined],
+                [1],
+            ]);
         });
 
         afterEach(async () => {

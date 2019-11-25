@@ -332,7 +332,6 @@ export class SharedMap extends SharedObject implements ISharedMap {
                     type: value.type,
                     value: value.value === undefined ? undefined : JSON.parse(value.value),
                 };
-
             }
         }
 
