@@ -46,7 +46,7 @@
     "watch:esnext": "lerna run --parallel build:esnext -- -- --watch",
     "watch:tsc": "lerna run --parallel tsc -- -- --watch",
     "watch:webpack": "lerna run --parallel webpack -- -- --watch",
-    "webpack": "lerna run --parallel webpack --stream"
+    "webpack": "lerna run --no-sort webpack --stream"
   },
   "dependencies": {},
   "devDependencies": {
