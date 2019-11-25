@@ -167,11 +167,6 @@ export class BuildGraph {
             const cleanScript = node.pkg.getScript("clean");
             if (cleanScript) {
                 cleanP.push(execCleanScript(node.pkg, cleanScript));
-            } else {
-                const buildScript = node.pkg.getScript("build");
-                if (buildScript && getExecutableFromCommand(buildScript) !== "echo") {
-                    console.warn(`${node.pkg.nameColored}: warning: package has "build" script without "clean" script`);
-                }
             }
         });
         const results = await Promise.all(cleanP);

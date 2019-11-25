@@ -75,7 +75,6 @@ export class Package {
     constructor(private readonly packageJsonFileName: string) {
         this.packageJson = require(packageJsonFileName);
         logVerbose(`Package Loaded: ${this.nameColored}`);
-        // this.checkScript();
     }
 
     public get name(): string {
@@ -127,43 +126,91 @@ export class Package {
         return this.packageJson.scripts[name];
     }
 
-    public checkScript() {
-        if (this.packageJson.scripts.build) {
+    public async checkScripts() {
+        const buildScript = this.getScript("build");
+        if (buildScript) {
+            if (buildScript.startsWith("echo ")) {
+                return;
+            }
             // These are script rules in the FluidFramework repo
+
+            // Default build script, tsc + tslint (with optional build:webpack)
             const build: string[] = ["build:compile"];
+
+            // all build tasks, but optional build:webpack
             const buildCompile: string[] = [];
+
+            // all build and lint steps (build + webpack)
             const buildFull: string[] = ["build"];
+
+            // all build steps (build:compile + webpack)
             const buildFullCompile: string[] = ["build:compile"];
             const buildPrefix = this.packageJson.scripts["build:genver"] ? "npm run build:genver && " : "";
-            if (this.packageJson.scripts.tsc) {
+            if (this.getScript("tsc")) {
                 buildCompile.push("tsc");
             }
-            if (this.packageJson.scripts["build:esnext"]) {
+            if (this.getScript("build:esnext")) {
                 buildCompile.push("build:esnext");
             }
 
-            if (this.packageJson.scripts["tslint"]) {
+            if (this.getScript("build:copy")) {
+                buildCompile.push("build:copy");
+            }
+
+            if (this.getScript("tslint")) {
                 build.push("tslint");
             }
 
-            if (this.packageJson.scripts["webpack"]) {
+            if (this.getScript("less")) {
+                buildCompile.push("less");
+            }
+
+            let implicitWebpack = true;
+            if (this.getScript("build:full:webpack")) {
+                buildFullCompile.push("build:full:webpack");
+                implicitWebpack = false;
+            }
+            if (this.getScript("build:webpack")) {
+                buildCompile.push("build:webpack");
+                implicitWebpack = false;
+            }
+
+            if (implicitWebpack && this.getScript("webpack")) {
                 buildFull.push("webpack");
                 buildFullCompile.push("webpack");
             }
 
+            if (buildCompile.length === 0) {
+                console.warn(`${this.nameColored}: warning: can't detect anything to build`);
+                return;
+            }
+
+            let fixed = false;
             const check = (scriptName: string, parts: string[], prefix = "") => {
-                const expected = prefix + 
+                const expected = prefix +
                     (parts.length > 1 ? `concurrently npm:${parts.join(" npm:")}` : `npm run ${parts[0]}`);
                 if (this.packageJson.scripts[scriptName] !== expected) {
                     console.warn(`${this.nameColored}: warning: non-conformant script ${scriptName}`);
                     console.warn(`${this.nameColored}: warning:   expect: ${expected}`);
                     console.warn(`${this.nameColored}: warning:      got: ${this.packageJson.scripts[scriptName]}`);
+                    if (options.fixScripts) {
+                        this.packageJson.scripts[scriptName] = expected;
+                        fixed = true;
+                    }
                 }
             }
             check("build", build, buildPrefix);
             check("build:compile", buildCompile);
             check("build:full", buildFull);
             check("build:full:compile", buildFullCompile);
+
+            if (!this.getScript("clean")) {
+                console.warn(`${this.nameColored}: warning: package has "build" script without "clean" script`);
+            }
+
+            if (fixed) {
+                await this.savePackageJson();
+            }
         }
     }
     public async depcheck() {
@@ -178,8 +225,12 @@ export class Package {
 
         const npmDepChecker = new NpmDepChecker(this, checkFiles);
         if (await npmDepChecker.run()) {
-            await writeFileAsync(this.packageJsonFileName, `${JSON.stringify(this.packageJson, undefined, 2)}\n`);
+            await this.savePackageJson();
         }
+    }
+
+    private async savePackageJson() {
+        return writeFileAsync(this.packageJsonFileName, `${JSON.stringify(this.packageJson, undefined, 2)}\n`);
     }
 
     private get color() {
@@ -283,6 +334,12 @@ export class Packages {
     public async symlink() {
         const packageMap = new Map<string, Package>(this.packages.map(pkg => [pkg.name, pkg]));
         return this.queueExecOnAllPackageCore(pkg => pkg.symlink(packageMap), options.nohoist ? "symlink" : "")
+    }
+
+    public async checkScripts() {
+        for (const pkg of this.packages) {
+            await pkg.checkScripts();
+        }
     }
 
     private async queueExecOnAllPackageCore<TResult>(exec: (pkg: Package) => Promise<TResult>, message?: string) {

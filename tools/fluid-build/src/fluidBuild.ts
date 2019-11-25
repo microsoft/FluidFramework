@@ -101,6 +101,10 @@ async function main() {
     const packages = Packages.load(baseDirectories);
     timer.time("Package scan completed");
 
+    // Check scripts
+    await packages.checkScripts();
+    timer.time("Check scripts completed");
+
     const hasMatchArgs = options.args.length;
     if (hasMatchArgs) {
         let matched = false;

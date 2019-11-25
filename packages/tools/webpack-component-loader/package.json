@@ -10,10 +10,11 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "concurrently npm:build:compile npm:tslint",
-    "build:compile": "concurrently npm:tsc npm:build:esnext npm:webpack",
+    "build:compile": "concurrently npm:tsc npm:build:esnext npm:build:webpack",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
+    "build:webpack": "npm run webpack",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "deploy": "npm publish --registry https://packages.wu2.prague.office-int.com",
     "test": "mocha --recursive dist/test --exit",

@@ -10,7 +10,7 @@
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "npm run build:compile",
+    "build": "concurrently npm:build:compile npm:tslint",
     "build:compile": "concurrently npm:tsc npm:build:esnext",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
