@@ -1,28 +1,16 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-FROM node:10.16.0-slim AS base
+FROM node:10.16.0-slim AS setup
 
-# node-gyp dependencies
-RUN apt-get update && apt-get install -y \
-        python \
-        make \
-        git \
-        curl \
-        g++
-
-# Add Tini
-ENV TINI_VERSION v0.18.0
-ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
-RUN chmod +x /tini
+# Setup stage to create the directory structure for lerna install
+# This will be copied later on in a different stage to reduce container layers
 
 # Copy over and build the server
 WORKDIR /usr/src/server
 
 # Copy over the package and package-lock and install prior to the other code to optimize Docker's file system cache on rebuilds
-COPY LICENSE.txt .
-COPY *.json ./
-COPY .npmrc .
+COPY LICENSE.txt *.json .npmrc ./
 COPY tools/build-server-resources/build-version.js tools/build-server-resources/
 
 COPY packages/agents/flow-intel/package*.json packages/agents/flow-intel/
@@ -134,6 +122,27 @@ COPY samples/chaincode/sudoku/package*.json  samples/chaincode/sudoku/
 COPY samples/chaincode/textarea-noreact/package*.json samples/chaincode/textarea-noreact/
 COPY samples/chaincode/tourofheroes/package*.json samples/chaincode/tourofheroes/
 COPY samples/chaincode/type-race/package*.json samples/chaincode/type-race/
+
+FROM node:10.16.0-slim AS base
+
+# node-gyp dependencies
+RUN apt-get update && apt-get install -y \
+        python \
+        make \
+        git \
+        curl \
+        g++
+
+# Add Tini
+ENV TINI_VERSION v0.18.0
+ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
+RUN chmod +x /tini
+
+# Copy over and build the server
+WORKDIR /usr/src/server
+
+# Copy the package.json structure we create from the setup stage - to reduce container layers
+COPY --from=setup /usr/src/server/ ./
 
 # Copy over chaincode npmrc and package.json to dynamically install packages.
 COPY server/routerlicious/chaincode/* /tmp/chaincode/
