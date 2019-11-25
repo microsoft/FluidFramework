@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { AsyncPriorityQueue, queue } from "async";
+import { AsyncPriorityQueue } from "async";
 import * as path from "path";
 import { logStatus, logVerbose } from "./common/logging";
 import { Package } from "./npmPackage";
 import { Task, TaskExec } from "./tasks/task";
 import { TaskFactory } from "./tasks/taskFactory";
 import { Timer } from './common/timer';
-import { getExecutableFromCommand, execWithErrorAsync, ExecAsyncResult } from "./common/utils";
+import { execWithErrorAsync, ExecAsyncResult } from "./common/utils";
 import { FileHashCache } from "./common/fileHashCache";
 import chalk from "chalk";
 import { options } from "./options";

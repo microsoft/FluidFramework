@@ -8,10 +8,10 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "concurrently npm:webpack npm:build:compile",
+    "build": "npm run build:compile",
     "build:compile": "npm run tsc",
-    "build:full": "npm run build",
-    "build:full:compile": "npm run build:compile",
+    "build:full": "concurrently npm:build npm:webpack",
+    "build:full:compile": "concurrently npm:build:compile npm:webpack",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "deploy": "npm run build && npm version patch && npm run verdaccio && npm run post-deploy",
     "dev": "npm run webpack:dev",

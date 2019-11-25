@@ -9,17 +9,18 @@
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "webpack --env=\"production\" && npm run tsc",
+    "build": "npm run build:compile",
+    "build:compile": "npm run tsc",
+    "build:full": "concurrently npm:build npm:webpack",
+    "build:full:compile": "concurrently npm:build:compile npm:webpack",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
-    "deploy": "npm run build && npm version patch && npm run verdaccio && npm run post-deploy",
-    "dev": "webpack --env=\"development\"",
+    "dev": "npm run webpack:dev",
     "start": "webpack-dev-server --config webpack.config.js --package package.json",
     "start:live": "webpack-dev-server --config webpack.config.js --package package.json --env.mode live",
     "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
     "tsc": "tsc",
-    "verdaccio": "npm publish --registry https://packages.wu2.prague.office-int.com",
-    "webpack": "npm run build",
-    "webpack:dev": "npm run dev"
+    "webpack": "webpack --env=\"production\"",
+    "webpack:dev": "webpack --env=\"development\""
   },
   "dependencies": {
     "@microsoft/fluid-build-common": "^0.12.0",
