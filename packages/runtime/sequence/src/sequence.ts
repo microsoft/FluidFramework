@@ -505,30 +505,17 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         // Are we fully loaded? If not, things will go south
         assert(this.isLoaded);
 
-        const minSeq = this.runtime.deltaManager ? this.runtime.deltaManager.minimumSequenceNumber : 0;
+        const minSeq = this.runtime.deltaManager
+            ? this.runtime.deltaManager.minimumSequenceNumber
+            : 0;
 
-        // Catch up to latest MSN, if we have not had a chance to do it.
-        // Required for case where ComponentRuntime.attachChannel() generates snapshot right after loading component.
-        // Note that we mock runtime in tests and mock does not have deltamanager implementation.
         if (this.runtime.deltaManager) {
             this.processMinSequenceNumberChanged(minSeq);
-            this.client.updateSeqNumbers(minSeq, this.runtime.deltaManager.referenceSequenceNumber);
-
-            // One of the snapshots (from SPO) I observed to have chunk.chunkSequenceNumber > minSeq!
-            // Not sure why - need to catch it sooner
-            assert(this.client.getCollabWindow().minSeq === minSeq);
         }
 
-        const snap = this.client.createSnapshotter();
-        snap.extractSync();
         this.messagesSinceMSNChange.forEach((m) => m.minimumSequenceNumber = minSeq);
-        const mtSnap = snap.emit(
-            this.messagesSinceMSNChange,
-            this.runtime.IComponentSerializer,
-            this.runtime.IComponentHandleContext,
-            this.handle);
 
-        return mtSnap;
+        return this.client.snapshot(this.runtime, this.handle, this.messagesSinceMSNChange);
     }
 
     private processMergeTreeMsg(rawMessage: ISequencedDocumentMessage) {
