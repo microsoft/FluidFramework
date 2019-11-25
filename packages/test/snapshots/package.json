@@ -19,7 +19,8 @@
     "test:generate": "node --experimental-worker dist/generateSnapshotFiles.js",
     "test:sequential": "node ../../../node_modules/mocha/bin/_mocha --recursive dist/test",
     "tsc": "tsc",
-    "tslint": "tslint --project tsconfig.json --format verbose"
+    "tslint": "tslint --project tsconfig.json --format verbose",
+    "build:compile:min": "npm run build:compile"
   },
   "dependencies": {
     "@microsoft/fluid-protocol-definitions": "^0.12.0",

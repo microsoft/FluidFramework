@@ -21,7 +21,8 @@
     "tsc": "tsc",
     "tslint": "tslint 'src/**/*.ts'",
     "webpack": "webpack --config webpack.config.js --env.production",
-    "webpack:dev": "webpack --env.development"
+    "webpack:dev": "webpack --env.development",
+    "build:compile:min": "npm run build:compile"
   },
   "author": "Microsoft",
   "dependencies": {

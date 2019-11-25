@@ -18,7 +18,8 @@
     "build:full:compile": "npm run build:compile",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "tsc": "tsc",
-    "tslint": "tslint --project tsconfig.json --format verbose"
+    "tslint": "tslint --project tsconfig.json --format verbose",
+    "build:compile:min": "npm run build:compile"
   },
   "dependencies": {
     "@microsoft/fluid-component-core-interfaces": "^0.12.0",

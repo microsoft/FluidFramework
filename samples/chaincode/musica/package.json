@@ -19,7 +19,8 @@
     "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
     "tsc": "tsc",
     "webpack": "webpack --env.production",
-    "webpack:dev": "webpack --env.development"
+    "webpack:dev": "webpack --env.development",
+    "build:compile:min": "npm run build:compile"
   },
   "dependencies": {
     "@babel/core": "^7.4.4",

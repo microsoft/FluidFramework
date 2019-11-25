@@ -19,7 +19,8 @@
     "build:genver": "node node_modules/@microsoft/fluid-build-common/gen_version.js",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "tsc": "tsc",
-    "tslint": "tslint --project tsconfig.json --format verbose"
+    "tslint": "tslint --project tsconfig.json --format verbose",
+    "build:compile:min": "npm run build:compile"
   },
   "dependencies": {
     "@microsoft/fluid-component-core-interfaces": "^0.12.0",

@@ -24,7 +24,8 @@
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose",
     "webpack": "webpack --env.production",
-    "webpack:dev": "webpack --env.development"
+    "webpack:dev": "webpack --env.development",
+    "build:compile:min": "npm run build:compile"
   },
   "dependencies": {
     "@fluid-example/client-ui-lib": "^0.12.0",

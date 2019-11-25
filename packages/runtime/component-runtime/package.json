@@ -20,7 +20,8 @@
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "tsc": "tsc",
     "tsc:watch": "tsc --watch",
-    "tslint": "tslint --project tsconfig.json --format verbose"
+    "tslint": "tslint --project tsconfig.json --format verbose",
+    "build:compile:min": "npm run build:compile"
   },
   "dependencies": {
     "@microsoft/fluid-component-core-interfaces": "^0.12.0",

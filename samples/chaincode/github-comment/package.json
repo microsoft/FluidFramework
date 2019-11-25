@@ -23,7 +23,8 @@
     "tslint": "tslint --project tsconfig.json --format verbose",
     "verdaccio": "npm publish --registry https://packages.wu2.prague.office-int.com",
     "webpack": "webpack --env.production",
-    "webpack:dev": "webpack --env.development"
+    "webpack:dev": "webpack --env.development",
+    "build:compile:min": "npm run build:compile"
   },
   "dependencies": {
     "@fluid-example/textarea-noreact": "^0.12.0",

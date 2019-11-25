@@ -18,7 +18,8 @@
     "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
     "tsc": "tsc",
     "tslint": "tslint 'src/**/*.{ts,tsx}'",
-    "webpack": "webpack --env=\"production\""
+    "webpack": "webpack --env=\"production\"",
+    "build:compile:min": "npm run build:compile"
   },
   "dependencies": {
     "@microsoft/fluid-component-core-interfaces": "^0.12.0",

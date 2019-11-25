@@ -145,6 +145,9 @@ export class Package {
 
             // all build steps (build:compile + webpack)
             const buildFullCompile: string[] = ["build:compile"];
+
+            // all build steps prod
+            const buildCompileMin: string[] = ["build:compile"];
             const buildPrefix = this.packageJson.scripts["build:genver"] ? "npm run build:genver && " : "";
             if (this.getScript("tsc")) {
                 buildCompile.push("tsc");
@@ -166,8 +169,8 @@ export class Package {
             }
 
             let implicitWebpack = true;
-            if (this.getScript("build:full:webpack")) {
-                buildFullCompile.push("build:full:webpack");
+            if (this.getScript("build:webpack:min")) {
+                buildCompileMin.push("build:webpack:min");
                 implicitWebpack = false;
             }
             if (this.getScript("build:webpack")) {
@@ -203,6 +206,7 @@ export class Package {
             check("build:compile", buildCompile);
             check("build:full", buildFull);
             check("build:full:compile", buildFullCompile);
+            check("build:compile:min", buildCompileMin);
 
             if (!this.getScript("clean")) {
                 console.warn(`${this.nameColored}: warning: package has "build" script without "clean" script`);

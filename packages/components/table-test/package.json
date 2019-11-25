@@ -17,7 +17,8 @@
     "clean": "rimraf dist *.tsbuildinfo *.build.log",
     "tsc": "tsc",
     "test": "mocha --recursive dist/**/*.spec.js --exit",
-    "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml --exit"
+    "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml --exit",
+    "build:compile:min": "npm run build:compile"
   },
   "dependencies": {
     "@fluid-example/table-document": "^0.12.0",

@@ -24,7 +24,8 @@
     "tsc": "tsc",
     "tslint": "npm run eslint",
     "webpack": "webpack --env.production",
-    "webpack:dev": "webpack --env.development"
+    "webpack:dev": "webpack --env.development",
+    "build:compile:min": "npm run build:compile"
   },
   "eslintIgnore": [
     "*.spec.ts"

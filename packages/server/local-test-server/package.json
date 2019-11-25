@@ -21,7 +21,8 @@
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose",
-    "webpack": "webpack --config webpack.config.js"
+    "webpack": "webpack --config webpack.config.js",
+    "build:compile:min": "npm run build:compile"
   },
   "dependencies": {
     "@microsoft/fluid-aqueduct": "^0.12.0",
