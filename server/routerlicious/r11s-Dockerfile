@@ -21,9 +21,9 @@ WORKDIR /usr/src/server
 
 # Copy over the package and package-lock and install prior to the other code to optimize Docker's file system cache on rebuilds
 COPY LICENSE.txt .
-COPY *.json ./
-COPY .npmrc .
-COPY tools/build-server-resources/build-version.js tools/build-server-resources/
+COPY server/routerlicious/*.json server/routerlicious/
+COPY server/routerlicious/.npmrc server/routerlicious/
+COPY tools/build-server-resources/build-version.js server/routerlicious/tools/build-server-resources/
 
 COPY server/routerlicious/packages/gitresources/package*.json server/routerlicious/packages/gitresources/
 COPY server/routerlicious/packages/protocol-definitions/package*.json server/routerlicious/packages/protocol-definitions/
@@ -54,22 +54,25 @@ RUN mkdir nyc && chown node: nyc
 # Expose the port the app runs under
 EXPOSE 3000
 
+# Switch to the server folder for npm install
+WORKDIR /usr/src/server/server/routerlicious
+
 # Need to set the --unsafe-perm flag since we are doing the install as root. Consider adding an 'app' accout so we
 # can do the install as node but then switch to 'app' to run. As app we won't be able to write to installed files
 # and be able to change them.
 RUN npm install --unsafe-perm
 
 # And now copy over our actual code and build
+WORKDIR /usr/src/server
 COPY server/routerlicious/packages/ server/routerlicious/packages/
 COPY packages/utils/build-common/ packages/utils/build-common/
 
-# Switch to the root folder
+# Switch to the server folder and build
 WORKDIR /usr/src/server/server/routerlicious
-
 # Set the version number
 ARG VERSION_BUILDNUMBER=0
 RUN echo $VERSION_BUILDNUMBER
-RUN version=`node ../../tools/build-server-resources/build-version.js`; echo $version; npx lerna version $version --no-git-tag-version --no-push --yes
+RUN version=`node tools/build-server-resources/build-version.js`; echo $version; npx lerna version $version --no-git-tag-version --no-push --yes
 RUN npm run build:ci
 
 # Build that alfred uses
