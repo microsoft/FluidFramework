@@ -10,6 +10,7 @@
   "scripts": {
     "build": "concurrently npm:build:compile npm:tslint",
     "build:compile": "npm run tsc",
+    "build:compile:min": "npm run build:compile",
     "build:full": "concurrently npm:build npm:webpack",
     "build:full:compile": "concurrently npm:build:compile npm:webpack",
     "clean": "rimraf dist *.tsbuildinfo *.build.log",
@@ -18,8 +19,7 @@
     "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
     "tsc": "tsc",
     "tslint": "tslint 'src/**/*.{ts,tsx}'",
-    "webpack": "webpack --env=\"production\"",
-    "build:compile:min": "npm run build:compile"
+    "webpack": "webpack --env=\"production\""
   },
   "dependencies": {
     "@microsoft/fluid-component-core-interfaces": "^0.12.0",

@@ -11,6 +11,7 @@
   "scripts": {
     "build": "concurrently npm:build:compile npm:tslint",
     "build:compile": "npm run tsc",
+    "build:compile:min": "npm run build:compile",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
@@ -19,8 +20,7 @@
     "test:generate": "node --experimental-worker dist/generateSnapshotFiles.js",
     "test:sequential": "node ../../../node_modules/mocha/bin/_mocha --recursive dist/test",
     "tsc": "tsc",
-    "tslint": "tslint --project tsconfig.json --format verbose",
-    "build:compile:min": "npm run build:compile"
+    "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "dependencies": {
     "@microsoft/fluid-protocol-definitions": "^0.12.0",

@@ -9,6 +9,7 @@
   "scripts": {
     "build": "concurrently npm:build:compile npm:tslint",
     "build:compile": "concurrently npm:tsc npm:build:esnext",
+    "build:compile:min": "npm run build:compile",
     "build:docs": "api-extractor run --local",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "concurrently npm:build npm:webpack",
@@ -17,8 +18,7 @@
     "start": "webpack-dev-server",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose",
-    "webpack": "webpack --env build",
-    "build:compile:min": "npm run build:compile"
+    "webpack": "webpack --env build"
   },
   "dependencies": {
     "@fluid-example/tiny-web-host": "^0.12.0",

@@ -14,6 +14,7 @@
   "scripts": {
     "build": "concurrently npm:build:compile npm:tslint",
     "build:compile": "concurrently npm:tsc npm:build:esnext npm:build:copy",
+    "build:compile:min": "npm run build:compile",
     "build:copy": "copyfiles -u 1 \"src/**/*.css\" dist/ && copyfiles -u 1 \"src/**/*.css\" lib/",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "concurrently npm:build npm:webpack",
@@ -24,8 +25,7 @@
     "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose",
-    "webpack": "webpack --env.production",
-    "build:compile:min": "npm run build:compile"
+    "webpack": "webpack --env.production"
   },
   "dependencies": {
     "@fluid-example/flow-intel": "^0.12.0",

@@ -12,6 +12,7 @@
   "scripts": {
     "build": "concurrently npm:build:compile npm:tslint",
     "build:compile": "concurrently npm:tsc npm:build:esnext",
+    "build:compile:min": "npm run build:compile",
     "build:docs": "api-extractor run --local",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
@@ -19,8 +20,7 @@
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "tsc": "tsc",
     "tsc:watch": "tsc --watch",
-    "tslint": "tslint --project tsconfig.json --format verbose",
-    "build:compile:min": "npm run build:compile"
+    "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.4.4",

@@ -12,6 +12,7 @@
   "scripts": {
     "build": "concurrently npm:build:compile npm:tslint",
     "build:compile": "concurrently npm:tsc npm:build:esnext npm:build:copy",
+    "build:compile:min": "npm run build:compile",
     "build:copy": "copyfiles -u 1 \"src/**/*.css\" dist/ && copyfiles -u 1 \"src/**/*.css\" lib/",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "concurrently npm:build npm:webpack",
@@ -21,8 +22,7 @@
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose",
     "webpack": "webpack --env=\"production\"",
-    "webpack:dev": "webpack --env=\"development\"",
-    "build:compile:min": "npm run build:compile"
+    "webpack:dev": "webpack --env=\"development\""
   },
   "dependencies": {
     "@fluid-example/client-ui-lib": "^0.12.0",

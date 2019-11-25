@@ -11,6 +11,7 @@
   "scripts": {
     "build": "concurrently npm:build:compile npm:tslint",
     "build:compile": "concurrently npm:tsc npm:build:esnext",
+    "build:compile:min": "npm run build:compile",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "concurrently npm:build npm:webpack",
     "build:full:compile": "concurrently npm:build:compile npm:webpack",
@@ -23,8 +24,7 @@
     "tslint": "tslint --project tsconfig.json --format verbose",
     "verdaccio": "npm publish --registry https://packages.wu2.prague.office-int.com",
     "webpack": "webpack --env.production",
-    "webpack:dev": "webpack --env.development",
-    "build:compile:min": "npm run build:compile"
+    "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
     "@fluid-example/textarea-noreact": "^0.12.0",

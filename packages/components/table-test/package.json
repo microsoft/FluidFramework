@@ -12,13 +12,13 @@
   "scripts": {
     "build": "npm run build:compile",
     "build:compile": "npm run tsc",
+    "build:compile:min": "npm run build:compile",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "clean": "rimraf dist *.tsbuildinfo *.build.log",
-    "tsc": "tsc",
     "test": "mocha --recursive dist/**/*.spec.js --exit",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml --exit",
-    "build:compile:min": "npm run build:compile"
+    "tsc": "tsc"
   },
   "dependencies": {
     "@fluid-example/table-document": "^0.12.0",

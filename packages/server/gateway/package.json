@@ -16,6 +16,7 @@
     "alfred:debug": "node --inspect=0.0.0.0:5858 dist/alfred/www.js",
     "build": "concurrently npm:build:compile npm:tslint",
     "build:compile": "concurrently npm:tsc npm:less npm:build:webpack",
+    "build:compile:min": "concurrently npm:build:compile npm:build:webpack:min",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "build:watch": "watch 'npm run tsc && npm run webpack' src",
@@ -30,8 +31,7 @@
     "webpack": "parallel-webpack --config webpack.config.js",
     "webpack:dev": "parallel-webpack --config webpack.config.js",
     "webpack:min": "parallel-webpack --config webpack.config.js -- --env.target production",
-    "webpack:watch": "npm run webpack:dev -- --watch",
-    "build:compile:min": "concurrently npm:build:compile npm:build:webpack:min"
+    "webpack:watch": "npm run webpack:dev -- --watch"
   },
   "dependencies": {
     "@fluid-example/tiny-web-host": "^0.12.0",

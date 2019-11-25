@@ -11,6 +11,7 @@
   "scripts": {
     "build": "concurrently npm:build:compile npm:tslint",
     "build:compile": "concurrently npm:tsc npm:build:esnext npm:build:webpack",
+    "build:compile:min": "npm run build:compile",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
@@ -21,8 +22,7 @@
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose",
-    "webpack": "webpack --color --config webpack.config.js",
-    "build:compile:min": "npm run build:compile"
+    "webpack": "webpack --color --config webpack.config.js"
   },
   "dependencies": {
     "@microsoft/fluid-aqueduct": "^0.12.0",
