@@ -141,7 +141,7 @@ RUN chmod +x /tini
 # Copy over and build the server
 WORKDIR /usr/src/server
 
-# Copy the package.json structure we create from the setup stage - to reduce container layers
+# Copy the package.json structure we create from the setup stage to reduce container layers
 COPY --from=setup /usr/src/server/ ./
 
 # Copy over chaincode npmrc and package.json to dynamically install packages.

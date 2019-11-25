@@ -4,7 +4,7 @@
  */
 
 import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
-import { FluidSudoku, FluidSudokuName } from "./FluidSudoku";
+import { FluidSudoku, FluidSudokuName } from "./fluidSudoku";
 import { ISudokuViewProps, SudokuView } from "./react/sudokuView";
 
 /**
