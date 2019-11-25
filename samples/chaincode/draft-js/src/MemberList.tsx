@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IQuorum } from "@microsoft/fluid-container-definitions";
-import { ISequencedClient, ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
+import { IQuorum, ISequencedClient, ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { ISharedObject } from "@microsoft/fluid-shared-object-base";
 import * as React from "react";
 

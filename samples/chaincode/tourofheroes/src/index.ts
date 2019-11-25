@@ -9,7 +9,7 @@ import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aquedu
 import { IContainerContext, IRuntime, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
 import { IComponentHTMLVisual, IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
-import { ComponentFactoryTypes, IComponentContext, IComponentFactory, IComponentRegistry } from '@microsoft/fluid-runtime-definitions';
+import { IComponentContext, IComponentFactory, IComponentRegistry, ComponentRegistryEntry } from '@microsoft/fluid-runtime-definitions';
 import * as GraphiQL from "graphiql";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -141,7 +141,7 @@ class TourOfHeroesContainerInstantiationFactory implements IRuntimeFactory, ICom
     public get IComponentRegistry() { return this; }
     public get IRuntimeFactory() { return this; }
 
-    public get(name: string): Promise<ComponentFactoryTypes> | undefined {
+    public get(name: string): Promise<ComponentRegistryEntry> | undefined {
         if (name === TourOfHeroesType) {
             return Promise.resolve(TourOfHeroesInstantiationFactory);
         }
@@ -153,8 +153,9 @@ class TourOfHeroesContainerInstantiationFactory implements IRuntimeFactory, ICom
     }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-        const runtime = await ContainerRuntime.load(context, this,
-            TourOfHeroesContainerInstantiationFactory.createRequestHandler,
+        const runtime = await ContainerRuntime.load(context, 
+            [[TourOfHeroesType, Promise.resolve(TourOfHeroesInstantiationFactory)]],
+            [TourOfHeroesContainerInstantiationFactory.containerRequestHandler],
             { generateSummaries: true });
 
         // On first boot create the base component
@@ -166,21 +167,19 @@ class TourOfHeroesContainerInstantiationFactory implements IRuntimeFactory, ICom
         return runtime;
     }
 
-    private static createRequestHandler(runtime: ContainerRuntime) {
-        return async (request: IRequest) => {
-            const componentRuntime = await runtime.getComponentRuntime("app", true);
-            const tourOfHeroes = (await componentRuntime.request({ url: "/" })).value as TourOfHeroes;
+    private static async containerRequestHandler(request: IRequest, runtime: ContainerRuntime) {
+        const componentRuntime = await runtime.getComponentRuntime("app", true);
+        const tourOfHeroes = (await componentRuntime.request({ url: "/" })).value as TourOfHeroes;
 
-            // Root entry we will use the full component. Otherwise we will proxy to a view
-            if (!request.url) {
-                return { status: 200, mimeType: "fluid/component", value: tourOfHeroes };
-            } else if (request.url === "/graphiql") {
-                return { status: 200, mimeType: "fluid/component", value: new GraphIQLView(tourOfHeroes) };
-            } else {
-                const view = new TourOfHeroesComponentView(tourOfHeroes, request.url);
-                return { status: 200, mimeType: "fluid/component", value: view };
-            }
-        };
+        // Root entry we will use the full component. Otherwise we will proxy to a view
+        if (!request.url) {
+            return { status: 200, mimeType: "fluid/component", value: tourOfHeroes };
+        } else if (request.url === "/graphiql") {
+            return { status: 200, mimeType: "fluid/component", value: new GraphIQLView(tourOfHeroes) };
+        } else {
+            const view = new TourOfHeroesComponentView(tourOfHeroes, request.url);
+            return { status: 200, mimeType: "fluid/component", value: view };
+        }
     }
 };
 

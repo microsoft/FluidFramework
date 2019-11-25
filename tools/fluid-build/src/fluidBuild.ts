@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Package, Packages } from "./npmPackage";
+import { Packages } from "./npmPackage";
 import { parseOptions, options } from "./options";
 import { BuildGraph, BuildResult } from "./buildGraph";
 import { Timer } from "./common/timer";
@@ -92,11 +92,18 @@ async function main() {
         return;
     }
 
-    const baseDirectory = path.join(resolvedRoot, "packages");
+    const baseDirectories = [ path.join(resolvedRoot, "packages")];
+    if (options.samples) {
+        baseDirectories.push(path.join(resolvedRoot, "samples/chaincode"));
+    }
 
     // Load the package
-    const packages = Packages.load(baseDirectory);
+    const packages = Packages.load(baseDirectories);
     timer.time("Package scan completed");
+
+    // Check scripts
+    await packages.checkScripts();
+    timer.time("Check scripts completed");
 
     const hasMatchArgs = options.args.length;
     if (hasMatchArgs) {

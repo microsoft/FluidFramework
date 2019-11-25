@@ -8,19 +8,15 @@ import { TscTask } from "./tscTask";
 import { readFileAsync } from "../../common/utils";
 import { existsSync } from "fs";
 
-export class TsLintTask extends LeafWithDoneFileTask {
+abstract class LintBaseTask extends LeafWithDoneFileTask {
     private tscTask: TscTask | undefined;
     protected get recheckLeafIsUpToDate() {
         return true;
     }
-    protected get doneFile() {
-        // TODO: This assume there is only one tslint task per package
-        return "tslint.done.build.log";
-    }
 
     protected async getDoneFileContent() {
         try {
-            const doneFileContent = { tsBuildInfoFile: {}, tslintJson: "" };
+            const doneFileContent = { tsBuildInfoFile: {}, configJson: "" };
             if (this.tscTask) {
                 const tsBuildInfo = await this.tscTask.readTsBuildInfo();
                 if (tsBuildInfo === undefined) {
@@ -30,7 +26,7 @@ export class TsLintTask extends LeafWithDoneFileTask {
                 const configFile = this.configFileFullPath;
                 if (existsSync(configFile)) {
                     // Include the config file if it exists so that we can detect changes
-                    doneFileContent.tslintJson = await readFileAsync(this.configFileFullPath, "utf8");
+                    doneFileContent.configJson = await readFileAsync(this.configFileFullPath, "utf8");
                 }
             }
             return JSON.stringify(doneFileContent);
@@ -54,8 +50,27 @@ export class TsLintTask extends LeafWithDoneFileTask {
         }
     }
 
-    private get configFileFullPath() {
-        return this.getPackageFileFullPath("tslint.json");
+    protected abstract get configFileFullPath() : string;
+}
+
+export class TsLintTask extends LintBaseTask {
+    protected get doneFile() {
+        // TODO: This assume there is only one tslint task per package
+        return "tslint.done.build.log";
     }
 
+    protected get configFileFullPath() {
+        return this.getPackageFileFullPath("tslint.json");
+    }
+}
+
+export class EsLintTask extends LintBaseTask {
+    protected get doneFile() {
+        // TODO: This assume there is only one tslint task per package
+        return "eslint.done.build.log";
+    }
+
+    protected get configFileFullPath() {
+        return this.getPackageFileFullPath(".eslintrc.json");
+    }
 }

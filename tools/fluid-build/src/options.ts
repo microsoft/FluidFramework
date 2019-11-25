@@ -24,8 +24,10 @@ interface FastBuildOptions {
     force: boolean;
     install: boolean
     nohoist: boolean;
-    uninstall: boolean
+    uninstall: boolean;
     concurrency: number;
+    samples: boolean;
+    fixScripts: boolean;
 }
 
 // defaults
@@ -49,6 +51,8 @@ export const options: FastBuildOptions = {
     nohoist: false,
     uninstall: false,
     concurrency: os.cpus().length, // TODO: argument?
+    samples: true,
+    fixScripts: false,
 
 };
 
@@ -135,6 +139,16 @@ export function parseOptions(argv: string[]) {
 
         if (arg === "-f" || arg === "--force") {
             options.force = true;
+            continue;
+        }
+        
+        if (arg === "--nosamples") {
+            options.samples = false;
+            continue;
+        }
+
+        if (arg === "--fixscripts") {
+            options.fixScripts = true;
             continue;
         }
 

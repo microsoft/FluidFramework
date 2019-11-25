@@ -37,7 +37,7 @@ export class FluidSudoku extends PrimedComponent
     ]);
 
     public static getFactory() {
-        return this.factory;
+        return FluidSudoku.factory;
     }
 
     private domElement: HTMLElement | undefined;

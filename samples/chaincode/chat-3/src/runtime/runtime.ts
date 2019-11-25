@@ -8,11 +8,11 @@ import {
     IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
 import {
-    ConnectionState,
     IContainerContext,
-    IQuorum,
 } from "@microsoft/fluid-container-definitions";
 import {
+    ConnectionState,
+    IQuorum,
     ISequencedDocumentMessage,
     ITree,
     MessageType,

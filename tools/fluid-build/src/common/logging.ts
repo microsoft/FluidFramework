@@ -8,7 +8,7 @@ import { options } from "../options";
 
 export function logVerbose(msg: string) {
     if (options.verbose) {
-        console.log(msg);
+        logStatus(msg);
     }
 }
 

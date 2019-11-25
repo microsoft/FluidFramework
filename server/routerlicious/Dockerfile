@@ -1,28 +1,16 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-FROM node:10.16.0-slim AS base
+FROM node:10.16.0-slim AS setup
 
-# node-gyp dependencies
-RUN apt-get update && apt-get install -y \
-        python \
-        make \
-        git \
-        curl \
-        g++
-
-# Add Tini
-ENV TINI_VERSION v0.18.0
-ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
-RUN chmod +x /tini
+# Setup stage to create the directory structure for lerna install
+# This will be copied later on in a different stage to reduce container layers
 
 # Copy over and build the server
 WORKDIR /usr/src/server
 
 # Copy over the package and package-lock and install prior to the other code to optimize Docker's file system cache on rebuilds
-COPY LICENSE.txt .
-COPY *.json ./
-COPY .npmrc .
+COPY LICENSE.txt *.json .npmrc ./
 COPY tools/build-server-resources/build-version.js tools/build-server-resources/
 
 COPY packages/agents/flow-intel/package*.json packages/agents/flow-intel/
@@ -114,6 +102,47 @@ COPY packages/tools/replay-tool/package*.json packages/tools/replay-tool/
 COPY packages/tools/webpack-component-loader/package*.json packages/tools/webpack-component-loader/
 COPY packages/tools/merge-tree-client-replay/package*.json packages/tools/merge-tree-client-replay/
 COPY packages/test/end-to-end/package*.json packages/test/end-to-end/
+COPY samples/chaincode/badge/package*.json samples/chaincode/badge/
+COPY samples/chaincode/chat-3/package*.json samples/chaincode/chat-3/
+COPY samples/chaincode/codemirror/package*.json samples/chaincode/codemirror/
+COPY samples/chaincode/containers/monaco/package*.json samples/chaincode/containers/monaco/
+COPY samples/chaincode/draft-js/package*.json samples/chaincode/draft-js/
+COPY samples/chaincode/drawer/package*.json samples/chaincode/drawer/
+COPY samples/chaincode/github-comment/package*.json samples/chaincode/github-comment/
+COPY samples/chaincode/image-gallery/package*.json samples/chaincode/image-gallery/
+COPY samples/chaincode/key-value-cache/package*.json samples/chaincode/key-value-cache/
+COPY samples/chaincode/musica/package*.json samples/chaincode/musica/
+COPY samples/chaincode/persona/package*.json samples/chaincode/persona/
+COPY samples/chaincode/pollster/package*.json samples/chaincode/pollster/
+COPY samples/chaincode/prosemirror/package*.json samples/chaincode/prosemirror/
+COPY samples/chaincode/simple-component-embed/package*.json samples/chaincode/simple-component-embed/	
+COPY samples/chaincode/simple-data-share/package*.json samples/chaincode/simple-data-share/
+COPY samples/chaincode/smde/package*.json samples/chaincode/smde/
+COPY samples/chaincode/sudoku/package*.json  samples/chaincode/sudoku/
+COPY samples/chaincode/textarea-noreact/package*.json samples/chaincode/textarea-noreact/
+COPY samples/chaincode/tourofheroes/package*.json samples/chaincode/tourofheroes/
+COPY samples/chaincode/type-race/package*.json samples/chaincode/type-race/
+
+FROM node:10.16.0-slim AS base
+
+# node-gyp dependencies
+RUN apt-get update && apt-get install -y \
+        python \
+        make \
+        git \
+        curl \
+        g++
+
+# Add Tini
+ENV TINI_VERSION v0.18.0
+ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
+RUN chmod +x /tini
+
+# Copy over and build the server
+WORKDIR /usr/src/server
+
+# Copy the package.json structure we create from the setup stage to reduce container layers
+COPY --from=setup /usr/src/server/ ./
 
 # Copy over chaincode npmrc and package.json to dynamically install packages.
 COPY server/routerlicious/chaincode/* /tmp/chaincode/
@@ -137,6 +166,7 @@ RUN npm install --unsafe-perm
 
 # And now copy over our actual code and build
 COPY packages/ packages/
+COPY samples/chaincode/ samples/chaincode/
 
 # Set the version number
 ARG VERSION_BUILDNUMBER=0

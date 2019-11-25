@@ -5,7 +5,7 @@
   "author": "Microsoft",
   "scripts": {
     "build": "npm run policy-check && npm run build:genver && npm run build:compile && npm run tslint && npm run build:docs",
-    "build:ci": "npm run build:genver && lerna run build:full:compile --stream",
+    "build:ci": "npm run build:genver && lerna run build:compile:min --stream",
     "build:compile": "lerna run build:compile --stream",
     "build:docs": "npm run clean:docs && lerna run build:docs --stream --parallel && npm run build:gendocs",
     "build:fast": "node ./tools/fluid-build/dist/fluidBuild.js --root .",
@@ -46,7 +46,7 @@
     "watch:esnext": "lerna run --parallel build:esnext -- -- --watch",
     "watch:tsc": "lerna run --parallel tsc -- -- --watch",
     "watch:webpack": "lerna run --parallel webpack -- -- --watch",
-    "webpack": "lerna run --parallel webpack --stream"
+    "webpack": "lerna run --no-sort webpack --stream"
   },
   "dependencies": {},
   "devDependencies": {
