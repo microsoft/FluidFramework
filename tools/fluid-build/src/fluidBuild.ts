@@ -92,9 +92,11 @@ async function main() {
         return;
     }
 
+    // TODO: Should read lerna.json to determine
     const baseDirectories = [ path.join(resolvedRoot, "packages")];
-    if (options.samples) {
-        baseDirectories.push(path.join(resolvedRoot, "samples/chaincode"));
+    const samplesDirectory = path.join(resolvedRoot, "samples/chaincode");
+    if (options.samples && existsSync(samplesDirectory)) {
+        baseDirectories.push(samplesDirectory);
     }
 
     // Load the package

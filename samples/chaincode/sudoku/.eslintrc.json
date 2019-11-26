@@ -30,6 +30,11 @@
         "@typescript-eslint/tslint",
         "@typescript-eslint"
     ],
+    "settings": {
+        "react": {
+            "version": "detect"
+        }
+    },
     "rules": {
         "@typescript-eslint/interface-name-prefix": "off",
         "@typescript-eslint/explicit-function-return-type": "off",
