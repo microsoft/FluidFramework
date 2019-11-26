@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { isSpoUrl, ITokenApis,  loadFluidContainer, loadIFramedFluidContainer } from "@fluid-example/tiny-web-host";
+import { ITokenApis,  loadFluidContainer, loadIFramedFluidContainer } from "@fluid-example/tiny-web-host";
 import * as React from "react";
 
 export interface ILoaderProps {

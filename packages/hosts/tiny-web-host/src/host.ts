@@ -58,7 +58,7 @@ export async function loadFluidContainer(
     let componentP: Promise<any>;
     let resolved: IResolvedUrl;
 
-    const resolvedPackge = pkg === undefined ? parseUrl(url) : pkg;
+    const resolvedPackge = pkg === undefined ? parseUrlToResolvedPackage(url) : pkg;
 
     if (isRouterliciousUrl(url)) {
         const routerliciousApiConfig = tokenApiConfig as IRouterliciousTokenApi;
@@ -94,15 +94,15 @@ export async function loadFluidContainer(
     return componentP;
 }
 
-function parseUrl(url: string) {
+export function parseUrlToResolvedPackage(url: string): IResolvedPackage {
     const pkg: IResolvedPackage =  {} as any;
 
     const urlRequest = new URL(url);
     const searchParams = urlRequest.searchParams;
     const chaincode = searchParams.get("chaincode");
-    console.log(chaincode);
 
-    const cdn = "https://pragueauspkn-3873244262.azureedge.net";
+    const cdn = searchParams.get("cdn") ?
+                    searchParams.get("cdn") : "https://pragueauspkn-3873244262.azureedge.net";
     const entryPoint = searchParams.get("entrypoint");
     let codeDetails: IFluidCodeDetails;
 
@@ -132,8 +132,9 @@ function parseUrl(url: string) {
             },
             package: chaincode,
         };
-        pkg.details = codeDetails;
     }
+    pkg.details = codeDetails;
+
     return pkg;
 }
 
