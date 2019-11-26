@@ -20,31 +20,30 @@ const patch = process.argv[4];
 
 const chart =
 ` ## Generated from a tool - do not edit directly
-name: routerlicious
+apiVersion: v1
+name: admin
 version: 0.1.${patch}
-description: Distributive object router
+description: A Helm chart for Fluid admin portal.
 home: https://github.com/microsoft/FluidFramework
 `;
 
 const values =
 `## Generated from a tool - do not edit directly
 ## Fluid image version
-image: prague.azurecr.io/prague-server:${imageVersion}
+replicaCount: 1
+image: prague.azurecr.io/prague:${imageVersion}
 
 ## Specify a imagePullPolicy
 ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
 imagePullPolicy: IfNotPresent
 
-name: routerlicious
+name: gateway
 
 alfred:
-  name: alfred
-  replicas: 4
   externalUrl: https://alfred.wu2.prague.office-int.com
-  host: alfred.wu2.prague.office-int.com
-  cert: wu2-tls-certificate
   tenants: []
   key: VBQyoGpEYrTn3XQPtXW3K8fFDd
+  url: http://pesky-platypus-alfred
 
 login:
   microsoft:
@@ -56,52 +55,10 @@ login:
   linkedAccounts: {}
 
 gateway:
-  name: gateway
-  replicas: 4
   externalUrl: https://www.wu2.prague.office-int.com
   host: www.wu2.prague.office-int.com
   cert: wu2-tls-certificate
   keyValueUrl: https://www.wu2.prague.office-int.com/loader/fluid/kv-cache-00018
-
-deli:
-  name: deli
-  replicas: 8
-
-scriptorium:
-  name: scriptorium
-  replicas: 8
-
-broadcaster:
-  name: broadcaster
-  replicas: 8
-
-scribe:
-  name: scribe
-  replicas: 8
-
-routemaster:
-  name: routemaster
-  replicas: 8
-
-foreman:
-  name: foreman
-  replicas: 8
-  externalUrl: https://tmz.wu2.prague.office-int.com
-  host: tmz.wu2.prague.office-int.com
-  cert: wu2-tls-certificate
-
-paparazzi:
-  name: paparazzi
-  replicas: 8
-
-serviceGraph:
-  name: servicegraph
-  replicas: 1
-
-riddler:
-  name: riddler
-  replicas: 2
-  tenants: []
 
 packageManager:
   endpoint: https://packages.wu2.prague.office-int.com
@@ -111,38 +68,14 @@ packageManager:
 historian:
   externalUrl: https://historian.wu2.prague.office-int.com
 
-gitrest:
-  url: http://smelly-wolf-gitrest
-
-cobalt:
-  url: http://smelly-wolf-cobalt
-
-zookeeper:
-  local: false
-  url: left-numbat-zookeeper:2181
-
-rabbitmq:
-  connectionString: ""
-
 mongodb:
   url: mongodb://quieting-guppy-mongodb:27017
 
 redis:
   url: winsome-wombat-redis
 
-redis2:
-  url: dining-maltese-redis
-
-kafka:
-  topics:
-    rawdeltas: rawdeltas
-    deltas: deltas
-
-minio:
-  externalUrl: https://minio.wu2.prague.office-int.com
-  endpoint: agents-storage-minio-svc
-  accessKey: ""
-  secretKey: ""
+riddler:
+  url: http://pesky-platypus-riddler
 
 ingress:
   class: nginx-prod
