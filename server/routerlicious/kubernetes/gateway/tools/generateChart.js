@@ -21,9 +21,9 @@ const patch = process.argv[4];
 const chart =
 ` ## Generated from a tool - do not edit directly
 apiVersion: v1
-name: admin
+name: gateway
 version: 0.1.${patch}
-description: A Helm chart for Fluid admin portal.
+description: A Helm chart for Fluid Gateway.
 home: https://github.com/microsoft/FluidFramework
 `;
 
