@@ -21,6 +21,8 @@ interface ITsBuildInfo {
 export class TscTask extends LeafTask {
     private _tsBuildInfoFullPath: string | undefined;
     private _tsBuildInfo: ITsBuildInfo | undefined;
+    private _tsConfig: ts.ParsedCommandLine | undefined;
+    private _tsConfigFullPath: string | undefined;
 
     protected addDependentTasks(dependentTasks: LeafTask[]) {
         if (this.addChildTask(dependentTasks, this.node, "npm run build:genver")) {
@@ -63,52 +65,72 @@ export class TscTask extends LeafTask {
         return this.checkTsConfig(tsBuildInfo);
     }
 
-    protected checkTsConfig(tsBuildInfo: ITsBuildInfo) {
-        const args = this.command.split(" ");
-
-        const parsedCommand = ts.parseCommandLine(args);
-        if (parsedCommand.errors.length) {
-            logVerbose(`${this.node.pkg.nameColored}: ts fail to parse command line ${this.command}`);
-            return false;
-        }
-
-        const configFileFullPath = this.configFileFullPath;
-        const configFile = ts.readConfigFile(configFileFullPath, ts.sys.readFile);
-        if (configFile.error) {
-            logVerbose(`${this.node.pkg.nameColored}: ts fail to parse ${configFileFullPath}`);
-            return false;
-        }
-        const options = ts.parseJsonConfigFileContent(configFile.config, ts.sys, this.node.pkg.directory, parsedCommand.options, configFileFullPath);
-        if (options.errors.length) {
-            logVerbose(`${this.node.pkg.nameColored}: ts fail to parse file content ${configFileFullPath}`);
+    private checkTsConfig(tsBuildInfo: ITsBuildInfo) {
+        const options = this.readTsConfig();
+        if (!options) {
             return false;
         }
 
         if (!isEqual(options.options, tsBuildInfo.program.options)) {
-            logVerbose(`${this.node.pkg.nameColored}: ts option changed ${configFileFullPath}`);
+            logVerbose(`${this.node.pkg.nameColored}: ts option changed ${this.configFileFullPath}`);
             return false;
         }
         return true;
     }
 
+    private readTsConfig() {
+        if (this._tsConfig == undefined) {
+            const args = this.command.split(" ");
+
+            const parsedCommand = ts.parseCommandLine(args);
+            if (parsedCommand.errors.length) {
+                logVerbose(`${this.node.pkg.nameColored}: ts fail to parse command line ${this.command}`);
+                return undefined;
+            }
+
+            const configFileFullPath = this.configFileFullPath;
+            const configFile = ts.readConfigFile(configFileFullPath, ts.sys.readFile);
+            if (configFile.error) {
+                logVerbose(`${this.node.pkg.nameColored}: ts fail to parse ${configFileFullPath}`);
+                return undefined;
+            }
+            const options = ts.parseJsonConfigFileContent(configFile.config, ts.sys, this.node.pkg.directory, parsedCommand.options, configFileFullPath);
+            if (options.errors.length) {
+                logVerbose(`${this.node.pkg.nameColored}: ts fail to parse file content ${configFileFullPath}`);
+                return undefined;
+            }
+            this._tsConfig = options;
+
+            if (!options.options.incremental) {
+                console.warn(`${this.node.pkg.nameColored}: warning: incremental not enabled`);
+            }
+        }
+
+        return this._tsConfig;
+    }
     protected get recheckLeafIsUpToDate() {
         return true;
     }
 
     private get configFileFullPath() {
-        // TODO: parse the command line for real, split space for now.
-        const args = this.command.split(" ");
+        if (this._tsConfigFullPath === undefined) {
+            // TODO: parse the command line for real, split space for now.
+            const args = this.command.split(" ");
 
-        const parsedCommand = ts.parseCommandLine(args);
-        const project = parsedCommand.options.project;
-        if (project !== undefined) {
-            return path.resolve(this.node.pkg.directory, project);
+            const parsedCommand = ts.parseCommandLine(args);
+            const project = parsedCommand.options.project;
+            if (project !== undefined) {
+                this._tsConfigFullPath = path.resolve(this.node.pkg.directory, project);
+            } else {
+                const foundConfigFile = ts.findConfigFile(this.node.pkg.directory, ts.sys.fileExists, "tsconfig.json");
+                if (foundConfigFile) {
+                    this._tsConfigFullPath = foundConfigFile;
+                } else {
+                    this._tsConfigFullPath = path.join(this.node.pkg.directory, "tsconfig.json");
+                }
+            }
         }
-        const foundConfigFile = ts.findConfigFile(this.node.pkg.directory, ts.sys.fileExists, "tsconfig.json");
-        if (foundConfigFile) {
-            return foundConfigFile;
-        }
-        return path.join(this.node.pkg.directory, "tsconfig.json");
+        return this._tsConfigFullPath;
     }
 
     private get tsBuildInfoFileName() {
@@ -120,29 +142,36 @@ export class TscTask extends LeafTask {
         return `${configFileParsed.name}${configFileParsed.ext}.tsbuildinfo`;
     }
 
-    private get tsBuildInfoFile() {
-        // TODO: should read the ts config to figure out where this is instead of guessing
-        // https://github.com/Microsoft/TypeScript/issues/30925
-        const tsBuildInfoFileRoot = this.tsBuildInfoFileName;
-        const tsBuildInfoFileDist = path.join("dist", tsBuildInfoFileRoot);
-        const tsBuildInfoFileLib = path.join("lib", tsBuildInfoFileRoot);
-        if (existsSync(this.getPackageFileFullPath(tsBuildInfoFileRoot))) {
-            return tsBuildInfoFileRoot;
+    private getTsBuildInfoFileFromConfig() {
+        const options = this.readTsConfig();
+        if (!options || !options.options.incremental) {
+            return undefined;
         }
-        if (existsSync(this.getPackageFileFullPath(tsBuildInfoFileDist))) {
-            return tsBuildInfoFileDist;
+
+        const outFile = options.options.out ? options.options.out : options.options.outFile;
+        if (outFile) {
+            return `${outFile}.tsbuildinfo`;
         }
-        if (existsSync(this.getPackageFileFullPath(tsBuildInfoFileLib))) {
-            return tsBuildInfoFileLib;
+
+        if (options.options.outDir) {
+            if (options.options.rootDir) {
+                const relative = path.relative(options.options.rootDir, path.parse(this.configFileFullPath).dir);
+                return path.join(options.options.outDir, relative, this.tsBuildInfoFileName);
+            }
+            return path.join(options.options.outDir, this.tsBuildInfoFileName);
         }
-        return undefined;
+        return path.join(path.parse(this.configFileFullPath).dir, this.tsBuildInfoFileName);
     }
 
     private get tsBuildInfoFileFullPath() {
         if (this._tsBuildInfoFullPath === undefined) {
-            const infoFile = this.tsBuildInfoFile;
+            const infoFile = this.getTsBuildInfoFileFromConfig();
             if (infoFile) {
-                this._tsBuildInfoFullPath = this.getPackageFileFullPath(infoFile);
+                if (path.isAbsolute(infoFile)) {
+                    this._tsBuildInfoFullPath = infoFile;
+                } else {
+                    this._tsBuildInfoFullPath = this.getPackageFileFullPath(infoFile);
+                }
             }
         }
         return this._tsBuildInfoFullPath;
@@ -162,7 +191,7 @@ export class TscTask extends LeafTask {
     public async readTsBuildInfo(): Promise<ITsBuildInfo | undefined> {
         if (this._tsBuildInfo === undefined) {
             const tsBuildInfoFileFullPath = this.tsBuildInfoFileFullPath;
-            if (tsBuildInfoFileFullPath) {
+            if (tsBuildInfoFileFullPath && existsSync(tsBuildInfoFileFullPath)) {
                 try {
                     this._tsBuildInfo = JSON.parse(await readFileAsync(tsBuildInfoFileFullPath, "utf8"));
                     return this._tsBuildInfo;
@@ -177,9 +206,6 @@ export class TscTask extends LeafTask {
     }
 
     protected async markExecDone() {
-        if (this.tsBuildInfoFile === undefined) {
-            console.warn(`${this.node.pkg.nameColored}: warning: tsBuildInfo file not found after build, incremental not enabled`);
-        }
         this._tsBuildInfo = undefined;
     }
 };

@@ -18,6 +18,6 @@ logger:
 npm:
   url: https://packages.wu2.prague.office-int.com
   username: prague
-  password: bohemia
+  password: 8Fxttu_A
 
 requestSizeLimit: 1gb
