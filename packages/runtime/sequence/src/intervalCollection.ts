@@ -292,9 +292,23 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
         this.intervalTree.map(fn);
     }
 
-    public deleteInterval(intervalToRemove: TInterval): void {
-        this.intervalTree.remove(intervalToRemove);
-        this.endIntervalTree.remove(intervalToRemove);
+    public deleteInterval(
+        start: number,
+        end: number,
+        intervalType: MergeTree.IntervalType): void {
+
+        const intervalToRemove = this.createInterval(start, end, intervalType);
+        if (intervalToRemove) {
+
+            console.log("removing");
+            console.log(intervalToRemove);
+            console.log("mapping before");
+            this.intervalTree.map((interval) => console.log(interval));
+            this.intervalTree.remove(intervalToRemove);
+            console.log("mapping after");
+            this.intervalTree.map((interval) => console.log(interval));
+            this.endIntervalTree.remove(intervalToRemove);
+        }
     }
 
     public findOverlappingIntervals(startPosition: number, endPosition: number) {
@@ -432,7 +446,7 @@ export class SequenceIntervalCollectionValueType
                     if (local) {
                         return;
                     }
-                    value.deleteIntervalInternal(params);
+                    value.deleteIntervalInternal(params.start, params.end, params.intervalType);
                 },
             },
         ]]);
@@ -509,7 +523,7 @@ export class IntervalCollectionValueType
                     if (local) {
                         return;
                     }
-                    value.deleteIntervalInternal(params);
+                    value.deleteIntervalInternal(params.start, params.end, params.intervalType);
                 },
             },
         ]]);
@@ -579,6 +593,7 @@ export class IntervalCollectionView<TInterval extends ISerializableInterval> ext
         intervalType: MergeTree.IntervalType,
         props?: MergeTree.PropertySet,
     ) {
+        console.log("add");
         let seq = 0;
         if (this.client) {
             seq = this.client.getCurrentSeq();
@@ -619,13 +634,29 @@ export class IntervalCollectionView<TInterval extends ISerializableInterval> ext
         return this;
     }
 
-    public deleteInterval(intervalToRemove: TInterval) {
-        this.deleteIntervalInternal(intervalToRemove);
-        this.emitter.emit("deleteInterval", undefined, intervalToRemove);
+    public deleteInterval(
+        start: number,
+        end: number,
+        intervalType: MergeTree.IntervalType) {
+        console.log("deleteInterval");
+        const intervalToRemove = this.localCollection.createInterval(start, end, intervalType);
+        this.deleteIntervalInternal(start, end, intervalType);
+        try {
+            this.emitter.emit("deleteInterval", intervalToRemove, {start, end, intervalType});
+            console.log("emitter emitted");
+            this.emit("deleteInterval");
+            console.log("this emitted");
+        } catch (e) {
+            console.log("there was an error!!");
+            console.log(e);
+        }
     }
 
-    public deleteIntervalInternal(intervalToRemove: TInterval) {
-        this.localCollection.deleteInterval(intervalToRemove);
+    public deleteIntervalInternal(
+        start: number,
+        end: number,
+        intervalType: MergeTree.IntervalType) {
+        this.localCollection.deleteInterval(start, end, intervalType);
     }
 
     public serializeInternal() {
@@ -718,15 +749,22 @@ export class IntervalCollection<TInterval extends ISerializableInterval> {
         return this.view.addInternal(serializedInterval, local, op);
     }
 
-    public deleteIntervalInternal(intervalToRemove: TInterval): void {
-        this.view.deleteIntervalInternal(intervalToRemove);
+    public deleteIntervalInternal(
+        start: number,
+        end: number,
+        intervalType: MergeTree.IntervalType): void {
+        this.view.deleteIntervalInternal(start, end, intervalType);
     }
 
-    public deleteInterval(intervalToRemove: TInterval): void {
+    public deleteInterval(
+        start: number,
+        end: number,
+        intervalType: MergeTree.IntervalType): void {
+        console.log("deleteInterval");
         if (!this.view) {
             throw new Error("attach must be called prior to deleting intervals");
         }
-        this.view.deleteInterval(intervalToRemove);
+        this.view.deleteInterval(start, end, intervalType);
     }
 
     public serializeInternal() {
