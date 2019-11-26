@@ -58,47 +58,7 @@ export async function loadFluidContainer(
     let componentP: Promise<any>;
     let resolved: IResolvedUrl;
 
-    const newPkg: IResolvedPackage = pkg ? pkg : {} as any;
-    if (!pkg) {
-
-        const urlRequest = new URL(url);
-        const searchParams = urlRequest.searchParams;
-        const chaincode = searchParams.get("chaincode");
-        console.log(chaincode);
-
-        const cdn = "https://pragueauspkn-3873244262.azureedge.net";
-        const entryPoint = searchParams.get("entrypoint");
-        let codeDetails: IFluidCodeDetails;
-
-        if (chaincode.indexOf("http") === 0) {
-            codeDetails = {
-                config: {
-                    [`@gateway:cdn`]: chaincode,
-                },
-                package: {
-                    fluid: {
-                        browser: {
-                            umd: {
-                                files: [chaincode],
-                                library: entryPoint,
-                            },
-                        },
-                    },
-                    name: `@gateway/${v4()}`,
-                    version: "0.0.0",
-                },
-            };
-        } else {
-            const details = extractDetails(chaincode);
-            codeDetails = {
-                config: {
-                    [`@${details.scope}:cdn`]: cdn,
-                },
-                package: chaincode,
-            };
-            newPkg.details = codeDetails;
-        }
-    }
+    const resolvedPackge = pkg === undefined ? parseUrl(url) : pkg;
 
     if (isRouterliciousUrl(url)) {
         const routerliciousApiConfig = tokenApiConfig as IRouterliciousTokenApi;
@@ -122,9 +82,59 @@ export async function loadFluidContainer(
     } else {
         throw new Error("Non-Compatible Url.");
     }
-    componentP =
-        loadContainer(url, resolved as IFluidResolvedUrl, tokenApiConfig, div, clientId, clientSecret, pkg, scriptIds);
+    componentP = loadContainer(
+                    url,
+                    resolved as IFluidResolvedUrl,
+                    tokenApiConfig,
+                    div,
+                    clientId,
+                    clientSecret,
+                    resolvedPackge,
+                    scriptIds);
     return componentP;
+}
+
+function parseUrl(url: string) {
+    const pkg: IResolvedPackage =  {} as any;
+
+    const urlRequest = new URL(url);
+    const searchParams = urlRequest.searchParams;
+    const chaincode = searchParams.get("chaincode");
+    console.log(chaincode);
+
+    const cdn = "https://pragueauspkn-3873244262.azureedge.net";
+    const entryPoint = searchParams.get("entrypoint");
+    let codeDetails: IFluidCodeDetails;
+
+    if (chaincode.indexOf("http") === 0) {
+        codeDetails = {
+            config: {
+                [`@gateway:cdn`]: chaincode,
+            },
+            package: {
+                fluid: {
+                    browser: {
+                        umd: {
+                            files: [chaincode],
+                            library: entryPoint,
+                        },
+                    },
+                },
+                name: `@gateway/${v4()}`,
+                version: "0.0.0",
+            },
+        };
+    } else {
+        const details = extractDetails(chaincode);
+        codeDetails = {
+            config: {
+                [`@${details.scope}:cdn`]: cdn,
+            },
+            package: chaincode,
+        };
+        pkg.details = codeDetails;
+    }
+    return pkg;
 }
 
 async function loadContainer(
