@@ -233,6 +233,9 @@ export class RunningSummarizer implements IDisposable {
             firstAck);
 
         await summarizer.waitStart();
+
+        // run the heuristics after starting
+        summarizer.heuristics.run();
         return summarizer;
     }
 
@@ -277,9 +280,6 @@ export class RunningSummarizer implements IDisposable {
                     timePending: Date.now() - this.heuristics.lastSent.summaryTime,
                 });
             });
-
-        // run the heuristics after starting
-        this.heuristics.run();
     }
 
     public dispose(): void {
