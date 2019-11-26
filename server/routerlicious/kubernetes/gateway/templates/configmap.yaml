@@ -1,9 +1,9 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ template "gateway.fullname" . }}
+  name: {{ template "fullname" . }}
   labels:
-    app: {{ template "routerlicious.name" . }}
+    app: {{ template "name" . }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     component: "{{ .Values.name }}"
     release: "{{ .Release.Name }}"
@@ -39,7 +39,7 @@ data:
                 ]
             },
             "auth": {
-                "endpoint": "http://{{ template "riddler.fullname" . }}"
+                "endpoint": "{{ .Values.riddler.url }}"
             }
         },
         "mongo": {
@@ -82,8 +82,8 @@ data:
                     "key": "{{ .Values.worker.intelligence.pinpointEditor.key }}"
                 }
             },
-            "alfredUrl": "http://{{ template "alfred.fullname" . }}",
-            "gatewayUrl": "http://{{ template "gateway.fullname" . }}",
+            "alfredUrl": "{{ .Values.alfred.url }}",
+            "gatewayUrl": "http://{{ template "fullname" . }}",
             "serverUrl": "{{ .Values.alfred.externalUrl }}",
             "blobStorageUrl": "{{ .Values.historian.externalUrl }}",
             "repository": "FluidFramework",
