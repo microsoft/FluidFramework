@@ -34,6 +34,8 @@ import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { OdspCache } from "./odspCache";
 import { getWithRetryForTokenRefresh, throwOdspNetworkError } from "./OdspUtils";
 
+const blobReuseFeatureDisabled = true;
+
 export class OdspDocumentStorageManager implements IDocumentStorageManager {
     // This cache is associated with mapping sha to path for previous summary which belongs to last summary handle.
     private blobsShaToPathCache: Map<string, string> = new Map();
@@ -544,16 +546,16 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                     let completePath = this.blobsShaToPathCache.get(hash);
                     // If the cache has the hash of the blob and handle of last summary is also present, then use that to generate complete path for
                     // the given blob.
-                    // if (!completePath || !this.lastSummaryHandle) {
-                    value = {
-                        content,
-                        encoding,
-                    };
-                    completePath = `${path}/${key}`;
-                    blobsShaToPathCacheLatest.set(hash, completePath);
-                    // } else {
-                    //    id = `${this.lastSummaryHandle}${completePath}`;
-                    // }
+                    if (blobReuseFeatureDisabled || !completePath || !this.lastSummaryHandle) {
+                        value = {
+                            content,
+                            encoding,
+                        };
+                        completePath = `${path}/${key}`;
+                        blobsShaToPathCacheLatest.set(hash, completePath);
+                    } else {
+                        id = `${this.lastSummaryHandle}${completePath}`;
+                    }
                     break;
 
                 case api.SummaryType.Handle:
