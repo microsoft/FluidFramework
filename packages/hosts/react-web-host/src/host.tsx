@@ -3,10 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ITokenApis, loadFluidComponent, loadIFramedFluidComponent } from "@fluid-example/tiny-web-host";
+import { isSpoUrl, ITokenApis,  loadFluidContainer, loadIFramedFluidContainer } from "@fluid-example/tiny-web-host";
 import * as React from "react";
-
-export { isSpoUrl, loadFluidComponent } from "@fluid-example/tiny-web-host";
 
 export interface ILoaderProps {
 
@@ -45,7 +43,7 @@ export class FluidLoader extends React.Component<ILoaderProps, any> {
   public async componentDidMount() {
 
     if (this.props.iframe) {
-       loadIFramedFluidComponent(
+       loadIFramedFluidContainer(
         this.props.url,
         this.divRef.current,
         this.props.tokenApi,
@@ -54,7 +52,7 @@ export class FluidLoader extends React.Component<ILoaderProps, any> {
         this.props.libraryName ? this.props.libraryName : "tinyWebLoader",
        );
     } else {
-      loadFluidComponent(
+      loadFluidContainer(
         this.props.url,
         this.divRef.current,
         this.props.tokenApi,
