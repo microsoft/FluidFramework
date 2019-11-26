@@ -82,7 +82,8 @@ export function blockList(nonRetriableCodes: number[]): RetryFilter {
 export const defaultRetryFilter = blockList([400, 401, 403, 404]);
 
 // socket error filter for socket erros where 400 is a special retryable error.
-export const socketErrorRetryFilter = blockList([401, 403, 404, 406]);
+// 404 - we connected to wrong server: connect_document_error - Invalid document. The document \"local/w1-645289b2-568e-4097-9ef8-3253a04d6209\" does not exist
+export const socketErrorRetryFilter = blockList([401, 403, 406]);
 
 export interface IOdspResponse<T> {
     content: T;

@@ -45,8 +45,18 @@ export class DeltaConnection extends EventEmitter {
     private readonly forwardEvents = ["op", "op-content", "signal", "error", "pong"];
     private readonly nonForwardEvents = ["nack", "disconnect"];
 
-    private constructor(private readonly connection: IDocumentDeltaConnection) {
+    private _connection?: IDocumentDeltaConnection;
+
+    private get connection(): IDocumentDeltaConnection {
+        if (!this._connection) {
+            throw new Error("Connection is closed!");
+        }
+        return this._connection;
+    }
+
+    private constructor(connection: IDocumentDeltaConnection) {
         super();
+        this._connection = connection;
 
         this._details = {
             claims: connection.claims,
@@ -81,8 +91,11 @@ export class DeltaConnection extends EventEmitter {
      */
     public close() {
         this._connected = false;
-        this.connection.disconnect();
-        this.removeAllListeners();
+        if (this._connection) {
+            this._connection.disconnect();
+            this._connection = undefined;
+            this.removeAllListeners();
+        }
     }
 
     public submit(messages: IDocumentMessage[]): void {
