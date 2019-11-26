@@ -106,7 +106,7 @@ riddler:
 packageManager:
   endpoint: https://packages.wu2.prague.office-int.com
   username: prague
-  password: bohemia
+  password: 8Fxttu_A
 
 historian:
   externalUrl: https://historian.wu2.prague.office-int.com
