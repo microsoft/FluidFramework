@@ -30,7 +30,7 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
   constructor(
     private readonly appId: string,
     private readonly getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
-    private readonly getWebsocketToken: () => Promise<string | null>,
+    private readonly getWebsocketToken: (refresh: boolean) => Promise<string | null>,
     private readonly logger: ITelemetryBaseLogger,
     private readonly storageFetchWrapper: IFetchWrapper = new FetchWrapper(),
     private readonly deltasFetchWrapper: IFetchWrapper = new FetchWrapper(),
