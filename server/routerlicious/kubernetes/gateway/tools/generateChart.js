@@ -31,7 +31,7 @@ const values =
 `## Generated from a tool - do not edit directly
 ## Fluid image version
 replicaCount: 1
-image: prague.azurecr.io/gateway:${imageVersion}
+image: prague.azurecr.io/prague:${imageVersion}
 
 ## Specify a imagePullPolicy
 ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
