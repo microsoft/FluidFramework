@@ -21,9 +21,7 @@ export class NetworkError extends Error implements INetworkError {
     public getCustomProperties() {
         const prop = {};
         for (const key of Object.getOwnPropertyNames(this)) {
-            if (this[key]) {
-                prop[key] = this[key];
-            }
+            prop[key] = this[key];
         }
         return prop;
     }
