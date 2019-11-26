@@ -39,6 +39,8 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
     private readonly summaryCollection: SummaryCollection;
     private onBehalfOfClientId: string;
     private runningSummarizer?: RunningSummarizer;
+    private systemOpListener?: (op: ISequencedDocumentMessage) => void;
+    private opListener?: (error: any, op: ISequencedDocumentMessage) => void;
 
     constructor(
         public readonly url: string,
@@ -55,6 +57,41 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
     }
 
     public async run(onBehalfOf: string): Promise<void> {
+        try {
+            await this.runCore(onBehalfOf);
+        } finally {
+            // cleanup after running
+            this.dispose();
+            if (this.runtime.connected) {
+                this.stop("runEnded");
+            }
+        }
+    }
+
+    /**
+     * Stops the summarizer from running.  This will complete
+     * the run promise, and also close the container.
+     * @param reason - reason code for stopping
+     */
+    public stop(reason?: string) {
+        this.logger.sendTelemetryEvent({
+            eventName: "StoppingSummarizer",
+            onBehalfOf: this.onBehalfOfClientId,
+            reason,
+        });
+        this.runCoordinator.stop();
+        this.runtime.closeFn();
+    }
+
+    public async request(request: IRequest): Promise<IResponse> {
+        return {
+            mimeType: "fluid/component",
+            status: 200,
+            value: this,
+        };
+    }
+
+    private async runCore(onBehalfOf: string): Promise<void> {
         this.onBehalfOfClientId = onBehalfOf;
 
         const startResult = await this.runCoordinator.waitStart();
@@ -108,42 +145,13 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
         });
 
         // listen for ops
-        const systemOpHandler = (op: ISequencedDocumentMessage) => this.runningSummarizer.handleSystemOp(op);
-        this.runtime.deltaManager.inbound.on("op", systemOpHandler);
+        this.systemOpListener = (op: ISequencedDocumentMessage) => this.runningSummarizer.handleSystemOp(op);
+        this.runtime.deltaManager.inbound.on("op", this.systemOpListener);
 
-        const opHandler = (error: any, op: ISequencedDocumentMessage) => this.runningSummarizer.handleOp(error, op);
-        this.runtime.on("batchEnd", opHandler);
+        this.opListener = (error: any, op: ISequencedDocumentMessage) => this.runningSummarizer.handleOp(error, op);
+        this.runtime.on("batchEnd", this.opListener);
 
-        // wait until stopped running
         await this.runCoordinator.waitStopped();
-
-        // cleanup after running
-        this.dispose();
-        this.runtime.deltaManager.inbound.removeListener("op", systemOpHandler);
-        this.runtime.removeListener("batchEnd", opHandler);
-    }
-
-    /**
-     * Stops the summarizer from running.  This will complete
-     * the run promise, and also close the container.
-     * @param reason - reason code for stopping
-     */
-    public stop(reason?: string) {
-        this.logger.sendTelemetryEvent({
-            eventName: "StoppingSummarizer",
-            onBehalfOf: this.onBehalfOfClientId,
-            reason,
-        });
-        this.runCoordinator.stop();
-        this.runtime.closeFn();
-    }
-
-    public async request(request: IRequest): Promise<IResponse> {
-        return {
-            mimeType: "fluid/component",
-            status: 200,
-            value: this,
-        };
     }
 
     /**
@@ -155,6 +163,12 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
         if (this.runningSummarizer) {
             this.runningSummarizer.dispose();
             this.runningSummarizer = undefined;
+        }
+        if (this.systemOpListener) {
+            this.runtime.deltaManager.inbound.removeListener("op", this.systemOpListener);
+        }
+        if (this.opListener) {
+            this.runtime.removeListener("batchEnd", this.opListener);
         }
     }
 
