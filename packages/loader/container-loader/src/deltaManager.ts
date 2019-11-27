@@ -697,6 +697,11 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         // Always connect in write mode after getting nacked.
         connection.on("nack", (target: number) => {
             const nackReason = target === -1 ? "Reconnecting to start writing" : "Reconnecting on nack";
+            if (!this.autoReconnect) {
+                // Not clear if reconnecting is the right thing in such state.
+                // Let's get telemetry to learn more...
+                this.logger.sendErrorEvent({ eventName: "NackWithNoReconnect", target, mode: this._connectionMode});
+            }
             // tslint:disable-next-line:no-floating-promises
             this.reconnectOnError(nackReason, connection, "write");
         });
