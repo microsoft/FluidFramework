@@ -107,6 +107,10 @@ export class Package {
     }
 
     public get dependencies() {
+        return this.packageJson.dependencies? Object.keys(this.packageJson.dependencies) : [];
+    }
+
+    public get combinedDependencies() {
         const it = function* (packageJson: IPackage) {
             for (const item in packageJson.dependencies) {
                 yield (item);
@@ -258,7 +262,7 @@ export class Package {
     }
 
     public async symlink(buildPackages: Map<string, Package>) {
-        for (const dep of this.dependencies) {
+        for (const dep of this.combinedDependencies) {
             const depBuildPackage = buildPackages.get(dep);
             if (depBuildPackage) {
                 const symlinkPath = path.join(this.directory, "node_modules", dep);
