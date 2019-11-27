@@ -694,7 +694,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         // Always connect in write mode after getting nacked.
         connection.on("nack", (target: number) => {
-            const nackReason = target === -1 ? "Reconnecting to start writing" : "Reconnecting on nack";
+            const nackReason = target === -1 ? "Nack: Start writing" : "Nack";
             if (!this.autoReconnect) {
                 // Not clear if reconnecting is the right thing in such state.
                 // Let's get telemetry to learn more...
@@ -710,7 +710,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             // ("server_disconnect", ODSP-specific) is mapped to "disconnect"
             // tslint:disable-next-line:no-floating-promises
             this.reconnectOnError(
-                `Got disconnect: ${disconnectReason}, autoReconnect: ${this.autoReconnect}`,
+                `Disconnect: ${disconnectReason}`,
                 connection,
                 this.systemConnectionMode,
                 disconnectReason,
@@ -725,7 +725,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             logNetworkFailure(this.logger, {eventName: "DeltaConnectionError"}, error);
             // tslint:disable-next-line:no-floating-promises
             this.reconnectOnError(
-                `Reconnecting on error: ${error}`,
+                `Error: ${error}`,
                 connection,
                 this.systemConnectionMode,
                 error);
