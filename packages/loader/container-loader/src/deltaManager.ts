@@ -8,6 +8,7 @@ import {
     IDeltaHandlerStrategy,
     IDeltaManager,
     IDeltaQueue,
+    IPermissions,
     ITelemetryLogger,
 } from "@microsoft/fluid-container-definitions";
 import {
@@ -80,9 +81,14 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
      */
     public autoReconnect: boolean = true;
 
+    // Current connection mode. "read" if disconnected.
     private _connectionMode: ConnectionMode = "write";
-    // Overwrites the current connection mode to always write.
-    private readonly systemConnectionMode: ConnectionMode;
+
+    // Connection mode used when reconnecting on error or disconnect.
+    private readonly defaultReconnectionMode: ConnectionMode;
+
+    // We assume r/w access until we learn that we do not have it.
+    private readonly _permissions: IPermissions = { readonly: false };
 
     private isDisposed: boolean = false;
     private pending: ISequencedDocumentMessage[] = [];
@@ -187,6 +193,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         return this._connectionMode;
     }
 
+    public get permissions(): IPermissions {
+        return this._permissions;
+    }
+
     constructor(
         private readonly service: IDocumentService,
         private readonly client: IClient,
@@ -195,7 +205,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         super();
 
         this.clientType = this.client.type;
-        this.systemConnectionMode = this.client.mode === "write" ? "write" : "read";
+        this.defaultReconnectionMode = this.client.mode === "write" ? "write" : "read";
 
         this._inbound = new DeltaQueue<ISequencedDocumentMessage>(
             (op) => {
@@ -242,6 +252,21 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     public dispose() {
         assert.fail("Not implemented.");
         this.isDisposed = true;
+    }
+
+    public on(event: "permissionsChanged", listener: (permissions: Partial<IPermissions>) => void): void;
+    public on(event: "connect", listener: (details: IConnectionDetails) => void): this;
+    public on(event: "disconnect", listener: (reason: string) => void): this;
+    public on(event: "prepareSend", listener: (messages: IDocumentMessage[]) => void): this;
+    public on(event: "error", listener: (error: any) => void): this;
+    public on(event: "submitOp", listener: (op: IDocumentMessage) => void): this;
+    public on(event: "closed" | "allSentOpsAckd", listener: () => void): this;
+    public on(event: "connectionDelay", listener: (delay: number) => void): this;
+    public on(event: "pong" | "processTime", listener: (latency: number) => void): this;
+
+    /* tslint:disable:no-unnecessary-override */
+    public on(event: string | symbol, listener: (...args: any[]) => void): this {
+        return super.on(event, listener);
     }
 
     /**
@@ -355,7 +380,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 });
             }
 
-            this.setupNewSuccessfulConnection(connection);
+            this.setupNewSuccessfulConnection(connection, requestedMode);
 
             if (this.connecting) {
                 this.connecting.resolve(connection.details);
@@ -386,6 +411,11 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         // TODO need to fail if gets too large
         // const serializedContent = JSON.stringify(this.messageBuffer);
         // const maxOpSize = this.context.deltaManager.maxMessageSize;
+
+        if (this.permissions.readonly) {
+            this.logger.sendErrorEvent({ eventName: "SubmitOpReadOnly", type });
+            return -1;
+        }
 
         // Start adding trace for the op.
         const traces: ITrace[] = [
@@ -650,16 +680,39 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         }
     }
 
+    private permissionChange(permissions: Partial<IPermissions>) {
+        const filtered: Partial<IPermissions> = {};
+        for (const key of Object.keys(permissions)) {
+            const value = permissions[key];
+            if (value !== this._permissions[key]) {
+                this._permissions[key] = value;
+                filtered[key] = value;
+            }
+        }
+
+        if (filtered !== {}) {
+            this.emit("permissionsChanged", filtered);
+        }
+    }
+
     /**
      * Once we've successfully gotten a DeltaConnection, we need to set up state, attach event listeners, and process
      * initial messages.
      * @param connection - The newly established connection
      */
-    private setupNewSuccessfulConnection(connection: DeltaConnection) {
+    private setupNewSuccessfulConnection(connection: DeltaConnection, requestedMode: ConnectionMode) {
         this.connection = connection;
 
         // back-compat for newer clients and old server. If the server does not have mode, we reset to write.
         this._connectionMode = connection.details.mode ? connection.details.mode : "write";
+
+        if (this._connectionMode === "write") {
+            // Connected as "write" - we have write permissions
+            this.permissionChange({ readonly: false });
+        } else if (requestedMode === "write") {
+            // Asked for write, but got read - file is read-only
+            this.permissionChange({ readonly: true });
+        }
 
         this.emitDelayInfo(retryFor.DELTASTREAM, -1);
 
@@ -712,7 +765,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             this.reconnectOnError(
                 `Got disconnect: ${disconnectReason}, autoReconnect: ${this.autoReconnect}`,
                 connection,
-                this.systemConnectionMode,
+                this.defaultReconnectionMode,
                 disconnectReason,
                 this.autoReconnect,
             );
@@ -727,7 +780,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             this.reconnectOnError(
                 `Reconnecting on error: ${error}`,
                 connection,
-                this.systemConnectionMode,
+                this.defaultReconnectionMode,
                 error);
         });
 

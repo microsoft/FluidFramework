@@ -13,6 +13,7 @@ import {
     IFluidCodeDetails,
     IFluidModule,
     IGenericBlob,
+    IPermissions,
     IProcessMessageResult,
     IQuorum,
     IRuntimeFactory,
@@ -175,6 +176,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
     private _closed = false;
 
+    public get permissions(): IPermissions {
+        return this._deltaManager!.permissions;
+    }
+
     public get closed(): boolean {
         return this._closed;
     }
@@ -315,6 +320,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return this.protocolHandler!.quorum;
     }
 
+    public on(event: "permissionsChanged", listener: (permissions: Partial<IPermissions>) => void): void;
     public on(event: "connected" | "contextChanged", listener: (clientId: string) => void): this;
     public on(event: "disconnected" | "joining" | "closed", listener: () => void): this;
     public on(event: "error", listener: (error: any) => void): this;
@@ -892,6 +898,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
             this._deltaManager.on("processTime", (time) => {
                 this.emit("processTime", time);
+            });
+
+            this._deltaManager.on("permissionsChanged", (permissions) => {
+                this.emit("permissionsChanged", permissions);
             });
         }
     }

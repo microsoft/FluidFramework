@@ -114,6 +114,17 @@ export enum ConnectionState {
 }
 
 /**
+ * File / container permissions
+ */
+export interface IPermissions {
+    /**
+     * Tells if container is read-only.
+     * It it is, attempts to submit ops will result in error being raised on container
+     */
+    readonly readonly: boolean;
+}
+
+/**
  * Package manager configuration. Provides a key value mapping of config values
  */
 export interface IPackageConfig {
