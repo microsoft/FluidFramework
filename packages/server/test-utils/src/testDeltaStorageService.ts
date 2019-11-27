@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as api from "@microsoft/fluid-protocol-definitions";
+import * as api from "@microsoft/fluid-driver-definitions";
+import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { IDatabaseManager } from "@microsoft/fluid-server-services-core";
 
 export class TestDeltaStorageService implements api.IDocumentDeltaStorageService {
@@ -13,7 +14,7 @@ export class TestDeltaStorageService implements api.IDocumentDeltaStorageService
         private databaseManager: IDatabaseManager) {
     }
 
-    public async get(from?: number, to?: number): Promise<api.ISequencedDocumentMessage[]> {
+    public async get(from?: number, to?: number): Promise<ISequencedDocumentMessage[]> {
         const query = { documentId: this.id, tenantId: this.tenantId };
         /* tslint:disable:no-unsafe-any */
         if (from !== undefined || to !== undefined) {

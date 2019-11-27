@@ -18,7 +18,7 @@ std::vector<std::shared_ptr<Segment>> LoadFileIntoSegments(const char *path, int
 		while (i != std::string_view::npos)
 		{
 			//segments.push_back(std::make_shared<TextSegment>(text.substr(0, i + 1)));
-			segments.push_back(std::make_shared<ExternalSegment>(fn, text.data(), i + 1));
+			segments.push_back(std::make_shared<ExternalSegment>(fn, text.data(), static_cast<int>(i + 1)));
 			text.remove_prefix(i + 1);
 			i = text.find('\n');
 		}
@@ -187,9 +187,11 @@ int main(int argc, char **argv)
 	//ComplexTreePerfTest();
 	//return 0;
 
+	const char *pp10path = "../../../packages/server/gateway/public/literature/pp10.txt";
+
 	if (argc > 1 && strcmp(argv[1], "piecetable") == 0)
-		RunFindReplaceTest_PieceTable("../../routerlicious/public/literature/pp10.txt");
+		RunFindReplaceTest_PieceTable(pp10path);
 	else //if (strcmp(argv[1], "mergetree"))
-		RunFindReplaceTest_MergeTree("../../routerlicious/public/literature/pp10.txt");
+		RunFindReplaceTest_MergeTree(pp10path);
 #endif
 }

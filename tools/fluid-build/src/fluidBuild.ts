@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { Package } from "./npmPackage";
+import { Packages } from "./npmPackage";
 import { parseOptions, options } from "./options";
 import { BuildGraph, BuildResult } from "./buildGraph";
 import { Timer } from "./common/timer";
 import { logStatus } from "./common/logging";
-import { existsSync, readFileAsync } from "./common/utils";
+import { existsSync, readFileAsync, rimrafWithErrorAsync, execWithErrorAsync } from "./common/utils";
 import * as path from "path";
 import chalk from "chalk";
 
@@ -92,17 +92,27 @@ async function main() {
         return;
     }
 
-    const baseDirectory = path.join(resolvedRoot, "packages");
+    // TODO: Should read lerna.json to determine
+    const baseDirectories = [ path.join(resolvedRoot, "packages")];
+    const samplesDirectory = path.join(resolvedRoot, "samples/chaincode");
+    if (options.samples && existsSync(samplesDirectory)) {
+        baseDirectories.push(samplesDirectory);
+    }
 
     // Load the package
-    const packages = Package.load(baseDirectory);
+    const packages = Packages.load(baseDirectories);
     timer.time("Package scan completed");
 
-    if (options.args.length) {
+    // Check scripts
+    await packages.checkScripts();
+    timer.time("Check scripts completed");
+
+    const hasMatchArgs = options.args.length;
+    if (hasMatchArgs) {
         let matched = false;
         options.args.forEach((arg) => {
             const regExp = new RegExp(arg);
-            packages.forEach((pkg) => {
+            packages.packages.forEach((pkg) => {
                 if (regExp.test(pkg.name)) {
                     matched = true;
                     pkg.setMatched();
@@ -115,29 +125,71 @@ async function main() {
             process.exit(-4)
         }
     } else {
-        packages.forEach((pkg) => pkg.setMatched());
+        packages.packages.forEach((pkg) => pkg.setMatched());
     }
 
-    if (options.depcheck) {
-        for (const pkg of packages) {
-            await pkg.depcheck();
+    if (options.install) {
+        const hasRootNodeModules = existsSync(path.join(resolvedRoot, "node_modules"));
+        if (hasRootNodeModules === options.nohoist) {
+            // We need to uninstall if nohoist doesn't match the current state of installation
+            options.uninstall = true;
         }
-        timer.time("Dependencies check completed")
     }
 
-    // build the graph
     try {
-        const buildGraph = new BuildGraph(packages, options.buildScript);
-        timer.time("Build graph creation completed");
+        if (options.uninstall) {
+            const cleanPackageNodeModules = packages.cleanNodeModules();
+            const r = await Promise.all([cleanPackageNodeModules, rimrafWithErrorAsync(path.join(resolvedRoot, "node_modules"), "ERROR")]);
+            const succeeded = r[0] && !r[1].error;
+            if (!succeeded) {
+                console.error(`ERROR: Delete node_module failed`);
+                process.exit(-8);
+            }
+            timer.time("Delete node_modules completed");
+        }
 
-        if (options.clean) {
-            await buildGraph.clean();
-            timer.time("Clean completed");
+        if (options.depcheck) {
+            for (const pkg of packages.packages) {
+                await pkg.depcheck();
+            }
+            timer.time("Dependencies check completed")
+        }
+
+        if (options.install) {
+            if (options.nohoist) {
+                if (!await packages.noHoistInstall(resolvedRoot)) {
+                    console.error(`ERROR: Install failed`);
+                    process.exit(-6);
+                }
+            } else {
+                const installScript = "npm i";
+                const ret = await execWithErrorAsync(installScript, { cwd: resolvedRoot }, "ERROR");
+                if (ret.error) {
+                    console.error(`ERROR: Install failed`);
+                    process.exit(-5);
+                }
+            }
+            timer.time("Install completed");
         }
 
         if (options.symlink) {
-            await buildGraph.symlink();
+            if (!await packages.symlink()) {
+                console.error(`ERROR: Symlink failed`);
+                process.exit(-7);
+            }
             timer.time("Symlink completed");
+        }
+
+        // build the graph
+        const buildGraph = new BuildGraph(packages.packages, options.buildScript);
+        timer.time("Build graph creation completed");
+
+        if (options.clean) {
+            if (!await buildGraph.clean()) {
+                console.error(`ERROR: Clean failed`);
+                process.exit(-9);
+            }
+            timer.time("Clean completed");
         }
 
         if (options.build !== false) {

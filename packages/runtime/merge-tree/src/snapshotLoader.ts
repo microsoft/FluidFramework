@@ -9,9 +9,10 @@ import { IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runti
 import * as assert from "assert";
 import { Client } from "./client";
 import { NonCollabClient, UniversalSequenceNumber } from "./constants";
-import { MergeTree } from "./mergeTree";
-import { MergeTreeChunk } from "./ops";
+import { ISegment, MergeTree } from "./mergeTree";
+import { hasMergeInfo, IJSONSegment, IJSONSegmentWithMergeInfo, MergeTreeChunk } from "./ops";
 import { Snapshot } from "./snapshot";
+import { SnapshotLegacy } from "./snapshotlegacy";
 
 export class SnapshotLoader {
 
@@ -27,7 +28,7 @@ export class SnapshotLoader {
         const headerP = services.read(Snapshot.header);
         // If loading from a snapshot load tardis messages
         // kick off loading in parallel to loading "body" chunk.
-        const rawMessages = services.read(Snapshot.tardis);
+        const rawMessages = services.read(SnapshotLegacy.tardis);
 
         const header = await headerP;
         assert(header);
@@ -43,9 +44,46 @@ export class SnapshotLoader {
         // tslint:disable-next-line: no-suspicious-comment
         // TODO we shouldn't need to wait on the body being complete to finish initialization.
         // To fully support this we need to be able to process inbound ops for pending segments.
-        // And storing 'blue' segments rather than using Tardis'd ops may be of help.
         await this.loadBody(chunk1, services);
+
+        // tslint:disable-next-line:no-suspicious-comment
+        // TODO: The 'Snapshot.tardis' tree entry is purely for backwards compatibility.
+        //       (See https://github.com/microsoft/FluidFramework/issues/84)
         return this.loadTardis(rawMessages, branch);
+    }
+
+    private readonly specToSegment = (spec: IJSONSegment | IJSONSegmentWithMergeInfo) => {
+        let seg: ISegment;
+
+        if (hasMergeInfo(spec)) {
+            seg = this.client.specToSegment(spec.json);
+
+            // `specToSegment()` initializes `seg` with the LocalClientId.  Overwrite this with
+            // the `spec` client (if specified).  Otherwise overwrite with `NonCollabClient`.
+            seg.clientId = spec.client !== undefined
+                ? this.client.getOrAddShortClientId(spec.client)
+                : NonCollabClient;
+
+            seg.seq = spec.seq !== undefined
+                ? spec.seq
+                : UniversalSequenceNumber;
+
+            if (spec.removedSeq !== undefined) {
+                seg.removedSeq = spec.removedSeq;
+            }
+            if (spec.removedClient !== undefined) {
+                seg.removedClientId = this.client.getOrAddShortClientId(spec.removedClient);
+            }
+        } else {
+            seg = this.client.specToSegment(spec);
+            seg.seq = UniversalSequenceNumber;
+
+            // `specToSegment()` initializes `seg` with the LocalClientId.  We must overwrite this with
+            // `NonCollabClient`.
+            seg.clientId = NonCollabClient;
+        }
+
+        return seg;
     }
 
     private loadHeader(
@@ -56,11 +94,7 @@ export class SnapshotLoader {
             header,
             this.runtime.IComponentSerializer,
             this.runtime.IComponentHandleContext);
-        const segs = chunk.segmentTexts.map((spec) => {
-            const seg = this.client.specToSegment(spec);
-            seg.seq = UniversalSequenceNumber;
-            return seg;
-        });
+        const segs = chunk.segmentTexts.map(this.specToSegment);
         this.mergeTree.reloadFromSegments(segs);
 
         // tslint:disable-next-line: no-suspicious-comment
@@ -68,7 +102,15 @@ export class SnapshotLoader {
         const branching = branchId === this.runtime.documentId ? 0 : 1;
 
         this.client.startCollaboration(
-            this.runtime.clientId, chunk.chunkSequenceNumber, branching);
+            this.runtime.clientId,
+            // tslint:disable-next-line:no-suspicious-comment
+            // TODO: Make 'minSeq' non-optional once the new snapshot format becomes the default?
+            //       (See https://github.com/microsoft/FluidFramework/issues/84)
+            /* minSeq: */ chunk.chunkMinSequenceNumber !== undefined
+                ? chunk.chunkMinSequenceNumber
+                : chunk.chunkSequenceNumber,
+            /* currentSeq: */ chunk.chunkSequenceNumber,
+            branching);
 
         return chunk;
     }
@@ -101,13 +143,41 @@ export class SnapshotLoader {
             { eventName: "Mismatch in totalSegmentCount" });
 
         // Deserialize each chunk segment and append it to the end of the MergeTree.
-        this.mergeTree.insertSegments(
-            this.mergeTree.root.cachedLength,
-            chunk2.segmentTexts.map((s) => this.client.specToSegment(s)),
-            UniversalSequenceNumber,
-            NonCollabClient,
-            UniversalSequenceNumber,
-            undefined);
+        const segs = chunk2.segmentTexts.map(this.specToSegment);
+
+        // Helper to insert segments at the end of the MergeTree.
+        const mergeTree = this.mergeTree;
+        const append = (segments: ISegment[], cli: number, seq: number) => {
+            mergeTree.insertSegments(
+                mergeTree.root.cachedLength,
+                segments,
+                /* refSeq: */ UniversalSequenceNumber,
+                cli,
+                seq,
+                undefined);
+        };
+
+        // Helpers to batch-insert segments that are below the min seq
+        const batch: ISegment[] = [];
+        const flushBatch = () => {
+            if (batch.length > 0) { append(batch, NonCollabClient, UniversalSequenceNumber); }
+        };
+
+        for (const seg of segs) {
+            const cli = seg.clientId;
+            const seq = seg.seq;
+
+            // If the segment can be batch inserted, add it to the 'batch' array.  Otherwise, flush
+            // any batched segments and then insert the current segment individually.
+            if (cli === NonCollabClient && seq === UniversalSequenceNumber) {
+                batch.push(seg);
+            } else {
+                flushBatch();
+                append([seg], cli, seq);
+            }
+        }
+
+        flushBatch();
     }
 
     // If loading from a snapshot load tardis messages

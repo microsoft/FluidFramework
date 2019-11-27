@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { ConnectionState } from "@microsoft/fluid-container-definitions";
 import { BlobTreeEntry } from "@microsoft/fluid-core-utils";
+import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import {
-    IDocumentStorageService,
+    ConnectionState,
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITree,

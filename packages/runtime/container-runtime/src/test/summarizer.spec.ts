@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Deferred, TelemetryNullLogger } from "@microsoft/fluid-core-utils";
+import { Deferred, TelemetryNullLogger} from "@microsoft/fluid-core-utils";
 import {
     ISequencedDocumentMessage,
     ISummaryAck,

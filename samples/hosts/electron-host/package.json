@@ -1,11 +1,24 @@
 {
   "name": "@prague/electron-host",
   "version": "0.7.0",
-  "chaincode": "@prague/shared-text@latest",
+  "repository": "microsoft/FluidFramework",
+  "license": "MIT",
+  "author": "Microsoft",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "author": "Microsoft",
-  "repository": "microsoft/FluidFramework",
+  "scripts": {
+    "build": "concurrently npm:build:compile npm:tslint",
+    "build:compile": "concurrently npm:tsc npm:build:esnext",
+    "build:esnext": "tsc --project ./tsconfig.esnext.json",
+    "build:full": "npm run build",
+    "build:full:compile": "npm run build:compile",
+    "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
+    "electron": "electron ./dist/index.html",
+    "electron:test": "electron --inspect=5858 ./dist/index.html",
+    "tsc": "tsc",
+    "tslint": "tslint --project tsconfig.json --format verbose",
+    "webpack": "webpack --env build"
+  },
   "dependencies": {
     "@prague/tiny-web-host": "^0.7.0",
     "electron": "^5.0.7",
@@ -30,20 +43,5 @@
     "webpack-dev-server": "^3.8.0",
     "webpack-merge": "^4.1.2"
   },
-  "scripts": {
-    "build": "concurrently npm:build:compile npm:tslint",
-    "build:compile": "concurrently npm:tsc npm:build:esnext",
-    "build:full": "npm run build",
-    "build:webpack": "webpack --env build",
-    "build:full:compile": "npm run build:compile",
-    "build:docs": "api-extractor run --local",
-    "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
-    "tsc": "tsc",
-    "build:esnext": "tsc --project ./tsconfig.esnext.json",
-    "tslint": "tslint --project tsconfig.json --format verbose",
-    "webpack": "npm run build:webpack",
-    "electron": "electron ./dist/index.html",
-    "electron:test": "electron --inspect=5858 ./dist/index.html"
-  },
-  "license": "MIT"
+  "chaincode": "@prague/shared-text@latest"
 }

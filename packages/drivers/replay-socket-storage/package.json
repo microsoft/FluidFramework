@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-replay-driver",
-  "version": "0.11.0",
+  "version": "0.12.0",
   "description": "Document replay version of Socket.IO implementation",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -12,33 +12,34 @@
   "scripts": {
     "build": "npm run build:genver && concurrently npm:build:compile npm:tslint",
     "build:compile": "concurrently npm:tsc npm:build:esnext",
+    "build:compile:min": "npm run build:compile",
     "build:docs": "api-extractor run --local",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "build:genver": "node node_modules/@microsoft/fluid-build-common/gen_version.js",
-    "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
+    "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "dependencies": {
-    "@microsoft/fluid-core-utils": "^0.11.0",
-    "@microsoft/fluid-driver-base": "^0.11.0",
-    "@microsoft/fluid-protocol-definitions": "^0.11.0",
+    "@microsoft/fluid-core-utils": "^0.12.0",
+    "@microsoft/fluid-driver-definitions": "^0.12.0",
+    "@microsoft/fluid-protocol-definitions": "^0.12.0",
     "debug": "^4.1.1"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.4.4",
-    "@microsoft/fluid-build-common": "^0.11.0",
+    "@microsoft/fluid-build-common": "^0.12.0",
     "@types/debug": "^0.0.31",
     "@types/mocha": "^5.2.5",
     "@types/nock": "^9.3.0",
-    "@types/node": "^10.12.12",
+    "@types/node": "^10.14.6",
     "concurrently": "^4.1.0",
     "mocha": "^5.2.0",
     "nock": "^10.0.1",
     "rimraf": "^2.6.2",
-    "tslint": "^5.11.0",
+    "tslint": "^5.20.0",
     "typescript": "~3.4.5"
   }
 }

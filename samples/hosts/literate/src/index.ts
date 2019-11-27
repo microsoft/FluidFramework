@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { Loader } from "@prague/container-loader";
-import { normalize, WebCodeLoader } from "@prague/loader-web";
-import { IUser } from "@prague/protocol-definitions";
-import { RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
+import { IFluidCodeDetails, IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
+import { Loader } from "@microsoft/fluid-container-loader";
+import { IUser } from "@microsoft/fluid-protocol-definitions";
+import { RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
+import { extractDetails, WebCodeLoader, WhiteList } from "@microsoft/fluid-web-code-loader";
 import { InsecureUrlResolver } from "./urlResolver";
 import { attach, initializeChaincode, parsePackageName } from "./utils";
 
@@ -30,7 +31,7 @@ const user = {
 } as IUser;
 
 export async function start(url: string, code: string): Promise<void> {
-    // Create the InsecureUrlResolve so we can generate access tokens to connect to Prague documents stored in our
+    // Create the InsecureUrlResolve so we can generate access tokens to connect to Fluid documents stored in our
     // tenant. Note that given we are storing the tenant secret in the clear on the client side this is a security
     // hole but it simplifies setting up this example. To make this clear we named it the InsecureUrlResolver. You would
     // not want to use this in a production environment and would want to protect the secret on your server. To give
@@ -55,7 +56,7 @@ export async function start(url: string, code: string): Promise<void> {
     // looks at the package's package.json for a special 'fluid' entry which defines the code designed to be run in
     // the browser as well as the name of the entry point module. It then script includes these files on the page and
     // once loaded makes use of the module entry point name to get access to the module.
-    const codeLoader = new WebCodeLoader(npm);
+    const codeLoader = new WebCodeLoader(new WhiteList());
 
     // Finally with all the above objects created we can fully construct the loader
     const loader = new Loader(
@@ -63,24 +64,31 @@ export async function start(url: string, code: string): Promise<void> {
         documentServicesFactory,
         codeLoader,
         { blockUpdateMarkers: true },
-        null);
+        null,
+        new Map<string, IProxyLoaderFactory>());
 
-    // We start by resolving the URL to its underlying Prague document. This gives low-level access which will enable
+    // We start by resolving the URL to its underlying Fluid document. This gives low-level access which will enable
     // us to quorum on code later or detect when the code quorum has changed. In many cases you may not need this
     // behavior and can instead just directly make requests against the document.
-    const pragueDocument = await loader.resolve({ url });
+    const fluidDocument = await loader.resolve({ url });
 
     // The attach helper method performs the actual attachment of the above platform to the component identified
     // by the URL in the browser. Once the attach is complete the component will render to the provided div.
-    attach(loader, pragueDocument, url, document.getElementById("content") as HTMLDivElement);
+    attach(loader, fluidDocument, url, document.getElementById("content") as HTMLDivElement);
 
     // This step is used when creating a new document. In the case that your host is only loading existing documents
     // then this is not necessary. But should you wish to create new ones this step goes and proposes the passed in
     // package name on the code quorum. We only perform this check for new documents.
-    if (!pragueDocument.existing) {
-        // normalize is a helper method which converts from a package name to the JSON object we will quorum on
-        const details = normalize(code, npm);
-        await initializeChaincode(pragueDocument, details)
+    if (!fluidDocument.existing) {
+        const parsedPackage = extractDetails(code);
+        const details: IFluidCodeDetails = {
+            config: {
+                [`@${parsedPackage.scope}:cdn`]: npm,
+            },
+            package: code,
+        };
+
+        await initializeChaincode(fluidDocument, details)
             .catch((error) => console.error("chaincode error", error));
     }
 }

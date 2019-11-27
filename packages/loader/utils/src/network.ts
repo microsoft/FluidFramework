@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { INetworkError } from "@microsoft/fluid-protocol-definitions";
+import { INetworkError } from "@microsoft/fluid-driver-definitions";
 
 /**
  * Network error error class - used to communicate all  network errors
@@ -18,14 +18,9 @@ export class NetworkError extends Error implements INetworkError {
         super(errorMessage);
     }
 
-    public getCustomProperties() {
-        const prop = {};
-        for (const key of Object.getOwnPropertyNames(this)) {
-            if (this[key]) {
-                prop[key] = this[key];
-            }
-        }
-        return prop;
+    // return all enumerable properties (i.e. exclude stack, message)
+    public getCustomProperties(): object {
+        return this;
     }
 }
 

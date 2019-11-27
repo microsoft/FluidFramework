@@ -7,10 +7,9 @@ import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import {
     IFluidResolvedUrl,
     IResolvedUrl,
-    ITokenClaims,
     IUrlResolver,
-    IUser,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@microsoft/fluid-driver-definitions";
+import { ITokenClaims, IUser } from "@microsoft/fluid-protocol-definitions";
 import Axios from "axios";
 import * as jwt from "jsonwebtoken";
 

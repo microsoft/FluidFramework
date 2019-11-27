@@ -4,11 +4,13 @@
  */
 
 import { BatchManager, NetworkError } from "@microsoft/fluid-core-utils";
+import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
 import {
     ConnectionMode,
     IClient,
+    IConnect,
+    IConnected,
     IContentMessage,
-    IDocumentDeltaConnection,
     IDocumentMessage,
     ISequencedDocumentMessage,
     IServiceConfiguration,
@@ -19,7 +21,6 @@ import {
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { debug } from "./debug";
-import { IConnect, IConnected } from "./messages";
 
 const protocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
 
@@ -98,7 +99,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
 
         const deltaConnection = new DocumentDeltaConnection(socket, id);
 
-        await deltaConnection.initialize(connectMessage);
+        await deltaConnection.initialize(connectMessage, timeoutMs);
         return deltaConnection;
     }
 
@@ -367,7 +368,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         this.removeTrackedListeners(false);
     }
 
-    protected async initialize(connectMessage: IConnect) {
+    protected async initialize(connectMessage: IConnect, timeout: number) {
         this._details = await new Promise<IConnected>((resolve, reject) => {
             // Listen for connection issues
             this.addConnectionListener("connect_error", (error) => {
@@ -380,6 +381,13 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
             this.addConnectionListener("connect_timeout", () => {
                 this.disconnect(true);
                 reject(createErrorObject("connect_timeout", "Socket connection timed out"));
+            });
+
+            // socket can be disconnected while waiting for Fluid protocol messages
+            // (connect_document_error / connect_document_success)
+            this.addConnectionListener("disconnect", (reason) => {
+                this.disconnect(true);
+                reject(createErrorObject("disconnect", reason));
             });
 
             this.addConnectionListener("connect_document_success", (response: IConnected) => {
@@ -403,6 +411,11 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
             }));
 
             this.socket.emit("connect_document", connectMessage);
+
+            // Give extra 2 seconds for handshake on top of socket connection timeout
+            setTimeout(() => {
+                reject(createErrorObject("Timeout waiting for handshake from ordering service", undefined));
+            }, timeout + 2000);
         });
     }
 

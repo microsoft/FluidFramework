@@ -1,0 +1,28 @@
+{
+    "name": "@microsoft/eslint-config-fluid",
+    "version": "0.12.0",
+    "description": "Shareable ESLint config for the Fluid Framework",
+    "repository": "microsoft/FluidFramework",
+    "license": "MIT",
+    "author": "Microsoft",
+    "main": "index.js",
+    "scripts": {
+        "build": "echo Skipping @microsoft/eslint-config-fluid: No build steps necessary."
+    },
+    "dependencies": {
+        "@typescript-eslint/eslint-plugin": "^2.4.0",
+        "@typescript-eslint/eslint-plugin-tslint": "^2.4.0",
+        "@typescript-eslint/parser": "^2.4.0",
+        "eslint": "^6.5.1",
+        "eslint-plugin-import": "^2.18.2",
+        "eslint-plugin-react": "^7.16.0"
+    },
+    "peerDependencies": {
+        "@typescript-eslint/eslint-plugin": ">=2.4.0",
+        "@typescript-eslint/eslint-plugin-tslint": ">=2.4.0",
+        "@typescript-eslint/parser": ">=2.4.0",
+        "eslint": ">=6.5",
+        "eslint-plugin-import": ">=2.18.2",
+        "eslint-plugin-react": ">=7.16.0"
+    }
+}

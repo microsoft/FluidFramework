@@ -13,18 +13,18 @@ import {
     IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
 import {
-    ConnectionState,
     IAudience,
     IBlobManager,
     IDeltaManager,
     IGenericBlob,
     ILoader,
-    IQuorum,
     ITelemetryLogger,
 } from "@microsoft/fluid-container-definitions";
+import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import {
+    ConnectionState,
     IDocumentMessage,
-    IDocumentStorageService,
+    IQuorum,
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITreeEntry,
@@ -202,7 +202,7 @@ export interface IComponentContext extends EventEmitter {
     readonly existing: boolean;
     readonly options: any;
     readonly clientId: string;
-    readonly clientType: string;
+    readonly clientType: string | undefined;
     readonly parentBranch: string;
     readonly connected: boolean;
     readonly leader: boolean;
@@ -321,7 +321,7 @@ export interface IHostRuntime extends
     readonly existing: boolean;
     readonly options: any;
     readonly clientId: string;
-    readonly clientType: string;
+    readonly clientType: string | undefined;
     readonly parentBranch: string;
     readonly connected: boolean;
     readonly leader: boolean;

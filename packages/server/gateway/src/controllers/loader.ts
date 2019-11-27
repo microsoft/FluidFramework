@@ -3,21 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import {
-    createWebLoader,
-    IHostConfig,
-    initializeChaincode,
-    registerAttach,
-} from "@microsoft/fluid-base-host";
+import { BaseHost, IBaseHostConfig } from "@microsoft/fluid-base-host";
 import { IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
 import { BaseTelemetryNullLogger } from "@microsoft/fluid-core-utils";
+import {
+    IDocumentServiceFactory,
+    IFluidResolvedUrl,
+} from "@microsoft/fluid-driver-definitions";
 import { WebWorkerLoaderFactory } from "@microsoft/fluid-execution-context-loader";
 import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
-import { IDocumentServiceFactory, IFluidResolvedUrl } from "@microsoft/fluid-protocol-definitions";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
 import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
 import { IGitCache } from "@microsoft/fluid-server-services-client";
-import { IResolvedPackage, WhiteList } from "@microsoft/fluid-web-code-loader";
+import { IResolvedPackage } from "@microsoft/fluid-web-code-loader";
 import Axios from "axios";
 import { DocumentFactory } from "./documentFactory";
 import { MicrosoftGraph } from "./graph";
@@ -97,9 +95,8 @@ export async function initialize(
     url: string,
     resolved: IFluidResolvedUrl,
     cache: IGitCache,
-    pkg: IResolvedPackage,
+    pkg: IResolvedPackage | undefined,
     scriptIds: string[],
-    npm: string,
     jwt: string,
     config: any,
     clientId: string,
@@ -118,7 +115,7 @@ export async function initialize(
         IPackageManager: packageManager,
     };
 
-    if ( user.accounts ) {
+    if (user.accounts) {
         for (const account of user.accounts) {
             if (account.provider === "msa") {
                 const mailServices = new MailServices(account.accessToken);
@@ -147,39 +144,30 @@ export async function initialize(
         jwt,
         new Map<string, IFluidResolvedUrl>([[url, resolved]]));
 
-    const hostConf: IHostConfig = { documentServiceFactory: documentServiceFactories, urlResolver: resolver };
+    const hostConfig: IBaseHostConfig = {
+        documentServiceFactory: documentServiceFactories,
+        urlResolver: resolver,
+        config,
+        scope: services,
+        proxyLoaderFactories: new Map<string, IProxyLoaderFactory>([["webworker", new WebWorkerLoaderFactory()]]),
+    };
 
     // Provide access to all loader services from command line for easier testing as we bring more up
     // tslint:disable-next-line
     window["allServices"] = services;
 
-    console.log(`Loading ${url}`);
-    const loader = await createWebLoader(
-        resolved,
-        pkg,
-        scriptIds,
-        config,
-        services,
-        hostConf,
-        new Map<string, IProxyLoaderFactory>([["webworker", new WebWorkerLoaderFactory()]]),
-        new WhiteList(),
-        );
+    const baseHost = new BaseHost(hostConfig, resolved, pkg, scriptIds);
+    const loader = await baseHost.getLoader();
     documentFactory.resolveLoader(loader);
 
+    console.log(`Loading ${url}`);
+
     const div = document.getElementById("content") as HTMLDivElement;
-    const container = await loader.resolve({ url });
+    const container = await baseHost.loadAndRender(url, div, pkg ? pkg.details : undefined);
 
     container.on("error", (error) => {
         console.error(error);
     });
-
-    registerAttach(loader, container, url, div);
-
-    // If this is a new document we will go and instantiate the chaincode. For old documents we assume a legacy
-    // package.
-    if (!container.existing) {
-        await initializeChaincode(container, pkg);
-    }
 
     return container;
 }

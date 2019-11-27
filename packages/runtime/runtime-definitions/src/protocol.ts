@@ -16,28 +16,6 @@ export interface IEnvelope {
     contents: any;
 }
 
-export interface IHelpMessage {
-
-    tasks: string[];
-
-    // Temporary version field for back-compat.
-    version?: string;
-}
-
-/**
- * Represents a message in queue to be processed.
- */
-export interface IQueueMessage {
-
-    message: IHelpMessage;
-
-    tenantId: string;
-
-    documentId: string;
-
-    token: string;
-}
-
 /**
  * Represents ISignalMessage with its type.
  */

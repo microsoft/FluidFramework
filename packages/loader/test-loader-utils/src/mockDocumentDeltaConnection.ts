@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
 import {
     ConnectionMode,
     IContentMessage,
-    IDocumentDeltaConnection,
     IDocumentMessage,
     INack,
     ISequencedDocumentMessage,

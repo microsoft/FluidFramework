@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import * as git from "@microsoft/fluid-gitresources";
 import {
     FileMode,
     IBlob,
-    IDocumentStorageService,
     ISnapshotTree,
     ITree,
     ITreeEntry,
@@ -119,9 +119,13 @@ function flattenCore(path: string, treeEntries: ITreeEntry[], blobMap: Map<strin
  * Build a tree hierarchy base on a flat tree
  *
  * @param flatTree - a flat tree
+ * @param blobsShaToPathCache - Map with blobs sha as keys and values as path of the blob.
  * @returns the hierarchical tree
  */
-export function buildHierarchy(flatTree: git.ITree): ISnapshotTree {
+export function buildHierarchy(
+    flatTree: git.ITree,
+    blobsShaToPathCache: Map<string, string> = new Map<string, string>()): ISnapshotTree {
+
     const lookup: { [path: string]: ISnapshotTree } = {};
     const root: ISnapshotTree = { id: flatTree.sha, blobs: {}, commits: {}, trees: {} };
     lookup[""] = root;
@@ -141,6 +145,7 @@ export function buildHierarchy(flatTree: git.ITree): ISnapshotTree {
             lookup[entry.path] = newTree;
         } else if (entry.type === "blob") {
             node.blobs[decodeURIComponent(entryPathBase)] = entry.sha;
+            blobsShaToPathCache.set(entry.sha, `/${entry.path}`);
         } else if (entry.type === "commit") {
             node.commits[decodeURIComponent(entryPathBase)] = entry.sha;
         }

@@ -10,12 +10,10 @@ import {
     IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
 import {
-    ConnectionState,
     IAudience,
     IDeltaManager,
     IGenericBlob,
     ILoader,
-    IQuorum,
     ITelemetryLogger,
 } from "@microsoft/fluid-container-definitions";
 import {
@@ -26,8 +24,10 @@ import {
 } from "@microsoft/fluid-core-utils";
 import * as git from "@microsoft/fluid-gitresources";
 import {
+    ConnectionState,
     IBlob,
     IDocumentMessage,
+    IQuorum,
     ISequencedDocumentMessage,
     ITree,
     ITreeEntry,
@@ -182,9 +182,9 @@ export class MockRuntime extends EventEmitter
     public readonly documentId: string;
     public readonly id: string;
     public readonly existing: boolean;
-    public readonly options: any;
+    public readonly options: any = {};
     public clientId: string = uuid();
-    public readonly clientType: string = "browser";
+    public readonly clientType: string = "";
     public readonly parentBranch: string;
     public readonly path = "";
     public readonly connected: boolean;

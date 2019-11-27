@@ -4,10 +4,12 @@
  */
 
 import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
-import { globFn, toPosixPath, } from "../../common/utils";
+import { globFn, toPosixPath, readFileAsync, existsSync } from "../../common/utils";
 import { TscTask } from "./tscTask";
+import * as path from "path";
 
 interface DoneFileContent {
+    config: { [configFile: string]: string },
     sources: { [srcFile: string]: string },
     dependencies: { [pkgName: string]: { [command: string]: any } },
 }
@@ -19,25 +21,36 @@ export class WebpackTask extends LeafWithDoneFileTask {
 
     protected async getDoneFileContent() {
         try {
-            const content: DoneFileContent = { sources: {}, dependencies: {}};
+            const content: DoneFileContent = {
+                config: {},
+                sources: {},
+                dependencies: {}
+            };
             const srcGlob = toPosixPath(this.node.pkg.directory) + "/src/**/*.*";
             const srcFiles = await globFn(srcGlob);
             for (const srcFile of srcFiles) {
                 content.sources[srcFile] = await this.node.buildContext.fileHashCache.getFileHash(srcFile);
             }
 
-            for (const dep of this.allDependentTasks) {
-                if (dep.executable === "tsc") {
-                    if (!content.dependencies[dep.package.name]) {
-                        content.dependencies[dep.package.name] = {};
-                    }
-                    const tsBuildInfo = await (dep as TscTask).readTsBuildInfo();
-                    if (tsBuildInfo === undefined) {
-                        return undefined;
-                    }
-                    content.dependencies[dep.package.name][dep.command] = tsBuildInfo;
-                }
+            const configFiles = await globFn(toPosixPath(this.node.pkg.directory) + "/webpack.*.js");
+            configFiles.push(this.configFileFullPath);
+            for (const configFile of configFiles) {
+                content.config[configFile] = await this.node.buildContext.fileHashCache.getFileHash(configFile);
             }
+
+            for (const dep of this.allDependentTasks) {
+                    if (dep.executable === "tsc") {
+                        if (!content.dependencies[dep.package.name]) {
+                            content.dependencies[dep.package.name] = {};
+                        }
+                        const tsBuildInfo = await (dep as TscTask).readTsBuildInfo();
+                        if (tsBuildInfo === undefined) {
+                            return undefined;
+                        }
+                        content.dependencies[dep.package.name][dep.command] = tsBuildInfo;
+                    }
+                }
+
             return JSON.stringify(content);
         } catch {
             return undefined;
@@ -62,5 +75,19 @@ export class WebpackTask extends LeafWithDoneFileTask {
                 this.logVerboseDependency(child, "*");
             }
         }
+    }
+
+    private get configFileFullPath() {
+        // TODO: parse the command line for real, split space for now.
+        const args = this.command.split(" ");
+        let configFile = "webpack.config.js";
+        for (let i = 0; i < args.length; i++) {
+            if (args[i] === "--config" && i + 1 < args.length) {
+                configFile = args[i + 1];
+                break;
+            }
+        }
+
+        return path.join(this.package.directory, configFile);
     }
 }

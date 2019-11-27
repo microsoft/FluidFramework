@@ -21,6 +21,9 @@ import {
     IDocumentServiceFactory,
     IFluidResolvedUrl,
     IResolvedUrl,
+} from "@microsoft/fluid-driver-definitions";
+import {
+    IClientDetails,
     ISequencedDocumentMessage,
 } from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
@@ -42,20 +45,22 @@ interface IParsedUrl {
 }
 
 export enum LoaderHeader {
+    /**
+     * Use cache for this container. If true, we will load a container from cache if one with the same id/version exists
+     * or create a new container and cache it if it does not. If false, always load a new container and don't cache it.
+     * Currently only used to opt-out of caching, as it will default to true but will be false (even if specified as
+     * true) if the reconnect header is false or the pause header is true, since these containers should not be cached.
+     */
     cache = "fluid-cache",
-
-    /**
-     * type of client; defaults to "browser"
-     */
-    clientType = "fluid-client-type",
-
-    /**
-     * connection options (list of keywords). Accepted options are open & pause.
-     */
-    connect = "connect",
+    clientDetails = "fluid-client-type",
     executionContext = "execution-context",
-    sequenceNumber = "fluid-sequence-number",
+
+    /**
+     * Start the container in a paused, unconnected state. Defaults to false
+     */
+    pause = "pause",
     reconnect = "fluid-reconnect",
+    sequenceNumber = "fluid-sequence-number",
 
     /**
      * One of the following:
@@ -67,8 +72,8 @@ export enum LoaderHeader {
 }
 export interface ILoaderHeader {
     [LoaderHeader.cache]: boolean;
-    [LoaderHeader.clientType]: string;
-    [LoaderHeader.connect]: string;
+    [LoaderHeader.clientDetails]: IClientDetails;
+    [LoaderHeader.pause]: boolean;
     [LoaderHeader.executionContext]: string;
     [LoaderHeader.sequenceNumber]: number;
     [LoaderHeader.reconnect]: boolean;
@@ -288,12 +293,7 @@ export class Loader extends EventEmitter implements ILoader {
             return Promise.reject(`Invalid URL ${request.url}`);
         }
         if (toCache.type !== "fluid") {
-            if (toCache.type === "prague") {
-                // tslint:disable-next-line:max-line-length
-                console.warn("IFluidResolvedUrl type === 'prague' has been deprecated. Please create IFluidResolvedUrls of type 'fluid' in the future.");
-            } else {
-                return Promise.reject("Only Fluid components currently supported");
-            }
+            return Promise.reject("Only Fluid components currently supported");
         }
         this.resolveCache.set(request.url, toCache);
 
@@ -316,7 +316,7 @@ export class Loader extends EventEmitter implements ILoader {
         request.headers = request.headers ? request.headers : {};
         const {canCache, fromSequenceNumber } = this.parseHeader(parsed, request);
 
-        debug(`${canCache} ${request.headers[LoaderHeader.connect]} ${request.headers[LoaderHeader.version]}`);
+        debug(`${canCache} ${request.headers[LoaderHeader.pause]} ${request.headers[LoaderHeader.version]}`);
         const factory: IDocumentServiceFactory =
             selectDocumentServiceFactoryForProtocol(resolvedAsFluid, this.protocolToDocumentFactoryMap);
 
@@ -366,23 +366,23 @@ export class Loader extends EventEmitter implements ILoader {
 
     }
 
+    private canUseCache(request: IRequest): boolean {
+        if (!request.headers) {
+            return true;
+        }
+
+        const noCache =
+            request.headers[LoaderHeader.cache] === false ||
+            request.headers[LoaderHeader.reconnect] === false ||
+            request.headers[LoaderHeader.pause];
+
+        return !noCache;
+    }
+
     private parseHeader(parsed: IParsedUrl, request: IRequest) {
-        let canCache = true;
         let fromSequenceNumber = -1;
 
         request.headers = request.headers ? request.headers : {};
-        if (!request.headers[LoaderHeader.connect]) {
-            request.headers[LoaderHeader.connect] = !parsed.version ? "open" : "close";
-        }
-
-        if (request.headers[LoaderHeader.cache] === false) {
-            canCache = false;
-        } else {
-            // If connection header is pure open or close we will cache it. Otherwise custom load behavior
-            // and so we will not cache the request
-            canCache = request.headers[LoaderHeader.connect] === "open"
-                || request.headers[LoaderHeader.connect] === "close";
-        }
 
         const headerSeqNum = request.headers[LoaderHeader.sequenceNumber];
         if (headerSeqNum) {
@@ -397,7 +397,7 @@ export class Loader extends EventEmitter implements ILoader {
             request.headers[LoaderHeader.version] = null;
         }
         return {
-            canCache,
+            canCache: this.canUseCache(request),
             fromSequenceNumber,
         };
     }

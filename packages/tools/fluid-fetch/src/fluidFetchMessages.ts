@@ -4,10 +4,12 @@
  */
 
 import {
-    ConnectionMode,
-    IClient,
     IDocumentDeltaStorageService,
     IDocumentService,
+} from "@microsoft/fluid-driver-definitions";
+import {
+    ConnectionMode,
+    IClient,
     ISequencedDocumentMessage,
     ScopeType,
 } from "@microsoft/fluid-protocol-definitions";
@@ -99,7 +101,9 @@ async function *loadAllSequencedMessages(
         const client: IClient = {
             permission: [],
             scopes: [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
-            type: "browser",
+            details: {
+                capabilities: { interactive: true },
+            },
             user: { id: "blah" },
         };
         console.log("Retrieving messages from web socket");

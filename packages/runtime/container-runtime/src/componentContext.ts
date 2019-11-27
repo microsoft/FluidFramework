@@ -5,13 +5,11 @@
 
 import { IComponent, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import {
-    ConnectionState,
     IAudience,
     IBlobManager,
     IDeltaManager,
     IGenericBlob,
     ILoader,
-    IQuorum,
 } from "@microsoft/fluid-container-definitions";
 import {
     BlobTreeEntry,
@@ -21,9 +19,11 @@ import {
     raiseConnectedEvent,
     readAndParse,
 } from "@microsoft/fluid-core-utils";
+import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import {
+    ConnectionState,
     IDocumentMessage,
-    IDocumentStorageService,
+    IQuorum,
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITree,
@@ -85,7 +85,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this._hostRuntime.clientId;
     }
 
-    public get clientType(): string {
+    public get clientType(): string | undefined {
         return this._hostRuntime.clientType;
     }
 

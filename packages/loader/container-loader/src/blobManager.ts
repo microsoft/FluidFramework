@@ -4,7 +4,7 @@
  */
 
 import { IBlobManager, IGenericBlob } from "@microsoft/fluid-container-definitions";
-import { IDocumentStorageService } from "@microsoft/fluid-protocol-definitions";
+import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 
 export class BlobManager implements IBlobManager {
     private readonly blobs: Map<string, IGenericBlob>;

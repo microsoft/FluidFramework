@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import * as api from "@microsoft/fluid-protocol-definitions";
 import { OdspDocumentStorageManager } from "./OdspDocumentStorageManager";
 
 /**
  * Document access to underlying storage for sharepoint driver.
  */
-export class OdspDocumentStorageService implements api.IDocumentStorageService {
+export class OdspDocumentStorageService implements IDocumentStorageService {
     constructor(private readonly storageManager: OdspDocumentStorageManager) { }
 
     public uploadSummary(summary: api.ISummaryTree, context: api.SummaryContext): Promise<string> {

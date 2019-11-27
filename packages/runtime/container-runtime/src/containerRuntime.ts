@@ -11,7 +11,6 @@ import {
     IRequest,
     IResponse } from "@microsoft/fluid-component-core-interfaces";
 import {
-    ConnectionState,
     IAudience,
     IBlobManager,
     IComponentTokenProvider,
@@ -20,7 +19,6 @@ import {
     IDeltaSender,
     ILoader,
     IMessageScheduler,
-    IQuorum,
     IRuntime,
     ITelemetryLogger,
 } from "@microsoft/fluid-container-definitions";
@@ -35,11 +33,13 @@ import {
     Trace,
     TreeTreeEntry,
 } from "@microsoft/fluid-core-utils";
+import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import {
-    Browser,
+    ConnectionState,
     IChunkedOp,
     IDocumentMessage,
-    IDocumentStorageService,
+    IHelpMessage,
+    IQuorum,
     ISequencedDocumentMessage,
     ISignalMessage,
     ISnapshotTree,
@@ -57,7 +57,6 @@ import {
     IComponentRegistry,
     IComponentRuntime,
     IEnvelope,
-    IHelpMessage,
     IHostRuntime,
     IInboundSignalMessage,
     ILatestSummary,
@@ -285,8 +284,6 @@ class ScheduleManager {
     public resume() {
         this.paused = false;
         if (!this.localPaused) {
-            // resume is only flipping the state but isn't concerned with the promise result
-            // tslint:disable-next-line:no-floating-promises
             this.deltaManager.inbound.systemResume();
         }
     }
@@ -298,12 +295,12 @@ class ScheduleManager {
         }
 
         this.localPaused = localPaused;
-        const promise = localPaused || this.paused
-            ? this.deltaManager.inbound.systemPause()
-            : this.deltaManager.inbound.systemResume();
-
-        // we do not care about "Resumed while waiting to pause" rejections.
-        promise.catch((err) => {});
+        if (localPaused || this.paused) {
+            // tslint:disable-next-line:no-floating-promises
+            this.deltaManager.inbound.systemPause();
+        } else {
+            this.deltaManager.inbound.systemResume();
+        }
     }
 
     private updatePauseState(sequenceNumber: number) {
@@ -439,7 +436,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this.context.clientId;
     }
 
-    public get clientType(): string {
+    public get clientType(): string | undefined {
         return this.context.clientType;
     }
 
@@ -858,7 +855,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         // If flush mode is already manual we are either
         // nested in another orderSequentially, or
         // the app is flushing manually, in which
-        // case this invokation doesn't own
+        // case this invocation doesn't own
         // flushing.
         if (this.flushMode === FlushMode.Manual) {
             callback();
@@ -1275,7 +1272,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     }
 
     private subscribeToLeadership() {
-        if (this.context.clientType === Browser) {
+        if (this.context.clientDetails.capabilities.interactive) {
             this.getScheduler().then((scheduler) => {
                 if (scheduler.leader) {
                     this.updateLeader(true);

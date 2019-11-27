@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ConnectionState } from "@microsoft/fluid-container-definitions";
+import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import {
-    IDocumentStorageService,
+    ConnectionState,
     ISequencedDocumentMessage,
     ITree,
     MessageType,

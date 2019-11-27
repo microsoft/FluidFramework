@@ -71,8 +71,14 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
             event.error = errorAsObject.message;
             // tslint:disable-next-line: no-unsafe-any
             if (error.getCustomProperties) {
-                // tslint:disable-next-line: no-parameter-reassignment no-unsafe-any
-                event = { ...event, ...error.getCustomProperties() };
+                // tslint:disable-next-line: no-unsafe-any
+                const customProps: object = error.getCustomProperties();
+                for (const key of Object.keys(customProps)) {
+                    if (event[key] === undefined) {
+                        // tslint:disable-next-line: no-parameter-reassignment no-unsafe-any
+                        event[key] = customProps[key];
+                    }
+                }
             }
         }
 

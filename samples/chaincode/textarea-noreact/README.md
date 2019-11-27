@@ -39,7 +39,7 @@ Go to https://packages.wu2.prague.office-int.com
 Login with:
 
     UN: prague
-    PW: bohemia
+    PW: 8Fxttu_A
 
 And follow the npm adduser steps
 

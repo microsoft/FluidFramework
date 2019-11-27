@@ -7,7 +7,7 @@ uid: build-a-component
 > [!WARNING]
 > This documentation is based on an earlier version of the Fluid Framework and is outdated.
 >
-> Track the documentation update with [#3502](https://github.com/microsoft/Prague/issues/3502).
+> Track the documentation update with [#641](https://github.com/microsoft/FluidFramework/issues/641).
 
 If you haven't already, you should [install and run yo fluid](xref:yo-fluid) and use it to generate scaffolding for a
 new component.
@@ -18,7 +18,7 @@ Within your project folder you can use the following commands:
 
 `npm run build` -- Builds the component into bundled js files
 
-`npm run deploy` -- Publishes the chaincode to Verdaccio, the Fluid team's private NPM repository (located at
+`npm run deploy` -- Publishes the component to Verdaccio, the Fluid team's private NPM repository (located at
 <https://packages.wu2.prague.office-int.com/#>)
 
 

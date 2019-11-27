@@ -36,6 +36,7 @@ import * as OpBuilder from "./opBuilder";
 import * as ops from "./ops";
 import * as Properties from "./properties";
 import { Snapshot } from "./snapshot";
+import { SnapshotLegacy } from "./snapshotlegacy";
 import { SnapshotLoader } from "./snapshotLoader";
 import { SortedSegmentSet } from "./sortedSegmentSet";
 import { MergeTreeTextHelper } from "./textSegment";
@@ -886,8 +887,12 @@ export class Client {
         return new MergeTreeTextHelper(this.mergeTree);
     }
 
-    public createSnapshotter() {
-        return new Snapshot(this.mergeTree, this.logger);
+    public createSnapshotter(): SnapshotLegacy {
+        // TODO: Remove once new snapshot format is adopted as default.
+        //       (See https://github.com/microsoft/FluidFramework/issues/84)
+        return this.mergeTree.options.newMergeTreeSnapshotFormat
+            ? new Snapshot(this.mergeTree, this.logger) as unknown as SnapshotLegacy
+            : new SnapshotLegacy(this.mergeTree, this.logger);
     }
 
     public createSnapshotLoader(runtime: IComponentRuntime) {
@@ -997,10 +1002,10 @@ export class Client {
         let segmentWindow = this.getCollabWindow();
         return this.mergeTree.getLength(segmentWindow.currentSeq, segmentWindow.clientId);
     }
-    startCollaboration(longClientId: string | undefined,  minSeq = 0, branchId = 0) {
+    startCollaboration(longClientId: string | undefined,  minSeq = 0, currentSeq = 0, branchId = 0) {
         this.longClientId = longClientId ? longClientId : "original";
         this.addLongClientId(this.longClientId , branchId);
-        this.mergeTree.startCollaboration(this.getShortClientId(this.longClientId), minSeq, branchId);
+        this.mergeTree.startCollaboration(this.getShortClientId(this.longClientId), minSeq, currentSeq, branchId);
     }
     updateCollaboration(longClientId: string) {
         const oldClientId = this.longClientId;

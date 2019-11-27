@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IProcessMessageResult, ITelemetryLogger } from "@microsoft/fluid-container-definitions";
+import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
 import { DebugLogger } from "@microsoft/fluid-core-utils";
-import { IClient, IDocumentMessage, MessageType } from "@microsoft/fluid-protocol-definitions";
+import { IClient, IDocumentMessage, IProcessMessageResult, MessageType } from "@microsoft/fluid-protocol-definitions";
 import { MockDocumentDeltaConnection, MockDocumentService } from "@microsoft/fluid-test-loader-utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
@@ -27,9 +27,9 @@ describe("Loader", () => {
 
             async function startDeltaManager() {
                 await deltaManager.connect();
-                await deltaManager.inbound.resume();
-                await deltaManager.outbound.resume();
-                await deltaManager.inboundSignal.resume();
+                deltaManager.inbound.resume();
+                deltaManager.outbound.resume();
+                deltaManager.inboundSignal.resume();
                 deltaManager.updateQuorumJoin();
             }
 
@@ -59,7 +59,7 @@ describe("Loader", () => {
                     undefined,
                     () => deltaConnection,
                 );
-                const client: Partial<IClient> = { mode: "write" };
+                const client: Partial<IClient> = { mode: "write", details: { capabilities: { interactive: true } } };
 
                 deltaManager = new DeltaManager(
                     service,

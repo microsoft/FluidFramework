@@ -4,7 +4,11 @@
  */
 import { ITelemetryBaseLogger } from "@microsoft/fluid-container-definitions";
 import { ChildLogger } from "@microsoft/fluid-core-utils";
-import { IDocumentService, IDocumentServiceFactory, IResolvedUrl } from "@microsoft/fluid-protocol-definitions";
+import {
+  IDocumentService,
+  IDocumentServiceFactory,
+  IResolvedUrl,
+} from "@microsoft/fluid-driver-definitions";
 import { IOdspResolvedUrl } from "./contracts";
 import { FetchWrapper, IFetchWrapper } from "./fetchWrapper";
 import { OdspCache } from "./odspCache";
@@ -32,7 +36,7 @@ export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentService
   constructor(
     private readonly appId: string,
     private readonly getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
-    private readonly getWebsocketToken: () => Promise<string | null>,
+    private readonly getWebsocketToken: (refresh: boolean) => Promise<string | null>,
     private readonly logger: ITelemetryBaseLogger,
     private readonly storageFetchWrapper: IFetchWrapper = new FetchWrapper(),
     private readonly deltasFetchWrapper: IFetchWrapper = new FetchWrapper(),

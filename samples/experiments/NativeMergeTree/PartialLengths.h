@@ -33,11 +33,6 @@ public:
 		std::fill(lengths.begin() + count, lengths.end(), lengthNil);
 	}
 
-	TPartialLengths(std::initializer_list<Length> il)
-		: PartialLengths(il.begin(), il.end())
-	{
-	}
-
 	Index Count() const
 	{
 		return count;

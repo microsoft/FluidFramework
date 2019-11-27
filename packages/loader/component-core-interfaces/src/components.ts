@@ -11,7 +11,6 @@ import {
 import { IProvideComponentHTMLVisual } from "./componentRender";
 import { IProvideComponentRouter } from "./componentRouter";
 import { IProvideComponentHandle, IProvideComponentHandleContext } from "./handles";
-import { IComponentQueryableLegacy } from "./legacy";
 import { IProvideComponentSerializer } from "./serializer";
 
 export interface IComponent extends
@@ -24,6 +23,4 @@ export interface IComponent extends
         & IProvideComponentConfiguration
         & IProvideComponentHandle
         & IProvideComponentSerializer>> {
-
-    readonly IComponentQueryableLegacy?: IComponentQueryableLegacy;
 }

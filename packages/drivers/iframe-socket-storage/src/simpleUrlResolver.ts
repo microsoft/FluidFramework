@@ -3,13 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import {
-    IRequest,
-} from "@microsoft/fluid-component-core-interfaces";
-import {
-    IResolvedUrl,
-    IUrlResolver,
-} from "@microsoft/fluid-protocol-definitions";
+import { IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { IResolvedUrl, IUrlResolver } from "@microsoft/fluid-driver-definitions";
 
 /**
  * A UrlResolver that just returns what's given.

@@ -41,8 +41,10 @@ function getSharepointServerRelativePathFromURL(url: URL) {
     const suffix = hostnameParts[0].endsWith("-my") ? "/_layouts/15/onedrive.aspx" : "/forms/allitems.aspx";
 
     let sitePath = url.pathname;
-    if (url.searchParams.get("id")) {
+    if (url.searchParams.has("id")) {
         sitePath = url.searchParams.get("id") as string;
+    } else if (url.searchParams.has("RootFolder")) {
+        sitePath = url.searchParams.get("RootFolder") as string;
     } else if (url.pathname.toLowerCase().endsWith(suffix)) {
         sitePath = sitePath.substr(0, url.pathname.length - suffix.length);
     }

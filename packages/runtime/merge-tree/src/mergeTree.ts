@@ -338,8 +338,10 @@ export function ordinalToArray(ord: string) {
     return a;
 }
 
-// TODO: `MaxNodesInBlock` may be misnomer.  From a cursory scan of the code, it appears
-//       that blocks only reach `MaxNodesInBlock` temporarily, at which point they split.
+// Note that the actual branching factor of the MergeTree is `MaxNodesInBlock - 1`.  This is because
+// the MergeTree always inserts first, then checks for overflow and splits if the child count equals
+// `MaxNodesInBlock`.  (i.e., `MaxNodesInBlock` contains 1 extra slot for temporary storage to
+// facilitate splits.)
 export const MaxNodesInBlock = 8;
 
 export class MergeBlock extends MergeNode implements IMergeBlock {
@@ -1350,6 +1352,9 @@ export class MergeTree {
     }
 
     reloadFromSegments(segments: ISegment[]) {
+        // This code assumes that a later call to `startCollaboration()` will initialize partial lengths.
+        assert(!this.collabWindow.collaborating);
+
         const maxChildren = MaxNodesInBlock - 1;
         const measureReloadTime = false;
 
@@ -1363,7 +1368,6 @@ export class MergeTree {
                 blockIndex < blockCount;                // If we have more blocks, we also have more nodes to insert
                 blockIndex++                            // Advance to next block in this layer.
             ) {
-                let len = 0;
                 const block = blocks[blockIndex] = this.makeBlock(0);
 
                 // For each child of the current block, insert a node (while we have nodes left)
@@ -1372,23 +1376,14 @@ export class MergeTree {
                     childIndex < maxChildren && nodeIndex < nodes.length;   // While we still have children & nodes left
                     childIndex++, nodeIndex++                               // Advance to next child & node
                 ) {
-                    // Insert the next node as the next child into the current block
-                    const child = nodes[nodeIndex];
-                    const childIndex = this.addNode(block, child);
-
-                    // The below is ~an inlined version of `blockUpdate()` to update the block
-                    // as we insert the children.  It avoids allocs and a 2nd walk of the children.
-                    len += child.cachedLength;
-                    if (MergeTree.blockUpdateMarkers) {
-                        const hierBlock = block.hierBlock();
-                        hierBlock.addNodeReferences(this, child);
-                    }
-                    if (this.blockUpdateActions) {
-                        this.blockUpdateActions.child(block, childIndex);
-                    }
+                    // Insert the next node into the current block
+                    this.addNode(block, nodes[nodeIndex]);
                 }
 
-                block.cachedLength = len;
+                // Calculate this block's info.  Previously this was inlined into the above loop as a micro-optimization,
+                // but it turns out to be negligible in practice since `reloadFromSegments()` is only invoked for the
+                // snapshot header.  The bulk of the segments in long documents are inserted via `insertSegments()`.
+                this.blockUpdate(block);
             }
 
             return blocks.length === 1          // If there is only one block at this layer...
@@ -1401,21 +1396,8 @@ export class MergeTree {
             clockStart = clock();
         }
         if (segments.length > 0) {
-            const block = buildMergeBlock(segments);
-
-            // TODO: Why add another root node on top of the root returned by buildMergeBlock?
-            this.root = this.makeBlock(1);
-            this.root.assignChild(block, 0, false);
-            if (MergeTree.blockUpdateMarkers) {
-                const hierRoot = this.root.hierBlock();
-                hierRoot.addNodeReferences(this, block);
-            }
-            if (this.blockUpdateActions) {
-                this.blockUpdateActions.child(this.root, 0);
-            }
-
+            this.root = buildMergeBlock(segments);
             this.nodeUpdateOrdinals(this.root);
-            this.root.cachedLength = block.cachedLength;
         } else {
             this.root = this.makeBlock(0);
             this.root.cachedLength = 0;
@@ -1427,11 +1409,11 @@ export class MergeTree {
     }
 
     // for now assume min starts at zero
-    startCollaboration(localClientId: number, minSeq: number, branchId: number) {
+    startCollaboration(localClientId: number, minSeq: number, currentSeq: number, branchId: number) {
         this.collabWindow.clientId = localClientId;
         this.collabWindow.minSeq = minSeq;
         this.collabWindow.collaborating = true;
-        this.collabWindow.currentSeq = minSeq;
+        this.collabWindow.currentSeq = currentSeq;
         this.localBranchId = branchId;
         this.segmentsToScour = new Collections.Heap<LRUSegment>([], LRUSegmentComparer);
         this.pendingSegments = Collections.ListMakeHead<SegmentGroup>();
@@ -1447,11 +1429,12 @@ export class MergeTree {
     }
 
     private addToLRUSet(segment: ISegment, seq: number) {
-        // only skip adding segments who's parents are
-        // explitly needing scour, not false or undefined
-        if (segment.parent.needsScour !== true) {
-            // sequence should be always above current.
-            assert(seq > this.collabWindow.currentSeq, "addToLRUSet");
+        // If the parent node has not yet been marked for scour (i.e., needsScour is not false or undefined),
+        // add the segment and mark the mark the node now.
+
+        // TODO: 'seq' may be less than the current sequence number when inserting pre-ACKed
+        //       segments from a snapshot.  We currently skip these for now.
+        if (segment.parent.needsScour !== true && seq > this.collabWindow.currentSeq) {
             segment.parent.needsScour = true;
             this.segmentsToScour.add({ segment, maxSeq: seq });
         }
@@ -2445,7 +2428,7 @@ export class MergeTree {
         }
     }
 
-    // visit segments starting from node's right siblings, then up to node's parent
+    // visit segments starting from node's left siblings, then up to node's parent
     leftExcursion<TClientData>(node: IMergeNode, leafAction: ISegmentAction<TClientData>) {
         const actions = { leaf: leafAction };
         let go = true;
@@ -3203,6 +3186,24 @@ export class MergeTree {
             go = actions.post(node, pos, refSeq, clientId, start, end, accum);
         }
 
+        return go;
+    }
+
+    // Invokes the leaf action for all segments.  Note that *all* segments are visited
+    // regardless of if they would be visible to the current `clientId` and `refSeq`.
+    walkAllSegments<TClientData>(
+        block: IMergeBlock,
+        action: (segment: ISegment, accum?: TClientData) => boolean,
+        accum?: TClientData,
+    ) {
+        let go = true;
+        const children = block.children;
+        for (let childIndex = 0; go && childIndex < block.childCount; childIndex++) {
+            const child = children[childIndex];
+            go = child.isLeaf()
+                ? action(child, accum)
+                : this.walkAllSegments(child, action, accum);
+        }
         return go;
     }
 

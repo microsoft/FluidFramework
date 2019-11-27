@@ -3,15 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import {
-    IRequest,
-} from "@microsoft/fluid-component-core-interfaces";
+import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
+import { IResolvedUrl, IUrlResolver } from "@microsoft/fluid-driver-definitions";
 import { createOdspUrl, OdspDriverUrlResolver } from "@microsoft/fluid-odsp-driver";
-import {
-    IResolvedUrl,
-    IUrlResolver,
-} from "@microsoft/fluid-protocol-definitions";
 
 const fluidOfficeServers = [
     "dev.fluidpreview.office.net",

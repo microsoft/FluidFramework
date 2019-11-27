@@ -4,17 +4,13 @@
  */
 
 import {
-    ConnectionMode,
-    IClient,
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
     IDocumentService,
-    IDocumentStorageService,
-} from "@microsoft/fluid-protocol-definitions";
-import * as Comlink from "comlink";
-import { InnerDocumentDeltaConnection } from "./innerDocumentDeltaConnection";
+    IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
+import { ConnectionMode, IClient } from "@microsoft/fluid-protocol-definitions";
+import { InnerDocumentDeltaConnection, IOuterDocumentDeltaConnectionProxy } from "./innerDocumentDeltaConnection";
 import { InnerDocumentStorageService } from "./innerDocumentStorageService";
-import { IOuterProxy } from "./outerDocumentService";
 
 /**
  * The shell of the document Service that we'll use on the inside of an IFrame
@@ -23,28 +19,23 @@ export class InnerDocumentService implements IDocumentService {
     /**
      * Create a new InnerDocumentService
      */
-    public static async create(): Promise<InnerDocumentService> {
-
-        return new Promise(async (resolve) => {
-            const create = async () => {
-                const outerProxyP = Comlink.wrap(Comlink.windowEndpoint(window.parent)) as Promise<IOuterProxy>;
-                const outerProxy = await outerProxyP;
-                await outerProxy.connected();
-                return new InnerDocumentService(outerProxy);
-            };
-            const eventListener = async (evt) => {
-                resolve(await create());
-            };
-            window.addEventListener("message", eventListener, {once: true});
-
-            const docService = await create();
-            window.removeEventListener("message", eventListener);
-            resolve(docService);
-        });
+    public static async create(proxyObject: {
+        clientId: string,
+        stream: IOuterDocumentDeltaConnectionProxy,
+        deltaStorage: IDocumentDeltaStorageService,
+        storage: IDocumentStorageService,
+     }): Promise<InnerDocumentService> {
+        // tslint:disable-next-line: await-promise
+        return new InnerDocumentService(proxyObject, await proxyObject.clientId);
     }
 
-    constructor(private readonly outerProxy: IOuterProxy) {
-    }
+    constructor(private readonly outerProxy: {
+                    clientId: string,
+                    stream: IOuterDocumentDeltaConnectionProxy,
+                    deltaStorage: IDocumentDeltaStorageService,
+                    storage: IDocumentStorageService,
+                },
+                public clientId: string) { }
 
     /**
      * Connects to a storage endpoint for snapshot service.
@@ -52,7 +43,7 @@ export class InnerDocumentService implements IDocumentService {
      * @returns returns the document storage service for routerlicious driver.
      */
     public async connectToStorage(): Promise<IDocumentStorageService> {
-        return new InnerDocumentStorageService(this.outerProxy);
+        return new InnerDocumentStorageService(this.outerProxy.storage);
     }
 
     /**
@@ -62,7 +53,9 @@ export class InnerDocumentService implements IDocumentService {
      */
     public async connectToDeltaStorage(): Promise<IDocumentDeltaStorageService> {
         return {
-            get: this.outerProxy.get,
+            get: (from?: number, to?: number) => {
+                return this.outerProxy.deltaStorage.get(from, to);
+            },
         };
     }
 
@@ -72,8 +65,8 @@ export class InnerDocumentService implements IDocumentService {
      * @returns returns the document delta stream service for routerlicious driver.
      */
     public async connectToDeltaStream(client: IClient, mode: ConnectionMode): Promise<IDocumentDeltaConnection> {
-        const connection = await this.outerProxy.getDetails();
-        return InnerDocumentDeltaConnection.create(connection, this.outerProxy);
+        const connection = await this.outerProxy.stream.getDetails();
+        return InnerDocumentDeltaConnection.create(connection, this.outerProxy.stream);
     }
 
     public async branch(): Promise<string> {

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IPen, IStylusOperation } from "@microsoft/fluid-ink";
+import { IInkPoint, IPen } from "@microsoft/fluid-ink";
 import { IPoint, IVector, Point, Vector } from "../ui";
 import { SegmentCircleInclusive } from "./overlayCanvas";
 import { Circle, IShape, Polygon } from "./shapes/index";
@@ -15,14 +15,14 @@ import { Circle, IShape, Polygon } from "./shapes/index";
  * Besides circles, a trapezoid that serves as a bounding box of two stroke point is also returned.
  */
 export function getShapes(
-    startPoint: IStylusOperation,
-    endPoint: IStylusOperation,
+    startPoint: IInkPoint,
+    endPoint: IInkPoint,
     pen: IPen,
     circleInclusive: SegmentCircleInclusive): IShape[] {
 
     const dirVector = new Vector(
-        endPoint.point.x - startPoint.point.x,
-        endPoint.point.y - startPoint.point.y);
+        endPoint.x - startPoint.x,
+        endPoint.y - startPoint.y);
     const len = dirVector.length();
 
     const shapes = new Array<IShape>();
@@ -39,7 +39,7 @@ export function getShapes(
     // Just draws a circle on small values??
     if (len + Math.min(widthAtStart, widthAtEnd) <= Math.max(widthAtStart, widthAtEnd)) {
         const center = widthAtStart >= widthAtEnd ? startPoint : endPoint;
-        shapes.push(new Circle({ x: center.point.x, y: center.point.y }, widthAtEnd));
+        shapes.push(new Circle({ x: center.x, y: center.y }, widthAtEnd));
         return shapes;
     }
 
@@ -56,35 +56,35 @@ export function getShapes(
 
         normalizedLateralVector = Vector.normalize(Vector.rotate(dirVector, -angle));
         trapezoidP0 = new Point(
-            startPoint.point.x + widthAtStart * normalizedLateralVector.x,
-            startPoint.point.y + widthAtStart * normalizedLateralVector.y);
+            startPoint.x + widthAtStart * normalizedLateralVector.x,
+            startPoint.y + widthAtStart * normalizedLateralVector.y);
         trapezoidP3 = new Point(
-            endPoint.point.x + widthAtEnd * normalizedLateralVector.x,
-            endPoint.point.y + widthAtEnd * normalizedLateralVector.y);
+            endPoint.x + widthAtEnd * normalizedLateralVector.x,
+            endPoint.y + widthAtEnd * normalizedLateralVector.y);
 
         normalizedLateralVector = Vector.normalize(Vector.rotate(dirVector, angle));
         trapezoidP2 = new Point(
-            endPoint.point.x + widthAtEnd * normalizedLateralVector.x,
-            endPoint.point.y + widthAtEnd * normalizedLateralVector.y);
+            endPoint.x + widthAtEnd * normalizedLateralVector.x,
+            endPoint.y + widthAtEnd * normalizedLateralVector.y);
         trapezoidP1 = new Point(
-            startPoint.point.x + widthAtStart * normalizedLateralVector.x,
-            startPoint.point.y + widthAtStart * normalizedLateralVector.y);
+            startPoint.x + widthAtStart * normalizedLateralVector.x,
+            startPoint.y + widthAtStart * normalizedLateralVector.y);
     } else {
         normalizedLateralVector = new Vector(-dirVector.y / len, dirVector.x / len);
 
         trapezoidP0 = new Point(
-            startPoint.point.x + widthAtStart * normalizedLateralVector.x,
-            startPoint.point.y + widthAtStart * normalizedLateralVector.y);
+            startPoint.x + widthAtStart * normalizedLateralVector.x,
+            startPoint.y + widthAtStart * normalizedLateralVector.y);
         trapezoidP1 = new Point(
-            startPoint.point.x - widthAtStart * normalizedLateralVector.x,
-            startPoint.point.y - widthAtStart * normalizedLateralVector.y);
+            startPoint.x - widthAtStart * normalizedLateralVector.x,
+            startPoint.y - widthAtStart * normalizedLateralVector.y);
 
         trapezoidP2 = new Point(
-            endPoint.point.x - widthAtEnd * normalizedLateralVector.x,
-            endPoint.point.y - widthAtEnd * normalizedLateralVector.y);
+            endPoint.x - widthAtEnd * normalizedLateralVector.x,
+            endPoint.y - widthAtEnd * normalizedLateralVector.y);
         trapezoidP3 = new Point(
-            endPoint.point.x + widthAtEnd * normalizedLateralVector.x,
-            endPoint.point.y + widthAtEnd * normalizedLateralVector.y);
+            endPoint.x + widthAtEnd * normalizedLateralVector.x,
+            endPoint.y + widthAtEnd * normalizedLateralVector.y);
     }
 
     const polygon = new Polygon([trapezoidP0, trapezoidP3, trapezoidP2, trapezoidP1]);
@@ -94,14 +94,14 @@ export function getShapes(
         case SegmentCircleInclusive.None:
             break;
         case SegmentCircleInclusive.Both:
-            shapes.push(new Circle({ x: startPoint.point.x, y: startPoint.point.y }, widthAtStart));
-            shapes.push(new Circle({ x: endPoint.point.x, y: endPoint.point.y }, widthAtEnd));
+            shapes.push(new Circle({ x: startPoint.x, y: startPoint.y }, widthAtStart));
+            shapes.push(new Circle({ x: endPoint.x, y: endPoint.y }, widthAtEnd));
             break;
         case SegmentCircleInclusive.Start:
-            shapes.push(new Circle({ x: startPoint.point.x, y: startPoint.point.y }, widthAtStart));
+            shapes.push(new Circle({ x: startPoint.x, y: startPoint.y }, widthAtStart));
             break;
         case SegmentCircleInclusive.End:
-            shapes.push(new Circle({ x: endPoint.point.x, y: endPoint.point.y }, widthAtEnd));
+            shapes.push(new Circle({ x: endPoint.x, y: endPoint.y }, widthAtEnd));
             break;
         default:
             break;

@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-fetch",
-  "version": "0.11.0",
+  "version": "0.12.0",
   "description": "",
   "license": "MIT",
   "author": "Microsoft",
@@ -10,30 +10,32 @@
   },
   "scripts": {
     "build": "concurrently npm:build:compile npm:tslint",
-    "build:compile": "tsc",
+    "build:compile": "npm run tsc",
+    "build:compile:min": "npm run build:compile",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
-    "clean": "rimraf dist *.tsbuildinfo package-deps.json *.build.log",
+    "clean": "rimraf dist *.tsbuildinfo *.build.log",
+    "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "dependencies": {
-    "@microsoft/fluid-core-utils": "^0.11.0",
-    "@microsoft/fluid-fluidapp-odsp-urlresolver": "^0.11.0",
-    "@microsoft/fluid-odsp-driver": "^0.11.0",
-    "@microsoft/fluid-odsp-urlresolver": "^0.11.0",
-    "@microsoft/fluid-odsp-utils": "^0.11.0",
-    "@microsoft/fluid-protocol-definitions": "^0.11.0",
-    "@microsoft/fluid-routerlicious-driver": "^0.11.0",
-    "@microsoft/fluid-routerlicious-host": "^0.11.0",
-    "@microsoft/fluid-routerlicious-urlresolver": "^0.11.0",
-    "@microsoft/fluid-runtime-definitions": "^0.11.0"
+    "@microsoft/fluid-core-utils": "^0.12.0",
+    "@microsoft/fluid-driver-definitions": "^0.12.0",
+    "@microsoft/fluid-fluidapp-odsp-urlresolver": "^0.12.0",
+    "@microsoft/fluid-odsp-driver": "^0.12.0",
+    "@microsoft/fluid-odsp-urlresolver": "^0.12.0",
+    "@microsoft/fluid-odsp-utils": "^0.12.0",
+    "@microsoft/fluid-protocol-definitions": "^0.12.0",
+    "@microsoft/fluid-routerlicious-driver": "^0.12.0",
+    "@microsoft/fluid-routerlicious-urlresolver": "^0.12.0",
+    "@microsoft/fluid-runtime-definitions": "^0.12.0"
   },
   "devDependencies": {
-    "@microsoft/fluid-build-common": "^0.11.0",
-    "@types/node": "^10.12.12",
+    "@microsoft/fluid-build-common": "^0.12.0",
+    "@types/node": "^10.14.6",
     "concurrently": "^4.1.0",
     "rimraf": "^2.6.2",
-    "tslint": "^5.11.0",
+    "tslint": "^5.20.0",
     "typescript": "~3.4.5"
   }
 }

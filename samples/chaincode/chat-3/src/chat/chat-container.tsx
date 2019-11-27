@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IQuorum } from "@microsoft/fluid-container-definitions";
-import { ISequencedDocumentMessage, MessageType } from "@microsoft/fluid-protocol-definitions";
+import { IQuorum, ISequencedDocumentMessage, MessageType } from "@microsoft/fluid-protocol-definitions";
 import { Chat } from "@stardust-ui/react";
 import * as React from "react";
 import { Runtime } from "../runtime/runtime";
