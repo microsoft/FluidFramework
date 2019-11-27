@@ -256,6 +256,18 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             throw new Error("Can't set autoReconnect prior to load");
         }
         this._deltaManager.autoReconnect = value;
+
+        this.logger.sendTelemetryEvent({
+            eventName: "AutoReconnect",
+            value,
+            connectionMode: this._deltaManager!.connectionMode,
+            connectionState: this.connectionState,
+        });
+
+        if (value) {
+            // Avoid unhandled promises - error reporting is done through error events
+            this._deltaManager!.connect().catch(() => {});
+        }
     }
 
     /**
@@ -415,13 +427,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             this.raiseCriticalError(error);
             throw error;
         });
-    }
-
-    /**
-     * Connect the deltaManager.  Useful when the autoConnect flag is set to false.
-     */
-    public async reconnect() {
-        return this._deltaManager!.connect();
     }
 
     private async reloadContextCore(): Promise<void> {
