@@ -224,15 +224,12 @@ export interface IDirectoryDataObject {
     subdirectories?: { [subdirName: string]: IDirectoryDataObject };
 }
 
-interface IDirectoryNewStorageFormat {
+export interface IDirectoryNewStorageFormat {
     blobs: string[];
     content: IDirectoryDataObject;
 }
 
 function serializeDirectory(root: SubDirectory): ITree {
-    // Splitting of big properties is currently disabled (via this big number)
-    // Once build with support for reading new snapshot format propagates, we can enable it.
-    const writeNewFormat = false;
     const MinValueSizeSeparateSnapshotBlob = 8 * 1024;
 
     const tree: ITree = { entries: [], id: null };
@@ -253,7 +250,7 @@ function serializeDirectory(root: SubDirectory): ITree {
                 type: value.type,
                 value: value.value && JSON.parse(value.value) as object,
             };
-            if (writeNewFormat && value.value && value.value.length >= MinValueSizeSeparateSnapshotBlob) {
+            if (value.value && value.value.length >= MinValueSizeSeparateSnapshotBlob) {
                 const extraContent: IDirectoryDataObject = {};
                 let largeContent = extraContent;
                 if (currentSubDir.absolutePath !== posix.sep) {
@@ -283,15 +280,11 @@ function serializeDirectory(root: SubDirectory): ITree {
         }
     }
 
-    if (writeNewFormat) {
-        const newFormat: IDirectoryNewStorageFormat = {
-            blobs,
-            content,
-        };
-        addBlobToTree(tree, snapshotFileName, newFormat);
-    } else {
-        addBlobToTree(tree, snapshotFileName, content);
-    }
+    const newFormat: IDirectoryNewStorageFormat = {
+        blobs,
+        content,
+    };
+    addBlobToTree(tree, snapshotFileName, newFormat);
 
     return tree;
 }
