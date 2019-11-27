@@ -783,6 +783,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         if (!context) {
             // attach message may not have been processed yet
             assert(!local);
+            this.logger.sendTelemetryEvent({ eventName: "SignalComponentNotFound", componentId: envelope.address });
             return;
         }
 
