@@ -6,7 +6,7 @@ uid: yo-fluid
 
 yo fluid is a tool that helps create a scaffold for a Fluid component.
 
-First, [clone the Fluid Framework repo locally](../README.md#fluid-repo).
+First, [clone the Fluid Framework repo locally](./README.md#fluid-repo).
 
 Once you've cloned the repo, you can set up the `yo fluid` bootstrapper:
 

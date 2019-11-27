@@ -1,5 +1,8 @@
 # Build Server
 
+> [!TIP]
+> This topic is only relevant to core Fluid contributors.
+
 Install Docker Community Edition in order to run the following
 <https://docs.docker.com/install/linux/docker-ce/ubuntu/#set-up-the-repository>
 
@@ -40,10 +43,11 @@ Create a new Ubuntu 18 VM. Currently we make use of the F16s_v2 VM size and add 
 To mount the disk once the VM is online follow the instructions at
 https://docs.microsoft.com/en-us/azure/virtual-machines/linux/attach-disk-portal.
 
-Then follow the instructions above. You likely want to store your images as well as VSTS work directory on the
-data drive. To change where Docker stores files follow the symbolic linking instructions at https://forums.docker.com/t/how-do-i-change-the-docker-image-installation-directory/1169. We prefer creating a `/datadrive/docker` folder that we
-then symbolically link `/var/lib/docker` to. For VSTS we create a `/datadrive/vsts` folder that we then have `/var/lib/vsts`
-symbolically link to - i.e. `sudo ln -s /datadrive/vsts /var/lib/vsts`.
+Then follow the instructions above. You likely want to store your images as well as VSTS work directory on the data
+drive. To change where Docker stores files follow the symbolic linking instructions at
+<https://forums.docker.com/t/how-do-i-change-the-docker-image-installation-directory/1169>. We prefer creating a
+`/datadrive/docker` folder that we then symbolically link `/var/lib/docker` to. For VSTS we create a `/datadrive/vsts`
+folder that we then have `/var/lib/vsts` symbolically link to - i.e. `sudo ln -s /datadrive/vsts /var/lib/vsts`.
 
 ## Build Machine Help
 

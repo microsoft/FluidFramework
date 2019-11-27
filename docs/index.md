@@ -39,12 +39,7 @@ See [this draft document](xref:what-is-fluid) for some more information about Fl
 
 ## Get started now
 
-Get up and running quickly using our [Getting Started guide](xref:get-started);
-
-You can use [yo fluid](xref:yo-fluid) to
-
-[!include[<yo yo yo>](./get-started/_yo-fluid-content.md)]
-
+Get up and running quickly using our [Getting Started guide](xref:get-started).
 
 ## Help
 
