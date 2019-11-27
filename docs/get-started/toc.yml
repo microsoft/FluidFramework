@@ -27,6 +27,8 @@
           href: SharedCell.md
         - name: ConsensusQueue
           href: ConsensusQueue.md
+        - name: ConsensusRegisterCollection
+          href: ConsensusRegisterCollection.md
         - name: ConsensusStack
           href: ConsensusStack.md
 - name: Terminology
