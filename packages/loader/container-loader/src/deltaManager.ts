@@ -135,6 +135,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     // collab window tracking. This is timestamp of %2000 message.
     private lastMessageTimeForTelemetry: number | undefined;
 
+    // To track round trip time for every %1000 client message.
+    private opSendTime: number | undefined;
+
     public get inbound(): IDeltaQueue<ISequencedDocumentMessage> {
         return this._inbound;
     }
@@ -407,6 +410,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             type,
         };
 
+        if (message.clientSequenceNumber % 1000 === 0) {
+            this.opSendTime = Date.now();
+        }
+
         const outbound = this.createOutboundMessage(type, message);
         this.stopSequenceNumberUpdate();
         this.emit("submitOp", message);
@@ -566,6 +573,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
      * Closes the connection and clears inbound & outbound queues.
      */
     public close(error?: any): void {
+        this.opSendTime = undefined;
         if (this.closed) {
             return;
         }
@@ -790,6 +798,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         error?: any,
         autoReconnect: boolean = true,
     ) {
+        this.opSendTime = undefined;
         // we quite often get protocol errors before / after observing nack/disconnect
         // we do not want to run through same sequence twice.
         if (connection !== this.connection) {
@@ -949,6 +958,16 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                     message.timestamp - this.lastMessageTimeForTelemetry : undefined,
             });
             this.lastMessageTimeForTelemetry = message.timestamp;
+        }
+
+        if (message.clientSequenceNumber % 1000 === 0) {
+            this.logger.sendTelemetryEvent({
+                eventName: "OpRTT",
+                seqNumber: message.sequenceNumber,
+                rtt: this.opSendTime ?
+                    Date.now() - this.opSendTime : undefined,
+            });
+            this.opSendTime = undefined;
         }
 
         const result = this.handler!.process(message);
