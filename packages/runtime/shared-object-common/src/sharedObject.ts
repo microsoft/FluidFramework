@@ -401,23 +401,25 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
     private processPendingOp(message: ISequencedDocumentMessage) {
         const firstPendingOp = this.pendingOps.peekFront();
 
-        // disconnected ops should never be processed. They should have been fully sent on connected
-        if (firstPendingOp !== undefined) {
-            assert(firstPendingOp.clientSequenceNumber !== -1,
-                `processing disconnected op ${firstPendingOp.clientSequenceNumber}`);
-
-            // One of our messages was sequenced. We can remove it from the local message list. Given these arrive
-            // in order we only need to check the beginning of the local list.
-
-            if (firstPendingOp.clientSequenceNumber === message.clientSequenceNumber) {
-                this.pendingOps.shift();
-                if (this.pendingOps.length === 0) {
-                    this.emit("processed");
-                }
-                return;
-            }
+        if (firstPendingOp === undefined) {
+            this.logger.sendErrorEvent({ eventName: "UnexpectedAckReceived" });
+            return;
         }
 
-        this.logger.sendErrorEvent({ eventName: "DuplicateAckReceived" });
+        // disconnected ops should never be processed. They should have been fully sent on connected
+        assert(firstPendingOp.clientSequenceNumber !== -1,
+            `processing disconnected op ${firstPendingOp.clientSequenceNumber}`);
+
+        // One of our messages was sequenced. We can remove it from the local message list. Given these arrive
+        // in order we only need to check the beginning of the local list.
+        if (firstPendingOp.clientSequenceNumber !== message.clientSequenceNumber) {
+            this.logger.sendErrorEvent({ eventName: "WrongAckReceived" });
+            return;
+        }
+
+        this.pendingOps.shift();
+        if (this.pendingOps.length === 0) {
+            this.emit("processed");
+        }
     }
 }

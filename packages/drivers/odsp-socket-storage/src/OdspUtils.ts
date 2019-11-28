@@ -79,12 +79,26 @@ export function blockList(nonRetriableCodes: number[]): RetryFilter {
     return (code: number) => !nonRetriableCodes.includes(code);
 }
 
-// Going safe - only exclude specific codes
-// export const defaultRetryFilter = allowList([408, 409, 429, 500, 503]);
+// Non-retryable errors on joinSession / getLatest / get ops / storage requests (blobs) / summary paths.
+// Basically all SPO communication.
+// PUSH (delta oedering service) errors use socketErrorRetryFilter below.
+// 401, 403: fatal errors, but driver will retry once with new token (see usage of getWithRetryForTokenRefresh)
 export const defaultRetryFilter = blockList([400, 401, 403, 404]);
 
-// socket error filter for socket erros where 400 is a special retryable error.
-export const socketErrorRetryFilter = blockList([401, 403, 404, 406]);
+//
+// Socket error filter for socket errors
+//
+// These errors are retryable in a sense that we rely on fetching new joinSession and it failing if needed
+// (see defaultRetryFilter list above), otherwise continuing with new connection (to potentially different server)
+//    400:
+//       Invalid tenant or document id. The WebSocket is connected to a different document
+//       Document is full (with retryAfter)
+//    404: Invalid document. The document \"local/w1-645289b2-568e-4097-9ef8-3253a04d6209\" does not exist
+// Not-retryable:
+//    401, 403: These are fatal, but runtime will retry once with new token (see usage of getWithRetryForTokenRefresh)
+//    406: Unsupported client protocol
+//
+export const socketErrorRetryFilter = blockList([401, 403, 406]);
 
 export interface IOdspResponse<T> {
     content: T;

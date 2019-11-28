@@ -35,18 +35,27 @@ export class DeltaConnection extends EventEmitter {
     }
 
     public get connected(): boolean {
-        return this._connected;
+        return !!this._connection;
     }
 
     private readonly _details: IConnectionDetails;
     private _nacked = false;
-    private _connected = true;
 
     private readonly forwardEvents = ["op", "op-content", "signal", "error", "pong"];
     private readonly nonForwardEvents = ["nack", "disconnect"];
 
-    private constructor(private readonly connection: IDocumentDeltaConnection) {
+    private _connection?: IDocumentDeltaConnection;
+
+    private get connection(): IDocumentDeltaConnection {
+        if (!this._connection) {
+            throw new Error("Connection is closed!");
+        }
+        return this._connection;
+    }
+
+    private constructor(connection: IDocumentDeltaConnection) {
         super();
+        this._connection = connection;
 
         this._details = {
             claims: connection.claims,
@@ -71,8 +80,8 @@ export class DeltaConnection extends EventEmitter {
         });
 
         connection.on("disconnect", (reason) => {
-            this._connected = false;
             this.emit("disconnect", reason);
+            this.close();
         });
     }
 
@@ -80,8 +89,11 @@ export class DeltaConnection extends EventEmitter {
      * Closes the delta connection. This disconnects the socket and clears any listeners
      */
     public close() {
-        this._connected = false;
-        this.connection.disconnect();
+        if (this._connection) {
+            const connection = this._connection;
+            this._connection = undefined;
+            connection.disconnect();
+        }
         this.removeAllListeners();
     }
 

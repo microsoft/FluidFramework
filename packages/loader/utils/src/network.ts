@@ -18,14 +18,9 @@ export class NetworkError extends Error implements IConnectionError {
         super(errorMessage);
     }
 
-    public getCustomProperties() {
-        const prop = {};
-        for (const key of Object.getOwnPropertyNames(this)) {
-            if (this[key]) {
-                prop[key] = this[key];
-            }
-        }
-        return prop;
+    // return all enumerable properties (i.e. exclude stack, message)
+    public getCustomProperties(): object {
+        return this;
     }
 }
 

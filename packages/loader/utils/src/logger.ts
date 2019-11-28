@@ -49,6 +49,20 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
         return Math.floor(tick);
     }
 
+    /**
+     * Attempts to parse number from string.
+     * If fails,returns original string.
+     * Used to make telemetry data typed (and support math operations, like comparison),
+     * in places where we do expect numbers (like contentsize/duration property in http header)
+     */
+    public static numberFromString(str: string | null | undefined): string | number | undefined {
+        if (str === undefined || str === null) {
+            return undefined;
+        }
+        const num = Number(str);
+        return Number.isNaN(num) ? str : num;
+    }
+
     public static sanitizePkgName(name: string) {
         return name.replace("@", "").replace("/", "-");
     }
@@ -71,8 +85,14 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
             event.error = errorAsObject.message;
             // tslint:disable-next-line: no-unsafe-any
             if (error.getCustomProperties) {
-                // tslint:disable-next-line: no-parameter-reassignment no-unsafe-any
-                event = { ...event, ...error.getCustomProperties() };
+                // tslint:disable-next-line: no-unsafe-any
+                const customProps: object = error.getCustomProperties();
+                for (const key of Object.keys(customProps)) {
+                    if (event[key] === undefined) {
+                        // tslint:disable-next-line: no-parameter-reassignment no-unsafe-any
+                        event[key] = customProps[key];
+                    }
+                }
             }
         }
 
@@ -470,7 +490,7 @@ export class PerformanceEvent {
     protected constructor(
             private readonly logger: ITelemetryLogger,
             event: ITelemetryGenericEvent) {
-        this.event = {...event, tick: this.startTime};
+        this.event = {...event};
         this.reportEvent("start");
 
         if (typeof window === "object" && window != null && window.performance) {
@@ -511,11 +531,10 @@ export class PerformanceEvent {
             return;
         }
 
-        const tick = performanceNow();
-        const event: ITelemetryPerformanceEvent = {...this.event, ...props, tick};
+        const event: ITelemetryPerformanceEvent = {...this.event, ...props};
         event.eventName = `${event.eventName}_${eventNameSuffix}`;
         if (eventNameSuffix !== "start") {
-            event.duration = tick - this.startTime;
+            event.duration = performanceNow() - this.startTime;
         }
 
         this.logger.sendPerformanceEvent(event, error);
