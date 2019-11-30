@@ -23,7 +23,7 @@
     "test": "mocha -r ts-node/register -r ignore-styles --recursive test/**/*.spec.ts --exit",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml --exit",
     "tsc": "tsc",
-    "tslint": "tslint --project tsconfig.json --format verbose"
+    "tslint": "npm run eslint"
   },
   "dependencies": {
     "@microsoft/fluid-aqueduct": "^0.12.0",
