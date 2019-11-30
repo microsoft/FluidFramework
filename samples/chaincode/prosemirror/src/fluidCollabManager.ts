@@ -3,30 +3,30 @@
  * Licensed under the MIT License.
  */
 
-import { Plugin, Transaction } from "prosemirror-state";
+import { Plugin, Transaction, EditorState, NodeSelection } from "prosemirror-state";
 import { SharedString } from "@microsoft/fluid-sequence";
 import { addListNodes } from "prosemirror-schema-list";
 import {
     ReferenceType,
     TextSegment,
     Marker,
-} from "@microsoft/fluid-merge-tree";
-import {
+
     createRemoveRangeOp,
     createGroupOp,
     IMergeTreeOp,
 } from "@microsoft/fluid-merge-tree";
+
 import OrderedMap = require('orderedmap');
 import { Schema, NodeSpec, Fragment, DOMSerializer, Slice } from "prosemirror-model";
-import { sliceToGroupOps, ProseMirrorTransactionBuilder } from "./fluidBridge";
+import { sliceToGroupOps, ProseMirrorTransactionBuilder, IProseMirrorNode, nodeTypeKey } from "./fluidBridge";
 import { schema } from "./fluidSchema";
 import * as assert from "assert";
 import { MenuItem } from "prosemirror-menu"
-import { EditorState, NodeSelection } from "prosemirror-state";
+
 import { EditorView } from "prosemirror-view";
 import { insertPoint } from "prosemirror-transform";
 import { buildMenuItems, exampleSetup } from "prosemirror-example-setup";
-import { IProseMirrorNode, nodeTypeKey } from "./fluidBridge";
+
 import { ComponentView } from "./componentView";
 import { FootnoteView } from "./footnoteView";
 import { create as createSelection } from "./selection";
@@ -78,7 +78,7 @@ export class FluidCollabManager extends EventEmitter {
         nodeStack.push({ type: "doc", content: [] });
 
         this.text.walkSegments((segment) => {
-            let top = nodeStack[nodeStack.length - 1];
+            const top = nodeStack[nodeStack.length - 1];
 
             if (TextSegment.is(segment)) {
                 const nodeJson: IProseMirrorNode = {
@@ -151,7 +151,8 @@ export class FluidCollabManager extends EventEmitter {
             label: "Component",
             enable(state) { return true },
             run: (state, _, view) => {
-                let { from, to } = state.selection, attrs = null
+                const { from, to } = state.selection;
+                let attrs = null;
                 if (state.selection instanceof NodeSelection && state.selection.node.type == fluidSchema.nodes.fluid)
                     attrs = state.selection.node.attrs
                 openPrompt({
@@ -179,7 +180,8 @@ export class FluidCollabManager extends EventEmitter {
                 return insertPoint(state.doc, state.selection.from, fluidSchema.nodes.footnote) != null
             },
             run(state, dispatch) {
-                let { empty, $from, $to } = state.selection, content = Fragment.empty
+                const { empty, $from, $to } = state.selection;
+                let content = Fragment.empty;
                 if (!empty && $from.sameParent($to) && $from.parent.inlineContent)
                     content = $from.parent.content.cut($from.parentOffset, $to.parentOffset)
                 dispatch(state.tr.replaceSelectionWith(fluidSchema.nodes.footnote.create(null, content)))
@@ -197,8 +199,8 @@ export class FluidCollabManager extends EventEmitter {
                     schema: this.schema,
                     menuContent: menu.fullMenu,
                 })
-                .concat(this.plugin)
-                .concat(createSelection()),
+                    .concat(this.plugin)
+                    .concat(createSelection()),
         });
 
         let sliceBuilder: ProseMirrorTransactionBuilder;
@@ -340,10 +342,10 @@ export class FluidCollabManager extends EventEmitter {
 
                     const groupOp = createGroupOp(...operations);
                     this.text.groupOperation(groupOp);
-                    
+
                     break;
                 }
-                
+
                 case "replaceAround": {
                     let operations = new Array<IMergeTreeOp>();
 
