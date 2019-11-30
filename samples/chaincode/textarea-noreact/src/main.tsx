@@ -328,6 +328,7 @@ export class TextareaNoReact
       await this.root.get<IComponentHandle>(this.textareaRootKey)
                      .get<SharedString>();
 
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
     textareaString.on("sequenceDelta", this.handleIncomingChange);
     this.textareaState.text = textareaString.getText();
     console.log("textarea-noreact: " + this.textareaState.text);
