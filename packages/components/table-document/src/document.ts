@@ -38,11 +38,11 @@ export class TableDocument extends PrimedComponent implements ITable {
         ],
     );
 
-    public  get numCols()    { return this.maybeCols.getLength(); }
-    public  get numRows()    { return this.matrix.numRows; }
+    public get numCols() { return this.maybeCols.getLength(); }
+    public get numRows() { return this.matrix.numRows; }
 
-    private get matrix()        { return this.maybeMatrix; }
-    private get workbook()      { return this.maybeWorkbook; }
+    private get matrix() { return this.maybeMatrix; }
+    private get workbook() { return this.maybeWorkbook; }
 
     private maybeRows?: SharedNumberSequence;
     private maybeCols?: SharedNumberSequence;
@@ -50,7 +50,7 @@ export class TableDocument extends PrimedComponent implements ITable {
     private maybeWorkbook?: ISheetlet;
 
     constructor(runtime: IComponentRuntime, context: IComponentContext) {
-       super(runtime, context);
+        super(runtime, context);
     }
 
     public evaluateCell(row: number, col: number) {
@@ -175,6 +175,7 @@ export class TableDocument extends PrimedComponent implements ITable {
         this.maybeRows.on("sequenceDelta", (e, t) => this.emit("sequenceDelta", e, t));
 
         // tslint:disable-next-line:no-this-assignment
+        // eslint-disable-next-line
         const table = this;
         this.maybeWorkbook = createSheetlet({
             get numRows() { return table.numRows; },
