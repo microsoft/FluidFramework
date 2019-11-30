@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Note } from './Note';
+import { Note } from "./Note";
 
 export const restNoteMidiNumber = -1;
 

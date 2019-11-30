@@ -2,5 +2,9 @@
     "extends": [
         "@microsoft/eslint-config-fluid"
     ],
-    "rules": {}
+    "rules": {
+        "tslint:no-import-side-effect": "off",
+        "tslint:no-unsafe-any": "off",
+        "!!@typescript-eslint/tslint/config": "off"
+    }
 }

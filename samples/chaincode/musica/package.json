@@ -21,6 +21,7 @@
     "start:live": "webpack-dev-server --config webpack.config.js --package package.json --env.mode live",
     "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
     "tsc": "tsc",
+    "tslint": "npm run eslint",
     "webpack": "webpack --env.production",
     "webpack:dev": "webpack --env.development"
   },
@@ -46,6 +47,7 @@
   "devDependencies": {
     "@babel/plugin-proposal-class-properties": "^7.4.4",
     "@microsoft/eslint-config-fluid": "^0.12.0",
+    "@microsoft/fluid-build-common": "^0.12.0",
     "@microsoft/fluid-webpack-component-loader": "^0.12.0",
     "@types/node": "^10.14.6",
     "@types/react": "^16.9.2",
@@ -59,6 +61,7 @@
     "rimraf": "^2.6.2",
     "style-loader": "^1.0.0",
     "ts-loader": "^6.1.2",
+    "tslint": "^5.20.0",
     "typescript": "~3.4.5",
     "webpack": "^4.16.5",
     "webpack-cli": "^3.1.2",
