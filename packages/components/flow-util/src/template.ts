@@ -124,6 +124,7 @@ export class Template {
     }
 
     public get(root: Element, name: string) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return this.refs.get(name)!(root);
     }
 
