@@ -13,13 +13,13 @@ export interface IDocumentListProps {
 
 export interface IDocumentListState {
     values: {
-        pkg: string,
-        name: string,
-        version: string,
-        icon: string,
-        url: string,
-        date: number,
-        user: any,
+        pkg: string;
+        name: string;
+        version: string;
+        icon: string;
+        url: string;
+        date: number;
+        user: any;
     }[];
 }
 

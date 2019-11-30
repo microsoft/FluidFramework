@@ -51,7 +51,7 @@ export class Drawer extends EventEmitter implements IComponentLoadable, ICompone
     private root: ISharedMap;
     private views = new Set<DrawerView>();
     private packageManager: IPackageManager;
-    private packagesP: Promise<{ pkg: string, name: string, version: string, icon: string }[]>;
+    private packagesP: Promise<{ pkg: string; name: string; version: string; icon: string }[]>;
 
     constructor(
         private readonly runtime: IComponentRuntime,

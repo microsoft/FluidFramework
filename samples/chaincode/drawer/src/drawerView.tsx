@@ -28,14 +28,14 @@ mergeStyles({
 });
 
 export class DrawerView implements IComponentHTMLView {
-    private packages: { pkg: string, name: string, version: string, icon: string }[] = [];
+    private packages: { pkg: string; name: string; version: string; icon: string }[] = [];
     private elm: HTMLElement;
 
     constructor(
         private readonly documentsFactory: IDocumentFactory,
         private readonly documentsMap: ISharedMap,
         private readonly context: IComponentContext,
-        packagesP: Promise<{ pkg: string, name: string, version: string, icon: string }[]>,
+        packagesP: Promise<{ pkg: string; name: string; version: string; icon: string }[]>,
         public remove: () => void,
     ) {
         packagesP.then((packages) => {
