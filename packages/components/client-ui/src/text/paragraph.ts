@@ -81,6 +81,7 @@ function makeIPGBlock(width: number, text: string, textSegment: MergeTree.TextSe
     return <IPGBlock>{ type: ParagraphItemType.Block, width, text, segment: textSegment };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function makeIPGMathBlock(width: number, text: string) {
     return <IPGMathBlock>{ type: ParagraphItemType.MathBlock, width, text };
 }
@@ -467,7 +468,7 @@ export interface IItemsContext {
 
 export function markerToItems(marker: MergeTree.Marker, itemsContext: IItemsContext) {
     const items = itemsContext.itemInfo.items;
-    
+
     // Assume this is a paragraph marker
     items.push(makeIPGMarker(marker));
 }
@@ -551,7 +552,7 @@ export function segmentToItems(
         } else if (segment.hasTileLabel("pg") || isEndBox(segment)) {
             context.nextPGPos = segpos;
             return false;
-        } 
+        }
     }
     return true;
 }

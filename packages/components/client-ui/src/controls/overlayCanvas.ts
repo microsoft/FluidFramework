@@ -206,7 +206,7 @@ export class InkLayer extends Layer {
         });
 
         this.model.on("stylus", (op) => {
-            const stroke = this.model.getStroke(op.id);
+            this.model.getStroke(op.id);
             this.drawingContext.drawSegmentToNewPoint(op.point);
         });
 

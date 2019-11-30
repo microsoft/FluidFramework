@@ -186,12 +186,12 @@ const cssColorStrings = ["AliceBlue", "AntiqueWhite", "Aqua", "Aquamarine", "Azu
     "SeaGreen", "SeaShell", "Sienna", "Silver", "SkyBlue", "SlateBlue", "SlateGray", "SlateGrey",
     "Snow", "SpringGreen", "SteelBlue", "Tan", "Teal", "Thistle", "Tomato", "Turquoise", "Violet", "Wheat",
     "White", "WhiteSmoke", "Yellow", "YellowGreen"];
-const cssColorTree = new MergeTree.TST<IFlowViewCmd>();
+// const cssColorTree = new MergeTree.TST<IFlowViewCmd>();
 for (const cssColor of cssColorStrings) {
     fontSizeTree.put(cssColor, { key: cssColor });
 }
-const cssColors = (f: FlowView) => cssColorTree;
-const defaultColor = (f: FlowView) => "Black";
+// const cssColors = (f: FlowView) => cssColorTree;
+// const defaultColor = (f: FlowView) => "Black";
 
 const commands: IFlowViewCmd[] = [
     {
@@ -824,6 +824,7 @@ function renderSegmentIntoLine(
 
                 // Delay load the instance if not available
                 if (!componentMarker.instance) {
+                    // eslint-disable-next-line @typescript-eslint/no-misused-promises
                     if (!componentMarker.instanceP) {
                         componentMarker.instanceP = lineContext.flowView.collabDocument.context.hostRuntime
                             .request({ url: `/${componentMarker.properties.leafId}` })
@@ -938,8 +939,7 @@ function buildIntervalBlockStyle(flowView: FlowView, properties: MergeTree.Prope
     height: number, leftInBounds: boolean, rightInBounds: boolean,
     contentDiv: HTMLDivElement) {
     const bookmarkDiv = document.createElement("div");
-    let bookmarkRect: ui.Rectangle;
-    bookmarkRect = new ui.Rectangle(startX, 0, endX - startX, height);
+    const bookmarkRect = new ui.Rectangle(startX, 0, endX - startX, height);
     bookmarkRect.conformElement(bookmarkDiv);
     contentDiv.appendChild(bookmarkDiv);
     if (leftInBounds) {
@@ -972,12 +972,11 @@ function buildIntervalTieStyle(flowView: FlowView, properties: MergeTree.Propert
     lineDivHeight: number, leftInBounds: boolean, rightInBounds: boolean,
     contentDiv: HTMLDivElement) {
     const bookmarkDiv = document.createElement("div");
-    let bookmarkRect: ui.Rectangle;
     const bookendDiv1 = document.createElement("div");
     const bookendDiv2 = document.createElement("div");
     const tenthHeight = Math.max(1, Math.floor(lineDivHeight / 10));
     const halfHeight = Math.floor(lineDivHeight >> 1);
-    bookmarkRect = new ui.Rectangle(startX, halfHeight - tenthHeight,
+    const bookmarkRect = new ui.Rectangle(startX, halfHeight - tenthHeight,
         endX - startX, 2 * tenthHeight);
     bookmarkRect.conformElement(bookmarkDiv);
     contentDiv.appendChild(bookmarkDiv);
@@ -2302,6 +2301,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                     }
                 } else {
                     // Delay load the instance if not available
+                    // eslint-disable-next-line @typescript-eslint/no-misused-promises
                     if (!newBlock.instanceP) {
                         newBlock.instanceP = newBlock.properties.leafId.get()
                             .then(async (component: IComponent) => {
@@ -2453,6 +2453,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
     };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function makeMathSpan(mathSegpos: number, offsetFromSegpos: number) {
     const span = document.createElement("span") as ISegSpan;
     span.segPos = mathSegpos;
@@ -3514,9 +3515,8 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         let position: number;
 
         if (targetLineDiv && (targetLineDiv.linePos !== undefined)) {
-            let y: number;
             const targetLineBounds = targetLineDiv.getBoundingClientRect();
-            y = targetLineBounds.top + Math.floor(targetLineBounds.height / 2);
+            const y = targetLineBounds.top + Math.floor(targetLineBounds.height / 2);
             const elm = document.elementFromPoint(x, y);
             if (elm.tagName === "DIV") {
                 if ((targetLineDiv.lineEnd - targetLineDiv.linePos) === 1) {
@@ -4254,8 +4254,8 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                 const remainingLabels = curLabels.filter((l) => l !== "list");
                 this.sharedString.annotateRange(
                     tileInfo.pos, tileInfo.pos + 1, {
-                        [MergeTree.reservedTileLabelsKey]: remainingLabels,
-                        series: null,
+                    [MergeTree.reservedTileLabelsKey]: remainingLabels,
+                    series: null,
                 });
             } else {
                 const augLabels = curLabels.slice();
@@ -4266,9 +4266,9 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                 }
                 this.sharedString.annotateRange(
                     tileInfo.pos, tileInfo.pos + 1, {
-                        [MergeTree.reservedTileLabelsKey]: augLabels,
-                        indentLevel,
-                        listKind,
+                    [MergeTree.reservedTileLabelsKey]: augLabels,
+                    indentLevel,
+                    listKind,
                 });
             }
             tile.listCache = undefined;
@@ -4915,6 +4915,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         let count = 0;
         const uniques = [] as string[];
         for (const key in obj) {
+            // eslint-disable-next-line no-prototype-builtins
             if (obj.hasOwnProperty(key)) {
                 count++;
                 uniques.push(key);
@@ -5011,10 +5012,8 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         const renderOutput = renderTree(this.viewportDiv, this.topChar, this, this.targetTranslation);
         this.viewportStartPos = renderOutput.viewportStartPos;
         this.viewportEndPos = renderOutput.viewportEndPos;
+        this.statusMessage("render", `&nbsp ${Date.now() - clk}ms`);
 
-        if (this.diagCharPort || true) {
-            this.statusMessage("render", `&nbsp ${Date.now() - clk}ms`);
-        }
         if (this.diagCharPort) {
             this.statusMessage("diagCharPort",
                 `&nbsp sp: (${this.topChar}) ep: ${this.viewportEndPos} cp: ${this.cursor.pos}`);
@@ -5218,7 +5217,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                     const markSegoff = this.sharedString.getContainingSegment(remotePresenceInfo.origMark);
                     if (markSegoff.segment) {
                         localPresenceInfo.markLocalRef =
-                        this.sharedString.createPositionReference(markSegoff.segment,
+                            this.sharedString.createPositionReference(markSegoff.segment,
                                 markSegoff.offset, MergeTree.ReferenceType.SlideOnRemove);
                     }
                 }
@@ -5253,8 +5252,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
 
     private broadcastDragPresence() {
         if (this.presenceSignal && this.collabDocument.isConnected) {
-            let dragPresenceInfo: IRemoteDragInfo;
-            dragPresenceInfo = {
+            const dragPresenceInfo: IRemoteDragInfo = {
                 dx: this.movingInclusion.dx,
                 dy: this.movingInclusion.dy,
                 exclu: this.movingInclusion.exclu,
@@ -5283,7 +5281,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         let opCursorPos: number;
         event.ranges.forEach((range) => {
             if (MergeTree.Marker.is(range.segment)) {
-                const marker = range.segment;
                 this.updatePGInfo(range.position - 1);
             } else if (MergeTree.TextSegment.is(range.segment)) {
                 if (range.operation === MergeTree.MergeTreeDeltaType.REMOVE) {
