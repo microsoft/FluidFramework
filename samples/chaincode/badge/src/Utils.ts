@@ -5,9 +5,9 @@
 
 export function getRelativeDate(timestamp: Date): string {
   // https://stackoverflow.com/questions/7641791/javascript-library-for-human-friendly-relative-date-formatting
-  var delta = Math.round(((new Date).getTime() - new Date(timestamp).getTime()) / 1000);
+  const delta = Math.round(((new Date).getTime() - new Date(timestamp).getTime()) / 1000);
 
-  var minute = 60,
+  const minute = 60,
     hour = minute * 60,
     day = hour * 24;
 
