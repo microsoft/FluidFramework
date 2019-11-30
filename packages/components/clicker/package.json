@@ -24,7 +24,7 @@
     "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
     "test:jest": "jest",
     "tsc": "tsc",
-    "tslint": "tslint --project tsconfig.json --format verbose",
+    "tslint": "npm run eslint",
     "webpack": "webpack --env.production",
     "webpack:dev": "webpack --env.development"
   },
