@@ -153,8 +153,9 @@ class TourOfHeroesContainerInstantiationFactory implements IRuntimeFactory, ICom
     }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-        const runtime = await ContainerRuntime.load(context, 
+        const runtime = await ContainerRuntime.load(context,
             [[TourOfHeroesType, Promise.resolve(TourOfHeroesInstantiationFactory)]],
+            // eslint-disable-next-line @typescript-eslint/unbound-method
             [TourOfHeroesContainerInstantiationFactory.containerRequestHandler],
             { generateSummaries: true });
 
@@ -181,6 +182,6 @@ class TourOfHeroesContainerInstantiationFactory implements IRuntimeFactory, ICom
             return { status: 200, mimeType: "fluid/component", value: view };
         }
     }
-};
+}
 
 export const fluidExport = new TourOfHeroesContainerInstantiationFactory();
