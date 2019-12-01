@@ -6,11 +6,13 @@
 import * as cell from "@microsoft/fluid-cell";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
-import { ICodeLoader,
-        IContainerContext,
-        IFluidCodeDetails,
-        IRuntime,
-        IRuntimeFactory } from "@microsoft/fluid-container-definitions";
+import {
+    ICodeLoader,
+    IContainerContext,
+    IFluidCodeDetails,
+    IRuntime,
+    IRuntimeFactory,
+} from "@microsoft/fluid-container-definitions";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@microsoft/fluid-container-runtime";
 import * as ink from "@microsoft/fluid-ink";
 import * as map from "@microsoft/fluid-map";
@@ -115,8 +117,9 @@ export class ChaincodeFactory implements IRuntimeFactory {
         return component.request({ url: trimmed.substr(1 + trimmed.length) });
     }
 
-    constructor(private readonly runtimeOptions: IContainerRuntimeOptions,
-                private readonly registries: NamedComponentRegistryEntries) {
+    constructor(
+        private readonly runtimeOptions: IContainerRuntimeOptions,
+        private readonly registries: NamedComponentRegistryEntries) {
     }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
@@ -128,6 +131,7 @@ export class ChaincodeFactory implements IRuntimeFactory {
                 ["@fluid-internal/client-api", Promise.resolve(chaincode)],
                 ...this.registries,
             ],
+            // eslint-disable-next-line @typescript-eslint/unbound-method
             [ChaincodeFactory.containerRequestHandler],
             this.runtimeOptions);
 
@@ -149,9 +153,10 @@ export class ChaincodeFactory implements IRuntimeFactory {
 export class CodeLoader implements ICodeLoader {
     private readonly factory: IRuntimeFactory;
 
-    constructor(runtimeOptions: IContainerRuntimeOptions,
-                registries?: NamedComponentRegistryEntries,
-        ) {
+    constructor(
+        runtimeOptions: IContainerRuntimeOptions,
+        registries?: NamedComponentRegistryEntries,
+    ) {
         this.factory = new ChaincodeFactory(runtimeOptions,
             registries ? registries : []);
     }
