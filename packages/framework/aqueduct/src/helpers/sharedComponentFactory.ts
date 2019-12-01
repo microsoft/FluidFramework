@@ -53,6 +53,7 @@ export class SharedComponentFactory implements IComponentFactory, Partial<IProvi
                 }
 
                 runtime.registerRequestHandler(async (request: IRequest) => {
+                    // eslint-disable-next-line @typescript-eslint/no-misused-promises
                     if (!instanceP) {
                         // Create a new instance of our component on demand
                         instanceP = this.instantiateInstance(runtime, context);
