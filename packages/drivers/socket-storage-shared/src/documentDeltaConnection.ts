@@ -136,11 +136,11 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
                 this.socket.emit(submitType, this.clientId, work);
             });
 
-        // tslint:disable-next-line:no-non-null-assertion
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.socket.on("op", this.earlyOpHandler!);
-        // tslint:disable-next-line:no-non-null-assertion
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.socket.on("op-content", this.earlyContentHandler!);
-        // tslint:disable-next-line:no-non-null-assertion
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.socket.on("signal", this.earlySignalHandler!);
     }
 
@@ -419,17 +419,17 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         });
     }
 
-    private earlyOpHandler ? = (documentId: string, msgs: ISequencedDocumentMessage[]) => {
+    private earlyOpHandler ?= (documentId: string, msgs: ISequencedDocumentMessage[]) => {
         debug("Queued early ops", msgs.length);
         this.queuedMessages.push(...msgs);
     }
 
-    private earlyContentHandler ? = (msg: IContentMessage) => {
+    private earlyContentHandler ?= (msg: IContentMessage) => {
         debug("Queued early contents");
         this.queuedContents.push(msg);
     }
 
-    private earlySignalHandler ? = (msg: ISignalMessage) => {
+    private earlySignalHandler ?= (msg: ISignalMessage) => {
         debug("Queued early signals");
         this.queuedSignals.push(msg);
     }
@@ -457,21 +457,21 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
 
     private addConnectionListener(event: string, listener: (...args: any[]) => void) {
         this.socket.on(event, listener);
-        this.trackedListeners.push({event, connectionListener: true, listener});
+        this.trackedListeners.push({ event, connectionListener: true, listener });
     }
 
     private addTrackedListener(event: string, listener: (...args: any[]) => void) {
         this.socket.on(event, listener);
-        this.trackedListeners.push({event, connectionListener: true, listener});
+        this.trackedListeners.push({ event, connectionListener: true, listener });
     }
 
     private removeTrackedListeners(connectionListenerOnly) {
         const remaining: IEventListener[] = [];
-        for (const {event, connectionListener, listener} of this.trackedListeners) {
+        for (const { event, connectionListener, listener } of this.trackedListeners) {
             if (!connectionListenerOnly || connectionListener) {
                 this.socket.off(event, listener);
             } else {
-                remaining.push({event, connectionListener, listener});
+                remaining.push({ event, connectionListener, listener });
             }
         }
         this.trackedListeners = remaining;
