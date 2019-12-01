@@ -106,11 +106,12 @@ export class DebugReplayController extends ReplayController implements IDebugger
     }
 
     public onSnapshotFileSelection(file: File) {
-        if (!file.name.match(/^snapshot.*\.json/)) {
+
+        if (!/^snapshot.*\.json/.exec(file.name)) {
             alert(`Incorrect file name: ${file.name}`);
             return;
         }
-        if (file.name.match(/.*_expanded.*/)) {
+        if (/.*_expanded.*/.exec(file.name)) {
             alert(`Incorrect file name - please use non-extended files: ${file.name}`);
             return;
         }
@@ -274,6 +275,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
     public async replay(
             emitter: (op: ISequencedDocumentMessage) => void,
             fetchedOps: ISequencedDocumentMessage[]): Promise<void> {
+        // eslint-disable-next-line no-constant-condition
         while (true) {
             if (fetchedOps.length === 0) {
                 this.ui.updateNextOpText([]);
