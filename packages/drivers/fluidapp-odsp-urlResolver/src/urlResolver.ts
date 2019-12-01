@@ -33,7 +33,8 @@ export class FluidAppOdspUrlResolver implements IUrlResolver {
 
 async function initializeFluidOffice(urlSource: URL) {
     const pathname = urlSource.pathname;
-    const siteDriveItemMatch = pathname.match(/\/p\/([^\/]*)\/([^\/]*)\/([^\/]*)/);
+    // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
+    const siteDriveItemMatch = pathname.match(/\/p\/([^/]*)\/([^/]*)\/([^/]*)/);
 
     if (siteDriveItemMatch === null) {
         return undefined;
