@@ -9,7 +9,8 @@ import {
     IComponentHandleContext,
     IComponentSerializer,
     IRequest,
-    IResponse } from "@microsoft/fluid-component-core-interfaces";
+    IResponse,
+} from "@microsoft/fluid-component-core-interfaces";
 import {
     IAudience,
     IBlobManager,
@@ -441,6 +442,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     }
 
     public get submitFn(): (type: MessageType, contents: any) => number {
+        // eslint-disable-next-line @typescript-eslint/unbound-method
         return this.submit;
     }
 
@@ -618,7 +620,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
         // tslint:disable-next-line: no-unsafe-any
         if (this.options && this.options.intelligence) {
-            return  {
+            return {
                 // tslint:disable-next-line: no-unsafe-any
                 intelligence: this.options.intelligence,
             } as IComponentTokenProvider;
@@ -1054,8 +1056,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                     // tslint:disable-next-line:no-floating-promises
                     Promise.resolve().then(() => remotedComponentContext.realize());
                 }
-
-            default:
+                break;
+            default: // do nothing
         }
     }
 
