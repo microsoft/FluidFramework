@@ -296,14 +296,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 
         const intervalToRemove = this.createInterval(start, end, undefined);
         if (intervalToRemove) {
-
-            console.log("removing");
-            console.log(intervalToRemove);
-            console.log("mapping before");
-            this.intervalTree.map((interval) => console.log(interval));
             this.intervalTree.remove(intervalToRemove);
-            console.log("mapping after");
-            this.intervalTree.map((interval) => console.log(interval));
             this.endIntervalTree.remove(intervalToRemove);
         }
     }
@@ -440,10 +433,6 @@ export class SequenceIntervalCollectionValueType
             "deleteInterval",
             {
                 process: (value, params, local, op) => {
-                    console.log("deleting interval");
-                    console.log(value);
-                    console.log(params);
-                    console.log(local);
                     if (local) {
                         return;
                     }
@@ -521,10 +510,6 @@ export class IntervalCollectionValueType
             "deleteInterval",
             {
                 process: (value, params, local, op) => {
-                    console.log("deleting interval");
-                    console.log(value);
-                    console.log(params);
-                    console.log(local);
                     if (local) {
                         return;
                     }
@@ -598,7 +583,6 @@ export class IntervalCollectionView<TInterval extends ISerializableInterval> ext
         intervalType: MergeTree.IntervalType,
         props?: MergeTree.PropertySet,
     ) {
-        console.log("add");
         let seq = 0;
         if (this.client) {
             seq = this.client.getCurrentSeq();
@@ -660,8 +644,6 @@ export class IntervalCollectionView<TInterval extends ISerializableInterval> ext
         intervalToRemove.addProperties(props);
         this.deleteIntervalInternal(serializedInterval, false, null);
         this.emitter.emit("deleteInterval", intervalToRemove, {start, end, intervalType});
-        console.log("intervalToRemove");
-        console.log(intervalToRemove);
         this.emit("deleteInterval", intervalToRemove);
     }
 
@@ -672,8 +654,6 @@ export class IntervalCollectionView<TInterval extends ISerializableInterval> ext
         if (local) {
             this.emitter.emit("deleteInterval", undefined, serializedInterval);
         }
-        console.log("deleteIntervalInternal");
-        console.log(serializedInterval);
         this.emit("deleteInterval", serializedInterval);
         this.localCollection.deleteInterval(serializedInterval.start, serializedInterval. end);
     }
@@ -780,8 +760,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval> {
         end: number,
         intervalType: MergeTree.IntervalType,
         props?: MergeTree.PropertySet): void {
-        console.log("deleteInterval");
-        console.log(props);
         if (!this.view) {
             throw new Error("attach must be called prior to deleting intervals");
         }
