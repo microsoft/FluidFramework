@@ -18,6 +18,8 @@
     "build:full": "concurrently npm:build npm:webpack",
     "build:full:compile": "concurrently npm:build:compile npm:webpack",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
+    "eslint": "eslint --ext=ts,tsx --format stylish src",
+    "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
     "start": "webpack-dev-server --config webpack.config.js --package package.json",
     "start:live": "webpack-dev-server --config webpack.config.js --package package.json --env.mode live",
     "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
@@ -33,9 +35,14 @@
     "@microsoft/fluid-container-runtime": "^0.12.0"
   },
   "devDependencies": {
+    "@microsoft/eslint-config-fluid": "^0.12.0",
     "@microsoft/fluid-webpack-component-loader": "^0.12.0",
+    "@typescript-eslint/eslint-plugin": "^2.9.0",
+    "@typescript-eslint/eslint-plugin-tslint": "^2.9.0",
+    "@typescript-eslint/parser": "^2.9.0",
     "concurrently": "^4.1.0",
     "css-loader": "^1.0.0",
+    "eslint": "^6.7.1",
     "html-loader": "^0.5.5",
     "loader-utils": "^1.1.0",
     "monaco-editor-webpack-plugin": "^1.5.4",
