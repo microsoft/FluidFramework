@@ -11,10 +11,11 @@
   "scripts": {
     "build": "concurrently npm:build:compile npm:tslint",
     "build:compile": "concurrently npm:tsc npm:build:esnext",
+    "build:compile:min": "npm run build:compile",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
-    "build:full": "npm run build",
-    "build:full:compile": "npm run build:compile",
-    "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
+    "build:full": "concurrently npm:build npm:webpack",
+    "build:full:compile": "concurrently npm:build:compile npm:webpack",
+    "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "deploy": "npm publish --registry https://packages.wu2.prague.office-int.com",
     "start": "webpack-dev-server --config webpack.config.js --package package.json",
     "start:live": "webpack-dev-server --config webpack.config.js --package package.json --env.mode live",
@@ -33,24 +34,24 @@
     "@microsoft/fluid-map": "^0.12.0",
     "@microsoft/fluid-runtime-definitions": "^0.12.0",
     "@microsoft/fluid-sequence": "^0.12.0",
-    "react": "^16.8.3",
-    "react-dom": "^16.8.3"
+    "react": "^16.10.2",
+    "react-dom": "^16.10.2"
   },
   "devDependencies": {
     "@microsoft/fluid-build-common": "^0.12.0",
     "@microsoft/fluid-webpack-component-loader": "^0.12.0",
-    "@types/node": "^10.12.12",
-    "@types/react": "^16.7.7",
-    "@types/react-dom": "^16.0.11",
+    "@types/node": "^10.14.6",
+    "@types/react": "^16.9.2",
+    "@types/react-dom": "^16.9.0",
     "concurrently": "^4.1.0",
     "rimraf": "^2.6.2",
-    "ts-loader": "^4.5.0",
-    "tslint": "^5.11.0",
+    "ts-loader": "^6.1.2",
+    "tslint": "^5.20.0",
     "typescript": "~3.4.5",
-    "webpack": "^4.8.2",
+    "webpack": "^4.16.5",
     "webpack-cli": "^3.1.2",
     "webpack-dev-server": "^3.8.0",
-    "webpack-merge": "^4.1.2"
+    "webpack-merge": "^4.1.4"
   },
   "fluid": {
     "browser": {

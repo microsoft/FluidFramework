@@ -15,7 +15,8 @@
         "outDir": "dist",
         "sourceMap": true,
         "strictPropertyInitialization": true,
-        "target": "es6"
+        "target": "es6",
+        "incremental": true
     },
     "include": [
         "src/**/*"

@@ -14,6 +14,7 @@ import {
     ILoader,
     IProxyLoaderFactory,
     ITelemetryBaseLogger,
+    LoaderHeader,
 } from "@microsoft/fluid-container-definitions";
 import { configurableUrlResolver, Deferred } from "@microsoft/fluid-core-utils";
 import {
@@ -22,10 +23,7 @@ import {
     IFluidResolvedUrl,
     IResolvedUrl,
 } from "@microsoft/fluid-driver-definitions";
-import {
-    IClientDetails,
-    ISequencedDocumentMessage,
-} from "@microsoft/fluid-protocol-definitions";
+import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
 // tslint:disable-next-line:no-var-requires
 const now = require("performance-now") as () => number;
@@ -42,47 +40,6 @@ interface IParsedUrl {
      * If needed, can add undefined which is treated by Container.load() as load latest snapshot.
      */
     version: string | null | undefined;
-}
-
-export enum LoaderHeader {
-    /**
-     * Use cache for this container. If true, we will load a container from cache if one with the same id/version exists
-     * or create a new container and cache it if it does not. If false, always load a new container and don't cache it.
-     * Currently only used to opt-out of caching, as it will default to true but will be false (even if specified as
-     * true) if the reconnect header is false or the pause header is true, since these containers should not be cached.
-     */
-    cache = "fluid-cache",
-    clientDetails = "fluid-client-type",
-    executionContext = "execution-context",
-
-    /**
-     * Start the container in a paused, unconnected state. Defaults to false
-     */
-    pause = "pause",
-    reconnect = "fluid-reconnect",
-    sequenceNumber = "fluid-sequence-number",
-
-    /**
-     * One of the following:
-     * null or "null": use ops, no snapshots
-     * undefined: fetch latest snapshot
-     * otherwise, version sha to load snapshot
-     */
-    version = "version",
-}
-export interface ILoaderHeader {
-    [LoaderHeader.cache]: boolean;
-    [LoaderHeader.clientDetails]: IClientDetails;
-    [LoaderHeader.pause]: boolean;
-    [LoaderHeader.executionContext]: string;
-    [LoaderHeader.sequenceNumber]: number;
-    [LoaderHeader.reconnect]: boolean;
-    [LoaderHeader.version]: string | undefined | null;
-}
-
-declare module "@microsoft/fluid-component-core-interfaces" {
-    export interface IRequestHeader extends Partial<ILoaderHeader> {
-    }
 }
 
 export class RelativeLoader extends EventEmitter implements ILoader {

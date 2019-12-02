@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { Package, Packages } from "./npmPackage";
+import { Packages } from "./npmPackage";
 import { parseOptions, options } from "./options";
 import { BuildGraph, BuildResult } from "./buildGraph";
+import { LayerGraph } from "./LayerGraph";
 import { Timer } from "./common/timer";
 import { logStatus } from "./common/logging";
 import { existsSync, readFileAsync, rimrafWithErrorAsync, execWithErrorAsync } from "./common/utils";
@@ -92,11 +93,24 @@ async function main() {
         return;
     }
 
-    const baseDirectory = path.join(resolvedRoot, "packages");
+    // TODO: Should read lerna.json to determine
+    const baseDirectories = [ path.join(resolvedRoot, "packages")];
+    const samplesDirectory = path.join(resolvedRoot, "samples/chaincode");
+    if (options.samples && existsSync(samplesDirectory)) {
+        baseDirectories.push(samplesDirectory);
+    }
 
     // Load the package
-    const packages = Packages.load(baseDirectory);
+    const packages = Packages.load(baseDirectories);
     timer.time("Package scan completed");
+
+    if (options.layerCheck) {
+        LayerGraph.check(resolvedRoot, packages);
+        timer.time("Layer check completed");
+    }
+    // Check scripts
+    await packages.checkScripts();
+    timer.time("Check scripts completed");
 
     const hasMatchArgs = options.args.length;
     if (hasMatchArgs) {

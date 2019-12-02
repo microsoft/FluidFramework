@@ -24,8 +24,11 @@ interface FastBuildOptions {
     force: boolean;
     install: boolean
     nohoist: boolean;
-    uninstall: boolean
+    uninstall: boolean;
     concurrency: number;
+    samples: boolean;
+    fixScripts: boolean;
+    layerCheck: boolean;
 }
 
 // defaults
@@ -49,7 +52,9 @@ export const options: FastBuildOptions = {
     nohoist: false,
     uninstall: false,
     concurrency: os.cpus().length, // TODO: argument?
-
+    samples: true,
+    fixScripts: false,
+    layerCheck: false,
 };
 
 function printUsage() {
@@ -135,6 +140,23 @@ export function parseOptions(argv: string[]) {
 
         if (arg === "-f" || arg === "--force") {
             options.force = true;
+            continue;
+        }
+        
+        if (arg === "--nosamples") {
+            options.samples = false;
+            continue;
+        }
+
+        if (arg === "--fixscripts") {
+            options.fixScripts = true;
+            setBuild(false);
+            continue;
+        }
+
+        if (arg === "--layercheck") {
+            options.layerCheck = true;
+            setBuild(false);
             continue;
         }
 

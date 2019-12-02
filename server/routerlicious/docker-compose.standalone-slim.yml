@@ -20,21 +20,21 @@ services:
         restart: always
     deli:
         image: prague.azurecr.io/prague:latest
-        command: node dist/kafka-service/index.js deli /usr/src/server/packages/server/routerlicious/dist/deli/index.js
+        command: node dist/kafka-service/index.js deli /usr/src/server/server/routerlicious/packages/routerlicious/dist/deli/index.js
         environment:
             - DEBUG=fluid:*
             - NODE_ENV=development
         restart: always
     scriptorium:
         image: prague.azurecr.io/prague:latest
-        command: node dist/kafka-service/index.js scriptorium /usr/src/server/packages/server/routerlicious/dist/scriptorium/index.js
+        command: node dist/kafka-service/index.js scriptorium /usr/src/server/server/routerlicious/packages/routerlicious/dist/scriptorium/index.js
         environment:
             - DEBUG=fluid:*
             - NODE_ENV=development
         restart: always
     broadcaster:
         image: prague.azurecr.io/prague:latest
-        command: node dist/kafka-service/index.js broadcaster /usr/src/server/packages/server/routerlicious/dist/broadcaster/index.js
+        command: node dist/kafka-service/index.js broadcaster /usr/src/server/server/routerlicious/packages/routerlicious/dist/broadcaster/index.js
         environment:
             - DEBUG=fluid:*
             - NODE_ENV=development
