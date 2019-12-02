@@ -1,5 +1,17 @@
 # 0.12 Breaking Changes
 
+- [LoaderHeader enum moved from @microsoft/fluid-container-loader to @microsoft/fluid-container-definitions](#LoaderHeader moved to fluid-container-definitions)
+- [Driver interface moved from @microsoft/fluid-protocol-defintions to @microsoft/fluid-driver-definitions](#driver-interfaces-moved-to-fluid-driver-definitions)
+- [Top-level `type` on `IClient` deprecated](#Top-level-type-on-IClient-deprecated)
+- [Support for `IFluidResolvedUrl.type` === "prague" removed](#support-for-ifluidresolvedurltype--prague-removed)
+- [`connect` header replaced with `pause` header; ability to load closed containers removed](#connect-header-replaced-with-pause-header-ability-to-load-closed-containers-removed)
+
+## LoaderHeader moved to fluid-container-definitions
+
+`LoaderHeader` enum is a shared definitions between the runtime and the loader and is moved to fluid-container-definitions from fluid-container-loader
+
+## Driver interfaces moved to fluid-driver-definitions
+
 The following interfaces/types have been moved to `@microsoft/fluid-protocol-definitions`:
 ```
 ConnectionState
@@ -34,11 +46,6 @@ IWebResolvedUrl
 IFluidResolvedUrl
 IUrlResolver
 ```
-
-- [Top-level `type` on `IClient` deprecated](#Top-level-type-on-IClient-deprecated)
-- [Support for `IFluidResolvedUrl.type` === "prague" removed](#support-for-ifluidresolvedurltype--prague-removed)
-- [`connect` header replaced with `pause` header; ability to load closed containers removed](#connect-header-replaced-with-pause-header-ability-to-load-closed-containers-removed)
-
 ## Top-level `type` on `IClient` deprecated
 The `type` field on `IClient` has been deprecated and will be removed in the future. There is now an optional type in the new `details` member of `IClient`. Some of the functionality of the top-level `type` field has been replaced by the `capabilities` member in `IClient.details`, specifically the `interactive` boolean is used to distinguish between human and non-human clients.
 

@@ -185,7 +185,7 @@ export class BuildGraph {
         const needPropagate: BuildPackage[] = [];
         this.buildPackages.forEach((node) => {
             if (node.pkg.markForBuild) { needPropagate.push(node); }
-            for (const key of node.pkg.dependencies) {
+            for (const key of node.pkg.combinedDependencies) {
                 const child = this.buildPackages.get(key);
                 if (child) {
                     logVerbose(`Package dependency: ${node.pkg.nameColored} => ${child.pkg.nameColored}`);
