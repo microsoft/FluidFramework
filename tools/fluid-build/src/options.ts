@@ -28,6 +28,7 @@ interface FastBuildOptions {
     concurrency: number;
     samples: boolean;
     fixScripts: boolean;
+    layerCheck: boolean;
 }
 
 // defaults
@@ -53,7 +54,7 @@ export const options: FastBuildOptions = {
     concurrency: os.cpus().length, // TODO: argument?
     samples: true,
     fixScripts: false,
-
+    layerCheck: false,
 };
 
 function printUsage() {
@@ -149,6 +150,13 @@ export function parseOptions(argv: string[]) {
 
         if (arg === "--fixscripts") {
             options.fixScripts = true;
+            setBuild(false);
+            continue;
+        }
+
+        if (arg === "--layercheck") {
+            options.layerCheck = true;
+            setBuild(false);
             continue;
         }
 
