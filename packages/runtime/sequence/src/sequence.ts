@@ -14,7 +14,7 @@ import {
     TreeEntry,
 } from "@microsoft/fluid-protocol-definitions";
 import { IChannelAttributes, IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
-import { parseHandles, serializeHandles, SharedObject } from "@microsoft/fluid-shared-object-base";
+import { makeHandlesSerializable, parseHandles, SharedObject } from "@microsoft/fluid-shared-object-base";
 import * as assert from "assert";
 import { debug } from "./debug";
 import {
@@ -314,7 +314,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     }
 
     public submitSequenceMessage(message: MergeTree.IMergeTreeOp) {
-        const translated = serializeHandles(
+        const translated = makeHandlesSerializable(
             message,
             this.runtime.IComponentSerializer,
             this.runtime.IComponentHandleContext,
@@ -498,7 +498,6 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
 
     protected initializeLocalCore() {
         super.initializeLocalCore();
-        assert(MergeTree.Snapshot.EmptyChunk.chunkSequenceNumber === 0);
         this.loadFinished();
     }
 

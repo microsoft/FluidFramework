@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { AsyncPriorityQueue, queue } from "async";
+import { AsyncPriorityQueue } from "async";
 import * as path from "path";
 import { logStatus, logVerbose } from "./common/logging";
 import { Package } from "./npmPackage";
 import { Task, TaskExec } from "./tasks/task";
 import { TaskFactory } from "./tasks/taskFactory";
 import { Timer } from './common/timer';
-import { getExecutableFromCommand, execWithErrorAsync, ExecAsyncResult } from "./common/utils";
+import { execWithErrorAsync, ExecAsyncResult } from "./common/utils";
 import { FileHashCache } from "./common/fileHashCache";
 import chalk from "chalk";
 import { options } from "./options";
@@ -167,11 +167,6 @@ export class BuildGraph {
             const cleanScript = node.pkg.getScript("clean");
             if (cleanScript) {
                 cleanP.push(execCleanScript(node.pkg, cleanScript));
-            } else {
-                const buildScript = node.pkg.getScript("build");
-                if (buildScript && getExecutableFromCommand(buildScript) !== "echo") {
-                    console.warn(`${node.pkg.nameColored}: warning: package has "build" script without "clean" script`);
-                }
             }
         });
         const results = await Promise.all(cleanP);
@@ -190,7 +185,7 @@ export class BuildGraph {
         const needPropagate: BuildPackage[] = [];
         this.buildPackages.forEach((node) => {
             if (node.pkg.markForBuild) { needPropagate.push(node); }
-            for (const key of node.pkg.dependencies) {
+            for (const key of node.pkg.combinedDependencies) {
                 const child = this.buildPackages.get(key);
                 if (child) {
                     logVerbose(`Package dependency: ${node.pkg.nameColored} => ${child.pkg.nameColored}`);

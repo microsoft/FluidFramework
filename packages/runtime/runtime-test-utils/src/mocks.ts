@@ -25,17 +25,21 @@ import {
 import * as git from "@microsoft/fluid-gitresources";
 import {
     ConnectionState,
+    IBlob,
     IDocumentMessage,
     IQuorum,
     ISequencedDocumentMessage,
+    ITree,
     ITreeEntry,
     MessageType,
+    TreeEntry,
 } from "@microsoft/fluid-protocol-definitions";
 import {
     IChannel,
     IComponentRuntime,
     IDeltaConnection,
     IDeltaHandler,
+    IObjectStorageService,
     ISharedObjectServices,
 } from "@microsoft/fluid-runtime-definitions";
 import { IHistorian } from "@microsoft/fluid-server-services-client";
@@ -178,7 +182,7 @@ export class MockRuntime extends EventEmitter
     public readonly documentId: string;
     public readonly id: string;
     public readonly existing: boolean;
-    public readonly options: any;
+    public readonly options: any = {};
     public clientId: string = uuid();
     public readonly clientType: string = "";
     public readonly parentBranch: string;
@@ -434,5 +438,56 @@ export class MockHistorian implements IHistorian {
     public async getFullTree(sha: string): Promise<any> {
         assert(false, "getFullTree");
         return null;
+    }
+}
+
+/**
+ * Mock implementation of IDeltaConnection
+ */
+export class MockEmptyDeltaConnection implements IDeltaConnection {
+    public state = ConnectionState.Disconnected;
+
+    public attach(handler) {
+    }
+
+    public submit(messageContent: any): number {
+        assert(false);
+        return 0;
+    }
+}
+
+/**
+ * Mock implementation of IObjectStorageService
+ */
+export class MockObjectStorageService implements IObjectStorageService {
+    public constructor(private readonly contents: {[key: string]: string}) {
+    }
+
+    public async read(path: string): Promise<string> {
+        const content = this.contents[path];
+        // Do we have such blob?
+        assert(content !== undefined);
+        return fromUtf8ToBase64(content);
+    }
+}
+
+/**
+ * Mock implementation of ISharedObjectServices
+ */
+export class MockSharedObjectServices implements ISharedObjectServices {
+    public static createFromTree(tree: ITree) {
+        const contents: {[key: string]: string} = {};
+        for (const entry of tree.entries) {
+            assert(entry.type === TreeEntry[TreeEntry.Blob]);
+            contents[entry.path] = (entry.value as IBlob).contents;
+        }
+        return new MockSharedObjectServices(contents);
+    }
+
+    public deltaConnection = new MockEmptyDeltaConnection();
+    public objectStorage: MockObjectStorageService;
+
+    public constructor(contents: {[key: string]: string}) {
+        this.objectStorage = new MockObjectStorageService(contents);
     }
 }

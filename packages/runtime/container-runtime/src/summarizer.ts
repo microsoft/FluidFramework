@@ -15,13 +15,12 @@ import {
     IDisposable,
     ISequencedDocumentMessage,
     ISequencedDocumentSystemMessage,
-    ISnapshotTree,
     ISummaryConfiguration,
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
 import { ContainerRuntime, GenerateSummaryData } from "./containerRuntime";
 import { RunWhileConnectedCoordinator } from "./runWhileConnectedCoordinator";
-import { IClientSummaryWatcher, ISummaryAckMessage, SummaryCollection } from "./summaryCollection";
+import { IClientSummaryWatcher, SummaryCollection } from "./summaryCollection";
 
 // send some telemetry if generate summary takes too long
 const maxSummarizeTimeoutTime = 20000; // 20 sec
@@ -41,13 +40,15 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
     private readonly summaryCollection: SummaryCollection;
     private onBehalfOfClientId: string;
     private runningSummarizer?: RunningSummarizer;
+    private systemOpListener?: (op: ISequencedDocumentMessage) => void;
+    private opListener?: (error: any, op: ISequencedDocumentMessage) => void;
 
     constructor(
         public readonly url: string,
         private readonly runtime: ContainerRuntime,
         private readonly configurationGetter: () => ISummaryConfiguration,
         private readonly generateSummaryCore: () => Promise<GenerateSummaryData>,
-        private readonly refreshBaseSummary: (snapshot: ISnapshotTree) => void,
+        private readonly refreshLatestAck: (handle: string, referenceSequenceNumber: number) => Promise<void>,
     ) {
         this.logger = ChildLogger.create(this.runtime.logger, "Summarizer");
         this.runCoordinator = new RunWhileConnectedCoordinator(runtime);
@@ -57,6 +58,41 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
     }
 
     public async run(onBehalfOf: string): Promise<void> {
+        try {
+            await this.runCore(onBehalfOf);
+        } finally {
+            // cleanup after running
+            this.dispose();
+            if (this.runtime.connected) {
+                this.stop("runEnded");
+            }
+        }
+    }
+
+    /**
+     * Stops the summarizer from running.  This will complete
+     * the run promise, and also close the container.
+     * @param reason - reason code for stopping
+     */
+    public stop(reason?: string) {
+        this.logger.sendTelemetryEvent({
+            eventName: "StoppingSummarizer",
+            onBehalfOf: this.onBehalfOfClientId,
+            reason,
+        });
+        this.runCoordinator.stop();
+        this.runtime.closeFn();
+    }
+
+    public async request(request: IRequest): Promise<IResponse> {
+        return {
+            mimeType: "fluid/component",
+            status: 200,
+            value: this,
+        };
+    }
+
+    private async runCore(onBehalfOf: string): Promise<void> {
         this.onBehalfOfClientId = onBehalfOf;
 
         const startResult = await this.runCoordinator.waitStart();
@@ -99,48 +135,24 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
             this.summaryCollection.createWatcher(this.runtime.clientId),
             this.configurationGetter(),
             () => this.generateSummary(),
-            (ack) => this.handleSuccessfulSummary(ack),
             this.runtime.deltaManager.referenceSequenceNumber,
             initialAttempt,
         );
 
-        // listen for ops
-        const systemOpHandler = (op: ISequencedDocumentMessage) => this.runningSummarizer.handleSystemOp(op);
-        this.runtime.deltaManager.inbound.on("op", systemOpHandler);
-
-        const opHandler = (error: any, op: ISequencedDocumentMessage) => this.runningSummarizer.handleOp(error, op);
-        this.runtime.on("batchEnd", opHandler);
-
-        // wait until stopped running
-        await this.runCoordinator.waitStopped();
-
-        // cleanup after running
-        this.dispose();
-        this.runtime.deltaManager.inbound.removeListener("op", systemOpHandler);
-        this.runtime.removeListener("batchEnd", opHandler);
-    }
-
-    /**
-     * Stops the summarizer from running.  This will complete
-     * the run promise, and also close the container.
-     * @param reason - reason code for stopping
-     */
-    public stop(reason?: string) {
-        this.logger.sendTelemetryEvent({
-            eventName: "StoppingSummarizer",
-            onBehalfOf: this.onBehalfOfClientId,
-            reason,
+        // handle summary acks
+        this.handleSummaryAcks().catch((error) => {
+            this.logger.sendErrorEvent({ eventName: "HandleSummaryAckFatalError" }, error);
+            this.stop("handleAckError");
         });
-        this.runCoordinator.stop();
-        this.runtime.closeFn();
-    }
 
-    public async request(request: IRequest): Promise<IResponse> {
-        return {
-            mimeType: "fluid/component",
-            status: 200,
-            value: this,
-        };
+        // listen for ops
+        this.systemOpListener = (op: ISequencedDocumentMessage) => this.runningSummarizer.handleSystemOp(op);
+        this.runtime.deltaManager.inbound.on("op", this.systemOpListener);
+
+        this.opListener = (error: any, op: ISequencedDocumentMessage) => this.runningSummarizer.handleOp(error, op);
+        this.runtime.on("batchEnd", this.opListener);
+
+        await this.runCoordinator.waitStopped();
     }
 
     /**
@@ -152,6 +164,12 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
         if (this.runningSummarizer) {
             this.runningSummarizer.dispose();
             this.runningSummarizer = undefined;
+        }
+        if (this.systemOpListener) {
+            this.runtime.deltaManager.inbound.removeListener("op", this.systemOpListener);
+        }
+        if (this.opListener) {
+            this.runtime.removeListener("batchEnd", this.opListener);
         }
     }
 
@@ -165,47 +183,20 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
         return this.generateSummaryCore();
     }
 
-    private async handleSuccessfulSummary(ack: ISummaryAckMessage): Promise<void> {
-        // we have to call get version to get the treeId for r11s; this isnt needed
-        // for odsp currently, since their treeId is undefined
-        const versionsResult = await this.setOrLogError("SummarizerFailedToGetVersion",
-            () => this.runtime.storage.getVersions(ack.contents.handle, 1),
-            (versions) => !!(versions && versions.length));
+    private async handleSummaryAcks() {
+        let refSequenceNumber = this.summaryCollection.initialSequenceNumber;
+        while (this.runningSummarizer) {
+            try {
+                const ack = await this.summaryCollection.waitSummaryAck(refSequenceNumber);
+                refSequenceNumber = ack.summaryOp.referenceSequenceNumber;
+                const handle = ack.summaryAckNack.contents.handle;
 
-        if (versionsResult.success) {
-            const snapshotResult = await this.setOrLogError("SummarizerFailedToGetSnapshot",
-                () => this.runtime.storage.getSnapshotTree(versionsResult.result[0]),
-                (snapshot) => !!snapshot);
-
-            if (snapshotResult.success) {
-                // refresh base summary
-                // it might be nice to do this in the container in the future, and maybe for all
-                // clients, not just the summarizer
-                this.refreshBaseSummary(snapshotResult.result);
+                await this.refreshLatestAck(handle, refSequenceNumber);
+                refSequenceNumber++;
+            } catch (error) {
+                this.logger.sendErrorEvent({ eventName: "HandleSummaryAckError", refSequenceNumber }, error);
             }
         }
-    }
-
-    private async setOrLogError<T>(
-        eventName: string,
-        setter: () => Promise<T>,
-        validator: (result: T) => boolean,
-    ): Promise<{ result: T, success: boolean }> {
-        let result: T;
-        let success = true;
-        try {
-            result = await setter();
-        } catch (error) {
-            // send error event for exceptions
-            this.logger.sendErrorEvent({ eventName }, error);
-            success = false;
-        }
-        if (success && !validator(result)) {
-            // send error event when result is invalid
-            this.logger.sendErrorEvent({ eventName });
-            success = false;
-        }
-        return { result, success };
     }
 }
 
@@ -243,7 +234,6 @@ export class RunningSummarizer implements IDisposable {
         summaryWatcher: IClientSummaryWatcher,
         configuration: ISummaryConfiguration,
         generateSummary: () => Promise<GenerateSummaryData | undefined>,
-        handleSuccessfulSummary: (ack: ISummaryAckMessage) => Promise<void>,
         lastOpSeqNumber: number,
         firstAck: ISummaryAttempt,
     ): Promise<RunningSummarizer> {
@@ -254,11 +244,13 @@ export class RunningSummarizer implements IDisposable {
             summaryWatcher,
             configuration,
             generateSummary,
-            handleSuccessfulSummary,
             lastOpSeqNumber,
             firstAck);
 
         await summarizer.waitStart();
+
+        // run the heuristics after starting
+        summarizer.heuristics.run();
         return summarizer;
     }
 
@@ -279,7 +271,6 @@ export class RunningSummarizer implements IDisposable {
         private readonly summaryWatcher: IClientSummaryWatcher,
         private readonly configuration: ISummaryConfiguration,
         private readonly generateSummary: () => Promise<GenerateSummaryData | undefined>,
-        private readonly handleSuccessfulSummary: (ack: ISummaryAckMessage) => Promise<void>,
         lastOpSeqNumber: number,
         firstAck: ISummaryAttempt,
     ) {
@@ -304,9 +295,6 @@ export class RunningSummarizer implements IDisposable {
                     timePending: Date.now() - this.heuristics.lastSent.summaryTime,
                 });
             });
-
-        // run the heuristics after starting
-        this.heuristics.run();
     }
 
     public dispose(): void {
@@ -444,7 +432,6 @@ export class RunningSummarizer implements IDisposable {
         // update for success
         if (ackNack.type === MessageType.SummaryAck) {
             this.heuristics.ackLastSent();
-            await this.handleSuccessfulSummary(ackNack);
         }
     }
 

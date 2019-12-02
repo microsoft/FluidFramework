@@ -1,6 +1,7 @@
 {
   "packages": [
-    "packages/**"
+    "packages/**",
+    "samples/chaincode/**"
   ],
   "version": "0.12.0"
 }

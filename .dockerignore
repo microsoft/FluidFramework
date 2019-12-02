@@ -3,6 +3,7 @@
 !.npmrc
 !LICENSE.txt
 !packages/**
+!samples/chaincode/**
 !server/routerlicious
 !docs/**
 !tools/build-server-resources/**

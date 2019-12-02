@@ -1,28 +1,16 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-FROM node:10.16.0-slim AS base
+FROM node:10.16.0-slim AS setup
 
-# node-gyp dependencies
-RUN apt-get update && apt-get install -y \
-        python \
-        make \
-        git \
-        curl \
-        g++
-
-# Add Tini
-ENV TINI_VERSION v0.18.0
-ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
-RUN chmod +x /tini
+# Setup stage to create the directory structure for lerna install
+# This will be copied later on in a different stage to reduce container layers
 
 # Copy over and build the server
 WORKDIR /usr/src/server
 
 # Copy over the package and package-lock and install prior to the other code to optimize Docker's file system cache on rebuilds
-COPY LICENSE.txt .
-COPY *.json ./
-COPY .npmrc .
+COPY LICENSE.txt *.json .npmrc ./
 COPY tools/build-server-resources/build-version.js tools/build-server-resources/
 
 COPY packages/agents/flow-intel/package*.json packages/agents/flow-intel/
@@ -45,12 +33,10 @@ COPY packages/components/shared-map-visualizer/package*.json packages/components
 COPY packages/components/video-players/package*.json packages/components/video-players/
 COPY packages/components/flow-scroll/package*.json packages/components/flow-scroll/
 COPY packages/components/flow-util/package*.json packages/components/flow-util/
-# COPY packages/components/key-value/package*.json packages/components/key-value/
 COPY packages/components/markflow/package*.json packages/components/markflow/
 COPY packages/components/math/package*.json packages/components/math/
 COPY packages/components/monaco/package*.json packages/components/monaco/
 COPY packages/components/owned-map/package*.json packages/components/owned-map/
-COPY packages/components/pinpoint-editor/package*.json packages/components/pinpoint-editor/
 COPY packages/components/scoreboard/package*.json packages/components/scoreboard/
 COPY packages/components/scribe/package*.json packages/components/scribe/
 COPY packages/components/shared-text/package*.json packages/components/shared-text/
@@ -81,9 +67,7 @@ COPY packages/loader/component-core-interfaces/package*.json packages/loader/com
 COPY packages/loader/container-definitions/package*.json packages/loader/container-definitions/
 COPY packages/loader/container-loader/package*.json packages/loader/container-loader/
 COPY packages/loader/driver-definitions/package*.json packages/loader/driver-definitions/
-COPY packages/loader/gitresources/package*.json packages/loader/gitresources/
 COPY packages/loader/loader-web/package*.json packages/loader/loader-web/
-COPY packages/loader/protocol-definitions/package*.json packages/loader/protocol-definitions/
 COPY packages/loader/utils/package*.json packages/loader/utils/
 COPY packages/loader/test-loader-utils/package*.json packages/loader/test-loader-utils/
 COPY packages/hosts/base-host/package*.json packages/hosts/base-host/
@@ -105,20 +89,11 @@ COPY packages/runtime/runtime-test-utils/package*.json packages/runtime/runtime-
 COPY packages/runtime/sequence/package*.json packages/runtime/sequence/
 COPY packages/server/agent/package*.json packages/server/agent/
 COPY packages/server/gateway/package*.json packages/server/gateway/
-COPY packages/server/kafka-orderer/package*.json packages/server/kafka-orderer/
-COPY packages/server/lambdas-driver/package*.json packages/server/lambdas-driver/
-COPY packages/server/lambdas/package*.json packages/server/lambdas/
 COPY packages/server/local-test-server/package*.json packages/server/local-test-server/
-COPY packages/server/memory-orderer/package*.json packages/server/memory-orderer/
-COPY packages/server/routerlicious/package*.json packages/server/routerlicious/
 COPY packages/server/paparazzi/package*.json packages/server/paparazzi/
-COPY packages/server/services/package*.json packages/server/services/
-COPY packages/server/services-client/package*.json packages/server/services-client/
-COPY packages/server/services-core/package*.json packages/server/services-core/
-COPY packages/server/services-utils/package*.json packages/server/services-utils/
-COPY packages/server/protocol-base/package*.json packages/server/protocol-base/
 COPY packages/utils/odsp-utils/package*.json packages/utils/odsp-utils/
 COPY packages/utils/build-common/package*.json packages/utils/build-common/
+COPY packages/utils/eslint-config-fluid/package*.json packages/utils/eslint-config-fluid/
 COPY packages/server/test-utils/package*.json packages/server/test-utils/
 COPY packages/server/tools-core/package*.json packages/server/tools-core/
 COPY packages/test/snapshots/package*.json packages/test/snapshots/
@@ -127,6 +102,47 @@ COPY packages/tools/replay-tool/package*.json packages/tools/replay-tool/
 COPY packages/tools/webpack-component-loader/package*.json packages/tools/webpack-component-loader/
 COPY packages/tools/merge-tree-client-replay/package*.json packages/tools/merge-tree-client-replay/
 COPY packages/test/end-to-end/package*.json packages/test/end-to-end/
+COPY samples/chaincode/badge/package*.json samples/chaincode/badge/
+COPY samples/chaincode/chat-3/package*.json samples/chaincode/chat-3/
+COPY samples/chaincode/codemirror/package*.json samples/chaincode/codemirror/
+COPY samples/chaincode/containers/monaco/package*.json samples/chaincode/containers/monaco/
+COPY samples/chaincode/draft-js/package*.json samples/chaincode/draft-js/
+COPY samples/chaincode/drawer/package*.json samples/chaincode/drawer/
+COPY samples/chaincode/github-comment/package*.json samples/chaincode/github-comment/
+COPY samples/chaincode/image-gallery/package*.json samples/chaincode/image-gallery/
+COPY samples/chaincode/key-value-cache/package*.json samples/chaincode/key-value-cache/
+COPY samples/chaincode/musica/package*.json samples/chaincode/musica/
+COPY samples/chaincode/persona/package*.json samples/chaincode/persona/
+COPY samples/chaincode/pollster/package*.json samples/chaincode/pollster/
+COPY samples/chaincode/prosemirror/package*.json samples/chaincode/prosemirror/
+COPY samples/chaincode/simple-component-embed/package*.json samples/chaincode/simple-component-embed/	
+COPY samples/chaincode/simple-data-share/package*.json samples/chaincode/simple-data-share/
+COPY samples/chaincode/smde/package*.json samples/chaincode/smde/
+COPY samples/chaincode/sudoku/package*.json  samples/chaincode/sudoku/
+COPY samples/chaincode/textarea-noreact/package*.json samples/chaincode/textarea-noreact/
+COPY samples/chaincode/tourofheroes/package*.json samples/chaincode/tourofheroes/
+COPY samples/chaincode/type-race/package*.json samples/chaincode/type-race/
+
+FROM node:10.16.0-slim AS base
+
+# node-gyp dependencies
+RUN apt-get update && apt-get install -y \
+        python \
+        make \
+        git \
+        curl \
+        g++
+
+# Add Tini
+ENV TINI_VERSION v0.18.0
+ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
+RUN chmod +x /tini
+
+# Copy over and build the server
+WORKDIR /usr/src/server
+
+# Copy the package.json structure we create from the setup stage to reduce container layers
+COPY --from=setup /usr/src/server/ ./
 
 # Copy over chaincode npmrc and package.json to dynamically install packages.
 COPY server/routerlicious/chaincode/* /tmp/chaincode/
@@ -150,6 +166,7 @@ RUN npm install --unsafe-perm
 
 # And now copy over our actual code and build
 COPY packages/ packages/
+COPY samples/chaincode/ samples/chaincode/
 
 # Set the version number
 ARG VERSION_BUILDNUMBER=0
@@ -182,4 +199,3 @@ RUN npm run webpack
 # Node wasn't designed to be run as PID 1. Tini is a tiny init wrapper. You can also set --init on docker later than
 # 1.13 but Kubernetes is at 1.12 so we prefer tini for now.
 ENTRYPOINT ["/tini", "--"]
-

@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IComponent, IComponentQueryableLegacy, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
+import { IComponent, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import {
     ICodeLoader,
     IConnectionDetails,
@@ -14,6 +14,7 @@ import {
     IRuntimeFactory,
     ITelemetryBaseLogger,
     ITelemetryLogger,
+    LoaderHeader,
     TelemetryEventRaisedOnContainer,
 } from "@microsoft/fluid-container-definitions";
 import {
@@ -68,7 +69,7 @@ import { ContainerContext } from "./containerContext";
 import { debug } from "./debug";
 import { DeltaManager } from "./deltaManager";
 import { DeltaManagerProxy } from "./deltaManagerProxy";
-import { Loader, LoaderHeader, RelativeLoader } from "./loader";
+import { Loader, RelativeLoader } from "./loader";
 import { NullChaincode } from "./nullRuntime";
 import { pkgName, pkgVersion } from "./packageVersion";
 import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
@@ -176,6 +177,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private connectionDetailsP: Promise<IConnectionDetails> | undefined;
 
     private firstConnection = true;
+    private manualReconnectInProgress = false;
     private readonly connectionTransitionTimes: number[] = [];
     private messageCountAfterDisconnection: number = 0;
 
@@ -431,6 +433,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
      * Connect the deltaManager.  Useful when the autoConnect flag is set to false.
      */
     public async reconnect() {
+        // Only track this as a manual reconnection if we are truly the ones kicking it off.
+        if (this._connectionState === ConnectionState.Disconnected) {
+            this.manualReconnectInProgress = true;
+        }
         return this._deltaManager!.connect();
     }
 
@@ -840,16 +846,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         const component = await this.codeLoader.load<IRuntimeFactory | IFluidModule>(pkg);
 
         if ("fluidExport" in component) {
-            let factory: IRuntimeFactory | undefined;
-            if (component.fluidExport.IRuntimeFactory) {
-                factory = component.fluidExport.IRuntimeFactory;
-            } else {
-                const queryable = component.fluidExport as IComponentQueryableLegacy;
-                if (queryable.query) {
-                    factory = queryable.query<IRuntimeFactory>("IRuntimeFactory");
-                }
-            }
-
+            const factory = component.fluidExport.IRuntimeFactory;
             return factory ? factory : Promise.reject(PackageNotFactoryError);
         }
 
@@ -927,6 +924,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         });
 
         this._deltaManager.on("disconnect", (reason: string) => {
+            this.manualReconnectInProgress = false;
             this.setConnectionState(ConnectionState.Disconnected, reason);
         });
 
@@ -974,27 +972,30 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         this.connectionTransitionTimes[value] = time;
         const duration = time - this.connectionTransitionTimes[oldState];
 
+        let connectionInitiationReason: string;
+        if (value === ConnectionState.Disconnected) {
+            connectionInitiationReason = "Disconnect";
+        } else if (this.firstConnection) {
+            connectionInitiationReason = "InitialConnect";
+        } else if (this.manualReconnectInProgress) {
+            connectionInitiationReason = "ManualReconnect";
+        } else {
+            connectionInitiationReason = "AutoReconnect";
+        }
+
         this.logger.sendPerformanceEvent({
             eventName: `ConnectionStateChange_${ConnectionState[value]}`,
             from: ConnectionState[oldState],
             duration,
             reason,
+            connectionInitiationReason,
             socketDocumentId: this._deltaManager ? this._deltaManager.socketDocumentId : undefined,
             pendingClientId: this.pendingClientId,
         });
 
-        if (value === ConnectionState.Connected && this.firstConnection) {
-            // We just logged event with disconnected/connecting -> connected time
-            // Log extra event recording disconnected -> connected time, as well as provide some extra info.
-            // We can group that info in previous event, but it's easier to analyze telemetry if these are
-            // two separate events (actually - three!).
-            this.logger.sendPerformanceEvent({
-                eventName: "ConnectionStateChange_InitialConnect",
-                duration: time - this.connectionTransitionTimes[ConnectionState.Disconnected],
-                durationCatchUp: time - this.connectionTransitionTimes[ConnectionState.Connecting],
-                reason,
-            });
+        if (value === ConnectionState.Connected) {
             this.firstConnection = false;
+            this.manualReconnectInProgress = false;
         }
     }
 

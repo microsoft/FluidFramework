@@ -1,4 +1,4 @@
 - name: Advanced Topics
   href: README.md
-- name: Writing a Distributed Data Structure
-  href: writing-dds.md
+- name: "Anatomy of a Distributed Data Structure"
+  href: dds-anatomy.md

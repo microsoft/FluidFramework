@@ -42,14 +42,6 @@ module.exports = env => {
                     loader: "ts-loader",
                     options: {
                         configFile,
-
-                        // ts-loader v4.4.2 resolves the 'declarationDir' for .d.ts files relative to 'outDir'.
-                        // This is different than 'tsc', which resolves 'declarationDir' relative to the location
-                        // of the tsconfig.
-                        compilerOptions: {
-                            declarationDir: ".",
-                            incremental: false
-                        }
                     },
                 },
                 {

@@ -27,7 +27,7 @@ spec:
           - 'node'
           - 'dist/kafka-service/index.js'
           - 'scribe'
-          - '/usr/src/server/packages/server/routerlicious/dist/scribe/index.js'
+          - '/usr/src/server/server/routerlicious/packages/routerlicious/dist/scribe/index.js'
         env:
         - name: DEBUG
           value: "fluid:*"
@@ -35,7 +35,7 @@ spec:
           value: production
         volumeMounts:
         - name: config
-          mountPath: /usr/src/server/packages/server/routerlicious/config/config.json
+          mountPath: /usr/src/server/server/routerlicious/packages/routerlicious/config/config.json
           subPath: config.json
       dnsConfig:
         options:

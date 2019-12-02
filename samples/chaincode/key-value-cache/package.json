@@ -1,34 +1,52 @@
 {
   "name": "@fluid-example/key-value-cache",
+  "version": "0.12.0",
   "description": "Key-value cache that runs in the node.js service",
-  "version": "0.11.1",
-  "author": "Microsoft",
   "repository": "microsoft/FluidFramework",
+  "license": "MIT",
+  "author": "Microsoft",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "webpack --env=\"production\" && npm run tsc",
-    "dev": "webpack --env=\"development\"",
+    "build": "npm run build:compile",
+    "build:compile": "npm run tsc",
+    "build:compile:min": "npm run build:compile",
+    "build:full": "concurrently npm:build npm:webpack",
+    "build:full:compile": "concurrently npm:build:compile npm:webpack",
+    "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
+    "deploy": "npm run build && npm version patch && npm run verdaccio && npm run post-deploy",
+    "dev": "npm run webpack:dev",
     "start": "webpack-dev-server --config webpack.config.js --package package.json",
     "start:live": "webpack-dev-server --config webpack.config.js --package package.json --env.mode live",
     "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
-    "verdaccio": "npm publish --registry https://packages.wu2.prague.office-int.com",
-    "deploy": "npm run build && npm version patch && npm run verdaccio && npm run post-deploy",
     "tsc": "tsc",
-    "webpack": "npm run build",
-    "webpack:dev": "npm run dev"
+    "verdaccio": "npm publish --registry https://packages.wu2.prague.office-int.com",
+    "webpack": "webpack --env=\"production\" ",
+    "webpack:dev": "webpack --env=\"development\""
+  },
+  "dependencies": {
+    "@microsoft/fluid-component-core-interfaces": "^0.12.0",
+    "@microsoft/fluid-component-runtime": "^0.12.0",
+    "@microsoft/fluid-container-definitions": "^0.12.0",
+    "@microsoft/fluid-container-runtime": "^0.12.0",
+    "@microsoft/fluid-map": "^0.12.0",
+    "@microsoft/fluid-runtime-definitions": "^0.12.0",
+    "@microsoft/fluid-shared-object-base": "^0.12.0",
+    "debug": "^4.1.1"
   },
   "devDependencies": {
-    "@microsoft/fluid-build-common": "0.11.15658",
-    "@microsoft/fluid-webpack-component-loader": "0.11.15658",
+    "@microsoft/fluid-build-common": "^0.12.0",
+    "@microsoft/fluid-webpack-component-loader": "^0.12.0",
     "@types/node": "^10.14.6",
+    "concurrently": "^4.1.0",
+    "rimraf": "^2.6.2",
     "source-map-loader": "^0.2.4",
-    "ts-loader": "^4.5.0",
+    "ts-loader": "^6.1.2",
     "typescript": "~3.4.5",
-    "webpack": "4.16.5",
-    "webpack-cli": "3.1.0",
+    "webpack": "^4.16.5",
+    "webpack-cli": "^3.1.2",
     "webpack-dev-server": "^3.8.0",
-    "webpack-merge": "4.1.4"
+    "webpack-merge": "^4.1.4"
   },
   "fluid": {
     "browser": {
@@ -39,16 +57,5 @@
         "library": "main"
       }
     }
-  },
-  "dependencies": {
-    "@microsoft/fluid-component-core-interfaces": "0.11.15658",
-    "@microsoft/fluid-component-runtime": "0.11.15658",
-    "@microsoft/fluid-container-definitions": "0.11.15658",
-    "@microsoft/fluid-container-runtime": "0.11.15658",
-    "@microsoft/fluid-map": "0.11.15658",
-    "@microsoft/fluid-runtime-definitions": "0.11.15658",
-    "@microsoft/fluid-shared-object-base": "0.11.15658",
-    "debug": "^4.1.1"
-  },
-  "license": "MIT"
+  }
 }
