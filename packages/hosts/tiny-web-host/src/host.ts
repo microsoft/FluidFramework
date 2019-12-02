@@ -5,6 +5,7 @@
 
 import { BaseHost, IBaseHostConfig } from "@microsoft/fluid-base-host";
 import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
+import { Container } from "@microsoft/fluid-container-loader";
 import { BaseTelemetryNullLogger, configurableUrlResolver } from "@microsoft/fluid-core-utils";
 import {
     IDocumentServiceFactory,
@@ -53,9 +54,9 @@ export async function loadFluidContainer(
     clientSecret?: string,
     pkg?: IResolvedPackage,
     scriptIds?: string[],
-): Promise<any> {
+): Promise<Container> {
 
-    let componentP: Promise<any>;
+    let containerP: Promise<Container>;
     let resolved: IResolvedUrl;
 
     const resolvedPackge = pkg === undefined ? parseUrlToResolvedPackage(url) : pkg;
@@ -82,7 +83,7 @@ export async function loadFluidContainer(
     } else {
         throw new Error("Non-Compatible Url.");
     }
-    componentP = loadContainer(
+    containerP = loadContainer(
                     url,
                     resolved as IFluidResolvedUrl,
                     tokenApiConfig,
@@ -91,7 +92,7 @@ export async function loadFluidContainer(
                     clientSecret,
                     resolvedPackge,
                     scriptIds);
-    return componentP;
+    return containerP;
 }
 
 export function parseUrlToResolvedPackage(url: string): IResolvedPackage {
@@ -147,7 +148,7 @@ async function loadContainer(
     secret: string,
     pkg?: IResolvedPackage,
     scriptIds?: string[],
-): Promise<any> {
+): Promise<Container> {
 
     let documentServiceFactory: IDocumentServiceFactory;
     const protocol = new URL(resolved.url).protocol;
@@ -229,7 +230,7 @@ export async function loadIFramedFluidContainer(
     tokenApiConfig: ITokenApis = { getToken: () => Promise.resolve("") },
     clientId?: string,
     secret?: string,
-    libraryName: string = "tinyWebLoader"): Promise<any> {
+    libraryName: string = "tinyWebLoader"): Promise<void> {
 
     let scriptUrl: string;
     // main.bundle.js refers to the output of webpacking this file.
@@ -245,7 +246,7 @@ export async function loadIFramedFluidContainer(
     // As per IComponentHTMLVisual, if the div has a size already, the render is expected to fill the space
     // it has been given. If not, the render should grow based on its own content.
     const divRect = div.getBoundingClientRect();
-    const expandToGivenSize = divRect.height && divRect.width;
+    const expandToGivenSize = divRect.height && divRect.width;a
 
     const iframe = document.createElement("iframe");
     iframe.frameBorder = "0";
