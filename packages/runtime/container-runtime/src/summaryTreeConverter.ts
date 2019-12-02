@@ -4,12 +4,14 @@
  */
 
 import {
+    IUploadSummaryHandle,
+    IUploadSummaryTree,
+    UploadSummaryObject,
+} from "@microsoft/fluid-driver-definitions";
+import {
     IBlob,
     ISummaryBlob,
-    ISummaryTree,
     ITree,
-    SummaryObject,
-    SummaryTree,
     SummaryType,
     TreeEntry,
 } from "@microsoft/fluid-protocol-definitions";
@@ -23,7 +25,7 @@ export interface ISummaryStats {
 
 export interface IConvertedSummaryResults {
     summaryStats: ISummaryStats;
-    summaryTree: SummaryTree;
+    summaryTree: IUploadSummaryTree;
 }
 
 export class SummaryTreeConverter {
@@ -33,11 +35,14 @@ export class SummaryTreeConverter {
     ): IConvertedSummaryResults {
         const summaryStats = this.mergeStats();
         const summaryTree = this.convertToSummaryTreeCore(
-            snapshot,
+            { ...snapshot, id: null }, // force root id to null
             summaryStats,
             fullTree,
             "");
 
+        if (summaryTree.type !== SummaryType.Tree) {
+            throw Error("Converted summary tree root should not be handle");
+        }
         return { summaryStats, summaryTree };
     }
 
@@ -63,7 +68,7 @@ export class SummaryTreeConverter {
         summaryStats: ISummaryStats,
         fullTree: boolean = false,
         path: string,
-    ): SummaryTree {
+    ): IUploadSummaryTree | IUploadSummaryHandle {
         if (snapshot.id && !fullTree) {
             summaryStats.handleNodeCount++;
             return {
@@ -72,13 +77,13 @@ export class SummaryTreeConverter {
                 type: SummaryType.Handle,
             };
         } else {
-            const summaryTree: ISummaryTree = {
+            const summaryTree: IUploadSummaryTree = {
                 tree: {},
                 type: SummaryType.Tree,
             };
 
             for (const entry of snapshot.entries) {
-                let value: SummaryObject;
+                let value: UploadSummaryObject;
 
                 switch (entry.type) {
                     case TreeEntry[TreeEntry.Blob]: {

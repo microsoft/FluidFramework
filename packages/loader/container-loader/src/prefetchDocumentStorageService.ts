@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
+import { IDocumentStorageService, IUploadSummaryTree, SummaryContext } from "@microsoft/fluid-driver-definitions";
 import {
     ICreateBlobResponse,
     ISnapshotTree,
@@ -11,7 +11,6 @@ import {
     ISummaryTree,
     ITree,
     IVersion,
-    SummaryContext,
 } from "@microsoft/fluid-protocol-definitions";
 import { debug } from "./debug";
 
@@ -56,7 +55,7 @@ export class PrefetchDocumentStorageService implements IDocumentStorageService {
         return this.storage.write(tree, parents, message, ref);
     }
 
-    public uploadSummary(summary: ISummaryTree, context: SummaryContext): Promise<string> {
+    public uploadSummary(summary: IUploadSummaryTree, context: SummaryContext): Promise<string> {
         return this.storage.uploadSummary(summary, context);
     }
 

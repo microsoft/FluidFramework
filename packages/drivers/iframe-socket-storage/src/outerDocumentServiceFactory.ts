@@ -205,8 +205,8 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
             getRawUrl: (blobId) => {
                 return storage.getRawUrl(blobId);
             },
-            uploadSummary: async (commit) => {
-                return storage.uploadSummary(commit);
+            uploadSummary: async (summary, context) => {
+                return storage.uploadSummary(summary, context);
             },
             downloadSummary: async (handle) => {
                 return storage.downloadSummary(handle);

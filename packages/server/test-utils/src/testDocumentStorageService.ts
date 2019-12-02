@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
+import { IDocumentStorageService, IUploadSummaryTree, SummaryContext } from "@microsoft/fluid-driver-definitions";
 import * as api from "@microsoft/fluid-protocol-definitions";
 
 /**
@@ -35,7 +35,7 @@ export class TestDocumentStorageService implements IDocumentStorageService  {
         return null;
     }
 
-    public uploadSummary(summary: api.ISummaryTree, context: api.SummaryContext): Promise<string> {
+    public uploadSummary(summary: IUploadSummaryTree, context: SummaryContext): Promise<string> {
         return Promise.reject("Not implemented");
     }
 

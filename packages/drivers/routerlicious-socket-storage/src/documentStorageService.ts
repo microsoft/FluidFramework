@@ -4,7 +4,12 @@
  */
 
 import { buildHierarchy, gitHashFile, LazyPromise } from "@microsoft/fluid-core-utils";
-import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
+import {
+    IDocumentStorageService,
+    IUploadSummaryTree,
+    SummaryContext,
+    UploadSummaryObject,
+} from "@microsoft/fluid-driver-definitions";
 import * as resources from "@microsoft/fluid-gitresources";
 import {
     FileMode,
@@ -14,8 +19,6 @@ import {
     ISummaryTree,
     ITree,
     IVersion,
-    SummaryContext,
-    SummaryObject,
     SummaryType,
 } from "@microsoft/fluid-protocol-definitions";
 import * as gitStorage from "@microsoft/fluid-server-services-client";
@@ -88,7 +91,7 @@ export class DocumentStorageService implements IDocumentStorageService  {
         return commit.then((c) => ({date: c.committer.date, id: c.sha, treeId: c.tree.sha}));
     }
 
-    public async uploadSummary(summary: ISummaryTree, context: SummaryContext): Promise<string> {
+    public async uploadSummary(summary: IUploadSummaryTree, context: SummaryContext): Promise<string> {
         if (context.ackHandle && context.ackHandle !== this.lastAckHandle) {
             this.lastAckHandle = context.ackHandle;
             const version = await this.getVersions(context.ackHandle, 1);
@@ -113,7 +116,7 @@ export class DocumentStorageService implements IDocumentStorageService  {
     }
 
     private async writeSummaryObject(
-        value: SummaryObject,
+        value: UploadSummaryObject,
         submodule: { path: string; sha: string }[],
         path: string,
     ): Promise<string> {
@@ -181,7 +184,7 @@ export class DocumentStorageService implements IDocumentStorageService  {
         }
     }
 
-    private getGitMode(value: SummaryObject): string {
+    private getGitMode(value: UploadSummaryObject): string {
         const type = value.type === SummaryType.Handle ? value.handleType : value.type;
         switch (type) {
             case SummaryType.Blob:
@@ -195,7 +198,7 @@ export class DocumentStorageService implements IDocumentStorageService  {
         }
     }
 
-    private getGitType(value: SummaryObject): string {
+    private getGitType(value: UploadSummaryObject): string {
         const type = value.type === SummaryType.Handle ? value.handleType : value.type;
         switch (type) {
             case SummaryType.Blob:

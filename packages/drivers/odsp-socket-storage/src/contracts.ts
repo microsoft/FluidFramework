@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IResolvedUrlBase } from "@microsoft/fluid-driver-definitions";
+import { IResolvedUrlBase, IUploadSummaryTree, SummaryContext } from "@microsoft/fluid-driver-definitions";
 import * as resources from "@microsoft/fluid-gitresources";
 import * as api from "@microsoft/fluid-protocol-definitions";
 
@@ -88,7 +88,7 @@ export interface IDocumentStorageManager {
      * Generates and uploads a packfile that represents the given commit. A driver generated handle to the packfile
      * is returned as a result of this call.
      */
-    uploadSummary(summary: api.ISummaryTree, context: api.SummaryContext): Promise<string>;
+    uploadSummary(summary: IUploadSummaryTree, context: SummaryContext): Promise<string>;
 
     /**
      * Retrieves the commit that matches the packfile handle. If the packfile has already been committed and the

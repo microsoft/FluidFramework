@@ -5,11 +5,13 @@
 
 import { BlobTreeEntry, TreeTreeEntry } from "@microsoft/fluid-core-utils";
 import {
+    IUploadSummaryHandle,
+    IUploadSummaryTree,
+    UploadSummaryObject,
+} from "@microsoft/fluid-driver-definitions";
+import {
     ISummaryBlob,
-    ISummaryHandle,
-    ISummaryTree,
     ITree,
-    SummaryObject,
     SummaryType,
 } from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
@@ -18,21 +20,21 @@ import { IConvertedSummaryResults, SummaryTreeConverter } from "../summaryTreeCo
 describe("Runtime", () => {
     describe("Container Runtime", () => {
         describe("Utils", () => {
-            function assertSummaryTree(obj: SummaryObject): ISummaryTree {
+            function assertSummaryTree(obj: UploadSummaryObject): IUploadSummaryTree {
                 if (obj && obj.type === SummaryType.Tree) {
                     return obj;
                 } else {
                     assert.fail("Object should be summary tree");
                 }
             }
-            function assertSummaryBlob(obj: SummaryObject): ISummaryBlob {
+            function assertSummaryBlob(obj: UploadSummaryObject): ISummaryBlob {
                 if (obj && obj.type === SummaryType.Blob) {
                     return obj;
                 } else {
                     assert.fail("Object should be summary blob");
                 }
             }
-            function assertSummaryHandle(obj: SummaryObject): ISummaryHandle {
+            function assertSummaryHandle(obj: UploadSummaryObject): IUploadSummaryHandle {
                 if (obj && obj.type === SummaryType.Handle) {
                     return obj;
                 } else {

@@ -11,13 +11,13 @@ import {
     IResponse } from "@microsoft/fluid-component-core-interfaces";
 import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
 import { ChildLogger, PerformanceEvent, PromiseTimer, Timer } from "@microsoft/fluid-core-utils";
+import { SummaryContext } from "@microsoft/fluid-driver-definitions";
 import {
     IDisposable,
     ISequencedDocumentMessage,
     ISequencedDocumentSystemMessage,
     ISummaryConfiguration,
     MessageType,
-    SummaryContext,
 } from "@microsoft/fluid-protocol-definitions";
 import { ContainerRuntime, GenerateSummaryData } from "./containerRuntime";
 import { RunWhileConnectedCoordinator } from "./runWhileConnectedCoordinator";

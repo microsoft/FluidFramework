@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
+import { IDocumentStorageService, IUploadSummaryTree, SummaryContext } from "@microsoft/fluid-driver-definitions";
 import * as api from "@microsoft/fluid-protocol-definitions";
 import { OdspDocumentStorageManager } from "./OdspDocumentStorageManager";
 
@@ -13,7 +13,7 @@ import { OdspDocumentStorageManager } from "./OdspDocumentStorageManager";
 export class OdspDocumentStorageService implements IDocumentStorageService {
     constructor(private readonly storageManager: OdspDocumentStorageManager) { }
 
-    public uploadSummary(summary: api.ISummaryTree, context: api.SummaryContext): Promise<string> {
+    public uploadSummary(summary: IUploadSummaryTree, context: SummaryContext): Promise<string> {
         return this.storageManager.uploadSummary(summary, context);
     }
 

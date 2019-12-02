@@ -31,7 +31,7 @@ export const enum SummaryType {
 export interface ISummaryHandle {
     type: SummaryType.Handle;
     handleType: SummaryType;
-    path: string;
+    handle: string;
 }
 
 export interface ISummaryBlob {
@@ -61,26 +61,3 @@ export interface ISummaryCommit {
     // Previous parents to the commit.
     parents: string[];
 }
-
-/**
- * Context for uploading a summary to storage.
- * Indicates the previously acked summary.
- */
-export interface ISummaryContext {
-    /**
-     * Parent summary proposed handle (from summary op)
-     */
-    readonly proposalHandle: string;
-
-    /**
-     * Parent summary acked handle (from summary ack)
-     */
-    readonly ackHandle: string;
-}
-
-/**
- * Context for uploading summary to storage.
- * There may not be an acked summary.
- */
-export type SummaryContext = ISummaryContext
-    | { proposalHandle: undefined; ackHandle: undefined; };

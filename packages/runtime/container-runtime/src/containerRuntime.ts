@@ -33,7 +33,7 @@ import {
     Trace,
     TreeTreeEntry,
 } from "@microsoft/fluid-core-utils";
-import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
+import { IDocumentStorageService, IUploadSummaryTree, SummaryContext } from "@microsoft/fluid-driver-definitions";
 import {
     ConnectionState,
     IChunkedOp,
@@ -45,10 +45,8 @@ import {
     ISnapshotTree,
     ISummaryConfiguration,
     ISummaryContent,
-    ISummaryTree,
     ITree,
     MessageType,
-    SummaryContext,
     SummaryType,
 } from "@microsoft/fluid-protocol-definitions";
 import {
@@ -84,7 +82,7 @@ import { analyzeTasks } from "./taskAnalyzer";
 
 interface ISummaryTreeWithStats {
     summaryStats: ISummaryStats;
-    summaryTree: ISummaryTree;
+    summaryTree: IUploadSummaryTree;
 }
 
 export interface IGeneratedSummaryData {
@@ -966,7 +964,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
         // convert to summary
         const treeWithStats = this.summaryTreeConverter.convertToSummaryTree(tree, fullTree);
-        const summaryTree = treeWithStats.summaryTree as ISummaryTree;
+        const summaryTree = treeWithStats.summaryTree;
 
         if (this.chunkMap.size > 0) {
             summaryTree.tree[".chunks"] = {

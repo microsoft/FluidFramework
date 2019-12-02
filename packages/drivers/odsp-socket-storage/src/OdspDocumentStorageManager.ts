@@ -11,6 +11,7 @@ import {
     gitHashFile,
     PerformanceEvent,
 } from "@microsoft/fluid-core-utils";
+import { IUploadSummaryTree, SummaryContext, UploadSummaryObject } from "@microsoft/fluid-driver-definitions";
 import * as resources from "@microsoft/fluid-gitresources";
 import * as api from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
@@ -343,10 +344,10 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         return Promise.reject("Not supported");
     }
 
-    public async uploadSummary(summary: api.ISummaryTree, context: api.SummaryContext): Promise<string> {
+    public async uploadSummary(summary: IUploadSummaryTree, context: SummaryContext): Promise<string> {
         this.checkSnapshotUrl();
 
-        const { result, blobsShaToPathCacheLatest } = await this.writeSummaryTree(tree, context);
+        const { result, blobsShaToPathCacheLatest } = await this.writeSummaryTree(summary, context);
         if (!result || !result.sha) {
             throw new Error(`Failed to write summary tree`);
         }
@@ -484,8 +485,8 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
     }
 
     private async writeSummaryTree(
-        tree: api.ISummaryTree,
-        context: api.SummaryContext,
+        tree: IUploadSummaryTree,
+        context: SummaryContext,
         depth: number = 0,
     ): Promise<{ result: ISnapshotResponse, blobsShaToPathCacheLatest?: Map<string, string>}> {
         // This cache is associated with mapping sha to path for currently generated summary.
@@ -517,7 +518,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
      * Converts a summary tree to ODSP tree
      */
     private convertSummaryToSnapshotTree(
-        tree: api.ISummaryTree,
+        tree: IUploadSummaryTree,
         parentHandle: string | undefined,
         blobsShaToPathCacheLatest: Map<string, string>,
         depth: number = 0,
@@ -609,7 +610,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         return snapshotTree;
     }
 
-    private getServerType(value: api.SummaryObject): string {
+    private getServerType(value: UploadSummaryObject): string {
         const type = value.type === api.SummaryType.Handle ? value.handleType : value.type;
         switch (type) {
             case api.SummaryType.Blob:

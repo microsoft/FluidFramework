@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
+import { IDocumentStorageService, IUploadSummaryTree, SummaryContext } from "@microsoft/fluid-driver-definitions";
 import * as api from "@microsoft/fluid-protocol-definitions";
 
 /**
@@ -14,7 +14,7 @@ export abstract class ReadDocumentStorageServiceBase implements IDocumentStorage
     public abstract getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null>;
     public abstract read(blobId: string): Promise<string>;
 
-    public uploadSummary(summary: api.ISummaryTree, context: api.SummaryContext): Promise<string> {
+    public uploadSummary(summary: IUploadSummaryTree, context: SummaryContext): Promise<string> {
         return Promise.reject("Invalid operation");
     }
 

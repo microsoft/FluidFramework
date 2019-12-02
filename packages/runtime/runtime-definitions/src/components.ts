@@ -20,7 +20,7 @@ import {
     ILoader,
     ITelemetryLogger,
 } from "@microsoft/fluid-container-definitions";
-import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
+import { IDocumentStorageService, SummaryContext } from "@microsoft/fluid-driver-definitions";
 import {
     ConnectionState,
     IDocumentMessage,
@@ -29,7 +29,6 @@ import {
     ISnapshotTree,
     ITreeEntry,
     MessageType,
-    SummaryContext,
 } from "@microsoft/fluid-protocol-definitions";
 
 import { EventEmitter } from "events";
