@@ -961,7 +961,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             this.lastMessageTimeForTelemetry = message.timestamp;
         }
 
-        if (this.opNumberForRTT === message.clientSequenceNumber) {
+        if (this.opSendTime && this.opNumberForRTT === message.clientSequenceNumber) {
             this.logger.sendTelemetryEvent({
                 eventName: "OpRTT",
                 seqNumber: message.sequenceNumber,
