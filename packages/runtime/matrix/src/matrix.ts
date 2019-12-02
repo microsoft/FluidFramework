@@ -45,18 +45,18 @@ class ContentObjectStorage implements IObjectStorageService {
 }
 
 export class SharedMatrix<T extends Jsonable<JsonablePrimitive | IComponentHandle>> extends SharedObject {
-
+    public static getFactory() { return new SharedMatrixFactory(); }
     public get numRows() { return this.rows.getLength(); }
     public get numCols() { return this.cols.getLength(); }
-    public static getFactory() { return new SharedMatrixFactory(); }
 
-    private readonly rows: MergeTree.Client;                    // Map logical row to physical storage index (if any)
-    private readonly rowTable = new HandleTable<number>();      // Tracks available storage indices for rows.
+    private readonly rows: MergeTree.Client;                    // Map logical row to storage handle (if any)
+    private readonly rowTable = new HandleTable<number>();      // Tracks available storage handles for rows.
 
-    private readonly cols: MergeTree.Client;                    // Map logical col to physical storage index (if any)
-    private readonly colTable = new HandleTable<number>();      // Tracks available storage indices for cols.
+    private readonly cols: MergeTree.Client;                    // Map logical col to storage handle (if any)
+    private readonly colTable = new HandleTable<number>();      // Tracks available storage handles for cols.
 
-    private cellKeyToValue = new Map<number, T>();              // Map of populated cell values.
+    // TODO: Explore alternative methods of storing the cell data (e.g. quad-tree).
+    private cellKeyToValue = new Map<number, T>();              // Map containing populated cell values.
     private cellKeyToPendingCliSeq = new Map<number, number>(); // Map 'cliSeq' of pending cell write (if any).
 
     constructor(
@@ -76,21 +76,17 @@ export class SharedMatrix<T extends Jsonable<JsonablePrimitive | IComponentHandl
     }
 
     public getCell(row: number, col: number) {
-        // Map the logical (row, col) to physical storage indices.
-        // tslint:disable-next-line:no-parameter-reassignment
-        ([row, col] = this.swizzle(row, col, /* alloc: */ false));
+        // Map the logical (row, col) to associated storage handles.
+        const key = this.swizzle(row, col, /* alloc: */ false);
 
-        // If either the row or col storage is unallocated, the cell is empty.
-        if (row === unallocated || col === unallocated) {
-            return undefined;
-        }
-
-        // Otherwise, combine the storage indices into a key and retrieve the value from the map.
-        return this.cellKeyToValue.get(pointToKey(row, col));
+        // Note that the storage may be unallocated, in which case the cell is empty.
+        return key === unallocated
+            ? undefined
+            : this.cellKeyToValue.get(key);
     }
 
     public setCell(row: number, col: number, value: T) {
-        // Write or clear the value in physical storage.
+        // Write or clear the value in storage.
         const key = this.storeCell(row, col, value);
 
         // And queue a 'set' op.
@@ -103,11 +99,11 @@ export class SharedMatrix<T extends Jsonable<JsonablePrimitive | IComponentHandl
     }
 
     public insertCols(start: number, count: number) {
-        this.insert(this.cols, "cols", start, count);
+        this.insert(this.cols, SnapshotPath.cols, start, count);
     }
 
     public insertRows(start: number, count: number) {
-        this.insert(this.rows, "rows", start, count);
+        this.insert(this.rows, SnapshotPath.rows, start, count);
     }
 
     public submitCellMessage(key: number, message: IMatrixCellMsg) {
@@ -168,7 +164,7 @@ export class SharedMatrix<T extends Jsonable<JsonablePrimitive | IComponentHandl
         try {
             await this.rows.load(branchId, this.runtime, new ContentObjectStorage(storage, SnapshotPath.rows));
             await this.cols.load(branchId, this.runtime, new ContentObjectStorage(storage, SnapshotPath.cols));
-            await this.loadCells(await storage.read(SnapshotPath.cells));
+            this.loadCells(await storage.read(SnapshotPath.cells));
         } catch (error) {
             this.logger.sendErrorEvent({eventName: "MatrixLoadFailed" }, error);
         }
@@ -183,17 +179,17 @@ export class SharedMatrix<T extends Jsonable<JsonablePrimitive | IComponentHandl
         const contents = msg.contents;
 
         switch (contents.target) {
-            case "cols":
+            case SnapshotPath.cols:
                 this.cols.applyMsg(msg);
                 break;
-            case "rows":
+            case SnapshotPath.rows:
                 this.rows.applyMsg(msg);
                 break;
             default: {
                 assert(contents.type === MatrixOp.set);
 
-                const [row, col] = this.swizzle(contents.row, contents.col, /* alloc */ false);
-                const pendingCliSeq = this.cellKeyToPendingCliSeq.get(pointToKey(row, col));
+                const key = this.swizzle(contents.row, contents.col, /* alloc */ false);
+                const pendingCliSeq = this.cellKeyToPendingCliSeq.get(key);
 
                 // If there is a local set op pending for this cell position...
                 if (pendingCliSeq !== undefined) {
@@ -222,7 +218,12 @@ export class SharedMatrix<T extends Jsonable<JsonablePrimitive | IComponentHandl
         this.cols.startCollaboration(this.runtime.clientId, 0);
     }
 
-    private insert(dimClient: MergeTree.Client, dimTarget: "rows" | "cols", start: number, count: number) {
+    private insert(
+        dimClient: MergeTree.Client,
+        dimTarget: SnapshotPath.rows | SnapshotPath.cols,
+        start: number,
+        count: number,
+    ) {
         // Construct a new MergeTree op to insert a new segment with the appropriate number of unallocated rows/cols.
         // Note that serialized RunSegment will continue to contain unallocated items, even if the RunSegment in
         // the MergeTree is modified prior to the op being transmitted.
@@ -237,22 +238,20 @@ export class SharedMatrix<T extends Jsonable<JsonablePrimitive | IComponentHandl
     private storeCell(row: number, col: number, value: T) {
         const clear = value === undefined;
 
-        // Map the logical row/col to the allocated storage indicise (if any).
-        // tslint:disable-next-line:no-parameter-reassignment
-        ([row, col] = this.swizzle(row, col, /* alloc: */ !clear));
+        // Map the logical row/col to the allocated storage handles (if any).
+        const key = this.swizzle(row, col, /* alloc: */ !clear);
 
         // If clearing and either the row and/or col is unallocated, no further work is necessary.
-        if (clear && row === unallocated || col === unallocated) {
+        if (clear && key === unallocated) {
             return;
         }
 
-        // Otherwise convert the storage indices into a map key and set or delete as appropriate.
-        const key = pointToKey(row, col);
+        // Otherwise convert the storage handles into a map key and set or delete as appropriate.
         if (clear) {
             this.cellKeyToValue.delete(key);
 
-            // TODO: If we kept track of non-empty cells per row/col, we could unallocate and reuse the
-            //       storage index when the count reaches zero.
+            // TODO: If we kept track of non-empty cells per row/col, we could deallocate and reuse the
+            //       storage handle when the count reaches zero.
         } else {
             this.cellKeyToValue.set(key, value);
         }
@@ -260,27 +259,30 @@ export class SharedMatrix<T extends Jsonable<JsonablePrimitive | IComponentHandl
         return key;
     }
 
-    // Maps the given row/col pair to their corresponding storage indices.  If `alloc` is true, storage
-    // indices will be allocated if needed.  Otherwise, returns `unallocated` (i.e., -1) for unallocated
+    // Maps the given row/col pair to their corresponding storage handles.  If `alloc` is true, storage
+    // handles will be allocated if needed.  Otherwise, returns `unallocated` (i.e., -1) for unallocated
     // rows/cols.
     private swizzle(row: number, col: number, alloc: boolean) {
-        return [
-            this.swizzle1(this.rows, this.rowTable, row, alloc),
-            this.swizzle1(this.cols, this.colTable, col, alloc),
-        ];
+        const rowHandle = this.swizzle1(this.rows, this.rowTable, row, alloc);
+        if (rowHandle === unallocated) { return unallocated; }
+
+        const colHandle = this.swizzle1(this.cols, this.colTable, col, alloc);
+        if (colHandle === unallocated) { return unallocated; }
+
+        return pointToKey(rowHandle, colHandle);
     }
 
-    // Helper for `swizzle()` that handles the logical row/col mapping to physical storage in one dimension.
+    // Helper for `swizzle()` that handles the logical row/col mapping to storage handle in one dimension.
     private swizzle1(client: MergeTree.Client, table: HandleTable<number>, pos: number, alloc: boolean): number {
         const segmentAndOffset = client.getContainingSegment(pos);
         assert(segmentAndOffset);
         const run = segmentAndOffset.segment as RunSegment;
-        let p = run.items[segmentAndOffset.offset] as number;
-        if (p === unallocated && alloc) {
-            p = table.allocate() - 1;
-            run.items[segmentAndOffset.offset] = p;
+        let handle = run.items[segmentAndOffset.offset] as number;
+        if (handle === unallocated && alloc) {
+            handle = table.allocate() - 1;
+            run.items[segmentAndOffset.offset] = handle;
         }
-        return p;
+        return handle;
     }
 
     // Constructs an ITreeEntry for the cell data.
