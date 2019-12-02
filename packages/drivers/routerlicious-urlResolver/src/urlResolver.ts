@@ -86,9 +86,9 @@ export class RouterliciousUrlResolver implements IUrlResolver {
                     `http://localhost:3003/` : `https://alfred.${serverSuffix}`;
             const deltaStorageUrl = this.config ?
                 `${this.config.serverUrl}/deltas/${encodeURIComponent(tenantId)}/${encodeURIComponent(documentId)}`
-                    : isLocalHost ?
-                        `http://localhost:3003/deltas/${tenantId}/${documentId}` :
-                            `https://alfred.${serverSuffix}/deltas/${tenantId}/${documentId}`;
+                : isLocalHost ?
+                    `http://localhost:3003/deltas/${tenantId}/${documentId}` :
+                    `https://alfred.${serverSuffix}/deltas/${tenantId}/${documentId}`;
 
             const resolved: IFluidResolvedUrl = {
                 endpoints: {
@@ -112,17 +112,18 @@ export function getR11sToken(
     tenants: IAlfredTenant[],
     scopes?: ScopeType[],
     user?: IAlfredUser): string {
-        let scope = scopes;
-        if (!scopes) {
-            scope = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
+    let scope = scopes;
+    if (!scopes) {
+        scope = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
+    }
+    for (const tenant of tenants) {
+        if (tenantId === tenant.id) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            return generateToken(tenantId, documentId, tenant.key, scope!, user);
         }
-        for (const tenant of tenants) {
-            if (tenantId === tenant.id) {
-                return generateToken(tenantId, documentId, tenant.key, scope!, user);
-            }
-        }
+    }
 
-        throw new Error("Invalid tenant");
+    throw new Error("Invalid tenant");
 }
 
 export interface IAlfredUser extends IUser {
