@@ -137,6 +137,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
     // To track round trip time for every %1000 client message.
     private opSendTime: number | undefined;
+    private opNumberForRTT: number | undefined;
 
     public get inbound(): IDeltaQueue<ISequencedDocumentMessage> {
         return this._inbound;
@@ -412,6 +413,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         if (message.clientSequenceNumber % 1000 === 0) {
             this.opSendTime = Date.now();
+            this.opNumberForRTT = message.clientSequenceNumber;
         }
 
         const outbound = this.createOutboundMessage(type, message);
@@ -573,7 +575,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
      * Closes the connection and clears inbound & outbound queues.
      */
     public close(error?: any): void {
-        this.opSendTime = undefined;
         if (this.closed) {
             return;
         }
@@ -960,7 +961,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             this.lastMessageTimeForTelemetry = message.timestamp;
         }
 
-        if (message.clientSequenceNumber % 1000 === 0) {
+        if (this.opNumberForRTT === message.clientSequenceNumber) {
             this.logger.sendTelemetryEvent({
                 eventName: "OpRTT",
                 seqNumber: message.sequenceNumber,
