@@ -11,9 +11,11 @@ import {
 import { isOnline, OnlineStatus } from "@microsoft/fluid-core-utils";
 
 export function logNetworkFailure(logger: ITelemetryLogger, event: ITelemetryErrorEvent, error?: any) {
-    const newEvent = {...event};
+    const newEvent = { ...event };
     newEvent.online = isOnline();
+    // tslint:disable-next-line:no-unsafe-any
     if (error && typeof error === "object" && (error).online !== undefined) {
+        // tslint:disable-next-line:no-unsafe-any
         newEvent.online = (error).online as string;
     }
 

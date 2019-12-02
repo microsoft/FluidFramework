@@ -72,8 +72,8 @@ export class RelativeLoader extends EventEmitter implements ILoader {
                 return this.loader.requestWorker(this.baseRequest.url, request);
             } else {
                 const container = this.canUseCache(request)
-                ? await this.containerDeferred.promise
-                : await this.loader.resolve({ url: this.baseRequest.url, headers: request.headers });
+                    ? await this.containerDeferred.promise
+                    : await this.loader.resolve({ url: this.baseRequest.url, headers: request.headers });
                 return container.request(request);
             }
         }
@@ -224,8 +224,8 @@ export class Loader extends EventEmitter implements ILoader {
     private parseUrl(url: string): IParsedUrl | null {
         const parsed = parse(url, true);
 
-        const regex = /^\/([^\/]*\/[^\/]*)(\/?.*)$/;
-        const match = parsed.pathname!.match(regex);
+        const regex = /^\/([^/]*\/[^/]*)(\/?.*)$/;
+        const match = regex.exec(parsed.pathname!);
 
         return (match && match.length === 3)
             ? { id: match[1], path: match[2], version: parsed.query.version as string }
@@ -270,8 +270,9 @@ export class Loader extends EventEmitter implements ILoader {
             return Promise.reject(`Invalid URL ${resolvedAsFluid.url}`);
         }
 
+        // eslint-disable-next-line require-atomic-updates
         request.headers = request.headers ? request.headers : {};
-        const {canCache, fromSequenceNumber } = this.parseHeader(parsed, request);
+        const { canCache, fromSequenceNumber } = this.parseHeader(parsed, request);
 
         debug(`${canCache} ${request.headers[LoaderHeader.pause]} ${request.headers[LoaderHeader.version]}`);
         const factory: IDocumentServiceFactory =
@@ -343,6 +344,7 @@ export class Loader extends EventEmitter implements ILoader {
 
         const headerSeqNum = request.headers[LoaderHeader.sequenceNumber];
         if (headerSeqNum) {
+            // tslint:disable-next-line no-unsafe-any
             fromSequenceNumber = headerSeqNum;
         }
 

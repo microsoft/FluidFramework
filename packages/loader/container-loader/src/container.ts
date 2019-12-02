@@ -74,7 +74,9 @@ import { NullChaincode } from "./nullRuntime";
 import { pkgName, pkgVersion } from "./packageVersion";
 import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
 
-// tslint:disable:no-floating-promises - disabling per-file rather than full subdirectory
+// disabling these per-file rather than full subdirectory
+// tslint:disable:no-floating-promises no-single-line-block-comment
+/* eslint-disable @typescript-eslint/no-misused-promises */
 
 // tslint:disable-next-line:no-var-requires
 const performanceNow = require("performance-now") as (() => number);
@@ -109,6 +111,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             request,
             logger);
 
+        // eslint-disable-next-line no-async-promise-executor
         return new Promise<Container>(async (res, rej) => {
             let alreadyRaisedError = false;
             const onError = (error) => {
@@ -125,6 +128,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             const version = request.headers && request.headers[LoaderHeader.version];
             const pause = request.headers && request.headers[LoaderHeader.pause];
 
+            // tslint:disable-next-line no-unsafe-any
             return container.load(version, !!pause)
                 .then(() => {
                     container.removeListener("error", onError);
@@ -136,7 +140,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                     }
                     container.ignoreUnhandledConnectonError();
                     onError(error);
-            });
+                });
         });
     }
 
@@ -578,7 +582,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private ignoreUnhandledConnectonError() {
         // avoid unhandled promises
         if (this.connectionDetailsP) {
-            this.connectionDetailsP.catch(() => {});
+            this.connectionDetailsP.catch(() => { });
         }
     }
 
@@ -865,7 +869,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             ? (this.options.client as IClient)
             : {
                 details: {
-                    capabilities: {interactive: true},
+                    capabilities: { interactive: true },
                 },
                 permission: [],
                 scopes: [],
@@ -1115,7 +1119,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     // tslint:disable no-unsafe-any
     private getScopes(options: any): string[] {
         return options && options.tokens && options.tokens.jwt ?
-            (jwtDecode(options.tokens.jwt)).scopes : [];
+            // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+            (jwtDecode(options.tokens.jwt) as ITokenClaims).scopes : [];
     }
     // tslint:enable no-unsafe-any
 

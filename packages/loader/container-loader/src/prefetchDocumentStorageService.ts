@@ -28,6 +28,7 @@ export class PrefetchDocumentStorageService implements IDocumentStorageService {
 
     public getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
         const p = this.storage.getSnapshotTree(version);
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises
         if (p && this.prefetchEnabled) {
             // We don't care if the prefetch succeed
             // tslint:disable-next-line:no-floating-promises
@@ -109,7 +110,7 @@ export class PrefetchDocumentStorageService implements IDocumentStorageService {
                     // tslint:disable-next-line:no-floating-promises
                     this.cachedRead(blob);
                 }
-            } else if (blobKey[0] !== "deltas") {
+            } else if (!blobKey.startsWith("deltas")) {
                 if (blob !== null) {
                     secondary.push(blob);
                 }
