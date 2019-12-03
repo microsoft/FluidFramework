@@ -47,7 +47,7 @@
     "rimraf": "^2.6.2",
     "ts-loader": "^6.1.2",
     "tslint": "^5.20.0",
-    "typescript": "~3.4.5",
+    "typescript": "~3.7.2",
     "webpack": "^4.16.5",
     "webpack-cli": "^3.1.2",
     "webpack-dev-server": "^3.8.0",

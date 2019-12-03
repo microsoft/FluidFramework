@@ -34,6 +34,6 @@
     "rimraf": "^2.6.2",
     "source-map-loader": "^0.2.4",
     "tslint": "^5.20.0",
-    "typescript": "~3.4.5"
+    "typescript": "~3.7.2"
   }
 }

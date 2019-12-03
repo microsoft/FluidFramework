@@ -56,7 +56,7 @@
     "random-js": "^1.0.8",
     "rimraf": "^2.6.2",
     "tslint": "^5.20.0",
-    "typescript": "~3.4.5",
+    "typescript": "~3.7.2",
     "xmldoc": "^1.1.2"
   },
   "nyc": {
