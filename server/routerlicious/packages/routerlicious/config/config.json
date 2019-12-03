@@ -180,9 +180,6 @@
             },
             "translation": {
                 "key": ""
-            },
-            "pinpointEditor": {
-                "key": ""
             }
         },
         "alfredUrl": "http://alfred:3000",

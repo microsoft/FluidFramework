@@ -485,12 +485,6 @@ const commands: IFlowViewCmd[] = [
     },
     {
         exec: (c, p, f) => {
-            f.insertComponentNew("map", "@fluid-example/pinpoint-editor");
-        },
-        key: "insert new map",
-    },
-    {
-        exec: (c, p, f) => {
             f.insertComponentNew("code", "@fluid-example/monaco");
         },
         key: "insert new monaco",
