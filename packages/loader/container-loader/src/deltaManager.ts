@@ -135,6 +135,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     // collab window tracking. This is timestamp of %2000 message.
     private lastMessageTimeForTelemetry: number | undefined;
 
+    // To track round trip time for every %1000 client message.
+    private opSendTime: number | undefined;
+    private opNumberForRTT: number | undefined;
+
     public get inbound(): IDeltaQueue<ISequencedDocumentMessage> {
         return this._inbound;
     }
@@ -406,6 +410,11 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             traces,
             type,
         };
+
+        if (this.opNumberForRTT !== undefined && message.clientSequenceNumber % 1000 === 0) {
+            this.opSendTime = Date.now();
+            this.opNumberForRTT = message.clientSequenceNumber;
+        }
 
         const outbound = this.createOutboundMessage(type, message);
         this.stopSequenceNumberUpdate();
@@ -790,6 +799,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         error?: any,
         autoReconnect: boolean = true,
     ) {
+        this.opSendTime = undefined;
         // we quite often get protocol errors before / after observing nack/disconnect
         // we do not want to run through same sequence twice.
         if (connection !== this.connection) {
@@ -949,6 +959,17 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                     message.timestamp - this.lastMessageTimeForTelemetry : undefined,
             });
             this.lastMessageTimeForTelemetry = message.timestamp;
+        }
+
+        if (this.opSendTime !== undefined && this.opNumberForRTT === message.clientSequenceNumber) {
+            this.logger.sendTelemetryEvent({
+                eventName: "OpRTT",
+                seqNumber: message.sequenceNumber,
+                rtt: this.opSendTime ?
+                    Date.now() - this.opSendTime : undefined,
+            });
+            this.opSendTime = undefined;
+            this.opNumberForRTT = undefined;
         }
 
         const result = this.handler!.process(message);

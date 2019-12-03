@@ -5,31 +5,31 @@ services:
             - ../..:/usr/src/server
     alfred:
         volumes:
-            - ../..:/usr/src/server
+            - .:/usr/src/server/server/routerlicious
     deli:
         volumes:
-            - ../..:/usr/src/server
+            - .:/usr/src/server/server/routerlicious
     scriptorium:
         volumes:
-            - ../..:/usr/src/server
+            - .:/usr/src/server/server/routerlicious
     copier:
         volumes:
-            - ../..:/usr/src/server
+            - .:/usr/src/server/server/routerlicious
     broadcaster:
         volumes:
-            - ../..:/usr/src/server
+            - .:/usr/src/server/server/routerlicious
     scribe:
         volumes:
-            - ../..:/usr/src/server
+            - .:/usr/src/server/server/routerlicious
     foreman:
         volumes:
-            - ../..:/usr/src/server
+            - .:/usr/src/server/server/routerlicious
     paparazzi:
         volumes:
             - ../..:/usr/src/server
     routemaster:
         volumes:
-            - ../..:/usr/src/server
+            - .:/usr/src/server/server/routerlicious
     riddler:
         volumes:
-            - ../..:/usr/src/server
+            - .:/usr/src/server/server/routerlicious

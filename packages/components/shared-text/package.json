@@ -33,7 +33,6 @@
     "@fluid-example/intelligence-runner-agent": "^0.12.0",
     "@fluid-example/math": "^0.12.0",
     "@fluid-example/monaco": "^0.12.0",
-    "@fluid-example/pinpoint-editor": "^0.12.0",
     "@fluid-example/progress-bars": "^0.12.0",
     "@fluid-example/video-players": "^0.12.0",
     "@fluid-internal/client-api": "^0.12.0",

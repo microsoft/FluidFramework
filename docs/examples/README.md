@@ -53,7 +53,3 @@ in a different canvas.
 ## Pond
 
 [Source code](https://github.com/Microsoft/FluidFramework/tree/release/0.6/packages/components/pond)
-
-## Pinpoint editor
-
-[Source code](https://github.com/Microsoft/FluidFramework/tree/release/0.6/packages/components/pinpoint-editor)

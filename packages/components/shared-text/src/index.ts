@@ -21,7 +21,6 @@ import * as sharedTextComponent from "./component";
 
 const math = import(/* webpackChunkName: "math", webpackPrefetch: true */ "@fluid-example/math");
 // const monaco = import(/* webpackChunkName: "monaco", webpackPrefetch: true */ "@fluid-example/monaco");
-const pinpoint = import(/* webpackChunkName: "pinpoint", webpackPrefetch: true */ "@fluid-example/pinpoint-editor");
 const progressBars = import(
     /* webpackChunkName: "collections", webpackPrefetch: true */ "@fluid-example/progress-bars");
 const videoPlayers = import(
@@ -52,7 +51,6 @@ const defaultRegistryEntries: NamedComponentRegistryEntries = [
     ["@fluid-example/progress-bars", progressBars.then((m) => m.fluidExport)],
     ["@fluid-example/video-players", videoPlayers.then((m) => m.fluidExport)],
     ["@fluid-example/image-collection", images.then((m) => m.fluidExport)],
-    ["@fluid-example/pinpoint-editor", pinpoint.then((m) => m.fluidExport)],
 ];
 
 class MyRegistry implements IComponentRegistry {
