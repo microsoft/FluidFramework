@@ -18,7 +18,7 @@ export class FluidAppOdspUrlResolver implements IUrlResolver {
     public async resolve(request: IRequest): Promise<IResolvedUrl | undefined> {
         const reqUrl = new URL(request.url);
         const server = reqUrl.hostname.toLowerCase();
-        if (fluidOfficeServers.indexOf(server) !== -1) {
+        if (fluidOfficeServers.includes(server)) {
             const contents = await initializeFluidOffice(reqUrl);
             if (!contents) {
                 return undefined;
