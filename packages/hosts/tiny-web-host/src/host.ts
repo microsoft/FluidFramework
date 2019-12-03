@@ -246,7 +246,7 @@ export async function loadIFramedFluidContainer(
     // As per IComponentHTMLVisual, if the div has a size already, the render is expected to fill the space
     // it has been given. If not, the render should grow based on its own content.
     const divRect = div.getBoundingClientRect();
-    const expandToGivenSize = divRect.height && divRect.width;a
+    const expandToGivenSize = divRect.height && divRect.width;
 
     const iframe = document.createElement("iframe");
     iframe.frameBorder = "0";
