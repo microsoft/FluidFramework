@@ -33,7 +33,7 @@ class Cursor {
 
     public child(index: number) {
         // Calculate the distance to the child from the last child.
-        let delta = this.element!.childElementCount - index;
+        let delta = this.element.childElementCount - index;
 
         if (index < delta) {
             this.first();
@@ -61,7 +61,7 @@ class Cursor {
     private moveTo(transition: ICursorTransition) {
         this.path += `.${transition.property}`;
         this.pathName += transition.suffix;
-        this.element = transition.fn(this.element!);
+        this.element = transition.fn(this.element);
     }
 }
 

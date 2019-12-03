@@ -103,7 +103,7 @@ export class PrefetchDocumentStorageService implements IDocumentStorageService {
     private prefetchTreeCore(tree: ISnapshotTree, secondary: string[]) {
         for (const blobKey of Object.keys(tree.blobs)) {
             const blob = tree.blobs[blobKey];
-            if (blobKey[0] === "." || blobKey === "header" || blobKey.indexOf("quorum") === 0) {
+            if (blobKey.startsWith(".") || blobKey === "header" || blobKey.startsWith("quorum")) {
                 if (blob !== null) {
                     // We don't care if the prefetch succeed
                     // tslint:disable-next-line:no-floating-promises

@@ -43,7 +43,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             return Promise.reject("Only Fluid components currently supported in the RouterliciousDocumentServiceFactory");
         }
 
-        const fluidResolvedUrl = resolvedUrl as IFluidResolvedUrl;
+        const fluidResolvedUrl = resolvedUrl;
         const storageUrl = fluidResolvedUrl.endpoints.storageUrl;
         const ordererUrl = fluidResolvedUrl.endpoints.ordererUrl;
         const deltaStorageUrl = fluidResolvedUrl.endpoints.deltaStorageUrl;

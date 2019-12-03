@@ -57,7 +57,7 @@ export class RelativeLoader extends EventEmitter implements ILoader {
     }
 
     public async resolve(request: IRequest): Promise<Container> {
-        if (request.url.indexOf("/") === 0) {
+        if (request.url.startsWith("/")) {
             // If no headers are set that require a reload make use of the same object
             const container = await this.containerDeferred.promise;
             return container;
@@ -67,7 +67,7 @@ export class RelativeLoader extends EventEmitter implements ILoader {
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        if (request.url.indexOf("/") === 0) {
+        if (request.url.startsWith("/")) {
             if (this.needExecutionContext(request)) {
                 return this.loader.requestWorker(this.baseRequest.url, request);
             } else {
@@ -212,7 +212,7 @@ export class Loader extends EventEmitter implements ILoader {
             const { fromSequenceNumber } =
                 this.parseHeader(parsed, { url: baseUrl, headers: request.headers });
             const proxyLoader = await proxyLoaderFactory.createProxyLoader(
-                parsed!.id,
+                parsed.id,
                 this.options,
                 resolvedAsFluid,
                 fromSequenceNumber,
@@ -259,7 +259,7 @@ export class Loader extends EventEmitter implements ILoader {
 
     private async resolveCore(
         request: IRequest,
-    ): Promise<{ container: Container, parsed: IParsedUrl }> {
+    ): Promise<{ container: Container; parsed: IParsedUrl }> {
 
         const resolved = await this.getResolvedUrl(request);
 

@@ -442,8 +442,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
     private async reloadContextCore(): Promise<void> {
         await Promise.all([
-            this.deltaManager!.inbound.systemPause(),
-            this.deltaManager!.inboundSignal.systemPause()]);
+            this.deltaManager.inbound.systemPause(),
+            this.deltaManager.inboundSignal.systemPause()]);
 
         const previousContextState = await this.context!.stop();
 
@@ -466,8 +466,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         await this.loadContext(attributes, storage, snapshot);
 
-        this.deltaManager!.inbound.systemResume();
-        this.deltaManager!.inboundSignal.systemResume();
+        this.deltaManager.inbound.systemResume();
+        this.deltaManager.inboundSignal.systemResume();
     }
 
     private async snapshotCore(tagMessage: string, fullTree: boolean = false) {
@@ -709,8 +709,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         const protocol = new ProtocolOpHandler(
             attributes.branch,
-            attributes.minimumSequenceNumber!,
-            attributes.sequenceNumber!,
+            attributes.minimumSequenceNumber,
+            attributes.sequenceNumber,
             members,
             proposals,
             values,
@@ -822,7 +822,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
     private async loadCodeFromQuorum(
         quorum: Quorum,
-    ): Promise<{ pkg: IFluidCodeDetails | undefined, chaincode: IRuntimeFactory }> {
+    ): Promise<{ pkg: IFluidCodeDetails | undefined; chaincode: IRuntimeFactory }> {
         // back compat - can remove in 0.7
         const codeQuorumKey = quorum.has("code")
             ? "code"
@@ -1056,7 +1056,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         if (logOpsOnReconnect) {
             this.messageCountAfterDisconnection = 0;
         }
-        this.context!.changeConnectionState(this._connectionState, this.clientId!, this._version!);
+        this.context!.changeConnectionState(this._connectionState, this.clientId!, this._version);
         this.protocolHandler!.quorum.changeConnectionState(this._connectionState, this.clientId!);
         raiseConnectedEvent(this, this._connectionState, this.clientId!);
         if (logOpsOnReconnect) {
@@ -1098,7 +1098,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private processSignal(message: ISignalMessage) {
         // No clientId indicates a system signal message.
         if (message.clientId === null && this._audience) {
-            const innerContent = message.content as { content: any, type: string };
+            const innerContent = message.content as { content: any; type: string };
             if (innerContent.type === MessageType.ClientJoin) {
                 const newClient = innerContent.content as ISignalClient;
                 this._audience.addMember(newClient.clientId, newClient.client);
@@ -1115,7 +1115,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     // tslint:disable no-unsafe-any
     private getScopes(options: any): string[] {
         return options && options.tokens && options.tokens.jwt ?
-            (jwtDecode(options.tokens.jwt) as ITokenClaims).scopes : [];
+            (jwtDecode(options.tokens.jwt)).scopes : [];
     }
     // tslint:enable no-unsafe-any
 

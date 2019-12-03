@@ -16,7 +16,7 @@ export interface IPackument {
     description: string;
     "dist-tags": {[key: string]: string};
     license: string;
-    maintainers: { email: string, name: string }[];
+    maintainers: { email: string; name: string }[];
     name: string;
     readme: string;
     readmeFilename: string;
@@ -47,12 +47,12 @@ export interface IPackageList {
 
 export interface ISearchResult {
     objects: {
-        package: IPackage,
+        package: IPackage;
         score: {
-            final: number,
+            final: number;
             detail: {
-                quality: number,
-                popularity: number,
+                quality: number;
+                popularity: number;
                 maintenance: number;
             };
         };

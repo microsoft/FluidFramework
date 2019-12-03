@@ -107,7 +107,7 @@ export class ChaincodeFactory implements IRuntimeFactory {
     private static async containerRequestHandler(request: IRequest, runtime: IHostRuntime) {
         const trimmed = request.url
             .substr(1)
-            .substr(0, request.url.indexOf("/", 1) === -1 ? request.url.length : request.url.indexOf("/"));
+            .substr(0, !request.url.includes("/", 1) ? request.url.length : request.url.indexOf("/"));
 
         const componentId = trimmed ? trimmed : "root";
 

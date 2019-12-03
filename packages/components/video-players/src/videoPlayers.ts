@@ -199,7 +199,7 @@ export class VideoPlayerCollection extends EventEmitter implements
         // TODO the request is not stripping / off the URL
         const trimmed = request.url
             .substr(1)
-            .substr(0, request.url.indexOf("/", 1) === -1 ? request.url.length : request.url.indexOf("/"));
+            .substr(0, !request.url.includes("/", 1) ? request.url.length : request.url.indexOf("/"));
 
         if (!trimmed) {
             return {
@@ -264,7 +264,7 @@ export class VideoPlayerFactoryComponent implements IComponentFactory {
     public get IComponentFactory() { return this; }
 
     public query(id: string): any {
-        return VideoPlayerFactoryComponent.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
+        return VideoPlayerFactoryComponent.supportedInterfaces.includes(id) ? this : undefined;
     }
 
     public list(): string[] {

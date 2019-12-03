@@ -217,7 +217,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         }
 
         // Parse out the leading slash
-        const id = request.url.charAt(0) === "/" ? request.url.substr(1) : request.url;
+        const id = request.url.startsWith("/") ? request.url.substr(1) : request.url;
 
         // Check for a data type reference first
         if (this.contextsDeferred.has(id)) {

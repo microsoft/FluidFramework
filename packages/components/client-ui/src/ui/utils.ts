@@ -7,7 +7,7 @@
 
 // Utility to fetch elements by ID
 export function id(elementId: string): HTMLElement {
-  return (document.getElementById(elementId)) as HTMLElement;
+  return (document.getElementById(elementId));
 }
 
 export function makeElementVisible(elem, visible) {

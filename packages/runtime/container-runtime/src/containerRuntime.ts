@@ -475,7 +475,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     public readonly logger: ITelemetryLogger;
     private readonly summaryManager: SummaryManager;
     private readonly summaryTreeConverter = new SummaryTreeConverter();
-    private latestSummaryAck: { handle?: string, referenceSequenceNumber: number };
+    private latestSummaryAck: { handle?: string; referenceSequenceNumber: number };
 
     private tasks: string[] = [];
 
@@ -779,7 +779,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         const context = this.contexts.get(envelope.address);
         assert(context);
 
-        const innerContent = envelope.contents as { content: any, type: string };
+        const innerContent = envelope.contents as { content: any; type: string };
         const transformed: IInboundSignalMessage = {
             clientId: message.clientId,
             content: innerContent.content,
@@ -1262,7 +1262,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         const envelope = message.contents as IEnvelope;
         const componentContext = this.contexts.get(envelope.address);
         assert(componentContext);
-        const innerContents = envelope.contents as { content: any, type: string };
+        const innerContents = envelope.contents as { content: any; type: string };
 
         const transformed: ISequencedDocumentMessage = {
             clientId: message.clientId,
@@ -1397,7 +1397,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         eventName: string,
         setter: () => Promise<T>,
         validator: (result: T) => boolean,
-    ): Promise<{ result: T, success: boolean }> {
+    ): Promise<{ result: T; success: boolean }> {
         let result: T;
         let success = true;
         try {

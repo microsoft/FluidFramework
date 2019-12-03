@@ -157,7 +157,7 @@ function altsToItems(alts: Alt[]) {
 export interface IFlowViewCmd extends SearchMenu.ISearchMenuCommand<FlowView> {
 }
 
-let viewOptions: Object;
+let viewOptions: Record<string, any>;
 
 const fontSizeStrings = ["8", "9", "10", "11", "12", "14", "16", "18", "20", "24", "32"];
 const fontSizeTree = new MergeTree.TST<IFlowViewCmd>();
@@ -808,7 +808,7 @@ function renderSegmentIntoLine(
         // If the marker is a simple reference, see if it's types is registered as an external
         // component.
         if (segment.refType === MergeTree.ReferenceType.Simple) {
-            const marker = segment as MergeTree.Marker;
+            const marker = segment;
             if (isMathComponentView(marker)) {
                 const span = document.createElement("span");
                 const mathViewMarker = marker as IMathViewMarker;
@@ -1593,7 +1593,7 @@ export class Viewport {
             // TODO: sabroner fix skip issue
             for (let i = 0; i < this.div.children.length; i++) {
                 const child = this.div.children.item(i);
-                if ((child.classList as DOMTokenList).contains("preserve")) {
+                if ((child.classList).contains("preserve")) {
                     if (this.excludedRects.every((e) => e.id !== child.classList[1])) {
                         this.div.removeChild(child);
                     }
@@ -1605,7 +1605,7 @@ export class Viewport {
     public viewHasInclusion(sha: string): HTMLDivElement {
         for (let i = 0; i < this.div.children.length; i++) {
             const child = this.div.children.item(i);
-            if ((child.classList as DOMTokenList).contains(sha)) {
+            if ((child.classList).contains(sha)) {
                 return child as HTMLDivElement;
             }
         }
@@ -1703,7 +1703,7 @@ export class Viewport {
                     } else if (irdoc.type.name === "video") {
                         let showVideo: HTMLVideoElement;
                         if (irdoc.referenceDocId && this.inclusions.has(irdoc.referenceDocId)) {
-                            showVideo = this.inclusions.get(irdoc.referenceDocId) as HTMLVideoElement;
+                            showVideo = this.inclusions.get(irdoc.referenceDocId);
                         } else {
                             showVideo = document.createElement("video");
                         }
@@ -1934,7 +1934,7 @@ export function breakPGIntoLinesFFVP(flowView: FlowView, itemInfo: Paragraph.IPa
         movingExclu: lineRect.e,
         posInPG: 0, startItemIndex: 0,
     };
-    const breaks = <IFlowBreakInfo[]>[breakInfo];
+    const breaks = [breakInfo];
     let posInPG = 0;
     let committedItemsWidth = 0;
     let blockRunWidth = 0;
@@ -2006,7 +2006,7 @@ export function breakPGIntoLinesFFVP(flowView: FlowView, itemInfo: Paragraph.IPa
             posInPG++;
             prevIsGlue = true;
         } else if (item.type === Paragraph.ParagraphItemType.Marker) {
-            viewport.addInclusion(flowView, <MergeTree.Marker>item.segment,
+            viewport.addInclusion(flowView, item.segment,
                 lineRect.x + committedItemsWidth,
                 viewport.getLineTop(), committedItemsHeight);
         }
@@ -2473,7 +2473,7 @@ function makeSegSpan(
     const spellOption = "spellchecker";
     if (textSegment.properties) {
         // tslint:disable-next-line
-        for (let key in textSegment.properties) {
+        for (const key in textSegment.properties) {
             if (key === "textError" && (viewOptions === undefined || viewOptions[spellOption] !== "disabled")) {
                 textErr = true;
                 if (textErrorRun === undefined) {
@@ -2556,7 +2556,7 @@ function pointerToElementOffsetWebkit(x: number, y: number): IRangeInfo {
     const range = document.caretRangeFromPoint(x, y);
     if (range) {
         const result = {
-            elm: range.startContainer.parentElement as HTMLElement,
+            elm: range.startContainer.parentElement,
             node: range.startContainer,
             offset: range.startOffset,
         };
@@ -3083,7 +3083,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         public collabDocument: api.Document,
         public sharedString: Sequence.SharedString,
         public status: Status,
-        public options?: Object) {
+        public options?: Record<string, any>) {
 
         super(element);
 
@@ -3600,7 +3600,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             }
             const segoff = getContainingSegment(this, this.cursor.pos);
             if (MergeTree.Marker.is(segoff.segment)) {
-                const marker = segoff.segment as MergeTree.Marker;
+                const marker = segoff.segment;
                 if (marker.refType & MergeTree.ReferenceType.Tile) {
                     if (marker.hasTileLabel("pg")) {
                         if (marker.hasRangeLabel("table") && (marker.refType & MergeTree.ReferenceType.NestEnd)) {
@@ -3642,7 +3642,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             const segoff = this.sharedString.getContainingSegment(this.cursor.pos);
             if (MergeTree.Marker.is(segoff.segment)) {
                 // REVIEW: assume marker for now
-                const marker = segoff.segment as MergeTree.Marker;
+                const marker = segoff.segment;
                 if (marker.refType & MergeTree.ReferenceType.Tile) {
                     if (marker.hasTileLabel("pg")) {
                         if (marker.hasRangeLabel("table") && (marker.refType & MergeTree.ReferenceType.NestEnd)) {
@@ -4170,7 +4170,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     public getMathViewMarker() {
         const segment = getContainingSegment(this, this.cursor.pos).segment;
         if (MergeTree.Marker.is(segment)) {
-            if (isMathComponentView(segment as MergeTree.Marker)) {
+            if (isMathComponentView(segment)) {
                 return segment as IMathViewMarker;
             }
         }
@@ -5105,7 +5105,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         }
     }
 
-    public setViewOption(options: Object) {
+    public setViewOption(options: Record<string, any>) {
         viewOptions = options;
     }
 
@@ -5283,7 +5283,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         let opCursorPos: number;
         event.ranges.forEach((range) => {
             if (MergeTree.Marker.is(range.segment)) {
-                const marker = range.segment as MergeTree.Marker;
+                const marker = range.segment;
                 this.updatePGInfo(range.position - 1);
             } else if (MergeTree.TextSegment.is(range.segment)) {
                 if (range.operation === MergeTree.MergeTreeDeltaType.REMOVE) {

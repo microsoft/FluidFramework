@@ -52,7 +52,7 @@ async function downloadRawText(textUrl: string): Promise<string> {
         return Promise.reject(result.data);
     }
 
-    return result.data as string;
+    return result.data;
 }
 
 function updateProgressBar(progressBar: HTMLElement, progress: number) {
@@ -455,7 +455,7 @@ class ScribeFactory implements IComponentFactory, IRuntimeFactory {
             [async (request: IRequest, containerRuntime: IHostRuntime) => {
                 console.log(request.url);
 
-                const requestUrl = request.url.length > 0 && request.url.charAt(0) === "/"
+                const requestUrl = request.url.length > 0 && request.url.startsWith("/")
                     ? request.url.substr(1)
                     : request.url;
                 const trailingSlash = requestUrl.indexOf("/");

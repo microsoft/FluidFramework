@@ -89,7 +89,7 @@ export class TestCollection implements ICollection<any> {
         return this.insertOneInternal(value);
     }
 
-    public async findOrCreate(query: any, value: any): Promise<{ value: any, existing: boolean }> {
+    public async findOrCreate(query: any, value: any): Promise<{ value: any; existing: boolean }> {
         const existing = this.findOneInternal(query);
         if (existing) {
             return { value: existing, existing: true };

@@ -38,7 +38,7 @@ export class RouterliciousUrlResolver implements IUrlResolver {
         }
         const reqUrl = new URL(requestedUrl);
         const server = reqUrl.hostname.toLowerCase();
-        if (r11sServers.indexOf(server) !== -1 || (server === "localhost" && reqUrl.port === "3000") || this.config) {
+        if (r11sServers.includes(server) || (server === "localhost" && reqUrl.port === "3000") || this.config) {
             const path = reqUrl.pathname.split("/");
             let tenantId: string;
             let documentId: string;
@@ -72,7 +72,7 @@ export class RouterliciousUrlResolver implements IUrlResolver {
             if (reqUrl.search) {
                 // In case of any additional parameters add them back to the url
                 const searchParams = reqUrl.search;
-                if (!!searchParams) {
+                if (searchParams) {
                     fluidUrl += searchParams;
                 }
             }

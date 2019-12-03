@@ -128,7 +128,7 @@ class ScriptManager {
     }
 
     public loadScripts(
-        umdDetails: { files: string[]; library: string; },
+        umdDetails: { files: string[]; library: string },
         packageUrl: string,
         scriptIds?: string[],
         // tslint:disable-next-line: array-type
@@ -136,7 +136,7 @@ class ScriptManager {
         return umdDetails.files.map(async (bundle, index) => {
             // Load file as cdn Link (starts with http)
             // Or create a cdnLink from packageURl
-            const url = bundle.indexOf("http") === 0
+            const url = bundle.startsWith("http")
                 ? bundle
                 : `${packageUrl}/${bundle}`;
             return this.loadScript(url, scriptIds !== undefined ? scriptIds[index] : undefined);

@@ -115,14 +115,14 @@ export type ParagraphItem = IPGBlock | IPGGlue | IPGPenalty | IPGMarker;
 
 // for now assume uniform line widths
 export function breakPGIntoLinesFF(items: ParagraphItem[], lineWidth: number) {
-    let breaks = <IBreakInfo[]>[{ posInPG: 0, startItemIndex: 0 }];
+    const breaks = <IBreakInfo[]>[{ posInPG: 0, startItemIndex: 0 }];
     let posInPG = 0;
     let committedItemsWidth = 0;
     let blockRunWidth = 0;
     let blockRunPos = -1;
     let prevIsGlue = true;
     for (let i = 0, len = items.length; i < len; i++) {
-        let item = items[i];
+        const item = items[i];
         if (item.type === ParagraphItemType.Block) {
             item.pos = posInPG;
             if (prevIsGlue) {
@@ -196,9 +196,9 @@ export class ParagraphLexer<TContext> {
             } else if (!this.leadSegment) {
                 this.leadSegment = textSegment;
             }
-            let segText = textSegment.text;
+            const segText = textSegment.text;
             for (let i = 0, len = segText.length; i < len; i++) {
-                let c = segText.charAt(i);
+                const c = segText.charAt(i);
                 if (c === " ") {
                     if (this.state === ParagraphLexerState.AccumBlockChars) {
                         this.emitBlock();
@@ -288,7 +288,7 @@ function getPrecedingTile(
     filter: (candidate: MergeTree.Marker) => boolean, precedingTileCache?: ITilePos[]) {
     if (precedingTileCache) {
         for (let i = precedingTileCache.length - 1; i >= 0; i--) {
-            let candidate = precedingTileCache[i];
+            const candidate = precedingTileCache[i];
             if (filter(candidate.tile)) {
                 return candidate;
             }
@@ -296,7 +296,7 @@ function getPrecedingTile(
     }
     while (tilePos > 0) {
         tilePos = tilePos - 1;
-        let prevTileInfo = sharedString.findTile(tilePos, label);
+        const prevTileInfo = sharedString.findTile(tilePos, label);
         if (prevTileInfo && filter(<MergeTree.Marker>prevTileInfo.tile)) {
             return prevTileInfo;
         }
@@ -322,12 +322,12 @@ function alphaSuffix(itemIndex: number, suffix: string, little = false) {
     if (little) {
         code += 32;
     }
-    let prefix = String.fromCharCode(code);
+    const prefix = String.fromCharCode(code);
     return { text: prefix + suffix };
 }
 
 // TODO: more than 10
-let romanNumbers = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
+const romanNumbers = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
 
 function roman(itemIndex: number, little = false) {
     let text = romanNumbers[itemIndex - 1] + ".";
@@ -338,19 +338,19 @@ function roman(itemIndex: number, little = false) {
 }
 
 // let wingdingLetters = ["l", "m", "n", "R", "S", "T", "s","w"];
-let unicodeBullets = [
+const unicodeBullets = [
     "\u2022", "\u25E6", "\u25AA", "\u2731", "\u272F", "\u2729", "\u273F",
     "\u2745", "\u2739", "\u2720", "\u2722",
 ];
 
 function itemSymbols(itemIndex: number, indentLevel: number) {
     //    let wingdingLetter = wingdingLetters[indentLevel - 1];
-    let wingdingLetter = unicodeBullets[indentLevel - 1];
+    const wingdingLetter = unicodeBullets[indentLevel - 1];
     //    return { text: wingdingLetter, font: "12px Wingdings" };
     return { text: wingdingLetter };
 }
 
-let listSeries = [
+const listSeries = [
     (itemIndex) => numberSuffix(itemIndex, "."),
     (itemIndex) => numberSuffix(itemIndex, ")"),
     (itemIndex) => alphaSuffix(itemIndex, ".", true),
@@ -361,7 +361,7 @@ let listSeries = [
     (itemIndex) => roman(itemIndex),
 ];
 
-let symbolSeries = [
+const symbolSeries = [
     (itemIndex) => itemSymbols(itemIndex, 1),
     (itemIndex) => itemSymbols(itemIndex, 2),
     (itemIndex) => itemSymbols(itemIndex, 3),
@@ -386,7 +386,7 @@ function convertToListHead(tile: IParagraphMarker) {
 /**
  * maximum number of characters before a preceding list paragraph deemed irrelevant
  */
-let maxListDistance = 400;
+const maxListDistance = 400;
 
 export function getListCacheInfo(
     sharedString: SharedString, tile: IParagraphMarker, tilePos: number, precedingTileCache?: ITilePos[]) {
@@ -396,17 +396,17 @@ export function getListCacheInfo(
             if (tile.properties.series) {
                 convertToListHead(tile);
             } else {
-                let listKind = tile.properties.listKind;
-                let precedingTilePos = getPrecedingTile(sharedString, tile, tilePos, "list",
+                const listKind = tile.properties.listKind;
+                const precedingTilePos = getPrecedingTile(sharedString, tile, tilePos, "list",
                     (t) => isListTile(t) && (t.properties.listKind === listKind), precedingTileCache);
                 if (precedingTilePos && ((tilePos - precedingTilePos.pos) < maxListDistance)) {
                     getListCacheInfo(sharedString, <MergeTree.Marker>precedingTilePos.tile,
                         precedingTilePos.pos, precedingTileCache);
-                    let precedingTile = <IParagraphMarker>precedingTilePos.tile;
+                    const precedingTile = <IParagraphMarker>precedingTilePos.tile;
                     tile.listHeadCache = precedingTile.listHeadCache;
-                    let indentLevel = tile.properties.indentLevel;
-                    let precedingItemCount = precedingTile.listCache.itemCounts[indentLevel];
-                    let itemCounts = precedingTile.listCache.itemCounts.slice();
+                    const indentLevel = tile.properties.indentLevel;
+                    const precedingItemCount = precedingTile.listCache.itemCounts[indentLevel];
+                    const itemCounts = precedingTile.listCache.itemCounts.slice();
                     if (indentLevel < itemCounts.length) {
                         itemCounts[indentLevel] = precedingItemCount + 1;
                     } else {
@@ -475,10 +475,10 @@ export function markerToItems(marker: MergeTree.Marker, itemsContext: IItemsCont
 export function textTokenToItems(
     text: string, type: ParagraphItemType, leadSegment: MergeTree.TextSegment,
     itemsContext: IItemsContext) {
-    let fontInfo = itemsContext.fontInfo;
-    let pgFontstr = fontInfo.getFont(itemsContext.curPGMarker);
+    const fontInfo = itemsContext.fontInfo;
+    const pgFontstr = fontInfo.getFont(itemsContext.curPGMarker);
     let lfontstr = pgFontstr;
-    let pgLineHeight = fontInfo.getLineHeight(lfontstr);
+    const pgLineHeight = fontInfo.getLineHeight(lfontstr);
     itemsContext.itemInfo.maxHeight = pgLineHeight;
     let divHeight = pgLineHeight;
     if (leadSegment.properties) {
@@ -486,32 +486,32 @@ export function textTokenToItems(
         if (leadSegment.properties.fontFamily) {
             fontFamily = leadSegment.properties.fontFamily;
         }
-        let fontSize = leadSegment.properties.fontSize;
+        const fontSize = leadSegment.properties.fontSize;
         if (fontSize !== undefined) {
             lfontstr = `${fontSize} ${fontFamily}`;
             divHeight = +fontSize;
         }
         // this is not complete because can be % or normal etc.
-        let lineHeight = leadSegment.properties.lineHeight;
+        const lineHeight = leadSegment.properties.lineHeight;
         if (lineHeight !== undefined) {
             divHeight = Math.floor((+lineHeight) * divHeight);
         }
-        let fontWeight = leadSegment.properties.fontWeight;
+        const fontWeight = leadSegment.properties.fontWeight;
         if (fontWeight) {
             lfontstr = fontWeight + " " + lfontstr;
         }
-        let fontStyle = leadSegment.properties.fontStyle;
+        const fontStyle = leadSegment.properties.fontStyle;
         if (fontStyle) {
             lfontstr = fontStyle + " " + lfontstr;
         }
     }
 
-    let textWidth = fontInfo.getTextWidth(text, lfontstr);
+    const textWidth = fontInfo.getTextWidth(text, lfontstr);
     if (textWidth > itemsContext.itemInfo.minWidth) {
         itemsContext.itemInfo.minWidth = textWidth;
     }
     if (type === ParagraphItemType.Block) {
-        let block = makeIPGBlock(textWidth, text, leadSegment);
+        const block = makeIPGBlock(textWidth, text, leadSegment);
         if (lfontstr !== pgFontstr) {
             block.fontstr = lfontstr;
         }
@@ -523,7 +523,7 @@ export function textTokenToItems(
         }
         itemsContext.itemInfo.items.push(block);
     } else {
-        let wordSpacing = fontInfo.getTextWidth(" ", lfontstr);
+        const wordSpacing = fontInfo.getTextWidth(" ", lfontstr);
         itemsContext.itemInfo.items.push(makeGlue(textWidth, text, leadSegment,
             wordSpacing / 2, wordSpacing / 3));
     }

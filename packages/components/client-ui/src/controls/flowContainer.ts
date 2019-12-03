@@ -52,7 +52,7 @@ export class FlowContainer extends ui.Component {
         private readonly overlayInkMap: ISharedMap,
         private readonly pageInk: IInk,
         private image: Image,
-        private options?: Object) {
+        private options?: Record<string, any>) {
 
         super(element);
 
@@ -120,10 +120,10 @@ export class FlowContainer extends ui.Component {
         this.flowView.on(
             "render",
             (renderInfo: {
-                overlayMarkers: IOverlayMarker[],
-                range: IRange,
-                viewportEndPos: number,
-                viewportStartPos: number,
+                overlayMarkers: IOverlayMarker[];
+                range: IRange;
+                viewportEndPos: number;
+                viewportStartPos: number;
             }) => {
                 const showScrollBar = renderInfo.range.min !== renderInfo.viewportStartPos ||
                     renderInfo.range.max !== renderInfo.viewportEndPos;
