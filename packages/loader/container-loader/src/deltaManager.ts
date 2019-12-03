@@ -411,7 +411,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             type,
         };
 
-        if (message.clientSequenceNumber % 1000 === 0) {
+        if (this.opNumberForRTT !== undefined && message.clientSequenceNumber % 1000 === 0) {
             this.opSendTime = Date.now();
             this.opNumberForRTT = message.clientSequenceNumber;
         }
@@ -961,7 +961,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             this.lastMessageTimeForTelemetry = message.timestamp;
         }
 
-        if (this.opSendTime && this.opNumberForRTT === message.clientSequenceNumber) {
+        if (this.opSendTime !== undefined && this.opNumberForRTT === message.clientSequenceNumber) {
             this.logger.sendTelemetryEvent({
                 eventName: "OpRTT",
                 seqNumber: message.sequenceNumber,
@@ -969,6 +969,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                     Date.now() - this.opSendTime : undefined,
             });
             this.opSendTime = undefined;
+            this.opNumberForRTT = undefined;
         }
 
         const result = this.handler!.process(message);
