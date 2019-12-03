@@ -273,8 +273,18 @@ class Document {
         const resolver = new ContainerUrlResolver(
             new Map<string, IResolvedUrl>([[resolved.url, resolved]]));
         const host = { resolver };
-
-        const codeLoader = new API.CodeLoader({ generateSummaries: false });
+        const chaincode = new API.Chaincode();
+        const codeLoader = new API.CodeLoader({ generateSummaries: false },
+            [
+                ["@ms/atmentions", Promise.resolve(chaincode)],
+                ["@ms/augloop", Promise.resolve(chaincode)],
+                ["@ms/catalog", Promise.resolve(chaincode)],
+                ["@ms/scriptor", Promise.resolve(chaincode)],
+                ["@ms/discover", Promise.resolve(chaincode)],
+                ["@ms/registro", Promise.resolve(chaincode)],
+                ["@ms/formula", Promise.resolve(chaincode)],
+                ["@ms/application-services", Promise.resolve(chaincode)],
+            ]);
         const options = {};
 
         // Load the Fluid document

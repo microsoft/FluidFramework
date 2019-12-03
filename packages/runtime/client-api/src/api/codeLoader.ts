@@ -20,6 +20,7 @@ import {
     IComponentContext,
     IComponentFactory,
     IHostRuntime,
+    NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
 import * as sequence from "@microsoft/fluid-sequence";
 import { Document } from "./document";
@@ -27,7 +28,7 @@ import { Document } from "./document";
 const rootMapId = "root";
 const insightsMapId = "insights";
 
-class Chaincode implements IComponentFactory {
+export class Chaincode implements IComponentFactory {
     public get IComponentFactory() { return this; }
 
     public instantiateComponent(context: IComponentContext): void {
@@ -114,7 +115,8 @@ export class ChaincodeFactory implements IRuntimeFactory {
         return component.request({ url: trimmed.substr(1 + trimmed.length) });
     }
 
-    constructor(private readonly runtimeOptions: IContainerRuntimeOptions) {
+    constructor(private readonly runtimeOptions: IContainerRuntimeOptions,
+                private readonly registries: NamedComponentRegistryEntries) {
     }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
@@ -122,7 +124,10 @@ export class ChaincodeFactory implements IRuntimeFactory {
 
         const runtime = await ContainerRuntime.load(
             context,
-            [["@fluid-internal/client-api", Promise.resolve(chaincode)]],
+            [
+                ["@fluid-internal/client-api", Promise.resolve(chaincode)],
+                ...this.registries,
+            ],
             [ChaincodeFactory.containerRequestHandler],
             this.runtimeOptions);
 
@@ -144,8 +149,11 @@ export class ChaincodeFactory implements IRuntimeFactory {
 export class CodeLoader implements ICodeLoader {
     private readonly factory: IRuntimeFactory;
 
-    constructor(runtimeOptions: IContainerRuntimeOptions) {
-        this.factory = new ChaincodeFactory(runtimeOptions);
+    constructor(runtimeOptions: IContainerRuntimeOptions,
+                registries?: NamedComponentRegistryEntries,
+        ) {
+        this.factory = new ChaincodeFactory(runtimeOptions,
+            registries ? registries : []);
     }
 
     public async load<T>(source: IFluidCodeDetails): Promise<T> {
