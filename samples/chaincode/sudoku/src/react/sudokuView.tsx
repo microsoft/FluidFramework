@@ -85,6 +85,7 @@ export function SudokuView(props: ISudokuViewProps): JSX.Element {
 
 // tslint:disable-next-line: max-func-body-length
 // eslint-disable-next-line @typescript-eslint/tslint/config, @typescript-eslint/no-unused-vars
+// tslint:disable-next-line: max-func-body-length
 function SimpleTable(props: ISudokuViewProps) {
     const coordinateDataAttributeName = "cellcoordinate";
 
@@ -218,8 +219,6 @@ function SimpleTable(props: ISudokuViewProps) {
                         inputClasses += " presence";
                     }
                 }
-
-                const nada = () => {}; // eslint-disable-line
                 // const disabled = currentCell.fixed === true;
                 return (
                     <td className="sudoku-cell" key={coord} style={getCellBorderStyles(coord)}>
@@ -233,7 +232,6 @@ function SimpleTable(props: ISudokuViewProps) {
                             onKeyDown={handleKeyDown}
                             value={SudokuCell.getDisplayString(currentCell)}
                             max={1}
-                            onChange={nada}
                             // disabled={disabled}
                             data-cellcoordinate={coord}
                         />
