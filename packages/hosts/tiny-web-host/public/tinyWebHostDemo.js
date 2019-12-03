@@ -21,7 +21,7 @@ function load() {
         getWebsocketToken: () => socketToken,
     };
 
-    tinyWebLoader.loadFluidComponent(
+    tinyWebLoader.loadFluidContainer(
         url,
         div,
         tokenApiConfig,

@@ -6,7 +6,7 @@
 import { Packages } from "./npmPackage";
 import { parseOptions, options } from "./options";
 import { BuildGraph, BuildResult } from "./buildGraph";
-import { LayerGraph } from "./LayerGraph";
+import { LayerGraph } from "./layerGraph";
 import { Timer } from "./common/timer";
 import { logStatus } from "./common/logging";
 import { existsSync, readFileAsync, rimrafWithErrorAsync, execWithErrorAsync } from "./common/utils";
