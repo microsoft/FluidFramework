@@ -44,7 +44,8 @@ class ContentObjectStorage implements IObjectStorageService {
     }
 }
 
-export class SharedMatrix<T extends Jsonable<JsonablePrimitive | IComponentHandle>> extends SharedObject {
+// tslint:disable-next-line:max-line-length
+export class SharedMatrix<T extends Jsonable<JsonablePrimitive | IComponentHandle> = Jsonable<JsonablePrimitive | IComponentHandle>> extends SharedObject {
     public static getFactory() { return new SharedMatrixFactory(); }
     public get numRows() { return this.rows.getLength(); }
     public get numCols() { return this.cols.getLength(); }
