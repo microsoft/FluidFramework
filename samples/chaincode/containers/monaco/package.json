@@ -30,7 +30,8 @@
     "@fluid-example/monaco": "^0.12.0",
     "@microsoft/fluid-component-core-interfaces": "^0.12.0",
     "@microsoft/fluid-container-definitions": "^0.12.0",
-    "@microsoft/fluid-container-runtime": "^0.12.0"
+    "@microsoft/fluid-container-runtime": "^0.12.0",
+    "@microsoft/fluid-runtime-definitions": "^0.12.0"
   },
   "devDependencies": {
     "@microsoft/fluid-webpack-component-loader": "^0.12.0",
