@@ -219,7 +219,7 @@ function SimpleTable(props: ISudokuViewProps) {
                     }
                 }
 
-                const nada = () => {};
+                const nada = () => {}; // eslint-disable-line
                 // const disabled = currentCell.fixed === true;
                 return (
                     <td className="sudoku-cell" key={coord} style={getCellBorderStyles(coord)}>
