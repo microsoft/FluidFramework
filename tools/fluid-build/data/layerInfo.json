@@ -1,0 +1,97 @@
+{
+    "Base-Definitions": {
+        "packages": [
+            "@microsoft/fluid-component-core-interfaces",
+            "@microsoft/fluid-protocol-definitions"
+        ]
+    },
+
+    "Driver-Definitions": {
+        "packages": [
+            "@microsoft/fluid-driver-definitions"
+        ],
+        "deps": [
+            "@microsoft/fluid-protocol-definitions"
+        ]
+    },
+    "Container-Definitions": {
+        "packages": [
+            "@microsoft/fluid-container-definitions"
+        ],
+        "deps": [
+            "Driver-Definitions",
+            "@microsoft/fluid-component-core-interfaces"
+        ]
+    },
+    "Common-Utils": {
+        "dirs": [
+            "packages/utils"
+        ]
+    },
+    "Driver": {
+        "dirs": [
+            "packages/drivers/"
+        ],
+        "deps": [
+            "Common-Utils",
+            "Driver-Definitions",
+            "@microsoft/fluid-component-core-interfaces"
+        ]
+    },
+    "Container-Utils": {
+        "packages": [
+            "@microsoft/fluid-core-utils"
+        ],
+        "deps": [
+            "Container-Definitions",
+            "@microsoft/fluid-component-core-interfaces"
+        ]
+    },
+    "Loader": {
+        "dirs": [
+            "packages/loader/"
+        ],
+        "deps": [
+            "Container-Utils"
+        ]
+    },
+    "Hosts": {
+        "dirs": [
+            "packages/hosts/"
+        ],
+        "deps": [
+            "Loader",
+            "Driver"
+        ]
+    },
+    "Runtime": {
+        "dirs": [
+            "packages/runtime/"
+        ],
+        "deps": [
+            "Container-Utils"
+        ]
+    },
+    "Framework": {
+        "dirs": [
+            "packages/framework/"
+        ],
+        "deps": [
+            "Hosts",
+            "Runtime"
+        ]
+    },
+    "Component": {
+        "dirs": [
+            "packages/component/",
+            "samples/chaincode/",
+            "packages/agent/",
+            "packages/server/",
+            "packages/tools/",
+            "packages/test/"
+        ],
+        "deps": [
+            "Framework"
+        ]
+    }
+}

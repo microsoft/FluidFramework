@@ -10,6 +10,8 @@ interface DepCheckRecord {
     name: string,
     import: RegExp,
     declare: RegExp,
+    peerImport?: RegExp,
+    peerDeclare?: RegExp,
     found: boolean,
 };
 
@@ -19,9 +21,10 @@ export class NpmDepChecker {
     // hjs is implicitly used
     private readonly ignored = ["hjs", ...this.foundTypes];
     // list of packages that should always in the devDependencies
-    private readonly dev = ["@microsoft/fluid-build-common", "nyc", "typescript", "tslint", "mocha-junit-reporter", "mocha"];
+    private readonly dev = ["@microsoft/fluid-build-common", "nyc", "typescript", "tslint", "mocha-junit-reporter", "mocha", "url-loader", "style-loader"];
     private readonly records: DepCheckRecord[] = [];
     private readonly altTyping = new Map<string, string>([["ws", "isomorphic-ws"]]);
+    private readonly peerDependencies = new Map<string, string>([["ws", "socket.io-client"], ["@angular/compiler", "@angular/platform-browser-dynamic"]]);
 
     constructor(private readonly pkg: Package, private readonly checkFiles: string[]) {
         if (checkFiles.length !== 0) {
@@ -34,12 +37,14 @@ export class NpmDepChecker {
                     // If we have a type package, we may still import the package, but not necessary depend on the package.
                     packageName = name.substring("@types/".length);
                 }
+                const peerPackage = this.peerDependencies.get(name);
+                const packageMatch = peerPackage? `(${packageName}|${peerPackage})` : packageName;
                 // These regexp doesn't aim to be totally accurate, but try to avoid false positives.
                 // These can definitely be improved
                 this.records.push({
                     name,
-                    import: new RegExp(`(import|require)[^;]+[\`'"](blob-url-loader.*)?${packageName}.*[\`'"]`, "m"),
-                    declare: new RegExp(`declare[\\s]+module[\\s]+['"]${packageName}['"]`, "m"),
+                    import: new RegExp(`(import|require)[^;]+[\`'"](blob-url-loader.*)?${packageMatch}.*[\`'"]`, "m"),
+                    declare: new RegExp(`declare[\\s]+module[\\s]+['"]${packageMatch}['"]`, "m"),
                     found: false,
                 });
             }
@@ -100,7 +105,7 @@ export class NpmDepChecker {
 
     private depcheckTypes() {
         let changed = false;
-        for (const dep of this.pkg.dependencies) {
+        for (const dep of this.pkg.combinedDependencies) {
             if (dep.startsWith("@types/") && this.foundTypes.indexOf(dep) === -1) {
                 const name = dep.substring("@types/".length);
                 const altName = this.altTyping.get(name);

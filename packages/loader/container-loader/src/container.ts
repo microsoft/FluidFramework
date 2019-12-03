@@ -14,6 +14,7 @@ import {
     IRuntimeFactory,
     ITelemetryBaseLogger,
     ITelemetryLogger,
+    LoaderHeader,
     TelemetryEventRaisedOnContainer,
 } from "@microsoft/fluid-container-definitions";
 import {
@@ -68,7 +69,7 @@ import { ContainerContext } from "./containerContext";
 import { debug } from "./debug";
 import { DeltaManager } from "./deltaManager";
 import { DeltaManagerProxy } from "./deltaManagerProxy";
-import { Loader, LoaderHeader, RelativeLoader } from "./loader";
+import { Loader, RelativeLoader } from "./loader";
 import { NullChaincode } from "./nullRuntime";
 import { pkgName, pkgVersion } from "./packageVersion";
 import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";

@@ -24,7 +24,7 @@ import { OdspDeltaStorageService } from "./OdspDeltaStorageService";
 import { OdspDocumentDeltaConnection } from "./OdspDocumentDeltaConnection";
 import { OdspDocumentStorageManager } from "./OdspDocumentStorageManager";
 import { OdspDocumentStorageService } from "./OdspDocumentStorageService";
-import { isLocalStorageAvailable } from "./OdspUtils";
+import { getWithRetryForTokenRefresh, isLocalStorageAvailable } from "./OdspUtils";
 import { getSocketStorageDiscovery } from "./Vroom";
 
 // tslint:disable-next-line:no-require-imports no-var-requires
@@ -80,7 +80,7 @@ export class OdspDocumentService implements IDocumentService {
         itemId: string,
         private readonly snapshotStorageUrl: string,
         getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
-        readonly getWebsocketToken: () => Promise<string | null>,
+        readonly getWebsocketToken: (refresh) => Promise<string | null>,
         logger: ITelemetryLogger,
         private readonly storageFetchWrapper: IFetchWrapper,
         private readonly deltasFetchWrapper: IFetchWrapper,
@@ -184,21 +184,24 @@ export class OdspDocumentService implements IDocumentService {
         // We should refresh our knowledge before attempting to reconnect
         this.websocketEndpointP = this.websocketEndpointRequestThrottler.response;
 
-        const [websocketEndpoint, webSocketToken, io] = await Promise.all([this.websocketEndpointP, this.getWebsocketToken(), this.socketIOClientP]);
+        // Attempt to connect twice, in case we used expired token.
+        return getWithRetryForTokenRefresh<IDocumentDeltaConnection>(async (refresh: boolean) => {
+            const [websocketEndpoint, webSocketToken, io] = await Promise.all([this.websocketEndpointP!, this.getWebsocketToken(refresh), this.socketIOClientP]);
 
-        return this.connectToDeltaStreamWithRetry(
-            websocketEndpoint.tenantId,
-            websocketEndpoint.id,
-            // This is workaround for fluid-fetcher. Need to have better long term solution
-            webSocketToken ? webSocketToken : websocketEndpoint.socketToken,
-            io,
-            client,
-            mode,
-            websocketEndpoint.deltaStreamSocketUrl,
-            websocketEndpoint.deltaStreamSocketUrl2,
-        ).catch((error) => {
-            this.odspCache.remove(this.joinSessionKey);
-            throw error;
+            return this.connectToDeltaStreamWithRetry(
+                websocketEndpoint.tenantId,
+                websocketEndpoint.id,
+                // This is workaround for fluid-fetcher. Need to have better long term solution
+                webSocketToken ? webSocketToken : websocketEndpoint.socketToken,
+                io,
+                client,
+                mode,
+                websocketEndpoint.deltaStreamSocketUrl,
+                websocketEndpoint.deltaStreamSocketUrl2,
+            ).catch((error) => {
+                this.odspCache.remove(this.joinSessionKey);
+                throw error;
+            });
         });
     }
 

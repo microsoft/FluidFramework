@@ -79,7 +79,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
         const deltaConnection = new OdspDocumentDeltaConnection(socket, webSocketId, socketReferenceKey);
 
         try {
-            await deltaConnection.initialize(connectMessage);
+            await deltaConnection.initialize(connectMessage, timeoutMs);
         } catch (errorObject) {
             // Test if it's NetworkError with IOdspSocketError.
             // Note that there might be no IOdspSocketError on it in case we hit socket.io protocol errors!
