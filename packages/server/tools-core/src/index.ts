@@ -5,4 +5,3 @@
 
 export * from "./author";
 export * from "./scribe";
-export * from "./spellingStats";

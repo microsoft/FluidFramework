@@ -345,14 +345,13 @@ export async function typeChunk(
             if (!play) {
                 return true;
             }
-            let pos: number;
             const relPosit: MergeTree.IRelativePosition = {
                 before: true,
                 id: chunkKey,
                 offset: 0,
             };
 
-            pos = a.ss.posFromRelativePos(relPosit);
+            const pos = a.ss.posFromRelativePos(relPosit);
 
             // Start inserting text into the string
             let code = chunk.charCodeAt(readPosition);
