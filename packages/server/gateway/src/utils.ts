@@ -15,6 +15,14 @@ export interface ICachedPackage {
     scripts: { id: string, url: string }[];
 }
 
+export interface IJWTClaims {
+    user: {
+        displayName: string;
+        id: string;
+        name: string;
+    };
+}
+
 /**
  * Helper function to return tenant specific configuration
  */
@@ -52,6 +60,22 @@ export function getVersion() {
     return `${version.endsWith(".0") ? "^" : ""}${version}`;
 }
 
+function getUser(request: Request) {
+    return request.user ? request.user : request.session.guest;
+}
+
+export function getJWTClaims(request: Request): IJWTClaims {
+    const user = getUser(request);
+
+    return {
+        user: {
+            displayName: user.name,
+            id: user.sub,
+            name: user.name,
+        },
+    };
+}
+
 export function getUserDetails(request: Request): string {
-    return JSON.stringify(request.user ? request.user : request.session.guest);
+    return JSON.stringify(getUser(request));
 }
