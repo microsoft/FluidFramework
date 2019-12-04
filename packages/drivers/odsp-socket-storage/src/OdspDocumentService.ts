@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
+import { ITelemetryBaseLogger } from "@microsoft/fluid-container-definitions";
 import { DebugLogger, TelemetryLogger, TelemetryNullLogger } from "@microsoft/fluid-core-utils";
 import {
     ConnectionMode,
@@ -73,7 +73,7 @@ export class OdspDocumentService implements IDocumentService {
         private readonly snapshotStorageUrl: string,
         getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
         readonly getWebsocketToken: (refresh) => Promise<string | null>,
-        logger: ITelemetryLogger,
+        logger: ITelemetryBaseLogger,
         private readonly storageFetchWrapper: IFetchWrapper,
         private readonly deltasFetchWrapper: IFetchWrapper,
         private readonly socketIOClientP: Promise<SocketIOClientStatic>,
@@ -83,7 +83,7 @@ export class OdspDocumentService implements IDocumentService {
         this.joinSessionKey = `${this.hashedDocumentId}/joinsession`;
 
         this.logger = DebugLogger.mixinDebugLogger(
-            "fluid:telemetry",
+            "fluid:telemetry:OdspDriver",
             logger,
             { docId: hashedDocumentId });
 
@@ -330,7 +330,7 @@ export class OdspDocumentService implements IDocumentService {
                             throw retryError;
                         });
                     } else {
-                        logger.sendErrorEvent({
+                        logger.sendPerformanceEvent({
                             eventName: "FailedAfdUrl-NoNonAfdFallback",
                         }, connectionError);
                     }
@@ -390,7 +390,7 @@ export class OdspDocumentService implements IDocumentService {
                         throw retryError;
                     });
                 } else {
-                    logger.sendErrorEvent({
+                    logger.sendPerformanceEvent({
                         eventName: "FailedNonAfdUrl-NoAfdFallback",
                     }, connectionError);
                 }
