@@ -18,6 +18,8 @@
     "build:full:compile": "npm run build:compile",
     "build:genver": "node node_modules/@microsoft/fluid-build-common/gen_version.js",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
+    "eslint": "eslint --ext=ts,tsx --format stylish src",
+    "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
     "test": "mocha --recursive dist/test",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose"
@@ -29,9 +31,14 @@
     "@microsoft/fluid-odsp-driver": "^0.12.0"
   },
   "devDependencies": {
+    "@microsoft/eslint-config-fluid": "^0.12.0",
     "@microsoft/fluid-build-common": "^0.12.0",
     "@types/mocha": "^5.2.5",
+    "@typescript-eslint/eslint-plugin": "^2.9.0",
+    "@typescript-eslint/eslint-plugin-tslint": "^2.9.0",
+    "@typescript-eslint/parser": "^2.9.0",
     "concurrently": "^4.1.0",
+    "eslint": "^6.7.1",
     "mocha": "^5.2.0",
     "rimraf": "^2.6.2",
     "tslint": "^5.20.0",

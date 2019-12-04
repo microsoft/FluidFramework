@@ -19,6 +19,8 @@
     "build:full:compile": "npm run build:compile",
     "build:genver": "node node_modules/@microsoft/fluid-build-common/gen_version.js",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
+    "eslint": "eslint --ext=ts,tsx --format stylish src",
+    "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
@@ -33,8 +35,13 @@
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.4.4",
+    "@microsoft/eslint-config-fluid": "^0.12.0",
     "@microsoft/fluid-build-common": "^0.12.0",
+    "@typescript-eslint/eslint-plugin": "^2.9.0",
+    "@typescript-eslint/eslint-plugin-tslint": "^2.9.0",
+    "@typescript-eslint/parser": "^2.9.0",
     "concurrently": "^4.1.0",
+    "eslint": "^6.7.1",
     "rimraf": "^2.6.2",
     "tslint": "^5.20.0",
     "typescript": "~3.4.5"

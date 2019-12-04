@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-module.exports = require("./.eslintrc.json")
+module.exports = require("./.eslintrc.js")

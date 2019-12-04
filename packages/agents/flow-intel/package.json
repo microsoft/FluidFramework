@@ -15,6 +15,8 @@
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "clean": "rimraf dist *.tsbuildinfo *.build.log",
+    "eslint": "eslint --ext=ts,tsx --format stylish src",
+    "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
@@ -25,10 +27,15 @@
     "request": "^2.88.0"
   },
   "devDependencies": {
+    "@microsoft/eslint-config-fluid": "^0.12.0",
     "@microsoft/fluid-build-common": "^0.12.0",
     "@types/node": "^10.14.6",
     "@types/request": "^2.47.1",
+    "@typescript-eslint/eslint-plugin": "^2.9.0",
+    "@typescript-eslint/eslint-plugin-tslint": "^2.9.0",
+    "@typescript-eslint/parser": "^2.9.0",
     "concurrently": "^4.1.0",
+    "eslint": "^6.7.1",
     "rimraf": "^2.6.2",
     "tslint": "^5.20.0",
     "typescript": "~3.4.5"
