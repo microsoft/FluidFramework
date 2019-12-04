@@ -218,7 +218,7 @@ type IDirectoryOperation = IDirectoryStorageOperation | IDirectorySubDirectoryOp
  * @privateRemarks
  * Directly used in JSON.stringify, direct result from JSON.parse.
  */
-interface IDirectoryDataObject {
+export interface IDirectoryDataObject {
     storage?: { [key: string]: ISerializableValue };
     subdirectories?: { [subdirName: string]: IDirectoryDataObject };
 }
