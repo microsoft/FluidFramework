@@ -27,10 +27,7 @@
   },
   "dependencies": {
     "@microsoft/fluid-aqueduct": "^0.12.0",
-    "@microsoft/fluid-build-common": "^0.12.0",
     "@microsoft/fluid-component-core-interfaces": "^0.12.0",
-    "@microsoft/fluid-component-runtime": "^0.12.0",
-    "@microsoft/fluid-container-definitions": "^0.12.0",
     "@microsoft/fluid-map": "^0.12.0",
     "@microsoft/fluid-merge-tree": "^0.12.0",
     "@microsoft/fluid-protocol-definitions": "^0.12.0",
@@ -44,6 +41,7 @@
   },
   "devDependencies": {
     "@microsoft/eslint-config-fluid": "^0.12.0",
+    "@microsoft/fluid-build-common": "^0.12.0",
     "@microsoft/fluid-webpack-component-loader": "^0.12.0",
     "@types/draft-js": "^0.10.34",
     "@types/node": "^10.14.6",
