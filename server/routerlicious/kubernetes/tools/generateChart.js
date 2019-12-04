@@ -157,8 +157,6 @@ worker:
       key: ""
     translation:
       key: ""
-    pinpointEditor:
-      key: ""
   clusterNpm: ""
   npm: ""
 `;

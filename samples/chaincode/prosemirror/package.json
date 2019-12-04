@@ -52,7 +52,7 @@
   },
   "devDependencies": {
     "@microsoft/eslint-config-fluid": "^0.12.0",
-    "@microsoft/fluid-webpack-component-loader": "^0.11.0",
+    "@microsoft/fluid-webpack-component-loader": "^0.12.0",
     "@types/node": "^10.14.6",
     "@typescript-eslint/eslint-plugin": "^2.9.0",
     "@typescript-eslint/eslint-plugin-tslint": "^2.9.0",
