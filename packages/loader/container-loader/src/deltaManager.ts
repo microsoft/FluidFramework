@@ -540,7 +540,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 if (success && retry >= 100) {
                     telemetryEvent.cancel({
                         category: "error",
-                        reason: "too many retries",
+                        error: "too many retries",
                         retry,
                         requests,
                         deltasRetrievedTotal: allDeltas.length,
@@ -567,21 +567,21 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         // Might need to change to non-error event
         this.logger.sendErrorEvent({eventName: "GetDeltasClosedConnection" });
-        telemetryEvent.cancel({ reason: "container closed" });
+        telemetryEvent.cancel({ error: "container closed" });
         return [];
     }
 
     /**
      * Closes the connection and clears inbound & outbound queues.
      */
-    public close(error?: any): void {
+    public close(error?: any, raiseContainerError = true): void {
         if (this.closed) {
             return;
         }
         this.closed = true;
 
         // Note: "disconnect" & "nack" do not have error object
-        if (error !== undefined) {
+        if (raiseContainerError && error !== undefined) {
             this.emit("error", error);
         }
 
@@ -809,8 +809,12 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this.disconnectFromDeltaStream(reason);
 
         // If reconnection is not an option, close the DeltaManager
-        if (!this.reconnect || !canRetryOnError(error)) {
-            this.close(error);
+        const criticalError = !canRetryOnError(error);
+        if (!this.reconnect || criticalError) {
+            // Do not raise container error if we are closing just because we lost connection.
+            // Those errors (like IdleDisconnect) would show up in telemetry dashboards and
+            // are very misleading, as first initial reaction - some logic is broken.
+            this.close(error, criticalError /*raiseContainerError*/);
         }
 
         // If closed then we can't reconnect
@@ -1012,7 +1016,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 from?: number,
                 to?: number,
                 messageGap?: number,
-            } = {
+        } = {
             eventName: `CatchUp_${telemetryEventSuffix}`,
             messageCount: messages.length,
             pendingCount: this.pending.length,

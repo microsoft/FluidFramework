@@ -99,7 +99,7 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
         if (startResult.started === false) {
             this.logger.sendTelemetryEvent({
                 eventName: "NotStarted",
-                message: startResult.message,
+                error: startResult.message,
                 onBehalfOf,
             });
             return;
@@ -425,7 +425,7 @@ export class RunningSummarizer implements IDisposable {
             category: ackNack.type === MessageType.SummaryAck ? "generic" : "error",
             timeWaiting: Date.now() - this.heuristics.lastSent.summaryTime,
             summarySequenceNumber: ackNack.contents.summaryProposal.summarySequenceNumber,
-            message: ackNack.type === MessageType.SummaryNack ? ackNack.contents.errorMessage : undefined,
+            error: ackNack.type === MessageType.SummaryNack ? ackNack.contents.errorMessage : undefined,
             handle: ackNack.type === MessageType.SummaryAck ? ackNack.contents.handle : undefined,
         });
 

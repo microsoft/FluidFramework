@@ -267,6 +267,14 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         if (!this._deltaManager) {
             throw new Error("Can't set autoReconnect prior to load");
         }
+
+        this.logger.sendTelemetryEvent({
+            eventName: "AutoReconnect",
+            value,
+            connectionMode: this._deltaManager!.connectionMode,
+            connectionState: this.connectionState,
+        });
+
         this._deltaManager.autoReconnect = value;
     }
 
@@ -730,7 +738,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                     const ack = message.contents as ISummaryAck;
                     protocolLogger.sendTelemetryEvent({
                         eventName: "SummaryAck",
-                        message: `handle: ${ack.handle}`,
+                        handle: ack.handle,
                         sequenceNumber: message.sequenceNumber,
                         summarySequenceNumber: ack.summaryProposal.summarySequenceNumber,
                     });
@@ -739,7 +747,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                     const nack = message.contents as ISummaryNack;
                     protocolLogger.sendTelemetryEvent({
                         eventName: "SummaryNack",
-                        message: nack.errorMessage,
+                        error: nack.errorMessage,
                         sequenceNumber: message.sequenceNumber,
                         summarySequenceNumber: nack.summaryProposal.summarySequenceNumber,
                     });
@@ -979,6 +987,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             connectionMode = this._deltaManager!.connectionMode;
             if (value === ConnectionState.Connected) {
                 durationFromDisconnected = time - this.connectionTransitionTimes[ConnectionState.Disconnected];
+                durationFromDisconnected = TelemetryLogger.formatTick(durationFromDisconnected);
                 this.firstConnection = false;
             }
             if (this.firstConnection) {
