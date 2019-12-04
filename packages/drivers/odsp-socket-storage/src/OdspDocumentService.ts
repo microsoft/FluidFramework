@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger } from "@microsoft/fluid-container-definitions";
-import { DebugLogger, SinglePromise, TelemetryLogger, TelemetryNullLogger } from "@microsoft/fluid-core-utils";
+import { DebugLogger, TelemetryLogger, TelemetryNullLogger } from "@microsoft/fluid-core-utils";
 import {
     ConnectionMode,
     IClient,
@@ -36,14 +35,8 @@ const lastAfdConnectionTimeMsKey = "LastAfdConnectionTimeMs";
  * clients
  */
 export class OdspDocumentService implements IDocumentService {
-    // This should be used to make web socket endpoint requests, it ensures we only have one active join session call at a time.
-    private readonly websocketEndpointRequestThrottler: SinglePromise<ISocketStorageDiscovery>;
-
-    // This is the result of a call to websocketEndpointSingleP, it is used to make sure that we don't make two join session
-    // calls to handle connecting to delta storage and delta stream.
-    private websocketEndpointP: Promise<ISocketStorageDiscovery> | undefined;
-
     private storageManager?: OdspDocumentStorageManager;
+    private joinSessionP: Promise<ISocketStorageDiscovery> | undefined;
 
     private readonly logger: TelemetryLogger;
 
@@ -74,8 +67,8 @@ export class OdspDocumentService implements IDocumentService {
         private readonly appId: string,
         private readonly hashedDocumentId: string,
         private readonly siteUrl: string,
-        driveId: string,
-        itemId: string,
+        private readonly driveId: string,
+        private readonly itemId: string,
         private readonly snapshotStorageUrl: string,
         getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
         readonly getWebsocketToken: (refresh) => Promise<string | null>,
@@ -102,19 +95,6 @@ export class OdspDocumentService implements IDocumentService {
             }
             return getStorageToken(this.siteUrl, refresh);
         };
-
-        this.websocketEndpointRequestThrottler = new SinglePromise(() =>
-            getSocketStorageDiscovery(
-                appId,
-                driveId,
-                itemId,
-                siteUrl,
-                this.logger,
-                this.getStorageToken,
-                this.odspCache,
-                this.joinSessionKey,
-            ),
-        );
 
         this.localStorageAvailable = isLocalStorageAvailable();
     }
@@ -149,17 +129,7 @@ export class OdspDocumentService implements IDocumentService {
      */
     public async connectToDeltaStorage(): Promise<IDocumentDeltaStorageService> {
         const urlProvider = async () => {
-            if (!this.websocketEndpointP) {
-              // We should never get here
-              // the very first (proactive) call to fetch ops should be serviced from latest snapshot, resulting in no opStream call
-              // any other requests are result of catching up on missing ops and are coming after websocket is established (or reconnected),
-              // and thus we already have fresh join session call.
-              // That said, tools like Fluid-fetcher will hit it, so that's valid code path.
-              this.logger.sendTelemetryEvent({ eventName: "ExtraJoinSessionCall" });
-
-              this.websocketEndpointP = this.websocketEndpointRequestThrottler.response;
-            }
-            const websocketEndpoint = await this.websocketEndpointP;
+            const websocketEndpoint = await this.joinSession();
             return websocketEndpoint.deltaStorageUrl;
         };
 
@@ -179,12 +149,9 @@ export class OdspDocumentService implements IDocumentService {
      * @returns returns the document delta stream service for sharepoint driver.
      */
     public async connectToDeltaStream(client: IClient, mode: ConnectionMode): Promise<IDocumentDeltaConnection> {
-        // We should refresh our knowledge before attempting to reconnect
-        this.websocketEndpointP = this.websocketEndpointRequestThrottler.response;
-
         // Attempt to connect twice, in case we used expired token.
         return getWithRetryForTokenRefresh<IDocumentDeltaConnection>(async (refresh: boolean) => {
-            const [websocketEndpoint, webSocketToken, io] = await Promise.all([this.websocketEndpointP!, this.getWebsocketToken(refresh), this.socketIOClientP]);
+            const [websocketEndpoint, webSocketToken, io] = await Promise.all([this.joinSession(), this.getWebsocketToken(refresh), this.socketIOClientP]);
 
             return this.connectToDeltaStreamWithRetry(
                 websocketEndpoint.tenantId,
@@ -209,6 +176,29 @@ export class OdspDocumentService implements IDocumentService {
 
     public getErrorTrackingService(): IErrorTrackingService {
         return { track: () => null };
+    }
+
+    private async joinSession(): Promise<ISocketStorageDiscovery> {
+        // Implement "locking" - only one outstanding join session call at a time.
+        // Note - we need it for perf. But also OdspCache.put() validates cache is not  overwritten by second call.
+        if (this.joinSessionP !== undefined) {
+            return this.joinSessionP;
+        }
+
+        this.joinSessionP = getSocketStorageDiscovery(
+            this.appId,
+            this.driveId,
+            this.itemId,
+            this.siteUrl,
+            this.logger,
+            this.getStorageToken,
+            this.odspCache,
+            this.joinSessionKey);
+        const joinSession = await this.joinSessionP;
+
+        // CLear "lock" - form now on cache is responsible for handling caching policy (duration / reset on error)
+        this.joinSessionP = undefined;
+        return joinSession;
     }
 
     /**

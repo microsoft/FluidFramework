@@ -239,8 +239,6 @@ function createSequenceInterval(
         const ival = new SequenceInterval(startLref, endLref, intervalType, rangeProp);
         // ival.checkMergeTree = sequence.client.mergeTree;
         return ival;
-    } else {
-        return null;
     }
 }
 
@@ -332,6 +330,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
             "transient", startPosition, endPosition, this.client, MergeTree.IntervalType.Transient);
         this.intervalTree.remove(transientInterval);
         this.endIntervalTree.remove(transientInterval);
+        return transientInterval;
     }
 
     public createInterval(start: number, end: number, intervalType: MergeTree.IntervalType) {
@@ -419,6 +418,17 @@ export class SequenceIntervalCollectionValueType
                     value.addInternal(params, local, op);
                 },
             },
+        ],
+        [
+            "delete",
+            {
+                process: (value, params, local, op) => {
+                    if (local) {
+                        return;
+                    }
+                    value.deleteInterval(params, local, op);
+                },
+            },
         ]]);
 }
 
@@ -485,6 +495,17 @@ export class IntervalCollectionValueType
                     value.addInternal(params, local, op);
                 },
             },
+        ],
+        [
+            "delete",
+            {
+                process: (value, params, local, op) => {
+                    if (local) {
+                        return;
+                    }
+                    value.deleteInterval(params, local, op);
+                },
+            },
         ]]);
 }
 
@@ -541,7 +562,7 @@ export class IntervalCollectionView<TInterval extends ISerializableInterval> ext
 
     /* tslint:disable:no-unnecessary-override */
     public on(
-        event: "addInterval",
+        event: "addInterval" | "deleteInterval",
         listener: (interval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage) => void): this {
         return super.on(event, listener);
     }
@@ -565,7 +586,25 @@ export class IntervalCollectionView<TInterval extends ISerializableInterval> ext
             start,
         };
 
-        this.addInternal(serializedInterval, true, null);
+        this.addInternal(serializedInterval, true, undefined);
+    }
+
+    public delete(
+        start: number,
+        end: number) {
+        let sequenceNumber = 0;
+        if (this.client) {
+            sequenceNumber = this.client.getCurrentSeq();
+        }
+
+        const serializedInterval: ISerializedInterval = {
+            start,
+            end,
+            sequenceNumber,
+            intervalType: MergeTree.IntervalType.Transient,
+        };
+
+        this.deleteInterval(serializedInterval, true, undefined);
     }
 
     // TODO: error cases
@@ -588,6 +627,26 @@ export class IntervalCollectionView<TInterval extends ISerializableInterval> ext
         }
 
         this.emit("addInterval", interval, local, op);
+
+        return this;
+    }
+
+    public deleteInterval(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage) {
+
+        const interval = this.localCollection.removeInterval(serializedInterval.start, serializedInterval.end);
+
+        if (interval) {
+            // Local ops get submitted to the server. Remote ops have the deserializer run.
+            if (local) {
+                this.emitter.emit("delete", undefined, serializedInterval);
+            } else {
+                if (this.onDeserialize) {
+                    this.onDeserialize(interval);
+                }
+            }
+        }
+
+        this.emit("deleteInterval", interval, local, op);
 
         return this;
     }
@@ -653,6 +712,17 @@ export class IntervalCollection<TInterval extends ISerializableInterval> {
         this.view.add(startPosition, endPosition, intervalType, props);
     }
 
+    public delete(
+        startPosition: number,
+        endPosition: number,
+    ) {
+        if (!this.view) {
+            throw new Error("attach must be called prior to deleting intervals");
+        }
+
+        this.view.delete(startPosition, endPosition);
+    }
+
     public addConflictResolver(conflictResolver: MergeTree.IntervalConflictResolver<TInterval>): void {
         this.view.addConflictResolver(conflictResolver);
     }
@@ -680,6 +750,16 @@ export class IntervalCollection<TInterval extends ISerializableInterval> {
         }
 
         return this.view.addInternal(serializedInterval, local, op);
+    }
+
+    public deleteInterval(
+            serializedInterval: ISerializedInterval,
+            local: boolean,
+            op: ISequencedDocumentMessage): void {
+        if (!this.view) {
+            throw new Error("attach must be called prior to deleting intervals");
+        }
+        this.view.deleteInterval(serializedInterval, local, op);
     }
 
     public serializeInternal() {
