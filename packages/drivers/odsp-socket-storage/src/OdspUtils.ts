@@ -27,7 +27,7 @@ export function throwOdspNetworkError(
         statusCode,
         canRetry,
         undefined,
-        response && response.headers ? `${response.headers.get("sprequestguid")}` : undefined,
+        response && response.headers && response.headers.get("sprequestguid"),
         online,
     );
 }
@@ -38,7 +38,7 @@ export class OdspNetworkError extends NetworkError {
         readonly statusCode: number | undefined,
         readonly canRetry: boolean,
         readonly retryAfterSeconds?: number,
-        readonly sprequestguid?: string,
+        readonly sprequestguid?: string | null,
         readonly online = OnlineStatus[isOnline()]) {
         super(errorMessage, statusCode, canRetry, retryAfterSeconds, online);
     }
