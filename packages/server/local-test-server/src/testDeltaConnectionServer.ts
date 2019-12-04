@@ -39,8 +39,8 @@ import {
     TestTenantManager,
     TestWebSocketServer,
 } from "@microsoft/fluid-server-test-utils";
+import { chance } from "chance";
 import * as jwt from "jsonwebtoken";
-import * as randomName from "random-name";
 import * as semver from "semver";
 import { TestReservationManager } from "./testReserverationManger";
 
@@ -209,7 +209,7 @@ export function register(
             }
             await tenantManager.verifyToken(claims.tenantId, token);
 
-            const clientId = `${randomName.first()}-${randomName.last()}`;
+            const clientId = `${chance.first()}-${chance.last()}`;
 
             const messageClient: Partial<IClient> = message.client ? message.client : {};
             messageClient.user = claims.user;
