@@ -10,6 +10,7 @@ import {
     fromUtf8ToBase64,
     gitHashFile,
     PerformanceEvent,
+    TelemetryLogger,
 } from "@microsoft/fluid-core-utils";
 import * as resources from "@microsoft/fluid-gitresources";
 import * as api from "@microsoft/fluid-protocol-definitions";
@@ -257,8 +258,8 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                             blobs: odspSnapshot.blobs ? odspSnapshot.blobs.length : 0,
                             ops: odspSnapshot.ops.length,
                             sprequestguid: response.headers.get("sprequestguid"),
-                            sprequestduration: response.headers.get("sprequestduration"),
-                            contentsize: response.headers.get("content-length"),
+                            sprequestduration: TelemetryLogger.numberFromString(response.headers.get("sprequestduration")),
+                            contentsize: TelemetryLogger.numberFromString(response.headers.get("content-length")),
                         };
                         event.end(props);
                     } catch (error) {
