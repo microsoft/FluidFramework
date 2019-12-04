@@ -35,7 +35,6 @@
     "@fluid-example/flow-util-lib": "^0.12.0",
     "@fluid-example/image-collection": "^0.12.0",
     "@fluid-example/math": "^0.12.0",
-    "@fluid-example/progress-bars": "^0.12.0",
     "@fluid-example/search-menu": "^0.12.0",
     "@fluid-example/table-document": "^0.12.0",
     "@fluid-example/table-view": "^0.12.0",
