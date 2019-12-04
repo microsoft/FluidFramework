@@ -217,9 +217,8 @@ type IDirectoryOperation = IDirectoryStorageOperation | IDirectorySubDirectoryOp
  * Defines the in-memory object structure to be used for the conversion to/from serialized.
  * @privateRemarks
  * Directly used in JSON.stringify, direct result from JSON.parse.
- * @internal
  */
-export interface IDirectoryDataObject {
+interface IDirectoryDataObject {
     storage?: { [key: string]: ISerializableValue };
     subdirectories?: { [subdirName: string]: IDirectoryDataObject };
 }
