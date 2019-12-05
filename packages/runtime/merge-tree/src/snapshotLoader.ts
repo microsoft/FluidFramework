@@ -110,15 +110,19 @@ export class SnapshotLoader {
             undefined);
     }
 
-    // If loading from a snapshot load tardis messages
+    /**
+     * If loading from a snapshot, get the tardis messages.
+     * @param rawMessages - The messages in original encoding
+     * @param branchId - The document branch
+     * @returns The decoded messages, but handles aren't parsed.  Matches the format that will be passed in
+     * SharedObject.processCore.
+     */
     private async loadTardis(
         rawMessages: Promise<string>,
         branchId: string,
     ): Promise<ISequencedDocumentMessage[]> {
         const utf8 = fromBase64ToUtf8(await rawMessages);
-        const messages = (this.runtime.IComponentSerializer
-            ? this.runtime.IComponentSerializer.parse(utf8, this.runtime.IComponentHandleContext)
-            : JSON.parse(utf8)) as ISequencedDocumentMessage[];
+        const messages = JSON.parse(utf8) as ISequencedDocumentMessage[];
         if (branchId !== this.runtime.documentId) {
             for (const message of messages) {
                 // Append branch information when transforming for the case of messages stashed with the snapshot
