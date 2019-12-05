@@ -31,7 +31,7 @@ export class TestDataStore {
         componentId: string,
         chaincodePackage: IFluidCodeDetails,
         path: string,
-        scope: IComponent,
+        scope?: IComponent,
     ): Promise<T> {
         debug(`TestDataStore.open("${componentId}", "${chaincodePackage.package}")`);
 
@@ -41,7 +41,7 @@ export class TestDataStore {
             this.documentServiceFactory,
             this.codeLoader,
             { blockUpdateMarkers: true },
-            scope,
+            scope || {},
             new Map<string, IProxyLoaderFactory>());
         const baseUrl = `https://test.com/tenantId/documentId/${encodeURIComponent(componentId)}`;
         const url = `${baseUrl}${
