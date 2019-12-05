@@ -39,7 +39,7 @@ yo @microsoft/fluid
 
 Update [Dockerfile](.\server\routerlicious\Dockerfile) with a reference to your package.json.  
 
-Update  [rush](./rush.json) with a reference to your package name.
+Update [rush](./rush.json) with a reference to your package name.
 
 ## Documentation
 
@@ -55,6 +55,8 @@ the [Fluid](https://stackoverflow.microsoft.com/questions/tagged/fluid) tag.
 
 * How do I get started?
   * Check out [Yo Fluid](./tools/generator-fluid/README.md)
+* Can I run Routerlicious locally?
+  * Yes, see the [Routerlicious documentation](./server/routerlicious/README.md)
 * Why can't I build or start docker?
   * [Allocate more than 4GB of RAM to Docker and share your harddrive with Docker](https://stackoverflow.microsoft.com/questions/137472/im-getting-docker-build-error-number-137)
 * Why can't I install Fluid dependencies?
@@ -94,10 +96,11 @@ the [Fluid](https://stackoverflow.microsoft.com/questions/tagged/fluid) tag.
 
 * [Loader](./packages/loader) startup code that loads Fluid container
 * [Runtime](./packages/runtime) core Fluid runtime definition and distributed data structures
-* [Framework](./packages/framework) base classes and interfaces for Fluid Framework that implements basic default behavior of components and containers.
+* [Framework](./packages/framework) base classes and interfaces for Fluid Framework that implements basic default behavior of components and containers
 * [Drivers](./packages/drivers) contains the drivers targeting different server implementation endpoints (e.g. Routerlicious and ODSP)
 * [Components](./packages/components) contains the component mechanism that enable components to be built on top of the Fluid runtime.  It also contains the sample Flow and Table components.
-* [Server](./packages/server) (To be moved to `server` directory) contains libraries for the reference implementation of the core server services
+* [Hosts](./packages/hosts) contains code to host Fluid Containers within other applications
+* [Server](./server) contains non-critical services that are especially tied into the loader and framework code
 
 [Server](./server) contains the reference server implementation **Routerlicious**
 
