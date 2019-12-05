@@ -1,17 +1,24 @@
 {
     "Base-Definitions": {
         "packages": [
-            "@microsoft/fluid-component-core-interfaces",
-            "@microsoft/fluid-protocol-definitions"
+            "@microsoft/fluid-common-definitions",
+            "@microsoft/fluid-component-core-interfaces"
         ]
     },
-
+    "Protocol-Definitions": {
+        "packages": [
+            "@microsoft/fluid-protocol-definitions"
+        ],
+        "deps": [
+            "Base-Definitions"
+        ]
+    },
     "Driver-Definitions": {
         "packages": [
             "@microsoft/fluid-driver-definitions"
         ],
         "deps": [
-            "@microsoft/fluid-protocol-definitions"
+            "Protocol-Definitions"
         ]
     },
     "Container-Definitions": {
