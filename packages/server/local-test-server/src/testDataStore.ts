@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IComponent} from '@microsoft/fluid-component-core-interfaces';
 import { ICodeLoader, IFluidCodeDetails, IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
 import { IDocumentServiceFactory, IUrlResolver } from "@microsoft/fluid-protocol-definitions";
@@ -30,6 +31,7 @@ export class TestDataStore {
         componentId: string,
         chaincodePackage: IFluidCodeDetails,
         path: string,
+        scope: IComponent,
     ): Promise<T> {
         debug(`TestDataStore.open("${componentId}", "${chaincodePackage.package}")`);
 
@@ -39,7 +41,7 @@ export class TestDataStore {
             this.documentServiceFactory,
             this.codeLoader,
             { blockUpdateMarkers: true },
-            {},
+            scope,
             new Map<string, IProxyLoaderFactory>());
         const baseUrl = `https://test.com/tenantId/documentId/${encodeURIComponent(componentId)}`;
         const url = `${baseUrl}${
