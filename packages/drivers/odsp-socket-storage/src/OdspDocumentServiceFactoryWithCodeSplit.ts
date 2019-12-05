@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ITelemetryBaseLogger } from "@microsoft/fluid-container-definitions";
+import { ITelemetryBaseLogger } from "@microsoft/fluid-common-definitions";
 import {
   IDocumentService,
   IDocumentServiceFactory,

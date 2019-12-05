@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-    ITelemetryErrorEvent,
-    ITelemetryLogger,
-} from "@microsoft/fluid-container-definitions";
-
+import { ITelemetryErrorEvent, ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import { isOnline, OnlineStatus } from "@microsoft/fluid-core-utils";
 
 export function logNetworkFailure(logger: ITelemetryLogger, event: ITelemetryErrorEvent, error?: any) {

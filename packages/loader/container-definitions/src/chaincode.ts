@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import {
     IComponent,
     IComponentConfiguration,
@@ -26,7 +27,6 @@ import { IAudience } from "./audience";
 import { IBlobManager } from "./blobs";
 import { IDeltaManager } from "./deltas";
 import { ICodeLoader, ILoader } from "./loader";
-import { ITelemetryLogger } from "./logger";
 
 /**
  * Person definition in a npm script

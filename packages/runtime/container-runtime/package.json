@@ -29,6 +29,7 @@
   },
   "dependencies": {
     "@microsoft/fluid-agent-scheduler": "^0.12.0",
+    "@microsoft/fluid-common-definitions": "^0.12.0",
     "@microsoft/fluid-component-core-interfaces": "^0.12.0",
     "@microsoft/fluid-container-definitions": "^0.12.0",
     "@microsoft/fluid-core-utils": "^0.12.0",

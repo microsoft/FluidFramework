@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryBaseLogger } from "@microsoft/fluid-common-definitions";
 import {
     IComponent,
     IRequest,
@@ -13,7 +14,6 @@ import {
     IHost,
     ILoader,
     IProxyLoaderFactory,
-    ITelemetryBaseLogger,
     LoaderHeader,
 } from "@microsoft/fluid-container-definitions";
 import { configurableUrlResolver, Deferred } from "@microsoft/fluid-core-utils";

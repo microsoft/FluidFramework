@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import {
     IComponentHandle,
     IComponentHandleContext,
@@ -15,7 +16,6 @@ import {
     IDeltaManager,
     IGenericBlob,
     ILoader,
-    ITelemetryLogger,
 } from "@microsoft/fluid-container-definitions";
 import {
     buildHierarchy,

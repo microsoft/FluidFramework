@@ -4,6 +4,7 @@
  */
 
 import { AgentSchedulerFactory } from "@microsoft/fluid-agent-scheduler";
+import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import {
     IComponent,
     IComponentHandleContext,
@@ -21,7 +22,6 @@ import {
     ILoader,
     IMessageScheduler,
     IRuntime,
-    ITelemetryLogger,
 } from "@microsoft/fluid-container-definitions";
 import {
     BlobTreeEntry,
