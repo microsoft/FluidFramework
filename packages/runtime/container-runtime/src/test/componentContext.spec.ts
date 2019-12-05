@@ -32,7 +32,7 @@ describe("Component Context Tests", () => {
             factory = { IComponentFactory: factory,  instantiateComponent: (context: IComponentContext) => { } };
             registry = {
                 IComponentRegistry: registry,
-                get: (pkg) => Promise.resolve(factory),
+                get: (pkg) => Promise.resolve({ IComponentFactory: factory }),
             };
             containerRuntime = { IComponentRegistry: registry} as ContainerRuntime;
         });
