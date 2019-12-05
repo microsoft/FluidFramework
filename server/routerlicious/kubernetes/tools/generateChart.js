@@ -110,6 +110,7 @@ packageManager:
 
 historian:
   externalUrl: https://historian.wu2.prague.office-int.com
+  internalUrl: http://smelly-wolf-historian
 
 gitrest:
   url: http://smelly-wolf-gitrest
