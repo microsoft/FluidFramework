@@ -284,6 +284,9 @@ class Document {
                 ["@ms/registro", Promise.resolve(chaincode)],
                 ["@ms/formula", Promise.resolve(chaincode)],
                 ["@ms/application-services", Promise.resolve(chaincode)],
+                ["@ms/undo-stack", Promise.resolve(chaincode)],
+                ["@ms/commanding-surface", Promise.resolve(chaincode)],
+                ["@ms/dias", Promise.resolve(chaincode)],
             ]);
         const options = {};
 
