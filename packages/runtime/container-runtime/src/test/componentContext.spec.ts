@@ -34,7 +34,7 @@ describe("Component Context Tests", () => {
                 IComponentRegistry: registry,
                 get: (pkg) => Promise.resolve({ IComponentFactory: factory }),
             };
-            containerRuntime = { IComponentRegistry: registry} as ContainerRuntime;
+            containerRuntime = { IComponentRegistry: registry } as ContainerRuntime;
         });
 
         it("Check LocalComponent Attributes", () => {
