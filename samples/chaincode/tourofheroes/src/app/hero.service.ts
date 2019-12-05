@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { Injectable, Inject } from '@angular/core';
-import { graphql, parse, subscribe, ExecutionResult } from "graphql";
-import { PubSub } from "graphql-subscriptions";
-import { from, Observable, of } from 'rxjs';
+import { Inject, Injectable } from '@angular/core';
+import { ISharedMap } from '@microsoft/fluid-map';
+import { EventEmitter } from 'events';
 import {
+    graphql, parse, subscribe, ExecutionResult,
     GraphQLInt,
     GraphQLList,
     GraphQLNonNull,
@@ -15,12 +15,12 @@ import {
     GraphQLSchema,
     GraphQLString,
 } from "graphql";
+import { PubSub } from "graphql-subscriptions";
+import { from, Observable, of } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import { Hero } from './hero';
 import { MessageService } from './message.service';
 import { PRAGUE_ROOT } from './tokens';
-import { ISharedMap } from '@microsoft/fluid-map';
-import { EventEmitter } from 'events';
 
 // Example of how to manually build a GraphQL Schema at https://github.com/graphql/graphql-js/ including 
 
@@ -287,7 +287,7 @@ export class GraphQLService {
     private getAllHeroes(): Hero[] {
         const heroes = new Array<Hero>();
         for (const key of this.root.keys()) {
-            if (key.indexOf(prefix) === 0) {
+            if (key.startsWith(prefix)) {
                 heroes.push({
                     id: parseInt(key.substr(prefix.length)),
                     name: this.root.get(key),
@@ -315,12 +315,13 @@ export class HeroService {
         return new Observable((subscriber) => {
             this.graphQLService.subscribeHeroes().then(
                 async (iterator) => {
+                    // eslint-disable-next-line no-constant-condition
                     while (true) {
                         const value = await iterator.next();
                         if (value.done) {
                             break;
                         }
-        
+
                         subscriber.next(value.value.data.heroesUpdate);
                     }
                 },
@@ -335,12 +336,13 @@ export class HeroService {
         return new Observable((subscriber) => {
             this.graphQLService.subscribeHero(id).then(
                 async (iterator) => {
+                    // eslint-disable-next-line no-constant-condition
                     while (true) {
                         const value = await iterator.next();
                         if (value.done) {
                             break;
                         }
-        
+
                         subscriber.next(value.value.data.heroUpdate);
                     }
                 },
@@ -393,7 +395,7 @@ export class HeroService {
             this.log(`${operation} failed: ${error.message}`);
 
             // Let the app keep running by returning an empty result.
-            return of(result as T);
+            return of(result);
         };
     }
 

@@ -79,7 +79,7 @@ export class TestHttpServer implements core.IHttpServer {
         // Fill me in
     }
 
-    public address(): { port: number; family: string; address: string; } {
+    public address(): { port: number; family: string; address: string } {
         return {
             address: "test",
             family: "test",

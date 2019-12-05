@@ -1,6 +1,7 @@
 {
     "extends": ["@microsoft/fluid-build-common/tslint.json"],
     "rules": {
+        "no-non-null-assertion": false,
         "no-suspicious-comment": false,
         "no-unsafe-any": false,
         "promise-function-async": false

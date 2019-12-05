@@ -164,7 +164,7 @@ export class BadgeView extends React.Component<IBadgeViewProps, IBadgeViewState>
   }
 
   private _onRenderCard(): JSX.Element {
-    let history = [];
+    const history = [];
 
     // add items to history in reverse order
     this.props.historySequence.getItems(0).forEach(x => {
@@ -183,7 +183,7 @@ export class BadgeView extends React.Component<IBadgeViewProps, IBadgeViewState>
         {history}
       </div>
     );
-  };
+  }
 
   public async componentDidMount(): Promise<void> {
     this.props.currentCell.on("valueChanged", () => {

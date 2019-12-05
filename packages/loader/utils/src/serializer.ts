@@ -88,7 +88,7 @@ export class ComponentSerializer implements IComponentSerializer {
                 // If the stored URL is absolute then we need to adjust the context from which we load. For
                 // absolute URLs we load from the root context. Given this is not always needed we delay looking
                 // up the root component until needed.
-                const absoluteUrl = value.url.indexOf("/") === 0;
+                const absoluteUrl = value.url.startsWith("/");
                 if (absoluteUrl && !root) {
                     // Find the root context to use for absolute requests
                     root = context;

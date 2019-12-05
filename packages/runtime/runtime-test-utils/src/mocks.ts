@@ -70,6 +70,7 @@ export class MockDeltaConnectionFactory {
     }
 
     public clearMessages() {
+        // eslint-disable-next-line no-empty
         while (this.messages.shift()) { }
     }
 
@@ -115,6 +116,7 @@ class MockDeltaConnection implements IDeltaConnection {
                     this.runtime.clientId = this.pendingClientId;
                     this.pendingClientId = undefined;
                 }
+            // intentional fallthrough
             case ConnectionState.Connecting:
                 this.pendingClientId = uuid();
                 break;
@@ -135,13 +137,13 @@ class MockDeltaConnection implements IDeltaConnection {
     constructor(
         private readonly factory: MockDeltaConnectionFactory,
         private readonly runtime: MockRuntime) {
-            this.handlers.push({
-                process: (message: ISequencedDocumentMessage, local: boolean) => {
-                    this.referenceSequenceNumber = message.sequenceNumber;
-                 },
-                setConnectionState: (state: ConnectionState) => { },
-            });
-        }
+        this.handlers.push({
+            process: (message: ISequencedDocumentMessage, local: boolean) => {
+                this.referenceSequenceNumber = message.sequenceNumber;
+            },
+            setConnectionState: (state: ConnectionState) => { },
+        });
+    }
 
     public submit(messageContent: any): number {
         this.clientSequenceNumber++;
@@ -306,7 +308,7 @@ export class MockRuntime extends EventEmitter
         return null;
     }
 
-    public error(err: any): void {}
+    public error(err: any): void { }
 }
 
 /**
@@ -324,6 +326,7 @@ export class MockHistorian implements IHistorian {
         return fromUtf8ToBase64(content);
     }
 
+    // eslint-disable-next-line @typescript-eslint/camelcase
     public async read_r(path: string, baseBlob: git.ITree | git.ICreateTreeParams): Promise<string> {
         if (!path.includes("/")) {
             for (const blob of baseBlob.tree) {
@@ -460,7 +463,7 @@ export class MockEmptyDeltaConnection implements IDeltaConnection {
  * Mock implementation of IObjectStorageService
  */
 export class MockObjectStorageService implements IObjectStorageService {
-    public constructor(private readonly contents: {[key: string]: string}) {
+    public constructor(private readonly contents: { [key: string]: string }) {
     }
 
     public async read(path: string): Promise<string> {
@@ -476,7 +479,7 @@ export class MockObjectStorageService implements IObjectStorageService {
  */
 export class MockSharedObjectServices implements ISharedObjectServices {
     public static createFromTree(tree: ITree) {
-        const contents: {[key: string]: string} = {};
+        const contents: { [key: string]: string } = {};
         for (const entry of tree.entries) {
             assert(entry.type === TreeEntry[TreeEntry.Blob]);
             contents[entry.path] = (entry.value as IBlob).contents;
@@ -487,7 +490,7 @@ export class MockSharedObjectServices implements ISharedObjectServices {
     public deltaConnection = new MockEmptyDeltaConnection();
     public objectStorage: MockObjectStorageService;
 
-    public constructor(contents: {[key: string]: string}) {
+    public constructor(contents: { [key: string]: string }) {
         this.objectStorage = new MockObjectStorageService(contents);
     }
 }

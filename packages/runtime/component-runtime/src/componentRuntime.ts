@@ -217,11 +217,11 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         }
 
         // Parse out the leading slash
-        const id = request.url.charAt(0) === "/" ? request.url.substr(1) : request.url;
+        const id = request.url.startsWith("/") ? request.url.substr(1) : request.url;
 
         // Check for a data type reference first
         if (this.contextsDeferred.has(id)) {
-            // tslint:disable-next-line: no-non-null-assertion
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const value = await this.contextsDeferred.get(id)!.promise;
             const channel = await value.getChannel();
 
@@ -250,7 +250,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
             this.contextsDeferred.set(id, new Deferred<IChannelContext>());
         }
 
-        // tslint:disable-next-line: no-non-null-assertion
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const context = await this.contextsDeferred.get(id)!.promise;
         const channel = await context.getChannel();
 
@@ -271,7 +271,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         this.contexts.set(id, context);
 
         if (this.contextsDeferred.has(id)) {
-            // tslint:disable-next-line: no-non-null-assertion
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             this.contextsDeferred.get(id)!.resolve(context);
         } else {
             const deferred = new Deferred<IChannelContext>();
@@ -293,7 +293,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
             this.attachChannel(channel);
             return;
         } else {
-            // tslint:disable-next-line: no-non-null-assertion
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             this.bind(channel.handle!);
 
             // If our Component is local then add the channel to the queue
@@ -387,8 +387,10 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         this.verifyNotClosed();
 
         const blob = await this.blobManager.createBlob(file);
+        /* eslint-disable require-atomic-updates */
         file.id = blob.id;
         file.url = blob.url;
+        /* eslint-enable require-atomic-updates */
 
         this.submit(MessageType.BlobUploaded, blob);
 
@@ -449,7 +451,8 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
 
                     this.contexts.set(attachMessage.id, remoteChannelContext);
                     if (this.contextsDeferred.has(attachMessage.id)) {
-                        // tslint:disable-next-line: no-non-null-assertion
+                        // tslint:disable-next-line max-line-length
+                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                         this.contextsDeferred.get(attachMessage.id)!.resolve(remoteChannelContext);
                     } else {
                         const deferred = new Deferred<IChannelContext>();
@@ -542,7 +545,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
     private attachChannel(channel: IChannel): void {
         this.verifyNotClosed();
 
-        // tslint:disable-next-line: no-non-null-assertion
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         channel.handle!.attach();
 
         // Get the object snapshot and include it in the initial attach
@@ -588,7 +591,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
             type: message.type,
         };
 
-        // tslint:disable-next-line: no-non-null-assertion
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         channelContext!.processOp(transformed, local);
 
         return channelContext;

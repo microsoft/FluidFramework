@@ -21,6 +21,7 @@
     "start:live": "webpack-dev-server --config webpack.config.js --package package.json --env.mode live",
     "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
     "tsc": "tsc",
+    "tslint": "npm run eslint",
     "webpack": "webpack --env=\"production\"",
     "webpack:dev": "webpack --env=\"development\""
   },
@@ -69,6 +70,7 @@
     "style-loader": "^1.0.0",
     "to-string-loader": "^1.1.5",
     "ts-loader": "^6.1.2",
+    "tslint": "^5.20.0",
     "typescript": "~3.4.5",
     "webpack": "^4.16.5",
     "webpack-cli": "^3.1.2",

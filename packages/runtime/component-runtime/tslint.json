@@ -3,7 +3,9 @@
     "rules": {
         "completed-docs": false,
         "no-for-in": false,
+        "no-non-null-assertion": false,
         "no-null-keyword": false,
+        "no-single-line-block-comment": false,
         "no-suspicious-comment": false,
         "promise-function-async": false
     }

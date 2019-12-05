@@ -39,7 +39,7 @@ const accumAsLeafAction = (
     startOffset: number,
     endOffset: number,
     accum?: LeafAction,
-) => (accum as LeafAction)(position, segment, startOffset, endOffset);
+) => (accum)(position, segment, startOffset, endOffset);
 
 const localAnnotationSym = Symbol("SourceDocument.localAnnotation");
 

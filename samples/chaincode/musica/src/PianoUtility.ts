@@ -3,30 +3,30 @@
  * Licensed under the MIT License.
  */
 
-import { MidiNumbers } from 'react-piano';
+import { MidiNumbers } from "react-piano";
 
 // Constants
-const activeKeyClassName = 'ReactPiano__Key--active';
-const keyQuerySelector = '.ReactPiano__Key';
-const firstNote = MidiNumbers.fromNote('c3');
-const lastNote = MidiNumbers.fromNote('f5');
+const activeKeyClassName = "ReactPiano__Key--active";
+const keyQuerySelector = ".ReactPiano__Key";
+const firstNote = MidiNumbers.fromNote("c3");
+const lastNote = MidiNumbers.fromNote("f5");
 
 const presenceColors = [
-  '#8B0400' /*maroon*/,
-  '#BF5D24' /*orange*/,
-  '#E6AF1F' /*gold*/,
-  '#95A84F' /*olive green*/,
-  '#4AA02C' /*Leevi's favorite color!!*/,
-  '#599E8E' /*seafoam green*/,
-  '#C791CB' /*light blue*/,
-  '#E73B65' /*pink*/
+  "#8B0400" /*maroon*/,
+  "#BF5D24" /*orange*/,
+  "#E6AF1F" /*gold*/,
+  "#95A84F" /*olive green*/,
+  "#4AA02C" /*Leevi"s favorite color!!*/,
+  "#599E8E" /*seafoam green*/,
+  "#C791CB" /*light blue*/,
+  "#E73B65" /*pink*/,
 ];
 
 // Exports
 export const pianoUtilityConstants = { firstNote, lastNote };
 export enum KeyStatus {
   Pressed,
-  Unpressed
+  Unpressed,
 }
 
 /**
@@ -40,7 +40,7 @@ export class PianoUtility {
     const allKeys = document.querySelectorAll(keyQuerySelector);
     const index = midiNumber - firstNote;
 
-    return <HTMLElement>allKeys[index];
+    return allKeys[index] as HTMLElement;
   }
 
   /**
@@ -61,10 +61,10 @@ export class PianoUtility {
     key.classList.add(activeKeyClassName);
 
     // Add presence-specific color.
-    let colorIndex = PianoUtility.getColorIndexFromClientId(clientId);
-    let color: string = presenceColors[colorIndex];
+    const colorIndex = PianoUtility.getColorIndexFromClientId(clientId);
+    const color: string = presenceColors[colorIndex];
     key.style.background = color;
-    key.style.border = '1px solid ' + color;
+    key.style.border = `px solid ${color}`;
   }
 
   private static getColorIndexFromClientId(clientId: string): number {
@@ -72,12 +72,13 @@ export class PianoUtility {
   }
 
   private static hashCode(str: string): number {
-    var hash = 0,
-      i,
-      chr;
-    if (str.length === 0) return hash;
+    let hash = 0;
+    let i;
+    let chr;
+    if (str.length === 0) { return hash; }
     for (i = 0; i < str.length; i++) {
       chr = str.charCodeAt(i);
+      // tslint:disable-next-line restrict-plus-operands
       hash = (hash << 5) - hash + chr;
       hash |= 0; // Convert to 32bit integer
     }
@@ -91,12 +92,13 @@ export class PianoUtility {
     key.classList.remove(activeKeyClassName);
 
     // Reset background color.
-    key.style.background = '';
-    key.style.border = '';
+    key.style.background = "";
+    key.style.border = "";
   }
 
   public static getPresenceColorId(): number {
-    let randomIndex: number = Math.floor(Math.random() * Math.floor(presenceColors.length));
+    // tslint:disable-next-line insecure-random
+    const randomIndex: number = Math.floor(Math.random() * Math.floor(presenceColors.length));
     return randomIndex;
   }
 }

@@ -124,7 +124,7 @@ export class DeltaConnection extends EventEmitter {
         // Note that we delay subscribing to op / op-content / signal on purpose, as
         // that is used as a signal in DocumentDeltaConnection to know if anyone has subscribed
         // to these events, and thus stop accumulating ops / signals in early handlers.
-        if (this.forwardEvents.indexOf(event) !== -1) {
+        if (this.forwardEvents.includes(event)) {
             assert(this.connection.listeners(event).length === 0, "re-registration of events is not implemented");
             this.connection.on(
                 event,
@@ -133,7 +133,7 @@ export class DeltaConnection extends EventEmitter {
                 });
         } else {
             // These are events that we already subscribed to and already emit on object.
-            assert(this.nonForwardEvents.indexOf(event) !== -1);
+            assert(this.nonForwardEvents.includes(event));
         }
 
         // And then add the listener to our event emitter

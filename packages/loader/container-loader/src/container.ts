@@ -74,7 +74,9 @@ import { NullChaincode } from "./nullRuntime";
 import { pkgName, pkgVersion } from "./packageVersion";
 import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
 
-// tslint:disable:no-floating-promises - disabling per-file rather than full subdirectory
+// disabling these per-file rather than full subdirectory
+// tslint:disable:no-floating-promises no-single-line-block-comment
+/* eslint-disable @typescript-eslint/no-misused-promises */
 
 // tslint:disable-next-line:no-var-requires
 const performanceNow = require("performance-now") as (() => number);
@@ -109,6 +111,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             request,
             logger);
 
+        // eslint-disable-next-line no-async-promise-executor
         return new Promise<Container>(async (res, rej) => {
             let alreadyRaisedError = false;
             const onError = (error) => {
@@ -125,6 +128,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             const version = request.headers && request.headers[LoaderHeader.version];
             const pause = request.headers && request.headers[LoaderHeader.pause];
 
+            // tslint:disable-next-line no-unsafe-any
             return container.load(version, !!pause)
                 .then(() => {
                     container.removeListener("error", onError);
@@ -136,7 +140,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                     }
                     container.ignoreUnhandledConnectonError();
                     onError(error);
-            });
+                });
         });
     }
 
@@ -271,7 +275,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         this.logger.sendTelemetryEvent({
             eventName: "AutoReconnect",
             value,
-            connectionMode: this._deltaManager!.connectionMode,
+            connectionMode: this._deltaManager.connectionMode,
             connectionState: this.connectionState,
         });
 
@@ -447,8 +451,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
     private async reloadContextCore(): Promise<void> {
         await Promise.all([
-            this.deltaManager!.inbound.systemPause(),
-            this.deltaManager!.inboundSignal.systemPause()]);
+            this.deltaManager.inbound.systemPause(),
+            this.deltaManager.inboundSignal.systemPause()]);
 
         const previousContextState = await this.context!.stop();
 
@@ -471,8 +475,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         await this.loadContext(attributes, storage, snapshot);
 
-        this.deltaManager!.inbound.systemResume();
-        this.deltaManager!.inboundSignal.systemResume();
+        this.deltaManager.inbound.systemResume();
+        this.deltaManager.inboundSignal.systemResume();
     }
 
     private async snapshotCore(tagMessage: string, fullTree: boolean = false) {
@@ -583,7 +587,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private ignoreUnhandledConnectonError() {
         // avoid unhandled promises
         if (this.connectionDetailsP) {
-            this.connectionDetailsP.catch(() => {});
+            this.connectionDetailsP.catch(() => { });
         }
     }
 
@@ -714,8 +718,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         const protocol = new ProtocolOpHandler(
             attributes.branch,
-            attributes.minimumSequenceNumber!,
-            attributes.sequenceNumber!,
+            attributes.minimumSequenceNumber,
+            attributes.sequenceNumber,
             members,
             proposals,
             values,
@@ -827,7 +831,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
     private async loadCodeFromQuorum(
         quorum: Quorum,
-    ): Promise<{ pkg: IFluidCodeDetails | undefined, chaincode: IRuntimeFactory }> {
+    ): Promise<{ pkg: IFluidCodeDetails | undefined; chaincode: IRuntimeFactory }> {
         // back compat - can remove in 0.7
         const codeQuorumKey = quorum.has("code")
             ? "code"
@@ -870,7 +874,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             ? (this.options.client as IClient)
             : {
                 details: {
-                    capabilities: {interactive: true},
+                    capabilities: { interactive: true },
                 },
                 permission: [],
                 scopes: [],
@@ -1076,7 +1080,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         if (logOpsOnReconnect) {
             this.messageCountAfterDisconnection = 0;
         }
-        this.context!.changeConnectionState(this._connectionState, this.clientId!, this._version!);
+        this.context!.changeConnectionState(this._connectionState, this.clientId!, this._version);
         this.protocolHandler!.quorum.changeConnectionState(this._connectionState, this.clientId!);
         raiseConnectedEvent(this, this._connectionState, this.clientId!);
         if (logOpsOnReconnect) {
@@ -1118,7 +1122,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private processSignal(message: ISignalMessage) {
         // No clientId indicates a system signal message.
         if (message.clientId === null && this._audience) {
-            const innerContent = message.content as { content: any, type: string };
+            const innerContent = message.content as { content: any; type: string };
             if (innerContent.type === MessageType.ClientJoin) {
                 const newClient = innerContent.content as ISignalClient;
                 this._audience.addMember(newClient.clientId, newClient.client);
@@ -1135,6 +1139,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     // tslint:disable no-unsafe-any
     private getScopes(options: any): string[] {
         return options && options.tokens && options.tokens.jwt ?
+            // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
             (jwtDecode(options.tokens.jwt) as ITokenClaims).scopes : [];
     }
     // tslint:enable no-unsafe-any

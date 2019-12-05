@@ -48,7 +48,7 @@ export class SharedStringTranslator {
 
     private needsTranslation(op: any): boolean {
         // Exit early if there are no target translations
-        const languages = this.typeInsights.get("translationTo") as string;
+        const languages = this.typeInsights.get("translationTo");
         if (!languages) {
             return false;
         }
@@ -63,7 +63,7 @@ export class SharedStringTranslator {
 
         // If an annotation it must be a style property change
         if (mergeTreeOp.type === MergeTree.MergeTreeDeltaType.ANNOTATE) {
-            const annotateOp = mergeTreeOp as MergeTree.IMergeTreeAnnotateMsg;
+            const annotateOp = mergeTreeOp;
             if (Object.keys(annotateOp.props).findIndex(
                 (key) => key === "font-weight" || key === "text-decoration") === -1) {
                 return false;
@@ -90,8 +90,8 @@ export class SharedStringTranslator {
             // Let new reqeusts start
             this.pendingTranslation = false;
 
-            const fromLanguage = this.typeInsights.get("translationFrom") as string;
-            const toLanguage = this.typeInsights.get("translationTo") as string;
+            const fromLanguage = this.typeInsights.get("translationFrom");
+            const toLanguage = this.typeInsights.get("translationTo");
 
             // Run translation on all other operations
             this.translating = true;

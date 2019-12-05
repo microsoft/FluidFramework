@@ -5,85 +5,85 @@
 
 // See https://github.com/danigb/soundfont-player
 // for more documentation on prop options.
-import * as React from 'react';
+import * as React from "react";
 
 // Piano
-import { Piano, KeyboardShortcuts } from 'react-piano';
-import './styles.css';
+import { KeyboardShortcuts, Piano } from "react-piano";
+import "./styles.css";
 
 // Player & Utility
-import { pianoUtilityConstants } from './PianoUtility';
+import { pianoUtilityConstants } from "./PianoUtility";
 
 // React widgets
-import { DropdownList } from 'react-widgets';
-import 'react-widgets/dist/css/react-widgets.css';
-import Slider from 'rc-slider';
-import 'rc-slider/assets/index.css';
+import { DropdownList } from "react-widgets";
+import Slider from "rc-slider";
+import "react-widgets/dist/css/react-widgets.css";
+import "rc-slider/assets/index.css";
 
-import { ISharedDirectory } from '@microsoft/fluid-map';
-import { NoteProperties, Instrument, WaveProperties } from './Player';
-import { SongSelection, songLibrary } from './SongLibrary';
-import { Song, restNoteMidiNumber } from './Songs/Song';
-import { Note, NoteType } from './Songs/Note';
-import { Recorder } from './Recorder';
+import { ISharedDirectory } from "@microsoft/fluid-map";
+import { Instrument, NoteProperties, WaveProperties } from "./Player";
+import { Recorder } from "./Recorder";
+import { songLibrary, SongSelection } from "./SongLibrary";
+import { Note, NoteType } from "./Songs/Note";
+import { restNoteMidiNumber, Song } from "./Songs/Song";
 
 const keyboardConfig = [
-  // { natural: 'q', flat: '1', sharp: '2' },
-  // { natural: 'w', flat: '2', sharp: '3' },
-  // { natural: 'e', flat: '3', sharp: '4' },
-  // { natural: 'r', flat: '4', sharp: '5' },
-  // { natural: 't', flat: '5', sharp: '6' },
-  // { natural: 'y', flat: '6', sharp: '7' },
-  // { natural: 'u', flat: '7', sharp: '8' },
-  // { natural: 'i', flat: '8', sharp: '9' },
-  // { natural: 'o', flat: '9', sharp: '0' },
-  // { natural: 'p', flat: '0', sharp: '-' },
-  // { natural: '[', flat: '-', sharp: '=' },
-  // { natural: 'z', flat: 'a', sharp: 's' },
-  // { natural: 'x', flat: 's', sharp: 'd' },
-  // { natural: 'c', flat: 'd', sharp: 'f' },
-  // { natural: 'v', flat: 'f', sharp: 'g' },
-  // { natural: 'b', flat: 'g', sharp: 'h' },
-  // { natural: 'n', flat: 'h', sharp: 'j' },
-  // { natural: 'm', flat: 'j', sharp: 'k' },
-  // { natural: ',', flat: 'k', sharp: 'l' },
-  // { natural: '.', flat: 'l', sharp: ';' },
-  // { natural: '/', flat: ';', sharp: "'" },
-  { natural: 'a', flat: 'q', sharp: 'w' },
-  { natural: 's', flat: 'w', sharp: 'e' },
-  { natural: 'd', flat: 'e', sharp: 'r' },
-  { natural: 'f', flat: 'r', sharp: 't' },
-  { natural: 'g', flat: 't', sharp: 'y' },
-  { natural: 'h', flat: 'y', sharp: 'u' },
-  { natural: 'j', flat: 'u', sharp: 'i' },
-  { natural: 'k', flat: 'i', sharp: 'o' },
-  { natural: 'l', flat: 'o', sharp: 'p' },
-  { natural: ';', flat: 'p', sharp: '[' },
-  { natural: "'", flat: '[', sharp: ']' }
+  // { natural: "q", flat: "1", sharp: "2" },
+  // { natural: "w", flat: "2", sharp: "3" },
+  // { natural: "e", flat: "3", sharp: "4" },
+  // { natural: "r", flat: "4", sharp: "5" },
+  // { natural: "t", flat: "5", sharp: "6" },
+  // { natural: "y", flat: "6", sharp: "7" },
+  // { natural: "u", flat: "7", sharp: "8" },
+  // { natural: "i", flat: "8", sharp: "9" },
+  // { natural: "o", flat: "9", sharp: "0" },
+  // { natural: "p", flat: "0", sharp: "-" },
+  // { natural: "[", flat: "-", sharp: "=" },
+  // { natural: "z", flat: "a", sharp: "s" },
+  // { natural: "x", flat: "s", sharp: "d" },
+  // { natural: "c", flat: "d", sharp: "f" },
+  // { natural: "v", flat: "f", sharp: "g" },
+  // { natural: "b", flat: "g", sharp: "h" },
+  // { natural: "n", flat: "h", sharp: "j" },
+  // { natural: "m", flat: "j", sharp: "k" },
+  // { natural: ",", flat: "k", sharp: "l" },
+  // { natural: ".", flat: "l", sharp: ";" },
+  // { natural: "/", flat: ";", sharp: """ },
+  { natural: "a", flat: "q", sharp: "w" },
+  { natural: "s", flat: "w", sharp: "e" },
+  { natural: "d", flat: "e", sharp: "r" },
+  { natural: "f", flat: "r", sharp: "t" },
+  { natural: "g", flat: "t", sharp: "y" },
+  { natural: "h", flat: "y", sharp: "u" },
+  { natural: "j", flat: "u", sharp: "i" },
+  { natural: "k", flat: "i", sharp: "o" },
+  { natural: "l", flat: "o", sharp: "p" },
+  { natural: ";", flat: "p", sharp: "[" },
+  { natural: "'", flat: "[", sharp: "]" },
 ];
 
 const keyboardShortcuts = KeyboardShortcuts.create({
   firstNote: pianoUtilityConstants.firstNote,
   lastNote: pianoUtilityConstants.lastNote,
-  keyboardConfig: keyboardConfig
+  keyboardConfig,
 });
 
 // Instruments
 const instrumentDropdownData = [
-  { label: 'Piano', id: Instrument.Piano },
-  { label: 'Guitar', id: Instrument.Guitar },
-  { label: 'Sine', id: Instrument.Sine },
-  { label: 'Organ', id: Instrument.Organ },
-  { label: 'Drumset', id: Instrument.Drumset },
-  { label: 'Custom', id: Instrument.Custom }
+  { label: "Piano", id: Instrument.Piano },
+  { label: "Guitar", id: Instrument.Guitar },
+  { label: "Sine", id: Instrument.Sine },
+  { label: "Organ", id: Instrument.Organ },
+  { label: "Drumset", id: Instrument.Drumset },
+  { label: "Custom", id: Instrument.Custom },
 ];
 
 // Songs
 const songDropdownData = [
-  { label: 'Für Elise', id: SongSelection.FurElise },
-  { label: 'Für Elise - Short', id: SongSelection.FurEliseShort },
-  { label: 'Ballgame', id: SongSelection.Ballgame },
-  { label: 'Sandstorm', id: SongSelection.Sandstorm }
+  { label: "Für Elise", id: SongSelection.FurElise },
+  { label: "Für Elise - Short", id: SongSelection.FurEliseShort },
+  { label: "Ballgame", id: SongSelection.Ballgame },
+  { label: "Sandstorm", id: SongSelection.Sandstorm },
 ];
 
 const defaultCustomState = {
@@ -92,7 +92,7 @@ const defaultCustomState = {
   overtone1: 0.7,
   overtone2: 0.15,
   overtone3: 0.06,
-  overtone4: 0.03
+  overtone4: 0.03,
 };
 
 export interface DAWState {
@@ -116,7 +116,7 @@ export interface DAWProps {
 }
 
 export class DAW extends React.Component<DAWProps, DAWState> {
-  private recorder;
+  private readonly recorder;
 
   constructor(props: DAWProps) {
     super(props);
@@ -130,25 +130,25 @@ export class DAW extends React.Component<DAWProps, DAWState> {
       overtone2: defaultCustomState.overtone2,
       overtone3: defaultCustomState.overtone3,
       overtone4: defaultCustomState.overtone4,
-      customInstrumentName: 'New Instrument',
-      customSongName: 'New Song',
+      customInstrumentName: "New Instrument",
+      customSongName: "New Song",
       songSelectionName: songDropdownData[0].label,
-      stopSong: false
+      stopSong: false,
     };
 
     this.recorder = new Recorder(props.rootDir);
   }
 
-  private resetToDefault = () => {
+  private readonly resetToDefault = () => {
     this.setState({
       customModulation: defaultCustomState.customModulation,
       customDecay: defaultCustomState.customDecay,
       overtone1: defaultCustomState.overtone1,
       overtone2: defaultCustomState.overtone2,
       overtone3: defaultCustomState.overtone3,
-      overtone4: defaultCustomState.overtone4
+      overtone4: defaultCustomState.overtone4,
     });
-  };
+  }
 
   private onTempoChange(tempo: number) {
     this.setState({ tempo });
@@ -182,9 +182,9 @@ export class DAW extends React.Component<DAWProps, DAWState> {
     this.setState({ instrument });
 
     if (instrument === Instrument.Custom) {
-      let savedInstruments = this.getSavedInstruments();
+      const savedInstruments = this.getSavedInstruments();
 
-      savedInstruments.forEach(savedInstrument => {
+      savedInstruments.forEach((savedInstrument) => {
         if (savedInstrument.name === name) {
           this.setState({
             customDecay: savedInstrument.waveProperties.decay,
@@ -192,7 +192,7 @@ export class DAW extends React.Component<DAWProps, DAWState> {
             overtone1: savedInstrument.waveProperties.overtone1,
             overtone2: savedInstrument.waveProperties.overtone2,
             overtone3: savedInstrument.waveProperties.overtone3,
-            overtone4: savedInstrument.waveProperties.overtone4
+            overtone4: savedInstrument.waveProperties.overtone4,
           });
         }
       });
@@ -209,7 +209,7 @@ export class DAW extends React.Component<DAWProps, DAWState> {
   public postPressKey(midiNumber: any) {
     this.recorder.postSaveNewNote(new Note(midiNumber, NoteType.quarter), this.state.tempo);
 
-    this.props.rootDir.set('playNote', {
+    this.props.rootDir.set("playNote", {
       length: 0.5,
       midiNumber,
       instrument: this.state.instrument,
@@ -218,17 +218,17 @@ export class DAW extends React.Component<DAWProps, DAWState> {
       overtone1: this.state.overtone1,
       overtone2: this.state.overtone2,
       overtone3: this.state.overtone3,
-      overtone4: this.state.overtone4
+      overtone4: this.state.overtone4,
     } as NoteProperties);
   }
 
   public postPlayNote(note: NoteProperties) {
-    this.props.rootDir.set('playNote', note);
+    this.props.rootDir.set("playNote", note);
   }
 
   public postSaveInstrument(event: any) {
-    let savedInstruments = this.getSavedInstruments();
-    let waveProperties = {
+    const savedInstruments = this.getSavedInstruments();
+    const waveProperties = {
       amplitude: 1,
       frequency: 0,
       modulation: this.state.customModulation,
@@ -236,18 +236,18 @@ export class DAW extends React.Component<DAWProps, DAWState> {
       overtone1: this.state.overtone1,
       overtone2: this.state.overtone2,
       overtone3: this.state.overtone3,
-      overtone4: this.state.overtone4
+      overtone4: this.state.overtone4,
     } as WaveProperties;
-    let instrumentProperty = { name: this.state.customInstrumentName, waveProperties } as InstrumentProperties;
+    const instrumentProperty = { name: this.state.customInstrumentName, waveProperties } as InstrumentProperties;
 
     savedInstruments.push(instrumentProperty);
 
-    this.props.rootDir.set('savedInstruments', savedInstruments);
+    this.props.rootDir.set("savedInstruments", savedInstruments);
     event.preventDefault();
   }
 
   public getSavedInstruments(): InstrumentProperties[] {
-    let savedInstruments = this.props.rootDir.get('savedInstruments');
+    const savedInstruments = this.props.rootDir.get("savedInstruments");
 
     if (savedInstruments === undefined) {
       return [];
@@ -257,16 +257,16 @@ export class DAW extends React.Component<DAWProps, DAWState> {
   }
 
   public postUnpressKey(midiNumber: any) {
-    this.props.rootDir.set('stopNote', midiNumber);
+    this.props.rootDir.set("stopNote", midiNumber);
   }
 
   private startPlaySong(loop: boolean) {
     let song: Song;
 
     if (this.state.songSelection === SongSelection.Custom) {
-      let savedSongs = this.recorder.getSavedSongs();
+      const savedSongs = this.recorder.getSavedSongs();
 
-      savedSongs.forEach(savedSong => {
+      savedSongs.forEach((savedSong) => {
         if (savedSong.name === this.state.songSelectionName) {
           song = savedSong.song;
         }
@@ -305,7 +305,7 @@ export class DAW extends React.Component<DAWProps, DAWState> {
     const noteLengthMs = noteLengthSeconds * 1000;
 
     if (note.midiNumber !== restNoteMidiNumber) {
-      // It's not a rest note - make a sound.
+      // It"s not a rest note - make a sound.
       const noteProperties: NoteProperties = {
         length: noteLengthSeconds,
         midiNumber: note.midiNumber,
@@ -315,7 +315,7 @@ export class DAW extends React.Component<DAWProps, DAWState> {
         overtone1: this.state.overtone1,
         overtone2: this.state.overtone2,
         overtone3: this.state.overtone3,
-        overtone4: this.state.overtone4
+        overtone4: this.state.overtone4,
       };
 
       // Play the note, and send the key unpress after note length time has elapsed.
@@ -327,15 +327,15 @@ export class DAW extends React.Component<DAWProps, DAWState> {
     setTimeout(() => this.postPlaySong(song, noteIndex + 1, loop), noteLengthMs);
   }
 
-  render() {
+  public render() {
     return (
       <div>
         <Piano
           noteRange={{ first: pianoUtilityConstants.firstNote, last: pianoUtilityConstants.lastNote }}
-          playNote={midiNumber => {
+          playNote={(midiNumber) => {
             this.postPressKey(midiNumber);
           }}
-          stopNote={midiNumber => {
+          stopNote={(midiNumber) => {
             this.postUnpressKey(midiNumber);
           }}
           width={1000}
@@ -345,19 +345,19 @@ export class DAW extends React.Component<DAWProps, DAWState> {
           style={{ maxWidth: 150, marginTop: 20 }}
           defaultValue={instrumentDropdownData[0].label}
           data={this.getInstrumentDropdownData()}
-          textField={i => i.label}
+          textField={(i) => i.label}
           valueField="label"
-          onChange={data => this.onInstrumentChange(data.label, data.id)}
+          onChange={(data) => this.onInstrumentChange(data.label, data.id)}
         />
 
         <div style={{ marginBottom: 20 }}>
           <DropdownList
-            style={{ maxWidth: 200, marginTop: 20, display: 'inline-block' }}
+            style={{ maxWidth: 200, marginTop: 20, display: "inline-block" }}
             defaultValue={songDropdownData[0].label}
             data={this.getSongDropdownData()}
-            textField={i => i.label}
+            textField={(i) => i.label}
             valueField="label"
-            onChange={data => this.onSongSelectionChange(data.label, data.id)}
+            onChange={(data) => this.onSongSelectionChange(data.label, data.id)}
           />
           <button style={{ marginLeft: 10, height: 36 }} onClick={() => this.startPlaySong(false)}>
             Play song!
@@ -374,7 +374,7 @@ export class DAW extends React.Component<DAWProps, DAWState> {
             <input
               type="text"
               value={this.state.customSongName}
-              onChange={event => this.onCustomSongNameChange(event)}
+              onChange={(event) => this.onCustomSongNameChange(event)}
             />
           </label>
 
@@ -392,10 +392,10 @@ export class DAW extends React.Component<DAWProps, DAWState> {
             <span>Tempo: </span>
             <Slider
               value={this.state.tempo}
-              onChange={tempo => this.onTempoChange(tempo)}
+              onChange={(tempo) => this.onTempoChange(tempo)}
               min={60}
               max={200}
-              style={{ width: 200, display: 'inline-block' }}
+              style={{ width: 200, display: "inline-block" }}
             />
             <span> {this.state.tempo}</span>
           </div>
@@ -406,19 +406,19 @@ export class DAW extends React.Component<DAWProps, DAWState> {
     );
   }
 
-  private ControlPanel = () => {
+  private readonly ControlPanel = () => {
     return (
       <div>
-        <div className={this.state.instrument !== Instrument.Custom ? 'hidden' : ''}>
+        <div className={this.state.instrument !== Instrument.Custom ? "hidden" : ""}>
           <div style={{ margin: 10 }}>
             <span>Modulation: </span>
             <Slider
               value={this.state.customModulation}
-              onChange={customModulation => this.onModulationChange(customModulation)}
+              onChange={(customModulation) => this.onModulationChange(customModulation)}
               min={-10}
               max={10}
               step={0.1}
-              style={{ width: 200, display: 'inline-block' }}
+              style={{ width: 200, display: "inline-block" }}
             />
             <span> {this.state.customModulation}</span>
           </div>
@@ -426,11 +426,11 @@ export class DAW extends React.Component<DAWProps, DAWState> {
             <span>Decay: </span>
             <Slider
               value={this.state.customDecay}
-              onChange={customDecay => this.onDecayChange(customDecay)}
+              onChange={(customDecay) => this.onDecayChange(customDecay)}
               min={-10}
               max={10}
               step={0.1}
-              style={{ width: 200, display: 'inline-block' }}
+              style={{ width: 200, display: "inline-block" }}
             />
             <span> {this.state.customDecay}</span>
           </div>
@@ -438,11 +438,11 @@ export class DAW extends React.Component<DAWProps, DAWState> {
             <span>Overtone 1: </span>
             <Slider
               value={this.state.overtone1}
-              onChange={overtone1 => this.onOvertone1Change(overtone1)}
+              onChange={(overtone1) => this.onOvertone1Change(overtone1)}
               min={0}
               max={1}
               step={0.01}
-              style={{ width: 200, display: 'inline-block' }}
+              style={{ width: 200, display: "inline-block" }}
             />
             <span> {this.state.overtone1}</span>
           </div>
@@ -450,11 +450,11 @@ export class DAW extends React.Component<DAWProps, DAWState> {
             <span>Overtone 2: </span>
             <Slider
               value={this.state.overtone2}
-              onChange={overtone2 => this.onOvertone2Change(overtone2)}
+              onChange={(overtone2) => this.onOvertone2Change(overtone2)}
               min={0}
               max={1}
               step={0.01}
-              style={{ width: 200, display: 'inline-block' }}
+              style={{ width: 200, display: "inline-block" }}
             />
             <span> {this.state.overtone2}</span>
           </div>
@@ -462,11 +462,11 @@ export class DAW extends React.Component<DAWProps, DAWState> {
             <span>Overtone 3: </span>
             <Slider
               value={this.state.overtone3}
-              onChange={overtone3 => this.onOvertone3Change(overtone3)}
+              onChange={(overtone3) => this.onOvertone3Change(overtone3)}
               min={0}
               max={1}
               step={0.01}
-              style={{ width: 200, display: 'inline-block' }}
+              style={{ width: 200, display: "inline-block" }}
             />
             <span> {this.state.overtone3}</span>
           </div>
@@ -474,11 +474,11 @@ export class DAW extends React.Component<DAWProps, DAWState> {
             <span>Overtone 4: </span>
             <Slider
               value={this.state.overtone4}
-              onChange={overtone4 => this.onOvertone4Change(overtone4)}
+              onChange={(overtone4) => this.onOvertone4Change(overtone4)}
               min={0}
               max={1}
               step={0.01}
-              style={{ width: 200, display: 'inline-block' }}
+              style={{ width: 200, display: "inline-block" }}
             />
             <span> {this.state.overtone4}</span>
           </div>
@@ -486,13 +486,13 @@ export class DAW extends React.Component<DAWProps, DAWState> {
           <br />
           <br />
 
-          <form onSubmit={event => this.postSaveInstrument(event)}>
+          <form onSubmit={(event) => this.postSaveInstrument(event)}>
             <label>
               Name:
               <input
                 type="text"
                 value={this.state.customInstrumentName}
-                onChange={event => this.onCustomInstrumentNameChange(event)}
+                onChange={(event) => this.onCustomInstrumentNameChange(event)}
               />
             </label>
             <input type="submit" value="Save Instrument" />
@@ -500,7 +500,7 @@ export class DAW extends React.Component<DAWProps, DAWState> {
         </div>
       </div>
     );
-  };
+  }
 
   private onCustomInstrumentNameChange(event) {
     this.setState({ customInstrumentName: event.target.value });
@@ -511,8 +511,8 @@ export class DAW extends React.Component<DAWProps, DAWState> {
   }
 
   private getInstrumentDropdownData(): { label: string; id: Instrument }[] {
-    let dropDownData = [...instrumentDropdownData];
-    this.getSavedInstruments().forEach(savedInstrument => {
+    const dropDownData = [...instrumentDropdownData];
+    this.getSavedInstruments().forEach((savedInstrument) => {
       dropDownData.push({ label: savedInstrument.name, id: Instrument.Custom });
     });
 
@@ -520,8 +520,8 @@ export class DAW extends React.Component<DAWProps, DAWState> {
   }
 
   private getSongDropdownData(): { label: string; id: SongSelection }[] {
-    let dropDownData = [...songDropdownData];
-    this.recorder.getSavedSongs().forEach(savedSong => {
+    const dropDownData = [...songDropdownData];
+    this.recorder.getSavedSongs().forEach((savedSong) => {
       dropDownData.push({ label: savedSong.name, id: SongSelection.Custom });
     });
 

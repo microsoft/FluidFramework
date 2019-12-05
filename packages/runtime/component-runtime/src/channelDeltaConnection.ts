@@ -12,7 +12,7 @@ export class ChannelDeltaConnection implements IDeltaConnection {
 
     private get handler(): IDeltaHandler {
         assert(this._handler);
-        // tslint:disable-next-line: no-non-null-assertion
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return this._handler!;
     }
     public get state(): ConnectionState {

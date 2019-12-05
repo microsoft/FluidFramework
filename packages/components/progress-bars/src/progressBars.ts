@@ -181,7 +181,7 @@ export class ProgressCollection
         // TODO the request is not stripping / off the URL
         const trimmed = request.url
             .substr(1)
-            .substr(0, request.url.indexOf("/", 1) === -1 ? request.url.length : request.url.indexOf("/"));
+            .substr(0, !request.url.includes("/", 1) ? request.url.length : request.url.indexOf("/"));
 
         if (!trimmed) {
             return {

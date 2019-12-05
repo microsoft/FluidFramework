@@ -8,13 +8,13 @@ import { PrimedComponent, PrimedComponentFactory, SimpleModuleInstantiationFacto
 import { IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
 
 // React
-import * as React from 'react';
-import * as ReactDOM from 'react-dom';
+import * as React from "react";
+import * as ReactDOM from "react-dom";
 
 // Player & Utility
-import { Player, NoteProperties } from './Player';
-import { PianoUtility } from './PianoUtility';
-import { DAW } from './DAW';
+import { Player, NoteProperties } from "./Player";
+import { PianoUtility } from "./PianoUtility";
+import { DAW } from "./DAW";
 
 // TODO: Is this right?
 const audioContext = new AudioContext();
@@ -32,13 +32,14 @@ export class Musica extends PrimedComponent implements IComponentHTMLVisual {
   public render(div: HTMLDivElement) {
     const reactRender = () => {
       // TODO: DAW and Recorder logic and visuals can be fully seperated and just both called here
-      // I think their only tie together is tempo, which isn't DAW related either so tempo may have to be updated in here as a global
+      // I think their only tie together is tempo, which isn"t DAW related either so tempo may
+      // have to be updated in here as a global
       ReactDOM.render(<DAW rootDir={this.root} />, div);
-    }
+    };
 
     reactRender();
 
-    this.root.on('op', (op) => {
+    this.root.on("op", (op) => {
       this.onOp(op);
       reactRender();
     });
@@ -49,11 +50,11 @@ export class Musica extends PrimedComponent implements IComponentHTMLVisual {
    */
   private onOp(op: any) {
     const contents = op.contents;
-    if (contents.key === 'playNote') {
-      let noteProperties = contents.value.value as NoteProperties;
+    if (contents.key === "playNote") {
+      const noteProperties = contents.value.value as NoteProperties;
       const clientId = op.clientId;
       this.execPressKey(noteProperties, clientId);
-    } else if (contents.key === 'stopNote') {
+    } else if (contents.key === "stopNote") {
       const midiNumber: number = contents.value.value;
       this.execUnpressKey(midiNumber);
     }

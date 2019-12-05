@@ -7,14 +7,14 @@ const SAMPLERATE = 44100;
 const PERIOD = 1 / SAMPLERATE;
 
 export class Player {
-  constructor(private audioContext: AudioContext) {}
+  constructor(private readonly audioContext: AudioContext) {}
 
   public playNote(note: NoteProperties) {
-    let frequency = Math.pow(2, (note.midiNumber - 69) / 12) * 440;
-    let instrument = note.instrument;
+    const frequency = Math.pow(2, (note.midiNumber - 69) / 12) * 440;
+    const instrument = note.instrument;
 
     let waveProperties = {
-      frequency
+      frequency,
     } as WaveProperties;
 
     // Drumset special case
@@ -34,7 +34,7 @@ export class Player {
         overtone2: 0.15,
         overtone3: 0.06,
         overtone4: 0.035,
-        amplitude: 1
+        amplitude: 1,
       };
     } else if (instrument === Instrument.Piano) {
       waveProperties = {
@@ -45,7 +45,7 @@ export class Player {
         overtone2: 0.2,
         overtone3: 0.15,
         overtone4: 0.004,
-        amplitude: 1
+        amplitude: 1,
       };
     } else if (instrument === Instrument.Guitar) {
       waveProperties = {
@@ -56,7 +56,7 @@ export class Player {
         overtone2: 0.15,
         overtone3: 0.06,
         overtone4: 0.035,
-        amplitude: 1
+        amplitude: 1,
       };
     } else if (instrument === Instrument.Organ) {
       waveProperties = {
@@ -67,18 +67,18 @@ export class Player {
         overtone2: 0.15,
         overtone3: 0.1,
         overtone4: 0.02,
-        amplitude: 1
+        amplitude: 1,
       };
     } else if (instrument === Instrument.Custom) {
       waveProperties = {
         ...waveProperties,
-        modulation: note.customModulation!,
-        decay: note.customDecay!,
+        modulation: note.customModulation,
+        decay: note.customDecay,
         overtone1: note.overtone1,
         overtone2: note.overtone2,
         overtone3: note.overtone3,
         overtone4: note.overtone4,
-        amplitude: 1
+        amplitude: 1,
       };
     }
 
@@ -93,7 +93,7 @@ export class Player {
           ...waveProperties,
           frequency: 1,
           amplitude: 10,
-          decay: -4
+          decay: -4,
         };
         this.playNoteCustomWave(0.5, waveProperties, this.bassWave);
         break;
@@ -103,7 +103,7 @@ export class Player {
         waveProperties = {
           ...waveProperties,
           frequency: 1,
-          decay: -8
+          decay: -8,
         };
         this.playNoteCustomWave(0.5, waveProperties, this.rideWave);
         break;
@@ -113,7 +113,7 @@ export class Player {
         waveProperties = {
           ...waveProperties,
           frequency: 1,
-          decay: -24
+          decay: -24,
         };
         this.playNoteCustomWave(0.5, waveProperties, this.snareWave);
         break;
@@ -123,7 +123,7 @@ export class Player {
         waveProperties = {
           ...waveProperties,
           frequency: 1,
-          decay: -4
+          decay: -4,
         };
         this.playNoteCustomWave(0.4, waveProperties, this.hiWave);
         break;
@@ -133,13 +133,13 @@ export class Player {
         waveProperties = {
           ...waveProperties,
           frequency: 1,
-          decay: -16
+          decay: -16,
         };
         this.playNoteCustomWave(0.5, waveProperties, this.hatWave);
         break;
       }
       default: {
-        break;
+        // do nothing
       }
     }
   }
@@ -147,23 +147,23 @@ export class Player {
   private playNoteCustomWave(
     length: number,
     note: WaveProperties,
-    customWave: (sampleIndex: number, waveProperties: WaveProperties) => number
+    customWave: (sampleIndex: number, waveProperties: WaveProperties) => number,
   ) {
-    var buffer = this.audioContext.createBuffer(1, SAMPLERATE / note.frequency, SAMPLERATE);
-    var data = buffer.getChannelData(0);
+    const buffer = this.audioContext.createBuffer(1, SAMPLERATE / note.frequency, SAMPLERATE);
+    const data = buffer.getChannelData(0);
 
-    for (var i = 0; i < data.length; i++) {
+    for (let i = 0; i < data.length; i++) {
       data[i] = customWave(i, note);
     }
 
-    var osc = this.createBufferSource();
+    const osc = this.createBufferSource();
     osc.buffer = buffer;
     osc.loop = true;
     osc.start();
     osc.stop(this.audioContext.currentTime + length);
   }
 
-  private sineWave = (sampleIndex: number, note: WaveProperties): number => {
+  private readonly sineWave = (sampleIndex: number, note: WaveProperties): number => {
     const time = sampleIndex * PERIOD;
 
     if (note.modulation !== 0) {
@@ -173,62 +173,66 @@ export class Player {
     return (
       note.amplitude * Math.exp(note.decay * time) * Math.sin(2 * Math.PI * note.frequency * time + note.modulation)
     );
-  };
+  }
 
-  private overtoneWave = (sampleIndex: number, note: WaveProperties): number => {
-    let overtoneWave =
+  private readonly overtoneWave = (sampleIndex: number, note: WaveProperties): number => {
+    const overtoneWave =
       note.overtone1 * this.sineWave(sampleIndex, { ...note, frequency: note.frequency }) +
       note.overtone2 * this.sineWave(sampleIndex, { ...note, frequency: note.frequency * 2 }) +
       note.overtone3 * this.sineWave(sampleIndex, { ...note, frequency: note.frequency * 3 }) +
       note.overtone4 * this.sineWave(sampleIndex, { ...note, frequency: note.frequency * 4 });
 
     return overtoneWave;
-  };
+  }
 
-  private snareWave = (sampleIndex: number, note: WaveProperties): number => {
+  private readonly snareWave = (sampleIndex: number, note: WaveProperties): number => {
     const time = sampleIndex * PERIOD;
 
-    let snareWave = 3 * Math.exp(note.decay * time) * Math.random();
+    // tslint:disable-next-line insecure-random
+    const snareWave = 3 * Math.exp(note.decay * time) * Math.random();
 
     return snareWave;
-  };
+  }
 
-  private hiWave = (sampleIndex: number, note: WaveProperties): number => {
+  private readonly hiWave = (sampleIndex: number, note: WaveProperties): number => {
     const time = sampleIndex * PERIOD;
 
-    let snareWave = ((Math.exp(note.decay * time) * 2 * sampleIndex) / (sampleIndex / 2 + 2)) * Math.random();
+    // tslint:disable-next-line insecure-random
+    const snareWave = ((Math.exp(note.decay * time) * 2 * sampleIndex) / (sampleIndex / 2 + 2)) * Math.random();
 
     return snareWave;
-  };
+  }
 
-  private hatWave = (sampleIndex: number, note: WaveProperties): number => {
+  private readonly hatWave = (sampleIndex: number, note: WaveProperties): number => {
     const time = sampleIndex * PERIOD;
 
-    let snareWave = ((Math.exp(note.decay * time) * 2 * sampleIndex) / (sampleIndex / 2 + 2)) * Math.random();
+    // tslint:disable-next-line insecure-random
+    const snareWave = ((Math.exp(note.decay * time) * 2 * sampleIndex) / (sampleIndex / 2 + 2)) * Math.random();
 
     return snareWave;
-  };
+  }
 
-  private rideWave = (sampleIndex: number, note: WaveProperties): number => {
+  private readonly rideWave = (sampleIndex: number, note: WaveProperties): number => {
     const time = sampleIndex * PERIOD;
 
-    let snareWave = (sampleIndex / (sampleIndex / 2) + 2) * Math.exp(note.decay * time) * Math.random();
+    // tslint:disable-next-line insecure-random
+    const snareWave = (sampleIndex / (sampleIndex / 2) + 2) * Math.exp(note.decay * time) * Math.random();
 
     return snareWave;
-  };
+  }
 
-  private bassWave = (sampleIndex: number, note: WaveProperties): number => {
+  private readonly bassWave = (sampleIndex: number, note: WaveProperties): number => {
     const time = sampleIndex * PERIOD;
 
-    let modulationSin = 7 * Math.exp(note.decay * time) * Math.sin(2 * Math.PI * 15 * time);
-    let modulatedSin =
+    const modulationSin = 7 * Math.exp(note.decay * time) * Math.sin(2 * Math.PI * 15 * time);
+    const modulatedSin =
       note.amplitude * (0.2 + Math.exp(note.decay * time) * Math.sin(2 * Math.PI * 15 * time + modulationSin));
 
     return modulatedSin;
-  };
+  }
 
   private createBufferSource(): AudioBufferSourceNode {
-    var osc = this.audioContext.createBufferSource();
+    const osc = this.audioContext.createBufferSource();
 
     const gain = this.audioContext.createGain();
     gain.gain.value = 0.1;
@@ -246,7 +250,7 @@ export enum Instrument {
   Guitar,
   Organ,
   Drumset,
-  Custom
+  Custom,
 }
 
 export interface WaveProperties {

@@ -16,6 +16,6 @@ export enum KeyCode {
     rightArrow = 39,
     downArrow = 40,
     del = 46,
-    letter_a = 65,
-    letter_z = 90,
+    letterA = 65,
+    letterZ = 90,
 }

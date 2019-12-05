@@ -9,7 +9,8 @@ import {
     IComponentHandleContext,
     IComponentSerializer,
     IRequest,
-    IResponse } from "@microsoft/fluid-component-core-interfaces";
+    IResponse,
+} from "@microsoft/fluid-component-core-interfaces";
 import {
     IAudience,
     IBlobManager,
@@ -441,6 +442,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     }
 
     public get submitFn(): (type: MessageType, contents: any) => number {
+        // eslint-disable-next-line @typescript-eslint/unbound-method
         return this.submit;
     }
 
@@ -475,7 +477,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     public readonly logger: ITelemetryLogger;
     private readonly summaryManager: SummaryManager;
     private readonly summaryTreeConverter = new SummaryTreeConverter();
-    private latestSummaryAck: { handle?: string, referenceSequenceNumber: number };
+    private latestSummaryAck: { handle?: string; referenceSequenceNumber: number };
 
     private tasks: string[] = [];
 
@@ -618,7 +620,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
         // tslint:disable-next-line: no-unsafe-any
         if (this.options && this.options.intelligence) {
-            return  {
+            return {
                 // tslint:disable-next-line: no-unsafe-any
                 intelligence: this.options.intelligence,
             } as IComponentTokenProvider;
@@ -784,7 +786,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             return;
         }
 
-        const innerContent = envelope.contents as { content: any, type: string };
+        const innerContent = envelope.contents as { content: any; type: string };
         const transformed: IInboundSignalMessage = {
             clientId: message.clientId,
             content: innerContent.content,
@@ -1059,8 +1061,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                     // tslint:disable-next-line:no-floating-promises
                     Promise.resolve().then(() => remotedComponentContext.realize());
                 }
-
-            default:
+                break;
+            default: // do nothing
         }
     }
 
@@ -1267,7 +1269,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         const envelope = message.contents as IEnvelope;
         const componentContext = this.contexts.get(envelope.address);
         assert(componentContext);
-        const innerContents = envelope.contents as { content: any, type: string };
+        const innerContents = envelope.contents as { content: any; type: string };
 
         const transformed: ISequencedDocumentMessage = {
             clientId: message.clientId,
@@ -1402,7 +1404,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         eventName: string,
         setter: () => Promise<T>,
         validator: (result: T) => boolean,
-    ): Promise<{ result: T, success: boolean }> {
+    ): Promise<{ result: T; success: boolean }> {
         let result: T;
         let success = true;
         try {

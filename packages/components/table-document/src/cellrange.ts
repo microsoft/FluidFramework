@@ -31,6 +31,7 @@ export function colIndexToName(colIndex: number) {
 }
 
 export function parseRange(range: string) {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const matches = rangeExpr.exec(range)!;
     const minCol = colNameToIndex(matches[1]);
     const minRow = parseInt(matches[2], 10) - 1;    // 1-indexed -> 0-indexed
@@ -42,7 +43,7 @@ export function parseRange(range: string) {
 export class CellRange {
     constructor(
         private readonly interval: SequenceInterval,
-        private readonly resolve: (localRef: LocalReference) => { row: number, col: number },
+        private readonly resolve: (localRef: LocalReference) => { row: number; col: number },
     ) {
         // Ensure CellInterval was not created with a null/undefined interval.
         assert(interval);
@@ -60,8 +61,8 @@ export class CellRange {
 
     public forEachRowMajor(callback: (row: number, col: number) => boolean) {
         const r = this.getRange();
-        for (let row = r.row, numRows = r.numRows; numRows > 0; row++, numRows--) {
-            for (let col = r.col, numCols = r.numCols; numCols > 0; col++, numCols--) {
+        for (let row = r.row, numRows = r.numRows; numRows > 0; row++ , numRows--) {
+            for (let col = r.col, numCols = r.numCols; numCols > 0; col++ , numCols--) {
                 if (!callback(row, col)) {
                     return;
                 }
@@ -71,8 +72,8 @@ export class CellRange {
 
     public forEachColMajor(callback: (row: number, col: number) => boolean) {
         const r = this.getRange();
-        for (let col = r.col, numCols = r.numCols; numCols > 0; col++, numCols--) {
-            for (let row = r.row, numRows = r.numRows; numRows > 0; row++, numRows--) {
+        for (let col = r.col, numCols = r.numCols; numCols > 0; col++ , numCols--) {
+            for (let row = r.row, numRows = r.numRows; numRows > 0; row++ , numRows--) {
                 if (!callback(row, col)) {
                     return;
                 }

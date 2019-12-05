@@ -231,7 +231,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this._inboundSignal = new DeltaQueue<ISignalMessage>((message) => {
             this.handler!.processSignal({
                 clientId: message.clientId,
-                content: JSON.parse(message!.content as string),
+                content: JSON.parse(message.content as string),
             });
         });
 
@@ -470,7 +470,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                     this.deltaStorageP = this.service.connectToDeltaStorage();
                 }
 
-                const deltaStorage = await this.deltaStorageP!;
+                const deltaStorage = await this.deltaStorageP;
 
                 requests++;
 
@@ -1010,12 +1010,12 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
     private catchUp(telemetryEventSuffix: string, messages: ISequencedDocumentMessage[]): void {
         const props: {
-                eventName: string,
-                messageCount: number,
-                pendingCount: number,
-                from?: number,
-                to?: number,
-                messageGap?: number,
+                eventName: string;
+                messageCount: number;
+                pendingCount: number;
+                from?: number;
+                to?: number;
+                messageGap?: number;
         } = {
             eventName: `CatchUp_${telemetryEventSuffix}`,
             messageCount: messages.length,

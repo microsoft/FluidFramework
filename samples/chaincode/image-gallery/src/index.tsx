@@ -84,7 +84,7 @@ export class ImageGalleryComponent extends PrimedComponent implements IComponent
         this.imageGallery.slideToIndex(position);
       }
     });
-  };
+  }
 }
 
 export const ImageGalleryInstantiationFactory = new PrimedComponentFactory(

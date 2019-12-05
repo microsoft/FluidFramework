@@ -8,7 +8,8 @@ import {
     IComponentRouter,
     IComponentRunnable,
     IRequest,
-    IResponse } from "@microsoft/fluid-component-core-interfaces";
+    IResponse,
+} from "@microsoft/fluid-component-core-interfaces";
 import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
 import { ChildLogger, PerformanceEvent, PromiseTimer, Timer } from "@microsoft/fluid-core-utils";
 import {
@@ -316,6 +317,7 @@ export class RunningSummarizer implements IDisposable {
                 }
                 // leave ops for any other client fall through to handle normally
             }
+            // intentional fallthrough
             case MessageType.ClientJoin:
             case MessageType.Propose:
             case MessageType.Reject: {
@@ -473,7 +475,7 @@ export class RunningSummarizer implements IDisposable {
         if (summaryData.submitted) {
             summarizingEvent.end(telemetryProps);
         } else {
-            summarizingEvent.cancel({...telemetryProps, category: "error"});
+            summarizingEvent.cancel({ ...telemetryProps, category: "error" });
         }
 
         return summaryData;

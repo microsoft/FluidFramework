@@ -39,7 +39,7 @@ class WorkerDocumentServiceFactory implements IDocumentServiceFactory {
             return Promise.reject("only fluid type urls can be resolved.");
         }
 
-        const urlAsFluidUrl = resolvedUrl as IFluidResolvedUrl;
+        const urlAsFluidUrl = resolvedUrl;
 
         const ordererUrl = urlAsFluidUrl.endpoints.ordererUrl;
         const storageUrl = urlAsFluidUrl.endpoints.storageUrl;
@@ -132,7 +132,7 @@ export class PaparazziRunner implements utils.IRunner {
         this.agentUploader.on("agentAdded", (agentModule: core.IAgent) => {
             if (agentModule.type === "server") {
                 winston.info(`New agent package uploaded: ${agentModule.name}`);
-                this.loadAgent(agentModule.name as string);
+                this.loadAgent(agentModule.name);
 
                 // Converting to webpacked scripts is disabled for now. Need to figure out an way to do it only once.
                 // const moduleUrl = url.resolve(this.alfredUrl, `/agent/js/${agent.name}`);
@@ -145,7 +145,7 @@ export class PaparazziRunner implements utils.IRunner {
         this.agentUploader.on("agentRemoved", (agentModule: core.IAgent) => {
             if (agentModule.type === "server") {
                 winston.info(`Agent package removed: ${agentModule.name}`);
-                this.unloadAgent(agentModule.name as string);
+                this.unloadAgent(agentModule.name);
             } else if (agentModule.type === "client") {
                 winston.info(`Agent script removed`);
                 // TODO: Figure out an way to send this message to browser clients.

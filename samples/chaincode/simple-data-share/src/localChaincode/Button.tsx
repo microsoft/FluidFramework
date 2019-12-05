@@ -35,14 +35,14 @@ export class Button extends PrimedComponent implements IComponentHTMLVisual {
   }
 }
 
-interface p {
-  counter: Counter
+interface ButtonProps {
+  counter: Counter;
 }
 
 /**
  * A React button function that increments the counter on click
  */
-function ButtonView(props: p) {
+function ButtonView(props: ButtonProps) {
   const increment = () => props.counter.increment(1);
   return <button onClick={increment}>+</button>;
 }

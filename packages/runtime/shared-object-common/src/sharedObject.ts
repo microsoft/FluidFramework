@@ -269,7 +269,7 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
         let clientSequenceNumber = -1;
         if (this.state === ConnectionState.Connected) {
             // This assert !isLocal above means services can't be undefined.
-            // tslint:disable-next-line: no-non-null-assertion
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             clientSequenceNumber = this.services!.deltaConnection.submit(content);
         } else {
             debug(`${this.id} Not fully connected - adding to pending list`, content);
@@ -310,7 +310,7 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
         this.didAttach();
 
         // attachDeltaHandler is only called after services is assigned
-        // tslint:disable-next-line: no-non-null-assertion
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.services!.deltaConnection.attach({
             process: (message, local) => {
                 this.process(message, local);
@@ -322,7 +322,7 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
 
         // Trigger initial state
         // attachDeltaHandler is only called after services is assigned
-        // tslint:disable-next-line: no-non-null-assertion
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.setConnectionState(this.services!.deltaConnection.state);
     }
 

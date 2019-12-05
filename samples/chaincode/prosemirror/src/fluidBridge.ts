@@ -29,9 +29,9 @@ import { ReplaceAroundStep } from "prosemirror-transform";
 
 export interface IProseMirrorNode {
     [key: string]: any;
-    type: string,
-    content?: IProseMirrorNode[],
-    marks?: any[],
+    type: string;
+    content?: IProseMirrorNode[];
+    marks?: any[];
     _open?: boolean;
 }
 
@@ -227,7 +227,7 @@ export class ProseMirrorTransactionBuilder {
 
         let currentGroup: IThingGroup;
         const groups = new Array<IThingGroup>();
-        let annotations = [];
+        const annotations = [];
         let position = 0;
 
         for (const thing of this.things) {
@@ -260,7 +260,7 @@ export class ProseMirrorTransactionBuilder {
             const group = groups[0];
         
             let removalSize = 0;
-            let insertSegments = [];
+            const insertSegments = [];
 
             group.items.forEach((value) => {
                 if (value.type === "delete") {
@@ -281,9 +281,9 @@ export class ProseMirrorTransactionBuilder {
                 group.position + removalSize,
                 slice)
         } else if (groups.length > 1) {
-            let removalSizes = [];
-            let insertSizes = [];
-            let insertSegments = [];
+            const removalSizes = [];
+            const insertSizes = [];
+            const insertSegments = [];
 
             for (const group of groups) {
                 let removalSize = 0;
@@ -497,7 +497,7 @@ function generateFragment(segments: ISegment[]) {
     // TODO should I pre-seed the data structure based on the nodes to the left of the open?
 
     for (const segment of segments) {
-        let top = nodeStack[nodeStack.length - 1];
+        const top = nodeStack[nodeStack.length - 1];
 
         if (TextSegment.is(segment)) {
             const nodeJson: IProseMirrorNode = {

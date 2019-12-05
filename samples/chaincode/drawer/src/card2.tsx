@@ -15,7 +15,7 @@ import {
     IDocumentCardActivityPerson
 } from 'office-ui-fabric-react/lib/DocumentCard';
 import { Stack, IStackTokens } from 'office-ui-fabric-react/lib/Stack';
-import { getTheme } from 'office-ui-fabric-react/lib/Styling';
+import { getTheme } from 'office-ui-fabric-react';
 
 const people: IDocumentCardActivityPerson[] = [
     { name: 'Annie Lindqvist', profileImageSrc: "https://static2.sharepointonline.com/files/fabric/office-ui-fabric-react-assets/persona-female.png" },
