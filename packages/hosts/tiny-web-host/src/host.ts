@@ -6,12 +6,13 @@
 import { BaseHost, IBaseHostConfig } from "@microsoft/fluid-base-host";
 import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
 import { Container } from "@microsoft/fluid-container-loader";
-import { BaseTelemetryNullLogger, configurableUrlResolver } from "@microsoft/fluid-core-utils";
+import { BaseTelemetryNullLogger } from "@microsoft/fluid-core-utils";
 import {
     IDocumentServiceFactory,
     IFluidResolvedUrl,
     IResolvedUrl,
 } from "@microsoft/fluid-driver-definitions";
+import { configurableUrlResolver } from "@microsoft/fluid-driver-utils";
 import { FluidAppOdspUrlResolver } from "@microsoft/fluid-fluidapp-odsp-urlresolver";
 import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
 import { OdspUrlResolver } from "@microsoft/fluid-odsp-urlresolver";

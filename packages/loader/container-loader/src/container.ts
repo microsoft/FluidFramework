@@ -28,13 +28,13 @@ import {
     flatten,
     PerformanceEvent,
     raiseConnectedEvent,
-    readAndParse,
     TelemetryLogger,
 } from "@microsoft/fluid-core-utils";
 import {
     IDocumentService,
     IDocumentStorageService,
 } from "@microsoft/fluid-driver-definitions";
+import { readAndParse } from "@microsoft/fluid-driver-utils";
 import { isSystemMessage, ProtocolOpHandler, Quorum, QuorumProxy } from "@microsoft/fluid-protocol-base";
 import {
     ConnectionState,

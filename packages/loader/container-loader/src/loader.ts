@@ -16,13 +16,14 @@ import {
     IProxyLoaderFactory,
     LoaderHeader,
 } from "@microsoft/fluid-container-definitions";
-import { configurableUrlResolver, Deferred } from "@microsoft/fluid-core-utils";
+import { Deferred } from "@microsoft/fluid-core-utils";
 import {
     IDocumentService,
     IDocumentServiceFactory,
     IFluidResolvedUrl,
     IResolvedUrl,
 } from "@microsoft/fluid-driver-definitions";
+import { configurableUrlResolver } from "@microsoft/fluid-driver-utils";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
 // tslint:disable-next-line:no-var-requires

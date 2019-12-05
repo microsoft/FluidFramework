@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { isOnline, NetworkError, OnlineStatus } from "@microsoft/fluid-core-utils";
+import { isOnline, NetworkError, OnlineStatus } from "@microsoft/fluid-driver-utils";
 import { default as fetch, RequestInfo as FetchRequestInfo, RequestInit as FetchRequestInit } from "node-fetch";
 import * as sha from "sha.js";
 import { IOdspSocketError } from "./contracts";

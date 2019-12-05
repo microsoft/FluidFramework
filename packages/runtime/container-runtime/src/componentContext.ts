@@ -15,10 +15,10 @@ import {
     BlobTreeEntry,
     Deferred,
     raiseConnectedEvent,
-    readAndParse,
     SummaryTracker,
 } from "@microsoft/fluid-core-utils";
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
+import { readAndParse } from "@microsoft/fluid-driver-utils";
 import {
     ConnectionState,
     IDocumentMessage,
@@ -170,7 +170,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         if (packagePath.length > 0 && pkg === packagePath[packagePath.length - 1]) {
             pkgs.shift();
         }
-        packagePath.push(... pkgs);
+        packagePath.push(...pkgs);
 
         const pkgId = uuid();
         return this.hostRuntime._createComponentWithProps(packagePath, props, pkgId);
@@ -469,8 +469,8 @@ export class RemotedComponentContext extends ComponentContext {
                 // Need to rip through snapshot and use that to populate extraBlobs
                 const { pkg, snapshotFormatVersion } =
                     await readAndParse<IComponentAttributes>(
-                    this.storage,
-                    tree.blobs[".component"]);
+                        this.storage,
+                        tree.blobs[".component"]);
 
                 let pkgFromSnapshot: string[];
                 // Use the snapshotFormatVersion to determine how the pkg is encoded in the snapshot.

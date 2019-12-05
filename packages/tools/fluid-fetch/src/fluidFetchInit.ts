@@ -4,8 +4,9 @@
  */
 
 // tslint:disable:object-literal-sort-keys
-import { BaseTelemetryNullLogger, configurableUrlResolver } from "@microsoft/fluid-core-utils";
+import { BaseTelemetryNullLogger } from "@microsoft/fluid-core-utils";
 import { IFluidResolvedUrl, IResolvedUrl, IUrlResolver } from "@microsoft/fluid-driver-definitions";
+import { configurableUrlResolver } from "@microsoft/fluid-driver-utils";
 import { FluidAppOdspUrlResolver } from "@microsoft/fluid-fluidapp-odsp-urlresolver";
 import * as odsp from "@microsoft/fluid-odsp-driver";
 import { OdspUrlResolver } from "@microsoft/fluid-odsp-urlresolver";

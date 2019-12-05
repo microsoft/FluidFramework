@@ -32,10 +32,10 @@ import {
     flatten,
     isSystemType,
     raiseConnectedEvent,
-    readAndParse,
     Trace,
 } from "@microsoft/fluid-core-utils";
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
+import { readAndParse } from "@microsoft/fluid-driver-utils";
 import {
     ConnectionState,
     IChunkedOp,

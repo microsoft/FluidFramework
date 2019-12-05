@@ -1,7 +1,7 @@
 {
-  "name": "@microsoft/fluid-component-runtime",
+  "name": "@microsoft/fluid-driver-utils",
   "version": "0.12.0",
-  "description": "Fluid component API",
+  "description": "Collection of utility functions for Fluid drivers",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
@@ -21,22 +21,23 @@
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --ext=ts,tsx --format stylish src",
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
+    "test": "mocha --recursive dist/test",
+    "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
     "tsc": "tsc",
-    "tsc:watch": "tsc --watch",
-    "tslint": "npm run eslint"
+    "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "dependencies": {
     "@microsoft/fluid-common-definitions": "^0.12.0",
     "@microsoft/fluid-component-core-interfaces": "^0.12.0",
-    "@microsoft/fluid-container-definitions": "^0.12.0",
     "@microsoft/fluid-core-utils": "^0.12.0",
+    "@microsoft/fluid-container-definitions": "^0.12.0",
     "@microsoft/fluid-driver-definitions": "^0.12.0",
-    "@microsoft/fluid-driver-utils": "^0.12.0",
+    "@microsoft/fluid-gitresources": "^0.12.0",
     "@microsoft/fluid-protocol-definitions": "^0.12.0",
-    "@microsoft/fluid-runtime-definitions": "^0.12.0",
-    "@microsoft/fluid-shared-object-base": "^0.12.0",
     "debug": "^4.1.1",
-    "uuid": "^3.3.2"
+    "lodash": "^4.17.11",
+    "performance-now": "^2.1.0",
+    "sha.js": "^2.4.11"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.4.4",
@@ -45,7 +46,6 @@
     "@types/debug": "^0.0.31",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.14.6",
-    "@types/uuid": "^3.4.4",
     "@typescript-eslint/eslint-plugin": "^2.9.0",
     "@typescript-eslint/eslint-plugin-tslint": "^2.9.0",
     "@typescript-eslint/parser": "^2.9.0",
@@ -57,5 +57,24 @@
     "rimraf": "^2.6.2",
     "tslint": "^5.20.0",
     "typescript": "~3.4.5"
+  },
+  "nyc": {
+    "all": true,
+    "exclude": [
+      "src/test/**/*.ts",
+      "dist/test/**/*.js"
+    ],
+    "include": [
+      "src/**/*.ts",
+      "dist/**/*.js"
+    ],
+    "reporter": [
+      "cobertura",
+      "html",
+      "text"
+    ],
+    "temp-directory": "nyc/.nyc_output",
+    "cache-dir": "nyc/.cache",
+    "report-dir": "nyc/report"
   }
 }
