@@ -3,5 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export * from "./disposable";
-export * from "./logger";
+export interface IDisposable {
+    readonly disposed: boolean;
+    dispose(): void;
+}

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable } from "@microsoft/fluid-protocol-definitions";
+import { IDisposable } from "@microsoft/fluid-common-definitions";
 import { EventEmitter } from "events";
 
 /**

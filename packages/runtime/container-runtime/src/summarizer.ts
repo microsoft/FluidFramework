@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { IDisposable, ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import {
     IComponentLoadable,
     IComponentRouter,
@@ -13,7 +13,6 @@ import {
 } from "@microsoft/fluid-component-core-interfaces";
 import { ChildLogger, PerformanceEvent, PromiseTimer, Timer } from "@microsoft/fluid-core-utils";
 import {
-    IDisposable,
     ISequencedDocumentMessage,
     ISequencedDocumentSystemMessage,
     ISummaryConfiguration,

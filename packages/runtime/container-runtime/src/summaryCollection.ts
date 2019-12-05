@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { IDisposable } from "@microsoft/fluid-common-definitions";
 import { Deferred } from "@microsoft/fluid-core-utils";
 import {
-    IDisposable,
     ISequencedDocumentMessage,
     ISummaryAck,
     ISummaryContent,
