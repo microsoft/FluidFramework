@@ -75,7 +75,7 @@ enum retryFor {
 export class DeltaManager extends EventEmitter implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
     public get disposed() { return this.isDisposed; }
 
-    public readonly clientType: string | undefined;
+    public readonly clientType: string;
     public readonly clientDetails: IClientDetails;
     public get IDeltaSender() { return this; }
 
@@ -202,7 +202,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         private readonly reconnect: boolean) {
         super();
 
-        this.clientType = this.client.type;
+        this.clientType = this.client.type!; // back-compat: 0.11 clientType
         this.clientDetails = this.client.details;
         this.systemConnectionMode = this.client.mode === "write" ? "write" : "read";
 
@@ -396,10 +396,12 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         // const maxOpSize = this.context.deltaManager.maxMessageSize;
 
         // Start adding trace for the op.
+        // back-compat: 0.11 clientType
+        const clientType = this.clientDetails ? this.clientDetails.type : this.clientType;
         const traces: ITrace[] = [
             {
                 action: "start",
-                service: this.clientDetails.type || "unknown",
+                service: clientType || "unknown",
                 timestamp: Date.now(),
             }];
 
@@ -944,9 +946,11 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         // Add final ack trace.
         if (message.traces && message.traces.length > 0) {
+            // back-compat: 0.11 clientType
+            const clientType = this.clientDetails ? this.clientDetails.type : this.clientType;
             message.traces.push({
                 action: "end",
-                service: this.clientDetails.type || "unknown",
+                service: clientType || "unknown",
                 timestamp: Date.now(),
             });
         }

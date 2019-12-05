@@ -113,7 +113,18 @@ export class ChaincodeWork extends EventEmitter {
     // a browser client connected.
     private noLeader(): boolean {
         for (const client of this.document.getQuorum().getMembers()) {
-            if (!client[1].client || !client[1].client.details.capabilities.interactive) {
+            if (
+                !client[1].client || (
+                    // back-compat: 0.11 clientType
+                    !client[1].client.details && (
+                        !client[1].client.type
+                        || client[1].client.type === "browser"
+                    )
+                ) || (
+                    client[1].client.details
+                    && client[1].client.details.capabilities.interactive
+                )
+            ) {
                 return false;
             }
         }

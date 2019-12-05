@@ -186,7 +186,7 @@ export class MockRuntime extends EventEmitter
     public readonly existing: boolean;
     public readonly options: any = {};
     public clientId: string = uuid();
-    public readonly clientType: string = "";
+    public readonly clientType: string = "browser"; // back-compat: 0.11 clientType
     public readonly parentBranch: string;
     public readonly path = "";
     public readonly connected: boolean;

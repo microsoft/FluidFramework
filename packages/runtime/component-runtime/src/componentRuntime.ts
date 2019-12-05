@@ -27,6 +27,7 @@ import {
 } from "@microsoft/fluid-core-utils";
 import {
     ConnectionState,
+    IClientDetails,
     IDocumentMessage,
     IQuorum,
     ISequencedDocumentMessage,
@@ -116,8 +117,16 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         return this.componentContext.clientId;
     }
 
-    public get clientType(): string | undefined {
+    /**
+     * DEPRECATED use clientDetails.type instead
+     * back-compat: 0.11 clientType
+     */
+    public get clientType(): string {
         return this.componentContext.clientType;
+    }
+
+    public get clientDetails(): IClientDetails {
+        return this.componentContext.hostRuntime.clientDetails;
     }
 
     public get loader(): ILoader {

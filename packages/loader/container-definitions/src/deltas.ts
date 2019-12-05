@@ -89,8 +89,8 @@ export interface IDeltaManager<T, U> extends EventEmitter, IDeltaSender, IDispos
     // The initial sequence number set when attaching the op handler
     initialSequenceNumber: number;
 
-    // Type of client
-    clientType: string | undefined;
+    // DEPRECATED: use clientDetails.type instead
+    clientType: string; // back-compat: 0.11 clientType
 
     // Details of client
     clientDetails: IClientDetails;

@@ -234,7 +234,11 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return this._scopes;
     }
 
-    public get clientType(): string | undefined {
+    /**
+     * DEPRECATED: use clientDetails.type instead
+     * back-compat: 0.11 clientType
+     */
+    public get clientType(): string {
         return this._deltaManager!.clientType;
     }
 
@@ -314,12 +318,14 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         this.canReconnect = !(originalRequest.headers && originalRequest.headers[LoaderHeader.reconnect] === false);
 
         // create logger for components to use
+        // back-compat: 0.11 clientType
+        const clientType = this.client.details ? this.client.details.type : this.client.type;
         this.subLogger = DebugLogger.mixinDebugLogger(
             "fluid:telemetry",
             logger,
             {
                 docId: this.id,
-                clientType: this.client.details.type, // differentiating summarizer container from main container
+                clientType, // differentiating summarizer container from main container
                 packageName: TelemetryLogger.sanitizePkgName(pkgName),
                 packageVersion: pkgVersion,
             });
@@ -876,6 +882,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             // tslint:disable-next-line:no-unsafe-any
             ? (this.options.client as IClient)
             : {
+                type: "browser", // back-compat: 0.11 clientType
                 details: {
                     capabilities: { interactive: true },
                 },
@@ -887,9 +894,16 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         // client info from headers overrides client info from loader options
         const headerClientDetails = this.originalRequest.headers
             && this.originalRequest.headers[LoaderHeader.clientDetails];
+
         if (headerClientDetails) {
             // tslint:disable-next-line: no-unsafe-any
             merge(client.details, headerClientDetails);
+        }
+
+        // back-compat: 0.11 clientType
+        const headerClientType = this.originalRequest.headers && this.originalRequest.headers[LoaderHeader.clientType];
+        if (headerClientType) {
+            client.type = headerClientType;
         }
         return client;
     }

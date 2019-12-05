@@ -91,7 +91,11 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         return this.container.clientId;
     }
 
-    public get clientType(): string | undefined {
+    /**
+     * DEPRECATED use clientDetails.type
+     * back-compat: 0.11 clientType
+     */
+    public get clientType(): string {
         return this.container.clientType;
     }
 
