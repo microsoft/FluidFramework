@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent} from '@microsoft/fluid-component-core-interfaces';
+import { IComponent} from "@microsoft/fluid-component-core-interfaces";
 import { ICodeLoader, IFluidCodeDetails, IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
 import { IDocumentServiceFactory, IUrlResolver } from "@microsoft/fluid-protocol-definitions";

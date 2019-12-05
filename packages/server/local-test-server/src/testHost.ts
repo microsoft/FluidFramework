@@ -4,7 +4,12 @@
  */
 
 import { PrimedComponent, PrimedComponentFactory, SimpleContainerRuntimeFactory } from "@microsoft/fluid-aqueduct";
-import { IComponent, IComponentHandle, IComponentLoadable, IComponentRunnable } from "@microsoft/fluid-component-core-interfaces";
+import {
+    IComponent,
+    IComponentHandle,
+    IComponentLoadable,
+    IComponentRunnable ,
+} from "@microsoft/fluid-component-core-interfaces";
 import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
 import {
     IComponentContext,
@@ -161,7 +166,7 @@ export class TestHost {
     constructor(
         private readonly componentRegistry: NamedComponentRegistryEntries,
         deltaConnectionServer?: ITestDeltaConnectionServer,
-        scope?: IComponent
+        scope?: IComponent,
     ) {
         this.deltaConnectionServer = deltaConnectionServer || TestDeltaConnectionServer.create();
 
