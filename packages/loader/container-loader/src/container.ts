@@ -275,7 +275,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         this.logger.sendTelemetryEvent({
             eventName: "AutoReconnect",
             value,
-            connectionMode: this._deltaManager!.connectionMode,
+            connectionMode: this._deltaManager.connectionMode,
             connectionState: this.connectionState,
         });
 
