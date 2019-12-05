@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { Song, furElise, sandstorm, furEliseShort, ballGame } from './Songs';
+import { Song, furElise, sandstorm, furEliseShort, ballGame } from "./Songs";
 
 export enum SongSelection {
   FurElise,
   FurEliseShort,
   Sandstorm,
   Ballgame,
-  Custom
+  Custom,
 }
 
 // TODO:NIT: how do you initialize this in place

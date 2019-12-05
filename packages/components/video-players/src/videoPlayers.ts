@@ -31,6 +31,7 @@ class YouTubeAPI {
     private static singletonP: Promise<YouTubeAPI>;
 
     public static async GetOrCreate(): Promise<YouTubeAPI> {
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises
         if (!YouTubeAPI.singletonP) {
             YouTubeAPI.singletonP = YouTubeAPI.Create();
         }
@@ -187,7 +188,7 @@ export class VideoPlayerCollection extends EventEmitter implements
         return this.videoPlayers.get(id);
     }
 
-     public removeCollectionItem(instance: IComponent): void {
+    public removeCollectionItem(instance: IComponent): void {
         throw new Error("Method not implemented.");
     }
 
@@ -199,7 +200,7 @@ export class VideoPlayerCollection extends EventEmitter implements
         // TODO the request is not stripping / off the URL
         const trimmed = request.url
             .substr(1)
-            .substr(0, request.url.indexOf("/", 1) === -1 ? request.url.length : request.url.indexOf("/"));
+            .substr(0, !request.url.includes("/", 1) ? request.url.length : request.url.indexOf("/"));
 
         if (!trimmed) {
             return {
@@ -259,12 +260,12 @@ export class VideoPlayerCollection extends EventEmitter implements
 }
 
 export class VideoPlayerFactoryComponent implements IComponentFactory {
-    public static supportedInterfaces = [ "IComponentFactory"];
+    public static supportedInterfaces = ["IComponentFactory"];
 
     public get IComponentFactory() { return this; }
 
     public query(id: string): any {
-        return VideoPlayerFactoryComponent.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
+        return VideoPlayerFactoryComponent.supportedInterfaces.includes(id) ? this : undefined;
     }
 
     public list(): string[] {

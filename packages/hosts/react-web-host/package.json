@@ -19,7 +19,7 @@
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
     "start": "webpack-dev-server",
     "tsc": "tsc",
-    "tslint": "tslint --project tsconfig.json --format verbose",
+    "tslint": "npm run eslint",
     "webpack": "webpack --env build"
   },
   "dependencies": {

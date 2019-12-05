@@ -115,7 +115,7 @@ export class KeyValueFactoryComponent implements IRuntimeFactory, IComponentFact
      * @param runtime - Container Runtime instance
      */
     private static async containerRequestHandler(request: IRequest, runtime: IHostRuntime): Promise<IResponse> {
-        const requestUrl = request.url.length > 0 && request.url.charAt(0) === "/"
+        const requestUrl = request.url.length > 0 && request.url.startsWith("/")
             ? request.url.substr(1)
             : request.url;
         const trailingSlash = requestUrl.indexOf("/");
@@ -150,6 +150,7 @@ export class KeyValueFactoryComponent implements IRuntimeFactory, IComponentFact
         const runtime = await ContainerRuntime.load(
             context,
             new Map([[ComponentName, Promise.resolve(this)]]),
+            // eslint-disable-next-line @typescript-eslint/unbound-method
             [KeyValueFactoryComponent.containerRequestHandler],
         );
 

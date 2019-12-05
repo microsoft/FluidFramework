@@ -33,7 +33,7 @@ import { CodeMirrorPresenceManager } from "./presence";
 class CodemirrorView implements IComponentHTMLView {
     private textArea: HTMLTextAreaElement;
     private codeMirror: CodeMirror.EditorFromTextArea;
-    private presenceManager : CodeMirrorPresenceManager;
+    private presenceManager: CodeMirrorPresenceManager;
     
     // TODO would be nice to be able to distinguish local edits across different uses of a sequence so that when
     // bridging to another model we know which one to update
@@ -113,7 +113,7 @@ class CodemirrorView implements IComponentHTMLView {
                     this.text.removeText(from, to);
                 }
 
-                const text = changeObj.text as string[];
+                const text = changeObj.text;
                 text.forEach((value, index) => {
                     // Insert the updated text
                     if (value) {

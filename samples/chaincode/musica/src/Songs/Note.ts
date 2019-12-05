@@ -4,9 +4,9 @@
  */
 
 export class Note {
-  midiNumber: number;
-  noteType: NoteType;
-  customNoteLength?: number;
+  public midiNumber: number;
+  public noteType: NoteType;
+  public customNoteLength?: number;
 
   constructor(midiNumber: number, noteType: NoteType, customNoteLength?: number) {
     this.midiNumber = midiNumber;
@@ -38,5 +38,5 @@ export enum NoteType {
   half,
   quarter,
   eighth,
-  sixteenth
+  sixteenth,
 }

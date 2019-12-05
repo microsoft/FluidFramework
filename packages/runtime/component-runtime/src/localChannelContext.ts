@@ -58,7 +58,7 @@ export class LocalChannelContext implements IChannelContext {
             return;
         }
 
-        // tslint:disable-next-line: no-non-null-assertion
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.connection!.setConnectionState(value);
     }
 
@@ -66,7 +66,7 @@ export class LocalChannelContext implements IChannelContext {
         assert(this.attached);
         this.summaryTracker.invalidate();
 
-        // tslint:disable-next-line: no-non-null-assertion
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.connection!.process(message, local);
     }
 

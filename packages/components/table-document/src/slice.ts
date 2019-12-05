@@ -30,8 +30,8 @@ export class TableSlice extends PrimedComponent implements ITable {
 
     public get name() { return this.root.get(ConfigKey.name); }
     public set name(value: string) { this.root.set(ConfigKey.name, value); }
-    public get values() { return this.maybeValues!; }
-    private get doc() { return this.maybeDoc!; }
+    public get values() { return this.maybeValues; }
+    private get doc() { return this.maybeDoc; }
 
     public get numRows() { return this.values.getRange().numRows; }
     public get numCols() { return this.values.getRange().numCols; }
@@ -104,7 +104,7 @@ export class TableSlice extends PrimedComponent implements ITable {
         if (!props) {
             return Promise.reject();
         }
-        const maybeConfig = props!;
+        const maybeConfig = props;
         this.root.set(ConfigKey.docId, maybeConfig.docId);
         this.root.set(ConfigKey.name, maybeConfig.name);
         await this.ensureDoc();

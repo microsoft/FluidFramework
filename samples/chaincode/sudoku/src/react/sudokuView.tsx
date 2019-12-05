@@ -84,8 +84,6 @@ export function SudokuView(props: ISudokuViewProps): JSX.Element {
 }
 
 // tslint:disable-next-line: max-func-body-length
-// eslint-disable-next-line @typescript-eslint/tslint/config, @typescript-eslint/no-unused-vars
-// tslint:disable-next-line: max-func-body-length
 function SimpleTable(props: ISudokuViewProps) {
     const coordinateDataAttributeName = "cellcoordinate";
 
@@ -125,7 +123,7 @@ function SimpleTable(props: ISudokuViewProps) {
             case "0":
                 keyString = "0";
             // intentional fall-through
-            // eslint-disable-next-line no-fallthrough
+            // eslint-disable no-fallthrough
             case "1":
             case "2":
             case "3":

@@ -33,6 +33,7 @@ export class CollaborativeCheckbox extends React.Component<IProps, IState> {
         this.isChecked = this.isChecked.bind(this);
     }
 
+    // eslint-disable-next-line react/no-deprecated
     public componentWillMount() {
         // Register a callback for when an increment happens
         this.props.counter.on("incremented", () => {

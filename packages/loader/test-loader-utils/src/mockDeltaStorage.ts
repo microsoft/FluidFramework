@@ -20,7 +20,8 @@ export class MockDocumentDeltaStorageService implements IDocumentDeltaStorageSer
 
         // find first
         if (from) {
-            while (this.messages[++index].sequenceNumber <= from) {}
+            // eslint-disable-next-line no-empty
+            while (this.messages[++index].sequenceNumber <= from) { }
         }
 
         // start reading

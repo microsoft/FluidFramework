@@ -43,6 +43,7 @@ export class ContainerUrlResolver implements IUrlResolver {
 
             this.cache.set(request.url, resolvedP.then((resolved) => resolved.data));
         }
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return this.cache.get(request.url)!;
     }
 }

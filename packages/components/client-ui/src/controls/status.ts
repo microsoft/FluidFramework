@@ -143,7 +143,7 @@ export class Status extends ui.Component implements IStatus {
             } else {
                 buf += `${kv.msg}`;
             }
-            buf += "<\span>";
+            buf += "</span>";
         }
 
         // tslint:disable-next-line:no-inner-html

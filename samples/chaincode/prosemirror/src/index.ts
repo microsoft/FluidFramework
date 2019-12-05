@@ -32,7 +32,7 @@ class ProseMirrorFactory implements IRuntimeFactory {
                 async (request: IRequest, containerRuntime) => {
                     console.log(request.url);
 
-                    const requestUrl = request.url.length > 0 && request.url.charAt(0) === "/"
+                    const requestUrl = request.url.length > 0 && request.url.startsWith("/")
                         ? request.url.substr(1)
                         : request.url;
                     const trailingSlash = requestUrl.indexOf("/");

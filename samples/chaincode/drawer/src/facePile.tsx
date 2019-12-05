@@ -4,10 +4,10 @@
  */
 
 import * as React from 'react';
-import { IFacepileProps, Facepile, OverflowButtonType } from 'office-ui-fabric-react/lib/Facepile';
+import { IFacepileProps, Facepile, OverflowButtonType , IFacepilePersona } from 'office-ui-fabric-react/lib/Facepile';
 import { Dropdown, IDropdownOption } from 'office-ui-fabric-react/lib/Dropdown';
 import { Slider } from 'office-ui-fabric-react/lib/Slider';
-import { IFacepilePersona } from 'office-ui-fabric-react/lib/Facepile';
+
 import { PersonaInitialsColor } from 'office-ui-fabric-react/lib/Persona';
 
 export const facepilePersonas: IFacepilePersona[] = [

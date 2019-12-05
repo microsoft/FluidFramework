@@ -36,20 +36,20 @@ export class TextDisplay extends PrimedComponent implements IComponentHTMLVisual
   }
 }
 
-interface p {
-  counter: Counter
+interface TextDisplayProps {
+  counter: Counter;
 }
 
-interface s {
-  value: number
+interface TextDisplayState {
+  value: number;
 }
 
 /**
  * A React Component that displays the value of the counter
  * This also subscribes to changes on the value so it can update its state
  */
-class TextDisplayView extends React.Component<p, s> {
-  constructor(props: p) {
+class TextDisplayView extends React.Component<TextDisplayProps, TextDisplayState> {
+  constructor(props: TextDisplayProps) {
     super(props);
 
     this.state = {

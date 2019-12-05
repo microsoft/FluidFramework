@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 import { ITelemetryBaseLogger } from "@microsoft/fluid-container-definitions";
-import { ChildLogger } from "@microsoft/fluid-core-utils";
 import {
   IDocumentService,
   IDocumentServiceFactory,
@@ -54,7 +53,7 @@ export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentService
       odspResolvedUrl.endpoints.snapshotStorageUrl,
       this.getStorageToken,
       this.getWebsocketToken,
-      ChildLogger.create(this.logger, "fluid:telemetry:OdspDriver"),
+      this.logger,
       this.storageFetchWrapper,
       this.deltasFetchWrapper,
       import("./getSocketIo").then((m) => m.getSocketIo()),

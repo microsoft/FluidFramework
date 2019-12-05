@@ -13,10 +13,10 @@ import { ISharedMap } from '@microsoft/fluid-map';
 import { IComponentContext } from '@microsoft/fluid-runtime-definitions';
 
 interface IDrawerCommandBarProps {
-    context: IComponentContext,
-    packages: { pkg: string, name: string, version: string, icon: string }[],
-    documentFactory: IDocumentFactory,
-    documentsMap: ISharedMap,
+    context: IComponentContext;
+    packages: { pkg: string; name: string; version: string; icon: string }[];
+    documentFactory: IDocumentFactory;
+    documentsMap: ISharedMap;
 }
 
 export class DrawerCommandBar extends React.Component<IDrawerCommandBarProps, {}> {
@@ -33,7 +33,7 @@ export class DrawerCommandBar extends React.Component<IDrawerCommandBarProps, {}
         );
     }
 
-    private async createDocument(details: { pkg: string, name: string, version: string, icon: string }) {
+    private async createDocument(details: { pkg: string; name: string; version: string; icon: string }) {
         const chaincode: IFluidCodeDetails = {
             config: {
                 "@fluid-example:cdn": "https://pragueauspkn-3873244262.azureedge.net",

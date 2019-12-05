@@ -62,7 +62,7 @@ export class BTree<TKey, TValue> {
 
     public insert(block: BTreeBlock<TKey, TValue>, key: TKey, val: TValue, ht: number): BTreeBlock<TKey, TValue> {
         const entry: IBTreeEntry<TKey, TValue> = { key };
-        let j:number;
+        let j: number;
         // leaf
         if (ht === 0) {
             for (j=0;j<block.childCount;j++) {

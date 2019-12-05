@@ -186,7 +186,7 @@ export class Smde extends EventEmitter implements IComponentLoadable, IComponent
     private isReadonly() {
         const runtimeAsComponent = this.context.hostRuntime as IComponent;
         const scopes = runtimeAsComponent.IComponentConfiguration.scopes;
-        return scopes !== undefined && scopes.indexOf("doc:write") === -1;
+        return scopes !== undefined && !scopes.includes("doc:write");
     }
 }
 

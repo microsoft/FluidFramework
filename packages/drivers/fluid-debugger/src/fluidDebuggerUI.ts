@@ -191,6 +191,7 @@ export class DebuggerUI {
             controller.onVersionSelection(index === 0 ? undefined : this.versions[index - 1]);
         };
 
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises
         fileSnapshot.addEventListener("change", async () => {
             const files = fileSnapshot.files;
             if (files) {

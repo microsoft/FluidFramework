@@ -16,7 +16,7 @@ export class TestCollection implements ICollection<any> {
             const keys = key.split(".");
             let value = propertyBag;
             keys.forEach((splitKey) => {
-               value = value[splitKey];
+                value = value[splitKey];
             });
             return value;
         }
@@ -40,9 +40,10 @@ export class TestCollection implements ICollection<any> {
         });
 
         if (sort && Object.keys(sort).length === 1) {
+            // eslint-disable-next-line no-inner-declarations
             function compare(a, b) {
                 const sortKey = Object.keys(sort)[0];
-                if (sort[sortKey] === 1 ) {
+                if (sort[sortKey] === 1) {
                     // a goes before b, sorting in ascending order
                     return getValueByKey(a, sortKey) - getValueByKey(b, sortKey);
                 } else {
@@ -89,7 +90,7 @@ export class TestCollection implements ICollection<any> {
         return this.insertOneInternal(value);
     }
 
-    public async findOrCreate(query: any, value: any): Promise<{ value: any, existing: boolean }> {
+    public async findOrCreate(query: any, value: any): Promise<{ value: any; existing: boolean }> {
         const existing = this.findOneInternal(query);
         if (existing) {
             return { value: existing, existing: true };

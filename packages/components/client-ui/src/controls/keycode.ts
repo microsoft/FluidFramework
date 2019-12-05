@@ -16,6 +16,8 @@ export enum KeyCode {
     rightArrow = 39,
     downArrow = 40,
     del = 46,
+    // eslint-disable-next-line @typescript-eslint/camelcase
     letter_a = 65,
+    // eslint-disable-next-line @typescript-eslint/camelcase
     letter_z = 90,
 }

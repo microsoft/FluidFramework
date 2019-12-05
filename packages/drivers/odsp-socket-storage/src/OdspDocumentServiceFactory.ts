@@ -4,7 +4,6 @@
  */
 
 import { ITelemetryBaseLogger } from "@microsoft/fluid-container-definitions";
-import { ChildLogger } from "@microsoft/fluid-core-utils";
 import {
   IDocumentService,
   IDocumentServiceFactory,
@@ -53,7 +52,7 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
       odspResolvedUrl.endpoints.snapshotStorageUrl,
       this.getStorageToken,
       this.getWebsocketToken,
-      ChildLogger.create(this.logger, "fluid:telemetry:OdspDriver"),
+      this.logger,
       this.storageFetchWrapper,
       this.deltasFetchWrapper,
       Promise.resolve(getSocketIo()),
