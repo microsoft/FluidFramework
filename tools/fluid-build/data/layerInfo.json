@@ -1,17 +1,24 @@
 {
     "Base-Definitions": {
         "packages": [
-            "@microsoft/fluid-component-core-interfaces",
-            "@microsoft/fluid-protocol-definitions"
+            "@microsoft/fluid-common-definitions",
+            "@microsoft/fluid-component-core-interfaces"
         ]
     },
-
+    "Protocol-Definitions": {
+        "packages": [
+            "@microsoft/fluid-protocol-definitions"
+        ],
+        "deps": [
+            "@microsoft/fluid-common-definitions"
+        ]
+    },
     "Driver-Definitions": {
         "packages": [
             "@microsoft/fluid-driver-definitions"
         ],
         "deps": [
-            "@microsoft/fluid-protocol-definitions"
+            "Protocol-Definitions"
         ]
     },
     "Container-Definitions": {
@@ -23,9 +30,25 @@
             "@microsoft/fluid-component-core-interfaces"
         ]
     },
-    "Common-Utils": {
+    "Base-Protocol-Utils": {
+        "packages": [
+            "@microsoft/fluid-core-utils"
+        ],
         "dirs": [
             "packages/utils"
+        ],
+        "deps": [
+            "Base-Definitions",
+            "Protocol-Definitions"
+        ]
+    },
+    "Driver-Utils": {
+        "packages": [
+            "@microsoft/fluid-driver-utils"
+        ],
+        "deps": [
+            "Base-Protocol-Utils",
+            "Driver-Definitions"
         ]
     },
     "Driver": {
@@ -33,17 +56,7 @@
             "packages/drivers/"
         ],
         "deps": [
-            "Common-Utils",
-            "Driver-Definitions",
-            "@microsoft/fluid-component-core-interfaces"
-        ]
-    },
-    "Container-Utils": {
-        "packages": [
-            "@microsoft/fluid-core-utils"
-        ],
-        "deps": [
-            "Container-Definitions",
+            "Driver-Utils",
             "@microsoft/fluid-component-core-interfaces"
         ]
     },
@@ -52,7 +65,8 @@
             "packages/loader/"
         ],
         "deps": [
-            "Container-Utils"
+            "Container-Definitions",
+            "Driver-Utils"
         ]
     },
     "Hosts": {
@@ -69,7 +83,8 @@
             "packages/runtime/"
         ],
         "deps": [
-            "Container-Utils"
+            "Container-Definitions",
+            "Driver-Utils"
         ]
     },
     "Framework": {

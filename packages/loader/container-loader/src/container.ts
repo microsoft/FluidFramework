@@ -2,6 +2,12 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
+
+import {
+    ITelemetryBaseLogger,
+    ITelemetryLogger,
+    TelemetryEventRaisedOnContainer,
+} from "@microsoft/fluid-common-definitions";
 import { IComponent, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import {
     ICodeLoader,
@@ -12,10 +18,7 @@ import {
     IFluidModule,
     IGenericBlob,
     IRuntimeFactory,
-    ITelemetryBaseLogger,
-    ITelemetryLogger,
     LoaderHeader,
-    TelemetryEventRaisedOnContainer,
 } from "@microsoft/fluid-container-definitions";
 import {
     buildHierarchy,
@@ -25,13 +28,13 @@ import {
     flatten,
     PerformanceEvent,
     raiseConnectedEvent,
-    readAndParse,
     TelemetryLogger,
 } from "@microsoft/fluid-core-utils";
 import {
     IDocumentService,
     IDocumentStorageService,
 } from "@microsoft/fluid-driver-definitions";
+import { readAndParse } from "@microsoft/fluid-driver-utils";
 import { isSystemMessage, ProtocolOpHandler, Quorum, QuorumProxy } from "@microsoft/fluid-protocol-base";
 import {
     ConnectionState,

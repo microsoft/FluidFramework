@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "@fluid-internal/client-api": "^0.12.0",
+    "@microsoft/fluid-common-definitions": "^0.12.0",
     "@microsoft/fluid-component-core-interfaces": "^0.12.0",
     "@microsoft/fluid-container-definitions": "^0.12.0",
     "@microsoft/fluid-container-loader": "^0.12.0",

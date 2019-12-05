@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { Deferred, readAndParse } from "@microsoft/fluid-core-utils";
+import { Deferred } from "@microsoft/fluid-core-utils";
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
+import { readAndParse } from "@microsoft/fluid-driver-utils";
 import {
     IDocumentAttributes,
     ISequencedDocumentMessage,

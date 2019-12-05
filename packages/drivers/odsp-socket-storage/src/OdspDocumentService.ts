@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger } from "@microsoft/fluid-container-definitions";
+import { ITelemetryBaseLogger } from "@microsoft/fluid-common-definitions";
 import { DebugLogger, TelemetryLogger, TelemetryNullLogger } from "@microsoft/fluid-core-utils";
 import {
     IDocumentDeltaConnection,

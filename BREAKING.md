@@ -23,7 +23,6 @@ IPendingProposal
 IQuorum
 IProtocolState
 IProcessMessageResult
-IDisposable
 IHelpMessage
 QueueMessage
 IConnect
@@ -45,6 +44,21 @@ IResolvedUrlBase
 IWebResolvedUrl
 IFluidResolvedUrl
 IUrlResolver
+```
+
+The following interfaces/types have been moved to `@microsoft/fluid-common-definitions`:
+```
+IDisposable
+ITelemetry*
+```
+
+The following enums/classes/functions have been moved to `@microsoft/fluid-driver-utils`:
+```
+configurableUrlResolver
+isOnline
+NetworkError
+OnlineStatus
+readAndParse
 ```
 ## Top-level `type` on `IClient` deprecated
 The `type` field on `IClient` has been deprecated and will be removed in the future. There is now an optional type in the new `details` member of `IClient`. Some of the functionality of the top-level `type` field has been replaced by the `capabilities` member in `IClient.details`, specifically the `interactive` boolean is used to distinguish between human and non-human clients.

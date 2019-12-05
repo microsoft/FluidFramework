@@ -8,5 +8,4 @@ export * from "./blobs";
 export * from "./chaincode";
 export * from "./deltas";
 export * from "./loader";
-export * from "./logger";
 export * from "./proxyLoader";

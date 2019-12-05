@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
+import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import {
     buildHierarchy,
     fromBase64ToUtf8,

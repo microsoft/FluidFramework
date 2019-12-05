@@ -12,7 +12,7 @@ import {
     ITelemetryPerformanceEvent,
     ITelemetryProperties,
     TelemetryEventPropertyType,
-} from "@microsoft/fluid-container-definitions";
+} from "@microsoft/fluid-common-definitions";
 import * as registerDebug from "debug";
 import { pkgName, pkgVersion } from "./packageVersion";
 // tslint:disable-next-line:no-var-requires

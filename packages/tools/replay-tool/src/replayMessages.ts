@@ -4,14 +4,9 @@
  */
 
 import * as API from "@fluid-internal/client-api";
-import {
-    IRequest,
-} from "@microsoft/fluid-component-core-interfaces";
-import {
-    IProxyLoaderFactory,
-    ITelemetryBaseEvent,
-    ITelemetryBaseLogger,
-} from "@microsoft/fluid-container-definitions";
+import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@microsoft/fluid-common-definitions";
+import { IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
 import { ChildLogger, TelemetryLogger } from "@microsoft/fluid-core-utils";
 import {

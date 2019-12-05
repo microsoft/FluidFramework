@@ -2,6 +2,8 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
+
+import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import {
     IComponent,
     IComponentHandleContext,
@@ -18,7 +20,6 @@ import {
     IDeltaManager,
     IGenericBlob,
     ILoader,
-    ITelemetryLogger,
 } from "@microsoft/fluid-container-definitions";
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import {

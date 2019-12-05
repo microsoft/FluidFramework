@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { BatchManager, NetworkError } from "@microsoft/fluid-core-utils";
+import { BatchManager } from "@microsoft/fluid-core-utils";
 import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
+import { NetworkError } from "@microsoft/fluid-driver-utils";
 import {
     ConnectionMode,
     IClient,

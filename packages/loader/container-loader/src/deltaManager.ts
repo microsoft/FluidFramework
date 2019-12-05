@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import {
     IConnectionDetails,
     IDeltaHandlerStrategy,
     IDeltaManager,
     IDeltaQueue,
-    ITelemetryLogger,
 } from "@microsoft/fluid-container-definitions";
 import {
     Deferred,
@@ -178,7 +178,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     }
 
     public get active(): boolean {
-         return this.inQuorum && this.connectionMode === "write";
+        return this.inQuorum && this.connectionMode === "write";
     }
 
     public get socketDocumentId(): string | undefined {
@@ -257,10 +257,11 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
      * Sets the sequence number from which inbound messages should be returned
      */
     public attachOpHandler(
-            minSequenceNumber: number,
-            sequenceNumber: number,
-            handler: IDeltaHandlerStrategy,
-            catchUp: boolean) {
+        minSequenceNumber: number,
+        sequenceNumber: number,
+        handler: IDeltaHandlerStrategy,
+        catchUp: boolean,
+    ) {
         debug("Attached op handler", sequenceNumber);
 
         this.initSequenceNumber = sequenceNumber;
@@ -435,14 +436,15 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         if (this.connection) {
             this.connection.submitSignal(content);
         } else {
-            this.logger.sendErrorEvent({eventName: "submitSignalDisconnected"});
+            this.logger.sendErrorEvent({ eventName: "submitSignalDisconnected" });
         }
     }
 
     public async getDeltas(
-            telemetryEventSuffix: string,
-            fromInitial: number,
-            to?: number): Promise<ISequencedDocumentMessage[]> {
+        telemetryEventSuffix: string,
+        fromInitial: number,
+        to?: number,
+    ): Promise<ISequencedDocumentMessage[]> {
         let retry: number = 0;
         let from: number = fromInitial;
         const allDeltas: ISequencedDocumentMessage[] = [];
@@ -515,7 +517,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
                 if (!canRetry || !canRetryOnError(error)) {
                     // It's game over scenario.
-                    telemetryEvent.cancel({category: "error"}, error);
+                    telemetryEvent.cancel({ category: "error" }, error);
                     this.close(error);
                     return [];
                 }
@@ -545,7 +547,8 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                         requests,
                         deltasRetrievedTotal: allDeltas.length,
                         replayFrom: from,
-                        to });
+                        to,
+                    });
                     this.close(new Error("Failed to retrieve ops from storage: giving up after too many retries"));
                     return [];
                 }
@@ -566,7 +569,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         }
 
         // Might need to change to non-error event
-        this.logger.sendErrorEvent({eventName: "GetDeltasClosedConnection" });
+        this.logger.sendErrorEvent({ eventName: "GetDeltasClosedConnection" });
         telemetryEvent.cancel({ error: "container closed" });
         return [];
     }
@@ -622,7 +625,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this.socketLatency += latency;
         const aggregateCount = 100;
         if (this.pongCount === aggregateCount) {
-            this.logger.sendTelemetryEvent({eventName: "DeltaLatency", value: this.socketLatency / aggregateCount});
+            this.logger.sendTelemetryEvent({ eventName: "DeltaLatency", value: this.socketLatency / aggregateCount });
             this.pongCount = 0;
             this.socketLatency = 0;
         }
@@ -709,7 +712,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             if (!this.autoReconnect) {
                 // Not clear if reconnecting is the right thing in such state.
                 // Let's get telemetry to learn more...
-                this.logger.sendErrorEvent({ eventName: "NackWithNoReconnect", target, mode: this._connectionMode});
+                this.logger.sendErrorEvent({ eventName: "NackWithNoReconnect", target, mode: this._connectionMode });
             }
             // tslint:disable-next-line:no-floating-promises
             this.reconnectOnError(nackReason, connection, "write");
@@ -733,7 +736,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             // Observation based on early pre-production telemetry:
             // We are getting transport errors from WebSocket here, right before or after "disconnect".
             // This happens only in Firefox.
-            logNetworkFailure(this.logger, {eventName: "DeltaConnectionError"}, error);
+            logNetworkFailure(this.logger, { eventName: "DeltaConnectionError" }, error);
             // tslint:disable-next-line:no-floating-promises
             this.reconnectOnError(
                 `Error: ${error}`,
@@ -839,18 +842,20 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     }
 
     private processInitialMessages(
-            messages: ISequencedDocumentMessage[] | undefined,
-            contents: IContentMessage[] | undefined,
-            signals: ISignalMessage[] | undefined,
-            firstConnection: boolean): void {
+        messages: ISequencedDocumentMessage[] | undefined,
+        contents: IContentMessage[] | undefined,
+        signals: ISignalMessage[] | undefined,
+        firstConnection: boolean,
+    ): void {
         this.enqueueInitialOps(messages, contents, firstConnection);
         this.enqueueInitialSignals(signals);
     }
 
     private enqueueInitialOps(
-            messages: ISequencedDocumentMessage[] | undefined,
-            contents: IContentMessage[] | undefined,
-            firstConnection: boolean): void {
+        messages: ISequencedDocumentMessage[] | undefined,
+        contents: IContentMessage[] | undefined,
+        firstConnection: boolean,
+    ): void {
         if (contents && contents.length > 0) {
             for (const content of contents) {
                 this.contentCache.set(content);
@@ -870,8 +875,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     }
 
     private enqueueMessages(
-            messages: ISequencedDocumentMessage[],
-            telemetryEventSuffix: string = "OutOfOrderMessage"): void {
+        messages: ISequencedDocumentMessage[],
+        telemetryEventSuffix: string = "OutOfOrderMessage",
+    ): void {
         if (!this.handler) {
             // We did not setup handler yet.
             // This happens when we connect to web socket faster than we get attributes for container
@@ -993,7 +999,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         }
 
         if (this.closed) {
-            this.logger.sendTelemetryEvent({eventName: "fetchMissingDeltasClosedConnection" });
+            this.logger.sendTelemetryEvent({ eventName: "fetchMissingDeltasClosedConnection" });
             return;
         }
 
