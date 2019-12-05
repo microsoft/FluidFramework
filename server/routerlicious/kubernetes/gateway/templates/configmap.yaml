@@ -83,6 +83,7 @@ data:
             "gatewayUrl": "http://{{ template "fullname" . }}",
             "serverUrl": "{{ .Values.alfred.externalUrl }}",
             "blobStorageUrl": "{{ .Values.historian.externalUrl }}",
+            "internalBlobStorageUrl": "{{ .Values.historian.internalUrl }}",
             "repository": "FluidFramework",
             "clusterNpm": "{{ .Values.worker.clusterNpm }}",
             "npm": "{{ .Values.worker.npm }}",

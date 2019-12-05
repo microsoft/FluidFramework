@@ -20,7 +20,7 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
     const mongoUrl = config.get("mongo:endpoint") as string;
     const documentsCollectionName = config.get("mongo:collectionNames:documents");
     const messagesCollectionName = config.get("mongo:collectionNames:scribeDeltas");
-    const historianUrl = config.get("worker:blobStorageUrl") as string;
+    const historianUrl = config.get("worker:internalBlobStorageUrl") as string || config.get("worker:blobStorageUrl") as string;
     const kafkaEndpoint = config.get("kafka:lib:endpoint");
     const kafkaLibrary = config.get("kafka:lib:name");
     const maxMessageSize = bytes.parse(config.get("kafka:maxMessageSize"));
