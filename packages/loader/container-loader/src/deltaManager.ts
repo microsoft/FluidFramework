@@ -540,7 +540,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 if (success && retry >= 100) {
                     telemetryEvent.cancel({
                         category: "error",
-                        reason: "too many retries",
+                        error: "too many retries",
                         retry,
                         requests,
                         deltasRetrievedTotal: allDeltas.length,
@@ -567,21 +567,21 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         // Might need to change to non-error event
         this.logger.sendErrorEvent({eventName: "GetDeltasClosedConnection" });
-        telemetryEvent.cancel({ reason: "container closed" });
+        telemetryEvent.cancel({ error: "container closed" });
         return [];
     }
 
     /**
      * Closes the connection and clears inbound & outbound queues.
      */
-    public close(error?: any): void {
+    public close(error?: any, raiseContainerError = true): void {
         if (this.closed) {
             return;
         }
         this.closed = true;
 
         // Note: "disconnect" & "nack" do not have error object
-        if (error !== undefined) {
+        if (raiseContainerError && error !== undefined) {
             this.emit("error", error);
         }
 
@@ -705,7 +705,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         // Always connect in write mode after getting nacked.
         connection.on("nack", (target: number) => {
-            const nackReason = target === -1 ? "Reconnecting to start writing" : "Reconnecting on nack";
+            const nackReason = target === -1 ? "Nack: Start writing" : "Nack";
             if (!this.autoReconnect) {
                 // Not clear if reconnecting is the right thing in such state.
                 // Let's get telemetry to learn more...
@@ -721,7 +721,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             // ("server_disconnect", ODSP-specific) is mapped to "disconnect"
             // tslint:disable-next-line:no-floating-promises
             this.reconnectOnError(
-                `Got disconnect: ${disconnectReason}, autoReconnect: ${this.autoReconnect}`,
+                `Disconnect: ${disconnectReason}`,
                 connection,
                 this.systemConnectionMode,
                 disconnectReason,
@@ -736,7 +736,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             logNetworkFailure(this.logger, {eventName: "DeltaConnectionError"}, error);
             // tslint:disable-next-line:no-floating-promises
             this.reconnectOnError(
-                `Reconnecting on error: ${error}`,
+                `Error: ${error}`,
                 connection,
                 this.systemConnectionMode,
                 error);
@@ -809,8 +809,12 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this.disconnectFromDeltaStream(reason);
 
         // If reconnection is not an option, close the DeltaManager
-        if (!this.reconnect || !canRetryOnError(error)) {
-            this.close(error);
+        const criticalError = !canRetryOnError(error);
+        if (!this.reconnect || criticalError) {
+            // Do not raise container error if we are closing just because we lost connection.
+            // Those errors (like IdleDisconnect) would show up in telemetry dashboards and
+            // are very misleading, as first initial reaction - some logic is broken.
+            this.close(error, criticalError /*raiseContainerError*/);
         }
 
         // If closed then we can't reconnect
@@ -953,7 +957,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         if (message.sequenceNumber % 2000 === 0) {
             this.logger.sendTelemetryEvent({
                 eventName: "OpStats",
-                seqNumber: message.sequenceNumber,
+                sequenceNumber: message.sequenceNumber,
                 value: msnDistance,
                 timeDelta: this.lastMessageTimeForTelemetry ?
                     message.timestamp - this.lastMessageTimeForTelemetry : undefined,
@@ -1012,7 +1016,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 from?: number;
                 to?: number;
                 messageGap?: number;
-            } = {
+        } = {
             eventName: `CatchUp_${telemetryEventSuffix}`,
             messageCount: messages.length,
             pendingCount: this.pending.length,

@@ -28,6 +28,7 @@
   "dependencies": {
     "@microsoft/fluid-base-host": "^0.12.0",
     "@microsoft/fluid-container-definitions": "^0.12.0",
+    "@microsoft/fluid-container-loader": "^0.12.0",
     "@microsoft/fluid-core-utils": "^0.12.0",
     "@microsoft/fluid-driver-definitions": "^0.12.0",
     "@microsoft/fluid-fluidapp-odsp-urlresolver": "^0.12.0",
@@ -38,16 +39,16 @@
     "@microsoft/fluid-routerlicious-driver": "^0.12.0",
     "@microsoft/fluid-routerlicious-host": "^0.12.0",
     "@microsoft/fluid-routerlicious-urlresolver": "^0.12.0",
-    "@microsoft/fluid-container-loader": "^0.12.0",
     "@microsoft/fluid-web-code-loader": "^0.12.0",
-    "uuid": "^3.3.2",
-    "jsonwebtoken": "^8.4.0"
+    "jsonwebtoken": "^8.4.0",
+    "uuid": "^3.3.2"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.4.4",
     "@microsoft/eslint-config-fluid": "^0.12.0",
     "@microsoft/fluid-build-common": "^0.12.0",
     "@types/node": "^10.14.6",
+    "@types/uuid": "^3.4.4",
     "@typescript-eslint/eslint-plugin": "^2.9.0",
     "@typescript-eslint/eslint-plugin-tslint": "^2.9.0",
     "@typescript-eslint/parser": "^2.9.0",

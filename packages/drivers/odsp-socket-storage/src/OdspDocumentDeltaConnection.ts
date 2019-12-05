@@ -242,13 +242,11 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
      * Disconnect from the websocket
      */
     public disconnect(socketProtocolError: boolean = false) {
-        if (this.socketReferenceKey === undefined) {
-            throw new Error("Invalid socket reference key");
+        if (this.socketReferenceKey !== undefined) {
+            OdspDocumentDeltaConnection.removeSocketIoReference(this.socketReferenceKey, socketProtocolError);
+            this.socketReferenceKey = undefined;
+
+            this.emit("disconnect", "client closing connection");
         }
-
-        OdspDocumentDeltaConnection.removeSocketIoReference(this.socketReferenceKey, socketProtocolError);
-        this.socketReferenceKey = undefined;
-
-        this.emit("disconnect", "client closing connection");
     }
 }

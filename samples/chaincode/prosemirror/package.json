@@ -29,7 +29,6 @@
     "webpack:dev": "webpack --env=\"development\""
   },
   "dependencies": {
-    "@microsoft/fluid-build-common": "^0.12.0",
     "@microsoft/fluid-component-core-interfaces": "^0.12.0",
     "@microsoft/fluid-component-runtime": "^0.12.0",
     "@microsoft/fluid-container-definitions": "^0.12.0",
@@ -40,19 +39,18 @@
     "@microsoft/fluid-sequence": "^0.12.0",
     "@microsoft/fluid-shared-object-base": "^0.12.0",
     "@types/prosemirror-model": "^1.7.2",
-    "@types/prosemirror-schema-basic": "^1.0.1",
     "@types/prosemirror-schema-list": "^1.0.1",
     "@types/prosemirror-state": "^1.2.3",
     "@types/prosemirror-view": "^1.9.0",
     "prosemirror-example-setup": "^1.0.1",
     "prosemirror-model": "^1.7.2",
-    "prosemirror-schema-basic": "^1.0.1",
     "prosemirror-schema-list": "^1.0.3",
     "prosemirror-state": "^1.2.4",
     "prosemirror-view": "^1.10.3"
   },
   "devDependencies": {
     "@microsoft/eslint-config-fluid": "^0.12.0",
+    "@microsoft/fluid-build-common": "^0.12.0",
     "@microsoft/fluid-webpack-component-loader": "^0.12.0",
     "@types/node": "^10.14.6",
     "@typescript-eslint/eslint-plugin": "^2.9.0",

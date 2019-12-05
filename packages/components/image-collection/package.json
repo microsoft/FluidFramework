@@ -42,6 +42,7 @@
     "concurrently": "^4.1.0",
     "eslint": "^6.7.1",
     "rimraf": "^2.6.2",
+    "ts-loader": "^6.1.2",
     "tslint": "^5.20.0",
     "typescript": "~3.4.5",
     "webpack": "^4.16.5",

@@ -29,7 +29,6 @@
     "webpack:dev": "webpack --env=\"development\""
   },
   "dependencies": {
-    "@microsoft/fluid-build-common": "^0.12.0",
     "@microsoft/fluid-component-core-interfaces": "^0.12.0",
     "@microsoft/fluid-component-runtime": "^0.12.0",
     "@microsoft/fluid-container-definitions": "^0.12.0",
@@ -44,6 +43,7 @@
   },
   "devDependencies": {
     "@microsoft/eslint-config-fluid": "^0.12.0",
+    "@microsoft/fluid-build-common": "^0.12.0",
     "@microsoft/fluid-webpack-component-loader": "^0.12.0",
     "@types/node": "^10.14.6",
     "@typescript-eslint/eslint-plugin": "^2.9.0",

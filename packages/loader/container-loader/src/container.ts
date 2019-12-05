@@ -271,6 +271,14 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         if (!this._deltaManager) {
             throw new Error("Can't set autoReconnect prior to load");
         }
+
+        this.logger.sendTelemetryEvent({
+            eventName: "AutoReconnect",
+            value,
+            connectionMode: this._deltaManager!.connectionMode,
+            connectionState: this.connectionState,
+        });
+
         this._deltaManager.autoReconnect = value;
     }
 
@@ -311,9 +319,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                 clientType: this.client.details.type, // differentiating summarizer container from main container
                 packageName: TelemetryLogger.sanitizePkgName(pkgName),
                 packageVersion: pkgVersion,
-            },
-            {
-                clientId: () => this.clientId,
             });
 
         // Prefix all events in this file with container-loader
@@ -737,7 +742,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                     const ack = message.contents as ISummaryAck;
                     protocolLogger.sendTelemetryEvent({
                         eventName: "SummaryAck",
-                        message: `handle: ${ack.handle}`,
+                        handle: ack.handle,
                         sequenceNumber: message.sequenceNumber,
                         summarySequenceNumber: ack.summaryProposal.summarySequenceNumber,
                     });
@@ -746,7 +751,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                     const nack = message.contents as ISummaryNack;
                     protocolLogger.sendTelemetryEvent({
                         eventName: "SummaryNack",
-                        message: nack.errorMessage,
+                        error: nack.errorMessage,
                         sequenceNumber: message.sequenceNumber,
                         summarySequenceNumber: nack.summaryProposal.summarySequenceNumber,
                     });
@@ -976,25 +981,40 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         this.connectionTransitionTimes[value] = time;
         const duration = time - this.connectionTransitionTimes[oldState];
 
-        let connectionInitiationReason: string;
+        let durationFromDisconnected: number | undefined;
+        let connectionMode: string | undefined;
+        let connectionInitiationReason: string | undefined;
+        let autoReconnect: boolean | undefined;
         if (value === ConnectionState.Disconnected) {
-            connectionInitiationReason = "Disconnect";
-        } else if (this.firstConnection) {
-            connectionInitiationReason = "InitialConnect";
-        } else if (this.manualReconnectInProgress) {
-            connectionInitiationReason = "ManualReconnect";
+            autoReconnect = this._deltaManager!.autoReconnect;
         } else {
-            connectionInitiationReason = "AutoReconnect";
+            connectionMode = this._deltaManager!.connectionMode;
+            if (value === ConnectionState.Connected) {
+                durationFromDisconnected = time - this.connectionTransitionTimes[ConnectionState.Disconnected];
+                durationFromDisconnected = TelemetryLogger.formatTick(durationFromDisconnected);
+                this.firstConnection = false;
+            }
+            if (this.firstConnection) {
+                connectionInitiationReason = "InitialConnect";
+            } else if (this.manualReconnectInProgress) {
+                connectionInitiationReason = "ManualReconnect";
+            } else {
+                connectionInitiationReason = "AutoReconnect";
+            }
         }
 
         this.logger.sendPerformanceEvent({
             eventName: `ConnectionStateChange_${ConnectionState[value]}`,
             from: ConnectionState[oldState],
             duration,
+            durationFromDisconnected,
             reason,
             connectionInitiationReason,
             socketDocumentId: this._deltaManager ? this._deltaManager.socketDocumentId : undefined,
             pendingClientId: this.pendingClientId,
+            clientId: this.clientId,
+            connectionMode,
+            autoReconnect,
         });
 
         if (value === ConnectionState.Connected) {
