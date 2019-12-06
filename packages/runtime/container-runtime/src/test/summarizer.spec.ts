@@ -123,10 +123,14 @@ describe("Runtime", () => {
                     await flushPromises(); // let summarize run
                 }
 
-                async function flushPromises(count: number = 1) {
-                    for (let i = 0; i < count; i++) {
-                        await Promise.resolve();
-                    }
+                // tslint:disable-next-line: mocha-no-side-effect-code
+                const flush = typeof setImmediate === "function"
+                    ? (fn: (...args: any[]) => void) => { setImmediate(fn); }
+                    : (fn: (...args: any[]) => void) => { setTimeout(fn, 0); };
+                async function flushPromises() {
+                    const p = new Promise((resolve) => { flush(resolve); });
+                    clock.tick(0);
+                    return p;
                 }
 
                 it("Should summarize after configured number of ops when not pending", async () => {
