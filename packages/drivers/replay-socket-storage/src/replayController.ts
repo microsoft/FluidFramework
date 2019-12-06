@@ -87,6 +87,6 @@ export abstract class ReplayController extends ReadDocumentStorageServiceBase {
      * @param fetchedOps - ops to process
      */
     public abstract replay(
-        emitter: (op: api.ISequencedDocumentMessage) => void,
+        emitter: (op: api.ISequencedDocumentMessage[]) => void,
         fetchedOps: api.ISequencedDocumentMessage[]): Promise<void>;
 }

@@ -274,7 +274,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
     }
 
     public async replay(
-            emitter: (op: ISequencedDocumentMessage) => void,
+            emitter: (op: ISequencedDocumentMessage[]) => void,
             fetchedOps: ISequencedDocumentMessage[]): Promise<void> {
         // eslint-disable-next-line no-constant-condition
         while (true) {
@@ -305,7 +305,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
                 playOps = fetchedOps.splice(0, this.stepsToPlay);
                 this.stepsToPlay = 0;
             }
-            playOps.map(emitter);
+            emitter(playOps);
         }
     }
 

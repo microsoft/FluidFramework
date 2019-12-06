@@ -18,8 +18,6 @@ import {
 import { EventEmitter } from "events";
 import { debug } from "./debug";
 import { FileDeltaStorageService } from "./fileDeltaStorageService";
-// tslint:disable-next-line:no-submodule-imports no-var-requires no-require-imports
-const cloneDeep = require("lodash/cloneDeep") as <T>(value: T) => T;
 
 const MaxBatchDeltas = 2000;
 
@@ -89,9 +87,11 @@ export class Replayer {
     }
 
     private emit(ops: ISequencedDocumentMessage[]) {
-        // Need to clone message as it gets modified while processing
-        // This breaks replay tool that uses same message with multiple containers.
-        ops.map((op) => this.deltaConnection.emit("op", op.clientId, cloneDeep(op)));
+        // Note: do not clone messages here!
+        // If Replay Tool fails due to one container patching message in-place,
+        // then same thing can happen in shipping product due to
+        // socket reuse in ODSP between main and summarizer containers.
+        ops.map((op) => this.deltaConnection.emit("op", "docId", op));
     }
 }
 

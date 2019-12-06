@@ -114,7 +114,7 @@ export class ReplayControllerStatic extends ReplayController {
     }
 
     public replay(
-            emitter: (op: ISequencedDocumentMessage) => void,
+            emitter: (op: ISequencedDocumentMessage[]) => void,
             fetchedOps: ISequencedDocumentMessage[]): Promise<void> {
         let current = this.skipToIndex(fetchedOps);
 
@@ -165,7 +165,7 @@ export class ReplayControllerStatic extends ReplayController {
                     }
                 }
                 scheduleNext(nextInterval);
-                playbackOps.map(emitter);
+                emitter(playbackOps);
             };
             const scheduleNext = (nextInterval: number) => {
                 if (nextInterval >= 0 && current < fetchedOps.length) {
@@ -329,7 +329,7 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
                 continue;
             }
 
-            replayP = replayP.then(() => controller.replay((op) => this.emit("op", op.clientId, op), fetchedOps));
+            replayP = replayP.then(() => controller.replay((ops) => this.emit("op", "docId", ops), fetchedOps));
 
             currentOp += fetchedOps.length;
             done = controller.isDoneFetch(currentOp, fetchedOps[fetchedOps.length - 1].timestamp);
