@@ -37,7 +37,6 @@ export class InnerDocumentServiceFactory implements IDocumentServiceFactory {
     private async createOuterProxy(): Promise<IDocumentServiceFactoryProxy> {
         return new Promise<IDocumentServiceFactoryProxy>(async (resolve, reject) => {
             const create = async () => {
-                reject(new Error("fixing build break, need to revisit this code"));
 
                 // If the parent endpoint does not exist, returns empty proxy silently (no connection/failure case)
                 const proxyP =
