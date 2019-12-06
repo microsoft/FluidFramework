@@ -26,6 +26,8 @@ import { ReplayController } from "./replayController";
 
 const MaxBatchDeltas = 2000;
 
+const ReplayDocumentId = "documentId";
+
 export class ReplayControllerStatic extends ReplayController {
     private static readonly DelayInterval = 50;
     private static readonly ReplayResolution = 15;
@@ -114,7 +116,7 @@ export class ReplayControllerStatic extends ReplayController {
     }
 
     public replay(
-            emitter: (op: ISequencedDocumentMessage) => void,
+            emitter: (op: ISequencedDocumentMessage[]) => void,
             fetchedOps: ISequencedDocumentMessage[]): Promise<void> {
         let current = this.skipToIndex(fetchedOps);
 
@@ -165,7 +167,7 @@ export class ReplayControllerStatic extends ReplayController {
                     }
                 }
                 scheduleNext(nextInterval);
-                playbackOps.map(emitter);
+                emitter(playbackOps);
             };
             const scheduleNext = (nextInterval: number) => {
                 if (nextInterval >= 0 && current < fetchedOps.length) {
@@ -227,7 +229,7 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
     private static readonly ReplayMaxMessageSize = 16 * 1024;
 
     private static readonly claims: ITokenClaims = {
-        documentId: "",
+        documentId: ReplayDocumentId,
         scopes: [],
         tenantId: "",
         user: {
@@ -329,7 +331,9 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
                 continue;
             }
 
-            replayP = replayP.then(() => controller.replay((op) => this.emit("op", op.clientId, op), fetchedOps));
+            replayP = replayP.then(() => {
+                return controller.replay((ops) => this.emit("op", ReplayDocumentId, ops), fetchedOps);
+            });
 
             currentOp += fetchedOps.length;
             done = controller.isDoneFetch(currentOp, fetchedOps[fetchedOps.length - 1].timestamp);

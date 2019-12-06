@@ -247,6 +247,10 @@ class Document {
         return content;
     }
 
+    public close() {
+        this.container.close();
+    }
+
     private resolveC = () => {};
 
     private async loadContainer(
@@ -532,6 +536,9 @@ export class ReplayTool {
         }
 
         await this.mainDocument.snapshot();
+        if (final) {
+            this.mainDocument.close();
+        }
 
         return content;
     }
@@ -556,7 +563,7 @@ export class ReplayTool {
                 && (final || this.documentsWindow[0].fromOp <= startOp)) {
             const doc = this.documentsWindow.shift();
             assert(doc.fromOp === startOp || final);
-            await this.saveAndVerify(doc, dir, content);
+            await this.saveAndVerify(doc, dir, content, final);
         }
     }
 
@@ -567,13 +574,13 @@ export class ReplayTool {
             this.documentsFromStorageSnapshots[0].fromOp <= op;
         if (this.documentPriorSnapshot && (processVersionedSnapshot || final)) {
             await this.documentPriorSnapshot.replay(op);
-            await this.saveAndVerify(this.documentPriorSnapshot, dir, content);
+            await this.saveAndVerify(this.documentPriorSnapshot, dir, content, final);
             this.documentPriorSnapshot = undefined;
         }
         if (processVersionedSnapshot) {
             this.documentPriorSnapshot = this.documentsFromStorageSnapshots.shift();
             assert(this.documentPriorSnapshot.fromOp === op);
-            await this.saveAndVerify(this.documentPriorSnapshot, dir, content)
+            await this.saveAndVerify(this.documentPriorSnapshot, dir, content, final)
                 .catch((e) => {
                     const from = this.documentPriorSnapshot.containerDescription;
                     this.reportError(`Error logged from ${from} while generating snapshot`, e);
@@ -583,7 +590,7 @@ export class ReplayTool {
 
     }
 
-    private async validateSaveAndLoad(content: ContainerContent, dir: string) {
+    private async validateSaveAndLoad(content: ContainerContent, dir: string, final: boolean) {
         const op = content.op;
 
         // Keep doc from previous iteration and validate here - this gives us shortest
@@ -592,7 +599,7 @@ export class ReplayTool {
         // in validateSlidingSnapshots()!
         if (this.documentPriorWindow && this.args.overlappingContainers !== 1) {
             await this.documentPriorWindow.replay(op);
-            await this.saveAndVerify(this.documentPriorWindow, dir, content);
+            await this.saveAndVerify(this.documentPriorWindow, dir, content, final);
             this.documentPriorWindow = undefined;
         }
 
@@ -601,7 +608,7 @@ export class ReplayTool {
         const storage = new storageClass(content.snapshot);
         this.documentPriorWindow = new Document(this.args, storage, `Saved & loaded at seq# ${op}`);
         await this.loadDoc(this.documentPriorWindow);
-        await this.saveAndVerify(this.documentPriorWindow, dir, content);
+        await this.saveAndVerify(this.documentPriorWindow, dir, content, final);
     }
 
     private async generateSnapshot(final: boolean) {
@@ -619,12 +626,12 @@ export class ReplayTool {
             return;
         }
 
-        await this.validateSaveAndLoad(content, dir);
+        await this.validateSaveAndLoad(content, dir, final);
 
         await this.validateSlidingSnapshots(content, dir, final);
 
         if (final && this.documentNeverSnapshot) {
-            await this.saveAndVerify(this.documentNeverSnapshot, dir, content);
+            await this.saveAndVerify(this.documentNeverSnapshot, dir, content, final);
         }
 
         await this.validateStorageSnapshots(content, dir, final);
@@ -644,7 +651,8 @@ export class ReplayTool {
     private async saveAndVerify(
             document2: Document,
             dir: string,
-            content: ContainerContent): Promise<boolean> {
+            content: ContainerContent,
+            final: boolean): Promise<boolean> {
         const op = document2.currentOp;
 
         const content2 = document2.extractContent();
@@ -657,6 +665,9 @@ export class ReplayTool {
         };
 
         await document2.snapshot();
+        if (final) {
+            document2.close();
+        }
 
         if (content2.snapshot === undefined) {
             this.reportError(`\nSnapshot ${name2} was not saved at op # ${op}!`);
