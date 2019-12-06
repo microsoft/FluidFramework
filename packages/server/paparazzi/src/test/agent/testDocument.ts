@@ -64,7 +64,7 @@ export class TestDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
         throw new Error("Method not implemented.");
     }
 
-    public runPaused<U>(callback: (() => Promise<U>) | (() => U)): Promise<U> {
+    public runPaused<U>(callback: () => Promise<U>): Promise<U> {
         throw new Error("Method not implemented");
     }
 }

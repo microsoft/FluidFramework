@@ -52,7 +52,7 @@ export class DeltaQueueProxy<T> extends EventForwarder implements IDeltaQueue<T>
         return this.queue.toArray();
     }
 
-    public runPaused<U>(callback: (() => Promise<U>) | (() => U)) {
+    public runPaused<U>(callback: () => Promise<U>) {
         return this.queue.runPaused(callback);
     }
 

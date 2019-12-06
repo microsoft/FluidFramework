@@ -94,7 +94,7 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
         this.ensureProcessing();
     }
 
-    public async runPaused<U>(callback: (() => Promise<U>) | (() => U)): Promise<U> {
+    public async runPaused<U>(callback: () => Promise<U>): Promise<U> {
         await this.pause();
         try {
             const res = await callback();
@@ -111,7 +111,7 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
      */
     private ensureProcessing() {
         assert(!this.isDisposed);
-        if (!this.paused() && !this.processingDeferred) {
+        if (!this.paused && !this.processingDeferred) {
             this.processingDeferred = new Deferred<void>();
             this.processDeltas();
             this.processingDeferred.resolve();
