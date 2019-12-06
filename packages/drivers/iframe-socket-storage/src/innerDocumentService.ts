@@ -24,22 +24,22 @@ export class InnerDocumentService implements IDocumentService {
      * Create a new InnerDocumentService
      */
     public static async create(): Promise<InnerDocumentService> {
-
-        return new Promise(async (resolve) => {
+        return new Promise<InnerDocumentService>(async (resolve, reject) => {
             const create = async () => {
-                const outerProxyP = Comlink.wrap(Comlink.windowEndpoint(window.parent)) as Promise<IOuterProxy>;
-                const outerProxy = await outerProxyP;
-                await outerProxy.connected();
-                return new InnerDocumentService(outerProxy);
+                const outerProxyP = Comlink.wrap<Promise<IOuterProxy>>(Comlink.windowEndpoint(window.parent));
+                outerProxyP.then(async (outerProxy) => {
+                    await outerProxy.connected();
+                    resolve(new InnerDocumentService(outerProxy));
+                }).catch(reject);
             };
             const eventListener = async (evt) => {
-                resolve(await create());
+                return create();
             };
             window.addEventListener("message", eventListener, {once: true});
 
-            const docService = await create();
+            await create();
+
             window.removeEventListener("message", eventListener);
-            resolve(docService);
         });
     }
 
