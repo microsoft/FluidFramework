@@ -195,11 +195,14 @@ export class OdspDocumentService implements IDocumentService {
             this.getStorageToken,
             this.odspCache,
             this.joinSessionKey);
-        const joinSession = await this.joinSessionP;
 
-        // CLear "lock" - form now on cache is responsible for handling caching policy (duration / reset on error)
-        this.joinSessionP = undefined;
-        return joinSession;
+        try {
+            const joinSession = await this.joinSessionP;
+            return joinSession;
+        } finally {
+            // Clear "lock" - form now on cache is responsible for handling caching policy (duration / reset on error)
+            this.joinSessionP = undefined;
+        }
     }
 
     /**
