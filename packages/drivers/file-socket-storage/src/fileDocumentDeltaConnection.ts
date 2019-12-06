@@ -91,7 +91,7 @@ export class Replayer {
         // If Replay Tool fails due to one container patching message in-place,
         // then same thing can happen in shipping product due to
         // socket reuse in ODSP between main and summarizer containers.
-        ops.map((op) => this.deltaConnection.emit("op", "docId", op));
+        this.deltaConnection.emit("op", "docId", ops);
     }
 }
 
