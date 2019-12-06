@@ -26,6 +26,8 @@ import { ReplayController } from "./replayController";
 
 const MaxBatchDeltas = 2000;
 
+const ReplayDocumentId = "documentId";
+
 export class ReplayControllerStatic extends ReplayController {
     private static readonly DelayInterval = 50;
     private static readonly ReplayResolution = 15;
@@ -227,7 +229,7 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
     private static readonly ReplayMaxMessageSize = 16 * 1024;
 
     private static readonly claims: ITokenClaims = {
-        documentId: "",
+        documentId: ReplayDocumentId,
         scopes: [],
         tenantId: "",
         user: {
@@ -329,7 +331,7 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
                 continue;
             }
 
-            replayP = replayP.then(() => controller.replay((ops) => this.emit("op", "docId", ops), fetchedOps));
+            replayP = replayP.then(() => controller.replay((ops) => this.emit("op", ReplayDocumentId, ops), fetchedOps));
 
             currentOp += fetchedOps.length;
             done = controller.isDoneFetch(currentOp, fetchedOps[fetchedOps.length - 1].timestamp);

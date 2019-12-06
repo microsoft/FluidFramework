@@ -26,8 +26,10 @@ const ReplayMaxMessageSize = 16 * 1024;
 
 const fileProtocolVersion = "^0.1.0";
 
+const replayDocumentId = "replayDocId";
+
 const Claims: ITokenClaims = {
-    documentId: "",
+    documentId: replayDocumentId,
     scopes: [],
     tenantId: "",
     user: {
@@ -91,7 +93,7 @@ export class Replayer {
         // If Replay Tool fails due to one container patching message in-place,
         // then same thing can happen in shipping product due to
         // socket reuse in ODSP between main and summarizer containers.
-        this.deltaConnection.emit("op", "docId", ops);
+        this.deltaConnection.emit("op", replayDocumentId, ops);
     }
 }
 
