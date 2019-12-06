@@ -123,12 +123,8 @@ describe("Runtime", () => {
                     await flushPromises(); // let summarize run
                 }
 
-                // tslint:disable-next-line: mocha-no-side-effect-code
-                const flush = typeof setImmediate === "function"
-                    ? (fn: (...args: any[]) => void) => { setImmediate(fn); }
-                    : (fn: (...args: any[]) => void) => { setTimeout(fn, 0); };
                 async function flushPromises() {
-                    const p = new Promise((resolve) => { flush(resolve); });
+                    const p = new Promise((resolve) => setTimeout(() => { resolve(); }, 0));
                     clock.tick(0);
                     return p;
                 }
