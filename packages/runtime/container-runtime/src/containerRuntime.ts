@@ -987,13 +987,14 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return { summaryStats, summaryTree };
     }
 
-    private processCore(message: ISequencedDocumentMessage, local: boolean) {
+    private processCore(messageArg: ISequencedDocumentMessage, local: boolean) {
         let remotedComponentContext: RemotedComponentContext;
 
         // Chunk processing must come first given that we will transform the message to the unchunked version
         // once all pieces are available
-        if (message.type === MessageType.ChunkedOp) {
-            this.processRemoteChunkedMessage(message);
+        let message = messageArg;
+        if (messageArg.type === MessageType.ChunkedOp) {
+            message = this.processRemoteChunkedMessage(messageArg);
         }
 
         // Old prepare part
@@ -1158,25 +1159,29 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         }
     }
 
-    private processRemoteChunkedMessage(message: ISequencedDocumentMessage): boolean {
+    private processRemoteChunkedMessage(message: ISequencedDocumentMessage) {
         const clientId = message.clientId;
         const chunkedContent = message.contents as IChunkedOp;
-        this.addChunk(clientId, chunkedContent.contents);
+        this.addChunk(clientId, chunkedContent);
         if (chunkedContent.chunkId === chunkedContent.totalChunks) {
+            const newMessage = {...message};
             const serializedContent = this.chunkMap.get(clientId).join("");
-            message.contents = JSON.parse(serializedContent);
-            message.type = chunkedContent.originalType;
+            newMessage.contents = JSON.parse(serializedContent);
+            newMessage.type = chunkedContent.originalType;
             this.clearPartialChunks(clientId);
-            return true;
+            return newMessage;
         }
-        return false;
+        return message;
     }
 
-    private addChunk(clientId: string, chunkedContent: string) {
-        if (!this.chunkMap.has(clientId)) {
-            this.chunkMap.set(clientId, []);
+    private addChunk(clientId: string, chunkedContent: IChunkedOp) {
+        let map = this.chunkMap.get(clientId);
+        if (map === undefined) {
+            map = [];
+            this.chunkMap.set(clientId, map);
         }
-        this.chunkMap.get(clientId).push(chunkedContent);
+        assert(chunkedContent.chunkId === map.length + 1); // 1-based indexing
+        map.push(chunkedContent.contents);
     }
 
     private clearPartialChunks(clientId: string) {
