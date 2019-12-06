@@ -24,8 +24,7 @@
     "tsc:watch": "tsc --watch",
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
-  "dependencies": {
-  },
+  "dependencies": {},
   "devDependencies": {
     "@microsoft/api-extractor": "^7.4.4",
     "@microsoft/eslint-config-fluid": "^0.12.0",
