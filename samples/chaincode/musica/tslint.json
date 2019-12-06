@@ -1,19 +1,6 @@
 {
-    "extends": ["@microsoft/fluid-build-common/tslint.json"],
+    "extends": [],
     "rules": {
-        "no-submodule-imports": false,
-        "no-import-side-effect": false,
-        "no-suspicious-comment": false,
-        "no-unsafe-any": false,
-        "ordered-imports": false,
-        "completed-docs": false,
-        "member-ordering": false,
-        "no-object-literal-type-assertion": false,
-        "react-this-binding-issue": false,
-        "interface-name": false,
-        "no-bitwise":false,
-        "no-parameter-reassignment": false,
-        "use-simple-attributes":false,
-        "no-unnecessary-class": false
+        "ban-ts-ignore": true
     }
 }
