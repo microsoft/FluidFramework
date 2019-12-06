@@ -39,6 +39,7 @@ import { readAndParse } from "@microsoft/fluid-driver-utils";
 import {
     ConnectionState,
     IChunkedOp,
+    IClientDetails,
     IDocumentMessage,
     IHelpMessage,
     IQuorum,
@@ -421,8 +422,16 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this.context.clientId;
     }
 
-    public get clientType(): string | undefined {
+    /**
+     * DEPRECATED use clientDetails.type instead
+     * back-compat: 0.11 clientType
+     */
+    public get clientType(): string {
         return this.context.clientType;
+    }
+
+    public get clientDetails(): IClientDetails {
+        return this.context.clientDetails;
     }
 
     public get blobManager(): IBlobManager {
@@ -1294,7 +1303,11 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     }
 
     private subscribeToLeadership() {
-        if (this.context.clientDetails.capabilities.interactive) {
+        // back-compat: 0.11 clientType
+        const interactive = this.context.clientType === "browser"
+            || (this.context.clientDetails && this.context.clientDetails.capabilities.interactive);
+
+        if (interactive) {
             this.getScheduler().then((scheduler) => {
                 if (scheduler.leader) {
                     this.updateLeader(true);

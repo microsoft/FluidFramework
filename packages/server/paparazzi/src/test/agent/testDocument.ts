@@ -94,7 +94,7 @@ export class TestDeltaManager
 
     public inboundSignal = new TestDeltaQueue<ISignalMessage>();
 
-    public clientType = "";
+    public clientType = "browser"; // back-compat: 0.11 clientType
     public clientDetails: IClientDetails = { capabilities: { interactive: true} };
 
     public version = "^0.1.0";

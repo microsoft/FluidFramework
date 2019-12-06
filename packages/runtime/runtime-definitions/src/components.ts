@@ -24,6 +24,7 @@ import {
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import {
     ConnectionState,
+    IClientDetails,
     IDocumentMessage,
     IQuorum,
     ISequencedDocumentMessage,
@@ -202,7 +203,11 @@ export interface IComponentContext extends EventEmitter {
     readonly existing: boolean;
     readonly options: any;
     readonly clientId: string;
-    readonly clientType: string | undefined;
+    /**
+     * DEPRECATED use hostRuntime.clientDetails.type instead
+     * back-compat: 0.11 clientType
+     */
+    readonly clientType: string;
     readonly parentBranch: string;
     readonly connected: boolean;
     readonly leader: boolean;
@@ -316,7 +321,12 @@ export interface IHostRuntime extends
     readonly existing: boolean;
     readonly options: any;
     readonly clientId: string;
-    readonly clientType: string | undefined;
+    /**
+     * DEPRECATED use clientDetails.type instead
+     * back-compat: 0.11 clientType
+     */
+    readonly clientType: string;
+    readonly clientDetails: IClientDetails;
     readonly parentBranch: string;
     readonly connected: boolean;
     readonly leader: boolean;
