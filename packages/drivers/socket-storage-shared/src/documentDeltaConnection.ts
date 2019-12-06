@@ -306,11 +306,14 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         assert(this.listeners(event).length === 0, "re-registration of events is not implemented");
 
         // Register for the event on socket.io
-        this.addTrackedListener(
-            event,
-            (...args: any[]) => {
-                this.emit(event, ...args);
-            });
+        // "error" is special - we already subscribed to it to modify error object on the fly.
+        if (event !== "error") {
+            this.addTrackedListener(
+                event,
+                (...args: any[]) => {
+                    this.emit(event, ...args);
+                });
+        }
 
         // And then add the listener to our event emitter
         super.on(event, listener);
@@ -394,11 +397,18 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
                 resolve(response);
             });
 
+            // WARNING: this has to stay as addTrackedListener listener and not be removed after successful connection.
+            // Reason: this.on() implementation does not subscribe to "error" socket events to propagate it to consumers
+            // of this class - it relies on this code to do so.
             this.addTrackedListener("error", ((error) => {
-                debug(`Error in documentDeltaConection: ${error}`);
+                // First, raise an error event, to give clients a chance to observe error contents
                 // This includes "Invalid namespace" error, which we consider critical (reconnecting will not help)
+                const errorObj = createErrorObject("error", error, error !== "Invalid namespace");
+                reject(errorObj);
+                this.emit("error", errorObj);
+
+                // Safety net - disconnect socket if client did not do so as result of processing "error" event.
                 this.disconnect(true);
-                reject(createErrorObject("error", error, error !== "Invalid namespace"));
             }));
 
             this.addConnectionListener("connect_document_error", ((error) => {
