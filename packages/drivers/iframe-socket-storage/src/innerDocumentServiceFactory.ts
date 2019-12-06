@@ -9,7 +9,7 @@ import {
     IFluidResolvedUrl,
     IResolvedUrl,
 } from "@microsoft/fluid-driver-definitions";
-// import * as Comlink from "comlink";
+import * as Comlink from "comlink";
 import { InnerDocumentService } from "./innerDocumentService";
 import { IDocumentServiceFactoryProxy } from "./outerDocumentServiceFactory";
 
@@ -38,16 +38,16 @@ export class InnerDocumentServiceFactory implements IDocumentServiceFactory {
         return new Promise<IDocumentServiceFactoryProxy>(async (resolve, reject) => {
             const create = async () => {
                 reject(new Error("fixing build break, need to revisit this code"));
-                /*
+
                 // If the parent endpoint does not exist, returns empty proxy silently (no connection/failure case)
                 const proxyP =
-                    Comlink.wrap(Comlink.windowEndpoint(window.parent)) as Promise<IDocumentServiceFactoryProxy>;
-                const proxy = await proxyP;
+                    Comlink.wrap<Promise<IDocumentServiceFactoryProxy>>(Comlink.windowEndpoint(window.parent));
 
-                // Check if the proxy is empty
-                await proxy.connected();
-                resolve(proxy);
-                */
+                return proxyP.then(async (proxy) => {
+                    // Check if the proxy is empty
+                    await proxy.connected();
+                    resolve(proxy);
+                });
             };
 
             // If innerFactory is created second, the outerFactory will trigger the connection
