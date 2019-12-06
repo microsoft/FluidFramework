@@ -331,7 +331,9 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
                 continue;
             }
 
-            replayP = replayP.then(() => controller.replay((ops) => this.emit("op", ReplayDocumentId, ops), fetchedOps));
+            replayP = replayP.then(() => {
+                return controller.replay((ops) => this.emit("op", ReplayDocumentId, ops), fetchedOps);
+            });
 
             currentOp += fetchedOps.length;
             done = controller.isDoneFetch(currentOp, fetchedOps[fetchedOps.length - 1].timestamp);
