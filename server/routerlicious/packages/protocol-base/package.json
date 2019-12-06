@@ -26,6 +26,7 @@
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "dependencies": {
+    "@microsoft/fluid-container-definitions": "0.12.16826",
     "@microsoft/fluid-core-utils": "0.12.16826",
     "@microsoft/fluid-protocol-definitions": "^0.12.0",
     "lodash": "^4.17.11"
