@@ -13,15 +13,9 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
     private isDisposed: boolean = false;
     private readonly q = new Deque<T>();
 
-    /**
-     * Tracks whether the system has requested the queue be paused.
-     */
-    private sysPause = true;
-
-    /**
-     * Tracks whether the user of the container has requested the queue be paused.
-     */
-    private userPause = false;
+    // We expose access to the DeltaQueue in order to allow users (from the console or code) to be able to pause/resume.
+    // But the internal system itself also sometimes needs to override these changes. The system field takes precedence.
+    private pauseCounter = 1;
 
     private error: any | undefined;
 
@@ -41,7 +35,7 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
     public get paused(): boolean {
         // The queue can be paused by either the user or by the system (e.g. during snapshotting).  If either requests
         // a pause, then the queue will pause.
-        return this.sysPause || this.userPause;
+        return this.pauseCounter > 0;
     }
 
     public get length(): number {
@@ -62,8 +56,8 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
     }
 
     public dispose() {
-        assert.fail("Not implemented.");
         this.isDisposed = true;
+        this.pauseCounter = 1;
     }
 
     public clear(): void {
@@ -85,7 +79,8 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
     }
 
     public async pause(): Promise<void> {
-        this.userPause = true;
+        assert(!this.isDisposed);
+        this.pauseCounter++;
         // If called from within the processing loop, we are in the middle of processing an op.  Return a promise
         // that will resolve when processing has actually stopped.
         if (this.processingDeferred) {
@@ -94,25 +89,19 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
     }
 
     public resume(): void {
-        this.userPause = false;
-        if (!this.paused) {
-            this.ensureProcessing();
-        }
+        assert(this.pauseCounter > 0);
+        assert(!this.isDisposed);
+        this.pauseCounter--;
+        this.ensureProcessing();
     }
 
-    public async systemPause(): Promise<void> {
-        this.sysPause = true;
-        // If called from within the processing loop, we are in the middle of processing an op.  Return a promise
-        // that will resolve when processing has actually stopped.
-        if (this.processingDeferred) {
-            return this.processingDeferred.promise;
-        }
-    }
-
-    public systemResume(): void {
-        this.sysPause = false;
-        if (!this.paused) {
-            this.ensureProcessing();
+    public async runPaused<U>(callback: () => Promise<U>): Promise<U> {
+        await this.pause();
+        try {
+            const res = await callback();
+            return res;
+        } finally {
+            this.resume();
         }
     }
 
@@ -122,7 +111,7 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
      * not already started.
      */
     private ensureProcessing() {
-        if (!this.processingDeferred) {
+        if (this.pauseCounter === 0 && !this.processingDeferred) {
             this.processingDeferred = new Deferred<void>();
             this.processDeltas();
             this.processingDeferred.resolve();

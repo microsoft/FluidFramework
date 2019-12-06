@@ -42,19 +42,9 @@ export class TestDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
         return Promise.resolve();
     }
 
-    public resume(): Promise<void> {
+    public resume() {
         this.paused = false;
         this.resumeDeferred.resolve();
-
-        return Promise.resolve();
-    }
-
-    public systemPause(): Promise<void> {
-        return this.pause();
-    }
-
-    public systemResume(): Promise<void> {
-        return this.resume();
     }
 
     public waitForResume(): Promise<void> {
@@ -72,6 +62,10 @@ export class TestDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
 
     public toArray(): T[] {
         throw new Error("Method not implemented.");
+    }
+
+    public runPaused<U>(callback: () => Promise<U>): Promise<U> {
+        throw new Error("Method not implemented");
     }
 }
 

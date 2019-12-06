@@ -274,8 +274,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this.handler = handler;
         assert(this.handler);
 
-        this._inbound.systemResume();
-        this._inboundSignal.systemResume();
+        // We are ready to process inbound messages
+        this._inbound.resume();
+        this._inboundSignal.resume();
 
         // We are ready to process inbound messages
         if (catchUp) {
@@ -602,17 +603,15 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             this.connecting = undefined;
         }
 
-        // tslint:disable-next-line:no-floating-promises
         this._inbound.clear();
-        // tslint:disable-next-line:no-floating-promises
         this._outbound.clear();
-        // tslint:disable-next-line:no-floating-promises
         this._inboundSignal.clear();
 
-        // tslint:disable-next-line:no-floating-promises
-        this._inbound.systemPause();
-        // tslint:disable-next-line:no-floating-promises
-        this._inboundSignal.systemPause();
+        this._inbound.dispose();
+        this._inboundSignal.dispose();
+
+        // Catch any cases where we will try to process ops after closing.
+        this.handler = undefined;
 
         // Drop pending messages - this will ensure catchUp() does not go into infinite loop
         this.pending = [];
@@ -687,7 +686,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             return;
         }
 
-        this._outbound.systemResume();
+        this._outbound.resume();
 
         this.clientSequenceNumber = 0;
         this.clientSequenceNumberObserved = 0;
@@ -780,7 +779,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this._connectionMode = "read";
 
         // tslint:disable-next-line:no-floating-promises
-        this._outbound.systemPause();
+        this._outbound.pause();
         // tslint:disable-next-line:no-floating-promises
         this._outbound.clear();
         this.emit("disconnect", reason);

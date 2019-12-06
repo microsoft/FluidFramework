@@ -149,7 +149,6 @@ class ScheduleManager {
     private pauseSequenceNumber: number | undefined;
     private pauseClientId: string | undefined;
 
-    private paused = false;
     private localPaused = false;
     private batchClientId: string;
 
@@ -261,18 +260,6 @@ class ScheduleManager {
         }
     }
 
-    public pause(): Promise<void> {
-        this.paused = true;
-        return this.deltaManager.inbound.systemPause();
-    }
-
-    public resume() {
-        this.paused = false;
-        if (!this.localPaused) {
-            this.deltaManager.inbound.systemResume();
-        }
-    }
-
     private setPaused(localPaused: boolean) {
         // return early if no change in value
         if (this.localPaused === localPaused) {
@@ -280,11 +267,10 @@ class ScheduleManager {
         }
 
         this.localPaused = localPaused;
-        if (localPaused || this.paused) {
-            // tslint:disable-next-line:no-floating-promises
-            this.deltaManager.inbound.systemPause();
+        if (localPaused) {
+            this.deltaManager.inbound.pause().catch((err) => {});
         } else {
-            this.deltaManager.inbound.systemResume();
+            this.deltaManager.inbound.resume();
         }
     }
 
@@ -1100,11 +1086,10 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             return;
         }
 
-        try {
-            await this.scheduleManager.pause();
-
+        return this.deltaManager.inbound.runPaused(async () => {
+            const referenceSequenceNumber = this.deltaManager.referenceSequenceNumber;
             const attemptData: IUnsubmittedSummaryData = {
-                referenceSequenceNumber: this.deltaManager.referenceSequenceNumber,
+                referenceSequenceNumber,
                 submitted: false,
             };
 
@@ -1143,6 +1128,9 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
             const clientSequenceNumber = this.submit(MessageType.Summarize, summaryMessage);
 
+            // Validate op consumption was paused while we were creating summary
+            assert(referenceSequenceNumber === this.deltaManager.referenceSequenceNumber);
+
             return {
                 ...attemptData,
                 ...generateData,
@@ -1151,10 +1139,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                 clientSequenceNumber,
                 submitOpDuration: trace.trace().duration,
             };
-        } finally {
-            // Restart the delta manager
-            this.scheduleManager.resume();
-        }
+        });
     }
 
     private processRemoteChunkedMessage(message: ISequencedDocumentMessage): boolean {

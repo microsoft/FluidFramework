@@ -20,6 +20,7 @@ import {
     ISignalMessage,
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
+import * as assert from "assert";
 
 /**
  * Proxy to the real IDeltaQueue - used to restrict access
@@ -37,8 +38,7 @@ export class DeltaQueueProxy<T> extends EventForwarder implements IDeltaQueue<T>
         return this.queue.idle;
     }
 
-    private systemPaused = false;
-    private localPaused = false;
+    private pauseCounter = 0;
 
     constructor(private readonly queue: IDeltaQueue<T>) {
         super(queue);
@@ -52,30 +52,24 @@ export class DeltaQueueProxy<T> extends EventForwarder implements IDeltaQueue<T>
         return this.queue.toArray();
     }
 
-    public async systemPause(): Promise<void> {
-        this.systemPaused = true;
-        return this.queue.pause();
+    public runPaused<U>(callback: () => Promise<U>): Promise<U> {
+        return this.queue.runPaused(callback);
     }
 
     public async pause(): Promise<void> {
-        this.localPaused = true;
+        this.pauseCounter++;
         return this.queue.pause();
     }
 
-    public async systemResume(): Promise<void> {
-        this.systemPaused = false;
-        return this.updateResume();
+    public async resume() {
+        assert(this.pauseCounter > 0);
+        this.pauseCounter--;
+        this.queue.resume();
     }
 
-    public async resume(): Promise<void> {
-        this.localPaused = false;
-        return this.updateResume();
-    }
-
-    private async updateResume(): Promise<void> {
-        if (!this.systemPaused && !this.localPaused) {
-            return this.queue.resume();
-        }
+    public dispose() {
+        assert(this.pauseCounter === 0);
+        super.dispose();
     }
 }
 

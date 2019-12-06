@@ -119,7 +119,7 @@ export class DocumentDeltaEventManager {
      * Useful when called from a manual test utility, but not for automated testing.
      */
     public async resumeProcessing(...docs: IDocumentDeltaEvent[]) {
-        await Promise.all(docs.map((doc) => this.resumeDocument(doc)));
+        docs.map((doc) => this.resumeDocument(doc));
         this.isNormalProcessingPaused = false;
     }
 
@@ -169,7 +169,7 @@ export class DocumentDeltaEventManager {
         await Promise.all([doc.deltaManager.inbound.pause(), doc.deltaManager.outbound.pause()]);
     }
 
-    private async resumeDocument(doc: IDocumentDeltaEvent) {
+    private resumeDocument(doc: IDocumentDeltaEvent) {
         doc.deltaManager.inbound.resume();
         doc.deltaManager.outbound.resume();
     }

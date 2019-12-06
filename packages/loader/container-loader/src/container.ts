@@ -396,29 +396,26 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         }
 
         // Stop inbound message processing while we complete the snapshot
-        try {
-            if (this.deltaManager !== undefined) {
-                await this.deltaManager.inbound.systemPause();
+        await this.deltaManager.inbound.runPaused(async () => {
+            try {
+                const ref = this._deltaManager!.referenceSequenceNumber;
+
+                await this.snapshotCore(tagMessage, fullTree);
+
+                // Validate op consumption was paused while creating snapshot.
+                assert(ref === this._deltaManager!.referenceSequenceNumber);
+
+            } catch (ex) {
+                this.logger.logException({ eventName: "SnapshotExceptionError" }, ex);
+                throw ex;
             }
-
-            await this.snapshotCore(tagMessage, fullTree);
-
-        } catch (ex) {
-            this.logger.logException({ eventName: "SnapshotExceptionError" }, ex);
-            throw ex;
-
-        } finally {
-            if (this.deltaManager !== undefined) {
-                this.deltaManager.inbound.systemResume();
-            }
-        }
+        });
     }
 
     public resume() {
         assert(this.loaded);
         // resume processing ops
         this._deltaManager!.inbound.resume();
-        this._deltaManager!.outbound.resume();
         this._deltaManager!.inboundSignal.resume();
 
         // Ensure connection to web socket
@@ -453,33 +450,30 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     }
 
     private async reloadContextCore(): Promise<void> {
-        await Promise.all([
-            this.deltaManager.inbound.systemPause(),
-            this.deltaManager.inboundSignal.systemPause()]);
+        this.deltaManager!.inbound.runPaused(async () => {
+            return this.deltaManager!.inboundSignal.runPaused(async () => {
+                const previousContextState = await this.context!.stop();
 
-        const previousContextState = await this.context!.stop();
+                let snapshot: ISnapshotTree | undefined;
+                const blobs = new Map();
+                if (previousContextState) {
+                    const flattened = flatten(previousContextState.entries, blobs);
+                    snapshot = buildHierarchy(flattened);
+                }
 
-        let snapshot: ISnapshotTree | undefined;
-        const blobs = new Map();
-        if (previousContextState) {
-            const flattened = flatten(previousContextState.entries, blobs);
-            snapshot = buildHierarchy(flattened);
-        }
+                const storage = blobs.size > 0
+                    ? new BlobCacheStorageService(this.storageService!, blobs)
+                    : this.storageService!;
 
-        const storage = blobs.size > 0
-            ? new BlobCacheStorageService(this.storageService!, blobs)
-            : this.storageService!;
+                const attributes: IDocumentAttributes = {
+                    branch: this.id,
+                    minimumSequenceNumber: this._deltaManager!.minimumSequenceNumber,
+                    sequenceNumber: this._deltaManager!.referenceSequenceNumber,
+                };
 
-        const attributes: IDocumentAttributes = {
-            branch: this.id,
-            minimumSequenceNumber: this._deltaManager!.minimumSequenceNumber,
-            sequenceNumber: this._deltaManager!.referenceSequenceNumber,
-        };
-
-        await this.loadContext(attributes, storage, snapshot);
-
-        this.deltaManager.inbound.systemResume();
-        this.deltaManager.inboundSignal.systemResume();
+                await this.loadContext(attributes, storage, snapshot);
+            });
+        });
     }
 
     private async snapshotCore(tagMessage: string, fullTree: boolean = false) {
