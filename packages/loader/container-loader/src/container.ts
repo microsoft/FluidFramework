@@ -450,8 +450,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     }
 
     private async reloadContextCore(): Promise<void> {
-        this.deltaManager!.inbound.runPaused(async () => {
-            return this.deltaManager!.inboundSignal.runPaused(async () => {
+        this.deltaManager.inbound.runPaused(async () => {
+            return this.deltaManager.inboundSignal.runPaused(async () => {
                 const previousContextState = await this.context!.stop();
 
                 let snapshot: ISnapshotTree | undefined;

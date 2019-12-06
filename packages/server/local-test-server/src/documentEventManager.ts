@@ -118,7 +118,7 @@ export class DocumentDeltaEventManager {
      * Resume normal delta event processing after a pauseProcessing call.
      * Useful when called from a manual test utility, but not for automated testing.
      */
-    public async resumeProcessing(...docs: IDocumentDeltaEvent[]) {
+    public resumeProcessing(...docs: IDocumentDeltaEvent[]) {
         docs.map((doc) => this.resumeDocument(doc));
         this.isNormalProcessingPaused = false;
     }

@@ -13,8 +13,6 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
     private isDisposed: boolean = false;
     private readonly q = new Deque<T>();
 
-    // We expose access to the DeltaQueue in order to allow users (from the console or code) to be able to pause/resume.
-    // But the internal system itself also sometimes needs to override these changes. The system field takes precedence.
     private pauseCounter = 1;
 
     private error: any | undefined;
@@ -57,6 +55,7 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
 
     public dispose() {
         this.isDisposed = true;
+        // safety net - keep queue in disabled state
         this.pauseCounter = 1;
     }
 
@@ -89,13 +88,13 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
     }
 
     public resume(): void {
-        assert(this.pauseCounter > 0);
         assert(!this.isDisposed);
+        assert(this.pauseCounter > 0);
         this.pauseCounter--;
         this.ensureProcessing();
     }
 
-    public async runPaused<U>(callback: () => Promise<U>): Promise<U> {
+    public async runPaused<U>(callback: (() => Promise<U>) | (() => U)): Promise<U> {
         await this.pause();
         try {
             const res = await callback();
@@ -111,7 +110,8 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
      * not already started.
      */
     private ensureProcessing() {
-        if (this.pauseCounter === 0 && !this.processingDeferred) {
+        assert(!this.isDisposed);
+        if (!this.paused() && !this.processingDeferred) {
             this.processingDeferred = new Deferred<void>();
             this.processDeltas();
             this.processingDeferred.resolve();

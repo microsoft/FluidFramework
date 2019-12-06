@@ -52,7 +52,7 @@ export class DeltaQueueProxy<T> extends EventForwarder implements IDeltaQueue<T>
         return this.queue.toArray();
     }
 
-    public runPaused<U>(callback: () => Promise<U>): Promise<U> {
+    public runPaused<U>(callback: (() => Promise<U>) | (() => U)) {
         return this.queue.runPaused(callback);
     }
 
@@ -69,7 +69,6 @@ export class DeltaQueueProxy<T> extends EventForwarder implements IDeltaQueue<T>
 
     public dispose() {
         assert(this.pauseCounter === 0);
-        super.dispose();
     }
 }
 

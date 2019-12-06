@@ -149,7 +149,7 @@ export interface IDeltaQueue<T> extends EventEmitter, IDisposable {
     toArray(): T[];
 
     /**
-     * System level pause
+     * pause processing on a queue
      * @returns A promise which resolves when processing has been paused.
      */
     pause(): Promise<void>;
@@ -162,5 +162,5 @@ export interface IDeltaQueue<T> extends EventEmitter, IDisposable {
     /**
      * Run callback in paused state
      */
-    runPaused<U>(callback: () => Promise<U>): Promise<U>;
+    runPaused<U>(callback: (() => Promise<U>) | (() => U)): Promise<U>;
 }
