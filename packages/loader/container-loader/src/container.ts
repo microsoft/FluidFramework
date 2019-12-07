@@ -21,11 +21,10 @@ import {
     LoaderHeader,
 } from "@microsoft/fluid-container-definitions";
 import {
-    buildHierarchy,
+    buildSnapshotTree,
     ChildLogger,
     DebugLogger,
     EventEmitterWithErrorHandling,
-    flatten,
     PerformanceEvent,
     raiseConnectedEvent,
     TelemetryLogger,
@@ -468,8 +467,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         let snapshot: ISnapshotTree | undefined;
         const blobs = new Map();
         if (previousContextState) {
-            const flattened = flatten(previousContextState.entries, blobs);
-            snapshot = buildHierarchy(flattened);
+            snapshot = buildSnapshotTree(previousContextState.entries, blobs);
         }
 
         const storage = blobs.size > 0

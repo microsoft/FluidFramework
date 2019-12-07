@@ -18,10 +18,9 @@ import {
     ILoader,
 } from "@microsoft/fluid-container-definitions";
 import {
-    buildHierarchy,
+    buildSnapshotTree,
     ChildLogger,
     Deferred,
-    flatten,
     raiseConnectedEvent,
     TreeTreeEntry,
 } from "@microsoft/fluid-core-utils";
@@ -443,8 +442,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
                     const origin = message.origin ? message.origin.id : this.documentId;
 
                     const flatBlobs = new Map<string, string>();
-                    const flattened = flatten(attachMessage.snapshot.entries, flatBlobs);
-                    const snapshotTree = buildHierarchy(flattened);
+                    const snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
 
                     const remoteChannelContext = new RemoteChannelContext(
                         this,

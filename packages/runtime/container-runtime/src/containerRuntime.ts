@@ -25,11 +25,10 @@ import {
 } from "@microsoft/fluid-container-definitions";
 import {
     BlobTreeEntry,
-    buildHierarchy,
+    buildSnapshotTree,
     CommitTreeEntry,
     ComponentSerializer,
     Deferred,
-    flatten,
     isSystemType,
     raiseConnectedEvent,
     Trace,
@@ -1017,8 +1016,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                 const flatBlobs = new Map<string, string>();
                 let snapshotTree: ISnapshotTree = null;
                 if (attachMessage.snapshot) {
-                    const flattened = flatten(attachMessage.snapshot.entries, flatBlobs);
-                    snapshotTree = buildHierarchy(flattened);
+                    snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
                 }
 
                 // Include the type of attach message which is the pkg of the component to be
