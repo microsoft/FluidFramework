@@ -37,6 +37,7 @@ COPY server/routerlicious/packages/services/package*.json server/routerlicious/p
 COPY server/routerlicious/packages/services-client/package*.json server/routerlicious/packages/services-client/
 COPY server/routerlicious/packages/services-core/package*.json server/routerlicious/packages/services-core/
 COPY server/routerlicious/packages/services-utils/package*.json server/routerlicious/packages/services-utils/
+COPY server/routerlicious/packages/test-utils/package*.json server/routerlicious/packages/test-utils/
 COPY server/routerlicious/packages/protocol-base/package*.json server/routerlicious/packages/protocol-base/
 COPY packages/utils/build-common/package*.json server/routerlicious/packages/utils/build-common/
 

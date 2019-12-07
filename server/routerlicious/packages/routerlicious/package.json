@@ -75,7 +75,7 @@
   },
   "devDependencies": {
     "@microsoft/fluid-build-common": "^0.12.0",
-    "@microsoft/fluid-server-test-utils": "0.12.17216",
+    "@microsoft/fluid-server-test-utils": "^0.12.0",
     "@types/bytes": "^3.0.0",
     "@types/compression": "0.0.33",
     "@types/cookie-parser": "^1.4.1",
