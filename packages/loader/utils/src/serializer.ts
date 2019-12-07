@@ -4,11 +4,9 @@
  */
 
 import {
-    IComponent,
     IComponentHandle,
     IComponentHandleContext,
     IComponentSerializer,
-    ISerializedHandle,
 } from "@microsoft/fluid-component-core-interfaces";
 import { ComponentHandle } from "./componentHandle";
 import { isSerializedHandle } from "./utils";
@@ -37,41 +35,29 @@ function toAbsoluteUrl(handle: IComponentHandle): string {
 export class ComponentSerializer implements IComponentSerializer {
     public get IComponentSerializer() { return this; }
 
-    public stringify(input: any, context: IComponentHandleContext, bind: IComponentHandle): string {
-        const contextAttached = bind.isAttached;
+    public replaceHandles(
+        input: any,
+        context: IComponentHandleContext,
+        bind: IComponentHandle,
+    ) {
+        // If the given 'input' cannot contain handles, return it immediately.  Otherwise,
+        // return the result of 'recursivelyReplaceHandles()'.
+        return !!input && typeof input === "object"
+            ? this.recursivelyReplaceHandles(input, context, bind)
+            : input;
+    }
 
-        const result = JSON.stringify(
-            input,
-            (key, value: IComponent) => {
-                // directly return the value unless it's a handle
-                const handle = value ? value.IComponentHandle : value;
-                if (!handle) {
-                    return value;
-                }
-
-                // If the context that is now referencing the component is already attached then we immediately
-                // attach the component. If it is not yet attached then we bind the reference to mark the dependency.
-                if (contextAttached) {
-                    handle.attach();
-                } else {
-                    bind.bind(handle);
-                }
-
-                // If the handle contexts match then we can store a relative path. Otherwise we convert to an
-                // absolute path.
-                const url = context === handle.routeContext
-                    ? handle.path
-                    : toAbsoluteUrl(handle);
-
-                const serializedHandle: ISerializedHandle = {
-                    type: "__fluid_handle__",
-                    url,
-                };
-
-                return serializedHandle;
-            });
-
-        return result;
+    public stringify(input: any, context: IComponentHandleContext, bind: IComponentHandle) {
+        // tslint:disable:no-unsafe-any
+        return JSON.stringify(input, (key, value) => {
+            // If the current 'value' is not a handle, return it unmodified.  Otherwise,
+            // return the result of 'serializeHandle'.
+            const handle = !!value && value.IComponentHandle;
+            return handle
+                ? this.serializeHandle(handle, context, bind)
+                : value;
+        });
+        // tslint:enable:no-unsafe-any
     }
 
     // parses the serialized data - context must match the context with which the JSON was stringified
@@ -103,5 +89,72 @@ export class ComponentSerializer implements IComponentSerializer {
 
                 return handle;
             });
+    }
+
+    // tslint:disable:no-unsafe-any
+
+    // Invoked by `replaceHandles()` for non-null objects to recursively replace IComponentHandle references
+    // with serialized handles (cloning as-needed to avoid mutating the original `input` object.)
+    private recursivelyReplaceHandles(
+        input: any,
+        context: IComponentHandleContext,
+        bind: IComponentHandle,
+    ) {
+        // If the current input is an IComponentHandle instance, replace this leaf in the object graph with
+        // the handle's serialized from.
+
+        // Note: Caller is responsible for ensuring that `input` is a non-null object.
+        const handle = input.IComponentHandle;
+        if (handle !== undefined) {
+            return this.serializeHandle(handle, context, bind);
+        }
+
+        let clone: object | undefined;
+        for (const key of Object.keys(input)) {
+            const value = input[key];
+            if (!!value && typeof value === "object") {
+                // Note: Except for IComponentHandle, `input` must not contain circular references (as object must
+                //       be JSON serializable.)  Therefore, guarding against infinite recursion here would only
+                //       lead to a later error when attempting to stringify().
+                const replaced = this.recursivelyReplaceHandles(value, context, bind);
+
+                // If the `replaced` object is different than the original `value` then the subgraph contained one
+                // or more handles.  If this happens, we need to return a clone of the `input` object where the
+                // current property is replaced by the `replaced` value.
+                if (replaced !== value) {
+                    // Lazily create a shallow clone of the `input` object if we haven't done so already.
+                    clone = clone || (Array.isArray(input)
+                        ? [...input]
+                        : {...input});
+
+                    // Overwrite the current property `key` in the clone with the `replaced` value.
+                    clone![key] = replaced;
+                }
+            }
+        }
+        return clone || input;
+    }
+
+    // tslint:enable:no-unsafe-any
+
+    private serializeHandle(handle: IComponentHandle, context: IComponentHandleContext, bind: IComponentHandle) {
+        // If the context that is now referencing the component is already attached then we immediately
+        // attach the component. If it is not yet attached then we bind the reference to mark the dependency.
+        if (bind.isAttached) {
+            handle.attach();
+        } else {
+            bind.bind(handle);
+        }
+
+        // If the handle contexts match then we can store a relative path. Otherwise we convert to an
+        // absolute path.
+        const url = context === handle.routeContext
+            ? handle.path
+            : toAbsoluteUrl(handle);
+
+        return {
+            type: "__fluid_handle__",
+            url,
+        };
     }
 }
