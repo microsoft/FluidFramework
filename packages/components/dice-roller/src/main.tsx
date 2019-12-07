@@ -26,6 +26,7 @@ export class DiceRoller extends PrimedComponent implements IComponentHTMLVisual 
      *
      * This method is used to perform component setup, which can include setting an initial schema or initial values.
      */
+    // eslint-disable-next-line @typescript-eslint/require-await
     protected async componentInitializingFirstTime() {
         this.root.set("diceValue", 1);
     }
@@ -40,7 +41,7 @@ export class DiceRoller extends PrimedComponent implements IComponentHTMLVisual 
 
             ReactDOM.render(
                 <div>
-                    <span style={{fontSize: 50}}>{this.getDiceChar(diceValue)}</span>
+                    <span style={{ fontSize: 50 }}>{this.getDiceChar(diceValue)}</span>
                     <button onClick={this.rollDice.bind(this)}>Roll</button>
                 </div>,
                 div,
@@ -54,7 +55,6 @@ export class DiceRoller extends PrimedComponent implements IComponentHTMLVisual 
     }
 
     private rollDice() {
-        // tslint:disable-next-line:insecure-random - We don't need secure random numbers for this application.
         const rollValue = Math.floor(Math.random() * 6) + 1;
         this.root.set("diceValue", rollValue);
     }
