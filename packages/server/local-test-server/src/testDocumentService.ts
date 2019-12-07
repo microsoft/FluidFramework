@@ -7,11 +7,8 @@ import * as api from "@microsoft/fluid-driver-definitions";
 import { ConnectionMode, IClient } from "@microsoft/fluid-protocol-definitions";
 import * as socketStorage from "@microsoft/fluid-routerlicious-driver";
 import { GitManager } from "@microsoft/fluid-server-services-client";
-import {
-    TestDeltaStorageService,
-    TestDocumentDeltaConnection,
-    TestHistorian,
-} from "@microsoft/fluid-server-test-utils";
+import { TestHistorian } from "@microsoft/fluid-server-test-utils";
+import { TestDeltaStorageService, TestDocumentDeltaConnection } from "@microsoft/fluid-test-driver";
 import { ITestDeltaConnectionServer } from "./testDeltaConnectionServer";
 
 /**

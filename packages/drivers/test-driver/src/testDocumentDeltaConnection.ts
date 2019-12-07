@@ -4,7 +4,6 @@
  */
 
 import { BatchManager } from "@microsoft/fluid-core-utils";
-import { debug } from "@microsoft/fluid-driver-base";
 import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
 import {
     ConnectionMode,
@@ -20,8 +19,9 @@ import {
     ITokenClaims,
 } from "@microsoft/fluid-protocol-definitions";
 import * as core from "@microsoft/fluid-server-services-core";
+import { TestWebSocketServer } from "@microsoft/fluid-server-test-utils";
 import { EventEmitter } from "events";
-import { TestWebSocketServer } from "./testWebServer";
+import { debug } from "./debug";
 
 const testProtocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
 export class TestDocumentDeltaConnection extends EventEmitter implements IDocumentDeltaConnection {
