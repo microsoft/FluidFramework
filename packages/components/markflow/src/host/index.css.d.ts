@@ -4,14 +4,14 @@
  */
 
 declare const styles: {
-  readonly "host": string;
-  readonly "page": string;
-  readonly "outline": string;
-  readonly "searchMenu": string;
-  readonly "slot": string;
-  readonly "status": string;
-  readonly "title": string;
-  readonly "viewport": string;
+    readonly "host": string;
+    readonly "page": string;
+    readonly "outline": string;
+    readonly "searchMenu": string;
+    readonly "slot": string;
+    readonly "status": string;
+    readonly "title": string;
+    readonly "viewport": string;
 };
 
 export = styles;

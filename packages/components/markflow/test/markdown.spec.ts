@@ -3,17 +3,12 @@
  * Licensed under the MIT License.
  */
 
-// tslint:disable:no-var-requires
-// tslint:disable:no-require-imports
 require("jsdom-global")("", { url: "http://localhost" });
-window.performance.mark = window.performance.mark || (() => {});
-window.performance.measure = window.performance.measure || (() => {});
+window.performance.mark = window.performance.mark || (() => { });
+window.performance.measure = window.performance.measure || (() => { });
 
-// tslint:enable:mocha-no-side-effect-code
-// tslint:disable:binary-expression-operand-order
 import { TestHost } from "@microsoft/fluid-local-test-server";
 import { strict as assert } from "assert";
-// tslint:disable-next-line:no-import-side-effect
 import "mocha";
 import { FlowDocument, flowDocumentFactory } from "../src/document";
 import { markdownFormatter } from "../src/markdown/formatters";
@@ -23,7 +18,6 @@ import { Layout } from "../src/view/layout";
 // import * as debug from "debug";
 // debug.enable("flow:*");
 
-// tslint:disable:mocha-no-side-effect-code
 const commonmark = processTests(require("./unit.json"));
 
 function processTests(tests: { markdown: string, html: string, section: string }[]) {
@@ -68,7 +62,6 @@ function processTests(tests: { markdown: string, html: string, section: string }
 //     assert.strictEqual(i, children.length);
 // }
 
-// tslint:disable:max-func-body-length
 describe("Markdown", () => {
     let host: TestHost;
     let doc: FlowDocument;
@@ -97,7 +90,6 @@ describe("Markdown", () => {
         let renderResolver: () => void;
         layout.invalidatedCallback = () => {
             if (!renderResolver) {
-                // tslint:disable-next-line:promise-must-complete
                 rendered = new Promise((accept) => {
                     console.log("Render pending");
                     renderResolver = accept;
@@ -143,10 +135,8 @@ describe("Markdown", () => {
     }
 
     describe("commonmark", () => {
-        // tslint:disable-next-line:mocha-no-side-effect-code
         for (const [section, tests] of commonmark.entries()) {
             describe(section, () => {
-                // tslint:disable-next-line:mocha-no-side-effect-code
                 tests.map(test);
             });
         }

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import { randomId, TokenList } from "@fluid-example/flow-util-lib";
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import { IComponent, IComponentHandle, IComponentHTMLOptions } from "@microsoft/fluid-component-core-interfaces";
@@ -30,7 +31,6 @@ import {
     SharedStringFactory,
     SharedStringSegment,
 } from "@microsoft/fluid-sequence";
-import * as assert from "assert";
 import { clamp, emptyArray } from "../util";
 import { IHTMLAttributes } from "../util/attr";
 import { Tag } from "../util/tag";
@@ -40,18 +40,18 @@ import { SegmentSpan } from "./segmentspan";
 export { SegmentSpan };
 
 export const enum DocSegmentKind {
-    text        = "text",
-    paragraph   = "<p>",
-    lineBreak   = "<br>",
-    beginTags   = "<t>",
-    inclusion   = "<?>",
-    endTags     = "</>",
+    text = "text",
+    paragraph = "<p>",
+    lineBreak = "<br>",
+    beginTags = "<t>",
+    inclusion = "<?>",
+    endTags = "</>",
 
     // Special case for LocalReference to end of document.  (See comments on 'endOfTextSegment').
-    endOfText   = "eot",
+    endOfText = "eot",
 }
 
-const tilesAndRanges = new Set([ DocSegmentKind.paragraph, DocSegmentKind.lineBreak, DocSegmentKind.beginTags, DocSegmentKind.inclusion ]);
+const tilesAndRanges = new Set([DocSegmentKind.paragraph, DocSegmentKind.lineBreak, DocSegmentKind.beginTags, DocSegmentKind.inclusion]);
 
 const enum Workaround { checkpoint = "*" }
 
@@ -60,9 +60,9 @@ export const enum DocTile {
     checkpoint = Workaround.checkpoint,
 }
 
-// tslint:disable:no-bitwise
 export const getDocSegmentKind = (segment: ISegment): DocSegmentKind => {
     // Special case for LocalReference to end of document.  (See comments on 'endOfTextSegment').
+    // eslint-disable-next-line @typescript-eslint/no-use-before-define
     if (segment === endOfTextSegment) {
         return DocSegmentKind.endOfText;
     }
@@ -71,16 +71,21 @@ export const getDocSegmentKind = (segment: ISegment): DocSegmentKind => {
         return DocSegmentKind.text;
     } else if (Marker.is(segment)) {
         const markerType = segment.refType;
+        /* eslint-disable @typescript-eslint/indent */
         switch (markerType) {
             case ReferenceType.Tile:
+            // eslint-disable-next-line no-bitwise
             case ReferenceType.Tile | ReferenceType.NestBegin:
+                // eslint-disable-next-line no-case-declarations
                 const rangeLabel = segment.getRangeLabels()[0];
+                // eslint-disable-next-line no-case-declarations
                 const kind = (rangeLabel || segment.getTileLabels()[0]) as DocSegmentKind;
 
                 assert(tilesAndRanges.has(kind), `Unknown tile/range label '${kind}'.`);
 
                 return kind;
             default:
+                // eslint-disable-next-line no-bitwise
                 assert(markerType === (ReferenceType.Tile | ReferenceType.NestEnd));
 
                 // Ensure that 'nestEnd' range label matches the 'beginTags' range label (otherwise it
@@ -109,14 +114,14 @@ type LeafAction = (position: number, segment: ISegment, startOffset: number, end
  * avoiding unnecessary allocation to wrap the given 'callback'.
  */
 const accumAsLeafAction = (
-        segment: ISegment,
-        position: number,
-        refSeq: number,
-        clientId: number,
-        startOffset: number,
-        endOffset: number,
-        accum?: LeafAction,
-    ) => (accum as LeafAction)(position, segment, startOffset, endOffset);
+    segment: ISegment,
+    position: number,
+    refSeq: number,
+    clientId: number,
+    startOffset: number,
+    endOffset: number,
+    accum?: LeafAction,
+) => (accum)(position, segment, startOffset, endOffset);
 
 // TODO: We need the ability to create LocalReferences to the end of the document. Our
 //       workaround creates a LocalReference with an 'undefined' segment that is never
@@ -140,7 +145,7 @@ export class FlowDocument extends PrimedComponent {
     private static readonly paragraphProperties = Object.freeze({ [reservedTileLabelsKey]: [DocSegmentKind.paragraph, DocTile.checkpoint], tag: Tag.p });
     private static readonly lineBreakProperties = Object.freeze({ [reservedTileLabelsKey]: [DocSegmentKind.lineBreak, DocTile.checkpoint] });
     private static readonly inclusionProperties = Object.freeze({ [reservedTileLabelsKey]: [DocSegmentKind.inclusion, DocTile.checkpoint] });
-    private static readonly tagsProperties      = Object.freeze({
+    private static readonly tagsProperties = Object.freeze({
         [reservedTileLabelsKey]: [DocSegmentKind.inclusion, DocTile.checkpoint],
         [reservedRangeLabelsKey]: [DocSegmentKind.beginTags],
     });
@@ -285,8 +290,10 @@ export class FlowDocument extends PrimedComponent {
     }
 
     public insertComponent(position: number, url: string, componentOptions: object, style?: string, classList?: string[]) {
-        this.sharedString.insertMarker(position, ReferenceType.Tile, Object.freeze({ ...FlowDocument.inclusionProperties,
-            componentOptions, url, style, classList: classList && classList.join(" ") }));
+        this.sharedString.insertMarker(position, ReferenceType.Tile, Object.freeze({
+            ...FlowDocument.inclusionProperties,
+            componentOptions, url, style, classList: classList && classList.join(" "),
+        }));
     }
 
     public setFormat(position: number, tag: Tag) {
@@ -310,10 +317,12 @@ export class FlowDocument extends PrimedComponent {
         const ops = [];
         const id = randomId();
 
+        // eslint-disable-next-line no-bitwise
         const endMarker = new Marker(ReferenceType.Tile | ReferenceType.NestEnd);
         endMarker.properties = Object.freeze({ ...FlowDocument.tagsProperties, [reservedMarkerIdKey]: `end-${id}` });
         ops.push(createInsertSegmentOp(end, endMarker));
 
+        // eslint-disable-next-line no-bitwise
         const beginMarker = new Marker(ReferenceType.Tile | ReferenceType.NestBegin);
         beginMarker.properties = Object.freeze({ ...FlowDocument.tagsProperties, tags, [reservedMarkerIdKey]: `begin-${id}` });
         ops.push(createInsertSegmentOp(start, beginMarker));
@@ -450,6 +459,7 @@ export class FlowDocument extends PrimedComponent {
                     break;
                 case DocSegmentKind.endTags:
                     segment = this.getStart(segment as Marker);
+                    // eslint-disable-next-line no-case-declarations
                     const tags = segment.properties.tags.slice().reverse();
                     for (const tag of tags) {
                         s.push(`</${tag}>`);
@@ -463,10 +473,11 @@ export class FlowDocument extends PrimedComponent {
         return s.join("");
     }
 
+    // eslint-disable-next-line @typescript-eslint/require-await
     protected async componentInitializingFirstTime() {
         // For 'findTile(..)', we must enable tracking of left/rightmost tiles:
         // (See: https://github.com/Microsoft/Prague/pull/1118)
-        Object.assign(this.runtime, { options: {...(this.runtime.options || {}),  blockUpdateMarkers: true} });
+        Object.assign(this.runtime, { options: { ...(this.runtime.options || {}), blockUpdateMarkers: true } });
 
         const text = SharedString.create(this.runtime, "text");
         this.root.set("text", text.handle);
@@ -482,7 +493,7 @@ export class FlowDocument extends PrimedComponent {
     }
 
     private updateCssClassList(start: number, end: number, callback: (classList: string) => string) {
-        const updates: {span: SegmentSpan, classList: string}[] = [];
+        const updates: { span: SegmentSpan, classList: string }[] = [];
 
         this.visitRange((position, segment, startOffset, endOffset) => {
             const oldList = getCss(segment).classList;

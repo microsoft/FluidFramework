@@ -4,7 +4,7 @@
  */
 
 import { MapLike } from "@microsoft/fluid-merge-tree";
-// import { strict as assert } from "assert";
+// Import { strict as assert } from "assert";
 import * as remark from "remark";
 import { debug } from "./debug";
 import { MarkdownToken } from "./types";
@@ -14,15 +14,15 @@ type visitFn = (position: number, token: MarkdownToken, props?: MapLike<string |
 // These Remark node 'types' trivially map to MarkdownTokens.
 const typeToToken = Object.freeze({
     blockquote: MarkdownToken.blockquote,
-    break:      MarkdownToken.break,
-    emphasis:   MarkdownToken.emphasis,
+    break: MarkdownToken.break,
+    emphasis: MarkdownToken.emphasis,
     inlineCode: MarkdownToken.inlineCode,
-    listItem:   MarkdownToken.listItem,
-    strong:     MarkdownToken.strong,
-    table:      MarkdownToken.table,
-    tableCell:  MarkdownToken.tableCell,
-    tableRow:   MarkdownToken.tableRow,
-    text:       MarkdownToken.text,
+    listItem: MarkdownToken.listItem,
+    strong: MarkdownToken.strong,
+    table: MarkdownToken.table,
+    tableCell: MarkdownToken.tableCell,
+    tableRow: MarkdownToken.tableRow,
+    text: MarkdownToken.text,
 });
 
 const depthToHeadingLevel = Object.freeze([
@@ -51,7 +51,7 @@ interface IMDNode {
     };
 }
 
-// const newlineExp = /([^\n]+)([\n]+)/g;
+// Const newlineExp = /([^\n]+)([\n]+)/g;
 
 export class MarkdownParser {
     private readonly path: IMDNode[] = [];
@@ -83,25 +83,6 @@ export class MarkdownParser {
         this.dispatch(this.leave, text, node, end);
     }
 
-    // private processText(start: number, end: number, text: string) {
-    //     newlineExp.lastIndex = start;
-    //     do {
-    //         const chars = text.match(/[^\n]*/g)[0];
-    //         if (chars) {
-    //             this.enter(start, MarkdownToken.text);
-    //             this.leave(chars.length, MarkdownToken.text);
-    //             start += chars.length;
-    //         }
-
-    //         const linefeeds = text.match(/\n*/g)[0];
-    //         if (linefeeds) {
-    //             this.enter(start, MarkdownToken.softbreak);
-    //             this.leave(linefeeds.length, MarkdownToken.softbreak);
-    //             start += linefeeds.length;
-    //         }
-    //     } while (start < end);
-    // }
-
     private peek(index: number) {
         const path = this.path;
         return path[path.length - index];
@@ -112,6 +93,7 @@ export class MarkdownParser {
         let props: MapLike<string | number>;
 
         const type = node.type;
+        /* eslint-disable @typescript-eslint/indent */
         switch (type) {
             case "root":
                 // Discard the root node.
@@ -145,7 +127,9 @@ export class MarkdownParser {
                 props = { "data-language": node.lang };
                 break;
             case "paragraph":
-                // Suppress paragraph token if it is the first child of a "tight" list item (in which case it should not be rendered.)
+                // Suppress paragraph token if it is the first child of a "tight" list item (in which case it should not
+                // be rendered.)
+                // eslint-disable-next-line no-case-declarations
                 const maybeList = this.peek(2);
                 if (maybeList && !maybeList.spread) {
                     return;
@@ -155,6 +139,7 @@ export class MarkdownParser {
             default:
                 token = typeToToken[type];
         }
+        /* eslint-enable @typescript-eslint/indent */
 
         if (token === undefined) {
             console.warn(token, `Unknown markdown node type: '${type}'`);

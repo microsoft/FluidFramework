@@ -5,10 +5,8 @@
 
 import { CharCode } from "@fluid-example/flow-util-lib";
 import { strict as assert } from "assert";
-// tslint:disable-next-line:no-import-side-effect
 import "mocha";
 
-// tslint:disable:no-bitwise
 const enum LineState {
     blank           = 0,
     notBlank        = (1 << 0),

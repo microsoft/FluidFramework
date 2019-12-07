@@ -12,17 +12,11 @@ import { Caret } from "./caret";
 import { debug } from "./debug";
 import * as styles from "./index.css";
 
-const onKeyDownThunk = (format: Readonly<Formatter<IFormatterState>>, state: Readonly<IFormatterState>, layout: Layout, caret: Caret, e: KeyboardEvent) => {
-    return format.onKeyDown(layout, state, caret, e);
-};
+const onKeyDownThunk = (format: Readonly<Formatter<IFormatterState>>, state: Readonly<IFormatterState>, layout: Layout, caret: Caret, e: KeyboardEvent) => format.onKeyDown(layout, state, caret, e);
 
-const onKeyPressThunk = (format: Readonly<Formatter<IFormatterState>>, state: Readonly<IFormatterState>, layout: Layout, caret: Caret, e: KeyboardEvent) => {
-    return format.onKeyPress(layout, state, caret, e);
-};
+const onKeyPressThunk = (format: Readonly<Formatter<IFormatterState>>, state: Readonly<IFormatterState>, layout: Layout, caret: Caret, e: KeyboardEvent) => format.onKeyPress(layout, state, caret, e);
 
-const onPasteThunk = (format: Readonly<Formatter<IFormatterState>>, state: Readonly<IFormatterState>, layout: Layout, caret: Caret, e: ClipboardEvent) => {
-    return format.onPaste(layout, state, caret, e);
-};
+const onPasteThunk = (format: Readonly<Formatter<IFormatterState>>, state: Readonly<IFormatterState>, layout: Layout, caret: Caret, e: ClipboardEvent) => format.onPaste(layout, state, caret, e);
 
 export class Editor {
     private get doc() { return this.layout.doc; }
@@ -31,7 +25,11 @@ export class Editor {
     private readonly layout: Layout;
     private readonly caret: Caret;
 
-    constructor(doc: FlowDocument, private readonly root: HTMLElement, formatter: Readonly<RootFormatter<IFormatterState>>, scope?: IComponent) {
+    constructor(
+        doc: FlowDocument,
+        private readonly root: HTMLElement,
+        formatter: Readonly<RootFormatter<IFormatterState>>,
+        scope?: IComponent) {
         const scheduler = new Scheduler();
         this.layout = new Layout(doc, root, formatter, scheduler, scope);
         this.caret = new Caret(this.layout);
@@ -82,6 +80,7 @@ export class Editor {
             return;
         }
 
+        /* eslint-disable @typescript-eslint/indent */
         switch (e.code) {
             case KeyCode.F1: {
                 console.clear();
@@ -106,7 +105,7 @@ export class Editor {
                 // Fall through to sync
             }
 
-            case KeyCode.F3 : {
+            case KeyCode.F3: {
                 this.layout.sync();
                 break;
             }
@@ -124,22 +123,23 @@ export class Editor {
                     this.consume(e);
                 }
             }
+            /* eslint-enable @typescript-eslint/indent */
         }
-    }
+    };
 
     private readonly onPaste = (e: ClipboardEvent) => {
         if (this.shouldHandleEvent(e)) {
             this.consume(e);
             this.delegateEvent(e, onPasteThunk);
         }
-    }
+    };
 
     private readonly onKeyPress = (e: KeyboardEvent) => {
         if (this.shouldHandleEvent(e)) {
             this.consume(e);
             this.delegateEvent(e, onKeyPressThunk);
         }
-    }
+    };
 
     private delegateEvent<TEvent extends Event>(e: TEvent, thunk: (format: Readonly<Formatter<IFormatterState>>, state: Readonly<IFormatterState>, layout: Layout, caret: Caret, e: TEvent) => boolean) {
         const { doc, caret, layout } = this;
