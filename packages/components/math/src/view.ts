@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-// tslint:disable:no-empty-interface
+/* eslint-disable @typescript-eslint/no-empty-interface */
 
 import {
     Caret,
@@ -18,13 +18,15 @@ import {
 import { debug } from "./debug";
 import * as style from "./index.css";
 
-const template = new Template({ tag: "div", props: { className: style.math }, children: [
-    { tag: "div", ref: "cell", props: { className: style.cell }},
-    { tag: "input", ref: "input", props: { className: style.input }},
-]});
+const template = new Template({
+    tag: "div", props: { className: style.math }, children: [
+        { tag: "div", ref: "cell", props: { className: style.cell } },
+        { tag: "input", ref: "input", props: { className: style.input } },
+    ],
+});
 
-interface IMathInit extends IMathProps {}
-interface IMathProps {}
+interface IMathInit extends IMathProps { }
+interface IMathProps { }
 
 export class MathView extends View<IMathInit, IMathProps> {
     private input?: HTMLInputElement;
@@ -47,16 +49,16 @@ export class MathView extends View<IMathInit, IMathProps> {
     }
 
     protected onUpdate(props: Readonly<IMathProps>): void {
-        // do nothing
+        // Do nothing
     }
 
     protected onDetach(): void {
-        // do nothing
+        // Do nothing
     }
 
     private readonly onInputChanged = () => {
         this.cell.textContent = this.input.value;
-    }
+    };
 
     private caretLeave(e: KeyboardEvent, direction: Direction) {
         const caretBounds = Dom.getClientRect(this.cell.firstChild, this.input.selectionEnd) as DOMRect;
@@ -67,6 +69,7 @@ export class MathView extends View<IMathInit, IMathProps> {
     }
 
     private readonly onKeyDown = (e: KeyboardEvent) => {
+        /* eslint-disable @typescript-eslint/indent */
         switch (e.code) {
             case KeyCode.arrowLeft:
                 if (this.input.selectionEnd === 0) {
@@ -87,7 +90,8 @@ export class MathView extends View<IMathInit, IMathProps> {
             default:
                 this.onInputChanged();
         }
-    }
+        /* eslint-enable @typescript-eslint/indent */
+    };
 
     private verticalCaretEnter(e: ICaretEvent) {
         const { left } = e.detail.caretBounds;
@@ -95,7 +99,7 @@ export class MathView extends View<IMathInit, IMathProps> {
         this.input.setSelectionRange(offset, offset, "forward");
         e.preventDefault();
         e.stopPropagation();
-}
+    }
 
     private readonly onCaretEnter = (e: ICaretEvent) => {
         debug(`onCaretEnter(${JSON.stringify(e.detail)})`);
@@ -103,6 +107,7 @@ export class MathView extends View<IMathInit, IMathProps> {
         const input = this.input;
         input.focus();
 
+        /* eslint-disable @typescript-eslint/indent */
         switch (e.detail.direction) {
             case Direction.left:
                 input.setSelectionRange(input.value.length, input.value.length, "backward");
@@ -120,5 +125,6 @@ export class MathView extends View<IMathInit, IMathProps> {
                 break;
             default:
         }
-    }
+        /* eslint-enable @typescript-eslint/indent */
+    };
 }
