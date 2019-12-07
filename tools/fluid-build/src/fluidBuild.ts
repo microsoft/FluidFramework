@@ -150,14 +150,14 @@ async function main() {
                 console.error(`ERROR: Delete node_module failed`);
                 process.exit(-8);
             }
-            timer.time("Delete node_modules completed");
+            timer.time("Delete node_modules completed", true);
         }
 
         if (options.depcheck) {
             for (const pkg of packages.packages) {
                 await pkg.depcheck();
             }
-            timer.time("Dependencies check completed")
+            timer.time("Dependencies check completed", true)
         }
 
         if (options.install) {
@@ -174,7 +174,7 @@ async function main() {
                     process.exit(-5);
                 }
             }
-            timer.time("Install completed");
+            timer.time("Install completed", true);
         }
 
         if (options.symlink) {
@@ -182,33 +182,35 @@ async function main() {
                 console.error(`ERROR: Symlink failed`);
                 process.exit(-7);
             }
-            timer.time("Symlink completed");
+            timer.time("Symlink completed", true);
         }
 
-        // build the graph
-        const buildGraph = new BuildGraph(packages.packages, options.buildScript);
-        timer.time("Build graph creation completed");
+        if (options.clean || options.build !== false) {
+            // build the graph
+            const buildGraph = new BuildGraph(packages.packages, options.buildScript);
+            timer.time("Build graph creation completed");
 
-        if (options.clean) {
-            if (!await buildGraph.clean()) {
-                console.error(`ERROR: Clean failed`);
-                process.exit(-9);
+            if (options.clean) {
+                if (!await buildGraph.clean()) {
+                    console.error(`ERROR: Clean failed`);
+                    process.exit(-9);
+                }
+                timer.time("Clean completed");
             }
-            timer.time("Clean completed");
-        }
 
-        if (options.build !== false) {
-            // Run the build
-            const buildResult = await buildGraph.build(timer);
-            const buildStatus = buildResultString(buildResult);
-            const elapsedTime = timer.time();
-            const totalElapsedTime = buildGraph.totalElapsedTime;
-            const concurrency = buildGraph.totalElapsedTime / elapsedTime;
-            if (options.timer) {
-                logStatus(`Execution time: ${totalElapsedTime.toFixed(3)}s, Concurrency: ${concurrency.toFixed(3)}`);
-                logStatus(`Build ${buildStatus} - ${elapsedTime.toFixed(3)}s`);
-            } else {
-                logStatus(`Build ${buildStatus}`);
+            if (options.build !== false) {
+                // Run the build
+                const buildResult = await buildGraph.build(timer);
+                const buildStatus = buildResultString(buildResult);
+                const elapsedTime = timer.time();
+                const totalElapsedTime = buildGraph.totalElapsedTime;
+                const concurrency = buildGraph.totalElapsedTime / elapsedTime;
+                if (options.timer) {
+                    logStatus(`Execution time: ${totalElapsedTime.toFixed(3)}s, Concurrency: ${concurrency.toFixed(3)}`);
+                    logStatus(`Build ${buildStatus} - ${elapsedTime.toFixed(3)}s`);
+                } else {
+                    logStatus(`Build ${buildStatus}`);
+                }
             }
         }
 
