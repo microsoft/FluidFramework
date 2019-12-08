@@ -1,6 +1,13 @@
 {
     "extends": [
-        "@microsoft/eslint-config-fluid"
+        "@microsoft/eslint-config-fluid/no-tslint"
     ],
-    "rules": {}
+    "rules": {
+        "@typescript-eslint/no-floating-promises": "off",
+        "@typescript-eslint/require-await": "off",
+        "@typescript-eslint/strict-boolean-expressions": "off",
+        "capitalized-comments": "off",
+        "no-bitwise": "off",
+        "no-null/no-null": "off"
+    }
 }
