@@ -387,7 +387,7 @@ export class RunningSummarizer implements IDisposable {
     private async summarize(reason: string) {
         // wait to generate and send summary
         const summaryData = await this.generateSummaryWithLogging(reason);
-        if (!summaryData.submitted) {
+        if (!summaryData || !summaryData.submitted) {
             // did not send the summary op
             return;
         }
@@ -448,7 +448,7 @@ export class RunningSummarizer implements IDisposable {
         try {
             summaryData = await this.generateSummary();
         } catch (error) {
-            summarizingEvent.cancel({}, error);
+            summarizingEvent.cancel({ category: "error" }, error);
             return;
         }
 
