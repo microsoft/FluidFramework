@@ -11,4 +11,4 @@ runService(
     new GatewayResourcesFactory(),
     new GatewayRunnerFactory(),
     "alfred",
-    path.join(__dirname, "../config.json"));
+    path.join(__dirname, "../../public/gatewayConfig.json"));

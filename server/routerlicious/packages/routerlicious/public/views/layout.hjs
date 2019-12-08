@@ -27,7 +27,7 @@
     <script>
         var user = {{{ user }}};
     </script>
-    <script src="{{#hfurl}}/public/scripts/dist/controllers.js{{/hfurl}}"></script>
+    <script src="https://pragueauspkn-3873244262.azureedge.net/@microsoft/fluid-server-gateway@%5E0.12.0/public/scripts/dist/controllers.js"></script>
     {{$scripts}}{{/scripts}}
     <script>
         controllers.navbar.initialize(user);

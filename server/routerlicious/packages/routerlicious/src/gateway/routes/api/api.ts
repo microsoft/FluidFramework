@@ -21,6 +21,7 @@ import { IJWTClaims } from "../../utils";
 async function getWebComponent(url: UrlWithStringQuery): Promise<IWebResolvedUrl> {
     const result = await Axios.get(url.href);
 
+    // tslint:disable-next-line: no-object-literal-type-assertion
     return {
         data: result.data,
         type: "web",
@@ -86,6 +87,7 @@ async function getInternalComponent(
         "/repos" +
         `/${encodeURIComponent(tenantId)}`;
 
+    // tslint:disable-next-line: no-object-literal-type-assertion
     return {
         endpoints: {
             deltaStorageUrl,

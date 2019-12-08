@@ -58,7 +58,7 @@ export function translateStaticUrl(
 
         // Cache the result and then update local
         cache[local] =
-            production && fs.existsSync(path.join(__dirname, "../public", minified))
+            production && fs.existsSync(path.join(__dirname, "../../public", minified))
                 ? minified
                 : local;
     }
@@ -244,11 +244,11 @@ export function create(
     app.set("trust proxy", 1);
 
     // view engine setup
-    app.set("views", path.join(__dirname, "../views"));
+    app.set("views", path.join(__dirname, "../../public/views"));
     app.set("view engine", "hjs");
 
     app.use(compression());
-    app.use(favicon(path.join(__dirname, "../public", "favicon.ico")));
+    app.use(favicon(path.join(__dirname, "../../public", "favicon.ico")));
     // TODO we probably want to switch morgan to use the common format in prod
     app.use(morgan(config.get("logger:morganFormat"), { stream }));
 
@@ -265,7 +265,7 @@ export function create(
     app.use(passport.initialize());
     app.use(passport.session());
 
-    app.use(staticFilesEndpoint, expiry(app, { dir: path.join(__dirname, "../public") }));
+    app.use(staticFilesEndpoint, expiry(app, { dir: path.join(__dirname, "../../public") }));
     app.locals.hfurl = () => (value: string) => {
         return translateStaticUrl(
             value,
@@ -273,7 +273,7 @@ export function create(
             app.locals.furl,
             app.get("env") === "production");
     };
-    app.use(staticFilesEndpoint, cors(), express.static(path.join(__dirname, "../public")));
+    app.use(staticFilesEndpoint, cors(), express.static(path.join(__dirname, "../../public")));
 
     // The below is to check to make sure the session is available (redis could have gone down for instance) and if
     // not return an error

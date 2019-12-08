@@ -21,7 +21,7 @@ import { getConfig, getParam, getUserDetails } from "../utils";
 import { defaultPartials } from "./partials";
 
 // tslint:disable-next-line: no-var-requires no-require-imports
-const pkgJson = require("../../package.json") as IPackage;
+const pkgJson = require("../../../package.json") as IPackage;
 const defaultChaincode =
     `@microsoft/fluid-external-component-loader@${pkgJson.version.endsWith(".0") ? "^" : ""}${pkgJson.version}`;
 

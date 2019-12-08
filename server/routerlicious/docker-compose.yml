@@ -3,11 +3,11 @@ services:
     gateway:
         build:
             context: ../..
-            dockerfile: server/routerlicious/Dockerfile
+            dockerfile: server/routerlicious/r11s-Dockerfile
             target: runner
         ports:
             - "3000:3000"
-        command: node ../gateway/dist/www.js
+        command: node dist/gateway/www.js
         environment:
             - DEBUG=fluid:*
             - NODE_ENV=development
