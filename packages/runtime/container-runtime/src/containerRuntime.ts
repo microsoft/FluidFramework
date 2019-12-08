@@ -27,7 +27,6 @@ import {
     BlobTreeEntry,
     buildHierarchy,
     CommitTreeEntry,
-    ComponentSerializer,
     Deferred,
     flatten,
     isSystemType,
@@ -63,6 +62,7 @@ import {
     IInboundSignalMessage,
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
+import { ComponentSerializer } from "@microsoft/fluid-runtime-utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 // tslint:disable-next-line:no-submodule-imports

@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import * as utils from "@microsoft/fluid-core-utils";
+import { Deferred } from "@microsoft/fluid-core-utils";
 import { IContext } from "@microsoft/fluid-server-services-core";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 
 interface IWaitOffset {
-    deferred: utils.Deferred<void>;
+    deferred: Deferred<void>;
     value: number;
 }
 
@@ -41,7 +41,7 @@ export class TestContext extends EventEmitter implements IContext {
             return Promise.resolve();
         }
 
-        const deferred = new utils.Deferred<void>();
+        const deferred = new Deferred<void>();
         this.waits.push({ deferred, value });
         return deferred.promise;
     }

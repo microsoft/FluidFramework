@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { SummaryTracker } from "@microsoft/fluid-core-utils";
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import {
     ConnectionState,
@@ -13,6 +12,7 @@ import {
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
 import { IChannel, IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { SummaryTracker } from "@microsoft/fluid-runtime-utils";
 import * as assert from "assert";
 import { createServiceEndpoints, IChannelContext, snapshotChannel } from "./channelContext";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
