@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { isSystemType, RangeTracker } from "@microsoft/fluid-core-utils";
+import { RangeTracker } from "@microsoft/fluid-core-utils";
+import { isSystemType } from "@microsoft/fluid-protocol-base";
 import {
     IBranchOrigin,
     IClientJoin,
