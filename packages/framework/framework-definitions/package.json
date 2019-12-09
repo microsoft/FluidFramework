@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-framework-interfaces",
-  "version": "0.12.0",
+  "version": "0.13.0",
   "description": "Definitions for fluid framework.",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -24,13 +24,13 @@
     "tslint": "npm run eslint"
   },
   "dependencies": {
-    "@microsoft/fluid-component-core-interfaces": "^0.12.0",
-    "@microsoft/fluid-runtime-definitions": "^0.12.0"
+    "@microsoft/fluid-component-core-interfaces": "^0.13.0",
+    "@microsoft/fluid-runtime-definitions": "^0.13.0"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.4.4",
-    "@microsoft/eslint-config-fluid": "^0.12.0",
-    "@microsoft/fluid-build-common": "^0.12.0",
+    "@microsoft/eslint-config-fluid": "^0.13.0",
+    "@microsoft/fluid-build-common": "^0.13.0",
     "@typescript-eslint/eslint-plugin": "^2.9.0",
     "@typescript-eslint/eslint-plugin-tslint": "^2.9.0",
     "@typescript-eslint/parser": "^2.9.0",

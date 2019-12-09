@@ -1,10 +1,31 @@
 # 0.12 Breaking Changes
 
-- [LoaderHeader enum moved from @microsoft/fluid-container-loader to @microsoft/fluid-container-definitions](#LoaderHeader moved to fluid-container-definitions)
+- [Packages moved from packages to server](#Packages-moved-from-packages-to-server)
+- [LoaderHeader enum moved from @microsoft/fluid-container-loader to @microsoft/fluid-container-definitions](#LoaderHeader-moved-to-fluid-container-definitions)
 - [Driver interface moved from @microsoft/fluid-protocol-defintions to @microsoft/fluid-driver-definitions](#driver-interfaces-moved-to-fluid-driver-definitions)
 - [Top-level `type` on `IClient` deprecated](#Top-level-type-on-IClient-deprecated)
 - [Support for `IFluidResolvedUrl.type` === "prague" removed](#support-for-ifluidresolvedurltype--prague-removed)
 - [`connect` header replaced with `pause` header; ability to load closed containers removed](#connect-header-replaced-with-pause-header-ability-to-load-closed-containers-removed)
+
+## Packages moved from packages to server
+
+There are a collection of packages that have moved from `./packages` to `./server`. This means these packages are now being versioned with the `./server` folder and not with the existing `./ packages` folder.
+
+```text
+@microsoft/fluid-gitresources
+@microsoft/fluid-server-kafka-orderer
+@microsoft/fluid-server-lambdas
+@microsoft/fluid-server-lambdas-driver
+@microsoft/fluid-server-memory-orderer
+@microsoft/fluid-protocol-base
+@microsoft/fluid-protocol-definitions
+@microsoft/fluid-server-routerlicious
+@microsoft/fluid-server-services
+@microsoft/fluid-server-services-client
+@microsoft/fluid-server-services-core
+@microsoft/fluid-server-services-utils
+@microsoft/fluid-server-test-utils
+```
 
 ## LoaderHeader moved to fluid-container-definitions
 
@@ -13,7 +34,8 @@
 ## Driver interfaces moved to fluid-driver-definitions
 
 The following interfaces/types have been moved to `@microsoft/fluid-protocol-definitions`:
-```
+
+```text
 ConnectionState
 IProposal
 ISequencedProposal
@@ -30,7 +52,8 @@ IConnected
 ```
 
 The following interfaces/types have been moved to `@microsoft/fluid-driver-definitions`:
-```
+
+```text
 IDeltaStorageService
 IDocumentDeltaStorageService
 IDocumentStorageService
@@ -47,26 +70,32 @@ IUrlResolver
 ```
 
 The following interfaces/types have been moved to `@microsoft/fluid-common-definitions`:
-```
+
+```text
 IDisposable
 ITelemetry*
 ```
 
 The following enums/classes/functions have been moved to `@microsoft/fluid-driver-utils`:
-```
+
+```text
 configurableUrlResolver
 isOnline
 NetworkError
 OnlineStatus
 readAndParse
 ```
+
 ## Top-level `type` on `IClient` deprecated
+
 The `type` field on `IClient` has been deprecated and will be removed in the future. There is now an optional type in the new `details` member of `IClient`. Some of the functionality of the top-level `type` field has been replaced by the `capabilities` member in `IClient.details`, specifically the `interactive` boolean is used to distinguish between human and non-human clients.
 
 ## Support for `IFluidResolvedUrl.type` === "prague" removed
+
 As previously mentioned, `IFluidResolvedUrl.type` should now be "fluid". Backwards compatibility for type "prague" has now been removed.
 
 ## `connect` header replaced with `pause` header; ability to load closed containers removed
+
 The comma-separated string `connect` header has been replaced with the boolean `pause` header. `pause: true` is equivalent to `connect: "open,pause"` and `pause: false` is equivalent to `connect: "open"`. If undefined, container will start unpaused. It is no longer possible to load a closed container. Instead, use a paused container.
 
 # 0.11 Breaking Changes
@@ -79,9 +108,11 @@ The comma-separated string `connect` header has been replaced with the boolean `
 - [`Loader` constructor takes a `Map<string, IProxyLoaderFactory>`](#Loader-constructor-takes-a-Mapstring-IProxyLoaderFactory)
 
 ## SequenceEvent start/end replaced with first/last
+
 The `start` and `end` members of SequenceEvent (and SequenceDeltaEvent) have been replaced with `first` and `last`, which return the first and last range, respectively. The values equivalent to `start` and `end` can be obtained with `first.position` and `last.position + last.segment.cachedLength`.
 
 ## Undefined keys and subdirectory names on SharedMap and SharedDirectory throw
+
 Previously, attempting to set `undefined` as a key on a SharedMap or SharedDirectory, or creating a subdirectory with name `undefined` would appear to succeed but would cause inconsistencies in snapshotting.  This will now throw immediately upon trying to set an `undefined` key or subdirectory name.
 
 ## SharedComponent extends IComponentHandles

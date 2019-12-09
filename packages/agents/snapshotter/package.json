@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/snapshotter-agent",
-  "version": "0.12.0",
+  "version": "0.13.0",
   "description": "Snapshotter for Fluid container",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -21,12 +21,12 @@
     "tslint": "npm run eslint"
   },
   "dependencies": {
-    "@microsoft/fluid-container-runtime": "^0.12.0",
+    "@microsoft/fluid-container-runtime": "^0.13.0",
     "@microsoft/fluid-protocol-definitions": "^0.12.0"
   },
   "devDependencies": {
-    "@microsoft/eslint-config-fluid": "^0.12.0",
-    "@microsoft/fluid-build-common": "^0.12.0",
+    "@microsoft/eslint-config-fluid": "^0.13.0",
+    "@microsoft/fluid-build-common": "^0.13.0",
     "@types/node": "^10.14.6",
     "@typescript-eslint/eslint-plugin": "^2.9.0",
     "@typescript-eslint/eslint-plugin-tslint": "^2.9.0",
