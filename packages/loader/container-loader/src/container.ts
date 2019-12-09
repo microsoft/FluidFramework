@@ -136,11 +136,11 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                     container.removeListener("error", onError);
                     res(container);
                 })
-                .catch((error) => {
+                .catch(async (error) => {
                     if (!alreadyRaisedError) {
                         container.logCriticalError(error);
                     }
-                    container.ignoreUnhandledConnectonError();
+                    await container.ignoreUnhandledConnectonError();
                     onError(error);
                 });
         });
@@ -594,7 +594,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private ignoreUnhandledConnectonError() {
         // avoid unhandled promises
         if (this.connectionDetailsP) {
-            this.connectionDetailsP.catch(() => { });
+            return this.connectionDetailsP.catch(() => { });
         }
     }
 
