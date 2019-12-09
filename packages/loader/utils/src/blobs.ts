@@ -39,7 +39,7 @@ export function gitHashFile(file: Buffer): string {
  * @param blobMap - a map of blob's sha1 to content
  * @returns A flatten with of the ITreeEntry
  */
-export function flatten(tree: ITreeEntry[], blobMap: Map<string, string>): git.ITree {
+function flatten(tree: ITreeEntry[], blobMap: Map<string, string>): git.ITree {
     const entries = flattenCore("", tree, blobMap);
     return {
         sha: "",
@@ -97,6 +97,18 @@ function flattenCore(path: string, treeEntries: ITreeEntry[], blobMap: Map<strin
     }
 
     return entries;
+}
+
+/**
+ * Build a tree hierarchy base on an array of ITreeEntry
+ *
+ * @param entries - an array of ITreeEntry to flatten
+ * @param blobMap - a map of blob's sha1 to content
+ * @returns the hierarchical tree
+ */
+export function buildSnapshotTree(entries: ITreeEntry[], blobMap: Map<string, string>): ISnapshotTree {
+    const flattened = flatten(entries, blobMap);
+    return buildHierarchy(flattened);
 }
 
 /**
@@ -169,7 +181,7 @@ export class CommitTreeEntry implements ITreeEntry {
      * @param path - path of entry
      * @param value - commit value
      */
-    constructor(public readonly path: string, public readonly value: string) {}
+    constructor(public readonly path: string, public readonly value: string) { }
 }
 
 /**
@@ -184,7 +196,7 @@ export class TreeTreeEntry implements ITreeEntry {
      * @param path - path of entry
      * @param value - subtree
      */
-    constructor(public readonly path: string, public readonly value: ITree) {}
+    constructor(public readonly path: string, public readonly value: ITree) { }
 }
 
 export function addBlobToTree(tree: ITree, blobName: string, content: object) {
