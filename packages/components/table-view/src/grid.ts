@@ -214,7 +214,7 @@ export class GridView {
     }
 
     private readonly cancelInput = () => {
-        const maybeParent = this.inputBox.parentElement as HTMLTableCellElement;
+        const maybeParent = this.inputBox.parentElement as HTMLTableCellElement | null;
         if (maybeParent) {
             this.inputBox.remove();
             const [row, col] = this.getRowColFromTd(maybeParent);
@@ -234,7 +234,7 @@ export class GridView {
     }
 
     private commitInput() {
-        const maybeParent = this.inputBox.parentElement as HTMLTableCellElement;
+        const maybeParent = this.inputBox.parentElement as HTMLTableCellElement | null;
         if (maybeParent) {
             const [row, col] = this.getRowColFromTd(maybeParent);
             const previous = this.doc.getCellValue(row, col);
@@ -248,6 +248,7 @@ export class GridView {
 
     private moveInputToPosition(row: number, col: number, extendSelection: boolean) {
         const newParent = this.getTdFromRowCol(row, col);
+        // tslint:disable-next-line: strict-boolean-expressions
         if (newParent) {
             this.commitInput();
 
@@ -272,6 +273,7 @@ export class GridView {
         }
 
         // 'getTdFromRowCol(..)' return false if row/col are outside the sheet range.
+        // tslint:disable-next-line: strict-boolean-expressions
         return !!newParent;
     }
 
