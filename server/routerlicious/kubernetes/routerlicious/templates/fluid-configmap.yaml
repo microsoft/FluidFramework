@@ -172,7 +172,7 @@ data:
         "redis2": {
             "host": "{{ .Values.redis2.url }}",
             "port": "{{ .Values.redis2.port }}",
-            "pass": "{{ .Values.redis2.password }}"
+            "pass": "{{ .Values.redis2.password }}",
             "tls": {{ .Values.redis2.tls }}
         },
         "error": {
