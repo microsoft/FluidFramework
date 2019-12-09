@@ -27,6 +27,8 @@ export const loadCellSym = Symbol("TableDocument.loadCell");
 export const storeCellSym = Symbol("TableDocument.storeCell");
 export const cellSym = Symbol("TableDocument.cell");
 
+export type TableDocumentItem = JsonablePrimitive;
+
 export class TableDocument extends PrimedComponent implements ITable {
     public static getFactory() { return TableDocument.factory; }
 
@@ -69,11 +71,11 @@ export class TableDocument extends PrimedComponent implements ITable {
         }
     }
 
-    public getCellValue(row: number, col: number): JsonablePrimitive {
+    public getCellValue(row: number, col: number): TableDocumentItem {
         return this[loadCellTextSym](row, col);
     }
 
-    public setCellValue(row: number, col: number, value: JsonablePrimitive) {
+    public setCellValue(row: number, col: number, value: TableDocumentItem) {
         this.workbook.setCellText(row, col, value);
     }
 
@@ -187,11 +189,11 @@ export class TableDocument extends PrimedComponent implements ITable {
         });
     }
 
-    private [loadCellTextSym](row: number, col: number): JsonablePrimitive {
-        return this.matrix.getItem(row, col) as JsonablePrimitive;
+    private [loadCellTextSym](row: number, col: number): TableDocumentItem {
+        return this.matrix.getItem(row, col) as TableDocumentItem;
     }
 
-    private [storeCellTextSym](row: number, col: number, value: JsonablePrimitive) {
+    private [storeCellTextSym](row: number, col: number, value: TableDocumentItem) {
         this.matrix.setItems(row, col, [value]);
     }
 
