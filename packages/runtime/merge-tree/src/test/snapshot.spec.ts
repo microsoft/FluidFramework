@@ -19,8 +19,8 @@ async function loadSnapshot(tree: ITree) {
         logger: client2.logger,
         clientId: "1",
     };
-    const loader = client2.createSnapshotLoader(runtime as IComponentRuntime);
-    await loader.initialize(undefined, services);
+
+    await client2.load(runtime as IComponentRuntime, services);
     return client2;
 }
 
