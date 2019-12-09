@@ -116,9 +116,9 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
         const webSocketLibrary = config.get("alfred:webSocketLib");
         const authEndpoint = config.get("auth:endpoint");
 
-        // Redis connection for client manaeger.
+        // Redis connection for client manager.
         const redisConfig2 = config.get("redis2");
-        const redisClient = redis.createClient(redisConfig2.port, redisConfig2.host);
+        const redisClient = redis.createClient(redisConfig2.port, redisConfig2.host, { auth_pass: redisConfig2.pass});
         const clientManager = new services.ClientManager(redisClient);
 
         // Database connection
