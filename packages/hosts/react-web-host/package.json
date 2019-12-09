@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/react-web-host",
-  "version": "0.12.0",
+  "version": "0.13.0",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
@@ -23,13 +23,13 @@
     "webpack": "webpack --env build"
   },
   "dependencies": {
-    "@fluid-example/tiny-web-host": "^0.12.0",
+    "@fluid-example/tiny-web-host": "^0.13.0",
     "react": "^16.10.2"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.4.4",
-    "@microsoft/eslint-config-fluid": "^0.12.0",
-    "@microsoft/fluid-build-common": "^0.12.0",
+    "@microsoft/eslint-config-fluid": "^0.13.0",
+    "@microsoft/fluid-build-common": "^0.13.0",
     "@types/node": "^10.14.6",
     "@types/react": "^16.9.2",
     "@typescript-eslint/eslint-plugin": "^2.9.0",
