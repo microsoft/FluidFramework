@@ -7,7 +7,7 @@ import { SequenceEvent } from "@microsoft/fluid-sequence";
 import { emptyObject } from "../util";
 import { Layout } from "./layout";
 
-// tslint:disable-next-line:no-empty-interface
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface IFormatterState { }
 
 export abstract class Formatter<TState extends IFormatterState> {

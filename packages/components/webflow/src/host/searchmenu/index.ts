@@ -59,7 +59,7 @@ export class SearchMenuView extends View<ISearchMenuProps, ISearchMenuProps> {
     }
 
     protected onDetach(): void {
-        // do nothing.
+        // Do nothing.
     }
 
     private updateCommands() {
@@ -106,13 +106,13 @@ export class SearchMenuView extends View<ISearchMenuProps, ISearchMenuProps> {
 
     private readonly onKeyDown = (e: KeyboardEvent) => {
         switch (e.code) {
-            case KeyCode.enter:
-                this.complete(e, true);
-                break;
-            case KeyCode.escape:
-                this.complete(e, false);
-                break;
-            default:
+        case KeyCode.enter:
+            this.complete(e, true);
+            break;
+        case KeyCode.escape:
+            this.complete(e, false);
+            break;
+        default:
         }
-    }
+    };
 }

@@ -88,41 +88,41 @@ export class Editor {
         }
 
         switch (e.code) {
-            case KeyCode.F4: {
-                console.clear();
-                break;
-            }
+        case KeyCode.F4: {
+            console.clear();
+            break;
+        }
 
-            case KeyCode.F5: {
-                console.clear();
-                debug("*** RESET ***");
-                this.unlinkChildren(this.layout.root);
-                this.layout.sync();
-                break;
-            }
+        case KeyCode.F5: {
+            console.clear();
+            debug("*** RESET ***");
+            this.unlinkChildren(this.layout.root);
+            this.layout.sync();
+            break;
+        }
 
-            case KeyCode.arrowLeft:
-                this.enterIfInclusion(e, this.caret.position - 1, Direction.left);
-                break;
+        case KeyCode.arrowLeft:
+            this.enterIfInclusion(e, this.caret.position - 1, Direction.left);
+            break;
 
-            case KeyCode.arrowRight:
-                this.enterIfInclusion(e, this.caret.position, Direction.right);
-                break;
+        case KeyCode.arrowRight:
+            this.enterIfInclusion(e, this.caret.position, Direction.right);
+            break;
 
             // Note: Chrome 69 delivers backspace on 'keydown' only (i.e., 'keypress' is not fired.)
-            case KeyCode.backspace: {
-                this.delete(e, Direction.left);
-                break;
-            }
-            case KeyCode.delete: {
-                this.delete(e, Direction.right);
-                break;
-            }
-            default: {
-                debug("Key: %s (%d)", e.key, e.keyCode);
-            }
+        case KeyCode.backspace: {
+            this.delete(e, Direction.left);
+            break;
         }
-    }
+        case KeyCode.delete: {
+            this.delete(e, Direction.right);
+            break;
+        }
+        default: {
+            debug("Key: %s (%d)", e.key, e.keyCode);
+        }
+        }
+    };
 
     private readonly onPaste = (e: ClipboardEvent) => {
         if (!this.shouldHandleEvent(e)) {
@@ -131,7 +131,7 @@ export class Editor {
 
         this.consume(e);
         paste(this.doc, e.clipboardData, this.caret.position);
-    }
+    };
 
     private readonly onKeyPress = (e: KeyboardEvent) => {
         if (!this.shouldHandleEvent(e)) {
@@ -141,19 +141,19 @@ export class Editor {
         this.consume(e);
 
         switch (e.code) {
-            case KeyCode.enter: {
-                if (e.shiftKey) {
-                    this.doc.insertLineBreak(this.caret.position);
-                } else {
-                    this.doc.insertParagraph(this.caret.position);
-                }
-                break;
+        case KeyCode.enter: {
+            if (e.shiftKey) {
+                this.doc.insertLineBreak(this.caret.position);
+            } else {
+                this.doc.insertParagraph(this.caret.position);
             }
-            default: {
-                this.insertText(e);
-            }
+            break;
         }
-    }
+        default: {
+            this.insertText(e);
+        }
+        }
+    };
 
     private insertText(e: KeyboardEvent, text = e.key) {
         const { start, end } = this.caret.selection;

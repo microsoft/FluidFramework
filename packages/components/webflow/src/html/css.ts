@@ -8,13 +8,11 @@ import { ISegment } from "@microsoft/fluid-merge-tree";
 import { getCss } from "../document";
 
 // Note: Similar to TokenList.set(..), but elides the search for duplicate tokens.
-function concat(leftTokens: string, rightTokens: string) {
-    return !rightTokens
-        ? leftTokens                            // If right is undefined/empty, just return left
-        : !leftTokens
-            ? rightTokens                       // If left is undefined/empty, just return right
-            : `${leftTokens} ${rightTokens}`;   // Otherwise concat left/right
-}
+const concat = (leftTokens: string, rightTokens: string) => !rightTokens
+    ? leftTokens                            // If right is undefined/empty, just return left
+    : !leftTokens
+        ? rightTokens                       // If left is undefined/empty, just return right
+        : `${leftTokens} ${rightTokens}`;// Otherwise concat left/right;
 
 export interface ICssProps { classList?: string; style?: string; }
 
