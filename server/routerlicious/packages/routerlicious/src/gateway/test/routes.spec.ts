@@ -14,7 +14,7 @@ describe("Gateway", () => {
         let testServer: supertest.SuperTest<supertest.Test>;
 
         beforeEach(() => {
-            const defaultConfig = nconf.file(path.join(__dirname, "../../config.json")).use("memory");
+            const defaultConfig = nconf.file(path.join(__dirname, "../../../public/gatewayConfig.json")).use("memory");
             defaultConfig.set("gateway:sessionStore", "memory");
 
             const alf = new Alfred(
