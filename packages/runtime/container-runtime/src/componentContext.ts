@@ -15,7 +15,6 @@ import {
     BlobTreeEntry,
     Deferred,
     raiseConnectedEvent,
-    SummaryTracker,
 } from "@microsoft/fluid-core-utils";
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import { readAndParse } from "@microsoft/fluid-driver-utils";
@@ -38,6 +37,7 @@ import {
     IHostRuntime,
     IInboundSignalMessage,
 } from "@microsoft/fluid-runtime-definitions";
+import { SummaryTracker } from "@microsoft/fluid-runtime-utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 // tslint:disable-next-line:no-submodule-imports

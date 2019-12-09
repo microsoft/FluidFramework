@@ -4,14 +4,14 @@
  */
 
 import { EventData, EventHubClient } from "@azure/event-hubs";
-import * as utils from "@microsoft/fluid-core-utils";
+import { Deferred } from "@microsoft/fluid-core-utils";
 import { IPendingBoxcar, IProducer } from "@microsoft/fluid-server-services-core";
 
 // 1MB batch size / (16KB max message size + overhead)
 const MaxBatchSize = 32;
 
 class PendingBoxcar implements IPendingBoxcar {
-    public deferred = new utils.Deferred<void>();
+    public deferred = new Deferred<void>();
     public messages: EventData[] = [];
 
     constructor(public tenantId: string, public documentId: string) {
