@@ -61,7 +61,7 @@ export class DeltaQueueProxy<T> extends EventForwarder implements IDeltaQueue<T>
         return this.queue.pause();
     }
 
-    public async resume() {
+    public resume() {
         assert(this.pauseCounter > 0);
         this.pauseCounter--;
         this.queue.resume();
@@ -69,6 +69,14 @@ export class DeltaQueueProxy<T> extends EventForwarder implements IDeltaQueue<T>
 
     public dispose() {
         assert(this.pauseCounter === 0);
+    }
+
+    // Backward compatibility: support "old" APIs
+    public systemPause(): Promise<void> {
+        return this.pause();
+    }
+    public sytemResume(): void {
+        this.resume();
     }
 }
 
