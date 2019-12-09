@@ -118,12 +118,16 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
 
         // Redis connection for client manager.
         const redisConfig2 = config.get("redis2");
+        const redisOptions2: redis.ClientOpts = { password: redisConfig2.pass };
+        if (redisConfig2.tls) {
+            redisOptions2.tls = {
+                serverName: redisConfig2.host,
+            };
+        }
         const redisClient = redis.createClient(
             redisConfig2.port,
             redisConfig2.host,
-            {
-                password: redisConfig2.pass
-            });
+            redisOptions2);
         const clientManager = new services.ClientManager(redisClient);
 
         // Database connection
