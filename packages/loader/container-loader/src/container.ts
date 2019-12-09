@@ -340,7 +340,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         this._closed = true;
 
         if (this._deltaManager) {
-            this._deltaManager.close(new Error(reason), false /*raiseContainerError*/);
+            this._deltaManager.close(reason ? new Error(reason) : undefined, false /*raiseContainerError*/);
         }
 
         if (this.protocolHandler) {
