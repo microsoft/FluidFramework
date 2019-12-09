@@ -3,5 +3,7 @@
  * Licensed under the MIT License.
  */
 
+export * from "./blobs";
 export * from "./protocol";
 export * from "./quorum";
+export * from "./utils";
