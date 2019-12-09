@@ -261,7 +261,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             eventName: "AutoReconnect",
             value,
             connectionMode: this._deltaManager!.connectionMode,
-            connectionState: this.connectionState,
+            connectionState: ConnectionState[this.connectionState],
         });
 
         this._deltaManager.autoReconnect = value;
@@ -333,14 +333,14 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return super.on(event, listener);
     }
 
-    public close() {
+    public close(reason?: string) {
         if (this._closed) {
             return;
         }
         this._closed = true;
 
         if (this._deltaManager) {
-            this._deltaManager.close();
+            this._deltaManager.close(reason ? new Error(reason) : undefined, false /*raiseContainerError*/);
         }
 
         if (this.protocolHandler) {
@@ -964,7 +964,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             if (value === ConnectionState.Connected) {
                 durationFromDisconnected = time - this.connectionTransitionTimes[ConnectionState.Disconnected];
                 durationFromDisconnected = TelemetryLogger.formatTick(durationFromDisconnected);
-                this.firstConnection = false;
             }
             if (this.firstConnection) {
                 connectionInitiationReason = "InitialConnect";
@@ -1161,7 +1160,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             (type, contents) => this.submitMessage(type, contents),
             (message) => this.submitSignal(message),
             (message) => this.snapshot(message),
-            () => this.close(),
+            (reason?: string) => this.close(reason),
             Container.version,
         );
 

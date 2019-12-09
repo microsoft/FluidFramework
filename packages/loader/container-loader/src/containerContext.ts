@@ -54,7 +54,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
         submitSignalFn: (contents: any) => void,
         snapshotFn: (message: string) => Promise<void>,
-        closeFn: () => void,                        // When would the context ever close?
+        closeFn: (reason?: string) => void,
         version: string,
     ): Promise<ContainerContext> {
         const context = new ContainerContext(
