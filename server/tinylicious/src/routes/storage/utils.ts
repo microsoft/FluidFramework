@@ -30,6 +30,6 @@ export function handleResponse<T>(
         });
 }
 
-export function getGitDir(store: nconf.Provider) {
-    return path.join(__dirname, "../../../storage");
+export function getGitDir(store: nconf.Provider, tenantId: string) {
+    return path.join(__dirname, "../../../storage", `./${tenantId}`);
 }

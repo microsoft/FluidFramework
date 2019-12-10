@@ -20,7 +20,7 @@ export function create(store: nconf.Provider): Router {
         const buffer = Buffer.from(body.content, body.encoding);
 
         const sha = await git.writeObject({
-            dir: utils.getGitDir(store),
+            dir: utils.getGitDir(store, tenantId),
             type: "blob",
             object: buffer,
         });
@@ -37,7 +37,7 @@ export function create(store: nconf.Provider): Router {
         sha: string,
         useCache: boolean,
     ): Promise<IBlob> {
-        const gitObj = await git.readObject({ dir: utils.getGitDir(store), oid: sha });
+        const gitObj = await git.readObject({ dir: utils.getGitDir(store, tenantId), oid: sha });
         const buffer = gitObj.object as Buffer;
 
         const result: IBlob = {
