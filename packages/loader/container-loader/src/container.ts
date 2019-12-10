@@ -416,6 +416,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         assert(this.loaded);
         // resume processing ops
         this._deltaManager!.inbound.resume();
+        this._deltaManager!.outbound.resume();
         this._deltaManager!.inboundSignal.resume();
 
         // Ensure connection to web socket
