@@ -10,16 +10,17 @@ import { NPMTask } from "./npmTask";
 import { Task } from "./task";
 import { TscTask } from "./leaf/tscTask";
 import { getExecutableFromCommand } from "../common/utils";
-import { TsLintTask } from "./leaf/tsLintTask";
+import { TsLintTask, EsLintTask } from "./leaf/lintTasks";
 import { WebpackTask } from "./leaf/webpackTask";
 import { LesscTask, CopyfilesTask, EchoTask, GenVerTask } from "./leaf/miscTasks";
 
 // Map of executable name to LeafTasks
-const executableToLeafTask: { [key: string]: new (node: BuildPackage, command:string) => LeafTask } = {
+const executableToLeafTask: { [key: string]: new (node: BuildPackage, command: string) => LeafTask } = {
     tsc: TscTask,
     tslint: TsLintTask,
+    eslint: EsLintTask,
     webpack: WebpackTask,
-    "parallel-webpack":  WebpackTask,
+    "parallel-webpack": WebpackTask,
     lessc: LesscTask,
     copyfiles: CopyfilesTask,
     echo: EchoTask,
@@ -28,7 +29,7 @@ const executableToLeafTask: { [key: string]: new (node: BuildPackage, command:st
 export class TaskFactory {
     public static Create(node: BuildPackage, command: string) {
         const concurrently = command.startsWith("concurrently ");
-        
+
         if (concurrently) {
             const subTasks = new Array<Task>();
             const steps = command.substring("concurrently ".length).split(" ");
@@ -41,7 +42,7 @@ export class TaskFactory {
                 }
             }
             return new ConcurrentNPMTask(node, command, subTasks);
-        } 
+        }
         if (command.startsWith("npm run ")) {
             const subTasks = new Array<Task>();
             const script = node.pkg.getScript(command.substring("npm run ".length));

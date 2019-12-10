@@ -18,7 +18,7 @@ import * as winston from "winston";
 import { spoEnsureLoggedIn } from "../gateway-odsp-utils";
 import { resolveUrl } from "../gateway-urlresolver";
 import { IAlfred, IKeyValueWrapper } from "../interfaces";
-import { getConfig, getParam, getUserDetails } from "../utils";
+import { getConfig, getJWTClaims, getParam, getUserDetails } from "../utils";
 import { defaultPartials } from "./partials";
 
 export function create(
@@ -62,11 +62,8 @@ export function create(
                 winston.info(`Redirecting to ${redirectUrl}`);
                 response.redirect(redirectUrl);
             } else {
-                const jwtToken = jwt.sign(
-                    {
-                        user: request.user,
-                    },
-                    jwtKey);
+                const claims = getJWTClaims(request);
+                const jwtToken = jwt.sign(claims, jwtKey);
 
                 const rawPath = request.params[0] as string;
                 const slash = rawPath.indexOf("/");
@@ -171,7 +168,6 @@ export function create(
                             clientId: config.get("login:microsoft").clientId,
                             config: workerConfig,
                             jwt: jwtToken,
-                            npm: config.get("worker:npm"),
                             partials: defaultPartials,
                             resolved: JSON.stringify(resolved),
                             scripts,

@@ -3,9 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { IDisposable } from "@microsoft/fluid-common-definitions";
 import {
     ConnectionMode,
+    IClientDetails,
     IContentMessage,
+    IProcessMessageResult,
     ISequencedDocumentMessage,
     IServiceConfiguration,
     ISignalClient,
@@ -14,7 +17,6 @@ import {
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
-import { IDisposable } from "./disposable";
 
 export interface IConnectionDetails {
     clientId: string;
@@ -29,10 +31,6 @@ export interface IConnectionDetails {
     initialSignals?: ISignalMessage[];
     maxMessageSize: number;
     serviceConfiguration: IServiceConfiguration;
-}
-
-export interface IProcessMessageResult {
-    immediateNoOp?: boolean;
 }
 
 /**
@@ -91,8 +89,11 @@ export interface IDeltaManager<T, U> extends EventEmitter, IDeltaSender, IDispos
     // The initial sequence number set when attaching the op handler
     initialSequenceNumber: number;
 
-    // Type of client
-    clientType: string;
+    // DEPRECATED: use clientDetails.type instead
+    clientType: string; // back-compat: 0.11 clientType
+
+    // Details of client
+    clientDetails: IClientDetails;
 
     // Protocol version being used to communicate with the service
     version: string;
@@ -108,7 +109,7 @@ export interface IDeltaManager<T, U> extends EventEmitter, IDeltaSender, IDispos
 
     close(): void;
 
-    connect(reason: string): Promise<IConnectionDetails>;
+    connect(requestedMode?: ConnectionMode): Promise<IConnectionDetails>;
 
     getDeltas(reason: string, from: number, to?: number): Promise<ISequencedDocumentMessage[]>;
 
@@ -139,13 +140,14 @@ export interface IDeltaQueue<T> extends EventEmitter, IDisposable {
 
     /**
      * Pauses processing on the queue
+     * @returns A promise which resolves when processing has been paused.
      */
     pause(): Promise<void>;
 
     /**
      * Resumes processing on the queue
      */
-    resume(): Promise<void>;
+    resume(): void;
 
     /**
      * Peeks at the next message in the queue
@@ -159,11 +161,12 @@ export interface IDeltaQueue<T> extends EventEmitter, IDisposable {
 
     /**
      * System level pause
+     * @returns A promise which resolves when processing has been paused.
      */
     systemPause(): Promise<void>;
 
     /**
      * System level resume
      */
-    systemResume(): Promise<void>;
+    systemResume(): void;
 }

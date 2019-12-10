@@ -52,7 +52,7 @@ async function downloadRawText(textUrl: string): Promise<string> {
         return Promise.reject(result.data);
     }
 
-    return result.data as string;
+    return result.data;
 }
 
 function updateProgressBar(progressBar: HTMLElement, progress: number) {
@@ -219,7 +219,7 @@ function initialize(
 
         const details: IFluidCodeDetails = {
             config: {
-                "@chaincode:cdn": "https://pragueauspkn-3873244262.azureedge.net",
+                "@fluid-example:cdn": "https://pragueauspkn-3873244262.azureedge.net",
             },
             package: `@fluid-example/shared-text@${version}`,
         };
@@ -332,7 +332,7 @@ const html =
     </div>
 
     <div class="typing-details hidden">
-        <img src="https://www.wu2.prague.office-int.com/public/images/corgi-typing.gif" />
+        <img src="https://praguenpm.blob.core.windows.net/images/corgi-typing.gif" />
 
         <!-- Progress of the scribe writing the document -->
         <h3>
@@ -455,7 +455,7 @@ class ScribeFactory implements IComponentFactory, IRuntimeFactory {
             [async (request: IRequest, containerRuntime: IHostRuntime) => {
                 console.log(request.url);
 
-                const requestUrl = request.url.length > 0 && request.url.charAt(0) === "/"
+                const requestUrl = request.url.length > 0 && request.url.startsWith("/")
                     ? request.url.substr(1)
                     : request.url;
                 const trailingSlash = requestUrl.indexOf("/");

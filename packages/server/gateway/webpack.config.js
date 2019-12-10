@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-const path = require('path');
-const webpack = require('webpack');
 const dev = require('./webpack.dev.js');
 const prod = require('./webpack.prod.js');
 const merge = require('webpack-merge');
@@ -88,7 +86,6 @@ module.exports = env => {
                 }
             ]
         },
-        target: 'node',
         stats: {
             timings: true,
             colors: true,
@@ -124,6 +121,34 @@ module.exports = env => {
                     openAnalyzer: false,
                     generateStatsFile: true,
                     statsFilename: 'controllers.stats.json'
+                })
+            ],
+        },
+        {
+            entry: {
+                loaderHost: "./src/controllers/loaderHost.ts"
+            },
+            plugins: [
+                new BundleAnalyzerPlugin({
+                    analyzerMode: 'static',
+                    reportFilename: 'loaderHost.stats.html',
+                    openAnalyzer: false,
+                    generateStatsFile: true,
+                    statsFilename: 'loaderHost.stats.json'
+                })
+            ],
+        },
+        {
+            entry: {
+                loaderFramed: "./src/controllers/loaderFramed.ts"
+            },
+            plugins: [
+                new BundleAnalyzerPlugin({
+                    analyzerMode: 'static',
+                    reportFilename: 'loaderFramed.stats.html',
+                    openAnalyzer: false,
+                    generateStatsFile: true,
+                    statsFilename: 'loaderFramed.stats.json'
                 })
             ],
         },

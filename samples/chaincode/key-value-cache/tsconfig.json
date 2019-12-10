@@ -12,7 +12,9 @@
         "outDir": "dist",
         "sourceMap": true,
         "inlineSources": true,
-        "lib": ["es2017", "dom"]
+        "lib": ["es2017", "dom"],
+        "incremental": true,
+        "types": []
     },
     "include": [
         "src/**/*"

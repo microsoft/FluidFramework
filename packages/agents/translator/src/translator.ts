@@ -27,7 +27,7 @@ function createRequestUri(from: string, to: string[]): string {
 
 function createRequestBody(texts: string[]): ITranslatorInput[] {
     return texts.map((text: string) => {
-        const input: ITranslatorInput = {Text: text};
+        const input: ITranslatorInput = { Text: text };
         return input;
     });
 }
@@ -39,6 +39,7 @@ function processTranslationOutput(input: ITranslatorOutput[]): Map<string, strin
             if (!languageText.has(translation.to)) {
                 languageText.set(translation.to, []);
             }
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             languageText.get(translation.to)!.push(translation.text);
         }
     }
@@ -56,7 +57,7 @@ async function translateCore(key: string, from: string, to: string[], text: stri
                 body: requestBody,
                 headers: {
                     "Content-Type": "application/json",
-                    "Ocp-Apim-Subscription-Key" : key,
+                    "Ocp-Apim-Subscription-Key": key,
                 },
                 json: true,
                 method: "POST",

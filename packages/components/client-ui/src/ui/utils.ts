@@ -7,7 +7,7 @@
 
 // Utility to fetch elements by ID
 export function id(elementId: string): HTMLElement {
-  return (document.getElementById(elementId)) as HTMLElement;
+  return (document.getElementById(elementId));
 }
 
 export function makeElementVisible(elem, visible) {
@@ -35,7 +35,7 @@ export interface IColor {
 }
 
 export function toColorStringNoAlpha(color: IColor) {
-  return "#" + byteHex(color.r * 255) + byteHex(color.g * 255) + byteHex(color.b * 255 );
+  return "#" + byteHex(color.r * 255) + byteHex(color.g * 255) + byteHex(color.b * 255);
 }
 
 /**
@@ -115,7 +115,7 @@ export function toColorStruct(color: string): IColor {
 // URL/Path parsing stuff
 // ----------------------------------------------------------------------
 export function breakFilePath(path) {
-  const m = path.match(/(.*)[\/\\]([^\/\\]+)\.(\w+)/);
+  const m = path.match(/(.*)[/\\]([^/\\]+)\.(\w+)/);
   if (m) {
     return { source: m[0], path: m[1], filename: m[2], ext: m[3] };
   } else {
@@ -157,21 +157,21 @@ export function parseURL(url) {
 // Following recomendations of https://developer.mozilla.org/en-US/docs/Web/Events/resize to
 // throttle computationally expensive events
 export function throttle(type: string, name: string, obj?: any) {
-    obj = obj || window;
-    let running = false;
-    obj.addEventListener(
-      type,
-      () => {
-        if (running) {
-            return;
-        }
+  obj = obj || window;
+  let running = false;
+  obj.addEventListener(
+    type,
+    () => {
+      if (running) {
+        return;
+      }
 
-        running = true;
-        requestAnimationFrame(() => {
-            obj.dispatchEvent(new CustomEvent(name));
-            running = false;
-        });
+      running = true;
+      requestAnimationFrame(() => {
+        obj.dispatchEvent(new CustomEvent(name));
+        running = false;
       });
+    });
 }
 
 /**
@@ -186,13 +186,13 @@ export class AnimationFrameThrottler {
 
   public trigger(): void {
     if (this.running) {
-        return;
+      return;
     }
 
     this.running = true;
     requestAnimationFrame(() => {
-        this.callback();
-        this.running = false;
+      this.callback();
+      this.running = false;
     });
   }
 }

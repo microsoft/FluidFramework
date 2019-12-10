@@ -27,6 +27,8 @@ export const loadCellSym = Symbol("TableDocument.loadCell");
 export const storeCellSym = Symbol("TableDocument.storeCell");
 export const cellSym = Symbol("TableDocument.cell");
 
+export type TableDocumentItem = JsonablePrimitive;
+
 export class TableDocument extends PrimedComponent implements ITable {
     public static getFactory() { return TableDocument.factory; }
 
@@ -38,11 +40,11 @@ export class TableDocument extends PrimedComponent implements ITable {
         ],
     );
 
-    public  get numCols()    { return this.maybeCols!.getLength(); }
-    public  get numRows()    { return this.matrix.numRows; }
+    public get numCols() { return this.maybeCols.getLength(); }
+    public get numRows() { return this.matrix.numRows; }
 
-    private get matrix()        { return this.maybeMatrix!; }
-    private get workbook()      { return this.maybeWorkbook!; }
+    private get matrix() { return this.maybeMatrix; }
+    private get workbook() { return this.maybeWorkbook; }
 
     private maybeRows?: SharedNumberSequence;
     private maybeCols?: SharedNumberSequence;
@@ -50,7 +52,7 @@ export class TableDocument extends PrimedComponent implements ITable {
     private maybeWorkbook?: ISheetlet;
 
     constructor(runtime: IComponentRuntime, context: IComponentContext) {
-       super(runtime, context);
+        super(runtime, context);
     }
 
     public evaluateCell(row: number, col: number) {
@@ -69,11 +71,11 @@ export class TableDocument extends PrimedComponent implements ITable {
         }
     }
 
-    public getCellValue(row: number, col: number): JsonablePrimitive {
+    public getCellValue(row: number, col: number): TableDocumentItem {
         return this[loadCellTextSym](row, col);
     }
 
-    public setCellValue(row: number, col: number, value: JsonablePrimitive) {
+    public setCellValue(row: number, col: number, value: TableDocumentItem) {
         this.workbook.setCellText(row, col, value);
     }
 
@@ -115,22 +117,22 @@ export class TableDocument extends PrimedComponent implements ITable {
 
     public insertRows(startRow: number, numRows: number) {
         this.matrix.insertRows(startRow, numRows);
-        this.maybeRows!.insert(startRow, new Array(numRows).fill(0));
+        this.maybeRows.insert(startRow, new Array(numRows).fill(0));
     }
 
     public removeRows(startRow: number, numRows: number) {
         this.matrix.removeRows(startRow, numRows);
-        this.maybeRows!.remove(startRow, startRow + numRows);
+        this.maybeRows.remove(startRow, startRow + numRows);
     }
 
     public insertCols(startCol: number, numCols: number) {
         this.matrix.insertCols(startCol, numCols);
-        this.maybeCols!.insert(startCol, new Array(numCols).fill(0));
+        this.maybeCols.insert(startCol, new Array(numCols).fill(0));
     }
 
     public removeCols(startCol: number, numCols: number) {
         this.matrix.removeCols(startCol, numCols);
-        this.maybeCols!.remove(startCol, startCol + numCols);
+        this.maybeCols.remove(startCol, startCol + numCols);
     }
 
     protected async componentInitializingFirstTime() {
@@ -175,6 +177,7 @@ export class TableDocument extends PrimedComponent implements ITable {
         this.maybeRows.on("sequenceDelta", (e, t) => this.emit("sequenceDelta", e, t));
 
         // tslint:disable-next-line:no-this-assignment
+        // eslint-disable-next-line
         const table = this;
         this.maybeWorkbook = createSheetlet({
             get numRows() { return table.numRows; },
@@ -186,11 +189,11 @@ export class TableDocument extends PrimedComponent implements ITable {
         });
     }
 
-    private [loadCellTextSym](row: number, col: number): JsonablePrimitive {
-        return this.matrix.getItem(row, col) as JsonablePrimitive;
+    private [loadCellTextSym](row: number, col: number): TableDocumentItem {
+        return this.matrix.getItem(row, col) as TableDocumentItem;
     }
 
-    private [storeCellTextSym](row: number, col: number, value: JsonablePrimitive) {
+    private [storeCellTextSym](row: number, col: number, value: TableDocumentItem) {
         this.matrix.setItems(row, col, [value]);
     }
 

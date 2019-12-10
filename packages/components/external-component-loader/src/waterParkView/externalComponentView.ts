@@ -9,7 +9,6 @@ import {
     IComponentHandle,
     IComponentHTMLVisual,
     IComponentLoadable,
-    IComponentQueryableLegacy,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IPackage } from "@microsoft/fluid-container-definitions";
 import { IComponentCollection } from "@microsoft/fluid-framework-interfaces";
@@ -96,11 +95,8 @@ export class ExternalComponentView extends PrimedComponent implements IComponent
                 this.sequence.getItems(0).forEach((url) => {
                     const component = this.urlToComponent.get(url);
                     if (component) {
-                        const queryable = component as IComponentQueryableLegacy;
-                        let renderable = component.IComponentHTMLVisual;
-                        if (!renderable && queryable.query) {
-                            renderable = queryable.query<IComponentHTMLVisual>("IComponentHTMLVisual");
-                        }
+                        const renderable = component.IComponentHTMLVisual;
+
                         if (renderable) {
                             const containerDiv = document.createElement("div");
                             mainDiv.appendChild(containerDiv);

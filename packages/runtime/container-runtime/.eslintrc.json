@@ -1,0 +1,8 @@
+{
+    "extends": [
+        "@microsoft/eslint-config-fluid"
+    ],
+    "rules": {
+        "no-case-declarations": "off"
+    }
+}

@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import * as messages from "@microsoft/fluid-driver-base";
+import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
 import {
     ConnectionMode,
+    IConnected,
     IContentMessage,
-    IDocumentDeltaConnection,
     IDocumentMessage,
     ISequencedDocumentMessage,
     IServiceConfiguration,
@@ -18,8 +18,6 @@ import {
 import { EventEmitter } from "events";
 import { debug } from "./debug";
 import { FileDeltaStorageService } from "./fileDeltaStorageService";
-// tslint:disable-next-line:no-submodule-imports no-var-requires no-require-imports
-const cloneDeep = require("lodash/cloneDeep") as <T>(value: T) => T;
 
 const MaxBatchDeltas = 2000;
 
@@ -28,8 +26,10 @@ const ReplayMaxMessageSize = 16 * 1024;
 
 const fileProtocolVersion = "^0.1.0";
 
+const replayDocumentId = "replayDocId";
+
 const Claims: ITokenClaims = {
-    documentId: "",
+    documentId: replayDocumentId,
     scopes: [],
     tenantId: "",
     user: {
@@ -89,9 +89,11 @@ export class Replayer {
     }
 
     private emit(ops: ISequencedDocumentMessage[]) {
-        // Need to clone message as it gets modified while processing
-        // This breaks replay tool that uses same message with multiple containers.
-        ops.map((op) => this.deltaConnection.emit("op", op.clientId, cloneDeep(op)));
+        // Note: do not clone messages here!
+        // If Replay Tool fails due to one container patching message in-place,
+        // then same thing can happen in shipping product due to
+        // socket reuse in ODSP between main and summarizer containers.
+        this.deltaConnection.emit("op", replayDocumentId, ops);
     }
 }
 
@@ -137,7 +139,7 @@ export class ReplayFileDeltaConnection extends EventEmitter implements IDocument
     public readonly maxMessageSize = ReplayMaxMessageSize;
     private readonly replayer: Replayer;
 
-    public constructor(public details: messages.IConnected, documentDeltaStorageService: FileDeltaStorageService) {
+    public constructor(public details: IConnected, documentDeltaStorageService: FileDeltaStorageService) {
         super();
         this.replayer = new Replayer(
             this,

@@ -3,12 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import * as api from "@microsoft/fluid-protocol-definitions";
 
 /**
  * Partial implementation of IDocumentStorageService
  */
-export abstract class ReadDocumentStorageServiceBase implements api.IDocumentStorageService {
+export abstract class ReadDocumentStorageServiceBase implements IDocumentStorageService {
     public abstract getVersions(versionId: string, count: number): Promise<api.IVersion[]>;
     public abstract getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null>;
     public abstract read(blobId: string): Promise<string>;
@@ -53,7 +54,7 @@ export abstract class ReplayController extends ReadDocumentStorageServiceBase {
      * @returns - Boolean, indicating if controller should be used.
      * If false is returned, caller should fallback to original storage.
      */
-    public abstract initStorage(storage: api.IDocumentStorageService): Promise<boolean>;
+    public abstract initStorage(storage: IDocumentStorageService): Promise<boolean>;
 
     /**
      * Returns sequence number to start processing ops
@@ -86,6 +87,6 @@ export abstract class ReplayController extends ReadDocumentStorageServiceBase {
      * @param fetchedOps - ops to process
      */
     public abstract replay(
-        emitter: (op: api.ISequencedDocumentMessage) => void,
+        emitter: (op: api.ISequencedDocumentMessage[]) => void,
         fetchedOps: api.ISequencedDocumentMessage[]): Promise<void>;
 }

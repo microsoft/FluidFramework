@@ -17,7 +17,7 @@ export interface IDebuggerUI {
      * Call when new version is downloaded from storage
      * Expect multiple callbacks.
      */
-    updateVerison(index: number, version: IVersion, seqNumber: number): void;
+    updateVersion(index: number, version: IVersion, seqNumber: number): void;
 
     /**
      * Called in response to successful onVersionSelection() or onSnapshotFileSelection() call
@@ -191,6 +191,7 @@ export class DebuggerUI {
             controller.onVersionSelection(index === 0 ? undefined : this.versions[index - 1]);
         };
 
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises
         fileSnapshot.addEventListener("change", async () => {
             const files = fileSnapshot.files;
             if (files) {
@@ -218,7 +219,7 @@ export class DebuggerUI {
         }
     }
 
-    public updateVerison(index: number, version: IVersion, seqNumber: number) {
+    public updateVersion(index: number, version: IVersion, seqNumber: number) {
         if (this.selector) {
             const option = this.selector[index + 1] as HTMLOptionElement;
             option.text = `${option.text},  seq = ${seqNumber}`;

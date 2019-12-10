@@ -1,0 +1,112 @@
+{
+    "Base-Definitions": {
+        "packages": [
+            "@microsoft/fluid-common-definitions",
+            "@microsoft/fluid-component-core-interfaces"
+        ]
+    },
+    "Protocol-Definitions": {
+        "packages": [
+            "@microsoft/fluid-protocol-definitions"
+        ],
+        "deps": [
+            "@microsoft/fluid-common-definitions"
+        ]
+    },
+    "Driver-Definitions": {
+        "packages": [
+            "@microsoft/fluid-driver-definitions"
+        ],
+        "deps": [
+            "Protocol-Definitions"
+        ]
+    },
+    "Container-Definitions": {
+        "packages": [
+            "@microsoft/fluid-container-definitions"
+        ],
+        "deps": [
+            "Driver-Definitions",
+            "@microsoft/fluid-component-core-interfaces"
+        ]
+    },
+    "Base-Protocol-Utils": {
+        "packages": [
+            "@microsoft/fluid-core-utils"
+        ],
+        "dirs": [
+            "packages/utils"
+        ],
+        "deps": [
+            "Base-Definitions",
+            "Protocol-Definitions"
+        ]
+    },
+    "Driver-Utils": {
+        "packages": [
+            "@microsoft/fluid-driver-utils"
+        ],
+        "deps": [
+            "Base-Protocol-Utils",
+            "Driver-Definitions"
+        ]
+    },
+    "Driver": {
+        "dirs": [
+            "packages/drivers/"
+        ],
+        "deps": [
+            "Driver-Utils",
+            "@microsoft/fluid-component-core-interfaces"
+        ]
+    },
+    "Loader": {
+        "dirs": [
+            "packages/loader/"
+        ],
+        "deps": [
+            "Container-Definitions",
+            "Driver-Utils"
+        ]
+    },
+    "Hosts": {
+        "dirs": [
+            "packages/hosts/"
+        ],
+        "deps": [
+            "Loader",
+            "Driver"
+        ]
+    },
+    "Runtime": {
+        "dirs": [
+            "packages/runtime/"
+        ],
+        "deps": [
+            "Container-Definitions",
+            "Driver-Utils"
+        ]
+    },
+    "Framework": {
+        "dirs": [
+            "packages/framework/"
+        ],
+        "deps": [
+            "Hosts",
+            "Runtime"
+        ]
+    },
+    "Component": {
+        "dirs": [
+            "packages/component/",
+            "samples/chaincode/",
+            "packages/agent/",
+            "packages/server/",
+            "packages/tools/",
+            "packages/test/"
+        ],
+        "deps": [
+            "Framework"
+        ]
+    }
+}

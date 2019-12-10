@@ -30,7 +30,8 @@ export class TeamScore extends React.Component<TeamScoreProps, TeamScoreState> {
     }
   }
 
-  componentWillMount() {
+  // eslint-disable-next-line react/no-deprecated
+componentWillMount() {
     // When the counter value changes, update the state of the React component
     this.props.counter.on("incremented", () => {
       this.setState({ score: this.props.counter.value });

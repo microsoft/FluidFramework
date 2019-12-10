@@ -3,22 +3,28 @@
  * Licensed under the MIT License.
  */
 
-import { IHostConfig, start } from "@microsoft/fluid-base-host";
-import { IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
-import { BaseTelemetryNullLogger, configurableUrlResolver } from "@microsoft/fluid-core-utils";
+import { BaseHost, IBaseHostConfig } from "@microsoft/fluid-base-host";
+import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
+import { Container } from "@microsoft/fluid-container-loader";
+import { BaseTelemetryNullLogger } from "@microsoft/fluid-core-utils";
+import {
+    IDocumentServiceFactory,
+    IFluidResolvedUrl,
+    IResolvedUrl,
+} from "@microsoft/fluid-driver-definitions";
+import { configurableUrlResolver } from "@microsoft/fluid-driver-utils";
 import { FluidAppOdspUrlResolver } from "@microsoft/fluid-fluidapp-odsp-urlresolver";
 import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
 import { OdspUrlResolver } from "@microsoft/fluid-odsp-urlresolver";
-import { IDocumentServiceFactory, IFluidResolvedUrl, IResolvedUrl } from "@microsoft/fluid-protocol-definitions";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
 import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
 import { RouterliciousUrlResolver } from "@microsoft/fluid-routerlicious-urlresolver";
-import { IResolvedPackage } from "@microsoft/fluid-web-code-loader";
+import { extractDetails, IResolvedPackage } from "@microsoft/fluid-web-code-loader";
+import { v4 } from "uuid";
 import { IOdspTokenApi, IRouterliciousTokenApi, ITokenApis } from "./utils";
+
 // tslint:disable-next-line: no-var-requires no-require-imports
 const packageJson = require("../package.json");
-
-const npm = "https://pragueauspkn-3873244262.azureedge.net";
 
 // This is insecure, but is being used for the time being for ease of use during the hackathon.
 const appTenants = [
@@ -41,7 +47,7 @@ const appTenants = [
  * @param clientSecret - The SPO clientSecret
  * @param scriptIds - the script tags the chaincode are attached to the view with
  */
-export async function loadFluidComponent(
+export async function loadFluidContainer(
     url: string,
     div: HTMLDivElement,
     tokenApiConfig: ITokenApis,
@@ -49,10 +55,13 @@ export async function loadFluidComponent(
     clientSecret?: string,
     pkg?: IResolvedPackage,
     scriptIds?: string[],
-): Promise<any> {
+): Promise<Container> {
 
-    let componentP: Promise<any>;
+    let containerP: Promise<Container>;
     let resolved: IResolvedUrl;
+
+    const resolvedPackge = pkg === undefined ? parseUrlToResolvedPackage(url) : pkg;
+
     if (isRouterliciousUrl(url)) {
         const routerliciousApiConfig = tokenApiConfig as IRouterliciousTokenApi;
         if (routerliciousApiConfig) {
@@ -75,9 +84,60 @@ export async function loadFluidComponent(
     } else {
         throw new Error("Non-Compatible Url.");
     }
-    componentP =
-        loadContainer(url, resolved as IFluidResolvedUrl, tokenApiConfig, div, clientId, clientSecret, pkg, scriptIds);
-    return componentP;
+    containerP = loadContainer(
+                    url,
+                    resolved as IFluidResolvedUrl,
+                    tokenApiConfig,
+                    div,
+                    clientId,
+                    clientSecret,
+                    resolvedPackge,
+                    scriptIds);
+    return containerP;
+}
+
+export function parseUrlToResolvedPackage(url: string): IResolvedPackage {
+    const pkg: IResolvedPackage =  {} as any;
+
+    const urlRequest = new URL(url);
+    const searchParams = urlRequest.searchParams;
+    const chaincode = searchParams.get("chaincode");
+
+    const cdn = searchParams.get("cdn") ?
+                    searchParams.get("cdn") : "https://pragueauspkn-3873244262.azureedge.net";
+    const entryPoint = searchParams.get("entrypoint");
+    let codeDetails: IFluidCodeDetails;
+
+    if (chaincode.indexOf("http") === 0) {
+        codeDetails = {
+            config: {
+                [`@gateway:cdn`]: chaincode,
+            },
+            package: {
+                fluid: {
+                    browser: {
+                        umd: {
+                            files: [chaincode],
+                            library: entryPoint,
+                        },
+                    },
+                },
+                name: `@gateway/${v4()}`,
+                version: "0.0.0",
+            },
+        };
+    } else {
+        const details = extractDetails(chaincode);
+        codeDetails = {
+            config: {
+                [`@${details.scope}:cdn`]: cdn,
+            },
+            package: chaincode,
+        };
+    }
+    pkg.details = codeDetails;
+
+    return pkg;
 }
 
 async function loadContainer(
@@ -89,7 +149,7 @@ async function loadContainer(
     secret: string,
     pkg?: IResolvedPackage,
     scriptIds?: string[],
-): Promise<any> {
+): Promise<Container> {
 
     let documentServiceFactory: IDocumentServiceFactory;
     const protocol = new URL(resolved.url).protocol;
@@ -114,23 +174,19 @@ async function loadContainer(
         "",
         new Map<string, IResolvedUrl>([[href, resolved]]));
 
-    const hostConf: IHostConfig = {
+    const hostConf: IBaseHostConfig = {
         documentServiceFactory,
         urlResolver: resolver,
     };
     // tslint:disable-next-line: no-unsafe-any
-    return start(
+    return BaseHost.start(
+        hostConf,
         href,
         // tslint:disable-next-line: no-unsafe-any
         resolved, // resolved, IResolvedUrl,
         pkg, // pkg, IResolvedPackage, (gateway/routes/loader has an example (pkgP))
         scriptIds, // scriptIds, string[], defines the id of the script tag added to the page
-        npm, // string,
-        {},
-        {},
         div,
-        hostConf,
-        new Map<string, IProxyLoaderFactory>(),
     );
 }
 
@@ -169,13 +225,13 @@ const spoUrls = [
  * @param secret - The SPO clientSecret.
  * @param libraryName - if loaded from React, this should be "reactLoader"
  */
-export async function loadIFramedFluidComponent(
+export async function loadIFramedFluidContainer(
     url: string,
     div: HTMLDivElement,
     tokenApiConfig: ITokenApis = { getToken: () => Promise.resolve("") },
     clientId?: string,
     secret?: string,
-    libraryName: string = "tinyWebLoader"): Promise<any> {
+    libraryName: string = "tinyWebLoader"): Promise<void> {
 
     let scriptUrl: string;
     // main.bundle.js refers to the output of webpacking this file.
@@ -212,7 +268,7 @@ export async function loadIFramedFluidComponent(
         <script>
                 console.log("Welcome to the IFrame");
                 function start(url, token, appId) {
-                    ${libraryName}.loadFluidComponent(
+                    ${libraryName}.loadFluidContainer(
                         url,
                         document.getElementById("componentDiv"),
                         tokenApiConfig,

@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { Deferred, readAndParse } from "@microsoft/fluid-core-utils";
+import { Deferred } from "@microsoft/fluid-core-utils";
+import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
+import { readAndParse } from "@microsoft/fluid-driver-utils";
 import {
     IDocumentAttributes,
-    IDocumentStorageService,
     ISequencedDocumentMessage,
     ISnapshotTree,
     IVersion,
@@ -106,11 +107,12 @@ export class DebugReplayController extends ReplayController implements IDebugger
     }
 
     public onSnapshotFileSelection(file: File) {
-        if (!file.name.match(/^snapshot.*\.json/)) {
+
+        if (!/^snapshot.*\.json/.exec(file.name)) {
             alert(`Incorrect file name: ${file.name}`);
             return;
         }
-        if (file.name.match(/.*_expanded.*/)) {
+        if (/.*_expanded.*/.exec(file.name)) {
             alert(`Incorrect file name - please use non-extended files: ${file.name}`);
             return;
         }
@@ -174,7 +176,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
         if (!this.isSelectionMade()) {
             this.versionCount--;
             this.ui.updateVersionText(this.versionCount);
-            this.ui.updateVerison(index, version, seqV);
+            this.ui.updateVersion(index, version, seqV);
         }
 
     }
@@ -272,8 +274,9 @@ export class DebugReplayController extends ReplayController implements IDebugger
     }
 
     public async replay(
-            emitter: (op: ISequencedDocumentMessage) => void,
+            emitter: (op: ISequencedDocumentMessage[]) => void,
             fetchedOps: ISequencedDocumentMessage[]): Promise<void> {
+        // eslint-disable-next-line no-constant-condition
         while (true) {
             if (fetchedOps.length === 0) {
                 this.ui.updateNextOpText([]);
@@ -302,7 +305,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
                 playOps = fetchedOps.splice(0, this.stepsToPlay);
                 this.stepsToPlay = 0;
             }
-            playOps.map(emitter);
+            emitter(playOps);
         }
     }
 

@@ -3,12 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { BatchManager, INetworkErrorProperties, NetworkError } from "@microsoft/fluid-core-utils";
+import { BatchManager } from "@microsoft/fluid-core-utils";
+import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
+import { NetworkError } from "@microsoft/fluid-driver-utils";
 import {
     ConnectionMode,
     IClient,
+    IConnect,
+    IConnected,
     IContentMessage,
-    IDocumentDeltaConnection,
     IDocumentMessage,
     ISequencedDocumentMessage,
     IServiceConfiguration,
@@ -19,7 +22,6 @@ import {
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { debug } from "./debug";
-import { IConnect, IConnected } from "./messages";
 
 const protocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
 
@@ -31,15 +33,14 @@ export function createErrorObject(handler: string, error: any, canRetry = true) 
     // If it's not (and it's an object), we would not get its content.
     // That is likely Ok, as it may contain PII that will get logged to telemetry,
     // so we do not want it there.
-    /// Also add actual error object(socketError), for driver to be able to parse it and reason over it.
+    // Also add actual error object(socketError), for driver to be able to parse it and reason over it.
     const errorObj = new NetworkError(
         `socket.io error: ${handler}: ${error}`,
-        [
-            [INetworkErrorProperties.canRetry, canRetry],
-            ["socketError", error],
-        ],
+        undefined,
+        canRetry,
     );
 
+    (errorObj as any).socketError = error;
     return errorObj;
 }
 
@@ -99,7 +100,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
 
         const deltaConnection = new DocumentDeltaConnection(socket, id);
 
-        await deltaConnection.initialize(connectMessage);
+        await deltaConnection.initialize(connectMessage, timeoutMs);
         return deltaConnection;
     }
 
@@ -136,11 +137,11 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
                 this.socket.emit(submitType, this.clientId, work);
             });
 
-        // tslint:disable-next-line:no-non-null-assertion
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.socket.on("op", this.earlyOpHandler!);
-        // tslint:disable-next-line:no-non-null-assertion
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.socket.on("op-content", this.earlyContentHandler!);
-        // tslint:disable-next-line:no-non-null-assertion
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.socket.on("signal", this.earlySignalHandler!);
     }
 
@@ -307,11 +308,14 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         assert(this.listeners(event).length === 0, "re-registration of events is not implemented");
 
         // Register for the event on socket.io
-        this.addTrackedListener(
-            event,
-            (...args: any[]) => {
-                this.emit(event, ...args);
-            });
+        // "error" is special - we already subscribed to it to modify error object on the fly.
+        if (event !== "error") {
+            this.addTrackedListener(
+                event,
+                (...args: any[]) => {
+                    this.emit(event, ...args);
+                });
+        }
 
         // And then add the listener to our event emitter
         super.on(event, listener);
@@ -368,7 +372,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         this.removeTrackedListeners(false);
     }
 
-    protected async initialize(connectMessage: IConnect) {
+    protected async initialize(connectMessage: IConnect, timeout: number) {
         this._details = await new Promise<IConnected>((resolve, reject) => {
             // Listen for connection issues
             this.addConnectionListener("connect_error", (error) => {
@@ -383,16 +387,30 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
                 reject(createErrorObject("connect_timeout", "Socket connection timed out"));
             });
 
+            // socket can be disconnected while waiting for Fluid protocol messages
+            // (connect_document_error / connect_document_success)
+            this.addConnectionListener("disconnect", (reason) => {
+                this.disconnect(true);
+                reject(createErrorObject("disconnect", reason));
+            });
+
             this.addConnectionListener("connect_document_success", (response: IConnected) => {
                 this.removeTrackedListeners(true);
                 resolve(response);
             });
 
+            // WARNING: this has to stay as addTrackedListener listener and not be removed after successful connection.
+            // Reason: this.on() implementation does not subscribe to "error" socket events to propagate it to consumers
+            // of this class - it relies on this code to do so.
             this.addTrackedListener("error", ((error) => {
-                debug(`Error in documentDeltaConection: ${error}`);
+                // First, raise an error event, to give clients a chance to observe error contents
                 // This includes "Invalid namespace" error, which we consider critical (reconnecting will not help)
+                const errorObj = createErrorObject("error", error, error !== "Invalid namespace");
+                reject(errorObj);
+                this.emit("error", errorObj);
+
+                // Safety net - disconnect socket if client did not do so as result of processing "error" event.
                 this.disconnect(true);
-                reject(createErrorObject("error", error, error !== "Invalid namespace"));
             }));
 
             this.addConnectionListener("connect_document_error", ((error) => {
@@ -404,20 +422,25 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
             }));
 
             this.socket.emit("connect_document", connectMessage);
+
+            // Give extra 2 seconds for handshake on top of socket connection timeout
+            setTimeout(() => {
+                reject(createErrorObject("Timeout waiting for handshake from ordering service", undefined));
+            }, timeout + 2000);
         });
     }
 
-    private earlyOpHandler ? = (documentId: string, msgs: ISequencedDocumentMessage[]) => {
+    private earlyOpHandler ?= (documentId: string, msgs: ISequencedDocumentMessage[]) => {
         debug("Queued early ops", msgs.length);
         this.queuedMessages.push(...msgs);
     }
 
-    private earlyContentHandler ? = (msg: IContentMessage) => {
+    private earlyContentHandler ?= (msg: IContentMessage) => {
         debug("Queued early contents");
         this.queuedContents.push(msg);
     }
 
-    private earlySignalHandler ? = (msg: ISignalMessage) => {
+    private earlySignalHandler ?= (msg: ISignalMessage) => {
         debug("Queued early signals");
         this.queuedSignals.push(msg);
     }
@@ -445,21 +468,21 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
 
     private addConnectionListener(event: string, listener: (...args: any[]) => void) {
         this.socket.on(event, listener);
-        this.trackedListeners.push({event, connectionListener: true, listener});
+        this.trackedListeners.push({ event, connectionListener: true, listener });
     }
 
     private addTrackedListener(event: string, listener: (...args: any[]) => void) {
         this.socket.on(event, listener);
-        this.trackedListeners.push({event, connectionListener: true, listener});
+        this.trackedListeners.push({ event, connectionListener: true, listener });
     }
 
     private removeTrackedListeners(connectionListenerOnly) {
         const remaining: IEventListener[] = [];
-        for (const {event, connectionListener, listener} of this.trackedListeners) {
+        for (const { event, connectionListener, listener } of this.trackedListeners) {
             if (!connectionListenerOnly || connectionListener) {
                 this.socket.off(event, listener);
             } else {
-                remaining.push({event, connectionListener, listener});
+                remaining.push({ event, connectionListener, listener });
             }
         }
         this.trackedListeners = remaining;

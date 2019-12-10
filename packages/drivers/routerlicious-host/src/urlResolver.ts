@@ -9,7 +9,7 @@ import {
 import {
     IResolvedUrl,
     IUrlResolver,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@microsoft/fluid-driver-definitions";
 import Axios from "axios";
 
 export class ContainerUrlResolver implements IUrlResolver {
@@ -43,6 +43,7 @@ export class ContainerUrlResolver implements IUrlResolver {
 
             this.cache.set(request.url, resolvedP.then((resolved) => resolved.data));
         }
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return this.cache.get(request.url)!;
     }
 }

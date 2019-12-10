@@ -14,7 +14,9 @@
         "inlineSources": true,
         "jsx": "react",
         "experimentalDecorators": true,
-        "emitDecoratorMetadata": true
+        "emitDecoratorMetadata": true,
+        "incremental": true,
+        "types": []
     },
     "include": [
         "src/**/*"

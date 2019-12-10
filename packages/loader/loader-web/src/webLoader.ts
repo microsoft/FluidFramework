@@ -128,7 +128,7 @@ class ScriptManager {
     }
 
     public loadScripts(
-        umdDetails: { files: string[]; library: string; },
+        umdDetails: { files: string[]; library: string },
         packageUrl: string,
         scriptIds?: string[],
         // tslint:disable-next-line: array-type
@@ -136,7 +136,7 @@ class ScriptManager {
         return umdDetails.files.map(async (bundle, index) => {
             // Load file as cdn Link (starts with http)
             // Or create a cdnLink from packageURl
-            const url = bundle.indexOf("http") === 0
+            const url = bundle.startsWith("http")
                 ? bundle
                 : `${packageUrl}/${bundle}`;
             return this.loadScript(url, scriptIds !== undefined ? scriptIds[index] : undefined);
@@ -312,7 +312,7 @@ export class WebCodeLoader implements ICodeLoader {
 
         const fullPkg = typeof details.package === "string"
             ? details.package // just return it if it's a string e.g. "@fluid-example/clicker@0.1.1"
-            : !details.package.version // if it doesn't exist, let's make it from the packge detals
+            : !details.package.version // if it doesn't exist, let's make it from the package details
                 ? `${details.package.name}` // e.g. @fluid-example/clicker
                 : `${details.package.name}@${details.package.version}`; // rebuild e.g. @fluid-example/clicker@0.1.1
         const parsed = extractDetails(fullPkg);

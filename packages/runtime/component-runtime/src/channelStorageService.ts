@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentStorageService, ISnapshotTree } from "@microsoft/fluid-protocol-definitions";
+import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
+import { ISnapshotTree } from "@microsoft/fluid-protocol-definitions";
 import { IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
 
 export class ChannelStorageService implements IObjectStorageService {
@@ -38,7 +39,7 @@ export class ChannelStorageService implements IObjectStorageService {
 
         // tslint:disable-next-line: strict-boolean-expressions
         return this.extraBlobs && this.extraBlobs.has(id)
-            // tslint:disable-next-line: no-non-null-assertion
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             ? Promise.resolve(this.extraBlobs.get(id)!)
             : this.storage.read(id);
     }

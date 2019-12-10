@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import {
     IComponent,
     IComponentConfiguration,
@@ -10,22 +11,22 @@ import {
     IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
 import {
-    ConnectionState,
     IAudience,
     ICodeLoader,
     IContainerContext,
     IDeltaManager,
     ILoader,
-    IQuorum,
     IRuntime,
     IRuntimeFactory,
-    ITelemetryLogger,
 } from "@microsoft/fluid-container-definitions";
-import { raiseConnectedEvent } from "@microsoft/fluid-core-utils";
+import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
+import { raiseConnectedEvent } from "@microsoft/fluid-protocol-base";
 import {
+    ConnectionState,
+    IClientDetails,
     IDocumentAttributes,
     IDocumentMessage,
-    IDocumentStorageService,
+    IQuorum,
     ISequencedDocumentMessage,
     IServiceConfiguration,
     ISignalMessage,
@@ -54,7 +55,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
         submitSignalFn: (contents: any) => void,
         snapshotFn: (message: string) => Promise<void>,
-        closeFn: () => void,                        // When would the context ever close?
+        closeFn: (reason?: string) => void,
         version: string,
     ): Promise<ContainerContext> {
         const context = new ContainerContext(
@@ -90,8 +91,16 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         return this.container.clientId;
     }
 
+    /**
+     * DEPRECATED use clientDetails.type
+     * back-compat: 0.11 clientType
+     */
     public get clientType(): string {
         return this.container.clientType;
+    }
+
+    public get clientDetails(): IClientDetails {
+        return this.container.clientDetails;
     }
 
     public get existing(): boolean | undefined {
@@ -205,6 +214,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
 
     public async postProcess(message: ISequencedDocumentMessage, local: boolean, context: any): Promise<void> {
         // included for back compat with documents created prior to postProcess deprecation
+        // eslint-disable-next-line @typescript-eslint/unbound-method
         if (!this.runtime || !this.runtime.postProcess) {
             return Promise.reject("Runtime must query for IMessageHandler to signal it does not implement postProcess");
         }

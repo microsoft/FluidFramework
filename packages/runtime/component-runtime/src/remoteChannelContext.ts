@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { ConnectionState } from "@microsoft/fluid-container-definitions";
-import { readAndParse, SummaryTracker } from "@microsoft/fluid-core-utils";
+import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
+import { readAndParse } from "@microsoft/fluid-driver-utils";
 import {
-    IDocumentStorageService,
+    ConnectionState,
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITree,
@@ -18,6 +18,7 @@ import {
     IComponentContext,
     IComponentRuntime,
 } from "@microsoft/fluid-runtime-definitions";
+import { SummaryTracker } from "@microsoft/fluid-runtime-utils";
 import * as assert from "assert";
 import { createServiceEndpoints, IChannelContext, snapshotChannel } from "./channelContext";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
@@ -68,7 +69,7 @@ export class RemoteChannelContext implements IChannelContext {
             return;
         }
 
-        // tslint:disable-next-line: no-non-null-assertion
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.connection!.setConnectionState(value);
     }
 
@@ -76,11 +77,11 @@ export class RemoteChannelContext implements IChannelContext {
         this.summaryTracker.invalidate();
 
         if (this.isLoaded) {
-            // tslint:disable-next-line: no-non-null-assertion
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             this.connection!.process(message, local);
         } else {
             assert(!local);
-            // tslint:disable-next-line: no-non-null-assertion
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             this.pending!.push(message);
         }
     }
@@ -150,7 +151,7 @@ export class RemoteChannelContext implements IChannelContext {
         this.connection = connection;
 
         // Send all pending messages to the channel
-        // tslint:disable-next-line: no-non-null-assertion
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         for (const message of this.pending!) {
             connection.process(message, false);
         }

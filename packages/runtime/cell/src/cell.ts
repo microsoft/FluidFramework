@@ -98,13 +98,11 @@ export class SharedCell extends SharedObject implements ISharedCell {
      * {@inheritDoc ISharedCell.set}
      */
     public set(value: any) {
-        let operationValue: ICellValue;
-
         if (SharedObject.is(value)) {
             throw new Error("SharedObject sets are no longer supported. Instead set the SharedObject handle.");
         }
 
-        operationValue = {
+        const operationValue: ICellValue = {
             type: ValueType[ValueType.Plain],
             value: this.toSerializable(value),
         };
@@ -145,8 +143,8 @@ export class SharedCell extends SharedObject implements ISharedCell {
     public snapshot(): ITree {
         // Get a serializable form of data
         const content: ICellValue = {
-                type: ValueType[ValueType.Plain],
-                value: this.toSerializable(this.data),
+            type: ValueType[ValueType.Plain],
+            value: this.toSerializable(this.data),
         };
 
         // And then construct the tree for it

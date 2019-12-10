@@ -2,9 +2,13 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ITelemetryBaseLogger } from "@microsoft/fluid-container-definitions";
-import { ChildLogger } from "@microsoft/fluid-core-utils";
-import { IDocumentService, IDocumentServiceFactory, IResolvedUrl } from "@microsoft/fluid-protocol-definitions";
+
+import { ITelemetryBaseLogger } from "@microsoft/fluid-common-definitions";
+import {
+  IDocumentService,
+  IDocumentServiceFactory,
+  IResolvedUrl,
+} from "@microsoft/fluid-driver-definitions";
 import { IOdspResolvedUrl } from "./contracts";
 import { FetchWrapper, IFetchWrapper } from "./fetchWrapper";
 import { getSocketIo } from "./getSocketIo";
@@ -16,7 +20,7 @@ import { OdspDocumentService } from "./OdspDocumentService";
  * use the sharepoint implementation.
  */
 export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
-    public readonly protocolName = "fluid-odsp:";
+  public readonly protocolName = "fluid-odsp:";
   /**
    * @param appId - app id used for telemetry for network requests.
    * @param getStorageToken - function that can provide the storage token for a given site. This is
@@ -30,12 +34,12 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
   constructor(
     private readonly appId: string,
     private readonly getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
-    private readonly getWebsocketToken: () => Promise<string | null>,
+    private readonly getWebsocketToken: (refresh: boolean) => Promise<string | null>,
     private readonly logger: ITelemetryBaseLogger,
     private readonly storageFetchWrapper: IFetchWrapper = new FetchWrapper(),
     private readonly deltasFetchWrapper: IFetchWrapper = new FetchWrapper(),
     private readonly odspCache: OdspCache = new OdspCache(),
-  ) {}
+  ) { }
 
   public async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
     const odspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
@@ -48,7 +52,7 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
       odspResolvedUrl.endpoints.snapshotStorageUrl,
       this.getStorageToken,
       this.getWebsocketToken,
-      ChildLogger.create(this.logger, "fluid:telemetry:OdspDriver"),
+      this.logger,
       this.storageFetchWrapper,
       this.deltasFetchWrapper,
       Promise.resolve(getSocketIo()),

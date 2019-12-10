@@ -7,11 +7,13 @@ import {
     IConnectionDetails,
 } from "@microsoft/fluid-container-definitions";
 import {
+    IDocumentDeltaConnection,
+    IDocumentService,
+} from "@microsoft/fluid-driver-definitions";
+import {
     ConnectionMode,
     IClient,
-    IDocumentDeltaConnection,
     IDocumentMessage,
-    IDocumentService,
     INack,
 } from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
@@ -35,18 +37,27 @@ export class DeltaConnection extends EventEmitter {
     }
 
     public get connected(): boolean {
-        return this._connected;
+        return !!this._connection;
     }
 
     private readonly _details: IConnectionDetails;
     private _nacked = false;
-    private _connected = true;
 
     private readonly forwardEvents = ["op", "op-content", "signal", "error", "pong"];
     private readonly nonForwardEvents = ["nack", "disconnect"];
 
-    private constructor(private readonly connection: IDocumentDeltaConnection) {
+    private _connection?: IDocumentDeltaConnection;
+
+    private get connection(): IDocumentDeltaConnection {
+        if (!this._connection) {
+            throw new Error("Connection is closed!");
+        }
+        return this._connection;
+    }
+
+    private constructor(connection: IDocumentDeltaConnection) {
         super();
+        this._connection = connection;
 
         this._details = {
             claims: connection.claims,
@@ -71,8 +82,8 @@ export class DeltaConnection extends EventEmitter {
         });
 
         connection.on("disconnect", (reason) => {
-            this._connected = false;
             this.emit("disconnect", reason);
+            this.close();
         });
     }
 
@@ -80,8 +91,11 @@ export class DeltaConnection extends EventEmitter {
      * Closes the delta connection. This disconnects the socket and clears any listeners
      */
     public close() {
-        this._connected = false;
-        this.connection.disconnect();
+        if (this._connection) {
+            const connection = this._connection;
+            this._connection = undefined;
+            connection.disconnect();
+        }
         this.removeAllListeners();
     }
 
@@ -110,7 +124,7 @@ export class DeltaConnection extends EventEmitter {
         // Note that we delay subscribing to op / op-content / signal on purpose, as
         // that is used as a signal in DocumentDeltaConnection to know if anyone has subscribed
         // to these events, and thus stop accumulating ops / signals in early handlers.
-        if (this.forwardEvents.indexOf(event) !== -1) {
+        if (this.forwardEvents.includes(event)) {
             assert(this.connection.listeners(event).length === 0, "re-registration of events is not implemented");
             this.connection.on(
                 event,
@@ -119,7 +133,7 @@ export class DeltaConnection extends EventEmitter {
                 });
         } else {
             // These are events that we already subscribed to and already emit on object.
-            assert(this.nonForwardEvents.indexOf(event) !== -1);
+            assert(this.nonForwardEvents.includes(event));
         }
 
         // And then add the listener to our event emitter

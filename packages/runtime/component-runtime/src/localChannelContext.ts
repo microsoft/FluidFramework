@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { ConnectionState } from "@microsoft/fluid-container-definitions";
-import { SummaryTracker } from "@microsoft/fluid-core-utils";
+import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import {
-    IDocumentStorageService,
+    ConnectionState,
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITree,
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
 import { IChannel, IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { SummaryTracker } from "@microsoft/fluid-runtime-utils";
 import * as assert from "assert";
 import { createServiceEndpoints, IChannelContext, snapshotChannel } from "./channelContext";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
@@ -58,7 +58,7 @@ export class LocalChannelContext implements IChannelContext {
             return;
         }
 
-        // tslint:disable-next-line: no-non-null-assertion
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.connection!.setConnectionState(value);
     }
 
@@ -66,7 +66,7 @@ export class LocalChannelContext implements IChannelContext {
         assert(this.attached);
         this.summaryTracker.invalidate();
 
-        // tslint:disable-next-line: no-non-null-assertion
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.connection!.process(message, local);
     }
 

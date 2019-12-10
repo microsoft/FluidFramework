@@ -1,21 +1,16 @@
 {
   "name": "@fluid-example/collab-compose",
   "version": "0.0.7",
-  "author": "Microsoft",
   "repository": {
     "type": "git",
     "url": "https://github.com/OfficeDev/Office-Addin-TaskPane.git"
   },
   "license": "MIT",
-  "config": {
-    "app-to-debug": "outlook",
-    "app-type-to-debug": "desktop",
-    "dev-server-port": 3000
-  },
+  "author": "Microsoft",
   "scripts": {
     "build": "webpack -p --mode production --https false",
-    "build:dev": "webpack --mode development --https false",
     "build-dev": "webpack --mode development --https false && echo . && echo . && echo . && echo Please use 'build:dev' instead of 'build-dev'.",
+    "build:dev": "webpack --mode development --https false",
     "dev-server": "webpack-dev-server --mode development",
     "start": "office-addin-debugging start manifest.xml",
     "start:desktop": "office-addin-debugging start manifest.xml desktop",
@@ -23,6 +18,11 @@
     "stop": "office-addin-debugging stop manifest.xml",
     "validate": "office-addin-manifest validate manifest.xml",
     "watch": "webpack --mode development --watch"
+  },
+  "config": {
+    "app-to-debug": "outlook",
+    "app-type-to-debug": "desktop",
+    "dev-server-port": 3000
   },
   "dependencies": {
     "@microsoft/fluid-base-host": "^0.11.14879",

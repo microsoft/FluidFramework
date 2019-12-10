@@ -22,6 +22,7 @@ import * as path from "path";
 import * as redis from "redis";
 import * as favicon from "serve-favicon";
 import * as expiry from "static-expiry";
+import { v4 } from "uuid";
 import * as winston from "winston";
 import { AccountManager } from "./accounts";
 import { saveSpoTokens } from "./gateway-odsp-utils";
@@ -211,7 +212,14 @@ export function create(
             for (const localAccount of localAccounts) {
                 // tslint:disable-next-line:possible-timing-attack
                 if (localAccount.username === username && localAccount.password === password) {
-                    return done(null, localAccount.username);
+                    const name = getRandomName(" ", true);
+                    return done(
+                        null,
+                        {
+                            displayName: name,
+                            name,
+                            sub: localAccount.username,
+                        });
                 }
             }
 
@@ -291,7 +299,12 @@ export function create(
 
     app.use((request, response, next) => {
         if (!request.session.guest) {
-            request.session.guest = { name: getRandomName(" ", true) };
+            const name = getRandomName(" ", true);
+            request.session.guest = {
+                displayName: name,
+                sub: `guest-${v4()}`,
+                name,
+            };
         }
 
         next();

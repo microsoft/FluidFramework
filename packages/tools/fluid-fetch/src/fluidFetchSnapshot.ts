@@ -7,6 +7,8 @@ import { fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
 import {
     IDocumentService,
     IDocumentStorageService,
+} from "@microsoft/fluid-driver-definitions";
+import {
     ISnapshotTree,
     IVersion,
 } from "@microsoft/fluid-protocol-definitions";
@@ -100,7 +102,9 @@ async function fetchBlobsFromSnapshotTree(
             console.error(`ERROR: Unable to get versions for ${component}`);
             continue;
         }
-        const componentSnapShotTree = await storage.getSnapshotTree(componentVersions[0]);
+        const componentSnapShotTree = await reportErrors(
+            `getSnapshotTree ${componentVersions[0].id}`,
+            storage.getSnapshotTree(componentVersions[0]));
         if (componentSnapShotTree === null) {
             // tslint:disable-next-line: max-line-length
             console.error(`No component tree for component = ${component}, path = ${prefix}, version = ${componentVersions[0].id}`);
@@ -206,11 +210,20 @@ async function saveSnapshot(name: string, blobs: IBlob[], saveDir: string) {
 }
 
 async function fetchBlobsFromVersion(storage: IDocumentStorageService, version: IVersion) {
-    const tree = await storage.getSnapshotTree(version);
+    const tree = await reportErrors(`getSnapshotTree ${version.id}`, storage.getSnapshotTree(version));
     if (!tree) {
         return Promise.reject(new Error("Failed to load snapshot tree"));
     }
     return fetchBlobsFromSnapshotTree(storage, tree);
+}
+
+async function reportErrors<T>(message: string, res: Promise<T>) {
+    try {
+        return await res;
+    } catch (error) {
+        console.error(`Error calling ${message}`);
+        throw error;
+    }
 }
 
 export async function fluidFetchSnapshot(documentService?: IDocumentService, saveDir?: string) {
@@ -229,7 +242,9 @@ export async function fluidFetchSnapshot(documentService?: IDocumentService, sav
 
     const storage = await documentService.connectToStorage();
     let version: IVersion | undefined;
-    const versions = await storage.getVersions(latestVersionsId, paramNumSnapshotVersions);
+    const versions = await reportErrors(
+        `getVersions ${latestVersionsId}`,
+        storage.getVersions(latestVersionsId, paramNumSnapshotVersions));
     if (dumpSnapshotVersions) {
         console.log("Snapshot versions");
         console.log(versions);

@@ -40,8 +40,9 @@ export const writeFileAsync = util.promisify(fs.writeFile);
 export const unlinkAsync = util.promisify(fs.unlink);
 export const existsSync = fs.existsSync;
 export const realpathAsync = util.promisify(fs.realpath);
-export const rmdirAsync = util.promisify(fs.rmdir);
 export const symlinkAsync = util.promisify(fs.symlink);
+export const mkdirAsync = util.promisify(fs.mkdir);
+export const copyFileAsync = util.promisify(fs.copyFile);
 
 export interface ExecAsyncResult {
     error: child_process.ExecException | null;
@@ -54,4 +55,33 @@ export async function execAsync(command: string, options: child_process.ExecOpti
             resolve({ error, stdout, stderr });
         })
     });
+}
+
+export async function execWithErrorAsync(command: string, options: child_process.ExecOptions, errorPrefix: string): Promise<ExecAsyncResult> {
+    const ret = await execAsync(command, options);
+    printExecError(ret, command, errorPrefix);
+    return ret;
+}
+
+async function rimrafAsync(deletePath: string) {
+    return execAsync(`rimraf "${deletePath}"`, {
+        env: { PATH: `${process.env["PATH"]}${path.delimiter}${path.join(__dirname, "..", "..", "node_modules", ".bin")}` }
+    });
+}
+
+export async function rimrafWithErrorAsync(deletePath: string, errorPrefix: string) {
+    const ret = await rimrafAsync(deletePath);
+    printExecError(ret, `rimraf ${deletePath}`, errorPrefix);
+    return ret;
+}
+
+function printExecError(ret: ExecAsyncResult, command: string, errorPrefix: string) {
+    if (ret.error) {
+        console.error(`${errorPrefix}: error during command ${command}`)
+        console.error(ret.stdout ? `${errorPrefix}: ${ret.stdout}\n${ret.stderr}` : `${errorPrefix}: ${ret.stderr}`);
+    } else if (ret.stderr) {
+        // no error code but still error messages, treat them is non fatal warnings
+        console.warn(`${errorPrefix}: warning during command ${command}`);
+        console.warn(`${errorPrefix}: ${ret.stderr}`);
+    }
 }

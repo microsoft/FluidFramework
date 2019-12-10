@@ -3,14 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import * as messages from "@microsoft/fluid-driver-base";
 import {
-    ConnectionMode,
-    IContentMessage,
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
-    IDocumentMessage,
     IDocumentStorageService,
+} from "@microsoft/fluid-driver-definitions";
+import {
+    ConnectionMode,
+    IConnected,
+    IContentMessage,
+    IDocumentMessage,
     ISequencedDocumentMessage,
     IServiceConfiguration,
     ISignalClient,
@@ -23,6 +25,8 @@ import { debug } from "./debug";
 import { ReplayController } from "./replayController";
 
 const MaxBatchDeltas = 2000;
+
+const ReplayDocumentId = "documentId";
 
 export class ReplayControllerStatic extends ReplayController {
     private static readonly DelayInterval = 50;
@@ -112,7 +116,7 @@ export class ReplayControllerStatic extends ReplayController {
     }
 
     public replay(
-            emitter: (op: ISequencedDocumentMessage) => void,
+            emitter: (op: ISequencedDocumentMessage[]) => void,
             fetchedOps: ISequencedDocumentMessage[]): Promise<void> {
         let current = this.skipToIndex(fetchedOps);
 
@@ -163,7 +167,7 @@ export class ReplayControllerStatic extends ReplayController {
                     }
                 }
                 scheduleNext(nextInterval);
-                playbackOps.map(emitter);
+                emitter(playbackOps);
             };
             const scheduleNext = (nextInterval: number) => {
                 if (nextInterval >= 0 && current < fetchedOps.length) {
@@ -189,7 +193,7 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
         documentStorageService: IDocumentDeltaStorageService,
         controller: ReplayController): IDocumentDeltaConnection {
 
-        const connection: messages.IConnected = {
+        const connection: IConnected = {
             claims: ReplayDocumentDeltaConnection.claims,
             clientId: "",
             existing: true,
@@ -225,7 +229,7 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
     private static readonly ReplayMaxMessageSize = 16 * 1024;
 
     private static readonly claims: ITokenClaims = {
-        documentId: "",
+        documentId: ReplayDocumentId,
         scopes: [],
         tenantId: "",
         user: {
@@ -280,7 +284,7 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
     public readonly maxMessageSize = ReplayDocumentDeltaConnection.ReplayMaxMessageSize;
 
     constructor(
-        public details: messages.IConnected,
+        public details: IConnected,
     ) {
         super();
     }
@@ -327,7 +331,9 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
                 continue;
             }
 
-            replayP = replayP.then(() => controller.replay((op) => this.emit("op", op.clientId, op), fetchedOps));
+            replayP = replayP.then(() => {
+                return controller.replay((ops) => this.emit("op", ReplayDocumentId, ops), fetchedOps);
+            });
 
             currentOp += fetchedOps.length;
             done = controller.isDoneFetch(currentOp, fetchedOps[fetchedOps.length - 1].timestamp);

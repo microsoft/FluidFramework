@@ -6,10 +6,9 @@
 import {
     IDocumentService,
     IDocumentServiceFactory,
-    IErrorTrackingService,
-    IFluidResolvedUrl,
     IResolvedUrl,
-} from "@microsoft/fluid-protocol-definitions";
+} from "@microsoft/fluid-driver-definitions";
+import { IErrorTrackingService } from "@microsoft/fluid-protocol-definitions";
 import { ICredentials, IGitCache } from "@microsoft/fluid-server-services-client";
 import { parse } from "url";
 import { DocumentService } from "./documentService";
@@ -41,16 +40,11 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
      */
     public createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
         if (resolvedUrl.type !== "fluid") {
-            if (resolvedUrl.type === "prague") {
-                // tslint:disable-next-line:max-line-length
-                console.warn("IFluidResolvedUrl type === 'prague' has been deprecated. Please create IFluidResolvedUrls of type 'fluid' in the future.");
-            } else {
-                // tslint:disable-next-line:max-line-length
-                return Promise.reject("Only Fluid components currently supported in the RouterliciousDocumentServiceFactory");
-            }
+            // tslint:disable-next-line:max-line-length
+            return Promise.reject("Only Fluid components currently supported in the RouterliciousDocumentServiceFactory");
         }
 
-        const fluidResolvedUrl = resolvedUrl as IFluidResolvedUrl;
+        const fluidResolvedUrl = resolvedUrl;
         const storageUrl = fluidResolvedUrl.endpoints.storageUrl;
         const ordererUrl = fluidResolvedUrl.endpoints.ordererUrl;
         const deltaStorageUrl = fluidResolvedUrl.endpoints.deltaStorageUrl;

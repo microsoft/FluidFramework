@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidResolvedUrl, IResolvedUrl, IWebResolvedUrl, ScopeType } from "@microsoft/fluid-protocol-definitions";
+import { IFluidResolvedUrl, IResolvedUrl, IWebResolvedUrl } from "@microsoft/fluid-driver-definitions";
+import { ScopeType } from "@microsoft/fluid-protocol-definitions";
 import { getR11sToken, IAlfredUser } from "@microsoft/fluid-routerlicious-urlresolver";
 import * as core from "@microsoft/fluid-server-services-core";
 import Axios from "axios";
@@ -11,10 +12,11 @@ import { Request, Router } from "express";
 import * as safeStringify from "json-stringify-safe";
 import * as moniker from "moniker";
 import { Provider } from "nconf";
+import * as passport from "passport";
 import { parse, UrlWithStringQuery } from "url";
 import * as winston from "winston";
+import { IJWTClaims } from "../../utils";
 
-import passport = require("passport");
 // Although probably the case we want a default behavior here. Maybe just the URL?
 async function getWebComponent(url: UrlWithStringQuery): Promise<IWebResolvedUrl> {
     const result = await Axios.get(url.href);
@@ -69,11 +71,7 @@ async function getInternalComponent(
 
     const orderer = config.get("worker:serverUrl");
 
-    const user: IAlfredUser = (request.user) ? {
-        displayName: request.user.name,
-        id: request.user.oid,
-        name: request.user.name,
-    } : undefined;
+    const user: IAlfredUser = (request.user as IJWTClaims).user;
 
     const token = getR11sToken(tenantId, documentId, appTenants, scopes, user);
     const fluidUrl = `fluid://${url.host}/${tenantId}/${documentId}${path}${url.hash ? url.hash : ""}`;

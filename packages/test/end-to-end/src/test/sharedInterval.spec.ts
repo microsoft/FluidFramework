@@ -63,7 +63,7 @@ describe("SharedInterval", () => {
         };
 
         beforeEach(async () => {
-            host = new TestHost([]);
+            host = new TestHost([], [SharedString.getFactory()]);
             sharedString = await host.createType("text", SharedStringFactory.Type);
             sharedString.insertText(0, "012");
             intervals = await sharedString.getIntervalCollection("intervals").getView();
@@ -181,7 +181,7 @@ describe("SharedInterval", () => {
 
     describe("multiple clients", () => {
         it("propagates", async () => {
-            const host1 = new TestHost([]);
+            const host1 = new TestHost([], [SharedString.getFactory()]);
             const sharedString1 = await host1.createType<SharedString>("text", SharedStringFactory.Type);
             sharedString1.insertText(0, "0123456789");
             const intervals1 = await sharedString1.getIntervalCollection("intervals").getView();
@@ -291,7 +291,7 @@ describe("SharedInterval", () => {
             // SharedString snapshots as a blob
             const snapshotBlob = outerString2.snapshot().entries[0].value as IBlob;
             // Since it's based on a map kernel, its contents parse as
-            // an IMapDataObject with the "comments" member we set
+            // an IMapDataObjectSerializable with the "comments" member we set
             const parsedSnapshot = JSON.parse(snapshotBlob.contents);
             // LocalIntervalCollection serializes as an array of ISerializedInterval, let's get the first comment
             const serializedInterval1FromSnapshot =

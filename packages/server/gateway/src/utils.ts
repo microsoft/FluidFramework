@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IClient } from "@microsoft/fluid-protocol-definitions";
 import { Request } from "express";
 // In this case we want @types/express-serve-static-core, not express-serve-static-core, and so disable the lint rule
 // tslint:disable-next-line:no-implicit-dependencies
@@ -12,6 +13,14 @@ import * as _ from "lodash";
 export interface ICachedPackage {
     entrypoint: string;
     scripts: { id: string, url: string }[];
+}
+
+export interface IJWTClaims {
+    user: {
+        displayName: string;
+        id: string;
+        name: string;
+    };
 }
 
 /**
@@ -26,10 +35,14 @@ export function getConfig(
     const updatedConfig = _.cloneDeep(config);
     updatedConfig.tenantId = tenantId;
     updatedConfig.trackError = trackError;
-    updatedConfig.client = {
+    const client: IClient = {
+        type: "browser", // back-compat: 0.11 clientType
+        details: { capabilities: { interactive: true } },
         permission: [],
-        type: "browser",
+        scopes: [],
+        user: { id: "" },
     };
+    updatedConfig.client = client;
     updatedConfig.blobStorageUrl = updatedConfig.blobStorageUrl.replace("historian:3000", "localhost:3001");
     updatedConfig.historianApi = true;
 
@@ -48,6 +61,22 @@ export function getVersion() {
     return `${version.endsWith(".0") ? "^" : ""}${version}`;
 }
 
+function getUser(request: Request) {
+    return request.user ? request.user : request.session.guest;
+}
+
+export function getJWTClaims(request: Request): IJWTClaims {
+    const user = getUser(request);
+
+    return {
+        user: {
+            displayName: user.name,
+            id: user.sub,
+            name: user.name,
+        },
+    };
+}
+
 export function getUserDetails(request: Request): string {
-    return JSON.stringify(request.user ? request.user : request.session.guest);
+    return JSON.stringify(getUser(request));
 }

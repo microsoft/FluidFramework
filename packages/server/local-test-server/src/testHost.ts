@@ -4,15 +4,19 @@
  */
 
 import { PrimedComponent, PrimedComponentFactory, SimpleContainerRuntimeFactory } from "@microsoft/fluid-aqueduct";
-import { IComponentHandle, IComponentLoadable, IComponentRunnable } from "@microsoft/fluid-component-core-interfaces";
+import {
+    IComponent,
+    IComponentHandle,
+    IComponentLoadable,
+    IComponentRunnable ,
+} from "@microsoft/fluid-component-core-interfaces";
 import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
 import {
     IComponentContext,
     IComponentRuntime,
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
-import { SharedString, SparseMatrix } from "@microsoft/fluid-sequence";
-import { ISharedObject } from "@microsoft/fluid-shared-object-base";
+import { ISharedObject, ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import {
     IDocumentDeltaEvent,
     ITestDeltaConnectionServer,
@@ -39,19 +43,6 @@ class TestRootComponent extends PrimedComponent implements IComponentRunnable {
         config: {},
     };
 
-    /**
-     * Get the factory for the IComponentRegistry
-     */
-    public static getFactory() { return TestRootComponent.factory; }
-
-    private static readonly factory = new PrimedComponentFactory(
-        TestRootComponent,
-        [
-            SharedString.getFactory(),
-            SparseMatrix.getFactory(),
-        ],
-    );
-
     constructor(runtime: IComponentRuntime, context: IComponentContext) {
         super(runtime, context);
     }
@@ -77,9 +68,14 @@ class TestRootComponent extends PrimedComponent implements IComponentRunnable {
      * @param type - channel factory type
      */
     public createType<T extends ISharedObject>(id: string, type: string): T {
-        const instance = this.runtime.createChannel(id, type) as T;
-        this.root.set(id, instance.handle);
-        return instance;
+        try {
+            const instance = this.runtime.createChannel(id, type) as T;
+            this.root.set(id, instance.handle);
+            return instance;
+        } catch (error) {
+            // Tweak the error message to help users with the most common failure cause.
+            throw new Error(`'${type}.getFactory()' must be provided to TestHost ctor: ${error}`);
+        }
     }
 
     /**
@@ -156,11 +152,14 @@ export class TestHost {
 
     /**
      * @param componentRegistry - array of key-value pairs of components available to the host
+     * @param sharedObjectFactories - Shared object factories used by `createType()`
      * @param deltaConnectionServer - delta connection server for the ops
      */
     constructor(
         private readonly componentRegistry: NamedComponentRegistryEntries,
+        private readonly sharedObjectFactories: readonly ISharedObjectFactory[] = [],
         deltaConnectionServer?: ITestDeltaConnectionServer,
+        scope?: IComponent,
     ) {
         this.deltaConnectionServer = deltaConnectionServer || TestDeltaConnectionServer.create();
 
@@ -174,14 +173,16 @@ export class TestHost {
                         TestRootComponent.type,
                         [
                             ...componentRegistry,
-                            [TestRootComponent.type, Promise.resolve(TestRootComponent.getFactory())],
+                            [TestRootComponent.type, Promise.resolve(
+                                new PrimedComponentFactory(TestRootComponent, sharedObjectFactories),
+                            )],
                         ]),
                 }],
             ]),
             new TestDocumentServiceFactory(this.deltaConnectionServer),
             new TestResolver());
 
-        store.open<TestRootComponent>("test-root-component", TestRootComponent.codeProposal, "")
+        store.open<TestRootComponent>("test-root-component", TestRootComponent.codeProposal, "", scope)
             .then(this.rootResolver)
             .catch((reason) => { throw new Error(`${reason}`); });
     }
@@ -193,6 +194,7 @@ export class TestHost {
     public clone(): TestHost {
         return new TestHost(
             this.componentRegistry,
+            this.sharedObjectFactories,
             this.deltaConnectionServer);
     }
 
@@ -225,7 +227,8 @@ export class TestHost {
     }
 
     /**
-     * Creates and returns a new shared object in the root component.
+     * Creates and returns a new shared object instance the root component.  The `ISharedObjectFactory`
+     * for the given `type` must be provided to the TestHost ctor.
      * @param id - ID of new shared object
      * @param type - type of new shared object
      */

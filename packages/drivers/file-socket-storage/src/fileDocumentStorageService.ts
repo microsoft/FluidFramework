@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { buildHierarchy, flatten, fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
+import { fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
+import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
+import { buildSnapshotTree } from "@microsoft/fluid-protocol-base";
 import * as api from "@microsoft/fluid-protocol-definitions";
 import { IFileSnapshot, ReadDocumentStorageServiceBase } from "@microsoft/fluid-replay-driver";
 import * as assert from "assert";
@@ -22,7 +24,7 @@ const FileStorageVersionTreeIdUnused = "baad";
 /**
  * Document storage service for the file driver.
  */
-export class FluidFetchReader extends ReadDocumentStorageServiceBase implements api.IDocumentStorageService {
+export class FluidFetchReader extends ReadDocumentStorageServiceBase implements IDocumentStorageService {
     protected docTree: api.ISnapshotTree | null = null;
 
     constructor(private readonly path: string, private readonly versionName?: string) {
@@ -103,13 +105,13 @@ export class FluidFetchReader extends ReadDocumentStorageServiceBase implements 
     }
 }
 
-export interface ISnapshotWriterStorage extends api.IDocumentStorageService {
+export interface ISnapshotWriterStorage extends IDocumentStorageService {
     onCommitHandler(componentName: string, tree: api.ITree): void;
     onSnapshotHandler(snapshot: IFileSnapshot): void;
     reset(): void;
 }
 
-export type ReaderConstructor = new (...args: any[]) => api.IDocumentStorageService;
+export type ReaderConstructor = new (...args: any[]) => IDocumentStorageService;
 // tslint:disable-next-line:max-func-body-length
 export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(Base: TBase) {
     return class extends Base implements ISnapshotWriterStorage {
@@ -168,8 +170,7 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
                 return this.latestWriterTree;
             }
             if (version && this.commitsWriter[version.id] !== undefined) {
-                const flattened = flatten(this.commitsWriter[version.id].entries, this.blobsWriter);
-                return buildHierarchy(flattened);
+                return buildSnapshotTree(this.commitsWriter[version.id].entries, this.blobsWriter);
             }
             return super.getSnapshotTree(version);
         }
@@ -211,8 +212,7 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
 
                 // Prep for the future - refresh latest tree, as it's requests on next snapshot generation.
                 // Do not care about blobs (at least for now), as blobs are not written out (need follow up)
-                const flattened = flatten(tree.entries, this.blobsWriter);
-                this.latestWriterTree = buildHierarchy(flattened);
+                this.latestWriterTree = buildSnapshotTree(tree.entries, this.blobsWriter);
 
                 // Do not reset this.commitsWriter - runtime will reference same commits in future snapshots
                 // if component did not change in between two snapshots.

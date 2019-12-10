@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentService, IDocumentServiceFactory } from "@microsoft/fluid-protocol-definitions";
+import { IDocumentService, IDocumentServiceFactory } from "@microsoft/fluid-driver-definitions";
 import { ReplayDocumentService, ReplayDocumentServiceFactory } from "@microsoft/fluid-replay-driver";
 import { DebugReplayController } from "./fluidDebuggerController";
 import { DebuggerUI } from "./fluidDebuggerUI";
 
-// tslint:disable-next-line:no-namespace
+// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace FluidDebugger {
     /**
      * Creates document service wrapper that pops up Debugger window and allows user to play ops one by one.

@@ -37,7 +37,7 @@ export class FluidSudoku extends PrimedComponent
     ]);
 
     public static getFactory() {
-        return this.factory;
+        return FluidSudoku.factory;
     }
 
     private domElement: HTMLElement | undefined;
@@ -51,7 +51,6 @@ export class FluidSudoku extends PrimedComponent
      * your component is created. Anything that happens in componentInitializingFirstTime will happen before any other
      * user will see the component.
      */
-    // eslint-disable-next-line @typescript-eslint/require-await
     protected async componentInitializingFirstTime() {
         // Create a new map for our Sudoku data
         const map = SharedMap.create(this.runtime);

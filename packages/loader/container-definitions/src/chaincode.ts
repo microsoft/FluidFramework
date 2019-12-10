@@ -3,15 +3,19 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import {
     IComponent,
     IComponentConfiguration,
     IRequest,
     IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
+import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import {
+    ConnectionState,
+    IClientDetails,
     IDocumentMessage,
-    IDocumentStorageService,
+    IQuorum,
     ISequencedDocumentMessage,
     IServiceConfiguration,
     ISnapshotTree,
@@ -21,10 +25,8 @@ import {
 import { EventEmitter } from "events";
 import { IAudience } from "./audience";
 import { IBlobManager } from "./blobs";
-import { IQuorum } from "./consensus";
 import { IDeltaManager } from "./deltas";
 import { ICodeLoader, ILoader } from "./loader";
-import { ITelemetryLogger } from "./logger";
 
 /**
  * Person definition in a npm script
@@ -94,23 +96,6 @@ export interface IFluidPackage extends IPackage {
 export function isFluidPackage(pkg: IPackage): pkg is IFluidPackage {
     // tslint:disable-next-line: no-unsafe-any
     return pkg.fluid && pkg.fluid.browser && pkg.fluid.browser.umd;
-}
-
-export enum ConnectionState {
-    /**
-     * The document is no longer connected to the delta server
-     */
-    Disconnected,
-
-    /**
-     * The document has an inbound connection but is still pending for outbound deltas
-     */
-    Connecting,
-
-    /**
-     * The document is fully connected
-     */
-    Connected,
 }
 
 /**
@@ -193,7 +178,9 @@ export interface IContainerContext extends EventEmitter, IMessageScheduler, IPro
     readonly options: any;
     readonly configuration: IComponentConfiguration;
     readonly clientId: string | undefined;
-    readonly clientType: string;
+    // DEPRECATED: use clientDetails.type instead
+    readonly clientType: string; // back-compat: 0.11 clientType
+    readonly clientDetails: IClientDetails;
     readonly parentBranch: string | undefined | null;
     readonly blobManager: IBlobManager | undefined;
     readonly storage: IDocumentStorageService | undefined | null;

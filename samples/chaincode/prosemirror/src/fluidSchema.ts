@@ -5,6 +5,8 @@
 
 // Fork of https://github.com/ProseMirror/prosemirror-schema-basic/blob/master/src/schema-basic.js
 
+/* eslint-disable @typescript-eslint/camelcase */
+
 import { Schema } from "prosemirror-model"
 
 const pDOM = ["p", 0], blockquoteDOM = ["blockquote", 0], hrDOM = ["hr"],
@@ -143,7 +145,7 @@ export const nodes = {
                 }
             }
         }],
-        toDOM(node) { let { src, alt, title } = node.attrs; return ["img", { src, alt, title }] }
+        toDOM(node) { const { src, alt, title } = node.attrs; return ["img", { src, alt, title }] }
     },
 
     // :: NodeSpec A hard line break, represented in the DOM as `<br>`.
@@ -174,7 +176,7 @@ export const marks = {
                 return { href: dom.getAttribute("href"), title: dom.getAttribute("title") }
             }
         }],
-        toDOM(node) { let { href, title } = node.attrs; return ["a", { href, title }, 0] }
+        toDOM(node) { const { href, title } = node.attrs; return ["a", { href, title }, 0] }
     },
 
     // :: MarkSpec An emphasis mark. Rendered as an `<em>` element.

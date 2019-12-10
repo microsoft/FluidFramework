@@ -3,16 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { buildHierarchy, flatten } from "@microsoft/fluid-core-utils";
 import {
-    ConnectionMode,
-    IClient,
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
     IDocumentService,
     IDocumentServiceFactory,
     IDocumentStorageService,
     IResolvedUrl,
+} from "@microsoft/fluid-driver-definitions";
+import { buildSnapshotTree } from "@microsoft/fluid-protocol-base";
+import {
+    ConnectionMode,
+    IClient,
     ISnapshotTree,
     ITree,
     IVersion,
@@ -42,8 +44,7 @@ export class FileSnapshotReader extends ReadDocumentStorageServiceBase implement
     public constructor(json: IFileSnapshot) {
         super();
         this.commits = json.commits;
-        const flattened = flatten(json.tree.entries, this.blobs);
-        this.docTree = buildHierarchy(flattened);
+        this.docTree = buildSnapshotTree(json.tree.entries, this.blobs);
     }
 
     public async getVersions(
@@ -75,8 +76,7 @@ export class FileSnapshotReader extends ReadDocumentStorageServiceBase implement
                 throw new Error(`Can't find version ${versionRequested.id}`);
             }
 
-            const flattened = flatten(tree.entries, this.blobs);
-            this.trees[versionRequested.id] = snapshotTree = buildHierarchy(flattened);
+            this.trees[versionRequested.id] = snapshotTree = buildSnapshotTree(tree.entries, this.blobs);
         }
         return snapshotTree;
     }

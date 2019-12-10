@@ -130,6 +130,7 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
      * Wait for a value to be available and remove it from the consensus collection
      */
     public async waitAndRemove(): Promise<T> {
+        // eslint-disable-next-line no-constant-condition
         while (true) {
             if (this.data.size() === 0) {
                 // wait for new entry before trying to remove again
@@ -198,7 +199,7 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
      * @param value - the value related to the operation
      */
     private processLocalMessage(message: ISequencedDocumentMessage, value: any) {
-        // tslint:disable-next-line: no-non-null-assertion
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/tslint/config
         const pending = this.promiseResolveQueue.shift()!;
         assert(pending);
         assert(message.contents.opName === pending.message.opName);
@@ -229,7 +230,7 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
     private removeCore(): T {
         // Caller should check if it is empty first
         assert(this.data.size() !== 0);
-        // tslint:disable-next-line: no-non-null-assertion
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/tslint/config
         const value = this.data.remove()!;
 
         // Note remove event only fires if there are value removed

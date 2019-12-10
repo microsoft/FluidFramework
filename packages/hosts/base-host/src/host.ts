@@ -3,45 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import {
-    IComponent,
-    IComponentHTMLVisual,
-    IComponentQueryableLegacy,
-    IRequest,
-} from "@microsoft/fluid-component-core-interfaces";
-import { ICodeWhiteList, IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
+    IFluidCodeDetails,
+    IProxyLoaderFactory,
+} from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
-import {
-    IFluidResolvedUrl,
-    IResolvedUrl,
-} from "@microsoft/fluid-protocol-definitions";
-import { IResolvedPackage, WebCodeLoader, WhiteList } from "@microsoft/fluid-web-code-loader";
-import { IHostConfig } from "./hostConfig";
-
-/**
- * Interface to provide the info about the session.
- */
-export interface IPrivateSessionInfo {
-    /**
-     * True if the request is made by outer frame.
-     */
-    outerSession?: boolean;
-
-    /**
-     * True if the request is made by inner frame.
-     */
-    innerSession?: boolean;
-
-    /**
-     * IFrame in which the inner session is loaded.
-     */
-    frameP?: Promise<HTMLIFrameElement>;
-
-    /**
-     * Request to be resolved.
-     */
-    request?: IRequest;
-}
+import { IFluidResolvedUrl, IResolvedUrl } from "@microsoft/fluid-driver-definitions";
+import { IResolvedPackage, WebCodeLoader } from "@microsoft/fluid-web-code-loader";
+import { IBaseHostConfig } from "./hostConfig";
 
 async function attach(loader: Loader, url: string, div: HTMLDivElement) {
     const response = await loader.request({ url });
@@ -56,11 +26,8 @@ async function attach(loader: Loader, url: string, div: HTMLDivElement) {
 
     // Check if the component is viewable
     const component = response.value as IComponent;
-    const queryable = component as IComponentQueryableLegacy;
-    let viewable = component.IComponentHTMLVisual;
-    if (!viewable && queryable.query) {
-        viewable = queryable.query<IComponentHTMLVisual>("IComponentHTMLVisual");
-    }
+    const viewable = component.IComponentHTMLVisual;
+
     if (viewable) {
         const renderable =
             viewable.addView ? viewable.addView() : viewable;
@@ -70,7 +37,7 @@ async function attach(loader: Loader, url: string, div: HTMLDivElement) {
     }
 }
 
-export async function initializeChaincode(document: Container, pkg: IResolvedPackage): Promise<void> {
+async function initializeChaincode(document: Container, pkg?: IFluidCodeDetails): Promise<void> {
     if (!pkg) {
         return;
     }
@@ -84,19 +51,14 @@ export async function initializeChaincode(document: Container, pkg: IResolvedPac
     }
 
     // And then make the proposal if a code proposal has not yet been made
-    if (!quorum.has("code2")) {
-        // We propose both code and code2. code2 is the legacy format of just a string. code is the new object
-        // based format.
-        await Promise.all([
-            quorum.propose("code", pkg.details),
-            quorum.propose("code2", pkg.parsed.full),
-        ]);
+    if (!quorum.has("code")) {
+        await quorum.propose("code", pkg);
     }
 
-    console.log(`Code is ${quorum.get("code2")}`);
+    console.log(`Code is ${quorum.get("code")}`);
 }
 
-export async function registerAttach(loader: Loader, container: Container, uri: string, div: HTMLDivElement) {
+async function registerAttach(loader: Loader, container: Container, uri: string, div: HTMLDivElement) {
     container.on("contextChanged", async (value) => {
         await attach(loader, uri, div);
     });
@@ -105,29 +67,22 @@ export async function registerAttach(loader: Loader, container: Container, uri: 
 
 /**
  * Create a loader and return it.
+ * @param hostConfig - Config specifying the resolver/factory to be used.
  * @param resolved - A resolved url from a url resolver.
  * @param pkg - A resolved package with cdn links.
  * @param scriptIds - The script tags the chaincode are attached to the view with.
- * @param config - Any config to be provided to loader.
- * @param scope - A component that gives host provided capabilities/configurations
- *  to the component in the container(such as auth).
- * @param hostConf - Config specifying the resolver/factory to be used.
- * @param whiteList - functionality to check the validity of code to be loaded.
  */
-export async function createWebLoader(
+async function createWebLoader(
+    hostConfig: IBaseHostConfig,
     resolved: IResolvedUrl,
-    pkg: IResolvedPackage,
+    pkg: IResolvedPackage | undefined,
     scriptIds: string[],
-    config: any,
-    scope: IComponent,
-    hostConf: IHostConfig,
-    proxyLoaderFactories: Map<string, IProxyLoaderFactory>,
-    whiteList?: ICodeWhiteList,
 ): Promise<Loader> {
 
     // Create the web loader and prefetch the chaincode we will need
-    const codeLoader = new WebCodeLoader(whiteList);
+    const codeLoader = new WebCodeLoader(hostConfig.whiteList);
     if (pkg) {
+        // tslint:disable-next-line: strict-boolean-expressions
         if (pkg.pkg) { // this is an IFluidPackage
             await codeLoader.seed({
                 package: pkg.pkg,
@@ -142,6 +97,9 @@ export async function createWebLoader(
         // The load takes in an IFluidCodeDetails
         codeLoader.load(pkg.details).catch((error) => console.error("script load error", error));
     }
+
+    const config = hostConfig.config ? hostConfig.config : {};
+
     // we need to extend options, otherwise we nest properties, like client, too deeply
     //
     // tslint:disable-next-line: no-unsafe-any
@@ -149,64 +107,78 @@ export async function createWebLoader(
     // tslint:disable-next-line: no-unsafe-any
     config.tokens = (resolved as IFluidResolvedUrl).tokens;
 
+    const scope = hostConfig.scope ? hostConfig.scope : {};
+    const proxyLoaderFactories = hostConfig.proxyLoaderFactories ?
+        hostConfig.proxyLoaderFactories : new Map<string, IProxyLoaderFactory>();
+
     return new Loader(
-        { resolver: hostConf.urlResolver },
-        hostConf.documentServiceFactory,
+        { resolver: hostConfig.urlResolver },
+        hostConfig.documentServiceFactory,
         codeLoader,
         config,
         scope,
         proxyLoaderFactories);
 }
 
-/**
- * Function to load the container from the given url and initialize the chaincode.
- * @param url - Url of the Fluid component to be loaded.
- * @param resolved - A resolved url from a url resolver.
- * @param pkg - A resolved package with cdn links.
- * @param scriptIds - The script tags the chaincode are attached to the view with.
- * @param npm - path from where the packages can be fetched.
- * @param config - Any config to be provided to loader.
- * @param scope - A component that gives host provided capabilities/configurations
- *  to the component in the container(such as auth).
- * @param div - The div to load the component into.
- * @param hostConf - Config specifying the resolver/factory to be used.
- */
-export async function start(
-    url: string,
-    resolved: IResolvedUrl,
-    pkg: IResolvedPackage,
-    scriptIds: string[],
-    npm: string,
-    config: any,
-    scope: IComponent,
-    div: HTMLDivElement,
-    hostConf: IHostConfig,
-    proxyLoaderFactories: Map<string, IProxyLoaderFactory>,
-): Promise<Container> {
-    const loader = await createWebLoader(
-        resolved,
-        pkg,
-        scriptIds,
-        config,
-        scope,
-        hostConf,
-        proxyLoaderFactories,
-        new WhiteList(),
-        );
-
-    const container = await loader.resolve({ url });
-    await registerAttach(
-        loader,
-        container,
-        url,
-        div);
-
-    // If this is a new document we will go and instantiate the chaincode. For old documents we assume a legacy
-    // package.
-    if (!container.existing) {
-            await initializeChaincode(container, pkg)
-                .catch((error) => console.error("chaincode error", error));
+export class BaseHost {
+    /**
+     * Function to load the container from the given url and initialize the chaincode.
+     * @param hostConfig - Config specifying the resolver/factory and other loader settings to be used.
+     * @param url - Url of the Fluid component to be loaded.
+     * @param resolved - A resolved url from a url resolver.
+     * @param pkg - A resolved package with cdn links.
+     * @param scriptIds - The script tags the chaincode are attached to the view with.
+     * @param div - The div to load the component into.
+     */
+    public static async start(
+        hostConfig: IBaseHostConfig,
+        url: string,
+        resolved: IResolvedUrl,
+        pkg: IResolvedPackage | undefined,
+        scriptIds: string[],
+        div: HTMLDivElement,
+    ): Promise<Container> {
+        const baseHost = new BaseHost(hostConfig, resolved, pkg, scriptIds);
+        return baseHost.loadAndRender(url, div, pkg ? pkg.details : undefined);
     }
 
-    return container;
+    private readonly loaderP: Promise<Loader>;
+    public constructor(
+        hostConfig: IBaseHostConfig,
+        resolved: IResolvedUrl,
+        seedPackage: IResolvedPackage | undefined,
+        scriptIds: string[],
+    ) {
+
+        this.loaderP = createWebLoader(
+            hostConfig,
+            resolved,
+            seedPackage,
+            scriptIds,
+        );
+    }
+
+    public async getLoader() {
+        return this.loaderP;
+    }
+
+    public async loadAndRender(url: string, div: HTMLDivElement, pkg?: IFluidCodeDetails) {
+        const loader = await this.getLoader();
+        const container = await loader.resolve({ url });
+        await registerAttach(
+            loader,
+            container,
+            url,
+            div);
+
+        // If this is a new document we will go and instantiate the chaincode. For old documents we assume a legacy
+        // package.
+        // tslint:disable-next-line: strict-boolean-expressions
+        if (!container.existing) {
+            await initializeChaincode(container, pkg)
+                .catch((error) => console.error("chaincode error", error));
+        }
+
+        return container;
+    }
 }

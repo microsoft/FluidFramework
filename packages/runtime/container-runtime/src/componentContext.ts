@@ -5,24 +5,20 @@
 
 import { IComponent, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import {
-    ConnectionState,
     IAudience,
     IBlobManager,
     IDeltaManager,
     IGenericBlob,
     ILoader,
-    IQuorum,
 } from "@microsoft/fluid-container-definitions";
+import { Deferred } from "@microsoft/fluid-core-utils";
+import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
+import { readAndParse } from "@microsoft/fluid-driver-utils";
+import { BlobTreeEntry, raiseConnectedEvent } from "@microsoft/fluid-protocol-base";
 import {
-    BlobTreeEntry,
-    Deferred,
-    raiseConnectedEvent,
-    readAndParse,
-    SummaryTracker,
-} from "@microsoft/fluid-core-utils";
-import {
+    ConnectionState,
     IDocumentMessage,
-    IDocumentStorageService,
+    IQuorum,
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITree,
@@ -38,6 +34,7 @@ import {
     IHostRuntime,
     IInboundSignalMessage,
 } from "@microsoft/fluid-runtime-definitions";
+import { SummaryTracker } from "@microsoft/fluid-runtime-utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 // tslint:disable-next-line:no-submodule-imports
@@ -83,6 +80,10 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this._hostRuntime.clientId;
     }
 
+    /**
+     * DEPRECATED use hostRuntime.clientDetails.type instead
+     * back-compat: 0.11 clientType
+     */
     public get clientType(): string {
         return this._hostRuntime.clientType;
     }
@@ -170,7 +171,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         if (packagePath.length > 0 && pkg === packagePath[packagePath.length - 1]) {
             pkgs.shift();
         }
-        packagePath.push(... pkgs);
+        packagePath.push(...pkgs);
 
         const pkgId = uuid();
         return this.hostRuntime._createComponentWithProps(packagePath, props, pkgId);
@@ -482,18 +483,21 @@ export class RemotedComponentContext extends ComponentContext {
                 // Need to rip through snapshot and use that to populate extraBlobs
                 const { pkg, snapshotFormatVersion } =
                     await readAndParse<IComponentAttributes>(
-                    this.storage,
-                    tree.blobs[".component"]);
+                        this.storage,
+                        tree.blobs[".component"]);
 
                 let pkgFromSnapshot: string[];
                 // Use the snapshotFormatVersion to determine how the pkg is encoded in the snapshot.
                 // For snapshotFormatVersion = "0.1", pkg is jsonified, otherwise it is just a string.
-                if (snapshotFormatVersion && snapshotFormatVersion === currentSnapshotFormatVersion) {
+                if (snapshotFormatVersion === undefined) {
+                    if (pkg.startsWith("[\"") && pkg.endsWith("\"]")) {
+                        pkgFromSnapshot = JSON.parse(pkg) as string[];
+                    } else {
+                        pkgFromSnapshot = [pkg];
+                    }
+                } else if (snapshotFormatVersion === currentSnapshotFormatVersion) {
                     pkgFromSnapshot = JSON.parse(pkg) as string[];
-                } else {
-                    pkgFromSnapshot = [pkg];
                 }
-
                 this.details = {
                     pkg: pkgFromSnapshot,
                     snapshot: tree,

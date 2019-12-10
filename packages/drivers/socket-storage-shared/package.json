@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-driver-base",
-  "version": "0.12.0",
+  "version": "0.13.0",
   "description": "Shared package across different socket-storage implementation",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -12,31 +12,39 @@
   "scripts": {
     "build": "npm run build:genver && concurrently npm:build:compile npm:tslint",
     "build:compile": "concurrently npm:tsc npm:build:esnext",
+    "build:compile:min": "npm run build:compile",
     "build:docs": "api-extractor run --local",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "build:genver": "node node_modules/@microsoft/fluid-build-common/gen_version.js",
-    "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
+    "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
+    "eslint": "eslint --ext=ts,tsx --format stylish src",
+    "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
     "tsc": "tsc",
-    "tslint": "tslint --project tsconfig.json --format verbose"
+    "tslint": "npm run eslint"
   },
   "dependencies": {
-    "@microsoft/fluid-container-definitions": "^0.10.0",
-    "@microsoft/fluid-core-utils": "^0.12.0",
+    "@microsoft/fluid-core-utils": "^0.13.0",
+    "@microsoft/fluid-driver-definitions": "^0.13.0",
+    "@microsoft/fluid-driver-utils": "^0.13.0",
     "@microsoft/fluid-protocol-definitions": "^0.12.0",
     "@types/debug": "^0.0.31",
-    "@types/node": "^10.12.12",
+    "@types/node": "^10.14.6",
     "@types/socket.io-client": "^1.4.32",
-    "comlink": "^4.0.2",
     "debug": "^4.1.1"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.4.4",
-    "@microsoft/fluid-build-common": "^0.12.0",
+    "@microsoft/eslint-config-fluid": "^0.13.0",
+    "@microsoft/fluid-build-common": "^0.13.0",
+    "@typescript-eslint/eslint-plugin": "^2.9.0",
+    "@typescript-eslint/eslint-plugin-tslint": "^2.9.0",
+    "@typescript-eslint/parser": "^2.9.0",
     "concurrently": "^4.1.0",
+    "eslint": "^6.7.1",
     "rimraf": "^2.6.2",
-    "tslint": "^5.11.0",
+    "tslint": "^5.20.0",
     "typescript": "~3.4.5"
   }
 }

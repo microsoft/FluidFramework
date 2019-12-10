@@ -2,9 +2,12 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ITelemetryBaseLogger } from "@microsoft/fluid-container-definitions";
-import { ChildLogger } from "@microsoft/fluid-core-utils";
-import { IDocumentService, IDocumentServiceFactory, IResolvedUrl } from "@microsoft/fluid-protocol-definitions";
+import { ITelemetryBaseLogger } from "@microsoft/fluid-common-definitions";
+import {
+  IDocumentService,
+  IDocumentServiceFactory,
+  IResolvedUrl,
+} from "@microsoft/fluid-driver-definitions";
 import { IOdspResolvedUrl } from "./contracts";
 import { FetchWrapper, IFetchWrapper } from "./fetchWrapper";
 import { OdspCache } from "./odspCache";
@@ -32,7 +35,7 @@ export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentService
   constructor(
     private readonly appId: string,
     private readonly getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
-    private readonly getWebsocketToken: () => Promise<string | null>,
+    private readonly getWebsocketToken: (refresh: boolean) => Promise<string | null>,
     private readonly logger: ITelemetryBaseLogger,
     private readonly storageFetchWrapper: IFetchWrapper = new FetchWrapper(),
     private readonly deltasFetchWrapper: IFetchWrapper = new FetchWrapper(),
@@ -50,7 +53,7 @@ export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentService
       odspResolvedUrl.endpoints.snapshotStorageUrl,
       this.getStorageToken,
       this.getWebsocketToken,
-      ChildLogger.create(this.logger, "fluid:telemetry:OdspDriver"),
+      this.logger,
       this.storageFetchWrapper,
       this.deltasFetchWrapper,
       import("./getSocketIo").then((m) => m.getSocketIo()),

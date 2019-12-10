@@ -25,12 +25,13 @@ class CanvasView implements IComponentHTMLView {
         runtime: IComponentRuntime,
         root: ISharedMap,
         ink: IInk,
+        elm: HTMLElement,
     ): CanvasView {
         const browserHost = new ui.BrowserContainerHost();
         const canvas = new controls.FlexView(
             document.createElement("div"),
             ink);
-        browserHost.attach(canvas);
+        browserHost.attach(canvas, elm);
 
         return new CanvasView();
     }
@@ -52,7 +53,7 @@ export class Canvas extends PrimedComponent implements IComponentHTMLVisual {
     private ink: IInk;
 
     public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
-        CanvasView.create(this.runtime, this.root, this.ink).render(elm, options);
+        CanvasView.create(this.runtime, this.root, this.ink, elm).render(elm, options);
     }
 
     protected async componentInitializingFirstTime() {

@@ -2,16 +2,18 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IHostConfig } from "@microsoft/fluid-base-host";
+import { IBaseHostConfig } from "@microsoft/fluid-base-host";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
 import { BaseTelemetryNullLogger, Deferred } from "@microsoft/fluid-core-utils";
+import {
+    IDocumentServiceFactory,
+    IFluidResolvedUrl,
+    IResolvedUrl,
+} from "@microsoft/fluid-driver-definitions";
 import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
-import { IDocumentServiceFactory,
-        IFluidResolvedUrl,
-        IResolvedUrl,
-        ScopeType } from "@microsoft/fluid-protocol-definitions";
+import { ScopeType } from "@microsoft/fluid-protocol-definitions";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
 import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
 import { NodeCodeLoader, NodeWhiteList } from "@microsoft/fluid-server-services";
@@ -94,7 +96,7 @@ class KeyValueLoader {
             hostToken,
             new Map<string, IResolvedUrl>([[documentUrl, result.data]]));
 
-        const hostConf: IHostConfig = { documentServiceFactory: documentServiceFactories, urlResolver: resolver };
+        const hostConf: IBaseHostConfig = { documentServiceFactory: documentServiceFactories, urlResolver: resolver };
         config.tokens = (result.data as IFluidResolvedUrl).tokens;
 
         const loader = new Loader(

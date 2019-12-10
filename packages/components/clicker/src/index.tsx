@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent, PrimedComponentFactory, SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
+import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import { IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
 import { Counter, CounterValueType } from "@microsoft/fluid-map";
 import { ITask } from "@microsoft/fluid-runtime-definitions";
@@ -73,16 +73,16 @@ export class Clicker extends PrimedComponent implements IComponentHTMLVisual {
 
 // ----- REACT STUFF -----
 
-interface p {
+interface CounterProps {
   counter: Counter;
 }
 
-interface s {
+interface CounterState {
   value: number;
 }
 
-class CounterReactView extends React.Component<p, s> {
-  constructor(props: p) {
+class CounterReactView extends React.Component<CounterProps, CounterState> {
+  constructor(props: CounterProps) {
     super(props);
 
     this.state = {
@@ -99,7 +99,8 @@ class CounterReactView extends React.Component<p, s> {
   render() {
     return (
       <div>
-        <span>{this.state.value}</span><button onClick={() => { this.props.counter.increment(1); }}>+</button>
+        <span className="clicker-value-class" id={`clicker-value-${Date.now().toString()}`}>{this.state.value}</span>
+        <button onClick={() => { this.props.counter.increment(1); }}>+</button>
       </div>
     );
   }
@@ -112,9 +113,4 @@ export const ClickerInstantiationFactory = new PrimedComponentFactory(
   [],
 );
 
-export const fluidExport = new SimpleModuleInstantiationFactory(
-  ClickerName,
-  new Map([
-    [ClickerName, Promise.resolve(ClickerInstantiationFactory)],
-  ]),
-);
+export const fluidExport = ClickerInstantiationFactory;

@@ -3,15 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryErrorEvent, ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import {
-    ConnectionState,
     IComponent,
-    ITelemetryErrorEvent,
-    ITelemetryLogger,
 } from "@microsoft/fluid-container-definitions";
 import { ChildLogger, EventEmitterWithErrorHandling } from "@microsoft/fluid-core-utils";
-import { ISequencedDocumentMessage, ITree, MessageType } from "@microsoft/fluid-protocol-definitions";
+import { ConnectionState, ISequencedDocumentMessage, ITree, MessageType } from "@microsoft/fluid-protocol-definitions";
 import {
     IChannelAttributes,
     IComponentRuntime,
@@ -132,8 +130,6 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
 
         this.services = services;
 
-        await this.getOwnerSnapshot(services.objectStorage);
-
         await this.loadCore(
             branchId,
             services.objectStorage);
@@ -218,15 +214,6 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
     }
 
     /**
-     * Reads and sets the owner from storage if this is an ownedSharedObject
-     *
-     * @param storage - The storage used by the shared object
-     */
-    protected async getOwnerSnapshot(storage: IObjectStorageService): Promise<void> {
-        return;
-    }
-
-    /**
      * Allows the distributed data type to perform custom loading
      * @param branchId - Branch ID
      * @param services - Storage used by the shared object
@@ -281,7 +268,7 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
         let clientSequenceNumber = -1;
         if (this.state === ConnectionState.Connected) {
             // This assert !isLocal above means services can't be undefined.
-            // tslint:disable-next-line: no-non-null-assertion
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             clientSequenceNumber = this.services!.deltaConnection.submit(content);
         } else {
             debug(`${this.id} Not fully connected - adding to pending list`, content);
@@ -322,7 +309,7 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
         this.didAttach();
 
         // attachDeltaHandler is only called after services is assigned
-        // tslint:disable-next-line: no-non-null-assertion
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.services!.deltaConnection.attach({
             process: (message, local) => {
                 this.process(message, local);
@@ -334,7 +321,7 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
 
         // Trigger initial state
         // attachDeltaHandler is only called after services is assigned
-        // tslint:disable-next-line: no-non-null-assertion
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.setConnectionState(this.services!.deltaConnection.state);
     }
 
@@ -412,23 +399,25 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
     private processPendingOp(message: ISequencedDocumentMessage) {
         const firstPendingOp = this.pendingOps.peekFront();
 
-        // disconnected ops should never be processed. They should have been fully sent on connected
-        if (firstPendingOp !== undefined) {
-            assert(firstPendingOp.clientSequenceNumber !== -1,
-                `processing disconnected op ${firstPendingOp.clientSequenceNumber}`);
-
-            // One of our messages was sequenced. We can remove it from the local message list. Given these arrive
-            // in order we only need to check the beginning of the local list.
-
-            if (firstPendingOp.clientSequenceNumber === message.clientSequenceNumber) {
-                this.pendingOps.shift();
-                if (this.pendingOps.length === 0) {
-                    this.emit("processed");
-                }
-                return;
-            }
+        if (firstPendingOp === undefined) {
+            this.logger.sendErrorEvent({ eventName: "UnexpectedAckReceived" });
+            return;
         }
 
-        this.logger.sendErrorEvent({ eventName: "DuplicateAckReceived" });
+        // disconnected ops should never be processed. They should have been fully sent on connected
+        assert(firstPendingOp.clientSequenceNumber !== -1,
+            `processing disconnected op ${firstPendingOp.clientSequenceNumber}`);
+
+        // One of our messages was sequenced. We can remove it from the local message list. Given these arrive
+        // in order we only need to check the beginning of the local list.
+        if (firstPendingOp.clientSequenceNumber !== message.clientSequenceNumber) {
+            this.logger.sendErrorEvent({ eventName: "WrongAckReceived" });
+            return;
+        }
+
+        this.pendingOps.shift();
+        if (this.pendingOps.length === 0) {
+            this.emit("processed");
+        }
     }
 }

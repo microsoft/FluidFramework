@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ConnectionState } from "@microsoft/fluid-container-definitions";
 import { fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
 import {
+    ConnectionState,
     FileMode,
     ISequencedDocumentMessage,
     ITree,
@@ -256,7 +256,7 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
 
     protected onConnect(pending: any[]) {
         while (this.promiseResolveQueue.length > 0) {
-            // tslint:disable-next-line: no-non-null-assertion
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const pendingP = this.promiseResolveQueue.shift()!;
             pendingP.reject(`Client was disconnected before ${pendingP.key} was acked`);
         }
@@ -329,7 +329,7 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
     }
 
     private processLocalMessage(message: ISequencedDocumentMessage) {
-        // tslint:disable-next-line: no-non-null-assertion
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const pending = this.promiseResolveQueue.shift()!;
         assert(pending);
         assert(message.clientSequenceNumber === -1

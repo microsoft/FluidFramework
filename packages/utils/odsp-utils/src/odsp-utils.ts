@@ -86,6 +86,21 @@ export async function postTokenRequest(server: string, postBody: string): Promis
     });
 }
 
+async function requestWithRefresh(
+    server: string,
+    clientConfig: IClientConfig,
+    tokens: IODSPTokens,
+    requestCallback: (token: string) => Promise<any>): Promise<any> {
+
+    const result = await requestCallback(tokens.accessToken);
+    if (result.status !== 401 && result.status !== 403) {
+        return result;
+    }
+    // Unauthorized, try to refresh the token
+    const odspTokens = await refreshAccessToken(server, clientConfig, tokens);
+    return requestCallback(odspTokens.accessToken);
+}
+
 export async function refreshAccessToken(server: string, clientConfig: IClientConfig, tokens: IODSPTokens) {
     console.log("Refreshing access token");
     tokens.accessToken = "";
@@ -94,22 +109,6 @@ export async function refreshAccessToken(server: string, clientConfig: IClientCo
     tokens.accessToken = odspTokens.accessToken;
     tokens.refreshToken = odspTokens.refreshToken;
     return odspTokens;
-}
-
-export async function getWithRetryForTokenRefresh<T>(get: (refresh: boolean) => Promise<T>) {
-    return get(false).catch(async (e) => {
-        // if the error is 401 or 403 refresh the token and try once more.
-        if (e.statusCode === 401 || e.statusCode === 403) {
-            return get(true);
-        }
-
-        // All code paths (deltas, blobs, trees) already throw exceptions.
-        // Throwing is better than returning null as most code paths do not return nullable-objects,
-        // and error reporting is better (for example, getDeltas() will log error to telemetry)
-        // getTree() path is the only potential exception where returning null might result in
-        // document being opened, though there maybe really bad user experience (consuming thousands of ops)
-        throw e;
-    });
 }
 
 function getRequestHandler(resolve, reject) {
@@ -130,13 +129,10 @@ async function getAsync(
     url: string,
     headers?: any): Promise<IRequestResult> {
 
-    return getWithRetryForTokenRefresh(async (refresh: boolean) => {
-        let odspTokens: IODSPTokens = tokens;
-        if (refresh) {
-            odspTokens = await refreshAccessToken(server, clientConfig, tokens);
-        }
+    return requestWithRefresh(server, clientConfig, tokens, async (token: string) => {
         return new Promise((resolve, reject) => {
-            request.get({ url, headers, auth: { bearer: odspTokens.accessToken } }, getRequestHandler(resolve, reject));
+            // console.log(`GET: ${url}`);
+            request.get({ url, headers, auth: { bearer: token } }, getRequestHandler(resolve, reject));
         });
     });
 }
@@ -148,13 +144,10 @@ async function putAsync(
     url: string,
     headers?: any): Promise<IRequestResult> {
 
-    return getWithRetryForTokenRefresh(async (refresh: boolean) => {
-        let odspTokens: IODSPTokens = tokens;
-        if (refresh) {
-            odspTokens = await refreshAccessToken(server, clientConfig, tokens);
-        }
+    return requestWithRefresh(server, clientConfig, tokens, async (token: string) => {
         return new Promise((resolve, reject) => {
-            request.put({ url, headers, auth: { bearer: odspTokens.accessToken } }, getRequestHandler(resolve, reject));
+            // console.log(`PUT: ${url}`);
+            request.put({ url, headers, auth: { bearer: token } }, getRequestHandler(resolve, reject));
         });
     });
 }
@@ -305,7 +298,7 @@ async function getDriveItem(
             return Promise.reject(createRequestError("Unable to get drive/item id from path", getDriveItemResult));
         }
         // try createing the file
-        const contentUri = `${getDriveItemUrl}:/content`;
+        const contentUri = `${getDriveItemUrl}/content`;
         const createResult = await putAsync(server, clientConfig, tokens, contentUri);
         if (createResult.status !== 201) {
             return Promise.reject(createRequestError("Failed to create file", createResult));

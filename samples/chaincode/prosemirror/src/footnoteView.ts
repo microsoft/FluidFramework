@@ -42,7 +42,7 @@ export class FootnoteView {
 
     open() {
         // Append a tooltip to the outer node
-        let tooltip = this.dom.appendChild(document.createElement("div"))
+        const tooltip = this.dom.appendChild(document.createElement("div"))
         tooltip.className = "footnote-tooltip"
         // And put a sub-ProseMirror into that
         this.innerView = new EditorView(tooltip, {
@@ -80,13 +80,13 @@ export class FootnoteView {
     }
 
     dispatchInner(tr) {
-        let { state, transactions } = this.innerView.state.applyTransaction(tr)
+        const { state, transactions } = this.innerView.state.applyTransaction(tr)
         this.innerView.updateState(state)
 
         if (!tr.getMeta("fromOutside")) {
-            let outerTr = this.outerView.state.tr, offsetMap = StepMap.offset(this.getPos() + 1)
+            const outerTr = this.outerView.state.tr, offsetMap = StepMap.offset(this.getPos() + 1)
             for (let i = 0; i < transactions.length; i++) {
-                let steps = transactions[i].steps
+                const steps = transactions[i].steps
                 for (let j = 0; j < steps.length; j++)
                     outerTr.step(steps[j].map(offsetMap))
             }
@@ -98,11 +98,11 @@ export class FootnoteView {
         if (!node.sameMarkup(this.node)) return false
         this.node = node
         if (this.innerView) {
-            let state = this.innerView.state
-            let start = node.content.findDiffStart(state.doc.content)
+            const state = this.innerView.state
+            const start = node.content.findDiffStart(state.doc.content)
             if (start != null) {
                 let { a: endA, b: endB } = node.content.findDiffEnd(state.doc.content)
-                let overlap = start - Math.min(endA, endB)
+                const overlap = start - Math.min(endA, endB)
                 if (overlap > 0) { endA += overlap; endB += overlap }
                 this.innerView.dispatch(
                     state.tr

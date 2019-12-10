@@ -10,9 +10,8 @@ import { Package } from "./npmPackage";
 import { Task, TaskExec } from "./tasks/task";
 import { TaskFactory } from "./tasks/taskFactory";
 import { Timer } from './common/timer';
-import { getExecutableFromCommand, execAsync, unlinkAsync, rmdirAsync, symlinkAsync } from "./common/utils";
+import { execWithErrorAsync, ExecAsyncResult } from "./common/utils";
 import { FileHashCache } from "./common/fileHashCache";
-import { existsSync, lstatAsync, realpathAsync } from "./common/utils";
 import chalk from "chalk";
 import { options } from "./options";
 
@@ -92,34 +91,12 @@ export class BuildPackage {
         }
         return this.buildP;
     }
-
-    public async symlink(buildPackages: Map<string, BuildPackage>) {
-        for (const dep of this.pkg.dependencies) {
-            const depBuildPackage = buildPackages.get(dep);
-            if (depBuildPackage) {
-                const symlinkPath = path.join(this.pkg.directory, "node_modules", dep);
-                try {
-                    if (existsSync(symlinkPath)) {
-                        const stat = await lstatAsync(symlinkPath);
-                        if (!stat.isSymbolicLink || await realpathAsync(symlinkPath) !== depBuildPackage.pkg.directory) {
-                            if (stat.isDirectory) {
-                                await rmdirAsync(symlinkPath);
-                            } else {
-                                await unlinkAsync(symlinkPath);
-                            }
-                            await symlinkAsync(depBuildPackage.pkg.directory, symlinkPath, "junction");
-                            console.warn(`${this.pkg.nameColored}: warning: replaced existing package ${symlinkPath}`);
-                        }
-                    } else {
-                        await symlinkAsync(depBuildPackage.pkg.directory, symlinkPath, "junction");
-                    }
-                } catch (e) {
-                    throw new Error(`symlink failed on ${symlinkPath}. ${e}`);
-                }
-            }
-        }
-    }
 }
+
+interface BuildPackageTaskExec<T> {
+    buildPackage: BuildPackage;
+    resolve: (result: T) => void;
+};
 
 export class BuildGraph {
     private readonly buildPackages = new Map<string, BuildPackage>();
@@ -162,35 +139,26 @@ export class BuildGraph {
         }
         this.buildContext.fileHashCache.clear();
         const q = Task.createTaskQueue();
-        const p = new Array<Promise<BuildResult>>();
+        const p: Promise<BuildResult>[] = [];
         this.buildPackages.forEach((node) => {
             p.push(node.build(q));
         });
         return summarizeBuildResult(await Promise.all(p));
     }
 
-    public async symlink(): Promise<void> {
-        for (const value of this.buildPackages.values()) {
-            await value.symlink(this.buildPackages);
-        }
-    }
-
     public async clean() {
-        const cleanP = new Array<Promise<void>>();
+        const cleanP: Promise<ExecAsyncResult>[] = [];
         let numDone = 0;
-        let numTotal = 0;
         const execCleanScript = async (pkg: Package, cleanScript: string) => {
             const startTime = Date.now();
-            const ret = await execAsync(cleanScript, {
+            const result = await execWithErrorAsync(cleanScript, {
                 cwd: pkg.directory,
                 env: { PATH: `${process.env["PATH"]}${path.delimiter}${path.join(pkg.directory, "node_modules", ".bin")}` }
-            });
-            if (ret.error) {
-                console.error(`${pkg.nameColored}: error during command ${cleanScript}`)
-                console.error(`${pkg.nameColored}: ${ret.stdout}\n${ret.stderr}`);
-            }
+            }, pkg.nameColored);
+
             const elapsedTime = (Date.now() - startTime) / 1000;
-            logStatus(`[${++numDone}/${numTotal}] ${pkg.nameColored}: ${cleanScript} - ${elapsedTime.toFixed(3)}s`);
+            logStatus(`[${++numDone}/${cleanP.length}] ${pkg.nameColored}: ${cleanScript} - ${elapsedTime.toFixed(3)}s`);
+            return result;
         };
         this.buildPackages.forEach((node) => {
             if (options.matchedOnly === true && !node.pkg.matched) {
@@ -198,16 +166,11 @@ export class BuildGraph {
             }
             const cleanScript = node.pkg.getScript("clean");
             if (cleanScript) {
-                numTotal++;
                 cleanP.push(execCleanScript(node.pkg, cleanScript));
-            } else {
-                const buildScript = node.pkg.getScript("build");
-                if (buildScript && getExecutableFromCommand(buildScript) !== "echo") {
-                    console.warn(`${node.pkg.nameColored}: warning: package has "build" script without "clean" script`);
-                }
             }
         });
-        return Promise.all(cleanP);
+        const results = await Promise.all(cleanP);
+        return !results.some(result => result.error);
     }
 
     public get numSkippedTasks(): number {
@@ -222,7 +185,7 @@ export class BuildGraph {
         const needPropagate: BuildPackage[] = [];
         this.buildPackages.forEach((node) => {
             if (node.pkg.markForBuild) { needPropagate.push(node); }
-            for (const key of node.pkg.dependencies) {
+            for (const key of node.pkg.combinedDependencies) {
                 const child = this.buildPackages.get(key);
                 if (child) {
                     logVerbose(`Package dependency: ${node.pkg.nameColored} => ${child.pkg.nameColored}`);
@@ -285,5 +248,5 @@ export class BuildGraph {
         if (!hasTask) {
             throw new Error(`No task for script ${this.buildScriptName} found`);
         }
-    }
+    } 
 }

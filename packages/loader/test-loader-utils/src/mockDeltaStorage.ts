@@ -3,10 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import {
-    IDocumentDeltaStorageService,
-    ISequencedDocumentMessage,
-} from "@microsoft/fluid-protocol-definitions";
+import { IDocumentDeltaStorageService } from "@microsoft/fluid-driver-definitions";
+import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 
 /**
  * Mock Document Delta Storage Service for testing
@@ -22,7 +20,8 @@ export class MockDocumentDeltaStorageService implements IDocumentDeltaStorageSer
 
         // find first
         if (from) {
-            while (this.messages[++index].sequenceNumber <= from) {}
+            // eslint-disable-next-line no-empty
+            while (this.messages[++index].sequenceNumber <= from) { }
         }
 
         // start reading

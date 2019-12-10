@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-test-snapshots",
-  "version": "0.12.0",
+  "version": "0.13.0",
   "description": "Comprehensive test of snapshot logic.",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -10,29 +10,37 @@
   "types": "dist/generateSnapshotFiles.js",
   "scripts": {
     "build": "concurrently npm:build:compile npm:tslint",
-    "build:compile": "tsc",
+    "build:compile": "npm run tsc",
+    "build:compile:min": "npm run build:compile",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
-    "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
-    "test": "node --experimental-worker ../../../node_modules/mocha/bin/_mocha --recursive dist/test",
+    "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
+    "eslint": "eslint --ext=ts,tsx --format stylish src",
+    "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
     "test:generate": "node --experimental-worker dist/generateSnapshotFiles.js",
     "test:sequential": "node ../../../node_modules/mocha/bin/_mocha --recursive dist/test",
+    "test_disabled": "node --experimental-worker ../../../node_modules/mocha/bin/_mocha --recursive dist/test",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "dependencies": {
     "@microsoft/fluid-protocol-definitions": "^0.12.0",
-    "@microsoft/fluid-replay-tool": "^0.12.0"
+    "@microsoft/fluid-replay-tool": "^0.13.0"
   },
   "devDependencies": {
-    "@microsoft/fluid-build-common": "^0.12.0",
+    "@microsoft/eslint-config-fluid": "^0.13.0",
+    "@microsoft/fluid-build-common": "^0.13.0",
     "@types/mocha": "^5.2.5",
-    "@types/node": "^10.12.12",
+    "@types/node": "^10.14.6",
+    "@typescript-eslint/eslint-plugin": "^2.9.0",
+    "@typescript-eslint/eslint-plugin-tslint": "^2.9.0",
+    "@typescript-eslint/parser": "^2.9.0",
     "concurrently": "^4.1.0",
+    "eslint": "^6.7.1",
     "mocha": "^5.2.0",
     "rimraf": "^2.6.2",
-    "tslint": "^5.11.0",
+    "tslint": "^5.20.0",
     "typescript": "~3.4.5"
   }
 }

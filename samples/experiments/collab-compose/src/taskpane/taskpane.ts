@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IHostConfig, registerAttach } from "@microsoft/fluid-base-host";
+import { registerAttach } from "@microsoft/fluid-base-host";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { IFluidCodeDetails, ILoader } from "@microsoft/fluid-container-definitions";
 import { Deferred } from "@microsoft/fluid-core-utils";
@@ -98,13 +98,10 @@ function start(info) {
     true));
 
   const resolver = new ContainerUrlResolver(host, jwtToken);
-
-  const hostConf: IHostConfig = { documentServiceFactory: documentServiceFactories, urlResolver: resolver };
-
   const codeLoader = new WebCodeLoader();
   const loader = new Loader(
     {
-      resolver: hostConf.urlResolver
+      resolver
     },
     documentServiceFactories,
     codeLoader,

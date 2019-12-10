@@ -2,6 +2,8 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
+
+import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import {
     IComponent,
     IComponentHandleContext,
@@ -13,18 +15,18 @@ import {
     IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
 import {
-    ConnectionState,
     IAudience,
     IBlobManager,
     IDeltaManager,
     IGenericBlob,
     ILoader,
-    IQuorum,
-    ITelemetryLogger,
 } from "@microsoft/fluid-container-definitions";
+import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import {
+    ConnectionState,
+    IClientDetails,
     IDocumentMessage,
-    IDocumentStorageService,
+    IQuorum,
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITreeEntry,
@@ -201,6 +203,10 @@ export interface IComponentContext extends EventEmitter {
     readonly existing: boolean;
     readonly options: any;
     readonly clientId: string;
+    /**
+     * DEPRECATED use hostRuntime.clientDetails.type instead
+     * back-compat: 0.11 clientType
+     */
     readonly clientType: string;
     readonly parentBranch: string;
     readonly connected: boolean;
@@ -315,7 +321,12 @@ export interface IHostRuntime extends
     readonly existing: boolean;
     readonly options: any;
     readonly clientId: string;
+    /**
+     * DEPRECATED use clientDetails.type instead
+     * back-compat: 0.11 clientType
+     */
     readonly clientType: string;
+    readonly clientDetails: IClientDetails;
     readonly parentBranch: string;
     readonly connected: boolean;
     readonly leader: boolean;

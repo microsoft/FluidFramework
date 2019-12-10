@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Browser, ISequencedClient } from "@microsoft/fluid-protocol-definitions";
+import { ISequencedClient } from "@microsoft/fluid-protocol-definitions";
 
 export interface IHelpTasks {
     robot: string[];
@@ -28,12 +28,12 @@ export function analyzeTasks(
     tasks: string[]): IHelpTasks {
     const robotClients = [...clients].filter((client) => isRobot(client[1]));
     const handledTasks = robotClients.map((robot) => robot[1].client.type);
-    const unhandledTasks = tasks.filter((task) => handledTasks.indexOf(task) === -1);
+    const unhandledTasks = tasks.filter((task) => !handledTasks.includes(task));
     if (unhandledTasks.length > 0) {
         const runnerClient = clients.get(runnerClientId);
         const permission = runnerClient.client && runnerClient.client.permission ? runnerClient.client.permission : [];
-        const allowedTasks = unhandledTasks.filter((task) => permission && permission.indexOf(task) !== -1);
-        const robotNeeded = unhandledTasks.filter((task) => permission && permission.indexOf(task) === -1);
+        const allowedTasks = unhandledTasks.filter((task) => permission && permission.includes(task));
+        const robotNeeded = unhandledTasks.filter((task) => permission && !permission.includes(task));
         return {
             browser: allowedTasks,
             robot: robotNeeded,
@@ -42,5 +42,15 @@ export function analyzeTasks(
 }
 
 function isRobot(client: ISequencedClient): boolean {
-    return client.client && client.client.type && client.client.type !== Browser;
+    return client.client && (
+        (
+            // back-compat: 0.11 clientType
+            !client.client.details
+            && client.client.type !== "browser"
+        ) || (
+            client.client.details
+            && client.client.details.capabilities
+            && !client.client.details.capabilities.interactive
+        )
+    );
 }

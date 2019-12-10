@@ -3,12 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { buildHierarchy } from "@microsoft/fluid-core-utils";
+import { gitHashFile } from "@microsoft/fluid-core-utils";
+import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import * as resources from "@microsoft/fluid-gitresources";
+import { buildHierarchy } from "@microsoft/fluid-protocol-base";
 import {
     FileMode,
     ICreateBlobResponse,
-    IDocumentStorageService,
     ISnapshotTree,
     ISummaryHandle,
     ISummaryTree,
@@ -18,11 +19,16 @@ import {
     SummaryType,
 } from "@microsoft/fluid-protocol-definitions";
 import * as gitStorage from "@microsoft/fluid-server-services-client";
+import * as assert from "assert";
 
 /**
  * Document access to underlying storage for routerlicious driver.
  */
 export class DocumentStorageService implements IDocumentStorageService  {
+
+    // The values of this cache is useless. We only need the keys. So we are always putting
+    // empty strings as values.
+    private readonly blobsShaCache = new Map<string, string>();
     public get repositoryUrl(): string {
         return "";
     }
@@ -42,7 +48,7 @@ export class DocumentStorageService implements IDocumentStorageService  {
         }
 
         const tree = await this.manager.getTree(requestVersion.treeId);
-        return buildHierarchy(tree);
+        return buildHierarchy(tree, this.blobsShaCache);
     }
 
     public async getVersions(versionId: string, count: number): Promise<IVersion[]> {
@@ -56,6 +62,7 @@ export class DocumentStorageService implements IDocumentStorageService  {
 
     public async read(blobId: string): Promise<string> {
         const value = await this.manager.getBlob(blobId);
+        this.blobsShaCache.set(value.sha, "");
         return value.content;
     }
 
@@ -101,9 +108,14 @@ export class DocumentStorageService implements IDocumentStorageService  {
             case SummaryType.Blob:
                 const content = typeof value.content === "string" ? value.content : value.content.toString("base64");
                 const encoding = typeof value.content === "string" ? "utf-8" : "base64";
-                const blob = await this.manager.createBlob(content, encoding);
-                return blob.sha;
-
+                // The gitHashFile would return the same hash as returned by the server as blob.sha
+                const hash = gitHashFile(Buffer.from(content, encoding));
+                if (!this.blobsShaCache.has(hash)) {
+                    const blob = await this.manager.createBlob(content, encoding);
+                    assert.strictEqual(hash, blob.sha, "Blob.sha and hash do not match!!");
+                    this.blobsShaCache.set(blob.sha, "");
+                }
+                return hash;
             case SummaryType.Commit:
                 const commitTreeHandle = await this.writeSummaryObject(
                     value.tree,

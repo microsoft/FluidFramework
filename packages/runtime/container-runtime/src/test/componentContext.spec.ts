@@ -4,7 +4,8 @@
  */
 // tslint:disable: prefer-const
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
-import { IBlob, IDocumentStorageService, ISnapshotTree } from "@microsoft/fluid-protocol-definitions";
+import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
+import { IBlob, ISnapshotTree } from "@microsoft/fluid-protocol-definitions";
 import {
     IComponentContext,
     IComponentFactory,
@@ -28,12 +29,15 @@ describe("Component Context Tests", () => {
         beforeEach(async () => {
             let registry: IComponentRegistry;
             let factory: IComponentFactory;
-            factory = { IComponentFactory: factory,  instantiateComponent: (context: IComponentContext) => { } };
+            factory = {
+                get IComponentFactory() { return factory; },
+                instantiateComponent: (context: IComponentContext) => { },
+            };
             registry = {
                 IComponentRegistry: registry,
                 get: (pkg) => Promise.resolve(factory),
             };
-            containerRuntime = { IComponentRegistry: registry} as ContainerRuntime;
+            containerRuntime = { IComponentRegistry: registry } as ContainerRuntime;
         });
 
         it("Check LocalComponent Attributes", () => {

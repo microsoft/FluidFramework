@@ -2,10 +2,12 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IConnect, IConnected } from "@microsoft/fluid-driver-base";
+
 import {
     ConnectionMode,
     IClient,
+    IConnect,
+    IConnected,
     IContentMessage,
     IDocumentMessage,
     ISignalMessage,

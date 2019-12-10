@@ -184,14 +184,12 @@ data:
                 },
                 "translation": {
                     "key": "{{ .Values.worker.intelligence.translation.key }}"
-                },
-                "pinpointEditor": {
-                    "key": "{{ .Values.worker.intelligence.pinpointEditor.key }}"
                 }
             },
             "alfredUrl": "http://{{ template "alfred.fullname" . }}",
             "serverUrl": "{{ .Values.alfred.externalUrl }}",
             "blobStorageUrl": "{{ .Values.historian.externalUrl }}",
+            "internalBlobStorageUrl": "{{ .Values.historian.internalUrl }}",
             "repository": "FluidFramework",
             "clusterNpm": "{{ .Values.worker.clusterNpm }}",
             "npm": "{{ .Values.worker.npm }}",

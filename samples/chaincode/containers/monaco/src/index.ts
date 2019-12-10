@@ -39,11 +39,11 @@ export async function instantiateRuntime(context: IContainerContext): Promise<IR
     const registry = new Map<string, Promise<IComponentFactory>>([["@fluid-example/monaco", getMonacoFluidExport()]]);
 
     const runtime = await ContainerRuntime.load(context, registry,
-        (containerRuntime: ContainerRuntime) => {
+        [
             // Register path handler for inbound messages
-            return async (request: IRequest) => {
+            async (request: IRequest, containerRuntime) => {
                 console.log(request.url);
-                const requestUrl = request.url.length > 0 && request.url.charAt(0) === "/"
+                const requestUrl = request.url.length > 0 && request.url.startsWith("/")
                     ? request.url.substr(1)
                     : request.url;
                 const trailingSlash = requestUrl.indexOf("/");
@@ -55,8 +55,8 @@ export async function instantiateRuntime(context: IContainerContext): Promise<IR
 
                 const pathForComponent = trailingSlash !== -1 ? requestUrl.substr(trailingSlash) : requestUrl;
                 return component.request({ url: pathForComponent });
-            };
-        },
+            },
+        ],
     );
 
     // On first boot create the base component

@@ -41,8 +41,10 @@ function getSharepointServerRelativePathFromURL(url: URL) {
     const suffix = hostnameParts[0].endsWith("-my") ? "/_layouts/15/onedrive.aspx" : "/forms/allitems.aspx";
 
     let sitePath = url.pathname;
-    if (url.searchParams.get("id")) {
+    if (url.searchParams.has("id")) {
         sitePath = url.searchParams.get("id") as string;
+    } else if (url.searchParams.has("RootFolder")) {
+        sitePath = url.searchParams.get("RootFolder") as string;
     } else if (url.pathname.toLowerCase().endsWith(suffix)) {
         sitePath = sitePath.substr(0, url.pathname.length - suffix.length);
     }
@@ -81,13 +83,10 @@ fluidFetchMain()
     .catch((error: Error) => {
         if (error instanceof Error) {
             let extraMsg = "";
-            const data = (error as any).requestResult;
-            if (data) {
-                extraMsg += `\nRequest Result: ${JSON.stringify(data, undefined, 2)}`;
-            }
-            const statusCode = (error as any).statusCode;
-            if (statusCode !== undefined) {
-                extraMsg += `${extraMsg}\nStatus Code: ${statusCode}`;
+            for (const key of Object.keys(error)) {
+                if (key !== "message" && key !== "stack") {
+                    extraMsg += `\n${key}: ${JSON.stringify(error[key], undefined, 2)}`;
+                }
             }
             console.error(`ERROR: ${error.stack}${extraMsg}`);
         } else if (typeof error === "object") {

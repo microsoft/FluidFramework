@@ -6,6 +6,7 @@
 import { TestHost } from "@microsoft/fluid-local-test-server";
 import {
     TableDocument,
+    TableDocumentItem,
     TableDocumentType,
     TableSliceType,
     TableSlice,
@@ -24,28 +25,28 @@ describe("TableDocument", () => {
                 (m) => m.TableSlice.getFactory())],
         ]);
     });
-    
+
     after(async () => { await host.close(); })
-    
+
     function makeId(type: string) {
         const id = Math.random().toString(36).substr(2);
         // console.log(`${type}: ${id}`);
         return id;
     }
-    
+
     async function createTable() {
         return await host.createAndAttachComponent(makeId("Table-Document"), TableDocumentType);
     }
 
-    let table: TableDocument;    
+    let table: TableDocument;
     beforeEach(async () => {
         table = await createTable() as TableDocument;
     });
 
     const extract = (table: TableDocument) => {
-        const rows = [];
+        const rows: TableDocumentItem[][] = [];
         for (let r = 0; r < table.numRows; r++) {
-            const cols = [];
+            const cols: TableDocumentItem[] = [];
             for (let c = 0; c < table.numCols; c++) {
                 cols.push(table.getCellValue(r, c));
             }
@@ -104,7 +105,7 @@ describe("TableDocument", () => {
                     table.setCellValue(row, col, `${row},${col}`);
                 }
             }
-        
+
             for (let row = 0; row < table.numRows; row++) {
                 for (let col = 0; col < table.numCols; col++) {
                     assert.strictEqual(table.getCellValue(row, col), `${row},${col}`);
@@ -192,7 +193,7 @@ describe("TableDocument", () => {
     describe("TableSlice", () => {
         it("range follows edits", async () => {
             table.insertRows(0, 5);
-            table.insertCols(0, 7);    
+            table.insertCols(0, 7);
             const min = { row: 1, col: 2 };
             const max = { row: 3, col: 4 };
 
@@ -211,7 +212,7 @@ describe("TableDocument", () => {
 
         it("asserts when outside of slice", async () => {
             table.insertRows(0, 5);
-            table.insertCols(0, 7);    
+            table.insertCols(0, 7);
 
             const slice = await table.createSlice(makeId("Table-Slice"), "unnamed-slice", 0, 0, 2, 2);
             assert.throws(() => slice.getCellValue(-1, 0));
@@ -222,7 +223,7 @@ describe("TableDocument", () => {
 
         it("Annotations work when proxied through table slice", async () => {
             table.insertRows(0, 5);
-            table.insertCols(0, 7);    
+            table.insertCols(0, 7);
 
             const slice = await table.createSlice(makeId("Table-Slice"), "unnamed-slice", 0, 0, 2, 2);
             slice.annotateRows(0, 1, { id: "row0" });
@@ -235,7 +236,7 @@ describe("TableDocument", () => {
 
         it("Insert rows and columns work when proxied through table slice", async () => {
             table.insertRows(0, 5);
-            table.insertCols(0, 7);    
+            table.insertCols(0, 7);
 
             const slice = await table.createSlice(makeId("Table-Slice"), "unnamed-slice", 0, 0, 2, 2);
             assert.equal(slice.numCols, 3);
@@ -251,7 +252,7 @@ describe("TableDocument", () => {
     describe("CellRange", () => {
         it("forEachRowMajor visits all cells", async () => {
             table.insertRows(0, 5);
-            table.insertCols(0, 7);    
+            table.insertCols(0, 7);
 
             const slice = await table.createSlice(makeId("Table-Slice"), "unnamed-slice", 1, 1, 2, 2);
             assert.equal(slice.numCols, 2);
@@ -268,7 +269,7 @@ describe("TableDocument", () => {
 
         it("forEachColMajor visits all cells", async () => {
             table.insertRows(0, 5);
-            table.insertCols(0, 7);    
+            table.insertCols(0, 7);
 
             const slice = await table.createSlice(makeId("Table-Slice"), "unnamed-slice", 1, 1, 2, 2);
             assert.equal(slice.numCols, 2);

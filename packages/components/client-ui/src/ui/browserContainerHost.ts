@@ -16,8 +16,9 @@ import { removeAllChildren } from "./utils";
  */
 export class BrowserContainerHost {
     private root: Component = null;
+    private parent: HTMLElement = null;
 
-    public attach(root: Component) {
+    public attach(root: Component, parent?: HTMLElement) {
         debug("Attaching new component to browser host");
 
         // Make note of the root node
@@ -25,6 +26,7 @@ export class BrowserContainerHost {
             throw new Error("A component has already been attached");
         }
         this.root = root;
+        this.parent = parent;
 
         // Listen for resize messages and propagate them to child elements
         window.addEventListener("resize", () => {
@@ -43,16 +45,39 @@ export class BrowserContainerHost {
             this.root.emit("keypress", e);
         };
 
-        removeAllChildren(document.body);
-        document.body.appendChild(root.element);
+        if (parent) {
+            parent.appendChild(root.element);
+        } else {
+            removeAllChildren(document.body);
+            document.body.appendChild(root.element);
+        }
 
         // Trigger initial resize due to attach
         this.resize();
+        this.resize(); // have to resize twice because we get a weird bounding rect the first time, not sure why
     }
 
     private resize() {
-        const clientRect = document.body.getBoundingClientRect();
-        const newSize = Rectangle.fromClientRect(clientRect);
+        let clientRect;
+        let newSize;
+        if (this.parent) {
+            clientRect = this.parent.getBoundingClientRect();
+            newSize = Rectangle.fromClientRect(clientRect);
+            // assume parent div is containing block and we want to render at its top-leftmost
+            newSize.x = 0;
+            newSize.y = 0;
+
+            // tslint:disable: strict-boolean-expressions
+            const borderWidth = (parseFloat(this.parent.style.borderLeftWidth) || 0)
+                + (parseFloat(this.parent.style.borderRightWidth) || 0);
+            const borderHeight = (parseFloat(this.parent.style.borderTopWidth) || 0)
+                + (parseFloat(this.parent.style.borderBottomWidth) || 0);
+            newSize.width -= borderWidth;
+            newSize.height -= borderHeight;
+        } else {
+            clientRect = document.body.getBoundingClientRect();
+            newSize = Rectangle.fromClientRect(clientRect);
+        }
         newSize.conformElement(this.root.element);
         this.root.resize(newSize);
     }

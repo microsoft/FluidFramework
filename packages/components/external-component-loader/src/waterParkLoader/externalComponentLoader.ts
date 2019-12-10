@@ -25,7 +25,6 @@ export class ExternalComponentLoader extends PrimedComponent
     implements IComponentHTMLVisual {
 
     private static readonly defaultComponents = [
-        "@fluid-example/pinpoint-editor",
         "@fluid-example/todo",
         "@fluid-example/math",
         "@fluid-example/monaco",

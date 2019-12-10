@@ -15,13 +15,13 @@ import { ImageFit } from 'office-ui-fabric-react/lib/Image';
 import * as moment from "moment";
 
 export interface IDocumentCardBasicExampleProps {
-    pkg: string,
-    name: string,
-    version: string,
-    icon: string,
-    url: string,
-    date: number,
-    user: any
+    pkg: string;
+    name: string;
+    version: string;
+    icon: string;
+    url: string;
+    date: number;
+    user: any;
 }
 
 export class DocumentCardBasicExample extends React.Component<IDocumentCardBasicExampleProps> {

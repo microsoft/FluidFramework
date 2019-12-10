@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/flow-util-lib",
-  "version": "0.12.0",
+  "version": "0.13.0",
   "description": "Shared utility code for Flow-* packages.",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -12,24 +12,32 @@
   "scripts": {
     "build": "concurrently npm:build:compile npm:tslint",
     "build:compile": "concurrently npm:tsc npm:build:esnext npm:build:copy",
+    "build:compile:min": "npm run build:compile",
     "build:copy": "copyfiles -u 1 \"src/**/*.css\" dist/ && copyfiles -u 1 \"src/**/*.css\" lib/",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
-    "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
+    "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
+    "eslint": "eslint --ext=ts,tsx --format stylish src",
+    "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
     "test": "ts-mocha --recursive test/**/*.spec.ts --exit",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml --exit",
     "tsc": "tsc",
-    "tslint": "tslint --project tsconfig.json --format verbose"
+    "tslint": "npm run eslint"
   },
   "devDependencies": {
-    "@microsoft/fluid-build-common": "^0.12.0",
+    "@microsoft/eslint-config-fluid": "^0.13.0",
+    "@microsoft/fluid-build-common": "^0.13.0",
     "@types/benchmark": "^1.0.31",
     "@types/mocha": "^5.2.5",
-    "@types/node": "^10.12.12",
+    "@types/node": "^10.14.6",
+    "@typescript-eslint/eslint-plugin": "^2.9.0",
+    "@typescript-eslint/eslint-plugin-tslint": "^2.9.0",
+    "@typescript-eslint/parser": "^2.9.0",
     "benchmark": "^2.1.4",
     "concurrently": "^4.1.0",
     "copyfiles": "^2.1.0",
+    "eslint": "^6.7.1",
     "ignore-styles": "^5.0.1",
     "jsdom": "^12.0.0",
     "jsdom-global": "^3.0.2",
@@ -39,7 +47,7 @@
     "rimraf": "^2.6.2",
     "ts-mocha": "^6.0.0",
     "ts-node": "^7.0.1",
-    "tslint": "^5.11.0",
+    "tslint": "^5.20.0",
     "typescript": "~3.4.5"
   }
 }

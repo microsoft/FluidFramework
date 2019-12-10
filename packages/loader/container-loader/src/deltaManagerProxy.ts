@@ -12,6 +12,8 @@ import {
 } from "@microsoft/fluid-container-definitions";
 import { EventForwarder } from "@microsoft/fluid-core-utils";
 import {
+    ConnectionMode,
+    IClientDetails,
     IDocumentMessage,
     ISequencedDocumentMessage,
     IServiceConfiguration,
@@ -104,8 +106,16 @@ export class DeltaManagerProxy
         return this.deltaManager.initialSequenceNumber;
     }
 
+    /**
+     * DEPRECATED use clientDetails.type
+     * back-compat: 0.11 clientType
+     */
     public get clientType(): string {
         return this.deltaManager.clientType;
+    }
+
+    public get clientDetails(): IClientDetails {
+        return this.deltaManager.clientDetails;
     }
 
     public get version(): string {
@@ -143,8 +153,8 @@ export class DeltaManagerProxy
         return this.deltaManager.close();
     }
 
-    public async connect(reason: string): Promise<IConnectionDetails> {
-        return this.deltaManager.connect(reason);
+    public async connect(requestedMode: ConnectionMode): Promise<IConnectionDetails> {
+        return this.deltaManager.connect(requestedMode);
     }
 
     public async getDeltas(

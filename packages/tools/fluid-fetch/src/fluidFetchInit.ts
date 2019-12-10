@@ -4,15 +4,15 @@
  */
 
 // tslint:disable:object-literal-sort-keys
-import { BaseTelemetryNullLogger, configurableUrlResolver } from "@microsoft/fluid-core-utils";
+import { BaseTelemetryNullLogger } from "@microsoft/fluid-core-utils";
+import { IFluidResolvedUrl, IResolvedUrl, IUrlResolver } from "@microsoft/fluid-driver-definitions";
+import { configurableUrlResolver } from "@microsoft/fluid-driver-utils";
 import { FluidAppOdspUrlResolver } from "@microsoft/fluid-fluidapp-odsp-urlresolver";
 import * as odsp from "@microsoft/fluid-odsp-driver";
 import { OdspUrlResolver } from "@microsoft/fluid-odsp-urlresolver";
 import { IClientConfig, refreshAccessToken } from "@microsoft/fluid-odsp-utils";
-import { IFluidResolvedUrl, IResolvedUrl, IUrlResolver } from "@microsoft/fluid-protocol-definitions";
 import * as r11s from "@microsoft/fluid-routerlicious-driver";
 import { RouterliciousUrlResolver } from "@microsoft/fluid-routerlicious-urlresolver";
-import * as sha from "sha.js";
 import { URL } from "url";
 import { localDataOnly, paramJWT } from "./fluidFetchArgs";
 import { getClientConfig, getODSPTokens, saveAccessToken } from "./fluidFetchODSPTokens";
@@ -38,7 +38,7 @@ async function initializeODSPCore(
         return;
     }
 
-    const docId = new sha.sha256().update(`${driveId}_${itemId}`).digest("base64");
+    const docId = odsp.getHashedDocumentId(driveId, itemId);
 
     console.log(`Connecting to ODSP:
   server: ${server}

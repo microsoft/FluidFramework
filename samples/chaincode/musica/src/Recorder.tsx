@@ -3,33 +3,34 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedDirectory } from '@microsoft/fluid-map';
-import { Song } from './Songs';
-import { Note } from './Songs/Note';
+import { ISharedDirectory } from "@microsoft/fluid-map";
+import { Song } from "./Songs";
+import { Note } from "./Songs/Note";
 
 export class Recorder {
-  private currentSongName = '';
+  private currentSongName = "";
   private isRecording = false;
   private lastNoteTime = new Date();
 
-  constructor(private rootDir: ISharedDirectory) {}
+  constructor(private readonly rootDir: ISharedDirectory) {}
 
   // Save each new note into Fluid as they come in
   public postSaveNewNote(note: Note, currentTempo: number) {
     if (this.isRecording) {
-      let savedSongs = this.getSavedSongs();
+      const savedSongs = this.getSavedSongs();
 
-      savedSongs.forEach(songProperties => {
+      savedSongs.forEach((songProperties) => {
         if (songProperties.name === this.currentSongName) {
-          let lastLastNoteTime = this.lastNoteTime;
+          const lastLastNoteTime = this.lastNoteTime;
           this.lastNoteTime = new Date();
-          let elapsedTimeInMs = this.lastNoteTime.getTime() - lastLastNoteTime.getTime();
+          const elapsedTimeInMs = this.lastNoteTime.getTime() - lastLastNoteTime.getTime();
 
-          let noteLength = (currentTempo * elapsedTimeInMs) / 60000;
+          const noteLength = (currentTempo * elapsedTimeInMs) / 60000;
 
-          let lastNote = songProperties.song.noteSequence.pop();
+          const lastNote = songProperties.song.noteSequence.pop();
 
-          // This can be simpler by just storing the n-1 note info and pushing it when necessary. Also pushing the last note on stop
+          // This can be simpler by just storing the n-1 note info and pushing it when necessary.
+          // Also pushing the last note on stop
           if (lastNote !== undefined) {
             lastNote.customNoteLength = noteLength;
             songProperties.song.noteSequence.push(lastNote);
@@ -43,7 +44,7 @@ export class Recorder {
   }
 
   public getSavedSongs(): SongProperties[] {
-    let savedSongs = this.rootDir.get('savedSongs');
+    const savedSongs = this.rootDir.get("savedSongs");
 
     if (savedSongs === undefined) {
       return [];
@@ -53,7 +54,7 @@ export class Recorder {
   }
 
   public postSavedSongs(savedSongs: SongProperties[]) {
-    this.rootDir.set('savedSongs', savedSongs);
+    this.rootDir.set("savedSongs", savedSongs);
   }
 
   // for caching later
@@ -65,9 +66,9 @@ export class Recorder {
     this.currentSongName = name;
     this.recordedSong = { noteSequence: [] };
 
-    let songProperties = { name: this.currentSongName, song: this.recordedSong } as SongProperties;
+    const songProperties = { name: this.currentSongName, song: this.recordedSong } as SongProperties;
 
-    let savedSongs = this.getSavedSongs();
+    const savedSongs = this.getSavedSongs();
     savedSongs.push(songProperties);
 
     this.postSavedSongs(savedSongs);

@@ -5,7 +5,7 @@
   "author": "Microsoft",
   "scripts": {
     "build": "npm run policy-check && npm run build:genver && npm run build:compile && npm run tslint && npm run build:docs",
-    "build:ci": "npm run build:genver && lerna run build:full:compile --stream",
+    "build:ci": "npm run build:genver && lerna run build:compile:min --stream",
     "build:compile": "lerna run build:compile --stream",
     "build:docs": "npm run clean:docs && lerna run build:docs --stream --parallel && npm run build:gendocs",
     "build:fast": "node ./tools/fluid-build/dist/fluidBuild.js --root .",
@@ -13,23 +13,20 @@
     "build:full:compile": "lerna run build:full:compile --stream",
     "build:gendocs": "api-documenter yaml -i packages/_api-extractor-temp/doc-models -o docs/api",
     "build:genver": "lerna run build:genver --stream --parallel",
-    "build:r11s": "cd server/routerlicious && npm run build",
     "bump-version": "lerna version minor --no-push --no-git-tag-version && npm run build:genver",
     "clean": "lerna run clean --stream --parallel && npm run clean:docs && npm run clean:nyc",
     "clean:docs": "rimraf packages/_api-extractor-temp docs/api/*/**",
     "clean:nyc": "rimraf nyc/**",
     "clean:r11s": "cd server/routerlicious && npm run clean",
-    "postinstall": "npm run postinstall:lerna && (npm run postinstall:fluid-build || true) && (npm run postinstall:r11s || true)",
+    "postinstall": "npm run postinstall:lerna && (npm run postinstall:fluid-build || true)",
     "policy-check": "cd tools/repo-policy-check && npm run policy-check",
     "policy-check:full": "cd tools/repo-policy-check && npm install && npm run policy-check",
     "postinstall:fluid-build": "cd tools/fluid-build && npm i && npm run build",
     "postinstall:lerna": "lerna bootstrap --hoist --nohoist tslint-microsoft-contrib",
-    "postinstall:r11s": "cd server/routerlicious && npm run registryAuth",
     "publish-local": "lerna run publish-local --stream",
     "restart": "cd server/routerlicious && npm run restart",
-    "sort-package-json": "sort-package-json ./package.json && lerna exec -- sort-package-json ./package.json",
-    "start": "cd server/routerlicious && npm run start",
-    "start:debug": "cd server/routerlicious && npm run start:debug",
+    "sort-package-json": "sort-package-json && sort-package-json ./{server,tools}/*/package.json && sort-package-json ./samples/*/*/package.json && lerna exec -- sort-package-json ./package.json",
+    "start": "echo 'Go to FluidFramework/server/routerlicious, install, build, and start'",
     "stop": "cd server/routerlicious && npm run stop",
     "stop:full": "cd server/routerlicious && npm run stop:full",
     "test": "lerna run test --stream --no-bail --no-sort",
@@ -46,7 +43,7 @@
     "watch:esnext": "lerna run --parallel build:esnext -- -- --watch",
     "watch:tsc": "lerna run --parallel tsc -- -- --watch",
     "watch:webpack": "lerna run --parallel webpack -- -- --watch",
-    "webpack": "lerna run --parallel webpack --stream"
+    "webpack": "lerna run --no-sort webpack --stream"
   },
   "dependencies": {},
   "devDependencies": {
@@ -57,7 +54,7 @@
     "lerna": "^3.14.1",
     "nyc": "^14.1.1",
     "rimraf": "^2.6.2",
-    "sort-package-json": "^1.22.1",
+    "sort-package-json": "^1.23.1",
     "typescript": "~3.4.5"
   },
   "nyc": {

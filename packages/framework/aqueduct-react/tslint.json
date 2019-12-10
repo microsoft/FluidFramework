@@ -16,6 +16,5 @@
         "use-simple-attributes": false,
         "strict-boolean-expressions": false,
         "react-a11y-input-elements": false
-
     }
 }

@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import * as os from "os";
+
 interface FastBuildOptions {
     verbose: boolean;
     nolint: boolean;
@@ -20,6 +22,13 @@ interface FastBuildOptions {
     symlink: boolean;
     depcheck: boolean;
     force: boolean;
+    install: boolean
+    nohoist: boolean;
+    uninstall: boolean;
+    concurrency: number;
+    samples: boolean;
+    fixScripts: boolean;
+    layerCheck: boolean;
 }
 
 // defaults
@@ -39,6 +48,13 @@ export const options: FastBuildOptions = {
     symlink: false,
     depcheck: false,
     force: false,
+    install: false,
+    nohoist: false,
+    uninstall: false,
+    concurrency: os.cpus().length, // TODO: argument?
+    samples: true,
+    fixScripts: false,
+    layerCheck: false,
 };
 
 function printUsage() {
@@ -64,9 +80,32 @@ Options:
 function setClean(build: boolean) {
     options.force = true;
     options.clean = true;
+    setBuild(build);
+}
+
+function setBuild(build: boolean) {
     if (build || options.build === undefined) {
         options.build = build;
     }
+}
+
+function setReinstall(nohoist: boolean) {
+    options.uninstall = true;
+    setInstall(nohoist);
+}
+
+function setInstall(nohoist: boolean) {
+    options.install = true;
+    options.nohoist = nohoist;
+    if (nohoist) {
+        options.symlink = true;
+    }
+    setBuild(false);
+}
+
+function setUninstall() {
+    options.uninstall = true;
+    setBuild(false);
 }
 
 export function parseOptions(argv: string[]) {
@@ -101,6 +140,48 @@ export function parseOptions(argv: string[]) {
 
         if (arg === "-f" || arg === "--force") {
             options.force = true;
+            continue;
+        }
+        
+        if (arg === "--nosamples") {
+            options.samples = false;
+            continue;
+        }
+
+        if (arg === "--fixscripts") {
+            options.fixScripts = true;
+            setBuild(false);
+            continue;
+        }
+
+        if (arg === "--layercheck") {
+            options.layerCheck = true;
+            setBuild(false);
+            continue;
+        }
+
+        if (arg === "--install") {
+            setInstall(false);
+            continue;
+        }
+
+        if (arg === "--install:nohoist") {
+            setInstall(true);
+            continue;
+        }
+
+        if (arg === "--reinstall") {
+            setReinstall(false);
+            continue;
+        }
+
+        if (arg === "--reinstall:nohoist") {
+            setReinstall(true);
+            continue;
+        }
+
+        if (arg === "--uninstall") {
+            setUninstall();
             continue;
         }
 
@@ -142,11 +223,13 @@ export function parseOptions(argv: string[]) {
 
         if (arg === "--symlink") {
             options.symlink = true;
+            setBuild(false);
             continue;
         }
 
         if (arg === "--depcheck") {
             options.depcheck = true;
+            setBuild(false);
             continue;
         }
 

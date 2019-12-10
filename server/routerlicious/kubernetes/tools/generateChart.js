@@ -29,7 +29,7 @@ home: https://github.com/microsoft/FluidFramework
 const values =
 `## Generated from a tool - do not edit directly
 ## Fluid image version
-image: prague.azurecr.io/prague:${imageVersion}
+image: prague.azurecr.io/prague-server:${imageVersion}
 
 ## Specify a imagePullPolicy
 ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
@@ -106,10 +106,11 @@ riddler:
 packageManager:
   endpoint: https://packages.wu2.prague.office-int.com
   username: prague
-  password: bohemia
+  password: 8Fxttu_A
 
 historian:
   externalUrl: https://historian.wu2.prague.office-int.com
+  internalUrl: http://smelly-wolf-historian
 
 gitrest:
   url: http://smelly-wolf-gitrest
@@ -156,8 +157,6 @@ worker:
     textAnalytics:
       key: ""
     translation:
-      key: ""
-    pinpointEditor:
       key: ""
   clusterNpm: ""
   npm: ""

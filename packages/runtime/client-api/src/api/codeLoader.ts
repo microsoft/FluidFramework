@@ -6,11 +6,13 @@
 import * as cell from "@microsoft/fluid-cell";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
-import { ICodeLoader,
-        IContainerContext,
-        IFluidCodeDetails,
-        IRuntime,
-        IRuntimeFactory } from "@microsoft/fluid-container-definitions";
+import {
+    ICodeLoader,
+    IContainerContext,
+    IFluidCodeDetails,
+    IRuntime,
+    IRuntimeFactory,
+} from "@microsoft/fluid-container-definitions";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@microsoft/fluid-container-runtime";
 import * as ink from "@microsoft/fluid-ink";
 import * as map from "@microsoft/fluid-map";
@@ -20,6 +22,7 @@ import {
     IComponentContext,
     IComponentFactory,
     IHostRuntime,
+    NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
 import * as sequence from "@microsoft/fluid-sequence";
 import { Document } from "./document";
@@ -27,7 +30,7 @@ import { Document } from "./document";
 const rootMapId = "root";
 const insightsMapId = "insights";
 
-class Chaincode implements IComponentFactory {
+export class Chaincode implements IComponentFactory {
     public get IComponentFactory() { return this; }
 
     public instantiateComponent(context: IComponentContext): void {
@@ -106,7 +109,7 @@ export class ChaincodeFactory implements IRuntimeFactory {
     private static async containerRequestHandler(request: IRequest, runtime: IHostRuntime) {
         const trimmed = request.url
             .substr(1)
-            .substr(0, request.url.indexOf("/", 1) === -1 ? request.url.length : request.url.indexOf("/"));
+            .substr(0, !request.url.includes("/", 1) ? request.url.length : request.url.indexOf("/"));
 
         const componentId = trimmed ? trimmed : "root";
 
@@ -114,7 +117,9 @@ export class ChaincodeFactory implements IRuntimeFactory {
         return component.request({ url: trimmed.substr(1 + trimmed.length) });
     }
 
-    constructor(private readonly runtimeOptions: IContainerRuntimeOptions) {
+    constructor(
+        private readonly runtimeOptions: IContainerRuntimeOptions,
+        private readonly registries: NamedComponentRegistryEntries) {
     }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
@@ -122,7 +127,11 @@ export class ChaincodeFactory implements IRuntimeFactory {
 
         const runtime = await ContainerRuntime.load(
             context,
-            [["@fluid-internal/client-api", Promise.resolve(chaincode)]],
+            [
+                ["@fluid-internal/client-api", Promise.resolve(chaincode)],
+                ...this.registries,
+            ],
+            // eslint-disable-next-line @typescript-eslint/unbound-method
             [ChaincodeFactory.containerRequestHandler],
             this.runtimeOptions);
 
@@ -137,10 +146,6 @@ export class ChaincodeFactory implements IRuntimeFactory {
                 });
         }
 
-        if (!this.runtimeOptions.generateSummaries) {
-            runtime.registerTasks(["snapshot", "spell", "intel", "translation"]);
-        }
-
         return runtime;
     }
 }
@@ -148,8 +153,12 @@ export class ChaincodeFactory implements IRuntimeFactory {
 export class CodeLoader implements ICodeLoader {
     private readonly factory: IRuntimeFactory;
 
-    constructor(runtimeOptions: IContainerRuntimeOptions) {
-        this.factory = new ChaincodeFactory(runtimeOptions);
+    constructor(
+        runtimeOptions: IContainerRuntimeOptions,
+        registries?: NamedComponentRegistryEntries,
+    ) {
+        this.factory = new ChaincodeFactory(runtimeOptions,
+            registries ? registries : []);
     }
 
     public async load<T>(source: IFluidCodeDetails): Promise<T> {

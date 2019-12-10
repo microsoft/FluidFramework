@@ -13,7 +13,9 @@
         "outDir": "dist",
         "sourceMap": true,
         "strict": true,
-        "inlineSources": true
+        "inlineSources": true,
+        "incremental": true,
+        "types": [],
     },
     "include": [
         "src/**/*.ts"
