@@ -24,8 +24,7 @@
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "dependencies": {
-    "@microsoft/fluid-component-core-interfaces": "0.12.17216",
-    "@microsoft/fluid-core-utils": "0.12.17216",
+    "@microsoft/fluid-core-utils": "0.13.17538",
     "@microsoft/fluid-gitresources": "^0.12.0",
     "@microsoft/fluid-protocol-base": "^0.12.0",
     "@microsoft/fluid-protocol-definitions": "^0.12.0",
