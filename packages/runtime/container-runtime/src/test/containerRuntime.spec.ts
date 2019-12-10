@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { BlobTreeEntry, TreeTreeEntry } from "@microsoft/fluid-core-utils";
+import { BlobTreeEntry, TreeTreeEntry } from "@microsoft/fluid-protocol-base";
 import {
     ISummaryBlob,
     ISummaryHandle,

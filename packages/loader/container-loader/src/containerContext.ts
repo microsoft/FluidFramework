@@ -19,8 +19,8 @@ import {
     IRuntime,
     IRuntimeFactory,
 } from "@microsoft/fluid-container-definitions";
-import { raiseConnectedEvent } from "@microsoft/fluid-core-utils";
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
+import { raiseConnectedEvent } from "@microsoft/fluid-protocol-base";
 import {
     ConnectionState,
     IClientDetails,

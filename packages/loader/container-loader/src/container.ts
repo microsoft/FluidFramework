@@ -21,12 +21,10 @@ import {
     LoaderHeader,
 } from "@microsoft/fluid-container-definitions";
 import {
-    buildSnapshotTree,
     ChildLogger,
     DebugLogger,
     EventEmitterWithErrorHandling,
     PerformanceEvent,
-    raiseConnectedEvent,
     TelemetryLogger,
 } from "@microsoft/fluid-core-utils";
 import {
@@ -34,7 +32,14 @@ import {
     IDocumentStorageService,
 } from "@microsoft/fluid-driver-definitions";
 import { readAndParse } from "@microsoft/fluid-driver-utils";
-import { isSystemMessage, ProtocolOpHandler, Quorum, QuorumProxy } from "@microsoft/fluid-protocol-base";
+import {
+    buildSnapshotTree,
+    isSystemMessage,
+    ProtocolOpHandler,
+    Quorum,
+    QuorumProxy,
+    raiseConnectedEvent,
+} from "@microsoft/fluid-protocol-base";
 import {
     ConnectionState,
     FileMode,

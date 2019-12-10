@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { addBlobToTree, fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
+import { fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
+import { addBlobToTree } from "@microsoft/fluid-protocol-base";
 import {
     ISequencedDocumentMessage,
     ITree,

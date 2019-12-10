@@ -5,7 +5,6 @@
 
 import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import {
-    buildHierarchy,
     fromBase64ToUtf8,
     fromUtf8ToBase64,
     gitHashFile,
@@ -13,6 +12,7 @@ import {
     TelemetryLogger,
 } from "@microsoft/fluid-core-utils";
 import * as resources from "@microsoft/fluid-gitresources";
+import { buildHierarchy } from "@microsoft/fluid-protocol-base";
 import * as api from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
 import {

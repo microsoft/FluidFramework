@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { buildSnapshotTree } from "@microsoft/fluid-core-utils";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
@@ -12,6 +11,7 @@ import {
     IDocumentStorageService,
     IResolvedUrl,
 } from "@microsoft/fluid-driver-definitions";
+import { buildSnapshotTree } from "@microsoft/fluid-protocol-base";
 import {
     ConnectionMode,
     IClient,

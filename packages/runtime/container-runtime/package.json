@@ -35,6 +35,7 @@
     "@microsoft/fluid-core-utils": "^0.13.0",
     "@microsoft/fluid-driver-definitions": "^0.13.0",
     "@microsoft/fluid-driver-utils": "^0.13.0",
+    "@microsoft/fluid-protocol-base": "^0.12.0",
     "@microsoft/fluid-protocol-definitions": "^0.12.0",
     "@microsoft/fluid-runtime-definitions": "^0.13.0",
     "@microsoft/fluid-runtime-utils": "^0.13.0",
