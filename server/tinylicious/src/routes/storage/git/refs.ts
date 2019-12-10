@@ -3,33 +3,63 @@
  * Licensed under the MIT License.
  */
 
-import * as git from "@microsoft/fluid-gitresources";
+import { ICreateRefParams, IPatchRefParams, IRef } from "@microsoft/fluid-gitresources";
 import { Router } from "express";
+import * as git from "isomorphic-git";
 import * as nconf from "nconf";
 import * as utils from "../utils";
+
+function refToIRef(ref: string, sha: string): IRef {
+    return {
+        object: {
+            sha,
+            type: "",
+            url: "",
+        },
+        ref,
+        url: "",
+    };
+}
 
 export function create(store: nconf.Provider): Router {
     const router: Router = Router();
 
-    async function getRefs(tenantId: string, authorization: string): Promise<git.IRef[]> {
+    async function getRefs(tenantId: string, authorization: string): Promise<IRef[]> {
         throw new Error("Not implemented");
     }
 
-    async function getRef(tenantId: string, authorization: string, ref: string): Promise<git.IRef> {
-        throw new Error("Not implemented");
+    async function getRef(tenantId: string, authorization: string, ref: string): Promise<IRef> {
+        const resolved = await git.resolveRef({
+            dir: utils.getGitDir(store, tenantId),
+            ref,
+        });
+
+        return refToIRef(ref, resolved);
     }
 
-    async function createRef(tenantId: string, authorization: string, params: git.ICreateRefParams): Promise<git.IRef> {
-        throw new Error("Not implemented");
+    async function createRef(tenantId: string, authorization: string, params: ICreateRefParams): Promise<IRef> {
+        await git.writeRef({
+            dir: utils.getGitDir(store, tenantId),
+            ref: params.ref,
+            value: params.sha,
+        });
+
+        return refToIRef(params.ref, params.sha);
     }
 
     async function updateRef(
         tenantId: string,
         authorization: string,
         ref: string,
-        params: git.IPatchRefParams,
-    ): Promise<git.IRef> {
-        throw new Error("Not implemented");
+        params: IPatchRefParams,
+    ): Promise<IRef> {
+        await git.writeRef({
+            dir: utils.getGitDir(store, tenantId),
+            ref,
+            value: params.sha,
+        });
+
+        return refToIRef(ref, params.sha);
     }
 
     async function deleteRef(
