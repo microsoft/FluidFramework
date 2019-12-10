@@ -1152,13 +1152,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                 return attemptData;
             }
 
-            // TODO in the future we can have stored the latest summary by listening to the summary ack message
-            // after loading from the beginning of the snapshot
-            const versions = await this.context.storage.getVersions(this.id, 1);
-            const parents = versions.map((version: IVersion) => version.id);
-            const parent = parents[0];
-            generateSummaryEvent.reportProgress({}, "loadedVersions");
-
             const trace = Trace.start();
             const treeWithStats = await this.summarize(fullTree);
             const generateData: IGeneratedSummaryData = {
