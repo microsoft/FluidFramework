@@ -45,6 +45,7 @@ interface IPackage {
     engines: { node: string; npm: string };
     os: string[];
     cpu: string[];
+    [key: string]: any;
 };
 
 export class Package {
@@ -107,7 +108,7 @@ export class Package {
     }
 
     public get dependencies() {
-        return this.packageJson.dependencies? Object.keys(this.packageJson.dependencies) : [];
+        return this.packageJson.dependencies ? Object.keys(this.packageJson.dependencies) : [];
     }
 
     public get combinedDependencies() {
@@ -131,6 +132,42 @@ export class Package {
     }
 
     public async checkScripts() {
+        // Fluid specific
+        let fixed = this.checkBuildScripts();
+        fixed = this.checkTestCoverageScripts() || fixed;
+
+        if (fixed) {
+            await this.savePackageJson();
+        }
+    }
+
+    public checkTestCoverageScripts() {
+        let fixed = false;
+        // Fluid specific
+        const testCoverageScript = this.getScript("test:coverage");
+        if (testCoverageScript && testCoverageScript.startsWith("nyc")) {
+            if (!this.packageJson.devDependencies.nyc) {
+                console.warn(`${this.nameColored}: warning: missing nyc dependency`);
+            }
+            if (this.packageJson.nyc) {
+                if (this.packageJson.nyc["exclude-after-remap"] !== false) {
+                    console.warn(`${this.nameColored}: warning: nyc.exclude-after-remap need to be false`);
+                    if (options.fixScripts) {
+                        this.packageJson.nyc["exclude-after-remap"] = false;
+                        fixed = true;
+                    }
+                }
+            } else {
+                console.warn(`${this.nameColored}: warning: missing nyc configuration`);
+            }
+        }
+
+        return fixed;
+    }
+
+    public checkBuildScripts() {
+        // Fluid specific
+        let fixed = false;
         const buildScript = this.getScript("build");
         if (buildScript) {
             if (buildScript.startsWith("echo ")) {
@@ -192,7 +229,6 @@ export class Package {
                 return;
             }
 
-            let fixed = false;
             const check = (scriptName: string, parts: string[], prefix = "") => {
                 const expected = prefix +
                     (parts.length > 1 ? `concurrently npm:${parts.join(" npm:")}` : `npm run ${parts[0]}`);
@@ -215,11 +251,8 @@ export class Package {
             if (!this.getScript("clean")) {
                 console.warn(`${this.nameColored}: warning: package has "build" script without "clean" script`);
             }
-
-            if (fixed) {
-                await this.savePackageJson();
-            }
         }
+        return fixed;
     }
     public async depcheck() {
         let checkFiles: string[];

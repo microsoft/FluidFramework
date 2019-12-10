@@ -59,7 +59,14 @@
   },
   "nyc": {
     "all": true,
+    "extension": [
+      ".ts",
+      ".tsx",
+      ".js",
+      ".jsx"
+    ],
     "exclude": [
+      "**/*.d.ts",
       "packages/**/src/test/**/*.ts",
       "packages/**/dist/test/**/*.js",
       "**/*.bundle.js",
@@ -77,6 +84,7 @@
     ],
     "temp-directory": "nyc/.nyc_output",
     "cache-dir": "nyc/.cache",
-    "report-dir": "nyc/report"
+    "report-dir": "nyc/report",
+    "exclude-after-remap": false
   }
 }
