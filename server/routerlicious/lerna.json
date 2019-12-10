@@ -1,7 +1,6 @@
 {
     "packages": [
-      "packages/**",
-      "../../packages/utils/build-common/**"
+      "packages/**"
     ],
     "version": "0.12.0"
 }
