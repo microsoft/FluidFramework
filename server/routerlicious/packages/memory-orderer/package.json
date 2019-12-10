@@ -43,7 +43,7 @@
     "ws": "^6.1.2"
   },
   "devDependencies": {
-    "@microsoft/fluid-build-common": "^0.12.0",
+    "@microsoft/fluid-build-common": "^0.13.0",
     "@types/uuid": "^3.4.4",
     "concurrently": "^4.1.0",
     "rimraf": "^2.6.2",
