@@ -10,7 +10,14 @@ import { BBCLambdaFactory } from "./lambdaFactory";
 
 export async function create(config: Provider): Promise<IPartitionLambdaFactory> {
     const redisConfig = config.get("redis");
-    const publisher = redis.createClient(redisConfig.port, redisConfig.host);
+    const redisOptions: redis.ClientOpts = { password: redisConfig.pass };
+    if (redisConfig.tls) {
+        redisOptions.tls = {
+            serverName: redisConfig.host,
+        };
+    }
+
+    const publisher = redis.createClient(redisConfig.port, redisConfig.host, redisOptions);
 
     return new BBCLambdaFactory(publisher);
 }

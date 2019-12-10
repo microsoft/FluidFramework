@@ -42,7 +42,14 @@ export class JarvisRunner implements utils.IRunner {
         alfred.set("port", this.port);
 
         this.server = http.createServer(alfred);
-        const redis = this.config.get("redis");
+        const redisConfig = this.config.get("redis");
+        const redisOptions: any = { password: redisConfig.pass };
+        if (redisConfig.tls) {
+            redisOptions.tls = {
+                serverName: redisConfig.host,
+            };
+        }
+        const redis = { host: redisConfig.host, port: redisConfig.port, options: redisOptions}
 
         // Register all the socket.io stuff
         io.register(

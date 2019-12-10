@@ -167,7 +167,9 @@ data:
         },
         "redis": {
             "host": "{{ .Values.redis.url }}",
-            "port": 6379
+            "port": "{{ .Values.redis.port }}",
+            "pass": "{{ .Values.redis.password }}",
+            "tls": {{ .Values.redis.tls }}
         },
         "redis2": {
             "host": "{{ .Values.redis2.url }}",

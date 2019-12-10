@@ -130,6 +130,8 @@ mongodb:
 
 redis:
   url: winsome-wombat-redis
+  port: 6379
+  tls: false
 
 redis2:
   url: dining-maltese-redis

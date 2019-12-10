@@ -122,7 +122,7 @@ export function create(
         const redisHost = config.get("redis:host");
         const redisPort = config.get("redis:port");
         const redisPass = config.get("redis:pass");
-        const options: any = { auth_pass: redisPass };
+        const options: redis.ClientOpts = { password: redisPass, auth_pass: redisPass };
         if (config.get("redis:tls")) {
             options.tls = {
                 servername: redisHost,

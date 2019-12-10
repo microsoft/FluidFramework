@@ -45,6 +45,13 @@ const riddlerEndpoint = provider.get("riddler");
 const riddler = new services.RiddlerService(riddlerEndpoint);
 
 const redisConfig = provider.get("redis");
+const redisOptions: redis.ClientOpts = { password: redisConfig.pass };
+if (redisConfig.tls) {
+    redisOptions.tls = {
+        serverName: redisConfig.host,
+    };
+}
+
 const redisClient = redis.createClient(redisConfig.port, redisConfig.host);
 const cache = new services.RedisCache(redisClient);
 
