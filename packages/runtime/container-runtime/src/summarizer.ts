@@ -81,7 +81,7 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
             reason,
         });
         this.runCoordinator.stop();
-        this.runtime.closeFn();
+        this.runtime.closeFn(`Summarizer: ${reason}`);
     }
 
     public async request(request: IRequest): Promise<IResponse> {

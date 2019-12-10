@@ -462,7 +462,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this.context.snapshotFn;
     }
 
-    public get closeFn(): () => void {
+    public get closeFn(): (reason?: string) => void {
         return this.context.closeFn;
     }
 
