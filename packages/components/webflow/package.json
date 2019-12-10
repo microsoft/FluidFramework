@@ -24,7 +24,7 @@
     "start": "webpack-dev-server --config webpack.config.js --package package.json",
     "start:live": "webpack-dev-server --config webpack.config.js --package package.json --env.mode live",
     "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
-    "test": "mocha -r ts-node/register -r ignore-styles --recursive test/**/*.spec.ts --exit",
+    "test": "mocha -r ts-node/register -r source-map-support/register -r ignore-styles --recursive test/**/*.spec.ts --exit",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml --exit",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose",
@@ -65,6 +65,7 @@
     "nyc": "^14.1.1",
     "rimraf": "^2.6.2",
     "source-map-loader": "^0.2.4",
+    "source-map-support": "^0.5.16",
     "style-loader": "^1.0.0",
     "ts-loader": "^6.1.2",
     "ts-node": "^7.0.1",
@@ -87,5 +88,30 @@
         "library": "main"
       }
     }
+  },
+  "nyc": {
+    "all": true,
+    "extension": [
+      ".ts",
+      ".tsx",
+      ".js",
+      ".jsx"
+    ],
+    "exclude": [
+      "**/*.d.ts",
+      "src/test/**/*.ts",
+      "dist/test/**/*.js"
+    ],
+    "include": [
+      "src/**/*.ts",
+      "dist/**/*.js"
+    ],
+    "require" : [
+      "ts-node/register"
+    ],
+    "temp-directory": "nyc/.nyc_output",
+    "cache-dir": "nyc/.cache",
+    "report-dir": "nyc/report",
+    "exclude-after-remap": false
   }
 }
