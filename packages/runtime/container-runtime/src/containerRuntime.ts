@@ -24,16 +24,18 @@ import {
     IRuntime,
 } from "@microsoft/fluid-container-definitions";
 import {
-    BlobTreeEntry,
-    buildSnapshotTree,
-    CommitTreeEntry,
     Deferred,
-    isSystemType,
-    raiseConnectedEvent,
     Trace,
 } from "@microsoft/fluid-core-utils";
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import { readAndParse } from "@microsoft/fluid-driver-utils";
+import {
+    BlobTreeEntry,
+    buildSnapshotTree,
+    CommitTreeEntry,
+    isSystemType,
+    raiseConnectedEvent,
+} from "@microsoft/fluid-protocol-base";
 import {
     ConnectionState,
     IChunkedOp,
@@ -462,7 +464,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this.context.snapshotFn;
     }
 
-    public get closeFn(): () => void {
+    public get closeFn(): (reason?: string) => void {
         return this.context.closeFn;
     }
 

@@ -22,8 +22,7 @@
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "dependencies": {
-    "@microsoft/fluid-component-core-interfaces": "0.12.17216",
-    "@microsoft/fluid-core-utils": "0.12.17216",
+    "@microsoft/fluid-core-utils": "0.13.17538",
     "@microsoft/fluid-protocol-base": "^0.12.0",
     "@microsoft/fluid-protocol-definitions": "^0.12.0",
     "@microsoft/fluid-server-lambdas": "^0.12.0",
@@ -43,7 +42,7 @@
     "ws": "^6.1.2"
   },
   "devDependencies": {
-    "@microsoft/fluid-build-common": "^0.12.0",
+    "@microsoft/fluid-build-common": "^0.13.0",
     "@types/uuid": "^3.4.4",
     "concurrently": "^4.1.0",
     "rimraf": "^2.6.2",

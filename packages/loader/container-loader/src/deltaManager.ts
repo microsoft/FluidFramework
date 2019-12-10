@@ -12,13 +12,13 @@ import {
 } from "@microsoft/fluid-container-definitions";
 import {
     Deferred,
-    isSystemType,
     PerformanceEvent,
 } from "@microsoft/fluid-core-utils";
 import {
     IDocumentDeltaStorageService,
     IDocumentService,
 } from "@microsoft/fluid-driver-definitions";
+import { isSystemType } from "@microsoft/fluid-protocol-base";
 import {
     ConnectionMode,
     IClient,
@@ -597,7 +597,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         const errorToReport = error !== undefined ? error : new Error("Container closed");
 
         // This raises "disconnect" event
-        this.disconnectFromDeltaStream(`${error}`);
+        this.disconnectFromDeltaStream(`${errorToReport}`);
 
         if (this.connecting) {
             this.connecting.reject(errorToReport);

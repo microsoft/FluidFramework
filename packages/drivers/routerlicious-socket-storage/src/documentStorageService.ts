@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { buildHierarchy, gitHashFile } from "@microsoft/fluid-core-utils";
+import { gitHashFile } from "@microsoft/fluid-core-utils";
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import * as resources from "@microsoft/fluid-gitresources";
+import { buildHierarchy } from "@microsoft/fluid-protocol-base";
 import {
     FileMode,
     ICreateBlobResponse,

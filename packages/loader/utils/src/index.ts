@@ -5,16 +5,15 @@
 
 export * from "./base64Encoding";
 export * from "./batchManager";
-export * from "./blobs";
 export * from "./disposal";
 export * from "./eventEmitterWithErrorHandling";
 export * from "./eventForwarder";
+export * from "./gitHashFile";
 export * from "./heap";
 export * from "./logger";
 export * from "./promises";
 export * from "./rangeTracker";
 export * from "./rateLimiter";
 export * from "./safeParser";
-export * from "./utils";
 export * from "./timer";
 export * from "./trace";
