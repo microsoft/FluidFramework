@@ -23,7 +23,7 @@
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "dependencies": {
-    "@microsoft/fluid-common-definitions": "0.12.17216"
+    "@microsoft/fluid-common-definitions": "0.13.17538"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.4.4",
