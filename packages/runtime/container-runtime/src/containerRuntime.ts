@@ -24,21 +24,22 @@ import {
     IRuntime,
 } from "@microsoft/fluid-container-definitions";
 import {
-    BlobTreeEntry,
-    buildHierarchy,
-    CommitTreeEntry,
-    ComponentSerializer,
     Deferred,
-    flatten,
-    isSystemType,
-    raiseConnectedEvent,
     Trace,
 } from "@microsoft/fluid-core-utils";
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import { readAndParse } from "@microsoft/fluid-driver-utils";
 import {
+    BlobTreeEntry,
+    buildSnapshotTree,
+    CommitTreeEntry,
+    isSystemType,
+    raiseConnectedEvent,
+} from "@microsoft/fluid-protocol-base";
+import {
     ConnectionState,
     IChunkedOp,
+    IClientDetails,
     IDocumentMessage,
     IHelpMessage,
     IQuorum,
@@ -62,6 +63,7 @@ import {
     IInboundSignalMessage,
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
+import { ComponentSerializer } from "@microsoft/fluid-runtime-utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 // tslint:disable-next-line:no-submodule-imports
@@ -407,8 +409,16 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this.context.clientId;
     }
 
-    public get clientType(): string | undefined {
+    /**
+     * DEPRECATED use clientDetails.type instead
+     * back-compat: 0.11 clientType
+     */
+    public get clientType(): string {
         return this.context.clientType;
+    }
+
+    public get clientDetails(): IClientDetails {
+        return this.context.clientDetails;
     }
 
     public get blobManager(): IBlobManager {
@@ -440,7 +450,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this.context.snapshotFn;
     }
 
-    public get closeFn(): () => void {
+    public get closeFn(): (reason?: string) => void {
         return this.context.closeFn;
     }
 
@@ -972,13 +982,14 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return { summaryStats, summaryTree };
     }
 
-    private processCore(message: ISequencedDocumentMessage, local: boolean) {
+    private processCore(messageArg: ISequencedDocumentMessage, local: boolean) {
         let remotedComponentContext: RemotedComponentContext;
 
         // Chunk processing must come first given that we will transform the message to the unchunked version
         // once all pieces are available
-        if (message.type === MessageType.ChunkedOp) {
-            this.processRemoteChunkedMessage(message);
+        let message = messageArg;
+        if (messageArg.type === MessageType.ChunkedOp) {
+            message = this.processRemoteChunkedMessage(messageArg);
         }
 
         // Old prepare part
@@ -993,8 +1004,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                 const flatBlobs = new Map<string, string>();
                 let snapshotTree: ISnapshotTree = null;
                 if (attachMessage.snapshot) {
-                    const flattened = flatten(attachMessage.snapshot.entries, flatBlobs);
-                    snapshotTree = buildHierarchy(flattened);
+                    snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
                 }
 
                 // Include the type of attach message which is the pkg of the component to be
@@ -1142,25 +1152,29 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         });
     }
 
-    private processRemoteChunkedMessage(message: ISequencedDocumentMessage): boolean {
+    private processRemoteChunkedMessage(message: ISequencedDocumentMessage) {
         const clientId = message.clientId;
         const chunkedContent = message.contents as IChunkedOp;
-        this.addChunk(clientId, chunkedContent.contents);
+        this.addChunk(clientId, chunkedContent);
         if (chunkedContent.chunkId === chunkedContent.totalChunks) {
+            const newMessage = {...message};
             const serializedContent = this.chunkMap.get(clientId).join("");
-            message.contents = JSON.parse(serializedContent);
-            message.type = chunkedContent.originalType;
+            newMessage.contents = JSON.parse(serializedContent);
+            newMessage.type = chunkedContent.originalType;
             this.clearPartialChunks(clientId);
-            return true;
+            return newMessage;
         }
-        return false;
+        return message;
     }
 
-    private addChunk(clientId: string, chunkedContent: string) {
-        if (!this.chunkMap.has(clientId)) {
-            this.chunkMap.set(clientId, []);
+    private addChunk(clientId: string, chunkedContent: IChunkedOp) {
+        let map = this.chunkMap.get(clientId);
+        if (map === undefined) {
+            map = [];
+            this.chunkMap.set(clientId, map);
         }
-        this.chunkMap.get(clientId).push(chunkedContent);
+        assert(chunkedContent.chunkId === map.length + 1); // 1-based indexing
+        map.push(chunkedContent.contents);
     }
 
     private clearPartialChunks(clientId: string) {
@@ -1274,7 +1288,11 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     }
 
     private subscribeToLeadership() {
-        if (this.context.clientDetails.capabilities.interactive) {
+        // back-compat: 0.11 clientType
+        const interactive = this.context.clientType === "browser"
+            || (this.context.clientDetails && this.context.clientDetails.capabilities.interactive);
+
+        if (interactive) {
             this.getScheduler().then((scheduler) => {
                 if (scheduler.leader) {
                     this.updateLeader(true);

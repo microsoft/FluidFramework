@@ -11,14 +11,10 @@ import {
     IGenericBlob,
     ILoader,
 } from "@microsoft/fluid-container-definitions";
-import {
-    BlobTreeEntry,
-    Deferred,
-    raiseConnectedEvent,
-    SummaryTracker,
-} from "@microsoft/fluid-core-utils";
+import { Deferred } from "@microsoft/fluid-core-utils";
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import { readAndParse } from "@microsoft/fluid-driver-utils";
+import { BlobTreeEntry, raiseConnectedEvent } from "@microsoft/fluid-protocol-base";
 import {
     ConnectionState,
     IDocumentMessage,
@@ -38,6 +34,7 @@ import {
     IHostRuntime,
     IInboundSignalMessage,
 } from "@microsoft/fluid-runtime-definitions";
+import { SummaryTracker } from "@microsoft/fluid-runtime-utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 // tslint:disable-next-line:no-submodule-imports
@@ -83,7 +80,11 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this._hostRuntime.clientId;
     }
 
-    public get clientType(): string | undefined {
+    /**
+     * DEPRECATED use hostRuntime.clientDetails.type instead
+     * back-compat: 0.11 clientType
+     */
+    public get clientType(): string {
         return this._hostRuntime.clientType;
     }
 

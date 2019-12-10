@@ -4,7 +4,12 @@
  */
 
 import { PrimedComponent, PrimedComponentFactory, SimpleContainerRuntimeFactory } from "@microsoft/fluid-aqueduct";
-import { IComponentHandle, IComponentLoadable, IComponentRunnable } from "@microsoft/fluid-component-core-interfaces";
+import {
+    IComponent,
+    IComponentHandle,
+    IComponentLoadable,
+    IComponentRunnable ,
+} from "@microsoft/fluid-component-core-interfaces";
 import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
 import {
     IComponentContext,
@@ -154,6 +159,7 @@ export class TestHost {
         private readonly componentRegistry: NamedComponentRegistryEntries,
         private readonly sharedObjectFactories: readonly ISharedObjectFactory[] = [],
         deltaConnectionServer?: ITestDeltaConnectionServer,
+        scope?: IComponent,
     ) {
         this.deltaConnectionServer = deltaConnectionServer || TestDeltaConnectionServer.create();
 
@@ -176,7 +182,7 @@ export class TestHost {
             new TestDocumentServiceFactory(this.deltaConnectionServer),
             new TestResolver());
 
-        store.open<TestRootComponent>("test-root-component", TestRootComponent.codeProposal, "")
+        store.open<TestRootComponent>("test-root-component", TestRootComponent.codeProposal, "", scope)
             .then(this.rootResolver)
             .catch((reason) => { throw new Error(`${reason}`); });
     }

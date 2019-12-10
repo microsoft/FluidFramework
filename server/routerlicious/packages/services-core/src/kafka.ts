@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as utils from "@microsoft/fluid-core-utils";
+import { Deferred } from "@microsoft/fluid-core-utils";
 
 export interface IKafkaMessage {
     topic: string;
@@ -58,7 +58,7 @@ export interface IConsumer {
  */
 export interface IPendingMessage {
     // The deferred is used to resolve a promise once the message is sent
-    deferred: utils.Deferred<any>;
+    deferred: Deferred<any>;
 
     // The message to send
     message: string;
@@ -84,6 +84,6 @@ export interface IProducer {
 export interface IPendingBoxcar {
     documentId: string;
     tenantId: string;
-    deferred: utils.Deferred<void>;
+    deferred: Deferred<void>;
     messages: any[];
 }

@@ -18,15 +18,17 @@ import {
     ILoader,
 } from "@microsoft/fluid-container-definitions";
 import {
-    buildHierarchy,
     ChildLogger,
     Deferred,
-    flatten,
-    raiseConnectedEvent,
-    TreeTreeEntry,
 } from "@microsoft/fluid-core-utils";
 import {
+    buildSnapshotTree,
+    raiseConnectedEvent,
+    TreeTreeEntry,
+} from "@microsoft/fluid-protocol-base";
+import {
     ConnectionState,
+    IClientDetails,
     IDocumentMessage,
     IQuorum,
     ISequencedDocumentMessage,
@@ -116,8 +118,16 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         return this.componentContext.clientId;
     }
 
-    public get clientType(): string | undefined {
+    /**
+     * DEPRECATED use clientDetails.type instead
+     * back-compat: 0.11 clientType
+     */
+    public get clientType(): string {
         return this.componentContext.clientType;
+    }
+
+    public get clientDetails(): IClientDetails {
+        return this.componentContext.hostRuntime.clientDetails;
     }
 
     public get loader(): ILoader {
@@ -434,8 +444,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
                     const origin = message.origin ? message.origin.id : this.documentId;
 
                     const flatBlobs = new Map<string, string>();
-                    const flattened = flatten(attachMessage.snapshot.entries, flatBlobs);
-                    const snapshotTree = buildHierarchy(flattened);
+                    const snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
 
                     const remoteChannelContext = new RemoteChannelContext(
                         this,

@@ -85,7 +85,8 @@ export class PaddingSegment extends BaseSegment {
     }
 }
 
-export class RunSegment extends SubSequence<Jsonable<JsonablePrimitive | IComponentHandle>> {
+export type SparseMatrixItem = Jsonable<JsonablePrimitive | IComponentHandle>;
+export class RunSegment extends SubSequence<SparseMatrixItem> {
     public static readonly typeString = "RunSegment";
     public static is(segment: ISegment): segment is RunSegment {
         return segment.type === RunSegment.typeString;
@@ -104,7 +105,7 @@ export class RunSegment extends SubSequence<Jsonable<JsonablePrimitive | ICompon
 
     private tags: any[];
 
-    constructor(public items: Jsonable<JsonablePrimitive | IComponentHandle>[]) {
+    constructor(public items: SparseMatrixItem[]) {
         super(items);
         this.tags = new Array(items.length).fill(undefined);
     }
@@ -213,7 +214,7 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
     public setItems(
         row: number,
         col: number,
-        values: Jsonable<JsonablePrimitive | IComponentHandle>[],
+        values: SparseMatrixItem[],
         props?: PropertySet,
     ) {
         const start = rowColToPosition(row, col);

@@ -81,7 +81,7 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
             reason,
         });
         this.runCoordinator.stop();
-        this.runtime.closeFn();
+        this.runtime.closeFn(`Summarizer: ${reason}`);
     }
 
     public async request(request: IRequest): Promise<IResponse> {
@@ -389,7 +389,7 @@ export class RunningSummarizer implements IDisposable {
     private async summarize(reason: string) {
         // wait to generate and send summary
         const summaryData = await this.generateSummaryWithLogging(reason);
-        if (!summaryData.submitted) {
+        if (!summaryData || !summaryData.submitted) {
             // did not send the summary op
             return;
         }
@@ -450,7 +450,7 @@ export class RunningSummarizer implements IDisposable {
         try {
             summaryData = await this.generateSummary();
         } catch (error) {
-            summarizingEvent.cancel({}, error);
+            summarizingEvent.cancel({ category: "error" }, error);
             return;
         }
 

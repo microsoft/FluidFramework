@@ -4,9 +4,10 @@
  */
 
 import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { ISequencedDocumentMessage, MessageType } from "@microsoft/fluid-protocol-definitions";
-import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
-import * as assert from "assert";
+import { IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
+import { strict as assert } from "assert";
 import { IIntegerRange } from "./base";
 import * as Collections from "./collections";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
@@ -887,16 +888,45 @@ export class Client {
         return new MergeTreeTextHelper(this.mergeTree);
     }
 
-    public createSnapshotter(): SnapshotLegacy {
-        // TODO: Remove once new snapshot format is adopted as default.
+    // TODO: Remove `tardisMsgs` once new snapshot format is adopted as default.
+    //       (See https://github.com/microsoft/FluidFramework/issues/84)
+    public snapshot(runtime: IComponentRuntime, handle: IComponentHandle, tardisMsgs: ISequencedDocumentMessage[]) {
+        const deltaManager = runtime.deltaManager;
+        const minSeq = deltaManager
+            ? deltaManager.minimumSequenceNumber
+            : 0;
+
+        // Catch up to latest MSN, if we have not had a chance to do it.
+        // Required for case where ComponentRuntime.attachChannel() generates snapshot right after loading component.
+        // Note that we mock runtime in tests and mock does not have deltamanager implementation.
+        if (deltaManager) {
+            this.updateSeqNumbers(minSeq, deltaManager.referenceSequenceNumber);
+
+            // One of the snapshots (from SPO) I observed to have chunk.chunkSequenceNumber > minSeq!
+            // Not sure why - need to catch it sooner
+            assert.equal(this.getCollabWindow().minSeq, minSeq);
+        }
+
+        // TODO: Remove options flag once new snapshot format is adopted as default.
         //       (See https://github.com/microsoft/FluidFramework/issues/84)
-        return this.mergeTree.options.newMergeTreeSnapshotFormat
-            ? new Snapshot(this.mergeTree, this.logger) as unknown as SnapshotLegacy
+        const snap = this.mergeTree.options.newMergeTreeSnapshotFormat
+            ? new Snapshot(this.mergeTree, this.logger)
             : new SnapshotLegacy(this.mergeTree, this.logger);
+
+        snap.extractSync();
+        return snap.emit(
+            tardisMsgs,
+            runtime.IComponentSerializer,
+            runtime.IComponentHandleContext,
+            handle);
     }
 
-    public createSnapshotLoader(runtime: IComponentRuntime) {
-        return new SnapshotLoader(runtime, this, this.mergeTree);
+    public async load(runtime: IComponentRuntime, storage: IObjectStorageService, branchId?: string) {
+        const loader = new SnapshotLoader(runtime, this, this.mergeTree);
+
+        // TODO: Remove return value once new snapshot format is adopted as default.
+        //       (See https://github.com/microsoft/FluidFramework/issues/84)
+        return await loader.initialize(branchId, storage);
     }
 
     getStackContext(startPos: number, rangeLabels: string[]) {

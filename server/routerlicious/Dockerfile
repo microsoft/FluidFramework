@@ -59,6 +59,7 @@ COPY packages/drivers/odsp-urlResolver/package*.json packages/drivers/odsp-urlRe
 COPY packages/drivers/fluidapp-odsp-urlResolver/package*.json packages/drivers/fluidapp-odsp-urlResolver/
 COPY packages/drivers/routerlicious-urlResolver/package*.json packages/drivers/routerlicious-urlResolver/
 COPY packages/drivers/execution-context-loader/package*.json packages/drivers/execution-context-loader/
+COPY packages/drivers/test-driver/package*.json packages/drivers/test-driver/
 COPY packages/framework/aqueduct/package*.json packages/framework/aqueduct/
 COPY packages/framework/aqueduct-react/package*.json packages/framework/aqueduct-react/
 COPY packages/framework/framework-definitions/package*.json packages/framework/framework-definitions/
@@ -87,16 +88,14 @@ COPY packages/runtime/map/package*.json packages/runtime/map/
 COPY packages/runtime/merge-tree/package*.json packages/runtime/merge-tree/
 COPY packages/runtime/container-runtime/package*.json packages/runtime/container-runtime/
 COPY packages/runtime/runtime-definitions/package*.json packages/runtime/runtime-definitions/
+COPY packages/runtime/runtime-utils/package*.json packages/runtime/runtime-utils/
 COPY packages/runtime/runtime-test-utils/package*.json packages/runtime/runtime-test-utils/
 COPY packages/runtime/sequence/package*.json packages/runtime/sequence/
-COPY packages/server/agent/package*.json packages/server/agent/
 COPY packages/server/gateway/package*.json packages/server/gateway/
 COPY packages/server/local-test-server/package*.json packages/server/local-test-server/
-COPY packages/server/paparazzi/package*.json packages/server/paparazzi/
 COPY packages/utils/odsp-utils/package*.json packages/utils/odsp-utils/
 COPY packages/utils/build-common/package*.json packages/utils/build-common/
 COPY packages/utils/eslint-config-fluid/package*.json packages/utils/eslint-config-fluid/
-COPY packages/server/test-utils/package*.json packages/server/test-utils/
 COPY packages/server/tools-core/package*.json packages/server/tools-core/
 COPY packages/test/snapshots/package*.json packages/test/snapshots/
 COPY packages/tools/fluid-fetch/package*.json packages/tools/fluid-fetch/

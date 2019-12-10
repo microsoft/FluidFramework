@@ -45,7 +45,7 @@ export function isSystemMessage(message: ISequencedDocumentMessage) {
 }
 
 /**
- * Handles protocol specifig ops.
+ * Handles protocol specific ops.
  */
 export class ProtocolOpHandler extends EventEmitter {
     public readonly quorum: Quorum;

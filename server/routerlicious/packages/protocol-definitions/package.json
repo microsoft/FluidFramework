@@ -22,9 +22,12 @@
     "tsc:watch": "tsc --watch",
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
+  "dependencies": {
+    "@microsoft/fluid-common-definitions": "0.13.17538"
+  },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.4.4",
-    "@microsoft/fluid-build-common": "^0.12.0",
+    "@microsoft/fluid-build-common": "^0.13.0",
     "@types/node": "^10.14.6",
     "concurrently": "^4.1.0",
     "rimraf": "^2.6.2",

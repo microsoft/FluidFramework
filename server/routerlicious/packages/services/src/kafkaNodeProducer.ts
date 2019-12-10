@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as utils from "@microsoft/fluid-core-utils";
+import { Deferred } from "@microsoft/fluid-core-utils";
 import { BoxcarType, IBoxcarMessage, IPendingBoxcar, IProducer } from "@microsoft/fluid-server-services-core";
 import { EventEmitter } from "events";
 import * as kafkaNode from "kafka-node";
@@ -14,7 +14,7 @@ import { debug } from "./debug";
 const MaxBatchSize = 32;
 
 class PendingBoxcar implements IPendingBoxcar {
-    public deferred = new utils.Deferred<void>();
+    public deferred = new Deferred<void>();
     public messages = [];
 
     constructor(public tenantId: string, public documentId: string) {

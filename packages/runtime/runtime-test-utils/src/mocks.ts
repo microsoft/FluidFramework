@@ -17,7 +17,6 @@ import {
     ILoader,
 } from "@microsoft/fluid-container-definitions";
 import {
-    ComponentSerializer,
     DebugLogger,
     Deferred,
     fromUtf8ToBase64,
@@ -42,6 +41,7 @@ import {
     IObjectStorageService,
     ISharedObjectServices,
 } from "@microsoft/fluid-runtime-definitions";
+import { ComponentSerializer } from "@microsoft/fluid-runtime-utils";
 import { IHistorian } from "@microsoft/fluid-server-services-client";
 import * as assert from "assert";
 import { EventEmitter } from "events";
@@ -186,7 +186,7 @@ export class MockRuntime extends EventEmitter
     public readonly existing: boolean;
     public readonly options: any = {};
     public clientId: string = uuid();
-    public readonly clientType: string = "";
+    public readonly clientType: string = "browser"; // back-compat: 0.11 clientType
     public readonly parentBranch: string;
     public readonly path = "";
     public readonly connected: boolean;

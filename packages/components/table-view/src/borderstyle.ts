@@ -52,7 +52,7 @@ export class BorderRect {
     }
 
     private getStyleIndices(min: number, value: number, max: number) {
-        const styles = [];
+        const styles: number[] = [];
         if (value === min) { styles.push(StyleIndex.Near); }
         if (value === max) { styles.push(StyleIndex.Far); }
         if (styles.length === 0) { styles.push(StyleIndex.Middle); }

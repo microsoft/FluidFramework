@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-test-runtime-utils",
-  "version": "0.12.0",
+  "version": "0.13.0",
   "description": "Distributed map",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -22,19 +22,20 @@
     "tslint": "npm run eslint"
   },
   "dependencies": {
-    "@microsoft/fluid-common-definitions": "^0.12.0",
-    "@microsoft/fluid-component-core-interfaces": "^0.12.0",
-    "@microsoft/fluid-container-definitions": "^0.12.0",
-    "@microsoft/fluid-core-utils": "^0.12.0",
+    "@microsoft/fluid-common-definitions": "^0.13.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.13.0",
+    "@microsoft/fluid-container-definitions": "^0.13.0",
+    "@microsoft/fluid-core-utils": "^0.13.0",
     "@microsoft/fluid-gitresources": "^0.12.0",
     "@microsoft/fluid-protocol-definitions": "^0.12.0",
-    "@microsoft/fluid-runtime-definitions": "^0.12.0",
+    "@microsoft/fluid-runtime-definitions": "^0.13.0",
+    "@microsoft/fluid-runtime-utils": "^0.13.0",
     "@microsoft/fluid-server-services-client": "^0.12.0",
     "uuid": "^3.3.2"
   },
   "devDependencies": {
-    "@microsoft/eslint-config-fluid": "^0.12.0",
-    "@microsoft/fluid-build-common": "^0.12.0",
+    "@microsoft/eslint-config-fluid": "^0.13.0",
+    "@microsoft/fluid-build-common": "^0.13.0",
     "@types/node": "^10.14.6",
     "@types/uuid": "^3.4.4",
     "@typescript-eslint/eslint-plugin": "^2.9.0",

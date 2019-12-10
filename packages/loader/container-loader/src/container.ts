@@ -21,13 +21,10 @@ import {
     LoaderHeader,
 } from "@microsoft/fluid-container-definitions";
 import {
-    buildHierarchy,
     ChildLogger,
     DebugLogger,
     EventEmitterWithErrorHandling,
-    flatten,
     PerformanceEvent,
-    raiseConnectedEvent,
     TelemetryLogger,
 } from "@microsoft/fluid-core-utils";
 import {
@@ -35,7 +32,14 @@ import {
     IDocumentStorageService,
 } from "@microsoft/fluid-driver-definitions";
 import { readAndParse } from "@microsoft/fluid-driver-utils";
-import { isSystemMessage, ProtocolOpHandler, Quorum, QuorumProxy } from "@microsoft/fluid-protocol-base";
+import {
+    buildSnapshotTree,
+    isSystemMessage,
+    ProtocolOpHandler,
+    Quorum,
+    QuorumProxy,
+    raiseConnectedEvent,
+} from "@microsoft/fluid-protocol-base";
 import {
     ConnectionState,
     FileMode,
@@ -234,7 +238,11 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return this._scopes;
     }
 
-    public get clientType(): string | undefined {
+    /**
+     * DEPRECATED: use clientDetails.type instead
+     * back-compat: 0.11 clientType
+     */
+    public get clientType(): string {
         return this._deltaManager!.clientType;
     }
 
@@ -279,7 +287,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             eventName: "AutoReconnect",
             value,
             connectionMode: this._deltaManager.connectionMode,
-            connectionState: this.connectionState,
+            connectionState: ConnectionState[this.connectionState],
         });
 
         this._deltaManager.autoReconnect = value;
@@ -314,12 +322,14 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         this.canReconnect = !(originalRequest.headers && originalRequest.headers[LoaderHeader.reconnect] === false);
 
         // create logger for components to use
+        // back-compat: 0.11 clientType
+        const clientType = this.client.details ? this.client.details.type : this.client.type;
         this.subLogger = DebugLogger.mixinDebugLogger(
             "fluid:telemetry",
             logger,
             {
                 docId: this.id,
-                clientType: this.client.details.type, // differentiating summarizer container from main container
+                clientType, // differentiating summarizer container from main container
                 packageName: TelemetryLogger.sanitizePkgName(pkgName),
                 packageVersion: pkgVersion,
             });
@@ -351,14 +361,14 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return super.on(event, listener);
     }
 
-    public close() {
+    public close(reason?: string) {
         if (this._closed) {
             return;
         }
         this._closed = true;
 
         if (this._deltaManager) {
-            this._deltaManager.close();
+            this._deltaManager.close(reason ? new Error(reason) : undefined, false /*raiseContainerError*/);
         }
 
         if (this.protocolHandler) {
@@ -453,13 +463,13 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private async reloadContextCore(): Promise<void> {
         this.deltaManager.inbound.runPaused(async () => {
             return this.deltaManager.inboundSignal.runPaused(async () => {
+
                 const previousContextState = await this.context!.stop();
 
                 let snapshot: ISnapshotTree | undefined;
                 const blobs = new Map();
                 if (previousContextState) {
-                    const flattened = flatten(previousContextState.entries, blobs);
-                    snapshot = buildHierarchy(flattened);
+                    snapshot = buildSnapshotTree(previousContextState.entries, blobs);
                 }
 
                 const storage = blobs.size > 0
@@ -871,6 +881,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             // tslint:disable-next-line:no-unsafe-any
             ? (this.options.client as IClient)
             : {
+                type: "browser", // back-compat: 0.11 clientType
                 details: {
                     capabilities: { interactive: true },
                 },
@@ -882,9 +893,16 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         // client info from headers overrides client info from loader options
         const headerClientDetails = this.originalRequest.headers
             && this.originalRequest.headers[LoaderHeader.clientDetails];
+
         if (headerClientDetails) {
             // tslint:disable-next-line: no-unsafe-any
             merge(client.details, headerClientDetails);
+        }
+
+        // back-compat: 0.11 clientType
+        const headerClientType = this.originalRequest.headers && this.originalRequest.headers[LoaderHeader.clientType];
+        if (headerClientType) {
+            client.type = headerClientType;
         }
         return client;
     }
@@ -990,7 +1008,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             if (value === ConnectionState.Connected) {
                 durationFromDisconnected = time - this.connectionTransitionTimes[ConnectionState.Disconnected];
                 durationFromDisconnected = TelemetryLogger.formatTick(durationFromDisconnected);
-                this.firstConnection = false;
             }
             if (this.firstConnection) {
                 connectionInitiationReason = "InitialConnect";
@@ -1188,7 +1205,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             (type, contents) => this.submitMessage(type, contents),
             (message) => this.submitSignal(message),
             (message) => this.snapshot(message),
-            () => this.close(),
+            (reason?: string) => this.close(reason),
             Container.version,
         );
 

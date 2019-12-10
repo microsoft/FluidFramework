@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-ink",
-  "version": "0.12.0",
+  "version": "0.13.0",
   "description": "Ink DDS",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -25,18 +25,18 @@
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "dependencies": {
-    "@microsoft/fluid-core-utils": "^0.12.0",
+    "@microsoft/fluid-core-utils": "^0.13.0",
     "@microsoft/fluid-protocol-definitions": "^0.12.0",
-    "@microsoft/fluid-runtime-definitions": "^0.12.0",
-    "@microsoft/fluid-shared-object-base": "^0.12.0",
+    "@microsoft/fluid-runtime-definitions": "^0.13.0",
+    "@microsoft/fluid-shared-object-base": "^0.13.0",
     "@types/debug": "^0.0.31",
     "debug": "^4.1.1",
     "uuid": "^3.3.2"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.4.4",
-    "@microsoft/eslint-config-fluid": "^0.12.0",
-    "@microsoft/fluid-build-common": "^0.12.0",
+    "@microsoft/eslint-config-fluid": "^0.13.0",
+    "@microsoft/fluid-build-common": "^0.13.0",
     "@types/uuid": "^3.4.4",
     "@typescript-eslint/eslint-plugin": "^2.9.0",
     "@typescript-eslint/eslint-plugin-tslint": "^2.9.0",

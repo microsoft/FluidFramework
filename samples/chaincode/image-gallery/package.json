@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/image-gallery",
-  "version": "0.12.0",
+  "version": "0.13.0",
   "description": "Image Gallery with pretty layout",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -8,7 +8,7 @@
   "main": "dist/main.bundle.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "npm run build:compile",
+    "build": "concurrently npm:build:compile npm:tslint",
     "build:compile": "npm run tsc",
     "build:compile:min": "npm run build:compile",
     "build:full": "concurrently npm:build npm:webpack",
@@ -26,16 +26,16 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "@microsoft/fluid-aqueduct": "^0.12.0",
-    "@microsoft/fluid-component-core-interfaces": "^0.12.0",
-    "@microsoft/fluid-map": "^0.12.0",
+    "@microsoft/fluid-aqueduct": "^0.13.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.13.0",
+    "@microsoft/fluid-map": "^0.13.0",
     "react": "^16.10.2",
     "react-dom": "^16.10.2",
     "react-image-gallery": "^0.9.1"
   },
   "devDependencies": {
-    "@microsoft/eslint-config-fluid": "^0.12.0",
-    "@microsoft/fluid-webpack-component-loader": "^0.12.0",
+    "@microsoft/eslint-config-fluid": "^0.13.0",
+    "@microsoft/fluid-webpack-component-loader": "^0.13.0",
     "@types/node": "^10.14.6",
     "@types/react-dom": "^16.9.0",
     "@types/react-image-gallery": "^0.8.4",

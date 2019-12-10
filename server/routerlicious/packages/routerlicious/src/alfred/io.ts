@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { isSystemType } from "@microsoft/fluid-core-utils";
+import { isSystemType } from "@microsoft/fluid-protocol-base";
 import {
     ConnectionMode,
     IClient,

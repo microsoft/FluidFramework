@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-core-utils",
-  "version": "0.12.0",
+  "version": "0.13.0",
   "description": "Collection of utility functions for Fluid",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -10,6 +10,7 @@
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
+    "bench": "ts-node bench/src/index.ts",
     "build": "npm run build:genver && concurrently npm:build:compile npm:tslint",
     "build:compile": "concurrently npm:tsc npm:build:esnext",
     "build:compile:min": "npm run build:compile",
@@ -27,10 +28,7 @@
     "tslint": "npm run eslint"
   },
   "dependencies": {
-    "@microsoft/fluid-common-definitions": "^0.12.0",
-    "@microsoft/fluid-component-core-interfaces": "^0.12.0",
-    "@microsoft/fluid-gitresources": "^0.12.0",
-    "@microsoft/fluid-protocol-definitions": "^0.12.0",
+    "@microsoft/fluid-common-definitions": "^0.13.0",
     "debug": "^4.1.1",
     "lodash": "^4.17.11",
     "performance-now": "^2.1.0",
@@ -38,20 +36,23 @@
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.4.4",
-    "@microsoft/eslint-config-fluid": "^0.12.0",
-    "@microsoft/fluid-build-common": "^0.12.0",
+    "@microsoft/eslint-config-fluid": "^0.13.0",
+    "@microsoft/fluid-build-common": "^0.13.0",
+    "@types/benchmark": "^1.0.31",
     "@types/debug": "^0.0.31",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.14.6",
     "@typescript-eslint/eslint-plugin": "^2.9.0",
     "@typescript-eslint/eslint-plugin-tslint": "^2.9.0",
     "@typescript-eslint/parser": "^2.9.0",
+    "benchmark": "^2.1.4",
     "concurrently": "^4.1.0",
     "eslint": "^6.7.1",
     "mocha": "^5.2.0",
     "mocha-junit-reporter": "^1.18.0",
     "nyc": "^14.1.1",
     "rimraf": "^2.6.2",
+    "ts-node": "^7.0.1",
     "tslint": "^5.20.0",
     "typescript": "~3.4.5"
   },

@@ -36,9 +36,9 @@
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "dependencies": {
-    "@microsoft/fluid-container-definitions": "0.12.16826",
-    "@microsoft/fluid-core-utils": "0.12.16826",
+    "@microsoft/fluid-core-utils": "0.13.17538",
     "@microsoft/fluid-gitresources": "^0.12.0",
+    "@microsoft/fluid-protocol-base": "^0.12.0",
     "@microsoft/fluid-protocol-definitions": "^0.12.0",
     "@microsoft/fluid-server-kafka-orderer": "^0.12.0",
     "@microsoft/fluid-server-lambdas": "^0.12.0",
@@ -74,7 +74,7 @@
     "ws": "^6.1.2"
   },
   "devDependencies": {
-    "@microsoft/fluid-build-common": "^0.12.0",
+    "@microsoft/fluid-build-common": "^0.13.0",
     "@microsoft/fluid-server-test-utils": "^0.12.0",
     "@types/bytes": "^3.0.0",
     "@types/compression": "0.0.33",
