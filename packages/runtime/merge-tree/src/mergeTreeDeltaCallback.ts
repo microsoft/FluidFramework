@@ -55,7 +55,6 @@ export const enum MergeTreeMaintenanceType {
 }
 
 export interface IMergeTreeMaintenanceCallbackArgs {
-    readonly mergeTree: MergeTree;
     readonly operation: MergeTreeMaintenanceType;
     readonly deltaSegments: IMergeTreeSegmentDelta[];
 }
