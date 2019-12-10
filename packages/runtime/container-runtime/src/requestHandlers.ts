@@ -87,7 +87,7 @@ export function createRegistryRoutingRequestHandler(registry: IComponentRegistry
             if (factory) {
                 // If the response is an IFactory we need to update the registry name to reflect this registry entry
                 const iFactory = (factory as IComponent).IComponentFactory;
-                if (iFactory && iFactory.hasOwnProperty("registryName") && iFactory.registryName !== pkg) {
+                if (iFactory && "registryName" in iFactory && iFactory.registryName !== pkg) {
                     iFactory.registryName = pkg;
                 }
                 return { status: 200, mimeType: "fluid/component", value: factory };

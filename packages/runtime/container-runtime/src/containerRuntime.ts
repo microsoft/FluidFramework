@@ -52,7 +52,6 @@ import {
     ITree,
     MessageType,
     SummaryType,
-    IVersion,
 } from "@microsoft/fluid-protocol-definitions";
 import {
     FlushMode,
@@ -917,10 +916,11 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     ): Promise<IComponentRuntime> {
         this.verifyNotClosed();
 
-        const id = uuid();
+        // tslint:disable-next-line: no-unsafe-any
+        const id: string = uuid();
         const context = new LocalComponentContext(
             id,
-            Array.isArray(pkg) ? pkg : [pkg],
+            [pkg],
             this,
             this.storage,
             this.context.scope,
