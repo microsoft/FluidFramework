@@ -58,8 +58,10 @@ data:
             "endpoint" : "{{ .Values.error.endpoint }}"
         },
         "redis": {
-            "host": "{{ .Values.endpoints.redis }}",
-            "port": 6379
+            "host": "{{ .Values.endpoints.redis.url }}",
+            "port": "{{ .Values.endpoints.redis.port }}"",
+            "tls": {{ .Values.endpoints.redis.tls }},
+            "pass": "{{ .Values.endpoints.redis.password }}"
         },
         "keyValue": {
             "documentUrl": "{{ .Values.endpoints.keyValueUrl }}",
