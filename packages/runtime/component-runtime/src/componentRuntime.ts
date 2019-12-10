@@ -18,12 +18,14 @@ import {
     ILoader,
 } from "@microsoft/fluid-container-definitions";
 import {
-    buildSnapshotTree,
     ChildLogger,
     Deferred,
+} from "@microsoft/fluid-core-utils";
+import {
+    buildSnapshotTree,
     raiseConnectedEvent,
     TreeTreeEntry,
-} from "@microsoft/fluid-core-utils";
+} from "@microsoft/fluid-protocol-base";
 import {
     ConnectionState,
     IClientDetails,
