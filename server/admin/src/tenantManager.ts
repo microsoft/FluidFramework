@@ -7,7 +7,7 @@ import * as core from "@microsoft/fluid-server-services-core";
 import * as moniker from "moniker";
 import * as request from "request-promise-native";
 import { IOrderer, ITenant, ITenantInput, ITenantStorage } from "./definitions";
-import { ITenantConfig, RiddlerManager} from "./riddlerManager";
+import { ITenantConfig, RiddlerManager } from "./riddlerManager";
 
 /**
  * User -> Orgs mapping document
@@ -76,24 +76,40 @@ export class TenantManager {
             await this.createEmptyTenantListForOrg(orgId);
         }
 
+        console.info("addTenant");
+        
         const newTenant = await this.riddlerManager.addTenant();
         const key = newTenant.key;
 
+        console.info("new tenant added");
+
         // create the tenant storage
         const orderer = this.createTenantOrderer(newTenant.id, inputParams.ordererType);
+        console.info("createTenantOrderer");
         const storage = await this.createTenantStorage(newTenant.id, inputParams);
+        console.info("createTenantStorage");
 
         const tenantUpdateP = this.riddlerManager.updateTenantStorage(newTenant.id, storage);
+        console.info("updateTenantStorage");
         const ordererUpdateP = this.riddlerManager.updateTenantOrderer(newTenant.id, orderer);
+        console.info("updateTenantOrderer");
+
         await Promise.all([tenantUpdateP, ordererUpdateP]);
 
+
+        console.info("await Promise.all([tenantUpdateP, ordererUpdateP]);");
+
         const tenant = await this.riddlerManager.getTenant(newTenant.id);
+        console.info("getTenant: " + JSON.stringify(tenant));
 
         await this.addNewTenantForOrg(orgId, newTenant.id);
+        console.info("addNewTenantForOrg");
         const details = await this.addToTenantDB(
             tenant.id,
             inputParams.name,
             inputParams.storageType);
+
+        console.info("addToTenantDB");
 
         return this.convertToITenant(details, tenant, key);
     }
@@ -165,7 +181,7 @@ export class TenantManager {
         let storageEndpoint = null;
         let owner = null;
         let repository = null;
-        let credentials: { user: string, password: string} = null;
+        let credentials: { user: string, password: string } = null;
 
         if (params.storageType !== "github") {
             storageEndpoint = params.storageType === "git" ? this.gitrestEndpoint : this.cobaltEndpoint;
@@ -242,7 +258,7 @@ export class TenantManager {
     private async addNewTenantForOrg(orgId: string, tenantId: string): Promise<void> {
         const db = await this.mongoManager.getDatabase();
         const collection = db.collection<IOrgTenant>(this.orgTenantCollection);
-        const existingTenants = (await collection.findOne({_id: orgId})).tenantIds;
+        const existingTenants = (await collection.findOne({ _id: orgId })).tenantIds;
         existingTenants.push(tenantId);
         await collection.update({ _id: orgId }, { tenantIds: existingTenants }, null);
     }
@@ -280,7 +296,7 @@ export class TenantManager {
         const db = await this.mongoManager.getDatabase();
         const collection = db.collection<ITenantDetails>(this.tenantCollection);
         const found = await collection.find(
-            { $and: [{_id: {$in: tenantIds}}, {deleted: false}]},
+            { $and: [{ _id: { $in: tenantIds } }, { deleted: false }] },
             {},
         );
         return found;
