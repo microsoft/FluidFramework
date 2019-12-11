@@ -5,8 +5,11 @@
     "rules": {
         "@typescript-eslint/array-type": "off",
         "@typescript-eslint/strict-boolean-expressions": "off",
+        "arrow-body-style": "off",
+        "capitalized-comments": "off",
         "import/no-internal-modules": "off",
         "max-len": "off",
+        "no-bitwise": "off",
         "no-null/no-null": "off",
         "no-param-reassign": "off",
         "prefer-arrow/prefer-arrow-functions": "off"

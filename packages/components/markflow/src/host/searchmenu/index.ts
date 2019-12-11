@@ -13,10 +13,12 @@ interface ISearchMenuProps {
 }
 
 const template = new Template(
-    { tag: "div", props: { className: style.searchMenu }, children: [
-        { tag: "input", ref: "input", props: { type: "text", className: style.input, autocomplete: "off" }},
-        { tag: "datalist", ref: "datalist" },
-    ]});
+    {
+        tag: "div", props: { className: style.searchMenu }, children: [
+            { tag: "input", ref: "input", props: { type: "text", className: style.input, autocomplete: "off" } },
+            { tag: "datalist", ref: "datalist" },
+        ],
+    });
 
 const optionTemplate = new Template({ tag: "option" });
 
@@ -105,14 +107,16 @@ export class SearchMenuView extends View<ISearchMenuProps, ISearchMenuProps> {
     }
 
     private readonly onKeyDown = (e: KeyboardEvent) => {
+        /* eslint-disable @typescript-eslint/indent */
         switch (e.code) {
-        case KeyCode.enter:
-            this.complete(e, true);
-            break;
-        case KeyCode.escape:
-            this.complete(e, false);
-            break;
-        default:
+            case KeyCode.enter:
+                this.complete(e, true);
+                break;
+            case KeyCode.escape:
+                this.complete(e, false);
+                break;
+            default:
         }
+        /* eslint-enable @typescript-eslint/indent */
     };
 }

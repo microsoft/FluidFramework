@@ -264,7 +264,6 @@ class MarkdownFormatter extends PlainTextFormatter<IMarkdownState> {
     private leave(doc: FlowDocument, position: number) {
         if (position < doc.length) {
             const md = this.getEnsuredParserAnnotation(doc, position);
-            // eslint-disable-next-line no-bitwise
             md.pop = (md.pop | 0) + 1;        // Coerce 'undefined' to 0
         }
     }

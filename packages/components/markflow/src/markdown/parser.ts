@@ -4,7 +4,7 @@
  */
 
 import { MapLike } from "@microsoft/fluid-merge-tree";
-// Import { strict as assert } from "assert";
+// import { strict as assert } from "assert";
 import * as remark from "remark";
 import { debug } from "./debug";
 import { MarkdownToken } from "./types";
@@ -51,7 +51,7 @@ interface IMDNode {
     };
 }
 
-// Const newlineExp = /([^\n]+)([\n]+)/g;
+// const newlineExp = /([^\n]+)([\n]+)/g;
 
 export class MarkdownParser {
     private readonly path: IMDNode[] = [];

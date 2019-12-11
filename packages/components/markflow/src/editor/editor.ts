@@ -12,11 +12,17 @@ import { Caret } from "./caret";
 import { debug } from "./debug";
 import * as styles from "./index.css";
 
-const onKeyDownThunk = (format: Readonly<Formatter<IFormatterState>>, state: Readonly<IFormatterState>, layout: Layout, caret: Caret, e: KeyboardEvent) => format.onKeyDown(layout, state, caret, e);
+const onKeyDownThunk = (format: Readonly<Formatter<IFormatterState>>, state: Readonly<IFormatterState>, layout: Layout, caret: Caret, e: KeyboardEvent) => {
+    return format.onKeyDown(layout, state, caret, e);
+};
 
-const onKeyPressThunk = (format: Readonly<Formatter<IFormatterState>>, state: Readonly<IFormatterState>, layout: Layout, caret: Caret, e: KeyboardEvent) => format.onKeyPress(layout, state, caret, e);
+const onKeyPressThunk = (format: Readonly<Formatter<IFormatterState>>, state: Readonly<IFormatterState>, layout: Layout, caret: Caret, e: KeyboardEvent) => {
+    return format.onKeyPress(layout, state, caret, e);
+};
 
-const onPasteThunk = (format: Readonly<Formatter<IFormatterState>>, state: Readonly<IFormatterState>, layout: Layout, caret: Caret, e: ClipboardEvent) => format.onPaste(layout, state, caret, e);
+const onPasteThunk = (format: Readonly<Formatter<IFormatterState>>, state: Readonly<IFormatterState>, layout: Layout, caret: Caret, e: ClipboardEvent) => {
+    return format.onPaste(layout, state, caret, e);
+};
 
 export class Editor {
     private get doc() { return this.layout.doc; }

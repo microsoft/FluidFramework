@@ -74,7 +74,6 @@ export const getDocSegmentKind = (segment: ISegment): DocSegmentKind => {
         /* eslint-disable @typescript-eslint/indent */
         switch (markerType) {
             case ReferenceType.Tile:
-            // eslint-disable-next-line no-bitwise
             case ReferenceType.Tile | ReferenceType.NestBegin:
                 // eslint-disable-next-line no-case-declarations
                 const rangeLabel = segment.getRangeLabels()[0];
@@ -85,7 +84,6 @@ export const getDocSegmentKind = (segment: ISegment): DocSegmentKind => {
 
                 return kind;
             default:
-                // eslint-disable-next-line no-bitwise
                 assert(markerType === (ReferenceType.Tile | ReferenceType.NestEnd));
 
                 // Ensure that 'nestEnd' range label matches the 'beginTags' range label (otherwise it
@@ -317,12 +315,10 @@ export class FlowDocument extends PrimedComponent {
         const ops = [];
         const id = randomId();
 
-        // eslint-disable-next-line no-bitwise
         const endMarker = new Marker(ReferenceType.Tile | ReferenceType.NestEnd);
         endMarker.properties = Object.freeze({ ...FlowDocument.tagsProperties, [reservedMarkerIdKey]: `end-${id}` });
         ops.push(createInsertSegmentOp(end, endMarker));
 
-        // eslint-disable-next-line no-bitwise
         const beginMarker = new Marker(ReferenceType.Tile | ReferenceType.NestBegin);
         beginMarker.properties = Object.freeze({ ...FlowDocument.tagsProperties, tags, [reservedMarkerIdKey]: `begin-${id}` });
         ops.push(createInsertSegmentOp(start, beginMarker));
@@ -473,7 +469,6 @@ export class FlowDocument extends PrimedComponent {
         return s.join("");
     }
 
-    // eslint-disable-next-line @typescript-eslint/require-await
     protected async componentInitializingFirstTime() {
         // For 'findTile(..)', we must enable tracking of left/rightmost tiles:
         // (See: https://github.com/Microsoft/Prague/pull/1118)
