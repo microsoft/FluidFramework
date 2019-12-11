@@ -109,6 +109,7 @@ module.exports = {
             }
         ],
         "@typescript-eslint/restrict-plus-operands": "error",
+        "@typescript-eslint/require-await": "off",
         "@typescript-eslint/semi": [
             "error",
             "always"
