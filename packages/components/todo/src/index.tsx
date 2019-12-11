@@ -4,7 +4,7 @@
  */
 
 import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
-import { TodoInstantiationFactory, TodoName } from "./Todo";
+import { TodoInstantiationFactory, TodoName, todoViewRequestHandler } from "./Todo";
 import { todoItemViewRequestHandler } from "./TodoItem";
 
 export const fluidExport = new SimpleModuleInstantiationFactory(
@@ -12,5 +12,5 @@ export const fluidExport = new SimpleModuleInstantiationFactory(
     new Map([
         [TodoName, Promise.resolve(TodoInstantiationFactory)],
     ]),
-    [todoItemViewRequestHandler],
+    [todoItemViewRequestHandler, todoViewRequestHandler],
 );

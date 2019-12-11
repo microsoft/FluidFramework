@@ -4,8 +4,11 @@
  */
 
 import { CollaborativeInput } from "@microsoft/fluid-aqueduct-react";
+import { IComponentHTMLVisual, IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
 import { SharedString } from "@microsoft/fluid-sequence";
 import * as React from "react";
+import * as ReactDOM from "react-dom";
 import { TodoItem } from "../TodoItem/TodoItem";
 import { TodoItemView } from "../TodoItem/TodoItemView";
 import { Todo } from "./Todo";
@@ -19,10 +22,35 @@ interface TodoViewState {
     modelLoaded: boolean;
 }
 
+export async function todoViewRequestHandler(request: IRequest, runtime: ContainerRuntime) {
+    if (!request.url.startsWith("/TodoView")) {
+        return undefined;
+    }
+
+    const modelUrl = request.url.replace("/TodoView", "");
+    const todoModel = (await runtime.request({ url: modelUrl })).value as Todo;
+    const view = new TodoView({ todoModel });
+    return { status: 200, mimeType: "fluid/component", value: view };
+}
+
+function getVisual(todoModel: Todo) {
+    const visual = {
+        render: (elm: HTMLElement) => {
+            ReactDOM.render(<TodoView todoModel={ todoModel }/>, elm);
+        },
+        IComponentHTMLVisual: undefined,
+    };
+    visual.IComponentHTMLVisual = visual;
+    return visual;
+}
+
 // tslint:disable:react-a11y-input-elements
-export class TodoView extends React.Component<TodoViewProps, TodoViewState> {
+export class TodoView extends React.Component<TodoViewProps, TodoViewState> implements IComponentHTMLVisual {
+    public get IComponentHTMLVisual() { return this.visual; }
     private newTextInput: HTMLInputElement;
     private titleString: SharedString;
+    private readonly visual: IComponentHTMLVisual;
+
     constructor(props: TodoViewProps) {
         super(props);
 
@@ -33,6 +61,8 @@ export class TodoView extends React.Component<TodoViewProps, TodoViewState> {
 
         this.createNewTodoItem = this.createNewTodoItem.bind(this);
         this.refreshTodoItemListFromModel = this.refreshTodoItemListFromModel.bind(this);
+
+        this.visual = getVisual(this.props.todoModel);
     }
 
     public async componentDidMount() {
