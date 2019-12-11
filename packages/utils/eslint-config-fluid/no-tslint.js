@@ -108,7 +108,7 @@ module.exports = {
                 "avoidEscape": true
             }
         ],
-        "@typescript-eslint/restrict-plus-operands": "error",
+        "@typescript-eslint/restrict-plus-operands": "warn",
         "@typescript-eslint/require-await": "off",
         "@typescript-eslint/semi": [
             "error",
