@@ -67,6 +67,7 @@ export function create(
      * Creates a new tenant
      */
     router.post("/tenants", (request, response) => {
+        console.info("POST /tenants");
         const tenantP = manager.createTenant();
         returnResponse(tenantP, response);
     });

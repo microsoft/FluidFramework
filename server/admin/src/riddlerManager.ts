@@ -36,6 +36,8 @@ export class RiddlerManager {
     }
 
     public async addTenant(): Promise<ITenantConfig & {key: string; }> {
+        console.info("addTenant");
+
         const tenant = await request.post(
             `${this.endpoint}/api/tenants`,
             {
@@ -45,6 +47,8 @@ export class RiddlerManager {
                 },
                 json: true,
             }) as ITenantConfig & {key: string; };
+
+        console.info("after addTenant: " + JSON.stringify(tenant));
         return tenant;
     }
 
