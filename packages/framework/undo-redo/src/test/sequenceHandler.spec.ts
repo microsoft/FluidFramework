@@ -13,21 +13,27 @@ const text =
     // tslint:disable-next-line: max-line-length
     "The SharedSegementSequenceRevertable does the heavy lifting of tracking and reverting changes on the underlying SharedSegementSequence. This is accomplished via TrackingGroup objects. A TrackingGroup creates a bi-direction link between itself and the segment. This link is maintained across segment movement, splits, merges, and removal. When a sequence delta event is fired the segments contained in that event are added to a TrackingGroup. The TrackingGroup is then tracked along with additional metadata, like the delta type and the annotate property changes. From the TrackingGroup's segments we can find the ranges in the current document that were affected by the original change even in the presesene of other changes. The segments also contain the content which can be used. With the ranges, content, and metadata we can revert the original change on the sequence.";
 
-function insertText(sharedString: SharedString, targetLength = text.length) {
+function insertTextAsChunks(sharedString: SharedString, targetLength = text.length) {
+    let chunks = 0;
     while (sharedString.getLength() < targetLength && sharedString.getLength() < text.length) {
         const len = sharedString.getLength() % 13 + 1;
         sharedString.insertText(
             sharedString.getLength(),
             text.substr(sharedString.getLength(), len));
+        chunks++;
     }
+    return chunks;
 }
-function deleteText(sharedString: SharedString, targetLength = 0) {
+function deleteTextByChunk(sharedString: SharedString, targetLength = 0) {
+    let chunks = 0;
     while (sharedString.getLength() > targetLength && sharedString.getLength() > 0) {
-        const len = sharedString.getLength() % 13 + 1;
+        const len = sharedString.getLength() % 17 + 1;
         sharedString.removeText(
-            Math.min(sharedString.getLength() - len, 0),
+            Math.max(sharedString.getLength() - len, 0),
             sharedString.getLength());
+        chunks++;
     }
+    return chunks;
 }
 
 describe("SharedSegmentSequenceUndoRedoHandler", () => {
@@ -52,11 +58,11 @@ describe("SharedSegmentSequenceUndoRedoHandler", () => {
     });
 
     it("Undo and Redo Delete", () => {
-        insertText(sharedString);
+        insertTextAsChunks(sharedString);
         const handler = new SharedSegmentSequenceUndoRedoHandler(undoRedoStack);
         handler.attachSequence(sharedString);
 
-        deleteText(sharedString);
+        deleteTextByChunk(sharedString);
 
         for (let i = 0; i < 10; i++) {
             assert.equal(sharedString.getText(), "");
@@ -70,7 +76,7 @@ describe("SharedSegmentSequenceUndoRedoHandler", () => {
     it("Undo and Redo Insert", () => {
         const handler = new SharedSegmentSequenceUndoRedoHandler(undoRedoStack);
         handler.attachSequence(sharedString);
-        insertText(sharedString);
+        insertTextAsChunks(sharedString);
 
         for (let i = 0; i < 10; i++) {
             assert.equal(sharedString.getText(), text);
@@ -85,8 +91,8 @@ describe("SharedSegmentSequenceUndoRedoHandler", () => {
         const handler = new SharedSegmentSequenceUndoRedoHandler(undoRedoStack);
         handler.attachSequence(sharedString);
         for (let i = 1; i < text.length; i *= 2) {
-            insertText(sharedString, text.length - i);
-            deleteText(sharedString, i);
+            insertTextAsChunks(sharedString, text.length - i);
+            deleteTextByChunk(sharedString, i);
         }
         const finalText = sharedString.getText();
 
@@ -97,5 +103,10 @@ describe("SharedSegmentSequenceUndoRedoHandler", () => {
             while (undoRedoStack.redoOperation()) { }
             assert.equal(sharedString.getText(), finalText);
         }
+    });
+
+    it("Undo and Redo Insert & Delete", () => {
+        const handler = new SharedSegmentSequenceUndoRedoHandler(undoRedoStack);
+        handler.attachSequence(sharedString);
     });
 });
