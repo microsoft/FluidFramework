@@ -77,7 +77,6 @@ export class TenantManager {
         }
 
         console.info("addTenant");
-        
         const newTenant = await this.riddlerManager.addTenant();
         const key = newTenant.key;
 
@@ -95,7 +94,6 @@ export class TenantManager {
         console.info("updateTenantOrderer");
 
         await Promise.all([tenantUpdateP, ordererUpdateP]);
-
 
         console.info("await Promise.all([tenantUpdateP, ordererUpdateP]);");
 
