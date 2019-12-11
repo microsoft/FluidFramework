@@ -1,7 +1,7 @@
 /*!
-* Copyright (c) Microsoft Corporation. All rights reserved.
-* Licensed under the MIT License.
-*/
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
 import * as assert from "assert";
 import { Dom, Scheduler } from "@fluid-example/flow-util-lib";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
@@ -14,7 +14,6 @@ import { extractRef, updateRef } from "../util/localref";
 import { hasTag } from "../util/tag";
 import { debug } from "./debug";
 import { BootstrapFormatter, Formatter, IFormatterState, RootFormatter } from "./formatter";
-
 
 export interface ILayoutCursor { parent: Node; previous: Node; }
 

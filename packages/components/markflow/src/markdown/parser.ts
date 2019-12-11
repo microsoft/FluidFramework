@@ -4,7 +4,6 @@
  */
 
 import { MapLike } from "@microsoft/fluid-merge-tree";
-// import { strict as assert } from "assert";
 import * as remark from "remark";
 import { debug } from "./debug";
 import { MarkdownToken } from "./types";
@@ -82,6 +81,25 @@ export class MarkdownParser {
         this.path.pop();
         this.dispatch(this.leave, text, node, end);
     }
+
+    // private processText(start: number, end: number, text: string) {
+    //     newlineExp.lastIndex = start;
+    //     do {
+    //         const chars = text.match(/[^\n]*/g)[0];
+    //         if (chars) {
+    //             this.enter(start, MarkdownToken.text);
+    //             this.leave(chars.length, MarkdownToken.text);
+    //             start += chars.length;
+    //         }
+
+    //         const linefeeds = text.match(/\n*/g)[0];
+    //         if (linefeeds) {
+    //             this.enter(start, MarkdownToken.softbreak);
+    //             this.leave(linefeeds.length, MarkdownToken.softbreak);
+    //             start += linefeeds.length;
+    //         }
+    //     } while (start < end);
+    // }
 
     private peek(index: number) {
         const path = this.path;
