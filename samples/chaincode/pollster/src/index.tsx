@@ -19,7 +19,6 @@ const chaincodeName = pkg.name;
 export class Pollster extends PrimedComponent implements IComponentHTMLVisual {
     public get IComponentHTMLVisual() { return this; }
 
-    // eslint-disable-next-line @typescript-eslint/require-await
     protected async componentInitializingFirstTime() {
         this.root.set(pollOptionsMapKey, SharedMap.create(this.runtime).handle);
         this.root.set(pollVotersMapKey, SharedMap.create(this.runtime).handle);

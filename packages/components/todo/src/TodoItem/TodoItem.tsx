@@ -51,7 +51,6 @@ export class TodoItem extends PrimedComponent
     /**
      * Do creation work
      */
-    // eslint-disable-next-line @typescript-eslint/require-await
     protected async componentInitializingFirstTime(props?: any) {
         let newItemText = "New Item";
 

@@ -26,7 +26,6 @@ export class DiceRoller extends PrimedComponent implements IComponentHTMLVisual 
      *
      * This method is used to perform component setup, which can include setting an initial schema or initial values.
      */
-    // eslint-disable-next-line @typescript-eslint/require-await
     protected async componentInitializingFirstTime() {
         this.root.set("diceValue", 1);
     }

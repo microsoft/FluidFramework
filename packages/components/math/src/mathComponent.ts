@@ -481,7 +481,6 @@ export class MathInstance implements IComponentLoadable, IComponentRouter,
         this.collection.removeText(this, startPos, endPos);
     }
 
-    // eslint-disable-next-line @typescript-eslint/require-await
     public async request(request: IRequest): Promise<IResponse> {
         return {
             mimeType: "fluid/component",

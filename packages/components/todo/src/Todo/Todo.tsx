@@ -44,7 +44,6 @@ export class Todo extends PrimedComponent implements IComponentHTMLVisual, IComp
     /**
      * Do setup work here
      */
-    // eslint-disable-next-line @typescript-eslint/require-await
     protected async componentInitializingFirstTime() {
         // Create a list for of all inner todo item components.
         // We will use this to know what components to load.

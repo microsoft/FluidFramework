@@ -45,7 +45,6 @@ export class GithubComment
    * Extension of the parent class function that also forces the innerHTML of
    * the markdown pane to update based on `nT`.
    */
-    // eslint-disable-next-line @typescript-eslint/require-await
     protected async forceDOMUpdate(nT, nSS?, nSE?) {
         super.forceDOMUpdate(nT, nSS, nSE);
 

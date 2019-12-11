@@ -224,7 +224,6 @@ const spoUrls = [
  * @param secret - The SPO clientSecret.
  * @param libraryName - if loaded from React, this should be "reactLoader"
  */
-// eslint-disable-next-line @typescript-eslint/require-await
 export async function loadIFramedFluidContainer(
     url: string,
     div: HTMLDivElement,
@@ -290,7 +289,6 @@ export async function loadIFramedFluidContainer(
     }
 
     div.appendChild(iframe);
-    // eslint-disable-next-line @typescript-eslint/require-await
     iframe.onload = async () => {
         iframe.contentWindow.postMessage({
             appId: "app Id",

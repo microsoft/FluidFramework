@@ -458,7 +458,6 @@ export class FlowDocument extends PrimedComponent {
         return s.join("");
     }
 
-    // eslint-disable-next-line @typescript-eslint/require-await
     protected async componentInitializingFirstTime() {
         // For 'findTile(..)', we must enable tracking of left/rightmost tiles:
         // (See: https://github.com/Microsoft/Prague/pull/1118)

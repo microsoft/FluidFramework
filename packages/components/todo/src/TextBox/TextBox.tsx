@@ -30,7 +30,6 @@ export class TextBox extends PrimedComponent
     /**
      * Do creation work
      */
-    // eslint-disable-next-line @typescript-eslint/require-await
     protected async componentInitializingFirstTime(props?: any) {
         let newItemText = "Important Things";
 

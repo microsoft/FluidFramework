@@ -84,7 +84,6 @@ export class TypeRace extends PrimedComponent implements IComponentHTMLVisual {
      * your component is created. Anything that happens in componentInitializingFirstTime will happen before any other
      * user will see the component.
      */
-    // eslint-disable-next-line @typescript-eslint/require-await
     protected async componentInitializingFirstTime() {
         this.root.set(this.targetTextKey, this.textGenerator.generateText());
         this.root.set("started", false);

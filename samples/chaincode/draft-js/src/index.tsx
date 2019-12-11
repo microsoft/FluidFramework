@@ -28,7 +28,6 @@ export class DraftJsExample extends PrimedComponent implements IComponentHTMLVis
     /**
      * Do setup work here
      */
-    // eslint-disable-next-line @typescript-eslint/require-await
     protected async componentInitializingFirstTime() {
         const text = SharedString.create(this.runtime);
         insertBlockStart(text, 0);

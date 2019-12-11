@@ -28,7 +28,6 @@ export class TextList extends PrimedComponent implements IComponentHTMLVisual, I
     /**
      * Do creation work
      */
-    // eslint-disable-next-line @typescript-eslint/require-await
     protected async componentInitializingFirstTime(_props?: any) {
         this.textDirectory = this.root.createSubDirectory("textDirectory");
 
@@ -36,12 +35,10 @@ export class TextList extends PrimedComponent implements IComponentHTMLVisual, I
         this.createNewItem();
     }
 
-    // eslint-disable-next-line @typescript-eslint/require-await
     protected async componentInitializingFromExisting() {
         this.textDirectory = this.root.getSubDirectory("textDirectory");
     }
 
-    // eslint-disable-next-line @typescript-eslint/require-await
     protected async componentHasInitialized() {
         // tslint:disable-next-line: no-console
         console.log("componentHasInitialized setting listener");
