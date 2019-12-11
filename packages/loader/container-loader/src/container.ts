@@ -145,7 +145,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                     if (!alreadyRaisedError) {
                         container.logCriticalError(error);
                     }
-                    container.ignoreUnhandledConnectonError();
                     onError(error);
                 });
         });
@@ -185,7 +184,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     // Fixed in ESLint: https://github.com/typescript-eslint/typescript-eslint/issues/946
     // tslint:disable-next-line:prefer-readonly
     private protocolHandler: ProtocolOpHandler | undefined;
-    private connectionDetailsP: Promise<IConnectionDetails> | undefined;
 
     private firstConnection = true;
     private manualReconnectInProgress = false;
@@ -433,11 +431,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         // Ensure connection to web socket
         this.connectToDeltaStream();
-
-        // Do not leave unhandled rejected promise.
-        // We report any connection errors through raiseCriticalError() mechanism
-        // as they can happen after initial connection.
-        this.ignoreUnhandledConnectonError();
     }
 
     public raiseCriticalError(error: any) {
@@ -459,7 +452,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         if (this._connectionState === ConnectionState.Disconnected) {
             this.manualReconnectInProgress = true;
         }
-        return this._deltaManager!.connect();
+        return this._deltaManager!.connect().catch(() => {});
     }
 
     private async reloadContextCore(): Promise<void> {
@@ -588,19 +581,20 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return versions[0];
     }
 
-    private async connectToDeltaStream() {
-        if (!this.connectionDetailsP) {
+    private async startConnectToDeltaStream() {
+        if (this.connectionTransitionTimes[ConnectionState.Disconnected] === undefined) {
             this.connectionTransitionTimes[ConnectionState.Disconnected] = performanceNow();
-            this.connectionDetailsP = this._deltaManager!.connect();
         }
-        return this.connectionDetailsP;
     }
 
-    private ignoreUnhandledConnectonError() {
-        // avoid unhandled promises
-        if (this.connectionDetailsP) {
-            this.connectionDetailsP.catch(() => { });
-        }
+    private kickConnectToDeltaStream() {
+        this.startConnectToDeltaStream();
+        this._deltaManager!.connect().catch(() => {});
+    }
+
+    private connectToDeltaStream() {
+        this.startConnectToDeltaStream();
+        return this._deltaManager!.connect();
     }
 
     /**
@@ -619,7 +613,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         // DeltaManager is resilient to this and will wait to start processing ops until after it is attached.
         this.createDeltaManager();
         if (!pause) {
-            this.connectToDeltaStream();
+            this.kickConnectToDeltaStream();
         }
 
         this.storageService = await this.getDocumentStorageService();
@@ -630,7 +624,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         // if pause, and there's no tree, then we'll start the websocket connection here (we'll need the details later)
         if (!maybeSnapshotTree) {
-            this.connectToDeltaStream();
+            this.kickConnectToDeltaStream();
         }
 
         const blobManagerP = this.loadBlobManager(this.storageService, maybeSnapshotTree);
