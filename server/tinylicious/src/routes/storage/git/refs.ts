@@ -25,7 +25,11 @@ export function create(store: nconf.Provider): Router {
     const router: Router = Router();
 
     async function getRefs(tenantId: string, authorization: string): Promise<IRef[]> {
-        throw new Error("Not implemented");
+        const branches = await git.listBranches({
+            dir: utils.getGitDir(store, tenantId),
+        });
+
+        return Promise.all(branches.map(async (branch) => getRef(tenantId, authorization, branch)));
     }
 
     async function getRef(tenantId: string, authorization: string, ref: string): Promise<IRef> {
@@ -53,9 +57,17 @@ export function create(store: nconf.Provider): Router {
         ref: string,
         params: IPatchRefParams,
     ): Promise<IRef> {
+        const dir = utils.getGitDir(store, tenantId);
+
+        // current code - or nodegit - takes in updates without the /refs input - need to resolve the behavior and
+        // either leave in the refs below or update the git managers to include it.
+        const rebasedRef = `refs/${ref}`;
+
+        // There is no updateRef in iso-git so we instead delete/write
         await git.writeRef({
-            dir: utils.getGitDir(store, tenantId),
-            ref,
+            dir,
+            force: true,
+            ref: rebasedRef,
             value: params.sha,
         });
 

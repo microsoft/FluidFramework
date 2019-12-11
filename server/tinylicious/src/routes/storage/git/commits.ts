@@ -21,7 +21,7 @@ export function create(store: nconf.Provider): Router {
         const author = {
             email: params.author.email,
             name: params.author.name,
-            timestamp: Date.parse(params.author.date),
+            timestamp: Math.floor(Date.parse(params.author.date) / 1000),
             timezoneOffset: 0,
         };
 
@@ -63,12 +63,12 @@ export function create(store: nconf.Provider): Router {
             author: {
                 email: description.author.email,
                 name: description.author.name,
-                date: new Date(description.author.timestamp).toISOString(),
+                date: new Date(description.author.timestamp * 1000).toISOString(),
             },
             committer: {
                 email: description.committer.email,
                 name: description.committer.name,
-                date: new Date(description.committer.timestamp).toISOString(),
+                date: new Date(description.committer.timestamp * 1000).toISOString(),
             },
             message: description.message,
             parents: description.parent.map((parentSha) => ({ sha: parentSha, url: "" })),

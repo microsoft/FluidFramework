@@ -31,5 +31,6 @@ export function handleResponse<T>(
 }
 
 export function getGitDir(store: nconf.Provider, tenantId: string) {
-    return path.join(__dirname, "../../../storage", `./${tenantId}`);
+    const directory = store.get("storage");
+    return path.join(directory, `./${tenantId}`);
 }

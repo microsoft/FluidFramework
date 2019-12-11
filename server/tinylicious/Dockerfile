@@ -39,6 +39,8 @@ COPY . .
 # And build
 RUN npm run tsc
 
+RUN mkdir /var/lib/tinylicious && chown node:node /var/lib/tinylicious
+
 # Don't run as root user
 USER node
 
