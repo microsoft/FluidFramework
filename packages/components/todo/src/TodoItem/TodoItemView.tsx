@@ -4,8 +4,11 @@
  */
 
 import { CollaborativeInput } from "@microsoft/fluid-aqueduct-react";
+import { IComponentHTMLVisual, IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
 import { SharedString } from "@microsoft/fluid-sequence";
 import * as React from "react";
+import * as ReactDOM from "react-dom";
 import { TodoItem } from "./TodoItem";
 import { TodoItemDetailsView } from "./TodoItemDetailsView";
 
@@ -18,7 +21,31 @@ interface TodoItemViewState {
     innerComponentVisible: boolean;
 }
 
-export class TodoItemView extends React.Component<TodoItemViewProps, TodoItemViewState> {
+export async function todoItemViewRequestHandler(request: IRequest, runtime: ContainerRuntime) {
+    if (!request.url.startsWith("/TodoItemView")) {
+        return undefined;
+    }
+
+    const modelUrl = request.url.replace("/TodoItemView", "");
+    const todoItemModel = (await runtime.request({ url: modelUrl })).value as TodoItem;
+    const view = new TodoItemView({ todoItemModel });
+    return { status: 200, mimeType: "fluid/component", value: view };
+}
+
+function getVisual(todoItemModel: TodoItem) {
+    const visual = {
+        render: (elm: HTMLElement) => {
+            ReactDOM.render(<TodoItemView todoItemModel={ todoItemModel }/>, elm);
+        },
+        IComponentHTMLVisual: undefined,
+    };
+    visual.IComponentHTMLVisual = visual;
+    return visual;
+}
+
+export class TodoItemView extends React.Component<TodoItemViewProps, TodoItemViewState>
+    implements IComponentHTMLVisual {
+    public get IComponentHTMLVisual() { return this.visual; }
     private readonly itemText: SharedString;
     private readonly itemUrl: string;
     private readonly buttonStyle = {
@@ -28,6 +55,8 @@ export class TodoItemView extends React.Component<TodoItemViewProps, TodoItemVie
         width: "35px",
     };
 
+    private readonly visual: IComponentHTMLVisual;
+
     constructor(props: TodoItemViewProps) {
         super(props);
 
@@ -35,7 +64,7 @@ export class TodoItemView extends React.Component<TodoItemViewProps, TodoItemVie
 
         const baseUrl = this.props.todoItemModel.getBaseUrl();
         const url = new URL(baseUrl);
-        this.itemUrl = `${url.origin}${url.pathname}/${this.props.todoItemModel.url}${url.search}`;
+        this.itemUrl = `${url.origin}${url.pathname}/TodoItemView/${this.props.todoItemModel.url}${url.search}`;
 
         this.state = {
             checked: this.props.todoItemModel.getCheckedState(),
@@ -43,6 +72,8 @@ export class TodoItemView extends React.Component<TodoItemViewProps, TodoItemVie
         };
 
         this.setCheckedState = this.setCheckedState.bind(this);
+
+        this.visual = getVisual(this.props.todoItemModel);
     }
 
     public componentDidMount() {

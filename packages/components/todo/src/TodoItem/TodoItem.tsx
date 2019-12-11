@@ -5,17 +5,13 @@
 
 import { ClickerName } from "@fluid-example/clicker";
 import { PrimedComponent } from "@microsoft/fluid-aqueduct";
-import { IComponentReactViewable } from "@microsoft/fluid-aqueduct-react";
 import { ISharedCell, SharedCell } from "@microsoft/fluid-cell";
-import { IComponentHandle, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
-import * as React from "react";
-import * as ReactDOM from "react-dom";
 import { TextBoxName } from "../TextBox";
 import { TextListName } from "../TextList";
 import { TodoItemSupportedComponents } from "./supportedComponent";
-import { TodoItemView } from "./TodoItemView";
 
 // tslint:disable-next-line: no-var-requires no-require-imports
 const pkg = require("../../package.json");
@@ -34,19 +30,13 @@ const innerComponentKey = "innerId";
  * - Link to open component in separate tab
  * - Button to remove entry
  */
-export class TodoItem extends PrimedComponent
-  implements
-    IComponentHTMLVisual,
-    IComponentReactViewable {
+export class TodoItem extends PrimedComponent {
 
   // tslint:disable:prefer-readonly
   private text: SharedString;
   private innerIdCell: ISharedCell;
   // tslint:enable:prefer-readonly
   private baseUrl: string = "";
-
-  public get IComponentHTMLVisual() { return this; }
-  public get IComponentReactViewable() { return this; }
 
   /**
    * Do creation work
@@ -109,33 +99,6 @@ export class TodoItem extends PrimedComponent
       }
     });
   }
-
-  // start IComponentHTMLVisual
-
-  public render(div: HTMLElement) {
-    ReactDOM.render(
-        this.createJSXElement(),
-        div,
-    );
-  }
-
-  // end IComponentHTMLVisual
-
-  // start IComponentReactViewable
-
-  /**
-   * If our caller supports React they can query against the IComponentReactViewable
-   * Since this returns a JSX.Element it allows for an easier model.
-   */
-  public createJSXElement(): JSX.Element {
-      return (
-        <TodoItemView
-          todoItemModel={this}
-        />
-      );
-  }
-
-  // end IComponentReactViewable
 
   // start public API surface for the TodoItem model, used by the view
 
