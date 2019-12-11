@@ -64,13 +64,16 @@ describe("SharedSegmentSequenceUndoRedoHandler", () => {
 
         deleteTextByChunk(sharedString);
 
-        for (let i = 0; i < 10; i++) {
-            assert.equal(sharedString.getText(), "");
-            while (undoRedoStack.undoOperation()) { }
-            assert.equal(sharedString.getText(), text);
-            while (undoRedoStack.redoOperation()) { }
-            assert.equal(sharedString.getText(), "");
-        }
+        assert.equal(sharedString.getText(), "");
+
+        while (undoRedoStack.undoOperation()) { }
+
+        assert.equal(sharedString.getText(), text);
+
+        while (undoRedoStack.redoOperation()) { }
+
+        assert.equal(sharedString.getText(), "");
+
     });
 
     it("Undo and Redo Insert", () => {
@@ -78,13 +81,16 @@ describe("SharedSegmentSequenceUndoRedoHandler", () => {
         handler.attachSequence(sharedString);
         insertTextAsChunks(sharedString);
 
-        for (let i = 0; i < 10; i++) {
-            assert.equal(sharedString.getText(), text);
-            while (undoRedoStack.undoOperation()) { }
-            assert.equal(sharedString.getText(), "");
-            while (undoRedoStack.redoOperation()) { }
-            assert.equal(sharedString.getText(), text);
-        }
+        assert.equal(sharedString.getText(), text);
+
+        while (undoRedoStack.undoOperation()) { }
+
+        assert.equal(sharedString.getText(), "");
+
+        while (undoRedoStack.redoOperation()) { }
+
+        assert.equal(sharedString.getText(), text);
+
     });
 
     it("Undo and Redo Insert & Delete", () => {
@@ -96,17 +102,41 @@ describe("SharedSegmentSequenceUndoRedoHandler", () => {
         }
         const finalText = sharedString.getText();
 
-        for (let i = 0; i < 10; i++) {
-            assert.equal(sharedString.getText(), finalText);
-            while (undoRedoStack.undoOperation()) { }
-            assert.equal(sharedString.getText(), "");
-            while (undoRedoStack.redoOperation()) { }
-            assert.equal(sharedString.getText(), finalText);
-        }
+        assert.equal(sharedString.getText(), finalText);
+
+        while (undoRedoStack.undoOperation()) { }
+
+        assert.equal(sharedString.getText(), "");
+
+        while (undoRedoStack.redoOperation()) { }
+
+        assert.equal(sharedString.getText(), finalText);
+
     });
 
-    it("Undo and Redo Insert & Delete", () => {
+    it("Undo and redo insert of split segment", () => {
         const handler = new SharedSegmentSequenceUndoRedoHandler(undoRedoStack);
         handler.attachSequence(sharedString);
+
+        // insert all text as a single segment
+        sharedString.insertText(0, text);
+
+        deltaConnectionFactory.processAllMessages();
+
+        // this will split that into three segment
+        sharedString.walkSegments(
+            () => true,
+            20,
+            30,
+            undefined,
+            true);
+
+        assert.equal(sharedString.getText(), text);
+
+        // undo and redo split insert
+        undoRedoStack.undoOperation();
+        undoRedoStack.redoOperation();
+
+        assert.equal(sharedString.getText(), text);
     });
 });
