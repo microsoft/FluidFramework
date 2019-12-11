@@ -24,12 +24,13 @@
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose",
     "test": "mocha --recursive dist/test --exit",
-    "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
+    "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml"
   },
   "dependencies": {
     "@microsoft/fluid-map": "^0.13.0",
     "@microsoft/fluid-merge-tree": "^0.13.0",
-    "@microsoft/fluid-sequence": "^0.13.0"
+    "@microsoft/fluid-sequence": "^0.13.0",
+    "@microsoft/fluid-test-runtime-utils": "^0.13.0"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.4.4",

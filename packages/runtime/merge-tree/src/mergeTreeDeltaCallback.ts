@@ -5,7 +5,6 @@
 
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { IMergeTreeOp, ISegment, MergeTreeDeltaType } from "./";
-import { MergeTree } from "./mergeTree";
 import { IMergeTreeGroupMsg } from "./ops";
 import { PropertySet } from "./properties";
 
