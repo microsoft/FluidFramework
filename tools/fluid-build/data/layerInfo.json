@@ -18,7 +18,8 @@
             "@microsoft/fluid-driver-definitions"
         ],
         "deps": [
-            "Protocol-Definitions"
+            "Protocol-Definitions",
+            "@microsoft/fluid-component-core-interfaces"
         ]
     },
     "Container-Definitions": {
@@ -79,6 +80,9 @@
         ]
     },
     "Runtime": {
+        "packages": [
+            "@microsoft/fluid-agent-scheduler"
+        ],
         "dirs": [
             "packages/runtime/"
         ],
@@ -88,6 +92,9 @@
         ]
     },
     "Framework": {
+        "packages": [
+            "@fluid-internal/client-api"
+        ],
         "dirs": [
             "packages/framework/"
         ],

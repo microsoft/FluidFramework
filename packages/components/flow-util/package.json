@@ -49,5 +49,30 @@
     "ts-node": "^7.0.1",
     "tslint": "^5.20.0",
     "typescript": "~3.4.5"
+  },
+  "nyc": {
+    "all": true,
+    "extension": [
+      ".ts",
+      ".tsx",
+      ".js",
+      ".jsx"
+    ],
+    "exclude": [
+      "**/*.d.ts",
+      "src/test/**/*.ts",
+      "dist/test/**/*.js"
+    ],
+    "include": [
+      "src/**/*.ts",
+      "dist/**/*.js"
+    ],
+    "require" : [
+      "ts-node/register"
+    ],
+    "temp-directory": "nyc/.nyc_output",
+    "cache-dir": "nyc/.cache",
+    "report-dir": "nyc/report",
+    "exclude-after-remap": false
   }
 }
