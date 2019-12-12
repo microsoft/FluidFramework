@@ -5,7 +5,7 @@
 
 import { CollaborativeInput } from "@microsoft/fluid-aqueduct-react";
 import { IComponentHTMLVisual, IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
+import { ContainerRuntime, RequestParser } from "@microsoft/fluid-container-runtime";
 import { SharedString } from "@microsoft/fluid-sequence";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -22,14 +22,16 @@ interface TodoItemViewState {
 }
 
 export async function todoItemViewRequestHandler(request: IRequest, runtime: ContainerRuntime) {
-    if (!request.url.startsWith("/TodoItemView")) {
+    const requestParser = new RequestParser(request);
+    const pathParts = requestParser.pathParts;
+    if (pathParts[0] !== "TodoItemView") {
         return undefined;
     }
 
-    const modelUrl = request.url.replace("/TodoItemView", "");
-    const todoItemModel = (await runtime.request({ url: modelUrl })).value as TodoItem;
-    const view = new TodoItemView({ todoItemModel });
-    return { status: 200, mimeType: "fluid/component", value: view };
+    const modelRequest = requestParser.createSubRequest(1);
+    const todoItemModel = (await runtime.request(modelRequest)).value as TodoItem;
+    const todoItemView = new TodoItemView({ todoItemModel });
+    return { status: 200, mimeType: "fluid/component", value: todoItemView };
 }
 
 function getVisual(todoItemModel: TodoItem) {
