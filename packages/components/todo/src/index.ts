@@ -4,13 +4,14 @@
  */
 
 import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
-import { TodoInstantiationFactory, TodoName, todoViewRequestHandler } from "./Todo";
+import { OrchestratorInstantiationFactory, OrchestratorName } from "./Orchestrator";
+import { todoViewRequestHandler } from "./Todo";
 import { todoItemViewRequestHandler } from "./TodoItem";
 
 export const fluidExport = new SimpleModuleInstantiationFactory(
-    TodoName,
+    OrchestratorName,
     new Map([
-        [TodoName, Promise.resolve(TodoInstantiationFactory)],
+        [OrchestratorName, Promise.resolve(OrchestratorInstantiationFactory)],
     ]),
     [todoItemViewRequestHandler, todoViewRequestHandler],
 );
