@@ -125,12 +125,23 @@
             "packages/component/",
             "samples/chaincode/",
             "packages/agent/",
-            "packages/server/",
             "packages/tools/",
-            "packages/test/"
+            "packages/test/",
+            "packages/server/tools-core"
         ],
         "deps": [
             "Framework"
+        ]
+    },
+    "Test": {
+        "test": true,
+        "packages": [
+            "@microsoft/fluid-test-driver",
+            "@microsoft/fluid-test-runtime-utils",
+            "@microsoft/fluid-server-gateway",
+            "@microsoft/fluid-local-test-server",
+            "@microsoft/fluid-webpack-component-loader",
+            "@fluid-example/table-test-lib"
         ]
     }
 }
