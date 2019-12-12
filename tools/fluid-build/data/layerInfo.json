@@ -1,119 +1,195 @@
 {
-    "Base-Definitions": {
-        "packages": [
-            "@microsoft/fluid-common-definitions",
-            "@microsoft/fluid-component-core-interfaces"
-        ]
+    "Definitions": {
+        "Base-Definitions": {
+            "packages": [
+                "@microsoft/fluid-common-definitions",
+                "@microsoft/fluid-component-core-interfaces",
+                "@microsoft/fluid-gitresources"
+            ]
+        },
+        "Protocol-Definitions": {
+            "packages": [
+                "@microsoft/fluid-protocol-definitions"
+            ],
+            "deps": [
+                "@microsoft/fluid-common-definitions"
+            ]
+        },
+        "Driver-Definitions": {
+            "packages": [
+                "@microsoft/fluid-driver-definitions"
+            ],
+            "deps": [
+                "Protocol-Definitions",
+                "@microsoft/fluid-component-core-interfaces"
+            ]
+        },
+        "Container-Definitions": {
+            "packages": [
+                "@microsoft/fluid-container-definitions"
+            ],
+            "deps": [
+                "Driver-Definitions",
+                "@microsoft/fluid-component-core-interfaces"
+            ]
+        }
     },
-    "Protocol-Definitions": {
-        "packages": [
-            "@microsoft/fluid-protocol-definitions"
-        ],
-        "deps": [
-            "@microsoft/fluid-common-definitions"
-        ]
+    "Utils": {
+        "Base-Utils": {
+            "packages": [
+                "@microsoft/fluid-core-utils"
+            ],
+            "dirs": [
+                "packages/utils"
+            ],
+            "deps": [
+                "Base-Definitions"
+            ]
+        },
+        "Protocol-Utils": {
+            "packages": [
+                "@microsoft/fluid-protocol-base"
+            ],
+            "deps": [
+                "Base-Utils",
+                "Protocol-Definitions"
+            ]
+        },
+        "Driver-Utils": {
+            "packages": [
+                "@microsoft/fluid-driver-utils"
+            ],
+            "deps": [
+                "Protocol-Utils",
+                "Driver-Definitions"
+            ]
+        }
     },
-    "Driver-Definitions": {
-        "packages": [
-            "@microsoft/fluid-driver-definitions"
-        ],
-        "deps": [
-            "Protocol-Definitions",
-            "@microsoft/fluid-component-core-interfaces"
-        ]
+    "Core": {
+        "Server": {
+            "dirs": [
+                "server/routerlicious/packages/"
+            ],
+            "deps": [
+                "Protocol-Utils",
+                "Routerlicious-Utils"
+            ]
+        },
+        "Driver": {
+            "dirs": [
+                "packages/drivers/"
+            ],
+            "deps": [
+                "Driver-Utils",
+                "@microsoft/fluid-component-core-interfaces"
+            ]
+        },
+        "Loader": {
+            "dirs": [
+                "packages/loader/"
+            ],
+            "deps": [
+                "Container-Definitions",
+                "Driver-Utils"
+            ]
+        },
+        "Hosts": {
+            "packages": [
+                "@microsoft/fluid-base-host",
+                "@microsoft/fluid-host-service-interfaces"
+            ],
+            "deps": [
+                "Loader"
+            ]
+        },
+        "Runtime": {
+            "packages": [
+                "@microsoft/fluid-agent-scheduler"
+            ],
+            "dirs": [
+                "packages/runtime/"
+            ],
+            "deps": [
+                "Container-Definitions",
+                "Driver-Utils"
+            ]
+        },
+        "Framework": {
+            "packages": [
+                "@fluid-internal/client-api"
+            ],
+            "dirs": [
+                "packages/framework/"
+            ],
+            "deps": [
+                "Hosts",
+                "Runtime"
+            ]
+        },
+        "Component": {
+            "dirs": [
+                "packages/component/",
+                "samples/chaincode/",
+                "packages/agent/",
+                "packages/server/tools-core"
+            ],
+            "deps": [
+                "Framework"
+            ]
+        },
+        "Tools": {
+            "dirs": [
+                "packages/tools/"
+            ],
+            "deps": [
+                "Framework",
+                "Routerlicious-Driver"
+            ]
+        },
+        "Test": {
+            "test": true,
+            "packages": [
+                "@microsoft/fluid-test-driver",
+                "@microsoft/fluid-test-runtime-utils",
+                "@microsoft/fluid-server-gateway",
+                "@microsoft/fluid-local-test-server",
+                "@microsoft/fluid-webpack-component-loader",
+                "@fluid-example/table-test-lib"
+            ],
+            "dirs": [
+                "packages/test/"
+            ]
+        }
     },
-    "Container-Definitions": {
-        "packages": [
-            "@microsoft/fluid-container-definitions"
-        ],
-        "deps": [
-            "Driver-Definitions",
-            "@microsoft/fluid-component-core-interfaces"
-        ]
-    },
-    "Base-Protocol-Utils": {
-        "packages": [
-            "@microsoft/fluid-core-utils"
-        ],
-        "dirs": [
-            "packages/utils"
-        ],
-        "deps": [
-            "Base-Definitions",
-            "Protocol-Definitions"
-        ]
-    },
-    "Driver-Utils": {
-        "packages": [
-            "@microsoft/fluid-driver-utils"
-        ],
-        "deps": [
-            "Base-Protocol-Utils",
-            "Driver-Definitions"
-        ]
-    },
-    "Driver": {
-        "dirs": [
-            "packages/drivers/"
-        ],
-        "deps": [
-            "Driver-Utils",
-            "@microsoft/fluid-component-core-interfaces"
-        ]
-    },
-    "Loader": {
-        "dirs": [
-            "packages/loader/"
-        ],
-        "deps": [
-            "Container-Definitions",
-            "Driver-Utils"
-        ]
-    },
-    "Hosts": {
-        "dirs": [
-            "packages/hosts/"
-        ],
-        "deps": [
-            "Loader",
-            "Driver"
-        ]
-    },
-    "Runtime": {
-        "packages": [
-            "@microsoft/fluid-agent-scheduler"
-        ],
-        "dirs": [
-            "packages/runtime/"
-        ],
-        "deps": [
-            "Container-Definitions",
-            "Driver-Utils"
-        ]
-    },
-    "Framework": {
-        "packages": [
-            "@fluid-internal/client-api"
-        ],
-        "dirs": [
-            "packages/framework/"
-        ],
-        "deps": [
-            "Hosts",
-            "Runtime"
-        ]
-    },
-    "Component": {
-        "dirs": [
-            "packages/component/",
-            "samples/chaincode/",
-            "packages/agent/",
-            "packages/server/",
-            "packages/tools/",
-            "packages/test/"
-        ],
-        "deps": [
-            "Framework"
-        ]
+    "Routerlicious": {
+        "Routerlicious-Utils": {
+            "packages": [
+                "@microsoft/fluid-server-services-client",
+                "@microsoft/fluid-server-services-core"
+            ],
+            "deps": [
+                "Protocol-Utils"
+            ]
+        },
+        "Routerlicious-Driver": {
+            "packages": [
+                "@microsoft/fluid-routerlicious-driver",
+                "@microsoft/fluid-routerlicious-urlresolver"
+            ],
+            "deps": [
+                "Driver",
+                "Routerlicious-Utils"
+            ]
+        },
+        "Routerlicious-Host": {
+            "packages": [
+                "@fluid-example/tiny-web-host",
+                "@fluid-example/react-web-host"
+            ],
+            "deps": [
+                "Routerlicious-Driver",
+                "Hosts"
+            ]
+        }
     }
 }

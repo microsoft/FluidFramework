@@ -3,17 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { Packages } from "./npmPackage";
+import { Packages } from "../npmPackage";
 import * as path from "path";
 
 interface ILayerInfo {
     deps?: string[];
     packages?: string[];
     dirs?: string[];
+    test?: boolean;
 };
 
 interface ILayerInfoFile {
-    [key: string]: ILayerInfo;
+    [key: string]: { [key: string]: ILayerInfo }
 };
 
 class BaseLayerNode {
@@ -44,6 +45,9 @@ class BaseLayerNode {
 };
 
 class TopLayerNode extends BaseLayerNode {
+    constructor(name: string, public readonly test: boolean = false) {
+        super(name);
+    }
 };
 
 class LayerItemNode extends BaseLayerNode {
@@ -53,6 +57,10 @@ class LayerItemNode extends BaseLayerNode {
 
     public get topLayerName() {
         return this.topLayerNode.name;
+    }
+
+    public get isTest() {
+        return this.topLayerNode.test;
     }
 };
 
@@ -89,27 +97,31 @@ export class LayerGraph {
         return packageLayerNode;
     }
     private constructor(root: string, layerInfo: ILayerInfoFile) {
+        // Load the layer info
         const pendingDeps: { node: BaseLayerNode, deps: string[] | undefined }[] = [];
 
         // First pass get the layer nodes
-        for (const layer of Object.keys(layerInfo)) {
-            const layerNode = new TopLayerNode(layer)
-            this.layers.set(layer, layerNode);
-            const info = layerInfo[layer];
-            if (info.dirs) {
-                for (const dir of info.dirs) {
-                    const fullDir = path.resolve(root, dir);
-                    const dirLayerNode = new DirLayerNode(fullDir, layerNode);
-                    this.dirLayers[fullDir] = dirLayerNode;
-                    layerNode.addDependent(dirLayerNode);
-                    pendingDeps.push({ node: dirLayerNode, deps: info.deps });
+        for (const layerGroup of Object.keys(layerInfo)) {
+            const layerGroupInfo = layerInfo[layerGroup];
+            for (const layer of Object.keys(layerGroupInfo)) {
+                const info = layerGroupInfo[layer];
+                const layerNode = new TopLayerNode(layer, info.test)
+                this.layers.set(layer, layerNode);
+                if (info.dirs) {
+                    for (const dir of info.dirs) {
+                        const fullDir = path.resolve(root, dir);
+                        const dirLayerNode = new DirLayerNode(fullDir, layerNode);
+                        this.dirLayers[fullDir] = dirLayerNode;
+                        layerNode.addDependent(dirLayerNode);
+                        pendingDeps.push({ node: dirLayerNode, deps: info.deps });
+                    }
                 }
-            }
-            if (info.packages) {
-                for (const pkg of info.packages) {
-                    const packageLayerNode = this.createPackage(pkg, layerNode);
-                    layerNode.addDependent(packageLayerNode);
-                    pendingDeps.push({ node: packageLayerNode, deps: info.deps });
+                if (info.packages) {
+                    for (const pkg of info.packages) {
+                        const packageLayerNode = this.createPackage(pkg, layerNode);
+                        layerNode.addDependent(packageLayerNode);
+                        pendingDeps.push({ node: packageLayerNode, deps: info.deps });
+                    }
                 }
             }
         }
@@ -133,6 +145,7 @@ export class LayerGraph {
     }
 
     private verify(packages: Packages) {
+        // Match the packages to the node if it is not explicitly specified
         for (const pkg of packages.packages) {
             if (this.packageLayer.get(pkg.name)) { continue; }
             for (const dir of Object.keys(this.dirLayers)) {
@@ -149,28 +162,41 @@ export class LayerGraph {
             }
         }
 
+        let error = false;
+        // Go thru the packages and check for dependency violation
         for (const pkg of packages.packages) {
             const packageLayerNode = this.packageLayer.get(pkg.name);
             if (!packageLayerNode) {
-                console.warn(`${pkg.nameColored}: warning: Package doesn't match any directories. Unable to do dependency check`);
+                console.error(`${pkg.nameColored}: error: Package doesn't match any directories. Unable to do dependency check`);
+                error = true;
+                continue;
+            }
+            if (packageLayerNode.isTest) {
+                // Don't check dependency on test packages
                 continue;
             }
             for (const dep of pkg.dependencies) {
                 const depLayerNode = this.packageLayer.get(dep);
                 if (!depLayerNode) { continue; }
+                if (depLayerNode.isTest) {
+                    console.error(`${pkg.nameColored}: error: test packages appearing in package dependencies instead of devDependencies - ${dep}, `);
+                    error = true;
+                }
                 // Package can depend on each other if they are in the same layer
                 if (packageLayerNode.topLayerNode === depLayerNode.topLayerNode) { continue; }
                 //console.log(`${pkg.nameColored}: checking ${dep}`);
                 if (!packageLayerNode.verifyDependent(depLayerNode)) {
-                    console.warn(`${pkg.nameColored}: warning: Dependency layer violation ${dep}, "${packageLayerNode.topLayerName}" -> "${depLayerNode.topLayerName}"`);
+                    console.error(`${pkg.nameColored}: error: Dependency layer violation ${dep}, "${packageLayerNode.topLayerName}" -> "${depLayerNode.topLayerName}"`);
+                    error = true;
                 }
             }
         }
+        return error;
     }
 
     public static check(root: string, packages: Packages) {
-        const layerInfoFile = require("../data/layerInfo.json");
+        const layerInfoFile = require(path.join(__dirname, "..", "..", "data", "layerInfo.json"));
         const layerGraph = new LayerGraph(root, layerInfoFile);
-        layerGraph.verify(packages);
+        return layerGraph.verify(packages);
     }
 };

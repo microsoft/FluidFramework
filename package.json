@@ -4,7 +4,7 @@
   "license": "MIT",
   "author": "Microsoft",
   "scripts": {
-    "build": "npm run policy-check && npm run build:genver && npm run build:compile && npm run tslint && npm run build:docs",
+    "build": "npm run policy-check && npm run layer-check && npm run build:genver && npm run build:compile && npm run tslint && npm run build:docs",
     "build:ci": "npm run build:genver && lerna run build:compile:min --stream",
     "build:compile": "lerna run build:compile --stream",
     "build:docs": "npm run clean:docs && lerna run build:docs --stream --parallel && npm run build:gendocs",
@@ -18,6 +18,8 @@
     "clean:docs": "rimraf packages/_api-extractor-temp docs/api/*/**",
     "clean:nyc": "rimraf nyc/**",
     "clean:r11s": "cd server/routerlicious && npm run clean",
+    "layer-check": "cd tools/fluid-build && npm run layer-check",
+    "layer-check:full": "cd tools/fluid-build && npm install && npm run layer-check",
     "postinstall": "npm run postinstall:lerna && (npm run postinstall:fluid-build || true)",
     "policy-check": "cd tools/repo-policy-check && npm run policy-check",
     "policy-check:full": "cd tools/repo-policy-check && npm install && npm run policy-check",
