@@ -4,6 +4,7 @@
  */
 
 interface CommonOptions {
+    defaultRoot?: string;
     root?: string;
     timer: boolean;
     logtime: boolean;
@@ -11,6 +12,7 @@ interface CommonOptions {
 };
 
 export const commonOptions : CommonOptions = {
+    defaultRoot: process.env["_FLUID_DEFAULT_ROOT_"],
     root: process.env["_FLUID_ROOT_"],
     timer: false,
     logtime: false,
@@ -18,7 +20,8 @@ export const commonOptions : CommonOptions = {
 }
 
 export const commonOptionString =
-`     --root <path>    Root directory of the fluid repo (default: env _FLUID_ROOT_)
+`     --defroot <path> Default root directory of the fluid repo if infer failed (default: env _FLUID_DEFAULT_ROOT_)
+     --root <path>    Root directory of the fluid repo (default: env _FLUID_ROOT_)
      --timer          Time separate phases
      --logtime        Display the current time on every status message for logging
   -v --verbose        Verbose messages
@@ -29,6 +32,15 @@ export function parseOption(argv: string[], i: number) {
     if (arg === "-v" || arg === "--verbose") {
         commonOptions.verbose = true;
         return 1;
+    }
+
+    if (arg === "--defroot") {
+        if (i !== process.argv.length - 1) {
+            commonOptions.defaultRoot = process.argv[++i];
+            return 2;
+        }
+        console.error("ERROR: Missing argument for --defroot");
+        return -1;
     }
 
     if (arg === "--root") {

@@ -6,7 +6,7 @@
 import { commonOptions } from "./commonOptions";
 import { existsSync, readFileAsync } from "./utils";
 import * as path from "path";
-import { logStatus } from "./logging";
+import { logVerbose } from "./logging";
 
 async function isFluidRootLerna(dir: string) {
     const filename = path.join(dir, "lerna.json");
@@ -48,7 +48,6 @@ async function inferRoot() {
     while (true) {
         try {
             if (await isFluidRoot(curr)) {
-                logStatus(`Fluid repo @ ${curr}`)
                 return curr;
             }
         } catch {
@@ -64,20 +63,28 @@ async function inferRoot() {
 }
 
 export async function getResolvedFluidRoot() {
-    if (commonOptions.root) {
-        if (!isFluidRoot(commonOptions.root)) {
-            console.error(`ERROR: '${commonOptions.root}' is not a root of fluid repo.`);
-            process.exit(-100);
+    let checkFluidRoot = true;
+    let root = commonOptions.root;
+    if (root) {
+        logVerbose(`Using argument root @ ${root}`);
+    } else {
+        root = await inferRoot();
+        if (root) {
+            checkFluidRoot = false;
+            logVerbose(`Using inferred root @ ${root}`);
+        } else if (commonOptions.defaultRoot) {
+            root = commonOptions.defaultRoot;
+            logVerbose(`Using default root @ ${root}`);
+        } else {
+            console.error(`ERROR: Unknown repo root. Specify it with --root or environment variable _FLUID_ROOT_`);
+            process.exit(-101);
             throw new Error("Internal error");
         }
-    } else {
-        commonOptions.root = await inferRoot();
     }
 
-    const root = commonOptions.root;
-    if (!root) {
-        console.error(`ERROR: Unknown repo root. Specify it with --root or environment variable _FLUID_ROOT_`);
-        process.exit(-101);
+    if (checkFluidRoot && !isFluidRoot(root)) {
+        console.error(`ERROR: '${root}' is not a root of fluid repo.`);
+        process.exit(-100);
         throw new Error("Internal error");
     }
 
