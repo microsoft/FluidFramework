@@ -36,7 +36,7 @@
     "test:coverage": "nyc npm run test:report",
     "test:fromroot": "mocha \"packages/**/dist/test/**/*.spec.js\" --exit",
     "test:full": "npm run test:ci:coverage",
-    "test:report": "lerna run test --stream --no-bail --no-sort -- -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
+    "test:report": "lerna run test --stream --no-bail --no-sort -- -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml -r make-promises-safe",
     "tsc": "lerna run tsc --stream",
     "tslint": "lerna run tslint --no-sort --stream",
     "watch": "concurrently \"npm run watch:tsc\" \"npm run watch:esnext\" \"npm run watch:webpack\"",
