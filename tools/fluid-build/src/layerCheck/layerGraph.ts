@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Packages } from "./npmPackage";
+import { Packages } from "../npmPackage";
 import * as path from "path";
 
 interface ILayerInfo {
@@ -169,7 +169,7 @@ export class LayerGraph {
     }
 
     public static check(root: string, packages: Packages) {
-        const layerInfoFile = require("../data/layerInfo.json");
+        const layerInfoFile = require(path.join(__dirname, "..", "..", "data", "layerInfo.json"));
         const layerGraph = new LayerGraph(root, layerInfoFile);
         layerGraph.verify(packages);
     }

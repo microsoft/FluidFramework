@@ -127,8 +127,20 @@ export class Package {
         return path.dirname(this.packageJsonFileName);
     }
 
+    private get color() {
+        return Package.chalkColor[this.packageId % Package.chalkColor.length];
+    }
+
     public getScript(name: string): string | undefined {
         return this.packageJson.scripts[name];
+    }
+
+    public async cleanNodeModules() {
+        return rimrafWithErrorAsync(path.join(this.directory, "node_modules"), this.nameColored);
+    }
+
+    private async savePackageJson() {
+        return writeFileAsync(this.packageJsonFileName, `${JSON.stringify(this.packageJson, undefined, 2)}\n`);
     }
 
     public async checkScripts() {
@@ -254,7 +266,9 @@ export class Package {
         }
         return fixed;
     }
+
     public async depcheck() {
+        // Fluid specific
         let checkFiles: string[];
         if (this.packageJson.dependencies) {
             const tsFiles = await globFn(`${this.directory}/**/*.ts`, { ignore: `${this.directory}/node_modules` });
@@ -270,19 +284,8 @@ export class Package {
         }
     }
 
-    private async savePackageJson() {
-        return writeFileAsync(this.packageJsonFileName, `${JSON.stringify(this.packageJson, undefined, 2)}\n`);
-    }
-
-    private get color() {
-        return Package.chalkColor[this.packageId % Package.chalkColor.length];
-    }
-
-    public async cleanNodeModules() {
-        return rimrafWithErrorAsync(path.join(this.directory, "node_modules"), this.nameColored);
-    }
-
     public async noHoistInstall(repoRoot: string) {
+        // Fluid specific
         const rootNpmRC = path.join(repoRoot, ".npmrc")
         const npmRC = path.join(this.directory, ".npmrc");
         const npmCommand = "npm i --no-package-lock --no-shrinkwrap";
@@ -295,6 +298,7 @@ export class Package {
     }
 
     public async symlink(buildPackages: Map<string, Package>) {
+        // Fluid specific
         for (const dep of this.combinedDependencies) {
             const depBuildPackage = buildPackages.get(dep);
             if (depBuildPackage) {

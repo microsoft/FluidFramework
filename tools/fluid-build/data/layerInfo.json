@@ -2,7 +2,8 @@
     "Base-Definitions": {
         "packages": [
             "@microsoft/fluid-common-definitions",
-            "@microsoft/fluid-component-core-interfaces"
+            "@microsoft/fluid-component-core-interfaces",
+            "@microsoft/fluid-gitresources"
         ]
     },
     "Protocol-Definitions": {
@@ -31,7 +32,7 @@
             "@microsoft/fluid-component-core-interfaces"
         ]
     },
-    "Base-Protocol-Utils": {
+    "Base-Utils": {
         "packages": [
             "@microsoft/fluid-core-utils"
         ],
@@ -39,8 +40,24 @@
             "packages/utils"
         ],
         "deps": [
-            "Base-Definitions",
+            "Base-Definitions"
+        ]
+    },
+    "Protocol-Utils": {
+        "packages": [
+            "@microsoft/fluid-protocol-base"
+        ],
+        "deps": [
+            "Base-Utils",
             "Protocol-Definitions"
+        ]
+    },
+    "Server": {
+        "dirs": [
+            "server/routerlicious/packages/"
+        ],
+        "deps": [
+            "Protocol-Utils"
         ]
     },
     "Driver-Utils": {
@@ -48,7 +65,7 @@
             "@microsoft/fluid-driver-utils"
         ],
         "deps": [
-            "Base-Protocol-Utils",
+            "Protocol-Utils",
             "Driver-Definitions"
         ]
     },

@@ -4,21 +4,18 @@
  */
 
 import * as os from "os";
+import { commonOptionString, parseOption } from "./common/commonOptions"
 
 interface FastBuildOptions {
-    verbose: boolean;
     nolint: boolean;
     lintonly: boolean;
     showExec: boolean;
-    timer: boolean;
-    logtime: boolean;
     clean: boolean;
     matchedOnly: boolean
     buildScript: string;
     build?: boolean;
     vscode: boolean;
     args: string[];
-    root?: string;
     symlink: boolean;
     depcheck: boolean;
     force: boolean;
@@ -28,21 +25,17 @@ interface FastBuildOptions {
     concurrency: number;
     samples: boolean;
     fixScripts: boolean;
-    layerCheck: boolean;
+    server: boolean;
 }
 
 // defaults
 export const options: FastBuildOptions = {
-    verbose: false,
     nolint: false,
     lintonly: false,
     showExec: false,
-    logtime: false,
-    timer: false,
     clean: false,
     args: [],
     matchedOnly: true,
-    root: process.env["_FLUID_ROOT_"],
     buildScript: "build",
     vscode: false,
     symlink: false,
@@ -54,7 +47,7 @@ export const options: FastBuildOptions = {
     concurrency: os.cpus().length, // TODO: argument?
     samples: true,
     fixScripts: false,
-    layerCheck: false,
+    server: false,
 };
 
 function printUsage() {
@@ -67,13 +60,14 @@ Options:
   -d --dep            Apply actions (clean/force/rebuild) to matched packages and their dependent packages
   -f --force          Force build and ignore dependency check on matched packages (all if package regexp is not specified)
   -? --help           Print this message
-     --logtime        Display the current time on every status message for logging
   -r --rebuild        Clean and build on matched packages (all if package regexp is not specified)
      --root <path>    Root directory of the fluid repo (default: env _FLUID_ROOT_)
   -s --script <name>  NPM script to execute (default:build)
+     --server         Operate on the server monorepo
      --timer          Time separate phases
   -v --verbose        Verbose messages
      --vscode         Output error message to work with default problem matcher in vscode
+${commonOptionString}
 `);
 }
 
@@ -110,17 +104,22 @@ function setUninstall() {
 
 export function parseOptions(argv: string[]) {
     let error = false;
-    for (let i = 2; i < process.argv.length; i++) {
+    for (let i = 2; i < argv.length; i++) {
+        const argParsed = parseOption(argv, i);
+        if (argParsed < 0) {
+            error = true;
+            break;
+        }
+        if (argParsed > 0) {
+            i += argParsed - 1;
+            continue;
+        }
+
         const arg = process.argv[i];
 
         if (arg === "-?" || arg === "--help") {
             printUsage();
             process.exit(0);
-        }
-
-        if (arg === "-v" || arg === "--verbose") {
-            options.verbose = true;
-            continue;
         }
 
         if (arg === "-d" || arg === "--dep") {
@@ -154,12 +153,6 @@ export function parseOptions(argv: string[]) {
             continue;
         }
 
-        if (arg === "--layercheck") {
-            options.layerCheck = true;
-            setBuild(false);
-            continue;
-        }
-
         if (arg === "--install") {
             setInstall(false);
             continue;
@@ -185,6 +178,11 @@ export function parseOptions(argv: string[]) {
             continue;
         }
 
+        if (arg === "--server") {
+            options.server = true;
+            continue;
+        }
+
         if (arg === "-s" || arg === "--script") {
             if (i !== process.argv.length - 1) {
                 options.buildScript = process.argv[++i];
@@ -192,26 +190,6 @@ export function parseOptions(argv: string[]) {
                 continue;
             }
             console.error("ERROR: Missing argument for --script");
-            error = true;
-            break;
-        }
-
-        if (arg === "--timer") {
-            options.timer = true;
-            continue;
-        }
-
-        if (arg === "--logtime") {
-            options.logtime = true;
-            continue;
-        }
-
-        if (arg === "--root") {
-            if (i !== process.argv.length - 1) {
-                options.root = process.argv[++i];
-                continue;
-            }
-            console.error("ERROR: Missing argument for --root");
             error = true;
             break;
         }

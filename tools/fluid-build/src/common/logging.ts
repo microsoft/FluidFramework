@@ -4,16 +4,16 @@
  */
 
 import * as chalk from "chalk";
-import { options } from "../options";
+import { commonOptions } from "./commonOptions";
 
 export function logVerbose(msg: string) {
-    if (options.verbose) {
+    if (commonOptions.verbose) {
         logStatus(msg);
     }
 }
 
 export function logStatus(msg: string) {
-    if (!options.logtime) {
+    if (!commonOptions.logtime) {
         console.log(msg);
         return;
     }
