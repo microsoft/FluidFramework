@@ -14,7 +14,7 @@ interface ILayerInfo {
 };
 
 interface ILayerInfoFile {
-    [key: string]: ILayerInfo;
+    [key: string]: { [key: string]: ILayerInfo }
 };
 
 class BaseLayerNode {
@@ -101,24 +101,27 @@ export class LayerGraph {
         const pendingDeps: { node: BaseLayerNode, deps: string[] | undefined }[] = [];
 
         // First pass get the layer nodes
-        for (const layer of Object.keys(layerInfo)) {
-            const info = layerInfo[layer];
-            const layerNode = new TopLayerNode(layer, info.test)
-            this.layers.set(layer, layerNode);
-            if (info.dirs) {
-                for (const dir of info.dirs) {
-                    const fullDir = path.resolve(root, dir);
-                    const dirLayerNode = new DirLayerNode(fullDir, layerNode);
-                    this.dirLayers[fullDir] = dirLayerNode;
-                    layerNode.addDependent(dirLayerNode);
-                    pendingDeps.push({ node: dirLayerNode, deps: info.deps });
+        for (const layerGroup of Object.keys(layerInfo)) {
+            const layerGroupInfo = layerInfo[layerGroup];
+            for (const layer of Object.keys(layerGroupInfo)) {
+                const info = layerGroupInfo[layer];
+                const layerNode = new TopLayerNode(layer, info.test)
+                this.layers.set(layer, layerNode);
+                if (info.dirs) {
+                    for (const dir of info.dirs) {
+                        const fullDir = path.resolve(root, dir);
+                        const dirLayerNode = new DirLayerNode(fullDir, layerNode);
+                        this.dirLayers[fullDir] = dirLayerNode;
+                        layerNode.addDependent(dirLayerNode);
+                        pendingDeps.push({ node: dirLayerNode, deps: info.deps });
+                    }
                 }
-            }
-            if (info.packages) {
-                for (const pkg of info.packages) {
-                    const packageLayerNode = this.createPackage(pkg, layerNode);
-                    layerNode.addDependent(packageLayerNode);
-                    pendingDeps.push({ node: packageLayerNode, deps: info.deps });
+                if (info.packages) {
+                    for (const pkg of info.packages) {
+                        const packageLayerNode = this.createPackage(pkg, layerNode);
+                        layerNode.addDependent(packageLayerNode);
+                        pendingDeps.push({ node: packageLayerNode, deps: info.deps });
+                    }
                 }
             }
         }
@@ -159,11 +162,13 @@ export class LayerGraph {
             }
         }
 
+        let error = false;
         // Go thru the packages and check for dependency violation
         for (const pkg of packages.packages) {
             const packageLayerNode = this.packageLayer.get(pkg.name);
             if (!packageLayerNode) {
-                console.warn(`${pkg.nameColored}: warning: Package doesn't match any directories. Unable to do dependency check`);
+                console.error(`${pkg.nameColored}: error: Package doesn't match any directories. Unable to do dependency check`);
+                error = true;
                 continue;
             }
             if (packageLayerNode.isTest) {
@@ -174,21 +179,24 @@ export class LayerGraph {
                 const depLayerNode = this.packageLayer.get(dep);
                 if (!depLayerNode) { continue; }
                 if (depLayerNode.isTest) {
-                    console.warn(`${pkg.nameColored}: warning: test packages appearing in package dependencies instead of devDependencies - ${dep}, `)
+                    console.error(`${pkg.nameColored}: error: test packages appearing in package dependencies instead of devDependencies - ${dep}, `);
+                    error = true;
                 }
                 // Package can depend on each other if they are in the same layer
                 if (packageLayerNode.topLayerNode === depLayerNode.topLayerNode) { continue; }
                 //console.log(`${pkg.nameColored}: checking ${dep}`);
                 if (!packageLayerNode.verifyDependent(depLayerNode)) {
-                    console.warn(`${pkg.nameColored}: warning: Dependency layer violation ${dep}, "${packageLayerNode.topLayerName}" -> "${depLayerNode.topLayerName}"`);
+                    console.error(`${pkg.nameColored}: error: Dependency layer violation ${dep}, "${packageLayerNode.topLayerName}" -> "${depLayerNode.topLayerName}"`);
+                    error = true;
                 }
             }
         }
+        return error;
     }
 
     public static check(root: string, packages: Packages) {
         const layerInfoFile = require(path.join(__dirname, "..", "..", "data", "layerInfo.json"));
         const layerGraph = new LayerGraph(root, layerInfoFile);
-        layerGraph.verify(packages);
+        return layerGraph.verify(packages);
     }
 };

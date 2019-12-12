@@ -12,6 +12,7 @@
   },
   "scripts": {
     "build": "tsc -b",
+    "layer-check": "node dist/layerCheck/layerCheck.js --root ../..",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {

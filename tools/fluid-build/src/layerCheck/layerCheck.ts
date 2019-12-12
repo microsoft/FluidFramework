@@ -77,8 +77,11 @@ async function main() {
     const packages = Packages.load(baseDirectories);
     timer.time("Package scan completed");
 
-    LayerGraph.check(resolvedRoot, packages);
+    const error = LayerGraph.check(resolvedRoot, packages);
     timer.time("Layer check completed");
+    if (error) {
+        process.exit(-1);
+    }
 }
 
 main();
