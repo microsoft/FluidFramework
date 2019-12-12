@@ -45,12 +45,12 @@ describe("SharedNumberSequence", () => {
             assert(verifyItems(items, []));
         });
 
-        function verifyItems(actual: Number[], expected: Number[]) : boolean {
+        function verifyItems(actual: number[], expected: number[]): boolean {
             if (actual.length !== expected.length) {
                 return false;
             }
             for (let i = 0; i < expected.length; i++) {
-                if (actual[i] != expected[i]) {
+                if (actual[i] !== expected[i]) {
                     return false;
                 }
             }
