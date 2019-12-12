@@ -581,19 +581,19 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return versions[0];
     }
 
-    private async startConnectToDeltaStream() {
+    private async recordConnectStartTime() {
         if (this.connectionTransitionTimes[ConnectionState.Disconnected] === undefined) {
             this.connectionTransitionTimes[ConnectionState.Disconnected] = performanceNow();
         }
     }
 
-    private kickConnectToDeltaStream() {
-        this.startConnectToDeltaStream();
+    private startConnectingToDeltaStream() {
+        this.recordConnectStartTime();
         this._deltaManager!.connect().catch(() => {});
     }
 
     private connectToDeltaStream() {
-        this.startConnectToDeltaStream();
+        this.recordConnectStartTime();
         return this._deltaManager!.connect();
     }
 
@@ -613,7 +613,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         // DeltaManager is resilient to this and will wait to start processing ops until after it is attached.
         this.createDeltaManager();
         if (!pause) {
-            this.kickConnectToDeltaStream();
+            this.startConnectingToDeltaStream();
         }
 
         this.storageService = await this.getDocumentStorageService();
@@ -624,7 +624,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         // if pause, and there's no tree, then we'll start the websocket connection here (we'll need the details later)
         if (!maybeSnapshotTree) {
-            this.kickConnectToDeltaStream();
+            this.startConnectingToDeltaStream();
         }
 
         const blobManagerP = this.loadBlobManager(this.storageService, maybeSnapshotTree);
