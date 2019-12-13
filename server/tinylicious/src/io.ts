@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { canSummarize, canWrite } from "@microsoft/fluid-server-services-client";
-import * as core from "@microsoft/fluid-server-services-core";
-import { generateClientId, getRandomInt } from "@microsoft/fluid-server-services-utils";
+import { isSystemType } from "@microsoft/fluid-core-utils";
 import {
     ConnectionMode,
     IClient,
+    IConnect,
+    IConnected,
     IContentMessage,
     IDocumentMessage,
     IDocumentSystemMessage,
@@ -16,8 +16,9 @@ import {
     ISignalMessage,
     ITokenClaims,
 } from "@microsoft/fluid-protocol-definitions";
-import { IConnect, IConnected } from "@microsoft/fluid-driver-base";
-import { isSystemType } from "@microsoft/fluid-core-utils";
+import { canSummarize, canWrite } from "@microsoft/fluid-server-services-client";
+import * as core from "@microsoft/fluid-server-services-core";
+import { generateClientId, getRandomInt } from "@microsoft/fluid-server-services-utils";
 import * as jwt from "jsonwebtoken";
 import * as semver from "semver";
 import * as winston from "winston";
