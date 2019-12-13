@@ -882,12 +882,24 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         }
     }
 
+    /**
+     * create a new component on the container
+     *
+     * This flow is deprecated and instead you should follow the registry request pattern.
+     * @deprecated
+     */
     public async createComponent(idOrPkg: string, maybePkg?: string | string[]) {
         const id = maybePkg === undefined ? uuid() : idOrPkg;
         const pkg = maybePkg === undefined ? idOrPkg : maybePkg;
         return this._createComponentWithProps(pkg, undefined, id);
     }
 
+    /**
+     * create a new component with initial props on the container
+     *
+     * This flow is deprecated and instead you should follow the registry request pattern.
+     * @deprecated
+     */
     // tslint:disable-next-line: function-name
     public async _createComponentWithProps(pkg: string | string[], props: any, id: string): Promise<IComponentRuntime> {
         this.verifyNotClosed();
@@ -908,7 +920,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return context.realizeFromRegistry();
     }
 
-        // something like creation scope?
+    // something like creation scope?
     // for now this only works for components on the container
     public async createComponentDirect(
         pkg: string,

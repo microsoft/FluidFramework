@@ -4,10 +4,10 @@
  */
 
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
-import { IComponent, IComponentHTMLVisual, IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHTMLVisual, IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
 import { Counter, CounterValueType, ISharedDirectory } from "@microsoft/fluid-map";
-import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
@@ -28,10 +28,11 @@ export interface IProvideComponentClickerWithInitialValueCreator {
  * A component that implements a collection of components.  Typically, the
  * components in the collection would be like-typed.
  */
-export interface IComponentClickerWithInitialValueCreator extends IProvideComponentClickerWithInitialValueCreator {
+export interface IComponentClickerWithInitialValueCreator
+    extends IProvideComponentClickerWithInitialValueCreator, IComponentFactory {
     createClickerComponent(
         props: IClickerWithInitialValueProps,
-        context: IComponentContext): Promise<IComponent>;
+        context: IComponentContext): Promise<ClickerWithInitialValue>;
 }
 
 export interface IClickerWithInitialValueProps {
@@ -45,7 +46,7 @@ export class ClickerWithInitialValueFactory
 
         public async createClickerComponent(
             props: IClickerWithInitialValueProps,
-            context: IComponentContext): Promise<IComponent> {
+            context: IComponentContext): Promise<ClickerWithInitialValue> {
                 const cr = await context.hostRuntime.createComponentDirect(
                     this.registryName, this.create(props));
                 const response = await cr.request({url: "/"});
@@ -54,7 +55,7 @@ export class ClickerWithInitialValueFactory
                 }
 
                 cr.attach();
-                return response.value as IComponent;
+                return response.value as ClickerWithInitialValue;
             }
 
         private create(props: IClickerWithInitialValueProps) {

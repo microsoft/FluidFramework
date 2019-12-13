@@ -63,26 +63,53 @@ export class Pond extends PrimedComponent implements IComponentHTMLVisual {
       }
     }
 
+    //
+    // This is the current pattern.
+    //
     // await this.createSubComponent<ClickerWithInitialValue>(
     //   this.clickerWithInitialValueKey,
     //   ClickerWithInitialValueName,
     //   { initialValue: 100 },
     // );
     // ...replaced with
-    const factoryRequest2 = {
-      url: "/_registry",
-      headers: {
-        pkg: ClickerWithInitialValueName,
-      },
-    };
-    const factory2 = await this.context.hostRuntime.request(factoryRequest2);
-    if (factory2.status === 200) {
-      const f = (factory2.value as IComponent).IComponentClickerWithInitialValueCreator;
-      if (f) {
-        const c = await f.createClickerComponent({initialValue: 100}, this.context) as Clicker;
+
+    //
+    // This is a pattern that uses request to get factories
+    //
+    // const factoryRequest2 = {
+    //   url: "/_registry",
+    //   headers: {
+    //     pkg: ClickerWithInitialValueName,
+    //   },
+    // };
+
+    // const factory2 = await this.context.hostRuntime.request(factoryRequest2);
+    // if (factory2.status === 200) {
+    //   const f = (factory2.value as IComponent).IComponentClickerWithInitialValueCreator;
+    //   if (f) {
+    //     const c = await f.createClickerComponent({initialValue: 100}, this.context) as Clicker;
+    //     this.root.set(this.clickerWithInitialValueKey, c.handle);
+    //   }
+    // }
+
+    const response = await this.context.hostRuntime.IComponentRegistry.get(ClickerWithInitialValueName);
+    if (response) {
+      const fCreator = (response as IComponent).IComponentClickerWithInitialValueCreator;
+      if (fCreator) {
+        fCreator.registryName = ClickerWithInitialValueName;
+        const c = await fCreator.createClickerComponent({initialValue: 100}, this.context);
         this.root.set(this.clickerWithInitialValueKey, c.handle);
       }
     }
+
+    //
+    // This is a pattern that is very similar to the SharedObject pattern.
+    //
+    // const factory4 = ClickerWithInitialValue.getFactory();
+    // factory4.registryName = ClickerWithInitialValueName;
+    // const c = await factory4.createClickerComponent({initialValue: 100}, this.context);
+    // this.root.set(this.clickerWithInitialValueKey, c.handle);
+
   }
 
   async createSubComponent<T extends PrimedComponent>(rootKey: string, pkgName: string, props?: any) {
