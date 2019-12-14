@@ -73,6 +73,6 @@ export async function initialize(
         document.getElementById("ifr") as HTMLIFrameElement,
         // privateSession.frame,
         options,
-        { resolver },
+        resolver,
     )).createDocumentServiceFromRequest({ url });
 }
