@@ -77,9 +77,12 @@ async function main() {
     const packages = Packages.load(baseDirectories);
     timer.time("Package scan completed");
 
-    const error = LayerGraph.check(resolvedRoot, packages);
+    
+    const layerGraph = LayerGraph.load(resolvedRoot, packages);
+    console.log(layerGraph.generateDotGraph());
+    const success = layerGraph.verify();
     timer.time("Layer check completed");
-    if (error) {
+    if (!success) {
         process.exit(-1);
     }
 }

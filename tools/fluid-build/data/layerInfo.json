@@ -127,6 +127,7 @@
             ]
         },
         "Component": {
+            "dot": false,
             "dirs": [
                 "packages/component/",
                 "samples/chaincode/",
