@@ -74,7 +74,7 @@ class SocketIoServer implements core.IWebSocketServer {
 
 export function create(redisConfig: any, server: http.Server): core.IWebSocketServer {
     const options: any = { auth_pass: redisConfig.pass };
-    if (redisConfig.tls !== undefined) {
+    if (redisConfig.tls) {
         options.tls = {
             servername: redisConfig.host,
         };
