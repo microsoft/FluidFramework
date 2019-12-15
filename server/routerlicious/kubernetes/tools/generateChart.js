@@ -135,6 +135,8 @@ redis:
 
 redis2:
   url: dining-maltese-redis
+  port: 6379
+  tls: false
 
 kafka:
   topics:
