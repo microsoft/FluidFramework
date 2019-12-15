@@ -36,6 +36,12 @@ export class GatewayResourcesFactory implements utils.IResourcesFactory<GatewayR
     public async create(config: Provider): Promise<GatewayResources> {
         // Producer used to publish messages
         const redisConfig = config.get("redis");
+        const options: redis.ClientOpts = { auth_pass: redisConfig.pass };
+        if (redisConfig.tls) {
+            options.tls = {
+                servername: redisConfig.host,
+            };
+        }
 
         // Database connection
         const mongoUrl = config.get("mongo:endpoint") as string;
@@ -53,7 +59,7 @@ export class GatewayResourcesFactory implements utils.IResourcesFactory<GatewayR
             false);
 
         // Redis connection
-        const redisClient = redis.createClient(redisConfig.port, redisConfig.host);
+        const redisClient = redis.createClient(redisConfig.port, redisConfig.host, options);
         const redisCache = new services.RedisCache(redisClient);
 
         // Tenants attached to the apps this service exposes

@@ -21,7 +21,9 @@ data:
         "requestSizeLimit": "1gb",
         "riddler": "{{ .Values.historian.riddler }}",
         "redis": {
-            "host": "{{ .Values.historian.redis }}",
-            "port": 6379
+            "host": "{{ .Values.historian.redis.url }}",
+            "port": "{{ .Values.historian.redis.port }}"",
+            "tls": {{ .Values.historian.redis.tls }},
+            "pass": "{{ .Values.historian.redis.password }}"
         }
     }

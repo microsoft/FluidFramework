@@ -55,7 +55,10 @@ endpoints:
   packageUrl: https://pragueauspkn-3873244262.azureedge.net
   historianUrl: https://historian.wu2.prague.office-int.com
   rabbitmq: ""
-  redis: winsome-wombat-redis
+  redis:
+    url: winsome-wombat-redis
+    port: 6379
+    tls: false
 `;
 
 const writeFileAsync = util.promisify(fs.writeFile);

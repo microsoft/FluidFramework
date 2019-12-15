@@ -29,10 +29,17 @@ export class HeadlessResourcesFactory implements utils.IResourcesFactory<Headles
     public async create(config: Provider): Promise<HeadlessResources> {
         const rabbitmqConfig = config.get("rabbitmq");
         const redisConfig = config.get("redis");
+        const redisOptions: redis.ClientOpts = { password: redisConfig.pass };
+        if (redisConfig.tls) {
+            redisOptions.tls = {
+                serverName: redisConfig.host,
+            };
+        }
+        
         const workerConfig = config.get("worker");
         const queueName = config.get("headless-agent:queue");
 
-        const redisClient = redis.createClient(redisConfig.port, redisConfig.host);
+        const redisClient = redis.createClient(redisConfig.port, redisConfig.host, redisOptions);
         const cache = new RedisCache(redisClient);
         const messageReceiver = services.createMessageReceiver(rabbitmqConfig, queueName);
 

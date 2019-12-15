@@ -103,7 +103,7 @@ export function create(config: Provider, mongoManager: core.MongoManager) {
         const redisHost = config.get("redis:host");
         const redisPort = config.get("redis:port");
         const redisPass = config.get("redis:pass");
-        const options: any = { auth_pass: redisPass };
+        const options: redis.ClientOpts  = { auth_pass: redisPass };
         if (config.get("redis:tls")) {
             options.tls = {
                 servername: redisHost,

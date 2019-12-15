@@ -23,8 +23,8 @@ export class SocketIoRedisPublisher implements core.IPublisher {
     private io: any;
     private events = new EventEmitter();
 
-    constructor(port: number, host: string) {
-        this.redisClient = redis.createClient(port, host);
+    constructor(port: number, host: string, options: any) {
+        this.redisClient = redis.createClient(port, host, options);
         this.io = socketIoEmitter(this.redisClient);
 
         this.redisClient.on("error", (error) => {
