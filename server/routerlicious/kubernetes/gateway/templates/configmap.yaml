@@ -64,7 +64,7 @@ data:
         },
         "redis": {
             "host": "{{ .Values.redis.url }}",
-            "port": "{{ .Values.redis.port }}",
+            "port": {{ .Values.redis.port }},
             "tls": {{ .Values.redis.tls }},
             "pass": "{{ .Values.redis.password }}"
         },

@@ -22,7 +22,7 @@ data:
         "riddler": "{{ .Values.historian.riddler }}",
         "redis": {
             "host": "{{ .Values.historian.redis.url }}",
-            "port": "{{ .Values.historian.redis.port }}",
+            "port": {{ .Values.historian.redis.port }},
             "tls": {{ .Values.historian.redis.tls }},
             "pass": "{{ .Values.historian.redis.password }}"
         }

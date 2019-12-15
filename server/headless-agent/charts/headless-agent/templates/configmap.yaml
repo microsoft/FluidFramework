@@ -27,7 +27,7 @@ data:
         },
         "redis": {
             "host": "{{ .Values.endpoints.redis.url }}",
-            "port": "{{ .Values.endpoints.redis.port }}",
+            "port": {{ .Values.endpoints.redis.port }},
             "tls": {{ .Values.endpoints.redis.tls }},
             "pass": "{{ .Values.endpoints.redis.password }}"
         },
