@@ -47,11 +47,11 @@ export class OdspNetworkError extends NetworkError {
 /**
  * Returns network error based on error object from ODSP socket (IOdspSocketError)
  */
-export function errorObjectFromOdspError(socketError: IOdspSocketError) {
+export function errorObjectFromOdspError(socketError: IOdspSocketError, canRetry: boolean) {
     return new OdspNetworkError(
         socketError.message,
         socketError.code,
-        socketErrorRetryFilter(socketError.code),
+        canRetry,
         socketError.retryAfter,
     );
 }
