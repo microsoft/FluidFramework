@@ -51,7 +51,7 @@ export function errorObjectFromOdspError(socketError: IOdspSocketError, canRetry
     return new OdspNetworkError(
         socketError.message,
         socketError.code,
-        socketErrorRetryFilter(socketError.code),
+        canRetry,
         socketError.retryAfter,
     );
 }
