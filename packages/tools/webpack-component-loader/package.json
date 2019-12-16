@@ -20,7 +20,7 @@
     "deploy": "npm publish --registry https://packages.wu2.prague.office-int.com",
     "eslint": "eslint --ext=ts,tsx --format stylish src",
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
-    "test": "mocha --recursive dist/test --exit",
+    "test": "mocha --recursive dist/test --exit -r make-promises-safe",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose",
@@ -66,7 +66,8 @@
     "tslint": "^5.20.0",
     "typescript": "~3.4.5",
     "webpack": "^4.16.5",
-    "webpack-cli": "^3.1.2"
+    "webpack-cli": "^3.1.2",
+    "make-promises-safe": "^5.1.0"
   },
   "nyc": {
     "all": true,

@@ -26,7 +26,7 @@
     "eslint": "eslint --ext=ts,tsx --format stylish src",
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
     "less": "lessc src/stylesheets/style.less public/stylesheets/dist/style.css && lessc src/stylesheets/map.less public/stylesheets/dist/map.css",
-    "test": "mocha --recursive dist/test --exit",
+    "test": "mocha --recursive dist/test --exit -r make-promises-safe",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose",
@@ -151,7 +151,8 @@
     "webpack-cli": "^3.1.2",
     "webpack-merge": "^4.1.4",
     "ws": "^6.1.2",
-    "xhr": "^2.5.0"
+    "xhr": "^2.5.0",
+    "make-promises-safe": "^5.1.0"
   },
   "nyc": {
     "all": true,

@@ -133,12 +133,36 @@ export class Package {
 
     public async checkScripts() {
         // Fluid specific
-        let fixed = this.checkBuildScripts();
-        fixed = this.checkTestCoverageScripts() || fixed;
+        const fixed = [this.checkBuildScripts(), this.checkTestCoverageScripts(), this.checkTestSafePromiseRequire()];
 
-        if (fixed) {
+        if (fixed.some((bool) => bool)) {
             await this.savePackageJson();
         }
+    }
+
+    public checkTestSafePromiseRequire() {
+        let fixed = false;
+        const pkgstring = "make-promises-safe";
+        if (this.packageJson.scripts && this.packageJson.scripts.test && !this.packageJson.scripts.test.startsWith("echo")) {
+            if (this.packageJson.devDependencies && !this.packageJson.devDependencies[pkgstring]) {
+                console.warn(`warning: missing ${pkgstring} dependency`);
+                if (options.fixScripts) {
+                    this.packageJson.devDependencies[pkgstring] = "^5.1.0";
+                    fixed = true;
+                }
+            }
+            if (!this.packageJson.scripts.test.includes(pkgstring)) {
+                if (this.packageJson.scripts.test.startsWith("mocha")) {
+                    console.warn(`warning: no ${pkgstring} require in test script`);
+                    if (options.fixScripts) {
+                        this.packageJson.scripts.test += " -r " + pkgstring;
+                        fixed = true;
+                    }
+                }
+            }
+        }
+
+        return fixed;
     }
 
     public checkTestCoverageScripts() {

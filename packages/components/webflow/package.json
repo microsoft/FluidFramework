@@ -24,7 +24,7 @@
     "start": "webpack-dev-server --config webpack.config.js --package package.json",
     "start:live": "webpack-dev-server --config webpack.config.js --package package.json --env.mode live",
     "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
-    "test": "mocha -r ts-node/register -r source-map-support/register -r ignore-styles --recursive test/**/*.spec.ts --exit",
+    "test": "mocha -r ts-node/register -r source-map-support/register -r ignore-styles --recursive test/**/*.spec.ts --exit -r make-promises-safe",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml --exit",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose",
@@ -77,7 +77,8 @@
     "webpack-cli": "^3.1.2",
     "webpack-dev-server": "^3.8.0",
     "webpack-merge": "^4.1.4",
-    "webpack-visualizer-plugin": "^0.1.11"
+    "webpack-visualizer-plugin": "^0.1.11",
+    "make-promises-safe": "^5.1.0"
   },
   "fluid": {
     "browser": {
@@ -106,7 +107,7 @@
       "src/**/*.ts",
       "dist/**/*.js"
     ],
-    "require" : [
+    "require": [
       "ts-node/register"
     ],
     "temp-directory": "nyc/.nyc_output",

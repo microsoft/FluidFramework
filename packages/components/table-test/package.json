@@ -16,7 +16,7 @@
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "clean": "rimraf dist *.tsbuildinfo *.build.log",
-    "test": "mocha --recursive dist/**/*.spec.js --exit",
+    "test": "mocha --recursive dist/**/*.spec.js --exit -r make-promises-safe",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml --exit",
     "tsc": "tsc"
   },
@@ -41,7 +41,8 @@
     "source-map-loader": "^0.2.4",
     "ts-loader": "^6.1.2",
     "tslint": "^5.20.0",
-    "typescript": "~3.4.5"
+    "typescript": "~3.4.5",
+    "make-promises-safe": "^5.1.0"
   },
   "nyc": {
     "all": true,

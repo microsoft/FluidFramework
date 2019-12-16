@@ -21,7 +21,7 @@
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --ext=ts,tsx --format stylish src",
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
-    "test": "mocha --recursive dist/test/**/*.spec.js",
+    "test": "mocha --recursive dist/test/**/*.spec.js -r make-promises-safe",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
     "test:newsnapfiles": "node dist/test/createSnapshotFiles.js",
     "testfarm": "node dist/test/testFarm.js",
@@ -64,7 +64,8 @@
     "rimraf": "^2.6.2",
     "tslint": "^5.20.0",
     "typescript": "~3.4.5",
-    "xmldoc": "^1.1.2"
+    "xmldoc": "^1.1.2",
+    "make-promises-safe": "^5.1.0"
   },
   "nyc": {
     "all": true,
