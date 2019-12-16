@@ -14,7 +14,7 @@ import {
 import * as assert from "assert";
 import { IOdspSocketError } from "./contracts";
 import { debug } from "./debug";
-import { errorObjectFromOdspError, OdspNetworkError } from "./OdspUtils";
+import { errorObjectFromOdspError, OdspNetworkError, socketErrorRetryFilter } from "./OdspUtils";
 
 const protocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
 
@@ -104,7 +104,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
             if (errorObject !== null && typeof errorObject === "object" && errorObject.canRetry) {
                 const socketError: IOdspSocketError = errorObject.socketError;
                 if (typeof socketError === "object" && socketError !== null) {
-                    throw errorObjectFromOdspError(socketError);
+                    throw errorObjectFromOdspError(socketError, socketErrorRetryFilter(socketError.code));
                 }
             }
             throw errorObject;
@@ -169,10 +169,17 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
                 });
 
             socket.on("server_disconnect", (socketError: IOdspSocketError) => {
+                // We get 403 / TokenExpired here. We cannot treat it as unrecoverable error!
+                // So we treat all errors as recoverable, and rely on joinSession / reconnection flow to
+                // filter out retryable vs. non-retryable cases.
+                // Specifically, it will have one retry for 403 - see
+                // connectToDeltaStream() / getWithRetryForTokenRefresh() call.
+                const error = errorObjectFromOdspError(socketError, true /*canRetry */);
+
                 // The server always closes the socket after sending this message
                 // fully remove the socket reference now
                 // This raises "disconnect" event with proper error object.
-                OdspDocumentDeltaConnection.removeSocketIoReference(key, true /*socketProtocolError*/, errorObjectFromOdspError(socketError));
+                OdspDocumentDeltaConnection.removeSocketIoReference(key, true /*socketProtocolError*/, error);
             });
 
             socketReference = new SocketReference(socket);
