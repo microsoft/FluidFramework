@@ -20,7 +20,7 @@
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --ext=ts,tsx --format stylish src",
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
-    "test": "ts-mocha --recursive test/**/*.spec.ts --exit",
+    "test": "ts-mocha --recursive test/**/*.spec.ts --exit -r make-promises-safe",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml --exit",
     "tsc": "tsc",
     "tslint": "npm run eslint"
@@ -53,27 +53,27 @@
   },
   "nyc": {
     "all": true,
+    "cache-dir": "nyc/.cache",
+    "exclude": [
+      "**/*.d.ts",
+      "src/test/**/*.ts",
+      "dist/test/**/*.js"
+    ],
+    "exclude-after-remap": false,
     "extension": [
       ".ts",
       ".tsx",
       ".js",
       ".jsx"
     ],
-    "exclude": [
-      "**/*.d.ts",
-      "src/test/**/*.ts",
-      "dist/test/**/*.js"
-    ],
     "include": [
       "src/**/*.ts",
       "dist/**/*.js"
     ],
+    "report-dir": "nyc/report",
     "require": [
       "ts-node/register"
     ],
-    "temp-directory": "nyc/.nyc_output",
-    "cache-dir": "nyc/.cache",
-    "report-dir": "nyc/report",
-    "exclude-after-remap": false
+    "temp-directory": "nyc/.nyc_output"
   }
 }
