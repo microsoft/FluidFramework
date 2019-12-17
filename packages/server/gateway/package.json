@@ -129,6 +129,7 @@
     "fork-ts-checker-webpack-plugin": "^0.4.9",
     "html-loader": "^0.5.5",
     "less": "~3.9.0",
+    "make-promises-safe": "^5.1.0",
     "mocha": "^5.2.0",
     "mocha-junit-reporter": "^1.18.0",
     "node-sass": "^4.9.3",
@@ -151,8 +152,7 @@
     "webpack-cli": "^3.1.2",
     "webpack-merge": "^4.1.4",
     "ws": "^6.1.2",
-    "xhr": "^2.5.0",
-    "make-promises-safe": "^5.1.0"
+    "xhr": "^2.5.0"
   },
   "nyc": {
     "all": true,

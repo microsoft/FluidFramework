@@ -47,13 +47,13 @@
     "@typescript-eslint/parser": "^2.9.0",
     "concurrently": "^4.1.0",
     "eslint": "^6.7.1",
+    "make-promises-safe": "^5.1.0",
     "mocha": "^5.2.0",
     "mocha-junit-reporter": "^1.18.0",
     "nyc": "^14.1.1",
     "rimraf": "^2.6.2",
     "tslint": "^5.20.0",
-    "typescript": "~3.4.5",
-    "make-promises-safe": "^5.1.0"
+    "typescript": "~3.4.5"
   },
   "nyc": {
     "all": true,
