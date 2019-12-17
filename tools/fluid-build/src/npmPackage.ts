@@ -7,6 +7,7 @@ import { queue } from "async";
 import * as chalk from "chalk";
 import * as fs from "fs";
 import * as path from "path";
+import { sortPackageJson } from "sort-package-json";
 import { logStatus, logVerbose } from "./common/logging";
 import { globFn, copyFileAsync, execWithErrorAsync, existsSync, lstatAsync, mkdirAsync, realpathAsync, rimrafWithErrorAsync, unlinkAsync, symlinkAsync, writeFileAsync, ExecAsyncResult } from "./common/utils"
 import { NpmDepChecker } from "./npmDepChecker";
@@ -295,7 +296,7 @@ export class Package {
     }
 
     private async savePackageJson() {
-        return writeFileAsync(this.packageJsonFileName, `${JSON.stringify(this.packageJson, undefined, 2)}\n`);
+        return writeFileAsync(this.packageJsonFileName, `${JSON.stringify(sortPackageJson(this.packageJson), undefined, 2)}\n`);
     }
 
     private get color() {
