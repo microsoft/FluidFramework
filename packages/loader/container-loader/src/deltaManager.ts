@@ -835,7 +835,14 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 this.emitDelayInfo(retryFor.DELTASTREAM, delay);
                 await waitForConnectedState(delay);
             }
-            await this.connect(requestedMode);
+
+            this.connect(requestedMode).catch((err) => {
+                // errors are raised as "error" event and close container.
+                // Have a catch-all case in case we missed something
+                if (!this.closed) {
+                    this.logger.sendErrorEvent({eventName: "ConnectException"}, err);
+                }
+            });
         }
     }
 

@@ -61,7 +61,10 @@ ingress:
 endpoints:
   mongodb: mongodb://quieting-guppy-mongodb:27017
   kafka: left-numbat-zookeeper:2181
-  redis: winsome-wombat-redis
+  redis:
+    url: winsome-wombat-redis
+    port: 6379
+    tls: false
   tenantsUrl: https://admin.wu2.prague.office-int.com
   historianUrl: https://historian.wu2.prague.office-int.com
   riddlerUrl: http://pesky-platypus-riddler

@@ -7,6 +7,8 @@ import { DocumentStorage } from "@microsoft/fluid-server-services";
 import { MongoDatabaseManager, MongoManager } from "@microsoft/fluid-server-services-core";
 import * as utils from "@microsoft/fluid-server-services-utils";
 import * as bytes from "bytes";
+import * as fs from "fs";
+import * as git from "isomorphic-git";
 import { Provider } from "nconf";
 import * as socketIo from "socket.io";
 import { TinyliciousResources } from "./resources";
@@ -38,6 +40,9 @@ export class TinyliciousResourcesFactory implements utils.IResourcesFactory<Tiny
         const storage = new DocumentStorage(databaseManager, tenantManager, null);
         const io = socketIo();
         const webServerFactory = new WebServerFactory(io);
+
+        // Initialize isomorphic-git
+        git.plugins.set("fs", fs);
 
         const orderManager = new OrdererManager(
             storage,

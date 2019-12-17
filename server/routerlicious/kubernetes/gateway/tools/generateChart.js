@@ -73,6 +73,8 @@ mongodb:
 
 redis:
   url: winsome-wombat-redis
+  port: 6379
+  tls: false
 
 riddler:
   url: http://pesky-platypus-riddler

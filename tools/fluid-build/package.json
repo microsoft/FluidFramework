@@ -1,16 +1,18 @@
 {
   "name": "fluid-build",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "private": true,
   "description": "Fluid Build tool",
   "license": "MIT",
   "author": "Microsoft",
   "main": "dist/fluidBuild.js",
   "bin": {
-    "fluid-build": "bin/fluid-build"
+    "fluid-build": "bin/fluid-build",
+    "fluid-layer-check": "bin/fluid-layer-check"
   },
   "scripts": {
     "build": "tsc -b",
+    "layer-check": "node dist/layerCheck/layerCheck.js --root ../..",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {

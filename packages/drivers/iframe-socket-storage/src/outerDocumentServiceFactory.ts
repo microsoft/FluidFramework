@@ -4,7 +4,6 @@
  */
 
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { IHost } from "@microsoft/fluid-container-definitions";
 import { Deferred } from "@microsoft/fluid-core-utils";
 import {
     IDocumentDeltaConnection,
@@ -59,20 +58,24 @@ export interface IDocumentServiceFactoryProxy {
  */
 export class IFrameDocumentServiceProxyFactory {
 
-    public static async create(documentServiceFactory: IDocumentServiceFactory,
-                               frame: HTMLIFrameElement,
-                               options: any,
-                               containerHost: IHost) {
-        return new IFrameDocumentServiceProxyFactory(documentServiceFactory, frame, options, containerHost);
+    public static async create(
+        documentServiceFactory: IDocumentServiceFactory,
+        frame: HTMLIFrameElement,
+        options: any,
+        urlResolver: IUrlResolver | IUrlResolver[],
+    ) {
+        return new IFrameDocumentServiceProxyFactory(documentServiceFactory, frame, options, urlResolver);
     }
 
     public readonly protocolName = "fluid-outer:";
     private documentServiceProxy: DocumentServiceFactoryProxy | undefined;
 
-    constructor(private readonly documentServiceFactory: IDocumentServiceFactory,
-                private readonly frame: HTMLIFrameElement,
-                private readonly options: any,
-                private readonly containerHost: IHost) {
+    constructor(
+        private readonly documentServiceFactory: IDocumentServiceFactory,
+        private readonly frame: HTMLIFrameElement,
+        private readonly options: any,
+        private readonly urlResolver: IUrlResolver | IUrlResolver[],
+    ) {
 
     }
 
@@ -91,11 +94,10 @@ export class IFrameDocumentServiceProxyFactory {
         // Simplify this with either https://github.com/microsoft/FluidFramework/pull/448
         // or https://github.com/microsoft/FluidFramework/issues/447
         const resolvers: IUrlResolver[] = new Array();
-        if (!(Array.isArray(this.containerHost.resolver as IUrlResolver[]))) {
-            resolvers.push(this.containerHost.resolver as IUrlResolver);
-
+        if (!(Array.isArray(this.urlResolver))) {
+            resolvers.push(this.urlResolver);
         } else {
-            resolvers.push(... (this.containerHost.resolver as IUrlResolver[]));
+            resolvers.push(... this.urlResolver);
         }
 
         const resolvedUrl = await configurableUrlResolver(resolvers, request);
@@ -120,20 +122,24 @@ export class IFrameDocumentServiceProxyFactory {
  * Proxy of the Document Service Factory that gets sent to the innerFrame
  */
 export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy {
-    public clients: { [clientId: string]: {
-        clientId: string;
-        stream: IOuterDocumentDeltaConnectionProxy;
-        deltaStorage: IDocumentDeltaStorageService;
-        storage: IDocumentStorageService;
-    }};
+    public clients: {
+        [clientId: string]: {
+            clientId: string;
+            stream: IOuterDocumentDeltaConnectionProxy;
+            deltaStorage: IDocumentDeltaStorageService;
+            storage: IDocumentStorageService;
+        },
+    };
 
     private readonly tokens: {
         [name: string]: string;
     };
 
-    constructor(private readonly documentServiceFactory: IDocumentServiceFactory,
-                private readonly options: any,
-                private readonly resolvedUrl: IFluidResolvedUrl) {
+    constructor(
+        private readonly documentServiceFactory: IDocumentServiceFactory,
+        private readonly options: any,
+        private readonly resolvedUrl: IFluidResolvedUrl,
+    ) {
 
         this.tokens = this.resolvedUrl.tokens;
         this.clients = {};

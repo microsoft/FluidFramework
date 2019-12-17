@@ -12,16 +12,20 @@ export class Timer {
     constructor(private enabled: boolean) {
 
     }
-    public time(msg?: string) {
+    public time(msg?: string, print?: boolean) {
         const currTime = Date.now();
         const diffTime = currTime - this.lastTime;
         this.lastTime = currTime;
         const diffTimeInSeconds = diffTime / 1000;
-        if (this.enabled && msg) {
-            if (diffTime > 100) {
-                logStatus(`${msg} - ${diffTimeInSeconds.toFixed(3)}s`);
-            } else {
-                logStatus(`${msg} - ${diffTime}ms`);
+        if (msg) {
+            if (this.enabled) {
+                if (diffTime > 100) {
+                    logStatus(`${msg} - ${diffTimeInSeconds.toFixed(3)}s`);
+                } else {
+                    logStatus(`${msg} - ${diffTime}ms`);
+                }
+            } else if (print) {
+                logStatus(msg);
             }
         }
         this.totalTime += diffTime;

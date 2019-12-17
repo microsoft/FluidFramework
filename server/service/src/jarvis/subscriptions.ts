@@ -16,8 +16,8 @@ export class RedisSubscriptionManager {
     private client: redis.RedisClient;
     private subscriptions = new Map<string, ISubscriptionDetails>();
 
-    constructor(host: string, port: number) {
-        this.client = redis.createClient(port, host);
+    constructor(host: string, port: number, options: any) {
+        this.client = redis.createClient(port, host, options);
 
         this.client.on("message", (topic, messageStr) => {
             const details = this.subscriptions.get(topic);
