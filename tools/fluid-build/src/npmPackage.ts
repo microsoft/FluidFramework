@@ -153,12 +153,16 @@ export class Package {
         }
     }
 
+    /**
+     * Verify that all packages with 'test' scripts require the 'make-promises-safe' package, which will cause unhandled
+     * promise rejections to throw errors
+     */
     public checkTestSafePromiseRequire() {
         let fixed = false;
         const pkgstring = "make-promises-safe";
         if (this.packageJson.scripts && this.packageJson.scripts.test && !this.packageJson.scripts.test.startsWith("echo")) {
             if (this.packageJson.devDependencies && !this.packageJson.devDependencies[pkgstring]) {
-                console.warn(`warning: missing ${pkgstring} dependency`);
+                console.warn(`warning: missing ${pkgstring} dependency in ${this.name}`);
                 if (options.fixScripts) {
                     this.packageJson.devDependencies[pkgstring] = "^5.1.0";
                     fixed = true;
@@ -166,7 +170,7 @@ export class Package {
             }
             if (!this.packageJson.scripts.test.includes(pkgstring)) {
                 if (this.packageJson.scripts.test.startsWith("mocha")) {
-                    console.warn(`warning: no ${pkgstring} require in test script`);
+                    console.warn(`warning: no ${pkgstring} require in test script in ${this.name}`);
                     if (options.fixScripts) {
                         this.packageJson.scripts.test += " -r " + pkgstring;
                         fixed = true;

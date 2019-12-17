@@ -12,8 +12,8 @@
   "typings": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "start:debug": "node --inspect=0.0.0.0:9229 dist/index.js",
     "start": "node dist/index.js",
+    "start:debug": "node --inspect=0.0.0.0:9229 dist/index.js",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose"
   },

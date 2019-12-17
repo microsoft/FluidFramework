@@ -30,10 +30,30 @@
     "foreman:debug": "node --inspect=0.0.0.0:5858 dist/foreman/index.js",
     "scriptorium": "node dist/scriptorium/index.js",
     "scriptorium:debug": "node --inspect=0.0.0.0:5858 dist/scriptorium/index.js",
-    "test": "mocha --recursive dist/test",
+    "test": "mocha --recursive dist/test -r make-promises-safe",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose"
+  },
+  "nyc": {
+    "all": true,
+    "cache-dir": "nyc/.cache",
+    "exclude": [
+      "src/test/**/*.ts",
+      "dist/test/**/*.js"
+    ],
+    "exclude-after-remap": false,
+    "include": [
+      "src/**/*.ts",
+      "dist/**/*.js"
+    ],
+    "report-dir": "nyc/report",
+    "reporter": [
+      "cobertura",
+      "html",
+      "text"
+    ],
+    "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
     "@microsoft/fluid-core-utils": "0.13.17538",
@@ -99,6 +119,7 @@
     "css-loader": "^1.0.0",
     "diff": "^3.5.0",
     "html-loader": "^0.5.5",
+    "make-promises-safe": "^5.1.0",
     "mocha": "^5.2.0",
     "mocha-junit-reporter": "^1.18.0",
     "node-sass": "^4.9.3",
@@ -115,24 +136,5 @@
     "tslint": "^5.20.0",
     "typescript": "~3.4.5",
     "url-loader": "^2.1.0"
-  },
-  "nyc": {
-    "all": true,
-    "exclude": [
-      "src/test/**/*.ts",
-      "dist/test/**/*.js"
-    ],
-    "include": [
-      "src/**/*.ts",
-      "dist/**/*.js"
-    ],
-    "reporter": [
-      "cobertura",
-      "html",
-      "text"
-    ],
-    "temp-directory": "nyc/.nyc_output",
-    "cache-dir": "nyc/.cache",
-    "report-dir": "nyc/report"
   }
 }
