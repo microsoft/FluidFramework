@@ -95,7 +95,7 @@ Annotate operations can add or remove map-like properties to or from content of 
     // props5 = { decoration: "underline" }
 ```
 
-Whenever an operation is perfomed on a sequence a _sequenceDelta_ event will be raised. This even provides the ranges affected by the operation, the type of the operation, and the properties that were changes by the operation.
+Whenever an operation is performed on a sequence a _sequenceDelta_ event will be raised. This even provides the ranges affected by the operation, the type of the operation, and the properties that were changes by the operation.
 
 ## How Collaboration Works
 
@@ -107,7 +107,7 @@ Like insert the strategies for remove and annotate also rely on guaranteed order
 
 For remove this means we can’t have an insert and a remove at the same time, as they will have an order, and all collaborators will see the operations in the same order. We also detect overlapping removes made by different collaborators, the resolutions here is straightforward, the content is removed.
 
-As mentioned above annotate operations behave like operations on Shared Maps. The merge strategy here is last one wins. So, if two collaborators set the same key on the annotate's properties the operation that gets ordered last will determine the value.
+As mentioned above annotate operations behave like operations on Shared Maps. The merge strategy here is last one wins. So, if two collaborators set the same key on the annotates properties the operation that gets ordered last will determine the value.
 
 # Shared String
 
@@ -116,3 +116,33 @@ The Shared String is a specialized data structure for handling collaborative tex
 In addition to text, a Shared String can also contain markers. Markers can be used to store metadata at positions within the text, like the details of an image or component that should be rendered with the text.
 
 Both markers and text are stored as segments in the Shared String. Text segments will be split and merged when modifications are made to the Shared String and will therefore have variable length matching the length of the text content they contain. Marker segments are never split or merged, and always have a length of 1.
+
+# Sparse Matrix
+
+The Sparse Matrix is a specialized data structure for efficiently handling collaborative tabular data. The Sparse Matrix works in a similar fashion to [raster scanning](https://en.wikipedia.org/wiki/Raster_scan). When a row is inserted it is inserted with the maximum possible number of columns, 16,385. This makes it easy to find any cell in the Sparse Matrix as it will exist at Row * MaxCol + Col. In order to store this efficiently the Sparse Matrix doesn't materialize cells that don't have data, this is where *Sparse* comes from.
+
+Just like any other sequence, the Sparse Matrix is made of segments. The segment types are RunSegments and PaddingSegments. RunSegment contain the data for cells that have data, and PaddingSegments fill the spaces that have no data. PaddingSegments just contain how long they are, and this is how the Sparse Matrix efficiently stores all the rows with the max number of columns. For instance, if we had a Matrix with 2 rows, and each row only contained data in the first two cells it's serialized form would look something like this:
+``` Json
+[
+    // The first row
+    // data
+    {
+        "items":["Value in row 0 cell 0", "Value in row 0 cell 1"],
+        "length": 2,
+    },
+    // padding
+    {
+        "length": 16383,
+    },
+    // The second row
+    // data
+    {
+        "items":["Value in row 1 cell 0", "Value in row 1 cell 1"],
+        "length": 2,
+    },
+    // padding
+    {
+        "length": 16383,
+    },
+]
+```
