@@ -121,10 +121,10 @@ Both markers and text are stored as segments in the Shared String. Text segments
 
 The Sparse Matrix is a specialized data structure for efficiently handling collaborative tabular data. The Sparse Matrix works in a similar fashion to [raster scanning](https://en.wikipedia.org/wiki/Raster_scan). When a row is inserted it is inserted with the maximum possible number of columns, 16,385. This makes it easy to find any cell in the Sparse Matrix as it will exist at Row * MaxCol + Col. In order to store this efficiently the Sparse Matrix doesn't materialize cells that don't have data, this is where *Sparse* comes from.
 
-Just like any other sequence, the Sparse Matrix is made of segments. The segment types are RunSegments and PaddingSegments. RunSegment contain the data for cells that have data, and PaddingSegments fill the spaces that have no data. PaddingSegments just contain how long they are, and this is how the Sparse Matrix efficiently stores all the rows with the max number of columns. For instance, if we had a Matrix with 2 rows, and each row only contained data in the first two cells it's serialized form would look something like this:
+Just like any other sequence, the Sparse Matrix is made of segments. The segment types are RunSegments and PaddingSegments. RunSegment contain the data for cells that have data, and PaddingSegments fill the spaces that have no data. PaddingSegments just contain how long they are, and this is how the Sparse Matrix efficiently stores all the rows with the max number of columns. For instance, if we had a Matrix with 2 rows, and each row only contained data in a couple columns it's serialized form would look something like this:
 ``` Json
 [
-    // The first row
+// The first row with data in 1st and 2nd column
     // data
     {
         "items":["Value in row 0 cell 0", "Value in row 0 cell 1"],
@@ -134,15 +134,25 @@ Just like any other sequence, the Sparse Matrix is made of segments. The segment
     {
         "length": 16383,
     },
-    // The second row
+
+// The second row with data in the 1st and 5th column
     // data
     {
-        "items":["Value in row 1 cell 0", "Value in row 1 cell 1"],
-        "length": 2,
+        "items":["Value in row 1 cell 0"],
+        "length": 1,
     },
     // padding
     {
-        "length": 16383,
+        "length": 3,
+    },
+    // data
+    {
+        "items":["Value in row 1 cell 4"],
+        "length": 1,
+    },
+    // padding
+    {
+        "length": 16380,
     },
 ]
 ```
