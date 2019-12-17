@@ -31,6 +31,31 @@
     "webpack": "webpack --env.production",
     "webpack:dev": "webpack --env.development"
   },
+  "nyc": {
+    "all": true,
+    "cache-dir": "nyc/.cache",
+    "exclude": [
+      "**/*.d.ts",
+      "src/test/**/*.ts",
+      "dist/test/**/*.js"
+    ],
+    "exclude-after-remap": false,
+    "extension": [
+      ".ts",
+      ".tsx",
+      ".js",
+      ".jsx"
+    ],
+    "include": [
+      "src/**/*.ts",
+      "dist/**/*.js"
+    ],
+    "report-dir": "nyc/report",
+    "require": [
+      "ts-node/register"
+    ],
+    "temp-directory": "nyc/.nyc_output"
+  },
   "dependencies": {
     "@fluid-example/flow-util-lib": "^0.13.0",
     "@microsoft/fluid-aqueduct": "^0.13.0",
@@ -89,30 +114,5 @@
         "library": "main"
       }
     }
-  },
-  "nyc": {
-    "all": true,
-    "extension": [
-      ".ts",
-      ".tsx",
-      ".js",
-      ".jsx"
-    ],
-    "exclude": [
-      "**/*.d.ts",
-      "src/test/**/*.ts",
-      "dist/test/**/*.js"
-    ],
-    "include": [
-      "src/**/*.ts",
-      "dist/**/*.js"
-    ],
-    "require": [
-      "ts-node/register"
-    ],
-    "temp-directory": "nyc/.nyc_output",
-    "cache-dir": "nyc/.cache",
-    "report-dir": "nyc/report",
-    "exclude-after-remap": false
   }
 }
