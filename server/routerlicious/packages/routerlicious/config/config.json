@@ -163,11 +163,13 @@
     },
     "redis": {
         "host": "redis",
-        "port": 6379
+        "port": 6379,
+        "tls": false
     },
     "redis2": {
         "host": "redis",
-        "port": 6379
+        "port": 6379,
+        "tls": false
     },
     "error": {
         "track": false,

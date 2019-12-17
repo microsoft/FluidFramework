@@ -127,8 +127,20 @@ export class Package {
         return path.dirname(this.packageJsonFileName);
     }
 
+    private get color() {
+        return Package.chalkColor[this.packageId % Package.chalkColor.length];
+    }
+
     public getScript(name: string): string | undefined {
         return this.packageJson.scripts[name];
+    }
+
+    public async cleanNodeModules() {
+        return rimrafWithErrorAsync(path.join(this.directory, "node_modules"), this.nameColored);
+    }
+
+    private async savePackageJson() {
+        return writeFileAsync(this.packageJsonFileName, `${JSON.stringify(this.packageJson, undefined, 2)}\n`);
     }
 
     public async checkScripts() {
@@ -254,7 +266,9 @@ export class Package {
         }
         return fixed;
     }
+
     public async depcheck() {
+        // Fluid specific
         let checkFiles: string[];
         if (this.packageJson.dependencies) {
             const tsFiles = await globFn(`${this.directory}/**/*.ts`, { ignore: `${this.directory}/node_modules` });
@@ -270,19 +284,8 @@ export class Package {
         }
     }
 
-    private async savePackageJson() {
-        return writeFileAsync(this.packageJsonFileName, `${JSON.stringify(this.packageJson, undefined, 2)}\n`);
-    }
-
-    private get color() {
-        return Package.chalkColor[this.packageId % Package.chalkColor.length];
-    }
-
-    public async cleanNodeModules() {
-        return rimrafWithErrorAsync(path.join(this.directory, "node_modules"), this.nameColored);
-    }
-
     public async noHoistInstall(repoRoot: string) {
+        // Fluid specific
         const rootNpmRC = path.join(repoRoot, ".npmrc")
         const npmRC = path.join(this.directory, ".npmrc");
         const npmCommand = "npm i --no-package-lock --no-shrinkwrap";
@@ -295,6 +298,7 @@ export class Package {
     }
 
     public async symlink(buildPackages: Map<string, Package>) {
+        // Fluid specific
         for (const dep of this.combinedDependencies) {
             const depBuildPackage = buildPackages.get(dep);
             if (depBuildPackage) {
@@ -328,10 +332,30 @@ export class Package {
     }
 };
 
-interface PackageTaskExec<T> {
-    pkg: Package;
-    resolve: (result: T) => void;
+interface TaskExec<TItem, TResult> {
+    item: TItem;
+    resolve: (result: TResult) => void;
 };
+
+async function queueExec<TItem, TResult>(items: Iterable<TItem>, exec: (item: TItem) => Promise<TResult>, messageCallback?: (item: TItem) => string) {
+    let numDone = 0;
+    const timedExec = messageCallback ? async (item: TItem) => {
+        const startTime = Date.now();
+        const result = await exec(item);
+        const elapsedTime = (Date.now() - startTime) / 1000;
+        logStatus(`[${++numDone}/${p.length}] ${messageCallback(item)} - ${elapsedTime.toFixed(3)}s`);
+        return result;
+    } : exec;
+    const q = queue(async (taskExec: TaskExec<TItem, TResult>, callback) => {
+        taskExec.resolve(await timedExec(taskExec.item));
+        callback();
+    }, options.concurrency);
+    const p: Promise<TResult>[] = [];
+    for (const item of items) {
+        p.push(new Promise<TResult>(resolve => q.push({ item, resolve })));
+    }
+    return Promise.all(p);
+}
 
 export class Packages {
 
@@ -384,20 +408,8 @@ export class Packages {
     }
 
     private async queueExecOnAllPackageCore<TResult>(exec: (pkg: Package) => Promise<TResult>, message?: string) {
-        let numDone = 0;
-        const timedExec = message ? async (pkg: Package) => {
-            const startTime = Date.now();
-            const result = await exec(pkg);
-            const elapsedTime = (Date.now() - startTime) / 1000;
-            logStatus(`[${++numDone}/${p.length}] ${pkg.nameColored}: ${message} - ${elapsedTime.toFixed(3)}s`);
-            return result;
-        } : exec;
-        const q = queue(async (taskExec: PackageTaskExec<TResult>, callback) => {
-            taskExec.resolve(await timedExec(taskExec.pkg));
-            callback();
-        }, options.concurrency);
-        const p = this.packages.map(pkg => new Promise<TResult>(resolve => q.push({ pkg, resolve })));
-        return Promise.all(p);
+        const messageCallback = message ? (pkg: Package) => ` ${pkg.nameColored}: ${message}` : undefined;
+        return queueExec(this.packages, exec, messageCallback);
     }
 
     private async queueExecOnAllPackage(exec: (pkg: Package) => Promise<ExecAsyncResult>, message?: string) {

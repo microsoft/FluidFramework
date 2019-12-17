@@ -8,7 +8,7 @@
     "build:ci": "npm run build:genver && lerna run build:compile:min --stream",
     "build:compile": "lerna run build:compile --stream",
     "build:docs": "npm run clean:docs && lerna run build:docs --stream --parallel && npm run build:gendocs",
-    "build:fast": "node ../../tools/fluid-build/dist/fluidBuild.js --root .",
+    "build:fast": "node ../../tools/fluid-build/dist/fluidBuild.js --root ../.. --server",
     "build:full": "npm run build:genver && npm run build:full:compile && npm run tslint && npm run build:docs",
     "build:full:compile": "lerna run build:full:compile --stream",
     "build:gendocs": "api-documenter yaml -i _api-extractor-temp/doc-models -o docs/api",
