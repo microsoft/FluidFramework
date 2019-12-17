@@ -137,20 +137,28 @@ export class UndoRedoStackManager {
         this.eventEmitter.removeListener(event, listener);
     }
 
-    public undoOperation() {
+    public undoOperation(): boolean {
+        if (this.undoStack.empty()) {
+            return false;
+        }
         this.mode = UndoRedoMode.Undo;
         UndoRedoStackManager.revert(
             this.undoStack,
             this.redoStack);
         this.mode = UndoRedoMode.None;
+        return true;
     }
 
-    public redoOperation() {
+    public redoOperation(): boolean {
+        if (this.redoStack.empty()) {
+            return false;
+        }
         this.mode = UndoRedoMode.Redo;
         UndoRedoStackManager.revert(
             this.redoStack,
             this.undoStack);
         this.mode = UndoRedoMode.None;
+        return true;
     }
 
     public pushToCurrentOperation(revertable: IRevertable) {

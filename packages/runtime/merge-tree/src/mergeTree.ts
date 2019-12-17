@@ -1483,7 +1483,6 @@ export class MergeTree {
                                 if (this.mergeTreeMaintenanceCallback) {
                                     this.mergeTreeMaintenanceCallback({
                                         operation: MergeTreeMaintenanceType.APPEND,
-                                        mergeTree: this,
                                         deltaSegments: [{ segment: prevSegment }, { segment }],
                                     });
                                 }
@@ -2382,7 +2381,6 @@ export class MergeTree {
         if (this.mergeTreeMaintenanceCallback) {
             this.mergeTreeMaintenanceCallback({
                 operation: MergeTreeMaintenanceType.SPLIT,
-                mergeTree: this,
                 deltaSegments: [{ segment }, { segment: next }],
             });
         }
