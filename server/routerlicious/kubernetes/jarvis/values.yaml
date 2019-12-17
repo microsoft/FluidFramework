@@ -52,6 +52,8 @@ mongodb:
 
 redis:
   url: punk-dachshund-redis
+  port: 6379
+  tls: false
 
 kafka:
   url: youngling-heron-kafka

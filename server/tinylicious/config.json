@@ -30,6 +30,7 @@
             "scribeDeltas": "scribeDeltas"
         }
     },
+    "storage": "/var/lib/tinylicious",
     "error": {
         "track": false,
         "endpoint" : ""

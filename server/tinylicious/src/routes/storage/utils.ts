@@ -4,6 +4,8 @@
  */
 
 import { Response } from "express";
+import * as nconf from "nconf";
+import * as path from "path";
 
 /**
  * Helper function to handle a promise that should be returned to the user
@@ -26,4 +28,9 @@ export function handleResponse<T>(
         (error) => {
             response.status(400).json(error);
         });
+}
+
+export function getGitDir(store: nconf.Provider, tenantId: string) {
+    const directory = store.get("storage");
+    return path.join(directory, `./${tenantId}`);
 }

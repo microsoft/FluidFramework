@@ -45,6 +45,10 @@ class SocketIoSocket implements IWebSocket {
     public async broadcastToRoom(roomId: string, event: string, ...args: any) {
         this.socket.to(roomId).broadcast.emit(event, ...args);
     }
+
+    public disconnect(close?: boolean): void {
+        return;
+    }
 }
 
 class SocketIoServer extends EventEmitter implements IWebSocketServer {

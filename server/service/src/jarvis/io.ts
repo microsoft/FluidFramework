@@ -194,10 +194,10 @@ export function register(
     httpServer: http.Server,
     orderFactory: OrdererManager,
     tenantManager: core.ITenantManager,
-    redisConfig: { host: string, port: number }) {
+    redisConfig: { host: string, port: number, options: any }) {
 
     const webSocketServer = new ws.Server({ server: httpServer });
-    const subscriber = new RedisSubscriptionManager(redisConfig.host, redisConfig.port);
+    const subscriber = new RedisSubscriptionManager(redisConfig.host, redisConfig.port, redisConfig.options);
 
     webSocketServer.on("connection", (socket: ws) => {
         SocketConnection.attach(

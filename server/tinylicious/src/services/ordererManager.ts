@@ -3,8 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { IDocumentAttributes } from "@microsoft/fluid-protocol-definitions";
 import { ILocalOrdererSetup, IPubSub, ISubscriber, LocalOrderer } from "@microsoft/fluid-server-memory-orderer";
-import { IGitManager } from "@microsoft/fluid-server-services-client";
+import {
+    GitManager,
+    Historian,
+    IGitManager,
+} from "@microsoft/fluid-server-services-client";
 import {
     ICollection,
     IDocument,
@@ -19,7 +24,7 @@ import {
     ITaskMessageSender,
     ITenantManager,
 } from "@microsoft/fluid-server-services-core";
-import { IDocumentAttributes } from "@microsoft/fluid-protocol-definitions";
+import { normalizePort } from "@microsoft/fluid-server-services-utils";
 import { Server } from "socket.io";
 
 export class LocalOrdererSetup implements ILocalOrdererSetup {
@@ -89,6 +94,48 @@ class LocalPubSub implements IPubSub {
     }
 }
 
+class WrappedLocalOrdererSetup implements ILocalOrdererSetup {
+    constructor(
+        private readonly wrapped: ILocalOrdererSetup,
+        private readonly tenantId: string,
+        private readonly documentId: string,
+    ) {
+    }
+
+    public async documentP(): Promise<IDocumentDetails> {
+        const details = await this.wrapped.documentP();
+
+        // TODO can remove wrapper once fix bug in local orderer scribe setup which assumes tenantId/documentId
+        // come from saved scribe data rather than on outer document itself.
+        const scribe = JSON.parse(details.value.scribe);
+        scribe.tenantId = this.tenantId;
+        scribe.documentId = this.documentId;
+        details.value.scribe = JSON.stringify(scribe);
+
+        return details;
+    }
+
+    public documentCollectionP(): Promise<ICollection<IDocument>> {
+        return this.wrapped.documentCollectionP();
+    }
+
+    public deltaCollectionP(): Promise<ICollection<any>> {
+        return this.wrapped.deltaCollectionP();
+    }
+
+    public scribeDeltaCollectionP(): Promise<ICollection<ISequencedOperationMessage>> {
+        return this.wrapped.scribeDeltaCollectionP();
+    }
+
+    public protocolHeadP(): Promise<number> {
+        return this.wrapped.protocolHeadP();
+    }
+
+    public scribeMessagesP(): Promise<ISequencedOperationMessage[]> {
+        return this.wrapped.scribeMessagesP();
+    }
+}
+
 export class OrdererManager implements IOrdererManager {
     private map = new Map<string, Promise<IOrderer>>();
 
@@ -115,6 +162,20 @@ export class OrdererManager implements IOrdererManager {
     }
 
     private async createLocalOrderer(tenantId: string, documentId: string): Promise<IOrderer> {
+        const port = normalizePort(process.env.PORT || "3000");
+        const url = `http://localhost:${port}/repos/${encodeURIComponent(tenantId)}`;
+
+        const historian = new Historian(url, false, false);
+        const gitManager = new GitManager(historian);
+
+        const localOrdererSetup = new LocalOrdererSetup(
+            tenantId,
+            documentId,
+            this.storage,
+            this.databaseManager,
+            gitManager);
+        const wrapped = new WrappedLocalOrdererSetup(localOrdererSetup, tenantId, documentId);
+
         const orderer = await LocalOrderer.load(
             this.storage,
             this.databaseManager,
@@ -124,8 +185,8 @@ export class OrdererManager implements IOrdererManager {
             this.tenantManager,
             this.permission,
             this.maxMessageSize,
-            undefined,
-            new LocalOrdererSetup(tenantId, documentId, this.storage, this.databaseManager, undefined),
+            gitManager,
+            wrapped,
             new LocalPubSub(this.io));
 
         // This is a temporary hack to work around promise bugs in the LocalOrderer load. The LocalOrderer does not

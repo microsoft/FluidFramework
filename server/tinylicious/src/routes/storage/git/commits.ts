@@ -5,6 +5,7 @@
 
 import { ICommit, ICreateCommitParams } from "@microsoft/fluid-gitresources";
 import { Router } from "express";
+import * as git from "isomorphic-git";
 import * as nconf from "nconf";
 import * as utils from "../utils";
 
@@ -16,7 +17,37 @@ export function create(store: nconf.Provider): Router {
         authorization: string,
         params: ICreateCommitParams,
     ): Promise<ICommit> {
-        throw new Error("Not implemented");
+        // TODO should include both author and committer
+        const author = {
+            email: params.author.email,
+            name: params.author.name,
+            timestamp: Math.floor(Date.parse(params.author.date) / 1000),
+            timezoneOffset: 0,
+        };
+
+        const commitDescription: git.CommitDescription = {
+            message: params.message,
+            parent: params.parents,
+            tree: params.tree,
+            author,
+            committer: author,
+        };
+
+        const sha = await git.writeObject({
+            dir: utils.getGitDir(store, tenantId),
+            type: "commit",
+            object: commitDescription,
+        });
+
+        return {
+            author: params.author,
+            committer: params.author,
+            message: params.message,
+            parents: params.parents.map((parentSha) => ({ sha: parentSha, url: "" })),
+            sha,
+            tree: { sha: params.tree, url: "" },
+            url: "",
+        };
     }
 
     async function getCommit(
@@ -25,7 +56,26 @@ export function create(store: nconf.Provider): Router {
         sha: string,
         useCache: boolean,
     ): Promise<ICommit> {
-        throw new Error("Not implemented");
+        const commit = await git.readObject({ dir: utils.getGitDir(store, tenantId), oid: sha });
+        const description = commit.object as git.CommitDescription;
+
+        return {
+            author: {
+                email: description.author.email,
+                name: description.author.name,
+                date: new Date(description.author.timestamp * 1000).toISOString(),
+            },
+            committer: {
+                email: description.committer.email,
+                name: description.committer.name,
+                date: new Date(description.committer.timestamp * 1000).toISOString(),
+            },
+            message: description.message,
+            parents: description.parent.map((parentSha) => ({ sha: parentSha, url: "" })),
+            sha,
+            tree: { sha: description.tree, url: "" },
+            url: "",
+        };
     }
 
     router.post(
