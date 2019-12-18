@@ -20,12 +20,12 @@ import {
 } from "@microsoft/fluid-merge-tree";
 import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
+// eslint-disable-next-line import/no-unresolved
 import * as monaco from "monaco-editor";
 
 /**
  * Compilation options for Monaco to use on Typescript
  */
-// tslint:disable
 const defaultCompilerOptions = {
     noImplicitAny: true,
     strictNullChecks: true,
@@ -58,7 +58,6 @@ const defaultCompilerOptions = {
 
     allowNonTsExtensions: true,
 };
-// tslint:enable
 
 /**
  * Component for using the Monaco text editor.
@@ -137,7 +136,6 @@ export class MonacoRunner extends PrimedComponent implements
      * Sets up the Monaco editor for use and attaches its HTML element to the mapHost element.
      * Also sets up eventing to send/receive ops as the text is changed.
      */
-    // tslint:disable-next-line: max-func-body-length
     private async initializeEditorDiv(): Promise<void> {
         // TODO make my dts
         const hostDts = null; // await platform.queryInterface<any>("dts");
@@ -179,6 +177,7 @@ export class MonacoRunner extends PrimedComponent implements
 
         this.codeEditor.addCommand(
             monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             () => { this.runCode(outputModel.getValue()); },
             null);
 
@@ -189,6 +188,7 @@ export class MonacoRunner extends PrimedComponent implements
 
         let ignoreModelContentChanges = false;
         this.codeEditor.onDidChangeModelContent((e) => {
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             monaco.languages.typescript.getTypeScriptWorker().then((worker) => {
                 worker(this.codeModel.uri.toString()).then((client) => {
                     client.getEmitOutput(this.codeModel.uri.toString()).then((r) => {
@@ -233,17 +233,21 @@ export class MonacoRunner extends PrimedComponent implements
      * @param delta The incoming op contents
      */
     private mergeDelta(delta: IMergeTreeOp): void {
+        /* eslint-disable @typescript-eslint/indent */
         switch (delta.type) {
             case MergeTreeDeltaType.GROUP:
-                this.mergeDeltaGroup(delta as IMergeTreeGroupMsg);
+                this.mergeDeltaGroup(delta);
                 break;
             case MergeTreeDeltaType.INSERT:
-                this.mergeInsertDelta(delta as IMergeTreeInsertMsg);
+                this.mergeInsertDelta(delta);
                 break;
             case MergeTreeDeltaType.REMOVE:
-                this.mergeRemoveDelta(delta as IMergeTreeRemoveMsg);
+                this.mergeRemoveDelta(delta);
+                break;
+            default:
                 break;
         }
+        /* eslint-enable @typescript-eslint/indent */
     }
 
     /**
@@ -269,7 +273,7 @@ export class MonacoRunner extends PrimedComponent implements
 
         const range = this.offsetsToRange(delta.pos1, delta.pos2);
         const text = delta.seg || "";
-        this.codeEditor.executeEdits("remote", [ { range, text } ]);
+        this.codeEditor.executeEdits("remote", [{ range, text }]);
     }
 
     /**
@@ -285,7 +289,7 @@ export class MonacoRunner extends PrimedComponent implements
 
         const range = this.offsetsToRange(delta.pos1, delta.pos2);
         const text = "";
-        this.codeEditor.executeEdits("remote", [ { range, text } ]);
+        this.codeEditor.executeEdits("remote", [{ range, text }]);
     }
 
     /**
@@ -308,6 +312,7 @@ export class MonacoRunner extends PrimedComponent implements
     private async runCode(code: string): Promise<void> {
         // const root = await platform.queryInterface<any>("root");
         // const host = root ? root.entry : null;
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.exec(/* host, */ code);
     }
 
@@ -316,6 +321,7 @@ export class MonacoRunner extends PrimedComponent implements
      * @param code String of JS to eval
      */
     private async exec(/* host: any, */ code: string) {
+        // eslint-disable-next-line no-eval
         eval(code);
     }
 }

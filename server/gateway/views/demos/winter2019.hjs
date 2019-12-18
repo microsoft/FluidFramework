@@ -1,0 +1,107 @@
+{{<layout}}
+{{$content}}
+<div class="container">
+
+    <h1>Prague Demos</h1>
+    <p>
+        Prague is a new platform and document model designed to better meet the collaborative needs of modern workers
+        by powering interactive component experiences when working together. Prague offers a novel and highly efficient
+        system for multi-user interactions, distributed data, and a transactional storage model which will enable new
+        rich collaboration and on-canvas interactivity scenarios at more performant level than we can offer with our
+        current stack today.
+    </p>
+    <p>
+        To create a new set of links refresh this page.
+    </p>
+
+    <h2>Components</h2>
+
+    <h3>Data, Code, Components Bindings</h3>
+    <p>Open the link below and add in a Monaco and Chart Component</p>
+    <li class="list-unstyled"><a href="/loader/fluid/{{chartMonacoMoniker}}?chaincode=@fluid-example/shared-text@{{version}}" target="_blank">Data +
+            Code Bindings</a></li>
+
+    <h3>Yo Fluid - Bootstrapper</h3>
+    <p>Follow the steps at the below link</p>
+    <li class="list-unstyled"><a href="https://aka.ms/r11s" target="_blank">aka.ms/r11s</a></li>
+
+    <h3>Non-Office</h3>
+    <p>Open the link below and add in a WSJ journal Pinpoint Map.</p>
+    <ul class="list-unstyled">
+        <li><a href="/loader/fluid/{{pinpointMoniker}}?chaincode=@container/pinpoint-editor@0.3.6527#/maps/new"
+                target="_blank">Pin Point Map</a></li>
+        <li><a href="/loader/fluid/{{newsMoniker}}?chaincode=@chaincode/shared-text@0.3.6672"
+                target="_blank">Prague Text Editor</a></li>
+        <li><a href="/loader/fluid/counterDemo" target="_blank">Counter</a></li>
+    </ul>
+
+    <h2>Text Editing</h2>
+    <p>
+        Open a copy of the links listed below in each of the browser windows. Show the same page side by side.
+        Pick a line and hold the space bar. Then hold down the backspace key to delete the spaces. Repeat this
+        process as many times as you want. The test shows the local client performance as well as the remote
+        client performance. To ink in the Prague example either use a pen or click the ink checkbox in the
+        bottom status bar and then use the mouse.
+    </p>
+
+    <ul class="list-unstyled">
+        <li><a href="https://docs.google.com/document/d/1Ed3_Bgmfj4L1tvjjh8geSHNZMbh_X6SaRd1uZGSQSio/edit"
+                target="_blank">Google Docs Pride and Prejudice</a></li>
+        <li><a href="/loader/fluid/{{sharedTextMoniker}}?chaincode=@fluid-example/shared-text@{{version}}&template=pp.txt" target="_blank">Prague Pride and Prejudice</a></li>
+    </ul>
+
+    <h2>Augmentation Loop</h2>
+
+    <h3>Automatic</h3>
+    <p>
+        Open the link below, click on the create button, then open the links to the translation documents. Then
+        click
+        Start. You will want to keep the Scribe page active (i.e. in its own window or in an active tab) since
+        otherwise the browser may stop it from running JavaScript which will pause the demo.
+    </p>
+    <ul class="list-unstyled">
+        <li><a href="/loader/fluid/{{scribeMoniker}}?chaincode=@fluid-example/scribe@{{version}}&speed=10&text=/public/literature/resume.txt" target="_blank">Scribe</a></li>
+    </ul>
+
+    <h3>Augmentation</h3>
+    <p>
+        Open one link in the left browser and the other in the right. Ctrl+B will bold text and Ctrl+U will
+        underline.
+    </p>
+    <ul class="list-unstyled">
+        <li><a href="/loader/fluid/{{translateMoniker}}?chaincode=@fluid-example/shared-text@{{version}}&languageFrom=en&languageTo=el"
+                target="_blank">Greek</a></li>
+        <li><a href="/loader/fluid/{{translateMoniker}}?chaincode=@fluid-example/shared-text@{{version}}&languageFrom=en&languageTo=es"
+                target="_blank">Spanish</a></li>
+    </ul>
+
+    <h2>Performance</h2>
+
+    <h3>Inking Canvas</h3>
+    <li class="list-unstyled"><a href="/loader/fluid/{{inkMoniker}}?chaincode=@fluid-example/canvas@{{version}}"
+            target="_blank">Canvas Chaincode</a></li>
+
+    <h3>Fast Load</h3>
+    <p>
+        Open a copy of each link and load each on refresh.
+        <ul class="list-unstyled">
+            <li><a href="https://www.wu2-ppe.prague.office-int.com/loader/fluid/ste-0314-002?chaincode=@chaincode/shared-text-2@0.3.91"
+                    target="_blank">Loader</a></li>
+            <li><a href="https://www.wu2-ppe.prague.office-int.com/fastloader/fluid/ste-0314-002?chaincode=@chaincode/shared-text-2@0.3.91"
+                    target="_blank">Augmented Loader</a></li>
+        </ul>
+    </p>
+
+    <h2>Teams + Word</h2>
+    <ul class="list-unstyled">
+        <p>
+            <li><a href="https://aka.ms/praguedocs" target="_blank">Prague Docs</a></li>
+            <li><a href="https://msit.microsoftstream.com/video/70eb52f4-b3da-4979-adb4-f43049ebfdb0?list=studio"
+                    target="_blank">Components and Teams</a></li>
+        </p>
+    </ul>
+
+</div>
+
+{{/content}}
+{{/layout}}

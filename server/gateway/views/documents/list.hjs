@@ -1,0 +1,18 @@
+{{<layout}}
+    {{$styles}}
+        <link href="{{#hfurl}}/public/stylesheets/dist/style.css{{/hfurl}}" rel="stylesheet" />
+    {{/styles}}
+
+    {{$content}}
+        <div class="container">
+            <h1>Templates</h1>
+            <ul class="list-unstyled">
+                {{#templates}}
+                <li>
+                    <a href="/loader/fluid/{{documentId}}?chaincode=@fluid-example/shared-text@{{version}}{{full}}">{{name}}</a>
+                </li>  
+                {{/templates}}
+            </ul>
+        </div>
+    {{/content}}
+{{/layout}}

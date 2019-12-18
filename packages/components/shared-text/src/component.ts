@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
+import { parse } from "querystring";
+import * as url from "url";
 import { controls, ui } from "@fluid-example/client-ui-lib";
 import { TextAnalyzer } from "@fluid-example/intelligence-runner-agent";
 import * as API from "@fluid-internal/client-api";
@@ -17,7 +20,6 @@ import {
 } from "@microsoft/fluid-component-core-interfaces";
 import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
 import { IInk, Ink } from "@microsoft/fluid-ink";
-import * as DistributedMap from "@microsoft/fluid-map";
 import {
     ISharedMap,
     SharedMap,
@@ -30,16 +32,13 @@ import {
     SharedObjectSequence,
     SharedString,
 } from "@microsoft/fluid-sequence";
-import { EventEmitter } from "events";
-import { parse } from "querystring";
-import * as url from "url";
 import { Document } from "./document";
 import { downloadRawText, getInsights, setTranslation } from "./utils";
 
-// tslint:disable:no-var-requires
+/* eslint-disable @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires */
 const performanceNow = require("performance-now");
 const debug = require("debug")("fluid:shared-text");
-// tslint:enable:no-var-requires
+/* eslint-enable @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires */
 
 /**
  * Helper function to retrieve the handle for the default component route
@@ -73,13 +72,13 @@ export class SharedTextRunner
 
     public readonly url = "/text";
     private sharedString: SharedString;
-    private insightsMap: DistributedMap.ISharedMap;
+    private insightsMap: ISharedMap;
     private rootView: ISharedMap;
     private collabDoc: Document;
     private taskManager: ITaskManager;
     private uiInitialized = false;
 
-    private constructor(private runtime: ComponentRuntime, private context: IComponentContext) {
+    private constructor(private readonly runtime: ComponentRuntime, private readonly context: IComponentContext) {
         super();
     }
 
@@ -108,7 +107,7 @@ export class SharedTextRunner
 
     private async initialize(): Promise<void> {
         this.collabDoc = await Document.load(this.runtime);
-        this.rootView = await this.collabDoc.getRoot();
+        this.rootView = this.collabDoc.getRoot();
 
         if (!this.runtime.existing) {
             const insightsMapId = "insights";
@@ -120,7 +119,7 @@ export class SharedTextRunner
             this.rootView.set("users", this.collabDoc.createMap().handle);
             const seq = SharedNumberSequence.create(this.collabDoc.runtime);
             this.rootView.set("sequence-test", seq.handle);
-            const newString = this.collabDoc.createString() as SharedString;
+            const newString = this.collabDoc.createString();
 
             const template = parse(window.location.search.substr(1)).template;
             const starterText = template
@@ -131,9 +130,9 @@ export class SharedTextRunner
             for (const segment of segments) {
                 if (MergeTree.TextSegment.is(segment)) {
                     newString.insertText(newString.getLength(), segment.text,
-                    segment.properties);
+                        segment.properties);
                 } else {
-                    // assume marker
+                    // Assume marker
                     const marker = segment as MergeTree.Marker;
                     newString.insertMarker(newString.getLength(), marker.refType, marker.properties);
                 }
@@ -155,7 +154,7 @@ export class SharedTextRunner
 
             insights.set(newString.id, this.collabDoc.createMap().handle);
 
-             // flowContainerMap MUST be set last
+            // The flowContainerMap MUST be set last
 
             const flowContainerMap = this.collabDoc.createMap();
             flowContainerMap.set("overlayInk", this.collabDoc.createMap().handle);
@@ -171,7 +170,7 @@ export class SharedTextRunner
         await this.rootView.wait("flowContainerMap");
 
         this.sharedString = await this.rootView.get<IComponentHandle>("text").get<SharedString>();
-        this.insightsMap = await this.rootView.get<IComponentHandle>("insights").get<DistributedMap.ISharedMap>();
+        this.insightsMap = await this.rootView.get<IComponentHandle>("insights").get<ISharedMap>();
         debug(`Shared string ready - ${performanceNow()}`);
         debug(`id is ${this.runtime.id}`);
         debug(`Partial load fired: ${performanceNow()}`);
@@ -201,13 +200,13 @@ export class SharedTextRunner
     }
 
     private async initializeUI(div): Promise<void> {
-        // tslint:disable
+        /* eslint-disable */
         require("bootstrap/dist/css/bootstrap.min.css");
         require("bootstrap/dist/css/bootstrap-theme.min.css");
         require("../stylesheets/map.css");
         require("../stylesheets/style.css");
         require("katex/dist/katex.min.css");
-        // tslint:enable
+        /* eslint-enable */
 
         const browserContainerHost = new ui.BrowserContainerHost();
 
@@ -218,7 +217,7 @@ export class SharedTextRunner
 
         const overlayMap = await this.rootView
             .get<IComponentHandle>("flowContainerMap")
-            .get<DistributedMap.ISharedMap>();
+            .get<ISharedMap>();
         const [overlayInkMap, pageInk] = await Promise.all([
             overlayMap.get<IComponentHandle>("overlayInk").get<ISharedMap>(),
             overlayMap.get<IComponentHandle>("pageInk").get<IInk>(),
@@ -239,6 +238,7 @@ export class SharedTextRunner
         const theFlow = container.flowView;
         browserContainerHost.attach(container, div);
 
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         getInsights(this.rootView, this.sharedString.id).then(
             (insightsMap) => {
                 container.trackInsights(insightsMap);
@@ -251,7 +251,9 @@ export class SharedTextRunner
 
         theFlow.setEdit(this.rootView);
 
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.sharedString.loaded.then(() => {
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             theFlow.loadFinished(performanceNow());
             debug(`${this.runtime.id} fully loaded: ${performanceNow()} `);
         });
@@ -260,11 +262,11 @@ export class SharedTextRunner
 
 class TaskScheduler {
     constructor(
-        private componentContext: IComponentContext,
-        private taskManager: ITaskManager,
-        private componentUrl: string,
-        private sharedString: SharedString,
-        private insightsMap: DistributedMap.ISharedMap,
+        private readonly componentContext: IComponentContext,
+        private readonly taskManager: ITaskManager,
+        private readonly componentUrl: string,
+        private readonly sharedString: SharedString,
+        private readonly insightsMap: ISharedMap,
     ) {
 
     }
@@ -272,8 +274,8 @@ class TaskScheduler {
     public start() {
         const hostTokens = (this.componentContext.hostRuntime as IComponent).IComponentTokenProvider;
         const intelTokens = hostTokens && hostTokens.intelligence
-        ? hostTokens.intelligence.textAnalytics
-        : undefined;
+            ? hostTokens.intelligence.textAnalytics
+            : undefined;
         const intelTask: ITask = {
             id: "intel",
             instance: new TextAnalyzer(this.sharedString, this.insightsMap, intelTokens),

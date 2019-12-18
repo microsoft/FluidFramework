@@ -169,7 +169,7 @@ function measureFetch(startFile: string, withBookmarks = false) {
     console.log(`naive clone took ${(et / (1000*reps)).toFixed(1)} milliseconds`);
 }
 
-const baseDir = "../../../../server/gateway/public/literature";
+const baseDir = "../../src/test/literature";
 const filename = path.join(__dirname, baseDir, "pp.txt");
 const testTimeout = 30000;
 

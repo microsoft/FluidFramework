@@ -10,13 +10,33 @@
     "build": "echo Skipping @microsoft/eslint-config-fluid: No build steps necessary."
   },
   "dependencies": {
+    "@microsoft/fluid-build-common": "^0.12.0",
     "@typescript-eslint/eslint-plugin": "^2.9.0",
     "@typescript-eslint/eslint-plugin-tslint": "^2.9.0",
     "@typescript-eslint/parser": "^2.9.0",
     "eslint": "^6.7.1",
     "eslint-plugin-import": "^2.18.2",
+    "eslint-plugin-no-null": "^1.0.2",
+    "eslint-plugin-prefer-arrow": "^1.1.7",
     "eslint-plugin-react": "^7.16.0",
-    "glob": "^7.1.3"
+    "eslint-plugin-unicorn": "^14.0.1",
+    "glob": "^7.1.3",
+    "tslint": "^5.20.0",
+    "tslint-microsoft-contrib": "^6.0.0"
+  },
+  "devDependencies": {
+    "@microsoft/fluid-build-common": "^0.12.0",
+    "@typescript-eslint/eslint-plugin": "^2.9.0",
+    "@typescript-eslint/eslint-plugin-tslint": "^2.9.0",
+    "@typescript-eslint/parser": "^2.9.0",
+    "eslint": "^6.7.1",
+    "eslint-plugin-import": "^2.18.2",
+    "eslint-plugin-no-null": "^1.0.2",
+    "eslint-plugin-prefer-arrow": "^1.1.7",
+    "eslint-plugin-react": "^7.16.0",
+    "eslint-plugin-unicorn": "^14.0.1",
+    "tslint": "^5.20.0",
+    "tslint-microsoft-contrib": "^6.0.0"
   },
   "peerDependencies": {
     "@typescript-eslint/eslint-plugin": ">=2.4.0",

@@ -40,7 +40,7 @@ export class WebflowView implements IComponentHTMLView {
     private previouslyFocused?: HTMLOrSVGElement;
     private root: Element;
 
-    constructor(private readonly docP: Promise<FlowDocument>, private readonly title: string) {}
+    constructor(private readonly docP: Promise<FlowDocument>, private readonly title: string) { }
 
     // #region IComponentHTMLView
     public remove(): void {
@@ -59,6 +59,7 @@ export class WebflowView implements IComponentHTMLView {
         this.root = template.clone();
         template.get(this.root, "titleText").textContent = this.title;
 
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.docP.then((doc) => {
             const slot = template.get(this.root, "slot") as HTMLElement;
             let editor = new Editor(doc, slot, markdownFormatter);
@@ -72,10 +73,11 @@ export class WebflowView implements IComponentHTMLView {
 
             this.searchMenu.attach(template.get(this.root, "search"), {
                 commands: [
-                    { name: "debug",        enabled: () => true,    exec: () => { import(/* webpackChunkName: "debug" */ "./debug.css"); slot.toggleAttribute("data-debug"); }},
-                    { name: "md",     enabled: () => true,    exec: () => { switchFormatter(markdownFormatter); }},
-                    { name: "smd",         enabled: () => true,    exec: () => { switchFormatter(markdownHighlightFormatter); }},
-                    { name: "text",    enabled: () => true,    exec: () => { switchFormatter(plainTextFormatter); }},
+                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                    { name: "debug", enabled: () => true, exec: () => { import(/* webpackChunkName: "debug" */ "./debug.css"); slot.toggleAttribute("data-debug"); } },
+                    { name: "md", enabled: () => true, exec: () => { switchFormatter(markdownFormatter); } },
+                    { name: "smd", enabled: () => true, exec: () => { switchFormatter(markdownHighlightFormatter); } },
+                    { name: "text", enabled: () => true, exec: () => { switchFormatter(plainTextFormatter); } },
                 ],
                 onComplete: this.onComplete,
             });
@@ -100,7 +102,7 @@ export class WebflowView implements IComponentHTMLView {
             e.preventDefault();
             e.stopPropagation();
         }
-    }
+    };
 
     private readonly onComplete = (command?: ICommand) => {
         if (command) {
@@ -110,5 +112,5 @@ export class WebflowView implements IComponentHTMLView {
 
         this.previouslyFocused.focus();
         this.previouslyFocused = undefined;
-    }
+    };
 }

@@ -10,7 +10,7 @@ import { emptyObject } from "../util";
 import { debug } from "./debug";
 import { ILayoutCursor, Layout } from "./layout";
 
-// tslint:disable-next-line:no-empty-interface
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface IFormatterState { }
 
 export abstract class Formatter<TState extends IFormatterState> {
@@ -30,19 +30,30 @@ export abstract class Formatter<TState extends IFormatterState> {
         state: Readonly<TState>,
     );
 
-    public onKeyDown(layout: Layout, state: Readonly<TState>, caret: Caret, e: KeyboardEvent)   { return false; }
-    public onKeyPress(layout: Layout, state: Readonly<TState>, caret: Caret, e: KeyboardEvent)  { return false; }
+    public onKeyDown(layout: Layout, state: Readonly<TState>, caret: Caret, e: KeyboardEvent) { return false; }
+    public onKeyPress(layout: Layout, state: Readonly<TState>, caret: Caret, e: KeyboardEvent) { return false; }
 
-    public onPaste(layout: Layout, state: Readonly<TState>, caret: Caret, e: ClipboardEvent)    {
+    public onPaste(layout: Layout, state: Readonly<TState>, caret: Caret, e: ClipboardEvent) {
         debug("paste: Unsupported mime: '%o'", [...e.clipboardData.items].map((item) => item.type));
         return false;
     }
 
-    public segmentAndOffsetToNodeAndOffset(layout: Layout, state: Readonly<TState>, segment: ISegment, offset: number, cursor: Readonly<ILayoutCursor>): { node: Node, nodeOffset: number } | undefined {
+    public segmentAndOffsetToNodeAndOffset(
+        layout: Layout,
+        state: Readonly<TState>,
+        segment: ISegment,
+        offset: number,
+        cursor: Readonly<ILayoutCursor>): { node: Node, nodeOffset: number } | undefined {
         return undefined;
     }
 
-    public nodeAndOffsetToSegmentAndOffset(layout: Layout, state: Readonly<TState>, node: Node, nodeOffset: number, segment: ISegment, cursor: Readonly<ILayoutCursor>): { segment: ISegment, offset: number } | undefined {
+    public nodeAndOffsetToSegmentAndOffset(
+        layout: Layout,
+        state: Readonly<TState>,
+        node: Node,
+        nodeOffset: number,
+        segment: ISegment,
+        cursor: Readonly<ILayoutCursor>): { segment: ISegment, offset: number } | undefined {
         return undefined;
     }
 }
@@ -70,15 +81,34 @@ export class BootstrapFormatter<TFormatter extends RootFormatter<TState>, TState
     public onChange(layout: Layout, e: SequenceEvent) { this.formatter.onChange(layout, e); }
     public prepare(layout: Layout, start: number, end: number) { return this.formatter.prepare(layout, start, end); }
 
-    public onKeyDown(layout: Layout, state: Readonly<TState>, caret: Caret, e: KeyboardEvent)   { return this.formatter.onKeyDown(layout, state, caret, e); }
-    public onKeyPress(layout: Layout, state: Readonly<TState>, caret: Caret, e: KeyboardEvent)  { return this.formatter.onKeyPress(layout, state, caret, e); }
-    public onPaste(layout: Layout, state: Readonly<TState>, caret: Caret, e: ClipboardEvent)    { return this.formatter.onPaste(layout, state, caret, e); }
+    public onKeyDown(layout: Layout, state: Readonly<TState>, caret: Caret, e: KeyboardEvent) {
+        return this.formatter.onKeyDown(layout, state, caret, e);
+    }
 
-    public segmentAndOffsetToNodeAndOffset(layout: Layout, state: Readonly<TState>, segment: ISegment, offset: number, cursor: Readonly<ILayoutCursor>): { node: Node, nodeOffset: number } | undefined {
+    public onKeyPress(layout: Layout, state: Readonly<TState>, caret: Caret, e: KeyboardEvent) {
+        return this.formatter.onKeyPress(layout, state, caret, e);
+    }
+
+    public onPaste(layout: Layout, state: Readonly<TState>, caret: Caret, e: ClipboardEvent) {
+        return this.formatter.onPaste(layout, state, caret, e);
+    }
+
+    public segmentAndOffsetToNodeAndOffset(
+        layout: Layout,
+        state: Readonly<TState>,
+        segment: ISegment,
+        offset: number,
+        cursor: Readonly<ILayoutCursor>): { node: Node, nodeOffset: number } | undefined {
         return this.formatter.segmentAndOffsetToNodeAndOffset(layout, state, segment, offset, cursor);
     }
 
-    public nodeAndOffsetToSegmentAndOffset(layout: Layout, state: Readonly<TState>, node: Node, nodeOffset: number, segment: ISegment, cursor: Readonly<ILayoutCursor>) {
+    public nodeAndOffsetToSegmentAndOffset(
+        layout: Layout,
+        state: Readonly<TState>,
+        node: Node,
+        nodeOffset: number,
+        segment: ISegment,
+        cursor: Readonly<ILayoutCursor>) {
         return this.formatter.nodeAndOffsetToSegmentAndOffset(layout, state, node, nodeOffset, segment, cursor);
     }
 }

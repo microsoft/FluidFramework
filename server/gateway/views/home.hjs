@@ -1,0 +1,97 @@
+{{<layout}}
+{{$content}}
+<div class="container">
+    <h1>Fluid Framework</h1>
+    <p>
+        Where'd Prague go? Prague was our code name. Fluid is what we'll use going forward.
+        <br>
+        "Prague" === "Fluid" === "Fluid Framework"
+    </p>
+
+    <h2>Get The Source Code</h2>
+    <p>
+        The repository is located at
+        <a href="https://github.com/Microsoft/FluidFramework/">https://github.com/Microsoft/FluidFramework/</a>. To gain
+        access you will need to link your GitHub and Microsoft accounts. To do so follow the instructions at
+        <a href="https://repos.opensource.microsoft.com/link">https://repos.opensource.microsoft.com/link</a>.
+    </p>
+    <p>
+        After linking your accounts you should be added to the
+        <a href="https://github.com/orgs/Microsoft/teams/everyone">https://github.com/orgs/Microsoft/teams/everyone</a>
+        group
+        which will grant you access to the Fluid Framework repo. If for some reason you are not automatically added
+        to that group request to join at
+        <a
+            href="https://repos.opensource.microsoft.com/Microsoft/teams/pragueread">https://repos.opensource.microsoft.com/Microsoft/teams/pragueread</a>
+    </p>
+
+    <h2>Build a Component</h2>
+    <p>
+        Once you've cloned the repo, you can set up the "yo fluid" bootstrapper:
+        <br>
+        <div style="color:#005cc5;font-family:monospace;padding-left:50px">
+            <p>
+                npm install -g yo
+
+            </p>
+            <p>
+                cd /FluidFramework/tools/generator-fluid
+
+            </p>
+            <p>
+                npm install
+
+            </p>
+            <p>
+                npm link
+            </p>
+        </div>
+        Now go back to your root directory and get started
+        <br>
+        <div style="color:green;font-family:monospace;padding-left:50px">
+            <p>
+                yo fluid
+            </p>
+        </div>
+        <br>
+        <h3>Component Waterpark</h3>
+        <p>
+            The Component Waterpark is a place to explore, test, and share components.
+            It can load any component made with "yo fluid" and published to verdaccio.
+            "yo fluid" provides instructions on how to publish your components to verdaccio.
+            <br>
+            <a href="/waterpark">Water Park</a>
+        </p>
+    </p>
+    <h2>Help</h2>
+    <p>
+        Technical questions can be directed to
+        <a href="https://stackoverflow.microsoft.com/">StackOverflow</a>
+        and can specifically be directed to the
+        <a href="https://stackoverflow.microsoft.com/questions/tagged/fluid">Fluid tag.</a>
+        <br>
+        Bugs, suggestions, and issues should be directed to our
+        <a href="https://github.com/Microsoft/FluidFramework/issues">issues page.</a>
+        <br>
+        Logistical questions can be directed to our
+        <a
+            href="https://teams.microsoft.com/l/team/19%3a10ccb94cae324ec2aabcd6b6322b1a25%40thread.skype/conversations?groupId=9ce27575-2f82-4689-abdb-bcff07e8063b&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47">Teams
+            group.</a>
+    </p>
+    <h2>Demos</h2>
+    <h3>Starter Documents</h3>
+    <ul class="list-unstyled">
+        <li><a href="/templates/list">Document Templates</a></li>
+    </ul>
+
+    <h3>Demo Scripts</h3>
+    <ul class="list-unstyled">
+        <li><a href="/democreator">December 2017</a></li>
+        <li><a href="/democreator/retreat">Retreat 2018</a></li>
+        <li><a href="/democreator/fall2018">Fall 2018</a></li>
+        <li><a href="/democreator/winter2019">Winter 2019</a></li>
+        <li><a href="/democreator/spring2019">Spring 2019</a></li>
+    </ul>
+</div>
+{{/content}}
+{{/layout}}
