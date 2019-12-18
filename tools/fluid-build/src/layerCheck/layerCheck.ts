@@ -9,6 +9,7 @@ import { commonOptions, commonOptionString, parseOption } from "../common/common
 import { Timer } from "../common/timer";
 import { getResolvedFluidRoot } from "../common/fluidUtils";
 import * as path from "path";
+import { writeFileAsync } from "../common/utils";
 
 function printUsage() {
     console.log(
@@ -18,6 +19,8 @@ Options:
 ${commonOptionString}
 `);
 }
+
+let dotGraph: string | undefined;
 
 function parseOptions(argv: string[]) {
     let error = false;
@@ -37,6 +40,16 @@ function parseOptions(argv: string[]) {
         if (arg === "-?" || arg === "--help") {
             printUsage();
             process.exit(0);
+        }
+
+        if (arg === "--dot") {
+            if (i !== process.argv.length - 1) {
+                dotGraph = process.argv[++i];
+                continue;
+            }
+            console.error("ERROR: Missing argument for --dot");
+            error = true;
+            break;
         }
 
         console.error(`ERROR: Invalid arguments ${arg}`);
@@ -77,10 +90,20 @@ async function main() {
     const packages = Packages.load(baseDirectories);
     timer.time("Package scan completed");
 
-    const error = LayerGraph.check(resolvedRoot, packages);
-    timer.time("Layer check completed");
-    if (error) {
-        process.exit(-1);
+    try {
+        const layerGraph = LayerGraph.load(resolvedRoot, packages);
+
+        if (dotGraph !== undefined) {
+            await writeFileAsync(dotGraph, layerGraph.generateDotGraph());
+        }
+        const success = layerGraph.verify();
+        timer.time("Layer check completed");
+        if (!success) {
+            process.exit(-1);
+        }
+    } catch (e) {
+        console.error(e.message);
+        process.exit(-2);
     }
 }
 
