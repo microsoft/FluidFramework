@@ -3,12 +3,16 @@
  * Licensed under the MIT License.
  */
 
+// tslint:disable:no-var-requires
+// tslint:disable:no-require-imports
 require("jsdom-global")("", { url: "http://localhost" });
-window.performance.mark = window.performance.mark || (() => { });
-window.performance.measure = window.performance.measure || (() => { });
+window.performance.mark = window.performance.mark || (() => {});
+window.performance.measure = window.performance.measure || (() => {});
 
+// tslint:disable:binary-expression-operand-order
 import { TestHost } from "@microsoft/fluid-local-test-server";
 import * as assert from "assert";
+// tslint:disable-next-line:no-import-side-effect
 import "mocha";
 import { htmlFormatter } from "../src";
 import { FlowDocument, flowDocumentFactory } from "../src/document";
@@ -38,6 +42,7 @@ function expectTree(actual: Node, expected: ISnapshotNode) {
     assert.strictEqual(i, children.length);
 }
 
+// tslint:disable:max-func-body-length
 describe("Layout", () => {
     let host: TestHost;
     let doc: FlowDocument;

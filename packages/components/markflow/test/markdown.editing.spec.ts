@@ -3,14 +3,19 @@
  * Licensed under the MIT License.
  */
 
+// tslint:disable:no-var-requires
+// tslint:disable:no-require-imports
 require("jsdom-global")("", { url: "http://localhost" });
-window.performance.mark = window.performance.mark || (() => { });
-window.performance.measure = window.performance.measure || (() => { });
+window.performance.mark = window.performance.mark || (() => {});
+window.performance.measure = window.performance.measure || (() => {});
 
 // import * as debug from "debug";
 // debug.enable("flow:*");
+// tslint:enable:mocha-no-side-effect-code
+// tslint:disable:binary-expression-operand-order
 import { TestHost } from "@microsoft/fluid-local-test-server";
 import { strict as assert } from "assert";
+// tslint:disable-next-line:no-import-side-effect
 import "mocha";
 import { FlowDocument, flowDocumentFactory } from "../src/document";
 import { Caret } from "../src/editor/caret";
@@ -44,6 +49,7 @@ import { Layout } from "../src/view/layout";
 //     assert.strictEqual(i, children.length);
 // }
 
+// tslint:disable:max-func-body-length
 describe("Markdown", () => {
     let host: TestHost;
     let doc: FlowDocument;
@@ -76,7 +82,7 @@ describe("Markdown", () => {
         layout.invalidatedCallback = (start, end) => {
             oldInvalidatedCallback(start, end);
             if (!renderResolver) {
-
+                // tslint:disable-next-line:promise-must-complete
                 rendered = new Promise((accept) => {
                     console.log("Render pending");
                     renderResolver = accept;
