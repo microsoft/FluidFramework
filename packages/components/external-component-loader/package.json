@@ -23,7 +23,7 @@
     "start:live": "webpack-dev-server --config webpack.config.js --package package.json --env.mode live",
     "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
     "test:buildclicker": "cd ../clicker && test -e dist/main.bundle.js || npm run webpack",
-    "test": "npm run test:buildclicker && jest",
+    "test:jest": "npm run test:buildclicker && jest",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose",
     "webpack": "webpack --env.production",
