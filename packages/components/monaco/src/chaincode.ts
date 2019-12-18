@@ -177,6 +177,7 @@ export class MonacoRunner extends PrimedComponent implements
 
         this.codeEditor.addCommand(
             monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             () => { this.runCode(outputModel.getValue()); },
             null);
 
@@ -187,6 +188,7 @@ export class MonacoRunner extends PrimedComponent implements
 
         let ignoreModelContentChanges = false;
         this.codeEditor.onDidChangeModelContent((e) => {
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             monaco.languages.typescript.getTypeScriptWorker().then((worker) => {
                 worker(this.codeModel.uri.toString()).then((client) => {
                     client.getEmitOutput(this.codeModel.uri.toString()).then((r) => {
@@ -232,7 +234,6 @@ export class MonacoRunner extends PrimedComponent implements
      */
     private mergeDelta(delta: IMergeTreeOp): void {
         /* eslint-disable @typescript-eslint/indent */
-        // eslint-disable-next-line default-case
         switch (delta.type) {
             case MergeTreeDeltaType.GROUP:
                 this.mergeDeltaGroup(delta);
@@ -242,6 +243,8 @@ export class MonacoRunner extends PrimedComponent implements
                 break;
             case MergeTreeDeltaType.REMOVE:
                 this.mergeRemoveDelta(delta);
+                break;
+            default:
                 break;
         }
         /* eslint-enable @typescript-eslint/indent */
@@ -309,6 +312,7 @@ export class MonacoRunner extends PrimedComponent implements
     private async runCode(code: string): Promise<void> {
         // const root = await platform.queryInterface<any>("root");
         // const host = root ? root.entry : null;
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.exec(/* host, */ code);
     }
 
