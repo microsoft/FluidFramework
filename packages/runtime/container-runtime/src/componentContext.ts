@@ -181,6 +181,9 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         if (!this.componentRuntimeDeferred) {
             this.componentRuntimeDeferred = new Deferred<IComponentRuntime>();
             const details = await this.getInitialSnapshotDetails();
+            // Base snapshot is the baseline where pending ops are applied to.
+            // It is important that this be in sync with the pending ops, and also
+            // that it is set here, before bindRuntime is called.
             this._baseSnapshot = details.snapshot;
             const packages = details.pkg;
             let entry: ComponentRegistryEntry;
