@@ -71,8 +71,7 @@ export async function initialize(
     (await IFrameDocumentServiceProxyFactory.create(
         selectDocumentServiceFactoryForProtocol(resolved as IFluidResolvedUrl, factoryMap),
         document.getElementById("ifr") as HTMLIFrameElement,
-        // privateSession.frame,
         options,
-        resolver,
+        { resolver },
     )).createDocumentServiceFromRequest({ url });
 }
