@@ -52,7 +52,6 @@ export class Caret {
             if (root.contains(node)) {
                 let el = node.parentElement;
 
-                // tslint:disable-next-line:no-conditional-assignment
                 while (el && el !== root) {
                     if (el.classList.contains(styles.inclusion)) {
                         e.preventDefault();
@@ -62,6 +61,7 @@ export class Caret {
                         let position = this.doc.getPosition(segment);
                         debug("  inclusion found @%d", position);
 
+                        /* eslint-disable @typescript-eslint/indent */
                         switch (detail.direction) {
                             case Direction.up:
                             case Direction.left:
@@ -69,6 +69,8 @@ export class Caret {
                             default:
                                 position++;
                         }
+                        /* eslint-enable @typescript-eslint/indent */
+
 
                         // Defer setting the selection to avoid stealing focus and receiving the pending key event.
                         requestAnimationFrame(() => {
@@ -134,7 +136,7 @@ export class Caret {
         const start = this.nodeOffsetToPosition(anchorNode, anchorOffset);
         const end = this.nodeOffsetToPosition(focusNode, focusOffset);
         this.setSelection(start, end);
-    }
+    };
 
     private positionToNodeOffset(ref: LocalReference) {
         let result: { node: Node, nodeOffset: number };

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import {
     IComponent,
     IComponentHTMLOptions,
@@ -24,10 +25,9 @@ import {
     IHostRuntime,
 } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
-import { EventEmitter } from "events";
 import * as $ from "jquery";
 
-// tslint:disable-next-line:no-var-requires no-submodule-imports
+// eslint-disable-next-line @typescript-eslint/no-require-imports,import/no-internal-modules,import/no-unassigned-import
 require("bootstrap/dist/css/bootstrap.min.css");
 
 async function updateOrCreateKey(key: string, map: ISharedMap, container: JQuery, runtime: IComponentRuntime) {
@@ -39,7 +39,6 @@ async function updateOrCreateKey(key: string, map: ISharedMap, container: JQuery
     const isCollab = value ? (value as IComponent).IComponentHandle !== undefined : false;
 
     if (newElement) {
-        // tslint:disable-next-line:no-jquery-raw-elements
         keyElement = $(`<div class="${key} ${isCollab ? "collab-object" : ""}"></div>`);
         container.append(keyElement);
     }
@@ -48,6 +47,7 @@ async function updateOrCreateKey(key: string, map: ISharedMap, container: JQuery
         if (newElement) {
             const handle = (value as IComponent).IComponentHandle;
             handle.get<SharedMap>().then((sharedMap) => {
+                // eslint-disable-next-line @typescript-eslint/no-use-before-define
                 displayMap(keyElement, key, sharedMap, map, runtime);
             });
         }
@@ -75,11 +75,31 @@ function displayValues(map: ISharedMap, container: JQuery, runtime: IComponentRu
     }
 
     // Listen and process updates
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
     map.on("valueChanged", async (changed: IValueChanged) => {
         updateOrCreateKey(changed.key, map, values, runtime);
     });
 
     container.append(values);
+}
+
+/**
+ * Randomly changes the values in the map
+ */
+async function randomizeMap(map: ISharedMap) {
+    // Link up the randomize button
+    const keys = ["foo", "bar", "baz", "binky", "winky", "twinkie"];
+
+    const counter: Counter =
+        map.createValueType("counter", CounterValueType.Name, undefined).
+            get("counter");
+
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
+    setInterval(async () => {
+        const key = keys[Math.floor(Math.random() * keys.length)];
+        map.set(key, Math.floor(Math.random() * 100000).toString());
+        counter.increment(1);
+    }, 1000);
 }
 
 /**
@@ -92,7 +112,6 @@ async function displayMap(
     parent: ISharedMap,
     runtime: IComponentRuntime,
 ) {
-    // tslint:disable-next-line:no-jquery-raw-elements
     const header = key !== null ? $(`<h2>${key}: ${map.id}</h2>`) : $(`<h2>${map.id}</h2>`);
 
     if (key !== null) {
@@ -105,9 +124,7 @@ async function displayMap(
     }
     parentElement.append(header);
 
-    // tslint:disable-next-line:no-jquery-raw-elements
     const container = $(`<div></div>`);
-    // tslint:disable-next-line:no-jquery-raw-elements
     const childMaps = $(`<div></div>`);
 
     displayValues(map, container, runtime);
@@ -136,26 +153,6 @@ async function displayMap(
     parentElement.append(container, childMaps);
 }
 
-/**
- * Randomly changes the values in the map
- */
-async function randomizeMap(map: ISharedMap) {
-    // link up the randomize button
-    const keys = ["foo", "bar", "baz", "binky", "winky", "twinkie"];
-
-    const counter: Counter =
-        map.createValueType("counter", CounterValueType.Name, undefined).
-            get("counter");
-
-    setInterval(async () => {
-        // tslint:disable-next-line:insecure-random
-        const key = keys[Math.floor(Math.random() * keys.length)];
-        // tslint:disable-next-line:insecure-random
-        map.set(key, Math.floor(Math.random() * 100000).toString());
-        counter.increment(1);
-    }, 1000);
-}
-
 export class ProgressCollection
     extends EventEmitter
     implements IComponentLoadable, IComponentRouter, IComponentHTMLVisual {
@@ -175,7 +172,7 @@ export class ProgressCollection
     private root: ISharedMap;
     private div: HTMLDivElement;
 
-    constructor(private runtime: IComponentRuntime, context: IComponentContext) {
+    constructor(private readonly runtime: IComponentRuntime, context: IComponentContext) {
         super();
 
         this.url = context.id;
@@ -196,7 +193,7 @@ export class ProgressCollection
             displayMap($(this.div), null, this.root, null, this.runtime);
         }
 
-        // reparent if needed
+        // Reparent if needed
         if (this.div.parentElement !== elm) {
             this.div.remove();
             elm.appendChild(this.div);
@@ -231,7 +228,7 @@ class SharedMapVisualizerFactory implements IComponentFactory, IRuntimeFactory {
             [async (request: IRequest, containerRuntime: IHostRuntime) => {
                 console.log(request.url);
 
-                const requestUrl = request.url.length > 0 && request.url.charAt(0) === "/"
+                const requestUrl = request.url.length > 0 && request.url.startsWith("/")
                     ? request.url.substr(1)
                     : request.url;
                 const trailingSlash = requestUrl.indexOf("/");
@@ -245,16 +242,16 @@ class SharedMapVisualizerFactory implements IComponentFactory, IRuntimeFactory {
             }],
             { generateSummaries: true });
 
-        // flush mode to manual to batch operations within a turn
+        // Flush mode to manual to batch operations within a turn
         runtime.setFlushMode(FlushMode.Manual);
 
         // On first boot create the base component
         if (!runtime.existing) {
             await Promise.all([
-                    runtime.createComponent(defaultComponentId, defaultComponent).then((componentRuntime) => {
-                        componentRuntime.attach();
-                    }),
-                ])
+                runtime.createComponent(defaultComponentId, defaultComponent).then((componentRuntime) => {
+                    componentRuntime.attach();
+                }),
+            ])
                 .catch((error) => {
                     context.error(error);
                 });

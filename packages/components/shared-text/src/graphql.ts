@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import { IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
 import { ISharedMap } from "@microsoft/fluid-map";
 import { SharedString } from "@microsoft/fluid-sequence";
-import { EventEmitter } from "events";
 import * as GraphiQL from "graphiql";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -19,7 +19,7 @@ export class GraphIQLView extends EventEmitter implements IComponentHTMLVisual {
 
     public get IComponentHTMLVisual() { return this; }
 
-    constructor(private map: ISharedMap, private sharedString: SharedString) {
+    constructor(private readonly map: ISharedMap, private readonly sharedString: SharedString) {
         super();
     }
 
@@ -30,7 +30,8 @@ export class GraphIQLView extends EventEmitter implements IComponentHTMLVisual {
         graphQLDiv.style.width = "100vw";
         graphQLDiv.style.height = "100vh";
 
-        // tslint:disable-next-line:no-submodule-imports
+        // eslint-disable-next-line max-len
+        // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires, import/no-internal-modules
         const css = require("graphiql/graphiql.css");
         const styleTag = document.createElement("style");
         styleTag.innerText = css;
@@ -40,9 +41,8 @@ export class GraphIQLView extends EventEmitter implements IComponentHTMLVisual {
             this.map,
             this.sharedString);
 
-        function graphQLFetcher(graphQLParams) {
-            return graphQLServer.runQuery(graphQLParams.query, graphQLParams.variables);
-        }
+        const graphQLFetcher = async (graphQLParams) =>
+            graphQLServer.runQuery(graphQLParams.query, graphQLParams.variables);
 
         ReactDOM.render(
             React.createElement(

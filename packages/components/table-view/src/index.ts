@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
- // set the base path for all dynamic imports first
-// tslint:disable-next-line:no-import-side-effect
+// set the base path for all dynamic imports first
+// eslint-disable-next-line import/no-unassigned-import
 import "./publicpath";
 
 export { fluidExport, tableViewType } from "./runtime";

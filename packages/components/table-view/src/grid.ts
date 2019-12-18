@@ -43,7 +43,7 @@ export class GridView {
     private get numCols() { return this.doc.numCols; }
     public readonly root = tableTemplate.clone();
 
-    private _startRow    = 0;
+    private _startRow = 0;
     public get startRow() { return this._startRow; }
     public set startRow(value: number) {
         this._startRow = value;
@@ -56,9 +56,9 @@ export class GridView {
     private readonly inputBox = cellInputTemplate.clone() as HTMLInputElement;
     private tdText?: Node;
     private readonly selection = new BorderRect([
-        [ `${styles.selectedTL}`, `${styles.selectedT}`, `${styles.selectedTR}` ],
-        [ `${styles.selectedL}`,  `${styles.selected}`,  `${styles.selectedR}`  ],
-        [ `${styles.selectedBL}`, `${styles.selectedB}`, `${styles.selectedBR}` ],
+        [`${styles.selectedTL}`, `${styles.selectedT}`, `${styles.selectedTR}`],
+        [`${styles.selectedL}`, `${styles.selected}`, `${styles.selectedR}`],
+        [`${styles.selectedBL}`, `${styles.selectedB}`, `${styles.selectedBR}`],
     ]);
     private readonly maxRows = 10;
 
@@ -96,8 +96,7 @@ export class GridView {
             const text = `\u200B${
                 value === undefined
                     ? ""
-                    : value
-            }`;
+                    : value}`;
 
             if (td.textContent !== text) {
                 td.textContent = text;
@@ -164,7 +163,7 @@ export class GridView {
             }
             this.cols.append(th);
         }
-    }
+    };
 
     private readonly onClick = (e: MouseEvent) => {
         const maybeTd = this.getCellFromEvent(e);
@@ -172,17 +171,17 @@ export class GridView {
             const [row, col] = this.getRowColFromTd(maybeTd);
             if (row < 0 && col >= 0) {
                 this.selection.start = [0, col];
-                this.selection.end   = [this.numRows - 1, col];
+                this.selection.end = [this.numRows - 1, col];
                 this.refreshCells();
             } else if (col < 0 && row >= 0) {
                 this.selection.start = [row, 0];
-                this.selection.end   = [row, this.numCols - 1];
+                this.selection.end = [row, this.numCols - 1];
                 this.refreshCells();
             } else if (col >= 0) {
                 this.moveInputToPosition(row, col, e.shiftKey);
             }
         }
-    }
+    };
 
     private readonly cellDown = (e: PointerEvent) => {
         const maybeTd = this.getCellFromEvent(e);
@@ -194,7 +193,7 @@ export class GridView {
                 this.refreshCells();
             }
         }
-    }
+    };
 
     private readonly cellMove = (e: PointerEvent) => {
         if (!e.buttons) {
@@ -211,7 +210,7 @@ export class GridView {
                 this.refreshCells();
             }
         }
-    }
+    };
 
     private readonly cancelInput = () => {
         const maybeParent = this.inputBox.parentElement as HTMLTableCellElement | null;
@@ -220,10 +219,10 @@ export class GridView {
             const [row, col] = this.getRowColFromTd(maybeParent);
             this.refreshCell(maybeParent, row, col);
         }
-    }
+    };
 
     private parseInput(input: string) {
-        if (input.match(numberExp)) {
+        if (numberExp.exec(input)) {
             const asNumber = Number(input);
             if (!isNaN(asNumber)) {
                 return asNumber;
@@ -248,10 +247,10 @@ export class GridView {
 
     private moveInputToPosition(row: number, col: number, extendSelection: boolean) {
         const newParent = this.getTdFromRowCol(row, col);
-        // tslint:disable-next-line: strict-boolean-expressions
         if (newParent) {
             this.commitInput();
 
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             this.tdText = newParent.firstChild!;
             console.assert(this.tdText.nodeType === Node.TEXT_NODE);
 
@@ -273,14 +272,15 @@ export class GridView {
         }
 
         // 'getTdFromRowCol(..)' return false if row/col are outside the sheet range.
-        // tslint:disable-next-line: strict-boolean-expressions
         return !!newParent;
     }
 
     private moveInputByOffset(e: KeyboardEvent, rowOffset: number, colOffset: number) {
         // Allow the left/right arrow keys to move the caret inside the inputBox until the caret
         // is in the first/last character position.  Then move the inputBox.
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         if ((e.target === this.inputBox) && this.inputBox.selectionStart! >= 0) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const x = this.inputBox.selectionStart! + colOffset;
             if (0 <= x && x <= this.inputBox.value.length) {
                 colOffset = 0;
@@ -307,21 +307,23 @@ export class GridView {
     }
 
     private readonly cellInput = () => {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.tdText!.textContent = `\u200B${this.inputBox.value}`;
-    }
+    };
 
     private readonly cellKeyDown = (e: KeyboardEvent) => {
-        // tslint:disable-next-line: switch-default
+        /* eslint-disable @typescript-eslint/indent, default-case */
         switch (e.code) {
-            case KeyCode.escape:     { this.cancelInput(); break; }
-            case KeyCode.arrowUp:    { this.moveInputByOffset(e, /* rowOffset: */ -1, /* colOffset */  0); break; }
-            case KeyCode.enter:      { this.commitInput(); /* fall-through */ }
-            case KeyCode.arrowDown:  { this.moveInputByOffset(e, /* rowOffset: */  1, /* colOffset */  0); break; }
-            case KeyCode.arrowLeft:  { this.moveInputByOffset(e, /* rowOffset: */  0, /* colOffset */ -1); break; }
-            case KeyCode.tab:        { e.preventDefault(); /* fall-through */ }
+            case KeyCode.escape: { this.cancelInput(); break; }
+            case KeyCode.arrowUp: { this.moveInputByOffset(e, /* rowOffset: */ -1, /* colOffset */  0); break; }
+            case KeyCode.enter: { this.commitInput(); /* fall-through */ }
+            case KeyCode.arrowDown: { this.moveInputByOffset(e, /* rowOffset: */  1, /* colOffset */  0); break; }
+            case KeyCode.arrowLeft: { this.moveInputByOffset(e, /* rowOffset: */  0, /* colOffset */ -1); break; }
+            case KeyCode.tab: { e.preventDefault(); /* fall-through */ }
             case KeyCode.arrowRight: { this.moveInputByOffset(e, /* rowOffset: */  0, /* colOffset */  1); }
         }
-    }
+        /* eslint-enable @typescript-eslint/indent, default-case */
+    };
 
     private getCellFromEvent(e: Event) {
         const target = e.target as HTMLElement;
@@ -351,6 +353,7 @@ export class GridView {
             return undefined;
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const cols = rows.item(row)!.children;
 
         // Row headings are inside the <tbody>, therefore we need to adjust our column

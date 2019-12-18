@@ -8,47 +8,49 @@ import { IComponentHTMLVisual, IComponentHandle } from "@microsoft/fluid-compone
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import { pollOptionsMapKey, pollVotersMapKey } from "./PragueConstants";
+import { pollOptionsMapKey, pollVotersMapKey } from "./Constants";
+// eslint-disable-next-line import/no-internal-modules
 import { Poll } from "./view/Poll";
 
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../package.json");
 const chaincodeName = pkg.name;
 
-export class Yopollster extends PrimedComponent implements IComponentHTMLVisual {
-  public get IComponentHTMLVisual() { return this; }
+export class Pollster extends PrimedComponent implements IComponentHTMLVisual {
+    public get IComponentHTMLVisual() { return this; }
 
-  protected async componentInitializingFirstTime() {
-    this.root.set(pollOptionsMapKey, SharedMap.create(this.runtime).handle);
-    this.root.set(pollVotersMapKey, SharedMap.create(this.runtime).handle);
-  }
+    protected async componentInitializingFirstTime() {
+        this.root.set(pollOptionsMapKey, SharedMap.create(this.runtime).handle);
+        this.root.set(pollVotersMapKey, SharedMap.create(this.runtime).handle);
+    }
 
-  public async render(div: HTMLDivElement) {
-    const optionsMap = await this.root.get<IComponentHandle>(pollOptionsMapKey).get<ISharedMap>();
-    const votersMap = await this.root.get<IComponentHandle>(pollVotersMapKey).get<ISharedMap>();
+    public async render(div: HTMLDivElement) {
+        const optionsMap = await this.root.get<IComponentHandle>(pollOptionsMapKey).get<ISharedMap>();
+        const votersMap = await this.root.get<IComponentHandle>(pollVotersMapKey).get<ISharedMap>();
 
-    // Render Component
-    ReactDOM.render(
-      <Poll
-        pollStore={{
-          rootMap: this.root,
-          optionsMap,
-          votersMap
-        }}
-        clientId={this.runtime.clientId}
-      />,
-      div
-    );
-  }
+        // Render Component
+        ReactDOM.render(
+            <Poll
+                pollStore={{
+                    rootMap: this.root,
+                    optionsMap,
+                    votersMap,
+                }}
+                clientId={this.runtime.clientId}
+            />,
+            div,
+        );
+    }
 }
 
 export const PollInstantiationFactory = new PrimedComponentFactory(
-  Yopollster,
-  [SharedMap.getFactory()],
+    Pollster,
+    [SharedMap.getFactory()],
 );
 
 export const fluidExport = new SimpleModuleInstantiationFactory(
-  chaincodeName,
-  new Map([
-    [chaincodeName, Promise.resolve(PollInstantiationFactory)],
-  ]),
+    chaincodeName,
+    new Map([
+        [chaincodeName, Promise.resolve(PollInstantiationFactory)],
+    ]),
 );

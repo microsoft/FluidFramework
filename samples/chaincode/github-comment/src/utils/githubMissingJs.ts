@@ -15,14 +15,14 @@ export function xn(e, t) {
     const o = n[t];
     const r = s[t];
 
-    // tslint:disable-next-line: max-line-length
-    if (!!e.dispatchEvent(new CustomEvent("tab-container-change", { bubbles: !0, cancelable: !0, detail: { relatedTarget: r } }))) {
-        // tslint:disable-next-line: no-shadowed-variable
+    // eslint-disable-next-line max-len
+    if (e.dispatchEvent(new CustomEvent("tab-container-change", { bubbles: !0, cancelable: !0, detail: { relatedTarget: r } }))) {
+        // eslint-disable-next-line no-shadow
         for (const e of n) {
             e.setAttribute("aria-selected", "false");
             e.setAttribute("tabindex", "-1");
         }
-        // tslint:disable-next-line: no-shadowed-variable
+        // eslint-disable-next-line no-shadow
         for (const e of s) {
             e.hidden = !0;
             e.setAttribute("tabindex", "0");
@@ -41,6 +41,6 @@ export function tabHandler(e) {
         return;
     }
     const n = e.target.closest('[role="tab"]');
-    // tslint:disable-next-line: no-unused-expression
+    // eslint-disable-next-line no-unused-expressions
     n && n.closest('[role="tablist"]') && xn(document, t.indexOf(n));
 }

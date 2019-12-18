@@ -2,12 +2,11 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
+import * as assert from "assert";
 import { Dom, Scheduler } from "@fluid-example/flow-util-lib";
-// tslint:disable:align
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { ISegment, LocalReference, MergeTreeMaintenanceType } from "@microsoft/fluid-merge-tree";
 import { SequenceEvent } from "@microsoft/fluid-sequence";
-import * as assert from "assert";
 import { Tag } from "../";
 import { FlowDocument } from "../document";
 import { clamp, emptyObject, getSegmentRange } from "../util";
@@ -32,11 +31,10 @@ class LayoutCheckpoint {
         cursor: Readonly<ILayoutCursor>,
     ) {
         this.formatStack = Object.freeze(formatStack.slice(0));
-        this.cursor = Object.freeze({...cursor});
+        this.cursor = Object.freeze({ ...cursor });
     }
 }
 
-// tslint:disable-next-line:no-object-literal-type-assertion
 export const eotSegment = Object.freeze({ cachedLength: 0 }) as ISegment;
 
 // Invariants:
@@ -112,7 +110,6 @@ export class Layout {
         Dom.removeAllChildren(this.root);
     }
 
-    // tslint:disable-next-line:max-func-body-length
     public sync(start = 0, end = this.doc.length) {
         const doc = this.doc;
         const length = doc.length;
@@ -155,6 +152,7 @@ export class Layout {
             doc.visitRange((position, segment, startOffset, endOffset) => {
                 this.beginSegment(position, segment, startOffset, endOffset);
 
+                // eslint-disable-next-line no-constant-condition
                 while (true) {
                     const index = this.formatStack.length - 1;
                     const formatInfo = this.format;
@@ -261,7 +259,7 @@ export class Layout {
         const stack = checkpoint.formatStack;
         return stack.length > 0
             ? stack
-            : [ this.rootFormatInfo ];
+            : [this.rootFormatInfo];
     }
 
     public popFormat(count = 1) {
@@ -421,7 +419,7 @@ export class Layout {
         // Reuse the existing element if possible, otherwise create a new one.  Note that
         // 'layout.pushNode(..)' will clean up the old node if needed.
         return hasTag(existing, tag) && this.nodeToSegment(existing) === this.segment
-            ? existing as HTMLElement
+            ? existing
             : document.createElement(tag);
     }
 
@@ -484,7 +482,7 @@ export class Layout {
     private restoreCheckpoint(checkpoint: LayoutCheckpoint) {
         const { formatStack, cursor } = checkpoint;
         this.formatStack = formatStack.map((formatInfo) => ({ ...formatInfo }));
-        this._cursor     = {...cursor};
+        this._cursor = { ...cursor };
 
         // The next insertion point must be a descendent of the root node.
         assert(this.root.contains(cursor.parent));
@@ -528,7 +526,7 @@ export class Layout {
         }
 
         this.invalidate(e.first.position, e.last.position + e.last.segment.cachedLength);
-    }
+    };
 
     private unionRef(doc: FlowDocument, position: number | undefined, ref: LocalReference | undefined, fn: (a: number, b: number) => number, limit: number) {
         return fn(
@@ -544,10 +542,12 @@ export class Layout {
     private invalidate(start: number, end: number) {
         // Union the delta range with the current invalidated range (if any).
         const doc = this.doc;
+        // eslint-disable-next-line @typescript-eslint/unbound-method
         start = this.unionRef(doc, start, this.startInvalid, Math.min, +Infinity);
-        end   = this.unionRef(doc, end,   this.endInvalid,   Math.max, -Infinity);
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        end = this.unionRef(doc, end, this.endInvalid, Math.max, -Infinity);
         this.startInvalid = updateRef(doc, this.startInvalid, start);
-        this.endInvalid   = updateRef(doc, this.endInvalid,   end);
+        this.endInvalid = updateRef(doc, this.endInvalid, end);
         this.scheduleRender();
         if (this.invalidatedCallback) { this.invalidatedCallback(start, end); }
     }
