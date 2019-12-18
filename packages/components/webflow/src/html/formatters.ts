@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import { Caret as CaretUtil, Direction, Rect } from "@fluid-example/flow-util-lib";
 import { IComponent, IComponentHTMLView } from "@microsoft/fluid-component-core-interfaces";
 import { Marker, TextSegment } from "@microsoft/fluid-merge-tree";
-import * as assert from "assert";
 import { DocSegmentKind, getComponentOptions, getCss, getDocSegmentKind } from "../document";
 import * as styles from "../editor/index.css";
 import { emptyObject } from "../util";
@@ -31,6 +31,7 @@ class HtmlFormatter extends RootFormatter<IFormatterState> {
         const segment = layout.segment;
         const kind = getDocSegmentKind(segment);
 
+        /* eslint-disable @typescript-eslint/indent */
         switch (kind) {
             case DocSegmentKind.text: {
                 layout.pushFormat(paragraphFormatter, emptyObject);
@@ -62,6 +63,7 @@ class HtmlFormatter extends RootFormatter<IFormatterState> {
             default:
                 assert.fail(`Unhandled DocSegmentKind '${kind}' @${layout.position}`);
         }
+        /* eslint-disable @typescript-eslint/indent */
     }
 
     public onChange() { }
@@ -94,7 +96,6 @@ export class InclusionFormatter extends Formatter<IInclusionState> {
                 const visual = component.IComponentHTMLVisual;
                 const view: IComponentHTMLView = visual.addView
                     ? visual.addView(layout.scope)
-                    // tslint:disable-next-line:no-object-literal-type-assertion
                     : {
                         IComponentHTMLVisual: visual,
                         render: visual.render.bind(visual),
@@ -131,7 +132,7 @@ interface ITagsProps { tags?: Tag[]; }
 class TagsFormatter extends Formatter<ITagsState> {
     public begin(layout: Layout, init: Readonly<Partial<ITagsState>>, prevState: Readonly<ITagsState>) {
         const state: Partial<ITagsState> = prevState
-            ? {...prevState}
+            ? { ...prevState }
             : {};
 
         const segment = layout.segment;
@@ -164,7 +165,7 @@ class TagsFormatter extends Formatter<ITagsState> {
             case DocSegmentKind.paragraph: {
                 layout.popNode();
                 const pg = layout.pushTag(state.pTag);
-                syncCss(pg as HTMLElement, getCss(segment), undefined);
+                syncCss(pg, getCss(segment), undefined);
                 return { state, consumed: true };
             }
 
@@ -208,7 +209,6 @@ class ParagraphFormatter extends Formatter<IParagraphState> {
             : {};
 
         const segment = layout.segment;
-        // tslint:disable-next-line:strict-boolean-expressions
         const tag = (segment.properties && segment.properties.tag) || this.defaultTag;
         state.root = layout.pushTag(tag);
         syncCss(state.root, getCss(segment), undefined);

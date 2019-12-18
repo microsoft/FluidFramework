@@ -1,6 +1,6 @@
 .searchMenu {
     display: none;
-    
+
     text-align: center;
     width: 100%;
 
@@ -11,7 +11,7 @@
 .input {
     -webkit-appearance: none;
     -moz-appearance: none;
-    padding: .5em;
+    padding: 0.5em;
     border: 1px solid #bbb;
     border-radius: 3px;
     width: 400px;

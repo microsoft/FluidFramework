@@ -136,7 +136,7 @@ export function integerTest1() {
 }
 
 export function fileTest1() {
-    let content = fs.readFileSync(path.join(__dirname, "../../../public/literature/shakespeare.txt"), "utf8");
+    let content = fs.readFileSync(path.join(__dirname, "../../src/test/literature/shakespeare.txt"), "utf8");
     let a = content.split('\n');
     let iterCount = a.length >> 2;
     const removeCount = 10;
@@ -1353,10 +1353,10 @@ function tst() {
     let p3 = tree.neighbors("hat");
     log(p3);
     let ntree = new MergeTree.TST<number>();
-    let filename = path.join(__dirname, "../../public/literature/dict.txt")
+    let filename = path.join(__dirname, "../../src/test/literature/dict.txt")
     let content = fs.readFileSync(filename, "utf8");
     let splitContent = content.split(/\r\n|\n/g);
-    let corpusFilename = path.join(__dirname, "../../../public/literature/pp.txt")
+    let corpusFilename = path.join(__dirname, "./literature/pp.txt")
     let corpusContent = fs.readFileSync(corpusFilename, "utf8");
     let corpusTree = new MergeTree.TST<number>();
     function addCorpus(corpusContent: string, corpusTree: MergeTree.TST<number>) {
@@ -1736,7 +1736,7 @@ if (testTST) {
     tst();
 }
 
-const baseDir = "../../../../server/gateway/public/literature";
+const baseDir = "../../src/test/literature";
 const testTimeout = 60000;
 
 describe("Routerlicious", () => {

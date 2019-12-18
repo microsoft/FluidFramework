@@ -1,0 +1,79 @@
+{{<layout}}
+    {{$content}}
+        <div class="container">
+
+            <h1>Prague Demos</h1>
+            <p>
+                For all demos you'll want to have two browser windows open side by side. Open this page in the left
+                browser window and use it to open links for both windows.
+            </p>
+            <p>
+                To create a new set of links refresh this page.
+            </p>
+
+            <h2>Performance</h2>
+            <p>
+                Open a copy of the links listed below in each of the browser windows. Show the same page side by side.
+                Pick a line and hold the space bar. Then hold down the backspace key to delete the spaces. Repeat this
+                process as many times as you want. The test shows the local client performance as well as the remote
+                client performance. To ink in the Prague example either use a pen or click the ink checkbox in the
+                bottom status bar and then use the mouse.
+            </p>
+
+            <ul class="list-unstyled">
+                <li><a href="https://docs.google.com/document/d/1Ed3_Bgmfj4L1tvjjh8geSHNZMbh_X6SaRd1uZGSQSio/edit" target="_blank">Google Docs Pride and Prejudice</a></li>
+                <li><a href="/loader/fluid/{{sharedTextMoniker}}?chaincode=@fluid-example/shared-text@{{version}}&template=pp.txt" target="_blank">Prague Pride and Prejudice</a></li>
+            </ul>
+
+            <h2>Augmentation Loop</h2>
+            <p>
+                You have the option to either have scribe automatically
+                type some text. Or you can manually load the documents and type yourself.
+            </p>
+
+            <h3>Manual</h3>
+            <p>
+                Open one link in the left browser and the other in the right. Ctrl+B will bold text and Ctrl+U will underline.
+            </p>
+            <ul class="list-unstyled">
+                <li><a href="/loader/fluid/{{translateMoniker}}?chaincode=@fluid-example/shared-text@{{version}}&languageFrom=en&languageTo=el" target="_blank">Greek</a></li>
+                <li><a href="/loader/fluid/{{translateMoniker}}?chaincode=@fluid-example/shared-text@{{version}}&languageFrom=en&languageTo=es" target="_blank">Spanish</a></li>
+            </ul>
+
+            <h3>Automatic</h3>
+            <p>
+                Open the link below, click on the create button, then open the links to the translation documents. Then click
+                Start. You will want to keep the Scribe page active (i.e. in its own window or in an active tab) since
+                otherwise the browser may stop it from running JavaScript which will pause the demo.
+            </p>
+            <ul class="list-unstyled">
+                <li><a href="/loader/fluid/{{scribeMoniker}}?chaincode=@fluid-example/scribe@{{version}}&language=el,es&speed=100&text=/public/literature/translate-demo.txt" target="_blank">Scribe</a></li>
+            </ul>
+
+            <h2>Feature Differentiation</h2>
+            <p>
+                Open the link below in both browser windows. Start typing in lines of text. We usually just like to do
+                <blockquote>
+                    This is the firt line</br>
+                    This is the second line</br>
+                    This is the third line</br>
+                    This is the fourth line</br>
+                </blockquote>
+                Note it has a purposeful spelling mistake on the first line.
+            </p>
+            <p>
+                Then click on the branch button in the bottom status bar. Open the branch document in the other browser page. Add a
+                line to the bottom of the document. Show how it goes to both branch documents.
+            </p>
+            <p>
+                Switch a tab back to the original document. Show that the branch update didn't apply. Now fix the spelling
+                mistake or add a new line. It will go to both the original and the branch.
+            </p>
+
+            <ul class="list-unstyled">
+                <li><a href="/loader/fluid/{{emptyMoniker}}?chaincode=@fluid-example/shared-text@{{version}}" target="_blank">Starter Document</a></li>
+            </ul>
+        </div>
+
+    {{/content}}
+{{/layout}}

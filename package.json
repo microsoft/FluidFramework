@@ -19,7 +19,7 @@
     "clean:nyc": "rimraf nyc/**",
     "clean:r11s": "cd server/routerlicious && npm run clean",
     "layer-check": "cd tools/fluid-build && npm run layer-check",
-    "layer-check:full": "cd tools/fluid-build && npm install && npm run layer-check",
+    "layer-check:full": "cd tools/fluid-build && npm install && npm run build && npm run layer-check",
     "postinstall": "npm run postinstall:lerna && (npm run postinstall:fluid-build || true)",
     "policy-check": "cd tools/repo-policy-check && npm run policy-check",
     "policy-check:full": "cd tools/repo-policy-check && npm install && npm run policy-check",

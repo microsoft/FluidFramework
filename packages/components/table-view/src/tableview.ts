@@ -42,6 +42,7 @@ export class TableView extends PrimedComponent implements IComponentHTMLVisual {
         const root = template.clone();
         elm.append(root);
 
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.getComponent<TableDocument>(this.docId, /* wait: */ true).then((doc) => {
             const grid = template.get(root, "grid");
             const gridView = new GridView(doc);

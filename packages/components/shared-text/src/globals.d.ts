@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-declare var __webpack_public_path__: string;
+declare let __webpack_public_path__: string;

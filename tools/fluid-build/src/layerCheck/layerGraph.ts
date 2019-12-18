@@ -3,39 +3,97 @@
  * Licensed under the MIT License.
  */
 
-import { Packages } from "../npmPackage";
+import { Package, Packages } from "../npmPackage";
+import { logVerbose } from "../common/logging";
 import * as path from "path";
 
 interface ILayerInfo {
     deps?: string[];
     packages?: string[];
     dirs?: string[];
-    test?: boolean;
+    dev?: boolean;
+    dot?: boolean;
+    dotSameRank?: boolean;
 };
+
+interface ILayerGroupInfo {
+    dot?: boolean;
+    dotSameRank?: boolean;
+    layers: { [key: string]: ILayerInfo }
+}
 
 interface ILayerInfoFile {
-    [key: string]: { [key: string]: ILayerInfo }
+    [key: string]: ILayerGroupInfo
 };
 
-class BaseLayerNode {
-    private dependentSet = new Set<BaseLayerNode>();
+class BaseNode {
     constructor(public readonly name: string) { }
 
-    public addDependent(dep: BaseLayerNode) {
-        this.dependentSet.add(dep);
+    public get dotName() {
+        return this.name.replace(/-/g, "_").toLowerCase();
+    }
+};
+
+class LayerNode extends BaseNode {
+    private packages = new Set<PackageNode>();
+    private allowedDependentPackageNodes = new Set<PackageNode>();
+    private allowedDependentLayerNodes: LayerNode[] = [];
+
+    constructor(name: string, public readonly layerInfo: ILayerInfo, private readonly groupNode: GroupNode) {
+        super(name);
     }
 
-    public get dependents() {
-        return this.dependentSet.values();
+    public get doDot() {
+        if (this.layerInfo.dot !== undefined) { return this.layerInfo.dot; }
+        return !this.isDev && this.groupNode.doDot;
     }
 
-    public verifyDependent(dep: PackageLayerNode) {
-        //console.log(`${this.name} -> ${dep.name}`);
-        if (this.dependentSet.has(dep)) {
+    private get dotSameRank() {
+        return this.layerInfo.dotSameRank === true;
+    }
+
+    public get isDev() {
+        return this.layerInfo.dev === true;
+    }
+
+    public addPackage(packageNode: PackageNode) {
+        this.packages.add(packageNode);
+    }
+
+    public addAllowedDependentPackageNode(dep: PackageNode) {
+        this.allowedDependentPackageNodes.add(dep);
+    }
+
+    public addAllowedDependentLayerNode(dep: LayerNode) {
+        this.allowedDependentLayerNodes.push(dep);
+    }
+
+    public generateDotSubgraph() {
+        if (!this.doDot) { return ""; }
+        const nodes = Array.from(this.packages.values(), packageNode => `"${packageNode.dotName}"`);
+        if (this.packages.size < 2) {
+            return `\n    ${nodes.join("\n    ")}`;
+        }
+        const sameRank = this.dotSameRank? "\n      rank=\"same\"": "";
+        return `
+    subgraph cluster_${this.dotName} {
+      label = "${this.dotName}"${sameRank}
+      ${nodes.join("\n      ")}
+    }`;
+    }
+
+    public verifyDependent(dep: PackageNode) {
+        if (this.packages.has(dep)) {
+            logVerbose(`Found: ${dep.name} in ${this.name}`);
+            return true;
+        }
+        if (this.allowedDependentPackageNodes.has(dep)) {
+            logVerbose(`Found: ${dep.name} in ${this.name}`);
             return true;
         }
 
-        for (const node of this.dependents) {
+        for (const node of this.allowedDependentLayerNodes) {
+            logVerbose(`Traversing: ${this.name} -> ${node.name}`);
             if (node.verifyDependent(dep)) {
                 return true;
             }
@@ -44,159 +102,267 @@ class BaseLayerNode {
     }
 };
 
-class TopLayerNode extends BaseLayerNode {
-    constructor(name: string, public readonly test: boolean = false) {
-        super(name);
-    }
-};
 
-class LayerItemNode extends BaseLayerNode {
-    constructor(name: string, public readonly topLayerNode: TopLayerNode) {
+class GroupNode extends BaseNode {
+    public layerNodes: LayerNode[] = [];
+
+    constructor(name: string, private readonly groupInfo: ILayerGroupInfo) {
         super(name);
     }
 
-    public get topLayerName() {
-        return this.topLayerNode.name;
+    public get doDot() {
+        return this.groupInfo.dot !== false;
+    }
+    
+    private get dotSameRank() {
+        return this.groupInfo.dotSameRank === true;
     }
 
-    public get isTest() {
-        return this.topLayerNode.test;
+    public createLayerNode(name: string, layerInfo: ILayerInfo) {
+        const layerNode = new LayerNode(name, layerInfo, this);
+        this.layerNodes.push(layerNode);
+        return layerNode;
+    }
+
+    public generateDotSubgraph() {
+        const sameRank = this.dotSameRank? "\n    rank=\"same\"": "";
+        return `
+  subgraph cluster_group_${this.dotName} {
+    label = "${this.dotName}"${sameRank}
+    ${this.layerNodes.map(layerNode => layerNode.generateDotSubgraph()).join("")}
+  }`;
     }
 };
 
-class PackageLayerNode extends LayerItemNode {
-    constructor(name: string, layerNode: TopLayerNode) {
-        super(name, layerNode);
+class PackageNode extends BaseNode {
+    private _pkg: Package | undefined;
+    private readonly _childDependencies: PackageNode[] = [];
+    private readonly depParents: PackageNode[] = [];
+    private _indirectDependencies: Set<PackageNode> | undefined;
+    private _level: number | undefined;
+
+    constructor(name: string, public readonly layerNode: LayerNode) {
+        super(name);
+    }
+
+    public get layerName() {
+        return this.layerNode.name;
+    }
+
+    public get isDev() {
+        return this.layerNode.isDev;
+    }
+
+    public get doDot() {
+        return this.layerNode.doDot;
+    }
+
+    public verifyDependent(dep: PackageNode) {
+        return this.layerNode.verifyDependent(dep);
+    }
+
+    public get dotName() {
+        return this.name.replace(/@microsoft\/fluid\-/, "");
+    }
+
+    public get pkg() {
+        if (!this._pkg) { throw new Error(`ERROR: Package missing from PackageNode ${this.name}`); }
+        return this._pkg;
+    }
+
+    public set pkg(pkg: Package) {
+        if (this._pkg) { throw new Error(`ERROR: Package assigned twice to a PackageNode ${this.name}`); }
+        this._pkg = pkg;
+    }
+
+    public initializedDependencies(packageNodeMap: Map<string, PackageNode>) {
+        for (const dep of this.pkg.dependencies) {
+            const depPackageNode = packageNodeMap.get(dep);
+            if (depPackageNode) {
+                this._childDependencies.push(depPackageNode);
+                depPackageNode.depParents.push(this);
+            }
+        }
+    }
+
+    public get childDependencies(): Readonly<PackageNode[]> {
+        return this._childDependencies;
+    }
+
+    public get indirectDependencies(): Set<PackageNode> {
+        if (this._indirectDependencies === undefined) {
+            // NOTE: recursive isn't great, but the graph should be small enough
+            this._indirectDependencies = this._childDependencies.reduce<Set<PackageNode>>((accum, childPackage) => {
+                childPackage.childDependencies.forEach(pkg => accum.add(pkg));
+                childPackage.indirectDependencies.forEach(pkg => accum.add(pkg));
+                return accum;
+            }, new Set<PackageNode>());
+        }
+        return this._indirectDependencies;
+    }
+
+    public get level(): number {
+        if (this._level === undefined) {
+            this._level = this._childDependencies.reduce<number>((accum, childPackage) => {
+                return Math.max(accum, childPackage.level + 1);
+            }, 0);
+        }
+        return this._level;
     }
 };
-
-class DirLayerNode extends LayerItemNode {
-    private packages = new Set<PackageLayerNode>();
-    public addPackage(pkg: PackageLayerNode) {
-        this.packages.add(pkg);
-    }
-
-    public verifyDependent(dep: PackageLayerNode) {
-        if (this.packages.has(dep)) { return true; }
-        return super.verifyDependent(dep);
-    }
-}
-
 
 export class LayerGraph {
-    private layers = new Map<string, TopLayerNode>();
-    private packageLayer = new Map<string, PackageLayerNode>();
-    private dirLayers: { [key: string]: DirLayerNode } = {};
+    private groupNodes: GroupNode[] = [];
+    private layerNodeMap = new Map<string, LayerNode>();
+    private packageNodeMap = new Map<string, PackageNode>();
+    private dirMapping: { [key: string]: LayerNode } = {};
 
-    private createPackage(name: string, layer: TopLayerNode) {
-        if (this.packageLayer.get(name)) {
-            throw new Error(`Duplicate package layer entry ${name}`);
+    private createPackageNode(name: string, layer: LayerNode) {
+        if (this.packageNodeMap.get(name)) {
+            throw new Error(`ERROR: Duplicate package layer entry ${name}`);
         }
-        const packageLayerNode = new PackageLayerNode(name, layer);
-        this.packageLayer.set(name, packageLayerNode);
-        return packageLayerNode;
+        const packageNode = new PackageNode(name, layer);
+        this.packageNodeMap.set(name, packageNode);
+        layer.addPackage(packageNode);
+        return packageNode;
     }
-    private constructor(root: string, layerInfo: ILayerInfoFile) {
-        // Load the layer info
-        const pendingDeps: { node: BaseLayerNode, deps: string[] | undefined }[] = [];
 
+    private constructor(root: string, layerInfo: ILayerInfoFile, packages: Packages) {
+        this.initializeLayers(root, layerInfo);
+        this.initializePackages(packages);
+    }
+
+    private initializeLayers(root: string, layerInfo: ILayerInfoFile) {
         // First pass get the layer nodes
-        for (const layerGroup of Object.keys(layerInfo)) {
-            const layerGroupInfo = layerInfo[layerGroup];
-            for (const layer of Object.keys(layerGroupInfo)) {
-                const info = layerGroupInfo[layer];
-                const layerNode = new TopLayerNode(layer, info.test)
-                this.layers.set(layer, layerNode);
-                if (info.dirs) {
-                    for (const dir of info.dirs) {
-                        const fullDir = path.resolve(root, dir);
-                        const dirLayerNode = new DirLayerNode(fullDir, layerNode);
-                        this.dirLayers[fullDir] = dirLayerNode;
-                        layerNode.addDependent(dirLayerNode);
-                        pendingDeps.push({ node: dirLayerNode, deps: info.deps });
-                    }
+        for (const groupName of Object.keys(layerInfo)) {
+
+            const groupInfo = layerInfo[groupName];
+            const groupNode = new GroupNode(groupName, groupInfo);
+            this.groupNodes.push(groupNode);
+
+            for (const layerName of Object.keys(groupInfo.layers)) {
+
+                const layerInfo = groupInfo.layers[layerName];
+                const layerNode = groupNode.createLayerNode(layerName, layerInfo);
+                this.layerNodeMap.set(layerName, layerNode);
+
+                if (layerInfo.dirs) {
+                    layerInfo.dirs.forEach(dir => this.dirMapping[path.resolve(root, dir)] = layerNode);
                 }
-                if (info.packages) {
-                    for (const pkg of info.packages) {
-                        const packageLayerNode = this.createPackage(pkg, layerNode);
-                        layerNode.addDependent(packageLayerNode);
-                        pendingDeps.push({ node: packageLayerNode, deps: info.deps });
-                    }
+                if (layerInfo.packages) {
+                    layerInfo.packages.forEach(pkg => this.createPackageNode(pkg, layerNode));
                 }
             }
         }
 
-        // Wire up the dependents
-        for (const { node, deps } of pendingDeps) {
-            if (!deps) { continue; }
-            for (const dep of deps) {
-                const depLayer = this.layers.get(dep);
-                if (depLayer) {
-                    node.addDependent(depLayer);
-                } else {
-                    const depPackage = this.packageLayer.get(dep);
-                    if (depPackage === undefined) {
-                        throw new Error(`Missing package entry for dependency ${dep} in ${node.name}`);
+        // Wire up the allowed dependents
+        for (const groupNode of this.groupNodes) {
+            for (const layerNode of groupNode.layerNodes) {
+                if (!layerNode.layerInfo.deps) { continue; }
+                for (const depName of layerNode.layerInfo.deps) {
+                    const depLayer = this.layerNodeMap.get(depName);
+                    if (depLayer) {
+                        layerNode.addAllowedDependentLayerNode(depLayer);
+                    } else {
+                        const depPackage = this.packageNodeMap.get(depName);
+                        if (depPackage === undefined) {
+                            throw new Error(`Missing package entry for dependency ${depName} in ${layerNode.name}`);
+                        }
+                        layerNode.addAllowedDependentPackageNode(depPackage);
                     }
-                    node.addDependent(depPackage);
                 }
             }
         }
     }
+    private initializePackages(packages: Packages) {
+        this.initializePackageMatching(packages);
+        this.initializeDependencies();
+    }
 
-    private verify(packages: Packages) {
+    private initializePackageMatching(packages: Packages) {
         // Match the packages to the node if it is not explicitly specified
         for (const pkg of packages.packages) {
-            if (this.packageLayer.get(pkg.name)) { continue; }
-            for (const dir of Object.keys(this.dirLayers)) {
+            const packageNode = this.packageNodeMap.get(pkg.name);
+            if (packageNode) {
+                packageNode.pkg = pkg;
+                continue;
+            }
+            let matched = false;
+            for (const dir of Object.keys(this.dirMapping)) {
                 if (pkg.directory.startsWith(dir)) {
-                    //console.log(`${pkg.nameColored}: ${dir}`);
-                    const dirLayerNode = this.dirLayers[dir];
-                    const packageLayerNode = this.createPackage(pkg.name, dirLayerNode.topLayerNode);
-                    dirLayerNode.addPackage(packageLayerNode);
-                    for (const dep of dirLayerNode.dependents) {
-                        packageLayerNode.addDependent(dep);
-                    }
+                    const layerNode = this.dirMapping[dir];
+                    logVerbose(`${pkg.nameColored}: matched with ${layerNode.name} (${dir})`);
+                    const packageNode = this.createPackageNode(pkg.name, layerNode);
+                    packageNode.pkg = pkg;
+                    matched = true;
                     break;
                 }
             }
-        }
-
-        let error = false;
-        // Go thru the packages and check for dependency violation
-        for (const pkg of packages.packages) {
-            const packageLayerNode = this.packageLayer.get(pkg.name);
-            if (!packageLayerNode) {
-                console.error(`${pkg.nameColored}: error: Package doesn't match any directories. Unable to do dependency check`);
-                error = true;
-                continue;
-            }
-            if (packageLayerNode.isTest) {
-                // Don't check dependency on test packages
-                continue;
-            }
-            for (const dep of pkg.dependencies) {
-                const depLayerNode = this.packageLayer.get(dep);
-                if (!depLayerNode) { continue; }
-                if (depLayerNode.isTest) {
-                    console.error(`${pkg.nameColored}: error: test packages appearing in package dependencies instead of devDependencies - ${dep}, `);
-                    error = true;
-                }
-                // Package can depend on each other if they are in the same layer
-                if (packageLayerNode.topLayerNode === depLayerNode.topLayerNode) { continue; }
-                //console.log(`${pkg.nameColored}: checking ${dep}`);
-                if (!packageLayerNode.verifyDependent(depLayerNode)) {
-                    console.error(`${pkg.nameColored}: error: Dependency layer violation ${dep}, "${packageLayerNode.topLayerName}" -> "${depLayerNode.topLayerName}"`);
-                    error = true;
-                }
+            if (!matched) {
+                throw new Error(`${pkg.nameColored}: ERROR: Package doesn't match any directories. Unable to do dependency check`);
             }
         }
-        return error;
     }
 
-    public static check(root: string, packages: Packages) {
+    private initializeDependencies() {
+        for (const packageNode of this.packageNodeMap.values()) {
+            packageNode.initializedDependencies(this.packageNodeMap);
+        }
+    }
+
+    private forEachDependencies(exec: (src: PackageNode, dest: PackageNode) => boolean) {
+        let success = true;
+        // Go thru the packages and check for dependency violation
+        for (const packageNode of this.packageNodeMap.values()) {
+            for (const depPackageNode of packageNode.childDependencies) {
+                if (!exec(packageNode, depPackageNode)) {
+                    success = false;
+                }
+            }
+        }
+        return success;
+    }
+    public verify() {
+        return this.forEachDependencies((packageNode, depPackageNode) => {
+            if (packageNode.isDev) {
+                // Don't check dependency on test packages
+                return true;
+            }
+            let success = true;
+            if (depPackageNode.isDev) {
+                console.error(`${packageNode.pkg.nameColored}: error: dev packages appearing in package dependencies instead of devDependencies - ${depPackageNode.name}, `);
+                success = false;
+            }
+
+            logVerbose(`${packageNode.pkg.nameColored}: checking ${depPackageNode.name} from ${packageNode.layerName}`);
+            if (!packageNode.verifyDependent(depPackageNode)) {
+                console.error(`${packageNode.pkg.nameColored}: error: Dependency layer violation ${depPackageNode.name}, "${packageNode.layerName}" -> "${depPackageNode.layerName}"`);
+                success = false;
+            }
+            return success;
+        });
+    }
+
+    private generateDotEdges() {
+        const entries: string[] = [];
+        this.forEachDependencies((packageNode, depPackageNode) => {
+            if (packageNode.doDot && !packageNode.indirectDependencies.has(depPackageNode)) {
+                const suffix = packageNode.indirectDependencies.has(depPackageNode) ? " [constraint=false color=lightgrey]" :
+                    (packageNode.layerNode != depPackageNode.layerNode && packageNode.level - depPackageNode.level > 3) ? " [constraint=false]" : "";
+                entries.push(`"${packageNode.dotName}"->"${depPackageNode.dotName}"${suffix}`);
+            }
+            return true;
+        });
+        return entries.join("\n  ");
+    }
+    public generateDotGraph() {
+        return `strict digraph G { graph [ newrank=true; ranksep=2; compound=true ]; ${this.groupNodes.map(group => group.generateDotSubgraph()).join("")}
+  ${this.generateDotEdges()}
+}`;
+    }
+
+    public static load(root: string, packages: Packages) {
         const layerInfoFile = require(path.join(__dirname, "..", "..", "data", "layerInfo.json"));
-        const layerGraph = new LayerGraph(root, layerInfoFile);
-        return layerGraph.verify(packages);
+        return new LayerGraph(root, layerInfoFile, packages);
     }
 };

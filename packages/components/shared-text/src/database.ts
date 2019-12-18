@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import { ISharedMap } from "@microsoft/fluid-map";
 import * as MergeTree from "@microsoft/fluid-merge-tree";
 import { SharedString } from "@microsoft/fluid-sequence";
-import { EventEmitter } from "events";
 import {
     ExecutionResult,
     graphql,
@@ -31,15 +31,11 @@ export class Hero {
 }
 
 export class GraphQLService {
-    private schema: GraphQLSchema;
-    private heroEmitter = new EventEmitter();
-    private heroPubSub = new PubSub({ eventEmitter: this.heroEmitter });
+    private readonly schema: GraphQLSchema;
+    private readonly heroEmitter = new EventEmitter();
+    private readonly heroPubSub = new PubSub({ eventEmitter: this.heroEmitter });
 
-    constructor(private map: ISharedMap, sharedString: SharedString) {
-        // type Hero {
-        //     id: Int!
-        //     name: String!
-        // }
+    constructor(private readonly map: ISharedMap, sharedString: SharedString) {
         const heroType = new GraphQLObjectType({
             description: "A superhero",
             fields: () => ({
@@ -66,16 +62,14 @@ export class GraphQLService {
             name: "Paragraph",
         });
 
-        // type Query {
-        //     heroes: [Character!]!
-        // }
         const queryType = new GraphQLObjectType({
             fields: () => ({
                 paragraphs: {
                     args: {
                         id: {
                             description:
-                            "If omitted, returns all the heroes. If provided, returns the hero of that particular id.",
+                                // eslint-disable-next-line max-len
+                                "If omitted, returns all the heroes. If provided, returns the hero of that particular id.",
                             type: GraphQLInt,
                         },
                     },
@@ -119,6 +113,7 @@ export class GraphQLService {
                             type: GraphQLNonNull(GraphQLString),
                         },
                     },
+                    // eslint-disable-next-line @typescript-eslint/promise-function-async
                     resolve: (obj, { id, name }) => {
                         const key = `${prefix}${id}`;
                         if (!this.map.has(key)) {
@@ -134,10 +129,6 @@ export class GraphQLService {
             name: "Mutation",
         });
 
-        // type Subscription {
-        //     herosUpdate: Character!
-        //     heroUpdate(id: Int)
-        // }
         const subscription = new GraphQLObjectType({
             fields: () => ({
                 heroUpdate: {
@@ -147,6 +138,7 @@ export class GraphQLService {
                             type: GraphQLNonNull(GraphQLInt),
                         },
                     },
+                    // eslint-disable-next-line @typescript-eslint/promise-function-async
                     resolve: (found) => {
                         const key = found.key as string;
                         const id = parseInt(key.substring(key.lastIndexOf("/") + 1), 10);
@@ -172,9 +164,8 @@ export class GraphQLService {
                     type: heroType,
                 },
                 heroesUpdate: {
-                    resolve: (found) => {
-                        return Promise.resolve(this.getAllHeroes());
-                    },
+                    // eslint-disable-next-line @typescript-eslint/promise-function-async
+                    resolve: (found) => Promise.resolve(this.getAllHeroes()),
                     subscribe: () => {
                         const iterator = this.heroPubSub.asyncIterator("valueChanged");
                         this.heroEmitter.emit("valueChanged", { local: false });
@@ -205,6 +196,7 @@ export class GraphQLService {
         });
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public getHeroes(): Promise<Hero[]> {
         const query =
             `
@@ -217,11 +209,15 @@ export class GraphQLService {
             `;
 
         const queryP = graphql<{ heroes: Hero[] }>(this.schema, query).then(
-            (response) => response.errors ? Promise.reject(response.errors) : Promise.resolve(response.data.heroes));
+            // eslint-disable-next-line @typescript-eslint/promise-function-async
+            (response) => response.errors
+                ? Promise.reject(response.errors)
+                : Promise.resolve(response.data.heroes));
 
         return queryP;
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public runQuery<T>(query, variables): Promise<ExecutionResult<T>> {
         return graphql({
             schema: this.schema,
@@ -267,6 +263,7 @@ export class GraphQLService {
         return value as AsyncIterator<ExecutionResult<{ heroUpdate: Hero }>>;
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public getHero(id: number): Promise<Hero> {
         const query =
             `
@@ -278,11 +275,15 @@ export class GraphQLService {
                 }
             `;
         const queryP = graphql<{ heroes: Hero[] }>(this.schema, query).then(
-            (response) => response.errors ? Promise.reject(response.errors) : Promise.resolve(response.data.heroes[0]));
+            // eslint-disable-next-line @typescript-eslint/promise-function-async
+            (response) => response.errors
+                ? Promise.reject(response.errors)
+                : Promise.resolve(response.data.heroes[0]));
 
         return queryP;
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public updateHero(hero: Hero): Promise<Hero> {
         const query =
             `
@@ -298,6 +299,7 @@ export class GraphQLService {
             name: hero.name,
         };
         const queryP = graphql<{ renameHero: Hero }>({ schema: this.schema, source: query, variableValues }).then(
+            // eslint-disable-next-line @typescript-eslint/promise-function-async
             (response) => response.errors
                 ? Promise.reject(response.errors)
                 : Promise.resolve(response.data.renameHero));
@@ -308,7 +310,7 @@ export class GraphQLService {
     private getAllHeroes(): Hero[] {
         const heroes: Hero[] = [];
         for (const key of this.map.keys()) {
-            if (key.indexOf(prefix) === 0) {
+            if (key.startsWith(prefix)) {
                 heroes.push({
                     id: parseInt(key.substr(prefix.length), 10),
                     name: this.map.get(key),
