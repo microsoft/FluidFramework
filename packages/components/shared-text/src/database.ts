@@ -31,11 +31,9 @@ export class Hero {
 }
 
 export class GraphQLService {
-    /* eslint-disable @typescript-eslint/prefer-readonly */
-    private schema: GraphQLSchema;
-    private heroEmitter = new EventEmitter();
-    private heroPubSub = new PubSub({ eventEmitter: this.heroEmitter });
-    /* eslint-enable @typescript-eslint/prefer-readonly */
+    private readonly schema: GraphQLSchema;
+    private readonly heroEmitter = new EventEmitter();
+    private readonly heroPubSub = new PubSub({ eventEmitter: this.heroEmitter });
 
     constructor(private readonly map: ISharedMap, sharedString: SharedString) {
         const heroType = new GraphQLObjectType({
@@ -115,7 +113,8 @@ export class GraphQLService {
                             type: GraphQLNonNull(GraphQLString),
                         },
                     },
-                    resolve: async (obj, { id, name }) => {
+                    // eslint-disable-next-line @typescript-eslint/promise-function-async
+                    resolve: (obj, { id, name }) => {
                         const key = `${prefix}${id}`;
                         if (!this.map.has(key)) {
                             return Promise.reject("Hero not found");
@@ -139,7 +138,8 @@ export class GraphQLService {
                             type: GraphQLNonNull(GraphQLInt),
                         },
                     },
-                    resolve: async (found) => {
+                    // eslint-disable-next-line @typescript-eslint/promise-function-async
+                    resolve: (found) => {
                         const key = found.key as string;
                         const id = parseInt(key.substring(key.lastIndexOf("/") + 1), 10);
                         return Promise.resolve({ id, name: found.value });
@@ -164,7 +164,8 @@ export class GraphQLService {
                     type: heroType,
                 },
                 heroesUpdate: {
-                    resolve: async (found) => Promise.resolve(this.getAllHeroes()),
+                    // eslint-disable-next-line @typescript-eslint/promise-function-async
+                    resolve: (found) => Promise.resolve(this.getAllHeroes()),
                     subscribe: () => {
                         const iterator = this.heroPubSub.asyncIterator("valueChanged");
                         this.heroEmitter.emit("valueChanged", { local: false });
@@ -195,7 +196,8 @@ export class GraphQLService {
         });
     }
 
-    public async getHeroes(): Promise<Hero[]> {
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
+    public getHeroes(): Promise<Hero[]> {
         const query =
             `
                 {
@@ -207,14 +209,16 @@ export class GraphQLService {
             `;
 
         const queryP = graphql<{ heroes: Hero[] }>(this.schema, query).then(
-            async (response) => response.errors
+            // eslint-disable-next-line @typescript-eslint/promise-function-async
+            (response) => response.errors
                 ? Promise.reject(response.errors)
                 : Promise.resolve(response.data.heroes));
 
         return queryP;
     }
 
-    public async runQuery<T>(query, variables): Promise<ExecutionResult<T>> {
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
+    public runQuery<T>(query, variables): Promise<ExecutionResult<T>> {
         return graphql({
             schema: this.schema,
             source: query,
@@ -259,7 +263,8 @@ export class GraphQLService {
         return value as AsyncIterator<ExecutionResult<{ heroUpdate: Hero }>>;
     }
 
-    public async getHero(id: number): Promise<Hero> {
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
+    public getHero(id: number): Promise<Hero> {
         const query =
             `
                 {
@@ -270,14 +275,16 @@ export class GraphQLService {
                 }
             `;
         const queryP = graphql<{ heroes: Hero[] }>(this.schema, query).then(
-            async (response) => response.errors
+            // eslint-disable-next-line @typescript-eslint/promise-function-async
+            (response) => response.errors
                 ? Promise.reject(response.errors)
                 : Promise.resolve(response.data.heroes[0]));
 
         return queryP;
     }
 
-    public async updateHero(hero: Hero): Promise<Hero> {
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
+    public updateHero(hero: Hero): Promise<Hero> {
         const query =
             `
                 mutation Rename($id: Int!, $name: String!) {
@@ -292,7 +299,8 @@ export class GraphQLService {
             name: hero.name,
         };
         const queryP = graphql<{ renameHero: Hero }>({ schema: this.schema, source: query, variableValues }).then(
-            async (response) => response.errors
+            // eslint-disable-next-line @typescript-eslint/promise-function-async
+            (response) => response.errors
                 ? Promise.reject(response.errors)
                 : Promise.resolve(response.data.renameHero));
 

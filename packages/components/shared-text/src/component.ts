@@ -78,8 +78,7 @@ export class SharedTextRunner
     private taskManager: ITaskManager;
     private uiInitialized = false;
 
-    // eslint-disable-next-line @typescript-eslint/prefer-readonly
-    private constructor(private runtime: ComponentRuntime, private context: IComponentContext) {
+    private constructor(private readonly runtime: ComponentRuntime, private readonly context: IComponentContext) {
         super();
     }
 
@@ -263,13 +262,11 @@ export class SharedTextRunner
 
 class TaskScheduler {
     constructor(
-        /* eslint-disable @typescript-eslint/prefer-readonly */
-        private componentContext: IComponentContext,
-        private taskManager: ITaskManager,
-        private componentUrl: string,
-        private sharedString: SharedString,
-        private insightsMap: ISharedMap,
-        /* eslint-enable @typescript-eslint/prefer-readonly */
+        private readonly componentContext: IComponentContext,
+        private readonly taskManager: ITaskManager,
+        private readonly componentUrl: string,
+        private readonly sharedString: SharedString,
+        private readonly insightsMap: ISharedMap,
     ) {
 
     }
