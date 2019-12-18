@@ -39,10 +39,8 @@ export class TodoItem extends PrimedComponent
     IComponentHTMLVisual,
     IComponentReactViewable {
 
-    // tslint:disable:prefer-readonly
     private text: SharedString;
     private innerIdCell: ISharedCell;
-    // tslint:enable:prefer-readonly
     private baseUrl: string = "";
 
     public get IComponentHTMLVisual() { return this; }

@@ -40,10 +40,8 @@ export class TextList extends PrimedComponent implements IComponentHTMLVisual, I
     }
 
     protected async componentHasInitialized() {
-        // tslint:disable-next-line: no-console
         console.log("componentHasInitialized setting listener");
         this.context.on("op", (e) => {
-            // tslint:disable-next-line: no-console
             console.log(JSON.stringify(e));
         });
     }

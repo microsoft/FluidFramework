@@ -18,7 +18,6 @@ interface ITextListViewProps {
 /**
  * This is an example of using react hooks with listeners
  */
-// tslint:disable-next-line: function-name
 export function TextListView(props: ITextListViewProps) {
     const [sharedStrings, setSharedString] = useState<{ id: string, text: SharedString }[]>([]);
     const sharedStringRef = useRef(sharedStrings);

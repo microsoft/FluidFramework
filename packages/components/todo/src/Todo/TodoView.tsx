@@ -19,7 +19,6 @@ interface TodoViewState {
     modelLoaded: boolean;
 }
 
-// tslint:disable:react-a11y-input-elements
 export class TodoView extends React.Component<TodoViewProps, TodoViewState> {
     private newTextInput: HTMLInputElement;
     private titleString: SharedString;
