@@ -330,7 +330,7 @@ export class LayerGraph {
             }
             let success = true;
             if (depPackageNode.isDev) {
-                console.error(`${packageNode.pkg.nameColored}: error: test packages appearing in package dependencies instead of devDependencies - ${depPackageNode.name}, `);
+                console.error(`${packageNode.pkg.nameColored}: error: dev packages appearing in package dependencies instead of devDependencies - ${depPackageNode.name}, `);
                 success = false;
             }
 

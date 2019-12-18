@@ -47,7 +47,7 @@ function parseOptions(argv: string[]) {
                 dotGraph = process.argv[++i];
                 continue;
             }
-            console.error("ERROR: Missing argument for --script");
+            console.error("ERROR: Missing argument for --dot");
             error = true;
             break;
         }
