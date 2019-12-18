@@ -40,7 +40,7 @@ export class RemoteChannelContext implements IChannelContext {
         private readonly storageService: IDocumentStorageService,
         private readonly submitFn: (type: MessageType, content: any) => number,
         private readonly id: string,
-        baseSnapshot: ISnapshotTree,
+        private readonly baseSnapshot: ISnapshotTree,
         private readonly registry: ISharedObjectRegistry,
         private readonly extraBlobs: Map<string, string>,
         private readonly branch: string,
@@ -100,14 +100,9 @@ export class RemoteChannelContext implements IChannelContext {
     }
 
     private getAttributesFromBaseTree(): Promise<RequiredIChannelAttributes> {
-        const baseTree = this.summaryTracker.baseTree;
-        if (baseTree) {
-            return readAndParse<RequiredIChannelAttributes>(
-                this.storageService,
-                baseTree.blobs[".attributes"]);
-        } else {
-            throw new Error("Null base summary tree should not be possible for remote channel.");
-        }
+        return readAndParse<RequiredIChannelAttributes>(
+            this.storageService,
+            this.baseSnapshot.blobs[".attributes"]);
     }
 
     private async loadChannel(): Promise<IChannel> {
@@ -138,7 +133,7 @@ export class RemoteChannelContext implements IChannelContext {
             this.componentContext.connectionState,
             this.submitFn,
             this.storageService,
-            this.summaryTracker.baseTree === null ? undefined : this.summaryTracker.baseTree,
+            this.baseSnapshot,
             this.extraBlobs);
         this.channel = await factory.load(
             this.runtime,
