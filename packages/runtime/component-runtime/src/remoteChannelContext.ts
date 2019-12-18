@@ -45,9 +45,7 @@ export class RemoteChannelContext implements IChannelContext {
         private readonly extraBlobs: Map<string, string>,
         private readonly branch: string,
         private readonly attributes: RequiredIChannelAttributes | undefined,
-    ) {
-        this.summaryTracker.setBaseTree(baseSnapshot);
-    }
+    ) {}
 
     public getChannel(): Promise<IChannel> {
         if (!this.channelP) {
