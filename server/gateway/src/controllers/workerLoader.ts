@@ -1,0 +1,108 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import {
+    IComponentRunnable,
+    IRequest,
+    IResponse,
+} from "@microsoft/fluid-component-core-interfaces";
+import { IContainer, ILoader } from "@microsoft/fluid-container-definitions";
+import { Container, Loader } from "@microsoft/fluid-container-loader";
+import { BaseTelemetryNullLogger } from "@microsoft/fluid-core-utils";
+import {
+    IDocumentService,
+    IDocumentServiceFactory,
+    IFluidResolvedUrl,
+} from "@microsoft/fluid-driver-definitions";
+import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
+import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
+import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
+import { WebCodeLoader } from "@microsoft/fluid-web-code-loader";
+import * as Comlink from "comlink";
+import { parse } from "url";
+
+// Loader class to load a container and proxy component interfaces from within a web worker.
+// Only supports IComponentRunnable for now.
+class WorkerLoader implements ILoader, IComponentRunnable {
+    private container: Container;
+    private runnable: IComponentRunnable;
+
+    constructor(
+        private readonly id: string,
+        private readonly options: any,
+        private readonly resolved: IFluidResolvedUrl,
+        private readonly fromSequenceNumber: number) {
+    }
+
+    public async request(request: IRequest): Promise<IResponse> {
+        console.log(`Request inside web worker`);
+        console.log(request);
+        const urlObj = parse(this.resolved.url);
+        let factory: IDocumentServiceFactory;
+        if (urlObj.protocol === "fluid:") {
+            factory = new RouterliciousDocumentServiceFactory(
+                false,
+                new DefaultErrorTracking(),
+                false,
+                true,
+                null);
+        } else {
+            factory = new OdspDocumentServiceFactory(
+                "", // figure this out
+                (siteUrl: string) => Promise.resolve(this.resolved.tokens.storageToken),
+                () => Promise.resolve(this.resolved.tokens.socketToken),
+                new BaseTelemetryNullLogger());
+        }
+        const documentService: IDocumentService = await factory.createDocumentService(this.resolved);
+        this.container = await Container.load(
+            this.id,
+            documentService,
+            new WebCodeLoader(),
+            this.options,
+            {},
+            (this as unknown) as Loader,
+            request,
+            new BaseTelemetryNullLogger());
+
+        // tslint:disable no-non-null-assertion
+        if (this.container.deltaManager!.referenceSequenceNumber <= this.fromSequenceNumber) {
+            await new Promise((resolve, reject) => {
+                const opHandler = (message: ISequencedDocumentMessage) => {
+                    if (message.sequenceNumber > this.fromSequenceNumber) {
+                        resolve();
+                        this.container.removeListener("op", opHandler);
+                    }
+                };
+                this.container.on("op", opHandler);
+            });
+        }
+
+        const response = await this.container.request(request);
+        if (response.status !== 200 || response.mimeType !== "fluid/component") {
+            return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
+        }
+        this.runnable = response.value as IComponentRunnable;
+        if (this.runnable === undefined) {
+            return { status: 404, mimeType: "text/plain", value: `IComponentRunnable not found` };
+        }
+        return { status: 200, mimeType: "fluid/component", value: `loaded` };
+    }
+
+    public async resolve(request: IRequest): Promise<IContainer> {
+        return this.container;
+    }
+
+    public async run(...args: any[]): Promise<void> {
+        return this.runnable === undefined ? Promise.reject() : this.runnable.run(...args);
+    }
+
+    public async stop(reason?: string): Promise<void> {
+        if (this.runnable !== undefined && this.runnable.stop !== undefined) {
+            return this.runnable.stop(reason);
+        }
+    }
+}
+
+Comlink.expose(WorkerLoader);

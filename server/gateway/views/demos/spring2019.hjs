@@ -1,0 +1,119 @@
+{{<layout}}
+{{$content}}
+<div class="container">
+
+    <h1>Fluid Demos</h1>
+    <p>
+        To create a new set of links refresh this page.
+    </p>
+
+    <h2>Components</h2>
+    <h3>Data, Code, Components Bindings</h3>
+    <p>
+        Open the link below and add in a Monaco and Chart Component. Press ctrl-M to open up the search menu.
+        Type "insert monaco" and "insert chart" to add Monaco and Charts respectively.
+    </p>
+    <li class="list-unstyled">
+        <a href="/loader/fluid/{{chartMonacoMoniker}}?chaincode=@fluid-example/shared-text@{{version}}" target="_blank">Data + Code Bindings</a>
+    </li>
+    <p>
+        For a coding example start by pasting in the code to the Monaco editor. This sample comes with two errors:
+        the getRandomValues function is not defined and you will get an intellisense warning on the host.chartembed2.set
+        line.
+    </p>
+<pre>
+let xValues = getRandomValues(10);
+let yValues = getRandomValues(10);
+let xValues2 = getRandomValues(10);
+let yValues2 = getRandomValues(10);
+
+const defaultSettings = {
+    series: [
+        {
+            id: "i3",
+            data: {
+                xValues,
+                yValues,
+            },
+            layout: "Scatter",
+        },
+        {
+            id: "i4",
+            data: {
+                xValues: xValues2,
+                yValues: yValues2,
+            },
+            layout: "Scatter",
+        }],
+    size: {
+        height: 480,
+        width: 768,
+    },
+    title: {
+        text: "Scatter Plot",
+    },
+};
+
+host.chartembed2.set("chart", defaultSettings);
+</pre>
+    <p>
+        To fix the host line simply type in host and then a dot to pull up the intellisense list. All components
+        defined on the page will be available in the definitions list. Choose the chart identifier.
+    </p>
+    <p>
+        The code for getRandomValues is given below. To open a standalone Monaco editor simply hover your mouse
+        above the Monaco component until the URL for it shows. You can click this to open it in a separate window.
+        This URL can also be pasted into OWA or Teams to edit from a separate host.
+    </p>
+<pre>
+function getRandomValues(length: number): number[] {
+    const values = new Array&lt;number&gt;();
+    for (let i = 0; i &lt; length; i++) {
+        values.push(Math.random() * 100);
+    }
+
+    return values;
+}
+</pre>
+    <h3>Fluid Math</h3>
+    <ul class="list-unstyled">
+        <li><a href="/loader/fluid/{{mathMoniker}}?chaincode=@chaincode/math@0.0.7" target="_blank">Fluid Math Component</a></li>
+    </ul>
+
+    <h2>OWA + Bohemia</h2>
+    <ul class="list-unstyled">
+        <p>
+            <li><a href="https://aka.ms/praguedocs" target="_blank">Bohemia Docs</a></li>
+            <li>Fluid Embeddable OWA</li>
+            <li style="padding-left:2em">
+                https://outlook-sdf.office.com/mail/inbox?features=rp-prague,cmp-prague&amp;popoutv2=1 (Must Be Copied In)
+            </li>
+        </p>
+    </ul>
+
+    <h2>Fluid @ Build 2019</h2>
+    <iframe width="640" height="360" src="https://msit.microsoftstream.com/embed/video/1bda8b08-17c7-4a14-8044-5b2001122b6b?autoplay=false&amp;showinfo=true" style="border:none;" allowfullscreen ></iframe>
+
+    <h2>Fluid Fundamentals</h2>
+    <h3>Rich Text Editing</h3>
+    <p>
+        Open a copy of the links listed below in each of the browser windows. Show the same page side by side.
+        Pick a line and hold the space bar. Then hold down the backspace key to delete the spaces. Repeat this
+        process as many times as you want. The test shows the local client performance as well as the remote
+        client performance. To ink in the Fluid example either use a pen or click the ink checkbox in the
+        bottom status bar and then use the mouse.
+    </p>
+
+    <ul class="list-unstyled">
+        <li><a href="https://docs.google.com/document/d/1Ed3_Bgmfj4L1tvjjh8geSHNZMbh_X6SaRd1uZGSQSio/edit"
+                target="_blank">Google Docs Pride and Prejudice</a></li>
+        <li><a href="/loader/fluid/{{sharedTextMoniker}}?chaincode=@fluid-example/shared-text@{{version}}&template=pp.txt" target="_blank">Fluid Pride and Prejudice</a></li>
+    </ul>
+
+
+    <h3>Inking Canvas</h3>
+    <li class="list-unstyled"><a href="/loader/fluid/{{inkMoniker}}?chaincode=@fluid-example/canvas@{{version}}" target="_blank">Canvas Chaincode</a></li>
+</div>
+
+{{/content}}
+{{/layout}}

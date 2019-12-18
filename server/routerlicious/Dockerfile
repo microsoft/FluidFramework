@@ -91,7 +91,6 @@ COPY packages/runtime/runtime-definitions/package*.json packages/runtime/runtime
 COPY packages/runtime/runtime-utils/package*.json packages/runtime/runtime-utils/
 COPY packages/runtime/runtime-test-utils/package*.json packages/runtime/runtime-test-utils/
 COPY packages/runtime/sequence/package*.json packages/runtime/sequence/
-COPY packages/server/gateway/package*.json packages/server/gateway/
 COPY packages/server/local-test-server/package*.json packages/server/local-test-server/
 COPY packages/utils/odsp-utils/package*.json packages/utils/odsp-utils/
 COPY packages/utils/build-common/package*.json packages/utils/build-common/
