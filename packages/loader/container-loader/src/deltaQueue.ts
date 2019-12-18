@@ -96,7 +96,7 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
     public resume(): void {
         this.userPause = false;
         if (!this.paused) {
-            this.ensureProcessing();
+            this.ensureProcessing(true);
         }
     }
 
@@ -112,7 +112,7 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
     public systemResume(): void {
         this.sysPause = false;
         if (!this.paused) {
-            this.ensureProcessing();
+            this.ensureProcessing(true);
         }
     }
 
@@ -120,13 +120,27 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
      * There are several actions that may need to kick off delta processing, so we want to guard against
      * accidental reentrancy.  ensureProcessing can be called safely to start the processing loop if it is
      * not already started.
+     * If processAsync is true, delta processing is done on a separate stack so that the user stack does
+     * not become too large.
      */
-    private ensureProcessing() {
+    private ensureProcessing(processAsync = false) {
         if (!this.processingDeferred) {
             this.processingDeferred = new Deferred<void>();
-            this.processDeltas();
-            this.processingDeferred.resolve();
-            this.processingDeferred = undefined;
+            if (processAsync) {
+                // Use a resolved promise to start the processing on a separate stack.
+                // tslint:disable-next-line: no-floating-promises
+                Promise.resolve().then(() => {
+                    this.processDeltas();
+                    if (this.processingDeferred) {
+                        this.processingDeferred.resolve();
+                        this.processingDeferred = undefined;
+                    }
+                });
+            } else {
+                this.processDeltas();
+                this.processingDeferred.resolve();
+                this.processingDeferred = undefined;
+            }
         }
     }
 
