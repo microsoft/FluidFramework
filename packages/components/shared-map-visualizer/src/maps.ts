@@ -172,8 +172,7 @@ export class ProgressCollection
     private root: ISharedMap;
     private div: HTMLDivElement;
 
-    // eslint-disable-next-line @typescript-eslint/prefer-readonly
-    constructor(private runtime: IComponentRuntime, context: IComponentContext) {
+    constructor(private readonly runtime: IComponentRuntime, context: IComponentContext) {
         super();
 
         this.url = context.id;
