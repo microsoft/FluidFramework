@@ -1,8 +1,7 @@
 {
-    "packages": [
-      "packages/**",
-      "../../packages/utils/build-common/**"
-    ],
-    "version": "0.12.0"
+  "packages": [
+    "../../packages/utils/build-common/**",
+    "packages/**"
+  ],
+  "version": "0.13.0"
 }
-  
