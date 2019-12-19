@@ -20,7 +20,7 @@
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --ext=ts,tsx --format stylish src",
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
-    "test": "mocha --recursive dist/test",
+    "test": "mocha --recursive dist/test -r make-promises-safe",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
@@ -38,6 +38,7 @@
     "@typescript-eslint/parser": "^2.9.0",
     "concurrently": "^4.1.0",
     "eslint": "^6.7.1",
+    "make-promises-safe": "^5.1.0",
     "mocha": "^5.2.0",
     "rimraf": "^2.6.2",
     "tslint": "^5.20.0",

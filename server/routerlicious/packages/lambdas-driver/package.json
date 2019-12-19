@@ -15,7 +15,7 @@
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
-    "test": "mocha --recursive dist/test",
+    "test": "mocha --recursive dist/test -r make-promises-safe",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose"
@@ -40,6 +40,7 @@
     "@types/nconf": "^0.0.37",
     "@types/node": "^10.14.6",
     "concurrently": "^4.1.0",
+    "make-promises-safe": "^5.1.0",
     "mocha": "^5.2.0",
     "rimraf": "^2.6.2",
     "tslint": "^5.20.0",
@@ -47,21 +48,22 @@
   },
   "nyc": {
     "all": true,
+    "cache-dir": "nyc/.cache",
     "exclude": [
       "src/test/**/*.ts",
       "dist/test/**/*.js"
     ],
+    "exclude-after-remap": false,
     "include": [
       "src/**/*.ts",
       "dist/**/*.js"
     ],
+    "report-dir": "nyc/report",
     "reporter": [
       "cobertura",
       "html",
       "text"
     ],
-    "temp-directory": "nyc/.nyc_output",
-    "cache-dir": "nyc/.cache",
-    "report-dir": "nyc/report"
+    "temp-directory": "nyc/.nyc_output"
   }
 }

@@ -26,7 +26,7 @@
     "eslint": "eslint --ext=ts,tsx --format stylish src",
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
     "less": "lessc src/stylesheets/style.less public/stylesheets/dist/style.css && lessc src/stylesheets/map.less public/stylesheets/dist/map.css",
-    "test": "mocha --recursive dist/test --exit",
+    "test": "mocha --recursive dist/test --exit -r make-promises-safe",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose",
@@ -129,6 +129,7 @@
     "fork-ts-checker-webpack-plugin": "^0.4.9",
     "html-loader": "^0.5.5",
     "less": "~3.9.0",
+    "make-promises-safe": "^5.1.0",
     "mocha": "^5.2.0",
     "mocha-junit-reporter": "^1.18.0",
     "node-sass": "^4.9.3",
@@ -156,22 +157,22 @@
   },
   "nyc": {
     "all": true,
+    "cache-dir": "nyc/.cache",
     "exclude": [
       "src/test/**/*.ts",
       "dist/test/**/*.js"
     ],
+    "exclude-after-remap": false,
     "include": [
       "src/**/*.ts",
       "dist/**/*.js"
     ],
+    "report-dir": "nyc/report",
     "reporter": [
       "cobertura",
       "html",
       "text"
     ],
-    "temp-directory": "nyc/.nyc_output",
-    "cache-dir": "nyc/.cache",
-    "report-dir": "nyc/report",
-    "exclude-after-remap": false
+    "temp-directory": "nyc/.nyc_output"
   }
 }
