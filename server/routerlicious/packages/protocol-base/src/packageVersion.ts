@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@microsoft/fluid-protocol-base";
-export const pkgVersion = "0.12.0";
+export const pkgVersion = "0.1000.0";
