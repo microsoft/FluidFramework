@@ -55,6 +55,7 @@
     "concurrently": "^4.1.0",
     "eslint": "^6.7.1",
     "jest": "^24.9.0",
+    "jest-junit": "10.0.0",
     "jest-puppeteer": "^4.3.0",
     "puppeteer": "^1.20.0",
     "rimraf": "^2.6.2",
@@ -76,5 +77,9 @@
         "library": "main"
       }
     }
+  },
+  "jest-junit": {
+    "outputDirectory": ".",
+    "outputName": "junit.xml"
   }
 }

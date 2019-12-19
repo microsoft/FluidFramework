@@ -69,7 +69,8 @@ export class Package {
         chalk.default.whiteBright,
     ];
 
-    public readonly packageJson: Readonly<IPackage>;
+    // public readonly packageJson: Readonly<IPackage>;
+    public packageJson: IPackage;
     private readonly packageId = Package.packageCount++;
     private _matched: boolean = false;
     private _markForBuild: boolean = false;
@@ -146,7 +147,7 @@ export class Package {
 
     public async checkScripts() {
         // Fluid specific
-        const fixed = [this.checkBuildScripts(), this.checkTestCoverageScripts(), this.checkTestSafePromiseRequire()];
+        const fixed = [this.checkBuildScripts(), this.checkTestCoverageScripts(), this.checkTestSafePromiseRequire(), this.checkMochaTestScripts(), this.checkJestJunitTestEntry()];
 
         if (fixed.some((bool) => bool)) {
             await this.savePackageJson();
@@ -176,6 +177,46 @@ export class Package {
                         fixed = true;
                     }
                 }
+            }
+        }
+    }
+
+    public checkMochaTestScripts() {
+        let fixed = false;
+        if (this.packageJson.scripts && this.packageJson.scripts.test && /^(ts-)?mocha/.test(this.packageJson.scripts.test)) {
+            console.warn(`${this.nameColored}: warning: "mocha" in "test" script`)
+            if (options.fixScripts) {
+                if (!this.packageJson.scripts["test:mocha"]) {
+                    this.packageJson.scripts["test:mocha"] = this.packageJson.scripts["test"];
+                    this.packageJson.scripts["test"] = "test:mocha";
+                    fixed = true;
+                } else {
+                    console.warn(`couldn't fix ${this.nameColored}: "test" and "test:mocha" scripts both present`)
+                }
+            }
+        }
+        return fixed;
+    }
+
+    public checkJestJunitTestEntry() {
+        let fixed = false;
+        const pkgstring = "jest-junit";
+        const pkgversion = "10.0.0";
+        if (this.packageJson.scripts && this.packageJson.scripts["test:jest"] && !this.packageJson.devDependencies[pkgstring]) {
+            console.warn(`${this.name}: warning: missing ${pkgstring} dependency`);
+            if (options.fixScripts) {
+                this.packageJson.devDependencies[pkgstring] = pkgversion;
+                fixed = true;
+            }
+        }
+        if (this.packageJson.scripts && this.packageJson.scripts["test:jest"] && !this.packageJson["jest-junit"]) {
+            console.warn(`${this.nameColored} warning: no jest-junit entry for jest test`);
+            if (options.fixScripts) {
+                this.packageJson["jest-junit"] = {
+                    outputDirectory: ".",
+                    outputName: "junit.xml",
+                };
+                fixed = true;
             }
         }
 
