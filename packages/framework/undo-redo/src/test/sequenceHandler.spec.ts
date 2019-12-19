@@ -11,7 +11,7 @@ import { UndoRedoStackManager } from "../undoRedoStackManager";
 
 const text =
     // tslint:disable-next-line: max-line-length
-    "The SharedSegementSequenceRevertable does the heavy lifting of tracking and reverting changes on the underlying SharedSegementSequence. This is accomplished via TrackingGroup objects. A TrackingGroup creates a bi-direction link between itself and the segment. This link is maintained across segment movement, splits, merges, and removal. When a sequence delta event is fired the segments contained in that event are added to a TrackingGroup. The TrackingGroup is then tracked along with additional metadata, like the delta type and the annotate property changes. From the TrackingGroup's segments we can find the ranges in the current document that were affected by the original change even in the presesene of other changes. The segments also contain the content which can be used. With the ranges, content, and metadata we can revert the original change on the sequence.";
+    "The SharedSegementSequenceRevertable does the heavy lifting of tracking and reverting changes on the underlying SharedSegementSequence. This is accomplished via TrackingGroup objects.";
 
 function insertTextAsChunks(sharedString: SharedString, targetLength = text.length) {
     let chunks = 0;
@@ -110,7 +110,7 @@ describe("SharedSegmentSequenceUndoRedoHandler", () => {
 
         while (undoRedoStack.redoOperation()) { }
 
-        assert.equal(sharedString.getText(), finalText);
+        assert.equal(sharedString.getText(), finalText, sharedString.getText());
 
     });
 
