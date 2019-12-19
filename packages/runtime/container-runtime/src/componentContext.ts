@@ -137,7 +137,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
     }
 
     public get baseSnapshot(): ISnapshotTree {
-        return this.summaryTracker.baseTree;
+        return this._baseSnapshot;
     }
 
     protected componentRuntime: IComponentRuntime;
@@ -146,6 +146,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
     private loaded = false;
     private pending: ISequencedDocumentMessage[] = [];
     private componentRuntimeDeferred: Deferred<IComponentRuntime>;
+    private _baseSnapshot: ISnapshotTree;
 
     constructor(
         private readonly _hostRuntime: ContainerRuntime,
@@ -181,14 +182,10 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         if (!this.componentRuntimeDeferred) {
             this.componentRuntimeDeferred = new Deferred<IComponentRuntime>();
             const details = await this.getInitialSnapshotDetails();
-            if (details.snapshot && !this.summaryTracker.baseTree) {
-                // do not overwrite if refreshed!
-                // local - will always give undefined tree, so never enter here
-                // remote - will give the tree at the time of construction (initial),
-                // which may be older than the refreshed one, but never newer than
-                // the refreshed or one set at constructor (in case of summarizer)
-                this.summaryTracker.setBaseTree(details.snapshot);
-            }
+            // Base snapshot is the baseline where pending ops are applied to.
+            // It is important that this be in sync with the pending ops, and also
+            // that it is set here, before bindRuntime is called.
+            this._baseSnapshot = details.snapshot;
             const packages = details.pkg;
             let entry: ComponentRegistryEntry;
             let registry = this._hostRuntime.IComponentRegistry;
@@ -433,20 +430,12 @@ export class RemotedComponentContext extends ComponentContext {
             () => {
                 throw new Error("Already attached");
             });
-
-        if (initSnapshotValue && typeof initSnapshotValue !== "string") {
-            // This will allow the summarizer to avoid calling realize if there
-            // are no changes to the component.  If the initSnapshotValue is a
-            // string, the summarizer cannot avoid calling realize.
-            this.summaryTracker.setBaseTree(initSnapshotValue);
-        }
     }
 
     public generateAttachMessage(): IAttachMessage {
         throw new Error("Cannot attach remote component");
     }
 
-    // Only refers to the initial snapshot value, not necessarily the baseSnapshot.
     // This should only be called during realize to get the baseSnapshot,
     // or it can be called at any time to get the pkg, but that assumes the
     // pkg can never change for a component.
