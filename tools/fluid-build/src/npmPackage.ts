@@ -213,8 +213,8 @@ export class Package {
             console.warn(`${this.nameColored} warning: no jest-junit entry for jest test`);
             if (options.fixScripts) {
                 this.packageJson["jest-junit"] = {
-                    outputDirectory: ".",
-                    outputName: "junit.xml",
+                    outputDirectory: "nyc",
+                    outputName: "jest-junit-report.xml",
                 };
                 fixed = true;
             }

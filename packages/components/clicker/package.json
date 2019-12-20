@@ -77,7 +77,7 @@
     }
   },
   "jest-junit": {
-    "outputDirectory": ".",
-    "outputName": "junit.xml"
+    "outputDirectory": "nyc",
+    "outputName": "jest-junit-report.xml"
   }
 }
