@@ -6,7 +6,7 @@
 import { IContext, IKafkaMessage, IPartitionLambda } from "@microsoft/fluid-server-services-core";
 
 export class NoOpLambda implements IPartitionLambda {
-    constructor(private context: IContext) {
+    constructor(private readonly context: IContext) {
     }
 
     public handler(message: IKafkaMessage): void {

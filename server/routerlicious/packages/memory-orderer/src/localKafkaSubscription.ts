@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import { IKafkaMessage } from "@microsoft/fluid-server-services-core";
 import * as Deque from "double-ended-queue";
-import { EventEmitter } from "events";
 import { IKafkaSubscriber } from "./interfaces";
 
 /**
@@ -52,7 +52,7 @@ export class LocalKafkaSubscription extends EventEmitter {
             this.emit("processed", this.queueOffset);
 
         } catch (ex) {
-            // lambda failed to process the message
+            // Lambda failed to process the message
             this.subscriber.context.error(ex, false);
 
             this.retryTimer = setTimeout(() => {
@@ -66,7 +66,7 @@ export class LocalKafkaSubscription extends EventEmitter {
             this.processing = false;
         }
 
-        // process the next one
+        // Process the next one
         this.process();
     }
 }

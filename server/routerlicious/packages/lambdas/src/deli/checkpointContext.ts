@@ -7,6 +7,8 @@ import { IRangeTrackerSnapshot } from "@microsoft/fluid-core-utils";
 import { ICollection, IContext, IDocument } from "@microsoft/fluid-server-services-core";
 import * as winston from "winston";
 
+/* eslint-disable no-null/no-null */
+
 export interface IClientSequenceNumber {
     // Whether or not the object can expire
     canEvict: boolean;
@@ -31,10 +33,10 @@ export class CheckpointContext {
     private closed = false;
 
     constructor(
-        private tenantId: string,
-        private id: string,
-        private collection: ICollection<IDocument>,
-        private context: IContext) {
+        private readonly tenantId: string,
+        private readonly id: string,
+        private readonly collection: ICollection<IDocument>,
+        private readonly context: IContext) {
     }
 
     public checkpoint(checkpoint: ICheckpoint) {
@@ -44,6 +46,7 @@ export class CheckpointContext {
         }
 
         // Check if a checkpoint is in progress - if so store the pending checkpoint
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises
         if (this.pendingUpdateP) {
             this.pendingCheckpoint = checkpoint;
             return;
@@ -73,6 +76,7 @@ export class CheckpointContext {
         this.closed = true;
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     private checkpointCore(checkpoint: ICheckpoint) {
         const updateP = this.collection.update(
             {
@@ -83,6 +87,7 @@ export class CheckpointContext {
             null);
 
         // Retry the checkpoint on error
+        // eslint-disable-next-line @typescript-eslint/promise-function-async
         return updateP.catch((error) => {
             winston.error("Error writing checkpoint to MongoDB", error);
             return new Promise<void>((resolve, reject) => {

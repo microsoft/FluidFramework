@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
+import * as util from "util";
 import { Deferred } from "@microsoft/fluid-core-utils";
 import { BoxcarType, IBoxcarMessage, IPendingBoxcar, IProducer } from "@microsoft/fluid-server-services-core";
-import { EventEmitter } from "events";
 import * as kafkaNode from "kafka-node";
-import * as util from "util";
 import { debug } from "./debug";
 
 // 1MB batch size / (16KB max message size + overhead)
@@ -25,24 +25,25 @@ class PendingBoxcar implements IPendingBoxcar {
  * Kafka-Node Producer.
  */
 export class KafkaNodeProducer implements IProducer {
-    private messages = new Map<string, IPendingBoxcar[]>();
+    private readonly messages = new Map<string, IPendingBoxcar[]>();
     private client: any;
     private producer: any;
     private sendPending: NodeJS.Immediate;
-    private events = new EventEmitter();
+    private readonly events = new EventEmitter();
     private connecting = false;
     private connected = false;
 
     constructor(
-        private endpoint: string,
-        private clientId: string,
-        private topic: string) {
+        private readonly endpoint: string,
+        private readonly clientId: string,
+        private readonly topic: string) {
         this.connect();
     }
 
     /**
      * Sends the provided message to Kafka
      */
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public send(messages: object[], tenantId: string, documentId: string): Promise<any> {
         const key = `${tenantId}/${documentId}`;
 
@@ -103,7 +104,7 @@ export class KafkaNodeProducer implements IProducer {
             return;
         }
 
-        // use setImmediate to play well with the node event loop
+        // Use setImmediate to play well with the node event loop
         this.sendPending = setImmediate(() => {
             this.sendPendingMessages();
             this.sendPending = undefined;
@@ -157,7 +158,7 @@ export class KafkaNodeProducer implements IProducer {
         this.client = new kafkaNode.Client(this.endpoint, this.clientId);
         this.producer = new kafkaNode.Producer(this.client, { partitionerType: 3 });
 
-        (this.client as any).on("error", (error) => {
+        (this.client).on("error", (error) => {
             this.handleError(error);
         });
 
@@ -200,6 +201,7 @@ export class KafkaNodeProducer implements IProducer {
     /**
      * Ensures that the provided topics are ready
      */
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     private ensureTopics(client: kafkaNode.Client, topics: string[]): Promise<void> {
         return new Promise<void>((resolve, reject) => {
             // We make use of a refreshMetadata call to validate the given topics exist

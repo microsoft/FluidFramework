@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
+import { EventEmitter } from "events";
 import {
     IContext,
     IKafkaMessage,
@@ -10,18 +12,16 @@ import {
     IPartitionLambdaFactory,
     ISequencedOperationMessage,
 } from "@microsoft/fluid-server-services-core";
-import * as assert from "assert";
-import { EventEmitter } from "events";
 import { Provider } from "nconf";
 
 export class TestLambda implements IPartitionLambda {
     public handleCalls = 0;
 
-    private documentId: string;
+    private readonly documentId: string;
     private failHandler = false;
     private throwHandler = false;
 
-    constructor(config: Provider, private context: IContext) {
+    constructor(config: Provider, private readonly context: IContext) {
         this.documentId = config.get("documentId");
         assert(this.documentId);
     }
@@ -94,9 +94,7 @@ export class TestLambdaFactory extends EventEmitter implements IPartitionLambdaF
     }
 }
 
-export function create(config: Provider): IPartitionLambdaFactory {
-    return new TestLambdaFactory();
-}
+export const create = (config: Provider): IPartitionLambdaFactory => new TestLambdaFactory();
 
 export interface ITestLambdaModule {
     create: () => TestLambdaFactory;

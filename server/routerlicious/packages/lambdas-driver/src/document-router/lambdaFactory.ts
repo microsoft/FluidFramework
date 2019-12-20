@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "@microsoft/fluid-server-services-core";
 import { EventEmitter } from "events";
+import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "@microsoft/fluid-server-services-core";
 import { Provider } from "nconf";
 import { DocumentLambda } from "./documentLambda";
 
 export class DocumentLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
-    constructor(private documentLambdaFactory: IPartitionLambdaFactory) {
+    constructor(private readonly documentLambdaFactory: IPartitionLambdaFactory) {
         super();
 
         // Forward on any factory errors

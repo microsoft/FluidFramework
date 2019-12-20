@@ -19,9 +19,9 @@ class PendingBoxcar implements IPendingBoxcar {
 }
 
 export class EventHubProducer implements IProducer {
-    private messages = new Map<string, PendingBoxcar>();
+    private readonly messages = new Map<string, PendingBoxcar>();
     private sendPending: NodeJS.Immediate;
-    private client: EventHubClient;
+    private readonly client: EventHubClient;
 
     constructor(endpoint: string, topic: string) {
         this.client = EventHubClient.createFromConnectionString(
@@ -32,6 +32,7 @@ export class EventHubProducer implements IProducer {
     /**
      * Sends the provided message to Kafka
      */
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public send(messages: object[], tenantId: string, documentId: string): Promise<any> {
         const key = `${tenantId}/${documentId}`;
 
@@ -78,7 +79,7 @@ export class EventHubProducer implements IProducer {
             return;
         }
 
-        // use setImmediate to play well with the node event loop
+        // Use setImmediate to play well with the node event loop
         this.sendPending = setImmediate(() => {
             this.sendPendingMessages();
             this.sendPending = undefined;
@@ -98,6 +99,7 @@ export class EventHubProducer implements IProducer {
 
     private sendBoxcar(boxcar: IPendingBoxcar) {
         boxcar.messages[0].partitionKey = boxcar.documentId;
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.client
             .sendBatch(boxcar.messages)
             .then(() => boxcar.deferred.resolve());

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import { IClient, IDocumentMessage, IServiceConfiguration } from "@microsoft/fluid-protocol-definitions";
 import {
     ICollection,
@@ -13,7 +14,6 @@ import {
     IOrderer,
     ISequencedOperationMessage,
 } from "@microsoft/fluid-server-services-core";
-import { EventEmitter } from "events";
 
 export interface IConcreteNode extends EventEmitter {
     id: string;
@@ -58,7 +58,7 @@ export interface INodeMessage {
     // Connection identifier
     cid: number;
 
-    // better way to do the before in TS?
+    // Better way to do the before in TS?
     type: "order" | "op" | "connect" | "disconnect" | "connected";
 
     payload: IDocumentMessage | string | IOpMessage | IConnectMessage | IConnectedMessage;
