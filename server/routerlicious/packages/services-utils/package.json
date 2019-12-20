@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-server-services-utils",
-  "version": "0.12.0",
+  "version": "0.1001.0",
   "description": "Fluid service lambdas",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -20,7 +20,7 @@
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "dependencies": {
-    "@microsoft/fluid-protocol-definitions": "^0.12.0",
+    "@microsoft/fluid-protocol-definitions": "^0.1001.0",
     "@sentry/node": "^5.6.2",
     "debug": "^4.1.1",
     "moniker": "^0.1.2",
