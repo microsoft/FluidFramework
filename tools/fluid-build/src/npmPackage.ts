@@ -69,8 +69,7 @@ export class Package {
         chalk.default.whiteBright,
     ];
 
-    // public readonly packageJson: Readonly<IPackage>;
-    public packageJson: IPackage;
+    public readonly packageJson: Readonly<IPackage>;
     private readonly packageId = Package.packageCount++;
     private _matched: boolean = false;
     private _markForBuild: boolean = false;
@@ -161,29 +160,33 @@ export class Package {
     public checkTestSafePromiseRequire() {
         let fixed = false;
         const pkgstring = "make-promises-safe";
-        if (this.packageJson.scripts && this.packageJson.scripts.test && /^(ts-)?mocha/.test(this.packageJson.scripts.test)) {
+        const pkgversion = "^5.1.0";
+        const testScript = options.server ? "test" : "test:mocha";
+        if (this.packageJson.scripts && this.packageJson.scripts[testScript] && /^(ts-)?mocha/.test(this.packageJson.scripts[testScript]!)) {
             if (this.packageJson.devDependencies && !this.packageJson.devDependencies[pkgstring]) {
-                console.warn(`warning: missing ${pkgstring} dependency in ${this.name}`);
+                console.warn(`${this.nameColored}: warning: missing ${pkgstring} dependency`);
                 if (options.fixScripts) {
-                    this.packageJson.devDependencies[pkgstring] = "^5.1.0";
+                    this.packageJson.devDependencies[pkgstring] = pkgversion;
                     fixed = true;
                 }
             }
-            if (!this.packageJson.scripts.test.includes(pkgstring)) {
-                if (/^(ts-)?mocha/.test(this.packageJson.scripts.test)) {
-                    console.warn(`warning: no ${pkgstring} require in test script in ${this.name}`);
+            if (!this.packageJson.scripts[testScript]!.includes(pkgstring)) {
+                if (/^(ts-)?mocha/.test(this.packageJson.scripts[testScript]!)) {
+                    console.warn(`${this.nameColored}: warning: no ${pkgstring} require in test script`);
                     if (options.fixScripts) {
-                        this.packageJson.scripts.test += " -r " + pkgstring;
+                        this.packageJson.scripts[testScript] += " -r " + pkgstring;
                         fixed = true;
                     }
                 }
             }
         }
+
+        return fixed;
     }
 
     public checkMochaTestScripts() {
         let fixed = false;
-        if (this.packageJson.scripts && this.packageJson.scripts.test && /^(ts-)?mocha/.test(this.packageJson.scripts.test)) {
+        if (!options.server && this.packageJson.scripts && this.packageJson.scripts.test && /^(ts-)?mocha/.test(this.packageJson.scripts.test)) {
             console.warn(`${this.nameColored}: warning: "mocha" in "test" script`)
             if (options.fixScripts) {
                 if (!this.packageJson.scripts["test:mocha"]) {
@@ -195,6 +198,7 @@ export class Package {
                 }
             }
         }
+
         return fixed;
     }
 
@@ -202,21 +206,16 @@ export class Package {
         let fixed = false;
         const pkgstring = "jest-junit";
         const pkgversion = "10.0.0";
-        if (this.packageJson.scripts && this.packageJson.scripts["test:jest"] && !this.packageJson.devDependencies[pkgstring]) {
-            console.warn(`${this.name}: warning: missing ${pkgstring} dependency`);
-            if (options.fixScripts) {
-                this.packageJson.devDependencies[pkgstring] = pkgversion;
-                fixed = true;
+        if (this.packageJson.scripts && this.packageJson.scripts["test:jest"]) {
+            if (!this.packageJson.devDependencies[pkgstring]) {
+                console.warn(`${this.name}: warning: missing ${pkgstring} dependency`);
+                if (options.fixScripts) {
+                    this.packageJson.devDependencies[pkgstring] = pkgversion;
+                    fixed = true;
+                }
             }
-        }
-        if (this.packageJson.scripts && this.packageJson.scripts["test:jest"] && !this.packageJson["jest-junit"]) {
-            console.warn(`${this.nameColored} warning: no jest-junit entry for jest test`);
-            if (options.fixScripts) {
-                this.packageJson["jest-junit"] = {
-                    outputDirectory: "nyc",
-                    outputName: "jest-junit-report.xml",
-                };
-                fixed = true;
+            if (!this.packageJson["jest-junit"]) {
+                console.warn(`${this.nameColored} warning: no jest-junit entry for jest test`);
             }
         }
 
