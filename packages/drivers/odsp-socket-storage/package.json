@@ -26,6 +26,26 @@
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
+  "nyc": {
+    "all": true,
+    "cache-dir": "nyc/.cache",
+    "exclude": [
+      "src/test/**/*.ts",
+      "dist/test/**/*.js"
+    ],
+    "exclude-after-remap": false,
+    "include": [
+      "src/**/*.ts",
+      "dist/**/*.js"
+    ],
+    "report-dir": "nyc/report",
+    "reporter": [
+      "cobertura",
+      "html",
+      "text"
+    ],
+    "temp-directory": "nyc/.nyc_output"
+  },
   "dependencies": {
     "@microsoft/fluid-common-definitions": "^0.13.0",
     "@microsoft/fluid-component-core-interfaces": "^0.13.0",
@@ -61,25 +81,5 @@
     "rimraf": "^2.6.2",
     "tslint": "^5.20.0",
     "typescript": "~3.4.5"
-  },
-  "nyc": {
-    "all": true,
-    "cache-dir": "nyc/.cache",
-    "exclude": [
-      "src/test/**/*.ts",
-      "dist/test/**/*.js"
-    ],
-    "exclude-after-remap": false,
-    "include": [
-      "src/**/*.ts",
-      "dist/**/*.js"
-    ],
-    "report-dir": "nyc/report",
-    "reporter": [
-      "cobertura",
-      "html",
-      "text"
-    ],
-    "temp-directory": "nyc/.nyc_output"
   }
 }

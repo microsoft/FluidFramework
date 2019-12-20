@@ -25,6 +25,31 @@
     "tsc": "tsc",
     "tslint": "npm run eslint"
   },
+  "nyc": {
+    "all": true,
+    "cache-dir": "nyc/.cache",
+    "exclude": [
+      "**/*.d.ts",
+      "src/test/**/*.ts",
+      "dist/test/**/*.js"
+    ],
+    "exclude-after-remap": false,
+    "extension": [
+      ".ts",
+      ".tsx",
+      ".js",
+      ".jsx"
+    ],
+    "include": [
+      "src/**/*.ts",
+      "dist/**/*.js"
+    ],
+    "report-dir": "nyc/report",
+    "require": [
+      "ts-node/register"
+    ],
+    "temp-directory": "nyc/.nyc_output"
+  },
   "devDependencies": {
     "@microsoft/eslint-config-fluid": "^0.13.0",
     "@microsoft/fluid-build-common": "^0.13.0",
@@ -50,30 +75,5 @@
     "ts-node": "^7.0.1",
     "tslint": "^5.20.0",
     "typescript": "~3.4.5"
-  },
-  "nyc": {
-    "all": true,
-    "cache-dir": "nyc/.cache",
-    "exclude": [
-      "**/*.d.ts",
-      "src/test/**/*.ts",
-      "dist/test/**/*.js"
-    ],
-    "exclude-after-remap": false,
-    "extension": [
-      ".ts",
-      ".tsx",
-      ".js",
-      ".jsx"
-    ],
-    "include": [
-      "src/**/*.ts",
-      "dist/**/*.js"
-    ],
-    "report-dir": "nyc/report",
-    "require": [
-      "ts-node/register"
-    ],
-    "temp-directory": "nyc/.nyc_output"
   }
 }

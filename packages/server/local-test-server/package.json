@@ -26,6 +26,26 @@
     "tslint": "tslint --project tsconfig.json --format verbose",
     "webpack": "webpack --config webpack.config.js"
   },
+  "nyc": {
+    "all": true,
+    "cache-dir": "nyc/.cache",
+    "exclude": [
+      "src/test/**/*.ts",
+      "dist/test/**/*.js"
+    ],
+    "exclude-after-remap": false,
+    "include": [
+      "src/**/*.ts",
+      "dist/**/*.js"
+    ],
+    "report-dir": "nyc/report",
+    "reporter": [
+      "cobertura",
+      "html",
+      "text"
+    ],
+    "temp-directory": "nyc/.nyc_output"
+  },
   "dependencies": {
     "@microsoft/fluid-aqueduct": "^0.13.0",
     "@microsoft/fluid-component-core-interfaces": "^0.13.0",
@@ -71,25 +91,5 @@
     "typescript": "~3.4.5",
     "webpack": "^4.16.5",
     "webpack-cli": "^3.1.2"
-  },
-  "nyc": {
-    "all": true,
-    "exclude": [
-      "src/test/**/*.ts",
-      "dist/test/**/*.js"
-    ],
-    "include": [
-      "src/**/*.ts",
-      "dist/**/*.js"
-    ],
-    "reporter": [
-      "cobertura",
-      "html",
-      "text"
-    ],
-    "temp-directory": "nyc/.nyc_output",
-    "cache-dir": "nyc/.cache",
-    "report-dir": "nyc/report",
-    "exclude-after-remap": false
   }
 }

@@ -25,6 +25,31 @@
     "tsc": "tsc",
     "tslint": "npm run eslint"
   },
+  "nyc": {
+    "all": true,
+    "cache-dir": "nyc/.cache",
+    "exclude": [
+      "**/*.d.ts",
+      "src/test/**/*.ts",
+      "dist/test/**/*.js"
+    ],
+    "exclude-after-remap": false,
+    "extension": [
+      ".ts",
+      ".tsx",
+      ".js",
+      ".jsx"
+    ],
+    "include": [
+      "src/**/*.ts",
+      "dist/**/*.js"
+    ],
+    "report-dir": "nyc/report",
+    "require": [
+      "ts-node/register"
+    ],
+    "temp-directory": "nyc/.nyc_output"
+  },
   "dependencies": {
     "@microsoft/fluid-aqueduct": "^0.13.0",
     "@microsoft/fluid-component-core-interfaces": "^0.13.0",
@@ -65,30 +90,5 @@
         "library": "main"
       }
     }
-  },
-  "nyc": {
-    "all": true,
-    "cache-dir": "nyc/.cache",
-    "exclude": [
-      "**/*.d.ts",
-      "src/test/**/*.ts",
-      "dist/test/**/*.js"
-    ],
-    "exclude-after-remap": false,
-    "extension": [
-      ".ts",
-      ".tsx",
-      ".js",
-      ".jsx"
-    ],
-    "include": [
-      "src/**/*.ts",
-      "dist/**/*.js"
-    ],
-    "report-dir": "nyc/report",
-    "require": [
-      "ts-node/register"
-    ],
-    "temp-directory": "nyc/.nyc_output"
   }
 }
