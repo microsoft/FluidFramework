@@ -17,7 +17,7 @@ export class TestClientLogger {
     private readonly roundLogLines: string[][] = [];
 
     constructor(
-        private readonly clients: TestClient[],
+        private readonly clients: ReadonlyArray<TestClient>,
         private readonly title?: string) {
 
         this.roundLogLines.push([
