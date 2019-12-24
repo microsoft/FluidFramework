@@ -34,7 +34,7 @@ export interface IDevServerUser extends IUser {
 }
 
 export interface IRouteOptions {
-    mode: "local" | "localhost" | "live";
+    mode: "local" | "docker" | "live" | "tinylicious";
     fluidHost?: string;
     tenantId?: string;
     tenantSecret?: string;
@@ -141,7 +141,7 @@ async function getResolvedPackage(
 
 function getUrlResolver(options: IRouteOptions): IUrlResolver {
     switch (options.mode) {
-        case "localhost":
+        case "docker":
             return new InsecureUrlResolver(
                 "http://localhost:3000",
                 "http://localhost:3003",
@@ -158,6 +158,16 @@ function getUrlResolver(options: IRouteOptions): IUrlResolver {
                 options.fluidHost.replace("www", "historian"),
                 options.tenantId,
                 options.tenantSecret,
+                getUser(),
+                options.bearerSecret);
+
+        case "tinylicious":
+            return new InsecureUrlResolver(
+                "http://localhost:3000",
+                "http://localhost:3000",
+                "http://localhost:3000",
+                "tinylicious",
+                "12345",
                 getUser(),
                 options.bearerSecret);
 

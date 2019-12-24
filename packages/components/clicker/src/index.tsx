@@ -31,10 +31,9 @@ export class Clicker extends PrimedComponent implements IComponentHTMLVisual {
       // tslint:disable-next-line
       await new Promise<void>((resolve) => this.runtime.on("connected", () => resolve()));
     }
-    this.setupAgent();
   }
 
-  protected async componentInitializingFromExisting() {
+  protected async componentHasInitialized() {
     this.setupAgent();
   }
 
