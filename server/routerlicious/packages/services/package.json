@@ -15,8 +15,10 @@
     "build:full:compile": "npm run build:compile",
     "build:genver": "node node_modules/@microsoft/fluid-build-common/gen_version.js",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
+    "eslint": "eslint --ext=ts,tsx --format stylish src",
+    "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
     "tsc": "tsc",
-    "tslint": "tslint --project tsconfig.json --format verbose"
+    "tslint": "npm run eslint"
   },
   "dependencies": {
     "@azure/event-hubs": "^1.0.8",
@@ -32,7 +34,7 @@
     "kafka-node": "^3.0.1",
     "lodash": "^4.17.11",
     "minio": "^7.0.2",
-    "mongodb": "^3.1.10",
+    "mongodb": "3.1.10",
     "moniker": "^0.1.2",
     "redis": "^2.8.0",
     "socket.io": "^2.2.0",
@@ -42,19 +44,27 @@
     "winston": "^3.1.0"
   },
   "devDependencies": {
+    "@microsoft/eslint-config-fluid": "^0.13.0",
     "@microsoft/fluid-build-common": "^0.13.0",
+    "@typescript-eslint/eslint-plugin": "^2.9.0",
+    "@typescript-eslint/parser": "^2.9.0",
     "@types/amqplib": "^0.5.9",
     "@types/debug": "^0.0.31",
     "@types/lodash": "^4.14.118",
     "@types/minio": "^7.0.1",
-    "@types/mongodb": "^3.1.17",
+    "@types/mongodb": "3.1.17",
     "@types/node": "^10.14.6",
     "@types/redis": "^2.8.8",
     "@types/socket.io": "^2.1.1",
     "@types/socket.io-redis": "^1.0.25",
     "concurrently": "^4.1.0",
+    "eslint": "^6.7.1",
+    "eslint-plugin-import": "^2.18.2",
+    "eslint-plugin-no-null": "^1.0.2",
+    "eslint-plugin-prefer-arrow": "^1.1.7",
+    "eslint-plugin-react": "^7.16.0",
+    "eslint-plugin-unicorn": "^14.0.1",
     "rimraf": "^2.6.2",
-    "tslint": "^5.20.0",
     "typescript": "~3.4.5"
   }
 }

@@ -10,23 +10,23 @@ import {
     ITenantManager,
     IWebSocketServer,
 } from "@microsoft/fluid-server-services-core";
-// tslint:disable-next-line:no-submodule-imports
+// eslint-disable-next-line import/no-internal-modules
 import * as uuid from "uuid/v4";
 import { IConcreteNodeFactory } from "./interfaces";
 import { LocalNode } from "./localNode";
 
 export class LocalNodeFactory implements IConcreteNodeFactory {
     constructor(
-        private hostname: string,
-        private address: string,
-        private storage: IDocumentStorage,
-        private databaseManager: IDatabaseManager,
-        private timeoutLength: number,
-        private webSocketServerFactory: () => IWebSocketServer,
-        private taskMessageSender: ITaskMessageSender,
-        private tenantManager: ITenantManager,
-        private permission: any,
-        private maxMessageSize: number) {
+        private readonly hostname: string,
+        private readonly address: string,
+        private readonly storage: IDocumentStorage,
+        private readonly databaseManager: IDatabaseManager,
+        private readonly timeoutLength: number,
+        private readonly webSocketServerFactory: () => IWebSocketServer,
+        private readonly taskMessageSender: ITaskMessageSender,
+        private readonly tenantManager: ITenantManager,
+        private readonly permission: any,
+        private readonly maxMessageSize: number) {
     }
 
     public async create(): Promise<LocalNode> {

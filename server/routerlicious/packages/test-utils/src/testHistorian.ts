@@ -43,6 +43,7 @@ export class TestHistorian implements IHistorian {
         };
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public getFullTree(sha: string): Promise<any> {
         throw new Error("Not Supported");
     }
@@ -70,6 +71,7 @@ export class TestHistorian implements IHistorian {
         };
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public getContent(path: string, ref: string): Promise<any> {
         throw new Error("Not Supported");
     }
@@ -97,12 +99,12 @@ export class TestHistorian implements IHistorian {
                 author: {} as Partial<git.IAuthor> as git.IAuthor,
                 committer: {} as Partial<git.ICommitter> as git.ICommitter,
                 message: commit.value.message,
-                parents: commit.value.parents.map<git.ICommitHash>((p) => ({sha: p, url: ""})),
+                parents: commit.value.parents.map<git.ICommitHash>((p) => ({ sha: p, url: "" })),
                 sha: commit._id,
                 tree: {
                     sha: gitHashFile(Buffer.from(commit.value.tree)),
                     url: "",
-                } ,
+                },
                 url: "",
             };
         }
@@ -114,18 +116,22 @@ export class TestHistorian implements IHistorian {
         return this.getCommit(_id);
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public getRefs(): Promise<git.IRef[]> {
         throw new Error("Not Supported");
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public getRef(ref: string): Promise<git.IRef> {
         throw new Error("Not Supported");
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public createRef(params: git.ICreateRefParams): Promise<git.IRef> {
         throw new Error("Not Supported");
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public updateRef(ref: string, params: git.IPatchRefParams): Promise<git.IRef> {
         throw new Error("Not Supported");
     }
@@ -134,10 +140,12 @@ export class TestHistorian implements IHistorian {
         throw new Error("Not Supported");
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public createTag(tag: git.ICreateTagParams): Promise<git.ITag> {
         throw new Error("Not Supported");
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public getTag(tag: string): Promise<git.ITag> {
         throw new Error("Not Supported");
     }

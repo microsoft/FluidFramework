@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IContext } from "@microsoft/fluid-server-services-core";
 import * as assert from "assert";
 import { EventEmitter } from "events";
+import { IContext } from "@microsoft/fluid-server-services-core";
 import { DocumentContext } from "./documentContext";
 
 // Constant representing the previous checkpointed offset
@@ -16,7 +16,7 @@ const LastCheckpointedOffset = -1;
  * from them.
  */
 export class DocumentContextManager extends EventEmitter {
-    private contexts: DocumentContext[] = [];
+    private readonly contexts: DocumentContext[] = [];
 
     // Head and tail represent our processing position of the queue. Head is the latest message seen and
     // tail is the last message processed
@@ -28,7 +28,7 @@ export class DocumentContextManager extends EventEmitter {
 
     private closed = false;
 
-    constructor(private partitionContext: IContext) {
+    constructor(private readonly partitionContext: IContext) {
         super();
     }
 

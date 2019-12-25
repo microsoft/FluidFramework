@@ -12,7 +12,8 @@ import {
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
 import * as core from "@microsoft/fluid-server-services-core";
-import * as _ from "lodash";
+
+/* eslint-disable no-null/no-null */
 
 export class KafkaOrdererConnection implements core.IOrdererConnection {
     public static async create(
@@ -43,16 +44,16 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
         return this._parentBranch;
     }
 
-    private _parentBranch: string;
+    private readonly _parentBranch: string;
 
     constructor(
         public readonly existing: boolean,
         document: core.IDocument,
-        private producer: core.IProducer,
+        private readonly producer: core.IProducer,
         public readonly tenantId: string,
         public readonly documentId: string,
         public readonly clientId: string,
-        private client: IClient,
+        private readonly client: IClient,
         public readonly maxMessageSize: number,
         public readonly serviceConfiguration: IServiceConfiguration,
     ) {
@@ -129,7 +130,7 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
     private submitRawOperation(messages: core.IRawOperationMessage[]) {
         // Add trace
         messages.forEach((message) => {
-            const operation = message.operation as IDocumentMessage;
+            const operation = message.operation;
             if (operation && operation.traces === undefined) {
                 operation.traces = [];
             } else if (operation && operation.traces && operation.traces.length > 1) {
@@ -142,6 +143,7 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
             }
         });
 
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.producer.send(messages, this.tenantId, this.documentId);
     }
 }
@@ -160,11 +162,11 @@ export class KafkaOrderer implements core.IOrderer {
     private existing: boolean;
 
     constructor(
-        private producer: core.IProducer,
-        private tenantId: string,
-        private documentId: string,
-        private maxMessageSize: number,
-        private serviceConfiguration: IServiceConfiguration,
+        private readonly producer: core.IProducer,
+        private readonly tenantId: string,
+        private readonly documentId: string,
+        private readonly maxMessageSize: number,
+        private readonly serviceConfiguration: IServiceConfiguration,
     ) {
     }
 
@@ -186,24 +188,25 @@ export class KafkaOrderer implements core.IOrderer {
             clientId,
             this.serviceConfiguration);
 
-        // document is now existing regardless of the original value
+        // Document is now existing regardless of the original value
         this.existing = true;
 
         return connection;
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public close() {
         return Promise.resolve();
     }
 }
 
 export class KafkaOrdererFactory {
-    private ordererMap = new Map<string, Promise<core.IOrderer>>();
+    private readonly ordererMap = new Map<string, Promise<core.IOrderer>>();
 
     constructor(
-        private producer: core.IProducer,
-        private maxMessageSize: number,
-        private serviceConfiguration: IServiceConfiguration,
+        private readonly producer: core.IProducer,
+        private readonly maxMessageSize: number,
+        private readonly serviceConfiguration: IServiceConfiguration,
     ) {
     }
 
