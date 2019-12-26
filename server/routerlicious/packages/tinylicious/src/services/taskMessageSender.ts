@@ -6,7 +6,7 @@
 import { ITaskMessage, ITaskMessageSender } from "@microsoft/fluid-server-services-core";
 
 export class TaskMessageSender implements ITaskMessageSender {
-    public initialize(): Promise<void> {
+    public async initialize(): Promise<void> {
         throw new Error("Method not implemented.");
     }
 
@@ -18,7 +18,7 @@ export class TaskMessageSender implements ITaskMessageSender {
         throw new Error("Method not implemented.");
     }
 
-    public close(): Promise<void> {
+    public async close(): Promise<void> {
         throw new Error("Method not implemented.");
     }
 }

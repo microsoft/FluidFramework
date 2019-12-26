@@ -6,7 +6,7 @@
 import { ITenant, ITenantManager } from "@microsoft/fluid-server-services-core";
 
 export class TenantManager implements ITenantManager {
-    public getTenant(tenantId: string): Promise<ITenant> {
+    public async getTenant(tenantId: string): Promise<ITenant> {
         throw new Error("Method not implemented.");
     }
 
@@ -14,7 +14,7 @@ export class TenantManager implements ITenantManager {
         return;
     }
 
-    public getKey(tenantId: string): Promise<string> {
+    public async getKey(tenantId: string): Promise<string> {
         throw new Error("Method not implemented.");
     }
 }

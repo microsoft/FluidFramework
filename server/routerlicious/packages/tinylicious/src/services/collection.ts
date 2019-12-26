@@ -9,7 +9,7 @@ import * as _ from "lodash";
 // TODO consider https://github.com/kofrasa/mingo for handling queries
 
 export class Collection<T> implements ICollection<T> {
-    private collection = new Array<T>();
+    private readonly collection = new Array<T>();
 
     constructor() {
     }
@@ -22,7 +22,7 @@ export class Collection<T> implements ICollection<T> {
         return this.collection;
     }
 
-    public findOne(query: any): Promise<T> {
+    public async findOne(query: any): Promise<T> {
         return Promise.resolve(this.findOneInternal(query));
     }
 
@@ -122,13 +122,14 @@ export class Collection<T> implements ICollection<T> {
         });
 
         if (sort && Object.keys(sort).length === 1) {
+            // eslint-disable-next-line no-inner-declarations
             function compare(a, b) {
                 const sortKey = Object.keys(sort)[0];
                 if (sort[sortKey] === 1) {
-                    // a goes before b, sorting in ascending order
+                    // A goes before b, sorting in ascending order
                     return getValueByKey(a, sortKey) - getValueByKey(b, sortKey);
                 } else {
-                    // b goes before a, sorting in descending order
+                    // B goes before a, sorting in descending order
                     return getValueByKey(b, sortKey) - getValueByKey(a, sortKey);
                 }
             }

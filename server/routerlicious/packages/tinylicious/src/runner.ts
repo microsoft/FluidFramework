@@ -24,18 +24,18 @@ export class TinyliciousRunner implements utils.IRunner {
     private runningDeferred: Deferred<void>;
 
     constructor(
-        private serverFactory: IWebServerFactory,
-        private config: Provider,
-        private port: string | number,
-        private orderManager: IOrdererManager,
-        private tenantManager: ITenantManager,
-        private storage: IDocumentStorage,
-        private mongoManager: MongoManager,
-        private contentCollection: ICollection<any>,
+        private readonly serverFactory: IWebServerFactory,
+        private readonly config: Provider,
+        private readonly port: string | number,
+        private readonly orderManager: IOrdererManager,
+        private readonly tenantManager: ITenantManager,
+        private readonly storage: IDocumentStorage,
+        private readonly mongoManager: MongoManager,
+        private readonly contentCollection: ICollection<any>,
     ) {
     }
 
-    public start(): Promise<void> {
+    public async start(): Promise<void> {
         this.runningDeferred = new Deferred<void>();
 
         // Create the HTTP server and attach alfred to it
@@ -65,7 +65,7 @@ export class TinyliciousRunner implements utils.IRunner {
         return this.runningDeferred.promise;
     }
 
-    public stop(): Promise<void> {
+    public async stop(): Promise<void> {
         // Close the underlying server and then resolve the runner once closed
         this.server.close().then(
             () => {
@@ -87,19 +87,19 @@ export class TinyliciousRunner implements utils.IRunner {
         }
 
         const bind = typeof this.port === "string"
-            ? "Pipe " + this.port
-            : "Port " + this.port;
+            ? `Pipe ${this.port}`
+            : `Port ${this.port}`;
 
-        // handle specific listen errors with friendly messages
+        // Handle specific listen errors with friendly messages
         switch (error.code) {
-            case "EACCES":
-                this.runningDeferred.reject(`${bind} requires elevated privileges`);
-                break;
-            case "EADDRINUSE":
-                this.runningDeferred.reject(`${bind} is already in use`);
-                break;
-            default:
-                throw error;
+        case "EACCES":
+            this.runningDeferred.reject(`${bind} requires elevated privileges`);
+            break;
+        case "EADDRINUSE":
+            this.runningDeferred.reject(`${bind} is already in use`);
+            break;
+        default:
+            throw error;
         }
     }
 
@@ -109,8 +109,8 @@ export class TinyliciousRunner implements utils.IRunner {
     private onListening() {
         const addr = this.server.httpServer.address();
         const bind = typeof addr === "string"
-            ? "pipe " + addr
-            : "port " + addr.port;
-        winston.info("Listening on " + bind);
+            ? `pipe ${addr}`
+            : `port ${addr.port}`;
+        winston.info(`Listening on ${bind}`);
     }
 }

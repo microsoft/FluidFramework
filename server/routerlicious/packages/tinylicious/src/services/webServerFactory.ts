@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import * as http from "http";
+import { EventEmitter } from "events";
 import { HttpServer } from "@microsoft/fluid-server-services";
 import {
     IWebServer,
@@ -11,8 +13,6 @@ import {
     IWebSocketServer,
     RequestListener,
 } from "@microsoft/fluid-server-services-core";
-import { EventEmitter } from "events";
-import * as http from "http";
 import { Socket } from "socket.io";
 import { WebServer } from "./webServer";
 
@@ -21,7 +21,7 @@ class SocketIoSocket implements IWebSocket {
         return this.socket.id;
     }
 
-    constructor(private socket: SocketIO.Socket) {
+    constructor(private readonly socket: SocketIO.Socket) {
     }
 
     public on(event: string, listener: (...args: any[]) => void) {
@@ -52,7 +52,7 @@ class SocketIoSocket implements IWebSocket {
 }
 
 class SocketIoServer extends EventEmitter implements IWebSocketServer {
-    constructor(server: http.Server, private io: SocketIO.Server) {
+    constructor(server: http.Server, private readonly io: SocketIO.Server) {
         super();
 
         this.io.attach(server);
@@ -69,7 +69,7 @@ class SocketIoServer extends EventEmitter implements IWebSocketServer {
 }
 
 export class WebServerFactory implements IWebServerFactory {
-    constructor(private io: SocketIO.Server) {
+    constructor(private readonly io: SocketIO.Server) {
     }
 
     public create(requestListener: RequestListener): IWebServer {

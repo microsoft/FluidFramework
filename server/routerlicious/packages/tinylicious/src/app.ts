@@ -12,14 +12,13 @@ import * as compression from "compression";
 import * as cookieParser from "cookie-parser";
 import * as cors from "cors";
 import * as express from "express";
-import { Express } from "express";
 import * as safeStringify from "json-stringify-safe";
 import * as morgan from "morgan";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import { create as createRoutes } from "./routes";
 
-// tslint:disable-next-line:no-var-requires
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const split = require("split");
 
 /**
@@ -38,7 +37,7 @@ export function create(
     const requestSize = config.get("alfred:restJsonSize");
 
     // Express app configuration
-    const app: Express = express();
+    const app = express();
 
     // Running behind iisnode
     app.set("trust proxy", 1);
@@ -50,7 +49,7 @@ export function create(
     app.use(bodyParser.json({ limit: requestSize }));
     app.use(bodyParser.urlencoded({ limit: requestSize, extended: false }));
 
-    // bind routes
+    // Bind routes
     const routes = createRoutes(
         config,
         mongoManager,
@@ -60,14 +59,14 @@ export function create(
     app.use(routes.storage);
     app.use(routes.ordering);
 
-    // catch 404 and forward to error handler
+    // Catch 404 and forward to error handler
     app.use((req, res, next) => {
         const err = new Error("Not Found");
         (err as any).status = 404;
         next(err);
     });
 
-    // error handlers
+    // Error handlers
 
     app.use((err, req, res, next) => {
         res.status(err.status || 500);

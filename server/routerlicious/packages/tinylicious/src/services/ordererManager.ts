@@ -17,13 +17,13 @@ import {
     IOrderer,
     IOrdererManager,
     ISequencedOperationMessage,
-} from "@microsoft/fluid-server-services-core";
-import {
+
     IDatabaseManager,
     IDocumentStorage,
     ITaskMessageSender,
     ITenantManager,
 } from "@microsoft/fluid-server-services-core";
+
 import { normalizePort } from "@microsoft/fluid-server-services-utils";
 import { Server } from "socket.io";
 
@@ -37,19 +37,19 @@ export class LocalOrdererSetup implements ILocalOrdererSetup {
     ) {
     }
 
-    public documentP(): Promise<IDocumentDetails> {
+    public async documentP(): Promise<IDocumentDetails> {
         return this.storage.getOrCreateDocument(this.tenantId, this.documentId);
     }
 
-    public documentCollectionP(): Promise<ICollection<IDocument>> {
+    public async documentCollectionP(): Promise<ICollection<IDocument>> {
         return this.databaseManager.getDocumentCollection();
     }
 
-    public deltaCollectionP(): Promise<ICollection<any>> {
+    public async deltaCollectionP(): Promise<ICollection<any>> {
         return this.databaseManager.getDeltaCollection(this.tenantId, this.documentId);
     }
 
-    public scribeDeltaCollectionP(): Promise<ICollection<ISequencedOperationMessage>> {
+    public async scribeDeltaCollectionP(): Promise<ICollection<ISequencedOperationMessage>> {
         return this.databaseManager.getScribeDeltaCollection(this.tenantId, this.documentId);
     }
 
@@ -79,7 +79,7 @@ export class LocalOrdererSetup implements ILocalOrdererSetup {
 }
 
 class LocalPubSub implements IPubSub {
-    constructor(private io: Server) {
+    constructor(private readonly io: Server) {
     }
 
     public subscribe(topic: string, subscriber: ISubscriber) {
@@ -115,38 +115,38 @@ class WrappedLocalOrdererSetup implements ILocalOrdererSetup {
         return details;
     }
 
-    public documentCollectionP(): Promise<ICollection<IDocument>> {
+    public async documentCollectionP(): Promise<ICollection<IDocument>> {
         return this.wrapped.documentCollectionP();
     }
 
-    public deltaCollectionP(): Promise<ICollection<any>> {
+    public async deltaCollectionP(): Promise<ICollection<any>> {
         return this.wrapped.deltaCollectionP();
     }
 
-    public scribeDeltaCollectionP(): Promise<ICollection<ISequencedOperationMessage>> {
+    public async scribeDeltaCollectionP(): Promise<ICollection<ISequencedOperationMessage>> {
         return this.wrapped.scribeDeltaCollectionP();
     }
 
-    public protocolHeadP(): Promise<number> {
+    public async protocolHeadP(): Promise<number> {
         return this.wrapped.protocolHeadP();
     }
 
-    public scribeMessagesP(): Promise<ISequencedOperationMessage[]> {
+    public async scribeMessagesP(): Promise<ISequencedOperationMessage[]> {
         return this.wrapped.scribeMessagesP();
     }
 }
 
 export class OrdererManager implements IOrdererManager {
-    private map = new Map<string, Promise<IOrderer>>();
+    private readonly map = new Map<string, Promise<IOrderer>>();
 
     constructor(
-        private storage: IDocumentStorage,
-        private databaseManager: IDatabaseManager,
-        private tenantManager: ITenantManager,
-        private taskMessageSender: ITaskMessageSender,
-        private permission: any, // can probably remove
-        private maxMessageSize: number,
-        private io: Server,
+        private readonly storage: IDocumentStorage,
+        private readonly databaseManager: IDatabaseManager,
+        private readonly tenantManager: ITenantManager,
+        private readonly taskMessageSender: ITaskMessageSender,
+        private readonly permission: any, // Can probably remove
+        private readonly maxMessageSize: number,
+        private readonly io: Server,
     ) {
     }
 
