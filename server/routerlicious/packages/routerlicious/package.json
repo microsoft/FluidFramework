@@ -26,6 +26,8 @@
     "deli": "node dist/deli/index.js",
     "deli:debug": "node --inspect=0.0.0.0:5858 dist/deli/index.js",
     "docker-run": "docker run --rm -v $(pwd):/usr/src/server -w /usr/src/server node:8.14.0-slim",
+    "eslint": "eslint --ext=ts,tsx --format stylish src",
+    "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
     "foreman": "node dist/foreman/index.js",
     "foreman:debug": "node --inspect=0.0.0.0:5858 dist/foreman/index.js",
     "scriptorium": "node dist/scriptorium/index.js",
@@ -33,7 +35,7 @@
     "test": "mocha --recursive dist/test -r make-promises-safe",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
     "tsc": "tsc",
-    "tslint": "tslint --project tsconfig.json --format verbose"
+    "tslint": "npm run eslint"
   },
   "dependencies": {
     "@microsoft/fluid-core-utils": "0.13.17538",
@@ -66,6 +68,7 @@
     "nconf": "^0.10.0",
     "redis": "^2.8.0",
     "request": "^2.88.0",
+    "rimraf": "^2.6.2",
     "semver": "^6.3.0",
     "split": "^1.0.0",
     "unzip-stream": "^0.3.0",
@@ -74,8 +77,11 @@
     "ws": "^6.1.2"
   },
   "devDependencies": {
+    "@microsoft/eslint-config-fluid": "^0.13.0",
     "@microsoft/fluid-build-common": "^0.13.0",
     "@microsoft/fluid-server-test-utils": "^0.1001.0",
+    "@typescript-eslint/eslint-plugin": "^2.9.0",
+    "@typescript-eslint/parser": "^2.9.0",
     "@types/bytes": "^3.0.0",
     "@types/compression": "0.0.33",
     "@types/cookie-parser": "^1.4.1",
@@ -98,6 +104,12 @@
     "concurrently": "^4.1.0",
     "css-loader": "^1.0.0",
     "diff": "^3.5.0",
+    "eslint": "^6.7.1",
+    "eslint-plugin-import": "^2.18.2",
+    "eslint-plugin-no-null": "^1.0.2",
+    "eslint-plugin-prefer-arrow": "^1.1.7",
+    "eslint-plugin-react": "^7.16.0",
+    "eslint-plugin-unicorn": "^14.0.1",
     "html-loader": "^0.5.5",
     "make-promises-safe": "^5.1.0",
     "mocha": "^5.2.0",
@@ -105,7 +117,6 @@
     "node-sass": "^4.9.3",
     "nyc": "^14.1.1",
     "random-js": "^1.0.8",
-    "rimraf": "^2.6.2",
     "sass-loader": "^7.1.0",
     "source-map-loader": "^0.2.4",
     "string-hash": "^1.1.3",
@@ -113,7 +124,6 @@
     "supertest": "^3.1.0",
     "thread-loader": "^1.2.0",
     "ts-loader": "^6.1.2",
-    "tslint": "^5.20.0",
     "typescript": "~3.4.5",
     "url-loader": "^2.1.0"
   },

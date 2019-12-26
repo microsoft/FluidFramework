@@ -90,10 +90,10 @@ export interface ISnapshotTree {
  * Represents a version of the snapshot of a component
  */
 export interface IVersion  {
-    // version ID
+    // Version ID
     id: string;
 
-    // tree ID for this version of the snapshot
+    // Tree ID for this version of the snapshot
     treeId: string;
 
     // Time when snapshot was generated.

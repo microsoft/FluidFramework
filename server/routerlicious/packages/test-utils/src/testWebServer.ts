@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import * as core from "@microsoft/fluid-server-services-core";
 import { EventEmitter } from "events";
+import * as core from "@microsoft/fluid-server-services-core";
 import * as moniker from "moniker";
 
 export class TestWebSocket implements core.IWebSocket {
-    private events = new EventEmitter();
+    private readonly events = new EventEmitter();
 
     constructor(public id: string) {
     }
@@ -45,7 +45,7 @@ export class TestWebSocket implements core.IWebSocket {
 }
 
 export class TestWebSocketServer implements core.IWebSocketServer {
-    private events = new EventEmitter();
+    private readonly events = new EventEmitter();
 
     public on(event: string, listener: (...args: any[]) => void) {
         this.events.on(event, listener);

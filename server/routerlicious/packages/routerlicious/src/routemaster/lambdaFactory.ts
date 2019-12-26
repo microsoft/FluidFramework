@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import {
     ICollection,
     IContext,
@@ -11,17 +12,16 @@ import {
     IProducer,
     MongoManager,
 } from "@microsoft/fluid-server-services-core";
-import { EventEmitter } from "events";
 import { Provider } from "nconf";
 import { DocumentManager } from "./documentManager";
 import { RouteMasterLambda } from "./lambda";
 
 export class RouteMasterLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
     constructor(
-        private mongoManager: MongoManager,
-        private collection: ICollection<any>,
-        private deltas: ICollection<any>,
-        private producer: IProducer) {
+        private readonly mongoManager: MongoManager,
+        private readonly collection: ICollection<any>,
+        private readonly deltas: ICollection<any>,
+        private readonly producer: IProducer) {
         super();
     }
 

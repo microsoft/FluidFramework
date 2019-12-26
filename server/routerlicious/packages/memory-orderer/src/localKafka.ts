@@ -32,7 +32,7 @@ export class LocalKafka implements IProducer {
                 return;
             }
 
-            // check if this queueOffset is the min
+            // Check if this queueOffset is the min
             for (const subscription of this.subscriptions) {
                 if (subscription.queueOffset < queueOffset) {
                     return;
@@ -42,12 +42,12 @@ export class LocalKafka implements IProducer {
             const diff = queueOffset - this.minimumQueueOffset;
             this.minimumQueueOffset = queueOffset;
 
-            // remove items before min queue offset
+            // Remove items before min queue offset
             for (let i = 0; i < diff; i++) {
                 this.qeueue.shift();
             }
 
-            // update offsets in each subscription to account for the queue index changing
+            // Update offsets in each subscription to account for the queue index changing
             for (const subscription of this.subscriptions) {
                 subscription.queueOffset -= diff;
             }

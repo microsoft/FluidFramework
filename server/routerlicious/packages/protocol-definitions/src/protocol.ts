@@ -199,7 +199,7 @@ export interface ISignalMessage {
 }
 
 export interface ISummaryContent {
-    // handle reference to the summary data
+    // Handle reference to the summary data
     handle: string;
 
     // Message included as part of the summary

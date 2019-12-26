@@ -3,20 +3,20 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import * as resources from "@microsoft/fluid-gitresources";
 import { buildHierarchy } from "@microsoft/fluid-protocol-base";
 import * as api from "@microsoft/fluid-protocol-definitions";
-import * as assert from "assert";
 import { debug } from "./debug";
 import { IGitManager, IHistorian } from "./storage";
 
 export class GitManager implements IGitManager {
-    private blobCache = new Map<string, resources.IBlob>();
-    private commitCache = new Map<string, resources.ICommit>();
-    private treeCache = new Map<string, resources.ITree>();
-    private refCache = new Map<string, string>();
+    private readonly blobCache = new Map<string, resources.IBlob>();
+    private readonly commitCache = new Map<string, resources.ICommit>();
+    private readonly treeCache = new Map<string, resources.ITree>();
+    private readonly refCache = new Map<string, string>();
 
-    constructor(private historian: IHistorian) {
+    constructor(private readonly historian: IHistorian) {
     }
 
     public async getHeader(id: string, sha: string): Promise<api.ISnapshotTree> {
@@ -36,7 +36,6 @@ export class GitManager implements IGitManager {
 
     public async getCommit(sha: string): Promise<resources.ICommit> {
         if (this.commitCache.has(sha)) {
-            // tslint:disable-next-line:no-unsafe-any - tslint bug?
             debug(`Cache hit on ${sha}`);
             return this.commitCache.get(sha);
         }
@@ -52,7 +51,6 @@ export class GitManager implements IGitManager {
 
         // See if the sha is really a ref and convert
         if (this.refCache.has(shaOrRef)) {
-            // tslint:disable-next-line:no-unsafe-any - tslint bug?
             debug(`Commit cache hit on ${shaOrRef}`);
             sha = this.refCache.get(shaOrRef);
 
@@ -91,7 +89,6 @@ export class GitManager implements IGitManager {
      */
     public async getTree(root: string, recursive = true): Promise<resources.ITree> {
         if (this.treeCache.has(root)) {
-            // tslint:disable-next-line:no-unsafe-any - tslint bug?
             debug(`Tree cache hit on ${root}`);
             return this.treeCache.get(root);
         }
@@ -101,7 +98,6 @@ export class GitManager implements IGitManager {
 
     public async getBlob(sha: string): Promise<resources.IBlob> {
         if (this.blobCache.has(sha)) {
-            // tslint:disable-next-line:no-unsafe-any - tslint bug?
             debug(`Blob cache hit on ${sha}`);
             return this.blobCache.get(sha);
         }
@@ -110,14 +106,14 @@ export class GitManager implements IGitManager {
     }
 
     public getRawUrl(sha: string): string {
-        return this.historian.endpoint + "/git/blobs/raw/" + sha;
+        return `${this.historian.endpoint}/git/blobs/raw/${sha}`;
     }
 
     /**
      * Retrieves the object at the given revision number
      */
-    /* tslint:disable:promise-function-async */
-     public getContent(commit: string, path: string): Promise<resources.IBlob> {
+    /* eslint-disable @typescript-eslint/promise-function-async */
+    public getContent(commit: string, path: string): Promise<resources.IBlob> {
         return this.historian.getContent(path, commit);
     }
 
@@ -147,6 +143,7 @@ export class GitManager implements IGitManager {
             .getRef(`heads/${ref}`)
             .catch((error) => {
                 if (error === 400 || error === 404) {
+                    // eslint-disable-next-line no-null/no-null
                     return null;
                 } else {
                     return Promise.reject(error);
@@ -236,6 +233,7 @@ export class GitManager implements IGitManager {
         // Kick off the work to create all the tree values
         const entriesP: Promise<resources.ICreateBlobResponse | resources.ITree>[] = [];
         for (const entry of files.entries) {
+            /* eslint-disable @typescript-eslint/indent, no-case-declarations */
             switch (api.TreeEntry[entry.type]) {
                 case api.TreeEntry.Blob:
                     const entryAsBlob = entry.value as api.IBlob;
@@ -263,6 +261,7 @@ export class GitManager implements IGitManager {
                 default:
                     return Promise.reject("Unknown entry type");
             }
+            /* eslint-enable @typescript-eslint/indent, no-case-declarations */
         }
 
         // Wait for them all to resolve

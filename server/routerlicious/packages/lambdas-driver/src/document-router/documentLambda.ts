@@ -15,10 +15,13 @@ import { DocumentContextManager } from "./contextManager";
 import { DocumentPartition } from "./documentPartition";
 
 export class DocumentLambda implements IPartitionLambda {
-    private documents = new Map<string, DocumentPartition>();
-    private contextManager: DocumentContextManager;
+    private readonly documents = new Map<string, DocumentPartition>();
+    private readonly contextManager: DocumentContextManager;
 
-    constructor(private factory: IPartitionLambdaFactory, private config: Provider, context: IContext) {
+    constructor(
+        private readonly factory: IPartitionLambdaFactory,
+        private readonly config: Provider,
+        context: IContext) {
         this.contextManager = new DocumentContextManager(context);
         this.contextManager.on("error", (error, restart) => {
             context.error(error, restart);
@@ -65,7 +68,7 @@ export class DocumentLambda implements IPartitionLambda {
             this.documents.set(routingKey, document);
         } else {
             document = this.documents.get(routingKey);
-            // setHead assumes it will always receive increasing offsets. So we need to split the creation case
+            // SetHead assumes it will always receive increasing offsets. So we need to split the creation case
             // from the update case.
             document.context.setHead(kafkaMessage.offset);
         }

@@ -97,7 +97,8 @@ const left = [
     "zealous",
     "zen"];
 
-// tslint:disable:max-line-length
+/* eslint-disable max-len */
+
 // Docker, starting from 0.7.x, generates names from notable scientists and hackers.
 // Please, for any amazing man that you add to the list, consider adding an equally amazing woman to it, and vice versa.
 const right = [
@@ -663,6 +664,12 @@ const fluidNames = [
 // Docker names + Fluid names
 const surnames = right.concat(fluidNames);
 
+const getRandomString = (values: string[]) =>
+    values[Math.floor(Math.random() * values.length)];
+
+const processString = (value: string, capitalize: boolean): string =>
+    capitalize ? `${value.charAt(0).toUpperCase()}${value.substr(1)}` : value;
+
 // GetRandomName generates a random name from the list of adjectives and surnames in this package
 // formatted as "adjective_surname". For example 'focused_turing'. If retry is non-zero, a random
 // integer between 0 and 10 will be added to the end of the name, e.g `focused_turing3`
@@ -686,15 +693,5 @@ export function getRandomName(connector = "_", capitalize = false, retry = false
 
 // Exposing a choose() function to align with moniker's API. Moniker is
 // server-only, and we can swap it out with this function for the browser.
-export function choose(): string {
-    return getRandomName();
-}
-
-function getRandomString(values: string[]) {
-    // tslint:disable-next-line:insecure-random
-    return values[Math.floor(Math.random() * values.length)];
-}
-
-function processString(value: string, capitalize: boolean): string {
-    return capitalize ? `${value.charAt(0).toUpperCase()}${value.substr(1)}` : value;
-}
+export const choose = (): string =>
+    getRandomName();

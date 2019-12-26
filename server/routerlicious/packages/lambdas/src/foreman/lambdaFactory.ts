@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import {
     IContext,
     IPartitionLambda,
@@ -10,15 +11,14 @@ import {
     ITaskMessageSender,
     ITenantManager,
 } from "@microsoft/fluid-server-services-core";
-import { EventEmitter } from "events";
 import { Provider } from "nconf";
 import { ForemanLambda } from "./lambda";
 
 export class ForemanLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
     constructor(
-        private messageSender: ITaskMessageSender,
-        private tenantManager: ITenantManager,
-        private permissions: any) {
+        private readonly messageSender: ITaskMessageSender,
+        private readonly tenantManager: ITenantManager,
+        private readonly permissions: any) {
         super();
 
         this.messageSender.on("error", (error) => {

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IConsumer, IKafkaMessage, IPartition, IPartitionLambdaFactory } from "@microsoft/fluid-server-services-core";
 import { EventEmitter } from "events";
+import { IConsumer, IKafkaMessage, IPartition, IPartitionLambdaFactory } from "@microsoft/fluid-server-services-core";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import { Partition } from "./partition";
@@ -19,9 +19,9 @@ export class PartitionManager extends EventEmitter {
     private isRebalancing = true;
 
     constructor(
-        private factory: IPartitionLambdaFactory,
-        private consumer: IConsumer,
-        private config: Provider) {
+        private readonly factory: IPartitionLambdaFactory,
+        private readonly consumer: IConsumer,
+        private readonly config: Provider) {
         super();
 
         // Place new Kafka messages into our processing queue

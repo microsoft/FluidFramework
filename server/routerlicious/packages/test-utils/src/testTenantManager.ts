@@ -8,11 +8,11 @@ import { ITenant, ITenantManager, ITenantOrderer, ITenantStorage } from "@micros
 import { TestHistorian } from "./testHistorian";
 
 export class TestTenant implements ITenant {
-    private owner = "test";
-    private repository = "test";
-    private manager: GitManager;
+    private readonly owner = "test";
+    private readonly repository = "test";
+    private readonly manager: GitManager;
 
-    constructor(private url: string) {
+    constructor(private readonly url: string) {
         const testHistorian = new TestHistorian();
         this.manager = new GitManager(testHistorian);
     }
@@ -40,20 +40,23 @@ export class TestTenant implements ITenant {
 }
 
 export class TestTenantManager implements ITenantManager {
-    private tenant: TestTenant;
+    private readonly tenant: TestTenant;
 
     constructor(url = "http://test") {
         this.tenant = new TestTenant(url);
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public verifyToken(token: string): Promise<void> {
         return Promise.resolve();
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public getTenant(id: string): Promise<ITenant> {
         return Promise.resolve(this.tenant);
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public getKey(tenantId: string): Promise<string> {
         return Promise.resolve("test");
     }

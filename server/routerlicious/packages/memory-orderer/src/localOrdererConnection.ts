@@ -22,22 +22,22 @@ import {
 } from "@microsoft/fluid-server-services-core";
 import { IPubSub, ISubscriber } from "./";
 
-// tslint:disable-next-line:no-var-requires
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const now = require("performance-now");
 
 export class LocalOrdererConnection implements IOrdererConnection {
     public readonly parentBranch: string;
 
     constructor(
-        private pubsub: IPubSub,
+        private readonly pubsub: IPubSub,
         public socket: ISubscriber,
         public readonly existing: boolean,
         document: IDocument,
-        private producer: IProducer,
+        private readonly producer: IProducer,
         public readonly tenantId: string,
         public readonly documentId: string,
         public readonly clientId: string,
-        private client: IClient,
+        private readonly client: IClient,
         public readonly maxMessageSize: number,
         public readonly serviceConfiguration: IServiceConfiguration,
     ) {
@@ -124,7 +124,7 @@ export class LocalOrdererConnection implements IOrdererConnection {
     private submitRawOperation(messages: IRawOperationMessage[]) {
         // Add trace
         messages.forEach((message) => {
-            const operation = message.operation as IDocumentMessage;
+            const operation = message.operation;
             if (operation && operation.traces) {
                 operation.traces.push(
                     {
@@ -143,6 +143,7 @@ export class LocalOrdererConnection implements IOrdererConnection {
         };
 
         // Submits the message.
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.producer.send([boxcar], this.tenantId, this.documentId);
     }
 }
