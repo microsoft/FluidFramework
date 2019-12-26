@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import { RangeTracker } from "@microsoft/fluid-core-utils";
 import { isSystemType } from "@microsoft/fluid-protocol-base";
 import {
@@ -33,11 +34,11 @@ import {
     RawOperationType,
     SequencedOperationType,
 } from "@microsoft/fluid-server-services-core";
-import * as assert from "assert";
-import * as _ from "lodash";
 import * as winston from "winston";
 import { CheckpointContext, ICheckpoint, IClientSequenceNumber } from "./checkpointContext";
 import { ClientSequenceNumberManager } from "./clientSeqManager";
+
+/* eslint-disable no-null/no-null */
 
 enum SendType {
     Immediate,
@@ -63,9 +64,7 @@ export interface ITicketedMessageOutput {
 /**
  * Maps from a branch to a clientId stored in the MSN map
  */
-function getBranchClientId(branch: string) {
-    return `branch$${branch}`;
-}
+const getBranchClientId = (branch: string) => `branch$${branch}`;
 
 export class DeliLambda implements IPartitionLambda {
     private sequenceNumber: number = undefined;
@@ -74,27 +73,28 @@ export class DeliLambda implements IPartitionLambda {
     // Client sequence number mapping
     private readonly clientSeqManager = new ClientSequenceNumberManager();
     private minimumSequenceNumber = 0;
-    private branchMap: RangeTracker;
-    private checkpointContext: CheckpointContext;
+    private readonly branchMap: RangeTracker;
+    private readonly checkpointContext: CheckpointContext;
     private lastSendP = Promise.resolve();
     private lastSentMSN = 0;
     private idleTimer: any;
     private noopTimer: any;
     private noActiveClients = false;
+    // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
     // @ts-ignore
     private canClose = false;
 
     constructor(
-        private context: IContext,
-        private tenantId: string,
-        private documentId: string,
+        private readonly context: IContext,
+        private readonly tenantId: string,
+        private readonly documentId: string,
         dbObject: IDocument,
         collection: ICollection<IDocument>,
-        private forwardProducer: IProducer,
-        private reverseProducer: IProducer,
-        private clientTimeout: number,
-        private activityTimeout: number,
-        private noOpConsolidationTimeout: number) {
+        private readonly forwardProducer: IProducer,
+        private readonly reverseProducer: IProducer,
+        private readonly clientTimeout: number,
+        private readonly activityTimeout: number,
+        private readonly noOpConsolidationTimeout: number) {
 
         // Instantiate existing clients
         if (dbObject.clients) {
@@ -119,7 +119,6 @@ export class DeliLambda implements IPartitionLambda {
                 this.branchMap = new RangeTracker(
                     dbObject.parent.minimumSequenceNumber,
                     dbObject.parent.minimumSequenceNumber);
-                // tslint:disable-next-line:max-line-length
                 for (let i = dbObject.parent.minimumSequenceNumber + 1; i <= dbObject.parent.sequenceNumber; i++) {
                     this.branchMap.add(i, i);
                 }
@@ -507,7 +506,6 @@ export class DeliLambda implements IPartitionLambda {
         // Perform duplicate detection on client IDs - Check that we have an increasing CID
         // For back compat ignore the 0/undefined message
         if (clientSequenceNumber && (client.clientSequenceNumber + 1 !== clientSequenceNumber)) {
-            // tslint:disable-next-line:max-line-length
             winston.info(`Duplicate ${client.clientId}:${client.clientSequenceNumber + 1} !== ${clientSequenceNumber}`);
             return true;
         }
@@ -515,6 +513,7 @@ export class DeliLambda implements IPartitionLambda {
         return false;
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     private sendToScriptorium(message: ITicketedMessage): Promise<void> {
         return this.forwardProducer.send([message], message.tenantId, message.documentId);
     }

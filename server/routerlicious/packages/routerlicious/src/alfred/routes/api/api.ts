@@ -22,6 +22,8 @@ import {
     IMapSetOperation,
 } from "./restHelper";
 
+/* eslint-disable @typescript-eslint/no-use-before-define */
+
 export function create(
     config: Provider,
     producer: core.IProducer,
@@ -43,8 +45,7 @@ export function create(
             sendOp(request, tenantId, documentId, clientId, producer, opBuilder);
             sendLeave(tenantId, documentId, clientId, producer);
             response.status(200).json();
-        },
-        (error) => response.status(400).end(error.toString()));
+        }, (error) => response.status(400).end(error.toString()));
     }
 
     router.patch("/:tenantId/:id/root", async (request, response) => {
@@ -85,11 +86,11 @@ function sendJoin(tenantId: string, documentId: string, clientId: string, produc
     const detail: IClient = {
         permission: [],
         scopes: [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
-        type: "robot", // back-compat: 0.11 clientType
+        type: "robot", // Back-compat: 0.11 clientType
         details: {
             capabilities: { interactive: false },
         },
-        user: {id: "Rest-Client"},
+        user: { id: "Rest-Client" },
     };
     const clientDetail: IClientJoin = {
         clientId,
@@ -97,11 +98,13 @@ function sendJoin(tenantId: string, documentId: string, clientId: string, produc
     };
 
     const joinMessage = craftClientJoinMessage(tenantId, documentId, clientDetail);
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     producer.send([joinMessage], tenantId, documentId);
 }
 
 function sendLeave(tenantId: string, documentId: string, clientId: string, producer: core.IProducer) {
     const leaveMessage = craftClientLeaveMessage(tenantId, documentId, clientId);
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     producer.send([leaveMessage], tenantId, documentId);
 }
 
@@ -121,16 +124,16 @@ function sendOp(
             clientId,
             JSON.stringify(content),
             clientSequenceNumber++);
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         producer.send([opMessage], tenantId, documentId);
     }
 }
 
-async function verifyRequest(
+const verifyRequest = async (
     request: Request,
     tenantManager: core.ITenantManager,
-    storage: core.IDocumentStorage) {
-        return Promise.all([verifyToken(request, tenantManager), checkDocumentExistence(request, storage)]);
-}
+    // eslint-disable-next-line max-len
+    storage: core.IDocumentStorage) => Promise.all([verifyToken(request, tenantManager), checkDocumentExistence(request, storage)]);
 
 async function verifyToken(request: Request, tenantManager: core.ITenantManager): Promise<void> {
     const token = request.headers["access-token"] as string;
@@ -155,8 +158,8 @@ async function checkDocumentExistence(request: Request, storage: core.IDocumentS
     return storage.getDocument(tenantId, documentId);
 }
 
-async function uploadBlob(uri: string, blobData: git.ICreateBlobParams): Promise<git.ICreateBlobResponse> {
-    return new Promise<git.ICreateBlobResponse>((resolve, reject) => {
+const uploadBlob = async (uri: string, blobData: git.ICreateBlobParams): Promise<git.ICreateBlobResponse> =>
+    new Promise<git.ICreateBlobResponse>((resolve, reject) => {
         requestAPI(
             {
                 body: blobData,
@@ -175,4 +178,3 @@ async function uploadBlob(uri: string, blobData: git.ICreateBlobParams): Promise
                 }
             });
     });
-}

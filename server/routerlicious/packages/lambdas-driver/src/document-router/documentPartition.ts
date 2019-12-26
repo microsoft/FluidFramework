@@ -11,8 +11,8 @@ import * as winston from "winston";
 import { DocumentContext } from "./documentContext";
 
 export class DocumentPartition {
-    private q: AsyncQueue<IKafkaMessage>;
-    private lambdaP: Promise<IPartitionLambda>;
+    private readonly q: AsyncQueue<IKafkaMessage>;
+    private readonly lambdaP: Promise<IPartitionLambda>;
     private lambda: IPartitionLambda;
     private corrupt = false;
 
@@ -23,7 +23,7 @@ export class DocumentPartition {
         documentId: string,
         public context: DocumentContext) {
 
-        // default to the git tenant if not specified
+        // Default to the git tenant if not specified
         const clonedConfig = _.cloneDeep((config as any).get());
         clonedConfig.tenantId = tenantId;
         clonedConfig.documentId = documentId;
@@ -31,7 +31,7 @@ export class DocumentPartition {
 
         this.q = queue(
             (message: IKafkaMessage, callback) => {
-                // winston.verbose(`${message.topic}:${message.partition}@${message.offset}`);
+                // Winston.verbose(`${message.topic}:${message.partition}@${message.offset}`);
                 try {
                     if (!this.corrupt) {
                         this.lambda.handler(message);
@@ -46,7 +46,7 @@ export class DocumentPartition {
                     this.corrupt = true;
                 }
 
-                // handle the next message
+                // Handle the next message
                 callback();
             },
             1);

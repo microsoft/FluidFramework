@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ICollection, IDb, IDbFactory } from "@microsoft/fluid-server-services-core";
 import { EventEmitter } from "events";
+import { ICollection, IDb, IDbFactory } from "@microsoft/fluid-server-services-core";
 import * as _ from "lodash";
 
 export class TestCollection implements ICollection<any> {
@@ -44,10 +44,10 @@ export class TestCollection implements ICollection<any> {
             function compare(a, b) {
                 const sortKey = Object.keys(sort)[0];
                 if (sort[sortKey] === 1) {
-                    // a goes before b, sorting in ascending order
+                    // A goes before b, sorting in ascending order
                     return getValueByKey(a, sortKey) - getValueByKey(b, sortKey);
                 } else {
-                    // b goes before a, sorting in descending order
+                    // B goes before a, sorting in descending order
                     return getValueByKey(b, sortKey) - getValueByKey(a, sortKey);
                 }
             }
@@ -61,6 +61,7 @@ export class TestCollection implements ICollection<any> {
         return this.collection;
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public findOne(query: any): Promise<any> {
         return Promise.resolve(this.findOneInternal(query));
     }
@@ -113,6 +114,7 @@ export class TestCollection implements ICollection<any> {
         throw new Error("Method not implemented.");
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public createIndex(index: any, unique: boolean): Promise<void> {
         throw new Error("Method not implemented.");
     }
@@ -129,11 +131,12 @@ export class TestCollection implements ICollection<any> {
 }
 
 export class TestDb implements IDb {
-    private emitter = new EventEmitter();
+    private readonly emitter = new EventEmitter();
 
     constructor(private collections: { [key: string]: any[] }) {
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public close(): Promise<void> {
         return Promise.resolve();
     }
@@ -162,6 +165,7 @@ export class TestDbFactory implements ITestDbFactory {
         this.testDatabase = new TestDb(collections);
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public connect(): Promise<IDb> {
         return Promise.resolve(this.testDatabase);
     }

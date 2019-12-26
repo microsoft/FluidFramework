@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as crypto from "crypto";
 import {
     getRandomName,
     ITenantConfig,
@@ -10,7 +11,6 @@ import {
     ITenantStorage,
     MongoManager,
 } from "@microsoft/fluid-server-services-core";
-import * as crypto from "crypto";
 import * as jwt from "jsonwebtoken";
 import * as _ from "lodash";
 
@@ -34,9 +34,9 @@ export interface ITenantDocument {
 
 export class TenantManager {
     constructor(
-        private mongoManager: MongoManager,
-        private collectionName: string,
-        private baseOrdererUrl: string) {
+        private readonly mongoManager: MongoManager,
+        private readonly collectionName: string,
+        private readonly baseOrdererUrl: string) {
     }
 
     /**

@@ -181,6 +181,12 @@ module.exports = {
         ],
         "import/no-internal-modules": "error",
         "import/no-unassigned-import": "error",
+        "import/no-unresolved": [
+            "error",
+            {
+                "caseSensitive": false
+            }
+        ],
         "import/order": "error",
         "linebreak-style": "off",
         "max-classes-per-file": "off",

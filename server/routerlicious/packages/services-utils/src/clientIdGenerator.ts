@@ -5,6 +5,5 @@
 
 import * as moniker from "moniker";
 
-export function generateClientId(): string {
-    return moniker.choose();
-}
+export const generateClientId = (): string =>
+    moniker.choose();

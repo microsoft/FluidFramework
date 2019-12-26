@@ -3,18 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import * as core from "@microsoft/fluid-server-services-core";
 import * as assert from "assert";
 import { EventEmitter } from "events";
+import * as core from "@microsoft/fluid-server-services-core";
 import { TestContext } from "./testContext";
 
 export class TestConsumer implements core.IConsumer {
-    private emitter = new EventEmitter();
+    private readonly emitter = new EventEmitter();
     private pausedQueue: string[] = null;
     private failOnCommit = false;
 
     // Leverage the context code for storing and tracking an offset
-    private context = new TestContext();
+    private readonly context = new TestContext();
 
     constructor(public groupId: string, public topic: string) {
     }
@@ -48,6 +48,7 @@ export class TestConsumer implements core.IConsumer {
         return this;
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public close(): Promise<void> {
         return Promise.resolve();
     }
@@ -93,9 +94,10 @@ export class TestConsumer implements core.IConsumer {
 }
 
 export class TestProducer implements core.IProducer {
-    constructor(private kafka: TestKafka) {
+    constructor(private readonly kafka: TestKafka) {
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public send(messages: object[], key: string): Promise<any> {
         for (const message of messages) {
             this.kafka.addMessage(message, key);
@@ -103,6 +105,7 @@ export class TestProducer implements core.IProducer {
         return Promise.resolve();
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public close(): Promise<void> {
         return Promise.resolve();
     }
@@ -116,9 +119,9 @@ export class TestProducer implements core.IProducer {
  * Test Kafka implementation. Allows for the creation of a joined producer/consumer pair.
  */
 export class TestKafka {
-    private messages: core.IKafkaMessage[] = [];
+    private readonly messages: core.IKafkaMessage[] = [];
     private offset = 0;
-    private consumers: TestConsumer[] = [];
+    private readonly consumers: TestConsumer[] = [];
 
     public createProducer(): TestProducer {
         return new TestProducer(this);
