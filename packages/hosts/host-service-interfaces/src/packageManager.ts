@@ -14,7 +14,7 @@ export interface IPackument {
         name: string;
     };
     description: string;
-    "dist-tags": {[key: string]: string};
+    "dist-tags": { [key: string]: string };
     license: string;
     maintainers: { email: string; name: string }[];
     name: string;
@@ -85,6 +85,6 @@ export interface IPackageManager extends IProvidePackageManager {
 }
 
 declare module "@microsoft/fluid-component-core-interfaces" {
-    export interface IComponent extends Readonly<Partial<IProvidePackageManager>> {
-    }
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface IComponent extends Readonly<Partial<IProvidePackageManager>> { }
 }
