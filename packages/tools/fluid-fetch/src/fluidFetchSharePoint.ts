@@ -52,6 +52,7 @@ export async function resolveDriveItemByServerRelativePath(
     clientConfig: IClientConfig,
 ) {
     return resolveWrapper<IODSPDriveItem>(
+        // eslint-disable-next-line @typescript-eslint/promise-function-async
         (tokens) => getDriveItemByServerRelativePath(server, serverRelativePath, clientConfig, tokens),
         server, clientConfig);
 }
@@ -62,6 +63,7 @@ async function resolveChildrenByDriveItem(
     clientConfig: IClientConfig,
 ) {
     return resolveWrapper<IODSPDriveItem[]>(
+        // eslint-disable-next-line @typescript-eslint/promise-function-async
         (tokens) => getChildrenByDriveItem(server, folderDriveItem, clientConfig, tokens),
         server, clientConfig);
 }
@@ -78,6 +80,7 @@ export async function getSharepointFiles(server: string, serverRelativePath: str
         files.push(fileInfo);
     }
 
+    // eslint-disable-next-line no-constant-condition
     while (true) {
         const folderInfo = pendingFolder.shift();
         if (!folderInfo) { break; }

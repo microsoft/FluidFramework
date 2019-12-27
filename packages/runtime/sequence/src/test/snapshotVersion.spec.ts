@@ -87,7 +87,6 @@ describe("SharedString Snapshot Version", () => {
             }
         });
     }
-    // tslint:disable-next-line:mocha-no-side-effect-code
     generateSnapshotRebuildTests();
 
     function generateSnapshotDiffTest(testString: SharedString, i: number) {
@@ -111,7 +110,6 @@ describe("SharedString Snapshot Version", () => {
             }
         });
     }
-    // tslint:disable-next-line:mocha-no-side-effect-code
     generateSnapshotDiffTests();
 
     function diff(s1: string, s2: string): string {

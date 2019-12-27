@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import { fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
 import {
     ConnectionState,
@@ -18,7 +19,6 @@ import {
     IObjectStorageService,
 } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObject, SharedObject, ValueType } from "@microsoft/fluid-shared-object-base";
-import * as assert from "assert";
 import { ConsensusRegisterCollectionFactory } from "./consensusRegisterCollectionFactory";
 import { debug } from "./debug";
 import { IConsensusRegisterCollection, ReadPolicy } from "./interfaces";
@@ -219,6 +219,7 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
                     },
                 },
             ],
+            // eslint-disable-next-line no-null/no-null
             id: null,
         };
 
@@ -265,6 +266,7 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
     protected processCore(message: ISequencedDocumentMessage, local: boolean) {
         if (message.type === MessageType.Operation) {
             const op: IRegisterOperation = message.contents;
+            /* eslint-disable @typescript-eslint/indent */
             switch (op.type) {
                 case "write":
                     this.processInboundWrite(message, op, local);
@@ -273,6 +275,7 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
                 default:
                     throw new Error("Unknown operation");
             }
+            /* eslint-enable @typescript-eslint/indent */
             // If it is local operation, resolve the promise.
             if (local) {
                 this.processLocalMessage(message);
@@ -332,9 +335,11 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const pending = this.promiseResolveQueue.shift()!;
         assert(pending);
+        /* eslint-disable @typescript-eslint/indent */
         assert(message.clientSequenceNumber === -1
             || message.clientSequenceNumber === pending.clientSequenceNumber,
             `${message.clientSequenceNumber} !== ${pending.clientSequenceNumber}`);
+        /* eslint-enable @typescript-eslint/indent */
         pending.resolve();
     }
 
@@ -365,6 +370,7 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
     }
 
     private async loadItem(item: ILocalRegister): Promise<ILocalRegister> {
+        /* eslint-disable @typescript-eslint/indent */
         switch (item.value.type) {
             case ValueType[ValueType.Plain]:
                 return item;
@@ -382,5 +388,6 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
                 assert(false, "Invalid value type");
                 return Promise.reject("Invalid value type");
         }
+        /* eslint-enable @typescript-eslint/indent */
     }
 }

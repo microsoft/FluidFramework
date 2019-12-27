@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
+import { EventEmitter } from "events";
 import { IComponent, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import {
     IAudience,
@@ -35,9 +37,7 @@ import {
     IInboundSignalMessage,
 } from "@microsoft/fluid-runtime-definitions";
 import { SummaryTracker } from "@microsoft/fluid-runtime-utils";
-import * as assert from "assert";
-import { EventEmitter } from "events";
-// tslint:disable-next-line:no-submodule-imports
+// eslint-disable-next-line import/no-internal-modules
 import * as uuid from "uuid/v4";
 import { ContainerRuntime } from "./containerRuntime";
 
@@ -71,7 +71,6 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this._hostRuntime.parentBranch;
     }
 
-    // tslint:disable-next-line:no-unsafe-any
     public get options(): any {
         return this._hostRuntime.options;
     }
@@ -210,6 +209,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this.componentRuntimeDeferred.promise;
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public getComponentRuntime(id: string, wait: boolean): Promise<IComponentRuntime> {
         return this._hostRuntime.getComponentRuntime(id, wait);
     }
@@ -236,7 +236,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
     public process(message: ISequencedDocumentMessage, local: boolean): void {
         this.verifyNotClosed();
 
-        // component has been modified and will need to regenerate its snapshot
+        // Component has been modified and will need to regenerate its snapshot
         this.summaryTracker.invalidate();
 
         if (this.loaded) {
@@ -272,6 +272,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this.blobManager.getBlobMetadata();
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public stop(): Promise<ITree> {
         this.verifyNotClosed();
 
@@ -288,7 +289,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
      * Notifies the object to take snapshot of a component.
      */
     public async snapshot(fullTree: boolean = false): Promise<ITree> {
-        // base ID still being set means previous snapshot is still valid
+        // Base ID still being set means previous snapshot is still valid
         const baseId = this.summaryTracker.getBaseId();
         if (baseId && !fullTree) {
             return { id: baseId, entries: [] };
@@ -362,7 +363,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         }
 
         if (this.pending.length > 0) {
-            // component has been modified and will need to regenerate its snapshot
+            // Component has been modified and will need to regenerate its snapshot
             this.summaryTracker.invalidate();
 
             // Apply all pending ops
@@ -373,7 +374,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
 
         this.pending = undefined;
 
-        // and now mark the runtime active
+        // And now mark the runtime active
         this.loaded = true;
         this.componentRuntime = componentRuntime;
 
@@ -385,7 +386,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
 
     public refreshBaseSummary(snapshot: ISnapshotTree) {
         this.summaryTracker.setBaseTree(snapshot);
-        // need to notify runtime of the update
+        // Need to notify runtime of the update
         this.emit("refreshBaseSummary", snapshot);
     }
 
@@ -509,7 +510,7 @@ export class LocalComponentContext extends ComponentContext {
 
         snapshot.entries.push(new BlobTreeEntry(".component", JSON.stringify(componentAttributes)));
 
-        // base ID still being set means previous snapshot is still valid
+        // Base ID still being set means previous snapshot is still valid
         snapshot.id = this.summaryTracker.getBaseId();
 
         const message: IAttachMessage = {

@@ -13,7 +13,7 @@ export interface IProxyLoaderFactory {
     environment: string;
 
     /**
-     * returns an instance of ILoader loaded inside an execution context.
+     * Returns an instance of ILoader loaded inside an execution context.
      */
     createProxyLoader(
         id: string,

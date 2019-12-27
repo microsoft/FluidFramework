@@ -28,6 +28,7 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
     ) {
     }
 
+    /* eslint-disable @typescript-eslint/promise-function-async */
     public getSnapshotTree(version?: IVersion): Promise<ISnapshotTree> {
         return this.storage.getSnapshotTree(version);
     }

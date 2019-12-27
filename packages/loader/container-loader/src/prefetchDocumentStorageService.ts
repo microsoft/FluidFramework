@@ -15,7 +15,7 @@ import {
 import { debug } from "./debug";
 
 export class PrefetchDocumentStorageService implements IDocumentStorageService {
-    // blobId -> blob prefetchCache cache
+    // BlobId -> blob prefetchCache cache
     private readonly prefetchCache = new Map<string, Promise<string>>();
     private prefetchEnabled = true;
 
@@ -26,12 +26,12 @@ export class PrefetchDocumentStorageService implements IDocumentStorageService {
         return this.storage.repositoryUrl;
     }
 
-    public getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
+    public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
         const p = this.storage.getSnapshotTree(version);
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         if (p && this.prefetchEnabled) {
             // We don't care if the prefetch succeed
-            // tslint:disable-next-line:no-floating-promises
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             p.then((tree: ISnapshotTree | null | undefined) => {
                 if (!tree) { return; }
                 this.prefetchTree(tree);
@@ -96,7 +96,7 @@ export class PrefetchDocumentStorageService implements IDocumentStorageService {
 
         for (const blob of secondary) {
             // We don't care if the prefetch succeed
-            // tslint:disable-next-line:no-floating-promises
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.cachedRead(blob);
         }
     }
@@ -107,7 +107,7 @@ export class PrefetchDocumentStorageService implements IDocumentStorageService {
             if (blobKey.startsWith(".") || blobKey === "header" || blobKey.startsWith("quorum")) {
                 if (blob !== null) {
                     // We don't care if the prefetch succeed
-                    // tslint:disable-next-line:no-floating-promises
+                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
                     this.cachedRead(blob);
                 }
             } else if (!blobKey.startsWith("deltas")) {

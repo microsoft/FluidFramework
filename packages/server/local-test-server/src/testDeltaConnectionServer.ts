@@ -65,7 +65,7 @@ class TestOrderManager implements IOrdererManager {
     /**
      * @param orderer - instance of in-memory orderer for the manager to provide
      */
-    constructor(private orderer: LocalOrderManager) {
+    constructor(private readonly orderer: LocalOrderManager) {
     }
 
     /**
@@ -74,6 +74,7 @@ class TestOrderManager implements IOrdererManager {
      * @param tenantId - ID of tenant
      * @param documentId - ID of document
      */
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public getOrderer(tenantId: string, documentId: string): Promise<IOrderer> {
         const p = this.orderer.get(tenantId, documentId);
         this.orderersP.push(p);
@@ -127,7 +128,7 @@ export class TestDeltaConnectionServer implements ITestDeltaConnectionServer {
 
         const nodeFactory = new LocalNodeFactory(
             "os",
-            "http://localhost:4000", // unused placeholder url
+            "http://localhost:4000", // Unused placeholder url
             testStorage,
             databaseManager,
             60000,
@@ -158,7 +159,7 @@ export class TestDeltaConnectionServer implements ITestDeltaConnectionServer {
     private constructor(
         public webSocketServer: IWebSocketServer,
         public databaseManager: IDatabaseManager,
-        private testOrdererManager: TestOrderManager,
+        private readonly testOrdererManager: TestOrderManager,
         public testDbFactory: ITestDbFactory) { }
 
     /**
@@ -179,7 +180,6 @@ export class TestDeltaConnectionServer implements ITestDeltaConnectionServer {
  */
 // Forked from io.ts in alfred, which has service dependencies and cannot run in a browser.
 // Further simplifications are likely possible.
-// tslint:disable:no-unsafe-any
 export function register(
     webSocketServer: IWebSocketServer,
     orderManager: IOrdererManager,
@@ -195,9 +195,7 @@ export function register(
         // Map from client IDs to room.
         const roomMap = new Map<string, string>();
 
-        function isWriter(scopes: string[], existing: boolean, mode: ConnectionMode): boolean {
-            return true;
-        }
+        const isWriter = (scopes: string[], existing: boolean, mode: ConnectionMode): boolean => true;
 
         socketList.push(socket);
         async function connectDocument(message: IConnect): Promise<IConnected> {
@@ -264,7 +262,7 @@ export function register(
                     parentBranch: null, // Does not matter for now.
                     serviceConfiguration: {
                         blockSize: 64436,
-                        maxMessageSize:  16 * 1024,
+                        maxMessageSize: 16 * 1024,
                         summary: {
                             idleTime: 5000,
                             maxOps: 1000,
@@ -281,6 +279,7 @@ export function register(
         }
 
         // Note connect is a reserved socket.io word so we use connect_document to represent the connect request
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises
         socket.on("connect_document", async (message: IConnect) => {
             connectDocument(message).then(
                 (connectedMessage) => {

@@ -22,7 +22,7 @@ export class SortedSegmentSet<T extends ISegment | { readonly segment: ISegment 
         return this.oridinalSortedItems.length;
     }
 
-    public get items(): ReadonlyArray<T> {
+    public get items(): readonly T[] {
         return this.oridinalSortedItems;
     }
 

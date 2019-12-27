@@ -9,18 +9,14 @@ import { isOnline, OnlineStatus } from "@microsoft/fluid-driver-utils";
 export function logNetworkFailure(logger: ITelemetryLogger, event: ITelemetryErrorEvent, error?: any) {
     const newEvent = { ...event };
     newEvent.online = isOnline();
-    // tslint:disable-next-line:no-unsafe-any
     if (error && typeof error === "object" && (error).online !== undefined) {
-        // tslint:disable-next-line:no-unsafe-any
         newEvent.online = (error).online as string;
     }
 
     if (typeof navigator === "object" && navigator !== null) {
         const nav = navigator as any;
-        // tslint:disable-next-line:no-unsafe-any
         const connection = nav.connection || nav.mozConnection || nav.webkitConnection;
         if (connection !== null && typeof connection === "object") {
-            // tslint:disable-next-line:no-unsafe-any
             newEvent.connectionType = connection.type;
         }
     }

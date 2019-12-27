@@ -6,7 +6,8 @@
 import { IProvideComponentFactory } from "./componentFactory";
 
 declare module "@microsoft/fluid-component-core-interfaces" {
-    export interface IComponent extends Readonly<Partial<IProvideComponentRegistry>> {}
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface IComponent extends Readonly<Partial<IProvideComponentRegistry>> { }
 }
 
 export type ComponentRegistryEntry = Readonly<Partial<IProvideComponentRegistry & IProvideComponentFactory>>;

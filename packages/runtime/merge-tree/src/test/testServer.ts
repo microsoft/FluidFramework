@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-// tslint:disable
+/* eslint-disable */
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { IIntegerRange } from "../";
 import * as Collections from "../collections";
@@ -27,26 +27,26 @@ import { TestClient } from "./testClient";
 export class TestServer extends TestClient {
     seq = 1;
     clients: TestClient[];
-    listeners: TestClient[]; // listeners do not generate edits
+    listeners: TestClient[]; // Listeners do not generate edits
     clientSeqNumbers: Collections.Heap<ClientSeq>;
     upstreamMap: Collections.RedBlackTree<number, number>;
     constructor(options?: Properties.PropertySet) {
         super(options);
     }
     addUpstreamClients(upstreamClients: TestClient[]) {
-        // assumes addClients already called
+        // Assumes addClients already called
         this.upstreamMap = new Collections.RedBlackTree<number, number>(compareNumbers);
-        for (let upstreamClient of upstreamClients) {
+        for (const upstreamClient of upstreamClients) {
             this.clientSeqNumbers.add({
                 refSeq: upstreamClient.getCurrentSeq(),
-                clientId: upstreamClient.longClientId
+                clientId: upstreamClient.longClientId,
             });
         }
     }
     addClients(clients: TestClient[]) {
         this.clientSeqNumbers = new Collections.Heap<ClientSeq>([], clientSeqComparer);
         this.clients = clients;
-        for (let client of clients) {
+        for (const client of clients) {
             this.clientSeqNumbers.add({ refSeq: client.getCurrentSeq(), clientId: client.longClientId });
         }
     }
@@ -56,7 +56,7 @@ export class TestServer extends TestClient {
     applyMsg(msg: ISequencedDocumentMessage) {
         super.applyMsg(msg);
         if (TestClient.useCheckQ) {
-            let clid = this.getShortClientId(msg.clientId);
+            const clid = this.getShortClientId(msg.clientId);
             return checkTextMatchRelative(msg.referenceSequenceNumber, clid, this, msg);
         }
         else {
@@ -86,7 +86,7 @@ export class TestServer extends TestClient {
             minimumSequenceNumber: msg.minimumSequenceNumber,
             referenceSequenceNumber: msg.referenceSequenceNumber,
             sequenceNumber: msg.sequenceNumber,
-            type: msg.type
+            type: msg.type,
         };
     }
 
@@ -94,7 +94,7 @@ export class TestServer extends TestClient {
 
     applyMessages(msgCount: number) {
         while (msgCount > 0) {
-            let msg = this.q.dequeue();
+            const msg = this.q.dequeue();
             if (msg) {
                 if (msg.sequenceNumber >= 0) {
                     this.transformUpstreamMessage(msg);
@@ -108,8 +108,8 @@ export class TestServer extends TestClient {
                     let minCli = this.clientSeqNumbers.peek();
                     if (minCli && (minCli.clientId == msg.clientId) &&
                         (minCli.refSeq < msg.referenceSequenceNumber)) {
-                        let cliSeq = this.clientSeqNumbers.get();
-                        let oldSeq = cliSeq.refSeq;
+                        const cliSeq = this.clientSeqNumbers.get();
+                        const oldSeq = cliSeq.refSeq;
                         cliSeq.refSeq = msg.referenceSequenceNumber;
                         this.clientSeqNumbers.add(cliSeq);
                         minCli = this.clientSeqNumbers.peek();
@@ -118,11 +118,11 @@ export class TestServer extends TestClient {
                             this.minSeq = minCli.refSeq;
                         }
                     }
-                    for (let client of this.clients) {
+                    for (const client of this.clients) {
                         client.enqueueMsg(msg);
                     }
                     if (this.listeners) {
-                        for (let listener of this.listeners) {
+                        for (const listener of this.listeners) {
                             listener.enqueueMsg(this.copyMsg(msg));
                         }
                     }
@@ -188,10 +188,10 @@ function incrementalGatherText(segment: ISegment, state: IncrementalMapState<Tex
  * Used for in-memory testing.  This will queue a reference string for each client message.
  */
 export function checkTextMatchRelative(refSeq: number, clientId: number, server: TestServer,
-    msg: ISequencedDocumentMessage) {
-    let client = server.clients[clientId];
-    let serverText = new MergeTreeTextHelper(server.mergeTree).getText(refSeq, clientId);
-    let cliText = client.checkQ.dequeue();
+                                       msg: ISequencedDocumentMessage) {
+    const client = server.clients[clientId];
+    const serverText = new MergeTreeTextHelper(server.mergeTree).getText(refSeq, clientId);
+    const cliText = client.checkQ.dequeue();
     if ((cliText === undefined) || (cliText != serverText)) {
         console.log(`mismatch `);
         console.log(msg);

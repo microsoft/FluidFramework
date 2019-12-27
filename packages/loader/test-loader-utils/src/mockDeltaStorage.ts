@@ -18,9 +18,8 @@ export class MockDocumentDeltaStorageService implements IDocumentDeltaStorageSer
         const ret: ISequencedDocumentMessage[] = [];
         let index: number = -1;
 
-        // find first
+        // Find first
         if (from) {
-            // eslint-disable-next-line no-empty
             while (this.messages[++index].sequenceNumber <= from) { }
         }
 

@@ -11,11 +11,11 @@ import * as MergeTree from "@microsoft/fluid-merge-tree";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { ISharedString } from "@microsoft/fluid-sequence";
-// tslint:disable-next-line:no-submodule-imports
+// eslint-disable-next-line import/no-internal-modules
 import * as queue from "async/queue";
 
 import Counter = api.RateCounter;
-// tslint:disable-next-line:no-submodule-imports
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 import clone = require("lodash/clone");
 
 let play: boolean = false;
@@ -187,7 +187,7 @@ export async function typeFile(
         latencyCounter.reset();
         pingCounter.reset();
 
-        // wait a second before beginning to allow for quiescing
+        // Wait a second before beginning to allow for quiescing
         await new Promise((resolve) => setTimeout(() => resolve(), 1000));
 
         const metric = await typeChunk(
@@ -209,6 +209,7 @@ export async function typeFile(
                 const a = authors.shift();
                 curKey++;
                 metrics.typingProgress = curKey / totalKeys;
+                // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 typeChunk(a, runtime, chunkKey, chunk, intervalTime, scribeCallback, queueCallback);
             }, writers);
 
@@ -232,6 +233,7 @@ export async function typeFile(
 /**
  * Types the given file into the shared string - starting at the end of the string
  */
+// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export async function typeChunk(
     a: IAuthor,
     runtime: IComponentRuntime,
@@ -296,7 +298,7 @@ export async function typeChunk(
                     }
                 }
 
-                // const roundTrip = Date.now() - messageStart.pop();
+                // Const roundTrip = Date.now() - messageStart.pop();
                 const roundTrip = clientEnd - clientStart;
                 latencyCounter.increment(roundTrip);
                 serverOrderCounter.increment(orderEnd - orderBegin);

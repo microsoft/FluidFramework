@@ -250,7 +250,7 @@ export async function getDriveItemByServerRelativePath(
 ): Promise<IODSPDriveItem> {
     let account = "";
     const pathParts = serverRelativePath.split("/");
-    if (serverRelativePath[0] === "/") {
+    if (serverRelativePath.startsWith("/")) {
         pathParts.shift();
     }
     if (pathParts.length === 0) {
@@ -297,7 +297,7 @@ async function getDriveItem(
         if (!create) {
             return Promise.reject(createRequestError("Unable to get drive/item id from path", getDriveItemResult));
         }
-        // try createing the file
+        // Try creating the file
         const contentUri = `${getDriveItemUrl}/content`;
         const createResult = await putAsync(server, clientConfig, tokens, contentUri);
         if (createResult.status !== 201) {

@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-// tslint:disable:whitespace align no-bitwise
+import { EventEmitter } from "events";
 import { IValueFactory, IValueOpEmitter, IValueOperation, IValueType } from "@microsoft/fluid-map";
 import * as MergeTree from "@microsoft/fluid-merge-tree";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
-import { EventEmitter } from "events";
+
+/* eslint-disable @typescript-eslint/indent, no-bitwise */
 
 export interface ISerializedInterval {
     sequenceNumber: number;
@@ -46,8 +47,8 @@ export class Interval implements ISerializableInterval {
     }
 
     public addPropertySet(props: MergeTree.PropertySet) {
-        if (this.auxProps===undefined) {
-            this.auxProps=[];
+        if (this.auxProps === undefined) {
+            this.auxProps = [];
         }
         this.auxProps.push(props);
     }
@@ -177,7 +178,7 @@ export class SequenceInterval implements ISerializableInterval {
         const bend = b.end.toPosition();
         const checkResult = ((astart < bend) && (bstart < aend));
         if (checkResult !== result) {
-            // tslint:disable-next-line:max-line-length
+            // eslint-disable-next-line max-len
             console.log(`check mismatch: res ${result} ${this.start.segment === b.end.segment} ${b.start.segment === this.end.segment}`);
             console.log(`as ${astart} ae ${aend} bs ${bstart} be ${bend}`);
             console.log(`as ${MergeTree.ordinalToArray(this.start.segment.ordinal)}@${this.start.offset}`);
@@ -190,7 +191,9 @@ export class SequenceInterval implements ISerializableInterval {
     }
 }
 
-function createPositionReference(client: MergeTree.Client, pos: number,
+function createPositionReference(
+    client: MergeTree.Client,
+    pos: number,
     refType: MergeTree.ReferenceType): MergeTree.LocalReference {
     const segoff = client.getContainingSegment(pos);
     if (segoff && segoff.segment) {
@@ -237,7 +240,6 @@ function createSequenceInterval(
         endLref.addProperties(rangeProp);
 
         const ival = new SequenceInterval(startLref, endLref, intervalType, rangeProp);
-        // ival.checkMergeTree = sequence.client.mergeTree;
         return ival;
     }
 }
@@ -267,10 +269,13 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
     private conflictResolver: MergeTree.IntervalConflictResolver<TInterval>;
     private endConflictResolver: MergeTree.ConflictAction<TInterval, TInterval>;
 
-    constructor(private readonly client: MergeTree.Client, private readonly label: string,
+    constructor(
+        private readonly client: MergeTree.Client,
+        private readonly label: string,
         private readonly helpers: IIntervalHelpers<TInterval>) {
 
         this.endIntervalTree =
+            // eslint-disable-next-line @typescript-eslint/unbound-method
             new MergeTree.RedBlackTree<TInterval, TInterval>(helpers.compareEnds);
     }
 
@@ -294,11 +299,11 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
         if (!this.intervalTree.intervals.isEmpty()) {
             const transientInterval =
                 this.helpers.create(
-                "transient",
-                startPosition,
-                endPosition,
-                this.client,
-                MergeTree.IntervalType.Transient);
+                    "transient",
+                    startPosition,
+                    endPosition,
+                    this.client,
+                    MergeTree.IntervalType.Transient);
 
             const overlappingIntervalNodes = this.intervalTree.match(transientInterval);
             return overlappingIntervalNodes.map((node) => node.key);
@@ -359,14 +364,11 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
     public serialize() {
         const client = this.client;
         const intervals = this.intervalTree.intervals.keys();
-        // tslint:disable-next-line
         return intervals.map((interval) => interval.serialize(client));
     }
 }
 
-function compareSequenceIntervalEnds(a: SequenceInterval, b: SequenceInterval): number {
-    return a.end.compare(b.end);
-}
+const compareSequenceIntervalEnds = (a: SequenceInterval, b: SequenceInterval): number => a.end.compare(b.end);
 
 class SequenceIntervalCollectionFactory
     implements IValueFactory<IntervalCollection<SequenceInterval>> {
@@ -404,37 +406,36 @@ export class SequenceIntervalCollectionValueType
 
     private static readonly _factory: IValueFactory<IntervalCollection<SequenceInterval>> =
         new SequenceIntervalCollectionFactory();
+
     private static readonly _ops: Map<string, IValueOperation<IntervalCollection<SequenceInterval>>> =
         new Map<string, IValueOperation<IntervalCollection<SequenceInterval>>>(
-        [[
-            "add",
-            {
-                process: (value, params, local, op) => {
-                    // Local ops were applied when the message was created
-                    if (local) {
-                        return;
-                    }
+            [[
+                "add",
+                {
+                    process: (value, params, local, op) => {
+                        // Local ops were applied when the message was created
+                        if (local) {
+                            return;
+                        }
 
-                    value.addInternal(params, local, op);
+                        value.addInternal(params, local, op);
+                    },
                 },
-            },
-        ],
-        [
-            "delete",
-            {
-                process: (value, params, local, op) => {
-                    if (local) {
-                        return;
-                    }
-                    value.deleteInterval(params, local, op);
+            ],
+            [
+                "delete",
+                {
+                    process: (value, params, local, op) => {
+                        if (local) {
+                            return;
+                        }
+                        value.deleteInterval(params, local, op);
+                    },
                 },
-            },
-        ]]);
+            ]]);
 }
 
-function compareIntervalEnds(a: Interval, b: Interval) {
-    return a.end - b.end;
-}
+const compareIntervalEnds = (a: Interval, b: Interval) => a.end - b.end;
 
 function createInterval(label: string, start: number, end: number, client: MergeTree.Client): Interval {
     let rangeProp: MergeTree.PropertySet;
@@ -483,30 +484,30 @@ export class IntervalCollectionValueType
         new IntervalCollectionFactory();
     private static readonly _ops: Map<string, IValueOperation<IntervalCollection<Interval>>> =
         new Map<string, IValueOperation<IntervalCollection<Interval>>>(
-        [[
-            "add",
-            {
-                process: (value, params, local, op) => {
-                    // Local ops were applied when the message was created
-                    if (local) {
-                        return;
-                    }
+            [[
+                "add",
+                {
+                    process: (value, params, local, op) => {
+                        // Local ops were applied when the message was created
+                        if (local) {
+                            return;
+                        }
 
-                    value.addInternal(params, local, op);
+                        value.addInternal(params, local, op);
+                    },
                 },
-            },
-        ],
-        [
-            "delete",
-            {
-                process: (value, params, local, op) => {
-                    if (local) {
-                        return;
-                    }
-                    value.deleteInterval(params, local, op);
+            ],
+            [
+                "delete",
+                {
+                    process: (value, params, local, op) => {
+                        if (local) {
+                            return;
+                        }
+                        value.deleteInterval(params, local, op);
+                    },
                 },
-            },
-        ]]);
+            ]]);
 }
 
 export type DeserializeCallback = (properties: MergeTree.PropertySet) => void;
@@ -753,9 +754,9 @@ export class IntervalCollection<TInterval extends ISerializableInterval> {
     }
 
     public deleteInterval(
-            serializedInterval: ISerializedInterval,
-            local: boolean,
-            op: ISequencedDocumentMessage): void {
+        serializedInterval: ISerializedInterval,
+        local: boolean,
+        op: ISequencedDocumentMessage): void {
         if (!this.view) {
             throw new Error("attach must be called prior to deleting intervals");
         }

@@ -55,6 +55,7 @@ export interface IVideoBlob extends IBaseBlob {
 }
 
 export function getFileBlobType(mimeType: string) {
+    /* eslint-disable @typescript-eslint/indent */
     switch (mimeType) {
         case "image/jpeg":
         case "image/png":
@@ -72,4 +73,5 @@ export function getFileBlobType(mimeType: string) {
             return "generic";
         }
     }
+    /* eslint-enable @typescript-eslint/indent */
 }

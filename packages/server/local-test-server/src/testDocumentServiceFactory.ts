@@ -3,14 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { parse } from "url";
 import {
     IDocumentService,
     IDocumentServiceFactory,
-    IFluidResolvedUrl,
     IResolvedUrl,
 } from "@microsoft/fluid-driver-definitions";
 import { TokenProvider } from "@microsoft/fluid-routerlicious-driver";
-import { parse } from "url";
 import { ITestDeltaConnectionServer } from "./testDeltaConnectionServer";
 import { createTestDocumentService } from "./testDocumentService";
 
@@ -23,27 +22,28 @@ export class TestDocumentServiceFactory implements IDocumentServiceFactory {
     /**
      * @param testDeltaConnectionServer - delta connection server for ops
      */
-    constructor(private testDeltaConnectionServer: ITestDeltaConnectionServer) {}
+    constructor(private readonly testDeltaConnectionServer: ITestDeltaConnectionServer) { }
 
     /**
      * Creates and returns a document service for testing using the given resolved
      * URL for the tenant ID, document ID, and token.
      * @param resolvedUrl - resolved URL of document
      */
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
         if (resolvedUrl.type !== "fluid") {
-            // tslint:disable-next-line:max-line-length
+            // eslint-disable-next-line max-len
             return Promise.reject("Only Fluid components currently supported in the RouterliciousDocumentServiceFactory");
         }
 
         const parsedUrl = parse(resolvedUrl.url);
         const [, tenantId, documentId] = parsedUrl.path.split("/");
         if (!documentId || !tenantId) {
-            // tslint:disable-next-line:max-line-length
+            // eslint-disable-next-line max-len
             return Promise.reject(`Couldn't parse documentId and/or tenantId. [documentId:${documentId}][tenantId:${tenantId}]`);
         }
 
-        const fluidResolvedUrl = resolvedUrl as IFluidResolvedUrl;
+        const fluidResolvedUrl = resolvedUrl;
         const jwtToken = fluidResolvedUrl.tokens.jwt;
         if (!jwtToken) {
             return Promise.reject(`Token was not provided.`);

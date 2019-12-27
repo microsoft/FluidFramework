@@ -61,7 +61,7 @@ export class TextSegment extends BaseSegment {
     }
 
     public canAppend(segment: ISegment) {
-        return this.text.charAt(this.text.length - 1) !== "\n"
+        return !this.text.endsWith("\n")
             && TextSegment.is(segment)
             && (this.cachedLength <= MergeTree.TextSegmentGranularity ||
                 segment.cachedLength <= MergeTree.TextSegmentGranularity);
@@ -212,13 +212,13 @@ export class MergeTreeTextHelper {
                 const remTags =  [] as string[];
                 if (tags.length > 0) {
                     for (const tag of tags) {
-                        if (accumText.tagsInProgress.indexOf(tag) < 0) {
+                        if (!accumText.tagsInProgress.includes(tag)) {
                             beginTags += `<${tag}>`;
                             initTags.push(tag);
                         }
                     }
                     for (const accumTag of accumText.tagsInProgress) {
-                        if (tags.indexOf(accumTag) < 0) {
+                        if (!tags.includes(accumTag)) {
                             endTags += `</${accumTag}>`;
                             remTags.push(accumTag);
                         }
@@ -276,5 +276,5 @@ export class MergeTreeTextHelper {
         }
 
         return true;
-    }
+    };
 }

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import {
     IComponentHandleContext,
     IComponentSerializer,
@@ -21,7 +22,6 @@ import {
     ITree,
     SummaryType,
 } from "@microsoft/fluid-protocol-definitions";
-import { EventEmitter } from "events";
 
 class NullRuntime extends EventEmitter implements IRuntime {
     public get IComponentSerializer(): IComponentSerializer {

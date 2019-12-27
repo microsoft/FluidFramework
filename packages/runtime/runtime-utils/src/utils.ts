@@ -5,7 +5,5 @@
 
 import { ISerializedHandle } from "@microsoft/fluid-component-core-interfaces";
 
-export function isSerializedHandle(value: any): value is ISerializedHandle {
-    // tslint:disable-next-line:no-unsafe-any
-    return value && value.type === "__fluid_handle__";
-}
+export const isSerializedHandle = (value: any): value is ISerializedHandle =>
+    value && value.type === "__fluid_handle__";

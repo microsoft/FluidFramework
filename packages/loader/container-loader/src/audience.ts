@@ -2,9 +2,9 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
+import { EventEmitter } from "events";
 import { IAudience } from "@microsoft/fluid-container-definitions";
 import { IClient } from "@microsoft/fluid-protocol-definitions";
-import { EventEmitter } from "events";
 
 /**
  * Audience represents all clients connected to the op stream.
