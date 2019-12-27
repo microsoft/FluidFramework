@@ -184,7 +184,7 @@ module.exports = {
         "import/no-unresolved": [
             "error",
             {
-                "caseSensitive": false
+                "caseSensitive": true
             }
         ],
         "import/order": "error",
