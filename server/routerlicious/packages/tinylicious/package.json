@@ -20,7 +20,8 @@
     "eslint": "eslint --ext=ts,tsx --format stylish src",
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
     "tsc": "tsc",
-    "tslint": "npm run eslint"
+    "tslint": "npm run eslint",
+    "start": "ts-node src/index.ts"
   },
   "dependencies": {
     "@microsoft/fluid-core-utils": "^0.13.0",
