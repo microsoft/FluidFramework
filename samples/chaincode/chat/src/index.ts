@@ -6,13 +6,14 @@
 import { IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
 import { IContainerContext } from "@microsoft/fluid-container-definitions";
 import { renderChat } from "./chat";
+// eslint-disable-next-line import/no-internal-modules
 import { Runtime } from "./runtime/runtime";
 
 export class ChatRunner implements IComponentHTMLVisual {
 
     public get IComponentHTMLVisual() { return this; }
 
-    constructor(private runtime: Runtime) {
+    constructor(private readonly runtime: Runtime) {
     }
 
     public render(elm: HTMLElement) {
@@ -23,9 +24,9 @@ export class ChatRunner implements IComponentHTMLVisual {
 export async function instantiateRuntime(context: IContainerContext): Promise<Runtime> {
     const runtime = await Runtime.load(context);
 
-    runtime.registerRequestHandler(async (request) => {
-        return { status: 200, mimeType: "fluid/component", value: new ChatRunner(runtime) };
-    });
+    runtime.registerRequestHandler(
+        async (request) => ({ status: 200, mimeType: "fluid/component", value: new ChatRunner(runtime) }),
+    );
 
     return runtime;
 }

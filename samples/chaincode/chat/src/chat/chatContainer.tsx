@@ -6,8 +6,9 @@
 import { IQuorum, ISequencedDocumentMessage, MessageType } from "@microsoft/fluid-protocol-definitions";
 import { Chat } from "@stardust-ui/react";
 import * as React from "react";
+// eslint-disable-next-line import/no-internal-modules
 import { Runtime } from "../runtime/runtime";
-import { ChatRenderer } from "./chat-renderer";
+import { ChatRenderer } from "./chatRenderer";
 import { translate } from "./translator";
 
 const transPrefix = "translate:";
@@ -37,7 +38,7 @@ interface IChatContainerState {
 
 export class ChatContainer extends React.Component<IChatContainerProps, IChatContainerState> {
     private selfLanguage = "en";
-    private toLanguages = new Set(["en"]);
+    private readonly toLanguages = new Set(["en"]);
     private alreadyLeader = false;
 
     public componentDidMount() {
@@ -55,6 +56,7 @@ export class ChatContainer extends React.Component<IChatContainerProps, IChatCon
     }
 
     public render() {
+        // eslint-disable-next-line no-null/no-null
         if (this.state === null) {
             return <div> Fetching Messages </div>;
         }
@@ -101,7 +103,7 @@ export class ChatContainer extends React.Component<IChatContainerProps, IChatCon
     }
 
     public inputChangeHandler = (event: React.ChangeEvent<HTMLInputElement>) =>
-        this.setState({ inputMessage: event.target.value })
+        this.setState({ inputMessage: event.target.value });
 
     public appendMessage = () => {
         const { inputMessage } = this.state;
@@ -120,7 +122,7 @@ export class ChatContainer extends React.Component<IChatContainerProps, IChatCon
             time: Date.now().toString(),
             translated: false,
         });
-    }
+    };
 
     private convertMessage(op: ISequencedDocumentMessage): IChatProps {
         const message: IMessage = op.contents;
@@ -165,7 +167,7 @@ export class ChatContainer extends React.Component<IChatContainerProps, IChatCon
         this.props.runtime.on("op", (op: ISequencedDocumentMessage) => {
             const message = op.contents as IMessage;
             if (!message.translated && !message.content.startsWith(transPrefix)) {
-                // tslint:disable max-line-length
+                // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 translate("api_key", message.language, [...this.toLanguages], [message.content]).then((val) => {
                     if (val) {
                         for (const languageTranslations of val) {

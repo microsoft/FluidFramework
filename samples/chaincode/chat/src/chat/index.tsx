@@ -7,8 +7,9 @@ import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions
 import { Provider, themes } from "@stardust-ui/react";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
+// eslint-disable-next-line import/no-internal-modules
 import { Runtime } from "../runtime/runtime";
-import { ChatContainer } from "./chat-container";
+import { ChatContainer } from "./chatContainer";
 
 export function renderChat(runtime: Runtime, hostElement: HTMLElement) {
     if (runtime.connected) {

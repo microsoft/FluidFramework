@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import {
     IRequest,
     IResponse,
@@ -17,7 +18,6 @@ import {
     ITree,
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
-import { EventEmitter } from "events";
 
 export class Runtime extends EventEmitter {
     public static async load(context: IContainerContext): Promise<Runtime> {
@@ -39,7 +39,7 @@ export class Runtime extends EventEmitter {
 
     private closed = false;
     private requestHandler: (request: IRequest) => Promise<IResponse>;
-    private bufferedOpsUntilConnection: ISequencedDocumentMessage[] = [];
+    private readonly bufferedOpsUntilConnection: ISequencedDocumentMessage[] = [];
 
     private constructor(private readonly context: IContainerContext) {
         super();
@@ -62,6 +62,7 @@ export class Runtime extends EventEmitter {
     }
 
     public async snapshot(tagMessage: string): Promise<ITree> {
+        // eslint-disable-next-line no-null/no-null
         const root: ITree = { entries: [], id: null };
         return root;
     }
@@ -84,7 +85,7 @@ export class Runtime extends EventEmitter {
         }
     }
 
-    public prepare(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
+    public async prepare(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
         return;
     }
 

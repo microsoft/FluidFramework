@@ -28,9 +28,10 @@ function createRequestUri(from: string, to: string[]): string {
     }
 }
 
+// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 function createRequestBody(texts: string[]): ITranslatorInput[] {
     return texts.map((text: string) => {
-        const input: ITranslatorInput = {Text: text};
+        const input: ITranslatorInput = { Text: text };
         return input;
     });
 }
@@ -58,7 +59,7 @@ async function translateCore(key: string, from: string, to: string[], text: stri
                     body: requestBody,
                     headers: {
                         "Content-Type": "application/json",
-                        "Ocp-Apim-Subscription-Key" : key,
+                        "Ocp-Apim-Subscription-Key": key,
                     },
                     json: true,
                     method: "POST",
