@@ -189,7 +189,8 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
             connected: this.connected,
             clients: this.clients,
             // Continue investigation of scope after feature check in
-            createDocumentService: async (resolvedUrl: IFluidResolvedUrl) => this.createDocumentService(resolvedUrl),
+            // eslint-disable-next-line @typescript-eslint/promise-function-async
+            createDocumentService: (resolvedUrl: IFluidResolvedUrl) => this.createDocumentService(resolvedUrl),
         };
     }
 

@@ -38,7 +38,8 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
      * @param resolvedUrl - URL containing different endpoint URLs.
      * @returns Routerlicious document service.
      */
-    public async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
+    public createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
         if (resolvedUrl.type !== "fluid") {
             // eslint-disable-next-line max-len
             return Promise.reject("Only Fluid components currently supported in the RouterliciousDocumentServiceFactory");

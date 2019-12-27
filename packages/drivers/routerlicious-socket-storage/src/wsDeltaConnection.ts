@@ -39,7 +39,8 @@ export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaCon
      * @param urlStr - url to connect to delta stream.
      * @returns Delta connection to the stream.
      */
-    public static async create(
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
+    public static create(
         tenantId: string,
         id: string,
         token: string,

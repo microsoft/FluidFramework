@@ -34,7 +34,8 @@ export class OdspCache {
     }
 
     private async gc(key: string, expiryTime: number) {
-        const delay = async (ms: number) => new Promise((res) => setTimeout(res, ms));
+        // eslint-disable-next-line @typescript-eslint/promise-function-async
+        const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
         await delay(expiryTime);
         if (this.odspCache.has(key)) {
             this.odspCache.delete(key);

@@ -55,7 +55,8 @@ export class InnerDocumentService implements IDocumentService {
      */
     public async connectToDeltaStorage(): Promise<IDocumentDeltaStorageService> {
         return {
-            get: async (from?: number, to?: number) => this.outerProxy.deltaStorage.get(from, to),
+            // eslint-disable-next-line @typescript-eslint/promise-function-async
+            get: (from?: number, to?: number) => this.outerProxy.deltaStorage.get(from, to),
         };
     }
 

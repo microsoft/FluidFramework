@@ -32,7 +32,7 @@ import { fetchSnapshot } from "./fetchSnapshot";
 import { IFetchWrapper } from "./fetchWrapper";
 import { getQueryString } from "./getQueryString";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
-import { OdspCache } from "./odspCache";
+import { OdspCache } from "./OdspCache";
 import { getWithRetryForTokenRefresh, throwOdspNetworkError } from "./OdspUtils";
 
 /* eslint-disable max-len */
@@ -80,7 +80,8 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         this.appId = queryParams.app_id;
     }
 
-    public async createBlob(file: Buffer): Promise<api.ICreateBlobResponse> {
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
+    public createBlob(file: Buffer): Promise<api.ICreateBlobResponse> {
         this.checkSnapshotUrl();
 
         // Need to wrap implementation with getWithRetryForTokenRefresh()
@@ -340,7 +341,8 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         });
     }
 
-    public async write(tree: api.ITree, parents: string[], message: string): Promise<api.IVersion> {
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
+    public write(tree: api.ITree, parents: string[], message: string): Promise<api.IVersion> {
         this.checkSnapshotUrl();
 
         return Promise.reject("Not supported");
@@ -365,7 +367,8 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         };
     }
 
-    public async downloadSummary(commit: api.ISummaryHandle): Promise<api.ISummaryTree> {
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
+    public downloadSummary(commit: api.ISummaryHandle): Promise<api.ISummaryTree> {
         return Promise.reject("Not implemented yet");
     }
 

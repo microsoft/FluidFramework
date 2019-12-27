@@ -31,15 +31,18 @@ export class NullBlobStorageService implements IDocumentStorageService {
         return Promise.reject("Invalid operation");
     }
 
-    public async write(tree: api.ITree, parents: string[], message: string, ref: string): Promise<api.IVersion> {
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
+    public write(tree: api.ITree, parents: string[], message: string, ref: string): Promise<api.IVersion> {
         return Promise.reject("Null blob storage can not write commit");
     }
 
-    public async uploadSummary(commit: api.ISummaryTree): Promise<api.ISummaryHandle> {
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
+    public uploadSummary(commit: api.ISummaryTree): Promise<api.ISummaryHandle> {
         return Promise.reject("Invalid operation");
     }
 
-    public async downloadSummary(handle: api.ISummaryHandle): Promise<api.ISummaryTree> {
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
+    public downloadSummary(handle: api.ISummaryHandle): Promise<api.ISummaryTree> {
         return Promise.reject("Invalid operation");
     }
 

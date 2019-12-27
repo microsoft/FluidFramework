@@ -116,7 +116,8 @@ export class SnapshotStorage extends ReadDocumentStorageServiceBase {
         return this.docTree;
     }
 
-    public async read(blobId: string): Promise<string> {
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
+    public read(blobId: string): Promise<string> {
         return this.storage.read(blobId);
     }
 }

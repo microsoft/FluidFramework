@@ -45,7 +45,8 @@ export class InnerDocumentStorageService implements IDocumentStorageService {
         return this.outerStorageService.getContent(version, path);
     }
 
-    public async write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion> {
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
+    public write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion> {
         return this.outerStorageService.write(tree, parents, message, ref);
     }
 
@@ -54,7 +55,8 @@ export class InnerDocumentStorageService implements IDocumentStorageService {
 
     }
 
-    public async downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
+    public downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {
         return this.outerStorageService.downloadSummary(handle);
     }
 

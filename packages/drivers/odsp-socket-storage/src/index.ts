@@ -15,4 +15,4 @@ export * from "./OdspUtils";
 export * from "./Vroom";
 export * from "./OdspDocumentServiceFactoryWithCodeSplit";
 export * from "./OdspDocumentDeltaConnection";
-export * from "./odspCache";
+export * from "./OdspCache";

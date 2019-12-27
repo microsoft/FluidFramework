@@ -10,7 +10,7 @@ import {
 } from "@microsoft/fluid-driver-definitions";
 import { IOdspResolvedUrl } from "./contracts";
 import { FetchWrapper, IFetchWrapper } from "./fetchWrapper";
-import { OdspCache } from "./odspCache";
+import { OdspCache } from "./OdspCache";
 import { OdspDocumentService } from "./OdspDocumentService";
 
 /**

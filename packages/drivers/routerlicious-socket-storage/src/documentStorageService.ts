@@ -71,7 +71,8 @@ export class DocumentStorageService implements IDocumentStorageService {
         return value.content;
     }
 
-    public async write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion> {
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
+    public write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion> {
         const branch = ref ? `components/${this.id}/${ref}` : this.id;
         const commit = this.manager.write(branch, tree, parents, message);
         return commit.then((c) => ({ date: c.committer.date, id: c.sha, treeId: c.tree.sha }));
@@ -86,7 +87,8 @@ export class DocumentStorageService implements IDocumentStorageService {
         };
     }
 
-    public async downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
+    public downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {
         return Promise.reject("NOT IMPLEMENTED!");
     }
 

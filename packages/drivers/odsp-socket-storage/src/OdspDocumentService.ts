@@ -19,7 +19,7 @@ import {
 import { ISocketStorageDiscovery } from "./contracts";
 import { debug } from "./debug";
 import { IFetchWrapper } from "./fetchWrapper";
-import { OdspCache } from "./odspCache";
+import { OdspCache } from "./OdspCache";
 import { OdspDeltaStorageService } from "./OdspDeltaStorageService";
 import { OdspDocumentDeltaConnection } from "./OdspDocumentDeltaConnection";
 import { OdspDocumentStorageManager } from "./OdspDocumentStorageManager";
@@ -303,7 +303,8 @@ export class OdspDocumentService implements IDocumentService {
                 });
 
                 return connection;
-            }).catch(async (connectionError) => {
+                // eslint-disable-next-line @typescript-eslint/promise-function-async
+            }).catch((connectionError) => {
                 const endAfd = performanceNow();
                 localStorage.removeItem(lastAfdConnectionTimeMsKey);
                 // Retry on non-AFD URL
@@ -358,7 +359,8 @@ export class OdspDocumentService implements IDocumentService {
         ).then((connection) => {
             logger.sendTelemetryEvent({ eventName: "UsedNonAfdUrl" });
             return connection;
-        }).catch(async (connectionError) => {
+            // eslint-disable-next-line @typescript-eslint/promise-function-async
+        }).catch((connectionError) => {
             const endNonAfd = performanceNow();
             if (hasUrl2 && this.canRetryOnError(connectionError)) {
                 // eslint-disable-next-line max-len

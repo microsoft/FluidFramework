@@ -12,7 +12,7 @@ import {
 import { IOdspResolvedUrl } from "./contracts";
 import { FetchWrapper, IFetchWrapper } from "./fetchWrapper";
 import { getSocketIo } from "./getSocketIo";
-import { OdspCache } from "./odspCache";
+import { OdspCache } from "./OdspCache";
 import { OdspDocumentService } from "./OdspDocumentService";
 
 /**

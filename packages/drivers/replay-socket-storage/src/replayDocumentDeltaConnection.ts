@@ -54,8 +54,9 @@ export class ReplayControllerStatic extends ReplayController {
         }
     }
 
-    public async initStorage(storage: IDocumentStorageService) {
-        return true;
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
+    public initStorage(storage: IDocumentStorageService) {
+        return Promise.resolve(true);
     }
 
     public async getVersions(versionId: string, count: number): Promise<IVersion[]> {
@@ -115,7 +116,8 @@ export class ReplayControllerStatic extends ReplayController {
         return 0;
     }
 
-    public async replay(
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
+    public replay(
         emitter: (op: ISequencedDocumentMessage[]) => void,
         fetchedOps: ISequencedDocumentMessage[]): Promise<void> {
         let current = this.skipToIndex(fetchedOps);
@@ -166,8 +168,8 @@ export class ReplayControllerStatic extends ReplayController {
                         }
                     }
                 }
-                // eslint-disable-next-line no-unused-expressions
-                (nextInterval);
+                // eslint-disable-next-line @typescript-eslint/no-use-before-define
+                scheduleNext(nextInterval);
                 emitter(playbackOps);
             };
             const scheduleNext = (nextInterval: number) => {

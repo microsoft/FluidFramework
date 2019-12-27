@@ -14,7 +14,8 @@ export class InnerUrlResolver implements IUrlResolver {
     constructor(private readonly resolved: IResolvedUrl) {
     }
 
-    public async resolve(request: IRequest): Promise<IResolvedUrl> {
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
+    public resolve(request: IRequest): Promise<IResolvedUrl> {
         return Promise.resolve(this.resolved);
     }
 }
