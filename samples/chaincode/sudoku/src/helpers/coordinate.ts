@@ -9,13 +9,12 @@
  */
 export type CoordinateString = string;
 
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class Coordinate {
     /**
      * Given two numbers, returns a 2-dimensional coordinate string.
      */
-    public static asString = (row: number, column: number): CoordinateString => {
-        return `${row},${column}`;
-    };
+    public static asString = (row: number, column: number): CoordinateString => `${row},${column}`;
 
     /**
      * Returns a 2-item array of individual coordinates as strings.
