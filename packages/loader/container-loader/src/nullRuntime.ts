@@ -38,10 +38,12 @@ class NullRuntime extends EventEmitter implements IRuntime {
         super();
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public snapshot(tagMessage: string): Promise<ITree | null> {
         return Promise.resolve(null);
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public summarize(fullTree: boolean = false): Promise<ISummaryTree> {
         return Promise.resolve({
             tree: {},
@@ -53,10 +55,12 @@ class NullRuntime extends EventEmitter implements IRuntime {
         return;
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public stop(): Promise<void> {
         return Promise.resolve();
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public request(request: IRequest): Promise<IResponse> {
         return Promise.resolve({ status: 404, mimeType: "text/plain", value: null });
     }

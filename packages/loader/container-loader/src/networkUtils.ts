@@ -41,6 +41,7 @@ export function logNetworkFailure(logger: ITelemetryLogger, event: ITelemetryErr
  * But there should be no false negatives.
  * The only exception - Opera returns false when user enters "Work Offline" mode, regardless of actual connectivity.
  */
+// eslint-disable-next-line @typescript-eslint/promise-function-async
 export function waitForConnectedState(minDelay: number): Promise<void> {
     // Use this frequency to poll even when we are offline and able to setup online/offline listener
     // This is mostly safety net

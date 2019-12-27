@@ -52,14 +52,17 @@ export class PrefetchDocumentStorageService implements IDocumentStorageService {
         return this.storage.getContent(version, path);
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion> {
         return this.storage.write(tree, parents, message, ref);
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public uploadSummary(commit: ISummaryTree): Promise<ISummaryHandle> {
         return this.storage.uploadSummary(commit);
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {
         return this.storage.downloadSummary(handle);
     }
@@ -77,6 +80,7 @@ export class PrefetchDocumentStorageService implements IDocumentStorageService {
         this.prefetchCache.clear();
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     private cachedRead(blobId: string): Promise<string> {
         if (this.prefetchEnabled) {
             const prefetchedBlobP: Promise<string> | undefined = this.prefetchCache.get(blobId);
@@ -119,6 +123,7 @@ export class PrefetchDocumentStorageService implements IDocumentStorageService {
 
         for (const commit of Object.keys(tree.commits)) {
             this.getVersions(tree.commits[commit], 1)
+                // eslint-disable-next-line @typescript-eslint/promise-function-async
                 .then((moduleCommit) => this.getSnapshotTree(moduleCommit[0]))
                 .catch((error) => debug("Ignored cached read error", error));
         }

@@ -240,6 +240,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         return;
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public reloadContext(): Promise<void> {
         return this.container.reloadContext();
     }
