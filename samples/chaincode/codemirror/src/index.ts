@@ -42,20 +42,20 @@ class CodeMirrorFactory implements IRuntimeFactory {
                     const component = await containerRuntime.getComponentRuntime(componentId, true);
 
                     return component.request({ url: trailingSlash === -1 ? "" : requestUrl.substr(trailingSlash + 1) });
-                }
+                },
             ],
             { generateSummaries: true });
 
-        // flush mode to manual to batch operations within a turn
+        // Flush mode to manual to batch operations within a turn
         runtime.setFlushMode(FlushMode.Manual);
 
         // On first boot create the base component
         if (!runtime.existing) {
             await Promise.all([
-                    runtime.createComponent(defaultComponentId, defaultComponent).then((componentRuntime) => {
-                        componentRuntime.attach();
-                    }),
-                ])
+                runtime.createComponent(defaultComponentId, defaultComponent).then((componentRuntime) => {
+                    componentRuntime.attach();
+                }),
+            ])
                 .catch((error) => {
                     context.error(error);
                 });
@@ -67,6 +67,6 @@ class CodeMirrorFactory implements IRuntimeFactory {
 
 export const fluidExport = new CodeMirrorFactory();
 
-export function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-    return fluidExport.instantiateRuntime(context);
-}
+export const instantiateRuntime =
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
+    (context: IContainerContext): Promise<IRuntime> => fluidExport.instantiateRuntime(context);

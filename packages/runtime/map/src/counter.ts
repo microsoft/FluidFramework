@@ -49,7 +49,6 @@ export class Counter extends EventEmitter {
         super();
     }
 
-    // tslint:disable-next-line:no-unnecessary-override
     public on(
         event: "incremented",
         listener: (incrementValue: number, currentValue: number) => void) {

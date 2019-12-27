@@ -9,12 +9,12 @@ import { IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
 
 export class ChannelStorageService implements IObjectStorageService {
     private static flattenTree(base: string, tree: ISnapshotTree, results: { [path: string]: string }) {
-        // tslint:disable-next-line:forin
+        // eslint-disable-next-line guard-for-in, no-restricted-syntax
         for (const path in tree.trees) {
             ChannelStorageService.flattenTree(`${base}${path}/`, tree.trees[path], results);
         }
 
-        // tslint:disable-next-line:forin
+        // eslint-disable-next-line guard-for-in, no-restricted-syntax
         for (const blob in tree.blobs) {
             results[`${base}${blob}`] = tree.blobs[blob];
         }
@@ -33,11 +33,10 @@ export class ChannelStorageService implements IObjectStorageService {
         }
     }
 
-    /* tslint:disable:promise-function-async */
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public read(path: string): Promise<string> {
         const id = this.getIdForPath(path);
 
-        // tslint:disable-next-line: strict-boolean-expressions
         return this.extraBlobs && this.extraBlobs.has(id)
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             ? Promise.resolve(this.extraBlobs.get(id)!)

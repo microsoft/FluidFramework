@@ -37,13 +37,13 @@ export class InkCanvas extends ui.Component {
     private canvas: HTMLCanvasElement;
     private context: CanvasRenderingContext2D;
     private penID: number = -1;
-    private canvasWrapper: HTMLElement;
+    private readonly canvasWrapper: HTMLElement;
     private currentStrokeId: string;
     private currentPen: ink.IPen;
     private lastStrokeRenderOp: { [key: string]: number } = {};
 
-    // constructor
-    constructor(element: HTMLDivElement, private model: ink.IInk, private image?: CanvasImageSource) {
+    // Constructor
+    constructor(element: HTMLDivElement, private readonly model: ink.IInk, private readonly image?: CanvasImageSource) {
         super(element);
 
         this.model.on("load", () => {
@@ -53,14 +53,14 @@ export class InkCanvas extends ui.Component {
         this.model.on("clear", this.handleClear.bind(this));
         this.model.on("stylus", this.handleStylus.bind(this));
 
-        // setup canvas
+        // Setup canvas
         this.canvasWrapper = document.createElement("div");
         this.canvasWrapper.classList.add("drawSurface");
         this.canvas = document.createElement("canvas");
         this.canvasWrapper.appendChild(this.canvas);
         element.appendChild(this.canvasWrapper);
 
-        // get context
+        // Get context
         this.context = this.canvas.getContext("2d");
 
         this.canvas.addEventListener("pointerdown", this.handlePointerDown.bind(this));
@@ -208,7 +208,7 @@ export class InkCanvas extends ui.Component {
         for (const stroke of strokes) {
             let previous = stroke.points[0];
             for (const current of stroke.points) {
-                // current === previous === stroke.operations[0] for the down
+                // Current === previous === stroke.operations[0] for the down
                 this.drawStroke(stroke, current, previous);
                 previous = current;
             }
@@ -246,7 +246,7 @@ export class InkCanvas extends ui.Component {
 
         const stroke = this.model.getStroke(dirtyStrokeId);
         for (; index < stroke.points.length; index++) {
-            // render the stroke
+            // Render the stroke
             this.drawStroke(stroke, stroke.points[index], stroke.points[Math.max(0, index - 1)]);
         }
 

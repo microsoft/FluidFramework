@@ -42,6 +42,7 @@ export class WebFlowHost extends PrimedComponent implements IComponentHTMLVisual
 
     public addView(scope?: IComponent): IComponentHTMLView {
         return new HostView(
+            // eslint-disable-next-line @typescript-eslint/promise-function-async
             (rootkey: string, pkg: string, props?: any) => this.createSubComponent(rootkey, pkg, props),
             this.getComponent<FlowDocument>(this.root.get(this.docId)),
             this.openCollection("math"),
@@ -77,6 +78,7 @@ export class WebFlowHost extends PrimedComponent implements IComponentHTMLVisual
         const url = new URL(window.location.href);
         const template = url.searchParams.get("template");
         if (template) {
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             importDoc(this.getComponent(this.root.get(this.docId)), template);
         }
     }
@@ -105,6 +107,7 @@ export class WebFlowHost extends PrimedComponent implements IComponentHTMLVisual
 
             if (needReset) {
                 needReset = false;
+                // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 Promise.resolve().then(() => {
                     console.log(`Turn count ${turnCount}`);
                     turnCount = 0;
@@ -122,6 +125,7 @@ export class WebFlowHost extends PrimedComponent implements IComponentHTMLVisual
         this.intelViewer = new FlowIntelViewer(insights);
 
         const flowDocument = await this.getComponent<FlowDocument>(this.root.get(this.docId));
+        // eslint-disable-next-line @typescript-eslint/no-use-before-define
         const taskScheduler = new TaskScheduler(
             this.context,
             this.taskManager,
@@ -142,7 +146,7 @@ export class WebFlowHost extends PrimedComponent implements IComponentHTMLVisual
             return Promise.reject("Not found");
         }
 
-        const component = request.value as IComponent;
+        const component = request.value;
         return component.IComponentCollection;
     }
 }
@@ -176,7 +180,9 @@ class TaskScheduler {
 
 export const webFlowHostFactory = new PrimedComponentFactory(WebFlowHost, [SharedMap.getFactory()], new Map([
     [FlowDocumentType, Promise.resolve(flowDocumentFactory)],
+    // eslint-disable-next-line max-len
     ["@fluid-example/video-players", import(/* webpackChunkName: "video-players", webpackPrefetch: true */ "@fluid-example/video-players").then((m) => m.fluidExport)],
+    // eslint-disable-next-line max-len
     ["@fluid-example/image-collection", import(/* webpackChunkName: "image-collection", webpackPrefetch: true */ "@fluid-example/image-collection").then((m) => m.fluidExport)],
     ["@fluid-example/math", import("@fluid-example/math").then((m) => m.fluidExport)],
     [TableDocumentType, import("@fluid-example/table-document").then((m) => m.TableDocument.getFactory())],

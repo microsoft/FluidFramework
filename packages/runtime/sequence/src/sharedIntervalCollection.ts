@@ -25,7 +25,7 @@ import {
     IntervalCollection,
     IntervalCollectionValueType,
     ISerializableInterval,
- } from "./intervalCollection";
+} from "./intervalCollection";
 import { pkgVersion } from "./packageVersion";
 
 const snapshotFileName = "header";
@@ -157,6 +157,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
                     },
                 },
             ],
+            // eslint-disable-next-line no-null/no-null
             id: null,
         };
 

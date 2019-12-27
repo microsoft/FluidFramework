@@ -11,7 +11,7 @@ export interface IPolygon extends IShape {
 }
 
 export class Polygon implements IPolygon {
-    private bounds: Rectangle;
+    private readonly bounds: Rectangle;
 
     /**
      * Constructs a new polygon composed of the given points. The polygon

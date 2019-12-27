@@ -4,7 +4,7 @@ import {
 
 import { } from "./main";
 
-// tslint:disable-next-line: no-var-requires no-require-imports
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../package.json");
 const componentName = pkg.name as string;
 

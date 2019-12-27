@@ -151,5 +151,5 @@ export class TableSlice extends PrimedComponent implements ITable {
 
     private readonly emitOp = (...args: any[]) => {
         this.emit("op", ...args);
-    }
+    };
 }

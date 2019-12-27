@@ -1,9 +1,13 @@
 {
     "extends": [
-        "@microsoft/eslint-config-fluid"
+        "@microsoft/eslint-config-fluid/no-tslint"
     ],
     "rules": {
         "@typescript-eslint/no-namespace": "off",
-        "no-inner-declarations": "off"
+        "@typescript-eslint/strict-boolean-expressions": "off",
+        "capitalized-comments": "off",
+        "no-inner-declarations": "off",
+        "no-param-reassign": "off",
+        "prefer-arrow/prefer-arrow-functions": "off"
     }
 }

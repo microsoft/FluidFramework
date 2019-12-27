@@ -13,9 +13,9 @@ import { generateToken } from "@microsoft/fluid-server-services-core";
  * related test classes in the local-test-server suite of implementations.
  */
 export class TestResolver implements IUrlResolver {
-    private id = "documentId";
-    private tenantId = "tenantId";
-    private tokenKey = "tokenKey";
+    private readonly id = "documentId";
+    private readonly tenantId = "tenantId";
+    private readonly tokenKey = "tokenKey";
 
     /**
      * Resolves URL requests by providing fake URLs with an actually generated

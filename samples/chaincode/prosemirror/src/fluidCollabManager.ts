@@ -3,36 +3,35 @@
  * Licensed under the MIT License.
  */
 
-import { Plugin, Transaction, EditorState, NodeSelection } from "prosemirror-state";
-import { SharedString } from "@microsoft/fluid-sequence";
-import { addListNodes } from "prosemirror-schema-list";
+import * as assert from "assert";
+import { EventEmitter } from "events";
+import { ILoader } from "@microsoft/fluid-container-definitions";
 import {
+    createGroupOp,
+    createRemoveRangeOp,
+    IMergeTreeOp,
+    Marker,
     ReferenceType,
     TextSegment,
-    Marker,
-
-    createRemoveRangeOp,
-    createGroupOp,
-    IMergeTreeOp,
 } from "@microsoft/fluid-merge-tree";
-
-import OrderedMap = require('orderedmap');
-import { Schema, NodeSpec, Fragment, DOMSerializer, Slice } from "prosemirror-model";
-import { sliceToGroupOps, ProseMirrorTransactionBuilder, IProseMirrorNode, nodeTypeKey } from "./fluidBridge";
-import { schema } from "./fluidSchema";
-import * as assert from "assert";
-import { MenuItem } from "prosemirror-menu"
-
-import { EditorView } from "prosemirror-view";
-import { insertPoint } from "prosemirror-transform";
+import { SharedString } from "@microsoft/fluid-sequence";
 import { buildMenuItems, exampleSetup } from "prosemirror-example-setup";
-
+import { MenuItem } from "prosemirror-menu";
+import { DOMSerializer, Fragment, NodeSpec, Schema, Slice } from "prosemirror-model";
+import { addListNodes } from "prosemirror-schema-list";
+import { EditorState, NodeSelection, Plugin, Transaction } from "prosemirror-state";
+import { insertPoint } from "prosemirror-transform";
+import { EditorView } from "prosemirror-view";
 import { ComponentView } from "./componentView";
+import { IProseMirrorNode, nodeTypeKey, ProseMirrorTransactionBuilder, sliceToGroupOps } from "./fluidBridge";
+import { schema } from "./fluidSchema";
 import { FootnoteView } from "./footnoteView";
-import { create as createSelection } from "./selection";
 import { openPrompt, TextField } from "./prompt";
-import { ILoader } from "@microsoft/fluid-container-definitions";
-import { EventEmitter } from "events";
+import { create as createSelection } from "./selection";
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+import OrderedMap = require("orderedmap");
+
 
 export interface IProvideRichTextEditor {
     readonly IRichTextEditor: IRichTextEditor;
@@ -57,19 +56,17 @@ export class FluidCollabManager extends EventEmitter {
 
         this.plugin = new Plugin({
             state: {
-                init: () => {
-                    return null;
-                },
+                init: () => null,
                 apply: (tr) => {
                     this.applyTransaction(tr);
                     return null;
-                }
+                },
             },
         });
 
         const fluidSchema = new Schema({
             nodes: addListNodes(schema.spec.nodes as OrderedMap<NodeSpec>, "paragraph block*", "block"),
-            marks: schema.spec.marks
+            marks: schema.spec.marks,
         });
         this.schema = fluidSchema;
 
@@ -92,7 +89,7 @@ export class FluidCollabManager extends EventEmitter {
                         nodeJson.marks.push({
                             type: propertyKey,
                             value: segment.properties[propertyKey],
-                        })
+                        });
                     }
                 }
 
@@ -101,6 +98,7 @@ export class FluidCollabManager extends EventEmitter {
                 // TODO are marks applied to the structural nodes as well? Or just inner text?
 
                 const nodeType = segment.properties[nodeTypeKey];
+                /* eslint-disable @typescript-eslint/indent */
                 switch (segment.refType) {
                     case ReferenceType.NestBegin:
                         // Create the new node, add it to the top's content, and push it on the stack
@@ -117,8 +115,8 @@ export class FluidCollabManager extends EventEmitter {
                     case ReferenceType.Simple:
                         // TODO consolidate the text segment and simple references
                         const nodeJson: IProseMirrorNode = {
-                            type: segment.properties["type"],
-                            attrs: segment.properties["attrs"],
+                            type: segment.properties.type,
+                            attrs: segment.properties.attrs,
                         };
 
                         if (segment.properties) {
@@ -137,9 +135,10 @@ export class FluidCollabManager extends EventEmitter {
                         break;
 
                     default:
-                        // throw for now when encountering something unknown
+                        // Throw for now when encountering something unknown
                         throw new Error("Unknown marker");
                 }
+                /* eslint-enable @typescript-eslint/indent */
             }
 
             return true;
@@ -149,12 +148,13 @@ export class FluidCollabManager extends EventEmitter {
         menu.insertMenu.content.push(new MenuItem({
             title: "Insert Component",
             label: "Component",
-            enable(state) { return true },
+            enable: (state) => true,
             run: (state, _, view) => {
                 const { from, to } = state.selection;
                 let attrs = null;
-                if (state.selection instanceof NodeSelection && state.selection.node.type == fluidSchema.nodes.fluid)
-                    attrs = state.selection.node.attrs
+                if (state.selection instanceof NodeSelection && state.selection.node.type === fluidSchema.nodes.fluid) {
+                    attrs = state.selection.node.attrs;
+                }
                 openPrompt({
                     title: "Insert component",
                     fields: {
@@ -162,30 +162,30 @@ export class FluidCollabManager extends EventEmitter {
                         title: new TextField({ label: "Title", value: attrs && attrs.title }),
                         alt: new TextField({
                             label: "Description",
-                            value: attrs ? attrs.alt : state.doc.textBetween(from, to, " ")
-                        })
+                            value: attrs ? attrs.alt : state.doc.textBetween(from, to, " "),
+                        }),
                     },
+                    // eslint-disable-next-line no-shadow
                     callback(attrs) {
-                        view.dispatch(view.state.tr.replaceSelectionWith(fluidSchema.nodes.fluid.createAndFill(attrs)))
-                        view.focus()
-                    }
-                })
-            }
+                        view.dispatch(view.state.tr.replaceSelectionWith(fluidSchema.nodes.fluid.createAndFill(attrs)));
+                        view.focus();
+                    },
+                });
+            },
         }));
 
         menu.insertMenu.content.push(new MenuItem({
             title: "Insert footnote",
             label: "Footnote",
-            select(state) {
-                return insertPoint(state.doc, state.selection.from, fluidSchema.nodes.footnote) != null
-            },
+            select: (state) => insertPoint(state.doc, state.selection.from, fluidSchema.nodes.footnote) != null,
             run(state, dispatch) {
                 const { empty, $from, $to } = state.selection;
                 let content = Fragment.empty;
-                if (!empty && $from.sameParent($to) && $from.parent.inlineContent)
-                    content = $from.parent.content.cut($from.parentOffset, $to.parentOffset)
-                dispatch(state.tr.replaceSelectionWith(fluidSchema.nodes.footnote.create(null, content)))
-            }
+                if (!empty && $from.sameParent($to) && $from.parent.inlineContent) {
+                    content = $from.parent.content.cut($from.parentOffset, $to.parentOffset);
+                }
+                dispatch(state.tr.replaceSelectionWith(fluidSchema.nodes.footnote.create(null, content)));
+            },
         }));
 
         const doc = nodeStack.pop();
@@ -264,7 +264,7 @@ export class FluidCollabManager extends EventEmitter {
                     {
                         type: "text",
                         text: value,
-                    }
+                    },
                 ],
             });
 
@@ -274,27 +274,26 @@ export class FluidCollabManager extends EventEmitter {
     }
 
     public setupEditor(textArea: HTMLDivElement) {
+        /* eslint-disable */
         require("prosemirror-view/style/prosemirror.css");
         require("prosemirror-menu/style/menu.css");
         require("prosemirror-example-setup/style/style.css");
         require("./style.css");
+        /* eslint-enable */
 
         const editorView = new EditorView(
             textArea,
             {
                 state: this.state,
                 nodeViews: {
-                    fluid: (node, view, getPos) => {
-                        return new ComponentView(node, view, getPos, this.loader);
-                    },
-                    footnote: (node, view, getPos) => {
-                        return new FootnoteView(node, view, getPos, this.loader);
-                    },
-                }
+                    fluid: (node, view, getPos) => new ComponentView(node, view, getPos, this.loader),
+                    footnote: (node, view, getPos) => new FootnoteView(node, view, getPos, this.loader),
+                },
             });
 
         this.editorView = editorView;
 
+        // eslint-disable-next-line dot-notation
         window["easyView"] = editorView;
     }
 
@@ -310,7 +309,7 @@ export class FluidCollabManager extends EventEmitter {
         }
     }
 
-    private applyTransaction(tr: Transaction<any>) {
+    private applyTransaction(tr: Transaction) {
         if (tr.getMeta("fluid-local")) {
             return;
         }
@@ -320,6 +319,7 @@ export class FluidCollabManager extends EventEmitter {
             console.log(JSON.stringify(step, null, 2));
 
             const stepAsJson = step.toJSON();
+            /* eslint-disable @typescript-eslint/indent */
             switch (stepAsJson.stepType) {
                 case "replace": {
                     const from = stepAsJson.from;
@@ -355,7 +355,7 @@ export class FluidCollabManager extends EventEmitter {
                     const gapTo = stepAsJson.gapTo;
                     const insert = stepAsJson.insert;
 
-                    // export class ReplaceAroundStep extends Step {
+                    // Export class ReplaceAroundStep extends Step {
                     // :: (number, number, number, number, Slice, number, ?bool)
                     // Create a replace-around step with the given range and gap.
                     // `insert` should be the point in the slice into which the content
@@ -431,7 +431,9 @@ export class FluidCollabManager extends EventEmitter {
                 }
 
                 default:
+                    break;
             }
+            /* eslint-enable @typescript-eslint/indent */
         }
     }
 }

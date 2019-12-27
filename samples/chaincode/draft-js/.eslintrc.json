@@ -3,6 +3,7 @@
         "@microsoft/eslint-config-fluid/no-tslint"
     ],
     "rules": {
+        "@typescript-eslint/indent": "off",
         "@typescript-eslint/strict-boolean-expressions": "off",
         "no-null/no-null": "off",
         "react/prop-types": "off"

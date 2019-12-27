@@ -1,6 +1,10 @@
 {
     "extends": [
-        "@microsoft/eslint-config-fluid"
+        "@microsoft/eslint-config-fluid/no-tslint"
     ],
-    "rules": {}
+    "rules": {
+        "@typescript-eslint/strict-boolean-expressions": "off",
+        "capitalized-comments": "off",
+        "no-case-declarations": "off"
+    }
 }

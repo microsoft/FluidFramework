@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
+import { EventEmitter } from "events";
 import { IDeltaQueue } from "@microsoft/fluid-container-definitions";
 import { Deferred } from "@microsoft/fluid-core-utils";
-import * as assert from "assert";
 import * as Deque from "double-ended-queue";
-import { EventEmitter } from "events";
 
 export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
     private isDisposed: boolean = false;
@@ -128,7 +128,7 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
             this.processingDeferred = new Deferred<void>();
             if (processAsync) {
                 // Use a resolved promise to start the processing on a separate stack.
-                // tslint:disable-next-line: no-floating-promises
+                // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 Promise.resolve().then(() => {
                     this.processDeltas();
                     if (this.processingDeferred) {

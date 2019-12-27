@@ -9,8 +9,7 @@ const base = (document.currentScript as HTMLScriptElement).src;
 
 // Need to also set webpack_public_path on the window given the below bug
 // https://github.com/Microsoft/monaco-editor-webpack-plugin/issues/7
-// tslint:disable-next-line:no-string-literal
-// eslint-disable-next-line @typescript-eslint/camelcase, @typescript-eslint/tslint/config
+// eslint-disable-next-line dot-notation
 window["__webpack_public_path__"] = __webpack_public_path__ = base.substr(0, base.lastIndexOf("/") + 1);
 
 export { };

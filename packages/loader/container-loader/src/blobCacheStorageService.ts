@@ -13,6 +13,8 @@ import {
     IVersion,
 } from "@microsoft/fluid-protocol-definitions";
 
+/* eslint-disable @typescript-eslint/promise-function-async */
+
 /**
  * IDocumentStorageService adapter with pre-cached blobs.
  */

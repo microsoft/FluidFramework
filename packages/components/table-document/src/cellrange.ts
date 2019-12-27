@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import { LocalReference } from "@microsoft/fluid-merge-tree";
 import { SequenceInterval } from "@microsoft/fluid-sequence";
-import * as assert from "assert";
 
 const rangeExpr = /([a-zA-Z]+)(\d+):([a-zA-Z]+)(\d+)/;
 
 // Parses an Excel-like column name to the corresponding 0-based index (e.g., 'A' -> 0)
+// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function colNameToIndex(colName: string) {
     return [...colName]
         .map((letter) => letter.toUpperCase().charCodeAt(0) - 64)                   // 64 -> A=1, B=2, etc.
@@ -23,7 +24,7 @@ export function colIndexToName(colIndex: number) {
     do {
         const mod = colIndex % 26;
         name = `${String.fromCharCode(65 + mod)}${name}`;
-        // tslint:disable-next-line:no-parameter-reassignment
+        // eslint-disable-next-line no-param-reassign
         colIndex = Math.trunc(colIndex / 26) - 1;
     } while (colIndex >= 0);
 

@@ -5,10 +5,8 @@
 
 import * as assert from "assert";
 
-// tslint:disable:no-var-requires
-// tslint:disable-next-line:no-submodule-imports
+// eslint-disable-next-line
 const cloneDeep = require("lodash/cloneDeep");
-// tslint:enable:no-var-requires
 
 /**
  * A range in the RangeTracker
@@ -70,7 +68,6 @@ export class RangeTracker {
             this.lastPrimary = primary;
             this.lastSecondary = secondary;
         } else {
-            /* tslint:disable:no-unsafe-any */
             this.ranges = cloneDeep(primary.ranges);
             this.lastPrimary = primary.lastPrimary;
             this.lastSecondary = primary.lastSecondary;
@@ -128,7 +125,7 @@ export class RangeTracker {
             }
         } else {
             if (primaryHead + 1 === primary && secondaryHead + 1 === secondary) {
-                // extend the length if both increase by the same amount
+                // Extend the length if both increase by the same amount
                 head.length++;
             } else {
                 // Insert a new node
@@ -191,7 +188,7 @@ export class RangeTracker {
         // And remove unnecessary ranges
         this.ranges = index - 1 > 0 ? this.ranges.slice(index - 1) : this.ranges;
 
-        // assert that the lowest value is now the input to this method
+        // Assert that the lowest value is now the input to this method
         assert.equal(primary, this.ranges[0].primary);
     }
 }

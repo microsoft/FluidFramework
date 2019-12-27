@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
+import { resolve } from "url";
 import {
     IComponentHTMLOptions,
     IComponentHTMLVisual,
@@ -30,13 +32,11 @@ import {
 import * as scribe from "@microsoft/fluid-server-tools-core";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import Axios from "axios";
-import { EventEmitter } from "events";
-import { resolve } from "url";
 
-// tslint:disable-next-line:no-var-requires no-submodule-imports
+// eslint-disable-next-line
 require("bootstrap/dist/css/bootstrap.min.css");
 
-// tslint:disable-next-line:no-var-requires
+// eslint-disable-next-line
 const pkgVersion = require("../package.json").version;
 const version = `${pkgVersion.endsWith(".0") ? "^" : ""}${pkgVersion}`;
 
@@ -121,10 +121,11 @@ function updateMetrics(
     }
 }
 
-function handleFiles(createButton: HTMLButtonElement,
-                     startButton: HTMLButtonElement,
-                     createDetails: HTMLElement,
-                     files: FileList) {
+function handleFiles(
+    createButton: HTMLButtonElement,
+    startButton: HTMLButtonElement,
+    createDetails: HTMLElement,
+    files: FileList) {
     if (files.length !== 1) {
         createButton.classList.add("hidden");
         startButton.classList.add("hidden");
@@ -132,7 +133,7 @@ function handleFiles(createButton: HTMLButtonElement,
         return;
     }
 
-    // prep the file reader to process the selected file
+    // Prep the file reader to process the selected file
     const reader = new FileReader();
     reader.onload = (event) => {
         // After loading the file show the create button
@@ -258,7 +259,7 @@ function initialize(
 
         if (initialRun) {
             // Initialize the scribe progress UI.
-            if (authorCount === 1 ) {
+            if (authorCount === 1) {
                 resetProgressBar(ackProgressBar);
                 resetProgressBar(typingProgressBar);
             } else {
@@ -293,6 +294,7 @@ function initialize(
         }
 
         const buttonText = startButton.innerText;
+        // eslint-disable-next-line no-unused-expressions
         buttonText === "Start" ? startButton.innerText = "Pause" : startButton.innerText = "Start";
 
         event.preventDefault();
@@ -301,7 +303,7 @@ function initialize(
 }
 
 const html =
-`
+    `
 <div class="container">
     <h1>Scribe</h1>
 
@@ -390,7 +392,7 @@ export class Scribe
     private root: ISharedMap;
     private div: HTMLDivElement;
 
-    constructor(private runtime: IComponentRuntime, private readonly context: IComponentContext) {
+    constructor(private readonly runtime: IComponentRuntime, private readonly context: IComponentContext) {
         super();
 
         this.url = context.id;
@@ -420,7 +422,7 @@ export class Scribe
                 "");
         }
 
-        // reparent if needed
+        // Reparent if needed
         if (this.div.parentElement !== elm) {
             this.div.remove();
             elm.appendChild(this.div);
@@ -472,10 +474,10 @@ class ScribeFactory implements IComponentFactory, IRuntimeFactory {
         // On first boot create the base component
         if (!runtime.existing) {
             await Promise.all([
-                    runtime.createComponent(defaultComponentId, defaultComponent).then((componentRuntime) => {
-                        componentRuntime.attach();
-                    }),
-                ])
+                runtime.createComponent(defaultComponentId, defaultComponent).then((componentRuntime) => {
+                    componentRuntime.attach();
+                }),
+            ])
                 .catch((error) => {
                     context.error(error);
                 });

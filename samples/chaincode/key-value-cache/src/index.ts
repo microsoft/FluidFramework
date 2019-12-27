@@ -25,8 +25,7 @@ import {
 } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 
-// tslint:disable no-var-requires
-// tslint:disable no-require-imports
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../package.json");
 export const ComponentName = pkg.name;
 
@@ -42,8 +41,8 @@ export interface IKeyValue extends IProvideKeyValue {
 }
 
 declare module "@microsoft/fluid-component-core-interfaces" {
-    export interface IComponent extends Readonly<Partial<IProvideKeyValue>> {
-    }
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface IComponent extends Readonly<Partial<IProvideKeyValue>> { }
 }
 
 class KeyValue implements IKeyValue, IComponent, IComponentRouter {
@@ -60,7 +59,7 @@ class KeyValue implements IKeyValue, IComponent, IComponentRouter {
 
     private root: ISharedMap;
 
-    constructor(private readonly runtime: IComponentRuntime, private context: IComponentContext) {
+    constructor(private readonly runtime: IComponentRuntime, private readonly context: IComponentContext) {
     }
 
     public set(key: string, value: any): void {
@@ -119,6 +118,7 @@ export class KeyValueFactoryComponent implements IRuntimeFactory, IComponentFact
             ? request.url.substr(1)
             : request.url;
         const trailingSlash = requestUrl.indexOf("/");
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         const componentId = requestUrl
             ? decodeURIComponent(requestUrl.substr(0, trailingSlash === -1 ? requestUrl.length : trailingSlash))
             : ComponentName;

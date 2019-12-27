@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import {
     ConnectionMode,
     IClient,
@@ -22,7 +23,6 @@ import {
     ITree,
     IVersion,
 } from "@microsoft/fluid-protocol-definitions";
-import { EventEmitter } from "events";
 import { IResolvedUrl } from "./urlResolver";
 
 /**
@@ -111,12 +111,12 @@ export interface IDocumentDeltaConnection extends EventEmitter {
     clientId: string;
 
     /**
-     * claims for the client
+     * Claims for the client
      */
     claims: ITokenClaims;
 
     /**
-     * mode of the client
+     * Mode of the client
      */
     mode: ConnectionMode;
 
@@ -216,12 +216,12 @@ export interface IDocumentService {
 
 export interface IDocumentServiceFactory {
     /**
-     * name of the protocol used by factory
+     * Name of the protocol used by factory
      */
     protocolName: string;
 
     /**
-     * returns an instance of IDocumentService
+     * Returns an instance of IDocumentService
      */
     createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService>;
 }

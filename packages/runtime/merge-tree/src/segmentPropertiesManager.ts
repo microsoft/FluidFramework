@@ -47,7 +47,7 @@ export class SegmentPropertiesManager {
 
         const collaborating =  collabWindow && collabWindow.collaborating;
 
-        // there are outstanding local rewrites, so block all non-local changes
+        // There are outstanding local rewrites, so block all non-local changes
         if (this.pendingRewriteCount > 0 && seq !== UnassignedSequenceNumber && collaborating) {
             return undefined;
         }
@@ -69,7 +69,7 @@ export class SegmentPropertiesManager {
             if (collaborating && seq === UnassignedSequenceNumber) {
                 this.pendingRewriteCount++;
             }
-            // we are re-writting so delete all the properties
+            // We are re-writting so delete all the properties
             // not in the new props
             for (const key of  Object.keys(this.segment.properties)) {
                 if (!newProps[key] && shouldModifyKey(key)) {
@@ -93,7 +93,7 @@ export class SegmentPropertiesManager {
             }
 
             const previousValue: any = this.segment.properties[key];
-            // the delta should be null if undefined, as thats how we encode delete
+            // The delta should be null if undefined, as thats how we encode delete
             deltas[key] = (previousValue === undefined) ? null : previousValue;
             let newValue: any;
             if (combiningOp) {

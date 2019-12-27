@@ -7,7 +7,7 @@ import * as ui from "../ui";
 
 export class Image extends ui.Component {
     private message: HTMLSpanElement;
-    private image: HTMLImageElement;
+    private readonly image: HTMLImageElement;
 
     constructor(element: HTMLDivElement, src: string) {
         super(element);

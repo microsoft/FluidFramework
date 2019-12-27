@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
+import { EventEmitter } from "events";
 import {
     IConnectionDetails,
 } from "@microsoft/fluid-container-definitions";
@@ -16,8 +18,6 @@ import {
     IDocumentMessage,
     INack,
 } from "@microsoft/fluid-protocol-definitions";
-import * as assert from "assert";
-import { EventEmitter } from "events";
 
 export class DeltaConnection extends EventEmitter {
     public static async connect(

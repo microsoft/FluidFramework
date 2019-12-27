@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import { IComponentRuntime, IInboundSignalMessage } from "@microsoft/fluid-runtime-definitions";
 import * as CodeMirror from "codemirror";
-import { EventEmitter } from "events";
 
 interface IPresenceInfo {
     userId: string;
@@ -27,15 +27,15 @@ interface IColor {
  * This will only take a dependency on the runtime.
  */
 class PresenceManager extends EventEmitter {
-    private presenceKey: string;
-    private presenceMap: Map<string, IPresenceInfo> = new Map();
+    private readonly presenceKey: string;
+    private readonly presenceMap: Map<string, IPresenceInfo> = new Map();
 
-    public constructor(private runtime: IComponentRuntime) {
+    public constructor(private readonly runtime: IComponentRuntime) {
         super();
         this.presenceKey = `presence-${runtime.id}`;
 
         runtime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
-            // only process presence keys that are not local while we are connected
+            // Only process presence keys that are not local while we are connected
             if (message.type === this.presenceKey && !local && runtime.connected) {
                 console.log(`received new presence signal: ${JSON.stringify(message)}`);
                 const presenceInfo = {
@@ -49,15 +49,16 @@ class PresenceManager extends EventEmitter {
         });
     }
 
-    public send(location: {}) { 
+    public send(location: {}) {
         if (this.runtime.connected) {
-            console.log(`sending new presence signal: ${JSON.stringify(location)}`);  
+            console.log(`sending new presence signal: ${JSON.stringify(location)}`);
             this.runtime.submitSignal(this.presenceKey, location);
         }
     }
 
-    private getColor(id: string): IColor  {
+    private getColor(id: string): IColor {
         let sum = 0;
+        // eslint-disable-next-line @typescript-eslint/prefer-for-of
         for (let i = 0; i < id.length; i++) {
             sum += id[i].charCodeAt(0);
         }
@@ -69,7 +70,7 @@ class PresenceManager extends EventEmitter {
                     r: 0,
                     g: 0,
                     b: 255,
-                }
+                },
             },
             {
                 name: "green",
@@ -77,7 +78,7 @@ class PresenceManager extends EventEmitter {
                     r: 0,
                     g: 255,
                     b: 0,
-                }
+                },
             },
             {
                 name: "red",
@@ -85,7 +86,7 @@ class PresenceManager extends EventEmitter {
                     r: 255,
                     g: 0,
                     b: 0,
-                }
+                },
             },
             {
                 name: "light blue",
@@ -93,7 +94,7 @@ class PresenceManager extends EventEmitter {
                     r: 80,
                     g: 208,
                     b: 255,
-                }
+                },
             },
             {
                 name: "orange",
@@ -101,7 +102,7 @@ class PresenceManager extends EventEmitter {
                     r: 255,
                     g: 160,
                     b: 16,
-                }
+                },
             },
             {
                 name: "pink",
@@ -109,7 +110,7 @@ class PresenceManager extends EventEmitter {
                     r: 255,
                     g: 96,
                     b: 208,
-                }
+                },
             },
         ];
 
@@ -127,14 +128,14 @@ interface ICodeMirrorPresenceInfo {
  * This will be the codemirror specific implementation
  */
 export class CodeMirrorPresenceManager extends EventEmitter {
-    private presenceManager: PresenceManager;
-    private presenceMap: Map<string, ICodeMirrorPresenceInfo> = new Map();
+    private readonly presenceManager: PresenceManager;
+    private readonly presenceMap: Map<string, ICodeMirrorPresenceInfo> = new Map();
 
     private get doc(): CodeMirror.Doc {
         return this.codeMirror.getDoc();
     }
 
-    public constructor(private codeMirror: CodeMirror.EditorFromTextArea, runtime: IComponentRuntime) {
+    public constructor(private readonly codeMirror: CodeMirror.EditorFromTextArea, runtime: IComponentRuntime) {
         super();
         this.presenceManager = new PresenceManager(runtime);
 
@@ -142,13 +143,13 @@ export class CodeMirrorPresenceManager extends EventEmitter {
             const selection = this.doc.listSelections();
             this.presenceManager.send(selection);
         });
-        
+
         this.presenceManager.on("newPresence", (presenceInfo: IPresenceInfo) => {
             if (this.presenceMap.has(presenceInfo.userId)) {
-                const previousUserInfo= this.presenceMap.get(presenceInfo.userId);
-                
-                // clean all the previous markers
-                previousUserInfo.markers.forEach(marker => {
+                const previousUserInfo = this.presenceMap.get(presenceInfo.userId);
+
+                // Clean all the previous markers
+                previousUserInfo.markers.forEach((marker) => {
                     marker.clear();
                 });
 
@@ -158,11 +159,12 @@ export class CodeMirrorPresenceManager extends EventEmitter {
 
             // Selection highlighting
             const style = {
+                // eslint-disable-next-line max-len
                 css: `background-color: rgba(${presenceInfo.color.rgb.r}, ${presenceInfo.color.rgb.g}, ${presenceInfo.color.rgb.b}, 0.3)`,
             };
 
-            const markers: CodeMirror.TextMarker[] = []
-            presenceInfo.location.forEach(range => {
+            const markers: CodeMirror.TextMarker[] = [];
+            presenceInfo.location.forEach((range) => {
                 const head = this.doc.indexFromPos(range.head);
                 const anchor = this.doc.indexFromPos(range.anchor);
                 if (head > anchor) {
@@ -176,6 +178,7 @@ export class CodeMirrorPresenceManager extends EventEmitter {
             const cursor = document.createElement("span");
             cursor.id = `cursor-${presenceInfo.userId}`;
             cursor.style.width = "1px";
+            // eslint-disable-next-line max-len
             cursor.style.backgroundColor = `rgb(${presenceInfo.color.rgb.r}, ${presenceInfo.color.rgb.g}, ${presenceInfo.color.rgb.b})`;
             cursor.style.height = "15px";
             cursor.style.marginTop = "-15px";
@@ -184,18 +187,19 @@ export class CodeMirrorPresenceManager extends EventEmitter {
             const cursorDot = document.createElement("span");
             cursorDot.style.height = "4px";
             cursorDot.style.width = "4px";
+            // eslint-disable-next-line max-len
             cursorDot.style.backgroundColor = `rgb(${presenceInfo.color.rgb.r}, ${presenceInfo.color.rgb.g}, ${presenceInfo.color.rgb.b})`;
             cursorDot.style.borderRadius = "50%";
             cursorDot.style.position = "absolute";
             cursorDot.style.marginTop = "-2px";
             cursor.appendChild(cursorDot);
-            
+
 
             const newUserInfo: ICodeMirrorPresenceInfo = {
                 cursor,
                 markers,
                 info: presenceInfo,
-            }
+            };
 
             this.presenceMap.set(presenceInfo.userId, newUserInfo);
             this.codeMirror.addWidget(presenceInfo.location[0].head, cursor, true);

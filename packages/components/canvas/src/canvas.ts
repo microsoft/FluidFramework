@@ -14,9 +14,9 @@ import {
 import { IInk, Ink } from "@microsoft/fluid-ink";
 import { ISharedMap } from "@microsoft/fluid-map";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+// eslint-disable-next-line import/no-unassigned-import
 import "./style.less";
 
-// tslint:disable:no-console
 class CanvasView implements IComponentHTMLView {
 
     public get IComponentHTMLView() { return this; }
@@ -62,7 +62,7 @@ export class Canvas extends PrimedComponent implements IComponentHTMLVisual {
 
     protected async componentHasInitialized() {
         // Wait here for the ink - otherwise flexView will try to root.get it before it exists if there hasn't been
-        // a summary op yet.  Probably flexView should wait instead.
+        // A summary op yet.  Probably flexView should wait instead.
         const handle = await this.root.wait<IComponentHandle>("pageInk");
         this.ink = await handle.get<IInk>();
     }
