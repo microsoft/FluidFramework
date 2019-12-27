@@ -14,7 +14,7 @@ export class EmptyDeltaStorageService implements IDocumentDeltaStorageService {
      * @param to - Op are returned from to - 1.
      * @returns Array of ops requested by the user.
      */
-    public get(from?: number, to?: number): Promise<api.ISequencedDocumentMessage[]> {
-        return Promise.resolve([] as api.ISequencedDocumentMessage[]);
+    public async get(from?: number, to?: number): Promise<api.ISequencedDocumentMessage[]> {
+        return [] as api.ISequencedDocumentMessage[];
     }
 }

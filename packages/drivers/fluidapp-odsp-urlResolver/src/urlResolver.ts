@@ -19,6 +19,7 @@ export class FluidAppOdspUrlResolver implements IUrlResolver {
         const reqUrl = new URL(request.url);
         const server = reqUrl.hostname.toLowerCase();
         if (fluidOfficeServers.includes(server)) {
+            // eslint-disable-next-line @typescript-eslint/no-use-before-define
             const contents = await initializeFluidOffice(reqUrl);
             if (!contents) {
                 return undefined;
@@ -36,6 +37,7 @@ async function initializeFluidOffice(urlSource: URL) {
     // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
     const siteDriveItemMatch = pathname.match(/\/p\/([^/]*)\/([^/]*)\/([^/]*)/);
 
+    // eslint-disable-next-line no-null/no-null
     if (siteDriveItemMatch === null) {
         return undefined;
     }

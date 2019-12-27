@@ -14,7 +14,7 @@ export class InnerUrlResolver implements IUrlResolver {
     constructor(private readonly resolved: IResolvedUrl) {
     }
 
-    public resolve(request: IRequest): Promise<IResolvedUrl> {
+    public async resolve(request: IRequest): Promise<IResolvedUrl> {
         return Promise.resolve(this.resolved);
     }
 }

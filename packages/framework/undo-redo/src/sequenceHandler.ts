@@ -22,8 +22,8 @@ import { IRevertable, UndoRedoStackManager } from "./undoRedoStackManager";
  */
 export class SharedSegmentSequenceUndoRedoHandler {
 
-    private readonly sequences =
-        new Map<SharedSegmentSequence<ISegment>, SharedSegmentSequenceRevertable | undefined>();
+    // eslint-disable-next-line max-len
+    private readonly sequences = new Map<SharedSegmentSequence<ISegment>, SharedSegmentSequenceRevertable | undefined>();
 
     constructor(private readonly stackManager: UndoRedoStackManager) {
         this.stackManager.on("changePushed", () => this.sequences.clear());
@@ -47,7 +47,7 @@ export class SharedSegmentSequenceUndoRedoHandler {
             }
             revertable.add(event);
         }
-    }
+    };
 }
 
 interface ITrackedSharedSegmentSequenceRevertable {
@@ -81,10 +81,10 @@ export class SharedSegmentSequenceRevertable implements IRevertable {
                     const tg = new TrackingGroup();
                     tg.link(range.segment);
                     current = {
-                            trackingGroup: tg,
-                            propertyDelta: range.propertyDeltas,
-                            operation: event.deltaOperation as MergeTreeDeltaOperationType,
-                        };
+                        trackingGroup: tg,
+                        propertyDelta: range.propertyDeltas,
+                        operation: event.deltaOperation as MergeTreeDeltaOperationType,
+                    };
                     this.tracking.push(current);
                 }
             }
@@ -98,6 +98,7 @@ export class SharedSegmentSequenceRevertable implements IRevertable {
                 while (tracked.trackingGroup.size > 0) {
                     const sg = tracked.trackingGroup.segments[0];
                     sg.trackingCollection.unlink(tracked.trackingGroup);
+                    /* eslint-disable @typescript-eslint/indent */
                     switch (tracked.operation) {
                         case MergeTreeDeltaType.INSERT:
                             if (sg.removedSeq === undefined) {
@@ -129,6 +130,7 @@ export class SharedSegmentSequenceRevertable implements IRevertable {
                         default:
                             throw new Error("operationt type not revertable");
                     }
+                    /* eslint-enable @typescript-eslint/indent */
                 }
             }
         }

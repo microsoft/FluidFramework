@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage, IVersion } from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
+import { ISequencedDocumentMessage, IVersion } from "@microsoft/fluid-protocol-definitions";
 
 export interface IDebuggerUI {
     /**
@@ -92,7 +92,7 @@ export interface IDebuggerController {
 }
 
 const debuggerWindowHtml =
-`<Title>Fluid Debugger</Title>
+    `<Title>Fluid Debugger</Title>
 <body>
 <h3>Fluid Debugger</h3>
 Please select snapshot or file to start with<br/>
@@ -107,7 +107,7 @@ Close debugger window to proceed to live document<br/><br/>
 </body>`;
 
 const debuggerWindowHtml2 =
-`<Title>Fluid Debugger</Title>
+    `<Title>Fluid Debugger</Title>
 <body>
 <h3>Fluid Debugger</h3>
 <div id='versionText'></div>
@@ -119,15 +119,13 @@ Step to move: <input type='number' id='steps' value='1' style='width:50px'/>
 <div id='text1'></div><div id='text2'></div><div id='text3'></div>
 </body>`;
 
-// tslint:disable:no-non-null-assertion
-
 export class DebuggerUI {
     public static create(controller: IDebuggerController): DebuggerUI | null {
         if (
-                typeof window !== "object" ||
-                window === null ||
-                typeof window.document !== "object" ||
-                window.document == null) {
+            typeof window !== "object" ||
+            window === null ||
+            typeof window.document !== "object" ||
+            window.document == null) {
             console.log("Can't create debugger window - not running in browser!");
             return null;
         }

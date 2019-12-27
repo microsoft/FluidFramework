@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { parse } from "url";
 import {
     IRequest,
 } from "@microsoft/fluid-component-core-interfaces";
@@ -13,7 +14,6 @@ import {
 } from "@microsoft/fluid-driver-definitions";
 import { IUser, ScopeType } from "@microsoft/fluid-protocol-definitions";
 import { generateToken, IAlfredTenant } from "@microsoft/fluid-server-services-core";
-import { parse } from "url";
 
 const r11sServers = [
     "www.wu2-ppe.prague.office-int.com",
@@ -55,6 +55,7 @@ export class RouterliciousUrlResolver implements IUrlResolver {
 
             let token: string;
             if (!this.getToken) {
+                // eslint-disable-next-line @typescript-eslint/no-use-before-define
                 token = getR11sToken(tenantId, documentId, this.appTenants, this.scopes, this.user);
             } else {
                 token = await this.getToken();

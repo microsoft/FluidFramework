@@ -16,7 +16,7 @@ import {
 /**
  * Document access to underlying storage for routerlicious driver.
  */
-export class InnerDocumentStorageService implements IDocumentStorageService  {
+export class InnerDocumentStorageService implements IDocumentStorageService {
     public get repositoryUrl(): string {
         return this.outerStorageService.repositoryUrl;
     }
@@ -37,7 +37,7 @@ export class InnerDocumentStorageService implements IDocumentStorageService  {
     }
 
     public async read(blobId: string): Promise<string> {
-        const blob =  await this.outerStorageService.read(blobId);
+        const blob = await this.outerStorageService.read(blobId);
         return blob;
     }
 
@@ -45,7 +45,7 @@ export class InnerDocumentStorageService implements IDocumentStorageService  {
         return this.outerStorageService.getContent(version, path);
     }
 
-    public write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion> {
+    public async write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion> {
         return this.outerStorageService.write(tree, parents, message, ref);
     }
 
@@ -54,7 +54,7 @@ export class InnerDocumentStorageService implements IDocumentStorageService  {
 
     }
 
-    public downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {
+    public async downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {
         return this.outerStorageService.downloadSummary(handle);
     }
 

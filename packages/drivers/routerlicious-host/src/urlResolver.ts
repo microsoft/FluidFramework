@@ -20,6 +20,7 @@ export class ContainerUrlResolver implements IUrlResolver {
         private readonly jwt: string,
         cache?: Map<string, IResolvedUrl>,
     ) {
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (cache) {
             for (const [key, value] of cache) {
                 this.cache.set(key, Promise.resolve(value));
@@ -27,6 +28,7 @@ export class ContainerUrlResolver implements IUrlResolver {
         }
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public resolve(request: IRequest): Promise<IResolvedUrl> {
         if (!this.cache.has(request.url)) {
             const headers = {

@@ -10,7 +10,7 @@ import * as api from "@microsoft/fluid-protocol-definitions";
  * Document access to underlying storage. It is default implementation of a storage service.
  * Does not read/write anything.
  */
-export class NullBlobStorageService implements IDocumentStorageService  {
+export class NullBlobStorageService implements IDocumentStorageService {
     public get repositoryUrl(): string {
         throw new Error("Invalid operation");
     }
@@ -31,15 +31,15 @@ export class NullBlobStorageService implements IDocumentStorageService  {
         return Promise.reject("Invalid operation");
     }
 
-    public write(tree: api.ITree, parents: string[], message: string, ref: string): Promise<api.IVersion> {
+    public async write(tree: api.ITree, parents: string[], message: string, ref: string): Promise<api.IVersion> {
         return Promise.reject("Null blob storage can not write commit");
     }
 
-    public uploadSummary(commit: api.ISummaryTree): Promise<api.ISummaryHandle> {
+    public async uploadSummary(commit: api.ISummaryTree): Promise<api.ISummaryHandle> {
         return Promise.reject("Invalid operation");
     }
 
-    public downloadSummary(handle: api.ISummaryHandle): Promise<api.ISummaryTree> {
+    public async downloadSummary(handle: api.ISummaryHandle): Promise<api.ISummaryTree> {
         return Promise.reject("Invalid operation");
     }
 
