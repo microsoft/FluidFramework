@@ -20,7 +20,7 @@ export class WaterParkModuleInstantiationFactory extends SimpleModuleInstantiati
         private readonly entries: NamedComponentRegistryEntries,
         private readonly loaderComponentName: string = WaterParkLoaderName,
         private readonly viewComponentName: string = WaterParkViewName) {
-            super(viewComponentName, entries);
+        super(viewComponentName, entries);
     }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
@@ -32,10 +32,10 @@ export class WaterParkModuleInstantiationFactory extends SimpleModuleInstantiati
             true,
         );
 
-        // tslint:disable-next-line: no-floating-promises
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         runtimeP.then(async (runtime) => {
             if (!runtime.existing) {
-                const viewResponse = await runtime.request({ url : SimpleContainerRuntimeFactory.defaultComponentId });
+                const viewResponse = await runtime.request({ url: SimpleContainerRuntimeFactory.defaultComponentId });
                 const viewComponent = viewResponse.value as ExternalComponentView;
                 const loaderComponent =
                     await SimpleContainerRuntimeFactory.createAndAttachComponent<ExternalComponentLoader>(

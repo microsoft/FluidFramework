@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-// tslint:disable
+/* eslint-disable */
 import * as MergeTree from "@microsoft/fluid-merge-tree";
 import * as Sequence from "@microsoft/fluid-sequence";
 import { CharacterCodes } from "./characterCodes";
@@ -51,7 +51,7 @@ export interface IParagraphItem {
     width: number;
     segment: MergeTree.ISegment;
     pos?: number;
-    // present if not default
+    // Present if not default
     height?: number;
     fontstr?: string;
 }
@@ -81,7 +81,6 @@ function makeIPGBlock(width: number, text: string, textSegment: MergeTree.TextSe
     return <IPGBlock>{ type: ParagraphItemType.Block, width, text, segment: textSegment };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function makeIPGMathBlock(width: number, text: string) {
     return <IPGMathBlock>{ type: ParagraphItemType.MathBlock, width, text };
 }
@@ -114,7 +113,7 @@ export interface IPGPenalty extends IParagraphItem {
 
 export type ParagraphItem = IPGBlock | IPGGlue | IPGPenalty | IPGMarker;
 
-// for now assume uniform line widths
+// For now assume uniform line widths
 export function breakPGIntoLinesFF(items: ParagraphItem[], lineWidth: number) {
     const breaks = <IBreakInfo[]>[{ posInPG: 0, startItemIndex: 0 }];
     let posInPG = 0;
@@ -169,7 +168,7 @@ export class ParagraphLexer<TContext> {
     private spaceCount = 0;
     private textBuf = "";
     private mathBuf = "";
-    private inMath = false;
+    private readonly inMath = false;
     private leadSegment: MergeTree.TextSegment;
 
     constructor(public tokenActions: ParagraphTokenActions<TContext>, public actionContext?: TContext) {
@@ -304,18 +303,14 @@ function getPrecedingTile(
     }
 }
 
-export function isListTile(tile: IParagraphMarker) {
-    return tile.hasTileLabel("list");
-}
+export const isListTile = (tile: IParagraphMarker) => tile.hasTileLabel("list");
 
 export interface ISymbol {
     font?: string;
     text: string;
 }
 
-function numberSuffix(itemIndex: number, suffix: string): ISymbol {
-    return { text: itemIndex.toString() + suffix };
-}
+const numberSuffix = (itemIndex: number, suffix: string): ISymbol => ({ text: itemIndex.toString() + suffix });
 
 // TODO: more than 26
 function alphaSuffix(itemIndex: number, suffix: string, little = false) {
@@ -331,23 +326,23 @@ function alphaSuffix(itemIndex: number, suffix: string, little = false) {
 const romanNumbers = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
 
 function roman(itemIndex: number, little = false) {
-    let text = romanNumbers[itemIndex - 1] + ".";
+    let text = `${romanNumbers[itemIndex - 1]}.`;
     if (little) {
         text = text.toLowerCase();
     }
     return { text };
 }
 
-// let wingdingLetters = ["l", "m", "n", "R", "S", "T", "s","w"];
+// Let wingdingLetters = ["l", "m", "n", "R", "S", "T", "s","w"];
 const unicodeBullets = [
     "\u2022", "\u25E6", "\u25AA", "\u2731", "\u272F", "\u2729", "\u273F",
     "\u2745", "\u2739", "\u2720", "\u2722",
 ];
 
 function itemSymbols(itemIndex: number, indentLevel: number) {
-    //    let wingdingLetter = wingdingLetters[indentLevel - 1];
+    //    Let wingdingLetter = wingdingLetters[indentLevel - 1];
     const wingdingLetter = unicodeBullets[indentLevel - 1];
-    //    return { text: wingdingLetter, font: "12px Wingdings" };
+    //    Return { text: wingdingLetter, font: "12px Wingdings" };
     return { text: wingdingLetter };
 }
 
@@ -385,7 +380,7 @@ function convertToListHead(tile: IParagraphMarker) {
 }
 
 /**
- * maximum number of characters before a preceding list paragraph deemed irrelevant
+ * Maximum number of characters before a preceding list paragraph deemed irrelevant
  */
 const maxListDistance = 400;
 
@@ -418,7 +413,7 @@ export function getListCacheInfo(
                     }
                     tile.listCache = { itemCounts };
                 } else {
-                    // doesn't race because re-render is deferred
+                    // Doesn't race because re-render is deferred
                     let series: number[];
                     if (tile.properties.listKind === 0) {
                         series = [0, 0, 2, 6, 3, 7, 2, 6, 3, 7];
@@ -492,18 +487,18 @@ export function textTokenToItems(
             lfontstr = `${fontSize} ${fontFamily}`;
             divHeight = +fontSize;
         }
-        // this is not complete because can be % or normal etc.
+        // This is not complete because can be % or normal etc.
         const lineHeight = leadSegment.properties.lineHeight;
         if (lineHeight !== undefined) {
             divHeight = Math.floor((+lineHeight) * divHeight);
         }
         const fontWeight = leadSegment.properties.fontWeight;
         if (fontWeight) {
-            lfontstr = fontWeight + " " + lfontstr;
+            lfontstr = `${fontWeight} ${lfontstr}`;
         }
         const fontStyle = leadSegment.properties.fontStyle;
         if (fontStyle) {
-            lfontstr = fontStyle + " " + lfontstr;
+            lfontstr = `${fontStyle} ${lfontstr}`;
         }
     }
 
@@ -530,16 +525,12 @@ export function textTokenToItems(
     }
 }
 
-export function isEndBox(marker: MergeTree.Marker) {
-    return (marker.refType & MergeTree.ReferenceType.NestEnd) &&
-        marker.hasRangeLabel("box");
-}
+export const isEndBox = (marker: MergeTree.Marker) => (marker.refType & MergeTree.ReferenceType.NestEnd) &&
+    marker.hasRangeLabel("box");
 
 export const referenceProperty = "ref";
 
-export function isReference(marker: MergeTree.Marker) {
-    return marker.hasProperty(referenceProperty);
-}
+export const isReference = (marker: MergeTree.Marker) => marker.hasProperty(referenceProperty);
 
 export function segmentToItems(
     segment: MergeTree.ISegment, segpos: number, refSeq: number, clientId: number,

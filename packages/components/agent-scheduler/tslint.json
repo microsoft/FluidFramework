@@ -1,9 +1,0 @@
-{
-    "extends": ["@microsoft/fluid-build-common/tslint.json"],
-    "rules": {
-        "completed-docs": false,
-        "no-suspicious-comment": false,
-        "no-unnecessary-type-assertion": false,
-        "object-literal-sort-keys": false
-    }
-}

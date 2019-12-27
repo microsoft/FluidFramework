@@ -4,7 +4,6 @@
     ],
     "rules": {
         "@typescript-eslint/no-floating-promises": "off",
-        "@typescript-eslint/require-await": "off",
         "@typescript-eslint/strict-boolean-expressions": "off",
         "no-null/no-null": "off"
     }

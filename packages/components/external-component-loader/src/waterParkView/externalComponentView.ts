@@ -15,7 +15,7 @@ import { IComponentCollection } from "@microsoft/fluid-framework-interfaces";
 import { MergeTreeDeltaType } from "@microsoft/fluid-merge-tree";
 import { SharedObjectSequence, SubSequence } from "@microsoft/fluid-sequence";
 
-// tslint:disable-next-line: no-var-requires no-require-imports
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const pkg = require("../../package.json") as IPackage;
 export const WaterParkViewName = `${pkg.name}-view`;
 
@@ -31,15 +31,14 @@ export class ExternalComponentView extends PrimedComponent implements IComponent
     private readonly urlToComponent = new Map<string, IComponent>();
     private savedElement: HTMLElement;
 
-    public createCollectionItem<T>(options: T): IComponent  {
-        // tslint:disable-next-line: no-string-literal
+    public createCollectionItem<T>(options: T): IComponent {
+        // eslint-disable-next-line dot-notation
         const url: string = options["url"];
         if (!url) {
             throw new Error("Options do not contain any url!!");
         }
 
         let loadableComponent: IComponentLoadable;
-        // tslint:disable-next-line: no-floating-promises
         this.getComponent<IComponent>(url)
             .then((component) => {
                 if (component.IComponentLoadable) {
@@ -148,14 +147,14 @@ export class ExternalComponentView extends PrimedComponent implements IComponent
         this.sequence = await seqHandle.get<SharedObjectSequence<string>>();
         const cacheComponentsByUrl = async (urls: string[]) => {
             const promises =
-                // tslint:disable-next-line: promise-function-async
+                // eslint-disable-next-line @typescript-eslint/promise-function-async
                 urls.map((url) => {
                     const urlSplit = url.split("/");
                     if (urlSplit.length > 0) {
                         return this.context.getComponentRuntime(urlSplit.shift(), true)
-                            .then(async (componentRuntime) => {
-                                return componentRuntime.request({ url: `/${urlSplit.join("/")}` });
-                            }).then((request) => {
+                            .then(
+                                async (componentRuntime) => componentRuntime.request({ url: `/${urlSplit.join("/")}` }),
+                            ).then((request) => {
                                 this.urlToComponent.set(url, request.value as IComponent);
                             });
                     }
@@ -168,12 +167,13 @@ export class ExternalComponentView extends PrimedComponent implements IComponent
 
         await cacheComponentsByUrl(this.sequence.getItems(0));
 
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises
         this.sequence.on("sequenceDelta", async (event) => {
             if (event.deltaOperation === MergeTreeDeltaType.INSERT) {
                 const items = event.deltaArgs.deltaSegments.reduce<string[]>(
                     (pv, cv) => {
                         if (SubSequence.is(cv.segment)) {
-                            pv.push(... cv.segment.items);
+                            pv.push(...cv.segment.items);
                         }
                         return pv;
                     },
