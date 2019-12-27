@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import {
     IComponent,
     IComponentHandleContext,
@@ -18,7 +19,6 @@ import { IComponentCollection, IComponentLayout } from "@microsoft/fluid-framewo
 import { ISharedMap, MapFactory } from "@microsoft/fluid-map";
 import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
-import { EventEmitter } from "events";
 
 export class ImageComponent implements
     IComponentLoadable, IComponentHTMLVisual, IComponentRouter, IComponentLayout {
@@ -71,10 +71,10 @@ export class ImageCollection extends EventEmitter implements
     public url: string;
     public handle: ComponentHandle;
 
-    private images = new Map<string, ImageComponent>();
+    private readonly images = new Map<string, ImageComponent>();
     private root: ISharedMap;
 
-    constructor(private runtime: IComponentRuntime, context: IComponentContext) {
+    constructor(private readonly runtime: IComponentRuntime, context: IComponentContext) {
         super();
 
         this.url = context.id;
@@ -102,6 +102,7 @@ export class ImageCollection extends EventEmitter implements
             .substr(1)
             .substr(0, !request.url.includes("/", 1) ? request.url.length : request.url.indexOf("/"));
 
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (!trimmed) {
             return {
                 mimeType: "fluid/component",

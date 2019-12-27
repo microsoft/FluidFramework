@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* tslint:disable:no-unsafe-any*/
 import { fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import { FileMode, ISequencedDocumentMessage, ITree, TreeEntry } from "@microsoft/fluid-protocol-definitions";
@@ -71,11 +70,11 @@ export class OwnedSharedMap extends SharedMap implements ISharedMap {
         return this.owner === member.client.user.id;
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     protected processCore(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
         if (this.getMessageOwner(message) !== this.owner) {
             debug("A non owner attempted to modify this object");
             return;
-            // throw new Error("Client does not have permission to modify this object.");
         } else {
             super.processCore(message, local);
         }
@@ -85,8 +84,8 @@ export class OwnedSharedMap extends SharedMap implements ISharedMap {
      * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.loadCore}
      */
     protected async loadCore(
-            branchId: string,
-            storage: IObjectStorageService) {
+        branchId: string,
+        storage: IObjectStorageService) {
         const owner = await storage.read(ownerPath);
         this.owner = fromBase64ToUtf8(owner);
         return super.loadCore(branchId, storage);

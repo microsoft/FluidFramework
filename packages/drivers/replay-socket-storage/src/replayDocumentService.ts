@@ -16,8 +16,8 @@ import { ReplayDocumentDeltaConnection } from "./replayDocumentDeltaConnection";
  */
 export class ReplayDocumentService implements api.IDocumentService {
     public static async create(
-            documentService: api.IDocumentService,
-            controller: ReplayController): Promise<api.IDocumentService> {
+        documentService: api.IDocumentService,
+        controller: ReplayController): Promise<api.IDocumentService> {
         const storage = await documentService.connectToStorage();
 
         const useController = await controller.initStorage(storage);
@@ -32,8 +32,8 @@ export class ReplayDocumentService implements api.IDocumentService {
     }
 
     constructor(
-            private readonly controller: api.IDocumentStorageService,
-            private readonly deltaStorage: api.IDocumentDeltaConnection) {
+        private readonly controller: api.IDocumentStorageService,
+        private readonly deltaStorage: api.IDocumentDeltaConnection) {
     }
 
     /**

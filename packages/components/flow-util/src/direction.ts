@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-// tslint:disable:no-bitwise
+/* eslint-disable no-bitwise */
 
 const enum DirectionFlag {
     // Bitmasks used to encode Direction as a pair of 2-bit signed integers

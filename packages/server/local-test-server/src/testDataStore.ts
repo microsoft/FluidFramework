@@ -51,6 +51,7 @@ export class TestDataStore {
         const url = `${baseUrl}${
             // Ensure '/' separator when concatenating 'baseUrl' and 'path'.
             (path && path.charAt(0)) !== "/" ? "/" : ""
+            // eslint-disable-next-line @typescript-eslint/indent
             }${path}`;
 
         debug(`resolving baseUrl = ${baseUrl}`);
@@ -58,10 +59,10 @@ export class TestDataStore {
         debug(`resolved baseUrl = ${baseUrl}`);
 
         let acceptResultOut: (value: T) => void;
-        // tslint:disable-next-line:promise-must-complete
         const resultOut = new Promise<T>((accept) => { acceptResultOut = accept; });
 
         debug(`attaching url = ${url}`);
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises
         container.on("contextChanged", async () => {
             debug(`contextChanged url=${url}`);
             await attach(loader, url, acceptResultOut);
@@ -120,6 +121,7 @@ async function attach<T>(
 
     const mimeType = response.mimeType;
     debug(`loader.request(url=${url}) -> ${mimeType}`);
+    /* eslint-disable @typescript-eslint/indent */
     switch (mimeType) {
         case "fluid/component":
         case "fluid/dataType":
@@ -128,4 +130,5 @@ async function attach<T>(
         default:
             debug(`Unhandled mimeType ${mimeType}`);
     }
+    /* eslint-enable @typescript-eslint/indent */
 }

@@ -35,11 +35,11 @@ class ResumeAnalyticsIntelligentService implements IIntelligentService {
     }
 
     // This is a fake resume classifier just for the demo since the original service is not working.
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     private invokeRequest(service: string, data: any): Promise<any> {
         return new Promise<any>((resolve, reject) => {
             const text = data.documents[0].text as string;
             if (text.includes("(bsd & SVr3/r4)")) {
-                /* tslint:disable:insecure-random */
                 const prob = Math.max(this.lastProb, Math.random() * (92 - 80) + 80);
                 this.lastProb = prob;
                 resolve((prob * 1) / 100);

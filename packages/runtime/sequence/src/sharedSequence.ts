@@ -19,7 +19,6 @@ export class SubSequence<T> extends BaseSegment {
         return segment.type === SubSequence.typeString;
     }
     public static fromJSONObject(spec: any) {
-        // tslint:disable: no-unsafe-any
         if (spec && typeof spec === "object" && "items" in spec) {
             const segment = new SubSequence<any>(spec.items);
             if (spec.props) {

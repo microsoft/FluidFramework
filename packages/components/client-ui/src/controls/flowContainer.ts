@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// tslint:disable:ban-types
 import * as api from "@fluid-internal/client-api";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { IInk } from "@microsoft/fluid-ink";
@@ -31,10 +30,10 @@ export class FlowContainer extends ui.Component {
     public status: Status;
     public title: Title;
     public flowView: FlowView;
-    private dockPanel: DockPanel;
-    private layerPanel: LayerPanel;
-    private overlayCanvas: OverlayCanvas;
-    private inkCanvas: InkCanvas;
+    private readonly dockPanel: DockPanel;
+    private readonly layerPanel: LayerPanel;
+    private readonly overlayCanvas: OverlayCanvas;
+    private readonly inkCanvas: InkCanvas;
 
     private layerCache: { [key: string]: Layer } = {};
     private activeLayers: { [key: string]: IOverlayLayerStatus } = {};
@@ -43,16 +42,16 @@ export class FlowContainer extends ui.Component {
      * This determines whether to use an OverlayCanvas or InkCanvas for inking.  Currently will always use an overlay
      * canvas, but keeping the other option alive for testing purposes for now.
      */
-    private useOverlayCanvas: boolean = true;
+    private readonly useOverlayCanvas: boolean = true;
 
     constructor(
         element: HTMLDivElement,
-        private collabDocument: api.Document,
-        private sharedString: Sequence.SharedString,
+        private readonly collabDocument: api.Document,
+        private readonly sharedString: Sequence.SharedString,
         private readonly overlayInkMap: ISharedMap,
         private readonly pageInk: IInk,
-        private image: Image,
-        private options?: Record<string, any>) {
+        private readonly image: Image,
+        private readonly options?: Record<string, any>) {
 
         super(element);
 
@@ -133,6 +132,7 @@ export class FlowContainer extends ui.Component {
 
                 this.markLayersInactive();
                 for (const marker of renderInfo.overlayMarkers) {
+                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
                     this.addLayer(marker);
                 }
                 this.pruneInactiveLayers();
@@ -187,8 +187,10 @@ export class FlowContainer extends ui.Component {
     }
 
     public trackInsights(insights: ISharedMap) {
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.updateInsights(insights);
         insights.on("valueChanged", () => {
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.updateInsights(insights);
         });
     }
@@ -269,14 +271,14 @@ export class FlowContainer extends ui.Component {
     }
 
     private markLayersInactive() {
-        // tslint:disable-next-line:forin
+        // eslint-disable-next-line guard-for-in, no-restricted-syntax
         for (const layer in this.activeLayers) {
             this.activeLayers[layer].active = false;
         }
     }
 
     private pruneInactiveLayers() {
-        // tslint:disable-next-line:forin
+        // eslint-disable-next-line no-restricted-syntax
         for (const layerId in this.activeLayers) {
             if (!this.activeLayers[layerId].active) {
                 const layer = this.activeLayers[layerId];

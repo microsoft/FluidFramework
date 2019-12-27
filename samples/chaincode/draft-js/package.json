@@ -49,7 +49,6 @@
     "@types/react": "^16.9.2",
     "@types/react-dom": "^16.9.0",
     "@typescript-eslint/eslint-plugin": "^2.9.0",
-    "@typescript-eslint/eslint-plugin-tslint": "^2.9.0",
     "@typescript-eslint/parser": "^2.9.0",
     "concurrently": "^4.1.0",
     "css-loader": "^1.0.0",

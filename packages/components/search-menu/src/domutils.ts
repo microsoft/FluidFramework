@@ -38,7 +38,7 @@ let cachedCanvas: HTMLCanvasElement;
 
 export function getLineHeight(fontstr: string, lineHeight?: string) {
     if (lineHeight) {
-        fontstr += ("/" + lineHeight);
+        fontstr += (`/${lineHeight}`);
     }
     let height = lineHeightCache.get(fontstr);
     if (height === undefined) {
@@ -79,7 +79,7 @@ export function getTextWidth(text: string, font: string) {
 }
 
 export function getMultiTextWidth(texts: string[], font: string) {
-    // re-use canvas object for better performance
+    // Re-use canvas object for better performance
     const canvas = cachedCanvas || (cachedCanvas = document.createElement("canvas"));
     const context = canvas.getContext("2d");
     context.font = font;

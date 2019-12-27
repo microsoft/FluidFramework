@@ -17,6 +17,7 @@ function getQueryStringLength(url: string): number {
     return url.length - queryParamStart - 1;
 }
 
+// eslint-disable-next-line max-len
 export function getUrlAndHeadersWithAuth(url: string, token: string | null): { url: string, headers: { [index: string]: string } } {
     if (!token || token.length === 0) {
         return { url, headers: {} };
@@ -24,12 +25,12 @@ export function getUrlAndHeadersWithAuth(url: string, token: string | null): { u
 
     const queryParamStart = url.indexOf("?");
 
-    // determine if we need to add ?, &, or nothing (if the url ends with ?)
+    // Determine if we need to add ?, &, or nothing (if the url ends with ?)
     let tokenQueryParam = queryParamStart === -1 ? "?" : (queryParamStart !== url.length - 1 ? `&` : "");
 
-    const tokenIsQueryParam = token[0] === "?";
+    const tokenIsQueryParam = token.startsWith("?");
     if (tokenIsQueryParam) {
-        // the token itself is a query param
+        // The token itself is a query param
         tokenQueryParam += token.substring(1);
 
     } else {

@@ -24,11 +24,13 @@ import { IComponent } from "@microsoft/fluid-component-core-interfaces";
  */
 
 declare module "@microsoft/fluid-component-core-interfaces" {
+    /* eslint-disable @typescript-eslint/indent */
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IComponent extends Readonly<Partial<
         IProvideComponentDiscoverableInterfaces
         & IProvideComponentDiscoverInterfaces
-        & IProvideComponentInterfacesRegistry>> {
-    }
+        & IProvideComponentInterfacesRegistry>> { }
+    /* eslint-enable @typescript-eslint/indent */
 }
 
 export interface IProvideComponentDiscoverableInterfaces {

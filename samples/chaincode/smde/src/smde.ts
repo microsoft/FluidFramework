@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import {
     IComponent,
     IComponentLoadable,
@@ -15,15 +16,21 @@ import {
 } from "@microsoft/fluid-component-core-interfaces";
 import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
-import { MergeTreeDeltaType, TextSegment, ReferenceType, reservedTileLabelsKey, Marker } from "@microsoft/fluid-merge-tree";
+import {
+    MergeTreeDeltaType,
+    TextSegment,
+    ReferenceType,
+    reservedTileLabelsKey,
+    Marker,
+} from "@microsoft/fluid-merge-tree";
 import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
-import { EventEmitter } from "events";
 import * as SimpleMDE from "simplemde";
 import { Viewer } from "./marked";
 
-import 'simplemde/dist/simplemde.min.css';
+// eslint-disable-next-line
+import "simplemde/dist/simplemde.min.css";
 
 export class Smde extends EventEmitter implements IComponentLoadable, IComponentRouter, IComponentHTMLVisual {
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
@@ -43,7 +50,7 @@ export class Smde extends EventEmitter implements IComponentLoadable, IComponent
     private textArea: HTMLTextAreaElement;
     private smde: SimpleMDE;
 
-    constructor(private runtime: IComponentRuntime, private context: IComponentContext) {
+    constructor(private readonly runtime: IComponentRuntime, private readonly context: IComponentContext) {
         super();
 
         this.url = context.id;
@@ -62,7 +69,7 @@ export class Smde extends EventEmitter implements IComponentLoadable, IComponent
             this.root = SharedMap.create(this.runtime, "root");
             const text = SharedString.create(this.runtime);
 
-            // initial paragraph marker
+            // Initial paragraph marker
             text.insertMarker(
                 0,
                 ReferenceType.Tile,
@@ -81,12 +88,12 @@ export class Smde extends EventEmitter implements IComponentLoadable, IComponent
             const viewer = new Viewer(elm, this.text);
             viewer.render();
         } else {
-            // create base textarea
+            // Create base textarea
             if (!this.textArea) {
                 this.textArea = document.createElement("textarea");
             }
 
-            // reparent if needed
+            // Reparent if needed
             if (this.textArea.parentElement !== elm) {
                 this.textArea.remove();
                 elm.appendChild(this.textArea);
@@ -154,7 +161,7 @@ export class Smde extends EventEmitter implements IComponentLoadable, IComponent
                     return;
                 }
 
-                // we add in line to adjust for paragraph markers
+                // We add in line to adjust for paragraph markers
                 let from = instance.doc.indexFromPos(changeObj.from);
                 const to = instance.doc.indexFromPos(changeObj.to);
 
@@ -162,6 +169,7 @@ export class Smde extends EventEmitter implements IComponentLoadable, IComponent
                     this.text.removeText(from, to);
                 }
 
+                // eslint-disable-next-line no-shadow
                 const text = changeObj.text as string[];
                 text.forEach((value, index) => {
                     // Insert the updated text

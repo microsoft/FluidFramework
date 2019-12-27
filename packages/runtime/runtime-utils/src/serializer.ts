@@ -48,7 +48,6 @@ export class ComponentSerializer implements IComponentSerializer {
     }
 
     public stringify(input: any, context: IComponentHandleContext, bind: IComponentHandle) {
-        // tslint:disable:no-unsafe-any
         return JSON.stringify(input, (key, value) => {
             // If the current 'value' is not a handle, return it unmodified.  Otherwise,
             // return the result of 'serializeHandle'.
@@ -57,10 +56,9 @@ export class ComponentSerializer implements IComponentSerializer {
                 ? this.serializeHandle(handle, context, bind)
                 : value;
         });
-        // tslint:enable:no-unsafe-any
     }
 
-    // parses the serialized data - context must match the context with which the JSON was stringified
+    // Parses the serialized data - context must match the context with which the JSON was stringified
     public parse(input: string, context: IComponentHandleContext) {
         let root: IComponentHandleContext;
 
@@ -90,8 +88,6 @@ export class ComponentSerializer implements IComponentSerializer {
                 return handle;
             });
     }
-
-    // tslint:disable:no-unsafe-any
 
     // Invoked by `replaceHandles()` for non-null objects to recursively replace IComponentHandle references
     // with serialized handles (cloning as-needed to avoid mutating the original `input` object.)
@@ -125,7 +121,7 @@ export class ComponentSerializer implements IComponentSerializer {
                     // Lazily create a shallow clone of the `input` object if we haven't done so already.
                     clone = clone || (Array.isArray(input)
                         ? [...input]
-                        : {...input});
+                        : { ...input });
 
                     // Overwrite the current property `key` in the clone with the `replaced` value.
                     clone![key] = replaced;
@@ -134,8 +130,6 @@ export class ComponentSerializer implements IComponentSerializer {
         }
         return clone || input;
     }
-
-    // tslint:enable:no-unsafe-any
 
     private serializeHandle(handle: IComponentHandle, context: IComponentHandleContext, bind: IComponentHandle) {
         // If the context that is now referencing the component is already attached then we immediately

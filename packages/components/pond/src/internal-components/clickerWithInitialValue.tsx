@@ -9,7 +9,7 @@ import { Counter, CounterValueType, ISharedDirectory } from "@microsoft/fluid-ma
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
-// tslint:disable-next-line: no-var-requires no-require-imports
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../../package.json");
 export const ClickerWithInitialValueName = `${pkg.name as string}-clickerWithInitialValue`;
 
@@ -78,7 +78,7 @@ class CounterReactView extends React.Component<CounterProps, CounterState> {
     }
 
     componentDidMount() {
-        // set a listener so when the counter increments we will update our state
+        // Set a listener so when the counter increments we will update our state
         // counter is annoying because it only allows you to register one listener.
         // this causes problems when we have multiple views off the same counter.
         // so we are listening to the directory

@@ -3,16 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import {} from "@microsoft/fluid-component-core-interfaces";
+// eslint-disable-next-line import/no-unassigned-import
+import { } from "@microsoft/fluid-component-core-interfaces";
+import { EventEmitter } from "events";
 import * as MergeTree from "@microsoft/fluid-merge-tree";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
-import { EventEmitter } from "events";
 import { SharedSegmentSequence } from "./sequence";
 import { SharedStringFactory } from "./sequenceFactory";
 
 declare module "@microsoft/fluid-component-core-interfaces" {
-    export interface IComponent extends Readonly<Partial<IProvideSharedString>> {
-    }
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface IComponent extends Readonly<Partial<IProvideSharedString>> { }
 }
 
 export interface IProvideSharedString {
@@ -60,6 +61,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
     private readonly mergeTreeTextHelper: MergeTree.MergeTreeTextHelper;
 
     constructor(document: IComponentRuntime, public id: string) {
+        // eslint-disable-next-line @typescript-eslint/unbound-method
         super(document, id, SharedStringFactory.Attributes, SharedStringFactory.segmentFromSpec);
         this.mergeTreeTextHelper = this.client.createTextHelper();
     }
