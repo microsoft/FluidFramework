@@ -1,4 +1,4 @@
-/*!
+/* !
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
@@ -36,7 +36,7 @@ export class PresenceManager {
 
     public constructor(private readonly authorMap: SharedMap, private readonly runtime: IComponentRuntime) { }
 
-    public subscribe(renderCallback: (textRangeUpdater: (range: TextRange) => TextRange) => void) {
+  public subscribe(renderCallback: (textRangeUpdater: (range: TextRange) => TextRange) => void): void {
         this.authorMap.on("op", (op: ISequencedDocumentMessage, local: boolean) => {
             if (local || op.contents.key === this.runtime.clientId) {
                 return;
@@ -94,7 +94,7 @@ export class PresenceManager {
 
     public addPresencePlaceholders(blocks: ContentBlock[]): ContentBlock[] {
         const coauthByBlock = new Map<string, AuthorWithBlockRange[]>();
-        this.coauthorPositions.forEach((author, k) => {
+    this.coauthorPositions.forEach((author, _) => {
             if (author.pos !== undefined) {
                 const blockRange = textRangeToBlockTextRangeFromBlocks(author.pos, blocks);
                 if (!coauthByBlock.has(blockRange.startKey)) {

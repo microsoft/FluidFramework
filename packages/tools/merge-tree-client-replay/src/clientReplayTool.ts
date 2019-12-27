@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
+import * as fs from "fs";
 import { FileDeltaStorageService } from "@microsoft/fluid-file-driver";
 import {
     createGroupOp,
@@ -11,7 +13,7 @@ import {
     ISegment,
     MergeTreeDeltaType,
 } from "@microsoft/fluid-merge-tree";
-// tslint:disable-next-line: no-submodule-imports
+// eslint-disable-next-line import/no-internal-modules
 import { TestClient } from "@microsoft/fluid-merge-tree/dist/test/testClient";
 import {
     IBlob,
@@ -27,11 +29,9 @@ import {
     SharedStringFactory,
     SparseMatrixFactory,
 } from "@microsoft/fluid-sequence";
-import * as assert from "assert";
-import * as fs from "fs";
 import { ReplayArgs } from "./replayArgs";
 
-// tslint:disable-next-line:no-var-requires no-submodule-imports no-require-imports
+// eslint-disable-next-line
 const cloneDeep = require("lodash/cloneDeep");
 
 interface IFullPathTreeEntry extends ITreeEntry {
@@ -55,7 +55,7 @@ interface IMessageContents {
 export class ClientReplayTool {
     private errorCount = 0;
     private deltaStorageService: FileDeltaStorageService;
-    public constructor(private readonly args: ReplayArgs) {}
+    public constructor(private readonly args: ReplayArgs) { }
 
     public async Go(): Promise<boolean> {
         this.args.checkArgs();
@@ -105,7 +105,6 @@ export class ClientReplayTool {
         if (this.args.inDirName === undefined) {
             return Promise.reject("Please provide --indir argument");
         }
-        // tslint:disable-next-line: non-literal-fs-path
         if (!fs.existsSync(this.args.inDirName)) {
             return Promise.reject("File does not exist");
         }
@@ -113,13 +112,13 @@ export class ClientReplayTool {
         this.deltaStorageService = new FileDeltaStorageService(this.args.inDirName);
     }
 
-    // tslint:disable-next-line: max-func-body-length
     private async mainCycle() {
         const clients = new Map<string, Map<string, TestClient>>();
-        const mergeTreeAttachTrees = new Map<string, {tree: ITree, specToSeg(segment: IJSONSegment): ISegment}>();
+        const mergeTreeAttachTrees = new Map<string, { tree: ITree, specToSeg(segment: IJSONSegment): ISegment }>();
         const mergeTreeMessages = new Array<IFullPathSequencedDocumentMessage>();
         for (const message of this.deltaStorageService.getFromWebSocket(0, this.args.to)) {
             const messagePathParts: string[] = [];
+            /* eslint-disable @typescript-eslint/indent */
             switch (message.type as MessageType) {
                 case MessageType.Operation:
                     let contents = message.contents as Partial<IMessageContents>;
@@ -143,9 +142,7 @@ export class ClientReplayTool {
                                 if (!clients.has(message.clientId)) {
                                     clients.set(message.clientId, new Map<string, TestClient>());
                                 }
-                                // tslint:disable-next-line: no-suspicious-comment
                                 // TODO: Interval collections, store in map "key"
-                                // tslint:disable-next-line: no-unsafe-any
                                 if (!content.contents.key) {
                                     const op = content.contents as IMergeTreeOp;
                                     if (this.args.verbose) {
@@ -169,6 +166,7 @@ export class ClientReplayTool {
                     break;
                 default:
             }
+            /* eslint-enable @typescript-eslint/indent */
         }
         if (mergeTreeAttachTrees.size > 0) {
             clients.set("readonly", new Map<string, TestClient>());
@@ -178,6 +176,7 @@ export class ClientReplayTool {
                     const creationInfo = mergeTreeAttachTrees.get(mergeTreeId);
                     client.set(
                         mergeTreeId,
+                        // eslint-disable-next-line @typescript-eslint/unbound-method
                         await TestClient.createFromSnapshot(creationInfo.tree, clientId, creationInfo.specToSeg));
                 }
                 const pendingMessages = new Array<IFullPathSequencedDocumentMessage>();
@@ -188,7 +187,7 @@ export class ClientReplayTool {
                     if (message.clientId !== clientId) {
                         pendingMessages.push(message);
                     } else {
-                        // we found an op from this client
+                        // We found an op from this client
                         // that means we know this clients reference sequence number
                         // when the op was created, so apply all ops up to this ops
                         // reference sequence number before we apply this op
@@ -199,12 +198,11 @@ export class ClientReplayTool {
                                 && pendingMessages[0].clientId === clientId
                                 && pendingMessages[0].sequenceNumber <= message.referenceSequenceNumber) {
                                 const reconnectMessage =
-                                    // tslint:disable-next-line: no-unsafe-any
                                     cloneDeep(pendingMessages.shift()) as IFullPathSequencedDocumentMessage;
                                 if (!reconnectPaths.has(reconnectMessage.fullPath)) {
                                     const reconnectOp =
                                         client.get(reconnectMessage.fullPath).resetPendingSegmentsToOp();
-                                    reconnectMessage.contents = reconnectOp ;
+                                    reconnectMessage.contents = reconnectOp;
                                     reconnectMessages.push(reconnectMessage);
                                     reconnectPaths.add(reconnectMessage.fullPath);
                                 } else {
@@ -227,7 +225,7 @@ export class ClientReplayTool {
                             }
                         }
                         const op = message.contents as IMergeTreeOp;
-                        // wrap in a group op, as that's the only way to
+                        // Wrap in a group op, as that's the only way to
                         // apply an op locally
                         const testClient = client.get(message.fullPath);
                         try {
@@ -240,7 +238,7 @@ export class ClientReplayTool {
                         pendingMessages.push(message);
                     }
                 }
-                // no more ops from this client, so apply whatever is left
+                // No more ops from this client, so apply whatever is left
                 for (const message of pendingMessages) {
                     const testClient = client.get(message.fullPath);
                     try {
@@ -272,18 +270,22 @@ export class ClientReplayTool {
         const mergeTreeTypes = [
             {
                 type: SharedStringFactory.Type,
+                // eslint-disable-next-line @typescript-eslint/unbound-method
                 specToSeg: SharedStringFactory.segmentFromSpec,
             },
             {
                 type: SparseMatrixFactory.Type,
+                // eslint-disable-next-line @typescript-eslint/unbound-method
                 specToSeg: SparseMatrixFactory.segmentFromSpec,
             },
             {
                 type: SharedObjectSequenceFactory.Type,
+                // eslint-disable-next-line @typescript-eslint/unbound-method
                 specToSeg: SharedObjectSequenceFactory.segmentFromSpec,
             },
             {
                 type: SharedNumberSequenceFactory.Type,
+                // eslint-disable-next-line @typescript-eslint/unbound-method
                 specToSeg: SharedNumberSequenceFactory.segmentFromSpec,
             },
         ];
@@ -299,8 +301,8 @@ export class ClientReplayTool {
                             break;
                         }
                     }
-                    // tslint:disable-next-line: max-line-length
-                    console.log(`MergeTree Found:\n ${JSON.stringify({fullPath: ssTree.fullPath, type: mergeTreeType.type })}`);
+                    // eslint-disable-next-line max-len
+                    console.log(`MergeTree Found:\n ${JSON.stringify({ fullPath: ssTree.fullPath, type: mergeTreeType.type })}`);
                     mergeTreeAttachTrees.set(
                         ssTree.fullPath,
                         {
@@ -329,6 +331,7 @@ export class ClientReplayTool {
                 const treeEntries = (tree.value as ITree).entries;
                 if (treeEntries) {
                     for (const entry of treeEntries) {
+                        /* eslint-disable @typescript-eslint/indent */
                         switch (entry.type) {
                             case "Tree":
                                 const fullPathEntry: IFullPathTreeEntry = entry;
@@ -349,6 +352,7 @@ export class ClientReplayTool {
                                 }
                             default:
                         }
+                        /* eslint-enable @typescript-eslint/indent */
                     }
                 }
             }

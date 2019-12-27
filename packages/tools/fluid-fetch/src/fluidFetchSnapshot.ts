@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
+import * as fs from "fs";
+import * as util from "util";
 import { fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
 import {
     IDocumentService,
@@ -12,9 +15,6 @@ import {
     ISnapshotTree,
     IVersion,
 } from "@microsoft/fluid-protocol-definitions";
-import * as assert from "assert";
-import * as fs from "fs";
-import * as util from "util";
 import { formatNumber } from "./fluidAnalyzeMessages";
 import {
     dumpSnapshotStats,
@@ -24,8 +24,6 @@ import {
     paramSnapshotVersionIndex,
 } from "./fluidFetchArgs";
 import { latestVersionsId } from "./fluidFetchInit";
-
-// tslint:disable:non-literal-fs-path
 
 interface ISnapshotInfo {
     blobCountNew: number;
@@ -72,10 +70,10 @@ function fetchBlobs(prefix: string, tree: ISnapshotTree, storage: IDocumentStora
 }
 
 async function fetchBlobsFromSnapshotTree(
-        storage: IDocumentStorageService,
-        tree: ISnapshotTree,
-        prefix: string = "/",
-        commit = true) {
+    storage: IDocumentStorageService,
+    tree: ISnapshotTree,
+    prefix: string = "/",
+    commit = true) {
     assert(Object.keys(tree.commits).length === 0 || (prefix === "/"));
     if (commit && dumpSnapshotTrees) {
         console.log(tree);
@@ -106,7 +104,7 @@ async function fetchBlobsFromSnapshotTree(
             `getSnapshotTree ${componentVersions[0].id}`,
             storage.getSnapshotTree(componentVersions[0]));
         if (componentSnapShotTree === null) {
-            // tslint:disable-next-line: max-line-length
+            // eslint-disable-next-line max-len
             console.error(`No component tree for component = ${component}, path = ${prefix}, version = ${componentVersions[0].id}`);
             continue;
         }
@@ -149,13 +147,12 @@ async function dumpSnapshotTreeVerbose(name: string, blobs: IBlob[]) {
         if (blob === undefined) {
             continue;
         }
-        // tslint:disable-next-line: max-line-length
+        // eslint-disable-next-line max-len
         console.log(`${item.path.padEnd(nameLength)} |    ${item.reused ? "X" : " "}   | ${formatNumber(blob.length).padStart(10)}`);
         size += blob.length;
     }
 
     console.log("-".repeat(nameLength + 26));
-    // tslint:disable-next-line:max-line-length
     console.log(`${"Total snapshot size".padEnd(nameLength)} |        | ${formatNumber(size).padStart(10)}`);
 }
 
@@ -177,7 +174,7 @@ async function dumpSnapshotTree(name: string, blobs: IBlob[]): Promise<ISnapshot
         size += blob.length;
     }
 
-    return {blobCountNew, blobCount: sorted.length, size, sizeNew };
+    return { blobCountNew, blobCount: sorted.length, size, sizeNew };
 }
 
 async function saveSnapshot(name: string, blobs: IBlob[], saveDir: string) {
@@ -266,7 +263,6 @@ export async function fluidFetchSnapshot(documentService?: IDocumentService, sav
     } else {
         version = versions[0];
         if (saveDir !== undefined && versions.length > 0) {
-            // tslint:disable-next-line:max-line-length
             console.log("  Name          |                  Date |       Size |   New Size |  Blobs | New Blobs");
             console.log("-".repeat(86));
 

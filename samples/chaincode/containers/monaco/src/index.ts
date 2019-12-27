@@ -4,6 +4,7 @@
  */
 
 // set the base path for all dynamic imports first
+// eslint-disable-next-line import/no-unassigned-import
 import "./publicpath";
 
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
@@ -11,7 +12,7 @@ import { IContainerContext, IRuntime } from "@microsoft/fluid-container-definiti
 import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
 import { IComponentFactory } from "@microsoft/fluid-runtime-definitions";
 
-// tslint:disable
+/* eslint-disable */
 (self as any).MonacoEnvironment = {
     getWorkerUrl: function (moduleId, label) {
         switch (label) {
@@ -25,7 +26,7 @@ import { IComponentFactory } from "@microsoft/fluid-runtime-definitions";
         }
     }
 };
-// tslint:enable
+/* eslint-enable */
 
 async function getMonacoFluidExport() {
     const monaco = await import("@fluid-example/monaco");

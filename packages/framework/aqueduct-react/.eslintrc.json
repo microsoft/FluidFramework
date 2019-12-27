@@ -1,8 +1,10 @@
 {
     "extends": [
-        "@microsoft/eslint-config-fluid"
+        "@microsoft/eslint-config-fluid/no-tslint"
     ],
     "rules": {
-        "@typescript-eslint/unbound-method": "off"
+        "@typescript-eslint/strict-boolean-expressions": "off",
+        "@typescript-eslint/unbound-method": "off",
+        "capitalized-comments": "off"
     }
 }

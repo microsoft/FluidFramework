@@ -14,11 +14,11 @@ export interface IFetchWrapper {
  * Get responses with retry for requests.
  */
 export class FetchWrapper implements IFetchWrapper {
-    public get<T>(url: string, _: string, headers: HeadersInit): Promise<IOdspResponse<T>> {
+    public async get<T>(url: string, _: string, headers: HeadersInit): Promise<IOdspResponse<T>> {
         return fetchHelper(url, { headers });
     }
 
-    public post<T>(url: string, postBody: string, headers: HeadersInit): Promise<IOdspResponse<T>> {
+    public async post<T>(url: string, postBody: string, headers: HeadersInit): Promise<IOdspResponse<T>> {
         return fetchHelper(
             url,
             {

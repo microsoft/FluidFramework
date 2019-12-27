@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
+import { EventEmitter } from "events";
 import { BatchManager } from "@microsoft/fluid-core-utils";
 import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
 import { NetworkError } from "@microsoft/fluid-driver-utils";
@@ -19,8 +21,6 @@ import {
     ISignalMessage,
     ITokenClaims,
 } from "@microsoft/fluid-protocol-definitions";
-import * as assert from "assert";
-import { EventEmitter } from "events";
 import { debug } from "./debug";
 
 const protocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
@@ -46,7 +46,7 @@ export function createErrorObject(handler: string, error: any, canRetry = true) 
 
 interface IEventListener {
     event: string;
-    connectionListener: boolean; // true if this event listener only needed while connection is in progress
+    connectionListener: boolean; // True if this event listener only needed while connection is in progress
     listener(...args: any[]): void;
 }
 
@@ -94,7 +94,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
             id,
             mode,
             tenantId,
-            token,  // token is going to indicate tenant level information, etc...
+            token,  // Token is going to indicate tenant level information, etc...
             versions: protocolVersions,
         };
 
@@ -128,8 +128,8 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
      * @param details - details of the websocket connection
      */
     protected constructor(
-            private readonly socket: SocketIOClient.Socket,
-            public documentId: string) {
+        private readonly socket: SocketIOClient.Socket,
+        public documentId: string) {
         super();
 
         this.submitManager = new BatchManager<IDocumentMessage[]>(
@@ -224,7 +224,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         assert(this.listeners("op").length !== 0, "No op handler is setup!");
 
         if (this.queuedMessages.length > 0) {
-            // some messages were queued.
+            // Some messages were queued.
             // add them to the list of initialMessages to be processed
             if (!this.details.initialMessages) {
                 this.details.initialMessages = [];
@@ -248,7 +248,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         assert(this.listeners("op-content").length !== 0, "No op-content handler is setup!");
 
         if (this.queuedContents.length > 0) {
-            // some contents were queued.
+            // Some contents were queued.
             // add them to the list of initialContents to be processed
             if (!this.details.initialContents) {
                 this.details.initialContents = [];
@@ -277,7 +277,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         assert(this.listeners("signal").length !== 0, "No signal handler is setup!");
 
         if (this.queuedSignals.length > 0) {
-            // some signals were queued.
+            // Some signals were queued.
             // add them to the list of initialSignals to be processed
             if (!this.details.initialSignals) {
                 this.details.initialSignals = [];
@@ -387,7 +387,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
                 reject(createErrorObject("connect_timeout", "Socket connection timed out"));
             });
 
-            // socket can be disconnected while waiting for Fluid protocol messages
+            // Socket can be disconnected while waiting for Fluid protocol messages
             // (connect_document_error / connect_document_success)
             this.addConnectionListener("disconnect", (reason) => {
                 this.disconnect(true);
@@ -433,17 +433,17 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
     private earlyOpHandler ?= (documentId: string, msgs: ISequencedDocumentMessage[]) => {
         debug("Queued early ops", msgs.length);
         this.queuedMessages.push(...msgs);
-    }
+    };
 
     private earlyContentHandler ?= (msg: IContentMessage) => {
         debug("Queued early contents");
         this.queuedContents.push(msg);
-    }
+    };
 
     private earlySignalHandler ?= (msg: ISignalMessage) => {
         debug("Queued early signals");
         this.queuedSignals.push(msg);
-    }
+    };
 
     private removeEarlyOpHandler() {
         if (this.earlyOpHandler) {

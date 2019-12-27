@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import {
     IComponentHandleContext,
     IComponentSerializer,
@@ -21,7 +22,6 @@ import {
     ITree,
     SummaryType,
 } from "@microsoft/fluid-protocol-definitions";
-import { EventEmitter } from "events";
 
 class NullRuntime extends EventEmitter implements IRuntime {
     public get IComponentSerializer(): IComponentSerializer {
@@ -38,11 +38,11 @@ class NullRuntime extends EventEmitter implements IRuntime {
         super();
     }
 
-    public snapshot(tagMessage: string): Promise<ITree | null> {
+    public async snapshot(tagMessage: string): Promise<ITree | null> {
         return Promise.resolve(null);
     }
 
-    public summarize(fullTree: boolean = false): Promise<ISummaryTree> {
+    public async summarize(fullTree: boolean = false): Promise<ISummaryTree> {
         return Promise.resolve({
             tree: {},
             type: SummaryType.Tree,
@@ -53,11 +53,11 @@ class NullRuntime extends EventEmitter implements IRuntime {
         return;
     }
 
-    public stop(): Promise<void> {
+    public async stop(): Promise<void> {
         return Promise.resolve();
     }
 
-    public request(request: IRequest): Promise<IResponse> {
+    public async request(request: IRequest): Promise<IResponse> {
         return Promise.resolve({ status: 404, mimeType: "text/plain", value: null });
     }
 

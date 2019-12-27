@@ -15,7 +15,7 @@ import {
 import { debug } from "./debug";
 
 export class PrefetchDocumentStorageService implements IDocumentStorageService {
-    // blobId -> blob prefetchCache cache
+    // BlobId -> blob prefetchCache cache
     private readonly prefetchCache = new Map<string, Promise<string>>();
     private prefetchEnabled = true;
 
@@ -26,12 +26,12 @@ export class PrefetchDocumentStorageService implements IDocumentStorageService {
         return this.storage.repositoryUrl;
     }
 
-    public getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
+    public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
         const p = this.storage.getSnapshotTree(version);
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         if (p && this.prefetchEnabled) {
             // We don't care if the prefetch succeed
-            // tslint:disable-next-line:no-floating-promises
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             p.then((tree: ISnapshotTree | null | undefined) => {
                 if (!tree) { return; }
                 this.prefetchTree(tree);
@@ -52,15 +52,15 @@ export class PrefetchDocumentStorageService implements IDocumentStorageService {
         return this.storage.getContent(version, path);
     }
 
-    public write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion> {
+    public async write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion> {
         return this.storage.write(tree, parents, message, ref);
     }
 
-    public uploadSummary(commit: ISummaryTree): Promise<ISummaryHandle> {
+    public async uploadSummary(commit: ISummaryTree): Promise<ISummaryHandle> {
         return this.storage.uploadSummary(commit);
     }
 
-    public downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {
+    public async downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {
         return this.storage.downloadSummary(handle);
     }
 
@@ -77,7 +77,7 @@ export class PrefetchDocumentStorageService implements IDocumentStorageService {
         this.prefetchCache.clear();
     }
 
-    private cachedRead(blobId: string): Promise<string> {
+    private async cachedRead(blobId: string): Promise<string> {
         if (this.prefetchEnabled) {
             const prefetchedBlobP: Promise<string> | undefined = this.prefetchCache.get(blobId);
             if (prefetchedBlobP) {
@@ -96,7 +96,7 @@ export class PrefetchDocumentStorageService implements IDocumentStorageService {
 
         for (const blob of secondary) {
             // We don't care if the prefetch succeed
-            // tslint:disable-next-line:no-floating-promises
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.cachedRead(blob);
         }
     }
@@ -107,7 +107,7 @@ export class PrefetchDocumentStorageService implements IDocumentStorageService {
             if (blobKey.startsWith(".") || blobKey === "header" || blobKey.startsWith("quorum")) {
                 if (blob !== null) {
                     // We don't care if the prefetch succeed
-                    // tslint:disable-next-line:no-floating-promises
+                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
                     this.cachedRead(blob);
                 }
             } else if (!blobKey.startsWith("deltas")) {
@@ -119,7 +119,7 @@ export class PrefetchDocumentStorageService implements IDocumentStorageService {
 
         for (const commit of Object.keys(tree.commits)) {
             this.getVersions(tree.commits[commit], 1)
-                .then((moduleCommit) => this.getSnapshotTree(moduleCommit[0]))
+                .then(async (moduleCommit) => this.getSnapshotTree(moduleCommit[0]))
                 .catch((error) => debug("Ignored cached read error", error));
         }
 

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import { gitHashFile } from "@microsoft/fluid-core-utils";
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import * as resources from "@microsoft/fluid-gitresources";
@@ -19,12 +20,11 @@ import {
     SummaryType,
 } from "@microsoft/fluid-protocol-definitions";
 import * as gitStorage from "@microsoft/fluid-server-services-client";
-import * as assert from "assert";
 
 /**
  * Document access to underlying storage for routerlicious driver.
  */
-export class DocumentStorageService implements IDocumentStorageService  {
+export class DocumentStorageService implements IDocumentStorageService {
 
     // The values of this cache is useless. We only need the keys. So we are always putting
     // empty strings as values.
@@ -71,10 +71,10 @@ export class DocumentStorageService implements IDocumentStorageService  {
         return value.content;
     }
 
-    public write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion> {
+    public async write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion> {
         const branch = ref ? `components/${this.id}/${ref}` : this.id;
         const commit = this.manager.write(branch, tree, parents, message);
-        return commit.then((c) => ({date: c.committer.date, id: c.sha, treeId: c.tree.sha}));
+        return commit.then((c) => ({ date: c.committer.date, id: c.sha, treeId: c.tree.sha }));
     }
 
     public async uploadSummary(commit: ISummaryTree): Promise<ISummaryHandle> {
@@ -86,13 +86,13 @@ export class DocumentStorageService implements IDocumentStorageService  {
         };
     }
 
-    public downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {
+    public async downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {
         return Promise.reject("NOT IMPLEMENTED!");
     }
 
     public async createBlob(file: Buffer): Promise<ICreateBlobResponse> {
         const response = this.manager.createBlob(file.toString("base64"), "base64");
-        return response.then((r) => ({id: r.sha, url: r.url}));
+        return response.then((r) => ({ id: r.sha, url: r.url }));
     }
 
     public getRawUrl(blobId: string): string {
@@ -104,6 +104,7 @@ export class DocumentStorageService implements IDocumentStorageService  {
         submodule: { path: string; sha: string }[],
         path: string,
     ): Promise<string> {
+        /* eslint-disable @typescript-eslint/indent */
         switch (value.type) {
             case SummaryType.Blob:
                 const content = typeof value.content === "string" ? value.content : value.content.toString("base64");
@@ -158,10 +159,12 @@ export class DocumentStorageService implements IDocumentStorageService  {
             default:
                 return Promise.reject();
         }
+        /* eslint-enable @typescript-eslint/indent */
     }
 
     private getGitMode(value: SummaryObject): string {
         const type = value.type === SummaryType.Handle ? value.handleType : value.type;
+        /* eslint-disable @typescript-eslint/indent */
         switch (type) {
             case SummaryType.Blob:
                 return FileMode.File;
@@ -172,10 +175,13 @@ export class DocumentStorageService implements IDocumentStorageService  {
             default:
                 throw new Error();
         }
+        /* eslint-enable @typescript-eslint/indent */
     }
 
     private getGitType(value: SummaryObject): string {
         const type = value.type === SummaryType.Handle ? value.handleType : value.type;
+
+        /* eslint-disable @typescript-eslint/indent */
         switch (type) {
             case SummaryType.Blob:
                 return "blob";
@@ -186,5 +192,6 @@ export class DocumentStorageService implements IDocumentStorageService  {
             default:
                 throw new Error();
         }
+        /* eslint-enable @typescript-eslint/indent */
     }
 }

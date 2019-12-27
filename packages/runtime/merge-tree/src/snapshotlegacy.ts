@@ -18,7 +18,7 @@ import * as ops from "./ops";
 import * as Properties from "./properties";
 import { SnapshotHeader } from "./snapshot";
 
-// tslint:disable
+/* eslint-disable */
 
 // first three are index entry
 export interface SnapChunk {
@@ -62,11 +62,11 @@ export class SnapshotLegacy {
     getSeqLengthSegs(allSegments: ops.IJSONSegment[], allLengths: number[], approxSequenceLength: number,
         startIndex = 0): ops.MergeTreeChunk {
 
-        let segs = <ops.IJSONSegment[]>[];
+        const segs = <ops.IJSONSegment[]>[];
         let sequenceLength = 0;
         let segCount = 0;
         while ((sequenceLength < approxSequenceLength) && ((startIndex + segCount) < allSegments.length)) {
-            let pseg = allSegments[startIndex + segCount];
+            const pseg = allSegments[startIndex + segCount];
             segs.push(pseg);
             sequenceLength += allLengths[startIndex + segCount];
             segCount++;
@@ -92,7 +92,7 @@ export class SnapshotLegacy {
         context?: IComponentHandleContext,
         bind?: IComponentHandle,
     ): ITree {
-        let chunk1 = this.getSeqLengthSegs(this.segments, this.segmentLengths, SnapshotLegacy.sizeOfFirstChunk);
+        const chunk1 = this.getSeqLengthSegs(this.segments, this.segmentLengths, SnapshotLegacy.sizeOfFirstChunk);
         let length: number = chunk1.chunkLengthChars;
         let segments: number = chunk1.chunkSegmentCount;
         const tree: ITree = {
@@ -112,7 +112,7 @@ export class SnapshotLegacy {
 
         if (chunk1.chunkSegmentCount < chunk1.totalSegmentCount)
         {
-            let chunk2 = this.getSeqLengthSegs(this.segments, this.segmentLengths, this.header.segmentsTotalLength, chunk1.chunkSegmentCount);
+            const chunk2 = this.getSeqLengthSegs(this.segments, this.segmentLengths, this.header.segmentsTotalLength, chunk1.chunkSegmentCount);
             length += chunk2.chunkLengthChars;
             segments += chunk2.chunkSegmentCount;
             tree.entries.push({
@@ -148,7 +148,7 @@ export class SnapshotLegacy {
     }
 
     extractSync() {
-        let collabWindow = this.mergeTree.getCollabWindow();
+        const collabWindow = this.mergeTree.getCollabWindow();
         this.seq = collabWindow.minSeq;
         this.header = {
             segmentsTotalLength: this.mergeTree.getLength(this.mergeTree.collabWindow.minSeq,
@@ -158,8 +158,8 @@ export class SnapshotLegacy {
 
         const segs = <MergeTree.ISegment[]>[];
         let prev: MergeTree.ISegment | undefined;
-        let extractSegment = (segment: MergeTree.ISegment, pos: number, refSeq: number, clientId: number,
-            start: number, end: number) => {
+        const extractSegment = (segment: MergeTree.ISegment, pos: number, refSeq: number, clientId: number,
+                                start: number, end: number) => {
             if ((segment.seq != UnassignedSequenceNumber) && (segment.seq <= this.seq) &&
                 ((segment.removedSeq === undefined) || (segment.removedSeq == UnassignedSequenceNumber) ||
                     (segment.removedSeq > this.seq))) {
@@ -174,7 +174,7 @@ export class SnapshotLegacy {
                 }
             }
             return true;
-        }
+        };
 
         this.mergeTree.map({ leaf: extractSegment }, this.seq, NonCollabClient);
         if (prev) {
@@ -208,7 +208,7 @@ export class SnapshotLegacy {
         serializer?: IComponentSerializer,
         context?: IComponentHandleContext,
     ): Promise<ops.MergeTreeChunk> {
-        let chunkAsString: string = await storage.read(path);
+        const chunkAsString: string = await storage.read(path);
         return SnapshotLegacy.processChunk(chunkAsString, serializer, context);
     }
 

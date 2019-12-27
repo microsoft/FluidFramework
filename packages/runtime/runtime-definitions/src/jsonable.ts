@@ -8,7 +8,9 @@
 // tslint:disable:interface-name
 
 export type JsonablePrimitive = undefined | null | boolean | number | string;
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface JsonableObject<T> extends Record<string, Jsonable<T>> { }
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface JsonableArray<T> extends Array<Jsonable<T>> { }
 
 /**

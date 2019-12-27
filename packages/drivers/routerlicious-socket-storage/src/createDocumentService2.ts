@@ -16,7 +16,7 @@ import { TokenProvider } from "./tokens";
  * @deprecated - The createDocumentService of document service factory directly returns
  *  the associated document service.
  */
-export function createDocumentService2(
+export const createDocumentService2 = (
     ordererUrl: string,
     deltaStorageUrl: string,
     gitUrl: string,
@@ -26,16 +26,14 @@ export function createDocumentService2(
     errorTracking: IErrorTrackingService = new DefaultErrorTracking(),
     disableCache = false,
     historianApi = true,
-    credentials?: ICredentials): IDocumentService {
-    return new DocumentService2(
-        ordererUrl,
-        deltaStorageUrl,
-        gitUrl,
-        errorTracking,
-        disableCache,
-        historianApi,
-        credentials,
-        tokenProvider,
-        tenantId,
-        documentId);
-}
+    credentials?: ICredentials): IDocumentService => new DocumentService2(
+    ordererUrl,
+    deltaStorageUrl,
+    gitUrl,
+    errorTracking,
+    disableCache,
+    historianApi,
+    credentials,
+    tokenProvider,
+    tenantId,
+    documentId);

@@ -9,6 +9,4 @@ import * as io from "socket.io-client";
  * This function only exists to create an ESM wrapper around the socket.io client module
  * for compatibility with ESM dynamic imports
  */
-export function getSocketIo(): SocketIOClientStatic {
-    return io;
-}
+export const getSocketIo = (): SocketIOClientStatic => io;

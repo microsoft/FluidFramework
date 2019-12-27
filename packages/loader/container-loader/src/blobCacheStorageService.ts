@@ -25,15 +25,15 @@ export class BlobCacheStorageService implements IDocumentStorageService {
     }
 
     // TODO Will a subcomponent ever need this? Or we can probably restrict the ref to itself
-    public getSnapshotTree(version: IVersion): Promise<ISnapshotTree | null> {
+    public async getSnapshotTree(version: IVersion): Promise<ISnapshotTree | null> {
         return this.storageService.getSnapshotTree(version);
     }
 
-    public getVersions(versionId: string, count: number): Promise<IVersion[]> {
+    public async getVersions(versionId: string, count: number): Promise<IVersion[]> {
         return this.storageService.getVersions(versionId, count);
     }
 
-    public getContent(version: IVersion, path: string): Promise<string> {
+    public async getContent(version: IVersion, path: string): Promise<string> {
         return this.storageService.getContent(version, path);
     }
 
@@ -45,19 +45,19 @@ export class BlobCacheStorageService implements IDocumentStorageService {
         return this.storageService.read(id);
     }
 
-    public write(root: ITree, parents: string[], message: string, ref: string): Promise<IVersion> {
+    public async write(root: ITree, parents: string[], message: string, ref: string): Promise<IVersion> {
         return this.storageService.write(root, parents, message, ref);
     }
 
-    public uploadSummary(commit: ISummaryTree): Promise<ISummaryHandle> {
+    public async uploadSummary(commit: ISummaryTree): Promise<ISummaryHandle> {
         return this.storageService.uploadSummary(commit);
     }
 
-    public downloadSummary(commit: ISummaryHandle): Promise<ISummaryTree> {
+    public async downloadSummary(commit: ISummaryHandle): Promise<ISummaryTree> {
         return this.storageService.downloadSummary(commit);
     }
 
-    public createBlob(file: Buffer): Promise<ICreateBlobResponse> {
+    public async createBlob(file: Buffer): Promise<ICreateBlobResponse> {
         return this.storageService.createBlob(file);
     }
 

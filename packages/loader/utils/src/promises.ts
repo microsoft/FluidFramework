@@ -14,7 +14,6 @@ export class Deferred<T> {
     private rej: ((reason?: any) => void) | undefined;
 
     constructor() {
-        /* tslint:disable:promise-must-complete */
         this.p = new Promise<T>((resolve, reject) => {
             this.res = resolve;
             this.rej = reject;
@@ -56,7 +55,7 @@ export class Deferred<T> {
 /**
  * Helper function that asserts that the given promise only resolves
  */
-/* tslint:disable:promise-function-async */
+// eslint-disable-next-line @typescript-eslint/promise-function-async
 export function assertNotRejected<T>(promise: Promise<T>): Promise<T> {
     // Assert that the given promise only resolves
     promise.catch((error) => {
@@ -121,7 +120,7 @@ export class SinglePromise<T> {
     }
 
     public get response(): Promise<T> {
-        // if we are actively running and we have a response return it
+        // If we are actively running and we have a response return it
         if (this.active && this.pResponse) {
             return this.pResponse;
         }

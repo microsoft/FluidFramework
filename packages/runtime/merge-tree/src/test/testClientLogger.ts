@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
+import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { UnassignedSequenceNumber } from "../constants";
 import { IMergeTreeOp } from "../ops";
 import { TextSegment } from "../textSegment";
@@ -34,8 +34,8 @@ export class TestClientLogger {
         const client = msg ? msg.clientId : "";
         const op = msg ? msg.contents as IMergeTreeOp : undefined;
         const opType = op ? op.type.toString() : "";
-        // tslint:disable-next-line: no-string-literal max-line-length
-        const opPos = op && op["pos1"] !== undefined ? `@${op["pos1"]}${op["pos2"] !== undefined  ? `,${op["pos2"]}` : ""}` : "";
+        // eslint-disable-next-line dot-notation
+        const opPos = op && op["pos1"] !== undefined ? `@${op["pos1"]}${op["pos2"] !== undefined ? `,${op["pos2"]}` : ""}` : "";
         const clientOp = ` ${client}${opType}${opPos}`;
         const ackedLine: string[] = [
             seq,
@@ -82,7 +82,6 @@ export class TestClientLogger {
                     assert.equal(
                         c.getText(),
                         baseText,
-                        // tslint:disable-next-line: max-line-length
                         `${this.toString()}\nClient ${c.longClientId} does not match client ${this.clients[0].longClientId}`);
                 }
             });
@@ -99,7 +98,7 @@ export class TestClientLogger {
         return str;
     }
 
-    private getSegString(client: TestClient): {acked: string, local: string} {
+    private getSegString(client: TestClient): { acked: string, local: string } {
         let acked: string = "";
         let local: string = "";
         const nodes = [...client.mergeTree.root.children];

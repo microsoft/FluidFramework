@@ -10,15 +10,15 @@ import { INetworkError } from "@microsoft/fluid-driver-definitions";
 export class NetworkError extends Error implements INetworkError {
 
     constructor(
-            errorMessage: string,
-            readonly statusCode: number | undefined,
-            readonly canRetry: boolean,
-            readonly retryAfterSeconds?: number,
-            readonly online = OnlineStatus[isOnline()]) {
+        errorMessage: string,
+        readonly statusCode: number | undefined,
+        readonly canRetry: boolean,
+        readonly retryAfterSeconds?: number,
+        readonly online = OnlineStatus[isOnline()]) {
         super(errorMessage);
     }
 
-    // return all enumerable properties (i.e. exclude stack, message)
+    // Return all enumerable properties (i.e. exclude stack, message)
     public getCustomProperties(): object {
         return this;
     }
@@ -34,6 +34,7 @@ export enum OnlineStatus {
 // No solution for node.js (other than resolve dns names / ping specific sites)
 // Can also use window.addEventListener("online" / "offline")
 export function isOnline(): OnlineStatus {
+    // eslint-disable-next-line no-null/no-null
     if (typeof navigator === "object" && navigator !== null && typeof navigator.onLine === "boolean") {
         return navigator.onLine ? OnlineStatus.Online : OnlineStatus.Offline;
     }

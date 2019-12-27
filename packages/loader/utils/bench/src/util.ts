@@ -8,8 +8,6 @@
 import { Suite } from "benchmark";
 import process = require("process");
 
-// tslint:disable:no-bitwise
-
 let count = 0;
 let cached: any;
 

@@ -24,7 +24,7 @@ import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@micr
 import { getRandomName } from "@microsoft/fluid-server-services-core";
 import { extractDetails, IResolvedPackage } from "@microsoft/fluid-web-code-loader";
 import * as jwt from "jsonwebtoken";
-// tslint:disable-next-line:no-submodule-imports
+// eslint-disable-next-line import/no-internal-modules
 import * as uuid from "uuid/v4";
 import { InsecureUrlResolver } from "./insecureUrlResolver";
 import { SessionStorageDbFactory } from "./sessionStorageTestDb";
@@ -43,12 +43,10 @@ export interface IRouteOptions {
     single?: boolean;
 }
 
-function getUser(): IDevServerUser {
-    return {
-        id: uuid(),
-        name: getRandomName(),
-     };
-}
+const getUser = (): IDevServerUser => ({
+    id: uuid(),
+    name: getRandomName(),
+});
 
 async function loadScripts(files: string[], origin: string) {
     // Add script to page, rather than load bundle directly
@@ -57,7 +55,7 @@ async function loadScripts(files: string[], origin: string) {
     let scriptIndex = 0;
     files.forEach((file: string) => {
         const script = document.createElement("script");
-        // translate URLs to be webpack-dev-server relative URLs
+        // Translate URLs to be webpack-dev-server relative URLs
         script.src = `${origin}/${file}`;
         const scriptId = `${scriptIdPrefix}_${scriptIndex++}`;
         script.id = scriptId;
@@ -75,7 +73,6 @@ async function loadScripts(files: string[], origin: string) {
 
 function wrapIfComponentPackage(packageName: string, packageJson: IFluidPackage) {
     // Wrap the core component in a runtime
-    // tslint:disable-next-line:no-string-literal
     const loadedComponentRaw = window[packageJson.fluid.browser.umd.library];
     const fluidModule = loadedComponentRaw as IFluidModule;
     if (fluidModule.fluidExport.IRuntimeFactory === undefined) {
@@ -87,7 +84,7 @@ function wrapIfComponentPackage(packageName: string, packageJson: IFluidPackage)
                 [packageName, Promise.resolve(componentFactory)],
             ]),
         );
-        // tslint:disable-next-line:no-string-literal
+        // eslint-disable-next-line dot-notation
         window["componentMain"] = {
             fluidExport: runtimeFactory,
         };
@@ -133,13 +130,14 @@ async function getResolvedPackage(
             pkg: "NA",
             name: "NA",
             version: "NA",
-            scope: "NA"
+            scope: "NA",
         },
-        packageUrl: "NA"
+        packageUrl: "NA",
     };
 }
 
 function getUrlResolver(options: IRouteOptions): IUrlResolver {
+    /* eslint-disable @typescript-eslint/indent */
     switch (options.mode) {
         case "localhost":
             return new InsecureUrlResolver(
@@ -161,9 +159,10 @@ function getUrlResolver(options: IRouteOptions): IUrlResolver {
                 getUser(),
                 options.bearerSecret);
 
-        default: // local
+        default: // Local
             return new TestResolver();
     }
+    /* eslint-enable @typescript-eslint/indent */
 }
 
 // Invoked by `start()` when the 'double' option is enabled to create the side-by-side panes.
@@ -179,7 +178,7 @@ export async function start(
     documentId: string,
     packageJson: IPackage,
     options: IRouteOptions,
-    div: HTMLDivElement
+    div: HTMLDivElement,
 ): Promise<void> {
     const url = window.location.href;
 
@@ -230,7 +229,7 @@ export async function start(
 
     let start2Promise: Promise<any> = Promise.resolve();
     if (double) {
-        // new documentServiceFactory for right div, same everything else
+        // New documentServiceFactory for right div, same everything else
         const docServFac2: IDocumentServiceFactory = new TestDocumentServiceFactory(deltaConn);
         const hostConf2 = { documentServiceFactory: docServFac2, urlResolver };
 

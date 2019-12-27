@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import {
     IComponentLoadable,
     IComponentRouter,
@@ -19,8 +20,8 @@ import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
-import { initializeIcons } from '@uifabric/icons';
-import { EventEmitter } from "events";
+// eslint-disable-next-line import/no-extraneous-dependencies
+import { initializeIcons } from "@uifabric/icons";
 import * as semver from "semver";
 import { DrawerView } from "./drawerView";
 
@@ -32,7 +33,7 @@ export class Drawer extends EventEmitter implements IComponentLoadable, ICompone
         return collection;
     }
 
-    private static packages = [
+    private static readonly packages = [
         { pkg: "@fluid-example/drawer", name: "Folder", version: "latest", icon: "FabricNewFolder" },
         { pkg: "@fluid-example/shared-text", name: "Shared Text", version: "^0.10.0", icon: "TextDocument" },
         { pkg: "@fluid-example/flow-scroll", name: "Web Flow", version: "^0.10.0", icon: "WebComponents" },
@@ -49,7 +50,7 @@ export class Drawer extends EventEmitter implements IComponentLoadable, ICompone
 
     public url: string;
     private root: ISharedMap;
-    private views = new Set<DrawerView>();
+    private readonly views = new Set<DrawerView>();
     private packageManager: IPackageManager;
     private packagesP: Promise<{ pkg: string; name: string; version: string; icon: string }[]>;
 
@@ -59,6 +60,7 @@ export class Drawer extends EventEmitter implements IComponentLoadable, ICompone
     ) {
         super();
 
+        // eslint-disable-next-line no-unused-expressions
         this.context.clientId;
 
         this.url = context.id;
@@ -99,14 +101,12 @@ export class Drawer extends EventEmitter implements IComponentLoadable, ICompone
             return packument.versions[max];
         }));
 
-        return latest.map((value, index) => {
-            return {
-                pkg: value.name,
-                name: Drawer.packages[index].name,
-                version: value.version,
-                icon: Drawer.packages[index].icon,
-            }
-        });
+        return latest.map((value, index) => ({
+            pkg: value.name,
+            name: Drawer.packages[index].name,
+            version: value.version,
+            icon: Drawer.packages[index].icon,
+        }));
     }
 
     public addView(scope?: IComponent): IComponentHTMLView {

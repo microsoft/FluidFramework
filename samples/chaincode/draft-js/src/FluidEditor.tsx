@@ -1,4 +1,4 @@
-/*!
+/* !
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
@@ -48,7 +48,6 @@ const styleMap = {
     },
 };
 
-/* eslint-disable @typescript-eslint/indent */
 const getBlockStyle = (block) => {
     switch (block.getType()) {
         case "blockquote":
@@ -59,7 +58,6 @@ const getBlockStyle = (block) => {
             return null;
     }
 };
-/* eslint-enable @typescript-eslint/indent */
 
 /**
  * A wrapper around the Draft.js Editor component which connects RichUtils and callbacks to connect Fluid

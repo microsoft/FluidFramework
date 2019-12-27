@@ -103,7 +103,7 @@ COPY packages/tools/webpack-component-loader/package*.json packages/tools/webpac
 COPY packages/tools/merge-tree-client-replay/package*.json packages/tools/merge-tree-client-replay/
 COPY packages/test/end-to-end/package*.json packages/test/end-to-end/
 COPY samples/chaincode/badge/package*.json samples/chaincode/badge/
-COPY samples/chaincode/chat-3/package*.json samples/chaincode/chat-3/
+COPY samples/chaincode/chat/package*.json samples/chaincode/chat/
 COPY samples/chaincode/codemirror/package*.json samples/chaincode/codemirror/
 COPY samples/chaincode/containers/monaco/package*.json samples/chaincode/containers/monaco/
 COPY samples/chaincode/draft-js/package*.json samples/chaincode/draft-js/
