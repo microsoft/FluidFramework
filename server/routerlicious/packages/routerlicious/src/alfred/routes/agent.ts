@@ -82,7 +82,7 @@ export function create(config: Provider): Router {
         // Returns the stream.
         minioClient.getObject(storageBucket, getParam(request.params, "id"), (error: any, stream: Stream) => {
             if (error) {
-                // eslint-disable-next-line
+                // eslint-disable-next-line max-len
                 return error.code === "NoSuchKey" ? response.status(200).send(null) : response.status(400).json({ error });
             }
             stream.pipe(response);
@@ -97,7 +97,7 @@ export function create(config: Provider): Router {
         const moduleName = moduleFile.split(".")[0];
         minioClient.getObject(storageBucket, moduleFile, (error: any, stream: Stream) => {
             if (error) {
-                // eslint-disable-next-line
+                // eslint-disable-next-line max-len
                 return error.code === "NoSuchKey" ? response.status(200).send(null) : response.status(400).json({ error });
             }
             stream

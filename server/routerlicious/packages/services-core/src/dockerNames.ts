@@ -2,6 +2,8 @@
 // Docker random name generator - taken from
 // https://github.com/moby/moby/blob/master/pkg/namesgenerator/names-generator.go
 
+/* eslint-disable max-len */
+
 const left = [
     "admiring",
     "adoring",
@@ -96,8 +98,6 @@ const left = [
     "youthful",
     "zealous",
     "zen"];
-
-/* eslint-disable max-len */
 
 // Docker, starting from 0.7.x, generates names from notable scientists and hackers.
 // Please, for any amazing man that you add to the list, consider adding an equally amazing woman to it, and vice versa.

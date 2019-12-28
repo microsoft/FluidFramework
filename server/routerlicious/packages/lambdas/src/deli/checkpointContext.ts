@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable no-null/no-null */
+
 import { IRangeTrackerSnapshot } from "@microsoft/fluid-core-utils";
 import { ICollection, IContext, IDocument } from "@microsoft/fluid-server-services-core";
 import * as winston from "winston";
-
-/* eslint-disable no-null/no-null */
 
 export interface IClientSequenceNumber {
     // Whether or not the object can expire

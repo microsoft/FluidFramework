@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable no-null/no-null */
+
 import { ICreateCommitParams, ICreateTreeEntry } from "@microsoft/fluid-gitresources";
 import { IQuorumSnapshot, ProtocolOpHandler } from "@microsoft/fluid-protocol-base";
 import {
@@ -34,8 +36,6 @@ import {
 import * as Deque from "double-ended-queue";
 import * as _ from "lodash";
 import { SequencedLambda } from "../sequencedLambda";
-
-/* eslint-disable no-null/no-null */
 
 export class ScribeLambda extends SequencedLambda {
     // Value of the last processed Kafka offset
