@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable no-null/no-null */
+
 import * as assert from "assert";
 import { RangeTracker } from "@microsoft/fluid-core-utils";
 import { isSystemType } from "@microsoft/fluid-protocol-base";
@@ -37,8 +39,6 @@ import {
 import * as winston from "winston";
 import { CheckpointContext, ICheckpoint, IClientSequenceNumber } from "./checkpointContext";
 import { ClientSequenceNumberManager } from "./clientSeqManager";
-
-/* eslint-disable no-null/no-null */
 
 enum SendType {
     Immediate,
