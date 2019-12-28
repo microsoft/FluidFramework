@@ -300,7 +300,7 @@ export function mergeTreeLargeTest() {
         insertText(mergeTree, pos, UniversalSequenceNumber, LocalClientId, UniversalSequenceNumber,
             s, undefined, undefined);
         accumTime += elapsedMicroseconds(clockStart);
-        if ((i > 0) && (0 == (i % 50000))) {
+        if ((i > 0) && ((i % 50000) == 0)) {
             const perIter = (accumTime / (i + 1)).toFixed(3);
             treeCount++;
             accumTreeSize += mergeTree.getLength(UniversalSequenceNumber, LocalClientId);
@@ -321,7 +321,7 @@ export function mergeTreeLargeTest() {
         mergeTree.removeRange(pos, pos + dlen, UniversalSequenceNumber, LocalClientId);
         accumTime += elapsedMicroseconds(clockStart);
 
-        if ((i > 0) && (0 == (i % 50000))) {
+        if ((i > 0) && ((i % 50000) == 0)) {
             const perIter = (accumTime / (i + 1)).toFixed(3);
             treeCount++;
             accumTreeSize += mergeTree.getLength(UniversalSequenceNumber, LocalClientId);
@@ -367,7 +367,7 @@ export function mergeTreeCheckedTest() {
             errorCount++;
             break;
         }
-        if ((i > 0) && (0 == (i % 1000))) {
+        if ((i > 0) && ((i % 1000) == 0)) {
             const perIter = (accumTime / (i + 1)).toFixed(3);
             treeCount++;
             accumTreeSize += mergeTree.getLength(UniversalSequenceNumber, LocalClientId);
@@ -388,7 +388,7 @@ export function mergeTreeCheckedTest() {
             log(mergeTree.toString());
             break;
         }
-        if ((i > 0) && (0 == (i % 10))) {
+        if ((i > 0) && ((i % 10) == 0)) {
             const perIter = (accumTime / (i + 1)).toFixed(3);
             treeCount++;
             accumTreeSize += mergeTree.getLength(UniversalSequenceNumber, LocalClientId);
@@ -421,7 +421,7 @@ export function mergeTreeCheckedTest() {
             }
 
         }
-        if ((i > 0) && (0 == (i % 1000))) {
+        if ((i > 0) && ((i % 1000) == 0)) {
             const perIter = (accumTime / (i + 1)).toFixed(3);
             treeCount++;
             accumTreeSize += mergeTree.getLength(UniversalSequenceNumber, LocalClientId);
@@ -443,7 +443,7 @@ export function mergeTreeCheckedTest() {
             errorCount++;
             break;
         }
-        if ((i > 0) && (0 == (i % 1000))) {
+        if ((i > 0) && ((i % 1000) == 0)) {
             const perIter = (accumTime / (i + 1)).toFixed(3);
             treeCount++;
             accumTreeSize += mergeTree.getLength(UniversalSequenceNumber, LocalClientId);
@@ -476,7 +476,7 @@ export function mergeTreeCheckedTest() {
             }
 
         }
-        if ((i > 0) && (0 == (i % 1000))) {
+        if ((i > 0) && ((i % 1000) == 0)) {
             const perIter = (accumTime / (i + 1)).toFixed(3);
             treeCount++;
             accumTreeSize += mergeTree.getLength(UniversalSequenceNumber, LocalClientId);
@@ -816,7 +816,7 @@ export function TestPack(verbose = true) {
             // log(server.getText());
             // log(server.mergeTree.toString());
             // log(server.mergeTree.getStats());
-            if (0 == (roundCount % 100)) {
+            if ((roundCount % 100) == 0) {
                 const clockStart = clock();
                 if (checkTextMatch()) {
                     log(`round: ${roundCount} BREAK`);

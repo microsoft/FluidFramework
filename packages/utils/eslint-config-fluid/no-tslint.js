@@ -315,7 +315,13 @@ module.exports = {
         ],
         "use-isnan": "error",
         "valid-typeof": "off",
-        "yoda": "off",
+        "yoda": [
+            "error",
+            "never",
+            {
+                "onlyEquality": true
+            }
+        ],
     },
     "overrides": [
         {
