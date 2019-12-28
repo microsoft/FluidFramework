@@ -18,8 +18,6 @@ import * as ops from "./ops";
 import * as Properties from "./properties";
 import { SnapshotHeader } from "./snapshot";
 
-/* eslint-disable */
-
 // first three are index entry
 export interface SnapChunk {
     /**
@@ -55,11 +53,15 @@ export class SnapshotLegacy {
     logger: ITelemetryLogger;
 
     constructor(public mergeTree: MergeTree.MergeTree, logger: ITelemetryLogger, public filename?: string,
+        // eslint-disable-next-line @typescript-eslint/indent
         public onCompletion?: () => void) {
         this.logger = ChildLogger.create(logger, "Snapshot");
     }
 
-    getSeqLengthSegs(allSegments: ops.IJSONSegment[], allLengths: number[], approxSequenceLength: number,
+    getSeqLengthSegs(
+        allSegments: ops.IJSONSegment[],
+        allLengths: number[],
+        approxSequenceLength: number,
         startIndex = 0): ops.MergeTreeChunk {
 
         const segs = <ops.IJSONSegment[]>[];
@@ -78,8 +80,8 @@ export class SnapshotLegacy {
             totalLengthChars: this.header.segmentsTotalLength,
             totalSegmentCount: allSegments.length,
             chunkSequenceNumber: this.header.seq,
-            segmentTexts: segs
-        }
+            segmentTexts: segs,
+        };
     }
 
     /**
@@ -102,7 +104,7 @@ export class SnapshotLegacy {
                     path: SnapshotLegacy.header,
                     type: TreeEntry[TreeEntry.Blob],
                     value: {
-                        contents: serializer ? serializer.stringify(chunk1, context, bind): JSON.stringify(chunk1),
+                        contents: serializer ? serializer.stringify(chunk1, context, bind) : JSON.stringify(chunk1),
                         encoding: "utf-8",
                     },
                 },
@@ -110,8 +112,7 @@ export class SnapshotLegacy {
             id: null,
         };
 
-        if (chunk1.chunkSegmentCount < chunk1.totalSegmentCount)
-        {
+        if (chunk1.chunkSegmentCount < chunk1.totalSegmentCount) {
             const chunk2 = this.getSeqLengthSegs(this.segments, this.segmentLengths, this.header.segmentsTotalLength, chunk1.chunkSegmentCount);
             length += chunk2.chunkLengthChars;
             segments += chunk2.chunkSegmentCount;
@@ -158,23 +159,25 @@ export class SnapshotLegacy {
 
         const segs = <MergeTree.ISegment[]>[];
         let prev: MergeTree.ISegment | undefined;
-        const extractSegment = (segment: MergeTree.ISegment, pos: number, refSeq: number, clientId: number,
-                                start: number, end: number) => {
-            if ((segment.seq != UnassignedSequenceNumber) && (segment.seq <= this.seq) &&
-                ((segment.removedSeq === undefined) || (segment.removedSeq == UnassignedSequenceNumber) ||
-                    (segment.removedSeq > this.seq))) {
-                if (prev && prev.canAppend(segment) && Properties.matchProperties(prev.properties, segment.properties)) {
-                    prev = prev.clone();
-                    prev.append(segment.clone());
-                } else {
-                    if (prev) {
-                        segs.push(prev);
+        const extractSegment =
+            (segment: MergeTree.ISegment, pos: number, refSeq: number, clientId: number, start: number, end: number) => {
+                // eslint-disable-next-line eqeqeq
+                if ((segment.seq != UnassignedSequenceNumber) && (segment.seq <= this.seq) &&
+                    // eslint-disable-next-line eqeqeq
+                    ((segment.removedSeq === undefined) || (segment.removedSeq == UnassignedSequenceNumber) ||
+                        (segment.removedSeq > this.seq))) {
+                    if (prev && prev.canAppend(segment) && Properties.matchProperties(prev.properties, segment.properties)) {
+                        prev = prev.clone();
+                        prev.append(segment.clone());
+                    } else {
+                        if (prev) {
+                            segs.push(prev);
+                        }
+                        prev = segment;
                     }
-                    prev = segment;
                 }
-            }
-            return true;
-        };
+                return true;
+            };
 
         this.mergeTree.map({ leaf: extractSegment }, this.seq, NonCollabClient);
         if (prev) {
@@ -194,8 +197,9 @@ export class SnapshotLegacy {
         // When this condition happens, we might not write out all segments in getSeqLengthSegs() when writing out "body"
         // Issue #1995 tracks following up on the core of the problem.
         // In the meantime, this code makes sure we will write out all segments properly
+        // eslint-disable-next-line eqeqeq
         if (this.header.segmentsTotalLength != totalLength) {
-            this.logger.sendErrorEvent({eventName: "SegmentsTotalLengthMismatch", totalLength, segmentsTotalLength: this.header.segmentsTotalLength});
+            this.logger.sendErrorEvent({ eventName: "SegmentsTotalLengthMismatch", totalLength, segmentsTotalLength: this.header.segmentsTotalLength });
             this.header.segmentsTotalLength = totalLength;
         }
 

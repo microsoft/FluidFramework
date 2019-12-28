@@ -33,10 +33,11 @@ import * as scribe from "@microsoft/fluid-server-tools-core";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import Axios from "axios";
 
-// eslint-disable-next-line
+// eslint-disable-next-line max-len
+// eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-internal-modules, import/no-unassigned-import
 require("bootstrap/dist/css/bootstrap.min.css");
 
-// eslint-disable-next-line
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const pkgVersion = require("../package.json").version;
 const version = `${pkgVersion.endsWith(".0") ? "^" : ""}${pkgVersion}`;
 

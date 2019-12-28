@@ -120,7 +120,6 @@ function SimpleTable(props: ISudokuViewProps) {
             case "0":
                 keyString = "0";
             // Intentional fall-through
-            // eslint-disable no-fallthrough
             case "1":
             case "2":
             case "3":
@@ -139,7 +138,6 @@ function SimpleTable(props: ISudokuViewProps) {
                 moveCell(keyString, coord);
                 return;
         }
-        /* eslint-enable @typescript-eslint/indent */
     };
 
     const numericInput = (keyString: string, coord: string) => {
@@ -291,6 +289,5 @@ function getCellBorderStyles(coord: CoordinateString): React.CSSProperties {
             break;
         default: // Nothing
     }
-    /* eslint-enable @typescript-eslint/indent */
     return styles;
 }

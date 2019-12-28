@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable */
 export interface IBTreeEntry<TKey, TValue> {
     key: TKey;
     subBlock?: BTreeBlock<TKey, TValue>;
@@ -24,7 +23,7 @@ export const MaxNodesInBlock = 512;
 export const MinNodesInBlock = MaxNodesInBlock / 2;
 
 export class BTreeBlock<TKey, TValue>  {
-    public children: Array<IBTreeEntry<TKey, TValue>>;
+    public children: IBTreeEntry<TKey, TValue>[];
 
     constructor(public childCount: number) {
         this.children = new Array<IBTreeEntry<TKey, TValue>>(MaxNodesInBlock);

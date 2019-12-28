@@ -29,13 +29,13 @@ import { SharedString, SequenceDeltaEvent } from "@microsoft/fluid-sequence";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import * as CodeMirror from "codemirror";
 
-// eslint-disable-next-line
+/* eslint-disable @typescript-eslint/no-require-imports,
+import/no-internal-modules, import/no-unassigned-import */
 require("codemirror/lib/codemirror.css");
-// eslint-disable-next-line
 require("./style.css");
-
-// eslint-disable-next-line
 require("codemirror/mode/javascript/javascript.js");
+/* eslint-enable @typescript-eslint/no-require-imports,
+import/no-internal-modules, import/no-unassigned-import */
 
 import { CodeMirrorPresenceManager } from "./presence";
 

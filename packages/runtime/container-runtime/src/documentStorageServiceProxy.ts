@@ -66,4 +66,5 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
     public downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {
         return this.storage.downloadSummary(handle);
     }
+    /* eslint-enable @typescript-eslint/promise-function-async */
 }

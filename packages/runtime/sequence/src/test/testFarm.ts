@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable */
 import * as fs from "fs";
 import * as path from "path";
 import * as MergeTree from "@microsoft/fluid-merge-tree";

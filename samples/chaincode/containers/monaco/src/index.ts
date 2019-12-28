@@ -12,21 +12,25 @@ import { IContainerContext, IRuntime } from "@microsoft/fluid-container-definiti
 import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
 import { IComponentFactory } from "@microsoft/fluid-runtime-definitions";
 
-/* eslint-disable */
+/* eslint-disable @typescript-eslint/indent, @typescript-eslint/no-require-imports, max-len */
 (self as any).MonacoEnvironment = {
-    getWorkerUrl: function (moduleId, label) {
+    getWorkerUrl(moduleId, label) {
         switch (label) {
-            case 'json': return require('blob-url-loader?type=application/javascript!compile-loader?target=worker&emit=false!monaco-editor/esm/vs/language/json/json.worker');
-            case 'css': return require('blob-url-loader?type=application/javascript!compile-loader?target=worker&emit=false!monaco-editor/esm/vs/language/css/css.worker');
-            case 'html': return require('blob-url-loader?type=application/javascript!compile-loader?target=worker&emit=false!monaco-editor/esm/vs/language/html/html.worker');
-            case 'typescript':
-            case 'javascript': return require('blob-url-loader?type=application/javascript!compile-loader?target=worker&emit=false!monaco-editor/esm/vs/language/typescript/ts.worker');
+            case "json":
+                return require("blob-url-loader?type=application/javascript!compile-loader?target=worker&emit=false!monaco-editor/esm/vs/language/json/json.worker");
+            case "css":
+                return require("blob-url-loader?type=application/javascript!compile-loader?target=worker&emit=false!monaco-editor/esm/vs/language/css/css.worker");
+            case "html":
+                return require("blob-url-loader?type=application/javascript!compile-loader?target=worker&emit=false!monaco-editor/esm/vs/language/html/html.worker");
+            case "typescript":
+            case "javascript":
+                return require("blob-url-loader?type=application/javascript!compile-loader?target=worker&emit=false!monaco-editor/esm/vs/language/typescript/ts.worker");
             default:
-                return require('blob-url-loader?type=application/javascript!compile-loader?target=worker&emit=false!monaco-editor/esm/vs/editor/editor.worker');
+                return require("blob-url-loader?type=application/javascript!compile-loader?target=worker&emit=false!monaco-editor/esm/vs/editor/editor.worker");
         }
-    }
+    },
 };
-/* eslint-enable */
+/* eslint-enable @typescript-eslint/indent, @typescript-eslint/no-require-imports, max-len */
 
 async function getMonacoFluidExport() {
     const monaco = await import("@fluid-example/monaco");

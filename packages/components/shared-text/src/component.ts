@@ -200,13 +200,15 @@ export class SharedTextRunner
     }
 
     private async initializeUI(div): Promise<void> {
-        /* eslint-disable */
+        /* eslint-disable @typescript-eslint/no-require-imports,
+        import/no-internal-modules, import/no-unassigned-import */
         require("bootstrap/dist/css/bootstrap.min.css");
         require("bootstrap/dist/css/bootstrap-theme.min.css");
         require("../stylesheets/map.css");
         require("../stylesheets/style.css");
         require("katex/dist/katex.min.css");
-        /* eslint-enable */
+        /* eslint-enable @typescript-eslint/no-require-imports,
+        import/no-internal-modules, import/no-unassigned-import */
 
         const browserContainerHost = new ui.BrowserContainerHost();
 
