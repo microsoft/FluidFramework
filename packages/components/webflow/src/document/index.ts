@@ -88,7 +88,7 @@ export const getDocSegmentKind = (segment: ISegment): DocSegmentKind => {
                 assert.strictEqual(segment.getRangeLabels()[0], DocSegmentKind.beginTags, `Unknown refType '${markerType}'.`);
                 return DocSegmentKind.endTags;
         }
-        /* eslint-disable @typescript-eslint/indent */
+        /* eslint-enable @typescript-eslint/indent */
     }
 };
 
@@ -218,6 +218,7 @@ export class FlowDocument extends PrimedComponent {
         const ops: IMergeTreeRemoveMsg[] = [];
 
         this.visitRange((position: number, segment: ISegment) => {
+            /* eslint-disable @typescript-eslint/indent */
             switch (getDocSegmentKind(segment)) {
                 case DocSegmentKind.beginTags: {
                     // Removing a start tag implicitly removes its matching end tag.
@@ -254,7 +255,9 @@ export class FlowDocument extends PrimedComponent {
                     break;
                 }
                 default:
+                    break;
             }
+            /* eslint-enable @typescript-eslint/indent */
             return true;
         }, start, end);
 

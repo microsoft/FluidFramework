@@ -119,7 +119,7 @@ class GraphIQLView implements IComponentHTMLVisual {
         maybeDiv.style.width = "100vw";
         maybeDiv.style.height = "100vh";
 
-        // eslint-disable-next-line
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
         const css = require("graphiql/graphiql.css");
         const styleTag = document.createElement("style");
         styleTag.innerText = css;

@@ -182,8 +182,7 @@ export class TableDocument extends PrimedComponent implements ITable {
         this.maybeCols.on("sequenceDelta", (e, t) => this.emit("sequenceDelta", e, t));
         this.maybeRows.on("sequenceDelta", (e, t) => this.emit("sequenceDelta", e, t));
 
-        // tslint:disable-next-line:no-this-assignment
-        // eslint-disable-next-line
+        // eslint-disable-next-line @typescript-eslint/no-this-alias
         const table = this;
         this.maybeWorkbook = createSheetlet({
             get numRows() { return table.numRows; },

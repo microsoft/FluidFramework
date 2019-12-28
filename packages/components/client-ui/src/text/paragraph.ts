@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable */
 import * as MergeTree from "@microsoft/fluid-merge-tree";
 import * as Sequence from "@microsoft/fluid-sequence";
 import { CharacterCodes } from "./characterCodes";
@@ -81,6 +80,7 @@ function makeIPGBlock(width: number, text: string, textSegment: MergeTree.TextSe
     return <IPGBlock>{ type: ParagraphItemType.Block, width, text, segment: textSegment };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function makeIPGMathBlock(width: number, text: string) {
     return <IPGMathBlock>{ type: ParagraphItemType.MathBlock, width, text };
 }
@@ -408,6 +408,7 @@ export function getListCacheInfo(
                     } else {
                         itemCounts[indentLevel] = 1;
                     }
+                    // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
                     for (let i = indentLevel + 1; i < itemCounts.length; i++) {
                         itemCounts[i] = 0;
                     }

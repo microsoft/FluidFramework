@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/promise-function-async */
+
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import {
     ICreateBlobResponse,
@@ -12,8 +14,6 @@ import {
     ITree,
     IVersion,
 } from "@microsoft/fluid-protocol-definitions";
-
-/* eslint-disable @typescript-eslint/promise-function-async */
 
 /**
  * IDocumentStorageService adapter with pre-cached blobs.

@@ -137,9 +137,10 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
                     break;
                 default:
             }
-            /* eslint-disable @typescript-eslint/indent */
+            /* eslint-enable @typescript-eslint/indent */
         });
         super.on("removeListener", (event: string | symbol) => {
+            /* eslint-disable @typescript-eslint/indent */
             switch (event) {
                 case "sequenceDelta":
                     if (super.listenerCount(event) === 0) {
@@ -152,7 +153,9 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
                     }
                     break;
                 default:
+                    break;
             }
+            /* eslint-enable @typescript-eslint/indent */
         });
 
         this.intervalMapKernel = new MapKernel(

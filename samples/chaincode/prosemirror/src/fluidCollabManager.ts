@@ -274,12 +274,14 @@ export class FluidCollabManager extends EventEmitter {
     }
 
     public setupEditor(textArea: HTMLDivElement) {
-        /* eslint-disable */
+        /* eslint-disable @typescript-eslint/no-require-imports,
+        import/no-internal-modules, import/no-unassigned-import */
         require("prosemirror-view/style/prosemirror.css");
         require("prosemirror-menu/style/menu.css");
         require("prosemirror-example-setup/style/style.css");
         require("./style.css");
-        /* eslint-enable */
+        /* eslint-enable @typescript-eslint/no-require-imports,
+        import/no-internal-modules, import/no-unassigned-import */
 
         const editorView = new EditorView(
             textArea,

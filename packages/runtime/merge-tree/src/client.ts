@@ -611,7 +611,6 @@ export class Client {
         }
     }
 
-    /* eslint-disable */
     // as functions are modified move them above the eslint-disabled waterline and lint them
 
     undoSingleSequenceNumber(undoSegments: IUndoInfo[], redoSegments: IUndoInfo[]) {
@@ -785,6 +784,7 @@ export class Client {
         const op = opArgs.op;
         const msg = opArgs.sequencedMessage;
         this.getOrAddShortClientId(msg.clientId);
+        /* eslint-disable @typescript-eslint/indent */
         switch (op.type) {
             case ops.MergeTreeDeltaType.INSERT:
                 this.applyInsertOp(opArgs);
@@ -796,7 +796,7 @@ export class Client {
                 this.applyAnnotateRangeOp(opArgs);
                 break;
             case ops.MergeTreeDeltaType.GROUP: {
-                for (let memberOp of op.ops) {
+                for (const memberOp of op.ops) {
                     this.applyRemoteOp({
                         op: memberOp,
                         groupOp: op,
@@ -805,7 +805,10 @@ export class Client {
                 }
                 break;
             }
+            default:
+                break;
         }
+        /* eslint-enable @typescript-eslint/indent */
     }
 
     public applyMsg(msg: ISequencedDocumentMessage) {
@@ -925,6 +928,7 @@ export class Client {
 
         // TODO: Remove return value once new snapshot format is adopted as default.
         //       (See https://github.com/microsoft/FluidFramework/issues/84)
+        // eslint-disable-next-line no-return-await
         return await loader.initialize(branchId, storage);
     }
 
@@ -947,6 +951,7 @@ export class Client {
                 op,
                 groupOp,
             };
+            /* eslint-disable @typescript-eslint/indent */
             switch (op.type) {
                 case ops.MergeTreeDeltaType.INSERT:
                     this.applyInsertOp(opArgs);
@@ -957,7 +962,10 @@ export class Client {
                 case ops.MergeTreeDeltaType.REMOVE:
                     this.applyRemoveRangeOp(opArgs);
                     break;
+                default:
+                    break;
             }
+            /* eslint-enable @typescript-eslint/indent */
         }
     }
     updateConsensusProperty(op: ops.IMergeTreeAnnotateMsg, msg: ISequencedDocumentMessage) {

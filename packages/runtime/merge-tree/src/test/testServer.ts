@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable */
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { IIntegerRange } from "../";
 import * as Collections from "../collections";
@@ -106,6 +105,7 @@ export class TestServer extends TestClient {
                 }
                 if (this.clients) {
                     let minCli = this.clientSeqNumbers.peek();
+                    // eslint-disable-next-line eqeqeq
                     if (minCli && (minCli.clientId == msg.clientId) &&
                         (minCli.refSeq < msg.referenceSequenceNumber)) {
                         const cliSeq = this.clientSeqNumbers.get();
@@ -136,7 +136,7 @@ export class TestServer extends TestClient {
         return false;
     }
     public incrementalGetText(start?: number, end?: number) {
-        const range: IIntegerRange = {start, end};
+        const range: IIntegerRange = { start, end };
         if (range.start === undefined) {
             range.start = 0;
         }
@@ -187,11 +187,15 @@ function incrementalGatherText(segment: ISegment, state: IncrementalMapState<Tex
 /**
  * Used for in-memory testing.  This will queue a reference string for each client message.
  */
-export function checkTextMatchRelative(refSeq: number, clientId: number, server: TestServer,
-                                       msg: ISequencedDocumentMessage) {
+export function checkTextMatchRelative(
+    refSeq: number,
+    clientId: number,
+    server: TestServer,
+    msg: ISequencedDocumentMessage) {
     const client = server.clients[clientId];
     const serverText = new MergeTreeTextHelper(server.mergeTree).getText(refSeq, clientId);
     const cliText = client.checkQ.dequeue();
+    // eslint-disable-next-line eqeqeq
     if ((cliText === undefined) || (cliText != serverText)) {
         console.log(`mismatch `);
         console.log(msg);

@@ -11,6 +11,7 @@ module.exports = {
     },
     "extends": [
         "eslint:recommended",
+        "plugin:eslint-comments/recommended",
         "plugin:react/recommended",
         "plugin:@typescript-eslint/eslint-recommended",
         "plugin:@typescript-eslint/recommended",
@@ -132,6 +133,14 @@ module.exports = {
         "@typescript-eslint/triple-slash-reference": "error",
         "@typescript-eslint/type-annotation-spacing": "error",
         "@typescript-eslint/unified-signatures": "error",
+
+        // eslint-plugin-eslint-comments
+        "eslint-comments/disable-enable-pair": [
+            "error",
+            {
+                "allowWholeFile": true
+            }
+        ],
 
         // eslint-plugin-import
         "import/no-default-export": "error",

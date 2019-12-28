@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable */
 import * as MergeTree from "@microsoft/fluid-merge-tree";
 import * as Sequence from "@microsoft/fluid-sequence";
 import * as Paragraph from "./paragraph";
@@ -182,6 +181,7 @@ function insertColumnCellForRow(
     row: Row,
     prevColId: string,
     colId: string) {
+    // eslint-disable-next-line @typescript-eslint/prefer-for-of
     for (let i = 0; i < row.cells.length; i++) {
         const prevCell = row.cells[i];
         if (prevCell.columnId === prevColId) {
@@ -216,6 +216,7 @@ export function insertColumn(
         type: MergeTree.MergeTreeDeltaType.INSERT,
     };
     opList.push(insertColMarkerOp);
+    // eslint-disable-next-line no-shadow
     for (const row of table.rows) {
         insertColumnCellForRow(idBase, opList, row, prevColumnId, columnId);
     }
@@ -250,7 +251,9 @@ export function deleteColumn(
         console.log(`delete column from cell ${cell.marker.toString()}`);
     }
     const columnId = cell.columnId;
+    // eslint-disable-next-line no-shadow
     for (const row of table.rows) {
+        // eslint-disable-next-line no-shadow
         for (const cell of row.cells) {
             if (cell.columnId === columnId) {
                 sharedString.annotateMarkerNotifyConsensus(cell.marker, { moribund: clientId }, (m) => {
