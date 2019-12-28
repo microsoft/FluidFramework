@@ -36,6 +36,7 @@ module.exports = {
     "plugins": [
         "@typescript-eslint",
         "no-null",
+        "optimize-regex",
         "prefer-arrow",
         "react",
         "unicorn",
@@ -286,6 +287,7 @@ module.exports = {
             "error",
             "never"
         ],
+        "optimize-regex/optimize-regex": "warn",
         "padding-line-between-statements": [
             "off",
             "error",
