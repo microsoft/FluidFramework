@@ -7,7 +7,7 @@ import * as assert from "assert";
 import { LocalReference } from "@microsoft/fluid-merge-tree";
 import { SequenceInterval } from "@microsoft/fluid-sequence";
 
-const rangeExpr = /([a-zA-Z]+)(\d+):([a-zA-Z]+)(\d+)/;
+const rangeExpr = /([A-Za-z]+)(\d+):([A-Za-z]+)(\d+)/;
 
 // Parses an Excel-like column name to the corresponding 0-based index (e.g., 'A' -> 0)
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
