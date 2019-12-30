@@ -13,6 +13,7 @@ import {
     IDeltaQueue,
 } from "@microsoft/fluid-container-definitions";
 import {
+    ChildLogger,
     Deferred,
     PerformanceEvent,
 } from "@microsoft/fluid-core-utils";
@@ -209,7 +210,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this._inbound = new DeltaQueue<ISequencedDocumentMessage>(
             (op) => {
                 this.processInboundMessage(op);
-            });
+            },
+            ChildLogger.create(this.logger, "InboundDeltaQueue"),
+        );
 
         this._inbound.on("error", (error) => {
             this.emit("error", error);
@@ -221,6 +224,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             (messages) => {
                 this.connection!.submit(messages);
             },
+            ChildLogger.create(this.logger, "OutboundDeltaQueue"),
         );
 
         this._outbound.on("error", (error) => {
@@ -233,7 +237,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 clientId: message.clientId,
                 content: JSON.parse(message.content as string),
             });
-        });
+        },
+        ChildLogger.create(this.logger, "InboundSignalDeltaQueue"),
+        );
 
         this._inboundSignal.on("error", (error) => {
             this.emit("error", error);
