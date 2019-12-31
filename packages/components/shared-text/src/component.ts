@@ -19,7 +19,7 @@ import {
     IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
 import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
-import { IInk, Ink } from "@microsoft/fluid-ink";
+import { Ink } from "@microsoft/fluid-ink";
 import {
     ISharedMap,
     SharedMap,
@@ -158,7 +158,6 @@ export class SharedTextRunner
 
             const flowContainerMap = this.collabDoc.createMap();
             flowContainerMap.set("overlayInk", this.collabDoc.createMap().handle);
-            flowContainerMap.set("pageInk", Ink.create(this.runtime).handle);
             this.rootView.set("flowContainerMap", flowContainerMap.handle);
 
             insights.set(newString.id, this.collabDoc.createMap().handle);
@@ -220,10 +219,7 @@ export class SharedTextRunner
         const overlayMap = await this.rootView
             .get<IComponentHandle>("flowContainerMap")
             .get<ISharedMap>();
-        const [overlayInkMap, pageInk] = await Promise.all([
-            overlayMap.get<IComponentHandle>("overlayInk").get<ISharedMap>(),
-            overlayMap.get<IComponentHandle>("pageInk").get<IInk>(),
-        ]);
+        const overlayInkMap = await overlayMap.get<IComponentHandle>("overlayInk").get<ISharedMap>();
 
         const containerDiv = document.createElement("div");
         containerDiv.id = "flow-container";
@@ -234,7 +230,6 @@ export class SharedTextRunner
             new API.Document(this.runtime, this.context, this.rootView),
             this.sharedString,
             overlayInkMap,
-            pageInk,
             image,
             {});
         const theFlow = container.flowView;

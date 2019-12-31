@@ -10,6 +10,4 @@ Provides a set of controls built on top of the Fluid UI library.
 
 ## Image
 
-## InkCanvas
-
 ## Status
