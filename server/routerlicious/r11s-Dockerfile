@@ -39,6 +39,7 @@ COPY server/routerlicious/packages/services-core/package*.json server/routerlici
 COPY server/routerlicious/packages/services-utils/package*.json server/routerlicious/packages/services-utils/
 COPY server/routerlicious/packages/test-utils/package*.json server/routerlicious/packages/test-utils/
 COPY server/routerlicious/packages/protocol-base/package*.json server/routerlicious/packages/protocol-base/
+COPY server/routerlicious/packages/tinylicious/package*.json server/routerlicious/packages/tinylicious/
 COPY packages/utils/build-common/package*.json server/routerlicious/packages/utils/build-common/
 
 # Copy over chaincode npmrc and package.json to dynamically install packages.
