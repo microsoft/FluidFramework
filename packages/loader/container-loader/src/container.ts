@@ -332,14 +332,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             this.logCriticalError(error);
         });
 
-        this._deltaManager = new DeltaManager(
-            this.service,
-            this.client,
-            ChildLogger.create(this.subLogger, "DeltaManager"),
-            this.canReconnect,
-        );
-
-        this.registerDeltaManagerEvents();
+        this._deltaManager = this.createDeltaManager();
     }
 
     /**
@@ -911,8 +904,15 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return client;
     }
 
-    private registerDeltaManagerEvents(): void {
-        this._deltaManager.on("connect", (details: IConnectionDetails) => {
+    private createDeltaManager() {
+        const deltaManager = new DeltaManager(
+            this.service,
+            this.client,
+            ChildLogger.create(this.subLogger, "DeltaManager"),
+            this.canReconnect,
+        );
+
+        deltaManager.on("connect", (details: IConnectionDetails) => {
             this.setConnectionState(
                 ConnectionState.Connecting,
                 "websocket established",
@@ -921,14 +921,14 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                 details.claims.scopes,
                 details.serviceConfiguration);
 
-            if (this._deltaManager.connectionMode === "read") {
+            if (deltaManager.connectionMode === "read") {
                 this.setConnectionState(
                     ConnectionState.Connected,
                     `joined as readonly`,
                     details.clientId,
-                    this._deltaManager.version,
+                    deltaManager.version,
                     details.claims.scopes,
-                    this._deltaManager.serviceConfiguration);
+                    deltaManager.serviceConfiguration);
             }
 
             // Back-compat for new client and old server.
@@ -940,22 +940,24 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             }
         });
 
-        this._deltaManager.on("disconnect", (reason: string) => {
+        deltaManager.on("disconnect", (reason: string) => {
             this.manualReconnectInProgress = false;
             this.setConnectionState(ConnectionState.Disconnected, reason);
         });
 
-        this._deltaManager.on("error", (error) => {
+        deltaManager.on("error", (error) => {
             this.raiseCriticalError(error);
         });
 
-        this._deltaManager.on("pong", (latency) => {
+        deltaManager.on("pong", (latency) => {
             this.emit("pong", latency);
         });
 
-        this._deltaManager.on("processTime", (time) => {
+        deltaManager.on("processTime", (time) => {
             this.emit("processTime", time);
         });
+
+        return deltaManager;
     }
 
     private attachDeltaManagerOpHandler(attributes: IDocumentAttributes, catchUp: boolean): void {
