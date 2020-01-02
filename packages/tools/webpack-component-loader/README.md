@@ -9,7 +9,7 @@ The following environment variables can be defined when running webpack-dev-serv
 | ---------| ----------- |
 | `local` | Load component in two side-by-side divs using local-test-server |
 | `single` | Load component normally using local-test-server server for ordering, etc. |
-| `localhost` | Use local routerlicious server for ordering, etc. |
+| `docker` | Use docker running routerlicious server for ordering, etc. |
 | `live` | Use remote routerlicious server for ordering, etc. (default option) |
 | `fluidHost` | Host url to target while testing. If you supply this, you must supply a tenant ID and secret |
 | `tenantId` | Tenant ID for your host. If you supply this you must supply a tenant secret |
