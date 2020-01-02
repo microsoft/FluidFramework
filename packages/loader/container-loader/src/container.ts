@@ -338,6 +338,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         this.on("error", (error: any) => {
             this.logCriticalError(error);
         });
+
+        this.createDeltaManager();
     }
 
     /**
@@ -616,7 +618,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         // Start websocket connection as soon as possible.  Note that there is no op handler attached yet, but the
         // DeltaManager is resilient to this and will wait to start processing ops until after it is attached.
-        this.createDeltaManager();
         if (!pause) {
             this.startConnectingToDeltaStream();
         }
