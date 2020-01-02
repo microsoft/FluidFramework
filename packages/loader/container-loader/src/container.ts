@@ -587,8 +587,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         this._deltaManager.connect().catch(() => { });
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    private connectToDeltaStream() {
+    private async connectToDeltaStream() {
         this.recordConnectStartTime();
         return this._deltaManager.connect();
     }
