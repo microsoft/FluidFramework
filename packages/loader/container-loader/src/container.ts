@@ -277,10 +277,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
      * Controls whether the container will automatically reconnect to the delta stream after receiving a disconnect.
      */
     public set autoReconnect(value: boolean) {
-        if (!this._deltaManager) {
-            throw new Error("Can't set autoReconnect prior to load");
-        }
-
         this.logger.sendTelemetryEvent({
             eventName: "AutoReconnect",
             value,
@@ -295,9 +291,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
      * Controls whether the container will automatically reconnect to the delta stream after receiving a disconnect.
      */
     public get autoReconnect() {
-        if (!this._deltaManager) {
-            throw new Error("Can't access autoReconnect prior to load");
-        }
         return this._deltaManager.autoReconnect;
     }
 
@@ -374,9 +367,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         }
         this._closed = true;
 
-        if (this._deltaManager) {
-            this._deltaManager.close(reason ? new Error(reason) : undefined, false /*raiseContainerError*/);
-        }
+        this._deltaManager.close(reason ? new Error(reason) : undefined, false /*raiseContainerError*/);
 
         if (this.protocolHandler) {
             this.protocolHandler.close();
@@ -968,8 +959,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     }
 
     private attachDeltaManagerOpHandler(attributes: IDocumentAttributes, catchUp: boolean): void {
-        assert(this._deltaManager);
-
         this._deltaManager.on("closed", () => {
             this.close();
         });
@@ -1024,7 +1013,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             durationFromDisconnected,
             reason,
             connectionInitiationReason,
-            socketDocumentId: this._deltaManager ? this._deltaManager.socketDocumentId : undefined,
+            socketDocumentId: this._deltaManager.socketDocumentId,
             pendingClientId: this.pendingClientId,
             clientId: this.clientId,
             connectionMode,
