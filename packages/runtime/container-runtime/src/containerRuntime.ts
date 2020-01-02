@@ -1068,7 +1068,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                     this.contexts.set(attachMessage.id, remotedComponentContext);
 
                     // Equivalent of nextTick() - Prefetch once all current ops have completed
-                    // eslint-disable-next-line
+                    // eslint-disable-next-line max-len
+                    // eslint-disable-next-line @typescript-eslint/no-floating-promises, @typescript-eslint/promise-function-async
                     Promise.resolve().then(() => remotedComponentContext.realize());
                 }
                 break;

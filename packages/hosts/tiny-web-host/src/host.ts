@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable capitalized-comments */
+
 import { BaseHost, IBaseHostConfig } from "@microsoft/fluid-base-host";
 import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
 import { Container } from "@microsoft/fluid-container-loader";
@@ -22,8 +24,6 @@ import { RouterliciousUrlResolver } from "@microsoft/fluid-routerlicious-urlreso
 import { extractDetails, IResolvedPackage } from "@microsoft/fluid-web-code-loader";
 import { v4 } from "uuid";
 import { IOdspTokenApi, IRouterliciousTokenApi, ITokenApis } from "./utils";
-
-/* eslint-disable capitalized-comments */
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const packageJson = require("../package.json");

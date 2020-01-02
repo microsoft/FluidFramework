@@ -19,11 +19,12 @@ export function generateToken(
     key: string,
     scopes: ScopeType[],
     user?: IUser): string {
-    // eslint-disable-next-line
+    // eslint-disable-next-line max-len
+    // eslint-disable-next-line @typescript-eslint/no-use-before-define, @typescript-eslint/strict-boolean-expressions, no-param-reassign
     user = (user) ? user : generateUser();
     if (user.id === "" || user.id === undefined) {
         debug("User with no id");
-        // eslint-disable-next-line
+        // eslint-disable-next-line @typescript-eslint/no-use-before-define, no-param-reassign
         user = generateUser();
     }
 

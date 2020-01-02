@@ -133,6 +133,7 @@ export class GitManager implements IGitManager {
     public createTree(files: api.ITree): Promise<resources.ITree> {
         return this.createTreeCore(files, 0);
     }
+    /* eslint-enable @typescript-eslint/promise-function-async */
 
     public async createCommit(commit: resources.ICreateCommitParams): Promise<resources.ICommit> {
         return this.historian.createCommit(commit);
@@ -141,6 +142,7 @@ export class GitManager implements IGitManager {
     public async getRef(ref: string): Promise<resources.IRef> {
         return this.historian
             .getRef(`heads/${ref}`)
+            // eslint-disable-next-line @typescript-eslint/promise-function-async
             .catch((error) => {
                 if (error === 400 || error === 404) {
                     // eslint-disable-next-line no-null/no-null

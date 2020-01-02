@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+
 import * as assert from "assert";
 import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
 import { ISequencedDocumentMessage, MessageType } from "@microsoft/fluid-protocol-definitions";
-
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 /**
  * Wrapper interface holding snapshot details for a given op

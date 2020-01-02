@@ -29,7 +29,7 @@ import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import * as SimpleMDE from "simplemde";
 import { Viewer } from "./marked";
 
-// eslint-disable-next-line
+// eslint-disable-next-line import/no-internal-modules, import/no-unassigned-import
 import "simplemde/dist/simplemde.min.css";
 
 export class Smde extends EventEmitter implements IComponentLoadable, IComponentRouter, IComponentHTMLVisual {

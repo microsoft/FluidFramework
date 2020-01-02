@@ -47,6 +47,8 @@ try {
 } catch (error) { }
 
 import { ReplayArgs } from "./replayArgs";
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+const packageJson = require("../package.json");
 
 function expandTreeForReadability(tree: ITree): ITree {
     const newTree: ITree = { entries: [], id: undefined };
@@ -718,7 +720,8 @@ export class ReplayTool {
         const snapshotAsString = fs.readFileSync(
             `${filename}.json`,
             { encoding: "utf-8" });
-        if (snapshotAsString !== content.snapshotAsString) {
+        if (snapshotAsString.replace(new RegExp("0.12.0" , "g"), `${packageJson.version}`)
+            !== content.snapshotAsString.replace(new RegExp("0.12.0" , "g"), `${packageJson.version}`)) {
             this.reportError(`Mismatch in snapshot ${filename}.json`);
         }
     }

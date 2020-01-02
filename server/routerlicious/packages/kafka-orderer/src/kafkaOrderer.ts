@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable no-null/no-null */
+
 import {
     IClient,
     IClientJoin,
@@ -12,8 +14,6 @@ import {
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
 import * as core from "@microsoft/fluid-server-services-core";
-
-/* eslint-disable no-null/no-null */
 
 export class KafkaOrdererConnection implements core.IOrdererConnection {
     public static async create(
@@ -57,6 +57,7 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
         public readonly maxMessageSize: number,
         public readonly serviceConfiguration: IServiceConfiguration,
     ) {
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         this._parentBranch = document.parent ? document.parent.documentId : null;
 
         const clientDetail: IClientJoin = {
@@ -131,8 +132,10 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
         // Add trace
         messages.forEach((message) => {
             const operation = message.operation;
+            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             if (operation && operation.traces === undefined) {
                 operation.traces = [];
+                // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             } else if (operation && operation.traces && operation.traces.length > 1) {
                 operation.traces.push(
                     {

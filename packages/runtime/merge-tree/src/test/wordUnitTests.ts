@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable */
-
 import * as path from "path";
+// eslint-disable-next-line import/no-extraneous-dependencies
 import * as random from "random-js";
 import { LocalReference } from "../localReference";
 import * as ops from "../ops";
@@ -47,6 +46,7 @@ export function propertyCopy() {
     clockStart = clock();
     for (let j = 0; j < iterCount; j++) {
         const bObj = Properties.createMap<number>();
+        // eslint-disable-next-line guard-for-in, no-restricted-syntax
         for (const key in obj) {
             bObj[key] = obj[key];
         }
@@ -96,6 +96,7 @@ export function propertyCopy() {
     const grayMap = new Map<string, number>();
     for (let j = 0; j < iterCount; j++) {
         map.forEach((v, k) => {
+            // eslint-disable-next-line eqeqeq
             if (diffMap.get(k) != v) {
                 grayMap.set(k, 1);
             }
@@ -115,7 +116,7 @@ function makeBookmarks(client: TestClient, bookmarkCount: number) {
         const pos = random.integer(0, len - 1)(mt);
         const segoff = client.getContainingSegment(pos);
         let refType = ops.ReferenceType.Simple;
-        if (i&1) {
+        if (i & 1) {
             refType = ops.ReferenceType.SlideOnRemove;
         }
         const lref = new LocalReference(client, segoff.segment, segoff.offset, refType);
@@ -164,7 +165,7 @@ function measureFetch(startFile: string, withBookmarks = false) {
         client.mergeTree.clone();
     }
     et = elapsedMicroseconds(clockStart);
-    console.log(`naive clone took ${(et / (1000*reps)).toFixed(1)} milliseconds`);
+    console.log(`naive clone took ${(et / (1000 * reps)).toFixed(1)} milliseconds`);
 }
 
 const baseDir = "../../src/test/literature";

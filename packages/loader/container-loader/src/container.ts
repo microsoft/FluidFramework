@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+// Disabling these per-file rather than full subdirectory
+/* eslint-disable @typescript-eslint/no-misused-promises */
+
 import * as assert from "assert";
 import {
     ITelemetryBaseLogger,
@@ -81,12 +84,10 @@ import { NullChaincode } from "./nullRuntime";
 import { pkgName, pkgVersion } from "./packageVersion";
 import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
 
-// Disabling these per-file rather than full subdirectory
-/* eslint-disable @typescript-eslint/no-misused-promises */
-
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const performanceNow = require("performance-now") as (() => number);
-// eslint-disable-next-line
+// eslint-disable-next-line max-len
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires, import/no-internal-modules
 const merge = require("lodash/merge");
 
 const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";

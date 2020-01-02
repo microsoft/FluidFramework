@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable eqeqeq */
+
 import * as assert from "assert";
 import * as fs from "fs";
 import * as path from "path";
@@ -21,7 +23,6 @@ import { specToSegment, TestClient } from "./testClient";
 import { TestServer } from "./testServer";
 import { insertText, loadTextFromFile, nodeOrdinalsHaveIntegrity } from "./testUtils";
 
-/* eslint-disable */
 let logLines: string[];
 function log(message: any) {
     if (logLines) {
@@ -197,7 +198,9 @@ function editFlat(source: string, s: number, dl: number, nt = "") {
 
 let accumTime = 0;
 
-function checkInsertMergeTree(mergeTree: MergeTree.MergeTree, pos: number, textSegment: MergeTree.TextSegment,
+function checkInsertMergeTree(
+    mergeTree: MergeTree.MergeTree,
+    pos: number, textSegment: MergeTree.TextSegment,
     verbose = false) {
     let checkText = new MergeTree.MergeTreeTextHelper(mergeTree).getText(UniversalSequenceNumber, LocalClientId);
     checkText = editFlat(checkText, pos, 0, textSegment.text);
@@ -926,13 +929,13 @@ export function TestPack(verbose = true) {
     }
 
     function randolicious() {
-        let insertRounds = 40;
-        let removeRounds = 32;
+        const insertRounds = 40;
+        const removeRounds = 32;
 
-        let cliA = new TestClient();
+        const cliA = new TestClient();
         cliA.insertTextLocal(0, "a stitch in time saves nine");
         cliA.startCollaboration("FredA");
-        let cliB = new TestClient();
+        const cliB = new TestClient();
         cliB.insertTextLocal(0, "a stitch in time saves nine");
         cliB.startCollaboration("FredB");
         function checkTextMatch(checkSeq: number) {
@@ -1331,10 +1334,10 @@ function tst() {
     const p3 = tree.neighbors("hat");
     log(p3);
     const ntree = new MergeTree.TST<number>();
-    let filename = path.join(__dirname, "../../public/literature/dict.txt")
+    const filename = path.join(__dirname, "../../public/literature/dict.txt");
     const content = fs.readFileSync(filename, "utf8");
     const splitContent = content.split(/\r\n|\n/g);
-    let corpusFilename = path.join(__dirname, "../../../public/literature/pp.txt")
+    let corpusFilename = path.join(__dirname, "../../../public/literature/pp.txt");
     let corpusContent = fs.readFileSync(corpusFilename, "utf8");
     const corpusTree = new MergeTree.TST<number>();
     function addCorpus(corpusContent: string, corpusTree: MergeTree.TST<number>) {
@@ -1455,6 +1458,7 @@ export class DocumentTree {
                 );
                 this.pos++;
             } else {
+                // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
                 const trid = docNode.name + this.ids[docNode.name].toString();
                 docNode.id = trid;
                 id = this.ids[docNode.name]++;
@@ -1497,6 +1501,7 @@ export class DocumentTree {
         };
 
         function printStack(stack: MergeTree.Stack<string>) {
+            // eslint-disable-next-line @typescript-eslint/no-for-in-array, guard-for-in, no-restricted-syntax
             for (const item in stack.items) {
                 log(item);
             }
@@ -1601,40 +1606,40 @@ export class DocumentTree {
     }
 
     private generateClient() {
-        let client = new TestClient({ blockUpdateMarkers: true });
+        const client = new TestClient({ blockUpdateMarkers: true });
         client.startCollaboration("Fred");
-        for (let child of this.children) {
+        for (const child of this.children) {
             this.addToMergeTree(client, child);
         }
         return client;
     }
 
     static test1() {
-        let doc = DocumentTree.generateDocument();
-        let client = doc.generateClient();
+        const doc = DocumentTree.generateDocument();
+        const client = doc.generateClient();
         return doc.checkStacksAllPositions(client);
     }
 
     static generateDocument() {
-        let tree = new DocumentTree("Document", DocumentTree.generateContent(0.6));
+        const tree = new DocumentTree("Document", DocumentTree.generateContent(0.6));
         return tree;
     }
 
     static generateContent(rowProbability: number) {
-        let items = <DocumentNode[]>[];
-        let docLen = DocumentTree.randPack.randInteger(7, 25);
+        const items = <DocumentNode[]>[];
+        const docLen = DocumentTree.randPack.randInteger(7, 25);
         for (let i = 0; i < docLen; i++) {
-            let rowThreshold = rowProbability * 1000;
-            let selector = DocumentTree.randPack.randInteger(1, 1000);
+            const rowThreshold = rowProbability * 1000;
+            const selector = DocumentTree.randPack.randInteger(1, 1000);
             if (selector >= rowThreshold) {
-                let pg = DocumentTree.generateParagraph();
+                const pg = DocumentTree.generateParagraph();
                 items.push(pg);
             } else {
                 rowProbability /= 2;
                 if (rowProbability < 0.08) {
                     rowProbability = 0;
                 }
-                let row = DocumentTree.generateRow(rowProbability);
+                const row = DocumentTree.generateRow(rowProbability);
                 items.push(row);
             }
 

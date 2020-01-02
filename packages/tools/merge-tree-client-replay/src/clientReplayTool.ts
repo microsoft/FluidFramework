@@ -31,7 +31,8 @@ import {
 } from "@microsoft/fluid-sequence";
 import { ReplayArgs } from "./replayArgs";
 
-// eslint-disable-next-line
+// eslint-disable-next-line max-len
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires, import/no-internal-modules
 const cloneDeep = require("lodash/cloneDeep");
 
 interface IFullPathTreeEntry extends ITreeEntry {

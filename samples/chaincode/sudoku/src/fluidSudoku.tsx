@@ -12,7 +12,7 @@ import * as ReactDOM from "react-dom";
 import { loadPuzzle } from "./helpers/puzzles";
 import { SudokuView } from "./react/sudokuView";
 
-// eslint-disable-next-line
+// eslint-disable-next-line import/no-unassigned-import
 import "./helpers/styles.css";
 
 export const FluidSudokuName = "FluidSudoku";

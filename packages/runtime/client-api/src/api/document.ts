@@ -177,10 +177,10 @@ export class Document extends EventEmitter {
         return quorum.getMember(clientId);
     }
 
-    /* eslint-disable @typescript-eslint/promise-function-async */
     /**
      * Called to snapshot the given document
      */
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public snapshot(tagMessage: string = ""): Promise<void> {
         return this.runtime.snapshot(tagMessage);
     }
@@ -193,6 +193,7 @@ export class Document extends EventEmitter {
     /**
      * Closes the document and detaches all listeners
      */
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public close() {
         return this.runtime.close();
     }
@@ -205,6 +206,7 @@ export class Document extends EventEmitter {
         return this.runtime.getBlob(blobId);
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public getBlobMetadata(): Promise<IGenericBlob[]> {
         return this.runtime.getBlobMetadata();
     }

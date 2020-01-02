@@ -63,7 +63,7 @@ class HtmlFormatter extends RootFormatter<IFormatterState> {
             default:
                 assert.fail(`Unhandled DocSegmentKind '${kind}' @${layout.position}`);
         }
-        /* eslint-disable @typescript-eslint/indent */
+        /* eslint-enable @typescript-eslint/indent */
     }
 
     public onChange() { }
@@ -156,6 +156,7 @@ class TagsFormatter extends Formatter<ITagsState> {
         const segment = layout.segment;
         const kind = getDocSegmentKind(segment);
 
+        /* eslint-disable @typescript-eslint/indent */
         switch (kind) {
             case DocSegmentKind.text: {
                 layout.emitText((segment as TextSegment).text);
@@ -189,6 +190,7 @@ class TagsFormatter extends Formatter<ITagsState> {
                 layout.popFormat();
                 return { state, consumed: false };
         }
+        /* eslint-enable @typescript-eslint/indent */
     }
 
     public end(layout: Layout, state: Readonly<ITagsState>) {
@@ -220,6 +222,7 @@ class ParagraphFormatter extends Formatter<IParagraphState> {
         const segment = layout.segment;
         const kind = getDocSegmentKind(segment);
 
+        /* eslint-disable @typescript-eslint/indent */
         switch (kind) {
             case DocSegmentKind.text: {
                 layout.pushFormat(textFormatter, emptyObject);
@@ -252,6 +255,7 @@ class ParagraphFormatter extends Formatter<IParagraphState> {
                 layout.popFormat();
                 return { state, consumed: false };
         }
+        /* eslint-enable @typescript-eslint/indent */
     }
 
     public end(layout: Layout, state: Readonly<IParagraphState>) {
@@ -277,6 +281,7 @@ class TextFormatter extends Formatter<ITextState> {
         const segment = layout.segment;
         const kind = getDocSegmentKind(segment);
 
+        /* eslint-disable @typescript-eslint/indent */
         switch (kind) {
             case DocSegmentKind.text: {
                 if (!sameCss(segment, state.css)) {
@@ -292,6 +297,7 @@ class TextFormatter extends Formatter<ITextState> {
                 layout.popFormat();
                 return { state, consumed: false };
         }
+        /* eslint-enable @typescript-eslint/indent */
     }
 
     public end(layout: Layout, state: Readonly<ITextState>) {

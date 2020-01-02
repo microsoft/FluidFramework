@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable */
+/* eslint-disable eqeqeq, object-shorthand */
 
 import * as Base from "./base";
 import * as MergeTree from "./mergeTree";
@@ -336,8 +336,8 @@ export function LinearDictionary<TKey, TData>(compareKeys: Base.KeyComparer<TKey
         remove: remove,
         get: get,
         put: put,
-        diag: diag
-    }
+        diag: diag,
+    };
 }
 
 export const enum RBColor {
@@ -429,8 +429,11 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
         return results;
     }
 
-    nodeGather(node: RBNode<TKey, TData>, results: RBNode<TKey, TData>[],
-        key: TKey, matcher: IRBMatcher<TKey, TData>) {
+    nodeGather(
+        node: RBNode<TKey, TData>,
+        results: RBNode<TKey, TData>[],
+        key: TKey,
+        matcher: IRBMatcher<TKey, TData>) {
         if (node) {
             if (matcher.continueSubtree(node.left, key)) {
                 this.nodeGather(node.left, results, key, matcher);
@@ -846,8 +849,12 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
         return go;
     }
 
-    nodeMap<TAccum>(node: RBNode<TKey, TData>, action: Base.PropertyAction<TKey, TData>,
-        accum?: TAccum, start?: TKey, end?: TKey) {
+    nodeMap<TAccum>(
+        node: RBNode<TKey, TData>,
+        action: Base.PropertyAction<TKey, TData>,
+        accum?: TAccum,
+        start?: TKey,
+        end?: TKey) {
         if (!node) {
             return true;
         }
@@ -892,7 +899,7 @@ export interface AugmentedIntervalNode {
 export function integerRangeUnion(a: Base.IIntegerRange, b: Base.IIntegerRange) {
     return <Base.IIntegerRange>{
         start: Math.min(a.start, b.start),
-        end: Math.max(a.end, b.end)
+        end: Math.max(a.end, b.end),
     };
 }
 
@@ -1279,8 +1286,13 @@ export class TST<T> {
         }
     }
 
-    nodeProximity(x: TSTNode<T>, prefix: TSTPrefix, d: number,
-                  pattern: string, distance: number, q: ProxString<T>[]) {
+    nodeProximity(
+        x: TSTNode<T>,
+        prefix: TSTPrefix,
+        d: number,
+        pattern: string,
+        distance: number,
+        q: ProxString<T>[]) {
         if ((x === undefined) || (distance < 0)) {
             return;
         }

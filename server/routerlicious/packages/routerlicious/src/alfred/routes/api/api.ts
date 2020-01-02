@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/no-use-before-define */
+
 import { fromUtf8ToBase64 } from "@microsoft/fluid-core-utils";
 import * as git from "@microsoft/fluid-gitresources";
 import { IClient, IClientJoin, ITokenClaims, ScopeType } from "@microsoft/fluid-protocol-definitions";
@@ -21,8 +23,6 @@ import {
     IBlobData,
     IMapSetOperation,
 } from "./restHelper";
-
-/* eslint-disable @typescript-eslint/no-use-before-define */
 
 export function create(
     config: Provider,
