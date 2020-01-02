@@ -46,14 +46,14 @@ export class OdspNetworkError extends NetworkError {
 /**
  * Returns network error based on error object from ODSP socket (IOdspSocketError)
  */
-export function errorObjectFromOdspError(socketError: IOdspSocketError) {
+export function errorObjectFromOdspError(socketError: IOdspSocketError, canRetry: boolean) {
     if (socketError.retryAfter) {
         return new ThrottlingError(socketError.message, ErrorOrWarningType.throttling, socketError.retryAfter);
     } else {
         return new OdspNetworkError(
             socketError.message,
             socketError.code,
-            socketErrorRetryFilter(socketError.code),
+            canRetry,
         );
     }
 }

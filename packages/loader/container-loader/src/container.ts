@@ -261,6 +261,14 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         if (!this._deltaManager) {
             throw new Error("Can't set autoReconnect prior to load");
         }
+
+        this.logger.sendTelemetryEvent({
+            eventName: "AutoReconnect",
+            value,
+            connectionMode: this._deltaManager!.connectionMode,
+            connectionState: ConnectionState[this.connectionState],
+        });
+
         this._deltaManager.autoReconnect = value;
     }
 
@@ -331,14 +339,14 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return super.on(event, listener);
     }
 
-    public close() {
+    public close(reason?: string) {
         if (this._closed) {
             return;
         }
         this._closed = true;
 
         if (this._deltaManager) {
-            this._deltaManager.close();
+            this._deltaManager.close(reason ? new Error(reason) : undefined, false /*raiseContainerError*/);
         }
 
         if (this.protocolHandler) {
@@ -969,7 +977,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             connectionMode = this._deltaManager!.connectionMode;
             if (value === ConnectionState.Connected) {
                 durationFromDisconnected = time - this.connectionTransitionTimes[ConnectionState.Disconnected];
-                this.firstConnection = false;
+                durationFromDisconnected = TelemetryLogger.formatTick(durationFromDisconnected);
             }
             if (this.firstConnection) {
                 connectionInitiationReason = "InitialConnect";
@@ -1166,7 +1174,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             (type, contents) => this.submitMessage(type, contents),
             (message) => this.submitSignal(message),
             (message) => this.snapshot(message),
-            () => this.close(),
+            (reason?: string) => this.close(reason),
             Container.version,
         );
 

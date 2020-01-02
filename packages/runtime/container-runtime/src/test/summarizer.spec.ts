@@ -124,9 +124,9 @@ describe("Runtime", () => {
                 }
 
                 async function flushPromises(count: number = 1) {
-                    for (let i = 0; i < count; i++) {
-                        await Promise.resolve();
-                    }
+                    const p = new Promise((resolve) => setTimeout(() => { resolve(); }, 0));
+                    clock.tick(0);
+                    return p;
                 }
 
                 it("Should summarize after configured number of ops when not pending", async () => {

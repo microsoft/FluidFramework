@@ -131,7 +131,7 @@ export class ProtocolOpHandler {
                 const ack = message.contents as ISummaryAck;
                 this.logger.sendTelemetryEvent({
                     eventName: "SummaryAck",
-                    message: `handle: ${ack.handle}`,
+                    handle: ack.handle,
                     sequenceNumber: message.sequenceNumber,
                     summarySequenceNumber: ack.summaryProposal.summarySequenceNumber,
                 });
@@ -141,7 +141,7 @@ export class ProtocolOpHandler {
                 const nack = message.contents as ISummaryNack;
                 this.logger.sendTelemetryEvent({
                     eventName: "SummaryNack",
-                    message: nack.errorMessage,
+                    error: nack.errorMessage,
                     sequenceNumber: message.sequenceNumber,
                     summarySequenceNumber: nack.summaryProposal.summarySequenceNumber,
                 });

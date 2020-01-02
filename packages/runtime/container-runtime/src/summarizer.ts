@@ -80,7 +80,7 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
             reason,
         });
         this.runCoordinator.stop();
-        this.runtime.closeFn();
+        this.runtime.closeFn(`Summarizer: ${reason}`);
     }
 
     public async request(request: IRequest): Promise<IResponse> {
@@ -98,7 +98,7 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
         if (startResult.started === false) {
             this.logger.sendTelemetryEvent({
                 eventName: "NotStarted",
-                message: startResult.message,
+                error: startResult.message,
                 onBehalfOf,
             });
             return;
@@ -387,7 +387,7 @@ export class RunningSummarizer implements IDisposable {
     private async summarize(reason: string) {
         // wait to generate and send summary
         const summaryData = await this.generateSummaryWithLogging(reason);
-        if (!summaryData.submitted) {
+        if (!summaryData || !summaryData.submitted) {
             // did not send the summary op
             return;
         }
@@ -424,7 +424,7 @@ export class RunningSummarizer implements IDisposable {
             category: ackNack.type === MessageType.SummaryAck ? "generic" : "error",
             timeWaiting: Date.now() - this.heuristics.lastSent.summaryTime,
             summarySequenceNumber: ackNack.contents.summaryProposal.summarySequenceNumber,
-            message: ackNack.type === MessageType.SummaryNack ? ackNack.contents.errorMessage : undefined,
+            error: ackNack.type === MessageType.SummaryNack ? ackNack.contents.errorMessage : undefined,
             handle: ackNack.type === MessageType.SummaryAck ? ackNack.contents.handle : undefined,
         });
 
@@ -448,7 +448,7 @@ export class RunningSummarizer implements IDisposable {
         try {
             summaryData = await this.generateSummary();
         } catch (error) {
-            summarizingEvent.cancel({}, error);
+            summarizingEvent.cancel({ category: "error" }, error);
             return;
         }
 

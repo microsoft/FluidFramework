@@ -381,7 +381,14 @@ export class DebugLogger extends TelemetryLogger {
         propertyGetters?: ITelemetryPropertyGetters): TelemetryLogger {
         // setup base logger upfront, such that host can disable it (if needed)
         const debug = registerDebug(namespace);
-        debug.enabled = true;
+        // Observations:
+        // For browser to print these messages to console, logger should be enabled here in addition
+        // to localStorage including namespace mask.
+        // But for node applications, there is no localStorage, and setting enabled to true always prints
+        // all messages, which we do not want.
+        if (typeof localStorage === "object" && localStorage) {
+            debug.enabled = true;
+        }
 
         const debugErr = registerDebug(namespace);
         debugErr.log = console.error.bind(console);
