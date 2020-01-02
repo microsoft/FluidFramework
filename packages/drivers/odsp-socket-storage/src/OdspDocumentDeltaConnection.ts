@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
-import { TelemetryNullLogger } from "@microsoft/fluid-core-utils";
+import { TelemetryNullLogger, ThrottlingError } from "@microsoft/fluid-core-utils";
 import { DocumentDeltaConnection, IConnect } from "@microsoft/fluid-driver-base";
 import {
     ConnectionMode,
@@ -200,7 +200,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
     private static removeSocketIoReference(
             key: string,
             isFatalError: boolean,
-            reason: string | OdspNetworkError) {
+            reason: string | OdspNetworkError | ThrottlingError) {
         const socketReference = OdspDocumentDeltaConnection.socketIoSockets.get(key);
         if (!socketReference) {
             // this is expected to happen if we removed the reference due the socket not being connected
