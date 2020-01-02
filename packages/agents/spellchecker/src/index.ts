@@ -18,8 +18,8 @@ export interface ISpellChecker extends IProvideSpellChecker {
 }
 
 declare module "@microsoft/fluid-component-core-interfaces" {
-    export interface IComponent extends Readonly<Partial<IProvideSpellChecker>> {
-    }
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface IComponent extends Readonly<Partial<IProvideSpellChecker>> { }
 }
 
 export class SpellChecker implements IComponentRouter, ISpellChecker {

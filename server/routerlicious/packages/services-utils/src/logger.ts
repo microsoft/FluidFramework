@@ -18,7 +18,7 @@ export interface IWinstonConfig {
  * Configures the default behavior of the Winston logger based on the provided config
  */
 export function configureLogging(config: IWinstonConfig) {
-    const formatters = [ winston.format.label({ label: config.label }) ];
+    const formatters = [winston.format.label({ label: config.label })];
 
     if (config.colorize) {
         formatters.push(winston.format.colorize());
@@ -46,10 +46,10 @@ export function configureLogging(config: IWinstonConfig) {
 
     // Forward all debug library logs through winston
     (debug as any).log = (msg, ...args) => winston.info(msg, ...args);
-    // override the default log format to not include the timestamp since winston will do this for us
-    // tslint:disable-next-line:only-arrow-functions
-    (debug as any).formatArgs = function(args) {
+    // Override the default log format to not include the timestamp since winston will do this for us
+    // eslint-disable-next-line space-before-function-paren
+    (debug as any).formatArgs = function (args) {
         const name = this.namespace;
-        args[0] = name + " " + args[0];
+        args[0] = `${name} ${args[0]}`;
     };
 }

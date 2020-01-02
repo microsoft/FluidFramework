@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { MongoManager } from "@microsoft/fluid-server-services-core";
 import * as assert from "assert";
 import { EventEmitter } from "events";
+import { MongoManager } from "@microsoft/fluid-server-services-core";
 import { IConcreteNode } from "./interfaces";
 import { RemoteNode } from "./remoteNode";
 
@@ -14,13 +14,13 @@ import { RemoteNode } from "./remoteNode";
  */
 export class NodeManager extends EventEmitter {
     // Every node we have ever loaded
-    private nodes = new Map<string, IConcreteNode>();
+    private readonly nodes = new Map<string, IConcreteNode>();
     // Nodes we are attempting to load
-    private pendingNodes = new Map<string, Promise<IConcreteNode>>();
+    private readonly pendingNodes = new Map<string, Promise<IConcreteNode>>();
 
     constructor(
-        private mongoManager: MongoManager,
-        private nodeCollectionName: string) {
+        private readonly mongoManager: MongoManager,
+        private readonly nodeCollectionName: string) {
         super();
     }
 
@@ -40,6 +40,7 @@ export class NodeManager extends EventEmitter {
     /**
      * Loads the given remote node with the provided ID
      */
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public loadRemote(id: string): Promise<IConcreteNode> {
         // Return immediately if have the resolved value
         if (this.nodes.has(id)) {

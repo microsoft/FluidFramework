@@ -5,11 +5,12 @@
 import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
 
 declare module "@microsoft/fluid-component-core-interfaces" {
-  export interface IComponent extends Readonly<Partial<IProvideComponentClipboardConsumer>> {}
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface IComponent extends Readonly<Partial<IProvideComponentClipboardConsumer>> { }
 }
 
 export interface IProvideComponentClipboardConsumer {
-  readonly IComponentClipboardConsumer: IComponentClipboardConsumer;
+    readonly IComponentClipboardConsumer: IComponentClipboardConsumer;
 }
 
 /**
@@ -28,14 +29,14 @@ export interface IProvideComponentClipboardConsumer {
  * Disclaimer: These interfaces are experimental and are subject to change.
  */
 export interface IComponentClipboardConsumer extends IProvideComponentClipboardConsumer {
-  /**
+    /**
    * Provide an alternate component identifier to be instantiated during the paste operation.
    * @alpha
    * @param targetContext - IComponentContext of the target
    * @param clipboardHTML - the html string that serialized by the component to the system clipboard.
    */
-  getComponentFromClipboardHTML(
-    targetContext: IComponentContext,
-    clipboardHTML: string | undefined,
-  ): Promise<string | undefined>;
+    getComponentFromClipboardHTML(
+        targetContext: IComponentContext,
+        clipboardHTML: string | undefined,
+    ): Promise<string | undefined>;
 }

@@ -20,13 +20,13 @@ interface IPartitionRange {
 export class PartitionManager {
     private checkpointing = false;
     // Stores the processed offset for each partition.
-    private partitionMap: { [key: string]: IPartitionRange} = {};
+    private partitionMap: { [key: string]: IPartitionRange } = {};
     private lastCheckpointTimestamp: number = 0;
 
     constructor(
-        private consumer: IConsumer,
-        private batchSize: number,
-        private checkPointInterval: number) {
+        private readonly consumer: IConsumer,
+        private readonly batchSize: number,
+        private readonly checkPointInterval: number) {
     }
 
     /**
@@ -51,8 +51,7 @@ export class PartitionManager {
                 this.lastCheckpointTimestamp = Date.now();
                 // Recursive call to trigger another round.
                 this.checkPoint();
-            },
-            (error) => {
+            }, (error) => {
                 debug(`${this.consumer.groupId}: Error checkpointing kafka offset: ${JSON.stringify(error)}`);
                 this.checkpointing = false;
                 // Triggering another round.
@@ -65,7 +64,7 @@ export class PartitionManager {
      */
     public update(partition: string, offset: string) {
         if (!(partition in this.partitionMap)) {
-            this.partitionMap[partition] = {latestOffset: Number(offset), checkpointedOffset: -1};
+            this.partitionMap[partition] = { latestOffset: Number(offset), checkpointedOffset: -1 };
         } else {
             this.partitionMap[partition].latestOffset = Number(offset);
         }
@@ -73,6 +72,7 @@ export class PartitionManager {
     /**
      * Implements checkpointing kafka offsets.
      */
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     private checkPointCore(): Promise<void> {
         return new Promise<any>((resolve, reject) => {
             const commitDetails = [];

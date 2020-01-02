@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/promise-function-async */
+
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import {
     ICreateBlobResponse,

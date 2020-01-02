@@ -13,7 +13,7 @@ import { CharacterCodes } from "./characterCodes";
 
 export const cursorTex = " \\textcolor{#800080}{\\vert}";
 export const cursorColor = "rgb(128, 0, 128)";
-export const boxEmptyParam = (viewText: string) => viewText.replace(/\{\}/g, "{\\Box}");
+export const boxEmptyParam = (viewText: string) => viewText.replace(/{}/g, "{\\Box}");
 
 export enum MathTokenType {
     Variable,

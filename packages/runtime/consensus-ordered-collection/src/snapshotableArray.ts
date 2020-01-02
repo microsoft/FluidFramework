@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import { fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
 import { FileMode, ITree, TreeEntry } from "@microsoft/fluid-protocol-definitions";
 import { IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
 import { SharedObject, ValueType } from "@microsoft/fluid-shared-object-base";
-import * as assert from "assert";
 import { IConsensusOrderedCollectionValue } from "./values";
 
 /**
@@ -47,6 +47,7 @@ export class SnapshotableArray<T> extends Array {
                     },
                 },
             ],
+            // eslint-disable-next-line no-null/no-null
             id: null,
         };
 
@@ -60,24 +61,25 @@ export class SnapshotableArray<T> extends Array {
         assert(this.data.length === 0, "Loading snapshot into a non-empty collection");
         const rawContent = await storage.read(snapshotFileName);
 
-        // tslint:disable-next-line:strict-boolean-expressions
         if (rawContent) {
             const values = JSON.parse(fromBase64ToUtf8(rawContent)) as IConsensusOrderedCollectionValue[];
 
             for (const item of values) {
+                /* eslint-disable @typescript-eslint/indent */
                 switch (item.type) {
                     case ValueType[ValueType.Plain]:
-                        // assuming type T
+                        // Assuming type T
                         this.data.push(item.value as T);
                         break;
                     case ValueType[ValueType.Shared]:
                         const channel = await runtime.getChannel(item.value as string);
-                        // assuming type T
+                        // Assuming type T
                         this.data.push(channel as unknown as T);
                         break;
                     default:
                         assert(false, "Invalid value type");
                 }
+                /* eslint-enable @typescript-eslint/indent */
             }
         }
     }

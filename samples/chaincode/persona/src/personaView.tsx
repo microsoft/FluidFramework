@@ -5,20 +5,21 @@
 
 import { IComponentHTMLOptions, IComponentHTMLView } from "@microsoft/fluid-component-core-interfaces";
 import { IDirectory } from "@microsoft/fluid-map";
-import { mergeStyles } from 'office-ui-fabric-react';
-import { Persona, PersonaPresence } from 'office-ui-fabric-react/lib/Persona';
-import * as React from 'react';
-import * as ReactDOM from 'react-dom';
+import { mergeStyles } from "office-ui-fabric-react";
+// eslint-disable-next-line import/no-internal-modules
+import { Persona, PersonaPresence } from "office-ui-fabric-react/lib/Persona";
+import * as React from "react";
+import * as ReactDOM from "react-dom";
 
 // Inject some global styles
 mergeStyles({
     selectors: {
-        ':global(body), :global(html), :global(#app)': {
+        ":global(body), :global(html), :global(#app)": {
             margin: 0,
             padding: 0,
-            height: '100vh'
-        }
-    }
+            height: "100vh",
+        },
+    },
 });
 
 interface IPersonaReactComponentProps {
@@ -27,7 +28,7 @@ interface IPersonaReactComponentProps {
     mobilePhone: string;
 }
 
-export class PersonaReactComponent extends React.Component<IPersonaReactComponentProps, {}> {
+export class PersonaReactComponent extends React.Component<IPersonaReactComponentProps> {
     public render(): JSX.Element {
         return (
             <div className="ms-Grid" dir="ltr">
@@ -42,7 +43,7 @@ export class PersonaReactComponent extends React.Component<IPersonaReactComponen
 }
 
 export class PersonaView implements IComponentHTMLView {
-    constructor(private directory: IDirectory, public remove: () => void) {
+    constructor(private readonly directory: IDirectory, public remove: () => void) {
     }
 
     public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {

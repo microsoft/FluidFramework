@@ -3,13 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import * as cell from "@microsoft/fluid-cell";
 import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
 import {
     IDeltaManager,
     IGenericBlob,
     IHost,
-    IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
+    IProxyLoaderFactory,
+} from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
 import { IContainerRuntimeOptions } from "@microsoft/fluid-container-runtime";
 import { Deferred } from "@microsoft/fluid-core-utils";
@@ -24,11 +26,10 @@ import {
 import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
 import * as sequence from "@microsoft/fluid-sequence";
 import { ISharedObject } from "@microsoft/fluid-shared-object-base";
-import { EventEmitter } from "events";
 import { CodeLoader } from "./codeLoader";
 import { debug } from "./debug";
 
-// tslint:disable-next-line:no-var-requires no-require-imports no-unsafe-any
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const apiVersion = require("../../package.json").version;
 
 // Registered services to use when loading a document
@@ -43,18 +44,14 @@ export function registerDocumentServiceFactory(service: IDocumentServiceFactory)
     defaultDocumentServiceFactory = service;
 }
 
-export function getDefaultDocumentServiceFactory(): IDocumentServiceFactory {
-    return defaultDocumentServiceFactory;
-}
+export const getDefaultDocumentServiceFactory = (): IDocumentServiceFactory => defaultDocumentServiceFactory;
 
 let chaincodeRepo: string;
 export function registerChaincodeRepo(repo: string) {
     chaincodeRepo = repo;
 }
 
-export function getChaincodeRepo(): string {
-    return chaincodeRepo;
-}
+export const getChaincodeRepo = (): string => chaincodeRepo;
 // End temporary calls
 
 /**
@@ -81,7 +78,6 @@ export class Document extends EventEmitter {
         return this.runtime.existing;
     }
 
-    /* tslint:disable:no-unsafe-any */
     public get options(): any {
         return this.runtime.options;
     }
@@ -181,14 +177,15 @@ export class Document extends EventEmitter {
         return quorum.getMember(clientId);
     }
 
-    /* tslint:disable:promise-function-async */
     /**
      * Called to snapshot the given document
      */
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public snapshot(tagMessage: string = ""): Promise<void> {
         return this.runtime.snapshot(tagMessage);
     }
 
+    // eslint-disable-next-line no-null/no-null
     public save(tag: string = null) {
         this.runtime.save(tag);
     }
@@ -196,6 +193,7 @@ export class Document extends EventEmitter {
     /**
      * Closes the document and detaches all listeners
      */
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public close() {
         return this.runtime.close();
     }
@@ -208,6 +206,7 @@ export class Document extends EventEmitter {
         return this.runtime.getBlob(blobId);
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public getBlobMetadata(): Promise<IGenericBlob[]> {
         return this.runtime.getBlobMetadata();
     }
@@ -218,7 +217,6 @@ async function initializeChaincode(container: Container, pkg: string): Promise<v
 
     // Wait for connection so that proposals can be sent
     if (!container.connected) {
-        // tslint:disable-next-line
         await new Promise<void>((resolve) => container.on("connected", () => resolve()));
     }
 
@@ -257,7 +255,7 @@ async function requestDocument(loader: Loader, container: Container, uri: string
         attach(loader, uri, deferred);
     });
 
-    // tslint:disable-next-line: no-floating-promises
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     deferred.promise.finally(() => container.removeListener("error", errorHandler));
     return deferred.promise;
 }

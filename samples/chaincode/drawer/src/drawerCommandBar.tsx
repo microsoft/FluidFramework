@@ -3,14 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import * as React from 'react';
+import * as React from "react";
 
-import { CommandBar, ICommandBarItemProps } from 'office-ui-fabric-react/lib/CommandBar';
-import { ContextualMenuItemType, IContextualMenuItem } from 'office-ui-fabric-react/lib/ContextualMenu';
-import { IDocumentFactory } from '@microsoft/fluid-host-service-interfaces';
-import { IFluidCodeDetails } from '@microsoft/fluid-container-definitions';
-import { ISharedMap } from '@microsoft/fluid-map';
-import { IComponentContext } from '@microsoft/fluid-runtime-definitions';
+// eslint-disable-next-line import/no-internal-modules
+import { CommandBar, ICommandBarItemProps } from "office-ui-fabric-react/lib/CommandBar";
+// eslint-disable-next-line import/no-internal-modules
+import { ContextualMenuItemType, IContextualMenuItem } from "office-ui-fabric-react/lib/ContextualMenu";
+import { IDocumentFactory } from "@microsoft/fluid-host-service-interfaces";
+import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
+import { ISharedMap } from "@microsoft/fluid-map";
+import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
 
 interface IDrawerCommandBarProps {
     context: IComponentContext;
@@ -19,15 +21,15 @@ interface IDrawerCommandBarProps {
     documentsMap: ISharedMap;
 }
 
-export class DrawerCommandBar extends React.Component<IDrawerCommandBarProps, {}> {
+export class DrawerCommandBar extends React.Component<IDrawerCommandBarProps> {
     public render(): JSX.Element {
         return (
             <div>
                 <CommandBar
                     items={this.getItems()}
-                    overflowButtonProps={{ ariaLabel: 'More commands' }}
+                    overflowButtonProps={{ ariaLabel: "More commands" }}
                     farItems={this.getFarItems()}
-                    ariaLabel={'Use left and right arrow keys to navigate between commands'}
+                    ariaLabel={"Use left and right arrow keys to navigate between commands"}
                 />
             </div>
         );
@@ -51,65 +53,62 @@ export class DrawerCommandBar extends React.Component<IDrawerCommandBarProps, {}
     }
 
     // Data for CommandBar
-    private getItems = () => {
-        const items: IContextualMenuItem[] = this.props.packages.map((value) => {
-            return {
-                key: value.pkg,
-                name: value.name,
-                iconProps: {
-                    iconName: value.icon,
-                },
-                onClick: () => {
-                    this.createDocument(value);
-                },
-            }
-        });
+    private readonly getItems = () => {
+        const items: IContextualMenuItem[] = this.props.packages.map((value) => ({
+            key: value.pkg,
+            name: value.name,
+            iconProps: {
+                iconName: value.icon,
+            },
+            onClick: () => {
+                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                this.createDocument(value);
+            },
+        }));
 
         items.splice(
             1,
             0,
             {
-                key: 'divider_1',
+                key: "divider_1",
                 itemType: ContextualMenuItemType.Divider,
             });
 
         const result: ICommandBarItemProps[] = [
             {
-                key: 'newItem',
-                name: 'New',
-                cacheKey: 'myCacheKey', // changing this key will invalidate this items cache
+                key: "newItem",
+                name: "New",
+                cacheKey: "myCacheKey", // Changing this key will invalidate this items cache
                 iconProps: {
-                    iconName: 'Add'
+                    iconName: "Add",
                 },
-                ariaLabel: 'New',
+                ariaLabel: "New",
                 subMenuProps: {
-                    items
+                    items,
                 },
             },
             {
-                key: 'share',
-                name: 'Share',
+                key: "share",
+                name: "Share",
                 iconProps: {
-                    iconName: 'Share'
+                    iconName: "Share",
                 },
-                onClick: () => console.log('Share')
+                onClick: () => console.log("Share"),
             }];
 
         return result;
     };
 
-    private getFarItems = () => {
-        return [
-            {
-                key: 'info',
-                name: 'Info',
-                ariaLabel: 'Info',
-                iconProps: {
-                    iconName: 'Info'
-                },
-                iconOnly: true,
-                onClick: () => console.log('Info')
-            }
-        ];
-    };
+    private readonly getFarItems = () => [
+        {
+            key: "info",
+            name: "Info",
+            ariaLabel: "Info",
+            iconProps: {
+                iconName: "Info",
+            },
+            iconOnly: true,
+            onClick: () => console.log("Info"),
+        },
+    ];
 }

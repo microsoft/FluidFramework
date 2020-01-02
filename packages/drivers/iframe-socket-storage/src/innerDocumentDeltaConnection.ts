@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import { Deferred } from "@microsoft/fluid-core-utils";
 import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
 import {
@@ -17,7 +18,6 @@ import {
     ITokenClaims,
 } from "@microsoft/fluid-protocol-definitions";
 import * as Comlink from "comlink";
-import { EventEmitter } from "events";
 
 export interface IOuterDocumentDeltaConnectionProxy {
     handshake: Deferred<any>;
@@ -200,7 +200,7 @@ export class InnerDocumentDeltaConnection extends EventEmitter implements IDocum
      * @param message - delta operation to submit
      */
     public submit(messages: IDocumentMessage[]): void {
-        // tslint:disable-next-line: no-floating-promises
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.outerProxy.submit(messages);
     }
 
@@ -209,7 +209,7 @@ export class InnerDocumentDeltaConnection extends EventEmitter implements IDocum
      *
      * @param message - message to submit
      */
-    public async submitAsync(messages: IDocumentMessage[]): Promise < void > {
+    public async submitAsync(messages: IDocumentMessage[]): Promise<void> {
         return this.outerProxy.submit(messages);
     }
 
@@ -219,7 +219,7 @@ export class InnerDocumentDeltaConnection extends EventEmitter implements IDocum
      * @param message - signal to submit
      */
     public submitSignal(message: IDocumentMessage): void {
-        // tslint:disable-next-line: no-floating-promises
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.outerProxy.submitSignal(message);
     }
 

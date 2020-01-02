@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import { IDisposable } from "@microsoft/fluid-common-definitions";
 import {
     ConnectionMode,
@@ -16,7 +17,6 @@ import {
     ITokenClaims,
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
-import { EventEmitter } from "events";
 
 export interface IConnectionDetails {
     clientId: string;
@@ -49,7 +49,8 @@ export interface IDeltaHandlerStrategy {
 }
 
 declare module "@microsoft/fluid-component-core-interfaces" {
-    interface IComponent extends Readonly<Partial<IProvideDeltaSender>> { }
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    interface IComponent extends Readonly<Partial<IProvideDeltaSender>>{ }
 }
 
 export interface IProvideDeltaSender {
@@ -74,7 +75,7 @@ export interface IDeltaManager<T, U> extends EventEmitter, IDeltaSender, IDispos
     // The queue of inbound delta messages
     inbound: IDeltaQueue<T>;
 
-    // the queue of outbound delta messages
+    // The queue of outbound delta messages
     outbound: IDeltaQueue<U[]>;
 
     // The queue of inbound delta signals
@@ -90,7 +91,7 @@ export interface IDeltaManager<T, U> extends EventEmitter, IDeltaSender, IDispos
     initialSequenceNumber: number;
 
     // DEPRECATED: use clientDetails.type instead
-    clientType: string; // back-compat: 0.11 clientType
+    clientType: string; // Back-compat: 0.11 clientType
 
     // Details of client
     clientDetails: IClientDetails;

@@ -8,11 +8,11 @@ import { ReplayArgs } from "./replayArgs";
 
 const optionsArray = [
     "Location:",
-        ["--indir <directory>", "Name of the directory containing the output of the fluid-fetch tool"],
+    ["--indir <directory>", "Name of the directory containing the output of the fluid-fetch tool"],
     "Misc:",
-        ["--testReconnect", "Simulates reconnect and rebuilding of pending changes"],
-        ["--quiet", "Reduces amount of output"],
-        ["--verbose", "Increases amount of output"],
+    ["--testReconnect", "Simulates reconnect and rebuilding of pending changes"],
+    ["--quiet", "Reduces amount of output"],
+    ["--verbose", "Increases amount of output"],
 ];
 
 /**
@@ -32,6 +32,7 @@ class ReplayProcessArgs extends ReplayArgs {
 
         for (let i = 2; i < process.argv.length; i++) {
             const arg = process.argv[i];
+            /* eslint-disable @typescript-eslint/indent */
             switch (arg.toLocaleLowerCase()) {
                 case "--indir":
                     i += 1;
@@ -55,6 +56,7 @@ class ReplayProcessArgs extends ReplayArgs {
                     this.printUsage();
                     process.exit(-1);
             }
+            /* eslint-enable @typescript-eslint/indent */
         }
     }
 

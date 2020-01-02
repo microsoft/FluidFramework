@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+
+import * as assert from "assert";
 import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
 import { ISequencedDocumentMessage, MessageType } from "@microsoft/fluid-protocol-definitions";
-import * as assert from "assert";
-
-// tslint:disable-next-line no-single-line-block-comment
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 /**
  * Wrapper interface holding snapshot details for a given op
@@ -95,7 +94,7 @@ export class Serializer {
 
         // If we were able to snapshot - or we failed but the snapshot wasn't required - then resume the inbound
         // message flow. Otherwise attempt the snapshot again
-        // tslint:disable-next-line: no-floating-promises
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         snapshotP.then(async (success) => {
             if (!success && required) {
                 this.retryTimer = setTimeout(() => this.snapshot(message, required), this.retryTime);

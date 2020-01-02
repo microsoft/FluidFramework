@@ -13,10 +13,10 @@ import { Badge } from "./index";
  * This is where you define all your Distributed Data Structures
  */
 export const BadgeInstantiationFactory = new PrimedComponentFactory(
-  Badge,
-  [
-    SharedMap.getFactory(),
-    SharedCell.getFactory(),
-    SharedObjectSequence.getFactory()
-  ]
+    Badge,
+    [
+        SharedMap.getFactory(),
+        SharedCell.getFactory(),
+        SharedObjectSequence.getFactory(),
+    ],
 );

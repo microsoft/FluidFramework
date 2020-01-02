@@ -4,7 +4,7 @@
  */
 
 export interface IGraphUser {
-    // general access to user data
+    // General access to user data
     [key: string]: any;
     businessPhones: string[];
     displayName: string;
@@ -28,6 +28,6 @@ export interface IMicrosoftGraph extends IProvideMicrosoftGraph {
 }
 
 declare module "@microsoft/fluid-component-core-interfaces" {
-    export interface IComponent extends Readonly<Partial<IProvideMicrosoftGraph>> {
-    }
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface IComponent extends Readonly<Partial<IProvideMicrosoftGraph>> { }
 }

@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { Direction } from "./";
 import { getTabDirection } from "./direction";
 import { IRect } from "./rect";
+import { Direction } from "./";
 
 export type ICaretBounds = Pick<IRect, "left" | "top" | "bottom">;
 
@@ -22,6 +22,7 @@ export const enum CaretEventType {
 }
 
 export namespace Caret {
+    // eslint-disable-next-line max-len
     function dispatchCaretEvent(type: CaretEventType, target: Element, direction: Direction, caretBounds: ICaretBounds) {
         return !(target.dispatchEvent(
             new CustomEvent(

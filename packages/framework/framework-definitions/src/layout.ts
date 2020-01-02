@@ -4,11 +4,14 @@
  */
 
 declare module "@microsoft/fluid-component-core-interfaces" {
+    /* eslint-disable @typescript-eslint/indent */
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IComponent extends Readonly<Partial<
-    IProvideComponentLayout
-    & IProvideComponentCursor
-    & IProvideComponentKeyHandlers>> {
+        IProvideComponentLayout
+        & IProvideComponentCursor
+        & IProvideComponentKeyHandlers>> {
     }
+    /* eslint-enable @typescript-eslint/indent */
 }
 
 export interface IProvideComponentLayout {
@@ -48,7 +51,7 @@ export interface IProvideComponentCursor {
 export interface IComponentCursor extends IProvideComponentCursor {
     enter(direction: ComponentCursorDirection): void;
     leave(direction: ComponentCursorDirection): void;
-    // returns true if cursor leaves the component
+    // Returns true if cursor leaves the component
     fwd(): boolean;
     rev(): boolean;
 }
@@ -57,7 +60,7 @@ export interface IProvideComponentKeyHandlers {
     readonly IComponentKeyHandlers: IComponentKeyHandlers;
 }
 
-// used when another component will forward keyboard events to this component
+// Used when another component will forward keyboard events to this component
 export interface IComponentKeyHandlers extends IProvideComponentKeyHandlers {
     onKeypress(e: KeyboardEvent): void;
     onKeydown(e: KeyboardEvent): void;

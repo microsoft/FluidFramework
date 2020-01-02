@@ -44,7 +44,7 @@ export class RateLimiter extends EventEmitter {
         });
 
         // Finally clause to start running tasks again once we finish
-        // tslint:disable-next-line: no-floating-promises
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         completeP.then(() => {
             this.running = false;
             this.emit("done");

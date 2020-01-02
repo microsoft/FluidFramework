@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import { ISequencedDocumentMessage, ITree, MessageType } from "@microsoft/fluid-protocol-definitions";
 import { IChannelAttributes, IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
 import { SharedObject, ValueType } from "@microsoft/fluid-shared-object-base";
-import * as assert from "assert";
 import { debug } from "./debug";
 import { IConsensusOrderedCollection, IOrderedCollection } from "./interfaces";
 import { IConsensusOrderedCollectionValue } from "./values";
@@ -133,7 +133,7 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
         // eslint-disable-next-line no-constant-condition
         while (true) {
             if (this.data.size() === 0) {
-                // wait for new entry before trying to remove again
+                // Wait for new entry before trying to remove again
                 await new Promise((resolve, reject) => {
                     this.once("add", resolve);
                 });
@@ -145,7 +145,7 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
                 return removeFullResult.value;
             }
 
-            // the collection is empty, try again
+            // The collection is empty, try again
         }
     }
 
@@ -172,6 +172,7 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
         if (message.type === MessageType.Operation) {
             const op: IConsensusOrderedCollectionOperation = message.contents;
             let value;
+            /* eslint-disable @typescript-eslint/indent */
             switch (op.opName) {
                 case "add":
                     this.addCore(op.value.value);
@@ -185,6 +186,7 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
                 default:
                     throw new Error("Unknown operation");
             }
+            /* eslint-enable @typescript-eslint/indent */
             // If it is local operation, resolve the promise.
             if (local) {
                 this.processLocalMessage(message, value);
@@ -199,7 +201,7 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
      * @param value - the value related to the operation
      */
     private processLocalMessage(message: ISequencedDocumentMessage, value: any) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/tslint/config
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const pending = this.promiseResolveQueue.shift()!;
         assert(pending);
         assert(message.contents.opName === pending.message.opName);
@@ -214,8 +216,6 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
         assert(!this.isLocal());
 
         const clientSequenceNumber = this.submitLocalMessage(message);
-        // False positive - tslint couldn't track that the promise is stored in promiseResolveQueue and resolved later
-        // tslint:disable:promise-must-complete
         return new Promise((resolve, reject) => {
             // Note that clientSequenceNumber and message is only used for asserts and isn't strictly necessary.
             this.promiseResolveQueue.push({ resolve, clientSequenceNumber, message });
@@ -230,7 +230,7 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
     private removeCore(): T {
         // Caller should check if it is empty first
         assert(this.data.size() !== 0);
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/tslint/config
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const value = this.data.remove()!;
 
         // Note remove event only fires if there are value removed

@@ -43,7 +43,7 @@ export const getColorForMember = (sc: ISequencedClient) => {
     // Support 20 unique colors
     const colorNumber = sc.sequenceNumber % 20;
     // Spread them through the hue range with an overflow so the first few authors are likely
-    // To have very different colors
+    // to have very different colors
     return `hsl(${(colorNumber * 360 / 7) % 360}, 100%, 35%)`;
 };
 
@@ -80,7 +80,7 @@ export class MemberList extends React.Component<IProps, IState> {
                 .getMembers()
                 .entries(),
         )
-            .filter(([id, sc]) => this.knownHumanMemberIds.has(id))
+      .filter(([id, _]) => this.knownHumanMemberIds.has(id))
             .map(([id, sc]) => {
                 let name: string = (sc.client.user as any).displayName || (sc.client.user as any).name;
                 let initials: string;

@@ -20,7 +20,7 @@ export function lis(x: number[]): number[] {
     // Note that there may be multiple increasing subsequences of length 'j'.  The always algorithm
     // maintains the m[j] that terminates the subsequence with the smallest value of x[m[j]] found so
     // far.
-    const m = [ 0 ];
+    const m = [0];
 
     // p[k] stores the index of the predecessor of x[k] in the longest increasing subsequence ending at x[k].
     const p = new Array<number>(x.length);
@@ -44,7 +44,7 @@ export function lis(x: number[]): number[] {
         {
             let hi = m.length - 1;
             while (lo < hi) {
-                // tslint:disable-next-line:no-bitwise
+                // eslint-disable-next-line no-bitwise
                 const mid = (lo + hi) >>> 1;
                 if (x[m[mid]] < x[i]) {
                     lo = mid + 1;

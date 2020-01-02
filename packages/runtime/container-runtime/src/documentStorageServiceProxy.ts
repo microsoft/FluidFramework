@@ -28,6 +28,7 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
     ) {
     }
 
+    /* eslint-disable @typescript-eslint/promise-function-async */
     public getSnapshotTree(version?: IVersion): Promise<ISnapshotTree> {
         return this.storage.getSnapshotTree(version);
     }
@@ -65,4 +66,5 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
     public downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {
         return this.storage.downloadSummary(handle);
     }
+    /* eslint-enable @typescript-eslint/promise-function-async */
 }

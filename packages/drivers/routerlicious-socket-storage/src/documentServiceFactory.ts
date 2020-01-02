@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { parse } from "url";
 import {
     IDocumentService,
     IDocumentServiceFactory,
@@ -10,7 +11,6 @@ import {
 } from "@microsoft/fluid-driver-definitions";
 import { IErrorTrackingService } from "@microsoft/fluid-protocol-definitions";
 import { ICredentials, IGitCache } from "@microsoft/fluid-server-services-client";
-import { parse } from "url";
 import { DocumentService } from "./documentService";
 import { DocumentService2 } from "./documentService2";
 import { DefaultErrorTracking } from "./errorTracking";
@@ -38,9 +38,10 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
      * @param resolvedUrl - URL containing different endpoint URLs.
      * @returns Routerlicious document service.
      */
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
         if (resolvedUrl.type !== "fluid") {
-            // tslint:disable-next-line:max-line-length
+            // eslint-disable-next-line max-len
             return Promise.reject("Only Fluid components currently supported in the RouterliciousDocumentServiceFactory");
         }
 
@@ -49,14 +50,14 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         const ordererUrl = fluidResolvedUrl.endpoints.ordererUrl;
         const deltaStorageUrl = fluidResolvedUrl.endpoints.deltaStorageUrl;
         if (!ordererUrl || !deltaStorageUrl) {
-            // tslint:disable-next-line:max-line-length
+            // eslint-disable-next-line max-len
             return Promise.reject(`All endpoints urls must be provided. [ordererUrl:${ordererUrl}][deltaStorageUrl:${deltaStorageUrl}]`);
         }
 
         const parsedUrl = parse(fluidResolvedUrl.url);
         const [, tenantId, documentId] = parsedUrl.pathname!.split("/");
         if (!documentId || !tenantId) {
-            // tslint:disable-next-line:max-line-length
+            // eslint-disable-next-line max-len
             return Promise.reject(`Couldn't parse documentId and/or tenantId. [documentId:${documentId}][tenantId:${tenantId}]`);
         }
 

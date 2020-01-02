@@ -25,8 +25,8 @@ export class OdspUrlResolver implements IUrlResolver {
 }
 
 export function isOdspUrl(url: string) {
-    const regex = /(.*\.sharepoint(-df)*\.com)\/_api\/v2.1\/drives\/([^\/]*)\/items\/([^\/]*)/;
-    if (url.toLowerCase().match(regex) !== null) {
+    const regex = /(.*\.sharepoint(-df)*\.com)\/_api\/v2.1\/drives\/([^/]*)\/items\/([^/]*)/;
+    if (regex.exec(url.toLowerCase())) {
         return true;
     }
     return false;
@@ -37,9 +37,9 @@ async function initializeODSP(url: URL) {
     const pathname = url.pathname;
 
     // Joinsession like URL
-    const joinSessionMatch = pathname.match(
-        /(.*)\/_api\/v2.1\/drives\/([^\/]*)\/items\/([^\/]*)(.*)/);
+    const joinSessionMatch = /(.*)\/_api\/v2.1\/drives\/([^/]*)\/items\/([^/]*)(.*)/.exec(pathname);
 
+    // eslint-disable-next-line no-null/no-null
     if (joinSessionMatch === null) {
         return undefined;
     }

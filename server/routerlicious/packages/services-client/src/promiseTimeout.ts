@@ -8,13 +8,13 @@
 */
 export async function promiseTimeout(mSec: number, promise: Promise<any>): Promise<any> {
     const timeout = new Promise((resolve, reject) => {
-      const id = setTimeout(() => {
-        clearTimeout(id);
-        reject(`Timed out in ${mSec} milliseconds.`);
-      }, mSec);
+        const id = setTimeout(() => {
+            clearTimeout(id);
+            reject(`Timed out in ${mSec} milliseconds.`);
+        }, mSec);
     });
     return Promise.race([
-      promise,
-      timeout,
+        promise,
+        timeout,
     ]);
 }

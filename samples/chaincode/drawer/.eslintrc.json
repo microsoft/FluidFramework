@@ -1,6 +1,10 @@
 {
     "extends": [
-        "@microsoft/eslint-config-fluid"
+        "@microsoft/eslint-config-fluid/no-tslint"
     ],
-    "rules": {}
+    "rules": {
+        "@typescript-eslint/no-use-before-define": "off",
+        "@typescript-eslint/strict-boolean-expressions": "off",
+        "prefer-arrow/prefer-arrow-functions": "off"
+    }
 }

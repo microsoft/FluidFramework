@@ -72,7 +72,7 @@ export class SequenceEvent {
      * The in-order ranges affected by this delta.
      * These may not be continous.
      */
-    public get ranges(): ReadonlyArray<Readonly<ISequenceDeltaRange>> {
+    public get ranges(): readonly Readonly<ISequenceDeltaRange>[] {
         return this.sortedRanges.value.items;
     }
 
@@ -137,7 +137,7 @@ export interface ISequenceDeltaRange {
     position: number;
     segment: ISegment;
     propertyDeltas: PropertySet;
- }
+}
 
 class Lazy<T> {
     private pValue: T;

@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
+import { EventEmitter } from "events";
 import { Deferred, doIfNotDisposed, EventForwarder } from "@microsoft/fluid-core-utils";
 import {
     ConnectionState,
@@ -13,10 +15,8 @@ import {
     ISequencedDocumentMessage,
     ISequencedProposal,
 } from "@microsoft/fluid-protocol-definitions";
-import * as assert from "assert";
-import { EventEmitter } from "events";
 
-// tslint:disable-next-line: no-submodule-imports no-var-requires
+// eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-internal-modules
 const cloneDeep = require("lodash/cloneDeep") as <T>(value: T) => T;
 
 /**
@@ -79,7 +79,7 @@ export class Quorum extends EventEmitter implements IQuorum {
     private readonly localProposals = new Map<number, Deferred<void>>();
 
     constructor(
-        private minimumSequenceNumber: number  | undefined,
+        private minimumSequenceNumber: number | undefined,
         members: [string, ISequencedClient][],
         proposals: [number, ISequencedProposal, string[]][],
         values: [string, ICommittedProposal][],
@@ -89,6 +89,7 @@ export class Quorum extends EventEmitter implements IQuorum {
 
         this.members = new Map(members);
         this.proposals = new Map(
+            // eslint-disable-next-line arrow-body-style
             proposals.map(([, proposal, rejections]) => {
                 return [
                     proposal.sequenceNumber,
@@ -111,12 +112,10 @@ export class Quorum extends EventEmitter implements IQuorum {
 
     public snapshot(): IQuorumSnapshot {
         const serializedProposals = Array.from(this.proposals).map(
-            ([sequenceNumber, proposal]) => {
-                return [
-                    sequenceNumber,
-                    { sequenceNumber, key: proposal.key, value: proposal.value },
-                    Array.from(proposal.rejections)] as [number, ISequencedProposal, string[]];
-            });
+            ([sequenceNumber, proposal]) => [
+                sequenceNumber,
+                { sequenceNumber, key: proposal.key, value: proposal.value },
+                Array.from(proposal.rejections)] as [number, ISequencedProposal, string[]]);
 
         const snapshot = {
             members: [...this.members],
@@ -193,7 +192,7 @@ export class Quorum extends EventEmitter implements IQuorum {
     public async propose(key: string, value: any): Promise<void> {
         const clientSequenceNumber = this.sendProposal(key, value);
         if (clientSequenceNumber < 0) {
-            this.emit("error", {eventName: "ProposalInDisconnectedState", key });
+            this.emit("error", { eventName: "ProposalInDisconnectedState", key });
             return Promise.reject(false);
         }
 
@@ -276,7 +275,6 @@ export class Quorum extends EventEmitter implements IQuorum {
         event: "rejectProposal",
         listener: (sequenceNumber: number, key: string, value: any, rejections: string[]) => void): this;
 
-    /* tslint:disable:no-unnecessary-override */
     public on(event: string | symbol, listener: (...args: any[]) => void): this {
         return super.on(event, listener);
     }
@@ -287,7 +285,6 @@ export class Quorum extends EventEmitter implements IQuorum {
      * that the proposal was accepted, then it becomes a committed consensus value.
      * Returns true if immediate no-op is required.
      */
-    // tslint:disable max-func-body-length
     public updateMinimumSequenceNumber(message: ISequencedDocumentMessage): boolean {
         const value = message.minimumSequenceNumber;
         if (this.minimumSequenceNumber !== undefined) {
@@ -323,6 +320,7 @@ export class Quorum extends EventEmitter implements IQuorum {
 
             // If it was a local proposal - resolve the promise
             if (proposal.deferred) {
+                // eslint-disable-next-line no-unused-expressions
                 approved
                     ? proposal.deferred.resolve()
                     : proposal.deferred.reject(`Rejected by ${Array.from(proposal.rejections)}`);
@@ -344,7 +342,7 @@ export class Quorum extends EventEmitter implements IQuorum {
                 this.values.set(committedProposal.key, committedProposal);
                 this.pendingCommit.set(committedProposal.key, committedProposal);
 
-                // send no-op on approval to expedite commit
+                // Send no-op on approval to expedite commit
                 // accept means that all clients have seen the proposal and nobody has rejected it
                 // commit means that all clients have seen that the proposal was accepted by everyone
                 immediateNoOp = true;

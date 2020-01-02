@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 declare module "@microsoft/fluid-component-core-interfaces" {
-  export interface IComponent extends Readonly<Partial<IProvideComponentClipboardData>> {}
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface IComponent extends Readonly<Partial<IProvideComponentClipboardData>> { }
 }
 
 export interface IProvideComponentClipboardData {
-  readonly IComponentClipboardDataProvider: IComponentClipboardData;
+    readonly IComponentClipboardDataProvider: IComponentClipboardData;
 }
 
 /**
@@ -29,17 +30,17 @@ export interface IProvideComponentClipboardData {
 export const fluidUrlAttributeName = "fluidUrl";
 
 export interface IComponentClipboardData extends IProvideComponentClipboardData {
-  /**
+    /**
    * Return the serialized HTML representation of the entire component instance to be
    * included for the html clipboard slot.
    * @alpha
    */
-  getComponentHtmlForClipboard(): string | undefined;
+    getComponentHtmlForClipboard(): string | undefined;
 
-  /**
+    /**
    * Returns the string representation for the entire component instance to be serialized for the
    * clipboard plain-text clipboard slot.
    * @alpha
    */
-  getComponentTextForClipboard(): string | undefined;
+    getComponentTextForClipboard(): string | undefined;
 }

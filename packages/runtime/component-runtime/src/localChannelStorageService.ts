@@ -26,22 +26,22 @@ export class LocalChannelStorageService implements IObjectStorageService {
     private readSyncInternal(path: string, tree: ITree): string | undefined {
         for (const entry of tree.entries) {
             switch (entry.type) {
-                case TreeEntry[TreeEntry.Blob]:
-                    if (path === entry.path) {
-                        const blob = entry.value as IBlob;
-                        return blob.encoding === "utf-8"
-                            ? fromUtf8ToBase64(blob.contents)
-                            : blob.contents;
-                    }
-                    break;
+            case TreeEntry[TreeEntry.Blob]:
+                if (path === entry.path) {
+                    const blob = entry.value as IBlob;
+                    return blob.encoding === "utf-8"
+                        ? fromUtf8ToBase64(blob.contents)
+                        : blob.contents;
+                }
+                break;
 
-                case TreeEntry[TreeEntry.Tree]:
-                    if (path.startsWith(entry.path)) {
-                        return this.readSyncInternal(path.substr(entry.path.length + 1), entry.value as ITree);
-                    }
-                    break;
+            case TreeEntry[TreeEntry.Tree]:
+                if (path.startsWith(entry.path)) {
+                    return this.readSyncInternal(path.substr(entry.path.length + 1), entry.value as ITree);
+                }
+                break;
 
-                default:
+            default:
             }
         }
 

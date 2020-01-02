@@ -13,7 +13,7 @@ export class TextAnalyzer implements IComponentRouter, IComponentRunnable {
     constructor(
         private readonly document: FlowDocument,
         private readonly insightsMap: ISharedMap,
-        private readonly config: ITokenConfig) {}
+        private readonly config: ITokenConfig) { }
 
     public get IComponentRouter() { return this; }
     public get IComponentRunnable() { return this; }

@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
+import * as querystring from "querystring";
 import { fromUtf8ToBase64 } from "@microsoft/fluid-core-utils";
 import { IDeltaStorageService, IDocumentDeltaStorageService } from "@microsoft/fluid-driver-definitions";
 import * as api from "@microsoft/fluid-protocol-definitions";
-import * as assert from "assert";
 import Axios from "axios";
-import * as querystring from "querystring";
 import { TokenProvider } from "./tokens";
 
 /**
@@ -22,7 +22,7 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
         private readonly storageService: IDeltaStorageService) {
     }
 
-    /* tslint:disable:promise-function-async */
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public get(from?: number, to?: number): Promise<api.ISequencedDocumentMessage[]> {
         return this.storageService.get(this.tenantId, this.id, this.tokenProvider, from, to);
     }
@@ -43,7 +43,7 @@ export class DeltaStorageService implements IDeltaStorageService {
         to?: number): Promise<api.ISequencedDocumentMessage[]> {
         const query = querystring.stringify({ from, to });
 
-        let headers: {Authorization: string} | null = null;
+        let headers: { Authorization: string } | null = null;
 
         const token = (tokenProvider as TokenProvider).token;
 
@@ -68,9 +68,7 @@ export class DeltaStorageService implements IDeltaStorageService {
             if (op.contents === undefined) {
                 assert.ok(contentIndex < contents.length, "Delta content not found");
                 const content = contents[contentIndex];
-                // tslint:disable-next-line: no-unsafe-any
                 assert.equal(op.sequenceNumber, content.sequenceNumber, "Invalid delta content order");
-                // tslint:disable-next-line: no-unsafe-any
                 op.contents = content.op.contents;
                 ++contentIndex;
             }

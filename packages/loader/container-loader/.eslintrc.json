@@ -1,9 +1,13 @@
 {
     "extends": [
-        "@microsoft/eslint-config-fluid"
+        "@microsoft/eslint-config-fluid/no-tslint"
     ],
     "rules": {
         "@typescript-eslint/no-non-null-assertion": "off",
-        "no-case-declarations": "off"
+        "@typescript-eslint/no-use-before-define": "off",
+        "@typescript-eslint/strict-boolean-expressions": "off",
+        "no-case-declarations": "off",
+        "no-inner-declarations": "off",
+        "no-null/no-null": "off"
     }
 }
