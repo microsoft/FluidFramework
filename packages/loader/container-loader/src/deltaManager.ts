@@ -622,9 +622,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         // Drop pending messages - this will ensure catchUp() does not go into infinite loop
         this.pending = [];
 
-        this.removeAllListeners();
-
         this.emit("closed");
+
+        this.removeAllListeners();
     }
 
     private recordPingTime(latency: number) {
