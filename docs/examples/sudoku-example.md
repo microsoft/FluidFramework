@@ -1,6 +1,6 @@
 ---
 
-title: Developing a Microsoft 365 package with Fluid capabilities
+title: Sudoku: An Example Fluid Framework component
 uid: sudoku-example
 
 ---
