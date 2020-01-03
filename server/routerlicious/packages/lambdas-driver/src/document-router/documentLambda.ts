@@ -14,6 +14,9 @@ import { Provider } from "nconf";
 import { DocumentContextManager } from "./contextManager";
 import { DocumentPartition } from "./documentPartition";
 
+// expire document partitions after 10 minutes of no activity
+const ActivityTimeout = 10 * 60 * 1000;
+
 export class DocumentLambda implements IPartitionLambda {
     private readonly documents = new Map<string, DocumentPartition>();
     private readonly contextManager: DocumentContextManager;
@@ -21,7 +24,8 @@ export class DocumentLambda implements IPartitionLambda {
     constructor(
         private readonly factory: IPartitionLambdaFactory,
         private readonly config: Provider,
-        context: IContext) {
+        context: IContext,
+        private readonly activityTimeout = ActivityTimeout) {
         this.contextManager = new DocumentContextManager(context);
         this.contextManager.on("error", (error, restart) => {
             context.error(error, restart);
@@ -36,9 +40,12 @@ export class DocumentLambda implements IPartitionLambda {
 
     public close() {
         this.contextManager.close();
+
         for (const [, partition] of this.documents) {
             partition.close();
         }
+
+        this.documents.clear();
     }
 
     private handlerCore(kafkaMessage: IKafkaMessage): void {
@@ -64,7 +71,14 @@ export class DocumentLambda implements IPartitionLambda {
                 this.config,
                 boxcar.tenantId,
                 boxcar.documentId,
-                documentContext);
+                documentContext,
+                this.activityTimeout);
+            document.on("inactive", () => {
+                // close and remove the inactive document
+                document.close();
+                this.documents.delete(routingKey);
+            });
+
             this.documents.set(routingKey, document);
         } else {
             document = this.documents.get(routingKey);
