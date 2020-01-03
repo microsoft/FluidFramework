@@ -27,6 +27,7 @@ export interface IPublisher {
      */
     to(topic: string): ITopic;
 }
+
 /**
  * Basic interface used to publish messages to a topic
  */
