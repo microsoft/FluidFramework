@@ -1,6 +1,6 @@
 ---
 
-title: Sudoku: An Example Fluid Framework component
+title: "Sudoku: An Example Fluid Framework component"
 uid: sudoku-example
 
 ---
