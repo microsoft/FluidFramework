@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { Deferred } from "@microsoft/fluid-core-utils";
+import { IContext, IKafkaMessage } from "@microsoft/fluid-server-services-core";
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import { Deferred } from "@microsoft/fluid-core-utils";
-import { IContext } from "@microsoft/fluid-server-services-core";
 
 interface IWaitOffset {
     deferred: Deferred<void>;
@@ -17,13 +17,13 @@ export class TestContext extends EventEmitter implements IContext {
     public offset: number = Number.NEGATIVE_INFINITY;
     private waits: IWaitOffset[] = [];
 
-    public checkpoint(offset: number) {
-        assert(offset > this.offset, `${offset} > ${this.offset}`);
-        this.offset = offset;
+    public checkpoint(message: IKafkaMessage) {
+        assert(message.offset > this.offset, `${message.offset} > ${this.offset}`);
+        this.offset = message.offset;
 
         // Use filter to update the waiting array and also trigger the callback for those that are filtered out
         this.waits = this.waits.filter((wait) => {
-            if (wait.value <= offset) {
+            if (wait.value <= message.offset) {
                 wait.deferred.resolve();
                 return false;
             } else {

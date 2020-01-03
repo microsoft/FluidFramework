@@ -5,13 +5,13 @@
 
 import * as assert from "assert";
 import { Deferred } from "@microsoft/fluid-core-utils";
-import { IConsumer } from "@microsoft/fluid-server-services-core";
+import { IConsumer, IKafkaMessage } from "@microsoft/fluid-server-services-core";
 
 export class CheckpointManager {
     private checkpointing = false;
     private closed = false;
-    private commitedOffset: number;
-    private lastOffset: number;
+    private commitedMessage: IKafkaMessage;
+    private lastMessage: IKafkaMessage;
     private pendingCheckpoint: Deferred<void>;
     private error: any;
 
@@ -21,9 +21,10 @@ export class CheckpointManager {
     /**
      * Requests a checkpoint at the given offset
      */
-    public async checkpoint(offset: number) {
+    public async checkpoint(message: IKafkaMessage) {
         // Checkpoint calls should always be of increasing or equal value
-        assert(this.lastOffset === undefined || offset >= this.lastOffset);
+        const offset = message.offset;
+        assert(this.lastMessage === undefined || offset >= this.lastMessage.offset);
 
         // Exit early if the manager has been closed
         if (this.closed) {
@@ -36,12 +37,12 @@ export class CheckpointManager {
         }
 
         // Exit early if already caught up
-        if (this.commitedOffset === offset) {
+        if (this.commitedMessage === message) {
             return;
         }
 
         // Track the highest requested offset
-        this.lastOffset = offset;
+        this.lastMessage = message;
 
         // If already checkpointing allow the operation to complete to trigger another round.
         if (this.checkpointing) {
@@ -58,14 +59,14 @@ export class CheckpointManager {
         const commitP = this.consumer.commitOffset([{ offset, partition: this.id }]);
         return commitP.then(
             () => {
-                this.commitedOffset = offset;
+                this.commitedMessage = message;
                 this.checkpointing = false;
 
                 // Trigger another checkpoint round if the offset has moved since the checkpoint finished and
                 // resolve any pending checkpoints to it.
-                if (this.lastOffset !== this.commitedOffset) {
+                if (this.lastMessage !== this.commitedMessage) {
                     assert(this.pendingCheckpoint, "Differing offsets will always result in pendingCheckpoint");
-                    const nextCheckpointP = this.checkpoint(this.lastOffset);
+                    const nextCheckpointP = this.checkpoint(this.lastMessage);
                     this.pendingCheckpoint.resolve(nextCheckpointP);
                     // eslint-disable-next-line no-null/no-null
                     this.pendingCheckpoint = null;
@@ -83,13 +84,11 @@ export class CheckpointManager {
     }
 
     /**
-     * Checkpoints at the last received offset. Returns the checkpointed offset.
+     * Checkpoints at the last received offset.
      */
     public async flush(): Promise<void> {
-        if (this.lastOffset === undefined) {
-            return;
-        } else {
-            return this.checkpoint(this.lastOffset);
+        if (this.lastMessage !== undefined) {
+            return this.checkpoint(this.lastMessage);
         }
     }
 

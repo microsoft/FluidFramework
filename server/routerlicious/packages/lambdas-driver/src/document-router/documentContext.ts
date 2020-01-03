@@ -5,33 +5,33 @@
 
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import { IContext } from "@microsoft/fluid-server-services-core";
+import { IContext, IKafkaMessage } from "@microsoft/fluid-server-services-core";
 
 export class DocumentContext extends EventEmitter implements IContext {
     // We track two offsets - head and tail. Head represents the largest offset related to this document we
     // have seen. Tail represents the last checkpointed offset. When head and tail match we have fully checkpointed
     // the document.
-    private tailInternal: number;
-    private headInternal: number;
+    private tailInternal: IKafkaMessage;
+    private headInternal: IKafkaMessage;
 
     private closed = false;
 
-    constructor(head: number) {
+    constructor(message: IKafkaMessage) {
         super();
 
         // We initialize tail to one less than head. Head represents the largest offset related to the document
         // that is not checkpointed. We can set tail to one less than the head since offsets are monotonically
         // increasing. This preserves the invariants and simplifies the math performed to merge various DocumentContext
         // ranges since we always operate with inclusive ranges.
-        this.headInternal = head;
-        this.tailInternal = head - 1;
+        this.headInternal = message;
+        // this.tailInternal = head - 1;
     }
 
-    public get head(): number {
+    public get head(): IKafkaMessage {
         return this.headInternal;
     }
 
-    public get tail(): number {
+    public get tail(): IKafkaMessage {
         return this.tailInternal;
     }
 
@@ -45,28 +45,29 @@ export class DocumentContext extends EventEmitter implements IContext {
     /**
      * Updates the head offset for the context.
      */
-    public setHead(head: number) {
-        assert(head > this.head, `${head} > ${this.head}`);
+    public setHead(head: IKafkaMessage) {
+        assert(head.offset > this.head.offset, `${head.offset} > ${this.head.offset}`);
 
         // When moving back to a state where head and tail differ we again subtract one from the head, as in the
         // constructor, to make tail represent the inclusive top end of the checkpoint range.
         if (!this.hasPendingWork()) {
-            this.tailInternal = head - 1;
+            this.tailInternal = this.headInternal;
         }
 
         this.headInternal = head;
     }
 
-    public checkpoint(offset: number) {
+    public checkpoint(message: IKafkaMessage) {
         // Assert offset is between the current tail and head
-        assert(offset > this.tail && offset <= this.head, `${offset} > ${this.tail} && ${offset} <= ${this.head}`);
+        const offset = message.offset;
+        assert(offset > this.tail.offset && offset <= this.head.offset, `${offset} > ${this.tail.offset} && ${offset} <= ${this.head.offset}`);
 
         if (this.closed) {
             return;
         }
 
         // Update the tail and broadcast the checkpoint
-        this.tailInternal = offset;
+        this.tailInternal = message;
         this.emit("checkpoint", this);
     }
 

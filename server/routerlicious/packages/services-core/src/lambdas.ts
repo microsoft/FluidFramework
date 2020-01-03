@@ -11,9 +11,9 @@ import { BoxcarType, IBoxcarMessage, IMessage } from "./messages";
 
 export interface IContext {
     /**
-     * Updates the checkpoint offset
+     * Updates the checkpoint
      */
-    checkpoint(offset: number);
+    checkpoint(message: IKafkaMessage);
 
     /**
      * Closes the context with an error. The restart flag indicates whether the error is recoverable and the lambda

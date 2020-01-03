@@ -55,8 +55,6 @@ export class EventHubConsumer implements IConsumer {
     }
 
     public async commitOffset(data: any[]): Promise<void> {
-        // Const commitP = this.consumer.commitOffset([{ offset, partition: this.id }]);
-        // TODO handle checkpointing
     }
 
     public on(event: string, listener: (...args: any[]) => void): this {
@@ -129,6 +127,10 @@ export class EventHubConsumer implements IConsumer {
             highWaterOffset: data.sequenceNumber,
             key: data.partitionKey,
             offset: data.sequenceNumber,
+            metadata: {
+                context,
+                eventData: data,
+            },
             partition: parseInt(context.partitionId, 10),
             topic: context.eventhubPath,
             value: boxcarMessage,

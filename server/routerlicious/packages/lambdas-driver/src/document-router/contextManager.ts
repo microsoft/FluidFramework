@@ -5,11 +5,8 @@
 
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import { IContext } from "@microsoft/fluid-server-services-core";
+import { IContext, IKafkaMessage } from "@microsoft/fluid-server-services-core";
 import { DocumentContext } from "./documentContext";
-
-// Constant representing the previous checkpointed offset
-const LastCheckpointedOffset = -1;
 
 /**
  * The DocumentContextManager manages a set of created DocumentContexts and computes an aggregate checkpoint offset
@@ -20,11 +17,11 @@ export class DocumentContextManager extends EventEmitter {
 
     // Head and tail represent our processing position of the queue. Head is the latest message seen and
     // tail is the last message processed
-    private head = LastCheckpointedOffset;
-    private tail = LastCheckpointedOffset;
+    private head: IKafkaMessage | undefined;
+    private tail: IKafkaMessage | undefined;
 
     // Offset represents the last offset checkpointed
-    private checkpointOffset = LastCheckpointedOffset;
+    private checkpointOffset: IKafkaMessage | undefined;
 
     private closed = false;
 
@@ -32,24 +29,27 @@ export class DocumentContextManager extends EventEmitter {
         super();
     }
 
-    public createContext(offset: number): DocumentContext {
+    public createContext(message: IKafkaMessage): DocumentContext {
         // Contexts should only be created within the processing range of the manager
-        assert(offset > this.tail && offset <= this.head);
+        const offset = message.offset;
+        if (this.tail) {
+            assert(offset > this.tail.offset && offset <= this.head.offset);
+        }
 
         // Create the new context and register for listeners on it
-        const context = new DocumentContext(offset);
+        const context = new DocumentContext(message);
         this.contexts.push(context);
         context.addListener("checkpoint", () => this.updateCheckpoint());
         context.addListener("error", (error, restart) => this.emit("error", error, restart));
         return context;
     }
 
-    public setHead(head: number) {
+    public setHead(head: IKafkaMessage) {
         assert(head > this.head, `${head} > ${this.head}`);
         this.head = head;
     }
 
-    public setTail(tail: number) {
+    public setTail(tail: IKafkaMessage) {
         assert(tail > this.tail && tail <= this.head, `${tail} > ${this.tail} && ${tail} <= ${this.head}`);
         this.tail = tail;
         this.updateCheckpoint();
@@ -69,19 +69,20 @@ export class DocumentContextManager extends EventEmitter {
         }
 
         // Set the starting offset at the tail. Contexts can then lower that offset based on their positions.
-        let offset = this.tail;
+        let message = this.tail;
+
         this.contexts.forEach((context) => {
             // Utilize the tail of the context if there is still pending work. If there isn't pending work then we
             // are fully caught up
             if (context.hasPendingWork()) {
-                offset = Math.min(offset, context.tail);
+                message = message.offset > context.tail.offset ? context.tail : message;
             }
         });
 
         // Checkpoint once the offset has changed
-        if (this.checkpointOffset !== offset) {
-            this.partitionContext.checkpoint(offset);
-            this.checkpointOffset = offset;
+        if (this.checkpointOffset !== message) {
+            this.partitionContext.checkpoint(message);
+            this.checkpointOffset = message;
         }
     }
 }

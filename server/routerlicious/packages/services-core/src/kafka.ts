@@ -12,6 +12,7 @@ export interface IKafkaMessage {
     partition: number;
     highWaterOffset: number;
     key: string;
+    metadata?: any;
 }
 
 export interface IPartition {

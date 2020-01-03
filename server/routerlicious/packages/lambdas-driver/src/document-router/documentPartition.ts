@@ -37,7 +37,7 @@ export class DocumentPartition {
                         this.lambda.handler(message);
                     } else {
                         // Until we can dead letter - simply checkpoint as handled
-                        this.context.checkpoint(message.offset);
+                        this.context.checkpoint(message);
                     }
                 } catch (error) {
                     // TODO dead letter queue for bad messages, etc... when the lambda is throwing an exception
