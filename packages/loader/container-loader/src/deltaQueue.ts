@@ -121,14 +121,16 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
 
     public async pause(): Promise<void> {
         this.userPause = true;
-        // If called from within the processing loop, we are in the middle of processing an op.  Return a promise
+        // If called from within the processing loop, we are in the middle of processing an op. Return a promise
         // that will resolve when processing has actually stopped.
+        const processingPromise: Promise<void>[] = [];
         if (this.processingDeferred) {
-            return this.processingDeferred.promise;
+            processingPromise.push(this.processingDeferred.promise);
         }
         if (this.processingDeferredAsync) {
-            return this.processingDeferredAsync.promise;
+            processingPromise.push(this.processingDeferredAsync.promise);
         }
+        await Promise.all(processingPromise);
     }
 
     public resume(): void {
@@ -140,14 +142,16 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
 
     public async systemPause(): Promise<void> {
         this.sysPause = true;
-        // If called from within the processing loop, we are in the middle of processing an op.  Return a promise
+        // If called from within the processing loop, we are in the middle of processing an op. Return a promise
         // that will resolve when processing has actually stopped.
+        const processingPromise: Promise<void>[] = [];
         if (this.processingDeferred) {
-            return this.processingDeferred.promise;
+            processingPromise.push(this.processingDeferred.promise);
         }
         if (this.processingDeferredAsync) {
-            return this.processingDeferredAsync.promise;
+            processingPromise.push(this.processingDeferredAsync.promise);
         }
+        await Promise.all(processingPromise);
     }
 
     public systemResume(): void {
@@ -159,7 +163,7 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
 
     /**
      * There are several actions that may need to kick off delta processing, so we want to guard against
-     * accidental reentrancy.  ensureProcessing can be called safely to start the processing loop if it is
+     * accidental reentrancy. ensureProcessing can be called safely to start the processing loop if it is
      * not already started.
      * If processAsync is true, delta processing is done on a separate stack so that the user stack does
      * not become too large.
@@ -230,7 +234,7 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
      * that all the ops process fairly quickly.
      */
     private processDeltasAsync(allowedProcessingTime = MaxAsyncProcessingTime) {
-        const startTime = new Date().getTime();
+        const startTime = performance.now();
         let elaspedTime = 0;
         // Loop over the local messages until no messages to process, we have become paused, we hit an error
         // or the allowed time has elasped.
@@ -247,7 +251,7 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
                 this.emit("error", error);
             }
 
-            elaspedTime = new Date().getTime() - startTime;
+            elaspedTime = performance.now() - startTime;
         }
 
         if (this.asyncProcessingLog) {
