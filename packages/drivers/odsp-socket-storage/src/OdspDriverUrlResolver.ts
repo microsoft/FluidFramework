@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IResolvedUrl, IUrlResolver } from "@microsoft/fluid-driver-definitions";
 import { IOdspResolvedUrl } from "./contracts";
@@ -44,6 +45,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
         const { siteUrl, driveId, itemId, path } = this.decodeOdspUrl(request.url);
         const hashedDocumentId = getHashedDocumentId(driveId, itemId);
+        assert.ok(!hashedDocumentId.includes("/"), "Docid should not contain slashes!!");
 
         let documentUrl = `fluid-odsp://placeholder/placeholder/${hashedDocumentId}/${removeBeginningSlash(path)}`;
 
