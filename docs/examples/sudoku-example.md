@@ -417,11 +417,20 @@ for storing the presence data, and a function to update the map with presence da
     });
     ```
 
-Now run `npm start` again and notice that your selected cell is now highlighted on the other side.
-
 ## Testing the changes
 
-Now you can build and upload your updated Sudoku component to the SharePoint app catalog for testing.
+Now run `npm start` again and notice that your selected cell is now highlighted on the other side.
+
+## What's next
+
+Now that you have some experience with Fluid, are there other features you could add to the Sudoku component? Perhaps
+you could extend it to display a client name in the cell to show client-specific presence. Or you could use the
+[undo-redo][] package to add undo/redo support!
+
+If you want to build your own component, check out <xref:yo-fluid>.
+
+See <xref:examples> for more examples.
+
 
 <!-- Links -->
 [IComponentHTMLVisual]: xref:@microsoft/fluid-component-core-interfaces!IComponentHTMLVisual:interface
@@ -430,3 +439,4 @@ Now you can build and upload your updated Sudoku component to the SharePoint app
 [PrimedComponent]: xref:@microsoft/fluid-aqueduct!PrimedComponent:class
 [SharedDirectory]: xref:@microsoft/fluid-map!SharedDirectory:class
 [SharedMap]: xref:@microsoft/fluid-map!SharedMap:class
+[undo-redo]: xref:@microsoft/fluid-undo-redo!
