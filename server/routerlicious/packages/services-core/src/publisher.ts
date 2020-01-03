@@ -27,3 +27,12 @@ export interface IPublisher {
      */
     to(topic: string): ITopic;
 }
+/**
+ * Basic interface used to publish messages to a topic
+ */
+export interface IClosablePublisher extends IPublisher {
+    /**
+     * Closes the publisher
+     */
+    close(): Promise<void>;
+}
