@@ -30,7 +30,7 @@ describe("canvas", () => {
                 const w = Math.min(...Array.from(canvases).map((c) => c.getBoundingClientRect().width));
                 const h = Math.min(...Array.from(canvases).map((c) => c.getBoundingClientRect().height));
 
-                // page.evaluate() will serialize this to JSON so we filter out nonzero values to make it faster
+                // page.evaluate() will serialize this to JSON so we filter out zeros to make it faster
                 return Array.from(canvases[i].getContext("2d").getImageData(0, 0, w, h).data).filter((e) => e > 0);
             }, index);
         };
