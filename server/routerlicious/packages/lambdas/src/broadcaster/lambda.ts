@@ -28,7 +28,7 @@ class BroadcasterBatch {
 
 export class BroadcasterLambda implements IPartitionLambda {
     private pending = new Map<string, BroadcasterBatch>();
-    private pendingOffset: number;
+    private pendingMessage: IKafkaMessage;
     private current = new Map<string, BroadcasterBatch>();
 
     constructor(private readonly io: IPublisher, protected context: IContext) {
@@ -62,7 +62,7 @@ export class BroadcasterLambda implements IPartitionLambda {
             }
         }
 
-        this.pendingOffset = message.offset;
+        this.pendingMessage = message;
         this.sendPending();
     }
 
@@ -87,13 +87,14 @@ export class BroadcasterLambda implements IPartitionLambda {
         const temp = this.current;
         this.current = this.pending;
         this.pending = temp;
-        const batchOffset = this.pendingOffset;
+        const batchMessage = this.pendingMessage;
 
         // Process all the batches + checkpoint
         this.current.forEach((batch, topic) => {
             this.io.to(topic).emit(batch.event, batch.documentId, batch.messages);
         });
-        this.context.checkpoint(batchOffset);
+
+        this.context.checkpoint(batchMessage);
 
         // Invoke the next send after a setImmediate to give IO time to create more batches
         setImmediate(() => {

@@ -43,6 +43,7 @@ export class ScribeLambda extends SequencedLambda {
 
     // Pending checkpoint information
     private pendingCheckpoint: IScribe;
+    private pendingCheckpointMessage: IKafkaMessage;
     private pendingP: Promise<void>;
     private readonly pendingCheckpointMessages = new Deque<ISequencedOperationMessage>();
 
@@ -145,7 +146,7 @@ export class ScribeLambda extends SequencedLambda {
             }
         }
 
-        this.checkpoint(message.offset);
+        this.checkpoint(message);
     }
 
     public close() {
@@ -167,23 +168,24 @@ export class ScribeLambda extends SequencedLambda {
         }
     }
 
-    private checkpoint(logOffset: number) {
+    private checkpoint(message: IKafkaMessage) {
         const protocolState = this.protocolHandler.getProtocolState();
 
         const checkpoint: IScribe = {
-            logOffset,
+            logOffset: message.offset,
             minimumSequenceNumber: this.minSequenceNumber,
             protocolState,
             sequenceNumber: this.sequenceNumber,
         };
 
-        this.checkpointCore(checkpoint);
+        this.checkpointCore(checkpoint, message);
     }
 
-    private checkpointCore(checkpoint: IScribe) {
+    private checkpointCore(checkpoint: IScribe, message: IKafkaMessage) {
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         if (this.pendingP) {
             this.pendingCheckpoint = checkpoint;
+            this.pendingCheckpointMessage = message;
             return;
         }
 
@@ -191,12 +193,14 @@ export class ScribeLambda extends SequencedLambda {
         this.pendingP.then(
             () => {
                 this.pendingP = undefined;
-                this.context.checkpoint(checkpoint.logOffset);
+                this.context.checkpoint(message);
 
                 if (this.pendingCheckpoint) {
                     const pending = this.pendingCheckpoint;
+                    const pendingMessage = this.pendingCheckpointMessage;
                     this.pendingCheckpoint = undefined;
-                    this.checkpointCore(pending);
+                    this.pendingCheckpointMessage = undefined;
+                    this.checkpointCore(pending,pendingMessage);
                 }
             },
             (error) => {

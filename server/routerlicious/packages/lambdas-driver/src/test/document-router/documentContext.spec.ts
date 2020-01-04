@@ -5,6 +5,7 @@
 
 import * as assert from "assert";
 import { DocumentContext } from "../../document-router/documentContext";
+import { getOrCreateMessage, clearMessages } from "./testDocumentLambda";
 
 function validateException(fn: () => void) {
     try {
@@ -20,54 +21,56 @@ describe("document-router", () => {
         let testContext: DocumentContext;
 
         beforeEach(async () => {
-            testContext = new DocumentContext(0);
+            clearMessages();
+
+            testContext = new DocumentContext(getOrCreateMessage(0));
         });
 
         describe(".setHead", () => {
             it("Should be able to set a new head offset", () => {
-                assert.equal(0, testContext.head);
-                testContext.setHead(1);
-                assert.equal(1, testContext.head);
+                assert.equal(0, testContext.head.offset);
+                testContext.setHead(getOrCreateMessage(1));
+                assert.equal(1, testContext.head.offset);
             });
 
             it("Should assert if new head is equal to existing head", () => {
-                validateException(() => testContext.setHead(0));
+                validateException(() => testContext.setHead(getOrCreateMessage(0)));
             });
 
             it("Should assert if new head is less than existing head", () => {
-                validateException(() => testContext.setHead(-5));
+                validateException(() => testContext.setHead(getOrCreateMessage(-5)));
             });
         });
 
         describe(".checkpoint", () => {
             it("Should be able to update the head offset of the manager", () => {
-                testContext.checkpoint(0);
-                assert.equal(0, testContext.tail);
+                testContext.checkpoint(getOrCreateMessage(0));
+                assert.equal(0, testContext.tail.offset);
                 assert.ok(!testContext.hasPendingWork());
             });
 
             it("Should be able to checkpoint after adjusting the head", () => {
-                testContext.setHead(10);
-                testContext.checkpoint(5);
-                assert.equal(5, testContext.tail);
-                testContext.setHead(15);
-                testContext.checkpoint(10);
-                assert.equal(10, testContext.tail);
-                testContext.checkpoint(15);
-                assert.equal(15, testContext.tail);
+                testContext.setHead(getOrCreateMessage(10));
+                testContext.checkpoint(getOrCreateMessage(5));
+                assert.equal(5, testContext.tail.offset);
+                testContext.setHead(getOrCreateMessage(15));
+                testContext.checkpoint(getOrCreateMessage(10));
+                assert.equal(10, testContext.tail.offset);
+                testContext.checkpoint(getOrCreateMessage(15));
+                assert.equal(15, testContext.tail.offset);
                 assert.ok(!testContext.hasPendingWork());
             });
 
             it("Should assert if checkpoint is less than tail", () => {
-                validateException(() => testContext.checkpoint(0));
+                validateException(() => testContext.checkpoint(getOrCreateMessage(0)));
             });
 
             it("Should assert if checkpoint is equal to tail", () => {
-                validateException(() => testContext.checkpoint(-1));
+                validateException(() => testContext.checkpoint(getOrCreateMessage(-1)));
             });
 
             it("Should assert if checkpoint is greater than head", () => {
-                validateException(() => testContext.checkpoint(1));
+                validateException(() => testContext.checkpoint(getOrCreateMessage(1)));
             });
         });
 

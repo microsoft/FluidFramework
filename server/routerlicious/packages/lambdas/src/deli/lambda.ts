@@ -189,7 +189,7 @@ export class DeliLambda implements IPartitionLambda {
             this.lastSendP = this.sendToScriptorium(ticketedMessage.message);
         }
 
-        const checkpoint = this.generateCheckpoint();
+        const checkpoint = this.generateCheckpoint(rawMessage);
         // TODO optimize this to avoid doing per message
         // Checkpoint the current state
         this.lastSendP.then(
@@ -618,12 +618,13 @@ export class DeliLambda implements IPartitionLambda {
     /**
      * Generates a checkpoint of the current ticketing state
      */
-    private generateCheckpoint(): ICheckpoint {
+    private generateCheckpoint(message: IKafkaMessage): ICheckpoint {
         return {
             branchMap: this.branchMap ? this.branchMap.serialize() : undefined,
             clients: this.clientSeqManager.cloneValues(),
             logOffset: this.logOffset,
             sequenceNumber: this.sequenceNumber,
+            message,
         };
     }
 

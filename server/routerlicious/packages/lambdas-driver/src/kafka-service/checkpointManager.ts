@@ -56,7 +56,7 @@ export class CheckpointManager {
 
         // Finally begin checkpointing the offsets.
         this.checkpointing = true;
-        const commitP = this.consumer.commitOffset([{ offset, partition: this.id }]);
+        const commitP = this.consumer.commitOffset(message, [{ offset, partition: this.id }]);
         return commitP.then(
             () => {
                 this.commitedMessage = message;

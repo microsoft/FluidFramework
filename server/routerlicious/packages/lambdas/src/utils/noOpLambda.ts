@@ -10,7 +10,7 @@ export class NoOpLambda implements IPartitionLambda {
     }
 
     public handler(message: IKafkaMessage): void {
-        this.context.checkpoint(message.offset);
+        this.context.checkpoint(message);
     }
 
     public close(): void {

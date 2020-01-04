@@ -6,7 +6,7 @@
 /* eslint-disable no-null/no-null */
 
 import { IRangeTrackerSnapshot } from "@microsoft/fluid-core-utils";
-import { ICollection, IContext, IDocument } from "@microsoft/fluid-server-services-core";
+import { ICollection, IContext, IDocument, IKafkaMessage } from "@microsoft/fluid-server-services-core";
 import * as winston from "winston";
 
 export interface IClientSequenceNumber {
@@ -25,6 +25,7 @@ export interface ICheckpoint {
     clients: IClientSequenceNumber[];
     logOffset: number;
     sequenceNumber: number;
+    message: IKafkaMessage;
 }
 
 export class CheckpointContext {
@@ -56,7 +57,7 @@ export class CheckpointContext {
         this.pendingUpdateP = this.checkpointCore(checkpoint);
         this.pendingUpdateP.then(
             () => {
-                this.context.checkpoint(checkpoint.logOffset);
+                this.context.checkpoint(checkpoint.message);
                 this.pendingUpdateP = null;
 
                 // Trigger another round if there is a pending update
@@ -83,7 +84,12 @@ export class CheckpointContext {
                 documentId: this.id,
                 tenantId: this.tenantId,
             },
-            checkpoint,
+            {
+                branchMap: checkpoint.branchMap,
+                clients: checkpoint.clients,
+                logOffset: checkpoint.logOffset,
+                sequenceNumber: checkpoint.sequenceNumber,
+            },
             null);
 
         // Retry the checkpoint on error

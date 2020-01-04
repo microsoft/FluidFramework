@@ -29,7 +29,7 @@ export interface IConsumer {
     /**
      * Commits consumer offset.
      */
-    commitOffset(data: any[]): Promise<void>;
+    commitOffset(message: IKafkaMessage, data: any[]): Promise<void>;
 
     /**
      * Event Handler.

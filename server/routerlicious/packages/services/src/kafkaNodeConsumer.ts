@@ -5,7 +5,7 @@
 
 import { EventEmitter } from "events";
 import * as util from "util";
-import { IConsumer, IPartition } from "@microsoft/fluid-server-services-core";
+import { IConsumer, IPartition, IKafkaMessage } from "@microsoft/fluid-server-services-core";
 import * as kafkaNode from "kafka-node";
 import { debug } from "./debug";
 
@@ -26,7 +26,7 @@ export class KafkaNodeConsumer implements IConsumer {
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public commitOffset(commitRequest: any[]): Promise<void> {
+    public commitOffset(message: IKafkaMessage, commitRequest: any[]): Promise<void> {
         commitRequest.forEach((commit) => {
             commit.topic = this.topic;
             commit.offset = commit.offset as number + 1;

@@ -6,38 +6,19 @@
 import { IContext, IKafkaMessage } from "@microsoft/fluid-server-services-core";
 import * as assert from "assert";
 import { DocumentContextManager } from "../../document-router/contextManager";
+import { getOrCreateMessage, clearMessages } from "./testDocumentLambda";
 
 class TestContext implements IContext {
     public offset = -1;
 
-    public checkpoint(offset: number) {
-        assert(offset >= this.offset, `${offset} >= ${this.offset}`);
-        this.offset = offset;
+    public checkpoint(message: IKafkaMessage) {
+        assert(message.offset >= this.offset, `${message.offset} >= ${this.offset}`);
+        this.offset = message.offset;
     }
 
     public error(error: any, restart: boolean) {
         throw new Error("Method not implemented.");
     }
-}
-
-// ensures the message objects are the same for a given offset
-const messages: Map<number, IKafkaMessage> = new Map();
-
-function getOrCreateMessage(offset: number): IKafkaMessage {
-    let message = messages.get(offset);
-    if (!message) {
-        message = {
-            topic: "test",
-            value: undefined,
-            offset: offset,
-            partition: 0,
-            highWaterOffset: 0,
-            key: "key"
-        };
-        messages.set(offset, message);
-    }
-
-    return message;
 }
 
 describe("document-router", () => {
@@ -46,7 +27,7 @@ describe("document-router", () => {
         let testContextManager: DocumentContextManager;
 
         beforeEach(async () => {
-            messages.clear();
+            clearMessages();
             testContext = new TestContext();
             testContextManager = new DocumentContextManager(testContext);
         });

@@ -15,7 +15,7 @@ import {
 
 export class ScriptoriumLambda implements IPartitionLambda {
     private pending = new Map<string, ISequencedOperationMessage[]>();
-    private pendingOffset: number;
+    private pendingMessage: IKafkaMessage;
     private current = new Map<string, ISequencedOperationMessage[]>();
 
     constructor(
@@ -43,7 +43,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
             }
         }
 
-        this.pendingOffset = message.offset;
+        this.pendingMessage = message;
         this.sendPending();
     }
 
@@ -64,7 +64,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
         const temp = this.current;
         this.current = this.pending;
         this.pending = temp;
-        const batchOffset = this.pendingOffset;
+        const batchMessage = this.pendingMessage;
 
         const allProcessed = [];
 
@@ -77,7 +77,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
         Promise.all(allProcessed).then(
             () => {
                 this.current.clear();
-                this.context.checkpoint(batchOffset);
+                this.context.checkpoint(batchMessage);
                 this.sendPending();
             },
             (error) => {

@@ -36,7 +36,7 @@ export class TestLambda implements IPartitionLambda {
         } else if (this.throwHandler) {
             throw new Error("Test Error");
         } else {
-            this.context.checkpoint(message.offset);
+            this.context.checkpoint(message);
         }
     }
 
@@ -111,4 +111,28 @@ export function createTestModule(): ITestLambdaModule {
         },
         factories,
     };
+}
+
+// Ensures the message objects are the same for a given offset
+const messages: Map<number, IKafkaMessage> = new Map();
+
+export function clearMessages() {
+    messages.clear();
+}
+
+export function getOrCreateMessage(offset: number): IKafkaMessage {
+    let message = messages.get(offset);
+    if (!message) {
+        message = {
+            highWaterOffset: 0,
+            key: "key",
+            offset,
+            partition: 0,
+            topic: "test",
+            value: undefined,
+        };
+        messages.set(offset, message);
+    }
+
+    return message;
 }

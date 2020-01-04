@@ -46,7 +46,7 @@ export class RouteMasterLambda extends SequencedLambda {
         // TODO can checkpoint here
         Promise.all(boxcarProcessed).then(
             () => {
-                this.context.checkpoint(rawMessage.offset);
+                this.context.checkpoint(rawMessage);
             },
             (error) => {
                 this.context.error(error, true);

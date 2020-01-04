@@ -6,6 +6,8 @@
 import { TestConsumer, TestKafka } from "@microsoft/fluid-server-test-utils";
 import * as assert from "assert";
 import { CheckpointManager } from "../../kafka-service/checkpointManager";
+import { getOrCreateMessage } from "./testPartitionLambdaFactory";
+import { IKafkaMessage } from "@microsoft/fluid-server-services-core";
 
 describe("kafka-service", () => {
     describe("CheckpointManager", () => {
@@ -23,8 +25,8 @@ describe("kafka-service", () => {
             /**
              * Helper function that invokes a checkpoint assuming it will fail
              */
-            async function verifyCheckpointError(offset: number) {
-                await checkpointManager.checkpoint(offset).then(
+            async function verifyCheckpointError(message: IKafkaMessage) {
+                await checkpointManager.checkpoint(message).then(
                     () => {
                         assert.ok(false, "Should have resulted in rejection");
                     },
@@ -34,39 +36,39 @@ describe("kafka-service", () => {
             }
 
             it("Should be able to checkpoint at the desired position", async () => {
-                checkpointManager.checkpoint(10);
+                checkpointManager.checkpoint(getOrCreateMessage(10));
                 await testConsumer.waitForOffset(10);
             });
 
             it("Should be able to checkpoint at multiple offsets", async () => {
-                checkpointManager.checkpoint(10);
-                checkpointManager.checkpoint(20);
-                checkpointManager.checkpoint(30);
+                checkpointManager.checkpoint(getOrCreateMessage(10));
+                checkpointManager.checkpoint(getOrCreateMessage(20));
+                checkpointManager.checkpoint(getOrCreateMessage(30));
                 await testConsumer.waitForOffset(30);
             });
 
             it("Should resolve to error on commit error", async () => {
-                await checkpointManager.checkpoint(10);
+                await checkpointManager.checkpoint(getOrCreateMessage(10));
                 testConsumer.setFailOnCommit(true);
-                await verifyCheckpointError(20);
+                await verifyCheckpointError(getOrCreateMessage(20));
             });
 
             it("Should always return an error once an error has occurred", async () => {
-                await checkpointManager.checkpoint(10);
+                await checkpointManager.checkpoint(getOrCreateMessage(10));
                 testConsumer.setFailOnCommit(true);
                 // Purposefully don't await the first call so we can queue a second checkpoint that also
                 // will be marked as failed
-                verifyCheckpointError(20);
-                await verifyCheckpointError(30);
-                await verifyCheckpointError(40);
+                verifyCheckpointError(getOrCreateMessage(20));
+                await verifyCheckpointError(getOrCreateMessage(30));
+                await verifyCheckpointError(getOrCreateMessage(40));
             });
         });
 
         describe(".flush", () => {
             it("Should flush all pending offset writes", async () => {
-                checkpointManager.checkpoint(10);
-                checkpointManager.checkpoint(20);
-                checkpointManager.checkpoint(30);
+                checkpointManager.checkpoint(getOrCreateMessage(10));
+                checkpointManager.checkpoint(getOrCreateMessage(20));
+                checkpointManager.checkpoint(getOrCreateMessage(30));
                 await checkpointManager.flush();
                 assert.equal(30, testConsumer.getOffset());
             });

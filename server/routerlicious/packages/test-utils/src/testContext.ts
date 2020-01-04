@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { Deferred } from "@microsoft/fluid-core-utils";
-import { IContext, IKafkaMessage } from "@microsoft/fluid-server-services-core";
 import * as assert from "assert";
 import { EventEmitter } from "events";
+import { Deferred } from "@microsoft/fluid-core-utils";
+import { IContext, IKafkaMessage } from "@microsoft/fluid-server-services-core";
 
 interface IWaitOffset {
     deferred: Deferred<void>;
@@ -18,6 +18,7 @@ export class TestContext extends EventEmitter implements IContext {
     private waits: IWaitOffset[] = [];
 
     public checkpoint(message: IKafkaMessage) {
+        console.log(JSON.stringify(message));
         assert(message.offset > this.offset, `${message.offset} > ${this.offset}`);
         this.offset = message.offset;
 

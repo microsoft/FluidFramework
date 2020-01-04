@@ -16,7 +16,7 @@ import {
 export class CopierLambda implements IPartitionLambda {
     // Below, one job corresponds to the task of sending one batch to Mongo:
     private pendingJobs = new Map<string, IRawOperationMessageBatch[]>();
-    private pendingOffset: number;
+    private pendingMessage: IKafkaMessage;
     private currentJobs = new Map<string, IRawOperationMessageBatch[]>();
 
     constructor(
@@ -45,7 +45,7 @@ export class CopierLambda implements IPartitionLambda {
         this.pendingJobs.get(topic).push(submittedBatch);
 
         // Update current offset (will be tied to this batch):
-        this.pendingOffset = message.offset;
+        this.pendingMessage = message;
         this.sendPending();
     }
 
@@ -66,7 +66,7 @@ export class CopierLambda implements IPartitionLambda {
         const temp = this.currentJobs;
         this.currentJobs = this.pendingJobs;
         this.pendingJobs = temp;
-        const batchOffset = this.pendingOffset;
+        const batchMessage = this.pendingMessage;
 
         const allProcessed = [];
 
@@ -79,7 +79,7 @@ export class CopierLambda implements IPartitionLambda {
         Promise.all(allProcessed).then(
             () => {
                 this.currentJobs.clear();
-                this.context.checkpoint(batchOffset);
+                this.context.checkpoint(batchMessage);
                 this.sendPending();
             },
             (error) => {

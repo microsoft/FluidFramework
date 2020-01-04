@@ -23,14 +23,14 @@ export class TestConsumer implements core.IConsumer {
         this.failOnCommit = value;
     }
 
-    public async commitOffset(data: any[]): Promise<void> {
+    public async commitOffset(message: core.IKafkaMessage, data: any[]): Promise<void> {
         // For now we assume a single partition for the test consumer
         assert(data.length === 1 && data[0].partition === 0);
 
         if (this.failOnCommit) {
             return Promise.reject("TestConsumer set to fail on commit");
         } else {
-            this.context.checkpoint(data[0].offset);
+            this.context.checkpoint(message);
             return;
         }
     }

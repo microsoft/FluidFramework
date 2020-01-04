@@ -14,7 +14,10 @@ import {
 } from "@microsoft/fluid-server-services-core";
 import { debug } from "./debug";
 
-const emit = true;
+interface MessageMetadata {
+    context: PartitionContext;
+    data: EventData;
+}
 
 export class EventHubConsumer implements IConsumer {
     private readonly events = new EventEmitter();
@@ -54,7 +57,14 @@ export class EventHubConsumer implements IConsumer {
         });
     }
 
-    public async commitOffset(data: any[]): Promise<void> {
+    public async commitOffset(message: IKafkaMessage, data: any[]): Promise<void> {
+        const metadata: MessageMetadata = message.metadata;
+        if (metadata && metadata.context && metadata.data) {
+            await metadata.context.checkpointFromEventData(metadata.data);
+
+        } else {
+            debug("Invalid message metadata");
+        }
     }
 
     public on(event: string, listener: (...args: any[]) => void): this {
@@ -123,25 +133,19 @@ export class EventHubConsumer implements IConsumer {
             type: BoxcarType,
         };
 
+        const metadata: MessageMetadata = { context, data };
+
         const kafkaMessage: IKafkaMessage = {
             highWaterOffset: data.sequenceNumber,
             key: data.partitionKey,
             offset: data.sequenceNumber,
-            metadata: {
-                context,
-                eventData: data,
-            },
+            metadata,
             partition: parseInt(context.partitionId, 10),
             topic: context.eventhubPath,
             value: boxcarMessage,
         };
 
-        // TODO handle checkpointing
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        context.checkpoint();
-        if (emit) {
-            this.events.emit("data", kafkaMessage);
-        }
+        this.events.emit("data", kafkaMessage);
     }
 
     private error(error) {

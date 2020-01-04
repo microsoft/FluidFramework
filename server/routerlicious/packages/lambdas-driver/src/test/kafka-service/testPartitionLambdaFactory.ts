@@ -30,7 +30,7 @@ export class TestLambda implements IPartitionLambda {
         assert.ok((this.lastOffset === undefined) || (this.lastOffset + 1 === message.offset));
         this.lastOffset = message.offset;
         this.factory.handleCount++;
-        this.context.checkpoint(message.offset);
+        this.context.checkpoint(message);
     }
 
     public close(): void {
@@ -82,4 +82,28 @@ export class TestPartitionLambdaFactory extends EventEmitter implements IPartiti
             lambda.error(error, restart);
         }
     }
+}
+
+// Ensures the message objects are the same for a given offset
+const messages: Map<number, IKafkaMessage> = new Map();
+
+export function clearMessages() {
+    messages.clear();
+}
+
+export function getOrCreateMessage(offset: number): IKafkaMessage {
+    let message = messages.get(offset);
+    if (!message) {
+        message = {
+            highWaterOffset: 0,
+            key: "key",
+            offset,
+            partition: 0,
+            topic: "test",
+            value: undefined,
+        };
+        messages.set(offset, message);
+    }
+
+    return message;
 }

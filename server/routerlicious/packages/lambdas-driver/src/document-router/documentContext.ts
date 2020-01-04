@@ -24,7 +24,10 @@ export class DocumentContext extends EventEmitter implements IContext {
         // increasing. This preserves the invariants and simplifies the math performed to merge various DocumentContext
         // ranges since we always operate with inclusive ranges.
         this.headInternal = message;
-        // this.tailInternal = head - 1;
+        this.tailInternal = {
+            ...message,
+            offset: message.offset - 1,
+        };
     }
 
     public get head(): IKafkaMessage {
@@ -60,7 +63,8 @@ export class DocumentContext extends EventEmitter implements IContext {
     public checkpoint(message: IKafkaMessage) {
         // Assert offset is between the current tail and head
         const offset = message.offset;
-        assert(offset > this.tail.offset && offset <= this.head.offset, `${offset} > ${this.tail.offset} && ${offset} <= ${this.head.offset}`);
+        assert(offset > this.tail.offset && offset <= this.head.offset,
+            `${offset} > ${this.tail.offset} && ${offset} <= ${this.head.offset}`);
 
         if (this.closed) {
             return;

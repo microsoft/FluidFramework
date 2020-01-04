@@ -21,6 +21,14 @@ describe("Routerlicious", () => {
                     clients: null,
                     logOffset,
                     sequenceNumber,
+                    message: {
+                        highWaterOffset: 0,
+                        key: "",
+                        offset: logOffset,
+                        partition: 0,
+                        topic: "",
+                        value: undefined,
+                    }
                 };
             }
 

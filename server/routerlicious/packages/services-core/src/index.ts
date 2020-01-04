@@ -17,7 +17,6 @@ export * from "./messages";
 export * from "./mongo";
 export * from "./mongoDatabaseManager";
 export * from "./orderer";
-export * from "./partitionManager";
 export * from "./publisher";
 export * from "./tenant";
 export * from "./taskMessages";
