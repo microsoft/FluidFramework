@@ -10,6 +10,9 @@ import { IDeltaQueue } from "@microsoft/fluid-container-definitions";
 import { Deferred } from "@microsoft/fluid-core-utils";
 import * as Deque from "double-ended-queue";
 
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const performanceNow = require("performance-now") as (() => number);
+
 /**
  * The maximum time allowed for processing ops in a single iteration when processing ops
  * asynchronously.
@@ -234,7 +237,7 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
      * that all the ops process fairly quickly.
      */
     private processDeltasAsync(allowedProcessingTime = MaxAsyncProcessingTime) {
-        const startTime = window.performance.now();
+        const startTime = performanceNow();
         let elaspedTime = 0;
         // Loop over the local messages until no messages to process, we have become paused, we hit an error
         // or the allowed time has elasped.
@@ -251,7 +254,7 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
                 this.emit("error", error);
             }
 
-            elaspedTime = window.performance.now() - startTime;
+            elaspedTime = performanceNow() - startTime;
         }
 
         if (this.asyncProcessingLog) {
