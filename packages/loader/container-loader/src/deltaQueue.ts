@@ -234,7 +234,7 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
      * that all the ops process fairly quickly.
      */
     private processDeltasAsync(allowedProcessingTime = MaxAsyncProcessingTime) {
-        const startTime = performance.now();
+        const startTime = window.performance.now();
         let elaspedTime = 0;
         // Loop over the local messages until no messages to process, we have become paused, we hit an error
         // or the allowed time has elasped.
@@ -251,7 +251,7 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
                 this.emit("error", error);
             }
 
-            elaspedTime = performance.now() - startTime;
+            elaspedTime = window.performance.now() - startTime;
         }
 
         if (this.asyncProcessingLog) {
