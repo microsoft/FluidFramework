@@ -124,7 +124,7 @@ interface IRefsAtOffest {
 
 export class LocalReferenceCollection {
 
-    public hierRefCount?: number;
+    public hierRefCount: number = 0;
     private refsByOffset: (IRefsAtOffest | undefined)[];
 
     constructor(
@@ -175,14 +175,14 @@ export class LocalReferenceCollection {
         for (const ref of this) {
             ref.segment = undefined;
         }
-        this.hierRefCount = undefined;
+        this.hierRefCount = 0;
         for (let i = 0; i < this.refsByOffset.length; i++) {
             this.refsByOffset[i] = undefined;
         }
     }
 
     public get empty() {
-        if (this.hierRefCount && this.hierRefCount > 0) {
+        if (this.hierRefCount > 0) {
             return false;
         }
 
@@ -196,9 +196,6 @@ export class LocalReferenceCollection {
 
     public addLocalRef(lref: LocalReference) {
         if (lref.hasRangeLabels() || lref.hasTileLabels()) {
-            if (this.hierRefCount === undefined) {
-                this.hierRefCount = 0;
-            }
             this.hierRefCount++;
         }
 
@@ -256,16 +253,11 @@ export class LocalReferenceCollection {
         if (!other) {
             return;
         }
-
+        this.hierRefCount += other.hierRefCount;
+        other.hierRefCount = 0;
         for (const lref of other) {
             lref.segment = this.segment;
             lref.offset += this.refsByOffset.length;
-            if (lref.hasRangeLabels() || lref.hasTileLabels()) {
-                if (this.hierRefCount === undefined) {
-                    this.hierRefCount = 0;
-                }
-                this.hierRefCount++;
-            }
         }
 
         this.refsByOffset.concat(other.refsByOffset);
@@ -281,12 +273,7 @@ export class LocalReferenceCollection {
                 lref.segment = splitSeg;
                 lref.offset -= offset;
                 if (lref.hasRangeLabels() || lref.hasTileLabels()) {
-                    if (this.hierRefCount !== undefined && this.hierRefCount > 0) {
-                        this.hierRefCount--;
-                    }
-                    if (splitSeg.localRefs.hierRefCount === undefined) {
-                        splitSeg.localRefs.hierRefCount = 0;
-                    }
+                    this.hierRefCount--;
                     splitSeg.localRefs.hierRefCount++;
                 }
             }
@@ -302,13 +289,10 @@ export class LocalReferenceCollection {
             for (const lref of iterable) {
                 // tslint:disable-next-line: no-bitwise
                 if (lref.refType & ReferenceType.SlideOnRemove) {
-                    beforeRefs.push(lref);
+                    beforeRefs.unshift(lref);
                     lref.segment = this.segment;
                     lref.offset = 0;
                     if (lref.hasRangeLabels() || lref.hasTileLabels()) {
-                        if (this.hierRefCount === undefined) {
-                            this.hierRefCount = 0;
-                        }
                         this.hierRefCount++;
                     }
                 } else {
@@ -339,9 +323,6 @@ export class LocalReferenceCollection {
                     lref.segment = this.segment;
                     lref.offset = this.segment.cachedLength - 1;
                     if (lref.hasRangeLabels() || lref.hasTileLabels()) {
-                        if (this.hierRefCount === undefined) {
-                            this.hierRefCount = 0;
-                        }
                         this.hierRefCount++;
                     }
                 } else {

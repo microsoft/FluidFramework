@@ -2717,8 +2717,8 @@ export class MergeTree {
                     removalInfo.removedClientId = clientId;
                     removalInfo.removedSeq = seq;
                     removedSegments.push({ segment });
-                    if (!segment.localRefs.empty && (brid === this.localBranchId)) {
-                        savedLocalRefs.concat(segment.localRefs);
+                    if (brid === this.localBranchId) {
+                        savedLocalRefs.push(segment.localRefs);
                     }
                 }
             }
@@ -2761,6 +2761,7 @@ export class MergeTree {
                 assert(refSegment);
                 refSegment.localRefs.addAfterTombstones(...savedLocalRefs);
             }
+
             if (refSegment) {
                 this.blockUpdatePathLengths(refSegment.parent, TreeMaintenanceSequenceNumber,
                     LocalClientId);
