@@ -65,7 +65,7 @@ export class SubSequence<T> extends BaseSegment {
 
         // Note: Must call 'appendLocalRefs' before modifying this segment's length as
         //       'this.cachedLength' is used to adjust the offsets of the local refs.
-        this.appendLocalRefs(segment);
+        this.localRefs.append(segment.localRefs);
 
         this.items = this.items.concat(segment.items);
         this.cachedLength = this.items.length;

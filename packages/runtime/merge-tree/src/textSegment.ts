@@ -75,7 +75,7 @@ export class TextSegment extends BaseSegment {
         if (TextSegment.is(segment)) {
             // Note: Must call 'appendLocalRefs' before modifying this segment's length as
             // 'this.cachedLength' is used to adjust the offsets of the local refs.
-            this.appendLocalRefs(segment);
+            this.localRefs.append(segment.localRefs);
 
             this.text += segment.text;
             this.cachedLength = this.text.length;

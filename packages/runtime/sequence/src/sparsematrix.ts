@@ -65,7 +65,7 @@ export class PaddingSegment extends BaseSegment {
 
         // Note: Must call 'appendLocalRefs' before modifying this segment's length as
         //       'this.cachedLength' is used to adjust the offsets of the local refs.
-        this.appendLocalRefs(segment);
+        this.localRefs.append(segment.localRefs);
 
         this.cachedLength += segment.cachedLength;
     }
