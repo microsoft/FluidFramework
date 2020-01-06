@@ -83,7 +83,7 @@ export class SharedSegmentSequenceRevertable implements IRevertable {
                     current = {
                         trackingGroup: tg,
                         propertyDelta: range.propertyDeltas,
-                        operation: event.deltaOperation as MergeTreeDeltaOperationType,
+                        operation: event.deltaOperation,
                     };
                     this.tracking.push(current);
                 }
