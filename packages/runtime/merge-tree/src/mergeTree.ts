@@ -2760,6 +2760,12 @@ export class MergeTree {
                 refSegment = beforeSegOff.segment;
                 assert(refSegment);
                 refSegment.localRefs.addAfterTombstones(...savedLocalRefs);
+            } else {
+                // TODO: The tree is empty, so there isn't anywhere to put these
+                // they should be preserved somehow
+                for (const refsCollection of savedLocalRefs) {
+                    refsCollection.clear();
+                }
             }
 
             if (refSegment) {
