@@ -2750,8 +2750,8 @@ export class MergeTree {
         if (savedLocalRefs.length > 0) {
             const length = this.getLength(refSeq, clientId);
             let refSegment: ISegment;
-            if (end < length) {
-                const afterSegOff = this.getContainingSegment(end, refSeq, clientId);
+            if (start < length) {
+                const afterSegOff = this.getContainingSegment(start, refSeq, clientId);
                 refSegment = afterSegOff.segment;
                 assert(refSegment);
                 refSegment.localRefs.addBeforeTombstones(...savedLocalRefs);

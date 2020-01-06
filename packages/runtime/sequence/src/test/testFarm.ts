@@ -2152,7 +2152,7 @@ if (clientServerTest) {
     const ppTest = true;
     const branch = false;
     const testPack = TestPack();
-    const filename = path.join(__dirname, "./literature", "pp.txt");
+    const filename = path.join(__dirname, "../../node_modules/@microsoft/fluid-merge-tree/src/test/literature", "pp.txt");
     if (ppTest) {
         if (branch) {
             testPack.clientServerBranch(filename, 100000);
