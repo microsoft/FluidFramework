@@ -315,6 +315,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             return this.connectionP;
         }
 
+        // The promise returned from connectCore will settle with a resolved DeltaConnection or reject with error
         const connectCore = async () => {
             let connection: DeltaConnection | undefined;
             let delay = InitialReconnectDelay;
@@ -373,21 +374,26 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             return connection;
         };
 
+        // This promise settles as soon as we know the outcome of the connection attempt
         this.connectionP = new Promise((resolve, reject) => {
-            const closeRejector = (error) => {
+            // Reject the connection promise if the DeltaManager gets closed during connection
+            const cleanupAndReject = (error) => {
+                cleanupConnection();
                 reject(error);
             };
-            this.on("closed", closeRejector);
+            this.on("closed", cleanupAndReject);
 
+            // Regardless of how the connection attempt concludes, we'll clear the promise and remove the listener
+            const cleanupConnection = () => {
+                this.connectionP = undefined;
+                this.removeListener("closed", cleanupAndReject);
+            };
+
+            // Attempt the connection
             connectCore().then((connection) => {
-                this.connectionP = undefined;
-                this.removeListener("closed", closeRejector);
+                cleanupConnection();
                 resolve(connection.details);
-            }).catch((error) => {
-                this.connectionP = undefined;
-                this.removeListener("closed", closeRejector);
-                reject(error);
-            });
+            }).catch(cleanupAndReject);
         });
 
         return this.connectionP;
