@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import { ChildLogger, Deferred, fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
 import { IValueChanged, MapKernel } from "@microsoft/fluid-map";
 import * as MergeTree from "@microsoft/fluid-merge-tree";
@@ -15,7 +16,6 @@ import {
 } from "@microsoft/fluid-protocol-definitions";
 import { IChannelAttributes, IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
 import { makeHandlesSerializable, parseHandles, SharedObject } from "@microsoft/fluid-shared-object-base";
-import * as assert from "assert";
 import { debug } from "./debug";
 import {
     IntervalCollection,
@@ -24,7 +24,8 @@ import {
 } from "./intervalCollection";
 import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent";
 import { ISharedIntervalCollection } from "./sharedIntervalCollection";
-// tslint:disable-next-line: no-var-requires no-require-imports no-submodule-imports
+// eslint-disable-next-line max-len
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires, import/no-internal-modules
 const cloneDeep = require("lodash/cloneDeep");
 
 const snapshotFileName = "header";
@@ -34,7 +35,7 @@ class ContentObjectStorage implements IObjectStorageService {
     constructor(private readonly storage: IObjectStorageService) {
     }
 
-    /* tslint:disable:promise-function-async */
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public read(path: string): Promise<string> {
         return this.storage.read(`${contentPath}/${path}`);
     }
@@ -51,12 +52,14 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     private static createOpsFromDelta(event: SequenceDeltaEvent): MergeTree.IMergeTreeOp[] {
         const ops: MergeTree.IMergeTreeOp[] = [];
         for (const r of event.ranges) {
+            /* eslint-disable @typescript-eslint/indent */
             switch (event.deltaOperation) {
                 case MergeTree.MergeTreeDeltaType.ANNOTATE:
                     const lastAnnotate = ops[ops.length - 1] as MergeTree.IMergeTreeAnnotateMsg;
                     const props = {};
                     for (const key of Object.keys(r.propertyDeltas)) {
                         props[key] =
+                            // eslint-disable-next-line no-null/no-null
                             r.segment.properties[key] === undefined ? null : r.segment.properties[key];
                     }
                     if (lastAnnotate && lastAnnotate.pos2 === r.position &&
@@ -90,6 +93,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
 
                 default:
             }
+            /* eslint-enable @typescript-eslint/indent */
         }
         return ops;
     }
@@ -115,6 +119,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
             document.options);
 
         super.on("newListener", (event) => {
+            /* eslint-disable @typescript-eslint/indent */
             switch (event) {
                 case "sequenceDelta":
                     if (!this.client.mergeTreeDeltaCallback) {
@@ -132,8 +137,10 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
                     break;
                 default:
             }
+            /* eslint-enable @typescript-eslint/indent */
         });
         super.on("removeListener", (event: string | symbol) => {
+            /* eslint-disable @typescript-eslint/indent */
             switch (event) {
                 case "sequenceDelta":
                     if (super.listenerCount(event) === 0) {
@@ -146,7 +153,9 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
                     }
                     break;
                 default:
+                    break;
             }
+            /* eslint-enable @typescript-eslint/indent */
         });
 
         this.intervalMapKernel = new MapKernel(
@@ -164,7 +173,6 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         event: "pre-op" | "op",
         listener: (op: ISequencedDocumentMessage, local: boolean, target: this) => void): this;
     public on(event: string | symbol, listener: (...args: any[]) => void): this;
-    // tslint:disable-next-line:no-unnecessary-override
     public on(event: string | symbol, listener: (...args: any[]) => void): this {
         return super.on(event, listener);
     }
@@ -417,6 +425,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
                 },
 
             ],
+            // eslint-disable-next-line no-null/no-null
             id: null,
         };
 
@@ -424,7 +433,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     }
 
     protected replaceRange(start: number, end: number, segment: MergeTree.ISegment) {
-        // insert first, so local references can slide to the inserted seg
+        // Insert first, so local references can slide to the inserted seg
         // if any
         const insert = this.client.insertSegmentLocal(end, segment);
         if (insert) {
@@ -526,7 +535,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
 
         const ops: MergeTree.IMergeTreeOp[] = [];
         function transfromOps(event: SequenceDeltaEvent) {
-            ops.push(... SharedSegmentSequence.createOpsFromDelta(event));
+            ops.push(...SharedSegmentSequence.createOpsFromDelta(event));
         }
         const needsTransformation = message.referenceSequenceNumber !== message.sequenceNumber - 1;
         let stashMessage = message;
@@ -570,10 +579,10 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     }
 
     private loadFinished(error?: any) {
-        // initialize the interval collections
+        // Initialize the interval collections
         this.initializeIntervalCollections();
         if (error) {
-            this.logger.sendErrorEvent({eventName: "SequenceLoadFailed" }, error);
+            this.logger.sendErrorEvent({ eventName: "SequenceLoadFailed" }, error);
             this.loadedDeferred.reject(error);
         } else {
             this.isLoaded = true;

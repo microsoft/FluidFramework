@@ -7,7 +7,7 @@ import { EventEmitter } from "events";
 
 export class DefinitionGuide extends EventEmitter {
     private dts: string = "";
-    private components = new Map<string, { root: { entry: any; type: string }; dts: string }>();
+    private readonly components = new Map<string, { root: { entry: any; type: string }; dts: string }>();
     private value: any;
 
     constructor() {

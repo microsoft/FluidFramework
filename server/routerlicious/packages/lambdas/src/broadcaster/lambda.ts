@@ -15,7 +15,6 @@ import {
     NackOperationType,
     SequencedOperationType,
 } from "@microsoft/fluid-server-services-core";
-import * as _ from "lodash";
 
 class BroadcasterBatch {
     public messages: (ISequencedDocumentMessage | INack)[] = [];
@@ -32,7 +31,7 @@ export class BroadcasterLambda implements IPartitionLambda {
     private pendingOffset: number;
     private current = new Map<string, BroadcasterBatch>();
 
-    constructor(private io: IPublisher, protected context: IContext) {
+    constructor(private readonly publisher: IPublisher, protected context: IContext) {
     }
 
     public handler(message: IKafkaMessage): void {
@@ -92,7 +91,7 @@ export class BroadcasterLambda implements IPartitionLambda {
 
         // Process all the batches + checkpoint
         this.current.forEach((batch, topic) => {
-            this.io.to(topic).emit(batch.event, batch.documentId, batch.messages);
+            this.publisher.to(topic).emit(batch.event, batch.documentId, batch.messages);
         });
         this.context.checkpoint(batchOffset);
 

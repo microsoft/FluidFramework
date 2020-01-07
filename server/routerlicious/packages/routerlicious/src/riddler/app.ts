@@ -6,12 +6,11 @@
 import { MongoManager } from "@microsoft/fluid-server-services-core";
 import * as bodyParser from "body-parser";
 import * as express from "express";
-import { Express } from "express";
 import * as morgan from "morgan";
 import * as winston from "winston";
 import * as api from "./api";
 
-// tslint:disable-next-line:no-var-requires
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const split = require("split");
 
 /**
@@ -28,7 +27,7 @@ export function create(
     baseOrdererUrl: string,
 ) {
     // Express app configuration
-    const app: Express = express();
+    const app: express.Express = express();
 
     // Running behind iisnode
     app.set("trust proxy", 1);
@@ -41,14 +40,14 @@ export function create(
     app.use(bodyParser.urlencoded({ extended: false }));
     app.use("/api", api.create(collectionName, mongoManager, baseOrdererUrl));
 
-    // catch 404 and forward to error handler
+    // Catch 404 and forward to error handler
     app.use((req, res, next) => {
         const err = new Error("Not Found");
         (err as any).status = 404;
         next(err);
     });
 
-    // error handlers
+    // Error handlers
 
     // development error handler
     // will print stacktrace
@@ -62,7 +61,7 @@ export function create(
         });
     }
 
-    // production error handler
+    // Production error handler
     // no stacktraces leaked to user
     app.use((err, req, res, next) => {
         res.status(err.status || 500);

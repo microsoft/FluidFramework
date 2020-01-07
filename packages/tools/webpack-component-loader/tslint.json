@@ -1,8 +1,0 @@
-{
-    "extends": ["@microsoft/fluid-build-common/tslint.json"],
-    "rules": {
-        "no-console": false,
-        "object-literal-sort-keys": false,
-        "trailing-comma": false
-    }
-}

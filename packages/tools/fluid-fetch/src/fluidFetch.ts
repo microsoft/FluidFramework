@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-// tslint:disable:object-literal-sort-keys
-import { isSharepointURL } from "@microsoft/fluid-odsp-utils";
 import * as fs from "fs";
 import * as util from "util";
+import { isSharepointURL } from "@microsoft/fluid-odsp-utils";
 import { paramSaveDir, paramURL, parseArguments } from "./fluidFetchArgs";
 import { connectionInfo, fluidFetchInit } from "./fluidFetchInit";
 import { fluidFetchMessages } from "./fluidFetchMessages";
@@ -79,6 +78,7 @@ async function fluidFetchMain() {
 
 parseArguments();
 
+// eslint-disable-next-line @typescript-eslint/no-floating-promises
 fluidFetchMain()
     .catch((error: Error) => {
         if (error instanceof Error) {

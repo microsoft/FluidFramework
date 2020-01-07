@@ -9,7 +9,7 @@ import * as ui from "../ui";
  * Stack panel
  */
 export class Button extends ui.Component {
-    constructor(element: HTMLDivElement, private desiredSize: ui.ISize, classList: string[]) {
+    constructor(element: HTMLDivElement, private readonly desiredSize: ui.ISize, classList: string[]) {
         super(element);
         const button = document.createElement("button");
         button.classList.add(...classList);

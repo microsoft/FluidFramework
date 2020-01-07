@@ -24,7 +24,7 @@ export class Tenant implements core.ITenant {
         return this.config.orderer;
     }
 
-    constructor(private config: core.ITenantConfig, private manager: GitManager) {
+    constructor(private readonly config: core.ITenantConfig, private readonly manager: GitManager) {
     }
 }
 
@@ -32,7 +32,7 @@ export class Tenant implements core.ITenant {
  * Manages a collection of tenants
  */
 export class TenantManager implements core.ITenantManager {
-    constructor(private endpoint: string, private historianEndpoint: string) {
+    constructor(private readonly endpoint: string, private readonly historianEndpoint: string) {
     }
 
     public async getTenant(tenantId: string): Promise<core.ITenant> {

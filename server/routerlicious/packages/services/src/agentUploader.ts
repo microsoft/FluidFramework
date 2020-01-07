@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IAgentUploader } from "@microsoft/fluid-server-services-core";
 import { EventEmitter } from "events";
+import { IAgentUploader } from "@microsoft/fluid-server-services-core";
 import * as minio from "minio";
 
 async function bucketExists(minioClient, bucket: string) {
@@ -40,8 +40,8 @@ function createReadWritePolicy(bucketName: string): string {
                     "s3:ListBucket",
                 ],
                 Effect: "Allow",
-                Principal: { AWS: [ "*" ] },
-                Resource: [ `arn:aws:s3:::${bucketName}` ],
+                Principal: { AWS: ["*"] },
+                Resource: [`arn:aws:s3:::${bucketName}`],
                 Sid: "",
             },
             {
@@ -50,8 +50,8 @@ function createReadWritePolicy(bucketName: string): string {
                     "s3:GetObject",
                 ],
                 Effect: "Allow",
-                Principal: { AWS: [ "*" ] },
-                Resource: [ `arn:aws:s3:::${bucketName}/*` ],
+                Principal: { AWS: ["*"] },
+                Resource: [`arn:aws:s3:::${bucketName}/*`],
                 Sid: "",
             },
         ],
@@ -64,15 +64,16 @@ function createReadWritePolicy(bucketName: string): string {
 export async function getOrCreateMinioBucket(minioClient, bucket: string) {
     const exists = await bucketExists(minioClient, bucket);
     if (!exists) {
+        // eslint-disable-next-line no-return-await
         return await makeBucket(minioClient, bucket);
     }
 }
 
 class MinioUploader implements IAgentUploader {
 
-    private events = new EventEmitter();
-    private minioClient: minio.Client;
-    private minioBucket: string;
+    private readonly events = new EventEmitter();
+    private readonly minioClient: minio.Client;
+    private readonly minioBucket: string;
 
     constructor(config: any) {
         this.minioClient = new minio.Client({
@@ -100,19 +101,19 @@ class MinioUploader implements IAgentUploader {
         // Set up notification.
         this.minioClient.listenBucketNotification(this.minioBucket, "", ".zip", ["s3:ObjectCreated:*"])
             .on("notification", (record) => {
-                this.events.emit("agentAdded", { type: "server", name: record.s3.object.key});
+                this.events.emit("agentAdded", { type: "server", name: record.s3.object.key });
             });
         this.minioClient.listenBucketNotification(this.minioBucket, "", ".zip", ["s3:ObjectRemoved:*"])
             .on("notification", (record) => {
-                this.events.emit("agentRemoved", { type: "server", name: record.s3.object.key});
+                this.events.emit("agentRemoved", { type: "server", name: record.s3.object.key });
             });
         this.minioClient.listenBucketNotification(this.minioBucket, "", ".js", ["s3:ObjectCreated:*"])
             .on("notification", (record) => {
-                this.events.emit("agentAdded", { type: "client", name: record.s3.object.key});
+                this.events.emit("agentAdded", { type: "client", name: record.s3.object.key });
             });
         this.minioClient.listenBucketNotification(this.minioBucket, "", ".js", ["s3:ObjectRemoved:*"])
             .on("notification", (record) => {
-                this.events.emit("agentRemoved", { type: "client", name: record.s3.object.key});
+                this.events.emit("agentRemoved", { type: "client", name: record.s3.object.key });
             });
     }
 

@@ -13,6 +13,7 @@ import { translate } from "./translator";
 export class SharedStringTranslator {
     private pendingTranslation = false;
     private translating = false;
+    // eslint-disable-next-line no-null/no-null
     private translationTimer: NodeJS.Timeout | null = null;
     private typeInsights!: map.ISharedMap;
 
@@ -20,7 +21,7 @@ export class SharedStringTranslator {
         private readonly insights: map.ISharedMap,
         private readonly sharedString: Sequence.SharedString,
         private readonly apiKey: string) {
-        }
+    }
 
     public get isTranslating() {
         return this.translating;
@@ -41,6 +42,7 @@ export class SharedStringTranslator {
         // Remove listener to stop inbound ops first.
         this.sharedString.removeAllListeners();
         // Cancel timer to stop invoking further translation.
+        // eslint-disable-next-line no-null/no-null
         if (this.translationTimer != null) {
             clearTimeout(this.translationTimer);
         }
@@ -101,6 +103,7 @@ export class SharedStringTranslator {
                 console.error(error);
             });
 
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             doneP.then(() => {
                 this.translating = false;
                 console.log(`${start} - ${Date.now()} - Done with translation ${this.sharedString.id}`);
@@ -111,6 +114,7 @@ export class SharedStringTranslator {
     private async invokeTranslation(fromLanguages: string[], toLanguages: string[]): Promise<void> {
         // Default to English if no from language is specified.
         if (fromLanguages.length === 0) {
+            // eslint-disable-next-line no-param-reassign
             fromLanguages = ["en"];
         }
         // Exit early if no target language is specified

@@ -3,6 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export function clamp(min: number, value: number, max: number) {
-    return Math.min(Math.max(min, value), max);
-}
+export const clamp =
+    (min: number, value: number, max: number) =>
+        Math.min(Math.max(min, value), max);

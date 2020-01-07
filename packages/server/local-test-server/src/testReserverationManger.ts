@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import {
     IConcreteNode,
     IConcreteNodeFactory,
@@ -10,14 +11,12 @@ import {
     IReservationManager,
 } from "@microsoft/fluid-server-memory-orderer";
 import { ICollection, MongoManager } from "@microsoft/fluid-server-services-core";
-import { EventEmitter } from "events";
 
-// tslint:disable-next-line: completed-docs
 export class TestReservationManager extends EventEmitter implements IReservationManager {
     constructor(
-        private nodeFactory: IConcreteNodeFactory,
-        private mongoManager: MongoManager,
-        private reservationColletionName: string) {
+        private readonly nodeFactory: IConcreteNodeFactory,
+        private readonly mongoManager: MongoManager,
+        private readonly reservationColletionName: string) {
         super();
     }
 

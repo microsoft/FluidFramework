@@ -3,17 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { IOrderer } from "@microsoft/fluid-server-services-core";
 import * as assert from "assert";
+import { IOrderer } from "@microsoft/fluid-server-services-core";
 import { IConcreteNode, IConcreteNodeFactory, IReservationManager } from "./interfaces";
 
 // The LocalOrderManager maintains a set of nodes and their set of ownerships of documents
 // It then provides caches of orderers
 export class LocalOrderManager {
-    private localOrderers = new Map<string, Promise<IOrderer>>();
+    private readonly localOrderers = new Map<string, Promise<IOrderer>>();
     private localNodeP: Promise<IConcreteNode>;
 
-    constructor(private nodeFactory: IConcreteNodeFactory, private reservationManager: IReservationManager) {
+    constructor(
+        private readonly nodeFactory: IConcreteNodeFactory,
+        private readonly reservationManager: IReservationManager) {
         this.createLocalNode();
     }
 
@@ -21,6 +23,7 @@ export class LocalOrderManager {
         const key = this.getKey(tenantId, documentId);
 
         let ordererP = this.localOrderers.get(key);
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises
         if (!ordererP) {
             ordererP = this.getCore(tenantId, documentId);
             this.localOrderers.set(key, ordererP);
@@ -33,6 +36,7 @@ export class LocalOrderManager {
         const key = this.getKey(tenantId, documentId);
 
         const ordererP = this.localOrderers.get(key);
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises
         if (ordererP) {
             this.localOrderers.delete(key);
 
@@ -60,7 +64,7 @@ export class LocalOrderManager {
         this.localNodeP.then(
             (localNode) => {
                 localNode.on("error", (error) => {
-                    // handle disconnects, error, etc... and create a new node
+                    // Handle disconnects, error, etc... and create a new node
                 });
             },
             (error) => {

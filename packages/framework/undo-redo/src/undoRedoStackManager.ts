@@ -52,6 +52,7 @@ class UndoRedoStack extends Stack<Stack<IRevertable> | undefined> {
 
     public push(item: Stack<IRevertable> | undefined) {
         if (item !== undefined) {
+            // eslint-disable-next-line @typescript-eslint/unbound-method
             item.itemPushedCallback = () => this.callItemPushedCallback;
         }
         super.push(item);
@@ -82,17 +83,17 @@ export class UndoRedoStackManager {
         revertStack: UndoRedoStack,
         pushStack: UndoRedoStack,
     ) {
-        // close the pushStack, as it could get  new ops
+        // Close the pushStack, as it could get  new ops
         // from the revert, and we don't want those combined
         // with any existing operation
         pushStack.closeCurrentOperationIfInProgress();
 
-        // search the revert stack for the first defined operation stack
+        // Search the revert stack for the first defined operation stack
         while (!revertStack.empty() && revertStack.top() === undefined) {
             revertStack.pop();
         }
 
-        // if there is a defined operation stack, revert it
+        // If there is a defined operation stack, revert it
         if (!revertStack.empty()) {
             const operationStack = revertStack.pop();
             if (operationStack !== undefined) {
@@ -105,7 +106,7 @@ export class UndoRedoStackManager {
             }
         }
 
-        // make sure both stacks have any open operations
+        // Make sure both stacks have any open operations
         // closed, since we won't want anything added to those
         //
         revertStack.closeCurrentOperationIfInProgress();
@@ -122,7 +123,7 @@ export class UndoRedoStackManager {
             () => this.eventEmitter.emit("changePushed");
         this.redoStack.itemPushedCallback =
             () => this.eventEmitter.emit("changePushed");
-     }
+    }
 
     public closeCurrentOperation() {
         if (this.mode === UndoRedoMode.None) {
@@ -164,6 +165,7 @@ export class UndoRedoStackManager {
     public pushToCurrentOperation(revertable: IRevertable) {
         let currentStack: UndoRedoStack;
 
+        /* eslint-disable @typescript-eslint/indent */
         switch (this.mode) {
             case UndoRedoMode.None:
                 currentStack = this.undoStack;
@@ -181,6 +183,7 @@ export class UndoRedoStackManager {
             default:
                 throw new Error("unknown mode");
         }
+        /* eslint-enable @typescript-eslint/indent */
         const operationStack = currentStack.top();
         if (operationStack === undefined) {
             currentStack.push(new Stack<IRevertable>(revertable));

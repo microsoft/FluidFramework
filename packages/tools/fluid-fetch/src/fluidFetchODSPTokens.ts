@@ -3,16 +3,17 @@
  * Licensed under the MIT License.
  */
 
-// tslint:disable:object-literal-sort-keys
+/* eslint-disable unicorn/filename-case */
+
+import * as child_process from "child_process";
+import * as http from "http";
+import { URL } from "url";
 import {
     getSharepointTenant,
     IClientConfig,
     IODSPTokens,
     postTokenRequest,
 } from "@microsoft/fluid-odsp-utils";
-import * as child_process from "child_process";
-import * as http from "http";
-import { URL } from "url";
 import { paramForceTokenReauth } from "./fluidFetchArgs";
 import { loadRC, saveRC } from "./fluidToolRC";
 
@@ -76,14 +77,13 @@ export async function saveAccessToken(server: string, odspTokens: IODSPTokens) {
     return saveRC(rc);
 }
 
-async function getRequestAccessTokenBody(server: string, clientConfig: IClientConfig) {
-    return `scope=offline_access https://${server}/AllSites.Write`
-        + `&client_id=${clientConfig.clientId}`
-        + `&client_secret=${clientConfig.clientSecret}`
-        + `&grant_type=authorization_code`
-        + `&code=${await getAuthorizationCode(server, clientConfig)}`
-        + `&redirect_uri=${redirectUri}`;
-}
+const getRequestAccessTokenBody = async (server: string, clientConfig: IClientConfig) =>
+    `scope=offline_access https://${server}/AllSites.Write`
+    + `&client_id=${clientConfig.clientId}`
+    + `&client_secret=${clientConfig.clientSecret}`
+    + `&grant_type=authorization_code`
+    + `&code=${await getAuthorizationCode(server, clientConfig)}`
+    + `&redirect_uri=${redirectUri}`;
 
 async function acquireTokens(server: string, clientConfig: IClientConfig): Promise<IODSPTokens> {
     console.log("Acquiring tokens");

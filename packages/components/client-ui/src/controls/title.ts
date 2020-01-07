@@ -22,7 +22,7 @@ export class Title extends ui.Component {
     }
 
     public setTitle(title: string) {
-        // tslint:disable-next-line
+        // eslint-disable-next-line max-len
         this.viewportDiv.innerHTML = `<span id="docname" style="font-size:20px;font-family:Book Antiqua">${title} <span id="doctoken"></span></span>`;
     }
 
@@ -46,7 +46,6 @@ export class Title extends ui.Component {
     private hashCode(str: string): number {
         let hash = 0;
         for (let i = 0; i < str.length; i++) {
-            /* tslint:disable:no-bitwise */
             hash = str.charCodeAt(i) + ((hash << 5) - hash);
         }
         return hash;
@@ -54,7 +53,6 @@ export class Title extends ui.Component {
 
     // Integer to RGB color converter.
     private intToHex(code: number): string {
-        /* tslint:disable:no-bitwise */
         const c = (code & 0x00FFFFFF).toString(16).toUpperCase();
         return "00000".substring(0, 6 - c.length) + c;
     }

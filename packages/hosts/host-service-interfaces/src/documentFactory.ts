@@ -14,6 +14,6 @@ export interface IDocumentFactory extends IProvideDocumentFactory {
 }
 
 declare module "@microsoft/fluid-component-core-interfaces" {
-    export interface IComponent extends Readonly<Partial<IProvideDocumentFactory>> {
-    }
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface IComponent extends Readonly<Partial<IProvideDocumentFactory>> { }
 }

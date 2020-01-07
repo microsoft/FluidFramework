@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable no-null/no-null */
+
 import { ICreateCommitParams, ICreateTreeEntry } from "@microsoft/fluid-gitresources";
 import { IQuorumSnapshot, ProtocolOpHandler } from "@microsoft/fluid-protocol-base";
 import {
@@ -36,34 +38,34 @@ import * as _ from "lodash";
 import { SequencedLambda } from "../sequencedLambda";
 
 export class ScribeLambda extends SequencedLambda {
-    // value of the last processed Kafka offset
-    private lastOffset: number;
+    // Value of the last processed Kafka offset
+    private readonly lastOffset: number;
 
-    // pending checkpoint information
+    // Pending checkpoint information
     private pendingCheckpoint: IScribe;
     private pendingP: Promise<void>;
-    private pendingCheckpointMessages = new Deque<ISequencedOperationMessage>();
+    private readonly pendingCheckpointMessages = new Deque<ISequencedOperationMessage>();
 
-    // messages not yet included within protocolHandler
+    // Messages not yet included within protocolHandler
     private readonly pendingMessages: Deque<ISequencedDocumentMessage>;
 
-    // current sequence/msn of the last processed offset
+    // Current sequence/msn of the last processed offset
     private sequenceNumber = 0;
     private minSequenceNumber = 0;
 
     constructor(
         context: IContext,
-        private documentCollection: ICollection<IDocument>,
-        private messageCollection: ICollection<ISequencedOperationMessage>,
+        private readonly documentCollection: ICollection<IDocument>,
+        private readonly messageCollection: ICollection<ISequencedOperationMessage>,
         protected tenantId: string,
         protected documentId: string,
         scribe: IScribe,
-        private storage: IGitManager,
-        private producer: IProducer,
-        private protocolHandler: ProtocolOpHandler,
-        private protocolHead: number,
+        private readonly storage: IGitManager,
+        private readonly producer: IProducer,
+        private readonly protocolHandler: ProtocolOpHandler,
+        private readonly protocolHead: number,
         messages: ISequencedOperationMessage[],
-        private nackOnSummarizeException?: boolean,
+        private readonly nackOnSummarizeException?: boolean,
     ) {
         super(context);
 
@@ -153,7 +155,7 @@ export class ScribeLambda extends SequencedLambda {
     private processFromPending(target: number) {
         while (this.pendingMessages.length > 0 && this.pendingMessages.peekFront().sequenceNumber <= target) {
             const message = this.pendingMessages.shift();
-            // winston.info(`Handle message ${JSON.stringify(message)}`);
+            // Winston.info(`Handle message ${JSON.stringify(message)}`);
 
             if (message.contents && typeof message.contents === "string" && message.type !== MessageType.ClientLeave) {
                 const clonedMessage = _.cloneDeep(message);
@@ -179,6 +181,7 @@ export class ScribeLambda extends SequencedLambda {
     }
 
     private checkpointCore(checkpoint: IScribe) {
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises
         if (this.pendingP) {
             this.pendingCheckpoint = checkpoint;
             return;
@@ -222,6 +225,7 @@ export class ScribeLambda extends SequencedLambda {
         if (inserts.length > 0) {
             await this.messageCollection
                 .insertMany(inserts, false)
+                // eslint-disable-next-line @typescript-eslint/promise-function-async
                 .catch((error) => {
                     // Duplicate key errors are ignored since a replay may cause us to insert twice into Mongo.
                     // All other errors result in a rejected promise.
@@ -284,7 +288,7 @@ export class ScribeLambda extends SequencedLambda {
             if (!existingRef || existingRef.object.sha !== content.head) {
                 await this.sendSummaryNack(
                     summarySequenceNumber,
-                    // tslint:disable-next-line:max-line-length
+                    // eslint-disable-next-line max-len
                     `Proposed parent summary "${content.head}" does not match actual parent summary "${existingRef ? existingRef.object.sha : "n/a"}".`,
                 );
                 return;
@@ -293,7 +297,7 @@ export class ScribeLambda extends SequencedLambda {
         } else if (existingRef) {
             await this.sendSummaryNack(
                 summarySequenceNumber,
-                // tslint:disable-next-line:max-line-length
+                // eslint-disable-next-line max-len
                 `Proposed parent summary "${content.head}" does not match actual parent summary "${existingRef.object.sha}".`,
             );
             return;
@@ -301,6 +305,7 @@ export class ScribeLambda extends SequencedLambda {
 
         // We also validate that the parent summary is valid
         try {
+            // eslint-disable-next-line @typescript-eslint/promise-function-async
             await Promise.all(content.parents.map((parentSummary) => this.storage.getCommit(parentSummary)));
         } catch (e) {
             await this.sendSummaryNack(
@@ -361,7 +366,7 @@ export class ScribeLambda extends SequencedLambda {
             this.storage.getTree(content.handle, false),
         ]);
 
-        // winston.info("SUMMARY IS");
+        // Winston.info("SUMMARY IS");
         // winston.info(JSON.stringify(entries, null, 2));
 
         // winston.info("TREE");
@@ -444,6 +449,7 @@ export class ScribeLambda extends SequencedLambda {
         await this.sendToDeli(operation);
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     private sendToDeli(operation: IDocumentMessage): Promise<any> {
         const message: IRawOperationMessage = {
             clientId: null,

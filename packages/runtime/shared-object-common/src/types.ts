@@ -7,6 +7,7 @@ import { ITree } from "@microsoft/fluid-protocol-definitions";
 import { IChannel, ISharedObjectServices } from "@microsoft/fluid-runtime-definitions";
 
 declare module "@microsoft/fluid-container-definitions" {
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
     interface IComponent extends Readonly<Partial<IProvideSharedObject>> { }
 }
 

@@ -21,17 +21,18 @@ import {
     SequencedOperationType,
 } from "@microsoft/fluid-server-services-core";
 
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 import hash = require("string-hash");
 
 export class KafkaMessageFactory {
-    private offsets: number[] = [];
+    private readonly offsets: number[] = [];
 
     constructor(
         public topic = "test",
         partitions = 1,
-        private stringify = true,
-        private tenantId: string = null,
-        private documentId: string = null) {
+        private readonly stringify = true,
+        private readonly tenantId: string = null,
+        private readonly documentId: string = null) {
         for (let i = 0; i < partitions; i++) {
             this.offsets.push(0);
         }
@@ -73,7 +74,7 @@ export class MessageFactory {
     private clientSequenceNumber = 0;
     private sequenceNumber = 0;
 
-    constructor(private documentId, private clientId, private tenantId = "test") {
+    constructor(private readonly documentId, private readonly clientId, private readonly tenantId = "test") {
     }
 
     public createDocumentMessage(referenceSequenceNumber = 0): IDocumentMessage {
@@ -99,7 +100,7 @@ export class MessageFactory {
             detail: {
                 permission: [],
                 scopes: [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
-                type: "browser", // back-compat: 0.11 clientType
+                type: "browser", // Back-compat: 0.11 clientType
                 details: {
                     capabilities: { interactive: true },
                 },

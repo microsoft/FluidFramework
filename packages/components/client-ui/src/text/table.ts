@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// tslint:disable
 import * as MergeTree from "@microsoft/fluid-merge-tree";
 import * as Sequence from "@microsoft/fluid-sequence";
 import * as Paragraph from "./paragraph";
@@ -33,9 +32,7 @@ let cellIdSuffix = 0;
 let rowIdSuffix = 0;
 let columnIdSuffix = 0;
 
-function getPosition(sharedString: SharedString, segment: MergeTree.ISegment) {
-    return sharedString.getPosition(segment);
-}
+const getPosition = (sharedString: SharedString, segment: MergeTree.ISegment) => sharedString.getPosition(segment);
 
 function createRelativeMarkerOp(
     relativePos1: MergeTree.IRelativePosition,
@@ -91,12 +88,13 @@ export function createMarkerOp(
 
 const endPrefix = "end-";
 
-export function idFromEndId(endId: string) {
-    return endId.substring(endPrefix.length);
-}
+export const idFromEndId = (endId: string) => endId.substring(endPrefix.length);
 
-function createCellBegin(opList: MergeTree.IMergeTreeOp[], cellEndId: string,
-    cellId: string, extraProperties?: MergeTree.PropertySet) {
+function createCellBegin(
+    opList: MergeTree.IMergeTreeOp[],
+    cellEndId: string,
+    cellId: string,
+    extraProperties?: MergeTree.PropertySet) {
 
     const cellEndRelPos = <MergeTree.IRelativePosition>{
         before: true,
@@ -110,13 +108,16 @@ function createCellBegin(opList: MergeTree.IMergeTreeOp[], cellEndId: string,
     }
     opList.push(createRelativeMarkerOp(cellEndRelPos, cellId,
         MergeTree.ReferenceType.NestBegin, ["cell"], undefined, startExtraProperties));
-    const pgOp = createRelativeMarkerOp(cellEndRelPos, cellId + "C",
+    const pgOp = createRelativeMarkerOp(cellEndRelPos, `${cellId}C`,
         MergeTree.ReferenceType.Tile, [], ["pg"], pgExtraProperties);
     opList.push(pgOp);
 }
 
-function createCellRelativeWithId(opList: MergeTree.IMergeTreeOp[], cellId: string,
-    relpos: MergeTree.IRelativePosition, extraProperties?: MergeTree.PropertySet) {
+function createCellRelativeWithId(
+    opList: MergeTree.IMergeTreeOp[],
+    cellId: string,
+    relpos: MergeTree.IRelativePosition,
+    extraProperties?: MergeTree.PropertySet) {
     const cellEndId = endPrefix + cellId;
     let endExtraProperties: Record<string, any>;
     if (extraProperties) {
@@ -127,13 +128,20 @@ function createCellRelativeWithId(opList: MergeTree.IMergeTreeOp[], cellId: stri
     createCellBegin(opList, cellEndId, cellId, extraProperties);
 }
 
-function createCellRelative(opList: MergeTree.IMergeTreeOp[], idBase: string,
-    relpos: MergeTree.IRelativePosition, extraProperties?: MergeTree.PropertySet) {
-    const cellId = idBase + `cell${cellIdSuffix++}`;
+function createCellRelative(
+    opList: MergeTree.IMergeTreeOp[],
+    idBase: string,
+    relpos: MergeTree.IRelativePosition,
+    extraProperties?: MergeTree.PropertySet) {
+    const cellId = `${idBase}cell${cellIdSuffix++}`;
     createCellRelativeWithId(opList, cellId, relpos, extraProperties);
 }
 
-function createEmptyRowAfter(opList: MergeTree.IMergeTreeOp[], sharedString: SharedString, prevRow: Row, rowId: string) {
+function createEmptyRowAfter(
+    opList: MergeTree.IMergeTreeOp[],
+    sharedString: SharedString,
+    prevRow: Row,
+    rowId: string) {
     const endRowPos = {
         id: prevRow.endRowMarker.getId(),
     };
@@ -143,8 +151,11 @@ function createEmptyRowAfter(opList: MergeTree.IMergeTreeOp[], sharedString: Sha
         MergeTree.ReferenceType.NestBegin, ["row"]));
 }
 
-function createRowCellOp(opList: MergeTree.IMergeTreeOp[], sharedString: SharedString,
-    idBase: string, endRowId: string, columnId?: string) {
+function createRowCellOp(
+    opList: MergeTree.IMergeTreeOp[],
+    sharedString: SharedString,
+    idBase: string, endRowId: string,
+    columnId?: string) {
     let props: MergeTree.PropertySet;
     if (columnId) {
         props = { columnId };
@@ -152,15 +163,25 @@ function createRowCellOp(opList: MergeTree.IMergeTreeOp[], sharedString: SharedS
     createCellRelative(opList, idBase, { id: endRowId, before: true }, props);
 }
 
-function createColumnCellOp(idBase: string, opList: MergeTree.IMergeTreeOp[], row: Row,
-    prevCell: Cell, columnId: string, extraProperties?: MergeTree.PropertySet) {
+function createColumnCellOp(
+    idBase: string,
+    opList: MergeTree.IMergeTreeOp[],
+    row: Row,
+    prevCell: Cell,
+    columnId: string,
+    extraProperties?: MergeTree.PropertySet) {
     const id = prevCell.endMarker.getId();
     createCellRelative(opList, idBase,
         { id }, { columnId });
 }
 
-function insertColumnCellForRow(idBase: string, opList: MergeTree.IMergeTreeOp[], row: Row,
-    prevColId: string, colId: string) {
+function insertColumnCellForRow(
+    idBase: string,
+    opList: MergeTree.IMergeTreeOp[],
+    row: Row,
+    prevColId: string,
+    colId: string) {
+    // eslint-disable-next-line @typescript-eslint/prefer-for-of
     for (let i = 0; i < row.cells.length; i++) {
         const prevCell = row.cells[i];
         if (prevCell.columnId === prevColId) {
@@ -172,7 +193,11 @@ function insertColumnCellForRow(idBase: string, opList: MergeTree.IMergeTreeOp[]
 const traceOps = true;
 
 // TODO: non-grid case
-export function insertColumn(sharedString: SharedString, idBase: string, prevCell: Cell, row: Row,
+export function insertColumn(
+    sharedString: SharedString,
+    idBase: string,
+    prevCell: Cell,
+    row: Row,
     table: Table) {
     const prevColumnId = prevCell.columnId;
     const columnId = `${idBase}Col${columnIdSuffix++}`;
@@ -185,12 +210,13 @@ export function insertColumn(sharedString: SharedString, idBase: string, prevCel
             marker: <MergeTree.IMarkerDef>{
                 refType: MergeTree.ReferenceType.Simple,
             },
-            props: { columnId, [MergeTree.reservedMarkerIdKey]: columnId }
+            props: { columnId, [MergeTree.reservedMarkerIdKey]: columnId },
         },
         relativePos1: { id: prevColumnId },
         type: MergeTree.MergeTreeDeltaType.INSERT,
     };
     opList.push(insertColMarkerOp);
+    // eslint-disable-next-line no-shadow
     for (const row of table.rows) {
         insertColumnCellForRow(idBase, opList, row, prevColumnId, columnId);
     }
@@ -200,24 +226,34 @@ export function insertColumn(sharedString: SharedString, idBase: string, prevCel
     };
     sharedString.groupOperation(groupOp);
 
-    // flush cache
+    // Flush cache
     table.tableMarker.table = undefined;
 }
 
-export function insertRowCellForColumn(sharedString: SharedString, opList: MergeTree.IMergeTreeOp[], prevCell: Cell,
-    idBase: string, endRowId: string) {
+export function insertRowCellForColumn(
+    sharedString: SharedString,
+    opList: MergeTree.IMergeTreeOp[],
+    prevCell: Cell,
+    idBase: string,
+    endRowId: string) {
     createRowCellOp(opList, sharedString, idBase, endRowId, prevCell.columnId);
 }
 
 // TODO: non-grid
 // TODO: GC using consensus remove
-export function deleteColumn(sharedString: SharedString, clientId: string, cell: Cell, row: Row,
+export function deleteColumn(
+    sharedString: SharedString,
+    clientId: string,
+    cell: Cell,
+    row: Row,
     table: Table) {
     if (traceOps) {
         console.log(`delete column from cell ${cell.marker.toString()}`);
     }
     const columnId = cell.columnId;
+    // eslint-disable-next-line no-shadow
     for (const row of table.rows) {
+        // eslint-disable-next-line no-shadow
         for (const cell of row.cells) {
             if (cell.columnId === columnId) {
                 sharedString.annotateMarkerNotifyConsensus(cell.marker, { moribund: clientId }, (m) => {
@@ -244,7 +280,9 @@ export function deleteColumn(sharedString: SharedString, clientId: string, cell:
 }
 
 // TODO: GC using consensus remove
-export function deleteCellShiftLeft(sharedString: SharedString, cell: Cell,
+export function deleteCellShiftLeft(
+    sharedString: SharedString,
+    cell: Cell,
     table: Table) {
     const cellPos = getPosition(sharedString, cell.marker);
     const annotOp = <MergeTree.IMergeTreeAnnotateMsg>{
@@ -300,7 +338,7 @@ export function insertRow(sharedString: SharedString, idBase: string, prevRow: R
     };
     sharedString.groupOperation(groupOp);
 
-    // flush cache
+    // Flush cache
     table.tableMarker.table = undefined;
 }
 
@@ -335,12 +373,12 @@ export function createTable(pos: number, sharedString: SharedString, idBase: str
         MergeTree.ReferenceType.NestBegin, ["table"], [], { rectTable: true }));
     const columnIds = <string[]>[];
     for (let row = 0; row < nrows; row++) {
-        const rowId = idBase + `row${rowIdSuffix++}`;
+        const rowId = `${idBase}row${rowIdSuffix++}`;
         opList.push(createRelativeMarkerOp(endTablePos, rowId,
             MergeTree.ReferenceType.NestBegin, ["row"]));
         for (let cell = 0; cell < ncells; cell++) {
             if (!columnIds[cell]) {
-                columnIds[cell] = idBase + `col${columnIdSuffix++}`;
+                columnIds[cell] = `${idBase}col${columnIdSuffix++}`;
             }
             const props = { columnId: columnIds[cell] };
             createCellRelative(opList, idBase, endTablePos, props);
@@ -355,7 +393,7 @@ export function createTable(pos: number, sharedString: SharedString, idBase: str
                 marker: <MergeTree.IMarkerDef>{
                     refType: MergeTree.ReferenceType.Simple,
                 },
-                props: { columnId, [MergeTree.reservedMarkerIdKey]: columnId }
+                props: { columnId, [MergeTree.reservedMarkerIdKey]: columnId },
             },
             relativePos1: { id: tableId },
             type: MergeTree.MergeTreeDeltaType.INSERT,
@@ -458,7 +496,7 @@ export class Table {
             }
         }
         let proportionalWidthPerColumn = Math.floor(this.width / liveColumnCount);
-        // assume remaining width positive for now
+        // Assume remaining width positive for now
         // assume uniform number of columns in rows for now (later update each row separately)
         let abscondedWidth = 0;
         let totalWidth = 0;
@@ -566,7 +604,7 @@ function parseCell(cellStartPos: number, sharedString: SharedString, fontInfo?: 
     }
     const endCellPos = getPosition(sharedString, endCellMarker);
     cellMarker.cell = new Cell(cellMarker, endCellMarker);
-    cellMarker.cell.columnId = cellMarker.properties["columnId"];
+    cellMarker.cell.columnId = cellMarker.properties.columnId;
     let nextPos = cellStartPos + cellMarker.cachedLength;
     if (markEmptyCells && (nextPos === endCellPos - 1)) {
         cellMarker.cell.emptyCell = true;
@@ -587,11 +625,11 @@ function parseCell(cellStartPos: number, sharedString: SharedString, fontInfo?: 
                     nextPos = sharedString.getPosition(endTableMarker);
                     nextPos += endTableMarker.cachedLength;
                 } else {
-                    // empty paragraph
+                    // Empty paragraph
                     nextPos++;
                 }
             } else {
-                // text segment
+                // Text segment
                 const tilePos = sharedString.findTile(nextPos, "pg", false);
                 const pgMarker = <Paragraph.IParagraphMarker>tilePos.tile;
                 if (!pgMarker.itemCache) {
@@ -620,11 +658,14 @@ function parseCell(cellStartPos: number, sharedString: SharedString, fontInfo?: 
             }
         }
     }
-    // console.log(`parsed cell ${cellMarker.getId()}`);
+    // Console.log(`parsed cell ${cellMarker.getId()}`);
     return cellMarker;
 }
 
-function parseRow(rowStartPos: number, sharedString: SharedString, table: Table,
+function parseRow(
+    rowStartPos: number,
+    sharedString: SharedString,
+    table: Table,
     fontInfo?: Paragraph.IFontInfo) {
     const rowMarkerSegOff = sharedString.getContainingSegment(rowStartPos);
     const rowMarker = <IRowMarker>rowMarkerSegOff.segment;
@@ -649,7 +690,7 @@ function parseRow(rowStartPos: number, sharedString: SharedString, table: Table,
         }
         // TODO: check for column id not in grid
         if (!cellIsMoribund(cellMarker)) {
-            const cellColumnId = cellMarker.properties["columnId"];
+            const cellColumnId = cellMarker.properties.columnId;
             rowMarker.row.minContentWidth += cellMarker.cell.minContentWidth;
             rowMarker.row.cells.push(cellMarker.cell);
             rowColumns[cellColumnId] = cellMarker.cell;
@@ -702,6 +743,7 @@ export function succinctPrintTable(tableMarker: ITableMarker, tableMarkerPos: nu
                         endLine = true;
                     }
                 }
+                /* eslint-disable @typescript-eslint/indent, default-case */
                 switch (rangeLabel) {
                     case "table":
                         lineBuf += "T";
@@ -720,6 +762,7 @@ export function succinctPrintTable(tableMarker: ITableMarker, tableMarkerPos: nu
                         lineBuf += "CL";
                         break;
                 }
+                /* eslint-enable @typescript-eslint/indent, default-case */
             } else if (marker.refType === MergeTree.ReferenceType.Simple) {
                 if (marker.properties.columnId) {
                     lineBuf += "CO";
@@ -748,7 +791,11 @@ export function succinctPrintTable(tableMarker: ITableMarker, tableMarkerPos: nu
     console.log(lineBuf);
 }
 
-export function insertHoleFixer(sharedString: SharedString, prevMarker: MergeTree.Marker, columnId: string, rowId: string) {
+export function insertHoleFixer(
+    sharedString: SharedString,
+    prevMarker: MergeTree.Marker,
+    columnId: string,
+    rowId: string) {
     const extraProperties = {
         columnId,
     };
@@ -813,11 +860,7 @@ export function parseTable(
     return table;
 }
 
-export function rowIsMoribund(rowMarker: IRowMarker) {
-    return rowMarker.properties && rowMarker.properties["moribund"];
-}
+export const rowIsMoribund = (rowMarker: IRowMarker) => rowMarker.properties && rowMarker.properties.moribund;
 
-export function cellIsMoribund(cellMarker: ICellMarker) {
-    return cellMarker.properties && cellMarker.properties["moribund"];
-}
+export const cellIsMoribund = (cellMarker: ICellMarker) => cellMarker.properties && cellMarker.properties.moribund;
 

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import {
     createInsertSegmentOp,
     IMergeTreeOp,
@@ -19,7 +20,6 @@ import {
     SequenceDeltaEvent,
     ISequenceDeltaRange,
 } from "@microsoft/fluid-sequence";
-import * as assert from "assert";
 import {
     Schema, Fragment, Slice,
     // Slice,
@@ -45,6 +45,7 @@ export const proseMirrorTreeLabel = "prosemirror";
 
 export const nodeTypeKey = "nodeType";
 
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class IProseMirrorTransaction {
 }
 
@@ -80,13 +81,13 @@ interface IThingGroup {
 }
 
 export class ProseMirrorTransactionBuilder {
-    private transaction: Transaction;
+    private readonly transaction: Transaction;
 
-    private things = new Array<IThing>();
+    private readonly things = new Array<IThing>();
 
     constructor(
         state: EditorState,
-        private schema: Schema,
+        private readonly schema: Schema,
         sharedString: SharedString,
     ) {
         this.transaction = state.tr;
@@ -115,7 +116,7 @@ export class ProseMirrorTransactionBuilder {
     }
 
     private addRange(range: ISequenceDeltaRange) {
-        // let's assume some things...
+        // Let's assume some things...
         // ... we will *never* delete an inserted node.
         // ... deletes will always apply to the ether
         // ... annotates will apply to non-deleted ether nodes
@@ -131,10 +132,11 @@ export class ProseMirrorTransactionBuilder {
             position -= this.things[i].length;
         }
 
-        // position's current value will tell us *where* in this.things[i] to begin inserting
+        // Position's current value will tell us *where* in this.things[i] to begin inserting
+        /* eslint-disable @typescript-eslint/indent */
         switch (range.operation) {
             case MergeTreeDeltaType.REMOVE: {
-                // walk the ether looking for the first ether element where position is found. Then split the ether
+                // Walk the ether looking for the first ether element where position is found. Then split the ether
                 // and add in the removal node.
                 //
                 // For positions we *will* need to include any newly inserted nodes. We can count these as "new" ether
@@ -147,26 +149,27 @@ export class ProseMirrorTransactionBuilder {
                     assert(this.things[i].type === "ether");
 
                     if (this.things[i].length <= length) {
-                        // ether node is fully encompasing
+                        // Ether node is fully encompasing
                         this.things[i].type = "delete";
                         this.things[i].event = range;
                         length -= this.things[i].length;
                         this.things[i].length = 0;
                         i++;
                     } else {
-                        // ether node is partially encompasing. Split it and loop around to then remove it
+                        // Ether node is partially encompasing. Split it and loop around to then remove it
                         this.splitAt(length, i);
                     }
                 }
 
                 break;
             }
-            
+
             case MergeTreeDeltaType.INSERT: {
                 // Walk the ether + new ether (ignoring deletes) looking for the position to insert the element
                 //
                 // Typing the above out it's not all that different from the removal case actually
                 const splicePoint = this.splitAt(position, i);
+                // eslint-disable-next-line max-len
                 this.things.splice(splicePoint, 0, { type: "insert", event: range, length: range.segment.cachedLength });
 
                 break;
@@ -189,26 +192,29 @@ export class ProseMirrorTransactionBuilder {
                     assert(this.things[i].type === "ether");
 
                     if (this.things[i].length <= length) {
-                        // ether node is fully encompasing
+                        // Ether node is fully encompasing
                         this.things[i].annotations = range.propertyDeltas;
                         this.things[i].event = range;
                         length -= this.things[i].length;
                         i++;
                     } else {
-                        // ether node is partially encompasing. Split it and loop around to then remove it
+                        // Ether node is partially encompasing. Split it and loop around to then remove it
                         this.splitAt(length, i);
                     }
                 }
 
                 break;
             }
+            default:
+                break;
         }
+        /* eslint-enable @typescript-eslint/indent */
     }
 
     public addSequencedDelta(delta: SequenceDeltaEvent) {
         for (const range of delta.ranges) {
             // The range has a position
-            // ... range.position                
+            // ... range.position
             // And the range has an operation
             // ... range.operation
             // And the range has a segment
@@ -218,7 +224,7 @@ export class ProseMirrorTransactionBuilder {
             // I need to extract the length given the type
             // range.segment.cachedLength
             this.addRange(range);
-            // this.processRange(range);
+            // This.processRange(range);
         }
     }
 
@@ -237,7 +243,7 @@ export class ProseMirrorTransactionBuilder {
                         from: position,
                         to: position + thing.length,
                         segment: thing.event.segment,
-                        propertyDeltas: thing.annotations
+                        propertyDeltas: thing.annotations,
                     });
                 }
 
@@ -258,7 +264,7 @@ export class ProseMirrorTransactionBuilder {
 
         if (groups.length === 1) {
             const group = groups[0];
-        
+
             let removalSize = 0;
             const insertSegments = [];
 
@@ -275,11 +281,11 @@ export class ProseMirrorTransactionBuilder {
                 Fragment.fromJSON(this.schema, fragment),
                 this.getOpenStart(fragment),
                 this.getOpenEnd(fragment));
-            
+
             this.transaction.replaceRange(
                 group.position,
                 group.position + removalSize,
-                slice)
+                slice);
         } else if (groups.length > 1) {
             const removalSizes = [];
             const insertSizes = [];
@@ -319,7 +325,7 @@ export class ProseMirrorTransactionBuilder {
                 insertSizes[0]));
         }
 
-        // apply annotations
+        // Apply annotations
         for (const annotation of annotations) {
             const segment = annotation.segment;
             // An annotation should just be an immediate flush - I think
@@ -403,7 +409,7 @@ function sliceToGroupOpsInternal(
 ) {
     let offset = 0;
 
-    let props: any = undefined;
+    let props: any;
     if (value.marks) {
         props = {};
         for (const mark of value.marks) {
@@ -437,14 +443,14 @@ function sliceToGroupOpsInternal(
             offset = adjustOffset(from, offset, 1, insert, gapDistance);
         }
     } else {
-        // negative open start indicates we have past the depth from which the opening began
+        // Negative open start indicates we have past the depth from which the opening began
         if (openStart < 0) {
             const beginProps = {
                 ...props,
                 ...{
                     [reservedRangeLabelsKey]: [proseMirrorTreeLabel],
                     [nodeTypeKey]: value.type,
-                }
+                },
             };
 
             const marker = new Marker(ReferenceType.NestBegin);
@@ -474,7 +480,7 @@ function sliceToGroupOpsInternal(
                 ...{
                     [reservedRangeLabelsKey]: [proseMirrorTreeLabel],
                     [nodeTypeKey]: value.type,
-                }
+                },
             };
 
             const marker = new Marker(ReferenceType.NestEnd);
@@ -511,16 +517,17 @@ function generateFragment(segments: ISegment[]) {
                     nodeJson.marks.push({
                         type: propertyKey,
                         value: segment.properties[propertyKey],
-                    })
+                    });
                 }
             }
 
             top.content.push(nodeJson);
         } else if (Marker.is(segment)) {
             const nodeType = segment.properties[nodeTypeKey];
+            /* eslint-disable @typescript-eslint/indent */
             switch (segment.refType) {
                 case ReferenceType.NestBegin:
-                    // special case the open top
+                    // Special case the open top
                     if (openTop) {
                         top.content.push(openTop);
                         openTop = undefined;
@@ -534,10 +541,11 @@ function generateFragment(segments: ISegment[]) {
                 case ReferenceType.NestEnd:
                     if (top.type === nodeType) {
                         top._open = false;
-                        // matching open
+                        // Matching open
                         nodeStack.pop();
                     } else {
-                        // unmatched open
+                        // Unmatched open
+                        // eslint-disable-next-line no-shadow
                         const newNode = { type: nodeType, content: [], _open: true };
                         if (openTop) {
                             newNode.content.push(openTop);
@@ -545,14 +553,14 @@ function generateFragment(segments: ISegment[]) {
 
                         openTop = newNode;
                     }
-                    
+
                     break;
 
                 case ReferenceType.Simple:
                     // TODO consolidate the text segment and simple references
                     const nodeJson: IProseMirrorNode = {
-                        type: segment.properties["type"],
-                        attrs: segment.properties["attrs"],
+                        type: segment.properties.type,
+                        attrs: segment.properties.attrs,
                     };
 
                     if (segment.properties) {
@@ -571,16 +579,17 @@ function generateFragment(segments: ISegment[]) {
                     break;
 
                 default:
-                    // throw for now when encountering something unknown
+                    // Throw for now when encountering something unknown
                     throw new Error("Unknown marker");
             }
+            /* eslint-enable @typescript-eslint/indent */
         }
     }
 
     const doc = nodeStack[0];
     const content = doc.content;
 
-    // we do a fix up down the left edge for all the open nodes since we need to change the ordering. Likely
+    // We do a fix up down the left edge for all the open nodes since we need to change the ordering. Likely
     // better way to do this but holding off until better understand slice use
     // if (content[0] && content[0]._open) {
     //     let prev;
@@ -592,7 +601,7 @@ function generateFragment(segments: ISegment[]) {
     //     }
     //     content[0] = prev;
     // }
-    
+
     return content;
 }
 

@@ -3,15 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import * as React from 'react';
+import * as React from "react";
 import {
     DocumentCard,
     DocumentCardActivity,
     DocumentCardPreview,
     DocumentCardTitle,
-    IDocumentCardPreviewProps
-} from 'office-ui-fabric-react/lib/DocumentCard';
-import { ImageFit } from 'office-ui-fabric-react/lib/Image';
+    IDocumentCardPreviewProps,
+    // eslint-disable-next-line import/no-internal-modules
+} from "office-ui-fabric-react/lib/DocumentCard";
+// eslint-disable-next-line import/no-internal-modules
+import { ImageFit } from "office-ui-fabric-react/lib/Image";
 import * as moment from "moment";
 
 export interface IDocumentCardBasicExampleProps {
@@ -33,7 +35,7 @@ export class DocumentCardBasicExample extends React.Component<IDocumentCardBasic
                     name: simpleName,
                     linkProps: {
                         href: this.props.url,
-                        target: '_blank'
+                        target: "_blank",
                     },
                     previewIconProps: {
                         iconName: this.props.icon,
@@ -41,9 +43,9 @@ export class DocumentCardBasicExample extends React.Component<IDocumentCardBasic
                     },
                     imageFit: ImageFit.cover,
                     width: 318,
-                    height: 196
-                }
-            ]
+                    height: 196,
+                },
+            ],
         };
 
         const name = this.props.user ? this.props.user.name : "Fluid User";
@@ -52,7 +54,7 @@ export class DocumentCardBasicExample extends React.Component<IDocumentCardBasic
             : "Created before the existance of time";
 
         return (
-            <DocumentCard onClick={(event) => { window.open(this.props.url, "_blank")}}>
+            <DocumentCard onClick={(event) => { window.open(this.props.url, "_blank");}}>
                 <DocumentCardPreview {...previewProps} />
                 <DocumentCardTitle
                     title={simpleName}

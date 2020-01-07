@@ -40,7 +40,7 @@ describe("Collections.IntervalTree", () => {
     let intervalTree: IntervalTree<TestInterval>;
 
     beforeEach(() => {
-       intervalTree = new IntervalTree<TestInterval>();
+        intervalTree = new IntervalTree<TestInterval>();
     });
 
     describe(".map", () => {

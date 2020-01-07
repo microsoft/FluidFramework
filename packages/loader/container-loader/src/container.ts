@@ -3,6 +3,10 @@
  * Licensed under the MIT License.
  */
 
+// Disabling these per-file rather than full subdirectory
+/* eslint-disable @typescript-eslint/no-misused-promises */
+
+import * as assert from "assert";
 import {
     ITelemetryBaseLogger,
     ITelemetryLogger,
@@ -67,7 +71,6 @@ import {
     MessageType,
     TreeEntry,
 } from "@microsoft/fluid-protocol-definitions";
-import * as assert from "assert";
 import * as jwtDecode from "jwt-decode";
 import { Audience } from "./audience";
 import { BlobCacheStorageService } from "./blobCacheStorageService";
@@ -81,13 +84,10 @@ import { NullChaincode } from "./nullRuntime";
 import { pkgName, pkgVersion } from "./packageVersion";
 import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
 
-// disabling these per-file rather than full subdirectory
-// tslint:disable:no-floating-promises no-single-line-block-comment
-/* eslint-disable @typescript-eslint/no-misused-promises */
-
-// tslint:disable-next-line:no-var-requires
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const performanceNow = require("performance-now") as (() => number);
-// tslint:disable-next-line:no-var-requires no-submodule-imports
+// eslint-disable-next-line max-len
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires, import/no-internal-modules
 const merge = require("lodash/merge");
 
 const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
@@ -168,7 +168,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private _version: string | undefined;
     private _clientId: string | undefined;
     private _scopes: string[] | undefined;
-    private _deltaManager: DeltaManager | undefined;
+    private readonly _deltaManager: DeltaManager;
     private _existing: boolean | undefined;
     private readonly _id: string;
     private _parentBranch: string | undefined | null;
@@ -201,7 +201,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     }
 
     public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
-        return this._deltaManager!;
+        return this._deltaManager;
     }
 
     public get connectionState(): ConnectionState {
@@ -241,11 +241,11 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
      * back-compat: 0.11 clientType
      */
     public get clientType(): string {
-        return this._deltaManager!.clientType;
+        return this._deltaManager.clientType;
     }
 
     public get clientDetails(): IClientDetails {
-        return this._deltaManager!.clientDetails;
+        return this._deltaManager.clientDetails;
     }
 
     public get chaincodePackage(): string | IFluidCodeDetails | undefined {
@@ -277,10 +277,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
      * Controls whether the container will automatically reconnect to the delta stream after receiving a disconnect.
      */
     public set autoReconnect(value: boolean) {
-        if (!this._deltaManager) {
-            throw new Error("Can't set autoReconnect prior to load");
-        }
-
         this.logger.sendTelemetryEvent({
             eventName: "AutoReconnect",
             value,
@@ -295,9 +291,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
      * Controls whether the container will automatically reconnect to the delta stream after receiving a disconnect.
      */
     public get autoReconnect() {
-        if (!this._deltaManager) {
-            throw new Error("Can't access autoReconnect prior to load");
-        }
         return this._deltaManager.autoReconnect;
     }
 
@@ -319,7 +312,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         this._audience = new Audience();
         this.canReconnect = !(originalRequest.headers && originalRequest.headers[LoaderHeader.reconnect] === false);
 
-        // create logger for components to use
+        // Create logger for components to use
         // back-compat: 0.11 clientType
         const clientType = this.client.details ? this.client.details.type : this.client.type;
         this.subLogger = DebugLogger.mixinDebugLogger(
@@ -327,7 +320,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             logger,
             {
                 docId: this.id,
-                clientType, // differentiating summarizer container from main container
+                clientType, // Differentiating summarizer container from main container
                 packageName: TelemetryLogger.sanitizePkgName(pkgName),
                 packageVersion: pkgVersion,
             });
@@ -338,6 +331,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         this.on("error", (error: any) => {
             this.logCriticalError(error);
         });
+
+        this._deltaManager = this.createDeltaManager();
     }
 
     /**
@@ -365,9 +360,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         }
         this._closed = true;
 
-        if (this._deltaManager) {
-            this._deltaManager.close(reason ? new Error(reason) : undefined, false /*raiseContainerError*/);
-        }
+        this._deltaManager.close(reason ? new Error(reason) : undefined, false /*raiseContainerError*/);
 
         if (this.protocolHandler) {
             this.protocolHandler.close();
@@ -424,12 +417,13 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
     public resume() {
         assert(this.loaded);
-        // resume processing ops
-        this._deltaManager!.inbound.resume();
-        this._deltaManager!.outbound.resume();
-        this._deltaManager!.inboundSignal.resume();
+        // Resume processing ops
+        this._deltaManager.inbound.resume();
+        this._deltaManager.outbound.resume();
+        this._deltaManager.inboundSignal.resume();
 
         // Ensure connection to web socket
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.connectToDeltaStream();
     }
 
@@ -437,6 +431,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         this.emit("error", error);
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public reloadContext(): Promise<void> {
         return this.reloadContextCore().catch((error) => {
             this.raiseCriticalError(error);
@@ -452,7 +447,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         if (this._connectionState === ConnectionState.Disconnected) {
             this.manualReconnectInProgress = true;
         }
-        return this._deltaManager!.connect().catch(() => {});
+        return this._deltaManager.connect().catch(() => { });
     }
 
     private async reloadContextCore(): Promise<void> {
@@ -474,8 +469,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         const attributes: IDocumentAttributes = {
             branch: this.id,
-            minimumSequenceNumber: this._deltaManager!.minimumSequenceNumber,
-            sequenceNumber: this._deltaManager!.referenceSequenceNumber,
+            minimumSequenceNumber: this._deltaManager.minimumSequenceNumber,
+            sequenceNumber: this._deltaManager.referenceSequenceNumber,
         };
 
         await this.loadContext(attributes, storage, snapshot);
@@ -496,7 +491,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         // Generate base snapshot message
         const deltaDetails =
-            `${this._deltaManager!.referenceSequenceNumber}:${this._deltaManager!.minimumSequenceNumber}`;
+            `${this._deltaManager.referenceSequenceNumber}:${this._deltaManager.minimumSequenceNumber}`;
         const message = `Commit @${deltaDetails} ${tagMessage}`;
 
         // Pull in the prior version and snapshot tree to store against
@@ -554,8 +549,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         // Save attributes for the document
         const documentAttributes: IDocumentAttributes = {
             branch: this.id,
-            minimumSequenceNumber: this._deltaManager!.minimumSequenceNumber,
-            sequenceNumber: this._deltaManager!.referenceSequenceNumber,
+            minimumSequenceNumber: this._deltaManager.minimumSequenceNumber,
+            sequenceNumber: this._deltaManager.referenceSequenceNumber,
         };
         entries.push({
             mode: FileMode.File,
@@ -588,13 +583,16 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     }
 
     private startConnectingToDeltaStream() {
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.recordConnectStartTime();
-        this._deltaManager!.connect().catch(() => {});
+        this._deltaManager.connect().catch(() => { });
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     private connectToDeltaStream() {
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.recordConnectStartTime();
-        return this._deltaManager!.connect();
+        return this._deltaManager.connect();
     }
 
     /**
@@ -611,18 +609,17 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         // Start websocket connection as soon as possible.  Note that there is no op handler attached yet, but the
         // DeltaManager is resilient to this and will wait to start processing ops until after it is attached.
-        this.createDeltaManager();
         if (!pause) {
             this.startConnectingToDeltaStream();
         }
 
         this.storageService = await this.getDocumentStorageService();
 
-        // fetch specified snapshot, but intentionally do not load from snapshot if specifiedVersion is null
+        // Fetch specified snapshot, but intentionally do not load from snapshot if specifiedVersion is null
         const maybeSnapshotTree = specifiedVersion === null ? undefined
             : await this.fetchSnapshotTree(specifiedVersion);
 
-        // if pause, and there's no tree, then we'll start the websocket connection here (we'll need the details later)
+        // If pause, and there's no tree, then we'll start the websocket connection here (we'll need the details later)
         if (!maybeSnapshotTree) {
             this.startConnectingToDeltaStream();
         }
@@ -631,7 +628,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         const attributes = await this.getDocumentAttributes(this.storageService, maybeSnapshotTree);
 
-        // attach op handlers to start processing ops
+        // Attach op handlers to start processing ops
         this.attachDeltaManagerOpHandler(attributes, !specifiedVersion);
 
         // ...load in the existing quorum
@@ -653,7 +650,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             });
         }
 
-        // loadContext directly requires blobManager and protocolHandler to be ready, and eventually calls
+        // LoadContext directly requires blobManager and protocolHandler to be ready, and eventually calls
         // instantiateRuntime which will want to know existing state.  Wait for these promises to finish.
         [this.blobManager, this.protocolHandler] = await Promise.all([blobManagerP, protocolHandlerP, loadDetailsP]);
 
@@ -666,7 +663,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         // Propagate current connection state through the system.
         const connected = this.connectionState === ConnectionState.Connected;
-        assert(!connected || this._deltaManager!.connectionMode === "read");
+        assert(!connected || this._deltaManager.connectionMode === "read");
         this.propagateConnectionState();
 
         perfEvent.end({
@@ -735,6 +732,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         const protocolLogger = ChildLogger.create(this.subLogger, "ProtocolHandler");
 
         protocol.on("Summary", (message) => {
+            /* eslint-disable @typescript-eslint/indent */
             switch (message.type) {
                 case MessageType.Summarize:
                     protocolLogger.sendTelemetryEvent({
@@ -764,7 +762,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                     break;
                 default:
             }
-
+            /* eslint-enable @typescript-eslint/indent */
         });
 
         protocol.quorum.on("error", (error) => {
@@ -780,15 +778,15 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                     ConnectionState.Connected,
                     `joined @ ${details.sequenceNumber}`,
                     this.pendingClientId,
-                    this._deltaManager!.version,
+                    this._deltaManager.version,
                     details.client.scopes,
-                    this._deltaManager!.serviceConfiguration);
+                    this._deltaManager.serviceConfiguration);
             }
         });
 
         protocol.quorum.on("removeMember", (clientId) => {
             if (clientId === this._clientId) {
-                this._deltaManager!.updateQuorumLeave();
+                this._deltaManager.updateQuorumLeave();
             }
         });
 
@@ -797,12 +795,12 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             (sequenceNumber, key, value) => {
                 debug(`approved ${key}`);
                 if (key === "code" || key === "code2") {
-                    // back compat - can remove in 0.7
+                    // Back compat - can remove in 0.7
                     if (!this.codeQuorumKey) {
                         this.codeQuorumKey = key;
                     }
 
-                    // back compat - can remove in 0.7
+                    // Back compat - can remove in 0.7
                     if (key !== this.codeQuorumKey) {
                         return;
                     }
@@ -813,6 +811,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                         return;
                     }
 
+                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
                     this.reloadContext();
                 }
             });
@@ -838,7 +837,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private async loadCodeFromQuorum(
         quorum: Quorum,
     ): Promise<{ pkg: IFluidCodeDetails | undefined; chaincode: IRuntimeFactory }> {
-        // back compat - can remove in 0.7
+        // Back compat - can remove in 0.7
         const codeQuorumKey = quorum.has("code")
             ? "code"
             : quorum.has("code2") ? "code2" : undefined;
@@ -879,7 +878,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             // tslint:disable-next-line:no-unsafe-any
             ? (this.options.client as IClient)
             : {
-                type: "browser", // back-compat: 0.11 clientType
+                type: "browser", // Back-compat: 0.11 clientType
                 details: {
                     capabilities: { interactive: true },
                 },
@@ -888,7 +887,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                 user: { id: "" },
             };
 
-        // client info from headers overrides client info from loader options
+        // Client info from headers overrides client info from loader options
         const headerClientDetails = this.originalRequest.headers
             && this.originalRequest.headers[LoaderHeader.clientDetails];
 
@@ -897,7 +896,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             merge(client.details, headerClientDetails);
         }
 
-        // back-compat: 0.11 clientType
+        // Back-compat: 0.11 clientType
         const headerClientType = this.originalRequest.headers && this.originalRequest.headers[LoaderHeader.clientType];
         if (headerClientType) {
             client.type = headerClientType;
@@ -905,20 +904,15 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return client;
     }
 
-    private createDeltaManager(): void {
-        // Create the DeltaManager and begin listening for connection events
-        // tslint:disable-next-line:no-unsafe-any
-        const client = this.client;
-
-        this._deltaManager = new DeltaManager(
+    private createDeltaManager() {
+        const deltaManager = new DeltaManager(
             this.service,
-            client,
+            this.client,
             ChildLogger.create(this.subLogger, "DeltaManager"),
             this.canReconnect,
         );
 
-        // Open a connection - the DeltaManager will automatically reconnect
-        this._deltaManager.on("connect", (details: IConnectionDetails) => {
+        deltaManager.on("connect", (details: IConnectionDetails) => {
             this.setConnectionState(
                 ConnectionState.Connecting,
                 "websocket established",
@@ -927,17 +921,17 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                 details.claims.scopes,
                 details.serviceConfiguration);
 
-            if (this._deltaManager!.connectionMode === "read") {
+            if (deltaManager.connectionMode === "read") {
                 this.setConnectionState(
                     ConnectionState.Connected,
                     `joined as readonly`,
                     details.clientId,
-                    this._deltaManager!.version,
+                    deltaManager.version,
                     details.claims.scopes,
-                    this._deltaManager!.serviceConfiguration);
+                    deltaManager.serviceConfiguration);
             }
 
-            // back-compat for new client and old server.
+            // Back-compat for new client and old server.
             this._audience.clear();
 
             const priorClients = details.initialClients ? details.initialClients : [];
@@ -946,28 +940,28 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             }
         });
 
-        this._deltaManager.on("disconnect", (reason: string) => {
+        deltaManager.on("disconnect", (reason: string) => {
             this.manualReconnectInProgress = false;
             this.setConnectionState(ConnectionState.Disconnected, reason);
         });
 
-        this._deltaManager.on("error", (error) => {
+        deltaManager.on("error", (error) => {
             this.raiseCriticalError(error);
         });
 
-        this._deltaManager.on("pong", (latency) => {
+        deltaManager.on("pong", (latency) => {
             this.emit("pong", latency);
         });
 
-        this._deltaManager.on("processTime", (time) => {
+        deltaManager.on("processTime", (time) => {
             this.emit("processTime", time);
         });
+
+        return deltaManager;
     }
 
     private attachDeltaManagerOpHandler(attributes: IDocumentAttributes, catchUp: boolean): void {
-        assert(this._deltaManager);
-
-        this._deltaManager!.on("closed", () => {
+        this._deltaManager.on("closed", () => {
             this.close();
         });
 
@@ -975,13 +969,11 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         // Begin fetching any pending deltas once we know the base sequence #. Can this fail?
         // It seems like something, like reconnection, that we would want to retry but otherwise allow
         // the document to load
-        this._deltaManager!.attachOpHandler(
+        this._deltaManager.attachOpHandler(
             attributes.minimumSequenceNumber,
             attributes.sequenceNumber,
             {
-                process: (message) => {
-                    return this.processRemoteMessage(message);
-                },
+                process: (message) => this.processRemoteMessage(message),
                 processSignal: (message) => {
                     this.processSignal(message);
                 },
@@ -1000,9 +992,9 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         let connectionInitiationReason: string | undefined;
         let autoReconnect: boolean | undefined;
         if (value === ConnectionState.Disconnected) {
-            autoReconnect = this._deltaManager!.autoReconnect;
+            autoReconnect = this._deltaManager.autoReconnect;
         } else {
-            connectionMode = this._deltaManager!.connectionMode;
+            connectionMode = this._deltaManager.connectionMode;
             if (value === ConnectionState.Connected) {
                 durationFromDisconnected = time - this.connectionTransitionTimes[ConnectionState.Disconnected];
                 durationFromDisconnected = TelemetryLogger.formatTick(durationFromDisconnected);
@@ -1023,7 +1015,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             durationFromDisconnected,
             reason,
             connectionInitiationReason,
-            socketDocumentId: this._deltaManager ? this._deltaManager.socketDocumentId : undefined,
+            socketDocumentId: this._deltaManager.socketDocumentId,
             pendingClientId: this.pendingClientId,
             clientId: this.clientId,
             connectionMode,
@@ -1073,7 +1065,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             this.pendingClientId = context;
         } else if (value === ConnectionState.Connected) {
             this._clientId = this.pendingClientId;
-            this._deltaManager!.updateQuorumJoin();
+            this._deltaManager.updateQuorumJoin();
         } else if (value === ConnectionState.Disconnected) {
             // Important as we process our own joinSession message through delta request
             this.pendingClientId = undefined;
@@ -1109,7 +1101,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         }
 
         this.messageCountAfterDisconnection += 1;
-        return this._deltaManager!.submit(type, contents, batch, metadata);
+        return this._deltaManager.submit(type, contents, batch, metadata);
     }
 
     private processRemoteMessage(message: ISequencedDocumentMessage): IProcessMessageResult {
@@ -1129,7 +1121,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     }
 
     private submitSignal(message: any) {
-        this._deltaManager!.submitSignal(JSON.stringify(message));
+        this._deltaManager.submitSignal(JSON.stringify(message));
     }
 
     private processSignal(message: ISignalMessage) {
@@ -1168,7 +1160,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         if (version) {
             return await this.storageService!.getSnapshotTree(version) || undefined;
         } else if (specifiedVersion) {
-            // we should have a defined version to load from if specified version requested
+            // We should have a defined version to load from if specified version requested
             this.logger.sendErrorEvent({ eventName: "NoVersionFoundWhenSpecified", specifiedVersion });
         }
 
@@ -1195,13 +1187,14 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             snapshot || { id: null, blobs: {}, commits: {}, trees: {} },
             attributes,
             this.blobManager,
-            new DeltaManagerProxy(this._deltaManager!),
+            new DeltaManagerProxy(this._deltaManager),
             new QuorumProxy(this.protocolHandler!.quorum),
             loader,
             storage,
             (err) => this.raiseCriticalError(err),
             (type, contents) => this.submitMessage(type, contents),
             (message) => this.submitSignal(message),
+            // eslint-disable-next-line @typescript-eslint/promise-function-async
             (message) => this.snapshot(message),
             (reason?: string) => this.close(reason),
             Container.version,

@@ -30,7 +30,7 @@ export const handle: IComponentHandle = new ComponentHandle("", mockHandleContex
  * is a factory that is invoked to create the leaves of the graph.
  */
 export function makeJson(breadth: number, depth: number, createLeaf: () => any) {
-    // tslint:disable-next-line:no-parameter-reassignment
+    // eslint-disable-next-line no-param-reassign
     if (--depth === 0) {
         return createLeaf();
     }

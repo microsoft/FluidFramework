@@ -18,8 +18,8 @@ const StartingSequenceNumber = 0;
 // Forked from DocumentStorage to remove to server dependencies and enable testing of other components.
 export class TestDocumentStorage implements IDocumentStorage {
     constructor(
-        private databaseManager: IDatabaseManager,
-        private tenantManager: ITenantManager) {
+        private readonly databaseManager: IDatabaseManager,
+        private readonly tenantManager: ITenantManager) {
     }
 
     /**
@@ -76,12 +76,12 @@ export class TestDocumentStorage implements IDocumentStorage {
      * Retrieves the forks for the given document
      */
     public async getForks(tenantId: string, documentId: string): Promise<string[]> {
-        // not implemented for testDocumentstorage
+        // Not implemented for testDocumentstorage
         return [];
     }
 
     public async createFork(tenantId: string, id: string): Promise<string> {
-        // not implemented for testDocumentstorage
+        // Not implemented for testDocumentstorage
         return "";
     }
 

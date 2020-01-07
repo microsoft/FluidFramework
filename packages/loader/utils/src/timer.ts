@@ -63,7 +63,7 @@ export class Timer implements ITimer {
     }
 
     protected wrapHandler(handler: () => void) {
-        // run clear first, in case the handler decides to start again
+        // Run clear first, in case the handler decides to start again
         this.clear();
         handler();
     }

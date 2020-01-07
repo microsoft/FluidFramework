@@ -6,8 +6,8 @@
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 
 declare module "@microsoft/fluid-component-core-interfaces" {
-    export interface IComponent extends Readonly<Partial<IProvideComponentCollection>> {
-    }
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface IComponent extends Readonly<Partial<IProvideComponentCollection>> { }
 }
 
 export interface IProvideComponentCollection {
@@ -21,5 +21,5 @@ export interface IProvideComponentCollection {
 export interface IComponentCollection extends IProvideComponentCollection {
     createCollectionItem<TOpt = object>(options?: TOpt): IComponent;
     removeCollectionItem(instance: IComponent): void;
-    // need iteration
+    // Need iteration
 }

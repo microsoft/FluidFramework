@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IContentMessage } from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";
+import { IContentMessage } from "@microsoft/fluid-protocol-definitions";
 import { debug } from "./debug";
 
 export class ContentCache extends EventEmitter {
@@ -33,7 +33,7 @@ export class ContentCache extends EventEmitter {
     }
 }
 
-// tslint:disable:no-bitwise
+/* eslint-disable no-bitwise */
 class RingBuffer {
     private log2Capacity: number;
     private length: number;
@@ -100,4 +100,4 @@ class RingBuffer {
         this.buffer = newBuffer;
     }
 }
-// tslint:enable:no-bitwise
+/* eslint-enable no-bitwise */

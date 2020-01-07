@@ -24,13 +24,11 @@ export class DocumentDeltaEventManager {
      */
     public static async yieldEventLoop(): Promise<void> {
         await new Promise<void>((resolve) => {
-            // tslint:disable-next-line no-string-based-set-timeout
             setTimeout(resolve, 0);
         });
     }
 
-    private readonly documents: Set<IDocumentDeltaEvent> =
-        new Set<IDocumentDeltaEvent>();
+    private readonly documents: Set<IDocumentDeltaEvent> = new Set<IDocumentDeltaEvent>();
 
     private isNormalProcessingPaused = false;
 
@@ -44,7 +42,7 @@ export class DocumentDeltaEventManager {
     /**
      * @param testDeltaConnectionServer - instance of delta connection server
      */
-    public constructor(private testDeltaConnectionServer: ITestDeltaConnectionServer) { }
+    public constructor(private readonly testDeltaConnectionServer: ITestDeltaConnectionServer) { }
 
     /**
      * Registers a collection of document delta events by adding them to
@@ -119,11 +117,13 @@ export class DocumentDeltaEventManager {
      * Useful when called from a manual test utility, but not for automated testing.
      */
     public async resumeProcessing(...docs: IDocumentDeltaEvent[]) {
+        // eslint-disable-next-line @typescript-eslint/promise-function-async
         await Promise.all(docs.map((doc) => this.resumeDocument(doc)));
         this.isNormalProcessingPaused = false;
     }
 
     private async pauseAndValidateDocs(...docs: IDocumentDeltaEvent[]): Promise<Iterable<IDocumentDeltaEvent>> {
+        // eslint-disable-next-line @typescript-eslint/promise-function-async
         await Promise.all(Array.from(this.documents).map((doc) => this.pauseDocument(doc)));
         this.isNormalProcessingPaused = true;
 

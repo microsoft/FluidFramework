@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { Deferred } from "@microsoft/fluid-core-utils";
-import { IContext } from "@microsoft/fluid-server-services-core";
 import * as assert from "assert";
 import { EventEmitter } from "events";
+import { Deferred } from "@microsoft/fluid-core-utils";
+import { IContext } from "@microsoft/fluid-server-services-core";
 
 interface IWaitOffset {
     deferred: Deferred<void>;
@@ -36,6 +36,7 @@ export class TestContext extends EventEmitter implements IContext {
         this.emit("error", error, restart);
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public waitForOffset(value: number): Promise<void> {
         if (value <= this.offset) {
             return Promise.resolve();

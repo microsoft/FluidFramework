@@ -44,7 +44,7 @@ export function analyzeTasks(
 function isRobot(client: ISequencedClient): boolean {
     return client.client && (
         (
-            // back-compat: 0.11 clientType
+            // Back-compat: 0.11 clientType
             !client.client.details
             && client.client.type !== "browser"
         ) || (

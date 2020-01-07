@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import { fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
 import { addBlobToTree } from "@microsoft/fluid-protocol-base";
 import {
@@ -20,7 +21,6 @@ import {
     ISharedObjectFactory,
     SharedObject,
 } from "@microsoft/fluid-shared-object-base";
-import * as assert from "assert";
 import { debug } from "./debug";
 import {
     ISharedMap,
@@ -258,7 +258,6 @@ export class SharedMap extends SharedObject implements ISharedMap {
         target: this) => void): this;
     public on(event: string | symbol, listener: (...args: any[]) => void): this;
 
-    /* tslint:disable:no-unnecessary-override */
     public on(event: string | symbol, listener: (...args: any[]) => void): this {
         return super.on(event, listener);
     }
@@ -316,7 +315,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
                 };
                 addBlobToTree(tree, blobName, content);
             } else {
-                currentSize += value.type.length + 21; // approximation cost of property header
+                currentSize += value.type.length + 21; // Approximation cost of property header
                 if (value.value) {
                     currentSize += value.value.length;
                 }

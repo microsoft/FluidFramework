@@ -12,6 +12,7 @@ import {
     IDocumentStorage,
     ISequencedOperationMessage,
 } from "@microsoft/fluid-server-services-core";
+// eslint-disable-next-line import/no-internal-modules
 import { IGitManager } from "../../services-client/dist";
 import { ILocalOrdererSetup } from "./interfaces";
 
@@ -25,18 +26,22 @@ export class LocalOrdererSetup implements ILocalOrdererSetup {
         private readonly gitManager?: IGitManager) {
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public documentP(): Promise<IDocumentDetails> {
         return this.storage.getOrCreateDocument(this.tenantId, this.documentId);
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public documentCollectionP(): Promise<ICollection<IDocument>> {
         return this.databaseManager.getDocumentCollection();
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public deltaCollectionP(): Promise<ICollection<any>> {
         return this.databaseManager.getDeltaCollection(this.tenantId, this.documentId);
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public scribeDeltaCollectionP(): Promise<ICollection<ISequencedOperationMessage>> {
         return this.databaseManager.getScribeDeltaCollection(this.tenantId, this.documentId);
     }

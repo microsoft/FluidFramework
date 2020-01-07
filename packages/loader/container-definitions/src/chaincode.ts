@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import {
     IComponent,
@@ -22,7 +23,6 @@ import {
     ITree,
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
-import { EventEmitter } from "events";
 import { IAudience } from "./audience";
 import { IBlobManager } from "./blobs";
 import { IDeltaManager } from "./deltas";
@@ -41,7 +41,7 @@ export interface IPerson {
  * Typescript interface definition for fields within a NPM module's package.json.
  */
 export interface IPackage {
-    // general access for extended fields
+    // General access for extended fields
     [key: string]: any;
     name: string;
     version: string;
@@ -81,7 +81,7 @@ export interface IFluidPackage extends IPackage {
                 // to the CDN location
                 files: string[];
 
-                // if libraryTarget is umd then library is the global name that the script entry points will be exposed
+                // If libraryTarget is umd then library is the global name that the script entry points will be exposed
                 // under. Other target formats may choose to reinterpret this value.
                 library: string;
             };
@@ -93,10 +93,8 @@ export interface IFluidPackage extends IPackage {
  * Check if the package.json defines a fluid module, which requires a `fluid` entry
  * @param pkg - the package json data to check if it is a fluid package.
  */
-export function isFluidPackage(pkg: IPackage): pkg is IFluidPackage {
-    // tslint:disable-next-line: no-unsafe-any
-    return pkg.fluid && pkg.fluid.browser && pkg.fluid.browser.umd;
-}
+export const isFluidPackage = (pkg: IPackage): pkg is IFluidPackage =>
+    pkg.fluid && pkg.fluid.browser && pkg.fluid.browser.umd;
 
 /**
  * Package manager configuration. Provides a key value mapping of config values
@@ -179,7 +177,7 @@ export interface IContainerContext extends EventEmitter, IMessageScheduler, IPro
     readonly configuration: IComponentConfiguration;
     readonly clientId: string | undefined;
     // DEPRECATED: use clientDetails.type instead
-    readonly clientType: string; // back-compat: 0.11 clientType
+    readonly clientType: string; // Back-compat: 0.11 clientType
     readonly clientDetails: IClientDetails;
     readonly parentBranch: string | undefined | null;
     readonly blobManager: IBlobManager | undefined;
@@ -237,9 +235,10 @@ export interface IRuntimeFactory extends IProvideRuntimeFactory {
 }
 
 declare module "@microsoft/fluid-component-core-interfaces" {
+    /* eslint-disable @typescript-eslint/indent, @typescript-eslint/no-empty-interface */
     export interface IComponent extends Readonly<Partial<
         IProvideRuntimeFactory &
         IProvideComponentTokenProvider &
-        IProvideMessageScheduler>> {
-    }
+        IProvideMessageScheduler>> { }
 }
+    /* eslint-enable @typescript-eslint/indent, @typescript-eslint/no-empty-interface */

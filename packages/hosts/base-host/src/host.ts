@@ -46,7 +46,6 @@ async function initializeChaincode(document: Container, pkg?: IFluidCodeDetails)
 
     // Wait for connection so that proposals can be sent
     if (!document.connected) {
-        // tslint:disable-next-line: no-unnecessary-callback-wrapper
         await new Promise<void>((resolve) => document.on("connected", () => resolve()));
     }
 
@@ -59,6 +58,7 @@ async function initializeChaincode(document: Container, pkg?: IFluidCodeDetails)
 }
 
 async function registerAttach(loader: Loader, container: Container, uri: string, div: HTMLDivElement) {
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
     container.on("contextChanged", async (value) => {
         await attach(loader, uri, div);
     });
@@ -82,14 +82,14 @@ async function createWebLoader(
     // Create the web loader and prefetch the chaincode we will need
     const codeLoader = new WebCodeLoader(hostConfig.whiteList);
     if (pkg) {
-        // tslint:disable-next-line: strict-boolean-expressions
-        if (pkg.pkg) { // this is an IFluidPackage
+        if (pkg.pkg) { // This is an IFluidPackage
             await codeLoader.seed({
                 package: pkg.pkg,
                 config: pkg.details.config,
                 scriptIds,
             });
             if (pkg.details.package === pkg.pkg.name) {
+                // eslint-disable-next-line require-atomic-updates
                 pkg.details.package = `${pkg.pkg.name}@${pkg.pkg.version}`;
             }
         }
@@ -100,11 +100,9 @@ async function createWebLoader(
 
     const config = hostConfig.config ? hostConfig.config : {};
 
-    // we need to extend options, otherwise we nest properties, like client, too deeply
+    // We need to extend options, otherwise we nest properties, like client, too deeply
     //
-    // tslint:disable-next-line: no-unsafe-any
     config.blockUpdateMarkers = true;
-    // tslint:disable-next-line: no-unsafe-any
     config.tokens = (resolved as IFluidResolvedUrl).tokens;
 
     const scope = hostConfig.scope ? hostConfig.scope : {};
@@ -173,7 +171,6 @@ export class BaseHost {
 
         // If this is a new document we will go and instantiate the chaincode. For old documents we assume a legacy
         // package.
-        // tslint:disable-next-line: strict-boolean-expressions
         if (!container.existing) {
             await initializeChaincode(container, pkg)
                 .catch((error) => console.error("chaincode error", error));

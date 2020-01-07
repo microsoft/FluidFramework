@@ -23,7 +23,12 @@ export interface IPublisher {
     on(event: string, listener: (...args: any[]) => void);
 
     /**
-     * used to send messages to a topic
+     * Used to send messages to a topic
      */
     to(topic: string): ITopic;
+
+    /**
+     * Closes the publisher
+     */
+    close(): Promise<void>;
 }

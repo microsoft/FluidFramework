@@ -13,8 +13,8 @@ import {
     JsonablePrimitive,
 } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObject, ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
-import { SharedSegmentSequence, SubSequence } from "./";
 import { pkgVersion } from "./packageVersion";
+import { SharedSegmentSequence, SubSequence } from "./";
 
 // An empty segment that occupies 'cachedLength' positions.  SparseMatrix uses PaddingSegment
 // to "pad" a run of unoccupied cells.
@@ -70,7 +70,7 @@ export class PaddingSegment extends BaseSegment {
         this.cachedLength += segment.cachedLength;
     }
 
-    // returns true if entire run removed
+    // Returns true if entire run removed
     public removeRange(start: number, end: number) {
         this.cachedLength -= (end - start);
         return (this.cachedLength === 0);
@@ -164,17 +164,15 @@ export class RunSegment extends SubSequence<SparseMatrixItem> {
 
 export type MatrixSegment = RunSegment | PaddingSegment;
 
-export const maxCol = 0x200000;         // x128 Excel maximum of 16,384 columns
+export const maxCol = 0x200000;         // X128 Excel maximum of 16,384 columns
 export const maxCols = maxCol + 1;
 
-export const maxRow = 0xFFFFFFFF;       // x4096 Excel maximum of 1,048,576 rows
+export const maxRow = 0xFFFFFFFF;       // X4096 Excel maximum of 1,048,576 rows
 export const maxRows = maxRow + 1;
 
 export const maxCellPosition = maxCol * maxRow;
 
-export function rowColToPosition(row: number, col: number) {
-    return row * maxCols + col;
-}
+export const rowColToPosition = (row: number, col: number) => row * maxCols + col;
 
 export function positionToRowCol(position: number) {
     const row = Math.floor(position / maxCols);
@@ -204,6 +202,7 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
     }
 
     constructor(document: IComponentRuntime, public id: string) {
+        // eslint-disable-next-line @typescript-eslint/unbound-method
         super(document, id, SparseMatrixFactory.Attributes, SparseMatrixFactory.segmentFromSpec);
     }
 
@@ -289,7 +288,7 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
         const removeColEnd = srcCol + numCols;
         const ops = [];
 
-        for (let r = 0, rowStart = 0; r < this.numRows; r++, rowStart += maxCols) {
+        for (let r = 0, rowStart = 0; r < this.numRows; r++ , rowStart += maxCols) {
             ops.push(this.client.removeRangeLocal(rowStart + removeColStart, rowStart + removeColEnd));
             const insertPos = rowStart + destCol;
             const segment = new PaddingSegment(numCols);

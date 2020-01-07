@@ -27,7 +27,7 @@ export class Rectangle {
         public y: number,
         public width: number,
         public height: number) {
-        }
+    }
 
     public square() {
         let len = this.width;
@@ -95,31 +95,31 @@ export class Rectangle {
 
     public conformElementMaxHeight(elm: HTMLElement) {
         elm.style.position = "absolute";
-        elm.style.left = this.x + "px";
-        elm.style.width = this.width + "px";
-        elm.style.top = this.y + "px";
-        elm.style.maxHeight = this.height + "px";
+        elm.style.left = `${this.x}px`;
+        elm.style.width = `${this.width}px`;
+        elm.style.top = `${this.y}px`;
+        elm.style.maxHeight = `${this.height}px`;
     }
 
     public conformElementMaxHeightFromBottom(elm: HTMLElement, bottom: number) {
         elm.style.position = "absolute";
-        elm.style.left = this.x + "px";
-        elm.style.width = this.width + "px";
-        elm.style.bottom = bottom + "px";
-        elm.style.maxHeight = this.height + "px";
+        elm.style.left = `${this.x}px`;
+        elm.style.width = `${this.width}px`;
+        elm.style.bottom = `${bottom}px`;
+        elm.style.maxHeight = `${this.height}px`;
     }
 
     public conformElementOpenHeight(elm: HTMLElement) {
         elm.style.position = "absolute";
-        elm.style.left = this.x + "px";
-        elm.style.width = this.width + "px";
-        elm.style.top = this.y + "px";
+        elm.style.left = `${this.x}px`;
+        elm.style.width = `${this.width}px`;
+        elm.style.top = `${this.y}px`;
     }
 
     public moveElementToUpperLeft(elm: HTMLElement) {
         elm.style.position = "absolute";
-        elm.style.left = this.x + "px";
-        elm.style.top = this.y + "px";
+        elm.style.left = `${this.x}px`;
+        elm.style.top = `${this.y}px`;
     }
 
     public conformElement(elm: HTMLElement) {

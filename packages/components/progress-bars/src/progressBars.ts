@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import {
     IComponent,
     IComponentHandleContext,
@@ -18,16 +19,15 @@ import { IComponentCollection } from "@microsoft/fluid-framework-interfaces";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
-import { EventEmitter } from "events";
 
-// tslint:disable-next-line:no-var-requires no-submodule-imports
+// eslint-disable-next-line @typescript-eslint/no-require-imports,import/no-internal-modules,import/no-unassigned-import
 require("bootstrap/dist/css/bootstrap.min.css");
 
 class ProgressBarView implements IComponentHTMLView {
 
     public parent: HTMLElement;
 
-    constructor(private bar: ProgressBar) {
+    constructor(private readonly bar: ProgressBar) {
     }
 
     public get IComponentHTMLView() { return this; }
@@ -40,7 +40,7 @@ class ProgressBarView implements IComponentHTMLView {
         if (parent) {
             const div = document.createElement("div");
             div.classList.add("progress");
-            // tslint:disable-next-line:max-line-length no-inner-html
+            // eslint-disable-next-line max-len
             div.innerHTML = `<div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" style="width: 75%"></div>`;
 
             const urlDiv = document.createElement("div");
@@ -72,7 +72,7 @@ class ProgressBarView implements IComponentHTMLView {
 
 // The "model" side of a progress bar
 export class ProgressBar implements IComponentLoadable, IComponentHTMLVisual, IComponentRouter {
-    private views = new Set<ProgressBarView>();
+    private readonly views = new Set<ProgressBarView>();
     private defaultView: ProgressBarView;
 
     public handle: ComponentHandle;
@@ -80,9 +80,9 @@ export class ProgressBar implements IComponentLoadable, IComponentHTMLVisual, IC
     constructor(
         public value: number,
         public url: string,
-        private keyId: string,
+        private readonly keyId: string,
         context: IComponentHandleContext,
-        private collection: ProgressCollection,
+        private readonly collection: ProgressCollection,
     ) {
         this.handle = new ComponentHandle(this, keyId, context);
     }
@@ -148,10 +148,10 @@ export class ProgressCollection
     public url: string;
     public handle: ComponentHandle;
 
-    private progressBars = new Map<string, ProgressBar>();
+    private readonly progressBars = new Map<string, ProgressBar>();
     private root: ISharedMap;
 
-    constructor(private runtime: IComponentRuntime, context: IComponentContext) {
+    constructor(private readonly runtime: IComponentRuntime, context: IComponentContext) {
         super();
 
         this.url = context.id;
@@ -212,9 +212,9 @@ export class ProgressCollection
                 new ProgressBar(
                     this.root.get(key),
                     `${this.url}/${key}`,
-                     key,
-                     this.runtime.IComponentHandleContext,
-                     this));
+                    key,
+                    this.runtime.IComponentHandleContext,
+                    this));
         }
 
         this.root.on("valueChanged", (changed, local) => {

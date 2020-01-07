@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 import * as assert from "assert";
-// tslint:disable: no-suspicious-comment
 import { Property } from "./base";
 import { RedBlackTree } from "./collections";
 import { UnassignedSequenceNumber } from "./constants";
@@ -136,7 +135,7 @@ export class PartialSequenceLengths {
                     return;
                 } else {
                     pLen = prevPartial.len;
-                    // previous sequence number is finished
+                    // Previous sequence number is finished
                     combinedPartialLengths.addClientSeqNumberFromPartial(prevPartial);
                 }
             }
@@ -164,9 +163,9 @@ export class PartialSequenceLengths {
         }
         let childPartialsLen = childPartials.length;
         if (childPartialsLen !== 0) {
-            // some children are interior nodes
+            // Some children are interior nodes
             if (combinedPartialLengths.partialLengths.length > 0) {
-                // some children were leaves; add combined partials from these segments
+                // Some children were leaves; add combined partials from these segments
                 childPartials.push(combinedPartialLengths);
                 childPartialsLen++;
                 combinedPartialLengths = new PartialSequenceLengths(collabWindow.minSeq);
@@ -184,7 +183,7 @@ export class PartialSequenceLengths {
             while (outerIndexOfEarliest >= 0) {
                 outerIndexOfEarliest = -1;
                 for (let k = 0; k < childPartialsLen; k++) {
-                    // find next earliest sequence number
+                    // Find next earliest sequence number
                     if (indices[k] < childPartialsCounts[k]) {
                         const cpLen = childPartials[k].partialLengths[indices[k]];
                         if ((outerIndexOfEarliest < 0) || (cpLen.seq < earliestPartialLength.seq)) {
@@ -198,7 +197,7 @@ export class PartialSequenceLengths {
                     indices[outerIndexOfEarliest]++;
                 }
             }
-            // add client entry for last partial, if any
+            // Add client entry for last partial, if any
             if (prevPartial) {
                 combinedPartialLengths.addClientSeqNumberFromPartial(prevPartial);
             }
@@ -231,10 +230,9 @@ export class PartialSequenceLengths {
         for (let i = 0; i < block.childCount; i++) {
             const child = block.children[i];
             if (child.isLeaf()) {
-                // leaf segment
+                // Leaf segment
                 const segment = child;
                 const segBranchId = mergeTree.getBranchId(segment.clientId);
-                // tslint:disable-next-line: max-line-length
                 // console.log(`seg br ${segBranchId} cli ${glc(mergeTree, segment.clientId)} me ${glc(mergeTree, mergeTree.collabWindow.clientId)}`);
                 if (segBranchId <= branchId) {
                     if (seqLTE(segment.seq, collabWindow.minSeq)) {
@@ -260,7 +258,7 @@ export class PartialSequenceLengths {
                 }
             }
         }
-        // post-process correctly-ordered partials computing sums and creating
+        // Post-process correctly-ordered partials computing sums and creating
         // lists for each present client id
         const seqPartials = combinedPartialLengths.partialLengths;
         const seqPartialsLen = seqPartials.length;
@@ -324,7 +322,7 @@ export class PartialSequenceLengths {
 
         const seqPartials = combinedPartialLengths.partialLengths;
         const seqPartialsLen = seqPartials.length;
-        // find the first entry with sequence number greater or equal to seq
+        // Find the first entry with sequence number greater or equal to seq
         let indexFirstGTE = 0;
         for (; indexFirstGTE < seqPartialsLen; indexFirstGTE++) {
             if (seqPartials[indexFirstGTE].seq >= seq) {
@@ -349,7 +347,7 @@ export class PartialSequenceLengths {
             }
 
             if (indexFirstGTE < seqPartialsLen) {
-                // shift entries with greater sequence numbers
+                // Shift entries with greater sequence numbers
                 // TODO: investigate performance improvement using BST
                 for (let k = seqPartialsLen; k > indexFirstGTE; k--) {
                     seqPartials[k] = seqPartials[k - 1];
@@ -387,7 +385,7 @@ export class PartialSequenceLengths {
             partialLengths.push(seqPartialLen);
         } else {
             seqPartialLen.seglen = seqSeglen;
-            // assert client id matches
+            // Assert client id matches
         }
         if (penultPartialLen !== undefined) {
             seqPartialLen.len = seqPartialLen.seglen + penultPartialLen.len;
@@ -412,7 +410,6 @@ export class PartialSequenceLengths {
         clientId: number,
         collabWindow: CollaborationWindow) {
         const segBranchId = mergeTree.getBranchId(clientId);
-        // tslint:disable-next-line: max-line-length
         // console.log(`seg br ${segBranchId} cli ${glc(mergeTree, segment.clientId)} me ${glc(mergeTree, mergeTree.collabWindow.clientId)}`);
         if (segBranchId === 0) {
             this.updateBranch(mergeTree, 0, block, seq, clientId, collabWindow);
@@ -480,7 +477,7 @@ export class PartialSequenceLengths {
                 }
             }
         } else {
-            // refSeq is before any of the partial lengths
+            // RefSeq is before any of the partial lengths
             // so just add in all local edits of that client (which should all be after the refSeq)
             if (cliLatestindex >= 0) {
                 const cliLatest = cliSeq[cliLatestindex];
@@ -490,7 +487,7 @@ export class PartialSequenceLengths {
         return pLen;
     }
 
-    // clear away partial sums for sequence numbers earlier than the current window
+    // Clear away partial sums for sequence numbers earlier than the current window
     private zamboni(segmentWindow: CollaborationWindow) {
         function copyDown(partialLengths: PartialSequenceLength[]) {
             const mindex = latestLEQ(partialLengths, segmentWindow.minSeq);
@@ -500,9 +497,9 @@ export class PartialSequenceLengths {
                 minLength = partialLengths[mindex].len;
                 const seqCount = partialLengths.length;
                 if (mindex <= (seqCount - 1)) {
-                    // still some entries remaining
+                    // Still some entries remaining
                     const remainingCount = (seqCount - mindex) - 1;
-                    // copy down
+                    // Copy down
                     for (let i = 0; i < remainingCount; i++) {
                         partialLengths[i] = partialLengths[i + mindex + 1];
                         partialLengths[i].len -= minLength;
@@ -513,7 +510,7 @@ export class PartialSequenceLengths {
             return minLength;
         }
         this.minLength += copyDown(this.partialLengths);
-        // tslint:disable-next-line: no-for-in no-for-in-array forin
+        // eslint-disable-next-line @typescript-eslint/no-for-in-array, guard-for-in, no-restricted-syntax
         for (const clientId in this.clientSeqNumbers) {
             const cliPartials = this.clientSeqNumbers[clientId];
             if (cliPartials) {
@@ -535,7 +532,7 @@ export class PartialSequenceLengths {
 
     }
 
-    // assumes sequence number already coalesced
+    // Assumes sequence number already coalesced
     private addClientSeqNumberFromPartial(partialLength: PartialSequenceLength) {
         this.addClientSeqNumber(partialLength.clientId, partialLength.seq, partialLength.seglen);
         if (partialLength.overlapRemoveClients) {
@@ -546,7 +543,7 @@ export class PartialSequenceLengths {
         }
     }
 
-    // assume: seq is latest sequence number; no structural change to sub-tree, but a segment
+    // Assume: seq is latest sequence number; no structural change to sub-tree, but a segment
     // with sequence number seq has been added within the sub-tree
     // TODO: assert client id matches
     private updateBranch(
@@ -558,7 +555,7 @@ export class PartialSequenceLengths {
         collabWindow: CollaborationWindow) {
         let seqSeglen = 0;
         let segCount = 0;
-        // compute length for seq across children
+        // Compute length for seq across children
         for (let i = 0; i < node.childCount; i++) {
             const child = node.children[i];
             if (!child.isLeaf()) {
@@ -640,7 +637,8 @@ export class PartialSequenceLengths {
         for (const partial of this.partialLengths) {
             buf += `(${partial.seq},${partial.len}) `;
         }
-        // tslint:disable-next-line: no-for-in no-for-in-array forin
+
+        // eslint-disable-next-line @typescript-eslint/no-for-in-array, no-restricted-syntax
         for (const clientId in this.clientSeqNumbers) {
             if (this.clientSeqNumbers[clientId].length > 0) {
                 buf += `Client `;
@@ -660,7 +658,7 @@ export class PartialSequenceLengths {
         return buf;
     }
 
-    // debug only
+    // Debug only
     private verifyPartialLengths(partialLengths: PartialSequenceLength[], clientPartials: boolean) {
         if (partialLengths.length === 0) { return 0; }
 
@@ -672,21 +670,21 @@ export class PartialSequenceLengths {
             // Count total number of partial length
             count++;
 
-            // sequence number should be larger or equal to minseq
+            // Sequence number should be larger or equal to minseq
             assert(this.minSeq <= partialLength.seq);
 
-            // sequence number should be sorted
+            // Sequence number should be sorted
             assert(lastSeqNum < partialLength.seq);
             lastSeqNum = partialLength.seq;
 
-            // len is a accumulation of all the seglen adjustments
+            // Len is a accumulation of all the seglen adjustments
             accumSegLen += partialLength.seglen;
             if (accumSegLen !== partialLength.len) {
                 assert(false);
             }
 
             if (clientPartials) {
-                // client partials used to track local edits so we can account for them some refSeq.
+                // Client partials used to track local edits so we can account for them some refSeq.
                 // But the information we keep track of are since minSeq, so we keep track of more history
                 // then needed, and some of them doesn't make sense to be used for length calculations
                 // e.g. if you have this sequence, where the minSeq is #5 because of other clients
@@ -697,7 +695,7 @@ export class PartialSequenceLengths {
                 // However, that combination is invalid, since we should never see any ops with refseq < 10 for
                 // client 2 after seq 11.
             } else {
-                // len adjustment should not make length negative
+                // Len adjustment should not make length negative
                 if (this.minLength + partialLength.len < 0) {
                     assert(false);
                 }
