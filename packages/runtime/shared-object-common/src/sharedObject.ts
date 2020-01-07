@@ -4,7 +4,7 @@
  */
 
 import * as assert from "assert";
-import { ITelemetryErrorEvent, ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import {
     IComponent,
@@ -292,17 +292,6 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
         }
 
         return;
-    }
-
-    /**
-     * Report ignorable errors in code logic or data integrity to the logger.
-     * Hosting app / container may want to optimize out these call sites and make them no-op.
-     * It may also show assert dialog in non-production builds of application.
-     * @param condition - If false, assert is logged
-     * @param message - Actual message to log; ideally should be unique message to identify call site
-     */
-    protected debugAssert(condition: boolean, event: ITelemetryErrorEvent) {
-        this.logger.debugAssert(condition, event);
     }
 
     private attachDeltaHandler() {

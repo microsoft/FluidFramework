@@ -4,12 +4,12 @@
  */
 
 import {
+    ITelemetryActivityEvent,
     ITelemetryBaseEvent,
     ITelemetryBaseLogger,
     ITelemetryErrorEvent,
     ITelemetryGenericEvent,
     ITelemetryLogger,
-    ITelemetryPerformanceEvent,
     ITelemetryProperties,
     TelemetryEventPropertyType,
 } from "@microsoft/fluid-common-definitions";
@@ -67,7 +67,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
         return name.replace("@", "").replace("/", "-");
     }
 
-    public static prepareErrorObject(event: ITelemetryBaseEvent, error: any, fetchStack: boolean) {
+    public static prepareErrorObject(event: ITelemetryBaseEvent, error: any) {
         if (error === null || typeof error !== "object") {
             event.error = error;
         } else {
@@ -93,7 +93,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
         }
 
         // Collect stack if we were not able to extract it from error
-        if (event.stack === undefined && fetchStack) {
+        if (event.stack === undefined) {
             event.stack = TelemetryLogger.getStack();
         }
     }
@@ -130,11 +130,8 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      * @param event - the event to send
      * @param error - optional error object to log
      */
-    public sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any) {
+    public sendTelemetryEvent(event: ITelemetryGenericEvent) {
         const newEvent: ITelemetryBaseEvent = { ...event, category: event.category ? event.category : "generic" };
-        if (error !== undefined) {
-            TelemetryLogger.prepareErrorObject(newEvent, error, false);
-        }
         this.send(newEvent);
     }
 
@@ -142,44 +139,37 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      * Send an error telemetry event with the logger
      *
      * @param event - the event to send
-     * @param error - optional error object to log
      */
-    public sendErrorEvent(event: ITelemetryErrorEvent, error?: any) {
+    public sendErrorEvent(event: ITelemetryErrorEvent) {
         const newEvent: ITelemetryBaseEvent = { ...event, category: "error" };
-        TelemetryLogger.prepareErrorObject(newEvent, error, true);
+
+        if (event.error) {
+            TelemetryLogger.prepareErrorObject(newEvent, event.error);
+        }
+
         this.send(newEvent);
     }
 
     /**
-     * Send a performance telemetry event with the logger
+     * Send an activity telemetry event with the logger
      *
      * @param event - Event to send
-     * @param error - optional error object to log
      */
-    public sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void {
+    public sendActivityEvent(event: ITelemetryActivityEvent): void {
         const perfEvent: ITelemetryBaseEvent = {
             ...event,
-            category: event.category ? event.category : "performance",
+            category: event.category ? event.category : "activity",
         };
-        if (error !== undefined) {
-            TelemetryLogger.prepareErrorObject(perfEvent, error, false);
+
+        if (event.error) {
+            TelemetryLogger.prepareErrorObject(perfEvent, event.error);
         }
 
-        if (event.duration) {
-            perfEvent.duration = TelemetryLogger.formatTick(event.duration);
+        if (event.durationMs) {
+            perfEvent.durationMs = TelemetryLogger.formatTick(event.durationMs);
         }
 
         this.send(perfEvent);
-    }
-
-    /**
-     * Log generic error with the logger
-     *
-     * @param eventName - the name of the event
-     * @param error - the error object to include in the event, require to be JSON-able
-     */
-    public logGenericError(eventName: string, error: any) {
-        this.sendErrorEvent({ eventName }, error);
     }
 
     /**
@@ -188,17 +178,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      * @param exception - Exception object to add to an event
      */
     public logException(event: ITelemetryErrorEvent, exception: any): void {
-        this.sendErrorEvent({ ...event, isException: true }, exception);
-    }
-
-    /**
-     * Log an debug assert with the logger
-     *
-     * @param condition - the condition to assert on
-     * @param event - the event to log if the condition fails
-     */
-    public debugAssert(condition: boolean, event?: ITelemetryErrorEvent): void {
-        this.shipAssert(condition, event);
+        this.sendErrorEvent({ ...event, isException: true, error: exception });
     }
 
     /**
@@ -253,19 +233,15 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
 export class TelemetryNullLogger implements ITelemetryLogger {
     public send(event: ITelemetryBaseEvent): void {
     }
-    public sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any) {
+    public sendTelemetryEvent(event: ITelemetryGenericEvent) {
     }
-    public sendErrorEvent(event: ITelemetryErrorEvent, error?: any) {
+    public sendErrorEvent(event: ITelemetryErrorEvent) {
     }
-    public sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void {
-    }
-    public logGenericError(eventName: string, error: any) {
+    public sendActivityEvent(event: ITelemetryActivityEvent): void {
     }
     public logException(event: ITelemetryErrorEvent, exception: any): void {
     }
-    public debugAssert(condition: boolean, event?: ITelemetryErrorEvent): void {
-    }
-    public shipAssert(condition: boolean, event?: ITelemetryErrorEvent): void {
+    public shipAssert(condition: boolean, event?: ITelemetryGenericEvent): void {
     }
 }
 
@@ -442,7 +418,7 @@ export class DebugLogger extends TelemetryLogger {
         newEvent.eventName = undefined;
 
         let tick = "";
-        if (event.category === "performance") {
+        if (event.category === "activity") {
             tick = `tick=${TelemetryLogger.formatTick(performanceNow())}`;
         }
 
@@ -527,16 +503,17 @@ export class PerformanceEvent {
                 eventName: "PerformanceEventAfterStop",
                 perfEventName: this.event!.eventName,
                 eventNameSuffix,
+                error,
             });
             return;
         }
 
-        const event: ITelemetryPerformanceEvent = { ...this.event, ...props };
+        const event: ITelemetryActivityEvent = { ...this.event, ...props, error };
         event.eventName = `${event.eventName}_${eventNameSuffix}`;
         if (eventNameSuffix !== "start") {
             event.duration = performanceNow() - this.startTime;
         }
 
-        this.logger.sendPerformanceEvent(event, error);
+        this.logger.sendActivityEvent(event);
     }
 }

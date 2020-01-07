@@ -1,10 +1,14 @@
 /*!
  * Copyright (c) Microsoft Corporation. All rights reserved.
- * Licensed under the MIT License.
  */
 
-export type TelemetryEventCategory = "generic" | "error" | "performance";
+export type TelemetryEventCategory = "generic" | "error" | "activity";
 export type TelemetryEventPropertyType = string | number | boolean | object | undefined;
+
+// Logging entire objects is considered extremely dangerous from a telemetry point of view because people
+// can easily add fields to objects that shouldn't be logged and not realize it's going to be logged.
+// General best practice is to explicitly log the fields you care about from objects
+export type TelemetryEventProperty = string | number | boolean | undefined;
 
 // Name of the error event property indicating if error was raised through Container.emit("error");
 // Presence of this property is a signal to the app not to raise this event to the user second time (if app chooses
@@ -43,18 +47,19 @@ export interface ITelemetryGenericEvent extends ITelemetryProperties {
     category?: TelemetryEventCategory;
 }
 
-/**
- * Error telemetry event.
- * Maps to category = "error"
- */
-export type ITelemetryErrorEvent = ITelemetryGenericEvent;
+export interface ITelemetryErrorEvent extends ITelemetryGenericEvent {
+    error?: any;
+}
 
 /**
- * Performance telemetry event.
- * Maps to category = "performance"
+ * A generic activity event that has a duration and success
+ * Maps to category = "activity"
  */
-export interface ITelemetryPerformanceEvent extends ITelemetryGenericEvent {
-    duration?: number; // Duration of event (optional)
+export interface ITelemetryActivityEvent extends ITelemetryGenericEvent, ITelemetryErrorEvent {
+    // Duration of the activity in ms
+    durationMs?: number;
+    // Overall result of the activity
+    succeeded?: boolean;
 }
 
 /**
@@ -62,7 +67,7 @@ export interface ITelemetryPerformanceEvent extends ITelemetryGenericEvent {
  * encoding in one place schemas for various types of Fluid telemetry events.
  * Creates sub-logger that appends properties to all events
  */
-export interface ITelemetryLogger extends ITelemetryBaseLogger {
+export interface ITelemetryLogger extends ITelemetryBaseLogger, ILifecycleHandler {
     /**
      * Actual implementation that sends telemetry event
      * Implemented by derived classes
@@ -75,27 +80,23 @@ export interface ITelemetryLogger extends ITelemetryBaseLogger {
      * @param event - Event to send
      * @param error - optional error object to log
      */
-    sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any): void;
+    sendTelemetryEvent(event: ITelemetryGenericEvent): void;
+
+    /**
+     * Send activity telemetry event
+     * @param event - Event to send
+     */
+    sendActivityEvent(event: ITelemetryActivityEvent): void;
 
     /**
      * Send error telemetry event
      * @param event - Event to send
      */
     sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void;
+}
 
-    /**
-     * Send error telemetry event
-     * @param event - Event to send
-     */
-    sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void;
-
-    /**
-     * Helper method to log generic errors
-     * @param eventName - Name of the event
-     * @param error - the error object to include in the event, require to be JSON-able
-     */
-    logGenericError(eventName: string, error: any): void;
-
+// TODO: As the lifecycle work continues, split this entirely out from ITelemetryLogger
+export interface ILifecycleHandler {
     /**
      * Helper method to log exceptions
      * @param event - the event to send
@@ -105,18 +106,8 @@ export interface ITelemetryLogger extends ITelemetryBaseLogger {
 
     /**
      * Report ignorable errors in code logic or data integrity.
-     * Hosting app / container may want to optimize out these call sites and make them no-op.
-     * It may also show assert dialog in non-production builds of application.
      * @param condition - If false, assert is logged.
      * @param message - Actual message to log; ideally should be unique message to identify call site
      */
-    debugAssert(condition: boolean, event?: ITelemetryErrorEvent): void;
-
-    /**
-     * Report ignorable errors in code logic or data integrity.
-     * Similar to debugAssert(), but is not supposed to be optimized out.
-     * @param condition - If false, assert is logged.
-     * @param message - Actual message to log; ideally should be unique message to identify call site
-     */
-    shipAssert(condition: boolean, event?: ITelemetryErrorEvent): void;
+    shipAssert(condition: boolean, event?: ITelemetryGenericEvent): void;
 }

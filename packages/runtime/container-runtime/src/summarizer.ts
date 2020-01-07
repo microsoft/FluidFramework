@@ -142,7 +142,7 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
 
         // Handle summary acks
         this.handleSummaryAcks().catch((error) => {
-            this.logger.sendErrorEvent({ eventName: "HandleSummaryAckFatalError" }, error);
+            this.logger.sendErrorEvent({ eventName: "HandleSummaryAckFatalError", error });
             this.stop("handleAckError");
         });
 
@@ -195,7 +195,7 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
                 await this.refreshLatestAck(handle, refSequenceNumber);
                 refSequenceNumber++;
             } catch (error) {
-                this.logger.sendErrorEvent({ eventName: "HandleSummaryAckError", refSequenceNumber }, error);
+                this.logger.sendErrorEvent({ eventName: "HandleSummaryAckError", refSequenceNumber, error });
             }
         }
     }

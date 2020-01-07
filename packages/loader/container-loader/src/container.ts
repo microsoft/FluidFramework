@@ -405,7 +405,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             await this.snapshotCore(tagMessage, fullTree);
 
         } catch (ex) {
-            this.logger.logException({ eventName: "SnapshotExceptionError" }, ex);
+            this.logger.sendErrorEvent({ eventName: "SnapshotExceptionError" }, ex);
             throw ex;
 
         } finally {
@@ -985,7 +985,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         // Log actual event
         const time = performanceNow();
         this.connectionTransitionTimes[value] = time;
-        const duration = time - this.connectionTransitionTimes[oldState];
+        const durationMs = time - this.connectionTransitionTimes[oldState];
 
         let durationFromDisconnected: number | undefined;
         let connectionMode: string | undefined;
@@ -1008,10 +1008,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             }
         }
 
-        this.logger.sendPerformanceEvent({
+        this.logger.sendActivityEvent({
             eventName: `ConnectionStateChange_${ConnectionState[value]}`,
             from: ConnectionState[oldState],
-            duration,
+            durationMs,
             durationFromDisconnected,
             reason,
             connectionInitiationReason,
@@ -1207,6 +1207,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     // Please avoid calling it directly.
     // raiseCriticalError() is the right flow for most cases
     private logCriticalError(error: any) {
-        this.logger.sendErrorEvent({ eventName: "onError", [TelemetryEventRaisedOnContainer]: true }, error);
+        this.logger.sendErrorEvent({ eventName: "onError", [TelemetryEventRaisedOnContainer]: true, error});
     }
 }

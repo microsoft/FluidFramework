@@ -590,7 +590,12 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             this.emit("error", error);
         }
 
-        this.logger.sendTelemetryEvent({ eventName: "ContainerClose" }, error);
+        if (error) {
+            this.logger.sendErrorEvent({ eventName: "ContainerClose", error });
+        }
+        else {
+            this.logger.sendTelemetryEvent({ eventName: "ContainerClose" });
+        }
 
         this.stopSequenceNumberUpdate();
 
@@ -836,7 +841,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 // Errors are raised as "error" event and close container.
                 // Have a catch-all case in case we missed something
                 if (!this.closed) {
-                    this.logger.sendErrorEvent({ eventName: "ConnectException" }, err);
+                    this.logger.sendErrorEvent({ eventName: "ConnectException", error: err });
                 }
             });
         }
@@ -935,8 +940,8 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         if (this.connection && this.connection.details.clientId === message.clientId) {
             const clientSequenceNumber = message.clientSequenceNumber;
 
-            this.logger.debugAssert(this.clientSequenceNumberObserved <= clientSequenceNumber);
-            this.logger.debugAssert(clientSequenceNumber <= this.clientSequenceNumber);
+            this.logger.shipAssert(this.clientSequenceNumberObserved <= clientSequenceNumber);
+            this.logger.shipAssert(clientSequenceNumber <= this.clientSequenceNumber);
 
             this.clientSequenceNumberObserved = clientSequenceNumber;
             if (clientSequenceNumber === this.clientSequenceNumber) {
@@ -1041,7 +1046,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             props.to = messages[messages.length - 1].sequenceNumber;
             props.messageGap = this.handler ? props.from - this.lastQueuedSequenceNumber - 1 : undefined;
         }
-        this.logger.sendPerformanceEvent(props);
+        this.logger.sendActivityEvent(props);
 
         // Apply current operations
         this.enqueueMessages(messages, telemetryEventSuffix);

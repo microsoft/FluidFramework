@@ -28,7 +28,7 @@ export function logNetworkFailure(logger: ITelemetryLogger, event: ITelemetryErr
     if (newEvent.online === OnlineStatus.Online) {
         logger.logException(newEvent, error);
     } else {
-        logger.sendTelemetryEvent(newEvent, error);
+        logger.sendTelemetryEvent(newEvent);
     }
 }
 
