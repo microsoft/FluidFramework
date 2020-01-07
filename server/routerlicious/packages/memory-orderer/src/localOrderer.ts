@@ -142,6 +142,9 @@ class LocalSocketPublisher implements IPublisher {
             emit: (event: string, ...args: any[]) => this.publisher.publish(topic, event, ...args),
         };
     }
+
+    public async close() {
+    }
 }
 
 // Want a pure local orderer that can do all kinds of stuff

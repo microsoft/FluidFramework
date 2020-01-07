@@ -7,15 +7,20 @@ The following environment variables can be defined when running webpack-dev-serv
 
 | variable | description |
 | ---------| ----------- |
-| `local` | Load component in two side-by-side divs using local-test-server |
-| `single` | Load component normally using local-test-server server for ordering, etc. |
-| `localhost` | Use local routerlicious server for ordering, etc. |
-| `live` | Use remote routerlicious server for ordering, etc. (default option) |
+| `mode` | Specify the mode to run in. See modes below. |
+| `single` | Load component normally when using local mode for ordering, etc. |
 | `fluidHost` | Host url to target while testing. If you supply this, you must supply a tenant ID and secret |
 | `tenantId` | Tenant ID for your host. If you supply this you must supply a tenant secret |
 | `tenantSecret` | Secret for your tenant |
 | `bearerSecret` | Secret for your bearer |
-| `component` | Load your component inside of a container |
+
+
+| modes | description |
+| ---------| ----------- |
+| `docker` | Use docker running routerlicious server for ordering, etc. |
+| `live`   | Use remote routerlicious server for ordering, etc. (default option) |
+| `local`  | Load component in two side-by-side divs using local-test-server |
+| `tinylicous` | Run against a local instance of tinylicious |
 
 To connect to a remote server, a host, tenant ID, tenant secret, and npm registry must be provided. These can be at the command line:
 ```

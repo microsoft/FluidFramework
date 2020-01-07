@@ -22,7 +22,7 @@
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
     "start": "webpack-dev-server --config webpack.config.js --package package.json",
     "start:live": "webpack-dev-server --config webpack.config.js --package package.json --env.mode live",
-    "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
+    "start:docker": "webpack-dev-server --config webpack.config.js --package package.json --env.mode docker",
     "tsc": "tsc",
     "tslint": "npm run eslint",
     "webpack": "webpack --config webpack.config.js --env.production",
