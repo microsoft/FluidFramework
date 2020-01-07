@@ -189,7 +189,7 @@ describe("Container", () => {
         assert.equal(container.connectionState, ConnectionState.Connecting, "Container should be in Connecting state");
         const err = {
             message: "Test error",
-            canRetry: false,
+            // canRetry: false,
         };
         deltaConnection.emitError(err);
         assert.equal(container.connectionState, ConnectionState.Disconnected, "Container should be in Disconnected state");
