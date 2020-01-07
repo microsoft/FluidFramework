@@ -12,6 +12,7 @@ import {
     IDocumentService,
     IDocumentStorageService,
     IFluidResolvedUrl,
+    IDocumentDeltaConnection,
 } from "@microsoft/fluid-driver-definitions";
 import {
     ITestDeltaConnectionServer,
@@ -19,12 +20,15 @@ import {
     TestDocumentServiceFactory,
     TestResolver,
 } from "@microsoft/fluid-local-test-server";
+import { MockDocumentDeltaConnection } from "@microsoft/fluid-test-loader-utils";
 import * as assert from "assert";
+import { ConnectionState } from "@microsoft/fluid-protocol-definitions";
 
 describe("Container", () => {
     let testDeltaConnectionServer: ITestDeltaConnectionServer;
     let testResolver: TestResolver;
     let testResolved: IFluidResolvedUrl;
+    let deltaConnection: MockDocumentDeltaConnection;
     const testRequest: IRequest = { url: "" };
     let service: IDocumentService;
     let codeLoader: API.CodeLoader;
@@ -100,5 +104,49 @@ describe("Container", () => {
             success = error as boolean;
         }
         assert.equal(success, false);
+    });
+
+    it("Raise disconnected event", async () => {
+        deltaConnection = new MockDocumentDeltaConnection(
+            "test",
+        );
+        service.connectToDeltaStream = async (): Promise<IDocumentDeltaConnection> => {
+            return deltaConnection;
+        };
+
+        const container = await Container.load(
+            "tenantId/documentId",
+            service,
+            codeLoader,
+            {},
+            {},
+            loader,
+            testRequest);
+        assert.equal(container.connectionState, ConnectionState.Connecting);
+        deltaConnection.disconnect();
+        assert.equal(container.connectionState, ConnectionState.Disconnected);
+        deltaConnection.removeAllListeners();
+    });
+
+    it("Raise error event", async () => {
+        deltaConnection = new MockDocumentDeltaConnection(
+            "test",
+        );
+        service.connectToDeltaStream = async (): Promise<IDocumentDeltaConnection> => {
+            return deltaConnection;
+        };
+
+        const container = await Container.load(
+            "tenantId/documentId",
+            service,
+            codeLoader,
+            {},
+            {},
+            loader,
+            testRequest);
+            assert.equal(container.connectionState, ConnectionState.Connecting);
+            deltaConnection.emitError("Test Error");
+            assert.equal(container.connectionState, ConnectionState.Disconnected);
+            deltaConnection.removeAllListeners();
     });
 });
