@@ -17,10 +17,10 @@
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --ext=ts,tsx --format stylish src",
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
+    "test": "node --experimental-worker ../../../node_modules/mocha/bin/_mocha --recursive dist/test",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
     "test:generate": "node --experimental-worker dist/generateSnapshotFiles.js",
     "test:sequential": "node ../../../node_modules/mocha/bin/_mocha --recursive dist/test",
-    "test": "node --experimental-worker ../../../node_modules/mocha/bin/_mocha --recursive dist/test",
     "tsc": "tsc",
     "tslint": "npm run eslint"
   },
