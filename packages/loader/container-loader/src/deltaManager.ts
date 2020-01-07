@@ -14,7 +14,6 @@ import {
 } from "@microsoft/fluid-container-definitions";
 import {
     ChildLogger,
-    Deferred,
     PerformanceEvent,
 } from "@microsoft/fluid-core-utils";
 import {
@@ -112,7 +111,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     private readonly _inboundSignal: DeltaQueue<ISignalMessage>;
     private readonly _outbound: DeltaQueue<IDocumentMessage[]>;
 
-    private connecting: Deferred<IConnectionDetails> | undefined;
+    private connectionP: Promise<IConnectionDetails> | undefined;
     private connection: DeltaConnection | undefined;
     private clientSequenceNumber = 0;
     private clientSequenceNumberObserved = 0;
@@ -312,8 +311,8 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             return this.connection.details;
         }
 
-        if (this.connecting) {
-            return this.connecting.promise;
+        if (this.connectionP) {
+            return this.connectionP;
         }
 
         const connectCore = async () => {
@@ -325,7 +324,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             // This loop will keep trying to connect until successful, with a delay between each iteration.
             while (connection === undefined) {
                 if (this.closed) {
-                    return;
+                    throw new Error("Attempting to connect a closed DeltaManager");
                 }
                 connectRepeatCount++;
 
@@ -335,7 +334,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                     // Socket.io error when we connect to wrong socket, or hit some multiplexing bug
                     if (!canRetryOnError(error)) {
                         this.close(error);
-                        return;
+                        throw new Error("Encountered unrecoverable error while connecting");
                     }
 
                     // Log error once - we get too many errors in logs when we are offline,
@@ -371,17 +370,27 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
             this.setupNewSuccessfulConnection(connection);
 
-            if (this.connecting) {
-                this.connecting.resolve(connection.details);
-                this.connecting = undefined;
-            }
+            return connection;
         };
 
-        this.connecting = new Deferred<IConnectionDetails>();
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        connectCore();
+        this.connectionP = new Promise((resolve, reject) => {
+            const closeRejector = (error) => {
+                reject(error);
+            };
+            this.on("closed", closeRejector);
 
-        return this.connecting.promise;
+            connectCore().then((connection) => {
+                this.connectionP = undefined;
+                this.removeListener("closed", closeRejector);
+                resolve(connection.details);
+            }).catch((error) => {
+                this.connectionP = undefined;
+                this.removeListener("closed", closeRejector);
+                reject(error);
+            });
+        });
+
+        return this.connectionP;
     }
 
     public flush() {
@@ -604,11 +613,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         // This raises "disconnect" event
         this.disconnectFromDeltaStream(`${errorToReport}`);
-
-        if (this.connecting) {
-            this.connecting.reject(errorToReport);
-            this.connecting = undefined;
-        }
 
         this._inbound.clear();
         this._outbound.clear();
