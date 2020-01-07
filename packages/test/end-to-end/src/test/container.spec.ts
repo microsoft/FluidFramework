@@ -174,7 +174,7 @@ describe("Container", () => {
         service.connectToDeltaStream = async (): Promise<IDocumentDeltaConnection> => {
             return deltaConnection;
         };
-        let errorRaised = false;
+        // let errorRaised = false;
         const container = await Container.load(
             "tenantId/documentId",
             service,
@@ -184,7 +184,7 @@ describe("Container", () => {
             loader,
             testRequest);
         container.on("error", (error) => {
-            errorRaised = true;
+            // errorRaised = true;
         });
         assert.equal(container.connectionState, ConnectionState.Connecting, "Container should be in Connecting state");
         const err = {
