@@ -34,8 +34,11 @@ import {
 import {
     IDocumentService,
     IDocumentStorageService,
+    IThrottlingError,
+    IErrorOrWarning,
+    isWarning,
 } from "@microsoft/fluid-driver-definitions";
-import { readAndParse } from "@microsoft/fluid-driver-utils";
+import { readAndParse, createContainerError } from "@microsoft/fluid-driver-utils";
 import {
     buildSnapshotTree,
     isSystemMessage,
@@ -142,10 +145,11 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                     res(container);
                 })
                 .catch((error) => {
+                    const err = createContainerError(error);
                     if (!alreadyRaisedError) {
-                        container.logCriticalError(error);
+                        container.logCriticalError(err);
                     }
-                    onError(error);
+                    onError(err);
                 });
         });
     }
@@ -345,6 +349,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     public on(event: "connected" | "contextChanged", listener: (clientId: string) => void): this;
     public on(event: "disconnected" | "joining" | "closed", listener: () => void): this;
     public on(event: "error", listener: (error: any) => void): this;
+    public on(event: "serviceBusy", listener: (error: IThrottlingError) => void): this;
     public on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
     public on(event: "pong" | "processTime", listener: (latency: number) => void): this;
     public on(event: MessageType.BlobUploaded, listener: (contents: any) => void): this;
@@ -427,14 +432,18 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         this.connectToDeltaStream();
     }
 
-    public raiseCriticalError(error: any) {
+    public raiseCriticalErrorOrWarning(error: IErrorOrWarning) {
+        if (isWarning(error)) {
+            this.emit("warning", error);
+            return;
+        }
         this.emit("error", error);
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
     public reloadContext(): Promise<void> {
         return this.reloadContextCore().catch((error) => {
-            this.raiseCriticalError(error);
+            this.raiseCriticalErrorOrWarning(createContainerError(error));
             throw error;
         });
     }
@@ -945,8 +954,12 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             this.setConnectionState(ConnectionState.Disconnected, reason);
         });
 
-        deltaManager.on("error", (error) => {
-            this.raiseCriticalError(error);
+        deltaManager.on("error", (error: IErrorOrWarning) => {
+            this.raiseCriticalErrorOrWarning(error);
+        });
+
+        deltaManager.on("serviceBusy", (error: IThrottlingError) => {
+            this.emit("serviceBusy", error);
         });
 
         deltaManager.on("pong", (latency) => {
@@ -1191,7 +1204,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             new QuorumProxy(this.protocolHandler!.quorum),
             loader,
             storage,
-            (err) => this.raiseCriticalError(err),
+            (err: IErrorOrWarning) => this.raiseCriticalErrorOrWarning(err),
             (type, contents) => this.submitMessage(type, contents),
             (message) => this.submitSignal(message),
             // eslint-disable-next-line @typescript-eslint/promise-function-async

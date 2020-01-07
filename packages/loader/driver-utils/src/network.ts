@@ -2,18 +2,18 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { INetworkError } from "@microsoft/fluid-driver-definitions";
+import { IConnectionError, IThrottlingError, ErrorOrWarningType } from "@microsoft/fluid-driver-definitions";
 
 /**
  * Network error error class - used to communicate all  network errors
  */
-export class NetworkError extends Error implements INetworkError {
+export class NetworkError extends Error implements IConnectionError {
 
     constructor(
         errorMessage: string,
-        readonly statusCode: number | undefined,
-        readonly canRetry: boolean,
-        readonly retryAfterSeconds?: number,
+        readonly type: ErrorOrWarningType.connectionError,
+        readonly statusCode?: number,
+        readonly canRetry?: boolean,
         readonly online = OnlineStatus[isOnline()]) {
         super(errorMessage);
     }
@@ -21,6 +21,29 @@ export class NetworkError extends Error implements INetworkError {
     // Return all enumerable properties (i.e. exclude stack, message)
     public getCustomProperties(): object {
         return this;
+    }
+}
+
+/**
+ * Throttling error class - used to communicate all throttling errors
+ */
+export class ThrottlingError extends Error implements IThrottlingError {
+
+    constructor(
+        errorMessage: string,
+        readonly type: ErrorOrWarningType.throttling,
+        readonly retryAfterSeconds: number) {
+        super(errorMessage);
+    }
+
+    public getCustomProperties() {
+        const prop = {};
+        for (const key of Object.getOwnPropertyNames(this)) {
+            if (this[key]) {
+                prop[key] = this[key];
+            }
+        }
+        return prop;
     }
 }
 

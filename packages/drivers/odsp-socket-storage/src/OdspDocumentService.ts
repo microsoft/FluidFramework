@@ -226,7 +226,7 @@ export class OdspDocumentService implements IDocumentService {
     }
 
     /**
-     * Test if we deal with INetworkError / NetworkError object and if it has enough information to make a call
+     * Test if we deal with NetworkError object and if it has enough information to make a call
      * If in doubt, allow retries
      *
      * @param error - error object

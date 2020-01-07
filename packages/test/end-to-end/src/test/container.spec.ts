@@ -12,6 +12,7 @@ import {
     IDocumentService,
     IDocumentStorageService,
     IFluidResolvedUrl,
+    IGeneralError,
 } from "@microsoft/fluid-driver-definitions";
 import {
     ITestDeltaConnectionServer,
@@ -77,7 +78,8 @@ describe("Container", () => {
                 loader,
                 testRequest);
         } catch (error) {
-            success = error as boolean;
+            const err = error as IGeneralError;
+            success = err.error as boolean;
         }
         assert.equal(success, false);
     });
@@ -97,7 +99,8 @@ describe("Container", () => {
                 loader,
                 testRequest);
         } catch (error) {
-            success = error as boolean;
+            const generalError = error as IGeneralError;
+            success = generalError.error as boolean;
         }
         assert.equal(success, false);
     });
