@@ -126,6 +126,7 @@ export class LocalReferenceCollection {
 
     public hierRefCount: number = 0;
     private refsByOffset: (IRefsAtOffest | undefined)[];
+    private refCount: number = 0;
 
     constructor(
         private readonly segment: ISegment) {
@@ -175,6 +176,7 @@ export class LocalReferenceCollection {
         for (const ref of this) {
             ref.segment = undefined;
         }
+        this.refCount = 0;
         this.hierRefCount = 0;
         for (let i = 0; i < this.refsByOffset.length; i++) {
             this.refsByOffset[i] = undefined;
@@ -182,23 +184,10 @@ export class LocalReferenceCollection {
     }
 
     public get empty() {
-        if (this.hierRefCount > 0) {
-            return false;
-        }
-
-        const next = this[Symbol.iterator]().next();
-        if (next.done) {
-            return true;
-        } else {
-            return false;
-        }
+        return this.refCount === 0;
     }
 
     public addLocalRef(lref: LocalReference) {
-        if (lref.hasRangeLabels() || lref.hasTileLabels()) {
-            this.hierRefCount++;
-        }
-
         if (this.refsByOffset[lref.offset] === undefined) {
             this.refsByOffset[lref.offset] = {
                 at: [lref],
@@ -206,6 +195,11 @@ export class LocalReferenceCollection {
         } else {
             this.refsByOffset[lref.offset].at.push(lref);
         }
+
+        if (lref.hasRangeLabels() || lref.hasTileLabels()) {
+            this.hierRefCount++;
+        }
+        this.refCount++;
     }
 
     public removeLocalRef(lref: LocalReference) {
@@ -218,6 +212,7 @@ export class LocalReferenceCollection {
                     if (lref.hasRangeLabels() || lref.hasTileLabels()) {
                         this.hierRefCount--;
                     }
+                    this.refCount--;
                     return lref;
                 }
             }
@@ -250,10 +245,11 @@ export class LocalReferenceCollection {
      *       will be incorrect.
      */
     public append(other: LocalReferenceCollection) {
-        if (!other) {
+        if (!other || other.empty) {
             return;
         }
         this.hierRefCount += other.hierRefCount;
+        this.refCount += other.refCount;
         other.hierRefCount = 0;
         for (const lref of other) {
             lref.segment = this.segment;
@@ -276,9 +272,10 @@ export class LocalReferenceCollection {
                     this.hierRefCount--;
                     splitSeg.localRefs.hierRefCount++;
                 }
+                this.refCount --;
+                splitSeg.localRefs.refCount++;
             }
         }
-
     }
 
     public addBeforeTombstones(...refs: Iterable<LocalReference>[]) {
@@ -295,6 +292,7 @@ export class LocalReferenceCollection {
                     if (lref.hasRangeLabels() || lref.hasTileLabels()) {
                         this.hierRefCount++;
                     }
+                    this.refCount ++;
                 } else {
                     lref.segment = undefined;
                 }
@@ -325,6 +323,7 @@ export class LocalReferenceCollection {
                     if (lref.hasRangeLabels() || lref.hasTileLabels()) {
                         this.hierRefCount++;
                     }
+                    this.refCount++;
                 } else {
                     lref.segment = undefined;
                 }
