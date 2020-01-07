@@ -25,6 +25,26 @@
     "tsc": "tsc",
     "tslint": "npm run eslint"
   },
+  "nyc": {
+    "all": true,
+    "cache-dir": "nyc/.cache",
+    "exclude": [
+      "src/test/**/*.ts",
+      "dist/test/**/*.js"
+    ],
+    "exclude-after-remap": false,
+    "include": [
+      "src/**/*.ts",
+      "dist/**/*.js"
+    ],
+    "report-dir": "nyc/report",
+    "reporter": [
+      "cobertura",
+      "html",
+      "text"
+    ],
+    "temp-directory": "nyc/.nyc_output"
+  },
   "devDependencies": {
     "@fluid-internal/client-api": "^0.13.0",
     "@microsoft/eslint-config-fluid": "^0.13.0",
@@ -68,25 +88,5 @@
     "typescript": "~3.4.5",
     "webpack": "^4.16.5",
     "webpack-cli": "^3.1.2"
-  },
-  "nyc": {
-    "all": true,
-    "cache-dir": "nyc/.cache",
-    "exclude": [
-      "src/test/**/*.ts",
-      "dist/test/**/*.js"
-    ],
-    "exclude-after-remap": false,
-    "include": [
-      "src/**/*.ts",
-      "dist/**/*.js"
-    ],
-    "report-dir": "nyc/report",
-    "reporter": [
-      "cobertura",
-      "html",
-      "text"
-    ],
-    "temp-directory": "nyc/.nyc_output"
   }
 }
