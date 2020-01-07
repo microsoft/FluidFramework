@@ -47,6 +47,36 @@
     "watch:webpack": "lerna run --parallel webpack -- -- --watch",
     "webpack": "lerna run --no-sort webpack --stream"
   },
+  "nyc": {
+    "all": true,
+    "cache-dir": "nyc/.cache",
+    "exclude": [
+      "**/*.d.ts",
+      "packages/**/src/test/**/*.ts",
+      "packages/**/dist/test/**/*.js",
+      "**/*.bundle.js",
+      "packages/components/**",
+      "packages/server/gateway/public/**"
+    ],
+    "exclude-after-remap": false,
+    "extension": [
+      ".ts",
+      ".tsx",
+      ".js",
+      ".jsx"
+    ],
+    "include": [
+      "packages/**/src/**/*.ts",
+      "packages/**/dist/**/*.js"
+    ],
+    "report-dir": "nyc/report",
+    "reporter": [
+      "cobertura",
+      "html",
+      "text"
+    ],
+    "temp-directory": "nyc/.nyc_output"
+  },
   "dependencies": {},
   "devDependencies": {
     "@microsoft/api-documenter": "^7.4.6",
@@ -56,37 +86,7 @@
     "lerna": "^3.14.1",
     "nyc": "^14.1.1",
     "rimraf": "^2.6.2",
-    "sort-package-json": "^1.23.1",
+    "sort-package-json": "1.31.0",
     "typescript": "~3.4.5"
-  },
-  "nyc": {
-    "all": true,
-    "extension": [
-      ".ts",
-      ".tsx",
-      ".js",
-      ".jsx"
-    ],
-    "exclude": [
-      "**/*.d.ts",
-      "packages/**/src/test/**/*.ts",
-      "packages/**/dist/test/**/*.js",
-      "**/*.bundle.js",
-      "packages/components/**",
-      "packages/server/gateway/public/**"
-    ],
-    "include": [
-      "packages/**/src/**/*.ts",
-      "packages/**/dist/**/*.js"
-    ],
-    "reporter": [
-      "cobertura",
-      "html",
-      "text"
-    ],
-    "temp-directory": "nyc/.nyc_output",
-    "cache-dir": "nyc/.cache",
-    "report-dir": "nyc/report",
-    "exclude-after-remap": false
   }
 }

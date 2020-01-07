@@ -42,4 +42,7 @@ export class TestPublisher implements core.IPublisher {
 
         return this.topics[topic];
     }
+
+    public async close() {
+    }
 }
