@@ -2,13 +2,13 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  */
 
+// Examples of known categories, however category can be any string for extensibility
 export type TelemetryEventCategory = "generic" | "error" | "activity";
-export type TelemetryEventPropertyType = string | number | boolean | object | undefined;
 
 // Logging entire objects is considered extremely dangerous from a telemetry point of view because people
 // can easily add fields to objects that shouldn't be logged and not realize it's going to be logged.
 // General best practice is to explicitly log the fields you care about from objects
-export type TelemetryEventProperty = string | number | boolean | undefined;
+export type TelemetryEventPropertyType = string | number | boolean | undefined;
 
 // Name of the error event property indicating if error was raised through Container.emit("error");
 // Presence of this property is a signal to the app not to raise this event to the user second time (if app chooses
@@ -26,7 +26,7 @@ export interface ITelemetryProperties {
  * @param eventName - name of the event.
  */
 export interface ITelemetryBaseEvent extends ITelemetryProperties {
-    category: TelemetryEventCategory;
+    category: string;
     eventName: string;
 }
 

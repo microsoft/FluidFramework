@@ -514,7 +514,7 @@ export class Client {
                     currentSeq: this.getCurrentSeq(),
                     end,
                     eventName: "InvalidOpRange",
-                    invalidPositions,
+                    invalidPositions: invalidPositions.toString(),
                     length,
                     opPos1: op.pos1,
                     opPos1Relative: op.relativePos1 !== undefined,

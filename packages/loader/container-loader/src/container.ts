@@ -737,7 +737,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                 case MessageType.Summarize:
                     protocolLogger.sendTelemetryEvent({
                         eventName: "Summarize",
-                        message: message.contents as ISummaryContent,
+                        message: (message.contents as ISummaryContent).message,
                         summarySequenceNumber: message.sequenceNumber,
                         refSequenceNumber: message.referenceSequenceNumber,
                     });
