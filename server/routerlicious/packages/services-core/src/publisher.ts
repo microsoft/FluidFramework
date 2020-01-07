@@ -26,12 +26,7 @@ export interface IPublisher {
      * Used to send messages to a topic
      */
     to(topic: string): ITopic;
-}
 
-/**
- * Basic interface used to publish messages to a topic
- */
-export interface IClosablePublisher extends IPublisher {
     /**
      * Closes the publisher
      */

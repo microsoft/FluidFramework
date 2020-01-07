@@ -18,7 +18,7 @@ export class SocketIoRedisTopic implements core.ITopic {
     }
 }
 
-export class SocketIoRedisPublisher implements core.IClosablePublisher {
+export class SocketIoRedisPublisher implements core.IPublisher {
     private readonly redisClient: redis.RedisClient;
     private readonly io: any;
     private readonly events = new EventEmitter();

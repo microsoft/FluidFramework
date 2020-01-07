@@ -6,7 +6,7 @@
 import { EventEmitter } from "events";
 import {
     IContext,
-    IClosablePublisher,
+    IPublisher,
     IPartitionLambda,
     IPartitionLambdaFactory,
 } from "@microsoft/fluid-server-services-core";
@@ -14,7 +14,7 @@ import { Provider } from "nconf";
 import { BroadcasterLambda } from "./lambda";
 
 export class BroadcasterLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
-    constructor(private readonly publisher: IClosablePublisher) {
+    constructor(private readonly publisher: IPublisher) {
         super();
 
         this.publisher.on("error", (error) => {
