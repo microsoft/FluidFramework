@@ -22,27 +22,22 @@ describe("canvas", () => {
         await page.mouse.up();
 
         // compare canvases
-        const getImage = async (index: number): Promise<number[]> => {
-            return page.evaluate((i) => {
-                const canvases = document.querySelectorAll("canvas");
+        const result = await page.evaluate(() => {
+            const canvases = Array.from(document.querySelectorAll("canvas"));
 
-                // use min dimensions to avoid problems from canvases of slightly mismatched sizes
-                const w = Math.min(...Array.from(canvases).map((c) => c.width));
-                const h = Math.min(...Array.from(canvases).map((c) => c.height));
+            // use min dimensions to avoid problems from canvases of slightly mismatched sizes
+            const width = Math.min(...canvases.map((c) => c.width));
+            const height = Math.min(...canvases.map((c) => c.height));
 
-                // page.evaluate() will serialize this to JSON so we filter out zeros to make it faster
-                return Array.from(canvases[i].getContext("2d").getImageData(0, 0, w, h).data).filter((e) => e > 0);
-            }, index);
-        };
+            const imgs = canvases.map((c) => c.getContext("2d").getImageData(0, 0, width, height).data);
 
-        const imgs = await Promise.all([getImage(0), getImage(1)]);
-        expect(imgs[0]).toEqual(expect.anything());
-        expect(imgs[1]).toEqual(expect.anything());
+            if (imgs[0].length === 0 || imgs[1].length === 0 || imgs[0].some((e, i) => imgs[1][i] !== e)) {
+                return false;
+            } else {
+                return true;
+            }
+        });
 
-        // make sure we didn't get empty image data on accident
-        expect(imgs[0].length).not.toEqual(0);
-        expect(imgs[1].length).not.toEqual(0);
-
-        expect(imgs[0]).toEqual(imgs[1]);
+        expect(result).toEqual(true);
     });
 });
