@@ -113,6 +113,7 @@ describe("document-router", () => {
                 testContextManager.setHead(getOrCreateMessage(12));
                 context.setHead(getOrCreateMessage(12));
                 context.checkpoint(getOrCreateMessage(12));
+                assert.equal(context.hasPendingWork(), false);
                 testContextManager.setTail(getOrCreateMessage(12));
 
                 // Move the overall offsets - context having no pending work will have it not affect the offset

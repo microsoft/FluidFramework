@@ -18,7 +18,6 @@ export class TestContext extends EventEmitter implements IContext {
     private waits: IWaitOffset[] = [];
 
     public checkpoint(message: IKafkaMessage) {
-        console.log(JSON.stringify(message));
         assert(message.offset > this.offset, `${message.offset} > ${this.offset}`);
         this.offset = message.offset;
 

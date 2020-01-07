@@ -21,7 +21,7 @@ export class DocumentContextManager extends EventEmitter {
     private tail: IKafkaMessage | undefined;
 
     // Offset represents the last offset checkpointed
-    private checkpointOffset: IKafkaMessage | undefined;
+    private checkpointOffset: number | undefined;
 
     private closed = false;
 
@@ -37,7 +37,7 @@ export class DocumentContextManager extends EventEmitter {
         }
 
         // Create the new context and register for listeners on it
-        const context = new DocumentContext(message);
+        const context = new DocumentContext(message, this.tail);
         this.contexts.push(context);
         context.addListener("checkpoint", () => this.updateCheckpoint());
         context.addListener("error", (error, restart) => this.emit("error", error, restart));
@@ -45,12 +45,19 @@ export class DocumentContextManager extends EventEmitter {
     }
 
     public setHead(head: IKafkaMessage) {
-        assert(head > this.head, `${head} > ${this.head}`);
+        if (this.head) {
+            assert(head.offset > this.head.offset, `${head.offset} > ${this.head.offset}`);
+        }
+
         this.head = head;
     }
 
     public setTail(tail: IKafkaMessage) {
-        assert(tail > this.tail && tail <= this.head, `${tail} > ${this.tail} && ${tail} <= ${this.head}`);
+        if (this.tail) {
+            assert(tail.offset > this.tail.offset && tail.offset <= this.head.offset,
+                `${tail.offset} > ${this.tail.offset} && ${tail.offset} <= ${this.head.offset}`);
+        }
+
         this.tail = tail;
         this.updateCheckpoint();
     }
@@ -71,18 +78,30 @@ export class DocumentContextManager extends EventEmitter {
         // Set the starting offset at the tail. Contexts can then lower that offset based on their positions.
         let message = this.tail;
 
+        console.log("current tail", message);
+        
+        let stop = false;
+
         this.contexts.forEach((context) => {
+            console.log("context", context, context.hasPendingWork());
             // Utilize the tail of the context if there is still pending work. If there isn't pending work then we
             // are fully caught up
             if (context.hasPendingWork()) {
+                if(!context.tail) {
+                    stop = true;
+                } else {
+                // lower the offset when possible
+                console.log("tail is", context.tail);
                 message = message.offset > context.tail.offset ? context.tail : message;
+                }
             }
         });
 
         // Checkpoint once the offset has changed
-        if (this.checkpointOffset !== message) {
+        if (!stop && message && this.checkpointOffset !== message.offset) {
+            console.log("going to checkpoint", message.offset);
             this.partitionContext.checkpoint(message);
-            this.checkpointOffset = message;
+            this.checkpointOffset = message.offset;
         }
     }
 }
