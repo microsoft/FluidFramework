@@ -11,18 +11,16 @@ export class DocumentContext extends EventEmitter implements IContext {
     // We track two offsets - head and tail. Head represents the largest offset related to this document we
     // have seen. Tail represents the last checkpointed offset. When head and tail match we have fully checkpointed
     // the document.
-    private tailInternal: ICheckpointOffset;
-    private headInternal: ICheckpointOffset | undefined;
+    private headInternal: ICheckpointOffset;
+    private tailInternal: ICheckpointOffset | undefined;
 
     private closed = false;
 
     constructor(head: ICheckpointOffset, tail: ICheckpointOffset | undefined) {
         super();
 
-        // We initialize tail to one less than head. Head represents the largest offset related to the document
-        // that is not checkpointed. We can set tail to one less than the head since offsets are monotonically
-        // increasing. This preserves the invariants and simplifies the math performed to merge various DocumentContext
-        // ranges since we always operate with inclusive ranges.
+        // Head represents the largest offset related to the document that is not checkpointed.
+        // Tail will be set to the checkpoint offset of the previous head
         this.headInternal = head;
         this.tailInternal = tail;
     }
@@ -48,7 +46,7 @@ export class DocumentContext extends EventEmitter implements IContext {
     public setHead(head: ICheckpointOffset) {
         assert(head.offset > this.head.offset, `${head.offset} > ${this.head.offset}`);
 
-        // When moving back to a state where head and tail differ we again subtract one from the head, as in the
+        // When moving back to a state where head and tail differ we set the tail to be the old head, as in the
         // constructor, to make tail represent the inclusive top end of the checkpoint range.
         if (!this.hasPendingWork()) {
             this.tailInternal = this.headInternal;
