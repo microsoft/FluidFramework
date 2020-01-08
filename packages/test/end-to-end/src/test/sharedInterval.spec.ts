@@ -167,7 +167,9 @@ describe("SharedInterval", () => {
             assertIntervals([{ start: 0, end: 2}]);
 
             sharedString.replaceText(2, 1, "aaa");
-            assertIntervals([{ start: 0, end: 2}]);
+            // This assert relies on the behvaior that replacement for a reversed range
+            // will insert at the max end of the range but not delete the range
+            assertIntervals([{ start: 0, end: 5}]);
         })
 
         // Uncomment below test to reproduce issue #2479:

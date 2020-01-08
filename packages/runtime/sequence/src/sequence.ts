@@ -433,15 +433,18 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     }
 
     protected replaceRange(start: number, end: number, segment: MergeTree.ISegment) {
-        if (start > end) {
-            return;
-        }
+        // Insert at the max end of the range when start > end, but still remove the range later
+        const insertIndex : number = Math.max(start, end);
 
         // Insert first, so local references can slide to the inserted seg if any
-        const insert = this.client.insertSegmentLocal(end, segment);
-        if (insert && (start < end)) {
-            const remove = this.client.removeRangeLocal(start, end);
-            this.submitSequenceMessage(MergeTree.createGroupOp(insert, remove));
+        const insert = this.client.insertSegmentLocal(insertIndex, segment);
+        if (insert) {
+            if (start != end) {
+                const remove = this.client.removeRangeLocal(start, end);
+                this.submitSequenceMessage(MergeTree.createGroupOp(insert, remove));
+            } else {
+                this.submitSequenceMessage(insert);
+            }
         }
     }
 
