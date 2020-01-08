@@ -30,7 +30,7 @@ export class KafkaNodeConsumer implements IConsumer {
         const commitRequest =  [{
             topic: this.topic,
             partition: partitionId,
-            offset: checkpointOffset.offset as number + 1,
+            offset: checkpointOffset.offset + 1,
         }];
         return new Promise<any>((resolve, reject) => {
             this.offset.commit(this.groupId, commitRequest, (err, data) => {

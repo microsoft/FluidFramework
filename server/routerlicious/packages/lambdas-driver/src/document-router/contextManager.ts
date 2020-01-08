@@ -79,22 +79,23 @@ export class DocumentContextManager extends EventEmitter {
         let checkpointOffset = this.tail;
 
         for (const context of this.contexts) {
-            // Utilize the tail of the context if there is still pending work. If there isn't pending work then we
-            // are fully caught up
+            // Utilize the tail of the context if there is still pending work.
+            // If there isn't pending work then we are fully caught up
             if (context.hasPendingWork()) {
                 if (!context.tail) {
-                    // the context hasn't completed any work yet
-                    // we can't checkpoint further so bail out
+                    // The context hasn't completed any work yet
+                    // We can't checkpoint further so bail out
                     return;
                 }
 
                 // Lower the offset when possible
                 checkpointOffset = checkpointOffset.offset > context.tail.offset ? context.tail : checkpointOffset;
             }
-        };
+        }
 
         // Checkpoint once the offset has changed
-        if (checkpointOffset && (this.lastCheckpoint === undefined || checkpointOffset.offset > this.lastCheckpoint.offset)) {
+        if (checkpointOffset &&
+            (this.lastCheckpoint === undefined || checkpointOffset.offset > this.lastCheckpoint.offset)) {
             this.partitionContext.checkpoint(checkpointOffset);
             this.lastCheckpoint = checkpointOffset;
         }
