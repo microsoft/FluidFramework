@@ -21,7 +21,7 @@ export class DocumentContextManager extends EventEmitter {
     private tail: IKafkaMessage | undefined;
 
     // Offset represents the last offset checkpointed
-    private checkpointOffset: number | undefined;
+    private lastCheckpoint: number | undefined;
 
     private closed = false;
 
@@ -78,30 +78,25 @@ export class DocumentContextManager extends EventEmitter {
         // Set the starting offset at the tail. Contexts can then lower that offset based on their positions.
         let message = this.tail;
 
-        console.log("current tail", message);
-        
-        let stop = false;
-
-        this.contexts.forEach((context) => {
-            console.log("context", context, context.hasPendingWork());
+        for(const context of  this.contexts) {
             // Utilize the tail of the context if there is still pending work. If there isn't pending work then we
             // are fully caught up
             if (context.hasPendingWork()) {
-                if(!context.tail) {
-                    stop = true;
+                if (!context.tail) {
+                    // the context hasn't completed any work yet, we can't checkpoint further
+                    return;
+                    
                 } else {
-                // lower the offset when possible
-                console.log("tail is", context.tail);
-                message = message.offset > context.tail.offset ? context.tail : message;
+                    // lower the offset when possible
+                    message = message.offset > context.tail.offset ? context.tail : message;
                 }
             }
-        });
+        };
 
         // Checkpoint once the offset has changed
-        if (!stop && message && this.checkpointOffset !== message.offset) {
-            console.log("going to checkpoint", message.offset);
+        if (message && (this.lastCheckpoint === undefined || message.offset > this.lastCheckpoint)) {
             this.partitionContext.checkpoint(message);
-            this.checkpointOffset = message.offset;
+            this.lastCheckpoint = message.offset;
         }
     }
 }

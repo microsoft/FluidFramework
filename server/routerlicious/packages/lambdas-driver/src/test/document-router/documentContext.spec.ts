@@ -23,7 +23,7 @@ describe("document-router", () => {
         beforeEach(async () => {
             clearMessages();
 
-            testContext = new DocumentContext(getOrCreateMessage(0));
+            testContext = new DocumentContext(getOrCreateMessage(0), undefined);
         });
 
         describe(".setHead", () => {

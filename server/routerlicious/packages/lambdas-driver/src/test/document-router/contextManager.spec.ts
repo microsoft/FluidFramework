@@ -89,7 +89,7 @@ describe("document-router", () => {
                 context2.checkpoint(getOrCreateMessage(10));
                 assert.equal(testContext.offset, 0);
 
-                // Checkpoint the first context at its head. This will make the second context the latest
+                // Checkpoint the first context at its head. This will make the context1 the latest
                 context0.checkpoint(getOrCreateMessage(12));
                 assert.equal(testContext.offset, 5);
 
@@ -127,7 +127,9 @@ describe("document-router", () => {
                 testContextManager.setHead(getOrCreateMessage(25));
                 context.setHead(getOrCreateMessage(25));
                 testContextManager.setTail(getOrCreateMessage(25));
-                assert.equal(testContext.offset, 24);
+
+                // context did no checkpoint so the offset remains at 20
+                assert.equal(testContext.offset, 20);
             });
 
             it("Should ignore contexts without pending work", () => {

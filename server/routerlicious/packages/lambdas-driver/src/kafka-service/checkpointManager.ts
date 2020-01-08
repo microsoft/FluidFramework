@@ -12,7 +12,7 @@ export class CheckpointManager {
     private closed = false;
     private commitedMessage: IKafkaMessage;
     private lastMessage: IKafkaMessage;
-    private pendingCheckpoint: Deferred<void>;
+    private pendingCheckpoint: Deferred<void> | undefined;
     private error: any;
 
     constructor(private readonly id: number, private readonly consumer: IConsumer) {
@@ -68,8 +68,11 @@ export class CheckpointManager {
                     assert(this.pendingCheckpoint, "Differing offsets will always result in pendingCheckpoint");
                     const nextCheckpointP = this.checkpoint(this.lastMessage);
                     this.pendingCheckpoint.resolve(nextCheckpointP);
-                    // eslint-disable-next-line no-null/no-null
-                    this.pendingCheckpoint = null;
+                    this.pendingCheckpoint = undefined;
+
+                } else if (this.pendingCheckpoint) {
+                    this.pendingCheckpoint.resolve();
+                    this.pendingCheckpoint = undefined;
                 }
             },
             // eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -87,7 +90,7 @@ export class CheckpointManager {
      * Checkpoints at the last received offset.
      */
     public async flush(): Promise<void> {
-        if (this.lastMessage !== undefined) {
+        if (this.lastMessage) {
             return this.checkpoint(this.lastMessage);
         }
     }

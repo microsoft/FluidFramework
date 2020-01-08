@@ -24,7 +24,7 @@ export class DocumentContext extends EventEmitter implements IContext {
         // increasing. This preserves the invariants and simplifies the math performed to merge various DocumentContext
         // ranges since we always operate with inclusive ranges.
         this.headInternal = head;
-        this.tailInternal = undefined;
+        this.tailInternal = tail;
     }
 
     public get head(): IKafkaMessage {
@@ -51,7 +51,7 @@ export class DocumentContext extends EventEmitter implements IContext {
         // When moving back to a state where head and tail differ we again subtract one from the head, as in the
         // constructor, to make tail represent the inclusive top end of the checkpoint range.
         if (!this.hasPendingWork()) {
-            this.tailInternal = undefined;
+            this.tailInternal = this.headInternal;
         }
 
         this.headInternal = head;
