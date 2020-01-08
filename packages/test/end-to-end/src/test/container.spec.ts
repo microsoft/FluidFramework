@@ -193,7 +193,9 @@ describe("Container", () => {
             message: "Test error",
             canRetry: false,
         };
-        deltaConnection.emitError(err);
+        try {
+            deltaConnection.emitError(err);
+        } catch(error) {}
         assert.equal(container.connectionState, ConnectionState.Disconnected, "Container should be in Disconnected state");
         assert.equal(container.closed, true, "Container should be closed");
         assert.equal(errorRaised, true, "Error event should be raised.");
