@@ -447,7 +447,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         if (this._connectionState === ConnectionState.Disconnected) {
             this.manualReconnectInProgress = true;
         }
-        return this._deltaManager.connect().catch(() => { });
+        return this._deltaManager.connect();
     }
 
     private async reloadContextCore(): Promise<void> {
@@ -582,11 +582,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         }
     }
 
-    private startConnectingToDeltaStream() {
-        this.recordConnectStartTime();
-        this._deltaManager.connect().catch(() => { });
-    }
-
     private async connectToDeltaStream() {
         this.recordConnectStartTime();
         return this._deltaManager.connect();
@@ -607,7 +602,9 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         // Start websocket connection as soon as possible.  Note that there is no op handler attached yet, but the
         // DeltaManager is resilient to this and will wait to start processing ops until after it is attached.
         if (!pause) {
-            this.startConnectingToDeltaStream();
+            this.connectToDeltaStream().catch((error) => {
+                debug(`Error in connecting to delta stream in unpaused case ${error}`);
+            });
         }
 
         this.storageService = await this.getDocumentStorageService();
@@ -618,7 +615,9 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         // If pause, and there's no tree, then we'll start the websocket connection here (we'll need the details later)
         if (!maybeSnapshotTree) {
-            this.startConnectingToDeltaStream();
+            this.connectToDeltaStream().catch((error) => {
+                debug(`Error in connecting to delta stream in no snapshot tree case ${error}`);
+            });
         }
 
         const blobManagerP = this.loadBlobManager(this.storageService, maybeSnapshotTree);
@@ -641,6 +640,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             this._parentBranch = attributes.branch !== this.id ? attributes.branch : null;
             loadDetailsP = Promise.resolve();
         } else {
+            // Intentionally don't .catch on this promise - we'll let any error throw below in the await.
             loadDetailsP = this.connectToDeltaStream().then((details) => {
                 this._existing = details.existing;
                 this._parentBranch = details.parentBranch;
