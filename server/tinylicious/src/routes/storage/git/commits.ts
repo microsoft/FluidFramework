@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ICommitDetails } from "@microsoft/fluid-gitresources";
+import { ICommit, ICreateCommitParams } from "@microsoft/fluid-gitresources";
 import { Router } from "express";
 import * as git from "isomorphic-git";
 import * as nconf from "nconf";
@@ -12,59 +12,95 @@ import * as utils from "../utils";
 export function create(store: nconf.Provider): Router {
     const router: Router = Router();
 
-    async function getCommits(
+    async function createCommit(
+        tenantId: string,
+        authorization: string,
+        params: ICreateCommitParams,
+    ): Promise<ICommit> {
+        // TODO should include both author and committer
+        const author = {
+            email: params.author.email,
+            name: params.author.name,
+            timestamp: Math.floor(Date.parse(params.author.date) / 1000),
+            timezoneOffset: 0,
+        };
+
+        const commitDescription: git.CommitDescription = {
+            message: params.message,
+            parent: params.parents,
+            tree: params.tree,
+            author,
+            committer: author,
+        };
+
+        const sha = await git.writeObject({
+            dir: utils.getGitDir(store, tenantId),
+            type: "commit",
+            object: commitDescription,
+        });
+
+        return {
+            author: params.author,
+            committer: params.author,
+            message: params.message,
+            parents: params.parents.map((parentSha) => ({ sha: parentSha, url: "" })),
+            sha,
+            tree: { sha: params.tree, url: "" },
+            url: "",
+        };
+    }
+
+    async function getCommit(
         tenantId: string,
         authorization: string,
         sha: string,
-        count: number,
-    ): Promise<ICommitDetails[]> {
-        const descriptions = await git.log({
-            depth: count,
-            dir: utils.getGitDir(store, tenantId),
-            ref: sha,
-        });
+        useCache: boolean,
+    ): Promise<ICommit> {
+        const commit = await git.readObject({ dir: utils.getGitDir(store, tenantId), oid: sha });
+        const description = commit.object as git.CommitDescription;
 
-        // eslint-disable-next-line arrow-body-style
-        return descriptions.map((description) => {
-            return {
-                url: "",
-                sha: description.oid,
-                commit: {
-                    url: "",
-                    author: {
-                        name: description.author.name,
-                        email: description.author.email,
-                        date: new Date(description.author.timestamp * 1000).toISOString(),
-                    },
-                    committer: {
-                        name: description.committer.name,
-                        email: description.committer.email,
-                        date: new Date(description.committer.timestamp * 1000).toISOString(),
-                    },
-                    message: description.message,
-                    tree: {
-                        sha: description.tree,
-                        url: "",
-                    },
-                },
-                parents: description.parent.map((parent) => ({ sha: parent, url: "" })),
-            };
-        });
+        return {
+            author: {
+                email: description.author.email,
+                name: description.author.name,
+                date: new Date(description.author.timestamp * 1000).toISOString(),
+            },
+            committer: {
+                email: description.committer.email,
+                name: description.committer.name,
+                date: new Date(description.committer.timestamp * 1000).toISOString(),
+            },
+            message: description.message,
+            parents: description.parent.map((parentSha) => ({ sha: parentSha, url: "" })),
+            sha,
+            tree: { sha: description.tree, url: "" },
+            url: "",
+        };
     }
 
-    router.get(
-        "/repos/:ignored?/:tenantId/commits",
+    router.post(
+        "/repos/:ignored?/:tenantId/git/commits",
         (request, response) => {
-            const commitsP = getCommits(
-                request.params.tenantId,
-                request.get("Authorization"),
-                request.query.sha,
-                request.query.count);
+            const commitP = createCommit(request.params.tenantId, request.get("Authorization"), request.body);
 
             utils.handleResponse(
-                commitsP,
+                commitP,
                 response,
-                false);
+                false,
+                201);
+        });
+
+    router.get(
+        "/repos/:ignored?/:tenantId/git/commits/:sha",
+        (request, response) => {
+            const useCache = !("disableCache" in request.query);
+            const commitP = getCommit(
+                request.params.tenantId,
+                request.get("Authorization"),
+                request.params.sha,
+                useCache);
+
+            utils.handleResponse(commitP, response, useCache);
         });
 
     return router;
