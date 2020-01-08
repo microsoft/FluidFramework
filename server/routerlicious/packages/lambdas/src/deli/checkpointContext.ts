@@ -25,7 +25,7 @@ export interface ICheckpoint {
     clients: IClientSequenceNumber[];
     logOffset: number;
     sequenceNumber: number;
-    checkpointOffset?: ICheckpointOffset;
+    checkpointOffset: ICheckpointOffset;
 }
 
 export class CheckpointContext {
