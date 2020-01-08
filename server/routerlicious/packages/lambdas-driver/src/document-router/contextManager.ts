@@ -29,15 +29,15 @@ export class DocumentContextManager extends EventEmitter {
         super();
     }
 
-    public createContext(message: ICheckpointOffset): DocumentContext {
+    public createContext(head: ICheckpointOffset): DocumentContext {
         // Contexts should only be created within the processing range of the manager
-        const offset = message.offset;
+        const offset = head.offset;
         if (this.tail) {
             assert(offset > this.tail.offset && offset <= this.head.offset);
         }
 
         // Create the new context and register for listeners on it
-        const context = new DocumentContext(message, this.tail);
+        const context = new DocumentContext(head, this.tail);
         this.contexts.push(context);
         context.addListener("checkpoint", () => this.updateCheckpoint());
         context.addListener("error", (error, restart) => this.emit("error", error, restart));
@@ -84,7 +84,7 @@ export class DocumentContextManager extends EventEmitter {
             if (context.hasPendingWork()) {
                 if (!context.tail) {
                     // The context hasn't completed any work yet
-                    // We can't checkpoint further so bail out
+                    // We can't checkpoint further, so bail out
                     return;
                 }
 
