@@ -1,46 +1,68 @@
 version: '3.4'
 services:
     gateway:
-        image: prague.azurecr.io/prague:latest
+        image: prague.azurecr.io/gateway:latest
         ports:
             - "3000:3000"
-        command: node ../gateway/dist/www.js
+        command: node dist/www.js
         environment:
             - DEBUG=fluid:*
             - NODE_ENV=development
         restart: always
     alfred:
-        image: prague.azurecr.io/prague:latest
+        image: prague.azurecr.io/prague-server:latest
         ports:
-            - "3000:3000"
+            - "3003:3000"
         command: node dist/alfred/www.js
         environment:
             - DEBUG=fluid:*
             - NODE_ENV=development
         restart: always
     deli:
-        image: prague.azurecr.io/prague:latest
+        image: prague.azurecr.io/prague-server:latest
         command: node dist/kafka-service/index.js deli /usr/src/server/server/routerlicious/packages/routerlicious/dist/deli/index.js
         environment:
             - DEBUG=fluid:*
             - NODE_ENV=development
         restart: always
     scriptorium:
-        image: prague.azurecr.io/prague:latest
+        image: prague.azurecr.io/prague-server:latest
         command: node dist/kafka-service/index.js scriptorium /usr/src/server/server/routerlicious/packages/routerlicious/dist/scriptorium/index.js
         environment:
             - DEBUG=fluid:*
             - NODE_ENV=development
         restart: always
     broadcaster:
-        image: prague.azurecr.io/prague:latest
+        image: prague.azurecr.io/prague-server:latest
         command: node dist/kafka-service/index.js broadcaster /usr/src/server/server/routerlicious/packages/routerlicious/dist/broadcaster/index.js
         environment:
             - DEBUG=fluid:*
             - NODE_ENV=development
         restart: always
+    scribe:
+        image: prague.azurecr.io/prague-server:latest
+        command: node dist/kafka-service/index.js scribe /usr/src/server/server/routerlicious/packages/routerlicious/dist/scribe/index.js
+        environment:
+            - DEBUG=fluid:*
+            - NODE_ENV=development
+        restart: always
+    foreman:
+        image: prague.azurecr.io/prague-server:latest
+        command: node dist/kafka-service/index.js foreman /usr/src/server/server/routerlicious/packages/routerlicious/dist/foreman/index.js
+        environment:
+            - DEBUG=fluid:*
+            - NODE_ENV=development
+        restart: always
+    routemaster:
+        image: prague.azurecr.io/prague-server:latest
+        command: node dist/kafka-service/index.js routemaster /usr/src/server/server/routerlicious/packages/lambdas-driver/dist/document-router/index.js
+        environment:
+            - DEBUG=fluid:*
+            - NODE_ENV=development
+            - documentLambda=/usr/src/server/server/routerlicious/packages/routerlicious/dist/routemaster/index.js
+        restart: always
     riddler:
-        image: prague.azurecr.io/prague:latest
+        image: prague.azurecr.io/prague-server:latest
         ports:
             - "5000:5000"
         command: node dist/riddler/www.js
