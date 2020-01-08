@@ -17,13 +17,13 @@ import {
     IOrderer,
     IOrdererManager,
     ISequencedOperationMessage,
-} from "@microsoft/fluid-server-services-core";
-import {
+
     IDatabaseManager,
     IDocumentStorage,
     ITaskMessageSender,
     ITenantManager,
 } from "@microsoft/fluid-server-services-core";
+
 import { normalizePort } from "@microsoft/fluid-server-services-utils";
 import { Server } from "socket.io";
 
@@ -79,7 +79,7 @@ export class LocalOrdererSetup implements ILocalOrdererSetup {
 }
 
 class LocalPubSub implements IPubSub {
-    constructor(private io: Server) {
+    constructor(private readonly io: Server) {
     }
 
     public subscribe(topic: string, subscriber: ISubscriber) {
@@ -138,16 +138,16 @@ class WrappedLocalOrdererSetup implements ILocalOrdererSetup {
 }
 
 export class OrdererManager implements IOrdererManager {
-    private map = new Map<string, Promise<IOrderer>>();
+    private readonly map = new Map<string, Promise<IOrderer>>();
 
     constructor(
-        private storage: IDocumentStorage,
-        private databaseManager: IDatabaseManager,
-        private tenantManager: ITenantManager,
-        private taskMessageSender: ITaskMessageSender,
-        private permission: any, // can probably remove
-        private maxMessageSize: number,
-        private io: Server,
+        private readonly storage: IDocumentStorage,
+        private readonly databaseManager: IDatabaseManager,
+        private readonly tenantManager: ITenantManager,
+        private readonly taskMessageSender: ITaskMessageSender,
+        private readonly permission: any, // Can probably remove
+        private readonly maxMessageSize: number,
+        private readonly io: Server,
     ) {
     }
 

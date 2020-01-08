@@ -67,6 +67,4 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
     },
 };
 
-export function getParam(params: Params, key: string) {
-    return Array.isArray(params) ? undefined : params[key];
-}
+export const getParam = (params: Params, key: string) => Array.isArray(params) ? undefined : params[key];

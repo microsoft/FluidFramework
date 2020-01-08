@@ -9,17 +9,15 @@ import * as git from "isomorphic-git";
 import * as nconf from "nconf";
 import * as utils from "../utils";
 
-function refToIRef(ref: string, sha: string): IRef {
-    return {
-        object: {
-            sha,
-            type: "",
-            url: "",
-        },
-        ref,
+const refToIRef = (ref: string, sha: string): IRef => ({
+    object: {
+        sha,
+        type: "",
         url: "",
-    };
-}
+    },
+    ref,
+    url: "",
+});
 
 export function create(store: nconf.Provider): Router {
     const router: Router = Router();
@@ -59,7 +57,7 @@ export function create(store: nconf.Provider): Router {
     ): Promise<IRef> {
         const dir = utils.getGitDir(store, tenantId);
 
-        // current code - or nodegit - takes in updates without the /refs input - need to resolve the behavior and
+        // Current code - or nodegit - takes in updates without the /refs input - need to resolve the behavior and
         // either leave in the refs below or update the git managers to include it.
         const rebasedRef = `refs/${ref}`;
 

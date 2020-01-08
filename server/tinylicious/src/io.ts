@@ -86,7 +86,7 @@ export function register(
                 if (!existing) {
                     return true;
                 } else {
-                    // back-compat for old client and new server.
+                    // Back-compat for old client and new server.
                     return mode === undefined ? true : mode === "write";
                 }
             } else {
@@ -96,12 +96,10 @@ export function register(
 
         // For easy transition, we are reusing the same nack format sent by broadcaster.
         // TODO: Create a separate nack format.
-        function createNackMessage(): INack {
-            return {
-                operation: undefined,
-                sequenceNumber: -1,
-            };
-        }
+        const createNackMessage = (): INack => ({
+            operation: undefined,
+            sequenceNumber: -1,
+        });
 
         async function connectDocument(message: IConnect): Promise<IConnected> {
             if (!message.token) {
@@ -123,7 +121,7 @@ export function register(
                 socket.join(`${claims.tenantId}/${claims.documentId}`),
                 socket.join(`client#${clientId}`)]);
 
-            // todo: should all the client details come from the claims???
+            // Todo: should all the client details come from the claims???
             // we are still trusting the users permissions and type here.
             const messageClient: Partial<IClient> = message.client ? message.client : {};
             messageClient.user = claims.user;

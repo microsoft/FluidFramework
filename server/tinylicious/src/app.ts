@@ -50,7 +50,7 @@ export function create(
     app.use(bodyParser.json({ limit: requestSize }));
     app.use(bodyParser.urlencoded({ limit: requestSize, extended: false }));
 
-    // bind routes
+    // Bind routes
     const routes = createRoutes(
         config,
         mongoManager,
@@ -60,14 +60,14 @@ export function create(
     app.use(routes.storage);
     app.use(routes.ordering);
 
-    // catch 404 and forward to error handler
+    // Catch 404 and forward to error handler
     app.use((req, res, next) => {
         const err = new Error("Not Found");
         (err as any).status = 404;
         next(err);
     });
 
-    // error handlers
+    // Error handlers
 
     app.use((err, req, res, next) => {
         res.status(err.status || 500);
