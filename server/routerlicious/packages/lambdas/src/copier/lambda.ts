@@ -11,12 +11,13 @@ import {
     IPartitionLambda,
     IRawOperationMessage,
     IRawOperationMessageBatch,
+    ICheckpointOffset,
 } from "@microsoft/fluid-server-services-core";
 
 export class CopierLambda implements IPartitionLambda {
     // Below, one job corresponds to the task of sending one batch to Mongo:
     private pendingJobs = new Map<string, IRawOperationMessageBatch[]>();
-    private pendingMessage: IKafkaMessage;
+    private pendingOffset: ICheckpointOffset;
     private currentJobs = new Map<string, IRawOperationMessageBatch[]>();
 
     constructor(
@@ -45,7 +46,7 @@ export class CopierLambda implements IPartitionLambda {
         this.pendingJobs.get(topic).push(submittedBatch);
 
         // Update current offset (will be tied to this batch):
-        this.pendingMessage = message;
+        this.pendingOffset = message;
         this.sendPending();
     }
 
@@ -66,7 +67,7 @@ export class CopierLambda implements IPartitionLambda {
         const temp = this.currentJobs;
         this.currentJobs = this.pendingJobs;
         this.pendingJobs = temp;
-        const batchMessage = this.pendingMessage;
+        const batchOffset = this.pendingOffset;
 
         const allProcessed = [];
 
@@ -79,7 +80,7 @@ export class CopierLambda implements IPartitionLambda {
         Promise.all(allProcessed).then(
             () => {
                 this.currentJobs.clear();
-                this.context.checkpoint(batchMessage);
+                this.context.checkpoint(batchOffset);
                 this.sendPending();
             },
             (error) => {

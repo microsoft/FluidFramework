@@ -14,6 +14,7 @@ import {
     ISequencedOperationMessage,
     NackOperationType,
     SequencedOperationType,
+    ICheckpointOffset,
 } from "@microsoft/fluid-server-services-core";
 
 class BroadcasterBatch {
@@ -28,7 +29,7 @@ class BroadcasterBatch {
 
 export class BroadcasterLambda implements IPartitionLambda {
     private pending = new Map<string, BroadcasterBatch>();
-    private pendingMessage: IKafkaMessage;
+    private pendingOffset: ICheckpointOffset;
     private current = new Map<string, BroadcasterBatch>();
 
     constructor(private readonly publisher: IPublisher, protected context: IContext) {
@@ -62,7 +63,7 @@ export class BroadcasterLambda implements IPartitionLambda {
             }
         }
 
-        this.pendingMessage = message;
+        this.pendingOffset = message;
         this.sendPending();
     }
 
@@ -87,14 +88,14 @@ export class BroadcasterLambda implements IPartitionLambda {
         const temp = this.current;
         this.current = this.pending;
         this.pending = temp;
-        const batchMessage = this.pendingMessage;
+        const batchOffset = this.pendingOffset;
 
         // Process all the batches + checkpoint
         this.current.forEach((batch, topic) => {
             this.publisher.to(topic).emit(batch.event, batch.documentId, batch.messages);
         });
 
-        this.context.checkpoint(batchMessage);
+        this.context.checkpoint(batchOffset);
 
         // Invoke the next send after a setImmediate to give IO time to create more batches
         setImmediate(() => {

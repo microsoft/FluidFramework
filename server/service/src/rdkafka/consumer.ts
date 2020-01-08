@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IConsumer, IKafkaMessage } from "@microsoft/fluid-server-services-core";
+import { IConsumer, ICheckpointOffset } from "@microsoft/fluid-server-services-core";
 import { EventEmitter } from "events";
 import * as Kafka from "node-rdkafka";
 
@@ -85,10 +85,14 @@ export class RdkafkaConsumer extends EventEmitter implements IConsumer {
         this.consumer.connect();
     }
 
-    public commitOffset(message: IKafkaMessage, data: any[]): Promise<void> {
-        const topicPartitions: ITopicPartition[] = data.map((d) =>
-            ({ offset: d.offset, partition: d.partition, topic: this.topic }));
-        this.consumer.commit(topicPartitions);
+    public commitOffset(partitionId: number, checkpointOffset: ICheckpointOffset): Promise<void> {
+        const commitRequest = [{
+            offset: checkpointOffset.offset,
+            partition: partitionId,
+            topic: this.topic,
+        }];
+
+        this.consumer.commit(commitRequest);
 
         return Promise.resolve();
     }

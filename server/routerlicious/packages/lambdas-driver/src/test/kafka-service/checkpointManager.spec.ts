@@ -6,8 +6,7 @@
 import { TestConsumer, TestKafka } from "@microsoft/fluid-server-test-utils";
 import * as assert from "assert";
 import { CheckpointManager } from "../../kafka-service/checkpointManager";
-import { getOrCreateMessage } from "./testPartitionLambdaFactory";
-import { IKafkaMessage } from "@microsoft/fluid-server-services-core";
+import { ICheckpointOffset } from "@microsoft/fluid-server-services-core";
 
 describe("kafka-service", () => {
     describe("CheckpointManager", () => {
@@ -25,8 +24,8 @@ describe("kafka-service", () => {
             /**
              * Helper function that invokes a checkpoint assuming it will fail
              */
-            async function verifyCheckpointError(message: IKafkaMessage) {
-                await checkpointManager.checkpoint(message).then(
+            async function verifyCheckpointError(checkpointOffset: ICheckpointOffset) {
+                await checkpointManager.checkpoint(checkpointOffset).then(
                     () => {
                         assert.ok(false, "Should have resulted in rejection");
                     },
@@ -36,39 +35,39 @@ describe("kafka-service", () => {
             }
 
             it("Should be able to checkpoint at the desired position", async () => {
-                checkpointManager.checkpoint(getOrCreateMessage(10));
+                checkpointManager.checkpoint(TestKafka.createCheckpointOffset(10));
                 await testConsumer.waitForOffset(10);
             });
 
             it("Should be able to checkpoint at multiple offsets", async () => {
-                checkpointManager.checkpoint(getOrCreateMessage(10));
-                checkpointManager.checkpoint(getOrCreateMessage(20));
-                checkpointManager.checkpoint(getOrCreateMessage(30));
+                checkpointManager.checkpoint(TestKafka.createCheckpointOffset(10));
+                checkpointManager.checkpoint(TestKafka.createCheckpointOffset(20));
+                checkpointManager.checkpoint(TestKafka.createCheckpointOffset(30));
                 await testConsumer.waitForOffset(30);
             });
 
             it("Should resolve to error on commit error", async () => {
-                await checkpointManager.checkpoint(getOrCreateMessage(10));
+                await checkpointManager.checkpoint(TestKafka.createCheckpointOffset(10));
                 testConsumer.setFailOnCommit(true);
-                await verifyCheckpointError(getOrCreateMessage(20));
+                await verifyCheckpointError(TestKafka.createCheckpointOffset(20));
             });
 
             it("Should always return an error once an error has occurred", async () => {
-                await checkpointManager.checkpoint(getOrCreateMessage(10));
+                await checkpointManager.checkpoint(TestKafka.createCheckpointOffset(10));
                 testConsumer.setFailOnCommit(true);
                 // Purposefully don't await the first call so we can queue a second checkpoint that also
                 // will be marked as failed
-                verifyCheckpointError(getOrCreateMessage(20));
-                await verifyCheckpointError(getOrCreateMessage(30));
-                await verifyCheckpointError(getOrCreateMessage(40));
+                verifyCheckpointError(TestKafka.createCheckpointOffset(20));
+                await verifyCheckpointError(TestKafka.createCheckpointOffset(30));
+                await verifyCheckpointError(TestKafka.createCheckpointOffset(40));
             });
         });
 
         describe(".flush", () => {
             it("Should flush all pending offset writes", async () => {
-                checkpointManager.checkpoint(getOrCreateMessage(10));
-                checkpointManager.checkpoint(getOrCreateMessage(20));
-                checkpointManager.checkpoint(getOrCreateMessage(30));
+                checkpointManager.checkpoint(TestKafka.createCheckpointOffset(10));
+                checkpointManager.checkpoint(TestKafka.createCheckpointOffset(20));
+                checkpointManager.checkpoint(TestKafka.createCheckpointOffset(30));
                 await checkpointManager.flush();
                 assert.equal(30, testConsumer.getOffset());
             });

@@ -119,6 +119,14 @@ export class TestProducer implements core.IProducer {
  * Test Kafka implementation. Allows for the creation of a joined producer/consumer pair.
  */
 export class TestKafka {
+
+    public static createCheckpointOffset(offset: number, metadata?: any): core.ICheckpointOffset {
+        return {
+            offset,
+            metadata,
+        };
+    }
+
     private readonly messages: core.IKafkaMessage[] = [];
     private offset = 0;
     private readonly consumers: TestConsumer[] = [];
@@ -162,4 +170,5 @@ export class TestKafka {
     public getMessage(index: number): core.ISequencedOperationMessage {
         return this.messages[index].value as core.ISequencedOperationMessage;
     }
+
 }

@@ -11,11 +11,12 @@ import {
     IPartitionLambda,
     ISequencedOperationMessage,
     SequencedOperationType,
+    ICheckpointOffset,
 } from "@microsoft/fluid-server-services-core";
 
 export class ScriptoriumLambda implements IPartitionLambda {
     private pending = new Map<string, ISequencedOperationMessage[]>();
-    private pendingMessage: IKafkaMessage;
+    private pendingOffset: ICheckpointOffset;
     private current = new Map<string, ISequencedOperationMessage[]>();
 
     constructor(
@@ -43,7 +44,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
             }
         }
 
-        this.pendingMessage = message;
+        this.pendingOffset = message;
         this.sendPending();
     }
 
@@ -64,7 +65,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
         const temp = this.current;
         this.current = this.pending;
         this.pending = temp;
-        const batchMessage = this.pendingMessage;
+        const batchOffset = this.pendingOffset;
 
         const allProcessed = [];
 
@@ -77,7 +78,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
         Promise.all(allProcessed).then(
             () => {
                 this.current.clear();
-                this.context.checkpoint(batchMessage);
+                this.context.checkpoint(batchOffset);
                 this.sendPending();
             },
             (error) => {

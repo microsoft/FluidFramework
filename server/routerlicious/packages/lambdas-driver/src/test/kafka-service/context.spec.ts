@@ -7,7 +7,6 @@ import { TestConsumer, TestKafka } from "@microsoft/fluid-server-test-utils";
 import * as assert from "assert";
 import { CheckpointManager } from "../../kafka-service/checkpointManager";
 import { Context } from "../../kafka-service/context";
-import { getOrCreateMessage } from "./testPartitionLambdaFactory";
 
 describe("kafka-service", () => {
     describe("Context", () => {
@@ -24,8 +23,8 @@ describe("kafka-service", () => {
 
         describe(".checkpoint", () => {
             it("Should be able to checkpoint at a given offset", async () => {
-                testContext.checkpoint(getOrCreateMessage(10));
-                testContext.checkpoint(getOrCreateMessage(30));
+                testContext.checkpoint(TestKafka.createCheckpointOffset(10));
+                testContext.checkpoint(TestKafka.createCheckpointOffset(30));
                 await testConsumer.waitForOffset(30);
             });
         });

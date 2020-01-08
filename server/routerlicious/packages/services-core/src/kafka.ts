@@ -5,7 +5,7 @@
 
 import { Deferred } from "@microsoft/fluid-core-utils";
 
-export interface IKafkaMessage extends ICheckpointOffset{
+export interface IKafkaMessage extends ICheckpointOffset {
     topic: string;
     value: string | any;
     partition: number;

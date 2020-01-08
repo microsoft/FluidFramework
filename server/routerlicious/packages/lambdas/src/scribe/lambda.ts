@@ -32,6 +32,7 @@ import {
     ISequencedOperationMessage,
     RawOperationType,
     SequencedOperationType,
+    ICheckpointOffset,
 } from "@microsoft/fluid-server-services-core";
 import * as Deque from "double-ended-queue";
 import * as _ from "lodash";
@@ -42,8 +43,8 @@ export class ScribeLambda extends SequencedLambda {
     private readonly lastOffset: number;
 
     // Pending checkpoint information
-    private pendingCheckpoint: IScribe;
-    private pendingCheckpointMessage: IKafkaMessage;
+    private pendingCheckpointScribe: IScribe;
+    private pendingCheckpointOffset: ICheckpointOffset;
     private pendingP: Promise<void>;
     private readonly pendingCheckpointMessages = new Deque<ISequencedOperationMessage>();
 
@@ -168,24 +169,24 @@ export class ScribeLambda extends SequencedLambda {
         }
     }
 
-    private checkpoint(message: IKafkaMessage) {
+    private checkpoint(checkpointOffset: ICheckpointOffset) {
         const protocolState = this.protocolHandler.getProtocolState();
 
         const checkpoint: IScribe = {
-            logOffset: message.offset,
+            logOffset: checkpointOffset.offset,
             minimumSequenceNumber: this.minSequenceNumber,
             protocolState,
             sequenceNumber: this.sequenceNumber,
         };
 
-        this.checkpointCore(checkpoint, message);
+        this.checkpointCore(checkpoint, checkpointOffset);
     }
 
-    private checkpointCore(checkpoint: IScribe, message: IKafkaMessage) {
+    private checkpointCore(checkpoint: IScribe, checkpointOffset: ICheckpointOffset) {
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         if (this.pendingP) {
-            this.pendingCheckpoint = checkpoint;
-            this.pendingCheckpointMessage = message;
+            this.pendingCheckpointScribe = checkpoint;
+            this.pendingCheckpointOffset = checkpointOffset;
             return;
         }
 
@@ -193,14 +194,14 @@ export class ScribeLambda extends SequencedLambda {
         this.pendingP.then(
             () => {
                 this.pendingP = undefined;
-                this.context.checkpoint(message);
+                this.context.checkpoint(checkpointOffset);
 
-                if (this.pendingCheckpoint) {
-                    const pending = this.pendingCheckpoint;
-                    const pendingMessage = this.pendingCheckpointMessage;
-                    this.pendingCheckpoint = undefined;
-                    this.pendingCheckpointMessage = undefined;
-                    this.checkpointCore(pending,pendingMessage);
+                if (this.pendingCheckpointScribe) {
+                    const pendingScribe = this.pendingCheckpointScribe;
+                    const pendingOffset = this.pendingCheckpointOffset;
+                    this.pendingCheckpointScribe = undefined;
+                    this.pendingCheckpointOffset = undefined;
+                    this.checkpointCore(pendingScribe, pendingOffset);
                 }
             },
             (error) => {
