@@ -112,7 +112,6 @@ describe("document-router", () => {
                 testContextManager.setHead(TestKafka.createCheckpointOffset(12));
                 context.setHead(TestKafka.createCheckpointOffset(12));
                 context.checkpoint(TestKafka.createCheckpointOffset(12));
-                assert.equal(context.hasPendingWork(), false);
                 testContextManager.setTail(TestKafka.createCheckpointOffset(12));
 
                 // Move the overall offsets - context having no pending work will have it not affect the offset
