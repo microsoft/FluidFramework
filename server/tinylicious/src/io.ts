@@ -2,8 +2,8 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
+import { isSystemType } from "@microsoft/fluid-protocol-base";
 
-import { isSystemType } from "@microsoft/fluid-core-utils";
 import {
     ConnectionMode,
     IClient,
