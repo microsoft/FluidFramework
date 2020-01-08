@@ -11,7 +11,8 @@ import { DocumentLambda } from "./documentLambda";
 export class DocumentLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
     constructor(
         private readonly documentLambdaFactory: IPartitionLambdaFactory,
-        private readonly activityTimeout?: number) {
+        private readonly activityTimeout?: number
+    ) {
         super();
 
         // Forward on any factory errors
