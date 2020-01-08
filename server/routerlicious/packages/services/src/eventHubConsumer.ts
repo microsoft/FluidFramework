@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { EventData, EventProcessorHost, PartitionContext } from "@azure/event-processor-host";
+import { EventData, EventProcessorHost, PartitionContext, FromTokenProviderOptions } from "@azure/event-processor-host";
 import {
     BoxcarType,
     IBoxcarMessage,
@@ -33,6 +33,7 @@ export class EventHubConsumer implements IConsumer {
         autoCommit: boolean,
         storageEndpoint: string,
         storageContainerName: string,
+        additionalOptions?: FromTokenProviderOptions,
     ) {
         console.log("Starting Event Hub");
 
@@ -45,6 +46,7 @@ export class EventHubConsumer implements IConsumer {
             {
                 consumerGroup: groupId,
                 eventHubPath: topic,
+                ...additionalOptions,
             });
 
         const startP = this.eventHost.start(

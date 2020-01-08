@@ -160,7 +160,7 @@ export class Package {
     public checkTestSafePromiseRequire() {
         let fixed = false;
         const pkgstring = "make-promises-safe";
-        if (this.packageJson.scripts && this.packageJson.scripts.test && /^(ts-)?mocha/.test(this.packageJson.scripts.test)) {
+        if (this.packageJson.scripts && this.packageJson.scripts.test && /(ts-)?mocha/.test(this.packageJson.scripts.test)) {
             if (this.packageJson.devDependencies && !this.packageJson.devDependencies[pkgstring]) {
                 console.warn(`warning: missing ${pkgstring} dependency in ${this.name}`);
                 if (options.fixScripts) {
@@ -169,7 +169,7 @@ export class Package {
                 }
             }
             if (!this.packageJson.scripts.test.includes(pkgstring)) {
-                if (/^(ts-)?mocha/.test(this.packageJson.scripts.test)) {
+                if (/(ts-)?mocha/.test(this.packageJson.scripts.test)) {
                     console.warn(`warning: no ${pkgstring} require in test script in ${this.name}`);
                     if (options.fixScripts) {
                         this.packageJson.scripts.test += " -r " + pkgstring;

@@ -107,6 +107,7 @@ class WrappedLocalOrdererSetup implements ILocalOrdererSetup {
 
         // TODO can remove wrapper once fix bug in local orderer scribe setup which assumes tenantId/documentId
         // come from saved scribe data rather than on outer document itself.
+        //
         const scribe = JSON.parse(details.value.scribe);
         scribe.tenantId = this.tenantId;
         scribe.documentId = this.documentId;

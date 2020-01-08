@@ -51,6 +51,19 @@
     "watch:webpack": "lerna run --parallel webpack -- -- --watch",
     "webpack": "lerna run --no-sort webpack --stream"
   },
+  "nyc": {
+    "all": true,
+    "cache-dir": "nyc/.cache",
+    "exclude": [],
+    "include": [],
+    "report-dir": "nyc/report",
+    "reporter": [
+      "cobertura",
+      "html",
+      "text"
+    ],
+    "temp-directory": "nyc/.nyc_output"
+  },
   "dependencies": {},
   "devDependencies": {
     "@microsoft/api-documenter": "^7.4.6",
@@ -60,20 +73,7 @@
     "lerna": "^3.14.1",
     "nyc": "^14.1.1",
     "rimraf": "^2.6.2",
-    "sort-package-json": "^1.22.1",
+    "sort-package-json": "1.31.0",
     "typescript": "~3.4.5"
-  },
-  "nyc": {
-    "all": true,
-    "exclude": [],
-    "include": [],
-    "reporter": [
-      "cobertura",
-      "html",
-      "text"
-    ],
-    "temp-directory": "nyc/.nyc_output",
-    "cache-dir": "nyc/.cache",
-    "report-dir": "nyc/report"
   }
 }
