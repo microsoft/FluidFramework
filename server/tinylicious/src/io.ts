@@ -178,7 +178,7 @@ export function register(
         }
 
         // Note connect is a reserved socket.io word so we use connect_document to represent the connect request
-        socket.on("connect_document", async (message: IConnect) => {
+        socket.on("connect_document", (message: IConnect) => {
             connectDocument(message).then(
                 (connectedMessage) => {
                     socket.emit("connect_document_success", connectedMessage);

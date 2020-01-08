@@ -12,14 +12,13 @@ import * as compression from "compression";
 import * as cookieParser from "cookie-parser";
 import * as cors from "cors";
 import * as express from "express";
-import { Express } from "express";
 import * as safeStringify from "json-stringify-safe";
 import * as morgan from "morgan";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import { create as createRoutes } from "./routes";
 
-// tslint:disable-next-line:no-var-requires
+// eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
 const split = require("split");
 
 /**
@@ -38,7 +37,7 @@ export function create(
     const requestSize = config.get("alfred:restJsonSize");
 
     // Express app configuration
-    const app: Express = express();
+    const app = express();
 
     // Running behind iisnode
     app.set("trust proxy", 1);

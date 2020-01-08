@@ -122,6 +122,7 @@ export class Collection<T> implements ICollection<T> {
         });
 
         if (sort && Object.keys(sort).length === 1) {
+            // eslint-disable-next-line no-inner-declarations
             function compare(a, b) {
                 const sortKey = Object.keys(sort)[0];
                 if (sort[sortKey] === 1) {
