@@ -154,6 +154,22 @@ describe("SharedInterval", () => {
             assertIntervals([{ start: 0, end: 1 }]);
         });
 
+        it("replace empty range", async () => {
+            intervals.add(0, 2, IntervalType.SlideOnRemove);
+            assertIntervals([{ start: 0, end: 2}]);
+
+            sharedString.replaceText(1, 1, "\u00e4\u00c4");
+            assertIntervals([{ start: 0, end: 4}]);
+        });
+
+        it("replace negative range is excluded", async () => {
+            intervals.add(0, 2, IntervalType.SlideOnRemove);
+            assertIntervals([{ start: 0, end: 2}]);
+
+            sharedString.replaceText(2, 1, "aaa");
+            assertIntervals([{ start: 0, end: 2}]);
+        })
+
         // Uncomment below test to reproduce issue #2479:
         // https://github.com/microsoft/Prague/issues/2479
         //
