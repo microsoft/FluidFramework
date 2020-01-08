@@ -15,7 +15,7 @@ import {
 } from "@microsoft/fluid-server-services-core";
 import { debug } from "./debug";
 
-interface MessageMetadata {
+interface IMessageMetadata {
     context: PartitionContext;
     data: EventData;
 }
@@ -61,7 +61,7 @@ export class EventHubConsumer implements IConsumer {
     }
 
     public async commitCheckpoint(partitionId: number, checkpointOffset: ICheckpointOffset): Promise<void> {
-        const metadata: MessageMetadata = checkpointOffset.metadata;
+        const metadata: IMessageMetadata = checkpointOffset.metadata;
         if (metadata && metadata.context && metadata.data) {
             await metadata.context.checkpointFromEventData(metadata.data);
 
@@ -134,7 +134,7 @@ export class EventHubConsumer implements IConsumer {
             type: BoxcarType,
         };
 
-        const metadata: MessageMetadata = { context, data };
+        const metadata: IMessageMetadata = { context, data };
 
         const kafkaMessage: IKafkaMessage = {
             highWaterOffset: data.sequenceNumber,
