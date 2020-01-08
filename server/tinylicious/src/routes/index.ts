@@ -17,11 +17,13 @@ export interface IRoutes {
     storage: Router;
 }
 
-export const create = (
+export function create(
     config: Provider,
     mongoManager: MongoManager,
     documentStorage: IDocumentStorage,
-) => ({
-    ordering: ordering.create(config, documentStorage, mongoManager),
-    storage: storage.create(config),
-});
+) {
+    return {
+        ordering: ordering.create(config, documentStorage, mongoManager),
+        storage: storage.create(config),
+    };
+}

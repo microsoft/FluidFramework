@@ -7,6 +7,7 @@
         "no-null/no-null": "off",
         "@typescript-eslint/no-use-before-define":"off",
         "import/no-internal-modules":"off",
-        "@typescript-eslint/promise-function-async":"off"
+        "@typescript-eslint/promise-function-async":"off",
+        "prefer-arrow/prefer-arrow-functions": "off"
     }
 }

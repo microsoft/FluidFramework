@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 import { isSystemType } from "@microsoft/fluid-protocol-base";
-
 import {
     ConnectionMode,
     IClient,
@@ -96,10 +95,12 @@ export function register(
 
         // For easy transition, we are reusing the same nack format sent by broadcaster.
         // TODO: Create a separate nack format.
-        const createNackMessage = (): INack => ({
-            operation: undefined,
-            sequenceNumber: -1,
-        });
+        function createNackMessage(): INack {
+            return {
+                operation: undefined,
+                sequenceNumber: -1,
+            };
+        }
 
         async function connectDocument(message: IConnect): Promise<IConnected> {
             if (!message.token) {

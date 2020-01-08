@@ -9,15 +9,17 @@ import * as git from "isomorphic-git";
 import * as nconf from "nconf";
 import * as utils from "../utils";
 
-const refToIRef = (ref: string, sha: string): IRef => ({
-    object: {
-        sha,
-        type: "",
+function refToIRef(ref: string, sha: string): IRef {
+    return {
+        object: {
+            sha,
+            type: "",
+            url: "",
+        },
+        ref,
         url: "",
-    },
-    ref,
-    url: "",
-});
+    };
+}
 
 export function create(store: nconf.Provider): Router {
     const router: Router = Router();
