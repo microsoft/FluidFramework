@@ -21,7 +21,7 @@ describe("document-router", () => {
         let testContext: DocumentContext;
 
         beforeEach(async () => {
-            testContext = new DocumentContext(TestKafka.createCheckpointOffset(0), undefined);
+            testContext = new DocumentContext(TestKafka.createCheckpointOffset(0), TestKafka.createCheckpointOffset(-1));
         });
 
         describe(".setHead", () => {

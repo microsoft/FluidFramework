@@ -12,11 +12,11 @@ export class DocumentContext extends EventEmitter implements IContext {
     // have seen. Tail represents the last checkpointed offset. When head and tail match we have fully checkpointed
     // the document.
     private headInternal: IQueuedMessage;
-    private tailInternal: IQueuedMessage | undefined;
+    private tailInternal: IQueuedMessage;
 
     private closed = false;
 
-    constructor(head: IQueuedMessage, tail: IQueuedMessage | undefined) {
+    constructor(head: IQueuedMessage, tail: IQueuedMessage) {
         super();
 
         // Head represents the largest offset related to the document that is not checkpointed.
@@ -29,7 +29,7 @@ export class DocumentContext extends EventEmitter implements IContext {
         return this.headInternal;
     }
 
-    public get tail(): IQueuedMessage | undefined {
+    public get tail(): IQueuedMessage {
         return this.tailInternal;
     }
 
@@ -37,7 +37,7 @@ export class DocumentContext extends EventEmitter implements IContext {
      * Returns whether or not there is pending work in flight - i.e. the head and tail are not equal
      */
     public hasPendingWork(): boolean {
-        return !this.tailInternal || this.headInternal.offset !== this.tailInternal.offset;
+        return this.headInternal.offset !== this.tailInternal.offset;
     }
 
     /**
@@ -59,10 +59,8 @@ export class DocumentContext extends EventEmitter implements IContext {
         // Assert offset is between the current tail and head
         const offset = message.offset;
 
-        if (this.tail) {
-            assert(offset > this.tail.offset && offset <= this.head.offset,
-                `${offset} > ${this.tail.offset} && ${offset} <= ${this.head.offset}`);
-        }
+        assert(offset > this.tail.offset && offset <= this.head.offset,
+            `${offset} > ${this.tail.offset} && ${offset} <= ${this.head.offset}`);
 
         if (this.closed) {
             return;
