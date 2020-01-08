@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IContext, IKafkaMessage } from "@microsoft/fluid-server-services-core";
+import { IContext, ICheckpointOffset } from "@microsoft/fluid-server-services-core";
 import * as assert from "assert";
 import { DocumentContextManager } from "../../document-router/contextManager";
 import { getOrCreateMessage, clearMessages } from "./testDocumentLambda";
@@ -11,9 +11,9 @@ import { getOrCreateMessage, clearMessages } from "./testDocumentLambda";
 class TestContext implements IContext {
     public offset = -1;
 
-    public checkpoint(message: IKafkaMessage) {
-        assert(message.offset >= this.offset, `${message.offset} >= ${this.offset}`);
-        this.offset = message.offset;
+    public checkpoint(checkpointOffset: ICheckpointOffset) {
+        assert(checkpointOffset.offset >= this.offset, `${checkpointOffset.offset} >= ${this.offset}`);
+        this.offset = checkpointOffset.offset;
     }
 
     public error(error: any, restart: boolean) {

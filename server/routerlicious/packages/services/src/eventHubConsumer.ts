@@ -11,6 +11,7 @@ import {
     IConsumer,
     IKafkaMessage,
     IPartition,
+    ICheckpointOffset,
 } from "@microsoft/fluid-server-services-core";
 import { debug } from "./debug";
 
@@ -57,8 +58,8 @@ export class EventHubConsumer implements IConsumer {
         });
     }
 
-    public async commitOffset(message: IKafkaMessage, data: any[]): Promise<void> {
-        const metadata: MessageMetadata = message.metadata;
+    public async commitOffset(partitionId: number, checkpointOffset: ICheckpointOffset): Promise<void> {
+        const metadata: MessageMetadata = checkpointOffset.metadata;
         if (metadata && metadata.context && metadata.data) {
             await metadata.context.checkpointFromEventData(metadata.data);
 
@@ -72,18 +73,16 @@ export class EventHubConsumer implements IConsumer {
         return this;
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public close(): Promise<void> {
-        return this.eventHost.stop();
+    public async close() {
+        await this.eventHost.stop();
     }
 
-    public pause() {
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.eventHost.stop();
+    public async pause() {
+        await this.eventHost.stop();
     }
 
-    public resume() {
-        throw new Error("Is this used?");
+    public async resume() {
+        throw new Error("Not implemented");
     }
 
     private getPartitions(partitionIds: string[]): IPartition[] {

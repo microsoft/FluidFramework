@@ -5,13 +5,16 @@
 
 import { Deferred } from "@microsoft/fluid-core-utils";
 
-export interface IKafkaMessage {
+export interface IKafkaMessage extends ICheckpointOffset{
     topic: string;
     value: string | any;
-    offset: number;
     partition: number;
     highWaterOffset: number;
     key: string;
+}
+
+export interface ICheckpointOffset {
+    offset: number;
     metadata?: any;
 }
 
@@ -29,7 +32,7 @@ export interface IConsumer {
     /**
      * Commits consumer offset.
      */
-    commitOffset(message: IKafkaMessage, data: any[]): Promise<void>;
+    commitOffset(partitionId: number, checkpointOffset: ICheckpointOffset): Promise<void>;
 
     /**
      * Event Handler.
@@ -46,12 +49,12 @@ export interface IConsumer {
     /**
      * Pauses retrieval of new messages
      */
-    pause();
+    pause(): Promise<void>;
 
     /**
      * Resumes retrival of messages
      */
-    resume();
+    resume(): Promise<void>;
 }
 
 /**

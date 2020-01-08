@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { IContext, IKafkaMessage } from "@microsoft/fluid-server-services-core";
+import { IContext, ICheckpointOffset } from "@microsoft/fluid-server-services-core";
 import { CheckpointManager } from "./checkpointManager";
 
 export class Context extends EventEmitter implements IContext {
@@ -17,12 +17,12 @@ export class Context extends EventEmitter implements IContext {
     /**
      * Updates the checkpoint for the partition
      */
-    public checkpoint(message: IKafkaMessage) {
+    public checkpoint(checkpointOffset: ICheckpointOffset) {
         if (this.closed) {
             return;
         }
 
-        this.checkpointManager.checkpoint(message).catch((error) => {
+        this.checkpointManager.checkpoint(checkpointOffset).catch((error) => {
             // Close context on error. Once the checkpointManager enters an error state it will stay there.
             // We will look to restart on checkpointing given it likely indicates a Kafka connection issue.
             this.emit("error", error, true);

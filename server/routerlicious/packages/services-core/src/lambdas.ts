@@ -6,20 +6,20 @@
 import { EventEmitter } from "events";
 import { safelyParseJSON } from "@microsoft/fluid-core-utils";
 import * as nconf from "nconf";
-import { IKafkaMessage } from "./kafka";
+import { IKafkaMessage, ICheckpointOffset } from "./kafka";
 import { BoxcarType, IBoxcarMessage, IMessage } from "./messages";
 
 export interface IContext {
     /**
      * Updates the checkpoint
      */
-    checkpoint(message: IKafkaMessage);
+    checkpoint(checkpointOffset: ICheckpointOffset): void;
 
     /**
      * Closes the context with an error. The restart flag indicates whether the error is recoverable and the lambda
      * should be restarted.
      */
-    error(error: any, restart: boolean);
+    error(error: any, restart: boolean): void;
 }
 
 export interface IPartitionLambda {

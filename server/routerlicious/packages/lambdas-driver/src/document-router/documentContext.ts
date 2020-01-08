@@ -5,18 +5,18 @@
 
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import { IContext, IKafkaMessage } from "@microsoft/fluid-server-services-core";
+import { IContext, ICheckpointOffset } from "@microsoft/fluid-server-services-core";
 
 export class DocumentContext extends EventEmitter implements IContext {
     // We track two offsets - head and tail. Head represents the largest offset related to this document we
     // have seen. Tail represents the last checkpointed offset. When head and tail match we have fully checkpointed
     // the document.
-    private tailInternal: IKafkaMessage;
-    private headInternal: IKafkaMessage | undefined;
+    private tailInternal: ICheckpointOffset;
+    private headInternal: ICheckpointOffset | undefined;
 
     private closed = false;
 
-    constructor(head: IKafkaMessage, tail: IKafkaMessage | undefined) {
+    constructor(head: ICheckpointOffset, tail: ICheckpointOffset | undefined) {
         super();
 
         // We initialize tail to one less than head. Head represents the largest offset related to the document
@@ -27,11 +27,11 @@ export class DocumentContext extends EventEmitter implements IContext {
         this.tailInternal = tail;
     }
 
-    public get head(): IKafkaMessage {
+    public get head(): ICheckpointOffset {
         return this.headInternal;
     }
 
-    public get tail(): IKafkaMessage | undefined {
+    public get tail(): ICheckpointOffset | undefined {
         return this.tailInternal;
     }
 
@@ -45,7 +45,7 @@ export class DocumentContext extends EventEmitter implements IContext {
     /**
      * Updates the head offset for the context.
      */
-    public setHead(head: IKafkaMessage) {
+    public setHead(head: ICheckpointOffset) {
         assert(head.offset > this.head.offset, `${head.offset} > ${this.head.offset}`);
 
         // When moving back to a state where head and tail differ we again subtract one from the head, as in the
@@ -57,7 +57,7 @@ export class DocumentContext extends EventEmitter implements IContext {
         this.headInternal = head;
     }
 
-    public checkpoint(message: IKafkaMessage) {
+    public checkpoint(message: ICheckpointOffset) {
         // Assert offset is between the current tail and head
         const offset = message.offset;
 
