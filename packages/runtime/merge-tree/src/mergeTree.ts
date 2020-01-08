@@ -455,8 +455,8 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     readonly segmentGroups: SegmentGroupCollection = new SegmentGroupCollection(this);
     readonly trackingCollection: TrackingGroupCollection = new TrackingGroupCollection(this);
     propertyManager: SegmentPropertiesManager;
-    localRefs?: LocalReferenceCollection;
     properties: Properties.PropertySet;
+    localRefs?: LocalReferenceCollection;
     abstract readonly type: string;
 
     addProperties(newProps: Properties.PropertySet, op?: ops.ICombiningOp, seq?: number, collabWindow?: CollaborationWindow) {
@@ -2712,6 +2712,7 @@ export class MergeTree {
                     if (segment.localRefs && !segment.localRefs.empty && brid === this.localBranchId) {
                         savedLocalRefs.push(segment.localRefs);
                     }
+                    segment.localRefs = undefined;
                 }
             }
             // Save segment so can assign removed sequence number when acked by server
