@@ -14,7 +14,7 @@ import { Provider } from "nconf";
 import { DocumentContextManager } from "./contextManager";
 import { DocumentPartition } from "./documentPartition";
 
-// expire document partitions after 10 minutes of no activity
+// Expire document partitions after 10 minutes of no activity
 const ActivityTimeout = 10 * 60 * 1000;
 
 export class DocumentLambda implements IPartitionLambda {
@@ -74,7 +74,7 @@ export class DocumentLambda implements IPartitionLambda {
                 documentContext,
                 this.activityTimeout);
             document.on("inactive", () => {
-                // close and remove the inactive document
+                // Close and remove the inactive document
                 document.close();
                 this.documents.delete(routingKey);
             });
