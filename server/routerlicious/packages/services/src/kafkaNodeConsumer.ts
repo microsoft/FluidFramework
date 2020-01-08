@@ -5,7 +5,7 @@
 
 import { EventEmitter } from "events";
 import * as util from "util";
-import { IConsumer, IPartition, ICheckpointOffset } from "@microsoft/fluid-server-services-core";
+import { IConsumer, IPartition, IQueuedMessage } from "@microsoft/fluid-server-services-core";
 import * as kafkaNode from "kafka-node";
 import { debug } from "./debug";
 
@@ -26,9 +26,9 @@ export class KafkaNodeConsumer implements IConsumer {
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public commitCheckpoint(partitionId: number, checkpointOffset: ICheckpointOffset): Promise<void> {
+    public commitCheckpoint(partitionId: number, queuedMessage: IQueuedMessage): Promise<void> {
         const commitRequest =  [{
-            offset: checkpointOffset.offset + 1,
+            offset: queuedMessage.offset + 1,
             partition: partitionId,
             topic: this.topic,
         }];

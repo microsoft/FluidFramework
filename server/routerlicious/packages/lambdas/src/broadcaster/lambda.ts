@@ -7,14 +7,13 @@ import { INack, ISequencedDocumentMessage } from "@microsoft/fluid-protocol-defi
 import {
     extractBoxcar,
     IContext,
-    IKafkaMessage,
     INackMessage,
     IPartitionLambda,
     IPublisher,
     ISequencedOperationMessage,
     NackOperationType,
     SequencedOperationType,
-    ICheckpointOffset,
+    IQueuedMessage,
 } from "@microsoft/fluid-server-services-core";
 
 class BroadcasterBatch {
@@ -29,13 +28,13 @@ class BroadcasterBatch {
 
 export class BroadcasterLambda implements IPartitionLambda {
     private pending = new Map<string, BroadcasterBatch>();
-    private pendingOffset: ICheckpointOffset;
+    private pendingOffset: IQueuedMessage;
     private current = new Map<string, BroadcasterBatch>();
 
     constructor(private readonly publisher: IPublisher, protected context: IContext) {
     }
 
-    public handler(message: IKafkaMessage): void {
+    public handler(message: IQueuedMessage): void {
         const boxcar = extractBoxcar(message);
 
         for (const baseMessage of boxcar.contents) {

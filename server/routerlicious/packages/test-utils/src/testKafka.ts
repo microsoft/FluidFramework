@@ -23,14 +23,14 @@ export class TestConsumer implements core.IConsumer {
         this.failOnCommit = value;
     }
 
-    public async commitCheckpoint(partitionId: number, checkpointOffset: core.ICheckpointOffset): Promise<void> {
+    public async commitCheckpoint(partitionId: number, queuedMessage: core.IQueuedMessage): Promise<void> {
         // For now we assume a single partition for the test consumer
         assert(partitionId === 0);
 
         if (this.failOnCommit) {
             return Promise.reject("TestConsumer set to fail on commit");
         } else {
-            this.context.checkpoint(checkpointOffset);
+            this.context.checkpoint(queuedMessage);
             return;
         }
     }
@@ -120,14 +120,16 @@ export class TestProducer implements core.IProducer {
  */
 export class TestKafka {
 
-    public static createCheckpointOffset(offset: number, metadata?: any): core.ICheckpointOffset {
+    public static createCheckpointOffset(offset: number, metadata?: any): core.IQueuedMessage {
         return {
+            topic: "topic",
+            partition: 1,
             offset,
-            metadata,
+            value: "",
         };
     }
 
-    private readonly messages: core.IKafkaMessage[] = [];
+    private readonly messages: core.IQueuedMessage[] = [];
     private offset = 0;
     private readonly consumers: TestConsumer[] = [];
 
@@ -142,15 +144,13 @@ export class TestKafka {
         return consumer;
     }
 
-    public getRawMessages(): core.IKafkaMessage[] {
+    public getRawMessages(): core.IQueuedMessage[] {
         return this.messages;
     }
 
     public addMessage(message: any, topic: string) {
         const offset = this.offset++;
-        const storedMessage: core.IKafkaMessage = {
-            highWaterOffset: offset,
-            key: null,
+        const storedMessage: core.IQueuedMessage = {
             offset,
             partition: 0,
             topic,

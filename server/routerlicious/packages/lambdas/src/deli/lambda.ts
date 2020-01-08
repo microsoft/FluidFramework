@@ -24,7 +24,6 @@ import {
     ICollection,
     IContext,
     IDocument,
-    IKafkaMessage,
     IMessage,
     INackMessage,
     IPartitionLambda,
@@ -35,7 +34,7 @@ import {
     NackOperationType,
     RawOperationType,
     SequencedOperationType,
-    ICheckpointOffset,
+    IQueuedMessage,
 } from "@microsoft/fluid-server-services-core";
 import * as winston from "winston";
 import { CheckpointContext, ICheckpoint, IClientSequenceNumber } from "./checkpointContext";
@@ -143,7 +142,7 @@ export class DeliLambda implements IPartitionLambda {
         this.checkpointContext = new CheckpointContext(this.tenantId, this.documentId, collection, context);
     }
 
-    public handler(rawMessage: IKafkaMessage): void {
+    public handler(rawMessage: IQueuedMessage): void {
         // In cases where we are reprocessing messages we have already checkpointed exit early
         if (rawMessage.offset < this.logOffset) {
             return;
@@ -619,13 +618,13 @@ export class DeliLambda implements IPartitionLambda {
     /**
      * Generates a checkpoint of the current ticketing state
      */
-    private generateCheckpoint(checkpointOffset: ICheckpointOffset): ICheckpoint {
+    private generateCheckpoint(queuedMessage: IQueuedMessage): ICheckpoint {
         return {
             branchMap: this.branchMap ? this.branchMap.serialize() : undefined,
             clients: this.clientSeqManager.cloneValues(),
             logOffset: this.logOffset,
             sequenceNumber: this.sequenceNumber,
-            checkpointOffset,
+            queuedMessage,
         };
     }
 

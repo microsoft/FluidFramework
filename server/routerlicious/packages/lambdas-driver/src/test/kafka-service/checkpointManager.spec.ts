@@ -6,7 +6,7 @@
 import { TestConsumer, TestKafka } from "@microsoft/fluid-server-test-utils";
 import * as assert from "assert";
 import { CheckpointManager } from "../../kafka-service/checkpointManager";
-import { ICheckpointOffset } from "@microsoft/fluid-server-services-core";
+import { IQueuedMessage } from "@microsoft/fluid-server-services-core";
 
 describe("kafka-service", () => {
     describe("CheckpointManager", () => {
@@ -24,8 +24,8 @@ describe("kafka-service", () => {
             /**
              * Helper function that invokes a checkpoint assuming it will fail
              */
-            async function verifyCheckpointError(checkpointOffset: ICheckpointOffset) {
-                await checkpointManager.checkpoint(checkpointOffset).then(
+            async function verifyCheckpointError(queuedMessage: IQueuedMessage) {
+                await checkpointManager.checkpoint(queuedMessage).then(
                     () => {
                         assert.ok(false, "Should have resulted in rejection");
                     },

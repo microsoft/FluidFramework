@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IContext, ICheckpointOffset } from "@microsoft/fluid-server-services-core";
+import { IContext, IQueuedMessage } from "@microsoft/fluid-server-services-core";
 import { TestKafka } from "@microsoft/fluid-server-test-utils";
 import * as assert from "assert";
 import { DocumentContextManager } from "../../document-router/contextManager";
@@ -11,9 +11,9 @@ import { DocumentContextManager } from "../../document-router/contextManager";
 class TestContext implements IContext {
     public offset = -1;
 
-    public checkpoint(checkpointOffset: ICheckpointOffset) {
-        assert(checkpointOffset.offset >= this.offset, `${checkpointOffset.offset} >= ${this.offset}`);
-        this.offset = checkpointOffset.offset;
+    public checkpoint(queuedMessage: IQueuedMessage) {
+        assert(queuedMessage.offset >= this.offset, `${queuedMessage.offset} >= ${this.offset}`);
+        this.offset = queuedMessage.offset;
     }
 
     public error(error: any, restart: boolean) {

@@ -39,7 +39,7 @@ export class ForemanLambda extends SequencedLambda {
         }
     }
 
-    protected async handlerCore(message: core.IKafkaMessage): Promise<void> {
+    protected async handlerCore(message: core.IQueuedMessage): Promise<void> {
         const boxcar = core.extractBoxcar(message);
 
         for (const baseMessage of boxcar.contents) {

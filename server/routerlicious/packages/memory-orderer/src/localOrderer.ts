@@ -30,7 +30,7 @@ import {
     ITenantManager,
     ITopic,
     IWebSocket,
-    ICheckpointOffset,
+    IQueuedMessage,
 } from "@microsoft/fluid-server-services-core";
 import { ILocalOrdererSetup } from "./interfaces";
 import { LocalKafka } from "./localKafka";
@@ -150,7 +150,7 @@ class LocalSocketPublisher implements IPublisher {
 
 // Want a pure local orderer that can do all kinds of stuff
 class LocalContext implements IContext {
-    public checkpoint(checkpointOffset: ICheckpointOffset) {
+    public checkpoint(queuedMessage: IQueuedMessage) {
         return;
     }
 

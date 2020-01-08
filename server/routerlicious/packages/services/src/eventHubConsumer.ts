@@ -9,13 +9,12 @@ import {
     BoxcarType,
     IBoxcarMessage,
     IConsumer,
-    IKafkaMessage,
+    IQueuedMessage,
     IPartition,
-    ICheckpointOffset,
 } from "@microsoft/fluid-server-services-core";
 import { debug } from "./debug";
 
-interface IMessageMetadata {
+interface IEventHubMessage extends IQueuedMessage {
     context: PartitionContext;
     data: EventData;
 }
@@ -60,10 +59,10 @@ export class EventHubConsumer implements IConsumer {
         });
     }
 
-    public async commitCheckpoint(partitionId: number, checkpointOffset: ICheckpointOffset): Promise<void> {
-        const metadata: IMessageMetadata = checkpointOffset.metadata;
-        if (metadata && metadata.context && metadata.data) {
-            await metadata.context.checkpointFromEventData(metadata.data);
+    public async commitCheckpoint(partitionId: number, queuedMessage: IQueuedMessage): Promise<void> {
+        const eventHubMessage = queuedMessage as IEventHubMessage;
+        if (eventHubMessage && eventHubMessage.context && eventHubMessage.data) {
+            await eventHubMessage.context.checkpointFromEventData(eventHubMessage.data);
 
         } else {
             debug("Invalid message metadata");
@@ -134,13 +133,10 @@ export class EventHubConsumer implements IConsumer {
             type: BoxcarType,
         };
 
-        const metadata: IMessageMetadata = { context, data };
-
-        const kafkaMessage: IKafkaMessage = {
-            highWaterOffset: data.sequenceNumber,
-            key: data.partitionKey,
+        const kafkaMessage: IEventHubMessage = {
+            context,
+            data,
             offset: data.sequenceNumber,
-            metadata,
             partition: parseInt(context.partitionId, 10),
             topic: context.eventhubPath,
             value: boxcarMessage,

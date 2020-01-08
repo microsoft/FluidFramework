@@ -5,11 +5,14 @@
 
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import { IContext, ICheckpointOffset } from "@microsoft/fluid-server-services-core";
+import { IContext, IQueuedMessage } from "@microsoft/fluid-server-services-core";
 import { DocumentContext } from "./documentContext";
 
-const LastCheckpointedOffset: ICheckpointOffset = {
+const LastCheckpointedOffset: IQueuedMessage = {
     offset: -1,
+    partition: -1,
+    topic: "",
+    value: undefined,
 };
 
 /**
@@ -33,7 +36,7 @@ export class DocumentContextManager extends EventEmitter {
         super();
     }
 
-    public createContext(head: ICheckpointOffset): DocumentContext {
+    public createContext(head: IQueuedMessage): DocumentContext {
         // Contexts should only be created within the processing range of the manager
         assert(head.offset > this.tail.offset && head.offset <= this.head.offset);
 
@@ -45,13 +48,13 @@ export class DocumentContextManager extends EventEmitter {
         return context;
     }
 
-    public setHead(head: ICheckpointOffset) {
+    public setHead(head: IQueuedMessage) {
         assert(head.offset > this.head.offset, `${head.offset} > ${this.head.offset}`);
 
         this.head = head;
     }
 
-    public setTail(tail: ICheckpointOffset) {
+    public setTail(tail: IQueuedMessage) {
         assert(tail.offset > this.tail.offset && tail.offset <= this.head.offset,
             `${tail.offset} > ${this.tail.offset} && ${tail.offset} <= ${this.head.offset}`);
 
@@ -73,21 +76,21 @@ export class DocumentContextManager extends EventEmitter {
         }
 
         // Set the starting offset at the tail. Contexts can then lower that offset based on their positions.
-        let checkpointOffset = this.tail;
+        let queuedMessage = this.tail;
 
         for (const context of this.contexts) {
             // Utilize the tail of the context if there is still pending work.
             // If there isn't pending work then we are fully caught up
             if (context.hasPendingWork()) {
                 // Lower the offset when possible
-                checkpointOffset = checkpointOffset.offset > context.tail.offset ? context.tail : checkpointOffset;
+                queuedMessage = queuedMessage.offset > context.tail.offset ? context.tail : queuedMessage;
             }
         }
 
         // Checkpoint once the offset has changed
-        if (checkpointOffset.offset > this.lastCheckpoint.offset) {
-            this.partitionContext.checkpoint(checkpointOffset);
-            this.lastCheckpoint = checkpointOffset;
+        if (queuedMessage.offset > this.lastCheckpoint.offset) {
+            this.partitionContext.checkpoint(queuedMessage);
+            this.lastCheckpoint = queuedMessage;
         }
     }
 }

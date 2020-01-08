@@ -5,18 +5,18 @@
 
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import { IContext, ICheckpointOffset } from "@microsoft/fluid-server-services-core";
+import { IContext, IQueuedMessage } from "@microsoft/fluid-server-services-core";
 
 export class DocumentContext extends EventEmitter implements IContext {
     // We track two offsets - head and tail. Head represents the largest offset related to this document we
     // have seen. Tail represents the last checkpointed offset. When head and tail match we have fully checkpointed
     // the document.
-    private headInternal: ICheckpointOffset;
-    private tailInternal: ICheckpointOffset | undefined;
+    private headInternal: IQueuedMessage;
+    private tailInternal: IQueuedMessage | undefined;
 
     private closed = false;
 
-    constructor(head: ICheckpointOffset, tail: ICheckpointOffset | undefined) {
+    constructor(head: IQueuedMessage, tail: IQueuedMessage | undefined) {
         super();
 
         // Head represents the largest offset related to the document that is not checkpointed.
@@ -25,11 +25,11 @@ export class DocumentContext extends EventEmitter implements IContext {
         this.tailInternal = tail;
     }
 
-    public get head(): ICheckpointOffset {
+    public get head(): IQueuedMessage {
         return this.headInternal;
     }
 
-    public get tail(): ICheckpointOffset | undefined {
+    public get tail(): IQueuedMessage | undefined {
         return this.tailInternal;
     }
 
@@ -43,7 +43,7 @@ export class DocumentContext extends EventEmitter implements IContext {
     /**
      * Updates the head offset for the context.
      */
-    public setHead(head: ICheckpointOffset) {
+    public setHead(head: IQueuedMessage) {
         assert(head.offset > this.head.offset, `${head.offset} > ${this.head.offset}`);
 
         // When moving back to a state where head and tail differ we set the tail to be the old head, as in the
@@ -55,7 +55,7 @@ export class DocumentContext extends EventEmitter implements IContext {
         this.headInternal = head;
     }
 
-    public checkpoint(message: ICheckpointOffset) {
+    public checkpoint(message: IQueuedMessage) {
         // Assert offset is between the current tail and head
         const offset = message.offset;
 

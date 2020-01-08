@@ -6,7 +6,7 @@
 import {
     extractBoxcar,
     IContext,
-    IKafkaMessage,
+    IQueuedMessage,
     IPartitionLambda,
     IPartitionLambdaFactory,
 } from "@microsoft/fluid-server-services-core";
@@ -28,7 +28,7 @@ export class DocumentLambda implements IPartitionLambda {
         });
     }
 
-    public handler(message: IKafkaMessage): void {
+    public handler(message: IQueuedMessage): void {
         this.contextManager.setHead(message);
         this.handlerCore(message);
         this.contextManager.setTail(message);
@@ -41,7 +41,7 @@ export class DocumentLambda implements IPartitionLambda {
         }
     }
 
-    private handlerCore(message: IKafkaMessage): void {
+    private handlerCore(message: IQueuedMessage): void {
         const boxcar = extractBoxcar(message);
         if (!boxcar.documentId || !boxcar.tenantId) {
             return;

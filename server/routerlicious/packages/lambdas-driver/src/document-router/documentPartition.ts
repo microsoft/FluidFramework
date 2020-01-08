@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IKafkaMessage, IPartitionLambda, IPartitionLambdaFactory } from "@microsoft/fluid-server-services-core";
+import { IQueuedMessage, IPartitionLambda, IPartitionLambdaFactory } from "@microsoft/fluid-server-services-core";
 import { AsyncQueue, queue } from "async";
 import * as _ from "lodash";
 import { Provider } from "nconf";
@@ -11,7 +11,7 @@ import * as winston from "winston";
 import { DocumentContext } from "./documentContext";
 
 export class DocumentPartition {
-    private readonly q: AsyncQueue<IKafkaMessage>;
+    private readonly q: AsyncQueue<IQueuedMessage>;
     private readonly lambdaP: Promise<IPartitionLambda>;
     private lambda: IPartitionLambda;
     private corrupt = false;
@@ -30,7 +30,7 @@ export class DocumentPartition {
         const documentConfig = new Provider({}).defaults(clonedConfig).use("memory");
 
         this.q = queue(
-            (message: IKafkaMessage, callback) => {
+            (message: IQueuedMessage, callback) => {
                 // Winston.verbose(`${message.topic}:${message.partition}@${message.offset}`);
                 try {
                     if (!this.corrupt) {
@@ -65,7 +65,7 @@ export class DocumentPartition {
             });
     }
 
-    public process(message: IKafkaMessage) {
+    public process(message: IQueuedMessage) {
         this.q.push(message);
     }
 

@@ -7,17 +7,16 @@ import {
     extractBoxcar,
     ICollection,
     IContext,
-    IKafkaMessage,
+    IQueuedMessage,
     IPartitionLambda,
     IRawOperationMessage,
     IRawOperationMessageBatch,
-    ICheckpointOffset,
 } from "@microsoft/fluid-server-services-core";
 
 export class CopierLambda implements IPartitionLambda {
     // Below, one job corresponds to the task of sending one batch to Mongo:
     private pendingJobs = new Map<string, IRawOperationMessageBatch[]>();
-    private pendingOffset: ICheckpointOffset;
+    private pendingOffset: IQueuedMessage;
     private currentJobs = new Map<string, IRawOperationMessageBatch[]>();
 
     constructor(
@@ -25,7 +24,7 @@ export class CopierLambda implements IPartitionLambda {
         protected context: IContext) {
     }
 
-    public handler(message: IKafkaMessage): void {
+    public handler(message: IQueuedMessage): void {
         // Extract batch of raw ops from Kafka message:
         const boxcar = extractBoxcar(message);
         const batch = boxcar.contents;
