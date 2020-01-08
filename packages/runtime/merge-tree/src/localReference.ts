@@ -124,6 +124,15 @@ interface IRefsAtOffest {
 
 export class LocalReferenceCollection {
 
+    public static append(seg1: ISegment, seg2: ISegment){
+        if(seg2.localRefs && !seg2.localRefs.empty){
+            if(!seg1.localRefs){
+                seg1.localRefs = new LocalReferenceCollection(seg1);
+            }
+            seg1.localRefs.append(seg2.localRefs);
+        }
+    }
+
     public hierRefCount: number = 0;
     private refsByOffset: (IRefsAtOffest | undefined)[];
     private refCount: number = 0;
@@ -262,6 +271,7 @@ export class LocalReferenceCollection {
     public split(offset: number, splitSeg: ISegment) {
 
         if (!this.empty) {
+            splitSeg.localRefs = new LocalReferenceCollection(splitSeg);
             splitSeg.localRefs.refsByOffset =
                 this.refsByOffset.splice(offset, this.refsByOffset.length - offset);
 

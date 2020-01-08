@@ -29,7 +29,7 @@ describe("MergeTree.Client", () => {
 
         const segInfo = client1.getContainingSegment(2);
         const c1LocalRef = new LocalReference(client1, segInfo.segment, segInfo.offset, ReferenceType.Simple);
-        segInfo.segment.localRefs.addLocalRef(c1LocalRef);
+        client1.addLocalReference(c1LocalRef)
 
         assert.equal(c1LocalRef.toPosition(), 2);
 
@@ -77,7 +77,7 @@ describe("MergeTree.Client", () => {
 
         const segInfo = client1.getContainingSegment(2);
         const c1LocalRef = new LocalReference(client1, segInfo.segment, segInfo.offset, ReferenceType.SlideOnRemove);
-        segInfo.segment.localRefs.addLocalRef(c1LocalRef);
+        client1.addLocalReference(c1LocalRef)
 
         assert.equal(c1LocalRef.toPosition(), 2);
 
@@ -123,7 +123,7 @@ describe("MergeTree.Client", () => {
 
         const segInfo = client1.getContainingSegment(2);
         const c1LocalRef = new LocalReference(client1, segInfo.segment, segInfo.offset, ReferenceType.SlideOnRemove);
-        segInfo.segment.localRefs.addLocalRef(c1LocalRef);
+        client1.addLocalReference(c1LocalRef)
 
         assert.equal(c1LocalRef.toPosition(), 2);
 
@@ -158,7 +158,7 @@ describe("MergeTree.Client", () => {
 
         const segInfo = client1.getContainingSegment(2);
         const c1LocalRef = new LocalReference(client1, segInfo.segment, segInfo.offset, ReferenceType.SlideOnRemove);
-        segInfo.segment.localRefs.addLocalRef(c1LocalRef);
+        client1.addLocalReference(c1LocalRef)
 
         assert.equal(c1LocalRef.toPosition(), 2);
 

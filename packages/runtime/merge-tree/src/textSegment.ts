@@ -7,6 +7,7 @@ import { IIntegerRange } from "./base";
 import { BaseSegment, glc, ISegment, Marker, MergeTree } from "./mergeTree";
 import * as ops from "./ops";
 import * as Properties from "./properties";
+import { LocalReferenceCollection } from "./localReference";
 
 export interface IJSONTextSegment extends ops.IJSONSegment {
     text: string;
@@ -75,7 +76,7 @@ export class TextSegment extends BaseSegment {
         if (TextSegment.is(segment)) {
             // Note: Must call 'appendLocalRefs' before modifying this segment's length as
             // 'this.cachedLength' is used to adjust the offsets of the local refs.
-            this.localRefs.append(segment.localRefs);
+            LocalReferenceCollection.append(this, segment);
 
             this.text += segment.text;
             this.cachedLength = this.text.length;

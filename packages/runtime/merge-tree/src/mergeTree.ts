@@ -104,10 +104,10 @@ export interface ISegment extends IMergeNodeCommon, IRemovalInfo {
     readonly type: string;
     readonly segmentGroups: SegmentGroupCollection;
     readonly trackingCollection: TrackingGroupCollection;
-    readonly localRefs: LocalReferenceCollection;
     propertyManager: SegmentPropertiesManager;
     seq?: number;  // If not present assumed to be previous to window min
     clientId?: number;
+    localRefs?: LocalReferenceCollection;
     removalsByBranch?: IRemovalInfo[];
     properties?: Properties.PropertySet;
     addProperties(newProps: Properties.PropertySet, op?: ops.ICombiningOp, seq?: number, collabWindow?: CollaborationWindow): Properties.PropertySet;
@@ -441,8 +441,6 @@ function nodeTotalLength(mergeTree: MergeTree, node: IMergeNode) {
 }
 
 export abstract class BaseSegment extends MergeNode implements ISegment {
-    private localReferenceCollection?: LocalReferenceCollection;
-
     constructor() {
         super();
     }
@@ -457,15 +455,9 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     readonly segmentGroups: SegmentGroupCollection = new SegmentGroupCollection(this);
     readonly trackingCollection: TrackingGroupCollection = new TrackingGroupCollection(this);
     propertyManager: SegmentPropertiesManager;
+    localRefs?: LocalReferenceCollection;
     properties: Properties.PropertySet;
     abstract readonly type: string;
-
-    public get localRefs(): LocalReferenceCollection {
-        if (this.localReferenceCollection === undefined) {
-            this.localReferenceCollection = new LocalReferenceCollection(this);
-        }
-        return this.localReferenceCollection;
-    }
 
     addProperties(newProps: Properties.PropertySet, op?: ops.ICombiningOp, seq?: number, collabWindow?: CollaborationWindow) {
         if (!this.propertyManager) {
@@ -580,8 +572,8 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
                 }
                 this.segmentGroups.copyTo(leafSegment);
                 this.trackingCollection.copyTo(leafSegment);
-                if (this.localReferenceCollection) {
-                    this.localReferenceCollection.split(pos, leafSegment);
+                if (this.localRefs) {
+                    this.localRefs.split(pos, leafSegment);
                 }
             }
             return leafSegment;
@@ -2717,7 +2709,7 @@ export class MergeTree {
                     removalInfo.removedClientId = clientId;
                     removalInfo.removedSeq = seq;
                     removedSegments.push({ segment });
-                    if (brid === this.localBranchId) {
+                    if (segment.localRefs && !segment.localRefs.empty && brid === this.localBranchId) {
                         savedLocalRefs.push(segment.localRefs);
                     }
                 }
@@ -2754,11 +2746,17 @@ export class MergeTree {
                 const afterSegOff = this.getContainingSegment(start, refSeq, clientId);
                 refSegment = afterSegOff.segment;
                 assert(refSegment);
+                if(!refSegment.localRefs){
+                    refSegment.localRefs = new LocalReferenceCollection(refSegment);
+                }
                 refSegment.localRefs.addBeforeTombstones(...savedLocalRefs);
             } else if(length > 0) {
                 const beforeSegOff = this.getContainingSegment(length - 1, refSeq, clientId);
                 refSegment = beforeSegOff.segment;
                 assert(refSegment);
+                if(!refSegment.localRefs){
+                    refSegment.localRefs = new LocalReferenceCollection(refSegment);
+                }
                 refSegment.localRefs.addAfterTombstones(...savedLocalRefs);
             } else {
                 // TODO: The tree is empty, so there isn't anywhere to put these
@@ -2870,15 +2868,20 @@ export class MergeTree {
     }
 
     removeLocalReference(segment: ISegment, lref: LocalReference) {
-        const removedRef = segment.localRefs.removeLocalRef(lref);
-        if (removedRef) {
-            this.blockUpdatePathLengths(segment.parent, TreeMaintenanceSequenceNumber,
-                LocalClientId);
+        if(segment.localRefs){
+            const removedRef = segment.localRefs.removeLocalRef(lref);
+            if (removedRef) {
+                this.blockUpdatePathLengths(segment.parent, TreeMaintenanceSequenceNumber,
+                    LocalClientId);
+            }
         }
     }
 
     addLocalReference(lref: LocalReference) {
         const segment = lref.segment;
+        if(!segment.localRefs){
+            segment.localRefs = new LocalReferenceCollection(segment);
+        }
         segment.localRefs.addLocalRef(lref);
         this.blockUpdatePathLengths(segment.parent, TreeMaintenanceSequenceNumber,
             LocalClientId);
