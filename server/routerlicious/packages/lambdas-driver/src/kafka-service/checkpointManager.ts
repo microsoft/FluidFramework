@@ -55,7 +55,7 @@ export class CheckpointManager {
 
         // Finally begin checkpointing the offsets.
         this.checkpointing = true;
-        const commitP = this.consumer.commitOffset(this.id, checkpointOffset);
+        const commitP = this.consumer.commitCheckpoint(this.id, checkpointOffset);
         return commitP.then(
             () => {
                 this.commitedCheckpoint = checkpointOffset;

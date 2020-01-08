@@ -26,7 +26,7 @@ export class KafkaNodeConsumer implements IConsumer {
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public commitOffset(partitionId: number, checkpointOffset: ICheckpointOffset): Promise<void> {
+    public commitCheckpoint(partitionId: number, checkpointOffset: ICheckpointOffset): Promise<void> {
         const commitRequest =  [{
             offset: checkpointOffset.offset + 1,
             partition: partitionId,

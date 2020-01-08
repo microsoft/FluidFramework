@@ -60,7 +60,7 @@ export class EventHubConsumer implements IConsumer {
         });
     }
 
-    public async commitOffset(partitionId: number, checkpointOffset: ICheckpointOffset): Promise<void> {
+    public async commitCheckpoint(partitionId: number, checkpointOffset: ICheckpointOffset): Promise<void> {
         const metadata: MessageMetadata = checkpointOffset.metadata;
         if (metadata && metadata.context && metadata.data) {
             await metadata.context.checkpointFromEventData(metadata.data);

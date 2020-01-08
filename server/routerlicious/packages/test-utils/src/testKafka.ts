@@ -23,7 +23,7 @@ export class TestConsumer implements core.IConsumer {
         this.failOnCommit = value;
     }
 
-    public async commitOffset(partitionId: number, checkpointOffset: core.ICheckpointOffset): Promise<void> {
+    public async commitCheckpoint(partitionId: number, checkpointOffset: core.ICheckpointOffset): Promise<void> {
         // For now we assume a single partition for the test consumer
         assert(partitionId === 0);
 

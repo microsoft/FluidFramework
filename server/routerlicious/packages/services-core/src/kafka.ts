@@ -30,9 +30,9 @@ export interface IConsumer {
     topic: string;
 
     /**
-     * Commits consumer offset.
+     * Commits consumer checkpoint offset.
      */
-    commitOffset(partitionId: number, checkpointOffset: ICheckpointOffset): Promise<void>;
+    commitCheckpoint(partitionId: number, checkpointOffset: ICheckpointOffset): Promise<void>;
 
     /**
      * Event Handler.
