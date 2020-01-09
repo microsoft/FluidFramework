@@ -19,9 +19,11 @@ function validateException(fn: () => void) {
 describe("document-router", () => {
     describe("DocumentContext", () => {
         let testContext: DocumentContext;
+        let offset0 = TestKafka.createdQueuedMessage(0);
+        let contextTailOffset = TestKafka.createdQueuedMessage(-1);
 
         beforeEach(async () => {
-            testContext = new DocumentContext(TestKafka.createdQueuedMessage(0), TestKafka.createdQueuedMessage(-1));
+            testContext = new DocumentContext(offset0, () => contextTailOffset);
         });
 
         describe(".setHead", () => {
@@ -32,7 +34,7 @@ describe("document-router", () => {
             });
 
             it("Should assert if new head is equal to existing head", () => {
-                validateException(() => testContext.setHead(TestKafka.createdQueuedMessage(0)));
+                validateException(() => testContext.setHead(offset0));
             });
 
             it("Should assert if new head is less than existing head", () => {
@@ -42,25 +44,28 @@ describe("document-router", () => {
 
         describe(".checkpoint", () => {
             it("Should be able to update the head offset of the manager", () => {
-                testContext.checkpoint(TestKafka.createdQueuedMessage(0));
+                testContext.checkpoint(offset0);
                 assert.equal(0, testContext.tail.offset);
                 assert.ok(!testContext.hasPendingWork());
             });
 
             it("Should be able to checkpoint after adjusting the head", () => {
-                testContext.setHead(TestKafka.createdQueuedMessage(10));
+                const offset10 = TestKafka.createdQueuedMessage(10);
+                const offset15 = TestKafka.createdQueuedMessage(15);
+
+                testContext.setHead(offset10);
                 testContext.checkpoint(TestKafka.createdQueuedMessage(5));
                 assert.equal(5, testContext.tail.offset);
-                testContext.setHead(TestKafka.createdQueuedMessage(15));
-                testContext.checkpoint(TestKafka.createdQueuedMessage(10));
+                testContext.setHead(offset15);
+                testContext.checkpoint(offset10);
                 assert.equal(10, testContext.tail.offset);
-                testContext.checkpoint(TestKafka.createdQueuedMessage(15));
+                testContext.checkpoint(offset15);
                 assert.equal(15, testContext.tail.offset);
                 assert.ok(!testContext.hasPendingWork());
             });
 
             it("Should assert if checkpoint is less than tail", () => {
-                validateException(() => testContext.checkpoint(TestKafka.createdQueuedMessage(0)));
+                validateException(() => testContext.checkpoint(offset0));
             });
 
             it("Should assert if checkpoint is equal to tail", () => {

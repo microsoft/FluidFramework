@@ -36,7 +36,7 @@ export class CheckpointManager {
         }
 
         // Exit early if already caught up
-        if (this.commitedCheckpoint && this.commitedCheckpoint.offset === queuedMessage.offset) {
+        if (this.commitedCheckpoint === queuedMessage) {
             return;
         }
 
@@ -63,7 +63,7 @@ export class CheckpointManager {
 
                 // Trigger another checkpoint round if the offset has moved since the checkpoint finished and
                 // resolve any pending checkpoints to it.
-                if (this.lastCheckpoint.offset !== this.commitedCheckpoint.offset) {
+                if (this.lastCheckpoint !== this.commitedCheckpoint) {
                     assert(this.pendingCheckpoint, "Differing offsets will always result in pendingCheckpoint");
                     const nextCheckpointP = this.checkpoint(this.lastCheckpoint);
                     this.pendingCheckpoint.resolve(nextCheckpointP);

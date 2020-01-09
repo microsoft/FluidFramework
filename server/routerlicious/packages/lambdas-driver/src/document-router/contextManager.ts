@@ -41,7 +41,7 @@ export class DocumentContextManager extends EventEmitter {
         assert(head.offset > this.tail.offset && head.offset <= this.head.offset);
 
         // Create the new context and register for listeners on it
-        const context = new DocumentContext(head, this.tail);
+        const context = new DocumentContext(head, () => this.tail);
         this.contexts.push(context);
         context.addListener("checkpoint", () => this.updateCheckpoint());
         context.addListener("error", (error, restart) => this.emit("error", error, restart));

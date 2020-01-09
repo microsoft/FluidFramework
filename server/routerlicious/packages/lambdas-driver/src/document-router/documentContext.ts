@@ -16,13 +16,13 @@ export class DocumentContext extends EventEmitter implements IContext {
 
     private closed = false;
 
-    constructor(head: IQueuedMessage, tail: IQueuedMessage) {
+    constructor(head: IQueuedMessage, private readonly getLatestTail: () => IQueuedMessage) {
         super();
 
         // Head represents the largest offset related to the document that is not checkpointed.
         // Tail will be set to the checkpoint offset of the previous head
         this.headInternal = head;
-        this.tailInternal = tail;
+        this.tailInternal = this.getLatestTail();
     }
 
     public get head(): IQueuedMessage {
@@ -37,7 +37,7 @@ export class DocumentContext extends EventEmitter implements IContext {
      * Returns whether or not there is pending work in flight - i.e. the head and tail are not equal
      */
     public hasPendingWork(): boolean {
-        return this.headInternal.offset !== this.tailInternal.offset;
+        return this.headInternal !== this.tailInternal;
     }
 
     /**
@@ -49,7 +49,7 @@ export class DocumentContext extends EventEmitter implements IContext {
         // When moving back to a state where head and tail differ we set the tail to be the old head, as in the
         // constructor, to make tail represent the inclusive top end of the checkpoint range.
         if (!this.hasPendingWork()) {
-            this.tailInternal = this.headInternal;
+            this.tailInternal = this.getLatestTail();
         }
 
         this.headInternal = head;
