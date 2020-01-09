@@ -154,20 +154,20 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      * @param event - Event to send
      */
     public sendActivityEvent(event: ITelemetryActivityEvent, error?: IErrorObject): void {
-        const perfEvent: ITelemetryBaseEvent = {
+        const activityEvent: ITelemetryBaseEvent = {
             ...event,
             category: event.category ? event.category : "activity",
         };
 
         if (error) {
-            TelemetryLogger.prepareErrorObject(perfEvent, error);
+            TelemetryLogger.prepareErrorObject(activityEvent, error);
         }
 
         if (event.durationMs) {
-            perfEvent.durationMs = TelemetryLogger.formatTick(event.durationMs);
+            activityEvent.durationMs = TelemetryLogger.formatTick(event.durationMs);
         }
 
-        this.send(perfEvent);
+        this.send(activityEvent);
     }
 
     /**

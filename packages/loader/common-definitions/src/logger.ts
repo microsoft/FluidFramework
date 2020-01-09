@@ -1,5 +1,6 @@
 /*!
  * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
  */
 
 // Examples of known categories, however category can be any string for extensibility
