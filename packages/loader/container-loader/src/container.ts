@@ -599,11 +599,14 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private async load(specifiedVersion: string | null | undefined, pause: boolean): Promise<void> {
         const perfEvent = PerformanceEvent.start(this.logger, { eventName: "Load" });
 
+        let startConnectionP: Promise<IConnectionDetails> | undefined;
+
         // Start websocket connection as soon as possible.  Note that there is no op handler attached yet, but the
         // DeltaManager is resilient to this and will wait to start processing ops until after it is attached.
         if (!pause) {
-            this.connectToDeltaStream().catch((error) => {
-                debug(`Error in connecting to delta stream in unpaused case ${error}`);
+            startConnectionP = this.connectToDeltaStream();
+            startConnectionP.catch((error) => {
+                debug(`Error in connecting to delta stream from unpaused case ${error}`);
             });
         }
 
@@ -614,9 +617,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             : await this.fetchSnapshotTree(specifiedVersion);
 
         // If pause, and there's no tree, then we'll start the websocket connection here (we'll need the details later)
-        if (!maybeSnapshotTree) {
-            this.connectToDeltaStream().catch((error) => {
-                debug(`Error in connecting to delta stream in no snapshot tree case ${error}`);
+        if (!maybeSnapshotTree && !startConnectionP) {
+            startConnectionP = this.connectToDeltaStream();
+            startConnectionP.catch((error) => {
+                debug(`Error in connecting to delta stream from no snapshot tree case ${error}`);
             });
         }
 
@@ -640,8 +644,11 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             this._parentBranch = attributes.branch !== this.id ? attributes.branch : null;
             loadDetailsP = Promise.resolve();
         } else {
+            if (!startConnectionP) {
+                startConnectionP = this.connectToDeltaStream();
+            }
             // Intentionally don't .catch on this promise - we'll let any error throw below in the await.
-            loadDetailsP = this.connectToDeltaStream().then((details) => {
+            loadDetailsP = startConnectionP.then((details) => {
                 this._existing = details.existing;
                 this._parentBranch = details.parentBranch;
             });
