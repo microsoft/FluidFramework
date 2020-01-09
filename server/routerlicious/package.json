@@ -32,7 +32,6 @@
     "start": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml up",
     "start:debug": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.debug.yml up",
     "start:rdkafka": "docker-compose -f docker-compose.rdkafka.yml -f docker-compose.dev.yml up",
-    "start:standalone": "docker-compose -f docker-compose.standalone.yml up",
     "stop": "docker-compose down",
     "stop:full": "docker-compose down && docker volume prune --force",
     "test": "lerna run test --stream --no-bail --no-sort",

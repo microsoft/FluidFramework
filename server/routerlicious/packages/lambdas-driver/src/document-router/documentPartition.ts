@@ -3,25 +3,29 @@
  * Licensed under the MIT License.
  */
 
-import { IQueuedMessage, IPartitionLambda, IPartitionLambdaFactory } from "@microsoft/fluid-server-services-core";
+import { EventEmitter } from "events";
+import { IPartitionLambda, IPartitionLambdaFactory, IQueuedMessage } from "@microsoft/fluid-server-services-core";
 import { AsyncQueue, queue } from "async";
 import * as _ from "lodash";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import { DocumentContext } from "./documentContext";
 
-export class DocumentPartition {
+export class DocumentPartition extends EventEmitter {
     private readonly q: AsyncQueue<IQueuedMessage>;
     private readonly lambdaP: Promise<IPartitionLambda>;
     private lambda: IPartitionLambda;
     private corrupt = false;
+    private activityTimer: NodeJS.Timeout | undefined;
 
     constructor(
         factory: IPartitionLambdaFactory,
         config: Provider,
         tenantId: string,
         documentId: string,
-        public context: DocumentContext) {
+        public readonly context: DocumentContext,
+        private readonly activityTimeout: number) {
+        super();
 
         // Default to the git tenant if not specified
         const clonedConfig = _.cloneDeep((config as any).get());
@@ -67,9 +71,14 @@ export class DocumentPartition {
 
     public process(message: IQueuedMessage) {
         this.q.push(message);
+        this.updateActivityTimer();
     }
 
     public close() {
+        this.clearActivityTimer();
+
+        this.removeAllListeners();
+
         // Stop any future processing
         this.q.kill();
 
@@ -80,5 +89,20 @@ export class DocumentPartition {
             (error) => {
                 // Lambda was never created - ignoring
             });
+    }
+
+    private updateActivityTimer() {
+        this.clearActivityTimer();
+
+        this.activityTimer = setTimeout(() => {
+            this.emit("inactive");
+        }, this.activityTimeout);
+    }
+
+    private clearActivityTimer() {
+        if (this.activityTimer !== undefined) {
+            clearTimeout(this.activityTimer);
+            this.activityTimer = undefined;
+        }
     }
 }

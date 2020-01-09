@@ -576,21 +576,18 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return versions[0];
     }
 
-    private async recordConnectStartTime() {
+    private recordConnectStartTime() {
         if (this.connectionTransitionTimes[ConnectionState.Disconnected] === undefined) {
             this.connectionTransitionTimes[ConnectionState.Disconnected] = performanceNow();
         }
     }
 
     private startConnectingToDeltaStream() {
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.recordConnectStartTime();
         this._deltaManager.connect().catch(() => { });
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    private connectToDeltaStream() {
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    private async connectToDeltaStream() {
         this.recordConnectStartTime();
         return this._deltaManager.connect();
     }
