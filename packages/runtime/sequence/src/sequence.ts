@@ -432,14 +432,26 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         return tree;
     }
 
+    /**
+     * Replace the range specified from start to end with the provided segment
+     * This is done by inserting the segment at the end of the range, followed
+     * by removing the contents of the range
+     * For a zero range (start == end), insert at end do not remove anything
+     * For a reverse range (start > end), insert the segment at the greater of
+     * start/end and allow Client to attempt to remove the range
+     *
+     * @param start - The start of the range to replace
+     * @param end - The end of the range to replace
+     * @param segment - The segment that will replace the range
+     */
     protected replaceRange(start: number, end: number, segment: MergeTree.ISegment) {
         // Insert at the max end of the range when start > end, but still remove the range later
-        const insertIndex : number = Math.max(start, end);
+        const insertIndex: number = Math.max(start, end);
 
         // Insert first, so local references can slide to the inserted seg if any
         const insert = this.client.insertSegmentLocal(insertIndex, segment);
         if (insert) {
-            if (start != end) {
+            if (start !== end) {
                 const remove = this.client.removeRangeLocal(start, end);
                 this.submitSequenceMessage(MergeTree.createGroupOp(insert, remove));
             } else {
