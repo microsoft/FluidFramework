@@ -1197,8 +1197,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             (err) => this.raiseCriticalError(err),
             (type, contents) => this.submitMessage(type, contents),
             (message) => this.submitSignal(message),
-            // eslint-disable-next-line @typescript-eslint/promise-function-async
-            (message) => this.snapshot(message),
+            async (message) => this.snapshot(message),
             (reason?: string) => this.close(reason),
             Container.version,
         );
