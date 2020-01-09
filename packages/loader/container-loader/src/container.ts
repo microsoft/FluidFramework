@@ -447,7 +447,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         if (this._connectionState === ConnectionState.Disconnected) {
             this.manualReconnectInProgress = true;
         }
-        return this._deltaManager.connect();
+        return this._deltaManager.connect().catch(() => { });
     }
 
     private async reloadContextCore(): Promise<void> {
