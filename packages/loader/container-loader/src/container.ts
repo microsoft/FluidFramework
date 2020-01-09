@@ -118,8 +118,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             request,
             logger);
 
-        // eslint-disable-next-line no-async-promise-executor
-        return new Promise<Container>(async (res, rej) => {
+        return new Promise<Container>((res, rej) => {
             let alreadyRaisedError = false;
             const onError = (error) => {
                 container.removeListener("error", onError);
@@ -136,7 +135,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             const pause = request.headers && request.headers[LoaderHeader.pause];
 
             // tslint:disable-next-line no-unsafe-any
-            return container.load(version, !!pause)
+            container.load(version, !!pause)
                 .then(() => {
                     container.removeListener("error", onError);
                     res(container);
