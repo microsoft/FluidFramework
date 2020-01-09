@@ -1135,12 +1135,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         }
     }
 
-    // tslint:disable no-unsafe-any
     private getScopes(options: any): string[] {
         return options && options.tokens && options.tokens.jwt ?
             jwtDecode<ITokenClaims>(options.tokens.jwt).scopes : [];
     }
-    // tslint:enable no-unsafe-any
 
     /**
      * Get the most recent snapshot, or a specific version.
