@@ -176,11 +176,14 @@ function getUrlResolver(options: IRouteOptions): IUrlResolver {
 }
 
 // Invoked by `start()` when the 'double' option is enabled to create the side-by-side panes.
-function makeSideBySideDiv() {
+function makeSideBySideDiv(divId?: string) {
     const div = document.createElement("div");
     div.style.flexGrow = "1";
     div.style.border = "1px solid lightgray";
     div.style.position = "relative";                // Make the new <div> a CSS stacking context.
+    if (divId) {
+        div.id = divId;
+    }
     return div;
 }
 
@@ -223,8 +226,8 @@ export async function start(
     let leftDiv: HTMLDivElement;
     let rightDiv: HTMLDivElement;
     if (double) {
-        leftDiv = makeSideBySideDiv();
-        rightDiv = makeSideBySideDiv();
+        leftDiv = makeSideBySideDiv("sbs-left");
+        rightDiv = makeSideBySideDiv("sbs-right");
         div.append(leftDiv, rightDiv);
     }
 
