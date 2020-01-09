@@ -669,7 +669,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         perfEvent.end({
             existing: this._existing,
             sequenceNumber: attributes.sequenceNumber,
-            version: maybeSnapshotTree ? maybeSnapshotTree.id : undefined,
+            version: maybeSnapshotTree && maybeSnapshotTree.id !== null ? maybeSnapshotTree.id : undefined,
         });
 
         if (!pause) {
@@ -737,7 +737,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                 case MessageType.Summarize:
                     protocolLogger.sendTelemetryEvent({
                         eventName: "Summarize",
-                        message: (message.contents as ISummaryContent).message,
+                        message: (message.contents as ISummaryContent).toString(),
                         summarySequenceNumber: message.sequenceNumber,
                         refSequenceNumber: message.referenceSequenceNumber,
                     });
@@ -1207,6 +1207,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     // Please avoid calling it directly.
     // raiseCriticalError() is the right flow for most cases
     private logCriticalError(error: any) {
-        this.logger.sendErrorEvent({ eventName: "onError", [TelemetryEventRaisedOnContainer]: true, error});
+        this.logger.sendErrorEvent({ eventName: "onError", [TelemetryEventRaisedOnContainer]: true}, error);
     }
 }

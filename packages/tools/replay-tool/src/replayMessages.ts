@@ -468,7 +468,7 @@ export class ReplayTool {
                         this.documentsFromStorageSnapshots.push(doc);
                     }
                 } catch (error) {
-                    doc.logger.logException({ eventName: "FailedToLoadSnapshot" }, error);
+                    doc.logger.sendErrorEvent({ eventName: "FailedToLoadSnapshot" }, error);
                 }
             }
             this.documentsFromStorageSnapshots.sort((a: Document, b: Document) => a.fromOp > b.fromOp ? 1 : -1);

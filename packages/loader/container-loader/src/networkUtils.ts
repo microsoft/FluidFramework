@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryErrorEvent, ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { ITelemetryGenericEvent, ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import { isOnline, OnlineStatus } from "@microsoft/fluid-driver-utils";
 
-export function logNetworkFailure(logger: ITelemetryLogger, event: ITelemetryErrorEvent, error?: any) {
+export function logNetworkFailure(logger: ITelemetryLogger, event: ITelemetryGenericEvent, error?: any) {
     const newEvent = { ...event };
     newEvent.online = isOnline();
     if (error && typeof error === "object" && (error).online !== undefined) {
@@ -26,7 +26,7 @@ export function logNetworkFailure(logger: ITelemetryLogger, event: ITelemetryErr
     // it in the future once confident it's right thing to do.
     // Note: Unfortunately false positives happen in here (i.e. cable disconnected, but it reports true)!
     if (newEvent.online === OnlineStatus.Online) {
-        logger.logException(newEvent, error);
+        logger.sendErrorEvent(newEvent, error);
     } else {
         logger.sendTelemetryEvent(newEvent);
     }

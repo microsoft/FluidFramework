@@ -7,11 +7,11 @@ import {
     ITelemetryActivityEvent,
     ITelemetryBaseEvent,
     ITelemetryBaseLogger,
-    ITelemetryErrorEvent,
     ITelemetryGenericEvent,
     ITelemetryLogger,
     ITelemetryProperties,
     TelemetryEventPropertyType,
+    IErrorObject,
 } from "@microsoft/fluid-common-definitions";
 import * as registerDebug from "debug";
 import { pkgName, pkgVersion } from "./packageVersion";
@@ -140,12 +140,10 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      *
      * @param event - the event to send
      */
-    public sendErrorEvent(event: ITelemetryErrorEvent) {
+    public sendErrorEvent(event: ITelemetryGenericEvent, error?: IErrorObject) {
         const newEvent: ITelemetryBaseEvent = { ...event, category: "error" };
 
-        if (event.error) {
-            TelemetryLogger.prepareErrorObject(newEvent, event.error);
-        }
+        TelemetryLogger.prepareErrorObject(newEvent, error);
 
         this.send(newEvent);
     }
@@ -155,14 +153,14 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      *
      * @param event - Event to send
      */
-    public sendActivityEvent(event: ITelemetryActivityEvent): void {
+    public sendActivityEvent(event: ITelemetryActivityEvent, error?: IErrorObject): void {
         const perfEvent: ITelemetryBaseEvent = {
             ...event,
             category: event.category ? event.category : "activity",
         };
 
-        if (event.error) {
-            TelemetryLogger.prepareErrorObject(perfEvent, event.error);
+        if (error) {
+            TelemetryLogger.prepareErrorObject(perfEvent, error);
         }
 
         if (event.durationMs) {
@@ -173,23 +171,14 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
     }
 
     /**
-     * Helper method to log exceptions
-     * @param event - the event to send
-     * @param exception - Exception object to add to an event
-     */
-    public logException(event: ITelemetryErrorEvent, exception: any): void {
-        this.sendErrorEvent({ ...event, isException: true, error: exception });
-    }
-
-    /**
      * Log an ship assert with the logger
      *
      * @param condition - the condition to assert on
      * @param event - the event to log if the condition fails
      */
-    public shipAssert(condition: boolean, event?: ITelemetryErrorEvent): void {
+    public assert(condition: boolean, event?: ITelemetryGenericEvent): void {
         if (!condition) {
-            const realEvent: ITelemetryErrorEvent = event === undefined ? { eventName: "Assert" } : event;
+            const realEvent: ITelemetryGenericEvent = event === undefined ? { eventName: "Assert" } : event;
             realEvent.isAssert = true;
             realEvent.stack = TelemetryLogger.getStack();
             this.sendErrorEvent(realEvent);
@@ -235,13 +224,11 @@ export class TelemetryNullLogger implements ITelemetryLogger {
     }
     public sendTelemetryEvent(event: ITelemetryGenericEvent) {
     }
-    public sendErrorEvent(event: ITelemetryErrorEvent) {
+    public sendErrorEvent(event: ITelemetryGenericEvent, error: IErrorObject) {
     }
-    public sendActivityEvent(event: ITelemetryActivityEvent): void {
+    public sendActivityEvent(event: ITelemetryActivityEvent, error: IErrorObject): void {
     }
-    public logException(event: ITelemetryErrorEvent, exception: any): void {
-    }
-    public shipAssert(condition: boolean, event?: ITelemetryGenericEvent): void {
+    public assert(condition: boolean, event?: ITelemetryGenericEvent): void {
     }
 }
 
@@ -452,7 +439,7 @@ export class DebugLogger extends TelemetryLogger {
 }
 
 /**
- * Helper class to log performance events
+ * Helper class to log performance events. Generates perf markers and logs start/end/cancel fields.
  */
 export class PerformanceEvent {
     public static start(logger: ITelemetryLogger, event: ITelemetryGenericEvent) {
@@ -475,11 +462,11 @@ export class PerformanceEvent {
         }
     }
 
-    public reportProgress(props?: object, eventNameSuffix: string = "update"): void {
+    public reportProgress(props?: ITelemetryProperties, eventNameSuffix: string = "update"): void {
         this.reportEvent(eventNameSuffix, props);
     }
 
-    public end(props?: object, eventNameSuffix = "end"): void {
+    public end(props?: ITelemetryProperties, eventNameSuffix = "end"): void {
         this.reportEvent(eventNameSuffix, props);
 
         if (this.startMark) {
@@ -492,28 +479,100 @@ export class PerformanceEvent {
         this.event = undefined;
     }
 
-    public cancel(props?: object, error?: any): void {
+    public cancel(props?: ITelemetryProperties, error?: IErrorObject): void {
         this.reportEvent("cancel", props, error);
         this.event = undefined;
     }
 
-    public reportEvent(eventNameSuffix: string, props?: object, error?: any): void {
+    public reportEvent(eventNameSuffix: string, props?: ITelemetryProperties, error?: IErrorObject): void {
         if (!this.event) {
             this.logger.sendErrorEvent({
                 eventName: "PerformanceEventAfterStop",
                 perfEventName: this.event!.eventName,
                 eventNameSuffix,
-                error,
-            });
+            }, error);
             return;
         }
 
-        const event: ITelemetryActivityEvent = { ...this.event, ...props, error };
+        const event: ITelemetryActivityEvent = { ...this.event, ...props };
         event.eventName = `${event.eventName}_${eventNameSuffix}`;
         if (eventNameSuffix !== "start") {
-            event.duration = performanceNow() - this.startTime;
+            event.durationMs = performanceNow() - this.startTime;
         }
 
-        this.logger.sendActivityEvent(event);
+        this.logger.sendActivityEvent(event, error);
+    }
+}
+
+export interface IActivityTracker {
+    setResult(succeeded: boolean, additionalProps?: ITelemetryProperties): void;
+}
+
+/**
+ * Helper class to log activities. Records a failure if an error is thrown, otherwise records
+ * whatever is passed into setResult.
+ */
+export class ActivityTracker implements IActivityTracker {
+    private readonly startTime: number;
+    private durationMs?: number;
+    private succeeded?: boolean;
+    private additionalProps?: ITelemetryProperties;
+    private isLogged = false;
+    private error?: IErrorObject;
+
+    public constructor(
+        private readonly logger: ITelemetryLogger,
+        private readonly activityName: string,
+    ) {
+        this.startTime = performance.now();
+    }
+
+    public execute<T>(activityFunc: (tracker: IActivityTracker) => T) {
+        try {
+            const result = activityFunc(this);
+            return result;
+        } catch (error) {
+            this.error = error;
+            this.setResult(false);
+            throw error;
+        } finally {
+            this.log();
+        }
+    }
+
+    public async executeAsync<T>(activityFunc: (tracker: IActivityTracker) => Promise<T>) {
+        try {
+            const result = await activityFunc(this);
+            return result;
+        } catch (error) {
+            this.error = error;
+            this.setResult(false);
+            throw error;
+        } finally {
+            this.log();
+        }
+    }
+
+    public setResult(succeeded: boolean, additionalProps?: ITelemetryProperties) {
+        this.durationMs = Math.round(performance.now() - this.startTime);
+        this.succeeded = succeeded;
+        this.additionalProps = additionalProps;
+        this.log();
+    }
+
+    private log() {
+        if (this.isLogged) {
+            return;
+        }
+        this.isLogged = true;
+
+        const activityEvent: ITelemetryActivityEvent = {
+            eventName: this.activityName,
+            durationMs: this.durationMs,
+            succeeded: this.succeeded,
+            ...this.additionalProps,
+        };
+
+        this.logger.sendActivityEvent(activityEvent, this.error);
     }
 }

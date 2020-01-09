@@ -116,11 +116,11 @@ export class SnapshotLoader {
     }
 
     private async loadBody(chunk1: MergeTreeChunk, services: IObjectStorageService): Promise<void> {
-        this.runtime.logger.shipAssert(
+        this.runtime.logger.assert(
             chunk1.chunkLengthChars <= chunk1.totalLengthChars,
             { eventName: "Mismatch in totalLengthChars" });
 
-        this.runtime.logger.shipAssert(
+        this.runtime.logger.assert(
             chunk1.chunkSegmentCount <= chunk1.totalSegmentCount,
             { eventName: "Mismatch in totalSegmentCount" });
 
@@ -134,11 +134,11 @@ export class SnapshotLoader {
             this.runtime.IComponentSerializer,
             this.runtime.IComponentHandleContext);
 
-        this.runtime.logger.shipAssert(
+        this.runtime.logger.assert(
             chunk1.chunkLengthChars + chunk2.chunkLengthChars === chunk1.totalLengthChars,
             { eventName: "Mismatch in totalLengthChars" });
 
-        this.runtime.logger.shipAssert(
+        this.runtime.logger.assert(
             chunk1.chunkSegmentCount + chunk2.chunkSegmentCount === chunk1.totalSegmentCount,
             { eventName: "Mismatch in totalSegmentCount" });
 

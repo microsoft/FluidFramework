@@ -593,7 +593,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
         this.deltaManager.on("submitOp", (message: IDocumentMessage) => {
             if (!isSystemType(message.type) && message.type !== MessageType.NoOp) {
-                this.logger.shipAssert(this.connected, { eventName: "submitOp in disconnected state" });
+                this.logger.assert(this.connected, { eventName: "submitOp in disconnected state" });
                 this.updateDocumentDirtyState(true);
             }
         });
@@ -1433,7 +1433,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             result = await setter();
         } catch (error) {
             // Send error event for exceptions
-            this.logger.sendErrorEvent({ eventName, error });
+            this.logger.sendErrorEvent({ eventName }, error);
             success = false;
         }
         if (success && !validator(result)) {

@@ -142,7 +142,7 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
 
         // Handle summary acks
         this.handleSummaryAcks().catch((error) => {
-            this.logger.sendErrorEvent({ eventName: "HandleSummaryAckFatalError", error });
+            this.logger.sendErrorEvent({ eventName: "HandleSummaryAckFatalError" }, error);
             this.stop("handleAckError");
         });
 
@@ -195,7 +195,7 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
                 await this.refreshLatestAck(handle, refSequenceNumber);
                 refSequenceNumber++;
             } catch (error) {
-                this.logger.sendErrorEvent({ eventName: "HandleSummaryAckError", refSequenceNumber, error });
+                this.logger.sendErrorEvent({ eventName: "HandleSummaryAckError", refSequenceNumber }, error);
             }
         }
     }
@@ -464,18 +464,20 @@ export class RunningSummarizer implements IDisposable {
             return;
         }
 
-        const telemetryProps = {
+        const combinedTelemetryProps = {
             ...summaryData,
             ...summaryData.summaryStats,
             refSequenceNumber: summaryData.referenceSequenceNumber,
             opsSinceLastAttempt: summaryData.referenceSequenceNumber - this.heuristics.lastSent.refSequenceNumber,
             opsSinceLastSummary: summaryData.referenceSequenceNumber - this.heuristics.lastAcked.refSequenceNumber,
         };
-        telemetryProps.summaryStats = undefined;
-        telemetryProps.referenceSequenceNumber = undefined;
+
+        // Remove duplicate summaryStats object and referenceSequenceNumber from logged telemetry
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { summaryStats, referenceSequenceNumber, ...telemetryProps } = combinedTelemetryProps;
 
         if (summaryData.submitted) {
-            summarizingEvent.end(telemetryProps);
+            summarizingEvent.end({ ...telemetryProps});
         } else {
             summarizingEvent.cancel({ ...telemetryProps, category: "error" });
         }

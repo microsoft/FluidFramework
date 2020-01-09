@@ -591,7 +591,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         }
 
         if (error) {
-            this.logger.sendErrorEvent({ eventName: "ContainerClose", error });
+            this.logger.sendErrorEvent({ eventName: "ContainerClose" }, error);
         }
         else {
             this.logger.sendTelemetryEvent({ eventName: "ContainerClose" });
@@ -841,7 +841,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 // Errors are raised as "error" event and close container.
                 // Have a catch-all case in case we missed something
                 if (!this.closed) {
-                    this.logger.sendErrorEvent({ eventName: "ConnectException", error: err });
+                    this.logger.sendErrorEvent({ eventName: "ConnectException" }, err);
                 }
             });
         }
@@ -940,8 +940,8 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         if (this.connection && this.connection.details.clientId === message.clientId) {
             const clientSequenceNumber = message.clientSequenceNumber;
 
-            this.logger.shipAssert(this.clientSequenceNumberObserved <= clientSequenceNumber);
-            this.logger.shipAssert(clientSequenceNumber <= this.clientSequenceNumber);
+            this.logger.assert(this.clientSequenceNumberObserved <= clientSequenceNumber);
+            this.logger.assert(clientSequenceNumber <= this.clientSequenceNumber);
 
             this.clientSequenceNumberObserved = clientSequenceNumber;
             if (clientSequenceNumber === this.clientSequenceNumber) {

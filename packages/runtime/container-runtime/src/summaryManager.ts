@@ -211,7 +211,7 @@ export class SummaryManager extends EventEmitter {
                 this.state = SummaryManagerState.Off;
             }
         }, (error) => {
-            this.logger.sendErrorEvent({ eventName: "CreateSummarizerError", attempt, error });
+            this.logger.sendErrorEvent({ eventName: "CreateSummarizerError", attempt }, error);
             if (this.shouldSummarize) {
                 this.start(attempt + 1);
             } else {

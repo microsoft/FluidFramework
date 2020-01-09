@@ -326,23 +326,20 @@ export class OdspDocumentService implements IDocumentService {
                         logger.sendActivityEvent({
                             eventName: "UsedNonAfdUrlFallback",
                             durationMs: endAfd - startAfd,
-                            error: connectionError,
-                        });
+                        }, connectionError);
 
                         return connection;
                     }).catch((retryError) => {
                         logger.sendActivityEvent({
                             eventName: "FailedNonAfdUrlFallback",
                             durationMs: endAfd - startAfd,
-                            error: retryError,
-                        });
+                        }, retryError);
                         throw retryError;
                     });
                 } else {
                     logger.sendActivityEvent({
                         eventName: "FailedAfdUrl-NoNonAfdFallback",
-                        error: connectionError,
-                    });
+                    }, connectionError);
                 }
                 throw connectionError;
             });
@@ -391,23 +388,20 @@ export class OdspDocumentService implements IDocumentService {
                         durationMs: endNonAfd - startNonAfd,
                         refreshedCache: cacheResult,
                         fromCache: false,
-                        error: connectionError,
-                    });
+                    }, connectionError);
 
                     return connection;
                 }).catch((retryError) => {
                     logger.sendActivityEvent({
                         eventName: "FailedAfdUrlFallback",
                         durationMs: endNonAfd - startNonAfd,
-                        error: retryError,
-                    });
+                    }, retryError);
                     throw retryError;
                 });
             } else {
                 logger.sendErrorEvent({
                     eventName: "FailedNonAfdUrl-NoAfdFallback",
-                    error: connectionError,
-                });
+                }, connectionError);
             }
             throw connectionError;
         });

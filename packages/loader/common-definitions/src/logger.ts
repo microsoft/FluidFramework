@@ -47,15 +47,17 @@ export interface ITelemetryGenericEvent extends ITelemetryProperties {
     category?: TelemetryEventCategory;
 }
 
-export interface ITelemetryErrorEvent extends ITelemetryGenericEvent {
-    error?: any;
+export interface IErrorObject {
+    message?: string;
+    stack?: string;
+    getCustomProperties?: () => object;
 }
 
 /**
  * A generic activity event that has a duration and success
  * Maps to category = "activity"
  */
-export interface ITelemetryActivityEvent extends ITelemetryGenericEvent, ITelemetryErrorEvent {
+export interface ITelemetryActivityEvent extends ITelemetryGenericEvent {
     // Duration of the activity in ms
     durationMs?: number;
     // Overall result of the activity
@@ -67,7 +69,7 @@ export interface ITelemetryActivityEvent extends ITelemetryGenericEvent, ITeleme
  * encoding in one place schemas for various types of Fluid telemetry events.
  * Creates sub-logger that appends properties to all events
  */
-export interface ITelemetryLogger extends ITelemetryBaseLogger, ILifecycleHandler {
+export interface ITelemetryLogger extends ITelemetryBaseLogger {
     /**
      * Actual implementation that sends telemetry event
      * Implemented by derived classes
@@ -86,28 +88,18 @@ export interface ITelemetryLogger extends ITelemetryBaseLogger, ILifecycleHandle
      * Send activity telemetry event
      * @param event - Event to send
      */
-    sendActivityEvent(event: ITelemetryActivityEvent): void;
+    sendActivityEvent(event: ITelemetryActivityEvent, error?: IErrorObject): void;
 
     /**
      * Send error telemetry event
      * @param event - Event to send
      */
-    sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void;
-}
-
-// TODO: As the lifecycle work continues, split this entirely out from ITelemetryLogger
-export interface ILifecycleHandler {
-    /**
-     * Helper method to log exceptions
-     * @param event - the event to send
-     * @param exception - Exception object to add to an event
-     */
-    logException(event: ITelemetryErrorEvent, exception: any): void;
+    sendErrorEvent(event: ITelemetryGenericEvent, error?: IErrorObject): void;
 
     /**
-     * Report ignorable errors in code logic or data integrity.
-     * @param condition - If false, assert is logged.
-     * @param message - Actual message to log; ideally should be unique message to identify call site
+     * Send potential errors if the condition fails
+     * @param condition - If false, error event is logged.
+     * @param event - Event to send
      */
-    shipAssert(condition: boolean, event?: ITelemetryGenericEvent): void;
+    assert(condition: boolean, event?: ITelemetryGenericEvent): void;
 }
