@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { IConsumer, IKafkaMessage, IPartition, IPartitionLambdaFactory } from "@microsoft/fluid-server-services-core";
+import { IConsumer, IQueuedMessage, IPartition, IPartitionLambdaFactory } from "@microsoft/fluid-server-services-core";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import { Partition } from "./partition";
@@ -58,7 +58,7 @@ export class PartitionManager extends EventEmitter {
         }
     }
 
-    private process(message: IKafkaMessage) {
+    private process(message: IQueuedMessage) {
         if (this.isRebalancing) {
             winston.info(`Ignoring ${message.topic}:${message.partition}@${message.offset} due to pending rebalance`);
             return;

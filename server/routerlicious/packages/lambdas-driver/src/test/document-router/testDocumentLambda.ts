@@ -7,7 +7,7 @@ import * as assert from "assert";
 import { EventEmitter } from "events";
 import {
     IContext,
-    IKafkaMessage,
+    IQueuedMessage,
     IPartitionLambda,
     IPartitionLambdaFactory,
     ISequencedOperationMessage,
@@ -26,7 +26,7 @@ export class TestLambda implements IPartitionLambda {
         assert(this.documentId);
     }
 
-    public handler(message: IKafkaMessage): void {
+    public handler(message: IQueuedMessage): void {
         this.handleCalls++;
         const sequencedMessage = message.value as ISequencedOperationMessage;
         assert.equal(this.documentId, sequencedMessage.documentId);
@@ -36,7 +36,7 @@ export class TestLambda implements IPartitionLambda {
         } else if (this.throwHandler) {
             throw new Error("Test Error");
         } else {
-            this.context.checkpoint(message.offset);
+            this.context.checkpoint(message);
         }
     }
 

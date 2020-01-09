@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { IContext, IKafkaMessage, IPartitionLambda } from "@microsoft/fluid-server-services-core";
+import { IContext, IQueuedMessage, IPartitionLambda } from "@microsoft/fluid-server-services-core";
 import { IKafkaSubscriber, ILocalOrdererSetup } from "./interfaces";
 import { LocalKafka } from "./localKafka";
 
@@ -69,7 +69,7 @@ export class LocalLambdaController extends EventEmitter implements IKafkaSubscri
         this.removeAllListeners();
     }
 
-    public process(message: IKafkaMessage): void {
+    public process(message: IQueuedMessage): void {
         if (!this.lambda) {
             throw new Error("The lambda has not started yet");
         }

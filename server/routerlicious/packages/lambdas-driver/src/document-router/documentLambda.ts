@@ -6,7 +6,7 @@
 import {
     extractBoxcar,
     IContext,
-    IKafkaMessage,
+    IQueuedMessage,
     IPartitionLambda,
     IPartitionLambdaFactory,
 } from "@microsoft/fluid-server-services-core";
@@ -32,10 +32,10 @@ export class DocumentLambda implements IPartitionLambda {
         });
     }
 
-    public handler(message: IKafkaMessage): void {
-        this.contextManager.setHead(message.offset);
+    public handler(message: IQueuedMessage): void {
+        this.contextManager.setHead(message);
         this.handlerCore(message);
-        this.contextManager.setTail(message.offset);
+        this.contextManager.setTail(message);
     }
 
     public close() {
@@ -48,14 +48,14 @@ export class DocumentLambda implements IPartitionLambda {
         this.documents.clear();
     }
 
-    private handlerCore(kafkaMessage: IKafkaMessage): void {
-        const boxcar = extractBoxcar(kafkaMessage);
+    private handlerCore(message: IQueuedMessage): void {
+        const boxcar = extractBoxcar(message);
         if (!boxcar.documentId || !boxcar.tenantId) {
             return;
         }
 
         // Stash the parsed value for down stream lambdas
-        kafkaMessage.value = boxcar;
+        message.value = boxcar;
 
         // Create the routing key from tenantId + documentId
         const routingKey = `${boxcar.tenantId}/${boxcar.documentId}`;
@@ -64,7 +64,7 @@ export class DocumentLambda implements IPartitionLambda {
         let document: DocumentPartition;
         if (!this.documents.has(routingKey)) {
             // Create a new context and begin tracking it
-            const documentContext = this.contextManager.createContext(kafkaMessage.offset);
+            const documentContext = this.contextManager.createContext(message);
 
             document = new DocumentPartition(
                 this.factory,
@@ -84,10 +84,10 @@ export class DocumentLambda implements IPartitionLambda {
             document = this.documents.get(routingKey);
             // SetHead assumes it will always receive increasing offsets. So we need to split the creation case
             // from the update case.
-            document.context.setHead(kafkaMessage.offset);
+            document.context.setHead(message);
         }
 
         // Forward the message to the document queue and then resolve the promise to begin processing more messages
-        document.process(kafkaMessage);
+        document.process(message);
     }
 }

@@ -21,6 +21,7 @@ const RequestWindowMS = 15000;
 export class ForemanLambda extends SequencedLambda {
     private readonly taskQueueMap = new Map<string, string>();
     private readonly rateLimiter = new RateLimiter(RequestWindowMS);
+
     constructor(
         private readonly messageSender: core.ITaskMessageSender,
         private readonly tenantManager: core.ITenantManager,
@@ -38,7 +39,7 @@ export class ForemanLambda extends SequencedLambda {
         }
     }
 
-    protected async handlerCore(message: core.IKafkaMessage): Promise<void> {
+    protected async handlerCore(message: core.IQueuedMessage): Promise<void> {
         const boxcar = core.extractBoxcar(message);
 
         for (const baseMessage of boxcar.contents) {
@@ -65,7 +66,7 @@ export class ForemanLambda extends SequencedLambda {
             }
         }
 
-        this.context.checkpoint(message.offset);
+        this.context.checkpoint(message);
     }
 
     // Sends help message for a task. Uses a rate limiter to limit request per clientId.
