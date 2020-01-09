@@ -120,10 +120,10 @@ export class TestProducer implements core.IProducer {
  */
 export class TestKafka {
 
-    public static createCheckpointOffset(offset: number, metadata?: any): core.IQueuedMessage {
+    public static createdQueuedMessage(offset: number, metadata?: any): core.IQueuedMessage {
         return {
             topic: "topic",
-            partition: 1,
+            partition: 0,
             offset,
             value: "",
         };
@@ -150,16 +150,15 @@ export class TestKafka {
 
     public addMessage(message: any, topic: string) {
         const offset = this.offset++;
-        const storedMessage: core.IQueuedMessage = {
-            offset,
-            partition: 0,
-            topic,
-            value: message,
-        };
-        this.messages.push(storedMessage);
+
+        const queuedMessage = TestKafka.createdQueuedMessage(offset);
+        queuedMessage.value = message;
+        queuedMessage.topic = topic;
+
+        this.messages.push(queuedMessage);
 
         for (const consumer of this.consumers) {
-            consumer.emit(storedMessage);
+            consumer.emit(queuedMessage);
         }
     }
 

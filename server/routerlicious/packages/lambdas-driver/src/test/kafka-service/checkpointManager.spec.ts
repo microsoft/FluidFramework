@@ -35,39 +35,39 @@ describe("kafka-service", () => {
             }
 
             it("Should be able to checkpoint at the desired position", async () => {
-                checkpointManager.checkpoint(TestKafka.createCheckpointOffset(10));
+                checkpointManager.checkpoint(TestKafka.createdQueuedMessage(10));
                 await testConsumer.waitForOffset(10);
             });
 
             it("Should be able to checkpoint at multiple offsets", async () => {
-                checkpointManager.checkpoint(TestKafka.createCheckpointOffset(10));
-                checkpointManager.checkpoint(TestKafka.createCheckpointOffset(20));
-                checkpointManager.checkpoint(TestKafka.createCheckpointOffset(30));
+                checkpointManager.checkpoint(TestKafka.createdQueuedMessage(10));
+                checkpointManager.checkpoint(TestKafka.createdQueuedMessage(20));
+                checkpointManager.checkpoint(TestKafka.createdQueuedMessage(30));
                 await testConsumer.waitForOffset(30);
             });
 
             it("Should resolve to error on commit error", async () => {
-                await checkpointManager.checkpoint(TestKafka.createCheckpointOffset(10));
+                await checkpointManager.checkpoint(TestKafka.createdQueuedMessage(10));
                 testConsumer.setFailOnCommit(true);
-                await verifyCheckpointError(TestKafka.createCheckpointOffset(20));
+                await verifyCheckpointError(TestKafka.createdQueuedMessage(20));
             });
 
             it("Should always return an error once an error has occurred", async () => {
-                await checkpointManager.checkpoint(TestKafka.createCheckpointOffset(10));
+                await checkpointManager.checkpoint(TestKafka.createdQueuedMessage(10));
                 testConsumer.setFailOnCommit(true);
                 // Purposefully don't await the first call so we can queue a second checkpoint that also
                 // will be marked as failed
-                verifyCheckpointError(TestKafka.createCheckpointOffset(20));
-                await verifyCheckpointError(TestKafka.createCheckpointOffset(30));
-                await verifyCheckpointError(TestKafka.createCheckpointOffset(40));
+                verifyCheckpointError(TestKafka.createdQueuedMessage(20));
+                await verifyCheckpointError(TestKafka.createdQueuedMessage(30));
+                await verifyCheckpointError(TestKafka.createdQueuedMessage(40));
             });
         });
 
         describe(".flush", () => {
             it("Should flush all pending offset writes", async () => {
-                checkpointManager.checkpoint(TestKafka.createCheckpointOffset(10));
-                checkpointManager.checkpoint(TestKafka.createCheckpointOffset(20));
-                checkpointManager.checkpoint(TestKafka.createCheckpointOffset(30));
+                checkpointManager.checkpoint(TestKafka.createdQueuedMessage(10));
+                checkpointManager.checkpoint(TestKafka.createdQueuedMessage(20));
+                checkpointManager.checkpoint(TestKafka.createdQueuedMessage(30));
                 await checkpointManager.flush();
                 assert.equal(30, testConsumer.getOffset());
             });

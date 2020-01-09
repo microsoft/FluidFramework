@@ -34,15 +34,15 @@ describe("document-router", () => {
         describe(".createContext", () => {
             it("Should be able to create and then track a document context", () => {
                 // Create an initial context
-                testContextManager.setHead(TestKafka.createCheckpointOffset(0));
-                const context = testContextManager.createContext(TestKafka.createCheckpointOffset(0));
-                testContextManager.setTail(TestKafka.createCheckpointOffset(0));
+                testContextManager.setHead(TestKafka.createdQueuedMessage(0));
+                const context = testContextManager.createContext(TestKafka.createdQueuedMessage(0));
+                testContextManager.setTail(TestKafka.createdQueuedMessage(0));
 
                 // Move the head offset and update the context to match
-                testContextManager.setHead(TestKafka.createCheckpointOffset(5));
-                context.setHead(TestKafka.createCheckpointOffset(5));
-                context.checkpoint(TestKafka.createCheckpointOffset(5));
-                testContextManager.setTail(TestKafka.createCheckpointOffset(5));
+                testContextManager.setHead(TestKafka.createdQueuedMessage(5));
+                context.setHead(TestKafka.createdQueuedMessage(5));
+                context.checkpoint(TestKafka.createdQueuedMessage(5));
+                testContextManager.setTail(TestKafka.createdQueuedMessage(5));
 
                 // Validate we are at the checkpointed context
                 assert.equal(testContext.offset, 5);
@@ -50,81 +50,81 @@ describe("document-router", () => {
 
             it("Should be able to create and track multiple document contexts", () => {
                 // Create an initial context
-                testContextManager.setHead(TestKafka.createCheckpointOffset(0));
-                const context0 = testContextManager.createContext(TestKafka.createCheckpointOffset(0));
-                testContextManager.setTail(TestKafka.createCheckpointOffset(0));
+                testContextManager.setHead(TestKafka.createdQueuedMessage(0));
+                const context0 = testContextManager.createContext(TestKafka.createdQueuedMessage(0));
+                testContextManager.setTail(TestKafka.createdQueuedMessage(0));
 
                 // And then a second one
-                testContextManager.setHead(TestKafka.createCheckpointOffset(5));
-                const context1 = testContextManager.createContext(TestKafka.createCheckpointOffset(5));
-                testContextManager.setTail(TestKafka.createCheckpointOffset(5));
+                testContextManager.setHead(TestKafka.createdQueuedMessage(5));
+                const context1 = testContextManager.createContext(TestKafka.createdQueuedMessage(5));
+                testContextManager.setTail(TestKafka.createdQueuedMessage(5));
 
                 // Third context
-                testContextManager.setHead(TestKafka.createCheckpointOffset(10));
-                const context2 = testContextManager.createContext(TestKafka.createCheckpointOffset(10));
-                testContextManager.setTail(TestKafka.createCheckpointOffset(10));
+                testContextManager.setHead(TestKafka.createdQueuedMessage(10));
+                const context2 = testContextManager.createContext(TestKafka.createdQueuedMessage(10));
+                testContextManager.setTail(TestKafka.createdQueuedMessage(10));
 
                 // Offset should still be unset
                 assert.equal(testContext.offset, -1);
 
                 // New message and checkpoint the first context at the initial message.
                 // Overall checkpoint still unaffected
-                testContextManager.setHead(TestKafka.createCheckpointOffset(12));
-                context0.setHead(TestKafka.createCheckpointOffset(12));
-                context0.checkpoint(TestKafka.createCheckpointOffset(0));
-                testContextManager.setTail(TestKafka.createCheckpointOffset(12));
+                testContextManager.setHead(TestKafka.createdQueuedMessage(12));
+                context0.setHead(TestKafka.createdQueuedMessage(12));
+                context0.checkpoint(TestKafka.createdQueuedMessage(0));
+                testContextManager.setTail(TestKafka.createdQueuedMessage(12));
                 assert.equal(testContext.offset, 0);
 
                 // New message and checkpoint the second message at the initial message.
                 // Overall checkpoint still unaffected
-                testContextManager.setHead(TestKafka.createCheckpointOffset(15));
-                context1.setHead(TestKafka.createCheckpointOffset(15));
-                context1.checkpoint(TestKafka.createCheckpointOffset(5));
-                testContextManager.setTail(TestKafka.createCheckpointOffset(15));
+                testContextManager.setHead(TestKafka.createdQueuedMessage(15));
+                context1.setHead(TestKafka.createdQueuedMessage(15));
+                context1.checkpoint(TestKafka.createdQueuedMessage(5));
+                testContextManager.setTail(TestKafka.createdQueuedMessage(15));
                 assert.equal(testContext.offset, 0);
 
                 // Checkpoint the third context at its head - this should have the checkpoint be at the 0th
                 // context's tail since it's the earliest
-                context2.checkpoint(TestKafka.createCheckpointOffset(10));
+                context2.checkpoint(TestKafka.createdQueuedMessage(10));
                 assert.equal(testContext.offset, 0);
 
                 // Checkpoint the first context at its head. This will make the context1 the latest
-                context0.checkpoint(TestKafka.createCheckpointOffset(12));
+                context0.checkpoint(TestKafka.createdQueuedMessage(12));
                 assert.equal(testContext.offset, 5);
 
                 // Update the manager location - the second context is not caught up so will hold the checkpoint offset
-                testContextManager.setHead(TestKafka.createCheckpointOffset(20));
-                testContextManager.setTail(TestKafka.createCheckpointOffset(20));
+                testContextManager.setHead(TestKafka.createdQueuedMessage(20));
+                testContextManager.setTail(TestKafka.createdQueuedMessage(20));
                 assert.equal(testContext.offset, 5);
 
                 // Move the second context to the head. This will make the manager's offset take over
-                context1.checkpoint(TestKafka.createCheckpointOffset(15));
+                context1.checkpoint(TestKafka.createdQueuedMessage(15));
                 assert.equal(testContext.offset, 20);
             });
 
             it("Should correctly compute the checkpointed offset after contexts switch pending work state", () => {
                 // Create an initial context
-                testContextManager.setHead(TestKafka.createCheckpointOffset(0));
-                const context = testContextManager.createContext(TestKafka.createCheckpointOffset(0));
-                testContextManager.setTail(TestKafka.createCheckpointOffset(0));
+                testContextManager.setHead(TestKafka.createdQueuedMessage(0));
+                const context = testContextManager.createContext(TestKafka.createdQueuedMessage(0));
+                testContextManager.setTail(TestKafka.createdQueuedMessage(0));
 
                 // Checkpoint the main context at a later point - having it no longer have pending work
-                testContextManager.setHead(TestKafka.createCheckpointOffset(12));
-                context.setHead(TestKafka.createCheckpointOffset(12));
-                context.checkpoint(TestKafka.createCheckpointOffset(12));
-                testContextManager.setTail(TestKafka.createCheckpointOffset(12));
+                testContextManager.setHead(TestKafka.createdQueuedMessage(12));
+                context.setHead(TestKafka.createdQueuedMessage(12));
+                context.checkpoint(TestKafka.createdQueuedMessage(12));
+                testContextManager.setTail(TestKafka.createdQueuedMessage(12));
 
                 // Move the overall offsets - context having no pending work will have it not affect the offset
                 // computation
-                testContextManager.setHead(TestKafka.createCheckpointOffset(20));
-                testContextManager.setTail(TestKafka.createCheckpointOffset(20));
+                testContextManager.setHead(TestKafka.createdQueuedMessage(20));
+                testContextManager.setTail(TestKafka.createdQueuedMessage(20));
                 assert.equal(testContext.offset, 20);
 
                 // Update context's head. This will transition it from no work to having pending work (the new head
                 // at offset 25).
-                testContextManager.setHead(TestKafka.createCheckpointOffset(25));
-                context.setHead(TestKafka.createCheckpointOffset(25));
-                testContextManager.setTail(TestKafka.createCheckpointOffset(25));
+                testContextManager.setHead(TestKafka.createdQueuedMessage(25));
+                context.setHead(TestKafka.createdQueuedMessage(25));
+                testContextManager.setTail(TestKafka.createdQueuedMessage(25));
 
                 // context did no checkpoint so the offset remains at 20
                 assert.equal(testContext.offset, 20);
@@ -132,14 +132,14 @@ describe("document-router", () => {
 
             it("Should ignore contexts without pending work", () => {
                 // Create an initial context
-                testContextManager.setHead(TestKafka.createCheckpointOffset(0));
-                const context = testContextManager.createContext(TestKafka.createCheckpointOffset(0));
-                context.checkpoint(TestKafka.createCheckpointOffset(0));
-                testContextManager.setTail(TestKafka.createCheckpointOffset(0));
+                testContextManager.setHead(TestKafka.createdQueuedMessage(0));
+                const context = testContextManager.createContext(TestKafka.createdQueuedMessage(0));
+                context.checkpoint(TestKafka.createdQueuedMessage(0));
+                testContextManager.setTail(TestKafka.createdQueuedMessage(0));
 
                 // Move the manager's locations but keep the context static
-                testContextManager.setHead(TestKafka.createCheckpointOffset(5));
-                testContextManager.setTail(TestKafka.createCheckpointOffset(5));
+                testContextManager.setHead(TestKafka.createdQueuedMessage(5));
+                testContextManager.setTail(TestKafka.createdQueuedMessage(5));
 
                 // Validate we are at the checkpointed context
                 assert.equal(testContext.offset, 5);
@@ -147,21 +147,21 @@ describe("document-router", () => {
 
             it("Should not checkpoint until the starting offset changes", () => {
                 // Create an initial context and verify no change to the checkpoint offset
-                testContextManager.setHead(TestKafka.createCheckpointOffset(0));
-                testContextManager.createContext(TestKafka.createCheckpointOffset(0));
-                testContextManager.setTail(TestKafka.createCheckpointOffset(0));
+                testContextManager.setHead(TestKafka.createdQueuedMessage(0));
+                testContextManager.createContext(TestKafka.createdQueuedMessage(0));
+                testContextManager.setTail(TestKafka.createdQueuedMessage(0));
                 assert.equal(testContext.offset, -1);
 
                 // Move the manager's locations and verify no change to the checkpoint offset
-                testContextManager.setHead(TestKafka.createCheckpointOffset(5));
-                testContextManager.setTail(TestKafka.createCheckpointOffset(5));
+                testContextManager.setHead(TestKafka.createdQueuedMessage(5));
+                testContextManager.setTail(TestKafka.createdQueuedMessage(5));
                 assert.equal(testContext.offset, -1);
             });
 
             it("Should emit an error if a created context emits an error", async () => {
-                testContextManager.setHead(TestKafka.createCheckpointOffset(0));
-                const context = testContextManager.createContext(TestKafka.createCheckpointOffset(0));
-                testContextManager.setTail(TestKafka.createCheckpointOffset(0));
+                testContextManager.setHead(TestKafka.createdQueuedMessage(0));
+                const context = testContextManager.createContext(TestKafka.createdQueuedMessage(0));
+                testContextManager.setTail(TestKafka.createdQueuedMessage(0));
 
                 return new Promise<void>((resolve, reject) => {
                     testContextManager.on("error", (error, restart) => {
