@@ -155,10 +155,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
     private pendingClientId: string | undefined;
     private loaded = false;
-    // TSLint incorrectly believes blobManager is not reassigned, but actually it is in load().
-    // Known bug: https://github.com/palantir/tslint/issues/3803
-    // Fixed in ESLint: https://github.com/typescript-eslint/typescript-eslint/issues/946
-    // tslint:disable-next-line:prefer-readonly
     private blobManager: BlobManager | undefined;
 
     // Active chaincode and associated runtime
@@ -178,10 +174,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private context: ContainerContext | undefined;
     private pkg: string | IFluidCodeDetails | undefined;
     private codeQuorumKey;
-    // TSLint incorrectly believes protocolHandler is not reassigned, but actually it is in load().
-    // Known bug: https://github.com/palantir/tslint/issues/3803
-    // Fixed in ESLint: https://github.com/typescript-eslint/typescript-eslint/issues/946
-    // tslint:disable-next-line:prefer-readonly
     private protocolHandler: ProtocolOpHandler | undefined;
 
     private firstConnection = true;
