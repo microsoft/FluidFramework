@@ -439,7 +439,7 @@ export class DebugLogger extends TelemetryLogger {
 }
 
 /**
- * Helper class to log performance events. Generates perf markers and logs start/end/cancel fields.
+ * Helper class to track performance events. Generates perf markers and logs start/update/end/cancel log lines.
  */
 export class PerformanceEvent {
     public static start(logger: ITelemetryLogger, event: ITelemetryGenericEvent) {
@@ -504,68 +504,36 @@ export class PerformanceEvent {
     }
 }
 
-export interface IActivityTracker {
-    setResult(succeeded: boolean, additionalProps?: ITelemetryProperties): void;
-}
-
 /**
- * Helper class to log activities. Records a failure if an error is thrown, otherwise records
- * whatever is passed into setResult.
+ * Helper class to log activities with success and duration. Only logs when setResult is called.
  */
-export class ActivityTracker implements IActivityTracker {
+export class ActivityTracker {
     private readonly startTime: number;
     private durationMs?: number;
     private succeeded?: boolean;
     private additionalProps?: ITelemetryProperties;
-    private isLogged = false;
     private error?: IErrorObject;
 
-    public constructor(
+    public static start(logger: ITelemetryLogger, activityName: string) {
+        return new ActivityTracker(logger, activityName);
+    }
+
+    protected constructor(
         private readonly logger: ITelemetryLogger,
         private readonly activityName: string,
     ) {
         this.startTime = performance.now();
     }
 
-    public execute<T>(activityFunc: (tracker: IActivityTracker) => T) {
-        try {
-            const result = activityFunc(this);
-            return result;
-        } catch (error) {
-            this.error = error;
-            this.setResult(false);
-            throw error;
-        } finally {
-            this.log();
-        }
-    }
-
-    public async executeAsync<T>(activityFunc: (tracker: IActivityTracker) => Promise<T>) {
-        try {
-            const result = await activityFunc(this);
-            return result;
-        } catch (error) {
-            this.error = error;
-            this.setResult(false);
-            throw error;
-        } finally {
-            this.log();
-        }
-    }
-
-    public setResult(succeeded: boolean, additionalProps?: ITelemetryProperties) {
+    public setResult(succeeded: boolean, additionalProps?: ITelemetryProperties, error?: IErrorObject) {
         this.durationMs = Math.round(performance.now() - this.startTime);
         this.succeeded = succeeded;
         this.additionalProps = additionalProps;
+        this.error = error;
         this.log();
     }
 
     private log() {
-        if (this.isLogged) {
-            return;
-        }
-        this.isLogged = true;
-
         const activityEvent: ITelemetryActivityEvent = {
             eventName: this.activityName,
             durationMs: this.durationMs,
