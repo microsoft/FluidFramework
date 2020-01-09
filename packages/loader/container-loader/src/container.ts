@@ -3,9 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// Disabling these per-file rather than full subdirectory
-/* eslint-disable @typescript-eslint/no-misused-promises */
-
 import * as assert from "assert";
 import {
     ITelemetryBaseLogger,
