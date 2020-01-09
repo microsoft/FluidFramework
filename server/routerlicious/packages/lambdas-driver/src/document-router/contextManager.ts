@@ -88,7 +88,7 @@ export class DocumentContextManager extends EventEmitter {
         }
 
         // Checkpoint once the offset has changed
-        if (queuedMessage.offset > this.lastCheckpoint.offset) {
+        if (queuedMessage.offset !== this.lastCheckpoint.offset) {
             this.partitionContext.checkpoint(queuedMessage);
             this.lastCheckpoint = queuedMessage;
         }
