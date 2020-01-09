@@ -80,7 +80,7 @@ export class DocumentContextManager extends EventEmitter {
 
         for (const context of this.contexts) {
             // Utilize the tail of the context if there is still pending work.
-            // If there isn't pending work then we are fully caught up
+            // If there isn't pending work then we are fully caught up.
             if (context.hasPendingWork()) {
                 // Lower the offset when possible
                 queuedMessage = queuedMessage.offset > context.tail.offset ? context.tail : queuedMessage;
