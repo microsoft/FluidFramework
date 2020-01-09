@@ -1138,8 +1138,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     // tslint:disable no-unsafe-any
     private getScopes(options: any): string[] {
         return options && options.tokens && options.tokens.jwt ?
-            // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-            (jwtDecode(options.tokens.jwt) as ITokenClaims).scopes : [];
+            jwtDecode<ITokenClaims>(options.tokens.jwt).scopes : [];
     }
     // tslint:enable no-unsafe-any
 
