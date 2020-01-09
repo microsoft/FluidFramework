@@ -154,24 +154,6 @@ describe("SharedInterval", () => {
             assertIntervals([{ start: 0, end: 1 }]);
         });
 
-        it("replace empty range", async () => {
-            intervals.add(0, 2, IntervalType.SlideOnRemove);
-            assertIntervals([{ start: 0, end: 2}]);
-
-            sharedString.replaceText(1, 1, "\u00e4\u00c4");
-            assertIntervals([{ start: 0, end: 4}]);
-        });
-
-        it("replace negative range is excluded", async () => {
-            intervals.add(0, 2, IntervalType.SlideOnRemove);
-            assertIntervals([{ start: 0, end: 2}]);
-
-            sharedString.replaceText(2, 1, "aaa");
-            // This assert relies on the behvaior that replacement for a reversed range
-            // will insert at the max end of the range but not delete the range
-            assertIntervals([{ start: 0, end: 5}]);
-        })
-
         // Uncomment below test to reproduce issue #2479:
         // https://github.com/microsoft/Prague/issues/2479
         //

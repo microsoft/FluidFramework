@@ -437,7 +437,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
      * This is done by inserting the segment at the end of the range, followed
      * by removing the contents of the range
      * For a zero range (start == end), insert at end do not remove anything
-     * For a reverse range (start > end), insert the segment at the greater of
+     * For a reverse range (start \> end), insert the segment at the greater of
      * start/end and allow Client to attempt to remove the range
      *
      * @param start - The start of the range to replace
