@@ -14,7 +14,6 @@ import {
 } from "@microsoft/fluid-container-definitions";
 import {
     ChildLogger,
-    Deferred,
     PerformanceEvent,
 } from "@microsoft/fluid-core-utils";
 import {
@@ -115,7 +114,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     private readonly _inboundSignal: DeltaQueue<ISignalMessage>;
     private readonly _outbound: DeltaQueue<IDocumentMessage[]>;
 
-    private connecting: Deferred<IConnectionDetails> | undefined;
+    private connectionP: Promise<IConnectionDetails> | undefined;
     private connection: DeltaConnection | undefined;
     private clientSequenceNumber = 0;
     private clientSequenceNumberObserved = 0;
@@ -315,10 +314,11 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             return this.connection.details;
         }
 
-        if (this.connecting) {
-            return this.connecting.promise;
+        if (this.connectionP) {
+            return this.connectionP;
         }
 
+        // The promise returned from connectCore will settle with a resolved DeltaConnection or reject with error
         const connectCore = async () => {
             let connection: DeltaConnection | undefined;
             let delay = InitialReconnectDelay;
@@ -328,7 +328,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             // This loop will keep trying to connect until successful, with a delay between each iteration.
             while (connection === undefined) {
                 if (this.closed) {
-                    return;
+                    throw new Error("Attempting to connect a closed DeltaManager");
                 }
                 connectRepeatCount++;
 
@@ -338,7 +338,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                     // Socket.io error when we connect to wrong socket, or hit some multiplexing bug
                     if (!canRetryOnError(error)) {
                         this.close(error);
-                        return;
+                        throw new Error("Encountered unrecoverable error while connecting");
                     }
 
                     // Log error once - we get too many errors in logs when we are offline,
@@ -376,17 +376,32 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
             this.setupNewSuccessfulConnection(connection);
 
-            if (this.connecting) {
-                this.connecting.resolve(connection.details);
-                this.connecting = undefined;
-            }
+            return connection;
         };
 
-        this.connecting = new Deferred<IConnectionDetails>();
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        connectCore();
+        // This promise settles as soon as we know the outcome of the connection attempt
+        this.connectionP = new Promise((resolve, reject) => {
+            // Regardless of how the connection attempt concludes, we'll clear the promise and remove the listener
+            const cleanupConnectionAttempt = () => {
+                this.connectionP = undefined;
+                this.removeListener("closed", cleanupAndReject);
+            };
 
-        return this.connecting.promise;
+            // Reject the connection promise if the DeltaManager gets closed during connection
+            const cleanupAndReject = (error) => {
+                cleanupConnectionAttempt();
+                reject(error);
+            };
+            this.on("closed", cleanupAndReject);
+
+            // Attempt the connection
+            connectCore().then((connection) => {
+                cleanupConnectionAttempt();
+                resolve(connection.details);
+            }).catch(cleanupAndReject);
+        });
+
+        return this.connectionP;
     }
 
     public flush() {
@@ -613,11 +628,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         // This raises "disconnect" event
         this.disconnectFromDeltaStream(`${errorToReport}`);
 
-        if (this.connecting) {
-            this.connecting.reject(errorToReport);
-            this.connecting = undefined;
-        }
-
         this._inbound.clear();
         this._outbound.clear();
         this._inboundSignal.clear();
@@ -630,9 +640,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         // Drop pending messages - this will ensure catchUp() does not go into infinite loop
         this.pending = [];
 
-        this.removeAllListeners();
-
         this.emit("closed");
+
+        this.removeAllListeners();
     }
 
     private recordPingTime(latency: number) {

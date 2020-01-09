@@ -32,7 +32,6 @@
     "start": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml up",
     "start:debug": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.debug.yml up",
     "start:rdkafka": "docker-compose -f docker-compose.rdkafka.yml -f docker-compose.dev.yml up",
-    "start:standalone": "docker-compose -f docker-compose.standalone.yml up",
     "stop": "docker-compose down",
     "stop:full": "docker-compose down && docker volume prune --force",
     "test": "lerna run test --stream --no-bail --no-sort",
@@ -51,6 +50,19 @@
     "watch:webpack": "lerna run --parallel webpack -- -- --watch",
     "webpack": "lerna run --no-sort webpack --stream"
   },
+  "nyc": {
+    "all": true,
+    "cache-dir": "nyc/.cache",
+    "exclude": [],
+    "include": [],
+    "report-dir": "nyc/report",
+    "reporter": [
+      "cobertura",
+      "html",
+      "text"
+    ],
+    "temp-directory": "nyc/.nyc_output"
+  },
   "dependencies": {},
   "devDependencies": {
     "@microsoft/api-documenter": "^7.4.6",
@@ -60,20 +72,7 @@
     "lerna": "^3.14.1",
     "nyc": "^14.1.1",
     "rimraf": "^2.6.2",
-    "sort-package-json": "^1.22.1",
+    "sort-package-json": "1.31.0",
     "typescript": "~3.4.5"
-  },
-  "nyc": {
-    "all": true,
-    "exclude": [],
-    "include": [],
-    "reporter": [
-      "cobertura",
-      "html",
-      "text"
-    ],
-    "temp-directory": "nyc/.nyc_output",
-    "cache-dir": "nyc/.cache",
-    "report-dir": "nyc/report"
   }
 }

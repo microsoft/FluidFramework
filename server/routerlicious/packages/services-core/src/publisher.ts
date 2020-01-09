@@ -26,4 +26,9 @@ export interface IPublisher {
      * Used to send messages to a topic
      */
     to(topic: string): ITopic;
+
+    /**
+     * Closes the publisher
+     */
+    close(): Promise<void>;
 }

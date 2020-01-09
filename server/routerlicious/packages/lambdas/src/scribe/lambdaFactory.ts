@@ -65,7 +65,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
 
         // Check of scribe being a non-string included for back compat when we would store as JSON. We now store
         // as a string given Mongo has issues with certain JSON values. Will be removed in 0.8.
-        const scribe = document.scribe
+        const scribe: IScribe = document.scribe
             ? typeof document.scribe === "string" ? JSON.parse(document.scribe) : document.scribe
             : DefaultScribe;
         if (!scribe.protocolState) {
