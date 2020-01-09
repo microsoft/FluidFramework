@@ -431,8 +431,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         this.emit("error", error);
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public reloadContext(): Promise<void> {
+    public async reloadContext(): Promise<void> {
         return this.reloadContextCore().catch((error) => {
             this.raiseCriticalError(error);
             throw error;
