@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import { TelemetryNullLogger } from "@microsoft/fluid-core-utils";
 import { DocumentDeltaConnection } from "@microsoft/fluid-driver-base";
@@ -12,15 +13,14 @@ import {
     IClient,
     IConnect,
 } from "@microsoft/fluid-protocol-definitions";
-import * as assert from "assert";
 import { IOdspSocketError } from "./contracts";
 import { debug } from "./debug";
-import { errorObjectFromOdspError, OdspNetworkError } from "./OdspUtils";
+import { errorObjectFromOdspError, OdspNetworkError, socketErrorRetryFilter } from "./OdspUtils";
 
 const protocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
 
-// how long to wait before disconnecting the socket after the last reference is removed
-// this allows reconnection after receiving a nack to be smooth
+// How long to wait before disconnecting the socket after the last reference is removed
+// This allows reconnection after receiving a nack to be smooth
 const socketReferenceBufferTime = 2000;
 
 class SocketReference {
@@ -90,7 +90,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
             id: webSocketId,
             mode,
             tenantId,
-            token,  // token is going to indicate tenant level information, etc...
+            token,  // Token is going to indicate tenant level information, etc...
             versions: protocolVersions,
         };
 
@@ -99,13 +99,13 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
         try {
             await deltaConnection.initialize(connectMessage, timeoutMs);
         } catch (errorObject) {
-            // Test if it's NetworkError with IOdspSocketError.
-            // Note that there might be no IOdspSocketError on it in case we hit socket.io protocol errors!
-            // So we test canRetry property first - if it false, that means protocol is broken and reconnecting will not help.
+            // Test if it's NetworkError with IOdspSocketError. Note that there might be no IOdspSocketError on it in
+            // case we hit socket.io protocol errors! So we test canRetry property first - if it false, that means
+            // protocol is broken and reconnecting will not help.
             if (errorObject !== null && typeof errorObject === "object" && errorObject.canRetry) {
                 const socketError: IOdspSocketError = errorObject.socketError;
                 if (typeof socketError === "object" && socketError !== null) {
-                    throw errorObjectFromOdspError(socketError);
+                    throw errorObjectFromOdspError(socketError, socketErrorRetryFilter(socketError.code));
                 }
             }
             throw errorObject;
@@ -130,11 +130,11 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
         telemetryLogger: ITelemetryLogger): SocketReference {
         let socketReference = OdspDocumentDeltaConnection.socketIoSockets.get(key);
 
-        // verify the socket is healthy before reusing it
+        // Verify the socket is healthy before reusing it
         if (socketReference && (!socketReference.socket || !socketReference.socket.connected)) {
             // We should not get here with active users.
             assert(socketReference.references === 0);
-            // the socket is in a bad state. fully remove the reference
+            // The socket is in a bad state. fully remove the reference
             OdspDocumentDeltaConnection.removeSocketIoReference(key, true, "socket is closed");
 
             socketReference = undefined;
@@ -150,7 +150,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
 
             socketReference.references++;
 
-            // clear the pending deletion if there is one
+            // Clear the pending deletion if there is one
             socketReference.clearTimer();
 
             debug(`Using existing socketio reference for ${key} (${socketReference.references})`);
@@ -159,7 +159,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
             const socket = io(
                 url,
                 {
-                    multiplex: false, // don't rely on socket.io built-in multiplexing
+                    multiplex: false, // Don't rely on socket.io built-in multiplexing
                     query: {
                         documentId,
                         tenantId,
@@ -170,10 +170,17 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
                 });
 
             socket.on("server_disconnect", (socketError: IOdspSocketError) => {
+                // We get 403 / TokenExpired here. We cannot treat it as unrecoverable error!
+                // So we treat all errors as recoverable, and rely on joinSession / reconnection flow to
+                // filter out retryable vs. non-retryable cases.
+                // Specifically, it will have one retry for 403 - see
+                // connectToDeltaStream() / getWithRetryForTokenRefresh() call.
+                const error = errorObjectFromOdspError(socketError, true /*canRetry */);
+
                 // The server always closes the socket after sending this message
                 // fully remove the socket reference now
                 // This raises "disconnect" event with proper error object.
-                OdspDocumentDeltaConnection.removeSocketIoReference(key, true /*socketProtocolError*/, errorObjectFromOdspError(socketError));
+                OdspDocumentDeltaConnection.removeSocketIoReference(key, true /*socketProtocolError*/, error);
             });
 
             socketReference = new SocketReference(socket);
@@ -192,12 +199,12 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
      * @param isFatalError - true if the socket reference should be removed immediately due to a fatal error
      */
     private static removeSocketIoReference(
-            key: string,
-            isFatalError: boolean,
-            reason: string | OdspNetworkError) {
+        key: string,
+        isFatalError: boolean,
+        reason: string | OdspNetworkError) {
         const socketReference = OdspDocumentDeltaConnection.socketIoSockets.get(key);
         if (!socketReference) {
-            // this is expected to happen if we removed the reference due the socket not being connected
+            // This is expected to happen if we removed the reference due the socket not being connected
             return;
         }
 
@@ -206,7 +213,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
         debug(`Removed socketio reference for ${key}. Remaining references: ${socketReference.references}.`);
 
         if (isFatalError || (socketReference.socket && !socketReference.socket.connected)) {
-            // clear the pending deletion if there is one
+            // Clear the pending deletion if there is one
             socketReference.clearTimer();
 
             OdspDocumentDeltaConnection.socketIoSockets.delete(key);
@@ -259,7 +266,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
             const reason = "client closing connection";
             OdspDocumentDeltaConnection.removeSocketIoReference(key, socketProtocolError, reason);
 
-            // removeSocketIoReference() above raises "disconnect" event on socket for socketProtocolError === true
+            // RemoveSocketIoReference() above raises "disconnect" event on socket for socketProtocolError === true
             // If it's not critical error, we want to raise event on this object only.
             this.emit("disconnect", reason);
         }

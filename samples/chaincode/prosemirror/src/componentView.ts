@@ -11,7 +11,7 @@ import { IComponent, IComponentHTMLRender, IComponentHTMLView } from "@microsoft
 export class ComponentView implements NodeView {
     public dom: HTMLElement;
     public innerView;
-    
+
     private renderable: IComponentHTMLView | IComponentHTMLRender;
 
     constructor(
@@ -22,7 +22,7 @@ export class ComponentView implements NodeView {
     ) {
         // The node's representation in the editor (empty, for now)
         this.dom = document.createElement("fluid");
-        const src = node.attrs["src"];
+        const src = node.attrs.src;
         this.load(src);
     }
 
@@ -47,11 +47,12 @@ export class ComponentView implements NodeView {
     private load(url: string) {
         this.attach(url);
         const containerP = this.loader.resolve({ url });
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         containerP.then((container) => {
             container.on("contextChanged", (value) => {
                 this.attach(url);
             });
-        })
+        });
     }
 
     private attach(url: string) {
@@ -72,7 +73,7 @@ export class ComponentView implements NodeView {
 
         componentP.then(
             (component) => {
-                // clear any previous content
+                // Clear any previous content
                 this.dom.innerHTML = "";
 
                 // Remove the previous view
@@ -85,7 +86,7 @@ export class ComponentView implements NodeView {
                 this.renderable.render(this.dom);
             },
             (error) => {
-                // fall back to URL if can't load
+                // Fall back to URL if can't load
                 this.dom.innerHTML = `<a href="${url}">${url}</a>`;
             });
     }

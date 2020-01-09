@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// tslint:disable:binary-expression-operand-order
 import { ISegment } from "@microsoft/fluid-merge-tree";
 
 export class SegmentSpan {

@@ -35,7 +35,5 @@ const names = [
     "Celeste Burton",
 ];
 
-export function chooseCelaName(): string {
-    // tslint:disable-next-line:insecure-random
-    return names[Math.floor(Math.random() * names.length)];
-}
+export const chooseCelaName = (): string =>
+    names[Math.floor(Math.random() * names.length)];

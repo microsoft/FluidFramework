@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import { IUrlResolver } from "@microsoft/fluid-driver-definitions";
 import {
@@ -11,7 +12,6 @@ import {
     IQuorum,
     ISequencedDocumentMessage,
 } from "@microsoft/fluid-protocol-definitions";
-import { EventEmitter } from "events";
 import { IFluidCodeDetails } from "./chaincode";
 import { IDeltaManager } from "./deltas";
 
@@ -110,6 +110,6 @@ export interface ILoaderHeader {
 }
 
 declare module "@microsoft/fluid-component-core-interfaces" {
-    export interface IRequestHeader extends Partial<ILoaderHeader> {
-    }
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface IRequestHeader extends Partial<ILoaderHeader> { }
 }

@@ -4,13 +4,13 @@
  */
 import { ITelemetryBaseLogger } from "@microsoft/fluid-common-definitions";
 import {
-  IDocumentService,
-  IDocumentServiceFactory,
-  IResolvedUrl,
+    IDocumentService,
+    IDocumentServiceFactory,
+    IResolvedUrl,
 } from "@microsoft/fluid-driver-definitions";
 import { IOdspResolvedUrl } from "./contracts";
 import { FetchWrapper, IFetchWrapper } from "./fetchWrapper";
-import { OdspCache } from "./odspCache";
+import { OdspCache } from "./OdspCache";
 import { OdspDocumentService } from "./OdspDocumentService";
 
 /**
@@ -21,8 +21,8 @@ import { OdspDocumentService } from "./OdspDocumentService";
  * to leverage code splitting as a means to keep bundles as small as possible.
  */
 export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentServiceFactory {
-  public readonly protocolName = "fluid-odsp:";
-  /**
+    public readonly protocolName = "fluid-odsp:";
+    /**
    * @param appId - app id used for telemetry for network requests.
    * @param getStorageToken - function that can provide the storage token for a given site. This is
    * is also referred to as the "VROOM" token in SPO.
@@ -32,32 +32,32 @@ export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentService
    * @param storageFetchWrapper - if not provided FetchWrapper will be used
    * @param deltasFetchWrapper - if not provided FetchWrapper will be used
    */
-  constructor(
-    private readonly appId: string,
-    private readonly getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
-    private readonly getWebsocketToken: (refresh: boolean) => Promise<string | null>,
-    private readonly logger: ITelemetryBaseLogger,
-    private readonly storageFetchWrapper: IFetchWrapper = new FetchWrapper(),
-    private readonly deltasFetchWrapper: IFetchWrapper = new FetchWrapper(),
-    private readonly odspCache: OdspCache = new OdspCache(),
-  ) {}
+    constructor(
+        private readonly appId: string,
+        private readonly getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
+        private readonly getWebsocketToken: (refresh: boolean) => Promise<string | null>,
+        private readonly logger: ITelemetryBaseLogger,
+        private readonly storageFetchWrapper: IFetchWrapper = new FetchWrapper(),
+        private readonly deltasFetchWrapper: IFetchWrapper = new FetchWrapper(),
+        private readonly odspCache: OdspCache = new OdspCache(),
+    ) {}
 
-  public async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
-    const odspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
-    return new OdspDocumentService(
-      this.appId,
-      odspResolvedUrl.hashedDocumentId,
-      odspResolvedUrl.siteUrl,
-      odspResolvedUrl.driveId,
-      odspResolvedUrl.itemId,
-      odspResolvedUrl.endpoints.snapshotStorageUrl,
-      this.getStorageToken,
-      this.getWebsocketToken,
-      this.logger,
-      this.storageFetchWrapper,
-      this.deltasFetchWrapper,
+    public async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
+        const odspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
+        return new OdspDocumentService(
+            this.appId,
+            odspResolvedUrl.hashedDocumentId,
+            odspResolvedUrl.siteUrl,
+            odspResolvedUrl.driveId,
+            odspResolvedUrl.itemId,
+            odspResolvedUrl.endpoints.snapshotStorageUrl,
+            this.getStorageToken,
+            this.getWebsocketToken,
+            this.logger,
+            this.storageFetchWrapper,
+            this.deltasFetchWrapper,
       import("./getSocketIo").then((m) => m.getSocketIo()),
       this.odspCache,
-    );
-  }
+        );
+    }
 }

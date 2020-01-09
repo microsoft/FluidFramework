@@ -1,4 +1,4 @@
-Example IResolvedPackage
+# Example IResolvedPackage
 
 ``` TypeScript
 import { IFluidPackage, IPackageConfig } from "@microsoft/fluid-container-definitions";
@@ -8,7 +8,6 @@ const cdnLink = "https://pragueauspkn-3873244262.azureedge.net/@fluid-example/cl
 const linkedLibraryName = "main";
 const scope = "@random";
 
-// tslint:disable: one-variable-per-declaration object-literal-sort-keys
 const testPackage: IFluidPackage = {
     name: `${scope}/name`,
     version: "0.0.1",
@@ -43,4 +42,4 @@ export const testResolvedPackage: IResolvedPackage = {
     pkg: testPackage,
     packageUrl: "",
 };
-``` 
+```

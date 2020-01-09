@@ -18,6 +18,7 @@ import {
  * @param bind - Bind any other handles we find in the object against this given handle.
  * @returns Result of strigifying an object
  */
+// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function serializeHandles(
     value: any,
     serializer: IComponentSerializer,
@@ -44,6 +45,7 @@ export function serializeHandles(
  * @param bind - Bind any other handles we find in the object against this given handle.
  * @returns The fully-plain object
  */
+// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function makeHandlesSerializable(
     value: any,
     serializer: IComponentSerializer,
@@ -64,6 +66,7 @@ export function makeHandlesSerializable(
  * @param context - The handle context for the container
  * @returns The mostly-plain object with handle objects within
  */
+// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function parseHandles(
     value: any,
     serializer: IComponentSerializer,

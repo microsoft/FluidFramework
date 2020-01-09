@@ -24,8 +24,8 @@ interface IOption {
 
 export class Status extends ui.Component implements IStatus {
     public info: IKeyMsgPair[] = [];
-    private commands: IOption[] = [];
-    private listElement: HTMLUListElement;
+    private readonly commands: IOption[] = [];
+    private readonly listElement: HTMLUListElement;
     private sliderElement: HTMLDivElement;
 
     constructor(element: HTMLDivElement) {
@@ -146,7 +146,6 @@ export class Status extends ui.Component implements IStatus {
             buf += "</span>";
         }
 
-        // tslint:disable-next-line:no-inner-html
         this.element.innerHTML = buf;
 
         // Add options

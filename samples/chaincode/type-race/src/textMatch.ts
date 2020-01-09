@@ -8,13 +8,13 @@ export class TextMatch {
 
     public match(text: string): IMatchData {
         const firstIncorrectIndex = this.findDiffIndex(this.text, text);
-        
+
         const correctText = this.text.slice(0, firstIncorrectIndex);
         const badEndIndex = firstIncorrectIndex >= text.length
             ? firstIncorrectIndex
             : this.text.length > text.length
-            ? text.length
-            : this.text.length;
+                ? text.length
+                : this.text.length;
         const incorrectText = this.text.slice(firstIncorrectIndex, badEndIndex);
         const badText = text.slice(firstIncorrectIndex);
         const remainingText = this.text.slice(badEndIndex);

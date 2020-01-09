@@ -20,7 +20,7 @@ export class StackPanel extends ui.Component {
     public bottom: ui.Component;
     public content: ui.Component;
 
-    constructor(element: HTMLDivElement, private orientation: Orientation, classList: string[]) {
+    constructor(element: HTMLDivElement, private readonly orientation: Orientation, classList: string[]) {
         super(element);
         element.classList.add(...classList);
     }
@@ -61,7 +61,7 @@ export class StackPanel extends ui.Component {
 
     protected resizeCore(bounds: ui.Rectangle) {
         bounds = new ui.Rectangle(0, 0, bounds.width, bounds.height);
-        // layout is very primitive right now... the below is tailored for a list of buttons
+        // Layout is very primitive right now... the below is tailored for a list of buttons
         const children = this.getChildren();
         let remainingBounds = bounds;
         for (const child of children) {

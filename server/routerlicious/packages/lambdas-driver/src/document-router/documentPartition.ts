@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import { IKafkaMessage, IPartitionLambda, IPartitionLambdaFactory } from "@microsoft/fluid-server-services-core";
 import { AsyncQueue, queue } from "async";
 import * as _ from "lodash";
@@ -10,20 +11,23 @@ import { Provider } from "nconf";
 import * as winston from "winston";
 import { DocumentContext } from "./documentContext";
 
-export class DocumentPartition {
-    private q: AsyncQueue<IKafkaMessage>;
-    private lambdaP: Promise<IPartitionLambda>;
+export class DocumentPartition extends EventEmitter {
+    private readonly q: AsyncQueue<IKafkaMessage>;
+    private readonly lambdaP: Promise<IPartitionLambda>;
     private lambda: IPartitionLambda;
     private corrupt = false;
+    private activityTimer: NodeJS.Timeout | undefined;
 
     constructor(
         factory: IPartitionLambdaFactory,
         config: Provider,
         tenantId: string,
         documentId: string,
-        public context: DocumentContext) {
+        public readonly context: DocumentContext,
+        private readonly activityTimeout: number) {
+        super();
 
-        // default to the git tenant if not specified
+        // Default to the git tenant if not specified
         const clonedConfig = _.cloneDeep((config as any).get());
         clonedConfig.tenantId = tenantId;
         clonedConfig.documentId = documentId;
@@ -31,7 +35,7 @@ export class DocumentPartition {
 
         this.q = queue(
             (message: IKafkaMessage, callback) => {
-                // winston.verbose(`${message.topic}:${message.partition}@${message.offset}`);
+                // Winston.verbose(`${message.topic}:${message.partition}@${message.offset}`);
                 try {
                     if (!this.corrupt) {
                         this.lambda.handler(message);
@@ -46,7 +50,7 @@ export class DocumentPartition {
                     this.corrupt = true;
                 }
 
-                // handle the next message
+                // Handle the next message
                 callback();
             },
             1);
@@ -67,9 +71,14 @@ export class DocumentPartition {
 
     public process(message: IKafkaMessage) {
         this.q.push(message);
+        this.updateActivityTimer();
     }
 
     public close() {
+        this.clearActivityTimer();
+
+        this.removeAllListeners();
+
         // Stop any future processing
         this.q.kill();
 
@@ -80,5 +89,20 @@ export class DocumentPartition {
             (error) => {
                 // Lambda was never created - ignoring
             });
+    }
+
+    private updateActivityTimer() {
+        this.clearActivityTimer();
+
+        this.activityTimer = setTimeout(() => {
+            this.emit("inactive");
+        }, this.activityTimeout);
+    }
+
+    private clearActivityTimer() {
+        if (this.activityTimer !== undefined) {
+            clearTimeout(this.activityTimer);
+            this.activityTimer = undefined;
+        }
     }
 }

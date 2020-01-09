@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import { ITaskMessage, ITaskMessageSender } from "@microsoft/fluid-server-services-core";
 import * as amqp from "amqplib";
-import { EventEmitter } from "events";
 import * as winston from "winston";
 
 class RabbitmqTaskSender implements ITaskMessageSender {
 
-    private events = new EventEmitter();
-    private rabbitmqConnectionString: string;
-    private taskQueues: string[];
+    private readonly events = new EventEmitter();
+    private readonly rabbitmqConnectionString: string;
+    private readonly taskQueues: string[];
     private connection: amqp.Connection;
     private channel: amqp.Channel;
 

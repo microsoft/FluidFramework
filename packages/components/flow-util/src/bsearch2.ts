@@ -5,7 +5,8 @@
 
 export function bsearch2<T>(callback: (index: number) => boolean, start: number, end: number) {
     while (start < end) {
-        // tslint:disable-next-line:no-bitwise - Bitwise ops ~2x faster than 'mid = start + Math.floor((end - start) / 2)'.
+        // Bitwise ops are ~2x faster than 'mid = start + Math.floor((end - start) / 2)'.
+        // eslint-disable-next-line no-bitwise
         const mid = (start + end) >> 1;
         if (callback(mid)) {
             start = mid + 1;

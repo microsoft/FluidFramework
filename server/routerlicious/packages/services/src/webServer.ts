@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import * as core from "@microsoft/fluid-server-services-core";
 import * as http from "http";
 import { AddressInfo } from "net";
 import * as util from "util";
+import * as core from "@microsoft/fluid-server-services-core";
 import * as socketIo from "./socketIoServer";
 
 export type RequestListener = (request: http.IncomingMessage, response: http.ServerResponse) => void;
 
 export class HttpServer implements core.IHttpServer {
-    constructor(private server: http.Server) {
+    constructor(private readonly server: http.Server) {
     }
 
     public async close(): Promise<void> {
@@ -47,7 +47,7 @@ export class WebServer implements core.IWebServer {
 }
 
 export class SocketIoWebServerFactory implements core.IWebServerFactory {
-    constructor(private redisConfig: any) {
+    constructor(private readonly redisConfig: any) {
     }
 
     public create(requestListener: RequestListener): core.IWebServer {

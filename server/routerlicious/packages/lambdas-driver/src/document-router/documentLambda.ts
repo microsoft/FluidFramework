@@ -14,11 +14,18 @@ import { Provider } from "nconf";
 import { DocumentContextManager } from "./contextManager";
 import { DocumentPartition } from "./documentPartition";
 
-export class DocumentLambda implements IPartitionLambda {
-    private documents = new Map<string, DocumentPartition>();
-    private contextManager: DocumentContextManager;
+// Expire document partitions after 10 minutes of no activity
+const ActivityTimeout = 10 * 60 * 1000;
 
-    constructor(private factory: IPartitionLambdaFactory, private config: Provider, context: IContext) {
+export class DocumentLambda implements IPartitionLambda {
+    private readonly documents = new Map<string, DocumentPartition>();
+    private readonly contextManager: DocumentContextManager;
+
+    constructor(
+        private readonly factory: IPartitionLambdaFactory,
+        private readonly config: Provider,
+        context: IContext,
+        private readonly activityTimeout = ActivityTimeout) {
         this.contextManager = new DocumentContextManager(context);
         this.contextManager.on("error", (error, restart) => {
             context.error(error, restart);
@@ -33,9 +40,12 @@ export class DocumentLambda implements IPartitionLambda {
 
     public close() {
         this.contextManager.close();
+
         for (const [, partition] of this.documents) {
             partition.close();
         }
+
+        this.documents.clear();
     }
 
     private handlerCore(kafkaMessage: IKafkaMessage): void {
@@ -61,11 +71,18 @@ export class DocumentLambda implements IPartitionLambda {
                 this.config,
                 boxcar.tenantId,
                 boxcar.documentId,
-                documentContext);
+                documentContext,
+                this.activityTimeout);
+            document.on("inactive", () => {
+                // Close and remove the inactive document
+                document.close();
+                this.documents.delete(routingKey);
+            });
+
             this.documents.set(routingKey, document);
         } else {
             document = this.documents.get(routingKey);
-            // setHead assumes it will always receive increasing offsets. So we need to split the creation case
+            // SetHead assumes it will always receive increasing offsets. So we need to split the creation case
             // from the update case.
             document.context.setHead(kafkaMessage.offset);
         }

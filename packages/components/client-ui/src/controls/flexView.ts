@@ -38,11 +38,11 @@ interface IFlexViewComponent {
  */
 export class FlexView extends ui.Component {
     private colorButton: Button;
-    private dock: DockPanel;
-    private ink: InkCanvas;
+    private readonly dock: DockPanel;
+    private readonly ink: InkCanvas;
     private popup: Popup;
     private colorStack: StackPanel;
-    private components: IFlexViewComponent[] = [];
+    private readonly components: IFlexViewComponent[] = [];
 
     constructor(
         element: HTMLDivElement,
@@ -130,7 +130,7 @@ export class FlexView extends ui.Component {
             this.popup.toggle();
         });
 
-       // These should turn into components
+        // These should turn into components
         this.colorStack = new StackPanel(document.createElement("div"), Orientation.Vertical, []);
         for (const color of colors) {
             const buttonElement = document.createElement("div");

@@ -2,12 +2,11 @@ version: '3.4'
 services:
     gateway:
         build:
-            context: ../..
-            dockerfile: server/routerlicious/Dockerfile
-            target: runner
+            context: ../gateway
+            dockerfile: Dockerfile
         ports:
             - "3000:3000"
-        command: node ../gateway/dist/www.js
+        command: node dist/www.js
         environment:
             - DEBUG=fluid:*
             - NODE_ENV=development
@@ -98,18 +97,6 @@ services:
             - NODE_ENV=development
             - documentLambda=/usr/src/server/server/routerlicious/packages/routerlicious/dist/routemaster/index.js
         restart: always
-    paparazzi:
-        build:
-            context: ../..
-            dockerfile: server/routerlicious/Dockerfile
-            target: runner
-        command: node ../paparazzi/dist/index.js
-        environment:
-            - DEBUG=fluid:*
-            - worker__intelligence__resume__url=http://alfred:3000/intelligence/resume
-            - NODE_ENV=development
-            - intelligence__translation__key
-        restart: always
     riddler:
         build:
             context: ../..
@@ -129,9 +116,6 @@ services:
         environment:
             - DEBUG=fluid:*
             - NODE_ENV=development
-        restart: always
-    cobalt:
-        image: prague.azurecr.io/cobalt:1544
         restart: always
     gitrest:
         image: prague.azurecr.io/gitrest:4048

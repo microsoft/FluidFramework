@@ -13,11 +13,11 @@ import { debug } from "./debug";
  * Throws network error - an object with a bunch of network related properties
  */
 export function throwOdspNetworkError(
-        errorMessage: string,
-        statusCode: number,
-        canRetry: boolean,
-        response?: Response,
-        online?: string) {
+    errorMessage: string,
+    statusCode: number,
+    canRetry: boolean,
+    response?: Response,
+    online?: string) {
     let message = errorMessage;
     if (response) {
         message = `${message}, msg = ${response.statusText}, type = ${response.type}`;
@@ -47,35 +47,30 @@ export class OdspNetworkError extends NetworkError {
 /**
  * Returns network error based on error object from ODSP socket (IOdspSocketError)
  */
-export function errorObjectFromOdspError(socketError: IOdspSocketError) {
+export function errorObjectFromOdspError(socketError: IOdspSocketError, canRetry: boolean) {
     return new OdspNetworkError(
         socketError.message,
         socketError.code,
-        socketErrorRetryFilter(socketError.code),
+        canRetry,
         socketError.retryAfter,
     );
 }
 
 /**
- * returns true when the request should/can be retried
+ * Returns true when the request should/can be retried
  */
 export type RetryFilter = (code: number) => boolean;
 
-export function noRetry(): RetryFilter {
-    return () => false;
-}
+export const noRetry = (): RetryFilter => () => false;
 
 /**
  * Creates a filter that will allow retries for the whitelisted status codes
  * @param retriableCodes - Cannot be null/undefined
  */
-export function allowList(retriableCodes: number[]): RetryFilter {
-    return (code: number) => retriableCodes.includes(code);
-}
+export const allowList = (retriableCodes: number[]): RetryFilter => (code: number) => retriableCodes.includes(code);
 
-export function blockList(nonRetriableCodes: number[]): RetryFilter {
-    return (code: number) => !nonRetriableCodes.includes(code);
-}
+// eslint-disable-next-line max-len
+export const blockList = (nonRetriableCodes: number[]): RetryFilter => (code: number) => !nonRetriableCodes.includes(code);
 
 // Non-retryable errors on joinSession / getLatest / get ops / storage requests (blobs) / summary paths.
 // Basically all SPO communication.
@@ -109,7 +104,7 @@ export function getHashedDocumentId(driveId: string, itemId: string): string {
 
 export async function getWithRetryForTokenRefresh<T>(get: (refresh: boolean) => Promise<T>) {
     return get(false).catch(async (e) => {
-        // if the error is 401 or 403 refresh the token and try once more.
+        // If the error is 401 or 403 refresh the token and try once more.
         if (e.statusCode === 401 || e.statusCode === 403) {
             return get(true);
         }
@@ -129,37 +124,39 @@ export async function getWithRetryForTokenRefresh<T>(get: (refresh: boolean) => 
  * @param requestInit - fetch requestInit
  * @param retryPolicy - how to do retries
  */
+// eslint-disable-next-line @typescript-eslint/promise-function-async
 export function fetchHelper(
     requestInfo: RequestInfo,
     requestInit: RequestInit | undefined,
     retryFilter: RetryFilter = defaultRetryFilter,
 ): Promise<any> {
-    // node-fetch and dom has conflicting typing, force them to work by casting for now
+    // Node-fetch and dom have conflicting typing, force them to work by casting for now
     return fetch(requestInfo as FetchRequestInfo, requestInit as FetchRequestInit).then(async (fetchResponse) => {
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
         const response = fetchResponse as any as Response;
         // Let's assume we can retry.
         if (!response) {
             throwOdspNetworkError(`No response from the server`, 400, true, response);
         }
         if (!response.ok || response.status < 200 || response.status >= 300) {
+            // eslint-disable-next-line max-len
             throwOdspNetworkError(`Error ${response.status} from the server`, response.status, retryFilter(response.status), response);
         }
 
         // .json() can fail and message (that goes into telemetry) would container full request URI, including tokens...
-        // It tails for me with "Unexpected end of JSON input" quite often - an attempt to download big file (many ops) almost
-        // always ends up with this error - I'd guess 1% of op request end up here...
-        // It always succeeds on retry.
+        // It tails for me with "Unexpected end of JSON input" quite often - an attempt to download big file (many ops)
+        // almost always ends up with this error - I'd guess 1% of op request end up here... It always succeeds on
+        // retry.
         try {
             const res = {
                 headers: response.headers,
-                content: await response.json() as any,
+                content: await response.json(),
             };
             return res;
         } catch (e) {
             throwOdspNetworkError(`Error while parsing fetch response`, 400, true, response);
         }
-    },
-    (error) => {
+    }, (error) => {
         // While we do not know for sure whether computer is offline, this error is not actionable and
         // is pretty good indicator we are offline. Treating it as offline scenario will make it
         // easier to see other errors in telemetry.

@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { IContext } from "@microsoft/fluid-server-services-core";
 import { EventEmitter } from "events";
+import { IContext } from "@microsoft/fluid-server-services-core";
 import { CheckpointManager } from "./checkpointManager";
 
 export class Context extends EventEmitter implements IContext {
     private closed = false;
 
-    constructor(private checkpointManager: CheckpointManager) {
+    constructor(private readonly checkpointManager: CheckpointManager) {
         super();
     }
 

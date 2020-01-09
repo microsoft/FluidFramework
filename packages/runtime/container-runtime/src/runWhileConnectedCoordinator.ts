@@ -31,14 +31,14 @@ export class RunWhileConnectedCoordinator {
     private readonly stopDeferred = new Deferred<void>();
 
     public constructor(private readonly runtime: ContainerRuntime) {
-        // try to determine if the runtime has ever been connected
+        // Try to determine if the runtime has ever been connected
         if (this.runtime.connected) {
             this.everConnected = true;
         } else {
             this.runtime.once("connected", () => this.everConnected = true);
         }
         this.runtime.on("disconnected", () => {
-            // sometimes the initial connection state is raised as disconnected
+            // Sometimes the initial connection state is raised as disconnected
             if (!this.everConnected) {
                 return;
             }
@@ -57,14 +57,14 @@ export class RunWhileConnectedCoordinator {
                 const waitConnected = new Promise((resolve) => this.runtime.once("connected", resolve));
                 await Promise.race([waitConnected, this.stopDeferred.promise]);
                 if (!this.runtime.connected) {
-                    // if still not connected, no need to start running
+                    // If still not connected, no need to start running
                     return {
                         started: false,
                         message: "NeverConnectedBeforeRun",
                     };
                 }
             } else {
-                // we will not try to reconnect, so we are done running
+                // We will not try to reconnect, so we are done running
                 return {
                     started: false,
                     message: "DisconnectedBeforeRun",
@@ -77,6 +77,7 @@ export class RunWhileConnectedCoordinator {
     /**
      * Returns a prommise that resolves once stopped either externally or by disconnect.
      */
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public waitStopped(): Promise<void> {
         return this.stopDeferred.promise;
     }

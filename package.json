@@ -18,9 +18,9 @@
     "clean:docs": "rimraf packages/_api-extractor-temp docs/api/*/**",
     "clean:nyc": "rimraf nyc/**",
     "clean:r11s": "cd server/routerlicious && npm run clean",
-    "layer-check": "cd tools/fluid-build && npm run layer-check",
-    "layer-check:full": "cd tools/fluid-build && npm install && npm run layer-check",
     "postinstall": "npm run postinstall:lerna && (npm run postinstall:fluid-build || true)",
+    "layer-check": "cd tools/fluid-build && npm run layer-check",
+    "layer-check:full": "cd tools/fluid-build && npm install && npm run build && npm run layer-check",
     "policy-check": "cd tools/repo-policy-check && npm run policy-check",
     "policy-check:full": "cd tools/repo-policy-check && npm install && npm run policy-check",
     "postinstall:fluid-build": "cd tools/fluid-build && npm i && npm run build",
@@ -28,9 +28,9 @@
     "publish-local": "lerna run publish-local --stream",
     "restart": "cd server/routerlicious && npm run restart",
     "sort-package-json": "sort-package-json && sort-package-json ./{server,tools}/*/package.json && sort-package-json ./samples/*/*/package.json && lerna exec -- sort-package-json ./package.json",
-    "start": "echo 'Go to FluidFramework/server/routerlicious, install, build, and start'",
-    "stop": "cd server/routerlicious && npm run stop",
-    "stop:full": "cd server/routerlicious && npm run stop:full",
+    "start": "docker-compose up",
+    "stop": "docker-compose down",
+    "stop:full": "docker-compose down && docker volume prune --force",
     "test": "lerna run test --stream --no-bail --no-sort",
     "test:ci": "npm run test:report;t1=$?;npm run test:copyresults; exit $t1",
     "test:ci:coverage": "npm run test:coverage;t1=$?;npm run test:copyresults; exit $t1",
@@ -47,6 +47,36 @@
     "watch:webpack": "lerna run --parallel webpack -- -- --watch",
     "webpack": "lerna run --no-sort webpack --stream"
   },
+  "nyc": {
+    "all": true,
+    "cache-dir": "nyc/.cache",
+    "exclude": [
+      "**/*.d.ts",
+      "packages/**/src/test/**/*.ts",
+      "packages/**/dist/test/**/*.js",
+      "**/*.bundle.js",
+      "packages/components/**",
+      "packages/server/gateway/public/**"
+    ],
+    "exclude-after-remap": false,
+    "extension": [
+      ".ts",
+      ".tsx",
+      ".js",
+      ".jsx"
+    ],
+    "include": [
+      "packages/**/src/**/*.ts",
+      "packages/**/dist/**/*.js"
+    ],
+    "report-dir": "nyc/report",
+    "reporter": [
+      "cobertura",
+      "html",
+      "text"
+    ],
+    "temp-directory": "nyc/.nyc_output"
+  },
   "dependencies": {},
   "devDependencies": {
     "@microsoft/api-documenter": "^7.4.6",
@@ -56,37 +86,7 @@
     "lerna": "^3.14.1",
     "nyc": "^14.1.1",
     "rimraf": "^2.6.2",
-    "sort-package-json": "^1.23.1",
+    "sort-package-json": "1.31.0",
     "typescript": "~3.4.5"
-  },
-  "nyc": {
-    "all": true,
-    "extension": [
-      ".ts",
-      ".tsx",
-      ".js",
-      ".jsx"
-    ],
-    "exclude": [
-      "**/*.d.ts",
-      "packages/**/src/test/**/*.ts",
-      "packages/**/dist/test/**/*.js",
-      "**/*.bundle.js",
-      "packages/components/**",
-      "packages/server/gateway/public/**"
-    ],
-    "include": [
-      "packages/**/src/**/*.ts",
-      "packages/**/dist/**/*.js"
-    ],
-    "reporter": [
-      "cobertura",
-      "html",
-      "text"
-    ],
-    "temp-directory": "nyc/.nyc_output",
-    "cache-dir": "nyc/.cache",
-    "report-dir": "nyc/report",
-    "exclude-after-remap": false
   }
 }

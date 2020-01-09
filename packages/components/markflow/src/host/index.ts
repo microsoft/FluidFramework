@@ -44,6 +44,7 @@ export class WebFlow extends PrimedComponent implements IComponentHTMLVisual {
         const url = new URL(window.location.href);
         const template = url.searchParams.get("template");
         if (template) {
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             importDoc(Promise.resolve(doc), template);
         }
     }

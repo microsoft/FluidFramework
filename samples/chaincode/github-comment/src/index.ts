@@ -4,12 +4,12 @@
  */
 
 import {
-  SimpleModuleInstantiationFactory,
+    SimpleModuleInstantiationFactory,
 } from "@microsoft/fluid-aqueduct";
 
 import { GithubCommentInstantiationFactory } from "./main";
 
-// tslint:disable-next-line: no-var-requires no-require-imports
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../package.json");
 export const chaincodeName = pkg.name as string;
 
@@ -22,15 +22,15 @@ export const chaincodeName = pkg.name as string;
  * 2. Map of string to factory for all components
  */
 export const fluidExport = new SimpleModuleInstantiationFactory(
-  chaincodeName,
-  new Map([
-      [chaincodeName,
-       Promise.resolve(GithubCommentInstantiationFactory)],
-  ]),
+    chaincodeName,
+    new Map([
+        [chaincodeName,
+            Promise.resolve(GithubCommentInstantiationFactory)],
+    ]),
 );
 
 // Export necessary members from main.tsx:
 export {
-  GithubComment,
-  GithubCommentInstantiationFactory,
+    GithubComment,
+    GithubCommentInstantiationFactory,
 } from "./main";

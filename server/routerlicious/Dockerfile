@@ -91,7 +91,6 @@ COPY packages/runtime/runtime-definitions/package*.json packages/runtime/runtime
 COPY packages/runtime/runtime-utils/package*.json packages/runtime/runtime-utils/
 COPY packages/runtime/runtime-test-utils/package*.json packages/runtime/runtime-test-utils/
 COPY packages/runtime/sequence/package*.json packages/runtime/sequence/
-COPY packages/server/gateway/package*.json packages/server/gateway/
 COPY packages/server/local-test-server/package*.json packages/server/local-test-server/
 COPY packages/utils/odsp-utils/package*.json packages/utils/odsp-utils/
 COPY packages/utils/build-common/package*.json packages/utils/build-common/
@@ -104,7 +103,7 @@ COPY packages/tools/webpack-component-loader/package*.json packages/tools/webpac
 COPY packages/tools/merge-tree-client-replay/package*.json packages/tools/merge-tree-client-replay/
 COPY packages/test/end-to-end/package*.json packages/test/end-to-end/
 COPY samples/chaincode/badge/package*.json samples/chaincode/badge/
-COPY samples/chaincode/chat-3/package*.json samples/chaincode/chat-3/
+COPY samples/chaincode/chat/package*.json samples/chaincode/chat/
 COPY samples/chaincode/codemirror/package*.json samples/chaincode/codemirror/
 COPY samples/chaincode/containers/monaco/package*.json samples/chaincode/containers/monaco/
 COPY samples/chaincode/draft-js/package*.json samples/chaincode/draft-js/

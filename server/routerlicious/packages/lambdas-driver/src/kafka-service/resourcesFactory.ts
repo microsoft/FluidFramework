@@ -31,11 +31,11 @@ export class KafkaResources implements IKafkaResources {
 }
 
 export class KafkaResourcesFactory implements IResourcesFactory<KafkaResources> {
-    constructor(private name, private lambdaModule) {
+    constructor(private readonly name, private readonly lambdaModule) {
     }
 
     public async create(config: Provider): Promise<KafkaResources> {
-        // tslint:disable-next-line:non-literal-require
+        // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
         const plugin = require(this.lambdaModule);
         const lambdaFactory = await plugin.create(config) as IPartitionLambdaFactory;
 

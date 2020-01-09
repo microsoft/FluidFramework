@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// tslint:disable:non-literal-fs-path
-
 import * as fs from "fs";
 import { URL } from "url";
 
@@ -60,6 +58,7 @@ export function printUsage() {
 export function parseArguments() {
     for (let i = 2; i < process.argv.length; i++) {
         const arg = process.argv[i];
+        /* eslint-disable @typescript-eslint/indent */
         switch (arg) {
             case "--dump:rawmessage":
                 dumpMessages = true;
@@ -114,7 +113,6 @@ export function parseArguments() {
                         paramURL = arg;
                         break;
                     }
-                    // tslint:disable-next-line: no-http-string
                     if (url.protocol === "http:" && url.hostname === "localhost") {
                         paramURL = arg;
                         break;
@@ -128,6 +126,7 @@ export function parseArguments() {
                 process.exit(-1);
                 break;
         }
+        /* eslint-enable @typescript-eslint/indent */
     }
     checkArgs();
 }

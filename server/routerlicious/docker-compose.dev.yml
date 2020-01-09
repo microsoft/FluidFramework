@@ -2,7 +2,7 @@ version: '3.4'
 services:
     gateway:
         volumes:
-            - ../..:/usr/src/server
+            - ../gateway:/usr/src/server
     alfred:
         volumes:
             - .:/usr/src/server/server/routerlicious
@@ -24,9 +24,6 @@ services:
     foreman:
         volumes:
             - .:/usr/src/server/server/routerlicious
-    paparazzi:
-        volumes:
-            - ../..:/usr/src/server
     routemaster:
         volumes:
             - .:/usr/src/server/server/routerlicious

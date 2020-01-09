@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import {
     IComponent,
@@ -34,7 +35,6 @@ import {
     ITree,
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
-import { EventEmitter } from "events";
 import { BlobManager } from "./blobManager";
 import { Container } from "./container";
 
@@ -135,7 +135,6 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         return this.container.audience;
     }
 
-    // tslint:disable-next-line:no-unsafe-any
     public get options(): any {
         return this.container.options;
     }
@@ -171,7 +170,6 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         public readonly storage: IDocumentStorageService | undefined | null,
         public readonly loader: ILoader,
         private readonly errorFn: (err: any) => void,
-        // tslint:disable-next-line:max-line-length
         public readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
         public readonly submitSignalFn: (contents: any) => void,
         public readonly snapshotFn: (message: string) => Promise<void>,
@@ -184,7 +182,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
 
     public refreshBaseSummary(snapshot: ISnapshotTree) {
         this._baseSnapshot = snapshot;
-        // need to notify runtime of the update
+        // Need to notify runtime of the update
         this.emit("refreshBaseSummary", snapshot);
     }
 
@@ -201,7 +199,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         const snapshot = await this.runtime!.snapshot("", false);
         await this.runtime!.stop();
 
-        // dispose
+        // Dispose
         this.quorum.dispose();
         this.deltaManager.dispose();
 
@@ -213,7 +211,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
     }
 
     public async postProcess(message: ISequencedDocumentMessage, local: boolean, context: any): Promise<void> {
-        // included for back compat with documents created prior to postProcess deprecation
+        // Included for back compat with documents created prior to postProcess deprecation
         // eslint-disable-next-line @typescript-eslint/unbound-method
         if (!this.runtime || !this.runtime.postProcess) {
             return Promise.reject("Runtime must query for IMessageHandler to signal it does not implement postProcess");
@@ -242,6 +240,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         return;
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public reloadContext(): Promise<void> {
         return this.container.reloadContext();
     }

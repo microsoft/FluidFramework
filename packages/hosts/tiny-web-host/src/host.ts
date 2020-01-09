@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable capitalized-comments */
+
 import { BaseHost, IBaseHostConfig } from "@microsoft/fluid-base-host";
 import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
 import { Container } from "@microsoft/fluid-container-loader";
@@ -23,7 +25,7 @@ import { extractDetails, IResolvedPackage } from "@microsoft/fluid-web-code-load
 import { v4 } from "uuid";
 import { IOdspTokenApi, IRouterliciousTokenApi, ITokenApis } from "./utils";
 
-// tslint:disable-next-line: no-var-requires no-require-imports
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const packageJson = require("../package.json");
 
 // This is insecure, but is being used for the time being for ease of use during the hackathon.
@@ -57,7 +59,6 @@ export async function loadFluidContainer(
     scriptIds?: string[],
 ): Promise<Container> {
 
-    let containerP: Promise<Container>;
     let resolved: IResolvedUrl;
 
     const resolvedPackge = pkg === undefined ? parseUrlToResolvedPackage(url) : pkg;
@@ -84,31 +85,31 @@ export async function loadFluidContainer(
     } else {
         throw new Error("Non-Compatible Url.");
     }
-    containerP = loadContainer(
-                    url,
-                    resolved as IFluidResolvedUrl,
-                    tokenApiConfig,
-                    div,
-                    clientId,
-                    clientSecret,
-                    resolvedPackge,
-                    scriptIds);
+    const containerP = loadContainer(
+        url,
+        resolved as IFluidResolvedUrl,
+        tokenApiConfig,
+        div,
+        clientId,
+        clientSecret,
+        resolvedPackge,
+        scriptIds);
     return containerP;
 }
 
 export function parseUrlToResolvedPackage(url: string): IResolvedPackage {
-    const pkg: IResolvedPackage =  {} as any;
+    const pkg: IResolvedPackage = {} as any;
 
     const urlRequest = new URL(url);
     const searchParams = urlRequest.searchParams;
     const chaincode = searchParams.get("chaincode");
 
     const cdn = searchParams.get("cdn") ?
-                    searchParams.get("cdn") : "https://pragueauspkn-3873244262.azureedge.net";
+        searchParams.get("cdn") : "https://pragueauspkn-3873244262.azureedge.net";
     const entryPoint = searchParams.get("entrypoint");
     let codeDetails: IFluidCodeDetails;
 
-    if (chaincode.indexOf("http") === 0) {
+    if (chaincode.startsWith("http")) {
         codeDetails = {
             config: {
                 [`@gateway:cdn`]: chaincode,
@@ -157,7 +158,9 @@ async function loadContainer(
         const config = tokenApiConfig as IOdspTokenApi;
         documentServiceFactory = new OdspDocumentServiceFactory(
             clientId,
+            // eslint-disable-next-line @typescript-eslint/unbound-method
             config.getStorageToken,
+            // eslint-disable-next-line @typescript-eslint/unbound-method
             config.getWebsocketToken,
             new BaseTelemetryNullLogger());
     } else if (protocol === "fluid:") {
@@ -178,11 +181,9 @@ async function loadContainer(
         documentServiceFactory,
         urlResolver: resolver,
     };
-    // tslint:disable-next-line: no-unsafe-any
     return BaseHost.start(
         hostConf,
         href,
-        // tslint:disable-next-line: no-unsafe-any
         resolved, // resolved, IResolvedUrl,
         pkg, // pkg, IResolvedPackage, (gateway/routes/loader has an example (pkgP))
         scriptIds, // scriptIds, string[], defines the id of the script tag added to the page
@@ -190,11 +191,9 @@ async function loadContainer(
     );
 }
 
-const routerliciousRegex = "^(http(s)?:\/\/)?www\..{3,9}\.prague\.office-int\.com\/loader\/.*";
+const routerliciousRegex = /^(http(s)?:\/\/)?www\..{3,9}\.prague\.office-int\.com\/loader\/.*/;
 
-export function isRouterliciousUrl(url: string): boolean {
-    return url.match(routerliciousRegex) ? true : false;
-}
+export const isRouterliciousUrl = (url: string): boolean => routerliciousRegex.exec(url) ? true : false;
 
 export function isSpoUrl(url: string): boolean {
     const reqUrl = new URL(url);
@@ -228,19 +227,18 @@ const spoUrls = [
 export async function loadIFramedFluidContainer(
     url: string,
     div: HTMLDivElement,
-    tokenApiConfig: ITokenApis = { getToken: () => Promise.resolve("") },
+    tokenApiConfig: ITokenApis = { getToken: async () => Promise.resolve("") },
     clientId?: string,
     secret?: string,
     libraryName: string = "tinyWebLoader"): Promise<void> {
 
     let scriptUrl: string;
     // main.bundle.js refers to the output of webpacking this file.
-    // tslint:disable-next-line: no-unsafe-any
     if (packageJson.version.split(".")[2] === "0") {
         console.log("Ends in 0, so we'll use the local bundle");
         scriptUrl = "dist/main.bundle.js";
     } else {
-        // tslint:disable-next-line: max-line-length no-unsafe-any
+        // eslint-disable-next-line max-len
         scriptUrl = `https://pragueauspkn-3873244262.azureedge.net/@fluid-example/tiny-web-host@${packageJson.version}/dist/main.bundle.js`;
     }
 

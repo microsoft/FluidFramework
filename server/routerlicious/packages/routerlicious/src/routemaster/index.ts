@@ -25,7 +25,9 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
     const mongoFactory = new services.MongoDbFactory(mongoUrl);
     const mongoManager = new MongoManager(mongoFactory, false);
     const client = await mongoManager.getDatabase();
+    // eslint-disable-next-line @typescript-eslint/await-thenable
     const collection = await client.collection(documentsCollectionName);
+    // eslint-disable-next-line @typescript-eslint/await-thenable
     const deltas = await client.collection(deltasCollectionName);
     const producer = services.createProducer(kafkaLibrary, kafkaEndpoint, kafkaClientId, sendTopic, maxMessageSize);
 

@@ -180,7 +180,7 @@ class Speller {
                 }
                 const endMarker = this.sharedString.findTile(position + 1, "pg", false);
                 if (endMarker) {
-                    this.tileMap.set(endMarker.tile, {begin: position, end: endMarker.pos});
+                    this.tileMap.set(endMarker.tile, { begin: position, end: endMarker.pos });
                 }
             }
             for (const entry of this.tileMap.entries()) {
@@ -247,6 +247,7 @@ export class Spellchecker {
     }
 
     public checkSharedString() {
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.root.loaded.then(() => {
             this.speller = new Speller(this.root, this.dict);
             this.speller.initialSpellCheck();

@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// tslint:disable:no-bitwise whitespace align switch-default no-string-literal ban-types
-// tslint:disable:no-angle-bracket-type-assertion arrow-parens
 import * as SearchMenu from "@fluid-example/search-menu";
 import * as api from "@fluid-internal/client-api";
 import {
@@ -36,7 +34,7 @@ import { KeyCode } from "./keycode";
 import { PresenceSignal } from "./presenceSignal";
 import { Status } from "./status";
 
-// tslint:disable-next-line:no-var-requires
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const performanceNow = require("performance-now");
 interface IPersistentElement extends HTMLDivElement {
     component: IComponent;
@@ -70,7 +68,7 @@ interface IMathCollection {
     getInstance(id: string, options?: IMathOptions): IMathInstance;
 }
 
-// the following interfaces should come from the math component but are
+// The following interfaces should come from the math component but are
 // here due to package dependencies
 
 interface IMathOptions {
@@ -154,6 +152,7 @@ function altsToItems(alts: Alt[]) {
     return alts.map((v) => ({ key: v.text }));
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface IFlowViewCmd extends SearchMenu.ISearchMenuCommand<FlowView> {
 }
 
@@ -186,11 +185,11 @@ const cssColorStrings = ["AliceBlue", "AntiqueWhite", "Aqua", "Aquamarine", "Azu
     "SeaGreen", "SeaShell", "Sienna", "Silver", "SkyBlue", "SlateBlue", "SlateGray", "SlateGrey",
     "Snow", "SpringGreen", "SteelBlue", "Tan", "Teal", "Thistle", "Tomato", "Turquoise", "Violet", "Wheat",
     "White", "WhiteSmoke", "Yellow", "YellowGreen"];
-// const cssColorTree = new MergeTree.TST<IFlowViewCmd>();
+// Const cssColorTree = new MergeTree.TST<IFlowViewCmd>();
 for (const cssColor of cssColorStrings) {
     fontSizeTree.put(cssColor, { key: cssColor });
 }
-// const cssColors = (f: FlowView) => cssColorTree;
+// Const cssColors = (f: FlowView) => cssColorTree;
 // const defaultColor = (f: FlowView) => "Black";
 
 const commands: IFlowViewCmd[] = [
@@ -372,9 +371,7 @@ const commands: IFlowViewCmd[] = [
         key: "next bookmark",
     },
     {
-        enabled: (f) => {
-            return !f.modes.showBookmarks;
-        },
+        enabled: (f) => !f.modes.showBookmarks,
         exec: (c, p, f) => {
             f.modes.showBookmarks = true;
             f.tempBookmarks = undefined;
@@ -383,9 +380,7 @@ const commands: IFlowViewCmd[] = [
         key: "show bookmarks",
     },
     {
-        enabled: (f) => {
-            return !f.modes.showCursorLocation;
-        },
+        enabled: (f) => !f.modes.showCursorLocation,
         exec: (c, p, f) => {
             f.modes.showCursorLocation = true;
             f.cursorLocation();
@@ -393,9 +388,7 @@ const commands: IFlowViewCmd[] = [
         key: "show cursor location",
     },
     {
-        enabled: (f) => {
-            return f.modes.showCursorLocation;
-        },
+        enabled: (f) => f.modes.showCursorLocation,
         exec: (c, p, f) => {
             f.modes.showCursorLocation = false;
             f.status.remove("cursor");
@@ -403,9 +396,7 @@ const commands: IFlowViewCmd[] = [
         key: "hide cursor location",
     },
     {
-        enabled: (f) => {
-            return f.modes.showBookmarks;
-        },
+        enabled: (f) => f.modes.showBookmarks,
         exec: (c, p, f) => {
             f.modes.showBookmarks = false;
             f.tempBookmarks = undefined;
@@ -414,9 +405,7 @@ const commands: IFlowViewCmd[] = [
         key: "hide bookmarks",
     },
     {
-        enabled: (f) => {
-            return !f.modes.showComments;
-        },
+        enabled: (f) => !f.modes.showComments,
         exec: (c, p, f) => {
             f.modes.showComments = true;
             f.hostSearchMenu(f.cursor.pos);
@@ -424,9 +413,7 @@ const commands: IFlowViewCmd[] = [
         key: "show comments",
     },
     {
-        enabled: (f) => {
-            return f.modes.showComments;
-        },
+        enabled: (f) => f.modes.showComments,
         exec: (c, p, f) => {
             f.modes.showComments = false;
             f.hostSearchMenu(f.cursor.pos);
@@ -545,6 +532,7 @@ function elmOffToSegOff(elmOff: IRangeInfo, span: HTMLSpanElement) {
         prevSib = elmOff.elm.previousSibling;
     }
     while (prevSib) {
+        /* eslint-disable @typescript-eslint/indent */
         switch (prevSib.nodeType) {
             case Node.ELEMENT_NODE:
                 const innerSpan = prevSib as HTMLSpanElement;
@@ -556,6 +544,7 @@ function elmOffToSegOff(elmOff: IRangeInfo, span: HTMLSpanElement) {
             default:
                 break;
         }
+        /* eslint-enable @typescript-eslint/indent */
         prevSib = prevSib.previousSibling;
     }
     return offset;
@@ -688,12 +677,12 @@ function showPositionInLine(
             lineContext.span.innerText = preCursorText;
             const cursorBounds = lineContext.span.getBoundingClientRect();
             posX = cursorBounds.width + (cursorBounds.left - lineDivBounds.left);
-            // console.log(`cbounds w ${cursorBounds.width} posX ${posX} ldb ${lineDivBounds.left}`);
+            // Console.log(`cbounds w ${cursorBounds.width} posX ${posX} ldb ${lineDivBounds.left}`);
             lineContext.span.innerText = temp;
         } else {
             const cursorBounds = lineContext.span.getBoundingClientRect();
             posX = cursorBounds.left - lineDivBounds.left;
-            // console.log(`cbounds whole l ${cursorBounds.left} posX ${posX} ldb ${lineDivBounds.left}`);
+            // Console.log(`cbounds whole l ${cursorBounds.left} posX ${posX} ldb ${lineDivBounds.left}`);
         }
         if (!presenceInfo) {
             lineContext.flowView.cursor.assignToLine(posX, lineContext.lineDivHeight, lineContext.lineDiv);
@@ -775,7 +764,7 @@ function renderSegmentIntoLine(
     }
     if (MergeTree.TextSegment.is(segment)) {
         if (lineContext.mathMode) {
-            // will be whole segment
+            // Will be whole segment
             // TODO: show math box if cursor in math
             lineContext.mathBuffer += segment.text;
         } else {
@@ -803,7 +792,7 @@ function renderSegmentIntoLine(
             }
         }
     } else if (MergeTree.Marker.is(segment)) {
-        // console.log(`marker pos: ${segpos}`);
+        // Console.log(`marker pos: ${segpos}`);
 
         // If the marker is a simple reference, see if it's types is registered as an external
         // component.
@@ -842,6 +831,7 @@ function renderSegmentIntoLine(
                                 return viewable;
                             });
 
+                        // eslint-disable-next-line @typescript-eslint/no-floating-promises
                         componentMarker.instanceP.then((instance) => {
                             // TODO how do I trigger a re-render?
                             componentMarker.instance = instance;
@@ -935,8 +925,14 @@ function reRenderLine(lineDiv: ILineDiv, flowView: FlowView, docContext: IDocume
     }
 }
 
-function buildIntervalBlockStyle(flowView: FlowView, properties: MergeTree.PropertySet, startX: number, endX: number,
-    height: number, leftInBounds: boolean, rightInBounds: boolean,
+function buildIntervalBlockStyle(
+    flowView: FlowView,
+    properties: MergeTree.PropertySet,
+    startX: number,
+    endX: number,
+    height: number,
+    leftInBounds: boolean,
+    rightInBounds: boolean,
     contentDiv: HTMLDivElement) {
     const bookmarkDiv = document.createElement("div");
     const bookmarkRect = new ui.Rectangle(startX, 0, endX - startX, height);
@@ -956,10 +952,10 @@ function buildIntervalBlockStyle(flowView: FlowView, properties: MergeTree.Prope
     bookmarkDiv.style.backgroundColor = "lightgray";
     bookmarkDiv.style.opacity = "0.3";
     if (properties) {
-        if (properties["bgColor"]) {
-            bookmarkDiv.style.backgroundColor = properties["bgColor"];
-        } else if (properties["clid"]) {
-            const clientId: string = properties["clid"];
+        if (properties.bgColor) {
+            bookmarkDiv.style.backgroundColor = properties.bgColor;
+        } else if (properties.clid) {
+            const clientId: string = properties.clid;
             const bgColor = flowView.presenceVector.get(clientId).presenceColor;
             bookmarkDiv.style.backgroundColor = bgColor;
             bookmarkDiv.style.opacity = "0.08";
@@ -968,8 +964,14 @@ function buildIntervalBlockStyle(flowView: FlowView, properties: MergeTree.Prope
     bookmarkDiv.style.zIndex = "2";
 }
 
-function buildIntervalTieStyle(flowView: FlowView, properties: MergeTree.PropertySet, startX: number, endX: number,
-    lineDivHeight: number, leftInBounds: boolean, rightInBounds: boolean,
+function buildIntervalTieStyle(
+    flowView: FlowView,
+    properties: MergeTree.PropertySet,
+    startX: number,
+    endX: number,
+    lineDivHeight: number,
+    leftInBounds: boolean,
+    rightInBounds: boolean,
     contentDiv: HTMLDivElement) {
     const bookmarkDiv = document.createElement("div");
     const bookendDiv1 = document.createElement("div");
@@ -993,8 +995,8 @@ function buildIntervalTieStyle(flowView: FlowView, properties: MergeTree.Propert
     bookmarkDiv.style.backgroundColor = "lightgray";
     bookendDiv1.style.backgroundColor = "lightgray";
     bookendDiv2.style.backgroundColor = "lightgray";
-    if (properties && properties["clid"]) {
-        const clientId: string = properties["clid"];
+    if (properties && properties.clid) {
+        const clientId: string = properties.clid;
         const bgColor = flowView.presenceVector.get(clientId).presenceColor;
         bookmarkDiv.style.backgroundColor = bgColor;
         bookendDiv1.style.backgroundColor = bgColor;
@@ -1008,8 +1010,11 @@ function buildIntervalTieStyle(flowView: FlowView, properties: MergeTree.Propert
     bookendDiv2.style.zIndex = "2";
 }
 
-function getWidthInLine(endPGMarker: Paragraph.IParagraphMarker, breakIndex: number,
-    defaultFontstr: string, offset: number) {
+function getWidthInLine(
+    endPGMarker: Paragraph.IParagraphMarker,
+    breakIndex: number,
+    defaultFontstr: string,
+    offset: number) {
     let itemIndex = endPGMarker.cache.breaks[breakIndex].startItemIndex;
     let w = 0;
     while (offset > 0) {
@@ -1032,10 +1037,21 @@ function getWidthInLine(endPGMarker: Paragraph.IParagraphMarker, breakIndex: num
     return Math.round(w);
 }
 
-function showBookmark(flowView: FlowView, properties: MergeTree.PropertySet, lineText: string,
-    start: number, end: number, lineStart: number, endPGMarker: Paragraph.IParagraphMarker,
-    computedEnd: number, lineFontstr: string, lineDivHeight: number, lineBreakIndex: number,
-    docContext: IDocumentContext, contentDiv: HTMLDivElement, useTie = false) {
+function showBookmark(
+    flowView: FlowView,
+    properties: MergeTree.PropertySet,
+    lineText: string,
+    start: number,
+    end: number,
+    lineStart: number,
+    endPGMarker: Paragraph.IParagraphMarker,
+    computedEnd: number,
+    lineFontstr: string,
+    lineDivHeight: number,
+    lineBreakIndex: number,
+    docContext: IDocumentContext,
+    contentDiv: HTMLDivElement,
+    useTie = false) {
     let startX: number;
     let height = lineDivHeight;
     if (start >= lineStart) {
@@ -1061,9 +1077,16 @@ function showBookmark(flowView: FlowView, properties: MergeTree.PropertySet, lin
     }
 }
 
-function showBookmarks(flowView: FlowView, lineStart: number, lineEnd: number,
-    lineFontstr: string, lineDivHeight: number, lineBreakIndex: number,
-    docContext: IDocumentContext, contentDiv: HTMLDivElement, endPGMarker: Paragraph.IParagraphMarker) {
+function showBookmarks(
+    flowView: FlowView,
+    lineStart: number,
+    lineEnd: number,
+    lineFontstr: string,
+    lineDivHeight: number,
+    lineBreakIndex: number,
+    docContext: IDocumentContext,
+    contentDiv: HTMLDivElement,
+    endPGMarker: Paragraph.IParagraphMarker) {
     const sel = flowView.cursor.getSelection();
     let havePresenceSel = false;
     for (const localPresenceInfo of flowView.presenceVector.values()) {
@@ -1134,7 +1157,7 @@ function makeContentDiv(r: ui.Rectangle, lineFontstr) {
     contentDiv.onclick = (e) => {
         const targetDiv = e.target as HTMLDivElement;
         if (targetDiv.lastElementChild) {
-            // tslint:disable-next-line:max-line-length
+            // eslint-disable-next-line max-len
             console.log(`div click at ${e.clientX},${e.clientY} rightmost span with text ${targetDiv.lastElementChild.innerHTML}`);
         }
     };
@@ -1273,7 +1296,7 @@ function renderTable(
     if (!tableView) {
         return;
     }
-    // let docContext = buildDocumentContext(viewportDiv);
+    // Let docContext = buildDocumentContext(viewportDiv);
     const viewportWidth = parseInt(layoutInfo.viewport.div.style.width, 10);
 
     const tableWidth = Math.floor(tableView.contentPct * viewportWidth);
@@ -1415,7 +1438,7 @@ function showCell(pos: number, flowView: FlowView) {
         const start = getPosition(flowView, cellMarker);
         const endMarker = cellMarker.cell.endMarker;
         const end = getPosition(flowView, endMarker) + 1;
-        // tslint:disable:max-line-length
+        // eslint-disable-next-line max-len
         console.log(`cell ${cellMarker.getId()} seq ${cellMarker.seq} clid ${cellMarker.clientId} at [${start},${end})`);
         console.log(`cell contents: ${flowView.sharedString.getTextRangeWithMarkers(start, end)}`);
     }
@@ -1488,7 +1511,7 @@ function gatherOverlayLayer(
     return true;
 }
 
-// tslint:disable-next-line:no-empty-interface
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface IViewportDiv extends HTMLDivElement {
 }
 
@@ -1574,14 +1597,14 @@ export interface IListRefMarker extends MergeTree.Marker {
 }
 
 export class Viewport {
-    // keep the line divs in order
+    // Keep the line divs in order
     public lineDivs: ILineDiv[] = [];
     public visibleRanges: IRange[] = [];
     public currentLineStart = -1;
     private lineTop = 0;
     private excludedRects = <IExcludedRectangle[]>[];
     private lineX = 0;
-    private inclusions: Map<string, HTMLVideoElement> = new Map<string, HTMLVideoElement>();
+    private readonly inclusions: Map<string, HTMLVideoElement> = new Map<string, HTMLVideoElement>();
 
     constructor(public maxHeight: number, public div: IViewportDiv, private width: number) {
     }
@@ -1612,15 +1635,19 @@ export class Viewport {
         return null;
     }
 
-    public addInclusion(flowView: FlowView, marker: MergeTree.Marker, x: number, y: number,
-        lineHeight: number, movingMarker = false) {
+    public addInclusion(
+        flowView: FlowView,
+        marker: MergeTree.Marker,
+        x: number, y: number,
+        lineHeight: number,
+        movingMarker = false) {
         if ((!flowView.movingInclusion.onTheMove) ||
             ((flowView.movingInclusion.onTheMove && (flowView.movingInclusion.marker !== marker)) ||
                 movingMarker)) {
             const irdoc = <IReferenceDoc>marker.properties.ref;
             if (irdoc) {
                 const borderSize = 4;
-                // for now always an image
+                // For now always an image
                 const minX = Math.floor(this.width / 5);
                 const w = Math.floor(this.width / 3);
                 let h = w;
@@ -1804,7 +1831,7 @@ export class Viewport {
             }
         }
         if (!rectHit) {
-            // hit right edge
+            // Hit right edge
             w = this.width - x;
             this.lineX = 0;
         }
@@ -1890,16 +1917,12 @@ interface IRenderOutput {
 }
 
 function makeFontInfo(docContext: IDocumentContext): Paragraph.IFontInfo {
-    function gtw(text: string, fontstr: string) {
-        return domutils.getTextWidth(text, fontstr);
-    }
+    const gtw = (text: string, fontstr: string) => domutils.getTextWidth(text, fontstr);
 
-    function glh(fontstr: string, lineHeight?: string) {
-        return domutils.getLineHeight(fontstr, lineHeight);
-    }
+    const glh = (fontstr: string, lineHeight?: string) => domutils.getLineHeight(fontstr, lineHeight);
 
     function getFont(pg: Paragraph.IParagraphMarker) {
-        if (pg.properties["header"]) {
+        if (pg.properties.header) {
             return docContext.headerFontstr;
         } else {
             return docContext.fontstr;
@@ -1921,8 +1944,12 @@ export interface IFlowBreakInfo extends Paragraph.IBreakInfo {
     movingExclu?: IExcludedRectangle;
 }
 
-export function breakPGIntoLinesFFVP(flowView: FlowView, itemInfo: Paragraph.IParagraphItemInfo, defaultLineHeight: number,
-    viewport: Viewport, startOffset = 0) {
+export function breakPGIntoLinesFFVP(
+    flowView: FlowView,
+    itemInfo: Paragraph.IParagraphItemInfo,
+    defaultLineHeight: number,
+    viewport: Viewport,
+    startOffset = 0) {
     const items = itemInfo.items;
     const savedTop = viewport.getLineTop();
     let lineRect = viewport.getLineRect(itemInfo.maxHeight);
@@ -2092,7 +2119,6 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
         const annotDiv = makeAnnotDiv(indentWidth, layoutContext.viewport.getLineTop(),
             contentWidth, docContext.fontstr);
         const text = endPGMarker.properties[targetTranslation];
-        // tslint:disable-next-line:no-inner-html
         annotDiv.innerHTML = text;
         const clientRect = annotDiv.getBoundingClientRect();
         return clientRect.height;
@@ -2142,7 +2168,6 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
             }
             contentWidth = Math.floor(contentPct * lineWidth) - indentWidth;
             if (contentWidth > lineWidth) {
-                // tslint:disable:max-line-length
                 console.log(`egregious content width ${contentWidth} bound ${lineWidth}`);
             }
 
@@ -2199,7 +2224,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                 eol = eol || (lineEnd === undefined);
                 layoutContext.viewport.commitLineDiv(lineDiv, lineDivHeight, eol);
                 if (breakInfo.movingExclu) {
-                    // console.log(`exclu line ${lineDiv.innerHTML} pos ${lineDiv.linePos} end ${lineDiv.lineEnd}`);
+                    // Console.log(`exclu line ${lineDiv.innerHTML} pos ${lineDiv.linePos} end ${lineDiv.lineEnd}`);
                     if (breakInfo.movingExclu.floatL) {
                         flowView.movingInclusion.ulPos = lineDiv.linePos;
                     } else {
@@ -2214,7 +2239,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
             }
 
             if (layoutContext.viewport.remainingHeight() < docContext.defaultLineDivHeight) {
-                // no more room for lines
+                // No more room for lines
                 break;
             }
         }
@@ -2249,7 +2274,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                 const minWidth = `${Math.round(0.75 * parseInt(layoutContext.viewport.div.style.width, 10))}px`;
                 const minHeight = `${Math.round(0.33 * parseInt(layoutContext.viewport.div.style.width, 10))}px`;
                 if (!newBlock.instance) {
-                    // for now, use math; later need to load route async
+                    // For now, use math; later need to load route async
                     layoutContext.flowView.loadMath(newBlock as IMathViewMarker);
                 }
                 const blockDiv = makeBlockDiv(0, layoutContext.viewport.getLineTop(), minWidth, minHeight);
@@ -2269,7 +2294,8 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                         const persistentComponent = layoutContext.flowView.getPersistentComponent(newBlock.instance);
                         let absBlockDiv: HTMLDivElement;
                         if (!persistentComponent) {
-                            absBlockDiv = makePersistentElement(0, layoutContext.viewport.getLineTop(), width, minHeight);
+                            absBlockDiv =
+                                makePersistentElement(0, layoutContext.viewport.getLineTop(), width, minHeight);
                             layoutContext.flowView.addPersistentComponent(absBlockDiv, newBlock.instance);
                         } else {
                             absBlockDiv = persistentComponent.elm;
@@ -2286,7 +2312,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                         absBlockDiv.style.width = width;
                         absBlockDiv.style.display = "block";
                         newBlock.instance.render(absBlockDiv, { display: "block" });
-                        // cache this in flow view
+                        // Cache this in flow view
                         ch = absBlockDiv.getBoundingClientRect().height;
                     } else {
                         const blockDiv = makeBlockDiv(0, layoutContext.viewport.getLineTop(), width, minHeight);
@@ -2295,7 +2321,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                             blockDiv.style.height = minHeight;
                         }
                         newBlock.instance.render(blockDiv, { display: "block" });
-                        // cache this in FlowView
+                        // Cache this in FlowView
                         ch = blockDiv.getBoundingClientRect().height;
                         console.log(`block height ${ch}`);
                     }
@@ -2316,6 +2342,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                                 return viewable;
                             });
 
+                        // eslint-disable-next-line @typescript-eslint/no-floating-promises
                         newBlock.instanceP.then((instance) => {
                             newBlock.instance = instance;
                             const compPos = getPosition(layoutContext.flowView, asMarker);
@@ -2356,7 +2383,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
             // TODO: if reached end of viewport, get pos ranges
         } else {
             if (asMarker) {
-                // empty paragraph
+                // Empty paragraph
                 curPGMarker = segoff.segment as Paragraph.IParagraphMarker;
                 if (fetchLog) {
                     console.log("empty pg");
@@ -2392,15 +2419,19 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
             // TODO: this is particular to pg annotation; need to call different vp idea for
             //   annotation
             const contentWidth = layoutContext.viewport.currentLineWidth();
-            // const breaks = Paragraph.breakPGIntoLinesFF(itemsContext.itemInfo.items, contentWidth);
+            // Const breaks = Paragraph.breakPGIntoLinesFF(itemsContext.itemInfo.items, contentWidth);
             // curPGMarker.cache = { breaks, isUniformWidth: true, uniformLineWidth: contentWidth };
 
             let startOffset = 0;
             if (layoutContext.requestedPosition > currentPos) {
                 startOffset = layoutContext.requestedPosition - currentPos;
             }
-            const breaks = breakPGIntoLinesFFVP(layoutContext.flowView, itemsContext.itemInfo, docContext.defaultLineDivHeight,
-                layoutContext.viewport, startOffset);
+            const breaks = breakPGIntoLinesFFVP(
+                layoutContext.flowView,
+                itemsContext.itemInfo,
+                docContext.defaultLineDivHeight,
+                layoutContext.viewport,
+                startOffset);
             curPGMarker.cache = { breaks, isUniformWidth: false };
             paragraphLexer.reset();
             // TODO: more accurate end of document reasoning
@@ -2412,7 +2443,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
 
                 if (!deferredPGs) {
                     if (curPGMarker.properties[targetTranslation]) {
-                        // layoutContext.viewport.vskip(Math.floor(docContext.pgVspace/2));
+                        // LayoutContext.viewport.vskip(Math.floor(docContext.pgVspace/2));
                         // TODO: make sure content width is same as pg width (may be different with regions present)
                         const height = renderPGAnnotation(curPGMarker, Math.floor(indentPct * contentWidth),
                             Math.floor(contentPct * contentWidth));
@@ -2422,6 +2453,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                 if (currentPos < totalLength) {
                     segoff = getContainingSegment(flowView, currentPos);
                     if (MergeTree.Marker.is(segoff.segment)) {
+                        // eslint-disable-next-line max-len
                         if (segoff.segment.hasRangeLabel("cell") && (segoff.segment.refType & MergeTree.ReferenceType.NestEnd)) {
                             break;
                         }
@@ -2473,7 +2505,7 @@ function makeSegSpan(
     let textErr = false;
     const spellOption = "spellchecker";
     if (textSegment.properties) {
-        // tslint:disable-next-line
+        // eslint-disable-next-line no-restricted-syntax
         for (const key in textSegment.properties) {
             if (key === "textError" && (viewOptions === undefined || viewOptions[spellOption] !== "disabled")) {
                 textErr = true;
@@ -2518,7 +2550,6 @@ function makeSegSpan(
                             if (slb) {
                                 slb.selectItem(itemElm.innerText);
                             }
-                            // console.log(`highlight ${itemElm.innerText}`);
                         }
                         console.log(`button ${e.button}`);
                         if ((e.button === 2) || ((e.button === 0) && (e.ctrlKey))) {
@@ -2650,7 +2681,7 @@ export class FlowCursor extends Cursor {
         }
     }
     public addPresenceInfo(presenceInfo: ILocalPresenceInfo) {
-        // for now, color
+        // For now, color
         this.bgColor = presenceInfo.presenceColor;
         this.presenceInfo = presenceInfo;
         this.makePresenceDiv();
@@ -2685,7 +2716,7 @@ export class FlowCursor extends Cursor {
         this.presenceDiv.style.border = `2px solid ${this.bgColor}`;
         this.presenceDiv.style.borderTopRightRadius = "1em";
         this.setPresenceDivEvents(this.presenceDiv);
-        // go underneath local cursor
+        // Go underneath local cursor
         this.editSpan.style.zIndex = "1";
     }
 
@@ -2754,7 +2785,7 @@ export class FlowCursor extends Cursor {
 
     protected blinkCursor() {
         if (this.presenceDiv) {
-            // this.editSpan.classList.add("brieflyBlinking");
+            // This.editSpan.classList.add("brieflyBlinking");
             // this.presenceDiv.classList.add("brieflyBlinking");
         } else {
             super.blinkCursor();
@@ -2864,7 +2895,7 @@ function getCurrentWord(pos: number, sharedString: Sequence.SharedString) {
             wordStart = segStartPos + maxWord.wordStart;
             wordEnd = segStartPos + maxWord.wordEnd;
             if (maxWord.wordStart === 0) {
-                // expand word backward
+                // Expand word backward
                 let leftPos = segStartPos;
                 while (leftPos > 0 && leftPos === wordStart) {
                     const leftSeg = sharedString.getContainingSegment(leftPos - 1).segment;
@@ -2876,7 +2907,7 @@ function getCurrentWord(pos: number, sharedString: Sequence.SharedString) {
                 }
             }
             if (maxWord.wordEnd === segoff.segment.text.length) {
-                // expand word forward
+                // Expand word forward
                 let rightPos = segStartPos + segoff.segment.cachedLength;
                 while (rightPos < sharedString.getLength() && rightPos === wordEnd) {
                     const rightSeg = sharedString.getContainingSegment(rightPos).segment;
@@ -2952,6 +2983,7 @@ export interface IListReferenceDoc extends IReferenceDoc {
 }
 
 export function makeBlobRef(blob: IGenericBlob, cb: (irdoc: IReferenceDoc) => void) {
+    /* eslint-disable @typescript-eslint/indent, default-case */
     switch (blob.type) {
         case "image": {
             const image = document.createElement("img");
@@ -2986,6 +3018,7 @@ export function makeBlobRef(blob: IGenericBlob, cb: (irdoc: IReferenceDoc) => vo
             video.load();
         }
     }
+    /* eslint-enable @typescript-eslint/indent, default-case */
 }
 
 export interface IFlowViewModes {
@@ -3062,12 +3095,12 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     public srcLanguage = "en";
 
     private lastVerticalX = -1;
-    private randWordTimer: any;
+    private readonly randWordTimer: any;
     private pendingRender = false;
-    private diagCharPort = false;
-    private targetTranslation: string;
+    private readonly diagCharPort = false;
+    private readonly targetTranslation: string;
     private activeSearchBox: SearchMenu.ISearchBox;
-    private cmdTree: MergeTree.TST<IFlowViewCmd>;
+    private readonly cmdTree: MergeTree.TST<IFlowViewCmd>;
     private formatRegister: MergeTree.PropertySet;
 
     private math: IMathCollection;
@@ -3109,8 +3142,8 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         this.targetTranslation = options[translationToLanguage]
             ? `translation-${options[translationToLanguage]}`
             : undefined;
-        if (options["translationFromLanguage"]) {
-            this.srcLanguage = options["translationFromLanguage"];
+        if (options.translationFromLanguage) {
+            this.srcLanguage = options.translationFromLanguage;
         }
         this.statusMessage("li", " ");
         this.statusMessage("si", " ");
@@ -3129,7 +3162,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             this.handleSharedStringDelta(event, target);
         });
 
-        // refresh cursors when clients join or leave
+        // Refresh cursors when clients join or leave
         collabDocument.runtime.getQuorum().on("addMember", () => {
             this.updatePresenceCursors();
             this.broadcastPresence();
@@ -3145,10 +3178,12 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             this.updatePresenceCursors();
         });
 
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.openCollections();
 
         this.cursor = new FlowCursor(this.viewportDiv);
         this.setViewOption(this.options);
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         blobUploadHandler(
             element,
             this.collabDocument,
@@ -3157,6 +3192,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
 
         // HACK: Expose "insertText" via window to Shared Browser Extension
         //       for 2018/Oct demo.
+        // eslint-disable-next-line dot-notation
         window["insertText"] = (text: string) => {
             this.sharedString.insertText(this.cursor.pos, text);
         };
@@ -3171,7 +3207,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         this.services.set("document", this.collabDocument);
     }
 
-    // remember an element to give to a component; element will be absolutely positioned during render, if needed
+    // Remember an element to give to a component; element will be absolutely positioned during render, if needed
     public addPersistentComponent(elm: HTMLDivElement, component: IComponent) {
         if (!this.persistentComponents) {
             this.persistentComponents = new Map<IComponent, PersistentComponent>();
@@ -3180,7 +3216,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         this.persistentComponents.set(component, new PersistentComponent(component, elm));
     }
 
-    // add event notification to component of removal
+    // Add event notification to component of removal
     public removePersistentComponent(pc: PersistentComponent) {
         if (this.persistentComponents) {
             this.persistentComponents.delete(pc.component);
@@ -3201,8 +3237,12 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         }
     }
 
-    public renderChildFlow(startChar: number, cursorPos: number, flowElement: HTMLDivElement,
-        flowRect: IExcludedRectangle, marker: MergeTree.Marker) {
+    public renderChildFlow(
+        startChar: number,
+        cursorPos: number,
+        flowElement: HTMLDivElement,
+        flowRect: IExcludedRectangle,
+        marker: MergeTree.Marker) {
         const childFlow = new FlowView(flowElement, this.collabDocument, this.sharedString,
             this.status, this.options);
         childFlow.parentFlow = this;
@@ -3237,7 +3277,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         this.sharedString.insertMarker(this.cursor.pos, MergeTree.ReferenceType.Simple, refProps);
     }
 
-    /* tslint:disable:insecure-random */
     public createBookmarks(k: number) {
         const len = this.sharedString.getLength();
         for (let i = 0; i < k; i++) {
@@ -3520,7 +3559,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             const elm = document.elementFromPoint(x, y);
             if (elm.tagName === "DIV") {
                 if ((targetLineDiv.lineEnd - targetLineDiv.linePos) === 1) {
-                    // empty line
+                    // Empty line
                     position = targetLineDiv.linePos;
                 } else if (targetLineDiv === elm) {
                     if (targetLineDiv.indentWidth !== undefined) {
@@ -3534,7 +3573,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                         position = targetLineDiv.lineEnd;
                     }
                 } else {
-                    // content div
+                    // Content div
                     if (x <= targetLineBounds.left) {
                         position = targetLineDiv.linePos;
                     } else {
@@ -3703,7 +3742,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         }
         const x = this.getCanonicalX();
 
-        // if line div is row, then find line in box closest to x
+        // If line div is row, then find line in box closest to x
         function checkInTable() {
             let rowDiv = targetLineDiv as IRowDiv;
             while (rowDiv && rowDiv.rowView) {
@@ -3750,7 +3789,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                     }
                     return this.setCursorPosFromPixels(targetLineDiv, x);
                 } else {
-                    // top or bottom row of table
+                    // Top or bottom row of table
                     if (up) {
                         targetLineDiv = rowDiv.previousElementSibling as ILineDiv;
                     } else {
@@ -3780,7 +3819,8 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         }
     }
 
-    public showSearchMenu(cmdTree: MergeTree.TST<SearchMenu.ISearchMenuCommand>,
+    public showSearchMenu(
+        cmdTree: MergeTree.TST<SearchMenu.ISearchMenuCommand>,
         foldCase = true,
         showAllInitially = false,
         cmdParser?: (searchString: string, cmd?: SearchMenu.ISearchMenuCommand) => void) {
@@ -3828,7 +3868,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                         }
                     }
                     if (this.movingInclusion.onTheMove) {
-                        // console.log(`moving inclusion to nowhere with ${prevX-downX},${prevY-downY}`);
+                        // Console.log(`moving inclusion to nowhere with ${prevX-downX},${prevY-downY}`);
                         const deltaX = prevX - downX;
                         const deltaY = prevY - downY;
                         const thresh = 2;
@@ -3900,7 +3940,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                     this.movingInclusion.ulPos = undefined;
                     this.broadcastDragPresence();
                     if (toPos !== undefined) {
-                        // console.log(`moving to ${toPos}`);
+                        // Console.log(`moving to ${toPos}`);
                         const fromPos = getPosition(this, this.movingInclusion.marker);
                         moveMarker(this, fromPos, toPos);
                         this.updatePGInfo(fromPos);
@@ -3955,7 +3995,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                     inputDelta = e.wheelDelta / 2;
                 }
                 const delta = factor * inputDelta;
-                // tslint:disable-next-line:max-line-length
+                // eslint-disable-next-line max-len
                 // console.log(`top char: ${this.topChar - delta} factor ${factor}; delta: ${delta} wheel: ${e.wheelDeltaY} ${e.wheelDelta} ${e.detail}`);
                 setTimeout(() => {
                     this.render(Math.floor(this.topChar - delta));
@@ -4001,8 +4041,9 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                             this.clearSelection();
                             this.cursor.pos = toRemove.start;
                         } else {
-                            // Otherwise, construct the range to remove by moving the cursor once in the reverse direction.
-                            // Below we will remove the positions spanned by the current and previous cursor positions.
+                            // Otherwise, construct the range to remove by moving the cursor once in the reverse
+                            // direction. Below we will remove the positions spanned by the current and previous cursor
+                            // positions.
                             const removeEnd = this.cursor.pos;
                             this.cursorRev();
                             toRemove = {
@@ -4166,7 +4207,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         this.keydownHandler = keydownHandler;
     }
 
-    // add caching
+    // Add caching
     public getMathViewMarker() {
         const segment = getContainingSegment(this, this.cursor.pos).segment;
         if (MergeTree.Marker.is(segment)) {
@@ -4227,7 +4268,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         if (tileInfo) {
             let buf = "";
             if (tileInfo.tile.properties) {
-                // tslint:disable:forin
+                // eslint-disable-next-line guard-for-in, no-restricted-syntax
                 for (const key in tileInfo.tile.properties) {
                     buf += ` { ${key}: ${tileInfo.tile.properties[key]} }`;
                 }
@@ -4253,10 +4294,11 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             if (listStatus) {
                 const remainingLabels = curLabels.filter((l) => l !== "list");
                 this.sharedString.annotateRange(
-                    tileInfo.pos, tileInfo.pos + 1, {
-                    [MergeTree.reservedTileLabelsKey]: remainingLabels,
-                    series: null,
-                });
+                    tileInfo.pos, tileInfo.pos + 1,
+                    {
+                        [MergeTree.reservedTileLabelsKey]: remainingLabels,
+                        series: null,
+                    });
             } else {
                 const augLabels = curLabels.slice();
                 augLabels.push("list");
@@ -4265,11 +4307,12 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                     indentLevel = tile.properties.indentLevel;
                 }
                 this.sharedString.annotateRange(
-                    tileInfo.pos, tileInfo.pos + 1, {
-                    [MergeTree.reservedTileLabelsKey]: augLabels,
-                    indentLevel,
-                    listKind,
-                });
+                    tileInfo.pos, tileInfo.pos + 1,
+                    {
+                        [MergeTree.reservedTileLabelsKey]: augLabels,
+                        indentLevel,
+                        listKind,
+                    });
             }
             tile.listCache = undefined;
         }
@@ -4457,11 +4500,11 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         if (overlappingComments && (overlappingComments.length >= 1)) {
             const commentInterval = overlappingComments[0];
 
-            const commentHandle = commentInterval.properties["story"] as IComponentHandle;
+            const commentHandle = commentInterval.properties.story as IComponentHandle;
             commentHandle.get<Sequence.SharedString>().then(
                 (comment) => {
                     const commentText = comment.getText();
-                    this.statusMessage("comment", "Comment Text: " + commentText);
+                    this.statusMessage("comment", `Comment Text: ${commentText}`);
                     setTimeout(() => {
                         this.status.remove("comment");
                     }, (10000));
@@ -4490,6 +4533,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     public insertComponentNew(prefix: string, chaincode: string, inline = false) {
         const id = `${prefix}-${Date.now()}`;
 
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.collabDocument.runtime.createAndAttachComponent(id, chaincode);
 
         const props = {
@@ -4534,7 +4578,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                 } as IReferenceDocType,
                 url: mathInstance.id,
             },
-            // change this to just use url and IComponentRouter on collection
+            // Change this to just use url and IComponentRouter on collection
             leafId: mathInstance.leafId,
         };
         if (!inline) {
@@ -4575,6 +4619,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     }
 
     public insertList() {
+        // eslint-disable-next-line max-len
         const testList: SearchMenu.ISearchMenuCommand[] = [{ key: "providence" }, { key: "boston" }, { key: "issaquah" }];
         const irdoc = <IListReferenceDoc>{
             items: testList,
@@ -4606,6 +4651,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     }
 
     private insertBlobInternal(blob: IGenericBlob) {
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.collabDocument.getBlob(blob.id)
             .then((finalBlob) => {
                 makeBlobRef(finalBlob, (irdoc) => {
@@ -4617,7 +4663,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             });
     }
 
-    // tslint:disable:member-ordering
     public copy() {
         const sel = this.cursor.getSelection();
         if (sel) {
@@ -4819,7 +4864,12 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                 const tableMarkerPos = getPosition(this, tableMarker);
                 Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
             }
-            Table.insertColumn(this.sharedString, this.collabDocument.clientId, cellMarker.cell, rowMarker.row, tableMarker.table);
+            Table.insertColumn(
+                this.sharedString,
+                this.collabDocument.clientId,
+                cellMarker.cell,
+                rowMarker.row,
+                tableMarker.table);
         }
     }
 
@@ -4840,6 +4890,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     }
 
     public keyCmd(charCode: number, shift = false) {
+        /* eslint-disable @typescript-eslint/indent */
         switch (charCode) {
             case CharacterCodes.A:
                 this.selectAll();
@@ -4898,6 +4949,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                 console.log(`got command key ${String.fromCharCode(charCode)} code: ${charCode}`);
                 break;
         }
+        /* eslint-enable @typescript-eslint/indent */
     }
 
     public testWordInfo() {
@@ -4914,6 +4966,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         }
         let count = 0;
         const uniques = [] as string[];
+        // eslint-disable-next-line no-restricted-syntax
         for (const key in obj) {
             // eslint-disable-next-line no-prototype-builtins
             if (obj.hasOwnProperty(key)) {
@@ -5008,7 +5061,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         // TODO: consider using markers for presence info once splice segments during pg render
         this.updatePresencePositions();
         domutils.clearSubtree(this.viewportDiv);
-        // this.viewportDiv.appendChild(this.cursor.editSpan);
+        // This.viewportDiv.appendChild(this.cursor.editSpan);
         const renderOutput = renderTree(this.viewportDiv, this.topChar, this, this.targetTranslation);
         this.viewportStartPos = renderOutput.viewportStartPos;
         this.viewportEndPos = renderOutput.viewportEndPos;
@@ -5053,7 +5106,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         });
         this.render(0, true);
         if (clockStart > 0) {
-            // tslint:disable-next-line:max-line-length
+            // eslint-disable-next-line max-len
             console.log(`time to edit/impression: ${this.timeToEdit} time to load: ${Date.now() - clockStart}ms len: ${this.sharedString.getLength()} - ${performanceNow()}`);
         }
         this.presenceSignal = new PresenceSignal(this.collabDocument.runtime);
@@ -5063,7 +5116,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             this.queueRender(undefined, true);
         });
 
-        // this.testWordInfo();
+        // This.testWordInfo();
     }
 
     public updateTableInfo(changePos: number) {
@@ -5140,12 +5193,12 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
 
         newProps[MergeTree.reservedTileLabelsKey] = newLabels;
         if (this.srcLanguage !== "en") {
-            newProps["fromLanguage"] = this.srcLanguage;
+            newProps.fromLanguage = this.srcLanguage;
         }
         // TODO: place in group op
         // old marker gets new props
         this.sharedString.annotateRange(pgPos, pgPos + 1, newProps, { name: "rewrite" });
-        // new marker gets existing props
+        // New marker gets existing props
         this.sharedString.insertMarker(pos, MergeTree.ReferenceType.Tile, curProps);
         this.undoRedoManager.closeCurrentOperation();
     }
@@ -5207,10 +5260,8 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                     presenceColor: this.presenceVector.has(clientId) ?
                         this.presenceVector.get(clientId).presenceColor :
                         presenceColors[this.presenceVector.size % presenceColors.length],
-                    shouldShowCursor: () => {
-                        return this.collabDocument.clientId !== clientId &&
-                            this.getRemoteClientInfo(clientId) !== undefined;
-                    },
+                    shouldShowCursor: () => this.collabDocument.clientId !== clientId &&
+                        this.getRemoteClientInfo(clientId) !== undefined,
                     user: clientInfo.user,
                 } as ILocalPresenceInfo;
                 if (remotePresenceInfo.origMark >= 0) {
@@ -5293,17 +5344,17 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                     }
                 }
             }
-            // if it was a remote op before the local cursor, we need to adjust
+            // If it was a remote op before the local cursor, we need to adjust
             // the local cursor
             if (!event.isLocal && range.position <= this.cursor.pos) {
                 let adjust = range.segment.cachedLength;
-                // we might not need to use the full length if
+                // We might not need to use the full length if
                 // the range crosses the curors position
                 if (range.position + adjust > this.cursor.pos) {
                     adjust -= range.position + adjust - this.cursor.pos;
                 }
 
-                // do nothing for annotate, as it doesn't affect position
+                // Do nothing for annotate, as it doesn't affect position
                 if (range.operation === MergeTree.MergeTreeDeltaType.REMOVE) {
                     this.cursor.pos -= adjust;
                 } else if (range.operation === MergeTree.MergeTreeDeltaType.INSERT) {

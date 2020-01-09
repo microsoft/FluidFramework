@@ -13,7 +13,7 @@ export abstract class SequencedLambda implements IPartitionLambda {
     protected tenantId: string;
     protected documentId: string;
 
-    private q: AsyncQueue<IKafkaMessage>;
+    private readonly q: AsyncQueue<IKafkaMessage>;
 
     constructor(protected context: IContext) {
         this.q = queue((message: IKafkaMessage, callback) => {
@@ -26,6 +26,7 @@ export abstract class SequencedLambda implements IPartitionLambda {
                 });
         }, 1);
 
+        // eslint-disable-next-line @typescript-eslint/unbound-method
         this.q.error = (error) => {
             const documentError = {
                 documentId: this.documentId,

@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { EventData, EventProcessorHost, PartitionContext } from "@azure/event-processor-host";
+import { EventEmitter } from "events";
+import { EventData, EventProcessorHost, PartitionContext, FromTokenProviderOptions } from "@azure/event-processor-host";
 import {
     BoxcarType,
     IBoxcarMessage,
@@ -11,15 +12,14 @@ import {
     IKafkaMessage,
     IPartition,
 } from "@microsoft/fluid-server-services-core";
-import { EventEmitter } from "events";
 import { debug } from "./debug";
 
 const emit = true;
 
 export class EventHubConsumer implements IConsumer {
-    private events = new EventEmitter();
-    private eventHost: EventProcessorHost;
-    private partitions = new Set<string>();
+    private readonly events = new EventEmitter();
+    private readonly eventHost: EventProcessorHost;
+    private readonly partitions = new Set<string>();
 
     constructor(
         endpoint: string,
@@ -29,6 +29,7 @@ export class EventHubConsumer implements IConsumer {
         autoCommit: boolean,
         storageEndpoint: string,
         storageContainerName: string,
+        additionalOptions?: FromTokenProviderOptions,
     ) {
         console.log("Starting Event Hub");
 
@@ -41,6 +42,7 @@ export class EventHubConsumer implements IConsumer {
             {
                 consumerGroup: groupId,
                 eventHubPath: topic,
+                ...additionalOptions,
             });
 
         const startP = this.eventHost.start(
@@ -55,7 +57,7 @@ export class EventHubConsumer implements IConsumer {
     }
 
     public async commitOffset(data: any[]): Promise<void> {
-        // const commitP = this.consumer.commitOffset([{ offset, partition: this.id }]);
+        // Const commitP = this.consumer.commitOffset([{ offset, partition: this.id }]);
         // TODO handle checkpointing
     }
 
@@ -64,11 +66,13 @@ export class EventHubConsumer implements IConsumer {
         return this;
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public close(): Promise<void> {
         return this.eventHost.stop();
     }
 
     public pause() {
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.eventHost.stop();
     }
 
@@ -133,6 +137,7 @@ export class EventHubConsumer implements IConsumer {
         };
 
         // TODO handle checkpointing
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         context.checkpoint();
         if (emit) {
             this.events.emit("data", kafkaMessage);

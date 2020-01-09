@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// tslint:disable: no-console
 import { IFluidModule, IFluidPackage, isFluidPackage } from "@microsoft/fluid-container-definitions";
 import { Deferred } from "@microsoft/fluid-core-utils";
 import {
@@ -23,7 +22,7 @@ export class UrlRegistry implements IComponentRegistry {
 
     constructor() {
 
-        // stash on the window so multiple instance can coordinate
+        // Stash on the window so multiple instance can coordinate
         const loadingPackagesKey = `${UrlRegistry.WindowKeyPrefix}LoadingPackages`;
         if (window[loadingPackagesKey] === undefined) {
             window[loadingPackagesKey] = new Map<string, Promise<unknown>>();
@@ -44,6 +43,7 @@ export class UrlRegistry implements IComponentRegistry {
         if (!this.urlRegistryMap.has(name)
             && (name.startsWith("http://") || name.startsWith("https://"))) {
 
+            // eslint-disable-next-line @typescript-eslint/no-misused-promises, no-async-promise-executor
             const entryPointPromise = new Promise<any>(async (resolve, reject) => {
                 if (!this.loadingPackages.has(name)) {
                     this.loadingPackages.set(name, this.loadEntrypoint(name));
@@ -108,7 +108,7 @@ export class UrlRegistry implements IComponentRegistry {
                         throw new Error(errors.join("\n"));
                     }
 
-                    // stash the entry point
+                    // Stash the entry point
                     const entrypoint = window[entrypointName];
                     if (entrypoint === undefined) {
                         throw new Error(
@@ -117,7 +117,7 @@ export class UrlRegistry implements IComponentRegistry {
                     return entrypoint;
 
                 } finally {
-                    // release the entry point
+                    // Release the entry point
                     window[entrypointName] = preservedEntryPoint;
                     loadingEntrypoint.resolve();
                     this.loadingEntrypoints.delete(entrypointName);
@@ -127,6 +127,7 @@ export class UrlRegistry implements IComponentRegistry {
     }
 }
 
+// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 async function loadScript(scriptUrl: string): Promise<{}> {
     return new Promise((resolve, reject) => {
         const script = document.createElement("script");

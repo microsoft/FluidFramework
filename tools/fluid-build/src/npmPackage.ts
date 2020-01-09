@@ -7,6 +7,7 @@ import { queue } from "async";
 import * as chalk from "chalk";
 import * as fs from "fs";
 import * as path from "path";
+import { sortPackageJson } from "sort-package-json";
 import { logStatus, logVerbose } from "./common/logging";
 import { globFn, copyFileAsync, execWithErrorAsync, existsSync, lstatAsync, mkdirAsync, realpathAsync, rimrafWithErrorAsync, unlinkAsync, symlinkAsync, writeFileAsync, ExecAsyncResult } from "./common/utils"
 import { NpmDepChecker } from "./npmDepChecker";
@@ -140,17 +141,45 @@ export class Package {
     }
 
     private async savePackageJson() {
-        return writeFileAsync(this.packageJsonFileName, `${JSON.stringify(this.packageJson, undefined, 2)}\n`);
+        return writeFileAsync(this.packageJsonFileName, `${JSON.stringify(sortPackageJson(this.packageJson), undefined, 2)}\n`);
     }
 
     public async checkScripts() {
         // Fluid specific
-        let fixed = this.checkBuildScripts();
-        fixed = this.checkTestCoverageScripts() || fixed;
+        const fixed = [this.checkBuildScripts(), this.checkTestCoverageScripts(), this.checkTestSafePromiseRequire()];
 
-        if (fixed) {
+        if (fixed.some((bool) => bool)) {
             await this.savePackageJson();
         }
+    }
+
+    /**
+     * Verify that all packages with 'test' scripts require the 'make-promises-safe' package, which will cause unhandled
+     * promise rejections to throw errors
+     */
+    public checkTestSafePromiseRequire() {
+        let fixed = false;
+        const pkgstring = "make-promises-safe";
+        if (this.packageJson.scripts && this.packageJson.scripts.test && /(ts-)?mocha/.test(this.packageJson.scripts.test)) {
+            if (this.packageJson.devDependencies && !this.packageJson.devDependencies[pkgstring]) {
+                console.warn(`warning: missing ${pkgstring} dependency in ${this.name}`);
+                if (options.fixScripts) {
+                    this.packageJson.devDependencies[pkgstring] = "^5.1.0";
+                    fixed = true;
+                }
+            }
+            if (!this.packageJson.scripts.test.includes(pkgstring)) {
+                if (/(ts-)?mocha/.test(this.packageJson.scripts.test)) {
+                    console.warn(`warning: no ${pkgstring} require in test script in ${this.name}`);
+                    if (options.fixScripts) {
+                        this.packageJson.scripts.test += " -r " + pkgstring;
+                        fixed = true;
+                    }
+                }
+            }
+        }
+
+        return fixed;
     }
 
     public checkTestCoverageScripts() {

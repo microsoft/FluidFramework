@@ -20,6 +20,7 @@ export interface IRoutes {
     api: Router;
 }
 
+// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function create(
     config: Provider,
     tenantManager: ITenantManager,

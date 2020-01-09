@@ -8,27 +8,27 @@ import { ReplayTool } from "./replayMessages";
 
 const optionsArray = [
     "Location:",
-        ["--indir <directory>", "Name of the directory containing the output of the fluid-fetch tool"],
-        ["--outdir <directory>", "Name of the output directory where the snapshots will appear",
-            "If not specified a directory will be created in current directory with name Output"],
+    ["--indir <directory>", "Name of the directory containing the output of the fluid-fetch tool"],
+    ["--outdir <directory>", "Name of the output directory where the snapshots will appear",
+        "If not specified a directory will be created in current directory with name Output"],
     "Modes:",
-        ["--write", "Write out snapshots. Behavior is controlled by --snapfreq & --storageSnapshots"],
-        ["--compare", "Compares snapshots to snapshots previously saved on disk. Used in testing"],
+    ["--write", "Write out snapshots. Behavior is controlled by --snapfreq & --storageSnapshots"],
+    ["--compare", "Compares snapshots to snapshots previously saved on disk. Used in testing"],
     "Processing:",
-        ["--snapfreq <N>", "A snapshot will be taken after every <N>th op"],
-        ["--stressTest", "Run stress tests. Adds --quiet --snapfreq 50",
-            "Writes out only snapshots with consistency issues"],
-        ["--storageSnapshots", "Validate storage (FluidFetch) snapshots"],
-        ["--incremental", "Allow incremental snapshots (to closer simulate reality). Diff will be noisy"],
+    ["--snapfreq <N>", "A snapshot will be taken after every <N>th op"],
+    ["--stressTest", "Run stress tests. Adds --quiet --snapfreq 50",
+        "Writes out only snapshots with consistency issues"],
+    ["--storageSnapshots", "Validate storage (FluidFetch) snapshots"],
+    ["--incremental", "Allow incremental snapshots (to closer simulate reality). Diff will be noisy"],
     "Scoping:",
-        ["--from <op#|version>", "if a number, indicates seq# where to start generation/validation of snapshots",
-            "Else specifies directory inside the --indir - a snapshot to load from"],
-        ["--to <op#>", "The last op number to be replayed"],
+    ["--from <op#|version>", "if a number, indicates seq# where to start generation/validation of snapshots",
+        "Else specifies directory inside the --indir - a snapshot to load from"],
+    ["--to <op#>", "The last op number to be replayed"],
     "Misc:",
-        ["--noexpanded", "Do not write out 'snapshot*_expanded.json' files"],
-        ["--windiff", "Launch windiff.exe for any mismatch"],
-        ["--quiet", "Reduces amount of output"],
-        ["--verbose", "Increases amount of output"],
+    ["--noexpanded", "Do not write out 'snapshot*_expanded.json' files"],
+    ["--windiff", "Launch windiff.exe for any mismatch"],
+    ["--quiet", "Reduces amount of output"],
+    ["--verbose", "Increases amount of output"],
 ];
 
 /**
@@ -49,6 +49,7 @@ class ReplayProcessArgs extends ReplayArgs {
 
         for (let i = 2; i < process.argv.length; i++) {
             const arg = process.argv[i];
+            /* eslint-disable @typescript-eslint/indent */
             switch (arg) {
                 case "--indir":
                     i += 1;
@@ -124,6 +125,7 @@ class ReplayProcessArgs extends ReplayArgs {
                     this.printUsage();
                     process.exit(-1);
             }
+            /* eslint-enable @typescript-eslint/indent */
         }
     }
 

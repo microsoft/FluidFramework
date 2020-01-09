@@ -47,16 +47,16 @@ class ProseMirrorFactory implements IRuntimeFactory {
             ],
             { generateSummaries: true });
 
-        // flush mode to manual to batch operations within a turn
+        // Flush mode to manual to batch operations within a turn
         runtime.setFlushMode(FlushMode.Manual);
 
         // On first boot create the base component
         if (!runtime.existing) {
             await Promise.all([
-                    runtime.createComponent(defaultComponentId, defaultComponent).then((componentRuntime) => {
-                        componentRuntime.attach();
-                    }),
-                ])
+                runtime.createComponent(defaultComponentId, defaultComponent).then((componentRuntime) => {
+                    componentRuntime.attach();
+                }),
+            ])
                 .catch((error) => {
                     context.error(error);
                 });
@@ -68,6 +68,7 @@ class ProseMirrorFactory implements IRuntimeFactory {
 
 export const fluidExport = new ProseMirrorFactory();
 
+// eslint-disable-next-line @typescript-eslint/promise-function-async, prefer-arrow/prefer-arrow-functions
 export function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
     return fluidExport.instantiateRuntime(context);
 }

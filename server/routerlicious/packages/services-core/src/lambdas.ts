@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { safelyParseJSON } from "@microsoft/fluid-core-utils";
 import { EventEmitter } from "events";
+import { safelyParseJSON } from "@microsoft/fluid-core-utils";
 import * as nconf from "nconf";
 import { IKafkaMessage } from "./kafka";
 import { BoxcarType, IBoxcarMessage, IMessage } from "./messages";
@@ -71,10 +71,13 @@ export function extractBoxcar(message: IKafkaMessage): IBoxcarMessage {
     const rawMessage = safelyParseJSON(messageContent);
     const parsedMessage = rawMessage as IMessage;
 
+    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     if (!parsedMessage) {
         return {
             contents: [],
+            // eslint-disable-next-line no-null/no-null
             documentId: null,
+            // eslint-disable-next-line no-null/no-null
             tenantId: null,
             type: BoxcarType,
         };

@@ -117,6 +117,21 @@ In addition to text, a Shared String can also contain markers. Markers can be us
 
 Both markers and text are stored as segments in the Shared String. Text segments will be split and merged when modifications are made to the Shared String and will therefore have variable length matching the length of the text content they contain. Marker segments are never split or merged, and always have a length of 1.
 
+### Examples
+- Rich Text Editor Implementations
+  - packages\components\webflow\
+  - packages\components\markflow\
+  - packages\components\client-ui\src\controls\flowView.ts
+
+- Integrations with Open Source Rich Text Editors
+  - samples\chaincode\prosemirror\
+  - samples\chaincode\smde\src\
+  - samples\chaincode\draft-js\
+
+- Plain Text Editor Implementations
+  - packages\framework\aqueduct-react\src\react\collaborativeTextArea.tsx
+  - packages\framework\aqueduct-react\src\react\collaborativeInput.tsx
+
 # Sparse Matrix
 
 The Sparse Matrix is a specialized data structure for efficiently handling collaborative tabular data. The Sparse Matrix works in a similar fashion to [raster scanning](https://en.wikipedia.org/wiki/Raster_scan). When a row is inserted it is inserted with the maximum possible number of columns, 16,385. This makes it easy to find any cell in the Sparse Matrix as it will exist at Row * MaxCol + Col. In order to store this efficiently the Sparse Matrix doesn't materialize cells that don't have data, this is where *Sparse* comes from.

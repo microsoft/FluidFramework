@@ -8,8 +8,8 @@ import { ConnectionState, ISequencedDocumentMessage, ITree } from "@microsoft/fl
 import { IChannelAttributes } from "./storage";
 
 declare module "@microsoft/fluid-container-definitions" {
-    interface IComponent extends Readonly<Partial<IProvideChannel>> {
-    }
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    interface IComponent extends Readonly<Partial<IProvideChannel>> { }
 }
 
 export interface IProvideChannel {
@@ -72,9 +72,9 @@ export interface IDeltaHandler {
      */
     process: (message: ISequencedDocumentMessage, local: boolean) => void;
 
-   /**
-    * State change events to indicate changes to the delta connection
-    */
+    /**
+     * State change events to indicate changes to the delta connection
+     */
     setConnectionState(state: ConnectionState): void;
 }
 

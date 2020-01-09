@@ -160,6 +160,7 @@ export class SharedCell extends SharedObject implements ISharedCell {
                     },
                 },
             ],
+            // eslint-disable-next-line no-null/no-null
             id: null,
         };
 
@@ -229,6 +230,7 @@ export class SharedCell extends SharedObject implements ISharedCell {
         if (message.type === MessageType.Operation && !local) {
             const op = message.contents as ICellOperation;
 
+            /* eslint-disable @typescript-eslint/indent */
             switch (op.type) {
                 case "setCell":
                     const value = this.fromSerializable(op.value);
@@ -242,6 +244,7 @@ export class SharedCell extends SharedObject implements ISharedCell {
                 default:
                     throw new Error("Unknown operation");
             }
+            /* eslint-enable @typescript-eslint/indent */
         }
     }
 
@@ -277,7 +280,7 @@ export class SharedCell extends SharedObject implements ISharedCell {
     private fromSerializable(operation: ICellValue) {
         let value = operation.value;
 
-        // convert any stored shared object to updated handle
+        // Convert any stored shared object to updated handle
         if (operation.type === ValueType[ValueType.Shared]) {
             const handle: ISerializedHandle = {
                 type: "__fluid_handle__",

@@ -4,10 +4,8 @@
  */
 
 import { TextSegment } from "@microsoft/fluid-merge-tree";
-// tslint:disable:binary-expression-operand-order
 import { TestHost } from "@microsoft/fluid-local-test-server";
 import * as assert from "assert";
-// tslint:disable-next-line:no-import-side-effect
 import "mocha";
 import { FlowDocument, flowDocumentFactory, SegmentSpan } from "../src/document";
 import { FlowDocumentType } from "../src/runtime";
@@ -71,7 +69,6 @@ describe("SegmentSpan", () => {
         });
     }
 
-    // tslint:disable:mocha-no-side-effect-code
     test(["0"], 0, 1);
     test(["01"], 0, 1);
     test(["01"], 1, 2);

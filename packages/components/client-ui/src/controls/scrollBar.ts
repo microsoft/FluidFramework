@@ -16,7 +16,7 @@ export interface IRange {
 export class ScrollBar extends ui.Component {
     public scrollDiv: HTMLDivElement;
     public scrollRect: ui.Rectangle;
-    private track: HTMLDivElement;
+    private readonly track: HTMLDivElement;
 
     private range: IRange = { value: 0, min: 0, max: 0 };
 

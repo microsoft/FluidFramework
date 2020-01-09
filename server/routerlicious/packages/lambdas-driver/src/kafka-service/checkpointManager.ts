@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import { Deferred } from "@microsoft/fluid-core-utils";
 import { IConsumer } from "@microsoft/fluid-server-services-core";
-import * as assert from "assert";
 
 export class CheckpointManager {
     private checkpointing = false;
@@ -15,14 +15,14 @@ export class CheckpointManager {
     private pendingCheckpoint: Deferred<void>;
     private error: any;
 
-    constructor(private id: number, private consumer: IConsumer) {
+    constructor(private readonly id: number, private readonly consumer: IConsumer) {
     }
 
     /**
      * Requests a checkpoint at the given offset
      */
     public async checkpoint(offset: number) {
-        // checkpoint calls should always be of increasing or equal value
+        // Checkpoint calls should always be of increasing or equal value
         assert(this.lastOffset === undefined || offset >= this.lastOffset);
 
         // Exit early if the manager has been closed
@@ -67,9 +67,11 @@ export class CheckpointManager {
                     assert(this.pendingCheckpoint, "Differing offsets will always result in pendingCheckpoint");
                     const nextCheckpointP = this.checkpoint(this.lastOffset);
                     this.pendingCheckpoint.resolve(nextCheckpointP);
+                    // eslint-disable-next-line no-null/no-null
                     this.pendingCheckpoint = null;
                 }
             },
+            // eslint-disable-next-line @typescript-eslint/promise-function-async
             (error) => {
                 // Enter an error state on any commit error
                 this.error = error;

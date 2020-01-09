@@ -9,6 +9,7 @@ import { ISegment, LocalReference, PropertySet, ReferenceType } from "@microsoft
 import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SequenceDeltaEvent, SequenceMaintenanceEvent, SharedString } from "@microsoft/fluid-sequence";
 import { debug } from "./debug";
+// eslint-disable-next-line import/no-internal-modules
 import { clamp } from "./util/clamp";
 
 // TODO: We need the ability to create LocalReferences to the end of the document. Our
@@ -20,7 +21,7 @@ import { clamp } from "./util/clamp";
 //       the user deletes the entire sequence.  (The SlideOnRemove references end up pointing
 //       to undefined segments.)
 //
-//       See: https://github.com/microsoft/Prague/issues/2408
+//       See: https://github.com/microsoft/FluidFramework/issues/86
 const endOfTextSegment = undefined;
 const endOfTextSegmentAndOffset = Object.freeze({ segment: endOfTextSegment, offset: 0 });
 
@@ -111,7 +112,9 @@ export class SourceDocument extends PrimedComponent {
     }
 
     public visitRange(callback: LeafAction, start = 0, end = this.length) {
+        // eslint-disable-next-line no-param-reassign
         end = clamp(0, end, this.length);
+        // eslint-disable-next-line no-param-reassign
         start = clamp(0, start, end);
 
         // Early exit if passed an empty or invalid range (e.g., NaN).
@@ -125,6 +128,7 @@ export class SourceDocument extends PrimedComponent {
         this.sharedString.walkSegments(accumAsLeafAction, start, end, callback);
     }
 
+    /* eslint-disable max-len */
     public on(event: "maintenance", listener: (event: SequenceMaintenanceEvent, target: SharedString, ...args: any[]) => void): this;
     public on(event: "sequenceDelta", listener: (event: SequenceDeltaEvent, target: SharedString, ...args: any[]) => void): this;
     public on(event: "maintenance" | "sequenceDelta", listener: (event: any, target: SharedString, ...args: any[]) => void): this {
@@ -138,6 +142,7 @@ export class SourceDocument extends PrimedComponent {
         this.maybeSharedString.removeListener(event, listener);
         return this;
     }
+    /* eslint-enable max-len */
 
     public getPreviousSegment(current: ISegment) {
         const position = this.getPosition(current);
@@ -155,7 +160,7 @@ export class SourceDocument extends PrimedComponent {
         this.ensureIntervalBoundary(end);
 
         this.visitRange((_, segment) => {
-            segment[localAnnotationSym] = {...segment[localAnnotationSym], ...props};
+            segment[localAnnotationSym] = { ...segment[localAnnotationSym], ...props };
             return true;
         }, start, end);
     }
