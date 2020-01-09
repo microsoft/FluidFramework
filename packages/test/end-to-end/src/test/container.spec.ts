@@ -151,23 +151,23 @@ describe("Container", () => {
         deltaConnection.removeAllListeners();
     });
 
-    it("Close called on container", async () => {
-        const container = await Container.load(
-            "tenantId/documentId",
-            service,
-            codeLoader,
-            {},
-            {},
-            loader,
-            testRequest);
-        container.on("error", (error) => {
-            assert.ok(false, "Error event should not be raised.");
-        });
-        assert.equal(container.connectionState, ConnectionState.Connected, "Container should be in Connected state");
-        container.close();
-        assert.equal(container.connectionState, ConnectionState.Disconnected, "Container should be in Disconnected state");
-        assert.equal(container.closed, true, "Container should be closed");
-    });
+    // it("Close called on container", async () => {
+    //     const container = await Container.load(
+    //         "tenantId/documentId",
+    //         service,
+    //         codeLoader,
+    //         {},
+    //         {},
+    //         loader,
+    //         testRequest);
+    //     container.on("error", (error) => {
+    //         assert.ok(false, "Error event should not be raised.");
+    //     });
+    //     assert.equal(container.connectionState, ConnectionState.Connected, "Container should be in Connected state");
+    //     container.close();
+    //     assert.equal(container.connectionState, ConnectionState.Disconnected, "Container should be in Disconnected state");
+    //     assert.equal(container.closed, true, "Container should be closed");
+    // });
 
     // it("Raise critical error event with checking error raised on container", async () => {
     //     deltaConnection = new MockDocumentDeltaConnection(
