@@ -19,7 +19,6 @@ export type ITokenApis = IRouterliciousTokenApi | IOdspTokenApi;
 
 // This is insecure, but is being used for the time being for ease of use during the hackathon.
 async function fetchSecret(tenant: string, getToken: () => Promise<string>): Promise<string> {
-    /* eslint-disable @typescript-eslint/indent */
     switch (tenant) {
         case "fluid": {
             return "43cfc3fbf04a97c0921fd23ff10f9e4b";
@@ -38,7 +37,6 @@ async function fetchSecret(tenant: string, getToken: () => Promise<string>): Pro
             return getToken();
         }
     }
-    /* eslint-enable @typescript-eslint/indent */
 }
 
 export async function auth(tenantId: string, documentId: string, getToken: () => Promise<string>): Promise<string> {

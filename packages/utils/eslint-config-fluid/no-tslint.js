@@ -73,7 +73,8 @@ module.exports = {
                 },
                 "FunctionExpression": {
                     "parameters": "first"
-                }
+                },
+                "SwitchCase": 1
             }
         ],
         "@typescript-eslint/interface-name-prefix": "off",

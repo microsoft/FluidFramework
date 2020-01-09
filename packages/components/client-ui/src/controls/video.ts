@@ -76,7 +76,6 @@ export class Video extends ui.Component {
 
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         this.videoMap.on("valueChanged", async (changedValue) => {
-            /* eslint-disable @typescript-eslint/indent */
             switch (changedValue.key) {
                 case ("play"):
                     this.videoMap.get(changedValue.key).then((play) => this.playPause(play));
@@ -87,7 +86,6 @@ export class Video extends ui.Component {
                 default:
                     break;
             }
-            /* eslint-enable @typescript-eslint/indent */
         });
     }
 

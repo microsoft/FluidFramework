@@ -743,7 +743,7 @@ export function succinctPrintTable(tableMarker: ITableMarker, tableMarkerPos: nu
                         endLine = true;
                     }
                 }
-                /* eslint-disable @typescript-eslint/indent, default-case */
+                /* eslint-disable default-case */
                 switch (rangeLabel) {
                     case "table":
                         lineBuf += "T";
@@ -762,7 +762,7 @@ export function succinctPrintTable(tableMarker: ITableMarker, tableMarkerPos: nu
                         lineBuf += "CL";
                         break;
                 }
-                /* eslint-enable @typescript-eslint/indent, default-case */
+                /* eslint-enable default-case */
             } else if (marker.refType === MergeTree.ReferenceType.Simple) {
                 if (marker.properties.columnId) {
                     lineBuf += "CO";

@@ -312,7 +312,7 @@ export class GridView {
     };
 
     private readonly cellKeyDown = (e: KeyboardEvent) => {
-        /* eslint-disable @typescript-eslint/indent, default-case */
+        /* eslint-disable default-case */
         switch (e.code) {
             case KeyCode.escape: { this.cancelInput(); break; }
             case KeyCode.arrowUp: { this.moveInputByOffset(e, /* rowOffset: */ -1, /* colOffset */  0); break; }
@@ -322,7 +322,7 @@ export class GridView {
             case KeyCode.tab: { e.preventDefault(); /* fall-through */ }
             case KeyCode.arrowRight: { this.moveInputByOffset(e, /* rowOffset: */  0, /* colOffset */  1); }
         }
-        /* eslint-enable @typescript-eslint/indent, default-case */
+        /* eslint-enable default-case */
     };
 
     private getCellFromEvent(e: Event) {

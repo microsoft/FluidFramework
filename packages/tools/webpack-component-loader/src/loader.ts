@@ -137,7 +137,6 @@ async function getResolvedPackage(
 }
 
 function getUrlResolver(options: IRouteOptions): IUrlResolver {
-    /* eslint-disable @typescript-eslint/indent */
     switch (options.mode) {
         case "docker":
             return new InsecureUrlResolver(
@@ -172,7 +171,6 @@ function getUrlResolver(options: IRouteOptions): IUrlResolver {
         default: // Local
             return new TestResolver();
     }
-    /* eslint-enable @typescript-eslint/indent */
 }
 
 // Invoked by `start()` when the 'double' option is enabled to create the side-by-side panes.

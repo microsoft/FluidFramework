@@ -32,7 +32,6 @@ class ReplayProcessArgs extends ReplayArgs {
 
         for (let i = 2; i < process.argv.length; i++) {
             const arg = process.argv[i];
-            /* eslint-disable @typescript-eslint/indent */
             switch (arg.toLocaleLowerCase()) {
                 case "--indir":
                     i += 1;
@@ -56,7 +55,6 @@ class ReplayProcessArgs extends ReplayArgs {
                     this.printUsage();
                     process.exit(-1);
             }
-            /* eslint-enable @typescript-eslint/indent */
         }
     }
 

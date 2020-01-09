@@ -65,7 +65,7 @@ export function insertOverlayNode(
     position: OverlayNodePosition, beginProps: MergeLib.PropertySet,
     refNodeId?: string) {
     const nodeId = makeId(client);
-    /* eslint-disable @typescript-eslint/indent, default-case */
+    /* eslint-disable default-case */
     switch (position) {
         case OverlayNodePosition.Append: {
             const endId = endIdFromId(refNodeId);
@@ -139,6 +139,6 @@ export function insertOverlayNode(
             break;
         }
     }
-    /* eslint-enable @typescript-eslint/indent, default-case */
+    /* eslint-enable default-case */
     return nodeId;
 }

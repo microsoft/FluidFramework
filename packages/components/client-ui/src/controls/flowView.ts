@@ -532,7 +532,6 @@ function elmOffToSegOff(elmOff: IRangeInfo, span: HTMLSpanElement) {
         prevSib = elmOff.elm.previousSibling;
     }
     while (prevSib) {
-        /* eslint-disable @typescript-eslint/indent */
         switch (prevSib.nodeType) {
             case Node.ELEMENT_NODE:
                 const innerSpan = prevSib as HTMLSpanElement;
@@ -544,7 +543,6 @@ function elmOffToSegOff(elmOff: IRangeInfo, span: HTMLSpanElement) {
             default:
                 break;
         }
-        /* eslint-enable @typescript-eslint/indent */
         prevSib = prevSib.previousSibling;
     }
     return offset;
@@ -2983,7 +2981,7 @@ export interface IListReferenceDoc extends IReferenceDoc {
 }
 
 export function makeBlobRef(blob: IGenericBlob, cb: (irdoc: IReferenceDoc) => void) {
-    /* eslint-disable @typescript-eslint/indent, default-case */
+    /* eslint-disable default-case */
     switch (blob.type) {
         case "image": {
             const image = document.createElement("img");
@@ -3018,7 +3016,7 @@ export function makeBlobRef(blob: IGenericBlob, cb: (irdoc: IReferenceDoc) => vo
             video.load();
         }
     }
-    /* eslint-enable @typescript-eslint/indent, default-case */
+    /* eslint-enable default-case */
 }
 
 export interface IFlowViewModes {
@@ -4890,7 +4888,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     }
 
     public keyCmd(charCode: number, shift = false) {
-        /* eslint-disable @typescript-eslint/indent */
         switch (charCode) {
             case CharacterCodes.A:
                 this.selectAll();
@@ -4949,7 +4946,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                 console.log(`got command key ${String.fromCharCode(charCode)} code: ${charCode}`);
                 break;
         }
-        /* eslint-enable @typescript-eslint/indent */
     }
 
     public testWordInfo() {

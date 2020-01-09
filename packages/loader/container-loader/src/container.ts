@@ -736,7 +736,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         const protocolLogger = ChildLogger.create(this.subLogger, "ProtocolHandler");
 
         protocol.on("Summary", (message) => {
-            /* eslint-disable @typescript-eslint/indent */
             switch (message.type) {
                 case MessageType.Summarize:
                     protocolLogger.sendTelemetryEvent({
@@ -766,7 +765,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                     break;
                 default:
             }
-            /* eslint-enable @typescript-eslint/indent */
         });
 
         protocol.quorum.on("error", (error) => {

@@ -86,7 +86,6 @@ export function hexStrToRGBA(hexStr: string): IColor {
 // If it isn"t one of those, then decode the hex string.  Otherwise return gray.
 // The alpha component is always set to full (255).
 export function toColorStruct(color: string): IColor {
-    /* eslint-disable @typescript-eslint/indent */
     switch (color) {
         // Ink colors
         case "Black": return { r: 0x00, g: 0x00, b: 0x00, a: 0xff };
@@ -103,7 +102,6 @@ export function toColorStruct(color: string): IColor {
         default:
             return hexStrToRGBA(color);
     }
-    /* eslint-enable @typescript-eslint/indent */
 }
 
 // ----------------------------------------------------------------------

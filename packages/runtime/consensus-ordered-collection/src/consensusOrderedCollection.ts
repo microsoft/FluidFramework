@@ -172,7 +172,6 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
         if (message.type === MessageType.Operation) {
             const op: IConsensusOrderedCollectionOperation = message.contents;
             let value;
-            /* eslint-disable @typescript-eslint/indent */
             switch (op.opName) {
                 case "add":
                     this.addCore(op.value.value);
@@ -186,7 +185,6 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
                 default:
                     throw new Error("Unknown operation");
             }
-            /* eslint-enable @typescript-eslint/indent */
             // If it is local operation, resolve the promise.
             if (local) {
                 this.processLocalMessage(message, value);
