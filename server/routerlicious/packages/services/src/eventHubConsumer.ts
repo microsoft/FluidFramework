@@ -133,7 +133,7 @@ export class EventHubConsumer implements IConsumer {
             type: BoxcarType,
         };
 
-        const kafkaMessage: IEventHubMessage = {
+        const eventHubMessage: IEventHubMessage = {
             context,
             data,
             offset: data.sequenceNumber,
@@ -142,7 +142,7 @@ export class EventHubConsumer implements IConsumer {
             value: boxcarMessage,
         };
 
-        this.events.emit("data", kafkaMessage);
+        this.events.emit("data", eventHubMessage);
     }
 
     private error(error) {
