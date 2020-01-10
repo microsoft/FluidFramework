@@ -80,7 +80,7 @@ export class Badge extends PrimedComponent implements IComponentHTMLVisual, ICom
      * This method is used to perform component setup, which can include setting an initial schema or initial values.
      */
     protected async componentInitializingFirstTime() {
-        // Create a cell to represent the Badge"s current state
+        // Create a cell to represent the Badge's current state
         const current = SharedCell.create(this.runtime);
         current.set(this.defaultOptions[0]);
         this.root.set(this.currentId, current.handle);
@@ -90,7 +90,7 @@ export class Badge extends PrimedComponent implements IComponentHTMLVisual, ICom
         this.defaultOptions.forEach((v) => options.set(v.key, v));
         this.root.set(this.optionsId, options.handle);
 
-        // Create a sequence to store the badge"s history
+        // Create a sequence to store the badge's history
         const history = SharedObjectSequence.create<IHistory<IBadgeType>>(this.runtime);
         history.insert(0, [{
             value: current.get(),
