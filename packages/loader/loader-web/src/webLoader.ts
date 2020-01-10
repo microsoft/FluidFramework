@@ -298,7 +298,7 @@ export class WebCodeLoader implements ICodeLoader {
     }
 
     private getFluidPackage(input: IFluidCodeDetails): FluidPackage {
-        const details = this.getPackageDetails(input);
+        const details = getPackageDetails(input);
 
         if (!this.resolvedCache.has(details.packageUrl)) {
             const resolved = new FluidPackage(details, this.scriptManager);
@@ -308,27 +308,26 @@ export class WebCodeLoader implements ICodeLoader {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return this.resolvedCache.get(details.packageUrl)!;
     }
+}
 
-    private getPackageDetails(details: IFluidCodeDetails): IPackageDetails {
+function getPackageDetails(details: IFluidCodeDetails): IPackageDetails {
+    const fullPkg = typeof details.package === "string"
+        ? details.package // Just return it if it's a string e.g. "@fluid-example/clicker@0.1.1"
+        : !details.package.version // If it doesn't exist, let's make it from the package details
+            ? `${details.package.name}` // E.g. @fluid-example/clicker
+            : `${details.package.name}@${details.package.version}`; // Rebuild e.g. @fluid-example/clicker@0.1.1
+    const parsed = extractDetails(fullPkg);
 
-        const fullPkg = typeof details.package === "string"
-            ? details.package // Just return it if it's a string e.g. "@fluid-example/clicker@0.1.1"
-            : !details.package.version // If it doesn't exist, let's make it from the package details
-                ? `${details.package.name}` // E.g. @fluid-example/clicker
-                : `${details.package.name}@${details.package.version}`; // Rebuild e.g. @fluid-example/clicker@0.1.1
-        const parsed = extractDetails(fullPkg);
+    const scriptCdnTag = `${parsed.scope ? `@${parsed.scope}:` : ""}cdn`;
+    const cdn = details.config[scriptCdnTag];
+    const scopePath = parsed.scope ? `@${encodeURI(parsed.scope)}/` : "";
+    const packageUrl = parsed.version !== undefined
+        ? `${cdn}/${scopePath}${encodeURI(`${parsed.name}@${parsed.version}`)}`
+        : `${cdn}/${scopePath}${encodeURI(`${parsed.name}`)}`;
 
-        const scriptCdnTag = `${parsed.scope ? `@${parsed.scope}:` : ""}cdn`;
-        const cdn = details.config[scriptCdnTag];
-        const scopePath = parsed.scope ? `@${encodeURI(parsed.scope)}/` : "";
-        const packageUrl = parsed.version !== undefined
-            ? `${cdn}/${scopePath}${encodeURI(`${parsed.name}@${parsed.version}`)}`
-            : `${cdn}/${scopePath}${encodeURI(`${parsed.name}`)}`;
-
-        return {
-            details,
-            packageUrl,
-            parsed,
-        };
-    }
+    return {
+        details,
+        packageUrl,
+        parsed,
+    };
 }
