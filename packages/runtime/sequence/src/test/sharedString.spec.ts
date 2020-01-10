@@ -80,5 +80,19 @@ describe("SharedString", () => {
 
             assert(sharedString.getText() === sharedString2.getText());
         }
+
+        it("replace zero range", async () => {
+            sharedString.insertText(0, "123");
+            sharedString.replaceText(1, 1, "\u00e4\u00c4");
+            assert.equal(sharedString.getText(), "1\u00e4\u00c423")
+        });
+
+        it("replace negative range", async () => {
+            sharedString.insertText(0, "123");
+            sharedString.replaceText(2, 1, "aaa");
+            // This assert relies on the behvaior that replacement for a reversed range
+            // will insert at the max end of the range but not delete the range
+            assert.equal(sharedString.getText(), "12aaa3")
+        })
     });
 });

@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { IKafkaMessage } from "@microsoft/fluid-server-services-core";
+import { IQueuedMessage } from "@microsoft/fluid-server-services-core";
 import * as Deque from "double-ended-queue";
 import { IKafkaSubscriber } from "./interfaces";
 
@@ -20,7 +20,7 @@ export class LocalKafkaSubscription extends EventEmitter {
     private processing = false;
     private retryTimer: NodeJS.Timeout | undefined;
 
-    constructor(private readonly subscriber: IKafkaSubscriber, private readonly queue: Deque<IKafkaMessage>) {
+    constructor(private readonly subscriber: IKafkaSubscriber, private readonly queue: Deque<IQueuedMessage>) {
         super();
     }
 

@@ -5,13 +5,11 @@
 
 import { Deferred } from "@microsoft/fluid-core-utils";
 
-export interface IKafkaMessage {
+export interface IQueuedMessage {
     topic: string;
-    value: string | any;
-    offset: number;
     partition: number;
-    highWaterOffset: number;
-    key: string;
+    offset: number;
+    value: string | any;
 }
 
 export interface IPartition {
@@ -26,14 +24,14 @@ export interface IConsumer {
     topic: string;
 
     /**
-     * Commits consumer offset.
+     * Commits consumer checkpoint offset.
      */
-    commitOffset(data: any[]): Promise<void>;
+    commitCheckpoint(partitionId: number, queuedMessage: IQueuedMessage): Promise<void>;
 
     /**
      * Event Handler.
      */
-    on(event: "data", listener: (message: IKafkaMessage) => void): this;
+    on(event: "data", listener: (message: IQueuedMessage) => void): this;
     on(event: "rebalancing" | "rebalanced", listener: (partitions: IPartition[]) => void): this;
     on(event: string, listener: (...args: any[]) => void): this;
 
@@ -45,12 +43,12 @@ export interface IConsumer {
     /**
      * Pauses retrieval of new messages
      */
-    pause();
+    pause(): Promise<void>;
 
     /**
      * Resumes retrival of messages
      */
-    resume();
+    resume(): Promise<void>;
 }
 
 /**
@@ -66,7 +64,7 @@ export interface IPendingMessage {
 
 export interface IProducer {
     /**
-     * Sends the message to kafka
+     * Sends the message to a queue
      */
     send(messages: object[], tenantId: string, documentId: string): Promise<any>;
 

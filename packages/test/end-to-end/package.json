@@ -52,6 +52,7 @@
     "@microsoft/fluid-aqueduct": "^0.13.0",
     "@microsoft/fluid-build-common": "^0.13.0",
     "@microsoft/fluid-cell": "^0.13.0",
+    "@microsoft/fluid-test-loader-utils": "^0.13.0",
     "@microsoft/fluid-component-core-interfaces": "^0.13.0",
     "@microsoft/fluid-container-definitions": "^0.13.0",
     "@microsoft/fluid-container-loader": "^0.13.0",

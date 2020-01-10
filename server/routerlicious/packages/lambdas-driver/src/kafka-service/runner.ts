@@ -47,7 +47,7 @@ export class KafkaRunner implements IRunner {
         winston.info("Stop requested");
 
         // Stop listening for new updates
-        this.consumer.pause();
+        await this.consumer.pause();
 
         // Mark ourselves done once the topic manager has stopped processing
         const stopP = this.partitionManager.stop();

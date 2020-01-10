@@ -431,7 +431,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
 
     public process(message: ISequencedDocumentMessage, local: boolean) {
         this.verifyNotClosed();
-        /* eslint-disable @typescript-eslint/indent, no-case-declarations */
+        /* eslint-disable no-case-declarations */
         switch (message.type) {
             case MessageType.Attach:
                 const attachMessage = message.contents as IAttachMessage;
@@ -477,7 +477,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
                 break;
             default:
         }
-        /* eslint-enable @typescript-eslint/indent, no-case-declarations */
+        /* eslint-enable no-case-declarations */
 
         this.emit("op", message);
     }

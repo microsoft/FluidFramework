@@ -6,27 +6,27 @@
 import { EventEmitter } from "events";
 import { safelyParseJSON } from "@microsoft/fluid-core-utils";
 import * as nconf from "nconf";
-import { IKafkaMessage } from "./kafka";
 import { BoxcarType, IBoxcarMessage, IMessage } from "./messages";
+import { IQueuedMessage } from "./queue";
 
 export interface IContext {
     /**
-     * Updates the checkpoint offset
+     * Updates the checkpoint
      */
-    checkpoint(offset: number);
+    checkpoint(queuedMessage: IQueuedMessage): void;
 
     /**
      * Closes the context with an error. The restart flag indicates whether the error is recoverable and the lambda
      * should be restarted.
      */
-    error(error: any, restart: boolean);
+    error(error: any, restart: boolean): void;
 }
 
 export interface IPartitionLambda {
     /**
      * Processes an incoming message
      */
-    handler(message: IKafkaMessage): void;
+    handler(message: IQueuedMessage): void;
 
     /**
      * Closes the lambda. After being called handler will no longer be invoked and the lambda is expected to cancel
@@ -61,7 +61,7 @@ export interface IPlugin {
     create(config: nconf.Provider): Promise<IPartitionLambdaFactory>;
 }
 
-export function extractBoxcar(message: IKafkaMessage): IBoxcarMessage {
+export function extractBoxcar(message: IQueuedMessage): IBoxcarMessage {
     if (typeof message.value !== "string" && !Buffer.isBuffer(message.value)) {
         return message.value;
     }

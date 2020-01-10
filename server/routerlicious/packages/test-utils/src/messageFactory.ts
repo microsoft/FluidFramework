@@ -14,7 +14,7 @@ import {
 import {
     BoxcarType,
     IBoxcarMessage,
-    IKafkaMessage,
+    IQueuedMessage,
     IRawOperationMessage,
     ISequencedOperationMessage,
     RawOperationType,
@@ -38,13 +38,11 @@ export class KafkaMessageFactory {
         }
     }
 
-    public sequenceMessage(value: any, key: string): IKafkaMessage {
+    public sequenceMessage(value: any, key: string): IQueuedMessage {
         const partition = this.getPartition(key);
         const offset = this.offsets[partition]++;
 
-        const kafkaMessage: IKafkaMessage = {
-            highWaterOffset: offset,
-            key,
+        const message: IQueuedMessage = {
             offset,
             partition,
             topic: this.topic,
@@ -58,7 +56,7 @@ export class KafkaMessageFactory {
                 } as IBoxcarMessage),
         };
 
-        return kafkaMessage;
+        return message;
     }
 
     public getHeadOffset(key: string) {

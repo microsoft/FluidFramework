@@ -98,7 +98,6 @@ export class SharedSegmentSequenceRevertable implements IRevertable {
                 while (tracked.trackingGroup.size > 0) {
                     const sg = tracked.trackingGroup.segments[0];
                     sg.trackingCollection.unlink(tracked.trackingGroup);
-                    /* eslint-disable @typescript-eslint/indent */
                     switch (tracked.operation) {
                         case MergeTreeDeltaType.INSERT:
                             if (sg.removedSeq === undefined) {
@@ -130,7 +129,6 @@ export class SharedSegmentSequenceRevertable implements IRevertable {
                         default:
                             throw new Error("operationt type not revertable");
                     }
-                    /* eslint-enable @typescript-eslint/indent */
                 }
             }
         }

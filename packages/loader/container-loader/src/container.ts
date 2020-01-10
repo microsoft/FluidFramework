@@ -3,9 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// Disabling these per-file rather than full subdirectory
-/* eslint-disable @typescript-eslint/no-misused-promises */
-
 import * as assert from "assert";
 import {
     ITelemetryBaseLogger,
@@ -118,8 +115,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             request,
             logger);
 
-        // eslint-disable-next-line no-async-promise-executor
-        return new Promise<Container>(async (res, rej) => {
+        return new Promise<Container>((res, rej) => {
             let alreadyRaisedError = false;
             const onError = (error) => {
                 container.removeListener("error", onError);
@@ -135,8 +131,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             const version = request.headers && request.headers[LoaderHeader.version];
             const pause = request.headers && request.headers[LoaderHeader.pause];
 
-            // tslint:disable-next-line no-unsafe-any
-            return container.load(version, !!pause)
+            container.load(version, !!pause)
                 .then(() => {
                     container.removeListener("error", onError);
                     res(container);
@@ -156,10 +151,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
     private pendingClientId: string | undefined;
     private loaded = false;
-    // TSLint incorrectly believes blobManager is not reassigned, but actually it is in load().
-    // Known bug: https://github.com/palantir/tslint/issues/3803
-    // Fixed in ESLint: https://github.com/typescript-eslint/typescript-eslint/issues/946
-    // tslint:disable-next-line:prefer-readonly
     private blobManager: BlobManager | undefined;
 
     // Active chaincode and associated runtime
@@ -179,10 +170,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private context: ContainerContext | undefined;
     private pkg: string | IFluidCodeDetails | undefined;
     private codeQuorumKey;
-    // TSLint incorrectly believes protocolHandler is not reassigned, but actually it is in load().
-    // Known bug: https://github.com/palantir/tslint/issues/3803
-    // Fixed in ESLint: https://github.com/typescript-eslint/typescript-eslint/issues/946
-    // tslint:disable-next-line:prefer-readonly
     private protocolHandler: ProtocolOpHandler | undefined;
 
     private firstConnection = true;
@@ -349,7 +336,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     public on(event: "pong" | "processTime", listener: (latency: number) => void): this;
     public on(event: MessageType.BlobUploaded, listener: (contents: any) => void): this;
 
-    /* tslint:disable:no-unnecessary-override */
     public on(event: string | symbol, listener: (...args: any[]) => void): this {
         return super.on(event, listener);
     }
@@ -431,8 +417,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         this.emit("error", error);
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public reloadContext(): Promise<void> {
+    public async reloadContext(): Promise<void> {
         return this.reloadContextCore().catch((error) => {
             this.raiseCriticalError(error);
             throw error;
@@ -576,21 +561,13 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return versions[0];
     }
 
-    private async recordConnectStartTime() {
+    private recordConnectStartTime() {
         if (this.connectionTransitionTimes[ConnectionState.Disconnected] === undefined) {
             this.connectionTransitionTimes[ConnectionState.Disconnected] = performanceNow();
         }
     }
 
-    private startConnectingToDeltaStream() {
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.recordConnectStartTime();
-        this._deltaManager.connect().catch(() => { });
-    }
-
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    private connectToDeltaStream() {
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    private async connectToDeltaStream() {
         this.recordConnectStartTime();
         return this._deltaManager.connect();
     }
@@ -607,10 +584,15 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private async load(specifiedVersion: string | null | undefined, pause: boolean): Promise<void> {
         const perfEvent = PerformanceEvent.start(this.logger, { eventName: "Load" });
 
+        let startConnectionP: Promise<IConnectionDetails> | undefined;
+
         // Start websocket connection as soon as possible.  Note that there is no op handler attached yet, but the
         // DeltaManager is resilient to this and will wait to start processing ops until after it is attached.
         if (!pause) {
-            this.startConnectingToDeltaStream();
+            startConnectionP = this.connectToDeltaStream();
+            startConnectionP.catch((error) => {
+                debug(`Error in connecting to delta stream from unpaused case ${error}`);
+            });
         }
 
         this.storageService = await this.getDocumentStorageService();
@@ -620,8 +602,11 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             : await this.fetchSnapshotTree(specifiedVersion);
 
         // If pause, and there's no tree, then we'll start the websocket connection here (we'll need the details later)
-        if (!maybeSnapshotTree) {
-            this.startConnectingToDeltaStream();
+        if (!maybeSnapshotTree && !startConnectionP) {
+            startConnectionP = this.connectToDeltaStream();
+            startConnectionP.catch((error) => {
+                debug(`Error in connecting to delta stream from no snapshot tree case ${error}`);
+            });
         }
 
         const blobManagerP = this.loadBlobManager(this.storageService, maybeSnapshotTree);
@@ -644,7 +629,11 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             this._parentBranch = attributes.branch !== this.id ? attributes.branch : null;
             loadDetailsP = Promise.resolve();
         } else {
-            loadDetailsP = this.connectToDeltaStream().then((details) => {
+            if (!startConnectionP) {
+                startConnectionP = this.connectToDeltaStream();
+            }
+            // Intentionally don't .catch on this promise - we'll let any error throw below in the await.
+            loadDetailsP = startConnectionP.then((details) => {
                 this._existing = details.existing;
                 this._parentBranch = details.parentBranch;
             });
@@ -732,7 +721,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         const protocolLogger = ChildLogger.create(this.subLogger, "ProtocolHandler");
 
         protocol.on("Summary", (message) => {
-            /* eslint-disable @typescript-eslint/indent */
             switch (message.type) {
                 case MessageType.Summarize:
                     protocolLogger.sendTelemetryEvent({
@@ -762,11 +750,9 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                     break;
                 default:
             }
-            /* eslint-enable @typescript-eslint/indent */
         });
 
         protocol.quorum.on("error", (error) => {
-            // tslint:disable-next-line no-unsafe-any
             protocolLogger.sendErrorEvent(error);
         });
 
@@ -873,9 +859,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     }
 
     private get client() {
-        // tslint:disable-next-line:no-unsafe-any
         const client: IClient = this.options && this.options.client
-            // tslint:disable-next-line:no-unsafe-any
             ? (this.options.client as IClient)
             : {
                 type: "browser", // Back-compat: 0.11 clientType
@@ -892,7 +876,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             && this.originalRequest.headers[LoaderHeader.clientDetails];
 
         if (headerClientDetails) {
-            // tslint:disable-next-line: no-unsafe-any
             merge(client.details, headerClientDetails);
         }
 
@@ -1141,13 +1124,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         }
     }
 
-    // tslint:disable no-unsafe-any
     private getScopes(options: any): string[] {
         return options && options.tokens && options.tokens.jwt ?
-            // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-            (jwtDecode(options.tokens.jwt) as ITokenClaims).scopes : [];
+            jwtDecode<ITokenClaims>(options.tokens.jwt).scopes : [];
     }
-    // tslint:enable no-unsafe-any
 
     /**
      * Get the most recent snapshot, or a specific version.
@@ -1194,8 +1174,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             (err) => this.raiseCriticalError(err),
             (type, contents) => this.submitMessage(type, contents),
             (message) => this.submitSignal(message),
-            // eslint-disable-next-line @typescript-eslint/promise-function-async
-            (message) => this.snapshot(message),
+            async (message) => this.snapshot(message),
             (reason?: string) => this.close(reason),
             Container.version,
         );

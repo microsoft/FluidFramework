@@ -13,7 +13,6 @@ import * as ui from "../ui";
 import { DockPanel } from "./dockPanel";
 import { FlowView, IOverlayMarker } from "./flowView";
 import { Image } from "./image";
-import { InkCanvas } from "./inkCanvas";
 import { LayerPanel } from "./layerPanel";
 import { InkLayer, Layer, OverlayCanvas } from "./overlayCanvas";
 import { IRange } from "./scrollBar";
@@ -33,23 +32,15 @@ export class FlowContainer extends ui.Component {
     private readonly dockPanel: DockPanel;
     private readonly layerPanel: LayerPanel;
     private readonly overlayCanvas: OverlayCanvas;
-    private readonly inkCanvas: InkCanvas;
 
     private layerCache: { [key: string]: Layer } = {};
     private activeLayers: { [key: string]: IOverlayLayerStatus } = {};
-
-    /**
-     * This determines whether to use an OverlayCanvas or InkCanvas for inking.  Currently will always use an overlay
-     * canvas, but keeping the other option alive for testing purposes for now.
-     */
-    private readonly useOverlayCanvas: boolean = true;
 
     constructor(
         element: HTMLDivElement,
         private readonly collabDocument: api.Document,
         private readonly sharedString: Sequence.SharedString,
         private readonly overlayInkMap: ISharedMap,
-        private readonly pageInk: IInk,
         private readonly image: Image,
         private readonly options?: Record<string, any>) {
 
@@ -80,40 +71,34 @@ export class FlowContainer extends ui.Component {
         layerPanelDiv.id = "layer-panel";
         this.layerPanel = new LayerPanel(layerPanelDiv);
 
-        // Create the correct inking canvas
-        if (this.useOverlayCanvas) {
-            // Overlay canvas for ink
-            const overlayCanvasDiv = document.createElement("div");
-            overlayCanvasDiv.classList.add("overlay-canvas");
-            this.overlayCanvas = new OverlayCanvas(this.collabDocument, overlayCanvasDiv, layerPanelDiv);
+        // Overlay canvas for ink
+        const overlayCanvasDiv = document.createElement("div");
+        overlayCanvasDiv.classList.add("overlay-canvas");
+        this.overlayCanvas = new OverlayCanvas(this.collabDocument, overlayCanvasDiv, layerPanelDiv);
 
-            this.overlayCanvas.on("ink", (layer: InkLayer, model: IInk, start: ui.IPoint) => {
-                this.overlayCanvas.enableInkHitTest(false);
-                const position = this.flowView.getNearestPosition(start);
-                this.overlayCanvas.enableInkHitTest(true);
+        this.overlayCanvas.on("ink", (layer: InkLayer, model: IInk, start: ui.IPoint) => {
+            this.overlayCanvas.enableInkHitTest(false);
+            const position = this.flowView.getNearestPosition(start);
+            this.overlayCanvas.enableInkHitTest(true);
 
-                const location = this.flowView.getPositionLocation(position);
-                const cursorOffset = {
-                    x: start.x - location.x,
-                    y: start.y - location.y,
-                };
+            const location = this.flowView.getPositionLocation(position);
+            const cursorOffset = {
+                x: start.x - location.x,
+                y: start.y - location.y,
+            };
 
-                this.layerCache[model.id] = layer;
-                this.activeLayers[model.id] = { layer, active: true, cursorOffset };
-                this.overlayInkMap.set(model.id, model.handle);
-                // Inserts the marker at the flow view's cursor position
-                this.sharedString.insertMarker(
-                    position,
-                    MergeTree.ReferenceType.Simple,
-                    {
-                        [MergeTree.reservedMarkerIdKey]: model.id,
-                        [MergeTree.reservedMarkerSimpleTypeKey]: "inkOverlay",
-                    });
-            });
-        } else {
-            this.inkCanvas = new InkCanvas(document.createElement("div"), this.pageInk);
-            this.inkCanvas.enableInkHitTest(false);
-        }
+            this.layerCache[model.id] = layer;
+            this.activeLayers[model.id] = { layer, active: true, cursorOffset };
+            this.overlayInkMap.set(model.id, model.handle);
+            // Inserts the marker at the flow view's cursor position
+            this.sharedString.insertMarker(
+                position,
+                MergeTree.ReferenceType.Simple,
+                {
+                    [MergeTree.reservedMarkerIdKey]: model.id,
+                    [MergeTree.reservedMarkerSimpleTypeKey]: "inkOverlay",
+                });
+        });
 
         // Update the scroll bar
         this.flowView.on(
@@ -140,11 +125,7 @@ export class FlowContainer extends ui.Component {
 
         this.status.addOption("inkingEnabled", "ink");
         this.status.on("inkingEnabled", (value) => {
-            if (this.useOverlayCanvas) {
-                this.overlayCanvas.enableInk(value);
-            } else {
-                this.inkCanvas.enableInkHitTest(value);
-            }
+            this.overlayCanvas.enableInk(value);
         });
 
         const spellOption = "spellchecker";
@@ -162,11 +143,7 @@ export class FlowContainer extends ui.Component {
 
         // Add children to the panel once we have both
         this.layerPanel.addChild(this.flowView);
-        if (this.useOverlayCanvas) {
-            this.layerPanel.addChild(this.overlayCanvas);
-        } else {
-            this.layerPanel.addChild(this.inkCanvas);
-        }
+        this.layerPanel.addChild(this.overlayCanvas);
 
         this.dockPanel = new DockPanel(this.element);
         this.addChild(this.dockPanel);

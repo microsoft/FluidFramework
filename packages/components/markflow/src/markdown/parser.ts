@@ -111,7 +111,6 @@ export class MarkdownParser {
         let props: MapLike<string | number>;
 
         const type = node.type;
-        /* eslint-disable @typescript-eslint/indent */
         switch (type) {
             case "root":
                 // Discard the root node.
@@ -157,7 +156,6 @@ export class MarkdownParser {
             default:
                 token = typeToToken[type];
         }
-        /* eslint-enable @typescript-eslint/indent */
 
         if (token === undefined) {
             console.warn(token, `Unknown markdown node type: '${type}'`);

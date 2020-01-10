@@ -784,7 +784,6 @@ export class Client {
         const op = opArgs.op;
         const msg = opArgs.sequencedMessage;
         this.getOrAddShortClientId(msg.clientId);
-        /* eslint-disable @typescript-eslint/indent */
         switch (op.type) {
             case ops.MergeTreeDeltaType.INSERT:
                 this.applyInsertOp(opArgs);
@@ -808,7 +807,6 @@ export class Client {
             default:
                 break;
         }
-        /* eslint-enable @typescript-eslint/indent */
     }
 
     public applyMsg(msg: ISequencedDocumentMessage) {
@@ -951,7 +949,6 @@ export class Client {
                 op,
                 groupOp,
             };
-            /* eslint-disable @typescript-eslint/indent */
             switch (op.type) {
                 case ops.MergeTreeDeltaType.INSERT:
                     this.applyInsertOp(opArgs);
@@ -965,7 +962,6 @@ export class Client {
                 default:
                     break;
             }
-            /* eslint-enable @typescript-eslint/indent */
         }
     }
     updateConsensusProperty(op: ops.IMergeTreeAnnotateMsg, msg: ISequencedDocumentMessage) {

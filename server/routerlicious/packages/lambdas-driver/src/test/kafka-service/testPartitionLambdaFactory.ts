@@ -7,7 +7,7 @@ import * as assert from "assert";
 import { EventEmitter } from "events";
 import {
     IContext,
-    IKafkaMessage,
+    IQueuedMessage,
     IPartitionLambda,
     IPartitionLambdaFactory,
 } from "@microsoft/fluid-server-services-core";
@@ -22,7 +22,7 @@ export class TestLambda implements IPartitionLambda {
         private readonly context: IContext) {
     }
 
-    public handler(message: IKafkaMessage): void {
+    public handler(message: IQueuedMessage): void {
         if (this.throwHandler) {
             throw new Error("Requested failure");
         }
@@ -30,7 +30,7 @@ export class TestLambda implements IPartitionLambda {
         assert.ok((this.lastOffset === undefined) || (this.lastOffset + 1 === message.offset));
         this.lastOffset = message.offset;
         this.factory.handleCount++;
-        this.context.checkpoint(message.offset);
+        this.context.checkpoint(message);
     }
 
     public close(): void {

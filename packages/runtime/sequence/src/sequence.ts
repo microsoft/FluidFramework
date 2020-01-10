@@ -52,7 +52,6 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     private static createOpsFromDelta(event: SequenceDeltaEvent): MergeTree.IMergeTreeOp[] {
         const ops: MergeTree.IMergeTreeOp[] = [];
         for (const r of event.ranges) {
-            /* eslint-disable @typescript-eslint/indent */
             switch (event.deltaOperation) {
                 case MergeTree.MergeTreeDeltaType.ANNOTATE:
                     const lastAnnotate = ops[ops.length - 1] as MergeTree.IMergeTreeAnnotateMsg;
@@ -93,7 +92,6 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
 
                 default:
             }
-            /* eslint-enable @typescript-eslint/indent */
         }
         return ops;
     }
@@ -119,7 +117,6 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
             document.options);
 
         super.on("newListener", (event) => {
-            /* eslint-disable @typescript-eslint/indent */
             switch (event) {
                 case "sequenceDelta":
                     if (!this.client.mergeTreeDeltaCallback) {
@@ -137,10 +134,8 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
                     break;
                 default:
             }
-            /* eslint-enable @typescript-eslint/indent */
         });
         super.on("removeListener", (event: string | symbol) => {
-            /* eslint-disable @typescript-eslint/indent */
             switch (event) {
                 case "sequenceDelta":
                     if (super.listenerCount(event) === 0) {
@@ -155,7 +150,6 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
                 default:
                     break;
             }
-            /* eslint-enable @typescript-eslint/indent */
         });
 
         this.intervalMapKernel = new MapKernel(
@@ -432,13 +426,31 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         return tree;
     }
 
+    /**
+     * Replace the range specified from start to end with the provided segment
+     * This is done by inserting the segment at the end of the range, followed
+     * by removing the contents of the range
+     * For a zero range (start == end), insert at end do not remove anything
+     * For a reverse range (start \> end), insert the segment at the greater of
+     * start/end and allow Client to attempt to remove the range
+     *
+     * @param start - The start of the range to replace
+     * @param end - The end of the range to replace
+     * @param segment - The segment that will replace the range
+     */
     protected replaceRange(start: number, end: number, segment: MergeTree.ISegment) {
-        // Insert first, so local references can slide to the inserted seg
-        // if any
-        const insert = this.client.insertSegmentLocal(end, segment);
+        // Insert at the max end of the range when start > end, but still remove the range later
+        const insertIndex: number = Math.max(start, end);
+
+        // Insert first, so local references can slide to the inserted seg if any
+        const insert = this.client.insertSegmentLocal(insertIndex, segment);
         if (insert) {
-            const remove = this.client.removeRangeLocal(start, end);
-            this.submitSequenceMessage(MergeTree.createGroupOp(insert, remove));
+            if (start !== end) {
+                const remove = this.client.removeRangeLocal(start, end);
+                this.submitSequenceMessage(MergeTree.createGroupOp(insert, remove));
+            } else {
+                this.submitSequenceMessage(insert);
+            }
         }
     }
 

@@ -110,7 +110,6 @@ class MockDeltaConnection implements IDeltaConnection {
     }
 
     public set state(state: ConnectionState) {
-        /* eslint-disable @typescript-eslint/indent */
         switch (state) {
             case ConnectionState.Connected:
                 if (this.pendingClientId) {
@@ -124,7 +123,6 @@ class MockDeltaConnection implements IDeltaConnection {
             case ConnectionState.Disconnected:
             default:
         }
-        /* eslint-enable @typescript-eslint/indent */
 
         this.connectionState = state;
         this.handlers.forEach((h) => {

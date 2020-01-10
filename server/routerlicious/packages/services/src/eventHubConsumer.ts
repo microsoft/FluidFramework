@@ -9,12 +9,15 @@ import {
     BoxcarType,
     IBoxcarMessage,
     IConsumer,
-    IKafkaMessage,
+    IQueuedMessage,
     IPartition,
 } from "@microsoft/fluid-server-services-core";
 import { debug } from "./debug";
 
-const emit = true;
+interface IEventHubMessage extends IQueuedMessage {
+    context: PartitionContext;
+    data: EventData;
+}
 
 export class EventHubConsumer implements IConsumer {
     private readonly events = new EventEmitter();
@@ -56,9 +59,14 @@ export class EventHubConsumer implements IConsumer {
         });
     }
 
-    public async commitOffset(data: any[]): Promise<void> {
-        // Const commitP = this.consumer.commitOffset([{ offset, partition: this.id }]);
-        // TODO handle checkpointing
+    public async commitCheckpoint(partitionId: number, queuedMessage: IQueuedMessage): Promise<void> {
+        const eventHubMessage = queuedMessage as IEventHubMessage;
+        if (eventHubMessage && eventHubMessage.context && eventHubMessage.data) {
+            await eventHubMessage.context.checkpointFromEventData(eventHubMessage.data);
+
+        } else {
+            debug("Invalid message metadata");
+        }
     }
 
     public on(event: string, listener: (...args: any[]) => void): this {
@@ -66,18 +74,16 @@ export class EventHubConsumer implements IConsumer {
         return this;
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public close(): Promise<void> {
-        return this.eventHost.stop();
+    public async close() {
+        await this.eventHost.stop();
     }
 
-    public pause() {
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.eventHost.stop();
+    public async pause() {
+        await this.eventHost.stop();
     }
 
-    public resume() {
-        throw new Error("Is this used?");
+    public async resume() {
+        throw new Error("Not implemented");
     }
 
     private getPartitions(partitionIds: string[]): IPartition[] {
@@ -127,21 +133,16 @@ export class EventHubConsumer implements IConsumer {
             type: BoxcarType,
         };
 
-        const kafkaMessage: IKafkaMessage = {
-            highWaterOffset: data.sequenceNumber,
-            key: data.partitionKey,
+        const eventHubMessage: IEventHubMessage = {
+            context,
+            data,
             offset: data.sequenceNumber,
             partition: parseInt(context.partitionId, 10),
             topic: context.eventhubPath,
             value: boxcarMessage,
         };
 
-        // TODO handle checkpointing
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        context.checkpoint();
-        if (emit) {
-            this.events.emit("data", kafkaMessage);
-        }
+        this.events.emit("data", eventHubMessage);
     }
 
     private error(error) {

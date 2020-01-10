@@ -383,7 +383,6 @@ export function inputBoxCreate(
     }
 
     function keydown(e: KeyboardEvent) {
-        /* eslint-disable @typescript-eslint/indent */
         switch (e.keyCode) {
             case KeyCode.leftArrow:
                 if (cursor.pos > 0) {
@@ -420,7 +419,6 @@ export function inputBoxCreate(
             default:
                 break;
         }
-        /* eslint-enable @typescript-eslint/indent */
     }
 
     function keypress(e: KeyboardEvent) {

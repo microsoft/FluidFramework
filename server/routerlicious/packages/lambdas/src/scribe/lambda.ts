@@ -25,13 +25,13 @@ import {
     ICollection,
     IContext,
     IDocument,
-    IKafkaMessage,
     IProducer,
     IRawOperationMessage,
     IScribe,
     ISequencedOperationMessage,
     RawOperationType,
     SequencedOperationType,
+    IQueuedMessage,
 } from "@microsoft/fluid-server-services-core";
 import * as Deque from "double-ended-queue";
 import * as _ from "lodash";
@@ -42,7 +42,8 @@ export class ScribeLambda extends SequencedLambda {
     private readonly lastOffset: number;
 
     // Pending checkpoint information
-    private pendingCheckpoint: IScribe;
+    private pendingCheckpointScribe: IScribe;
+    private pendingCheckpointOffset: IQueuedMessage;
     private pendingP: Promise<void>;
     private readonly pendingCheckpointMessages = new Deque<ISequencedOperationMessage>();
 
@@ -80,7 +81,7 @@ export class ScribeLambda extends SequencedLambda {
                 .map((message) => message.operation));
     }
 
-    public async handlerCore(message: IKafkaMessage): Promise<void> {
+    public async handlerCore(message: IQueuedMessage): Promise<void> {
         // Skip any log messages we have already processed. Can occur in the case Kafka needed to restart but
         // we had already checkpointed at a given offset.
         if (message.offset <= this.lastOffset) {
@@ -145,7 +146,7 @@ export class ScribeLambda extends SequencedLambda {
             }
         }
 
-        this.checkpoint(message.offset);
+        this.checkpoint(message);
     }
 
     public close() {
@@ -167,23 +168,24 @@ export class ScribeLambda extends SequencedLambda {
         }
     }
 
-    private checkpoint(logOffset: number) {
+    private checkpoint(queuedMessage: IQueuedMessage) {
         const protocolState = this.protocolHandler.getProtocolState();
 
         const checkpoint: IScribe = {
-            logOffset,
+            logOffset: queuedMessage.offset,
             minimumSequenceNumber: this.minSequenceNumber,
             protocolState,
             sequenceNumber: this.sequenceNumber,
         };
 
-        this.checkpointCore(checkpoint);
+        this.checkpointCore(checkpoint, queuedMessage);
     }
 
-    private checkpointCore(checkpoint: IScribe) {
+    private checkpointCore(checkpoint: IScribe, queuedMessage: IQueuedMessage) {
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         if (this.pendingP) {
-            this.pendingCheckpoint = checkpoint;
+            this.pendingCheckpointScribe = checkpoint;
+            this.pendingCheckpointOffset = queuedMessage;
             return;
         }
 
@@ -191,12 +193,14 @@ export class ScribeLambda extends SequencedLambda {
         this.pendingP.then(
             () => {
                 this.pendingP = undefined;
-                this.context.checkpoint(checkpoint.logOffset);
+                this.context.checkpoint(queuedMessage);
 
-                if (this.pendingCheckpoint) {
-                    const pending = this.pendingCheckpoint;
-                    this.pendingCheckpoint = undefined;
-                    this.checkpointCore(pending);
+                if (this.pendingCheckpointScribe) {
+                    const pendingScribe = this.pendingCheckpointScribe;
+                    const pendingOffset = this.pendingCheckpointOffset;
+                    this.pendingCheckpointScribe = undefined;
+                    this.pendingCheckpointOffset = undefined;
+                    this.checkpointCore(pendingScribe, pendingOffset);
                 }
             },
             (error) => {
