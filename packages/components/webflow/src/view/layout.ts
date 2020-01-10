@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
+import { EventEmitter } from "events";
 import { Dom, Scheduler } from "@fluid-example/flow-util-lib";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { ISegment, LocalReference, MergeTreeMaintenanceType } from "@microsoft/fluid-merge-tree";
 import { SequenceEvent } from "@microsoft/fluid-sequence";
-import * as assert from "assert";
-import { EventEmitter } from "events";
 import { Tag } from "../";
 import { FlowDocument } from "../document";
 import { clamp, done, emptyObject, getSegmentRange } from "../util";
@@ -25,19 +25,18 @@ interface IFormatInfo {
 }
 
 class LayoutCheckpoint {
-    public readonly formatStack: ReadonlyArray<Readonly<IFormatInfo>>;
+    public readonly formatStack: readonly Readonly<IFormatInfo>[];
     public readonly cursor: Readonly<ILayoutCursor>;
 
     constructor(
-        formatStack: ReadonlyArray<IFormatInfo>,
+        formatStack: readonly IFormatInfo[],
         cursor: Readonly<ILayoutCursor>,
     ) {
         this.formatStack = Object.freeze(formatStack.slice(0));
-        this.cursor = Object.freeze({...cursor});
+        this.cursor = Object.freeze({ ...cursor });
     }
 }
 
-// tslint:disable-next-line:no-object-literal-type-assertion
 export const eotSegment = Object.freeze({ cachedLength: 0 }) as ISegment;
 
 export class Layout extends EventEmitter {
@@ -116,7 +115,6 @@ export class Layout extends EventEmitter {
         Dom.removeAllChildren(this.root);
     }
 
-    // tslint:disable-next-line:max-func-body-length
     public sync(start = 0, end = this.doc.length) {
         const doc = this.doc;
         const length = doc.length;
@@ -160,6 +158,7 @@ export class Layout extends EventEmitter {
             doc.visitRange((position, segment, startOffset, endOffset) => {
                 this.beginSegment(position, segment, startOffset, endOffset);
 
+                // eslint-disable-next-line no-constant-condition
                 while (true) {
                     const index = this.formatStack.length - 1;
                     const formatInfo = this.format;
@@ -416,7 +415,7 @@ export class Layout extends EventEmitter {
         // Reuse the existing element if possible, otherwise create a new one.  Note that
         // 'layout.pushNode(..)' will clean up the old node if needed.
         return hasTag(existing, tag) && this.nodeToSegment(existing) === this.segment
-            ? existing as HTMLElement
+            ? existing
             : document.createElement(tag);
     }
 
@@ -479,7 +478,7 @@ export class Layout extends EventEmitter {
     private restoreCheckpoint(checkpoint: LayoutCheckpoint) {
         const { formatStack, cursor } = checkpoint;
         this.formatStack = formatStack.map((formatInfo) => ({ ...formatInfo }));
-        this._cursor     = {...cursor};
+        this._cursor = { ...cursor };
 
         // The next insertion point must be a descendent of the root node.
         assert(this.root.contains(cursor.parent));
@@ -523,7 +522,7 @@ export class Layout extends EventEmitter {
         }
 
         this.invalidate(e.first.position, e.last.position + e.last.segment.cachedLength);
-    }
+    };
 
     private unionRef(doc: FlowDocument, position: number | undefined, ref: LocalReference | undefined, fn: (a: number, b: number) => number, limit: number) {
         return fn(
@@ -539,13 +538,14 @@ export class Layout extends EventEmitter {
     private invalidate(start: number, end: number) {
         // Union the delta range with the current invalidated range (if any).
         const doc = this.doc;
+        /* eslint-disable @typescript-eslint/unbound-method */
         start = this.unionRef(doc, start, this.startInvalid, Math.min, +Infinity);
-        end   = this.unionRef(doc, end,   this.endInvalid,   Math.max, -Infinity);
+        end = this.unionRef(doc, end, this.endInvalid, Math.max, -Infinity);
+        /* eslint-enable @typescript-eslint/unbound-method */
         this.startInvalid = updateRef(doc, this.startInvalid, start);
-        this.endInvalid   = updateRef(doc, this.endInvalid,   end);
+        this.endInvalid = updateRef(doc, this.endInvalid, end);
         this.scheduleRender();
 
-        // tslint:disable-next-line:promise-must-complete
         this.renderPromise = new Promise((accept) => { this.renderResolver = accept; });
     }
 

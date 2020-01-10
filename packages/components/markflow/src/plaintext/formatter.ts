@@ -40,6 +40,7 @@ export class PlainTextFormatter<TState extends IFormatterState> extends RootForm
     public onChange() { }
 
     public onKeyDown(layout: Layout, state: Readonly<TState>, caret: Caret, e: KeyboardEvent) {
+
         switch (e.code) {
             // Note: Chrome 69 delivers backspace on 'keydown' only (i.e., 'keypress' is not fired.)
             case KeyCode.backspace: {
@@ -62,6 +63,7 @@ export class PlainTextFormatter<TState extends IFormatterState> extends RootForm
                 this.insertText(layout, caret, "\n");
                 break;
             default:
+                // eslint-disable-next-line no-case-declarations
                 const text = e.key;
                 this.insertText(layout, caret, text);
         }

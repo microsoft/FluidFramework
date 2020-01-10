@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
+import * as fs from "fs";
 import {
     IDocumentDeltaStorageService,
     IDocumentService,
@@ -13,8 +15,6 @@ import {
     ISequencedDocumentMessage,
     ScopeType,
 } from "@microsoft/fluid-protocol-definitions";
-import * as assert from "assert";
-import * as fs from "fs";
 import { printMessageStats } from "./fluidAnalyzeMessages";
 import {
     connectToWebSocket,
@@ -42,10 +42,10 @@ async function loadChunk(from: number, to: number, deltaStorage: IDocumentDeltaS
     throw new Error("Giving up after 3 attempts to download chunk.");
 }
 
-async function *loadAllSequencedMessages(
-        documentService?: IDocumentService,
-        dir?: string,
-        files?: string[]) {
+async function* loadAllSequencedMessages(
+    documentService?: IDocumentService,
+    dir?: string,
+    files?: string[]) {
     const batch = 2000;
     let lastSeq = 0;
 
@@ -92,7 +92,7 @@ async function *loadAllSequencedMessages(
     }
 
     if (requests > 0) {
-        // tslint:disable-next-line: max-line-length
+        // eslint-disable-next-line max-len
         console.log(`\n${Math.floor((Date.now() - timeStart) / 1000)} seconds to retrieve ${opsStorage} ops in ${requests} requests`);
     }
 
@@ -101,6 +101,7 @@ async function *loadAllSequencedMessages(
         const client: IClient = {
             permission: [],
             scopes: [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
+            type: "browser", // Back-compat: 0.11 clientType
             details: {
                 capabilities: { interactive: true },
             },
@@ -119,7 +120,7 @@ async function *loadAllSequencedMessages(
             const filtered = initialMessages.filter((a) => a.sequenceNumber > lastSequenceNumber);
             const sorted = filtered.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
             lastSeq = sorted[sorted.length - 1].sequenceNumber;
-            // tslint:disable-next-line: max-line-length
+            // eslint-disable-next-line max-len
             logMsg = ` (${opsStorage} delta storage, ${initialMessages.length} initial ws messages, ${initialMessages.length - sorted.length} dup)`;
             yield sorted;
         }
@@ -128,13 +129,13 @@ async function *loadAllSequencedMessages(
 }
 
 async function* saveOps(
-        gen, // AsyncGenerator<ISequencedDocumentMessage[]>,
-        dir: string,
-        files: string[]) {
-    // split into 100K ops
+    gen, // AsyncGenerator<ISequencedDocumentMessage[]>,
+    dir: string,
+    files: string[]) {
+    // Split into 100K ops
     const chunk = 100 * 1000;
 
-    // figure out first file we want to write to
+    // Figure out first file we want to write to
     let index = 0;
     if (files.length !== 0) {
         index = (files.length - 1);
@@ -160,7 +161,7 @@ async function* saveOps(
                 === curr + sequencedMessages.length - 1);
         }
 
-        // time to write it out?
+        // Time to write it out?
         while (sequencedMessages.length >= chunk || (result.done && sequencedMessages.length !== 0)) {
             const name = filenameFromIndex(index);
             const write = sequencedMessages.splice(0, chunk);
@@ -192,9 +193,7 @@ export async function fluidFetchMessages(documentService?: IDocumentService, sav
                 }
                 return true;
             })
-            .sort((a, b) => {
-                return a.localeCompare(b);
-            });
+            .sort((a, b) => a.localeCompare(b));
 
     let generator = loadAllSequencedMessages(documentService, saveDir, files);
 
@@ -209,8 +208,9 @@ export async function fluidFetchMessages(documentService?: IDocumentService, sav
             dumpMessages,
             messageTypeFilter);
     } else {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         let item;
-        for await (item of generator) {}
+        for await (item of generator) { }
     }
 
 }

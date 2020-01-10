@@ -13,10 +13,12 @@ import { OdspDocumentStorageManager } from "./OdspDocumentStorageManager";
 export class OdspDocumentStorageService implements IDocumentStorageService {
     constructor(private readonly storageManager: OdspDocumentStorageManager) { }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public uploadSummary(commit: api.ISummaryTree): Promise<api.ISummaryHandle> {
         return this.storageManager.uploadSummary(commit);
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public downloadSummary(handle: api.ISummaryHandle): Promise<api.ISummaryTree> {
         return this.storageManager.downloadSummary(handle);
     }
@@ -43,6 +45,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         return response.content;
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public write(tree: api.ITree, parents: string[], message: string): Promise<api.IVersion> {
         return this.storageManager.write(tree, parents, message);
     }

@@ -35,16 +35,19 @@ export class InnerDocumentServiceFactory implements IDocumentServiceFactory {
     }
 
     private async createOuterProxy(): Promise<IDocumentServiceFactoryProxy> {
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises, no-async-promise-executor
         return new Promise<IDocumentServiceFactoryProxy>(async (resolve, reject) => {
             const create = async () => {
+
                 // If the parent endpoint does not exist, returns empty proxy silently (no connection/failure case)
                 const proxyP =
-                    Comlink.wrap(Comlink.windowEndpoint(window.parent)) as Promise<IDocumentServiceFactoryProxy>;
-                const proxy = await proxyP;
+                    Comlink.wrap<Promise<IDocumentServiceFactoryProxy>>(Comlink.windowEndpoint(window.parent));
 
-                // Check if the proxy is empty
-                await proxy.connected();
-                resolve(proxy);
+                return proxyP.then(async (proxy) => {
+                    // Check if the proxy is empty
+                    await proxy.connected();
+                    resolve(proxy);
+                });
             };
 
             // If innerFactory is created second, the outerFactory will trigger the connection
@@ -52,6 +55,7 @@ export class InnerDocumentServiceFactory implements IDocumentServiceFactory {
                 await create();
             };
 
+            // eslint-disable-next-line @typescript-eslint/no-misused-promises
             window.addEventListener("message", evtListener, { once: true });
 
             // Attempt to connect, does not connect if innerDocumentServiceFactory
@@ -60,6 +64,7 @@ export class InnerDocumentServiceFactory implements IDocumentServiceFactory {
 
             // Remove eventListener if the create returns, the trigger was sent before inner was created
             // Leaving the eventListener will eat events.
+            // eslint-disable-next-line @typescript-eslint/no-misused-promises
             window.removeEventListener("message", evtListener);
         });
 

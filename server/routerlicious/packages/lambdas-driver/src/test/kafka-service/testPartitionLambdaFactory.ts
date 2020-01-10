@@ -3,23 +3,26 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
+import { EventEmitter } from "events";
 import {
     IContext,
-    IKafkaMessage,
+    IQueuedMessage,
     IPartitionLambda,
     IPartitionLambdaFactory,
 } from "@microsoft/fluid-server-services-core";
-import * as assert from "assert";
-import { EventEmitter } from "events";
 import { Provider } from "nconf";
 
 export class TestLambda implements IPartitionLambda {
     private lastOffset: number;
 
-    constructor(private factory: TestPartitionLambdaFactory, private throwHandler: boolean, private context: IContext) {
+    constructor(
+        private readonly factory: TestPartitionLambdaFactory,
+        private readonly throwHandler: boolean,
+        private readonly context: IContext) {
     }
 
-    public handler(message: IKafkaMessage): void {
+    public handler(message: IQueuedMessage): void {
         if (this.throwHandler) {
             throw new Error("Requested failure");
         }
@@ -27,7 +30,7 @@ export class TestLambda implements IPartitionLambda {
         assert.ok((this.lastOffset === undefined) || (this.lastOffset + 1 === message.offset));
         this.lastOffset = message.offset;
         this.factory.handleCount++;
-        this.context.checkpoint(message.offset);
+        this.context.checkpoint(message);
     }
 
     public close(): void {
@@ -43,7 +46,7 @@ export class TestPartitionLambdaFactory extends EventEmitter implements IPartiti
     public handleCount = 0;
     private failCreate = false;
     private throwHandler = false;
-    private lambdas: TestLambda[] = [];
+    private readonly lambdas: TestLambda[] = [];
 
     constructor() {
         super();

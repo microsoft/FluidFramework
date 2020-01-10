@@ -24,7 +24,7 @@ export class SharedMapUndoRedoHandler {
         if (local) {
             this.stackManager.pushToCurrentOperation(new SharedMapRevertable(changed, target));
         }
-    }
+    };
 }
 
 /**

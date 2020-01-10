@@ -13,10 +13,12 @@ interface ISearchMenuProps {
 }
 
 const template = new Template(
-    { tag: "div", props: { className: style.searchMenu }, children: [
-        { tag: "input", ref: "input", props: { type: "text", className: style.input, autocomplete: "off" }},
-        { tag: "datalist", ref: "datalist" },
-    ]});
+    {
+        tag: "div", props: { className: style.searchMenu }, children: [
+            { tag: "input", ref: "input", props: { type: "text", className: style.input, autocomplete: "off" } },
+            { tag: "datalist", ref: "datalist" },
+        ],
+    });
 
 const optionTemplate = new Template({ tag: "option" });
 
@@ -59,7 +61,7 @@ export class SearchMenuView extends View<ISearchMenuProps, ISearchMenuProps> {
     }
 
     protected onDetach(): void {
-        // do nothing.
+        // Do nothing.
     }
 
     private updateCommands() {
@@ -114,5 +116,5 @@ export class SearchMenuView extends View<ISearchMenuProps, ISearchMenuProps> {
                 break;
             default:
         }
-    }
+    };
 }

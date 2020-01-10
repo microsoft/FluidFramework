@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import { fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
 import {
     ConnectionState,
@@ -18,7 +19,6 @@ import {
     IObjectStorageService,
 } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObject, SharedObject, ValueType } from "@microsoft/fluid-shared-object-base";
-import * as assert from "assert";
 import { ConsensusRegisterCollectionFactory } from "./consensusRegisterCollectionFactory";
 import { debug } from "./debug";
 import { IConsensusRegisterCollection, ReadPolicy } from "./interfaces";
@@ -219,6 +219,7 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
                     },
                 },
             ],
+            // eslint-disable-next-line no-null/no-null
             id: null,
         };
 
@@ -332,9 +333,11 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const pending = this.promiseResolveQueue.shift()!;
         assert(pending);
+        /* eslint-disable @typescript-eslint/indent */
         assert(message.clientSequenceNumber === -1
             || message.clientSequenceNumber === pending.clientSequenceNumber,
             `${message.clientSequenceNumber} !== ${pending.clientSequenceNumber}`);
+        /* eslint-enable @typescript-eslint/indent */
         pending.resolve();
     }
 

@@ -3,4 +3,6 @@
  * Licensed under the MIT License.
  */
 
-module.exports = require("./.eslintrc.js")
+module.exports = require("./default.js")
+// module.exports = require("./converted.js")
+// module.exports = require("./unknown-rules.js")

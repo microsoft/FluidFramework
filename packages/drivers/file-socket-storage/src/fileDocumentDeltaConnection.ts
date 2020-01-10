@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
 import {
     ConnectionMode,
@@ -15,11 +16,8 @@ import {
     ISignalMessage,
     ITokenClaims,
 } from "@microsoft/fluid-protocol-definitions";
-import { EventEmitter } from "events";
 import { debug } from "./debug";
 import { FileDeltaStorageService } from "./fileDeltaStorageService";
-// tslint:disable-next-line:no-submodule-imports no-var-requires no-require-imports
-const cloneDeep = require("lodash/cloneDeep") as <T>(value: T) => T;
 
 const MaxBatchDeltas = 2000;
 
@@ -28,8 +26,10 @@ const ReplayMaxMessageSize = 16 * 1024;
 
 const fileProtocolVersion = "^0.1.0";
 
+const replayDocumentId = "replayDocId";
+
 const Claims: ITokenClaims = {
-    documentId: "",
+    documentId: replayDocumentId,
     scopes: [],
     tenantId: "",
     user: {
@@ -89,9 +89,11 @@ export class Replayer {
     }
 
     private emit(ops: ISequencedDocumentMessage[]) {
-        // Need to clone message as it gets modified while processing
-        // This breaks replay tool that uses same message with multiple containers.
-        ops.map((op) => this.deltaConnection.emit("op", op.clientId, cloneDeep(op)));
+        // Note: do not clone messages here!
+        // If Replay Tool fails due to one container patching message in-place,
+        // then same thing can happen in shipping product due to
+        // socket reuse in ODSP between main and summarizer containers.
+        this.deltaConnection.emit("op", replayDocumentId, ops);
     }
 }
 
@@ -103,7 +105,7 @@ export class ReplayFileDeltaConnection extends EventEmitter implements IDocument
      * @returns Document delta connection.
      */
     public static async create(
-            documentDeltaStorageService: FileDeltaStorageService): Promise<ReplayFileDeltaConnection> {
+        documentDeltaStorageService: FileDeltaStorageService): Promise<ReplayFileDeltaConnection> {
         const mode: ConnectionMode = "write";
         const connection = {
             claims: Claims,

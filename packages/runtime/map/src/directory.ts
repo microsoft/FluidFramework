@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { addBlobToTree, fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
+import * as assert from "assert";
+import * as path from "path";
+import { fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
+import { addBlobToTree } from "@microsoft/fluid-protocol-base";
 import {
     ISequencedDocumentMessage,
     ITree,
@@ -16,8 +19,6 @@ import {
     ISharedObjectServices,
 } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObjectFactory, SharedObject, ValueType } from "@microsoft/fluid-shared-object-base";
-import * as assert from "assert";
-import * as path from "path";
 import { debug } from "./debug";
 import {
     IDirectory,
@@ -259,11 +260,11 @@ function serializeDirectory(root: SubDirectory): ITree {
                 if (currentSubDir.absolutePath !== posix.sep) {
                     for (const dir of currentSubDir.absolutePath.substr(1).split(posix.sep)) {
                         const subDataObject: IDirectoryDataObject = {};
-                        largeContent.subdirectories = { [dir]: subDataObject};
+                        largeContent.subdirectories = { [dir]: subDataObject };
                         largeContent = subDataObject;
                     }
                 }
-                largeContent.storage = {[key]: result };
+                largeContent.storage = { [key]: result };
                 const blobName = `blob${counter}`;
                 counter++;
                 blobs.push(blobName);
@@ -606,7 +607,6 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
         target: this) => void): this;
     public on(event: string | symbol, listener: (...args: any[]) => void): this;
 
-    /* tslint:disable:no-unnecessary-override */
     public on(event: string | symbol, listener: (...args: any[]) => void): this {
         return super.on(event, listener);
     }
@@ -688,7 +688,7 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
         const data = JSON.parse(fromBase64ToUtf8(header));
         const newFormat = data as IDirectoryNewStorageFormat;
         if (Array.isArray(newFormat.blobs)) {
-            // new storage format
+            // New storage format
             this.populate(newFormat.content);
             await Promise.all(newFormat.blobs.map(async (blob) => {
                 const blobContent = await storage.read(blob);
@@ -696,7 +696,7 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
                 this.populate(dataExtra as IDirectoryDataObject);
             }));
         } else {
-            // old storage format
+            // Old storage format
             this.populate(data as IDirectoryDataObject);
         }
     }
@@ -808,7 +808,6 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
     /**
      * Set the message handlers for the directory.
      */
-    // tslint:disable-next-line:max-func-body-length
     private setMessageHandlers(): void {
         this.messageHandlers.set(
             "clear",
@@ -1226,7 +1225,7 @@ class SubDirectory implements IDirectory {
                 if (nextVal.done) {
                     return { value: undefined, done: true };
                 } else {
-                    // unpack the stored value
+                    // Unpack the stored value
                     return { value: [nextVal.value[0], nextVal.value[1].value], done: false };
                 }
             },
@@ -1257,7 +1256,7 @@ class SubDirectory implements IDirectory {
                 if (nextVal.done) {
                     return { value: undefined, done: true };
                 } else {
-                    // unpack the stored value
+                    // Unpack the stored value
                     return { value: nextVal.value.value, done: false };
                 }
             },

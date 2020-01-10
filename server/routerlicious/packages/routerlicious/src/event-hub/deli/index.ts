@@ -21,6 +21,7 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
     const mongoFactory = new services.MongoDbFactory(mongoUrl);
     const mongoManager = new core.MongoManager(mongoFactory, false);
     const client = await mongoManager.getDatabase();
+    // eslint-disable-next-line @typescript-eslint/await-thenable
     const collection = await client.collection<core.IDocument>(documentsCollectionName);
 
     const endpoint = config.get("eventHub:endpoint");
@@ -31,7 +32,7 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
 }
 
 export async function create(config: Provider): Promise<core.IPartitionLambdaFactory> {
-    // nconf has problems with prototype methods which prevents us from storing this as a class
+    // Nconf has problems with prototype methods which prevents us from storing this as a class
     config.set("documentLambda", { create: deliCreate });
     return createDocumentRouter(config);
 }

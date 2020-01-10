@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable } from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
+import { IDisposable } from "@microsoft/fluid-common-definitions";
 
 /**
  * Base class used for forwarding events from a source EventEmitter.
@@ -23,12 +23,12 @@ export class EventForwarder extends EventEmitter implements IDisposable {
     private isDisposed: boolean = false;
 
     private readonly forwardingEvents: Map<string | symbol, () => void> =
-        new Map<string | symbol, () => void>();
+    new Map<string | symbol, () => void>();
 
     constructor(source: EventEmitter) {
         super();
         if (source) {
-            // newListener event is raised whenever someone starts listening to this events, so
+            // NewListener event is raised whenever someone starts listening to this events, so
             // we keep track of events being listened to, and start forwarding from the source
             // event emitter per event listened to on this
             const removeListenerHandler = (event: string | symbol) => this.unforward(event);
@@ -44,7 +44,7 @@ export class EventForwarder extends EventEmitter implements IDisposable {
             try {
                 listenerRemover();
             } catch {
-                // should be fine because of removeAllListeners below
+                // Should be fine because of removeAllListeners below
             }
         }
         this.removeAllListeners();

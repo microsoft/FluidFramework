@@ -4,7 +4,12 @@
  */
 
 import { PrimedComponent, PrimedComponentFactory, SimpleContainerRuntimeFactory } from "@microsoft/fluid-aqueduct";
-import { IComponentHandle, IComponentLoadable, IComponentRunnable } from "@microsoft/fluid-component-core-interfaces";
+import {
+    IComponent,
+    IComponentHandle,
+    IComponentLoadable,
+    IComponentRunnable,
+} from "@microsoft/fluid-component-core-interfaces";
 import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
 import {
     IComponentContext,
@@ -12,6 +17,7 @@ import {
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObject, ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
+import { TestDataStore } from "./testDataStore";
 import {
     IDocumentDeltaEvent,
     ITestDeltaConnectionServer,
@@ -20,7 +26,6 @@ import {
     TestDocumentServiceFactory,
     TestResolver,
 } from "./";
-import { TestDataStore } from "./testDataStore";
 
 /**
  * Basic component implementation for testing.
@@ -33,7 +38,7 @@ class TestRootComponent extends PrimedComponent implements IComponentRunnable {
      */
     public static readonly type: string = "@chaincode/test-root-component";
 
-    public static readonly codeProposal: IFluidCodeDetails =  {
+    public static readonly codeProposal: IFluidCodeDetails = {
         package: TestRootComponent.type,
         config: {},
     };
@@ -42,16 +47,15 @@ class TestRootComponent extends PrimedComponent implements IComponentRunnable {
         super(runtime, context);
     }
 
-    public run = () =>  Promise.resolve();
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
+    public run = () => Promise.resolve();
 
     // Make this function public so TestHost can use them
-    // tslint:disable-next-line: no-unnecessary-override
     public async createAndAttachComponent<T>(id: string, type: string, props?: any): Promise<T> {
         return super.createAndAttachComponent<T>(id, type, props);
     }
 
     // Make this function public so TestHost can use them
-    // tslint:disable-next-line: no-unnecessary-override
     public async getComponent<T>(id: string): Promise<T> {
         return super.getComponent<T>(id);
     }
@@ -110,7 +114,7 @@ class TestRootComponent extends PrimedComponent implements IComponentRunnable {
     /**
      * Simply returns this component runtime.
      */
-    public getDocumentDeltaEvent(): IDocumentDeltaEvent  {
+    public getDocumentDeltaEvent(): IDocumentDeltaEvent {
         return this.runtime;
     }
 }
@@ -142,8 +146,7 @@ export class TestHost {
     public readonly deltaConnectionServer: ITestDeltaConnectionServer;
     private rootResolver: (accept: TestRootComponent) => void;
 
-    // tslint:disable-next-line:promise-must-complete
-    private root = new Promise<TestRootComponent>((accept) => { this.rootResolver = accept; });
+    private readonly root = new Promise<TestRootComponent>((accept) => { this.rootResolver = accept; });
 
     /**
      * @param componentRegistry - array of key-value pairs of components available to the host
@@ -154,29 +157,33 @@ export class TestHost {
         private readonly componentRegistry: NamedComponentRegistryEntries,
         private readonly sharedObjectFactories: readonly ISharedObjectFactory[] = [],
         deltaConnectionServer?: ITestDeltaConnectionServer,
+        scope?: IComponent,
     ) {
         this.deltaConnectionServer = deltaConnectionServer || TestDeltaConnectionServer.create();
 
         const store = new TestDataStore(
             new TestCodeLoader([
-                [TestRootComponent.type,
+                [
+                    TestRootComponent.type,
                     {
-                    IRuntimeFactory: undefined,
-                    instantiateRuntime: (context) => SimpleContainerRuntimeFactory.instantiateRuntime(
-                        context,
-                        TestRootComponent.type,
-                        [
-                            ...componentRegistry,
-                            [TestRootComponent.type, Promise.resolve(
-                                new PrimedComponentFactory(TestRootComponent, sharedObjectFactories),
-                            )],
-                        ]),
-                }],
+                        IRuntimeFactory: undefined,
+                        // eslint-disable-next-line @typescript-eslint/promise-function-async
+                        instantiateRuntime: (context) => SimpleContainerRuntimeFactory.instantiateRuntime(
+                            context,
+                            TestRootComponent.type,
+                            [
+                                ...componentRegistry,
+                                [TestRootComponent.type, Promise.resolve(
+                                    new PrimedComponentFactory(TestRootComponent, sharedObjectFactories),
+                                )],
+                            ]),
+                    },
+                ],
             ]),
             new TestDocumentServiceFactory(this.deltaConnectionServer),
             new TestResolver());
 
-        store.open<TestRootComponent>("test-root-component", TestRootComponent.codeProposal, "")
+        store.open<TestRootComponent>("test-root-component", TestRootComponent.codeProposal, "", scope)
             .then(this.rootResolver)
             .catch((reason) => { throw new Error(`${reason}`); });
     }
@@ -193,7 +200,7 @@ export class TestHost {
     }
 
     /**
-     * runs createComponent followed by openComponent
+     * Runs createComponent followed by openComponent
      * @param id component id
      * @param type component type
      * @param services component services for query interface

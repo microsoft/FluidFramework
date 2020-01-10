@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
+import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import { DebugLogger } from "@microsoft/fluid-core-utils";
 import { IClient, IDocumentMessage, IProcessMessageResult, MessageType } from "@microsoft/fluid-protocol-definitions";
 import { MockDocumentDeltaConnection, MockDocumentService } from "@microsoft/fluid-test-loader-utils";

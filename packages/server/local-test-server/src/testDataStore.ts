@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import {
     ICodeLoader,
     IFluidCodeDetails,
@@ -34,6 +35,7 @@ export class TestDataStore {
         componentId: string,
         chaincodePackage: IFluidCodeDetails,
         path: string,
+        scope?: IComponent,
     ): Promise<T> {
         debug(`TestDataStore.open("${componentId}", "${chaincodePackage.package}")`);
 
@@ -43,12 +45,13 @@ export class TestDataStore {
             this.documentServiceFactory,
             this.codeLoader,
             { blockUpdateMarkers: true },
-            {},
+            scope || {},
             new Map<string, IProxyLoaderFactory>());
         const baseUrl = `https://test.com/tenantId/documentId/${encodeURIComponent(componentId)}`;
         const url = `${baseUrl}${
             // Ensure '/' separator when concatenating 'baseUrl' and 'path'.
             (path && path.charAt(0)) !== "/" ? "/" : ""
+            // eslint-disable-next-line @typescript-eslint/indent
             }${path}`;
 
         debug(`resolving baseUrl = ${baseUrl}`);
@@ -56,10 +59,10 @@ export class TestDataStore {
         debug(`resolved baseUrl = ${baseUrl}`);
 
         let acceptResultOut: (value: T) => void;
-        // tslint:disable-next-line:promise-must-complete
         const resultOut = new Promise<T>((accept) => { acceptResultOut = accept; });
 
         debug(`attaching url = ${url}`);
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises
         container.on("contextChanged", async () => {
             debug(`contextChanged url=${url}`);
             await attach(loader, url, acceptResultOut);

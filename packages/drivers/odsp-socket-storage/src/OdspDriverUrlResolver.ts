@@ -3,14 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IResolvedUrl, IUrlResolver } from "@microsoft/fluid-driver-definitions";
 import { IOdspResolvedUrl } from "./contracts";
 import { getHashedDocumentId } from "./OdspUtils";
 
 function getSnapshotUrl(siteUrl: string, driveId: string, itemId: string) {
-  const siteOrigin = new URL(siteUrl).origin;
-  return `${siteOrigin}/_api/v2.1/drives/${driveId}/items/${itemId}/opStream/snapshots`;
+    const siteOrigin = new URL(siteUrl).origin;
+    return `${siteOrigin}/_api/v2.1/drives/${driveId}/items/${itemId}/opStream/snapshots`;
 }
 
 /**
@@ -21,9 +22,9 @@ function getSnapshotUrl(siteUrl: string, driveId: string, itemId: string) {
  * @param path - A path that corresponds to a request that will be handled by the container
  */
 export function createOdspUrl(siteUrl: string, driveId: string, itemId: string, path: string): string {
-  return `${siteUrl}?driveId=${encodeURIComponent(driveId)}&itemId=${encodeURIComponent(
-    itemId,
-  )}&path=${encodeURIComponent(path)}`;
+    return `${siteUrl}?driveId=${encodeURIComponent(driveId)}&itemId=${encodeURIComponent(
+        itemId,
+    )}&path=${encodeURIComponent(path)}`;
 }
 
 /**
@@ -31,70 +32,71 @@ export function createOdspUrl(siteUrl: string, driveId: string, itemId: string, 
  * For example if a value of '/id1/id2' is provided, id1/id2 is returned.
  */
 function removeBeginningSlash(str: string): string {
-  if (str[0] === "/") {
-    return str.substr(1);
-  }
+    if (str.startsWith("/")) {
+        return str.substr(1);
+    }
 
-  return str;
+    return str;
 }
 
 export class OdspDriverUrlResolver implements IUrlResolver {
-  constructor() { }
+    constructor() { }
 
-  public async resolve(request: IRequest): Promise<IResolvedUrl> {
-    const { siteUrl, driveId, itemId, path } = this.decodeOdspUrl(request.url);
-    const hashedDocumentId = getHashedDocumentId(driveId, itemId);
+    public async resolve(request: IRequest): Promise<IResolvedUrl> {
+        const { siteUrl, driveId, itemId, path } = this.decodeOdspUrl(request.url);
+        const hashedDocumentId = getHashedDocumentId(driveId, itemId);
+        assert.ok(!hashedDocumentId.includes("/"), "Docid should not contain slashes!!");
 
-    let documentUrl = `fluid-odsp://placeholder/placeholder/${hashedDocumentId}/${removeBeginningSlash(path)}`;
+        let documentUrl = `fluid-odsp://placeholder/placeholder/${hashedDocumentId}/${removeBeginningSlash(path)}`;
 
-    if (request.url.length > 0) {
-      // In case of any additional parameters add them back to the url
-      const requestURL = new URL(request.url);
-      const searchParams = requestURL.search;
-      if (!!searchParams) {
-        documentUrl += searchParams;
-      }
-    }
-    const response: IOdspResolvedUrl = {
-      endpoints: { snapshotStorageUrl: getSnapshotUrl(siteUrl, driveId, itemId) },
-      tokens: {},
-      type: "fluid",
-      url: documentUrl,
-      hashedDocumentId,
-      siteUrl,
-      driveId,
-      itemId,
-    };
+        if (request.url.length > 0) {
+            // In case of any additional parameters add them back to the url
+            const requestURL = new URL(request.url);
+            const searchParams = requestURL.search;
+            if (searchParams) {
+                documentUrl += searchParams;
+            }
+        }
+        const response: IOdspResolvedUrl = {
+            endpoints: { snapshotStorageUrl: getSnapshotUrl(siteUrl, driveId, itemId) },
+            tokens: {},
+            type: "fluid",
+            url: documentUrl,
+            hashedDocumentId,
+            siteUrl,
+            driveId,
+            itemId,
+        };
 
-    return response;
-  }
-
-  private decodeOdspUrl(url: string): { siteUrl: string; driveId: string; itemId: string; path: string } {
-    const [siteUrl, queryString] = url.split("?");
-
-    const searchParams = new URLSearchParams(queryString);
-
-    const driveId = searchParams.get("driveId");
-    const itemId = searchParams.get("itemId");
-    const path = searchParams.get("path");
-
-    if (driveId === null) {
-      throw new Error("ODSP URL did not contain a drive id");
+        return response;
     }
 
-    if (itemId === null) {
-      throw new Error("ODSP Url did not contain an item id");
-    }
+    private decodeOdspUrl(url: string): { siteUrl: string; driveId: string; itemId: string; path: string } {
+        const [siteUrl, queryString] = url.split("?");
 
-    if (path === null) {
-      throw new Error("ODSP Url did not contain a path");
-    }
+        const searchParams = new URLSearchParams(queryString);
 
-    return {
-      siteUrl,
-      driveId: decodeURIComponent(driveId),
-      itemId: decodeURIComponent(itemId),
-      path: decodeURIComponent(path),
-    };
-  }
+        const driveId = searchParams.get("driveId");
+        const itemId = searchParams.get("itemId");
+        const path = searchParams.get("path");
+
+        if (driveId === null) {
+            throw new Error("ODSP URL did not contain a drive id");
+        }
+
+        if (itemId === null) {
+            throw new Error("ODSP Url did not contain an item id");
+        }
+
+        if (path === null) {
+            throw new Error("ODSP Url did not contain a path");
+        }
+
+        return {
+            siteUrl,
+            driveId: decodeURIComponent(driveId),
+            itemId: decodeURIComponent(itemId),
+            path: decodeURIComponent(path),
+        };
+    }
 }

@@ -14,6 +14,7 @@ export abstract class ReadDocumentStorageServiceBase implements IDocumentStorage
     public abstract getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null>;
     public abstract read(blobId: string): Promise<string>;
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public uploadSummary(commit: api.ISummaryTree): Promise<api.ISummaryHandle> {
         return Promise.reject("Invalid operation");
     }
@@ -30,6 +31,7 @@ export abstract class ReadDocumentStorageServiceBase implements IDocumentStorage
         return Promise.reject("Invalid operation");
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public downloadSummary(handle: api.ISummaryHandle): Promise<api.ISummaryTree> {
         return Promise.reject("Invalid operation");
     }
@@ -87,6 +89,6 @@ export abstract class ReplayController extends ReadDocumentStorageServiceBase {
      * @param fetchedOps - ops to process
      */
     public abstract replay(
-        emitter: (op: api.ISequencedDocumentMessage) => void,
+        emitter: (op: api.ISequencedDocumentMessage[]) => void,
         fetchedOps: api.ISequencedDocumentMessage[]): Promise<void>;
 }

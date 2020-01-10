@@ -4,9 +4,9 @@
  */
 
 const enum StyleIndex {
-    Near    = 0,
-    Middle  = 1,
-    Far     = 2,
+    Near = 0,
+    Middle = 1,
+    Far = 2,
 }
 
 export class BorderRect {
@@ -15,12 +15,12 @@ export class BorderRect {
     public get max() { return [Math.max(this.start[0], this.end[0]), Math.max(this.start[1], this.end[1])]; }
 
     public start = [NaN, NaN];
-    public end   = [NaN, NaN];
+    public end = [NaN, NaN];
     constructor(private readonly styles: string[][]) { }
 
     public reset() {
         this.start = [NaN, NaN];
-        this.end   = [NaN, NaN];
+        this.end = [NaN, NaN];
     }
 
     public intersect(row: number, col: number) {
@@ -41,9 +41,7 @@ export class BorderRect {
         const horiz = this.getStyleIndices(min[1], col, max[1]);
         return vert.reduce((vertAccum, vertIndex) => {
             const vertStyles = this.styles[vertIndex];
-            return horiz.reduce((horizAccum, horizIndex) => {
-                return `${horizAccum} ${vertStyles[horizIndex]}`;
-            }, vertAccum);
+            return horiz.reduce((horizAccum, horizIndex) => `${horizAccum} ${vertStyles[horizIndex]}`, vertAccum);
         }, "");
     }
 
@@ -52,7 +50,7 @@ export class BorderRect {
     }
 
     private getStyleIndices(min: number, value: number, max: number) {
-        const styles = [];
+        const styles: number[] = [];
         if (value === min) { styles.push(StyleIndex.Near); }
         if (value === max) { styles.push(StyleIndex.Far); }
         if (styles.length === 0) { styles.push(StyleIndex.Middle); }

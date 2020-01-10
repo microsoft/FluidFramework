@@ -3,8 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { Deferred, readAndParse } from "@microsoft/fluid-core-utils";
+import * as assert from "assert";
+import { Deferred } from "@microsoft/fluid-core-utils";
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
+import { readAndParse } from "@microsoft/fluid-driver-utils";
 import {
     IDocumentAttributes,
     ISequencedDocumentMessage,
@@ -19,8 +21,7 @@ import {
     ReplayController,
     SnapshotStorage,
 } from "@microsoft/fluid-replay-driver";
-import * as assert from "assert";
-import { IDebuggerController, IDebuggerUI } from "./fluidDebuggerUI";
+import { IDebuggerController, IDebuggerUI } from "./fluidDebuggerUi";
 
 export type debuggerUIFactory = (controller: IDebuggerController) => IDebuggerUI | null;
 
@@ -31,7 +32,7 @@ const MaxBatchDeltas = 2000;
  */
 export class DebugReplayController extends ReplayController implements IDebuggerController {
     public static create(
-            createUi: debuggerUIFactory): DebugReplayController | null {
+        createUi: debuggerUIFactory): DebugReplayController | null {
         if (typeof localStorage === "object" && localStorage !== null && localStorage.FluidDebugger) {
             const controller = new DebugReplayController();
             const ui = createUi(controller);
@@ -42,7 +43,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
         return null;
     }
 
-    protected static readonly WindowClosedSeq = -1; // seq# to indicate that user closed window
+    protected static readonly WindowClosedSeq = -1; // Seq# to indicate that user closed window
 
     protected static async seqFromTree(
         documentStorageService: IDocumentStorageService,
@@ -58,11 +59,11 @@ export class DebugReplayController extends ReplayController implements IDebugger
         return attrib.sequenceNumber;
     }
 
-    protected ui: IDebuggerUI = null as any as IDebuggerUI; // not to check on every line that it's not null
+    protected ui: IDebuggerUI = null as any as IDebuggerUI; // Not to check on every line that it's not null
     protected stepsDeferred?: Deferred<number>;
     protected startSeqDeferred = new Deferred<number>();
 
-    // true will cause us ping server indefinitely waiting for new ops
+    // True will cause us ping server indefinitely waiting for new ops
     protected retryFetchOpsOnEndOfFile = false;
 
     protected documentStorageService?: IDocumentStorageService;
@@ -94,9 +95,9 @@ export class DebugReplayController extends ReplayController implements IDebugger
         const tree = await this.documentStorageService.getSnapshotTree(version);
         const seq = await DebugReplayController.seqFromTree(this.documentStorageService, tree);
         this.resolveStorage(
-                seq,
-                new SnapshotStorage(this.documentStorageService, tree),
-                version);
+            seq,
+            new SnapshotStorage(this.documentStorageService, tree),
+            version);
     }
 
     public onOpButtonClick(steps: number) {
@@ -123,7 +124,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
                 try {
                     const json: IFileSnapshot = JSON.parse(text) as IFileSnapshot;
                     /*
-                    const docStorage = this.documentStorageService;
+                    Const docStorage = this.documentStorageService;
                     const storage = {
                         read: (blobId: string) => this.read(docStorage, blobId),
                     };
@@ -152,16 +153,16 @@ export class DebugReplayController extends ReplayController implements IDebugger
         return currentOp + MaxBatchDeltas;
     }
 
-    // returns true if version / file / ops selections is made.
+    // Returns true if version / file / ops selections is made.
     public isSelectionMade() {
         return this.storage !== undefined;
     }
 
     public async downloadVersionInfo(
-            documentStorageService: IDocumentStorageService,
-            prevRequest: Promise<void>,
-            index: number,
-            version: IVersion): Promise<void> {
+        documentStorageService: IDocumentStorageService,
+        prevRequest: Promise<void>,
+        index: number,
+        version: IVersion): Promise<void> {
 
         if (this.isSelectionMade()) {
             return;
@@ -218,7 +219,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
         }
 
         // Don't wait for stuff to populate.
-        // tslint:disable-next-line:no-floating-promises
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         Promise.all(work).then(() => {
             this.ui.updateVersionText(0);
         });
@@ -236,8 +237,8 @@ export class DebugReplayController extends ReplayController implements IDebugger
     }
 
     public async getVersions(
-            versionId: string,
-            count: number): Promise<IVersion[]> {
+        versionId: string,
+        count: number): Promise<IVersion[]> {
         if (this.storage !== undefined) {
             return this.storage.getVersions(versionId, count);
         }
@@ -251,7 +252,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
         throw new Error("Reading snapshot tree before storage is setup properly");
     }
 
-    public getStartingOpSequence() {
+    public async getStartingOpSequence() {
         return this.startSeqDeferred.promise;
     }
 
@@ -273,8 +274,8 @@ export class DebugReplayController extends ReplayController implements IDebugger
     }
 
     public async replay(
-            emitter: (op: ISequencedDocumentMessage) => void,
-            fetchedOps: ISequencedDocumentMessage[]): Promise<void> {
+        emitter: (op: ISequencedDocumentMessage[]) => void,
+        fetchedOps: ISequencedDocumentMessage[]): Promise<void> {
         // eslint-disable-next-line no-constant-condition
         while (true) {
             if (fetchedOps.length === 0) {
@@ -298,20 +299,20 @@ export class DebugReplayController extends ReplayController implements IDebugger
             if (this.stepsToPlay >= fetchedOps.length) {
                 playOps = fetchedOps;
                 this.stepsToPlay -= fetchedOps.length;
-                // tslint:disable-next-line:no-parameter-reassignment
+                // eslint-disable-next-line no-param-reassign
                 fetchedOps = [];
             } else {
                 playOps = fetchedOps.splice(0, this.stepsToPlay);
                 this.stepsToPlay = 0;
             }
-            playOps.map(emitter);
+            emitter(playOps);
         }
     }
 
     protected resolveStorage(
-            seq: number,
-            storage: ReadDocumentStorageServiceBase,
-            version?: IVersion | string) {
+        seq: number,
+        storage: ReadDocumentStorageServiceBase,
+        version?: IVersion | string) {
         assert(!this.isSelectionMade());
         assert(storage);
         this.storage = storage;

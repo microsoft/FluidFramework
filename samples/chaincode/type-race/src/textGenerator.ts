@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable max-len */
 export class TextGenerator {
     public generateText(): string {
         const index = Math.floor(Math.random() * TextGenerator.sampleTexts.length);
@@ -19,5 +20,5 @@ export class TextGenerator {
         `Clients within the collaboration window accept the proposal by allowing their reference sequence number to go above the sequence number for the proposal.`,
         `The proposal enters the commit state when the minimum sequence number goes above the sequence number at which it became accepted. In the commit state all subsequent messages are guaranteed to have been sent with knowledge of the proposal.`,
         `You can get the url by looking at the kube endpoints that are available in the -n nuclio namespace`,
-    ]
+    ];
 }

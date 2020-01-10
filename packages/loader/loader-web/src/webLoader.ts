@@ -50,12 +50,14 @@ export function extractDetails(value: string): IParsedPackage {
 
     // Two @ symbols === the package has a version. Use alternative RegEx.
     if (value.indexOf("@") !== value.lastIndexOf("@")) {
+        // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
         const componentsWithVersion = value.match(/(@(.*)\/)?((.*)@(.*))/);
         if ((!componentsWithVersion || componentsWithVersion.length !== 6)) {
             throw new Error("Invalid package");
         }
         [full, , scope, pkg, name, version] = componentsWithVersion;
     } else {
+        // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
         const componentsWithoutVersion = value.match(/(@(.*)\/)?((.*))/);
         if ((!componentsWithoutVersion || componentsWithoutVersion.length !== 5)) {
             throw new Error("Invalid package");
@@ -80,13 +82,12 @@ class ScriptManager {
 
     // Check whether the script is loaded inside a worker.
     public get isBrowser(): boolean {
-        // tslint:disable no-typeof-undefined
         if (typeof window === "undefined") {
             return false;
         }
         return window.document !== undefined;
     }
-    // tslint:disable-next-line:promise-function-async
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public loadScript(scriptUrl: string, scriptId?: string): Promise<void> {
         if (!this.loadCache.has(scriptUrl)) {
             const scriptP = new Promise<void>((resolve, reject) => {
@@ -103,7 +104,7 @@ class ScriptManager {
                     // executed after all of its dependencies have been loaded and executed.
                     script.async = false;
 
-                    // call signatures don't match and so need to wrap the method
+                    // Call signatures don't match and so need to wrap the method
                     // tslint:disable-next-line:no-unnecessary-callback-wrapper
                     script.onload = () => resolve();
                     script.onerror = () =>
@@ -123,7 +124,7 @@ class ScriptManager {
             this.loadCache.set(scriptUrl, scriptP);
         }
 
-        // tslint:disable-next-line:no-non-null-assertion
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return this.loadCache.get(scriptUrl)!;
     }
 
@@ -131,7 +132,6 @@ class ScriptManager {
         umdDetails: { files: string[]; library: string },
         packageUrl: string,
         scriptIds?: string[],
-        // tslint:disable-next-line: array-type
     ): Promise<void>[] {
         return umdDetails.files.map(async (bundle, index) => {
             // Load file as cdn Link (starts with http)
@@ -179,6 +179,7 @@ class FluidPackage {
 
             const scriptFound = scriptIds.find((scriptId) => {
                 const script = document.getElementById(scriptId) as HTMLScriptElement;
+                // eslint-disable-next-line no-null/no-null
                 return (script !== null);
             });
 
@@ -193,6 +194,7 @@ class FluidPackage {
             scriptIds.forEach((scriptId) => {
                 const script = document.getElementById(scriptId) as HTMLScriptElement;
 
+                // eslint-disable-next-line no-null/no-null
                 if (script !== undefined && script !== null) {
                     script.onload = () => {
                         if (entrypoint in window) {
@@ -277,7 +279,8 @@ export class WebCodeLoader implements ICodeLoader {
     /**
      * Resolves the input data structures to the resolved details
      */
-    // tslint:disable-next-line:promise-function-async disabled to verify function sets cache synchronously
+    // Disabled to verify function sets cache synchronously
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public resolve(input: IFluidCodeDetails): Promise<IResolvedPackage> {
         const fluidPackage = this.getFluidPackage(input);
         return fluidPackage.resolve();
@@ -304,17 +307,17 @@ export class WebCodeLoader implements ICodeLoader {
             this.resolvedCache.set(details.packageUrl, resolved);
         }
 
-        // tslint:disable-next-line:no-non-null-assertion
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return this.resolvedCache.get(details.packageUrl)!;
     }
 
     private getPackageDetails(details: IFluidCodeDetails): IPackageDetails {
 
         const fullPkg = typeof details.package === "string"
-            ? details.package // just return it if it's a string e.g. "@fluid-example/clicker@0.1.1"
-            : !details.package.version // if it doesn't exist, let's make it from the package details
-                ? `${details.package.name}` // e.g. @fluid-example/clicker
-                : `${details.package.name}@${details.package.version}`; // rebuild e.g. @fluid-example/clicker@0.1.1
+            ? details.package // Just return it if it's a string e.g. "@fluid-example/clicker@0.1.1"
+            : !details.package.version // If it doesn't exist, let's make it from the package details
+                ? `${details.package.name}` // E.g. @fluid-example/clicker
+                : `${details.package.name}@${details.package.version}`; // Rebuild e.g. @fluid-example/clicker@0.1.1
         const parsed = extractDetails(fullPkg);
 
         const scriptCdnTag = `${parsed.scope ? `@${parsed.scope}:` : ""}cdn`;

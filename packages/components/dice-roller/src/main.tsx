@@ -40,7 +40,7 @@ export class DiceRoller extends PrimedComponent implements IComponentHTMLVisual 
 
             ReactDOM.render(
                 <div>
-                    <span style={{fontSize: 50}}>{this.getDiceChar(diceValue)}</span>
+                    <span style={{ fontSize: 50 }}>{this.getDiceChar(diceValue)}</span>
                     <button onClick={this.rollDice.bind(this)}>Roll</button>
                 </div>,
                 div,
@@ -54,7 +54,6 @@ export class DiceRoller extends PrimedComponent implements IComponentHTMLVisual 
     }
 
     private rollDice() {
-        // tslint:disable-next-line:insecure-random - We don't need secure random numbers for this application.
         const rollValue = Math.floor(Math.random() * 6) + 1;
         this.root.set("diceValue", rollValue);
     }

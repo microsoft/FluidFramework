@@ -7,7 +7,6 @@ export * from "./clients";
 export * from "./connection";
 export * from "./consensus";
 export * from "./config";
-export * from "./disposable";
 export * from "./error";
 export * from "./protocol";
 export * from "./storage";

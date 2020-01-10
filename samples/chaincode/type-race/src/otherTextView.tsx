@@ -14,9 +14,8 @@ interface IProps {
     textMatch: TextMatch;
 }
 
-interface IState {
-
-}
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+interface IState { }
 
 export class OtherTextView extends React.Component<IProps, IState> {
     public render() {
@@ -24,13 +23,13 @@ export class OtherTextView extends React.Component<IProps, IState> {
         const match = this.props.textMatch.match(text);
 
         return (
-            <div style={{border: "1px solid black"}}>
-                <div style={{background: "lightgray"}}>
+            <div style={{ border: "1px solid black" }}>
+                <div style={{ background: "lightgray" }}>
                     <b>{this.props.username} ({this.props.getWPM()} wpm) {this.props.medal}</b><br />
                 </div>
                 <p>
                     <span>{match.correctText}</span>
-                    <span style={{color: "red"}}>{match.badText}</span>
+                    <span style={{ color: "red" }}>{match.badText}</span>
                 </p>
             </div>
         );

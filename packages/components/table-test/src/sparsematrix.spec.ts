@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { SparseMatrix, SparseMatrixFactory } from "@microsoft/fluid-sequence";
+import { SparseMatrix, SparseMatrixFactory, SparseMatrixItem } from "@microsoft/fluid-sequence";
 import { TestHost } from "@microsoft/fluid-local-test-server";
 import * as assert from "assert";
 import "mocha";
 
 describe("SparseMatrix", () => {
     const extract = (matrix: SparseMatrix, numCols: number) => {
-        const rows = [];
+        const rows: SparseMatrixItem[][] = [];
         for (let r = 0; r < matrix.numRows; r++) {
-            const cols = [];
+            const cols: SparseMatrixItem[] = [];
             for (let c = 0; c < numCols; c++) {
                 cols.push(matrix.getItem(r, c));
             }

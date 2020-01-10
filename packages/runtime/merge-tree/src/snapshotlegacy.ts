@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import {
     IComponentHandle,
     IComponentHandleContext,
     IComponentSerializer,
 } from "@microsoft/fluid-component-core-interfaces";
-import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
 import { ChildLogger, fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
 import { FileMode, ISequencedDocumentMessage, ITree, TreeEntry } from "@microsoft/fluid-protocol-definitions";
 import { IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
@@ -17,8 +17,6 @@ import * as MergeTree from "./mergeTree";
 import * as ops from "./ops";
 import * as Properties from "./properties";
 import { SnapshotHeader } from "./snapshot";
-
-// tslint:disable
 
 // first three are index entry
 export interface SnapChunk {
@@ -55,18 +53,22 @@ export class SnapshotLegacy {
     logger: ITelemetryLogger;
 
     constructor(public mergeTree: MergeTree.MergeTree, logger: ITelemetryLogger, public filename?: string,
+        // eslint-disable-next-line @typescript-eslint/indent
         public onCompletion?: () => void) {
         this.logger = ChildLogger.create(logger, "Snapshot");
     }
 
-    getSeqLengthSegs(allSegments: ops.IJSONSegment[], allLengths: number[], approxSequenceLength: number,
+    getSeqLengthSegs(
+        allSegments: ops.IJSONSegment[],
+        allLengths: number[],
+        approxSequenceLength: number,
         startIndex = 0): ops.MergeTreeChunk {
 
-        let segs = <ops.IJSONSegment[]>[];
+        const segs = <ops.IJSONSegment[]>[];
         let sequenceLength = 0;
         let segCount = 0;
         while ((sequenceLength < approxSequenceLength) && ((startIndex + segCount) < allSegments.length)) {
-            let pseg = allSegments[startIndex + segCount];
+            const pseg = allSegments[startIndex + segCount];
             segs.push(pseg);
             sequenceLength += allLengths[startIndex + segCount];
             segCount++;
@@ -78,8 +80,8 @@ export class SnapshotLegacy {
             totalLengthChars: this.header.segmentsTotalLength,
             totalSegmentCount: allSegments.length,
             chunkSequenceNumber: this.header.seq,
-            segmentTexts: segs
-        }
+            segmentTexts: segs,
+        };
     }
 
     /**
@@ -92,7 +94,7 @@ export class SnapshotLegacy {
         context?: IComponentHandleContext,
         bind?: IComponentHandle,
     ): ITree {
-        let chunk1 = this.getSeqLengthSegs(this.segments, this.segmentLengths, SnapshotLegacy.sizeOfFirstChunk);
+        const chunk1 = this.getSeqLengthSegs(this.segments, this.segmentLengths, SnapshotLegacy.sizeOfFirstChunk);
         let length: number = chunk1.chunkLengthChars;
         let segments: number = chunk1.chunkSegmentCount;
         const tree: ITree = {
@@ -102,7 +104,7 @@ export class SnapshotLegacy {
                     path: SnapshotLegacy.header,
                     type: TreeEntry[TreeEntry.Blob],
                     value: {
-                        contents: serializer ? serializer.stringify(chunk1, context, bind): JSON.stringify(chunk1),
+                        contents: serializer ? serializer.stringify(chunk1, context, bind) : JSON.stringify(chunk1),
                         encoding: "utf-8",
                     },
                 },
@@ -110,9 +112,8 @@ export class SnapshotLegacy {
             id: null,
         };
 
-        if (chunk1.chunkSegmentCount < chunk1.totalSegmentCount)
-        {
-            let chunk2 = this.getSeqLengthSegs(this.segments, this.segmentLengths, this.header.segmentsTotalLength, chunk1.chunkSegmentCount);
+        if (chunk1.chunkSegmentCount < chunk1.totalSegmentCount) {
+            const chunk2 = this.getSeqLengthSegs(this.segments, this.segmentLengths, this.header.segmentsTotalLength, chunk1.chunkSegmentCount);
             length += chunk2.chunkLengthChars;
             segments += chunk2.chunkSegmentCount;
             tree.entries.push({
@@ -148,7 +149,7 @@ export class SnapshotLegacy {
     }
 
     extractSync() {
-        let collabWindow = this.mergeTree.getCollabWindow();
+        const collabWindow = this.mergeTree.getCollabWindow();
         this.seq = collabWindow.minSeq;
         this.header = {
             segmentsTotalLength: this.mergeTree.getLength(this.mergeTree.collabWindow.minSeq,
@@ -158,23 +159,25 @@ export class SnapshotLegacy {
 
         const segs = <MergeTree.ISegment[]>[];
         let prev: MergeTree.ISegment | undefined;
-        let extractSegment = (segment: MergeTree.ISegment, pos: number, refSeq: number, clientId: number,
-            start: number, end: number) => {
-            if ((segment.seq != UnassignedSequenceNumber) && (segment.seq <= this.seq) &&
-                ((segment.removedSeq === undefined) || (segment.removedSeq == UnassignedSequenceNumber) ||
-                    (segment.removedSeq > this.seq))) {
-                if (prev && prev.canAppend(segment) && Properties.matchProperties(prev.properties, segment.properties)) {
-                    prev = prev.clone();
-                    prev.append(segment.clone());
-                } else {
-                    if (prev) {
-                        segs.push(prev);
+        const extractSegment =
+            (segment: MergeTree.ISegment, pos: number, refSeq: number, clientId: number, start: number, end: number) => {
+                // eslint-disable-next-line eqeqeq
+                if ((segment.seq != UnassignedSequenceNumber) && (segment.seq <= this.seq) &&
+                    // eslint-disable-next-line eqeqeq
+                    ((segment.removedSeq === undefined) || (segment.removedSeq == UnassignedSequenceNumber) ||
+                        (segment.removedSeq > this.seq))) {
+                    if (prev && prev.canAppend(segment) && Properties.matchProperties(prev.properties, segment.properties)) {
+                        prev = prev.clone();
+                        prev.append(segment.clone());
+                    } else {
+                        if (prev) {
+                            segs.push(prev);
+                        }
+                        prev = segment;
                     }
-                    prev = segment;
                 }
-            }
-            return true;
-        }
+                return true;
+            };
 
         this.mergeTree.map({ leaf: extractSegment }, this.seq, NonCollabClient);
         if (prev) {
@@ -194,8 +197,9 @@ export class SnapshotLegacy {
         // When this condition happens, we might not write out all segments in getSeqLengthSegs() when writing out "body"
         // Issue #1995 tracks following up on the core of the problem.
         // In the meantime, this code makes sure we will write out all segments properly
+        // eslint-disable-next-line eqeqeq
         if (this.header.segmentsTotalLength != totalLength) {
-            this.logger.sendErrorEvent({eventName: "SegmentsTotalLengthMismatch", totalLength, segmentsTotalLength: this.header.segmentsTotalLength});
+            this.logger.sendErrorEvent({ eventName: "SegmentsTotalLengthMismatch", totalLength, segmentsTotalLength: this.header.segmentsTotalLength });
             this.header.segmentsTotalLength = totalLength;
         }
 
@@ -208,7 +212,7 @@ export class SnapshotLegacy {
         serializer?: IComponentSerializer,
         context?: IComponentHandleContext,
     ): Promise<ops.MergeTreeChunk> {
-        let chunkAsString: string = await storage.read(path);
+        const chunkAsString: string = await storage.read(path);
         return SnapshotLegacy.processChunk(chunkAsString, serializer, context);
     }
 

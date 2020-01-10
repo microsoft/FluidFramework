@@ -4,7 +4,6 @@
  */
 
 export * from "./dbFactory";
-export * from "./documentStorage";
 export * from "./ordererManager";
 export * from "./taskMessageSender";
 export * from "./tenantManager";

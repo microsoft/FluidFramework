@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger } from "@microsoft/fluid-container-definitions";
+import { ITelemetryBaseLogger } from "@microsoft/fluid-common-definitions";
 import { DebugLogger, TelemetryLogger, TelemetryNullLogger } from "@microsoft/fluid-core-utils";
 import {
     IDocumentDeltaConnection,
@@ -19,7 +19,7 @@ import {
 import { ISocketStorageDiscovery } from "./contracts";
 import { debug } from "./debug";
 import { IFetchWrapper } from "./fetchWrapper";
-import { OdspCache } from "./odspCache";
+import { OdspCache } from "./OdspCache";
 import { OdspDeltaStorageService } from "./OdspDeltaStorageService";
 import { OdspDocumentDeltaConnection } from "./OdspDocumentDeltaConnection";
 import { OdspDocumentStorageManager } from "./OdspDocumentStorageManager";
@@ -27,7 +27,7 @@ import { OdspDocumentStorageService } from "./OdspDocumentStorageService";
 import { getWithRetryForTokenRefresh, isLocalStorageAvailable } from "./OdspUtils";
 import { getSocketStorageDiscovery } from "./Vroom";
 
-// tslint:disable-next-line:no-require-imports no-var-requires
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const performanceNow = require("performance-now") as (() => number);
 
 const afdUrlConnectExpirationMs = 6 * 60 * 60 * 1000; // 6 hours
@@ -51,16 +51,16 @@ export class OdspDocumentService implements IDocumentService {
 
     /**
      * @param appId - app id used for telemetry for network requests
-     * @param hashedDocumentId - A unique identifer for the document. The "hashed" here implies that the contents of this string
-     * contains no end user identifiable information.
+     * @param hashedDocumentId - A unique identifer for the document. The "hashed" here implies that the contents of
+     * this string contains no end user identifiable information.
      * @param siteUrl - the url of the site that hosts this container
      * @param driveId - the id of the drive that hosts this container
      * @param itemId - the id of the container within the drive
      * @param snapshotStorageUrl - the URL where snapshots should be obtained from
-     * @param getStorageToken - function that can provide the storage token for a given site. This is
-     * is also referred to as the "VROOM" token in SPO.
-     * @param getWebsocketToken - function that can provide a token for accessing the web socket. This is also
-     * referred to as the "Push" token in SPO.
+     * @param getStorageToken - function that can provide the storage token for a given site. This is is also referred
+     * to as the "VROOM" token in SPO.
+     * @param getWebsocketToken - function that can provide a token for accessing the web socket. This is also referred
+     * to as the "Push" token in SPO.
      * @param logger - a logger that can capture performance and diagnostic information
      * @param storageFetchWrapper - if not provided FetchWrapper will be used
      * @param deltasFetchWrapper - if not provided FetchWrapper will be used
@@ -89,11 +89,11 @@ export class OdspDocumentService implements IDocumentService {
             logger,
             { docId: hashedDocumentId });
 
-        this.getStorageToken = (refresh: boolean) => {
+        this.getStorageToken = async (refresh: boolean) => {
             if (refresh) {
-                // Potential perf issue:
-                // Host should optimize and provide non-expired tokens on all critical paths.
-                // Exceptions: race conditions around expiration, revoked tokens, host that does not care (fluid-fetcher)
+                // Potential perf issue: Host should optimize and provide non-expired tokens on all critical paths.
+                // Exceptions: race conditions around expiration, revoked tokens, host that does not care
+                // (fluid-fetcher)
                 this.logger.sendTelemetryEvent({ eventName: "StorageTokenRefresh" });
             }
             return getStorageToken(this.siteUrl, refresh);
@@ -154,7 +154,22 @@ export class OdspDocumentService implements IDocumentService {
     public async connectToDeltaStream(client: IClient, mode: ConnectionMode): Promise<IDocumentDeltaConnection> {
         // Attempt to connect twice, in case we used expired token.
         return getWithRetryForTokenRefresh<IDocumentDeltaConnection>(async (refresh: boolean) => {
-            const [websocketEndpoint, webSocketToken, io] = await Promise.all([this.joinSession(), this.getWebsocketToken(refresh), this.socketIOClientP]);
+            const [websocketEndpoint, webSocketToken, io] =
+                await Promise.all([this.joinSession(), this.getWebsocketToken(refresh), this.socketIOClientP]);
+
+            // This check exists because of a typescript bug.
+            // Issue: https://github.com/microsoft/TypeScript/issues/33752
+            // The TS team has plans to fix this in the 3.8 release
+            if (!websocketEndpoint) {
+                throw new Error("websocket endpoint should be defined");
+            }
+
+            // This check exists because of a typescript bug.
+            // Issue: https://github.com/microsoft/TypeScript/issues/33752
+            // The TS team has plans to fix this in the 3.8 release
+            if (!io) {
+                throw new Error("websocket endpoint should be defined");
+            }
 
             return this.connectToDeltaStreamWithRetry(
                 websocketEndpoint.tenantId,
@@ -197,11 +212,14 @@ export class OdspDocumentService implements IDocumentService {
             this.getStorageToken,
             this.odspCache,
             this.joinSessionKey);
-        const joinSession = await this.joinSessionP;
 
-        // CLear "lock" - form now on cache is responsible for handling caching policy (duration / reset on error)
-        this.joinSessionP = undefined;
-        return joinSession;
+        try {
+            const joinSession = await this.joinSessionP;
+            return joinSession;
+        } finally {
+            // Clear "lock" - form now on cache is responsible for handling caching policy (duration / reset on error)
+            this.joinSessionP = undefined;
+        }
     }
 
     /**
@@ -289,7 +307,6 @@ export class OdspDocumentService implements IDocumentService {
                 io,
                 client,
                 mode,
-                // tslint:disable-next-line: no-non-null-assertion
                 url2!,
                 20000,
                 this.logger,
@@ -300,11 +317,13 @@ export class OdspDocumentService implements IDocumentService {
                 });
 
                 return connection;
+                // eslint-disable-next-line @typescript-eslint/promise-function-async
             }).catch((connectionError) => {
                 const endAfd = performanceNow();
                 localStorage.removeItem(lastAfdConnectionTimeMsKey);
                 // Retry on non-AFD URL
                 if (this.canRetryOnError(connectionError)) {
+                    // eslint-disable-next-line max-len
                     debug(`Socket connection error on AFD URL (cached). Error was [${connectionError}]. Retry on non-AFD URL: ${url}`);
 
                     return OdspDocumentDeltaConnection.create(
@@ -354,9 +373,11 @@ export class OdspDocumentService implements IDocumentService {
         ).then((connection) => {
             logger.sendTelemetryEvent({ eventName: "UsedNonAfdUrl" });
             return connection;
+            // eslint-disable-next-line @typescript-eslint/promise-function-async
         }).catch((connectionError) => {
             const endNonAfd = performanceNow();
             if (hasUrl2 && this.canRetryOnError(connectionError)) {
+                // eslint-disable-next-line max-len
                 debug(`Socket connection error on non-AFD URL. Error was [${connectionError}]. Retry on AFD URL: ${url2}`);
 
                 return OdspDocumentDeltaConnection.create(
@@ -366,7 +387,6 @@ export class OdspDocumentService implements IDocumentService {
                     io,
                     client,
                     mode,
-                    // tslint:disable-next-line: no-non-null-assertion
                     url2!,
                     20000,
                     this.logger,
@@ -374,6 +394,7 @@ export class OdspDocumentService implements IDocumentService {
                     // Refresh AFD cache
                     const cacheResult = this.writeLocalStorage(lastAfdConnectionTimeMsKey, Date.now().toString());
                     if (cacheResult) {
+                        // eslint-disable-next-line max-len
                         debug(`Cached AFD connection time. Expiring in ${new Date(Number(localStorage.getItem(lastAfdConnectionTimeMsKey)) + afdUrlConnectExpirationMs)}`);
                     }
                     logger.sendPerformanceEvent({

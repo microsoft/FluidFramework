@@ -110,6 +110,7 @@ packageManager:
 
 historian:
   externalUrl: https://historian.wu2.prague.office-int.com
+  internalUrl: http://smelly-wolf-historian
 
 gitrest:
   url: http://smelly-wolf-gitrest
@@ -129,9 +130,13 @@ mongodb:
 
 redis:
   url: winsome-wombat-redis
+  port: 6379
+  tls: false
 
 redis2:
   url: dining-maltese-redis
+  port: 6379
+  tls: false
 
 kafka:
   topics:

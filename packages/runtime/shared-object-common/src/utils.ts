@@ -18,6 +18,7 @@ import {
  * @param bind - Bind any other handles we find in the object against this given handle.
  * @returns Result of strigifying an object
  */
+// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function serializeHandles(
     value: any,
     serializer: IComponentSerializer,
@@ -34,25 +35,27 @@ export function serializeHandles(
 
 /**
  * Given a mostly-plain object that may have handle objects embedded within, will return a fully-plain object
- * where the handle objects have been replaced with a serializable form.
- * @param value - The mostly-plain object
- * @param serializer - The serializer that knows how to convert handles into serializable format
+ * where any embedded IComponentHandles have been replaced with a serializable form.
+ *
+ * The original `input` object is not mutated.  This method will shallowly clones all objects in the path from
+ * the root to any replaced handles.  (If no handles are found, returns the original object.)
+ *
+ * @param input - The mostly-plain object
  * @param context - The handle context for the container
  * @param bind - Bind any other handles we find in the object against this given handle.
  * @returns The fully-plain object
  */
+// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function makeHandlesSerializable(
     value: any,
     serializer: IComponentSerializer,
     context: IComponentHandleContext,
     bind: IComponentHandle,
-): object | undefined {
-    const serialized = serializeHandles(
+) {
+    return serializer.replaceHandles(
         value,
-        serializer,
         context,
         bind);
-    return serialized !== undefined ? JSON.parse(serialized) : undefined;
 }
 
 /**
@@ -63,6 +66,7 @@ export function makeHandlesSerializable(
  * @param context - The handle context for the container
  * @returns The mostly-plain object with handle objects within
  */
+// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function parseHandles(
     value: any,
     serializer: IComponentSerializer,

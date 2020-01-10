@@ -16,7 +16,7 @@ export class TestCodeLoader implements ICodeLoader {
     /**
      * @param factories - array of keys and their runtime factories for getting code
      */
-    constructor(factories: ReadonlyArray<[string, Promise<IRuntimeFactory> | IRuntimeFactory]>) {
+    constructor(factories: readonly [string, Promise<IRuntimeFactory> | IRuntimeFactory][]) {
         this.typeToFactory = new Map(factories);
     }
 
@@ -26,6 +26,7 @@ export class TestCodeLoader implements ICodeLoader {
      * if the key does not exist.
      * @param source - key of code to load
      */
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public load<T>(pkg: IFluidCodeDetails): Promise<T> {
         let source: string;
 

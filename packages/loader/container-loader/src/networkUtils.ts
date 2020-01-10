@@ -3,28 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import {
-    ITelemetryErrorEvent,
-    ITelemetryLogger,
-} from "@microsoft/fluid-container-definitions";
-
-import { isOnline, OnlineStatus } from "@microsoft/fluid-core-utils";
+import { ITelemetryErrorEvent, ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { isOnline, OnlineStatus } from "@microsoft/fluid-driver-utils";
 
 export function logNetworkFailure(logger: ITelemetryLogger, event: ITelemetryErrorEvent, error?: any) {
     const newEvent = { ...event };
     newEvent.online = isOnline();
-    // tslint:disable-next-line:no-unsafe-any
     if (error && typeof error === "object" && (error).online !== undefined) {
-        // tslint:disable-next-line:no-unsafe-any
         newEvent.online = (error).online as string;
     }
 
     if (typeof navigator === "object" && navigator !== null) {
         const nav = navigator as any;
-        // tslint:disable-next-line:no-unsafe-any
         const connection = nav.connection || nav.mozConnection || nav.webkitConnection;
         if (connection !== null && typeof connection === "object") {
-            // tslint:disable-next-line:no-unsafe-any
             newEvent.connectionType = connection.type;
         }
     }
@@ -49,6 +41,7 @@ export function logNetworkFailure(logger: ITelemetryLogger, event: ITelemetryErr
  * But there should be no false negatives.
  * The only exception - Opera returns false when user enters "Work Offline" mode, regardless of actual connectivity.
  */
+// eslint-disable-next-line @typescript-eslint/promise-function-async
 export function waitForConnectedState(minDelay: number): Promise<void> {
     // Use this frequency to poll even when we are offline and able to setup online/offline listener
     // This is mostly safety net

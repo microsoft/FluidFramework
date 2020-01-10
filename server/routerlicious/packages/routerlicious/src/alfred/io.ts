@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { isSystemType } from "@microsoft/fluid-core-utils";
+import { isSystemType } from "@microsoft/fluid-protocol-base";
 import {
     ConnectionMode,
     IClient,
@@ -47,6 +47,7 @@ interface IConnectedClient {
     connectVersions: string[];
 }
 
+// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 function getRoomId(room: IRoom) {
     return `${room.tenantId}/${room.documentId}`;
 }
@@ -112,7 +113,7 @@ export function register(
         // Map from client IDs to room.
         const roomMap = new Map<string, IRoom>();
 
-        // back-compat map for storing clientIds with latest protocol versions.
+        // Back-compat map for storing clientIds with latest protocol versions.
         const versionMap = new Set<string>();
 
         function isWriter(scopes: string[], existing: boolean, mode: ConnectionMode): boolean {
@@ -121,7 +122,7 @@ export function register(
                 if (!existing) {
                     return true;
                 } else {
-                    // back-compat for old client and new server.
+                    // Back-compat for old client and new server.
                     if (mode === undefined) {
                         return true;
                     } else {
@@ -133,9 +134,10 @@ export function register(
             }
         }
 
-        // back-compat for old clients not having protocol version ^0.3.0
+        // Back-compat for old clients not having protocol version ^0.3.0
+        // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
         function canSendMessage(connectVersions: string[]) {
-            return connectVersions.indexOf("^0.3.0") !== -1;
+            return connectVersions.includes("^0.3.0");
         }
 
         async function connectDocument(message: IConnect): Promise<IConnectedClient> {
@@ -162,7 +164,7 @@ export function register(
                 socket.join(getRoomId(room)),
                 socket.join(`client#${clientId}`)]);
 
-            // todo: should all the client details come from the claims???
+            // Todo: should all the client details come from the claims???
             // we are still trusting the users permissions and type here.
             const messageClient: Partial<IClient> = message.client ? message.client : {};
             messageClient.user = claims.user;
@@ -237,11 +239,12 @@ export function register(
         }
 
         // Note connect is a reserved socket.io word so we use connect_document to represent the connect request
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises
         socket.on("connect_document", async (connectionMessage: IConnect) => {
             connectDocument(connectionMessage).then(
                 (message) => {
                     socket.emit("connect_document_success", message.connection);
-                    // back-compat for old clients.
+                    // Back-compat for old clients.
                     if (canSendMessage(message.connectVersions)) {
                         versionMap.add(message.connection.clientId);
                         socket.emitToRoom(
@@ -359,6 +362,7 @@ export function register(
                 }
             });
 
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises
         socket.on("disconnect", async () => {
             // Send notification messages for all client IDs in the connection map
             for (const [clientId, connection] of connectionsMap) {
@@ -370,7 +374,7 @@ export function register(
             for (const [clientId, room] of roomMap) {
                 winston.info(`Disconnect of ${clientId} from room`);
                 removeP.push(clientManager.removeClient(room.tenantId, room.documentId, clientId));
-                // back-compat check for older clients.
+                // Back-compat check for older clients.
                 if (versionMap.has(clientId)) {
                     socket.emitToRoom(getRoomId(room), "signal", createRoomLeaveMessage(clientId));
                 }

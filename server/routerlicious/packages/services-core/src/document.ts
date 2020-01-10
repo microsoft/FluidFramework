@@ -49,10 +49,10 @@ export interface IScribe {
     // Kafka checkpoint that maps to the below stored data
     logOffset: number;
 
-    // min sequence number at logOffset
+    // Min sequence number at logOffset
     minimumSequenceNumber: number;
 
-    // sequence number at logOffset
+    // Sequence number at logOffset
     sequenceNumber: number;
 
     // Stored protocol state within the window. This is either the state at the MSN or the state at the

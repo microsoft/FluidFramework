@@ -14,7 +14,7 @@ import { IPackage } from "@microsoft/fluid-container-definitions";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import * as uuid from "uuid";
 
-// tslint:disable-next-line: no-var-requires no-require-imports
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const pkg = require("../../package.json") as IPackage;
 export const WaterParkLoaderName = `${pkg.name}-loader`;
 
@@ -84,6 +84,7 @@ export class ExternalComponentLoader extends PrimedComponent
             const counterButton = document.createElement("button");
             inputDiv.appendChild(counterButton);
             counterButton.textContent = "Add Component";
+            // eslint-disable-next-line @typescript-eslint/promise-function-async
             counterButton.onclick = () => this.inputClick(input);
 
             if (this.error) {
@@ -112,6 +113,7 @@ export class ExternalComponentLoader extends PrimedComponent
             }
 
             try {
+                // eslint-disable-next-line @typescript-eslint/no-misused-promises
                 if (this.viewComponentP) {
                     const viewComponent = await this.viewComponentP;
                     if (viewComponent && viewComponent.IComponentCollection && this.runtime.IComponentRegistry) {
@@ -132,7 +134,7 @@ export class ExternalComponentLoader extends PrimedComponent
                         let component: IComponent = response.value as IComponent;
                         componentRuntime.attach();
                         if (component.IComponentCollection !== undefined) {
-                            // tslint:disable-next-line: await-promise
+                            // eslint-disable-next-line @typescript-eslint/await-thenable
                             component = await component.IComponentCollection.createCollectionItem();
                         }
                         viewComponent.IComponentCollection.createCollectionItem(component.IComponentLoadable);

@@ -11,6 +11,7 @@ export const FlowDocumentType = "@chaincode/flow-document";
 export const fluidExport = new SimpleModuleInstantiationFactory(
     webflowType,
     new Map([
-        [webflowType, import(/* webpackChunkName: "webflow", webpackPreload: true */ "./host").then((m) => m.webFlowFactory)],
+        [webflowType, import(/* webpackChunkName: "webflow", webpackPreload: true */ "./host")
+            .then((m) => m.webFlowFactory)],
     ]),
 );

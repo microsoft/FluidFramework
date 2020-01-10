@@ -5,82 +5,83 @@
 
 import { ISharedDirectory } from "@microsoft/fluid-map";
 import { Song } from "./Songs";
+// eslint-disable-next-line import/no-internal-modules
 import { Note } from "./Songs/Note";
 
 export class Recorder {
-  private currentSongName = "";
-  private isRecording = false;
-  private lastNoteTime = new Date();
+    private currentSongName = "";
+    private isRecording = false;
+    private lastNoteTime = new Date();
 
-  constructor(private readonly rootDir: ISharedDirectory) {}
+    constructor(private readonly rootDir: ISharedDirectory) {}
 
-  // Save each new note into Fluid as they come in
-  public postSaveNewNote(note: Note, currentTempo: number) {
-    if (this.isRecording) {
-      const savedSongs = this.getSavedSongs();
+    // Save each new note into Fluid as they come in
+    public postSaveNewNote(note: Note, currentTempo: number) {
+        if (this.isRecording) {
+            const savedSongs = this.getSavedSongs();
 
-      savedSongs.forEach((songProperties) => {
-        if (songProperties.name === this.currentSongName) {
-          const lastLastNoteTime = this.lastNoteTime;
-          this.lastNoteTime = new Date();
-          const elapsedTimeInMs = this.lastNoteTime.getTime() - lastLastNoteTime.getTime();
+            savedSongs.forEach((songProperties) => {
+                if (songProperties.name === this.currentSongName) {
+                    const lastLastNoteTime = this.lastNoteTime;
+                    this.lastNoteTime = new Date();
+                    const elapsedTimeInMs = this.lastNoteTime.getTime() - lastLastNoteTime.getTime();
 
-          const noteLength = (currentTempo * elapsedTimeInMs) / 60000;
+                    const noteLength = (currentTempo * elapsedTimeInMs) / 60000;
 
-          const lastNote = songProperties.song.noteSequence.pop();
+                    const lastNote = songProperties.song.noteSequence.pop();
 
-          // This can be simpler by just storing the n-1 note info and pushing it when necessary.
-          // Also pushing the last note on stop
-          if (lastNote !== undefined) {
-            lastNote.customNoteLength = noteLength;
-            songProperties.song.noteSequence.push(lastNote);
-          }
-          songProperties.song.noteSequence.push(note);
+                    // This can be simpler by just storing the n-1 note info and pushing it when necessary.
+                    // Also pushing the last note on stop
+                    if (lastNote !== undefined) {
+                        lastNote.customNoteLength = noteLength;
+                        songProperties.song.noteSequence.push(lastNote);
+                    }
+                    songProperties.song.noteSequence.push(note);
+                }
+            });
+
+            this.postSavedSongs(savedSongs);
         }
-      });
-
-      this.postSavedSongs(savedSongs);
-    }
-  }
-
-  public getSavedSongs(): SongProperties[] {
-    const savedSongs = this.rootDir.get("savedSongs");
-
-    if (savedSongs === undefined) {
-      return [];
     }
 
-    return savedSongs;
-  }
+    public getSavedSongs(): SongProperties[] {
+        const savedSongs = this.rootDir.get("savedSongs");
 
-  public postSavedSongs(savedSongs: SongProperties[]) {
-    this.rootDir.set("savedSongs", savedSongs);
-  }
+        if (savedSongs === undefined) {
+            return [];
+        }
 
-  // for caching later
-  private recordedSong: Song = { noteSequence: [] };
+        return savedSongs;
+    }
 
-  public startRecording(name: string) {
-    this.lastNoteTime = new Date();
-    this.isRecording = true;
-    this.currentSongName = name;
-    this.recordedSong = { noteSequence: [] };
+    public postSavedSongs(savedSongs: SongProperties[]) {
+        this.rootDir.set("savedSongs", savedSongs);
+    }
 
-    const songProperties = { name: this.currentSongName, song: this.recordedSong } as SongProperties;
+    // For caching later
+    private recordedSong: Song = { noteSequence: [] };
 
-    const savedSongs = this.getSavedSongs();
-    savedSongs.push(songProperties);
+    public startRecording(name: string) {
+        this.lastNoteTime = new Date();
+        this.isRecording = true;
+        this.currentSongName = name;
+        this.recordedSong = { noteSequence: [] };
 
-    this.postSavedSongs(savedSongs);
-  }
+        const songProperties = { name: this.currentSongName, song: this.recordedSong } as SongProperties;
 
-  public stopRecording() {
-    this.isRecording = false;
+        const savedSongs = this.getSavedSongs();
+        savedSongs.push(songProperties);
+
+        this.postSavedSongs(savedSongs);
+    }
+
+    public stopRecording() {
+        this.isRecording = false;
     // Save recorded song to Fluid
-  }
+    }
 }
 
 interface SongProperties {
-  name: string;
-  song: Song;
+    name: string;
+    song: Song;
 }

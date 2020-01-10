@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as os from "os";
 import { KafkaOrdererFactory } from "@microsoft/fluid-server-kafka-orderer";
 import {
     LocalNodeFactory,
@@ -15,7 +16,6 @@ import * as core from "@microsoft/fluid-server-services-core";
 import * as utils from "@microsoft/fluid-server-services-utils";
 import * as bytes from "bytes";
 import { Provider } from "nconf";
-import * as os from "os";
 import * as redis from "redis";
 import * as winston from "winston";
 import * as ws from "ws";
@@ -23,7 +23,7 @@ import { AlfredRunner } from "./runner";
 import { DefaultServiceConfiguration } from "./utils";
 
 class NodeWebSocketServer implements core.IWebSocketServer {
-    private webSocketServer: ws.Server;
+    private readonly webSocketServer: ws.Server;
 
     constructor(portNumber: number) {
         this.webSocketServer = new ws.Server({ port: portNumber });
@@ -31,6 +31,7 @@ class NodeWebSocketServer implements core.IWebSocketServer {
     public on(event: string, listener: (...args: any[]) => void) {
         this.webSocketServer.on(event, listener);
     }
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public close(): Promise<void> {
         this.webSocketServer.close();
         return Promise.resolve();
@@ -39,11 +40,11 @@ class NodeWebSocketServer implements core.IWebSocketServer {
 
 export class OrdererManager implements core.IOrdererManager {
     constructor(
-        private ordererUrl: string,
-        private tenantManager: core.ITenantManager,
-        private localOrderManager: LocalOrderManager,
-        private kafkaFactory: KafkaOrdererFactory,
-        private eventHubFactory: KafkaOrdererFactory,
+        private readonly ordererUrl: string,
+        private readonly tenantManager: core.ITenantManager,
+        private readonly localOrderManager: LocalOrderManager,
+        private readonly kafkaFactory: KafkaOrdererFactory,
+        private readonly eventHubFactory: KafkaOrdererFactory,
     ) {
     }
 
@@ -57,6 +58,7 @@ export class OrdererManager implements core.IOrdererManager {
             return Promise.reject("Invalid ordering service endpoint");
         }
 
+        /* eslint-disable @typescript-eslint/indent */
         switch (tenant.orderer.type) {
             case "kafka":
                 return this.kafkaFactory.create(tenantId, documentId);
@@ -65,6 +67,7 @@ export class OrdererManager implements core.IOrdererManager {
             default:
                 return this.localOrderManager.get(tenantId, documentId);
         }
+        /* eslint-enable @typescript-eslint/indent */
     }
 }
 
@@ -116,9 +119,18 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
         const webSocketLibrary = config.get("alfred:webSocketLib");
         const authEndpoint = config.get("auth:endpoint");
 
-        // Redis connection for client manaeger.
+        // Redis connection for client manager.
         const redisConfig2 = config.get("redis2");
-        const redisClient = redis.createClient(redisConfig2.port, redisConfig2.host);
+        const redisOptions2: redis.ClientOpts = { password: redisConfig2.pass };
+        if (redisConfig2.tls) {
+            redisOptions2.tls = {
+                serverName: redisConfig2.host,
+            };
+        }
+        const redisClient = redis.createClient(
+            redisConfig2.port,
+            redisConfig2.host,
+            redisOptions2);
         const clientManager = new services.ClientManager(redisClient);
 
         // Database connection
@@ -127,7 +139,7 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
         const mongoManager = new core.MongoManager(mongoFactory);
         const documentsCollectionName = config.get("mongo:collectionNames:documents");
 
-        // create the index on the documents collection
+        // Create the index on the documents collection
         const db = await mongoManager.getDatabase();
         const documentsCollection = db.collection<core.IDocument>(documentsCollectionName);
         await documentsCollection.createIndex(
@@ -139,7 +151,7 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
         const deltasCollectionName = config.get("mongo:collectionNames:deltas");
         const scribeCollectionName = config.get("mongo:collectionNames:scribeDeltas");
 
-        // foreman agent uploader does not run locally.
+        // Foreman agent uploader does not run locally.
         // TODO: Make agent uploader run locally.
         const foremanConfig = config.get("foreman");
         const taskMessageSender = services.createMessageSender(config.get("rabbitmq"), foremanConfig);
@@ -147,7 +159,7 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
 
         const nodeCollectionName = config.get("mongo:collectionNames:nodes");
         const nodeManager = new NodeManager(mongoManager, nodeCollectionName);
-        // this.nodeTracker.on("invalidate", (id) => this.emit("invalidate", id));
+        // This.nodeTracker.on("invalidate", (id) => this.emit("invalidate", id));
         const reservationManager = new ReservationManager(
             nodeManager,
             mongoManager,

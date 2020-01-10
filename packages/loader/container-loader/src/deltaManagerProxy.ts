@@ -106,7 +106,11 @@ export class DeltaManagerProxy
         return this.deltaManager.initialSequenceNumber;
     }
 
-    public get clientType(): string | undefined {
+    /**
+     * DEPRECATED use clientDetails.type
+     * back-compat: 0.11 clientType
+     */
+    public get clientType(): string {
         return this.deltaManager.clientType;
     }
 

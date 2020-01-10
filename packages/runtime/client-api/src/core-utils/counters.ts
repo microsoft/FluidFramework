@@ -76,7 +76,6 @@ export class ThroughputCounter {
 
             // If there was no activity within the interval disable it
             if (this.produceCounter.getValue() === 0 && this.acknowledgeCounter.getValue() === 0) {
-                // tslint:disable-next-line:no-unsafe-any
                 clearInterval(this.interval);
                 this.interval = undefined;
             }

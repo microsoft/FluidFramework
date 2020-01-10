@@ -12,10 +12,10 @@ import {
     ITelemetryPerformanceEvent,
     ITelemetryProperties,
     TelemetryEventPropertyType,
-} from "@microsoft/fluid-container-definitions";
+} from "@microsoft/fluid-common-definitions";
 import * as registerDebug from "debug";
 import { pkgName, pkgVersion } from "./packageVersion";
-// tslint:disable-next-line:no-var-requires
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const performanceNow = require("performance-now") as (() => number);
 
 export interface ITelemetryPropertyGetters {
@@ -69,7 +69,6 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
 
     public static prepareErrorObject(event: ITelemetryBaseEvent, error: any, fetchStack: boolean) {
         if (error === null || typeof error !== "object") {
-            // tslint:disable-next-line:no-unsafe-any
             event.error = error;
         } else {
             // WARNING: Exceptions can contain PII!
@@ -83,13 +82,10 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
 
             event.stack = errorAsObject.stack;
             event.error = errorAsObject.message;
-            // tslint:disable-next-line: no-unsafe-any
             if (error.getCustomProperties) {
-                // tslint:disable-next-line: no-unsafe-any
                 const customProps: object = error.getCustomProperties();
                 for (const key of Object.keys(customProps)) {
                     if (event[key] === undefined) {
-                        // tslint:disable-next-line: no-parameter-reassignment no-unsafe-any
                         event[key] = customProps[key];
                     }
                 }
@@ -109,7 +105,6 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
             try {
                 throw new Error();
             } catch (e) {
-                // tslint:disable-next-line:no-unsafe-any
                 stack = e.stack;
             }
         }
@@ -184,7 +179,6 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      * @param error - the error object to include in the event, require to be JSON-able
      */
     public logGenericError(eventName: string, error: any) {
-        // tslint:disable-next-line:no-unsafe-any
         this.sendErrorEvent({ eventName }, error);
     }
 
@@ -194,7 +188,6 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      * @param exception - Exception object to add to an event
      */
     public logException(event: ITelemetryErrorEvent, exception: any): void {
-        // tslint:disable-next-line:no-unsafe-any
         this.sendErrorEvent({ ...event, isException: true }, exception);
     }
 
@@ -232,16 +225,16 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
         if (this.namespace !== undefined) {
             newEvent.eventName = `${this.namespace}${TelemetryLogger.eventNamespaceSeparator}${newEvent.eventName}`;
         }
-        // evaluate any getter functions
+        // Evaluate any getter functions
         if (this.propertyGetters) {
             for (const key of Object.keys(this.propertyGetters)) {
                 if (event[key] !== undefined) {
-                    // properties directly on the event take priority
+                    // Properties directly on the event take priority
                     continue;
                 }
                 const getter = this.propertyGetters[key];
 
-                // if this throws, hopefully it is handled elsewhere
+                // If this throws, hopefully it is handled elsewhere
                 const value = getter();
                 if (value !== undefined) {
                     newEvent[key] = value;
@@ -379,7 +372,7 @@ export class DebugLogger extends TelemetryLogger {
         namespace: string,
         properties?: object,
         propertyGetters?: ITelemetryPropertyGetters): TelemetryLogger {
-        // setup base logger upfront, such that host can disable it (if needed)
+        // Setup base logger upfront, such that host can disable it (if needed)
         const debug = registerDebug(namespace);
         // Observations:
         // For browser to print these messages to console, logger should be enabled here in addition
@@ -477,7 +470,7 @@ export class DebugLogger extends TelemetryLogger {
             logger.enabled = true;
         }
 
-        // print multi-line.
+        // Print multi-line.
         logger(`${name} ${payload} ${tick} ${stack}`);
     }
 }
@@ -495,9 +488,9 @@ export class PerformanceEvent {
     private startMark?: string;
 
     protected constructor(
-            private readonly logger: ITelemetryLogger,
-            event: ITelemetryGenericEvent) {
-        this.event = {...event};
+        private readonly logger: ITelemetryLogger,
+        event: ITelemetryGenericEvent) {
+        this.event = { ...event };
         this.reportEvent("start");
 
         if (typeof window === "object" && window != null && window.performance) {
@@ -538,7 +531,7 @@ export class PerformanceEvent {
             return;
         }
 
-        const event: ITelemetryPerformanceEvent = {...this.event, ...props};
+        const event: ITelemetryPerformanceEvent = { ...this.event, ...props };
         event.eventName = `${event.eventName}_${eventNameSuffix}`;
         if (eventNameSuffix !== "start") {
             event.duration = performanceNow() - this.startTime;

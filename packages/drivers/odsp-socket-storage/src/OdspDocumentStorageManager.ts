@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
+import * as assert from "assert";
+import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import {
-    buildHierarchy,
     fromBase64ToUtf8,
     fromUtf8ToBase64,
     gitHashFile,
@@ -13,8 +13,8 @@ import {
     TelemetryLogger,
 } from "@microsoft/fluid-core-utils";
 import * as resources from "@microsoft/fluid-gitresources";
+import { buildHierarchy } from "@microsoft/fluid-protocol-base";
 import * as api from "@microsoft/fluid-protocol-definitions";
-import * as assert from "assert";
 import {
     IDocumentStorageGetVersionsResponse,
     IDocumentStorageManager,
@@ -32,8 +32,10 @@ import { fetchSnapshot } from "./fetchSnapshot";
 import { IFetchWrapper } from "./fetchWrapper";
 import { getQueryString } from "./getQueryString";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
-import { OdspCache } from "./odspCache";
+import { OdspCache } from "./OdspCache";
 import { getWithRetryForTokenRefresh, throwOdspNetworkError } from "./OdspUtils";
+
+/* eslint-disable max-len */
 
 const blobReuseFeatureDisabled = true;
 
@@ -78,6 +80,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         this.appId = queryParams.app_id;
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public createBlob(file: Buffer): Promise<api.ICreateBlobResponse> {
         this.checkSnapshotUrl();
 
@@ -163,7 +166,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
         const hierarchicalTree = buildHierarchy(tree);
 
-        // decode commit paths
+        // Decode commit paths
         const commits = {};
 
         const keys = Object.keys(hierarchicalTree.commits);
@@ -172,7 +175,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         }
 
         if (commits && commits[".app"]) {
-            // the latest snapshot is a summary
+            // The latest snapshot is a summary
             // attempt to read .protocol from commits for backwards compat
             return this.readSummaryTree(tree.sha, commits[".protocol"] || hierarchicalTree.trees[".protocol"], commits[".app"] as string);
         }
@@ -197,7 +200,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                 // If app indicate there are no latest snapshot, do not bother asking SPO - this adds substantially to load time
                 const latestSha = this.latestSha;
 
-                // clear it after using it once - this allows summary clients to fetch the correct versions
+                // Clear it after using it once - this allows summary clients to fetch the correct versions
                 this.latestSha = undefined;
 
                 if (latestSha === null) {
@@ -309,7 +312,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             const storageToken = await this.getStorageToken(refresh);
             const { url, headers } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/versions?count=${count}`, storageToken);
 
-            // fetch the latest snapshot versions for the document
+            // Fetch the latest snapshot versions for the document
             const response = await this.fetchWrapper
                 .get<IDocumentStorageGetVersionsResponse>(url, this.documentId, headers);
             const versionsResponse = response.content;
@@ -321,7 +324,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             }
             return versionsResponse.value.map((version) => {
                 // Parse the date from the message
-                let date: string|undefined;
+                let date: string | undefined;
                 for (const rec of version.message.split("\n")) {
                     const index = rec.indexOf(":");
                     if (index !== -1 && rec.substr(0, index) === "Date") {
@@ -338,6 +341,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         });
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public write(tree: api.ITree, parents: string[], message: string): Promise<api.IVersion> {
         this.checkSnapshotUrl();
 
@@ -363,6 +367,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         };
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public downloadSummary(commit: api.ISummaryHandle): Promise<api.ISummaryTree> {
         return Promise.reject("Not implemented yet");
     }
@@ -403,7 +408,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
                 const response = await fetchSnapshot(this.snapshotUrl!, storageToken, this.appId, this.fetchWrapper, id, this.fetchFullSnapshot);
                 const odspSnapshot: IOdspSnapshot = response.content;
-                // odspSnapshot contain "trees" when the request is made for latest or the root of the tree, for all other cases it will contain "tree" which is the fetched tree with the id
+                // OdspSnapshot contain "trees" when the request is made for latest or the root of the tree, for all other cases it will contain "tree" which is the fetched tree with the id
                 if (odspSnapshot) {
                     if (odspSnapshot.trees) {
                         this.initTreesCache(odspSnapshot.trees);
@@ -432,12 +437,12 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
      * @param appTreeId - Id of the app tree
      */
     private async readSummaryTree(snapshotTreeId: string, protocolTreeOrId: api.ISnapshotTree | string, appTreeId: string): Promise<api.ISnapshotTree> {
-        // load the app and protocol trees and return them
+        // Load the app and protocol trees and return them
         let hierarchicalProtocolTree: api.ISnapshotTree;
         let appTree: resources.ITree | null;
 
         if (typeof (protocolTreeOrId) === "string") {
-            // backwards compat for older summaries
+            // Backwards compat for older summaries
             const trees = await Promise.all([
                 this.readTree(protocolTreeOrId),
                 this.readTree(appTreeId),
@@ -488,7 +493,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         return summarySnapshotTree;
     }
 
-    private async writeSummaryTree(tree: api.SummaryTree, depth: number = 0): Promise<{ result: ISnapshotResponse, blobsShaToPathCacheLatest?: Map<string, string>}> {
+    private async writeSummaryTree(tree: api.SummaryTree, depth: number = 0): Promise<{ result: ISnapshotResponse, blobsShaToPathCacheLatest?: Map<string, string> }> {
         if (tree.type === api.SummaryType.Handle) {
             return {
                 result: { sha: tree.handle },
@@ -534,9 +539,10 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             let id: string | undefined;
             let value: SnapshotTreeValue | undefined;
 
+            /* eslint-disable no-case-declarations */
             switch (summaryObject.type) {
                 case api.SummaryType.Tree:
-                    value = this.convertSummaryToSnapshotTree(summaryObject, blobsShaToPathCacheLatest,  depth + 1, `${path}/${key}`);
+                    value = this.convertSummaryToSnapshotTree(summaryObject, blobsShaToPathCacheLatest, depth + 1, `${path}/${key}`);
                     break;
 
                 case api.SummaryType.Blob:
@@ -545,8 +551,8 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
                     const hash = gitHashFile(Buffer.from(content, encoding));
                     let completePath = this.blobsShaToPathCache.get(hash);
-                    // If the cache has the hash of the blob and handle of last summary is also present, then use that to generate complete path for
-                    // the given blob.
+                    // If the cache has the hash of the blob and handle of last summary is also present, then use that
+                    // to generate complete path for the given blob.
                     if (blobReuseFeatureDisabled || !completePath || !this.lastSummaryHandle) {
                         value = {
                             content,
@@ -574,6 +580,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                 default:
                     throw new Error(`Unknown tree type ${summaryObject.type}`);
             }
+            /* eslint-enable no-case-declarations */
 
             const baseEntry: ISnapshotTreeBaseEntry = {
                 mode: "100644",
@@ -623,3 +630,5 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         }
     }
 }
+
+/* eslint-enable max-len */

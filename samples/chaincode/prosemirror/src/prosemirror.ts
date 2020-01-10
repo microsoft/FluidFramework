@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import {
     IComponentLoadable,
     IComponentRouter,
@@ -25,7 +26,6 @@ import {
 import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
-import { EventEmitter } from "events";
 import { EditorView } from "prosemirror-view";
 import { nodeTypeKey } from "./fluidBridge";
 import { FluidCollabManager, IProvideRichTextEditor } from "./fluidCollabManager";
@@ -61,19 +61,19 @@ function createTreeMarkerOps(
 
 class ProseMirrorView implements IComponentHTMLView {
     private content: HTMLDivElement;
-    private editorView: EditorView;
+    private readonly editorView: EditorView;
     private textArea: HTMLDivElement;
-    private collabManager: FluidCollabManager;
+    private readonly collabManager: FluidCollabManager;
 
     public constructor(
-        private text: SharedString,
-        private runtime: IComponentRuntime,
+        private readonly text: SharedString,
+        private readonly runtime: IComponentRuntime,
     ) {
         this.collabManager = new FluidCollabManager(this.text, this.runtime.loader);
     }
 
     public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
-        // create base textarea
+        // Create base textarea
         if (!this.textArea) {
             this.textArea = document.createElement("div");
             this.textArea.classList.add("editor");
@@ -82,7 +82,7 @@ class ProseMirrorView implements IComponentHTMLView {
             this.content.innerHTML = "";
         }
 
-        // reparent if needed
+        // Reparent if needed
         if (this.textArea.parentElement !== elm) {
             this.textArea.remove();
             this.content.remove();
@@ -100,7 +100,8 @@ class ProseMirrorView implements IComponentHTMLView {
     }
 }
 
-export class ProseMirror extends EventEmitter implements IComponentLoadable, IComponentRouter, IComponentHTMLVisual, IProvideRichTextEditor {
+export class ProseMirror extends EventEmitter
+    implements IComponentLoadable, IComponentRouter, IComponentHTMLVisual, IProvideRichTextEditor {
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
         const collection = new ProseMirror(runtime, context);
         await collection.initialize();
@@ -118,10 +119,10 @@ export class ProseMirror extends EventEmitter implements IComponentLoadable, ICo
     private root: ISharedMap;
     private collabManager: FluidCollabManager;
     private defaultView: ProseMirrorView;
-    
+
     constructor(
-        private runtime: IComponentRuntime,
-        /* private */ context: IComponentContext,
+        private readonly runtime: IComponentRuntime,
+        /* Private */ context: IComponentContext,
     ) {
         super();
 
@@ -154,7 +155,8 @@ export class ProseMirror extends EventEmitter implements IComponentLoadable, ICo
 
         this.collabManager = new FluidCollabManager(this.text, this.runtime.loader);
 
-        // access for debugging
+        // Access for debugging
+        // eslint-disable-next-line dot-notation
         window["easyComponent"] = this;
     }
 

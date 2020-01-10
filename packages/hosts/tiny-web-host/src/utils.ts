@@ -49,6 +49,5 @@ export async function auth(tenantId: string, documentId: string, getToken: () =>
         user: { id: "anonymous-coward" },
     };
 
-    // tslint:disable-next-line: no-unsafe-any
     return jwt.sign(claims, secret);
 }

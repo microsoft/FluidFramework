@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-// tslint:disable:object-literal-sort-keys
-import { BaseTelemetryNullLogger, configurableUrlResolver } from "@microsoft/fluid-core-utils";
+import { URL } from "url";
+import { BaseTelemetryNullLogger } from "@microsoft/fluid-core-utils";
 import { IFluidResolvedUrl, IResolvedUrl, IUrlResolver } from "@microsoft/fluid-driver-definitions";
+import { configurableUrlResolver } from "@microsoft/fluid-driver-utils";
 import { FluidAppOdspUrlResolver } from "@microsoft/fluid-fluidapp-odsp-urlresolver";
 import * as odsp from "@microsoft/fluid-odsp-driver";
 import { OdspUrlResolver } from "@microsoft/fluid-odsp-urlresolver";
 import { IClientConfig, refreshAccessToken } from "@microsoft/fluid-odsp-utils";
 import * as r11s from "@microsoft/fluid-routerlicious-driver";
 import { RouterliciousUrlResolver } from "@microsoft/fluid-routerlicious-urlresolver";
-import { URL } from "url";
 import { localDataOnly, paramJWT } from "./fluidFetchArgs";
 import { getClientConfig, getODSPTokens, saveAccessToken } from "./fluidFetchODSPTokens";
 
@@ -54,6 +54,7 @@ async function initializeODSPCore(
         }
         return tokens.accessToken;
     };
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     const getWebsocketTokenStub = () => Promise.resolve("");
     const odspDocumentServiceFactory = new odsp.OdspDocumentServiceFactory(
         clientConfig.clientId,
@@ -75,7 +76,7 @@ async function initializeR11s(server: string, pathname: string, r11sResolvedUrl:
         documentId = path[3];
     }
 
-    // latest version id is the documentId for r11s
+    // Latest version id is the documentId for r11s
     latestVersionsId = documentId;
 
     connectionInfo = {
@@ -104,6 +105,7 @@ async function resolveUrl(url: string): Promise<IResolvedUrl | undefined> {
     const resolversList: IUrlResolver[] = [
         new OdspUrlResolver(),
         new FluidAppOdspUrlResolver(),
+        // eslint-disable-next-line @typescript-eslint/promise-function-async
         new RouterliciousUrlResolver(undefined, () => Promise.resolve(paramJWT), []),
     ];
     const resolved = await configurableUrlResolver(resolversList, { url });

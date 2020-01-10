@@ -31,7 +31,11 @@ export class Editor {
     private readonly layout: Layout;
     private readonly caret: Caret;
 
-    constructor(doc: FlowDocument, private readonly root: HTMLElement, formatter: Readonly<RootFormatter<IFormatterState>>, scope?: IComponent) {
+    constructor(
+        doc: FlowDocument,
+        private readonly root: HTMLElement,
+        formatter: Readonly<RootFormatter<IFormatterState>>,
+        scope?: IComponent) {
         const scheduler = new Scheduler();
         this.layout = new Layout(doc, root, formatter, scheduler, scope);
         this.caret = new Caret(this.layout);
@@ -106,7 +110,7 @@ export class Editor {
                 // Fall through to sync
             }
 
-            case KeyCode.F3 : {
+            case KeyCode.F3: {
                 this.layout.sync();
                 break;
             }
@@ -125,21 +129,21 @@ export class Editor {
                 }
             }
         }
-    }
+    };
 
     private readonly onPaste = (e: ClipboardEvent) => {
         if (this.shouldHandleEvent(e)) {
             this.consume(e);
             this.delegateEvent(e, onPasteThunk);
         }
-    }
+    };
 
     private readonly onKeyPress = (e: KeyboardEvent) => {
         if (this.shouldHandleEvent(e)) {
             this.consume(e);
             this.delegateEvent(e, onKeyPressThunk);
         }
-    }
+    };
 
     private delegateEvent<TEvent extends Event>(e: TEvent, thunk: (format: Readonly<Formatter<IFormatterState>>, state: Readonly<IFormatterState>, layout: Layout, caret: Caret, e: TEvent) => boolean) {
         const { doc, caret, layout } = this;

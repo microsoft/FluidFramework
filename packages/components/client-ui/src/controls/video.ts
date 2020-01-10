@@ -7,10 +7,10 @@ import { ISharedMap } from "@microsoft/fluid-map";
 import * as ui from "../ui";
 
 export class Video extends ui.Component {
-    private message: HTMLSpanElement;
+    private readonly message: HTMLSpanElement;
     private video: HTMLVideoElement;
 
-    constructor(element: HTMLDivElement, private videoMap: ISharedMap, src: string) {
+    constructor(element: HTMLDivElement, private readonly videoMap: ISharedMap, src: string) {
         super(element);
 
         this.message = document.createElement("span");
@@ -27,6 +27,7 @@ export class Video extends ui.Component {
         this.video.muted = true;
         element.appendChild(this.video);
 
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.handleVideoMap();
         this.video.onplay = () => this.handlePlay();
         this.video.onpause = () => this.handlePause();
@@ -45,6 +46,7 @@ export class Video extends ui.Component {
     public playPause(play: boolean) {
         if (play) {
             if (this.video.paused) {
+                // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 this.video.play();
             }
         } else {

@@ -6,10 +6,11 @@
 import { IInkPoint, IPen } from "@microsoft/fluid-ink";
 import { IPoint, IVector, Point, Vector } from "../ui";
 import { SegmentCircleInclusive } from "./overlayCanvas";
+// eslint-disable-next-line import/no-internal-modules
 import { Circle, IShape, Polygon } from "./shapes/index";
 
 /**
- * given start point and end point, get MixInk shapes to render. The returned MixInk
+ * Given start point and end point, get MixInk shapes to render. The returned MixInk
  * shapes may contain one or two circles whose center is either start point or end point.
  * Enum SegmentCircleInclusive determins whether circle is in the return list.
  * Besides circles, a trapezoid that serves as a bounding box of two stroke point is also returned.

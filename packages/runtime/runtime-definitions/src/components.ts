@@ -2,6 +2,9 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
+
+import { EventEmitter } from "events";
+import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import {
     IComponent,
     IComponentHandleContext,
@@ -18,11 +21,11 @@ import {
     IDeltaManager,
     IGenericBlob,
     ILoader,
-    ITelemetryLogger,
 } from "@microsoft/fluid-container-definitions";
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import {
     ConnectionState,
+    IClientDetails,
     IDocumentMessage,
     IQuorum,
     ISequencedDocumentMessage,
@@ -31,9 +34,8 @@ import {
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
 
-import { EventEmitter } from "events";
-import { IChannel } from ".";
 import { IProvideComponentRegistry } from "./componentRegistry";
+import { IChannel } from ".";
 
 /**
  * Represents the runtime for the component. Contains helper functions/state of the component.
@@ -201,7 +203,11 @@ export interface IComponentContext extends EventEmitter {
     readonly existing: boolean;
     readonly options: any;
     readonly clientId: string;
-    readonly clientType: string | undefined;
+    /**
+     * DEPRECATED use hostRuntime.clientDetails.type instead
+     * back-compat: 0.11 clientType
+     */
+    readonly clientType: string;
     readonly parentBranch: string;
     readonly connected: boolean;
     readonly leader: boolean;
@@ -315,7 +321,12 @@ export interface IHostRuntime extends
     readonly existing: boolean;
     readonly options: any;
     readonly clientId: string;
-    readonly clientType: string | undefined;
+    /**
+     * DEPRECATED use clientDetails.type instead
+     * back-compat: 0.11 clientType
+     */
+    readonly clientType: string;
+    readonly clientDetails: IClientDetails;
     readonly parentBranch: string;
     readonly connected: boolean;
     readonly leader: boolean;

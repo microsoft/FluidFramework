@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import * as api from "@fluid-internal/client-api";
 import * as ink from "@microsoft/fluid-ink";
-import * as assert from "assert";
 import * as ui from "../ui";
 import { getShapes } from "./canvasCommon";
 import * as recognizer from "./shapeRecognizer";
@@ -33,16 +33,14 @@ function sizeCanvas(canvas: HTMLCanvasElement, size: ui.ISize) {
 /**
  * Adds padding to next if is different from the current value
  */
-function padLeft(current: number, next: number, padding: number) {
-    return current !== next ? Math.floor(next - padding) : current;
-}
+// eslint-disable-next-line max-len
+const padLeft = (current: number, next: number, padding: number) => current !== next ? Math.floor(next - padding) : current;
 
 /**
  * Adds padding to next if is different from the current value
  */
-function padRight(current: number, next: number, padding: number) {
-    return current !== next ? Math.ceil(next + padding) : current;
-}
+// eslint-disable-next-line max-len
+const padRight = (current: number, next: number, padding: number) => current !== next ? Math.ceil(next + padding) : current;
 
 /**
  * The drawing context provides access to a logical canvas that is infinite in size. In reality it's backed by a
@@ -80,7 +78,7 @@ export class DrawingContext {
         this.lastPoint = null;
     }
 
-    // store instructions used to render itself? i.e. the total path? Or defer to someone else to actually
+    // Store instructions used to render itself? i.e. the total path? Or defer to someone else to actually
     // do the re-render with a context?
     public drawSegmentToNewPoint(endPoint: ink.IInkPoint) {
         assert(this.pen);
@@ -198,7 +196,7 @@ export abstract class Layer {
  * Used to render ink
  */
 export class InkLayer extends Layer {
-    constructor(size: ui.ISize, private model: ink.IInk) {
+    constructor(size: ui.ISize, private readonly model: ink.IInk) {
         super(size);
 
         this.model.on("clear", (op) => {
@@ -233,7 +231,7 @@ export class InkLayer extends Layer {
  * API access to a drawing context that can be used to render elements
  */
 export class OverlayCanvas extends ui.Component {
-    private layers: Layer[] = [];
+    private readonly layers: Layer[] = [];
     private currentStrokeId: string;
     private activePointerId: number;
     private inkEventsEnabled = false;
@@ -258,7 +256,7 @@ export class OverlayCanvas extends ui.Component {
      * that element would then receive all events and events wouldn't pass through to the content under the
      * overlay. For that reason we ask the parent element to provide a div we can use to track pen entry/exit.
      */
-    constructor(private document: api.Document, container: HTMLDivElement, eventTarget: HTMLDivElement) {
+    constructor(private readonly document: api.Document, container: HTMLDivElement, eventTarget: HTMLDivElement) {
         super(container);
 
         // No pointer events by default

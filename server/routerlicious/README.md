@@ -18,6 +18,8 @@ The services follow the [twelve factor](https://12factor.net) methodology and ar
 
 To get started with Prague, we suggest that you [build a component](https://praguedocs.azurewebsites.net/get-started/build-a-component.html) using the [Yo Fluid](https://praguedocs.azurewebsites.net/get-started/yo-prague.html) bootstrapper.
 
+If you want a local service, but don't want to build routerlicious, you can use the standalone dockerfile located at the Fluid Framework root.
+
 If you want to dive into the Prague internals, keep reading below.
 
 ## Help and Questions
@@ -67,10 +69,11 @@ machine with your toolchain of choice. And the output is then run inside the con
 
 To start the service for development run the following commands:
 
-* `npm install`
-* `npm run build`
-* `npm start`
-
+```sh
+npm install
+npm run build
+npm start
+```
 To stop the service run `npm stop`. If you also want to clean up any mounted volumes (to get to a fully clean state) run `npm run stop:full`.
 
 If you also need debugging you can run:

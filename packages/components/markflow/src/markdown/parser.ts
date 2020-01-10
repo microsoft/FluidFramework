@@ -4,7 +4,6 @@
  */
 
 import { MapLike } from "@microsoft/fluid-merge-tree";
-// import { strict as assert } from "assert";
 import * as remark from "remark";
 import { debug } from "./debug";
 import { MarkdownToken } from "./types";
@@ -14,15 +13,15 @@ type visitFn = (position: number, token: MarkdownToken, props?: MapLike<string |
 // These Remark node 'types' trivially map to MarkdownTokens.
 const typeToToken = Object.freeze({
     blockquote: MarkdownToken.blockquote,
-    break:      MarkdownToken.break,
-    emphasis:   MarkdownToken.emphasis,
+    break: MarkdownToken.break,
+    emphasis: MarkdownToken.emphasis,
     inlineCode: MarkdownToken.inlineCode,
-    listItem:   MarkdownToken.listItem,
-    strong:     MarkdownToken.strong,
-    table:      MarkdownToken.table,
-    tableCell:  MarkdownToken.tableCell,
-    tableRow:   MarkdownToken.tableRow,
-    text:       MarkdownToken.text,
+    listItem: MarkdownToken.listItem,
+    strong: MarkdownToken.strong,
+    table: MarkdownToken.table,
+    tableCell: MarkdownToken.tableCell,
+    tableRow: MarkdownToken.tableRow,
+    text: MarkdownToken.text,
 });
 
 const depthToHeadingLevel = Object.freeze([
@@ -145,7 +144,9 @@ export class MarkdownParser {
                 props = { "data-language": node.lang };
                 break;
             case "paragraph":
-                // Suppress paragraph token if it is the first child of a "tight" list item (in which case it should not be rendered.)
+                // Suppress paragraph token if it is the first child of a "tight" list item (in which case it should not
+                // be rendered.)
+                // eslint-disable-next-line no-case-declarations
                 const maybeList = this.peek(2);
                 if (maybeList && !maybeList.spread) {
                     return;

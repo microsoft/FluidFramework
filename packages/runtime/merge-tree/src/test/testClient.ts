@@ -3,11 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import { DebugLogger } from "@microsoft/fluid-core-utils";
 import { ISequencedDocumentMessage, ITree, MessageType } from "@microsoft/fluid-protocol-definitions";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+// eslint-disable-next-line import/no-extraneous-dependencies
 import { MockStorage } from "@microsoft/fluid-test-runtime-utils";
-import * as assert from "assert";
+// eslint-disable-next-line import/no-extraneous-dependencies
 import * as random from "random-js";
 import { Client } from "../client";
 import * as Collections from "../collections";
@@ -60,21 +62,20 @@ export class TestClient extends Client {
         const services = new MockStorage(snapshotTree);
 
         const client2 = new TestClient(undefined, specToSeg);
-        const loader = client2.createSnapshotLoader(
+        await client2.load(
             // tslint:disable-next-line: no-object-literal-type-assertion
             {
                 logger: client2.logger,
                 clientId: newLongClientId,
-            } as IComponentRuntime);
-        await loader.initialize(undefined, services);
+            } as IComponentRuntime,
+            services);
         return client2;
     }
 
     public mergeTree: MergeTree;
 
     public readonly checkQ: Collections.List<string> = Collections.ListMakeHead<string>();
-    protected readonly q: Collections.List<ISequencedDocumentMessage> =
-        Collections.ListMakeHead<ISequencedDocumentMessage>();
+    protected readonly q: Collections.List<ISequencedDocumentMessage> = Collections.ListMakeHead<ISequencedDocumentMessage>();
 
     private readonly textHelper: MergeTreeTextHelper;
     constructor(
@@ -86,7 +87,7 @@ export class TestClient extends Client {
             options);
         this.textHelper = new MergeTreeTextHelper(this.mergeTree);
 
-        // validate by default
+        // Validate by default
         this.mergeTree.mergeTreeDeltaCallback = (o, d) => {
             // assert.notEqual(d.deltaSegments.length, 0);
             d.deltaSegments.forEach((s) => {
@@ -226,6 +227,7 @@ export class TestClient extends Client {
         while (start < this.getLength()) {
             chunk = this.getText(start, start + TestClient.searchChunkSize);
 
+            // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
             const result = chunk.match(target);
             if (result !== null) {
                 return { text: result[0], pos: (result.index + start) };

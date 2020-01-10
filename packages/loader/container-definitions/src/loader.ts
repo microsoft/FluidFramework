@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import { IUrlResolver } from "@microsoft/fluid-driver-definitions";
 import {
@@ -11,7 +12,6 @@ import {
     IQuorum,
     ISequencedDocumentMessage,
 } from "@microsoft/fluid-protocol-definitions";
-import { EventEmitter } from "events";
 import { IFluidCodeDetails } from "./chaincode";
 import { IDeltaManager } from "./deltas";
 
@@ -69,7 +69,13 @@ export enum LoaderHeader {
      * true) if the reconnect header is false or the pause header is true, since these containers should not be cached.
      */
     cache = "fluid-cache",
-    clientDetails = "fluid-client-type",
+
+    /**
+     * DEPRECATED use clientDetails instead
+     * back-compat: 0.11 clientType
+     */
+    clientType = "fluid-client-type",
+    clientDetails = "fluid-client-details",
     executionContext = "execution-context",
 
     /**
@@ -89,6 +95,12 @@ export enum LoaderHeader {
 }
 export interface ILoaderHeader {
     [LoaderHeader.cache]: boolean;
+
+    /**
+     * DEPRECATED use clientDetails instead
+     * back-compat: 0.11 clientType
+     */
+    [LoaderHeader.clientType]: string;
     [LoaderHeader.clientDetails]: IClientDetails;
     [LoaderHeader.pause]: boolean;
     [LoaderHeader.executionContext]: string;
@@ -98,6 +110,6 @@ export interface ILoaderHeader {
 }
 
 declare module "@microsoft/fluid-component-core-interfaces" {
-    export interface IRequestHeader extends Partial<ILoaderHeader> {
-    }
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface IRequestHeader extends Partial<ILoaderHeader> { }
 }

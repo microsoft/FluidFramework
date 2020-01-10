@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { Router } from "express";
 import * as fs from "fs";
+import * as path from "path";
+import { Stream } from "stream";
+import { Router } from "express";
 import * as minio from "minio";
 import { Provider } from "nconf";
-import * as path from "path";
 import * as rimraf from "rimraf";
-import { Stream } from "stream";
 import * as unzip from "unzip-stream";
 import * as webpack from "webpack";
 import * as winston from "winston";
@@ -28,31 +28,31 @@ export function create(config: Provider): Router {
     });
 
     // Uploads the webpacked script to minio and delete the temorary script.
-    function uploadScript(moduleName: string): Promise<any> {
-        return new Promise<any>((resolve, reject) => {
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
+    const uploadScript = (moduleName: string): Promise<any> =>
+        new Promise<any>((resolve, reject) => {
             const folder = "/tmp/build";
             const file = path.join(folder, `${moduleName}/webpacked_index.js`);
             const fileStream = fs.createReadStream(file);
             fs.stat(file, (error, stats) => {
-              if (error) {
-                  winston.error(`Webpacked file does not exist: ${error}`);
-                  reject(error);
-              }
-              minioClient.putObject(storageBucket, `${moduleName}/index.js`, fileStream, stats.size, (err, etag) => {
-                  rimraf(folder, (e) => {
-                      if (e) {
-                          winston.error(`Error deleting ${folder}: ${e}`);
-                      }
-                  });
-                  if (err) {
-                      winston.error(`Error uploading webpacked ${moduleName} to minio: ${err}`);
-                      reject(err);
-                  }
-                  resolve();
-              });
+                if (error) {
+                    winston.error(`Webpacked file does not exist: ${error}`);
+                    reject(error);
+                }
+                minioClient.putObject(storageBucket, `${moduleName}/index.js`, fileStream, stats.size, (err, etag) => {
+                    rimraf(folder, (e) => {
+                        if (e) {
+                            winston.error(`Error deleting ${folder}: ${e}`);
+                        }
+                    });
+                    if (err) {
+                        winston.error(`Error uploading webpacked ${moduleName} to minio: ${err}`);
+                        reject(err);
+                    }
+                    resolve();
+                });
             });
         });
-    }
 
     const router: Router = Router();
 
@@ -63,7 +63,7 @@ export function create(config: Provider): Router {
         const names: string[] = [];
         const objectsStream = minioClient.listObjects(storageBucket, "", true);
         objectsStream.on("data", (obj) => {
-            names.push(obj.name as string);
+            names.push(obj.name);
         });
 
         objectsStream.on("error", (error) => {
@@ -71,7 +71,7 @@ export function create(config: Provider): Router {
         });
 
         (objectsStream as Stream).on("end", (data) => {
-            response.status(200).json( { names } );
+            response.status(200).json({ names });
         });
     });
 
@@ -82,7 +82,7 @@ export function create(config: Provider): Router {
         // Returns the stream.
         minioClient.getObject(storageBucket, getParam(request.params, "id"), (error: any, stream: Stream) => {
             if (error) {
-                // tslint:disable-next-line
+                // eslint-disable-next-line max-len
                 return error.code === "NoSuchKey" ? response.status(200).send(null) : response.status(400).json({ error });
             }
             stream.pipe(response);
@@ -97,57 +97,57 @@ export function create(config: Provider): Router {
         const moduleName = moduleFile.split(".")[0];
         minioClient.getObject(storageBucket, moduleFile, (error: any, stream: Stream) => {
             if (error) {
-                // tslint:disable-next-line
+                // eslint-disable-next-line max-len
                 return error.code === "NoSuchKey" ? response.status(200).send(null) : response.status(400).json({ error });
             }
             stream
-            .pipe(unzip.Extract({ path: `/tmp/temp_modules/${moduleName}` })
-            .on("error", (err) => {
-                winston.error(`Error writing unzipped module ${moduleName}: ${err}`);
-                response.status(500).json( {status: "error"} );
-            })
-            .on("close", () => {
-                const compiler = webpack({
-                    entry: `/tmp/temp_modules/${moduleName}/${moduleName}/dist/index.js`,
-                    output: {
-                        filename: "webpacked_index.js",
-                        path: `/tmp/build/${moduleName}`,
-                    },
-                    resolve: {
-                        modules: [
-                          "temp_modules",
-                          "/tmp",
-                        ],
-                    },
-                    target: "node",
-                });
+                .pipe(unzip.Extract({ path: `/tmp/temp_modules/${moduleName}` })
+                    .on("error", (err) => {
+                        winston.error(`Error writing unzipped module ${moduleName}: ${err}`);
+                        response.status(500).json({ status: "error" });
+                    })
+                    .on("close", () => {
+                        const compiler = webpack({
+                            entry: `/tmp/temp_modules/${moduleName}/${moduleName}/dist/index.js`,
+                            output: {
+                                filename: "webpacked_index.js",
+                                path: `/tmp/build/${moduleName}`,
+                            },
+                            resolve: {
+                                modules: [
+                                    "temp_modules",
+                                    "/tmp",
+                                ],
+                            },
+                            target: "node",
+                        });
 
-                const tempFolder = `/tmp/temp_modules`;
-                compiler.run((err, stats) => {
-                    if (err || stats.hasErrors()) {
-                        winston.error(`Error packing: ${err}`);
-                        rimraf(tempFolder, (e) => {
-                            if (e) {
-                                winston.error(`Error deleting ${tempFolder}: ${e}`);
+                        const tempFolder = `/tmp/temp_modules`;
+                        compiler.run((err, stats) => {
+                            if (err || stats.hasErrors()) {
+                                winston.error(`Error packing: ${err}`);
+                                rimraf(tempFolder, (e) => {
+                                    if (e) {
+                                        winston.error(`Error deleting ${tempFolder}: ${e}`);
+                                    }
+                                });
+                            } else {
+                                winston.info(`Success packing!`);
+                                rimraf(tempFolder, (e) => {
+                                    if (e) {
+                                        winston.error(`Error deleting ${tempFolder}: ${e}`);
+                                    }
+                                });
+                                uploadScript(moduleName).then(() => {
+                                    winston.info(`Uploaded script from: ${__dirname}`);
+                                }, (uploadError) => {
+                                    winston.error(`Error uploading script: ${uploadError}`);
+                                });
                             }
                         });
-                    } else {
-                        winston.info(`Success packing!`);
-                        rimraf(tempFolder, (e) => {
-                            if (e) {
-                                winston.error(`Error deleting ${tempFolder}: ${e}`);
-                            }
-                        });
-                        uploadScript(moduleName).then(() => {
-                            winston.info(`Uploaded script from: ${__dirname}`);
-                        }, (uploadError) => {
-                            winston.error(`Error uploading script: ${uploadError}`);
-                        });
-                    }
-                });
 
-                response.status(200).json( {status: "Done uploading webpacked js file!"} );
-            }));
+                        response.status(200).json({ status: "Done uploading webpacked js file!" });
+                    }));
         });
     });
 

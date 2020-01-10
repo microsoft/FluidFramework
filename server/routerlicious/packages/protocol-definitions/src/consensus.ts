@@ -4,8 +4,8 @@
  */
 
 import { EventEmitter } from "events";
+import { IDisposable } from "@microsoft/fluid-common-definitions";
 import { ISequencedClient } from "./clients";
-import { IDisposable } from "./disposable";
 
 /**
  * Proposal to set the given key/value pair.

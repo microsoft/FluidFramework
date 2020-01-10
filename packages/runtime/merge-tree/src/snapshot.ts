@@ -3,23 +3,22 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
+import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import {
     IComponentHandle,
     IComponentHandleContext,
     IComponentSerializer,
 } from "@microsoft/fluid-component-core-interfaces";
-import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
 import { ChildLogger, fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
 import { FileMode, ISequencedDocumentMessage, ITree, TreeEntry } from "@microsoft/fluid-protocol-definitions";
 import { IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
-import { strict as assert } from "assert";
 import { UnassignedSequenceNumber } from "./constants";
 import * as MergeTree from "./mergeTree";
 import * as ops from "./ops";
 import * as Properties from "./properties";
 import { SnapshotLegacy } from "./snapshotlegacy";
 
-// tslint:disable
 type SegmentSpec = ops.IJSONSegment | ops.IJSONSegmentWithMergeInfo;
 
 export interface SnapshotHeader {
@@ -49,21 +48,27 @@ export class Snapshot {
     private header: SnapshotHeader;
     private segments: SegmentSpec[];
     private segmentLengths: number[];
-    private logger: ITelemetryLogger;
+    private readonly logger: ITelemetryLogger;
 
-    constructor(public mergeTree: MergeTree.MergeTree, logger: ITelemetryLogger, public filename?: string,
+    constructor(
+        public mergeTree: MergeTree.MergeTree,
+        logger: ITelemetryLogger,
+        public filename?: string,
         public onCompletion?: () => void) {
         this.logger = ChildLogger.create(logger, "Snapshot");
     }
 
-    getSeqLengthSegs(allSegments: SegmentSpec[], allLengths: number[], approxSequenceLength: number,
+    getSeqLengthSegs(
+        allSegments: SegmentSpec[],
+        allLengths: number[],
+        approxSequenceLength: number,
         startIndex = 0): ops.MergeTreeChunk {
 
-        let segs: SegmentSpec[] = [];
+        const segs: SegmentSpec[] = [];
         let sequenceLength = 0;
         let segCount = 0;
         while ((sequenceLength < approxSequenceLength) && ((startIndex + segCount) < allSegments.length)) {
-            let pseg = allSegments[startIndex + segCount];
+            const pseg = allSegments[startIndex + segCount];
             segs.push(pseg);
             sequenceLength += allLengths[startIndex + segCount];
             segCount++;
@@ -76,8 +81,8 @@ export class Snapshot {
             totalSegmentCount: allSegments.length,
             chunkSequenceNumber: this.header.seq,
             chunkMinSequenceNumber: this.header.minSeq,
-            segmentTexts: segs
-        }
+            segmentTexts: segs,
+        };
     }
 
     /**
@@ -96,9 +101,9 @@ export class Snapshot {
 
         // TODO: Remove or disable this timing data once Snapshot v2 becomes the default.  Right now,
         //       I leave it enabled to help identify when a client has successfully opted into v2.
-        console.time("Snapshot.emit()")
+        console.time("Snapshot.emit()");
         try {
-            let chunk1 = this.getSeqLengthSegs(this.segments, this.segmentLengths, Snapshot.sizeOfFirstChunk);
+            const chunk1 = this.getSeqLengthSegs(this.segments, this.segmentLengths, Snapshot.sizeOfFirstChunk);
             let length: number = chunk1.chunkLengthChars;
             let segments: number = chunk1.chunkSegmentCount;
             const tree: ITree = {
@@ -108,7 +113,9 @@ export class Snapshot {
                         path: Snapshot.header,
                         type: TreeEntry[TreeEntry.Blob],
                         value: {
-                            contents: serializer ? serializer.stringify(chunk1, context, bind): JSON.stringify(chunk1),
+                            contents: serializer ?
+                                serializer.stringify(chunk1, context, bind) :
+                                JSON.stringify(chunk1),
                             encoding: "utf-8",
                         },
                     },
@@ -116,9 +123,8 @@ export class Snapshot {
                 id: null,
             };
 
-            if (chunk1.chunkSegmentCount < chunk1.totalSegmentCount)
-            {
-                let chunk2 = this.getSeqLengthSegs(this.segments, this.segmentLengths, this.header.segmentsTotalLength, chunk1.chunkSegmentCount);
+            if (chunk1.chunkSegmentCount < chunk1.totalSegmentCount) {
+                const chunk2 = this.getSeqLengthSegs(this.segments, this.segmentLengths, this.header.segmentsTotalLength, chunk1.chunkSegmentCount);
                 length += chunk2.chunkLengthChars;
                 segments += chunk2.chunkSegmentCount;
                 tree.entries.push({
@@ -175,12 +181,12 @@ export class Snapshot {
             this.header.segmentsTotalLength += length;
             this.segments.push(json);
             this.segmentLengths.push(length);
-        }
+        };
 
         // Helper to serialize the given `segment` and add it to the snapshot (if a segment is provided).
         const pushSeg = (segment?: MergeTree.ISegment) => {
             if (segment) { pushSegRaw(segment.toJSONObject(), segment.cachedLength); }
-        }
+        };
 
         let prev: MergeTree.ISegment | undefined;
         const extractSegment = (segment: MergeTree.ISegment) => {
@@ -238,20 +244,20 @@ export class Snapshot {
                 }
 
                 // Sanity check that we are preserving either the seq < minSeq or a removed segment's info.
-                assert(raw.seq !== undefined  && raw.client !== undefined
+                assert(raw.seq !== undefined && raw.client !== undefined
                     || raw.removedSeq !== undefined && raw.removedClient !== undefined);
 
                 // Record the segment with it's required metadata.
                 pushSegRaw(raw, segment.cachedLength);
             }
             return true;
-        }
+        };
 
         mergeTree.walkAllSegments(mergeTree.root, extractSegment, this);
-        
+
         // If the last segment in the walk was coalescable, push it now.
         pushSeg(prev);
-        
+
         return this.segments;
     }
 
@@ -261,7 +267,7 @@ export class Snapshot {
         serializer?: IComponentSerializer,
         context?: IComponentHandleContext,
     ): Promise<ops.MergeTreeChunk> {
-        let chunkAsString: string = await storage.read(path);
+        const chunkAsString: string = await storage.read(path);
         return Snapshot.processChunk(chunkAsString, serializer, context);
     }
 

@@ -29,12 +29,15 @@ describe("Component Context Tests", () => {
         beforeEach(async () => {
             let registry: IComponentRegistry;
             let factory: IComponentFactory;
-            factory = { IComponentFactory: factory,  instantiateComponent: (context: IComponentContext) => { } };
+            factory = {
+                get IComponentFactory() { return factory; },
+                instantiateComponent: (context: IComponentContext) => { },
+            };
             registry = {
                 IComponentRegistry: registry,
                 get: (pkg) => Promise.resolve(factory),
             };
-            containerRuntime = { IComponentRegistry: registry} as ContainerRuntime;
+            containerRuntime = { IComponentRegistry: registry } as ContainerRuntime;
         });
 
         it("Check LocalComponent Attributes", () => {

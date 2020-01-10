@@ -3,26 +3,26 @@
  * Licensed under the MIT License.
  */
 
-import { IContext } from "@microsoft/fluid-server-services-core";
 import { EventEmitter } from "events";
+import { IContext, IQueuedMessage } from "@microsoft/fluid-server-services-core";
 import { CheckpointManager } from "./checkpointManager";
 
 export class Context extends EventEmitter implements IContext {
     private closed = false;
 
-    constructor(private checkpointManager: CheckpointManager) {
+    constructor(private readonly checkpointManager: CheckpointManager) {
         super();
     }
 
     /**
      * Updates the checkpoint for the partition
      */
-    public checkpoint(offset: number) {
+    public checkpoint(queuedMessage: IQueuedMessage) {
         if (this.closed) {
             return;
         }
 
-        this.checkpointManager.checkpoint(offset).catch((error) => {
+        this.checkpointManager.checkpoint(queuedMessage).catch((error) => {
             // Close context on error. Once the checkpointManager enters an error state it will stay there.
             // We will look to restart on checkpointing given it likely indicates a Kafka connection issue.
             this.emit("error", error, true);

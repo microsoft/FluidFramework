@@ -3,27 +3,27 @@
  * Licensed under the MIT License.
  */
 
-import { Deferred } from "@microsoft/fluid-core-utils";
-import { IConsumer } from "@microsoft/fluid-server-services-core";
 import * as assert from "assert";
+import { Deferred } from "@microsoft/fluid-core-utils";
+import { IConsumer, IQueuedMessage } from "@microsoft/fluid-server-services-core";
 
 export class CheckpointManager {
     private checkpointing = false;
     private closed = false;
-    private commitedOffset: number;
-    private lastOffset: number;
-    private pendingCheckpoint: Deferred<void>;
+    private commitedCheckpoint: IQueuedMessage;
+    private lastCheckpoint: IQueuedMessage;
+    private pendingCheckpoint: Deferred<void> | undefined;
     private error: any;
 
-    constructor(private id: number, private consumer: IConsumer) {
+    constructor(private readonly id: number, private readonly consumer: IConsumer) {
     }
 
     /**
      * Requests a checkpoint at the given offset
      */
-    public async checkpoint(offset: number) {
-        // checkpoint calls should always be of increasing or equal value
-        assert(this.lastOffset === undefined || offset >= this.lastOffset);
+    public async checkpoint(queuedMessage: IQueuedMessage) {
+        // Checkpoint calls should always be of increasing or equal value
+        assert(this.lastCheckpoint === undefined || queuedMessage.offset >= this.lastCheckpoint.offset);
 
         // Exit early if the manager has been closed
         if (this.closed) {
@@ -36,12 +36,12 @@ export class CheckpointManager {
         }
 
         // Exit early if already caught up
-        if (this.commitedOffset === offset) {
+        if (this.commitedCheckpoint === queuedMessage) {
             return;
         }
 
         // Track the highest requested offset
-        this.lastOffset = offset;
+        this.lastCheckpoint = queuedMessage;
 
         // If already checkpointing allow the operation to complete to trigger another round.
         if (this.checkpointing) {
@@ -55,21 +55,26 @@ export class CheckpointManager {
 
         // Finally begin checkpointing the offsets.
         this.checkpointing = true;
-        const commitP = this.consumer.commitOffset([{ offset, partition: this.id }]);
+        const commitP = this.consumer.commitCheckpoint(this.id, queuedMessage);
         return commitP.then(
             () => {
-                this.commitedOffset = offset;
+                this.commitedCheckpoint = queuedMessage;
                 this.checkpointing = false;
 
                 // Trigger another checkpoint round if the offset has moved since the checkpoint finished and
                 // resolve any pending checkpoints to it.
-                if (this.lastOffset !== this.commitedOffset) {
+                if (this.lastCheckpoint !== this.commitedCheckpoint) {
                     assert(this.pendingCheckpoint, "Differing offsets will always result in pendingCheckpoint");
-                    const nextCheckpointP = this.checkpoint(this.lastOffset);
+                    const nextCheckpointP = this.checkpoint(this.lastCheckpoint);
                     this.pendingCheckpoint.resolve(nextCheckpointP);
-                    this.pendingCheckpoint = null;
+                    this.pendingCheckpoint = undefined;
+
+                } else if (this.pendingCheckpoint) {
+                    this.pendingCheckpoint.resolve();
+                    this.pendingCheckpoint = undefined;
                 }
             },
+            // eslint-disable-next-line @typescript-eslint/promise-function-async
             (error) => {
                 // Enter an error state on any commit error
                 this.error = error;
@@ -81,13 +86,11 @@ export class CheckpointManager {
     }
 
     /**
-     * Checkpoints at the last received offset. Returns the checkpointed offset.
+     * Checkpoints at the last received offset.
      */
     public async flush(): Promise<void> {
-        if (this.lastOffset === undefined) {
-            return;
-        } else {
-            return this.checkpoint(this.lastOffset);
+        if (this.lastCheckpoint) {
+            return this.checkpoint(this.lastCheckpoint);
         }
     }
 

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-// tslint:disable
+/* eslint-disable eqeqeq, object-shorthand */
 
 import * as Base from "./base";
 import * as MergeTree from "./mergeTree";
@@ -15,7 +15,7 @@ export class Stack<T> {
     }
 
     empty() {
-        return this.items.length == 0;
+        return this.items.length === 0;
     }
 
     top(): T | undefined {
@@ -81,7 +81,7 @@ export class List<T> {
 
     dequeue(): T {
         if (!this.empty()) {
-            let removedEntry = ListRemoveEntry(this.next);
+            const removedEntry = ListRemoveEntry(this.next);
             return removedEntry.data;
         }
     }
@@ -91,13 +91,13 @@ export class List<T> {
     }
 
     walk(fn: (data: T, l: List<T>) => void): void {
-        for (var entry = this.next; !(entry.isHead); entry = entry.next) {
+        for (let entry = this.next; !(entry.isHead); entry = entry.next) {
             fn(entry.data, entry);
         }
     }
 
     some(fn: (data: T, l: List<T>) => boolean, rev?: boolean): T {
-        for (var entry = <List<T>>this; !(entry.isHead); entry = rev ? entry.prev : entry.next) {
+        for (let entry = <List<T>>this; !(entry.isHead); entry = rev ? entry.prev : entry.next) {
             if (fn(entry.data, entry)) {
                 return (entry.data);
             }
@@ -128,7 +128,7 @@ export class List<T> {
     }
 
     empty(): boolean {
-        return (this.next == this);
+        return (this.next === this);
     }
 
     pushEntry(entry: List<T>): void {
@@ -150,9 +150,12 @@ export class List<T> {
     }
 
     popEntry(head: List<T>): List<T> {
-        if (this.next.isHead)
+        if (this.next.isHead) {
             return (undefined);
-        else return (ListRemoveEntry(this.next));
+        }
+        else {
+            return (ListRemoveEntry(this.next));
+        }
     }
 
     insertEntry(entry: List<T>): List<T> {
@@ -196,7 +199,7 @@ export interface Comparer<T> {
 export const numberComparer: Comparer<number> = {
     min: Number.MIN_VALUE,
     compare: (a, b) => a - b,
-}
+};
 
 export class Heap<T> {
     L: T[];
@@ -252,12 +255,10 @@ export class Heap<T> {
     }
 }
 
-// for testing
+// For testing
 export function LinearDictionary<TKey, TData>(compareKeys: Base.KeyComparer<TKey>): Base.SortedDictionary<TKey, TData> {
-    let a: Base.Property<TKey, TData>[] = [];
-    function compareProps(a: Base.Property<TKey, TData>, b: Base.Property<TKey, TData>) {
-        return compareKeys(a.key, b.key);
-    }
+    const a: Base.Property<TKey, TData>[] = [];
+    const compareProps = (a: Base.Property<TKey, TData>, b: Base.Property<TKey, TData>) => compareKeys(a.key, b.key);
     function diag() {
         console.log(`size is ${a.length}`);
     }
@@ -270,7 +271,7 @@ export function LinearDictionary<TKey, TData>(compareKeys: Base.KeyComparer<TKey
         }
         for (let i = 0, len = a.length; i < len; i++) {
             if (compareKeys(start, a[i].key) <= 0) {
-                let ecmp = compareKeys(end, a[i].key);
+                const ecmp = compareKeys(end, a[i].key);
                 if (ecmp < 0) {
                     break;
                 }
@@ -310,8 +311,8 @@ export function LinearDictionary<TKey, TData>(compareKeys: Base.KeyComparer<TKey
                 remove(key);
             }
             else {
-                a.push({ key: key, data: data });
-                a.sort(compareProps); // go to insertion sort if too slow
+                a.push({ key, data });
+                a.sort(compareProps); // Go to insertion sort if too slow
             }
         }
     }
@@ -335,8 +336,8 @@ export function LinearDictionary<TKey, TData>(compareKeys: Base.KeyComparer<TKey
         remove: remove,
         get: get,
         put: put,
-        diag: diag
-    }
+        diag: diag,
+    };
 }
 
 export const enum RBColor {
@@ -377,7 +378,7 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
     }
 
     makeNode(key: TKey, data: TData, color: RBColor, size: number) {
-        let node = <RBNode<TKey, TData>>{ key: key, data: data, color: color, size: size };
+        const node = <RBNode<TKey, TData>>{ key, data, color, size };
         if (this.aug && this.aug.init) {
             this.aug.init(node);
         }
@@ -404,7 +405,7 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
     }
     nodeGet(node: RBNode<TKey, TData>, key: TKey) {
         while (node) {
-            let cmp = this.compareKeys(key, node.key);
+            const cmp = this.compareKeys(key, node.key);
             if (cmp < 0) {
                 node = node.left;
             }
@@ -421,15 +422,18 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
     }
 
     gather(key: TKey, matcher: IRBMatcher<TKey, TData>) {
-        let results = [] as RBNode<TKey, TData>[];
+        const results = [] as RBNode<TKey, TData>[];
         if (key !== undefined) {
             this.nodeGather(this.root, results, key, matcher);
         }
         return results;
     }
 
-    nodeGather(node: RBNode<TKey, TData>, results: RBNode<TKey, TData>[],
-        key: TKey, matcher: IRBMatcher<TKey, TData>) {
+    nodeGather(
+        node: RBNode<TKey, TData>,
+        results: RBNode<TKey, TData>[],
+        key: TKey,
+        matcher: IRBMatcher<TKey, TData>) {
         if (node) {
             if (matcher.continueSubtree(node.left, key)) {
                 this.nodeGather(node.left, results, key, matcher);
@@ -460,7 +464,7 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
             return this.makeNode(key, data, RBColor.RED, 1);
         }
         else {
-            let cmp = this.compareKeys(key, node.key);
+            const cmp = this.compareKeys(key, node.key);
             if (cmp < 0) {
                 node.left = this.nodePut(node.left, key, data, conflict);
             }
@@ -601,7 +605,7 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
                 node = this.moveRedRight(node);
             }
             if (this.compareKeys(key, node.key) == 0) {
-                let subtreeMin = this.nodeMin(node.right);
+                const subtreeMin = this.nodeMin(node.right);
                 node.key = subtreeMin.key;
                 node.data = subtreeMin.data;
                 node.right = this.nodeRemoveMin(node.right);
@@ -632,7 +636,7 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
 
     nodeFloor(node: RBNode<TKey, TData>, key: TKey): RBNode<TKey, TData> {
         if (node) {
-            let cmp = this.compareKeys(key, node.key);
+            const cmp = this.compareKeys(key, node.key);
             if (cmp == 0) {
                 return node;
             }
@@ -640,7 +644,7 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
                 return this.nodeFloor(node.left, key);
             }
             else {
-                let rightFloor = this.nodeFloor(node.right, key);
+                const rightFloor = this.nodeFloor(node.right, key);
                 if (rightFloor) {
                     return rightFloor;
                 }
@@ -659,7 +663,7 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
 
     nodeCeil(node: RBNode<TKey, TData>, key: TKey): RBNode<TKey, TData> {
         if (node) {
-            let cmp = this.compareKeys(key, node.key);
+            const cmp = this.compareKeys(key, node.key);
             if (cmp == 0) {
                 return node;
             }
@@ -667,7 +671,7 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
                 return this.nodeCeil(node.right, key);
             }
             else {
-                let leftCeil = this.nodeCeil(node.left, key);
+                const leftCeil = this.nodeCeil(node.left, key);
                 if (leftCeil) {
                     return leftCeil;
                 }
@@ -711,7 +715,7 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
     }
 
     rotateRight(node: RBNode<TKey, TData>) {
-        let leftChild = node.left;
+        const leftChild = node.left;
         node.left = leftChild.right;
         leftChild.right = node;
         leftChild.color = leftChild.right.color;
@@ -726,7 +730,7 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
     }
 
     rotateLeft(node: RBNode<TKey, TData>) {
-        let rightChild = node.right;
+        const rightChild = node.right;
         node.right = rightChild.left;
         rightChild.left = node;
         rightChild.color = rightChild.left.color;
@@ -796,13 +800,13 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
     }
 
     keys() {
-        let keyList = <TKey[]>[];
-        let actions = <RBNodeActions<TKey, TData>>{
+        const keyList = <TKey[]>[];
+        const actions = <RBNodeActions<TKey, TData>>{
             showStructure: true,
             infix: (node) => {
                 keyList.push(node.key);
                 return true;
-            }
+            },
         };
         this.walk(actions);
         return keyList;
@@ -845,8 +849,12 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
         return go;
     }
 
-    nodeMap<TAccum>(node: RBNode<TKey, TData>, action: Base.PropertyAction<TKey, TData>,
-        accum?: TAccum, start?: TKey, end?: TKey) {
+    nodeMap<TAccum>(
+        node: RBNode<TKey, TData>,
+        action: Base.PropertyAction<TKey, TData>,
+        accum?: TAccum,
+        start?: TKey,
+        end?: TKey) {
         if (!node) {
             return true;
         }
@@ -856,8 +864,8 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
         if (end === undefined) {
             end = this.nodeMax(node).key;
         }
-        let cmpStart = this.compareKeys(start, node.key);
-        let cmpEnd = this.compareKeys(end, node.key);
+        const cmpStart = this.compareKeys(start, node.key);
+        const cmpEnd = this.compareKeys(end, node.key);
         let go = true;
         if (cmpStart < 0) {
             go = this.nodeMap(node.left, action, accum, start, end);
@@ -891,7 +899,7 @@ export interface AugmentedIntervalNode {
 export function integerRangeUnion(a: Base.IIntegerRange, b: Base.IIntegerRange) {
     return <Base.IIntegerRange>{
         start: Math.min(a.start, b.start),
-        end: Math.max(a.end, b.end)
+        end: Math.max(a.end, b.end),
     };
 }
 
@@ -907,13 +915,9 @@ export function integerRangeComparer(a: Base.IIntegerRange, b: Base.IIntegerRang
     }
 }
 
-export function integerRangeCopy(r: Base.IIntegerRange) {
-    return <Base.IIntegerRange>{ start: r.start, end: r.end };
-}
+export const integerRangeCopy = (r: Base.IIntegerRange) => <Base.IIntegerRange>{ start: r.start, end: r.end };
 
-export function integerRangeToString(range: Base.IIntegerRange) {
-    return `[${range.start},${range.end})`;
-}
+export const integerRangeToString = (range: Base.IIntegerRange) => `[${range.start},${range.end})`;
 
 export type IntegerRangeNode = RBNode<Base.IIntegerRange, AugIntegerRangeNode>;
 
@@ -939,7 +943,7 @@ export class IntegerRangeTree implements IRBAugmentation<Base.IIntegerRange, Aug
     nodeToString(node: IntegerRangeNode) {
         let buf = "";
         let indentAmt = 0;
-        let actions = {
+        const actions = {
             pre: (node: IntegerRangeNode) => {
                 let red = "";
                 if (node.color === RBColor.RED) {
@@ -954,8 +958,8 @@ export class IntegerRangeTree implements IRBAugmentation<Base.IIntegerRange, Aug
                 indentAmt -= 2;
                 return true;
             },
-            showStructure: true
-        }
+            showStructure: true,
+        };
         this.ranges.nodeWalk(node, actions);
         return buf;
     }
@@ -973,7 +977,7 @@ export class IntegerRangeTree implements IRBAugmentation<Base.IIntegerRange, Aug
     }
 
     continueSubtree(node: IntegerRangeNode, key: Base.IIntegerRange) {
-        let cont = node && integerRangeOverlaps(node.data.minmax, key);
+        const cont = node && integerRangeOverlaps(node.data.minmax, key);
         if (this.diag && (!cont)) {
             if (node) {
                 console.log(`skipping subtree of size ${node.size} key ${integerRangeToString(key)}`);
@@ -1007,9 +1011,7 @@ export interface IInterval {
     union(b: IInterval): IInterval;
 }
 
-export function intervalComparer(a: IInterval, b: IInterval) {
-    return a.compare(b);
-}
+export const intervalComparer = (a: IInterval, b: IInterval) => a.compare(b);
 export type IntervalNode<T extends IInterval> = RBNode<T, AugmentedIntervalNode>;
 export type IntervalConflictResolver<TInterval> = (a: TInterval, b: TInterval) => TInterval;
 
@@ -1037,10 +1039,10 @@ export class IntervalTree<T extends IInterval> implements IRBAugmentation<T, Aug
                 return {
                     key: ival,
                 };
-            }
+            };
         }
         if (this.timePut) {
-            let clockStart = MergeTree.clock();
+            const clockStart = MergeTree.clock();
             this.intervals.put(x, { minmax: x.clone() }, rbConflict);
             this.putTime += MergeTree.elapsedMicroseconds(clockStart);
             this.putCount++;
@@ -1050,7 +1052,7 @@ export class IntervalTree<T extends IInterval> implements IRBAugmentation<T, Aug
     }
 
     map(fn: (x: T) => void) {
-        let actions = <RBNodeActions<T, AugmentedIntervalNode>>{
+        const actions = <RBNodeActions<T, AugmentedIntervalNode>>{
             infix: (node) => {
                 fn(node.key);
                 return true;
@@ -1070,7 +1072,7 @@ export class IntervalTree<T extends IInterval> implements IRBAugmentation<T, Aug
     }
 
     continueSubtree(node: IntervalNode<T>, key: T) {
-        let cont = node && node.data.minmax.overlaps(key);
+        const cont = node && node.data.minmax.overlaps(key);
         if (this.diag && (!cont)) {
             if (node) {
                 console.log(`skipping subtree of size ${node.size} key ${key.toString()}`);
@@ -1136,7 +1138,7 @@ export class TST<T> {
     }
 
     get(key: string) {
-        let x = this.nodeGet(this.root, key, 0);
+        const x = this.nodeGet(this.root, key, 0);
         if (x === undefined) {
             return undefined;
         }
@@ -1147,7 +1149,7 @@ export class TST<T> {
         if (x === undefined) {
             return undefined;
         }
-        let c = key.charAt(d);
+        const c = key.charAt(d);
         if (c < x.c) {
             return this.nodeGet(x.left, key, d);
         }
@@ -1157,7 +1159,7 @@ export class TST<T> {
         else if (d < (key.length - 1)) {
             return this.nodeGet(x.mid, key, d + 1);
         }
-        else return x;
+        else { return x; }
     }
 
     put(key: string, val: T) {
@@ -1169,7 +1171,7 @@ export class TST<T> {
     }
 
     nodePut(x: TSTNode<T>, key: string, val: T, d: number) {
-        let c = key.charAt(d);
+        const c = key.charAt(d);
         if (x === undefined) {
             x = { c };
         }
@@ -1191,13 +1193,13 @@ export class TST<T> {
     neighbors(text: string, distance = 2) {
         let q = <ProxString<T>[]>[];
         this.nodeProximity(this.root, { text: "" }, 0, text, distance, q);
-        q = q.filter(value => (value.text.length > 0));
+        q = q.filter((value) => (value.text.length > 0));
         return q;
     }
 
     keysWithPrefix(text: string) {
-        let q = <string[]>[];
-        let x = this.nodeGet(this.root, text, 0);
+        const q = <string[]>[];
+        const x = this.nodeGet(this.root, text, 0);
         if (x === undefined) {
             return q;
         }
@@ -1219,9 +1221,9 @@ export class TST<T> {
         this.collect(x.mid, { text: prefix.text + x.c }, q);
         this.collect(x.right, prefix, q);
     }
-    
-    mapNode(x: TSTNode<T>, prefix: TSTPrefix, fn: (key:string, val: T) => void) {
-        if (x===undefined) {
+
+    mapNode(x: TSTNode<T>, prefix: TSTPrefix, fn: (key: string, val: T) => void) {
+        if (x === undefined) {
             return;
         }
         const key = prefix.text + x.c;
@@ -1233,13 +1235,13 @@ export class TST<T> {
         this.mapNode(x.right, prefix, fn);
     }
 
-    map(fn: (key:string, val: T) => void) {
+    map(fn: (key: string, val: T) => void) {
         this.mapNode(this.root, { text: "" }, fn);
     }
 
     pairsWithPrefix(text: string) {
-        let q = <TSTResult<T>[]>[];
-        let x = this.nodeGet(this.root, text, 0);
+        const q = <TSTResult<T>[]>[];
+        const x = this.nodeGet(this.root, text, 0);
         if (x === undefined) {
             return q;
         }
@@ -1266,11 +1268,11 @@ export class TST<T> {
         if (x === undefined) {
             return;
         }
-        let c = pattern.charAt(d);
-        if ((c === '.') || (c < x.c)) {
+        const c = pattern.charAt(d);
+        if ((c === ".") || (c < x.c)) {
             this.patternCollect(x.left, prefix, d, pattern, q);
         }
-        else if ((c === '.') || (c === x.c)) {
+        else if ((c === ".") || (c === x.c)) {
             if ((d === (pattern.length - 1)) && (x.val !== undefined)) {
                 q.push(prefix.text + x.c);
             }
@@ -1279,22 +1281,27 @@ export class TST<T> {
                     d + 1, pattern, q);
             }
         }
-        if ((c === '.') || (c > x.c)) {
+        if ((c === ".") || (c > x.c)) {
             this.patternCollect(x.right, prefix, d, pattern, q);
         }
     }
 
-    nodeProximity(x: TSTNode<T>, prefix: TSTPrefix, d: number,
-        pattern: string, distance: number, q: ProxString<T>[]) {
+    nodeProximity(
+        x: TSTNode<T>,
+        prefix: TSTPrefix,
+        d: number,
+        pattern: string,
+        distance: number,
+        q: ProxString<T>[]) {
         if ((x === undefined) || (distance < 0)) {
             return;
         }
-        let c = pattern.charAt(d);
+        const c = pattern.charAt(d);
         if ((distance > 0) || (c < x.c)) {
             this.nodeProximity(x.left, prefix, d, pattern, distance, q);
         }
         if (x.val !== undefined) {
-            let remD = distance - (pattern.length - d);
+            const remD = distance - (pattern.length - d);
             if (remD >= 0) {
                 let invD = distance;
                 if (c !== x.c) {
@@ -1303,7 +1310,7 @@ export class TST<T> {
                 q.push({ text: prefix.text + x.c, val: x.val, invDistance: invD });
             }
         }
-        let recurD = (d < (pattern.length - 1)) ? d + 1 : d;
+        const recurD = (d < (pattern.length - 1)) ? d + 1 : d;
         if (c === x.c) {
             this.nodeProximity(x.mid, { text: prefix.text + x.c }, recurD, pattern, distance, q);
         }
@@ -1316,7 +1323,7 @@ export class TST<T> {
     }
 
     match(pattern: string) {
-        let q = <string[]>[];
+        const q = <string[]>[];
         this.patternCollect(this.root, { text: "" }, 0, pattern, q);
         return q;
     }

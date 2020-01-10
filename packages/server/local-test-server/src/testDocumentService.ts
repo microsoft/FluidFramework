@@ -7,11 +7,8 @@ import * as api from "@microsoft/fluid-driver-definitions";
 import { ConnectionMode, IClient } from "@microsoft/fluid-protocol-definitions";
 import * as socketStorage from "@microsoft/fluid-routerlicious-driver";
 import { GitManager } from "@microsoft/fluid-server-services-client";
-import {
-    TestDeltaStorageService,
-    TestDocumentDeltaConnection,
-    TestHistorian,
-} from "@microsoft/fluid-server-test-utils";
+import { TestHistorian } from "@microsoft/fluid-server-test-utils";
+import { TestDeltaStorageService, TestDocumentDeltaConnection } from "@microsoft/fluid-test-driver";
 import { ITestDeltaConnectionServer } from "./testDeltaConnectionServer";
 
 /**
@@ -21,12 +18,13 @@ import { ITestDeltaConnectionServer } from "./testDeltaConnectionServer";
  * @param tenantId - ID of tenant
  * @param documentId - ID of document
  */
+// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function createTestDocumentService(
     testDeltaConnectionServer: ITestDeltaConnectionServer,
     tokenProvider: socketStorage.TokenProvider,
     tenantId: string,
     documentId: string): api.IDocumentService {
-        return new TestDocumentService(testDeltaConnectionServer, tokenProvider, tenantId, documentId);
+    return new TestDocumentService(testDeltaConnectionServer, tokenProvider, tenantId, documentId);
 }
 
 /**
@@ -40,11 +38,11 @@ export class TestDocumentService implements api.IDocumentService {
      * @param documentId - ID of document
      */
     constructor(
-        private testDeltaConnectionServer: ITestDeltaConnectionServer,
-        private tokenProvider: socketStorage.TokenProvider,
-        private tenantId: string,
-        private documentId: string,
-    ) {}
+        private readonly testDeltaConnectionServer: ITestDeltaConnectionServer,
+        private readonly tokenProvider: socketStorage.TokenProvider,
+        private readonly tenantId: string,
+        private readonly documentId: string,
+    ) { }
 
     /**
      * Creates and returns a document storage service for testing.

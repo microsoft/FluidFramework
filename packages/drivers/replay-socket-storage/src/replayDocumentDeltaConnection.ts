@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
@@ -20,11 +21,12 @@ import {
     ITokenClaims,
     IVersion,
 } from "@microsoft/fluid-protocol-definitions";
-import { EventEmitter } from "events";
 import { debug } from "./debug";
 import { ReplayController } from "./replayController";
 
 const MaxBatchDeltas = 2000;
+
+const ReplayDocumentId = "documentId";
 
 export class ReplayControllerStatic extends ReplayController {
     private static readonly DelayInterval = 50;
@@ -41,10 +43,10 @@ export class ReplayControllerStatic extends ReplayController {
      * @param replayTo - Last op number to be played on socket.
      * @param unitIsTime - True is user want to play ops that are within a replay resolution window.
      */
-   public constructor(
-            public readonly replayFrom: number,
-            public readonly replayTo: number,
-            public readonly unitIsTime?: boolean) {
+    public constructor(
+        public readonly replayFrom: number,
+        public readonly replayTo: number,
+        public readonly unitIsTime?: boolean) {
         super();
         if (unitIsTime !== true) {
             // There is no code in here to start with snapshot, thus we have to start with op #0.
@@ -52,6 +54,7 @@ export class ReplayControllerStatic extends ReplayController {
         }
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public initStorage(storage: IDocumentStorageService) {
         return Promise.resolve(true);
     }
@@ -88,7 +91,7 @@ export class ReplayControllerStatic extends ReplayController {
             }
             return currentOp >= this.replayTo;
         }
-        return lastTimeStamp === undefined; // no more ops
+        return lastTimeStamp === undefined; // No more ops
     }
 
     public skipToIndex(fetchedOps: ISequencedDocumentMessage[]) {
@@ -113,9 +116,10 @@ export class ReplayControllerStatic extends ReplayController {
         return 0;
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public replay(
-            emitter: (op: ISequencedDocumentMessage) => void,
-            fetchedOps: ISequencedDocumentMessage[]): Promise<void> {
+        emitter: (op: ISequencedDocumentMessage[]) => void,
+        fetchedOps: ISequencedDocumentMessage[]): Promise<void> {
         let current = this.skipToIndex(fetchedOps);
 
         // tslint:disable-next-line:promise-must-complete
@@ -164,8 +168,9 @@ export class ReplayControllerStatic extends ReplayController {
                         }
                     }
                 }
+                // eslint-disable-next-line @typescript-eslint/no-use-before-define
                 scheduleNext(nextInterval);
-                playbackOps.map(emitter);
+                emitter(playbackOps);
             };
             const scheduleNext = (nextInterval: number) => {
                 if (nextInterval >= 0 && current < fetchedOps.length) {
@@ -204,7 +209,7 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
             parentBranch: null,
             serviceConfiguration: {
                 blockSize: 64436,
-                maxMessageSize:  16 * 1024,
+                maxMessageSize: 16 * 1024,
                 summary: {
                     idleTime: 5000,
                     maxOps: 1000,
@@ -216,7 +221,7 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
             version: ReplayDocumentDeltaConnection.replayProtocolVersion,
         };
         const deltaConnection = new ReplayDocumentDeltaConnection(connection);
-        // tslint:disable-next-line:no-floating-promises
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         deltaConnection.fetchAndEmitOps(documentStorageService, controller);
 
         return deltaConnection;
@@ -227,7 +232,7 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
     private static readonly ReplayMaxMessageSize = 16 * 1024;
 
     private static readonly claims: ITokenClaims = {
-        documentId: "",
+        documentId: ReplayDocumentId,
         scopes: [],
         tenantId: "",
         user: {
@@ -307,8 +312,8 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
      * This gets the specified ops from the delta storage endpoint and replays them in the replayer.
      */
     private async fetchAndEmitOps(
-            documentStorageService: IDocumentDeltaStorageService,
-            controller: ReplayController): Promise<void> {
+        documentStorageService: IDocumentDeltaStorageService,
+        controller: ReplayController): Promise<void> {
         let done;
         let replayP = Promise.resolve();
 
@@ -329,7 +334,8 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
                 continue;
             }
 
-            replayP = replayP.then(() => controller.replay((op) => this.emit("op", op.clientId, op), fetchedOps));
+            // eslint-disable-next-line @typescript-eslint/promise-function-async, max-len
+            replayP = replayP.then(() => controller.replay((ops) => this.emit("op", ReplayDocumentId, ops), fetchedOps));
 
             currentOp += fetchedOps.length;
             done = controller.isDoneFetch(currentOp, fetchedOps[fetchedOps.length - 1].timestamp);

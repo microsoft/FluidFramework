@@ -3,19 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@microsoft/fluid-container-definitions";
+import { strict as assert } from "assert";
+import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { ISequencedDocumentMessage, MessageType } from "@microsoft/fluid-protocol-definitions";
-import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
-import * as assert from "assert";
+import { IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
+import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import { IIntegerRange } from "./base";
 import * as Collections from "./collections";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
-import {
-    IMergeTreeClientSequenceArgs,
-    IMergeTreeDeltaOpArgs,
-    MergeTreeMaintenanceCallback,
-    ReferencePosition,
-} from "./index";
 import { LocalReference } from "./localReference";
 import {
     ClientIds,
@@ -40,6 +35,12 @@ import { SnapshotLegacy } from "./snapshotlegacy";
 import { SnapshotLoader } from "./snapshotLoader";
 import { SortedSegmentSet } from "./sortedSegmentSet";
 import { MergeTreeTextHelper } from "./textSegment";
+import {
+    IMergeTreeClientSequenceArgs,
+    IMergeTreeDeltaOpArgs,
+    MergeTreeMaintenanceCallback,
+    ReferencePosition,
+} from "./index";
 
 export class Client {
     public verboseOps = false;
@@ -132,7 +133,7 @@ export class Client {
         const annotateOp =
             OpBuilder.createAnnotateMarkerOp(marker, props, combiningOp);
 
-        if (this.applyAnnotateRangeOp({op: annotateOp})) {
+        if (this.applyAnnotateRangeOp({ op: annotateOp })) {
             return annotateOp;
         } else {
             return undefined;
@@ -158,7 +159,7 @@ export class Client {
             props,
             combiningOp);
 
-        if (this.applyAnnotateRangeOp({op: annotateOp})) {
+        if (this.applyAnnotateRangeOp({ op: annotateOp })) {
             return annotateOp;
         }
         return undefined;
@@ -176,7 +177,7 @@ export class Client {
 
         const removeOp = OpBuilder.createRemoveRangeOp(start, end, register);
 
-        if (this.applyRemoveRangeOp({op: removeOp})) {
+        if (this.applyRemoveRangeOp({ op: removeOp })) {
             return removeOp;
         }
         return undefined;
@@ -191,7 +192,7 @@ export class Client {
             return undefined;
         }
         const insertOp = OpBuilder.createInsertSegmentOp(pos, segment);
-        if (this.applyInsertOp({op: insertOp})) {
+        if (this.applyInsertOp({ op: insertOp })) {
             return insertOp;
         }
         return undefined;
@@ -216,7 +217,7 @@ export class Client {
             segment);
 
         const opArgs = { op };
-        let clockStart: number | [ number, number ];
+        let clockStart: number | [number, number];
         if (this.measureOps) {
             clockStart = clock();
         }
@@ -226,7 +227,7 @@ export class Client {
             segment,
             opArgs);
 
-        this.completeAndLogOp(opArgs, this.getClientSequenceArgs(opArgs), {start: op.pos1, end: undefined}, clockStart);
+        this.completeAndLogOp(opArgs, this.getClientSequenceArgs(opArgs), { start: op.pos1, end: undefined }, clockStart);
 
         return op;
     }
@@ -237,7 +238,7 @@ export class Client {
      */
     public pasteLocal(pos: number, register: string) {
         const insertOp = OpBuilder.createInsertFromRegisterOp(pos, register);
-        if (this.applyInsertOp({op: insertOp})) {
+        if (this.applyInsertOp({ op: insertOp })) {
             return insertOp;
         }
         return undefined;
@@ -251,7 +252,7 @@ export class Client {
      */
     public copyLocal(start: number, end: number, register: string) {
         const insertOp = OpBuilder.createInsertToRegisterOp(start, end, register);
-        if (this.applyInsertOp({op: insertOp})) {
+        if (this.applyInsertOp({ op: insertOp })) {
             return insertOp;
         }
         return undefined;
@@ -313,11 +314,11 @@ export class Client {
         }
 
         if (op.register) {
-            // cut
+            // Cut
             this.copy(range, op.register, clientArgs);
         }
 
-        let clockStart: number | [ number, number ];
+        let clockStart: number | [number, number];
         if (this.measureOps) {
             clockStart = clock();
         }
@@ -351,7 +352,7 @@ export class Client {
             return false;
         }
 
-        let clockStart: number | [ number, number ];
+        let clockStart: number | [number, number];
         if (this.measureOps) {
             clockStart = clock();
         }
@@ -388,15 +389,14 @@ export class Client {
 
         let segments: ISegment[];
         if (op.seg) {
-            // tslint:disable-next-line: no-unsafe-any
             segments = [this.specToSegment(op.seg)];
         } else if (op.register) {
             if (range.end) {
                 this.copy(range, op.register, clientArgs);
-                // enqueue an empty segment group to be dequeued on ack
+                // Enqueue an empty segment group to be dequeued on ack
                 //
                 if (clientArgs.sequenceNumber === UnassignedSequenceNumber) {
-                    this.mergeTree.pendingSegments.enqueue({segments: []});
+                    this.mergeTree.pendingSegments.enqueue({ segments: [] });
                 }
                 return true;
             }
@@ -409,7 +409,7 @@ export class Client {
             return false;
         }
 
-        let clockStart: number | [ number, number ];
+        let clockStart: number | [number, number];
         if (this.measureOps) {
             clockStart = clock();
         }
@@ -438,7 +438,7 @@ export class Client {
         opArgs: IMergeTreeDeltaOpArgs,
         clientArgs: IMergeTreeClientSequenceArgs,
         range: IIntegerRange,
-        clockStart?: number | [ number, number ]) {
+        clockStart?: number | [number, number]) {
         if (!opArgs.sequencedMessage) {
             if (clockStart) {
                 this.localTime += elapsedMicroseconds(clockStart);
@@ -457,7 +457,7 @@ export class Client {
             console.log(
                 `@cli ${this.getLongClientId(this.getCollabWindow().clientId)} ` +
                 `seq ${clientArgs.sequenceNumber} ${opArgs.op.type} local ${!opArgs.sequencedMessage} ` +
-                `start ${ range.start } end ${range.end} refseq ${clientArgs.referenceSequenceNumber} ` +
+                `start ${range.start} end ${range.end} refseq ${clientArgs.referenceSequenceNumber} ` +
                 `cli ${clientArgs.clientId}`);
         }
     }
@@ -487,13 +487,13 @@ export class Client {
                 clientArgs.clientId);
         }
 
-        // validate if local op
+        // Validate if local op
         if (clientArgs.clientId === this.getClientId()) {
             const length = this.getLength();
 
             const invalidPositions: string[] = [];
 
-            // validate start position
+            // Validate start position
             //
             if (start === undefined
                 || start < 0
@@ -501,7 +501,7 @@ export class Client {
                 || start === length && op.type !== ops.MergeTreeDeltaType.INSERT) {
                 invalidPositions.push("start");
             }
-            // validate end if not insert, or insert has end
+            // Validate end if not insert, or insert has end
             //
             if (op.type !== ops.MergeTreeDeltaType.INSERT || end !== undefined) {
                 if (end === undefined || end <= start) {
@@ -529,7 +529,7 @@ export class Client {
             }
         }
 
-        return {start, end};
+        return { start, end };
     }
 
     /**
@@ -538,7 +538,7 @@ export class Client {
      */
     private getClientSequenceArgs(opArgs: IMergeTreeDeltaOpArgs): IMergeTreeClientSequenceArgs {
 
-        // if there this no sequenced message, then the op is local
+        // If there this no sequenced message, then the op is local
         // and unacked, so use this clients sequenced args
         //
         if (!opArgs.sequencedMessage) {
@@ -574,7 +574,7 @@ export class Client {
 
     private ackPendingSegment(opArgs: IMergeTreeDeltaOpArgs) {
         const ackOp = (deltaOpArgs: IMergeTreeDeltaOpArgs) => {
-            let clockStart: number | [ number, number ];
+            let clockStart: number | [number, number];
             if (this.measureOps) {
                 clockStart = clock();
             }
@@ -611,18 +611,17 @@ export class Client {
         }
     }
 
-// tslint:disable
-// as functions are modified move them above the tslint: disabled waterline and lint them
+    // as functions are modified move them above the eslint-disabled waterline and lint them
 
     undoSingleSequenceNumber(undoSegments: IUndoInfo[], redoSegments: IUndoInfo[]) {
-        let len = undoSegments.length;
+        const len = undoSegments.length;
         let index = len - 1;
-        let seq = undoSegments[index].seq;
+        const seq = undoSegments[index].seq;
         if (seq === 0) {
             return 0;
         }
         while (index >= 0) {
-            let undoInfo = undoSegments[index];
+            const undoInfo = undoSegments[index];
             if (seq === undoInfo.seq) {
                 this.mergeTree.cherryPickedUndo(undoInfo);
                 redoSegments.push(undoInfo);
@@ -636,7 +635,7 @@ export class Client {
         return seq;
     }
     historyToPct(pct: number) {
-        let count = this.undoSegments.length + this.redoSegments.length;
+        const count = this.undoSegments.length + this.redoSegments.length;
         let curPct = this.undoSegments.length / count;
         let seq = -1;
         if (curPct >= pct) {
@@ -660,24 +659,24 @@ export class Client {
         return this.undoSingleSequenceNumber(this.redoSegments, this.undoSegments);
     }
     cloneFromSegments() {
-        let clone = new Client(this.specToSegment, this.logger, this.mergeTree.options);
-        let segments = <ISegment[]>[];
-        let newRoot = this.mergeTree.blockClone(this.mergeTree.root, segments);
+        const clone = new Client(this.specToSegment, this.logger, this.mergeTree.options);
+        const segments = <ISegment[]>[];
+        const newRoot = this.mergeTree.blockClone(this.mergeTree.root, segments);
         clone.mergeTree.root = newRoot;
         let undoSeg = <IUndoInfo[]>[];
-        for (let segment of segments) {
+        for (const segment of segments) {
             if (segment.seq !== 0) {
                 undoSeg.push({
                     seq: segment.seq,
                     seg: segment,
-                    op: ops.MergeTreeDeltaType.INSERT
+                    op: ops.MergeTreeDeltaType.INSERT,
                 });
             }
             if (segment.removedSeq !== undefined) {
                 undoSeg.push({
                     seq: segment.removedSeq,
                     seg: segment,
-                    op: ops.MergeTreeDeltaType.REMOVE
+                    op: ops.MergeTreeDeltaType.REMOVE,
                 });
             }
         }
@@ -733,17 +732,17 @@ export class Client {
         if (!segment.segmentGroups.empty) {
             segment.segmentGroups.clear();
 
-            // the segment was added and removed, so we don't need to send any ops for it
+            // The segment was added and removed, so we don't need to send any ops for it
             if (segment.seq === UnassignedSequenceNumber && segment.removedSeq === UnassignedSequenceNumber) {
-                // set to the universal sequence number so it can be zambonied
+                // Set to the universal sequence number so it can be zambonied
                 segment.removedSeq = UniversalSequenceNumber;
-                segment.seq = UniversalSequenceNumber
+                segment.seq = UniversalSequenceNumber;
                 return undefined;
             }
 
             const segmentPosition = this.getPosition(segment);
 
-            // if removed we only need to send a remove op
+            // If removed we only need to send a remove op
             // if inserted, we only need to send insert, as that will contain props
             // if pending properties send annotate
             if (segment.removedSeq === UnassignedSequenceNumber) {
@@ -796,7 +795,7 @@ export class Client {
                 this.applyAnnotateRangeOp(opArgs);
                 break;
             case ops.MergeTreeDeltaType.GROUP: {
-                for (let memberOp of op.ops) {
+                for (const memberOp of op.ops) {
                     this.applyRemoteOp({
                         op: memberOp,
                         groupOp: op,
@@ -805,6 +804,8 @@ export class Client {
                 }
                 break;
             }
+            default:
+                break;
         }
     }
 
@@ -834,7 +835,7 @@ export class Client {
 
     public updateSeqNumbers(min: number, seq: number) {
         const collabWindow = this.mergeTree.getCollabWindow();
-        // equal is fine here due to SharedSegmentSequence<>.snapshotContent() potentially updating with same #
+        // Equal is fine here due to SharedSegmentSequence<>.snapshotContent() potentially updating with same #
         assert(collabWindow.currentSeq <= seq);
         collabWindow.currentSeq = seq;
         assert(min <= seq);
@@ -887,16 +888,46 @@ export class Client {
         return new MergeTreeTextHelper(this.mergeTree);
     }
 
-    public createSnapshotter(): SnapshotLegacy {
-        // TODO: Remove once new snapshot format is adopted as default.
+    // TODO: Remove `tardisMsgs` once new snapshot format is adopted as default.
+    //       (See https://github.com/microsoft/FluidFramework/issues/84)
+    public snapshot(runtime: IComponentRuntime, handle: IComponentHandle, tardisMsgs: ISequencedDocumentMessage[]) {
+        const deltaManager = runtime.deltaManager;
+        const minSeq = deltaManager
+            ? deltaManager.minimumSequenceNumber
+            : 0;
+
+        // Catch up to latest MSN, if we have not had a chance to do it.
+        // Required for case where ComponentRuntime.attachChannel() generates snapshot right after loading component.
+        // Note that we mock runtime in tests and mock does not have deltamanager implementation.
+        if (deltaManager) {
+            this.updateSeqNumbers(minSeq, deltaManager.referenceSequenceNumber);
+
+            // One of the snapshots (from SPO) I observed to have chunk.chunkSequenceNumber > minSeq!
+            // Not sure why - need to catch it sooner
+            assert.equal(this.getCollabWindow().minSeq, minSeq);
+        }
+
+        // TODO: Remove options flag once new snapshot format is adopted as default.
         //       (See https://github.com/microsoft/FluidFramework/issues/84)
-        return this.mergeTree.options.newMergeTreeSnapshotFormat
-            ? new Snapshot(this.mergeTree, this.logger) as unknown as SnapshotLegacy
+        const snap = this.mergeTree.options.newMergeTreeSnapshotFormat
+            ? new Snapshot(this.mergeTree, this.logger)
             : new SnapshotLegacy(this.mergeTree, this.logger);
+
+        snap.extractSync();
+        return snap.emit(
+            tardisMsgs,
+            runtime.IComponentSerializer,
+            runtime.IComponentHandleContext,
+            handle);
     }
 
-    public createSnapshotLoader(runtime: IComponentRuntime) {
-        return new SnapshotLoader(runtime, this, this.mergeTree);
+    public async load(runtime: IComponentRuntime, storage: IObjectStorageService, branchId?: string) {
+        const loader = new SnapshotLoader(runtime, this, this.mergeTree);
+
+        // TODO: Remove return value once new snapshot format is adopted as default.
+        //       (See https://github.com/microsoft/FluidFramework/issues/84)
+        // eslint-disable-next-line no-return-await
+        return await loader.initialize(branchId, storage);
     }
 
     getStackContext(startPos: number, rangeLabels: string[]) {
@@ -904,7 +935,7 @@ export class Client {
     }
 
     private getLocalSequenceNumber() {
-        let segWindow = this.getCollabWindow();
+        const segWindow = this.getCollabWindow();
         if (segWindow.collaborating) {
             return UnassignedSequenceNumber;
         }
@@ -913,11 +944,11 @@ export class Client {
         }
     }
     localTransaction(groupOp: ops.IMergeTreeGroupMsg) {
-        for (let op of groupOp.ops) {
+        for (const op of groupOp.ops) {
             const opArgs: IMergeTreeDeltaOpArgs = {
                 op,
                 groupOp,
-            }
+            };
             switch (op.type) {
                 case ops.MergeTreeDeltaType.INSERT:
                     this.applyInsertOp(opArgs);
@@ -928,12 +959,14 @@ export class Client {
                 case ops.MergeTreeDeltaType.REMOVE:
                     this.applyRemoveRangeOp(opArgs);
                     break;
+                default:
+                    break;
             }
         }
     }
     updateConsensusProperty(op: ops.IMergeTreeAnnotateMsg, msg: ISequencedDocumentMessage) {
-        let markerId = op.relativePos1.id;
-        let consensusInfo = this.pendingConsensus.get(markerId);
+        const markerId = op.relativePos1.id;
+        const consensusInfo = this.pendingConsensus.get(markerId);
         if (consensusInfo) {
             consensusInfo.marker.addProperties(op.props, op.combiningOp, msg.sequenceNumber);
         }
@@ -941,13 +974,13 @@ export class Client {
     }
 
     updateMinSeq(minSeq: number) {
-        let clockStart: number | [ number, number ];
+        let clockStart: number | [number, number];
         if (this.measureOps) {
             clockStart = clock();
         }
         this.mergeTree.setMinSeq(minSeq);
         if (this.measureOps) {
-            let elapsed = elapsedMicroseconds(clockStart);
+            const elapsed = elapsedMicroseconds(clockStart);
             this.accumWindowTime += elapsed;
             if (elapsed > this.maxWindowTime) {
                 this.maxWindowTime = elapsed;
@@ -961,21 +994,21 @@ export class Client {
     }
 
     getPropertiesAtPosition(pos: number) {
-        let segWindow = this.getCollabWindow();
+        const segWindow = this.getCollabWindow();
         if (this.verboseOps) {
             console.log(`getPropertiesAtPosition cli ${this.getLongClientId(segWindow.clientId)} ref seq ${segWindow.currentSeq}`);
         }
 
         let propertiesAtPosition: Properties.PropertySet;
-        let segoff = this.getContainingSegment(pos);
-        let seg = segoff.segment;
+        const segoff = this.getContainingSegment(pos);
+        const seg = segoff.segment;
         if (seg) {
             propertiesAtPosition = seg.properties;
         }
         return propertiesAtPosition;
     }
     getRangeExtentsOfPosition(pos: number) {
-        let segWindow = this.getCollabWindow();
+        const segWindow = this.getCollabWindow();
         if (this.verboseOps) {
             console.log(`getRangeExtentsOfPosition cli ${this.getLongClientId(segWindow.clientId)} ref seq ${segWindow.currentSeq}`);
         }
@@ -983,8 +1016,8 @@ export class Client {
         let posStart: number;
         let posAfterEnd: number;
 
-        let segoff = this.getContainingSegment(pos);
-        let seg = segoff.segment;
+        const segoff = this.getContainingSegment(pos);
+        const seg = segoff.segment;
         if (seg) {
             posStart = this.getPosition(seg);
             posAfterEnd = posStart + seg.cachedLength;
@@ -999,17 +1032,17 @@ export class Client {
     }
 
     getLength() {
-        let segmentWindow = this.getCollabWindow();
+        const segmentWindow = this.getCollabWindow();
         return this.mergeTree.getLength(segmentWindow.currentSeq, segmentWindow.clientId);
     }
-    startCollaboration(longClientId: string | undefined,  minSeq = 0, currentSeq = 0, branchId = 0) {
+    startCollaboration(longClientId: string | undefined, minSeq = 0, currentSeq = 0, branchId = 0) {
         this.longClientId = longClientId ? longClientId : "original";
-        this.addLongClientId(this.longClientId , branchId);
+        this.addLongClientId(this.longClientId, branchId);
         this.mergeTree.startCollaboration(this.getShortClientId(this.longClientId), minSeq, currentSeq, branchId);
     }
     updateCollaboration(longClientId: string) {
         const oldClientId = this.longClientId;
-        let oldData = this.clientNameToIds.get(oldClientId).data;
+        const oldData = this.clientNameToIds.get(oldClientId).data;
         this.longClientId = longClientId;
         this.clientNameToIds.put(longClientId, oldData);
         this.shortClientIdMap[oldData.clientId] = longClientId;

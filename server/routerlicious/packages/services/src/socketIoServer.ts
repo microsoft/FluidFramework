@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import * as core from "@microsoft/fluid-server-services-core";
 import { EventEmitter } from "events";
 import * as http from "http";
+import * as util from "util";
+import * as core from "@microsoft/fluid-server-services-core";
 import * as _ from "lodash";
 import * as redis from "redis";
 import * as socketIo from "socket.io";
 import * as socketIoRedis from "socket.io-redis";
-import * as util from "util";
 
 const socketJoin = util.promisify(
     (socket: SocketIO.Socket, roomId: string, callback: (err: NodeJS.ErrnoException) => void) => {
@@ -22,7 +22,7 @@ class SocketIoSocket implements core.IWebSocket {
         return this.socket.id;
     }
 
-    constructor(private socket: SocketIO.Socket) {
+    constructor(private readonly socket: SocketIO.Socket) {
     }
 
     public on(event: string, listener: (...args: any[]) => void) {
@@ -51,9 +51,12 @@ class SocketIoSocket implements core.IWebSocket {
 }
 
 class SocketIoServer implements core.IWebSocketServer {
-    private events = new EventEmitter();
+    private readonly events = new EventEmitter();
 
-    constructor(private io: SocketIO.Server, private pub: redis.RedisClient, private sub: redis.RedisClient) {
+    constructor(
+        private readonly io: SocketIO.Server,
+        private readonly pub: redis.RedisClient,
+        private readonly sub: redis.RedisClient) {
         this.io.on("connection", (socket: SocketIO.Socket) => {
             const webSocket = new SocketIoSocket(socket);
             this.events.emit("connection", webSocket);
@@ -74,7 +77,7 @@ class SocketIoServer implements core.IWebSocketServer {
 
 export function create(redisConfig: any, server: http.Server): core.IWebSocketServer {
     const options: any = { auth_pass: redisConfig.pass };
-    if (redisConfig.tls !== undefined) {
+    if (redisConfig.tls) {
         options.tls = {
             servername: redisConfig.host,
         };

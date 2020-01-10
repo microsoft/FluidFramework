@@ -14,7 +14,6 @@ export class Deferred<T> {
     private rej: ((reason?: any) => void) | undefined;
 
     constructor() {
-        /* tslint:disable:promise-must-complete */
         this.p = new Promise<T>((resolve, reject) => {
             this.res = resolve;
             this.rej = reject;
@@ -56,7 +55,7 @@ export class Deferred<T> {
 /**
  * Helper function that asserts that the given promise only resolves
  */
-/* tslint:disable:promise-function-async */
+// eslint-disable-next-line @typescript-eslint/promise-function-async
 export function assertNotRejected<T>(promise: Promise<T>): Promise<T> {
     // Assert that the given promise only resolves
     promise.catch((error) => {
@@ -104,5 +103,39 @@ export class LazyPromise<T> implements Promise<T> {
             this.result = this.execute();
         }
         return this.result;
+    }
+}
+
+/**
+ * Utility that makes sure that an expensive function fn
+ * only has a single running instance at a time. For example,
+ * this can ensure that only a single web request is pending at a
+ * given time.
+ */
+export class SinglePromise<T> {
+    private pResponse: Promise<T> | undefined;
+    private active: boolean;
+    constructor(private readonly fn: () => Promise<T>) {
+        this.active = false;
+    }
+
+    public get response(): Promise<T> {
+        // If we are actively running and we have a response return it
+        if (this.active && this.pResponse) {
+            return this.pResponse;
+        }
+
+        this.active = true;
+        this.pResponse = this.fn()
+            .then((response) => {
+                this.active = false;
+                return response;
+            })
+            .catch(async (e) => {
+                this.active = false;
+                return Promise.reject(e);
+            });
+
+        return this.pResponse;
     }
 }

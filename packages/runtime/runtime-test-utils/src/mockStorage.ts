@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import { IBlob, ITree } from "@microsoft/fluid-protocol-definitions";
 import { IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
-import * as assert from "assert";
 
 /**
  * Mock implementation of IObjectStorageService based on ITree input.

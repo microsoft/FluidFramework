@@ -55,10 +55,10 @@ export interface ILocalValue {
 }
 
 export function makeSerializable(
-        localValue: ILocalValue,
-        serializer: IComponentSerializer,
-        context: IComponentHandleContext,
-        bind: IComponentHandle): ISerializableValue {
+    localValue: ILocalValue,
+    serializer: IComponentSerializer,
+    context: IComponentHandleContext,
+    bind: IComponentHandle): ISerializableValue {
     const value = localValue.makeSerialized(serializer, context, bind);
     return {
         type: value.type,
@@ -69,7 +69,7 @@ export function makeSerializable(
 /**
  * Supported value types.
  */
-export const valueTypes: ReadonlyArray<IValueType<any>> = [
+export const valueTypes: readonly IValueType<any>[] = [
     new CounterValueType(),
 ];
 
@@ -232,7 +232,7 @@ export class LocalValueMaker {
      */
     public fromSerializable(serializable: ISerializableValue, emitter?: IValueOpEmitter): ILocalValue {
         if (serializable.type === ValueType[ValueType.Plain] || serializable.type === ValueType[ValueType.Shared]) {
-            // migrate from old shared value to handles
+            // Migrate from old shared value to handles
             if (serializable.type === ValueType[ValueType.Shared]) {
                 serializable.type = ValueType[ValueType.Plain];
                 const handle: ISerializedHandle = {

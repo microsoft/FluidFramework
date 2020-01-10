@@ -10,13 +10,10 @@ import {
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
 
-// tslint:disable no-null-keyword
-export function createNackMessage(): INack {
-    return {
-        operation: undefined,
-        sequenceNumber: -1,
-    };
-}
+export const createNackMessage = (): INack => ({
+    operation: undefined,
+    sequenceNumber: -1,
+});
 
 export function createRoomJoinMessage(clientId: string, client: IClient): ISignalMessage {
     const joinContent: ISignalClient = {
@@ -24,6 +21,7 @@ export function createRoomJoinMessage(clientId: string, client: IClient): ISigna
         client,
     };
     return {
+        // eslint-disable-next-line no-null/no-null
         clientId: null,
         content: JSON.stringify({
             type: MessageType.ClientJoin,
@@ -32,12 +30,11 @@ export function createRoomJoinMessage(clientId: string, client: IClient): ISigna
     };
 }
 
-export function createRoomLeaveMessage(clientId: string): ISignalMessage {
-    return {
-        clientId: null,
-        content: JSON.stringify({
-            type: MessageType.ClientLeave,
-            content: clientId,
-        }),
-    };
-}
+export const createRoomLeaveMessage = (clientId: string): ISignalMessage => ({
+    // eslint-disable-next-line no-null/no-null
+    clientId: null,
+    content: JSON.stringify({
+        type: MessageType.ClientLeave,
+        content: clientId,
+    }),
+});

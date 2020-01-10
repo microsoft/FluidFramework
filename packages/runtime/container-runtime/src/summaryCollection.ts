@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
+import { IDisposable } from "@microsoft/fluid-common-definitions";
 import { Deferred } from "@microsoft/fluid-core-utils";
 import {
-    IDisposable,
     ISequencedDocumentMessage,
     ISummaryAck,
     ISummaryContent,
     ISummaryNack,
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
-import * as assert from "assert";
 
 /**
  * Interface for summary op messages with typed contents.
@@ -87,7 +87,7 @@ class Summary implements ISummary {
 
     private constructor(
         public readonly clientId: string,
-        public readonly clientSequenceNumber: number) {}
+        public readonly clientSequenceNumber: number) { }
 
     public hasBeenAcked(): this is IAckedSummary {
         return this.state === SummaryState.Acked;
@@ -142,7 +142,7 @@ class ClientSummaryWatcher implements IClientSummaryWatcher {
     public constructor(
         public readonly clientId: string,
         private readonly summaryCollection: SummaryCollection,
-    ) {}
+    ) { }
 
     /**
      * Watches for a specific sent summary op.
@@ -161,6 +161,7 @@ class ClientSummaryWatcher implements IClientSummaryWatcher {
      * Waits until all of the pending summaries in the underlying SummaryCollection
      * are acked/nacked.
      */
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public waitFlushed() {
         return this.summaryCollection.waitFlushed();
     }
@@ -203,7 +204,7 @@ export class SummaryCollection {
 
     public get latestAck() { return this.lastAck; }
 
-    public constructor(public readonly initialSequenceNumber: number) {}
+    public constructor(public readonly initialSequenceNumber: number) { }
 
     /**
      * Creates and returns a summary watcher for a specific client.
@@ -226,6 +227,7 @@ export class SummaryCollection {
      */
     public async waitFlushed(): Promise<IAckedSummary | undefined> {
         while (this.pendingSummaries.size > 0) {
+            // eslint-disable-next-line @typescript-eslint/promise-function-async
             const promises = Array.from(this.pendingSummaries, ([, summary]) => summary.waitAckNack());
             await Promise.all(promises);
         }
@@ -272,7 +274,7 @@ export class SummaryCollection {
     private handleSummaryOp(op: ISummaryOpMessage) {
         let summary: Summary | undefined;
 
-        // check if summary already being watched, broadcast if so
+        // Check if summary already being watched, broadcast if so
         const watcher = this.summaryWatchers.get(op.clientId);
         if (watcher) {
             summary = watcher.tryGetSummary(op.clientSequenceNumber);
@@ -281,7 +283,7 @@ export class SummaryCollection {
             }
         }
 
-        // if not watched, create from op
+        // If not watched, create from op
         if (!summary) {
             summary = Summary.createFromOp(op);
             if (watcher) {
@@ -294,11 +296,11 @@ export class SummaryCollection {
     private handleSummaryAck(op: ISummaryAckMessage) {
         const seq = op.contents.summaryProposal.summarySequenceNumber;
         const summary = this.pendingSummaries.get(seq);
-        assert(summary); // we should never see an ack without an op
+        assert(summary); // We should never see an ack without an op
         summary.ackNack(op);
         this.pendingSummaries.delete(seq);
 
-        // track latest ack
+        // Track latest ack
         if (!this.lastAck || seq > this.lastAck.summaryAckNack.contents.summaryProposal.summarySequenceNumber) {
             this.lastAck = summary as IAckedSummary;
             this.refreshWaitNextAck.resolve();

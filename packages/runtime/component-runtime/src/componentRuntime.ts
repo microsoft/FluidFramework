@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
+import { EventEmitter } from "events";
+import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import {
     IComponentHandle,
     IComponentHandleContext,
@@ -15,18 +18,19 @@ import {
     IDeltaManager,
     IGenericBlob,
     ILoader,
-    ITelemetryLogger,
 } from "@microsoft/fluid-container-definitions";
 import {
-    buildHierarchy,
     ChildLogger,
     Deferred,
-    flatten,
-    raiseConnectedEvent,
-    TreeTreeEntry,
 } from "@microsoft/fluid-core-utils";
 import {
+    buildSnapshotTree,
+    raiseConnectedEvent,
+    TreeTreeEntry,
+} from "@microsoft/fluid-protocol-base";
+import {
     ConnectionState,
+    IClientDetails,
     IDocumentMessage,
     IQuorum,
     ISequencedDocumentMessage,
@@ -44,9 +48,7 @@ import {
     IInboundSignalMessage,
 } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
-import * as assert from "assert";
-import { EventEmitter } from "events";
-// tslint:disable-next-line:no-submodule-imports
+// eslint-disable-next-line import/no-internal-modules
 import * as uuid from "uuid/v4";
 import { IChannelContext } from "./channelContext";
 import { LocalChannelContext } from "./localChannelContext";
@@ -116,8 +118,16 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         return this.componentContext.clientId;
     }
 
-    public get clientType(): string | undefined {
+    /**
+     * DEPRECATED use clientDetails.type instead
+     * back-compat: 0.11 clientType
+     */
+    public get clientType(): string {
         return this.componentContext.clientType;
+    }
+
+    public get clientDetails(): IClientDetails {
+        return this.componentContext.hostRuntime.clientDetails;
     }
 
     public get loader(): ILoader {
@@ -173,7 +183,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         const tree = componentContext.baseSnapshot;
 
         // Must always receive the component type inside of the attributes
-        // tslint:disable-next-line: strict-boolean-expressions
         if (tree && tree.trees) {
             Object.keys(tree.trees).forEach((path) => {
                 const channelContext = new RemoteChannelContext(
@@ -211,7 +220,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        // system routes
+        // System routes
         if (request.url === "/_scheduler") {
             return this.componentContext.hostRuntime.request(request);
         }
@@ -373,6 +382,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         return this.audience;
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public snapshot(message: string): Promise<void> {
         this.verifyNotClosed();
         return this.snapshotFn(message);
@@ -387,16 +397,15 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         this.verifyNotClosed();
 
         const blob = await this.blobManager.createBlob(file);
-        /* eslint-disable require-atomic-updates */
         file.id = blob.id;
         file.url = blob.url;
-        /* eslint-enable require-atomic-updates */
 
         this.submit(MessageType.BlobUploaded, blob);
 
         return file;
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public getBlob(blobId: string): Promise<IGenericBlob | undefined> {
         this.verifyNotClosed();
 
@@ -407,6 +416,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         return this.blobManager.getBlobMetadata();
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public stop(): Promise<ITreeEntry[]> {
         this.verifyNotClosed();
 
@@ -421,6 +431,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
 
     public process(message: ISequencedDocumentMessage, local: boolean) {
         this.verifyNotClosed();
+        /* eslint-disable no-case-declarations */
         switch (message.type) {
             case MessageType.Attach:
                 const attachMessage = message.contents as IAttachMessage;
@@ -430,12 +441,11 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
                     assert(this.pendingAttach.has(attachMessage.id));
                     this.pendingAttach.delete(attachMessage.id);
                 } else {
-                    // create storage service that wraps the attach data
+                    // Create storage service that wraps the attach data
                     const origin = message.origin ? message.origin.id : this.documentId;
 
                     const flatBlobs = new Map<string, string>();
-                    const flattened = flatten(attachMessage.snapshot.entries, flatBlobs);
-                    const snapshotTree = buildHierarchy(flattened);
+                    const snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
 
                     const remoteChannelContext = new RemoteChannelContext(
                         this,
@@ -451,7 +461,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
 
                     this.contexts.set(attachMessage.id, remoteChannelContext);
                     if (this.contextsDeferred.has(attachMessage.id)) {
-                        // tslint:disable-next-line max-line-length
                         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                         this.contextsDeferred.get(attachMessage.id)!.resolve(remoteChannelContext);
                     } else {
@@ -468,6 +477,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
                 break;
             default:
         }
+        /* eslint-enable no-case-declarations */
 
         this.emit("op", message);
     }
@@ -479,11 +489,11 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
     public async snapshotInternal(fullTree: boolean = false): Promise<ITreeEntry[]> {
         // Craft the .attributes file for each shared object
         const entries = await Promise.all(Array.from(this.contexts)
-            .filter(([key, value]) => {
+            .filter(([key, value]) =>
                 // If the object is registered - and we have received the sequenced op creating the object
                 // (i.e. it has a base mapping) - then we go ahead and snapshot
-                return value.isRegistered();
-            })
+                value.isRegistered(),
+            )
             .map(async ([key, value]) => {
                 const snapshot = await value.snapshot(fullTree);
 
@@ -611,7 +621,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
     }
 
     private refreshBaseSummary(snapshot: ISnapshotTree) {
-        // propogate updated tree to all channels
+        // Propogate updated tree to all channels
         for (const key of Object.keys(snapshot.trees)) {
             const channel = this.contexts.get(key);
             if (channel) {

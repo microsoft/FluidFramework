@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
+import { ITelemetryErrorEvent, ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import {
     IComponent,
-    ITelemetryErrorEvent,
-    ITelemetryLogger,
 } from "@microsoft/fluid-container-definitions";
 import { ChildLogger, EventEmitterWithErrorHandling } from "@microsoft/fluid-core-utils";
 import { ConnectionState, ISequencedDocumentMessage, ITree, MessageType } from "@microsoft/fluid-protocol-definitions";
@@ -17,7 +17,6 @@ import {
     IObjectStorageService,
     ISharedObjectServices,
 } from "@microsoft/fluid-runtime-definitions";
-import * as assert from "assert";
 import * as Deque from "double-ended-queue";
 import { debug } from "./debug";
 import { SharedObjectComponentHandle } from "./handle";
@@ -101,9 +100,10 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
             id,
             runtime.IComponentHandleContext);
 
-        // runtime could be null since some package hasn't turn on strictNullChecks yet
+        // Runtime could be null since some package hasn't turn on strictNullChecks yet
         // We should remove the null check once that is done
         this.logger = ChildLogger.create(
+            // eslint-disable-next-line no-null/no-null
             runtime !== null ? runtime.logger : undefined, this.attributes.type, { SharedObjectId: id });
 
         this.on("error", (error: any) => {
@@ -405,7 +405,7 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
             return;
         }
 
-        // disconnected ops should never be processed. They should have been fully sent on connected
+        // Disconnected ops should never be processed. They should have been fully sent on connected
         assert(firstPendingOp.clientSequenceNumber !== -1,
             `processing disconnected op ${firstPendingOp.clientSequenceNumber}`);
 

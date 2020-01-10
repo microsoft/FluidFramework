@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// tslint:disable
 export interface IBTreeEntry<TKey, TValue> {
     key: TKey;
     subBlock?: BTreeBlock<TKey, TValue>;
@@ -21,10 +20,10 @@ export interface IRecordRef {
 }
 
 export const MaxNodesInBlock = 512;
-export const MinNodesInBlock = MaxNodesInBlock/2;
+export const MinNodesInBlock = MaxNodesInBlock / 2;
 
 export class BTreeBlock<TKey, TValue>  {
-    public children: Array<IBTreeEntry<TKey, TValue>>;
+    public children: IBTreeEntry<TKey, TValue>[];
 
     constructor(public childCount: number) {
         this.children = new Array<IBTreeEntry<TKey, TValue>>(MaxNodesInBlock);
@@ -39,7 +38,7 @@ export interface IBTreeKeyFns<TKey, TValue> {
 export class BTree<TKey, TValue> {
     public root: BTreeBlock<TKey, TValue>;
     public count = 0;
-    private height =  0;
+    private height = 0;
 
     constructor(public keyFns: IBTreeKeyFns<TKey, TValue>) {
         this.root = new BTreeBlock<TKey, TValue>(0);
@@ -51,8 +50,8 @@ export class BTree<TKey, TValue> {
             this.count++;
             if (upBlock) {
                 const newRoot = new BTreeBlock<TKey, TValue>(2);
-                newRoot.children[0]={ key: this.root.children[0].key, subBlock: this.root };
-                newRoot.children[1]={ key: upBlock.children[0].key, subBlock: upBlock };
+                newRoot.children[0] = { key: this.root.children[0].key, subBlock: this.root };
+                newRoot.children[1] = { key: upBlock.children[0].key, subBlock: upBlock };
                 this.root = newRoot;
                 this.height++;
             }
@@ -65,15 +64,15 @@ export class BTree<TKey, TValue> {
         let j: number;
         // leaf
         if (ht === 0) {
-            for (j=0;j<block.childCount;j++) {
-                if (this.keyFns.compare(key,block.children[j].key)<0) {
+            for (j = 0; j < block.childCount; j++) {
+                if (this.keyFns.compare(key, block.children[j].key) < 0) {
                     break;
                 }
             }
         }
         else {
-            for (j=0;j<block.childCount;j++) {
-                if ((j+1===block.childCount)||(this.keyFns.compare(key,block.children[j+1].key))) {
+            for (j = 0; j < block.childCount; j++) {
+                if ((j + 1 === block.childCount) || (this.keyFns.compare(key, block.children[j + 1].key))) {
                     const upBlock = this.insert(block.children[j++].subBlock, key, val, ht - 1);
                     if (upBlock) {
                         entry.key = upBlock.children[0].key;
@@ -85,11 +84,11 @@ export class BTree<TKey, TValue> {
             }
         }
 
-        for (let i = block.childCount;i>j;i--) {
-            block.children[i] = block.children[i-1];
+        for (let i = block.childCount; i > j; i--) {
+            block.children[i] = block.children[i - 1];
         }
         block.childCount++;
-        if (block.childCount<MaxNodesInBlock) {
+        if (block.childCount < MaxNodesInBlock) {
             return undefined;
         } else {
             return this.split(block);
@@ -99,8 +98,8 @@ export class BTree<TKey, TValue> {
     private split(block: BTreeBlock<TKey, TValue>) {
         const rightSib = new BTreeBlock<TKey, TValue>(MinNodesInBlock);
         block.childCount = MinNodesInBlock;
-        for (let j=0;j<MinNodesInBlock;j++) {
-            rightSib.children[j] = block.children[MinNodesInBlock+j];
+        for (let j = 0; j < MinNodesInBlock; j++) {
+            rightSib.children[j] = block.children[MinNodesInBlock + j];
         }
         return rightSib;
     }

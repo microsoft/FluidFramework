@@ -9,7 +9,7 @@ import { IComponentHandle, IComponentHandleContext } from "./handles";
  * JSON serialized form of an IComponentHandle
  */
 export interface ISerializedHandle {
-    // marker to indicate to JSON.parse that the object is a Fluid handle
+    // Marker to indicate to JSON.parse that the object is a Fluid handle
     type: "__fluid_handle__";
 
     // URL to the object. Relative URLs are relative to the handle context passed to the stringify.
@@ -21,6 +21,15 @@ export interface IProvideComponentSerializer {
 }
 
 export interface IComponentSerializer extends IProvideComponentSerializer {
+    /**
+     * Given a mostly-plain object that may have handle objects embedded within, will return a fully-plain object
+     * where any embedded IComponentHandles have been replaced with a serializable form.
+     *
+     * The original `input` object is not mutated.  This method will shallowly clones all objects in the path from
+     * the root to any replaced handles.  (If no handles are found, returns the original object.)
+     */
+    replaceHandles(value: any, context: IComponentHandleContext, bind: IComponentHandle): any;
+
     /**
      * Stringifies a given value. Converts any IComponentHandle to its stringified equivalent.
      */

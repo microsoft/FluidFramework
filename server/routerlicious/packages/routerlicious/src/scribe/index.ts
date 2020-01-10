@@ -20,7 +20,8 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
     const mongoUrl = config.get("mongo:endpoint") as string;
     const documentsCollectionName = config.get("mongo:collectionNames:documents");
     const messagesCollectionName = config.get("mongo:collectionNames:scribeDeltas");
-    const historianUrl = config.get("worker:blobStorageUrl") as string;
+    const internalHistorianUrl = config.get("worker:internalBlobStorageUrl") as string;
+    const historianUrl = internalHistorianUrl || config.get("worker:blobStorageUrl") as string;
     const kafkaEndpoint = config.get("kafka:lib:endpoint");
     const kafkaLibrary = config.get("kafka:lib:name");
     const maxMessageSize = bytes.parse(config.get("kafka:maxMessageSize"));
@@ -58,7 +59,7 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
 }
 
 export async function create(config: Provider): Promise<IPartitionLambdaFactory> {
-    // nconf has problems with prototype methods which prevents us from storing this as a class
+    // Nconf has problems with prototype methods which prevents us from storing this as a class
     config.set("documentLambda", { create: scribeCreate });
     return createDocumentRouter(config);
 }

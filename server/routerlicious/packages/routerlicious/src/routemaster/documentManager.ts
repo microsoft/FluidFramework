@@ -17,12 +17,12 @@ export class DocumentManager {
         return new DocumentManager(document, collection, deltas);
     }
 
-    private activeForks: Set<string>;
+    private readonly activeForks: Set<string>;
 
     private constructor(
-        private document: core.IDocument,
-        private collection: core.ICollection<core.IDocument>,
-        private deltas: core.ICollection<core.ISequencedOperationMessage>) {
+        private readonly document: core.IDocument,
+        private readonly collection: core.ICollection<core.IDocument>,
+        private readonly deltas: core.ICollection<core.ISequencedOperationMessage>) {
 
         const forks = document.forks || [];
         const filtered = forks

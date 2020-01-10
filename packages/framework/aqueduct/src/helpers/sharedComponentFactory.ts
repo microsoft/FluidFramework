@@ -6,8 +6,16 @@
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { ComponentRuntime, ISharedObjectRegistry } from "@microsoft/fluid-component-runtime";
 import { ComponentRegistry } from "@microsoft/fluid-container-runtime";
-import { IComponentContext, IComponentFactory, IComponentRegistry, IComponentRuntime, IProvideComponentRegistry, NamedComponentRegistryEntries } from "@microsoft/fluid-runtime-definitions";
+import {
+    IComponentContext,
+    IComponentFactory,
+    IComponentRegistry,
+    IComponentRuntime,
+    IProvideComponentRegistry,
+    NamedComponentRegistryEntries,
+} from "@microsoft/fluid-runtime-definitions";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
+// eslint-disable-next-line import/no-internal-modules
 import { SharedComponent } from "../components/sharedComponent";
 
 export class SharedComponentFactory implements IComponentFactory, Partial<IProvideComponentRegistry>  {
@@ -16,7 +24,7 @@ export class SharedComponentFactory implements IComponentFactory, Partial<IProvi
 
     constructor(
         private readonly ctor: new (runtime: IComponentRuntime, context: IComponentContext) => SharedComponent,
-        sharedObjects: ReadonlyArray<ISharedObjectFactory>,
+        sharedObjects: readonly ISharedObjectFactory[],
         registryEntries?: NamedComponentRegistryEntries,
         private readonly onDemandInstantiation = true,
     ) {

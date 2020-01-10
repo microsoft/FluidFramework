@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-// tslint:disable: no-unsafe-any
-import { configurableUrlResolver } from "@microsoft/fluid-core-utils";
 import { IResolvedUrl, IUrlResolver } from "@microsoft/fluid-driver-definitions";
+import { configurableUrlResolver } from "@microsoft/fluid-driver-utils";
 
 export async function resolveFluidUrl(url: string, resolversList: IUrlResolver[]): Promise<IResolvedUrl> {
     const resolved: IResolvedUrl = await configurableUrlResolver(resolversList, { url });

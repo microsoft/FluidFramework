@@ -64,7 +64,9 @@ data:
         },
         "redis": {
             "host": "{{ .Values.redis.url }}",
-            "port": 6379
+            "port": "{{ .Values.redis.port }}",
+            "tls": {{ .Values.redis.tls }},
+            "pass": "{{ .Values.redis.password }}"
         },
         "error": {
             "track": {{ .Values.error.track }},
@@ -83,6 +85,7 @@ data:
             "gatewayUrl": "http://{{ template "fullname" . }}",
             "serverUrl": "{{ .Values.alfred.externalUrl }}",
             "blobStorageUrl": "{{ .Values.historian.externalUrl }}",
+            "internalBlobStorageUrl": "{{ .Values.historian.internalUrl }}",
             "repository": "FluidFramework",
             "clusterNpm": "{{ .Values.worker.clusterNpm }}",
             "npm": "{{ .Values.worker.npm }}",

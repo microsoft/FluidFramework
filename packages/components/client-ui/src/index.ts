@@ -14,7 +14,7 @@ export { ui };
 
 export { controls };
 
-// eslint-disable-next-line import/no-duplicates
+// eslint-disable-next-line import/no-duplicates, no-duplicate-imports
 import { CharacterCodes, Paragraph, Table } from "./text";
 export { CharacterCodes, Paragraph, Table };
 
