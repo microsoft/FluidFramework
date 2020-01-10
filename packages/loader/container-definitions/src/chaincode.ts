@@ -11,7 +11,7 @@ import {
     IRequest,
     IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
-import { IDocumentStorageService, IErrorOrWarning } from "@microsoft/fluid-driver-definitions";
+import { IDocumentStorageService, IError } from "@microsoft/fluid-driver-definitions";
 import {
     ConnectionState,
     IClientDetails,
@@ -203,7 +203,7 @@ export interface IContainerContext extends EventEmitter, IMessageScheduler, IPro
      */
     readonly scope: IComponent;
 
-    error(err: IErrorOrWarning): void;
+    error(err: IError): void;
     requestSnapshot(tagMessage: string): Promise<void>;
     reloadContext(): Promise<void>;
     refreshBaseSummary(snapshot: ISnapshotTree): void;

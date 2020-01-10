@@ -3,48 +3,40 @@
  * Licensed under the MIT License.
  */
 // tslint:disable: no-unsafe-any
-export enum ErrorOrWarningType {
+export enum ErrorType {
     generalError,
     connectionError,
     throttling,
-    serviceWarning,
-    summarizingWarning,
+    serviceError,
+    summarizingError,
 }
 
-export function isWarning(error: IErrorOrWarning) {
-    if (error.type === ErrorOrWarningType.serviceWarning ||
-        error.type === ErrorOrWarningType.summarizingWarning) {
-        return true;
-    }
-    return false;
-}
-
-export type IErrorOrWarning = IGeneralError | IThrottlingError | IConnectionError |
-IServiceWarning | ISummarizingWarning;
+export type IError = IGeneralError | IThrottlingError | IConnectionError |
+IServiceError | ISummarizingError;
 
 export interface IGeneralError {
-    readonly type: ErrorOrWarningType.generalError;
+    readonly type: ErrorType.generalError;
     error: any;
 }
 
 export interface IThrottlingError {
-    readonly type: ErrorOrWarningType.throttling;
+    readonly type: ErrorType.throttling;
     readonly message: string;
     readonly retryAfterSeconds: number;
 }
 
 export interface IConnectionError {
-    readonly type: ErrorOrWarningType.connectionError;
+    readonly type: ErrorType.connectionError;
     readonly message: string;
     readonly canRetry?: boolean;
     readonly statusCode?: number;
     readonly online: string;
 }
 
-export interface IServiceWarning {
-    readonly type: ErrorOrWarningType.serviceWarning;
+export interface IServiceError {
+    readonly type: ErrorType.serviceError;
 }
 
-export interface ISummarizingWarning {
-    readonly type: ErrorOrWarningType.summarizingWarning;
+export interface ISummarizingError {
+    readonly type: ErrorType.summarizingError;
 }

@@ -6,7 +6,7 @@
 import { isOnline, NetworkError, ThrottlingError, OnlineStatus } from "@microsoft/fluid-driver-utils";
 import { default as fetch, RequestInfo as FetchRequestInfo, RequestInit as FetchRequestInit } from "node-fetch";
 import * as sha from "sha.js";
-import { ErrorOrWarningType } from "@microsoft/fluid-driver-definitions";
+import { ErrorType } from "@microsoft/fluid-driver-definitions";
 import { IOdspSocketError } from "./contracts";
 import { debug } from "./debug";
 
@@ -39,7 +39,7 @@ export class OdspNetworkError extends NetworkError {
         readonly canRetry: boolean,
         readonly sprequestguid?: string,
         readonly online = OnlineStatus[isOnline()]) {
-        super(errorMessage, ErrorOrWarningType.connectionError, statusCode, canRetry, online);
+        super(errorMessage, ErrorType.connectionError, statusCode, canRetry, online);
     }
 }
 
@@ -48,7 +48,7 @@ export class OdspNetworkError extends NetworkError {
  */
 export function errorObjectFromOdspError(socketError: IOdspSocketError, canRetry: boolean) {
     if (socketError.retryAfter) {
-        return new ThrottlingError(socketError.message, ErrorOrWarningType.throttling, socketError.retryAfter);
+        return new ThrottlingError(socketError.message, ErrorType.throttling, socketError.retryAfter);
     } else {
         return new OdspNetworkError(
             socketError.message,

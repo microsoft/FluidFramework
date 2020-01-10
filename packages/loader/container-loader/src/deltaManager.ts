@@ -20,7 +20,7 @@ import {
     IDocumentDeltaStorageService,
     IDocumentService,
     IThrottlingError,
-    ErrorOrWarningType,
+    ErrorType,
 } from "@microsoft/fluid-driver-definitions";
 import { isSystemType } from "@microsoft/fluid-protocol-base";
 import {
@@ -686,7 +686,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             const delayTime = Math.max(this.deltaStorageDelay, this.deltaStreamDelay);
             if (delayTime >= 0) {
                 const throttlingError: IThrottlingError = {
-                    type: ErrorOrWarningType.throttling,
+                    type: ErrorType.throttling,
                     message: "Service busy/throttled.",
                     retryAfterSeconds: delayTime,
                 };

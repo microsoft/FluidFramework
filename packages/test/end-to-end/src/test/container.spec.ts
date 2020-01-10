@@ -14,7 +14,7 @@ import {
     IFluidResolvedUrl,
     IGeneralError,
     IDocumentDeltaConnection,
-    ErrorOrWarningType,
+    ErrorType,
 } from "@microsoft/fluid-driver-definitions";
 import {
     ITestDeltaConnectionServer,
@@ -104,7 +104,7 @@ describe("Container", () => {
                 loader,
                 testRequest);
         } catch (error) {
-            assert.equal(error.type, ErrorOrWarningType.generalError, "Error is not a general error");
+            assert.equal(error.type, ErrorType.generalError, "Error is not a general error");
             const generalError = error as IGeneralError;
             success = generalError.error as boolean;
         }

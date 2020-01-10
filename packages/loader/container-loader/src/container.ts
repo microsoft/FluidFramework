@@ -35,8 +35,7 @@ import {
     IDocumentService,
     IDocumentStorageService,
     IThrottlingError,
-    IErrorOrWarning,
-    isWarning,
+    IError,
 } from "@microsoft/fluid-driver-definitions";
 import { readAndParse, createContainerError } from "@microsoft/fluid-driver-utils";
 import {
@@ -349,7 +348,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     public on(event: "connected" | "contextChanged", listener: (clientId: string) => void): this;
     public on(event: "disconnected" | "joining" | "closed", listener: () => void): this;
     public on(event: "error", listener: (error: any) => void): this;
-    public on(event: "warning", listener: (warning: any) => void): this;
     public on(event: "serviceBusy", listener: (error: IThrottlingError) => void): this;
     public on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
     public on(event: "pong" | "processTime", listener: (latency: number) => void): this;
@@ -433,18 +431,14 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         this.connectToDeltaStream();
     }
 
-    public raiseCriticalErrorOrWarning(error: IErrorOrWarning) {
-        if (isWarning(error)) {
-            this.emit("warning", error);
-            return;
-        }
+    public raiseCriticalError(error: IError) {
         this.emit("error", error);
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
     public reloadContext(): Promise<void> {
         return this.reloadContextCore().catch((error) => {
-            this.raiseCriticalErrorOrWarning(createContainerError(error));
+            this.raiseCriticalError(createContainerError(error));
             throw error;
         });
     }
@@ -952,8 +946,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             this.setConnectionState(ConnectionState.Disconnected, reason);
         });
 
-        deltaManager.on("error", (error: IErrorOrWarning) => {
-            this.raiseCriticalErrorOrWarning(error);
+        deltaManager.on("error", (error: IError) => {
+            this.raiseCriticalError(error);
         });
 
         deltaManager.on("serviceBusy", (error: IThrottlingError) => {
@@ -1202,7 +1196,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             new QuorumProxy(this.protocolHandler!.quorum),
             loader,
             storage,
-            (err: IErrorOrWarning) => this.raiseCriticalErrorOrWarning(err),
+            (err: IError) => this.raiseCriticalError(err),
             (type, contents) => this.submitMessage(type, contents),
             (message) => this.submitSignal(message),
             // eslint-disable-next-line @typescript-eslint/promise-function-async

@@ -20,7 +20,7 @@ import {
     IRuntime,
     IRuntimeFactory,
 } from "@microsoft/fluid-container-definitions";
-import { IDocumentStorageService, IErrorOrWarning } from "@microsoft/fluid-driver-definitions";
+import { IDocumentStorageService, IError } from "@microsoft/fluid-driver-definitions";
 import { raiseConnectedEvent } from "@microsoft/fluid-protocol-base";
 import {
     ConnectionState,
@@ -51,7 +51,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         quorum: IQuorum,
         loader: ILoader,
         storage: IDocumentStorageService | null | undefined,
-        errorFn: (err: IErrorOrWarning) => void,
+        errorFn: (err: IError) => void,
         submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
         submitSignalFn: (contents: any) => void,
         snapshotFn: (message: string) => Promise<void>,
@@ -169,7 +169,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         public readonly quorum: IQuorum,
         public readonly storage: IDocumentStorageService | undefined | null,
         public readonly loader: ILoader,
-        private readonly errorFn: (err: IErrorOrWarning) => void,
+        private readonly errorFn: (err: IError) => void,
         public readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
         public readonly submitSignalFn: (contents: any) => void,
         public readonly snapshotFn: (message: string) => Promise<void>,
@@ -232,7 +232,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         return this.snapshotFn(tagMessage);
     }
 
-    public error(err: IErrorOrWarning): void {
+    public error(err: IError): void {
         this.errorFn(err);
     }
 

@@ -11,8 +11,7 @@ import {
     IDocumentDeltaStorageService,
     IDocumentService,
     IFluidResolvedUrl,
-    ErrorOrWarningType,
-    IErrorOrWarning,
+    ErrorType,
 } from "@microsoft/fluid-driver-definitions";
 import {
     ITestDeltaConnectionServer,
@@ -61,7 +60,7 @@ describe("Errors Types", () => {
                 loader,
                 testRequest);
         } catch (error) {
-            assert.equal(error.type, ErrorOrWarningType.generalError, "Error is not a general error");
+            assert.equal(error.type, ErrorType.generalError, "Error is not a general error");
         }
     });
 
@@ -70,7 +69,7 @@ describe("Errors Types", () => {
             message: "Test Error",
         }
         const networkError = createErrorObject("handler", err, false)
-        assert.equal(networkError.type, ErrorOrWarningType.connectionError, "Error is not a network error");
+        assert.equal(networkError.type, ErrorType.connectionError, "Error is not a network error");
     });
 
     it("Network Error Test_2", async () => {
@@ -79,7 +78,7 @@ describe("Errors Types", () => {
             retryAfter: 100,
         }
         const networkError = createErrorObject("handler", err, false)
-        assert.equal(networkError.type, ErrorOrWarningType.connectionError, "Error is not a network error");
+        assert.equal(networkError.type, ErrorType.connectionError, "Error is not a network error");
     });
 
     
@@ -89,7 +88,7 @@ describe("Errors Types", () => {
             code: 400,
         }
         const networkError = errorObjectFromOdspError(err, false)
-        assert.equal(networkError.type, ErrorOrWarningType.connectionError, "Error is not a network error");
+        assert.equal(networkError.type, ErrorType.connectionError, "Error is not a network error");
     });
 
     it("Throttling Error Test", async () => {
@@ -99,29 +98,7 @@ describe("Errors Types", () => {
             retryAfter: 100,
         }
         const throttlingError = errorObjectFromOdspError(err, true)
-        assert.equal(throttlingError.type, ErrorOrWarningType.throttling, "Error is not a throttling error");
-    });
-
-    it("Warning Test", async () => {
-        let success = false;
-        const container = await Container.load(
-            "tenantId/documentId",
-            service,
-            codeLoader,
-            {},
-            {},
-            loader,
-            testRequest);
-        container.on("warning", (warning) => {
-            if (warning.type === ErrorOrWarningType.serviceWarning) {
-                success = true;
-            }
-        });
-        const warning: IErrorOrWarning = {
-            type: ErrorOrWarningType.serviceWarning,
-        }
-        container.raiseCriticalErrorOrWarning(warning);
-        assert.equal(success, true, "Warning is not raised")
+        assert.equal(throttlingError.type, ErrorType.throttling, "Error is not a throttling error");
     });
 
 });
