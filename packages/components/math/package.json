@@ -50,7 +50,7 @@
     "concurrently": "^4.1.0",
     "copyfiles": "^2.1.0",
     "css-loader": "^1.0.0",
-    "eslint": "^7.7.2",
+    "eslint": "^6.7.1",
     "eslint-plugin-eslint-comments": "^3.1.2",
     "eslint-plugin-import": "^2.18.2",
     "eslint-plugin-no-null": "^1.0.2",

@@ -31,14 +31,14 @@
     "@microsoft/fluid-protocol-definitions": "^0.12.0"
   },
   "devDependencies": {
-    "@microsoft/api-extractor": "^7.4.4",
+    "@microsoft/api-extractor": "^7.7.2",
     "@microsoft/eslint-config-fluid": "^0.13.0",
     "@microsoft/fluid-build-common": "^0.13.0",
     "@types/node": "^10.14.6",
     "@typescript-eslint/eslint-plugin": "^2.9.0",
     "@typescript-eslint/parser": "^2.9.0",
     "concurrently": "^4.1.0",
-    "eslint": "^7.7.2",
+    "eslint": "^6.7.1",
     "eslint-plugin-eslint-comments": "^3.1.2",
     "eslint-plugin-import": "^2.18.2",
     "eslint-plugin-no-null": "^1.0.2",
