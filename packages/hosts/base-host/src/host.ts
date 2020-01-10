@@ -37,16 +37,16 @@ async function attach(loader: Loader, url: string, div: HTMLDivElement) {
     }
 }
 
-async function initializeChaincode(document: Container, pkg?: IFluidCodeDetails): Promise<void> {
+async function initializeChaincode(container: Container, pkg?: IFluidCodeDetails): Promise<void> {
     if (!pkg) {
         return;
     }
 
-    const quorum = document.getQuorum();
+    const quorum = container.getQuorum();
 
     // Wait for connection so that proposals can be sent
-    if (!document.connected) {
-        await new Promise<void>((resolve) => document.on("connected", () => resolve()));
+    if (!container.connected) {
+        await new Promise<void>((resolve) => container.on("connected", () => resolve()));
     }
 
     // And then make the proposal if a code proposal has not yet been made
