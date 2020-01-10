@@ -84,7 +84,7 @@
     "rimraf": "^2.6.2",
     "source-map-support": "^0.5.16",
     "ts-node": "^7.0.1",
-    "typescript": "~3.4.5"
+    "typescript": "~3.7.4"
   },
   "fluid": {
     "browser": {

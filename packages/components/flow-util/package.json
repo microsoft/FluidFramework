@@ -79,6 +79,6 @@
     "rimraf": "^2.6.2",
     "ts-mocha": "^6.0.0",
     "ts-node": "^7.0.1",
-    "typescript": "~3.4.5"
+    "typescript": "~3.7.4"
   }
 }

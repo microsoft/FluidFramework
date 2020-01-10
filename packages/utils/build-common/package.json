@@ -25,6 +25,6 @@
     "eslint-plugin-unicorn": "^14.0.1",
     "tslint": "^5.20.0",
     "tslint-microsoft-contrib": "^6.0.0",
-    "typescript": "~3.4.5"
+    "typescript": "~3.7.4"
   }
 }
