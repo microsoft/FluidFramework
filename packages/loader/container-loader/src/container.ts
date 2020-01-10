@@ -131,7 +131,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             const version = request.headers && request.headers[LoaderHeader.version];
             const pause = request.headers && request.headers[LoaderHeader.pause];
 
-            // tslint:disable-next-line no-unsafe-any
             container.load(version, !!pause)
                 .then(() => {
                     container.removeListener("error", onError);
@@ -337,7 +336,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     public on(event: "pong" | "processTime", listener: (latency: number) => void): this;
     public on(event: MessageType.BlobUploaded, listener: (contents: any) => void): this;
 
-    /* tslint:disable:no-unnecessary-override */
     public on(event: string | symbol, listener: (...args: any[]) => void): this {
         return super.on(event, listener);
     }
@@ -757,7 +755,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         });
 
         protocol.quorum.on("error", (error) => {
-            // tslint:disable-next-line no-unsafe-any
             protocolLogger.sendErrorEvent(error);
         });
 
@@ -864,9 +861,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     }
 
     private get client() {
-        // tslint:disable-next-line:no-unsafe-any
         const client: IClient = this.options && this.options.client
-            // tslint:disable-next-line:no-unsafe-any
             ? (this.options.client as IClient)
             : {
                 type: "browser", // Back-compat: 0.11 clientType
@@ -883,7 +878,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             && this.originalRequest.headers[LoaderHeader.clientDetails];
 
         if (headerClientDetails) {
-            // tslint:disable-next-line: no-unsafe-any
             merge(client.details, headerClientDetails);
         }
 
