@@ -274,16 +274,6 @@ export class WebCodeLoader implements ICodeLoader {
     }
 
     /**
-     * Resolves the input data structures to the resolved details
-     */
-    // Disabled to verify function sets cache synchronously
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public resolve(input: IFluidCodeDetails): Promise<IResolvedPackage> {
-        const fluidPackage = this.getFluidPackage(input);
-        return fluidPackage.resolve();
-    }
-
-    /**
      * @param source - Details of where to find chaincode
      */
     public async load<T>(
