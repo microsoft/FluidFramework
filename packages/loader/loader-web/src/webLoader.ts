@@ -176,31 +176,30 @@ class FluidPackage {
             }
 
             const scriptFound = scriptIds.find((scriptId) => {
-                const script = document.getElementById(scriptId);
+                const scriptElement = document.getElementById(scriptId);
                 // eslint-disable-next-line no-null/no-null
-                return (script !== null);
+                return (scriptElement !== null);
             });
 
-            // If the script hasn't been attached, attach it now.
+            // If the script hasn't been attached, attach it now, kicking off the load.
             // This could cause a double load of the script, but scriptManager handles duplicates
             if (scriptFound === undefined) {
                 this.scriptManager.loadScripts(umdDetails, this.details.packageUrl, scriptIds);
             }
 
             // ScriptIds are needed here in case the script hasn't loaded yet
-            // if there's no script, fetch and load it
             scriptIds.forEach((scriptId) => {
-                const script = document.getElementById(scriptId);
+                const scriptElement = document.getElementById(scriptId);
 
                 // eslint-disable-next-line no-null/no-null
-                if (script !== null) {
-                    script.onload = () => {
+                if (scriptElement !== null) {
+                    scriptElement.onload = () => {
                         if (entrypoint in window) {
                             resolve(window[entrypoint]);
                         }
                     };
 
-                    script.onerror = (error) => {
+                    scriptElement.onerror = (error) => {
                         reject(error);
                     };
                 }
@@ -246,10 +245,10 @@ class FluidPackage {
     }
 
     private async loadCore<T>(): Promise<T> {
-        const resolved = await this.resolve();
+        const resolvedPackage = await this.resolve();
 
         // Currently only support UMD package loads
-        const umdDetails = resolved.pkg.fluid.browser.umd;
+        const umdDetails = resolvedPackage.pkg.fluid.browser.umd;
 
         await Promise.all(this.scriptManager.loadScripts(umdDetails, this.details.packageUrl));
 
