@@ -144,7 +144,7 @@
     "cache-loader": "^1.2.2",
     "concurrently": "^4.1.0",
     "css-loader": "^1.0.0",
-    "eslint": "^6.7.1",
+    "eslint": "^7.7.2",
     "file-loader": "^3.0.1",
     "fork-ts-checker-webpack-plugin": "^0.4.9",
     "html-loader": "^0.5.5",
