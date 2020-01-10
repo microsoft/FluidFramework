@@ -87,8 +87,8 @@ export class TinyliciousRunner implements utils.IRunner {
         }
 
         const bind = typeof this.port === "string"
-            ? `Pipe ${  this.port}`
-            : `Port ${  this.port}`;
+            ? `Pipe ${this.port}`
+            : `Port ${this.port}`;
 
         // Handle specific listen errors with friendly messages
         switch (error.code) {
@@ -109,8 +109,8 @@ export class TinyliciousRunner implements utils.IRunner {
     private onListening() {
         const addr = this.server.httpServer.address();
         const bind = typeof addr === "string"
-            ? `pipe ${  addr}`
-            : `port ${  addr.port}`;
-        winston.info(`Listening on ${  bind}`);
+            ? `pipe ${addr}`
+            : `port ${addr.port}`;
+        winston.info(`Listening on ${bind}`);
     }
 }
