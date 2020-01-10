@@ -273,9 +273,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return this._parentBranch;
     }
 
-    /**
-     * Controls whether the container will automatically reconnect to the delta stream after receiving a disconnect.
-     */
     public set autoReconnect(value: boolean) {
         this.logger.sendTelemetryEvent({
             eventName: "AutoReconnect",
