@@ -154,8 +154,22 @@ export class OdspDocumentService implements IDocumentService {
     public async connectToDeltaStream(client: IClient, mode: ConnectionMode): Promise<IDocumentDeltaConnection> {
         // Attempt to connect twice, in case we used expired token.
         return getWithRetryForTokenRefresh<IDocumentDeltaConnection>(async (refresh: boolean) => {
-            // eslint-disable-next-line max-len
-            const [websocketEndpoint, webSocketToken, io] = await Promise.all([this.joinSession(), this.getWebsocketToken(refresh), this.socketIOClientP]);
+            const [websocketEndpoint, webSocketToken, io] =
+                await Promise.all([this.joinSession(), this.getWebsocketToken(refresh), this.socketIOClientP]);
+
+            // This check exists because of a typescript bug.
+            // Issue: https://github.com/microsoft/TypeScript/issues/33752
+            // The TS team has plans to fix this in the 3.8 release
+            if (!websocketEndpoint) {
+                throw new Error("websocket endpoint should be defined");
+            }
+
+            // This check exists because of a typescript bug.
+            // Issue: https://github.com/microsoft/TypeScript/issues/33752
+            // The TS team has plans to fix this in the 3.8 release
+            if (!io) {
+                throw new Error("websocket endpoint should be defined");
+            }
 
             return this.connectToDeltaStreamWithRetry(
                 websocketEndpoint.tenantId,
