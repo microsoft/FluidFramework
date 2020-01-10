@@ -97,7 +97,7 @@ export class BadgeView extends React.Component<IBadgeViewProps, IBadgeViewState>
                 },
             };
 
-      // add to the badge options
+            // Add to the badge options
             this.props.optionsMap.set(this.state.customText, newItem);
 
             this._setCurrent(newItem);
@@ -114,14 +114,14 @@ export class BadgeView extends React.Component<IBadgeViewProps, IBadgeViewState>
 
     private _setCurrent(newItem: IBadgeType): void {
         if (newItem.key !== this.state.current.key) {
-      // save current value into history
+            // Save current value into history
             const len = this.props.historySequence.getItemCount();
             this.props.historySequence.insert(len, [{
                 value: newItem,
                 timestamp: new Date(),
             }]);
 
-      // set new value
+            // Set new value
             this.props.currentCell.set(newItem);
         }
     }
@@ -167,11 +167,12 @@ export class BadgeView extends React.Component<IBadgeViewProps, IBadgeViewState>
     private _onRenderCard(): JSX.Element {
         const history = [];
 
-    // add items to history in reverse order
+        // Add items to history in reverse order
         this.props.historySequence.getItems(0).forEach((x) => {
             history.unshift(
                 <ActivityItem
                     activityDescription={`Set to ${x.value.text}`}
+                    // eslint-disable-next-line @typescript-eslint/no-use-before-define
                     timeStamp={getRelativeDate(x.timestamp)}
                     activityIcon={<Icon {...x.value.iconProps} />} />,
             );
@@ -197,7 +198,7 @@ export class BadgeView extends React.Component<IBadgeViewProps, IBadgeViewState>
     }
 
     public render(): JSX.Element {
-    // calculate colors
+        // Calculate colors
         const color = getColorFromString(this.state.current.iconProps.style.color);
         const colorHover = getColorFromHSV({
             h: color.h,
@@ -290,22 +291,22 @@ export class BadgeView extends React.Component<IBadgeViewProps, IBadgeViewState>
 
 function getRelativeDate(timestamp: Date): string {
     // https://stackoverflow.com/questions/7641791/javascript-library-for-human-friendly-relative-date-formatting
-    var delta = Math.round(((new Date).getTime() - new Date(timestamp).getTime()) / 1000);
+    const delta = Math.round(((new Date()).getTime() - new Date(timestamp).getTime()) / 1000);
 
-    var minute = 60,
-        hour = minute * 60,
-        day = hour * 24;
+    const minute = 60;
+    const hour = minute * 60;
+    const day = hour * 24;
 
     if (delta < 30) {
         return "just now";
     } else if (delta < 3 * minute) {
         return "a few minutes ago";
     } else if (delta < hour) {
-        return Math.floor(delta / minute) + " minutes ago";
+        return `${Math.floor(delta / minute)  } minutes ago`;
     } else if (Math.floor(delta / hour) < 3) {
-        return "a few hours ago."
+        return "a few hours ago.";
     } else if (delta < day) {
-        return Math.floor(delta / hour) + " hours ago";
+        return `${Math.floor(delta / hour)  } hours ago`;
     } else if (delta < day * 2) {
         return "yesterday";
     } else {

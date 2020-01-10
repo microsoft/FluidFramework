@@ -11,8 +11,6 @@ import { SharedMap } from "@microsoft/fluid-map";
 import { SharedObjectSequence } from "@microsoft/fluid-sequence";
 // eslint-disable-next-line import/no-internal-modules
 import { SharedColors } from "@uifabric/fluent-theme/lib/fluent/FluentColors";
-// eslint-disable-next-line import/no-internal-modules
-import { IIconProps } from "office-ui-fabric-react/lib/Icon";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { IBadgeType } from "./IBadgeType";
@@ -82,17 +80,17 @@ export class Badge extends PrimedComponent implements IComponentHTMLVisual, ICom
      * This method is used to perform component setup, which can include setting an initial schema or initial values.
      */
     protected async componentInitializingFirstTime() {
-        // create a cell to represent the Badge"s current state
+        // Create a cell to represent the Badge"s current state
         const current = SharedCell.create(this.runtime);
         current.set(this.defaultOptions[0]);
         this.root.set(this.currentId, current.handle);
 
-    // create a map to represent the options for the Badge
+        // Create a map to represent the options for the Badge
         const options = SharedMap.create(this.runtime);
         this.defaultOptions.forEach((v) => options.set(v.key, v));
         this.root.set(this.optionsId, options.handle);
 
-        // create a sequence to store the badge"s history
+        // Create a sequence to store the badge"s history
         const history = SharedObjectSequence.create<IHistory<IBadgeType>>(this.runtime);
         history.insert(0, [{
             value: current.get(),
