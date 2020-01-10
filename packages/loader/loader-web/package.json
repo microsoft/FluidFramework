@@ -46,6 +46,6 @@
     "eslint-plugin-unicorn": "^14.0.1",
     "rimraf": "^2.6.2",
     "source-map-loader": "^0.2.4",
-    "typescript": "~3.4.5"
+    "typescript": "~3.7.4"
   }
 }
