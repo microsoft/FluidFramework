@@ -14,7 +14,7 @@ import { IQuorum } from "@microsoft/fluid-protocol-definitions";
 import { IAudience } from "@microsoft/fluid-container-definitions";
 import * as assert from "assert";
 
-describe("Container", () => {
+describe("Component Runtime", () => {
 
     let localComponentContext: LocalComponentContext;
     let storage: IDocumentStorageService;
