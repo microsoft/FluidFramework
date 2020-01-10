@@ -19,7 +19,6 @@ export class SubSequence<T> extends BaseSegment {
         return segment.type === SubSequence.typeString;
     }
     public static fromJSONObject(spec: any) {
-        // tslint:disable: no-unsafe-any
         if (spec && typeof spec === "object" && "items" in spec) {
             const segment = new SubSequence<any>(spec.items);
             if (spec.props) {
@@ -150,10 +149,19 @@ export class SharedSequence<T> extends SharedSegmentSequence<SubSequence<T>> {
      */
     public getItems(start: number, end?: number): T[] {
         const items: T[] = [];
+        let firstSegment: ISegment;
+
+        // Return if the range is incorrect.
+        if (end !== undefined && end <= start) {
+            return items;
+        }
 
         this.walkSegments(
             (segment: ISegment) => {
                 if (SubSequence.is(segment)) {
+                    if (firstSegment === undefined) {
+                        firstSegment = segment;
+                    }
                     items.push(...segment.items);
                 }
                 return true;
@@ -161,6 +169,17 @@ export class SharedSequence<T> extends SharedSegmentSequence<SubSequence<T>> {
             start,
             end);
 
+        // The above call to walkSegments adds all the items in the walked
+        // segments. However, we only want items beginning at |start| in
+        // the first segment. Similarly, if |end| is passed in, we only
+        // want items until |end| in the last segment. Remove the rest of
+        // the items.
+        if (firstSegment !== undefined) {
+            items.splice(0, start - this.getPosition(firstSegment));
+        }
+        if (end !== undefined) {
+            items.splice(end - start);
+        }
         return items;
     }
 }

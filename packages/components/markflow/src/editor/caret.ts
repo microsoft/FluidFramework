@@ -37,13 +37,14 @@ export class Caret {
 
     private readonly onCaretLeave = ((e: ICaretEvent) => {
         const detail = e.detail;
-        debug("Leaving inclusion: (dx=%d,dy=%d,bounds=%o)", getDeltaX(detail.direction), getDeltaY(detail.direction), detail.caretBounds);
+        debug("Leaving inclusion: (dx=%d,dy=%d,bounds=%o)",
+            getDeltaX(detail.direction),
+            getDeltaY(detail.direction),
+            detail.caretBounds);
         const root = this.layout.root;
         const node = e.target as Node;
         if (root.contains(node)) {
             let el = node.parentElement;
-
-            // tslint:disable-next-line:no-conditional-assignment
             while (el && el !== root) {
                 if (el.classList.contains(styles.inclusion)) {
                     e.preventDefault();
@@ -108,6 +109,7 @@ export class Caret {
 
         const selection = window.getSelection();
         const { anchorNode, anchorOffset, focusNode, focusOffset } = selection;
+
         if (endOffset !== focusOffset || endNode !== focusNode || startOffset !== anchorOffset || startNode !== anchorNode) {
             debug("    caret set: (%o:%d..%o:%d)", startNode, startOffset, endNode, endOffset);
             this.logWindowSelection("was");
@@ -138,11 +140,11 @@ export class Caret {
         const start = this.nodeOffsetToPosition(anchorNode, anchorOffset);
         const end = this.nodeOffsetToPosition(focusNode, focusOffset);
         this.setSelection(start, end);
-    }
+    };
 
     private readonly onFocus = () => {
         this.sync();
-    }
+    };
 
     private referenceToNodeOffset(ref: LocalReference) {
         let { segment, offset } = ref;

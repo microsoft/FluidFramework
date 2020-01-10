@@ -3,9 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import * as commander from "commander";
 import * as fs from "fs";
 import * as path from "path";
+import * as commander from "commander";
+
+const getExtension = (fileName: string): string => fileName.split(".").pop();
+const list = (val: string): string[] => val.split(",");
+
+function ensurePath(filePath: string) {
+    const dir = path.dirname(filePath);
+    if (fs.existsSync(dir)) {
+        return true;
+    }
+    ensurePath(dir);
+    fs.mkdirSync(dir);
+}
 
 commander
     .version("0.0.1")
@@ -21,8 +33,8 @@ const files = fs.readdirSync(commander.directory);
 const sizeLogs: any = {};
 
 for (const file of files) {
-    if (extensions.indexOf(getExtension(file)) !== -1) {
-        sizeLogs[file] =  fs.statSync(path.join(commander.directory, file)).size;
+    if (extensions.includes(getExtension(file))) {
+        sizeLogs[file] = fs.statSync(path.join(commander.directory, file)).size;
     }
 }
 
@@ -36,20 +48,3 @@ fs.writeFile(commander.write, sizeString, (err) => {
     }
     process.exit(0);
 });
-
-function list(val: string): string[] {
-    return val.split(",");
-}
-
-function getExtension(fileName: string): string {
-    return fileName.split(".").pop();
-}
-
-function ensurePath(filePath: string) {
-    const dir = path.dirname(filePath);
-    if (fs.existsSync(dir)) {
-        return true;
-    }
-    ensurePath(dir);
-    fs.mkdirSync(dir);
-}

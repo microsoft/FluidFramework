@@ -12,7 +12,7 @@ export class NodeErrorTrackingService implements IErrorTrackingService {
         Sentry.init({ dsn: endpoint });
         Sentry.configureScope((scope) => {
             scope.setTag("service", service);
-          });
+        });
     }
 
     public track<T>(func: () => T): T {
@@ -24,7 +24,7 @@ export class NodeErrorTrackingService implements IErrorTrackingService {
             Sentry.withScope((scope) => {
                 scope.setTag("document", `${error.tenantId}/${error.documentId}`);
                 Sentry.captureException(error.error);
-              });
+            });
         } else {
             return Sentry.captureException(error);
         }

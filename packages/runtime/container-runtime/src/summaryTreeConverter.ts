@@ -37,7 +37,7 @@ export class SummaryTreeConverter {
         return { summaryStats, summaryTree };
     }
 
-    // no args will generate empty stats
+    // No args will generate empty stats
     public mergeStats(...stats: ISummaryStats[]): ISummaryStats {
         const results = {
             treeNodeCount: 0,
@@ -101,7 +101,7 @@ export class SummaryTreeConverter {
                         break;
 
                     case TreeEntry[TreeEntry.Commit]:
-                        // probably should not reach this case and assert so,
+                        // Probably should not reach this case and assert so,
                         // when snapshotting the commits become strings not ITrees
                         value = this.convertToSummaryTreeCore(
                             entry.value as ITree,

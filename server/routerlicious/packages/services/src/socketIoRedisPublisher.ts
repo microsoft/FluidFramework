@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import * as core from "@microsoft/fluid-server-services-core";
 import { EventEmitter } from "events";
+import * as util from "util";
+import * as core from "@microsoft/fluid-server-services-core";
 import * as redis from "redis";
 import * as socketIoEmitter from "socket.io-emitter";
-import * as util from "util";
 
 export class SocketIoRedisTopic implements core.ITopic {
-    constructor(private topic: any) {
+    constructor(private readonly topic: any) {
     }
 
     public emit(event: string, ...args: any[]) {
@@ -19,12 +19,12 @@ export class SocketIoRedisTopic implements core.ITopic {
 }
 
 export class SocketIoRedisPublisher implements core.IPublisher {
-    private redisClient: redis.RedisClient;
-    private io: any;
-    private events = new EventEmitter();
+    private readonly redisClient: redis.RedisClient;
+    private readonly io: any;
+    private readonly events = new EventEmitter();
 
-    constructor(port: number, host: string) {
-        this.redisClient = redis.createClient(port, host);
+    constructor(port: number, host: string, options: any) {
+        this.redisClient = redis.createClient(port, host, options);
         this.io = socketIoEmitter(this.redisClient);
 
         this.redisClient.on("error", (error) => {
@@ -42,6 +42,7 @@ export class SocketIoRedisPublisher implements core.IPublisher {
         return new SocketIoRedisTopic(this.io.to(topic));
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public close(): Promise<void> {
         return util.promisify(((callback) => this.redisClient.quit(callback)) as any)();
     }

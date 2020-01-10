@@ -4,5 +4,5 @@
  */
 
 export * from "./fluidDebuggerController";
-export * from "./fluidDebuggerUI";
+export * from "./fluidDebuggerUi";
 export * from "./fluidDebugger";

@@ -38,7 +38,7 @@ export class Document {
     /**
      * Constructs a new document from the provided details
      */
-    private constructor(public runtime: IComponentRuntime, private root: ISharedMap) {
+    private constructor(public runtime: IComponentRuntime, private readonly root: ISharedMap) {
     }
 
     public getRoot(): ISharedMap {

@@ -122,7 +122,7 @@ export class Editor {
                 debug("Key: %s (%d)", e.key, e.keyCode);
             }
         }
-    }
+    };
 
     private readonly onPaste = (e: ClipboardEvent) => {
         if (!this.shouldHandleEvent(e)) {
@@ -131,7 +131,7 @@ export class Editor {
 
         this.consume(e);
         paste(this.doc, e.clipboardData, this.caret.position);
-    }
+    };
 
     private readonly onKeyPress = (e: KeyboardEvent) => {
         if (!this.shouldHandleEvent(e)) {
@@ -153,7 +153,7 @@ export class Editor {
                 this.insertText(e);
             }
         }
-    }
+    };
 
     private insertText(e: KeyboardEvent, text = e.key) {
         const { start, end } = this.caret.selection;

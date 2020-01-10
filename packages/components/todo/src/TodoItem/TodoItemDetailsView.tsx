@@ -39,10 +39,11 @@ export class TodoItemDetailsView extends React.Component<TodoItemDetailsViewProp
 
     private async refreshInnerComponentFromModel(): Promise<void> {
         const innerComponent = await this.props.todoItemModel.getInnerComponent();
-        this.setState({innerComponent});
+        this.setState({ innerComponent });
     }
 
     public async componentDidMount() {
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises
         this.props.todoItemModel.on("innerComponentChanged", async () => {
             this.setState({
                 hasInnerComponent: this.props.todoItemModel.hasInnerComponent(),

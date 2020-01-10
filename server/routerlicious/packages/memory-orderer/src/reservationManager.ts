@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ICollection, MongoManager } from "@microsoft/fluid-server-services-core";
 import { EventEmitter } from "events";
+import { ICollection, MongoManager } from "@microsoft/fluid-server-services-core";
 import { IConcreteNode, IReservationManager } from "./interfaces";
 import { NodeManager } from "./nodeManager";
 
@@ -20,9 +20,9 @@ export interface IReservation {
 
 export class ReservationManager extends EventEmitter implements IReservationManager {
     constructor(
-        private nodeTracker: NodeManager,
-        private mongoManager: MongoManager,
-        private reservationColletionName: string) {
+        private readonly nodeTracker: NodeManager,
+        private readonly mongoManager: MongoManager,
+        private readonly reservationColletionName: string) {
         super();
     }
 

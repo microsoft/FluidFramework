@@ -9,9 +9,10 @@ import { Collection, MongoClient, MongoClientOptions } from "mongodb";
 const MaxFetchSize = 2000;
 
 export class MongoCollection<T> implements core.ICollection<T> {
-    constructor(private collection: Collection<T>) {
+    constructor(private readonly collection: Collection<T>) {
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public find(query: object, sort: any, limit = MaxFetchSize): Promise<T[]> {
         return this.collection
             .find(query)
@@ -20,10 +21,12 @@ export class MongoCollection<T> implements core.ICollection<T> {
             .toArray();
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public findOne(query: object): Promise<T> {
         return this.collection.findOne(query);
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public findAll(): Promise<T[]> {
         return this.collection.find({}).toArray();
     }
@@ -92,9 +95,10 @@ export class MongoCollection<T> implements core.ICollection<T> {
 }
 
 export class MongoDb implements core.IDb {
-    constructor(private client: MongoClient) {
+    constructor(private readonly client: MongoClient) {
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public close(): Promise<void> {
         return this.client.close();
     }
@@ -110,7 +114,7 @@ export class MongoDb implements core.IDb {
 }
 
 export class MongoDbFactory implements core.IDbFactory {
-    constructor(private endpoint: string) {
+    constructor(private readonly endpoint: string) {
     }
 
     public async connect(): Promise<core.IDb> {

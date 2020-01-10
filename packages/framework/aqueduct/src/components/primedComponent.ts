@@ -6,7 +6,7 @@
 import { IComponentHandle, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import { ISharedDirectory, MapFactory, SharedDirectory } from "@microsoft/fluid-map";
 import { ITaskManager } from "@microsoft/fluid-runtime-definitions";
-// tslint:disable-next-line:no-submodule-imports
+// eslint-disable-next-line import/no-internal-modules
 import * as uuid from "uuid/v4";
 import { BlobHandle } from "./blobHandle";
 import { SharedComponent } from "./sharedComponent";
@@ -95,7 +95,11 @@ export abstract class PrimedComponent extends SharedComponent {
             // PrimedComponent which used a SharedMap.  Since SharedMap and SharedDirectory are compatible unless
             // SharedDirectory-only commands are used on SharedMap, this will mostly just work for compatibility.
             if (this.internalRoot.attributes.type === MapFactory.Type) {
-                this.runtime.logger.send({category: "generic", eventName: "MapPrimedComponent", message: "Legacy document, SharedMap is masquerading as SharedDirectory in PrimedComponent"});
+                this.runtime.logger.send({
+                    category: "generic",
+                    eventName: "MapPrimedComponent",
+                    message: "Legacy document, SharedMap is masquerading as SharedDirectory in PrimedComponent",
+                });
             }
 
             await this.componentInitializingFromExisting();

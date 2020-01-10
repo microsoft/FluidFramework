@@ -12,7 +12,7 @@ export interface IProvideComponentLoadable {
  * A shared component has a URL from which it can be referenced
  */
 export interface IComponentLoadable extends IProvideComponentLoadable {
-    // absolute URL to the component within the document
+    // Absolute URL to the component within the document
     url: string;
 
     // Handle to the loadable component. Will eventually replace the url property. But currently marked optional while

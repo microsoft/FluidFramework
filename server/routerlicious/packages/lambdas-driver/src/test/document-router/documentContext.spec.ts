@@ -5,6 +5,7 @@
 
 import * as assert from "assert";
 import { DocumentContext } from "../../document-router/documentContext";
+import { TestKafka } from "@microsoft/fluid-server-test-utils";
 
 function validateException(fn: () => void) {
     try {
@@ -18,56 +19,61 @@ function validateException(fn: () => void) {
 describe("document-router", () => {
     describe("DocumentContext", () => {
         let testContext: DocumentContext;
+        let offset0 = TestKafka.createdQueuedMessage(0);
+        let contextTailOffset = TestKafka.createdQueuedMessage(-1);
 
         beforeEach(async () => {
-            testContext = new DocumentContext(0);
+            testContext = new DocumentContext(offset0, () => contextTailOffset);
         });
 
         describe(".setHead", () => {
             it("Should be able to set a new head offset", () => {
-                assert.equal(0, testContext.head);
-                testContext.setHead(1);
-                assert.equal(1, testContext.head);
+                assert.equal(0, testContext.head.offset);
+                testContext.setHead(TestKafka.createdQueuedMessage(1));
+                assert.equal(1, testContext.head.offset);
             });
 
             it("Should assert if new head is equal to existing head", () => {
-                validateException(() => testContext.setHead(0));
+                validateException(() => testContext.setHead(offset0));
             });
 
             it("Should assert if new head is less than existing head", () => {
-                validateException(() => testContext.setHead(-5));
+                validateException(() => testContext.setHead(TestKafka.createdQueuedMessage(-5)));
             });
         });
 
         describe(".checkpoint", () => {
             it("Should be able to update the head offset of the manager", () => {
-                testContext.checkpoint(0);
-                assert.equal(0, testContext.tail);
+                testContext.checkpoint(offset0);
+                assert.equal(0, testContext.tail.offset);
                 assert.ok(!testContext.hasPendingWork());
             });
 
             it("Should be able to checkpoint after adjusting the head", () => {
-                testContext.setHead(10);
-                testContext.checkpoint(5);
-                assert.equal(5, testContext.tail);
-                testContext.setHead(15);
-                testContext.checkpoint(10);
-                assert.equal(10, testContext.tail);
-                testContext.checkpoint(15);
-                assert.equal(15, testContext.tail);
+                const offset10 = TestKafka.createdQueuedMessage(10);
+                const offset15 = TestKafka.createdQueuedMessage(15);
+
+                testContext.setHead(offset10);
+                testContext.checkpoint(TestKafka.createdQueuedMessage(5));
+                assert.equal(5, testContext.tail.offset);
+                testContext.setHead(offset15);
+                testContext.checkpoint(offset10);
+                assert.equal(10, testContext.tail.offset);
+                testContext.checkpoint(offset15);
+                assert.equal(15, testContext.tail.offset);
                 assert.ok(!testContext.hasPendingWork());
             });
 
             it("Should assert if checkpoint is less than tail", () => {
-                validateException(() => testContext.checkpoint(0));
+                validateException(() => testContext.checkpoint(offset0));
             });
 
             it("Should assert if checkpoint is equal to tail", () => {
-                validateException(() => testContext.checkpoint(-1));
+                validateException(() => testContext.checkpoint(TestKafka.createdQueuedMessage(-1)));
             });
 
             it("Should assert if checkpoint is greater than head", () => {
-                validateException(() => testContext.checkpoint(1));
+                validateException(() => testContext.checkpoint(TestKafka.createdQueuedMessage(1)));
             });
         });
 

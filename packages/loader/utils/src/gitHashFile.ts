@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-// tslint:disable-next-line:no-submodule-imports
+// eslint-disable-next-line import/no-internal-modules
 import * as sha1 from "sha.js/sha1";
 
 /**
@@ -14,8 +14,7 @@ import * as sha1 from "sha.js/sha1";
  */
 export function gitHashFile(file: Buffer): string {
     const size = file.byteLength;
-    const filePrefix = "blob " + size.toString() + String.fromCharCode(0);
-    /* tslint:disable:no-unsafe-any */
+    const filePrefix = `blob ${size.toString()}${String.fromCharCode(0)}`;
     const engine = new sha1();
     return engine.update(filePrefix)
         .update(file)

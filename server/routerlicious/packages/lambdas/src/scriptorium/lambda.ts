@@ -7,7 +7,7 @@ import {
     extractBoxcar,
     ICollection,
     IContext,
-    IKafkaMessage,
+    IQueuedMessage,
     IPartitionLambda,
     ISequencedOperationMessage,
     SequencedOperationType,
@@ -15,16 +15,16 @@ import {
 
 export class ScriptoriumLambda implements IPartitionLambda {
     private pending = new Map<string, ISequencedOperationMessage[]>();
-    private pendingOffset: number;
+    private pendingOffset: IQueuedMessage;
     private current = new Map<string, ISequencedOperationMessage[]>();
 
     constructor(
-        private opCollection: ICollection<any>,
-        private contentCollection: ICollection<any>,
+        private readonly opCollection: ICollection<any>,
+        private readonly contentCollection: ICollection<any>,
         protected context: IContext) {
     }
 
-    public handler(message: IKafkaMessage): void {
+    public handler(message: IQueuedMessage): void {
         const boxcar = extractBoxcar(message);
 
         for (const baseMessage of boxcar.contents) {
@@ -43,7 +43,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
             }
         }
 
-        this.pendingOffset = message.offset;
+        this.pendingOffset = message;
         this.sendPending();
     }
 
@@ -94,6 +94,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
     private async insertOp(messages: ISequencedOperationMessage[]) {
         return this.opCollection
             .insertMany(messages, false)
+            // eslint-disable-next-line @typescript-eslint/promise-function-async
             .catch((error) => {
                 // Duplicate key errors are ignored since a replay may cause us to insert twice into Mongo.
                 // All other errors result in a rejected promise.
@@ -123,7 +124,10 @@ export class ScriptoriumLambda implements IPartitionLambda {
                     {
                         sequenceNumber: message.operation.sequenceNumber,
                     },
-                    null).catch((error) => {
+                    // eslint-disable-next-line no-null/no-null
+                    null)
+                    // eslint-disable-next-line @typescript-eslint/promise-function-async
+                    .catch((error) => {
                         // Same reason as insertOp.
                         if (error.code !== 11000) {
                             return Promise.reject(error);

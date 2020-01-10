@@ -31,6 +31,7 @@ export async function todoViewRequestHandler(request: IRequest, runtime: Contain
 
     const modelRequest = requestParser.createSubRequest(1);
     const todoModel = (await runtime.request(modelRequest)).value as Todo;
+    // eslint-disable-next-line @typescript-eslint/no-use-before-define
     const todoView = new TodoView({ todoModel });
     return { status: 200, mimeType: "fluid/component", value: todoView };
 }
@@ -46,7 +47,6 @@ function getVisual(todoModel: Todo) {
     return visual;
 }
 
-// tslint:disable:react-a11y-input-elements
 export class TodoView extends React.Component<TodoViewProps, TodoViewState> implements IComponentHTMLVisual {
     public get IComponentHTMLVisual() { return this.visual; }
     private newTextInput: HTMLInputElement;
@@ -71,6 +71,7 @@ export class TodoView extends React.Component<TodoViewProps, TodoViewState> impl
         // Get the shared string for the title off the model
         this.titleString = await this.props.todoModel.getTodoTitleString();
 
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises
         this.props.todoModel.on("todoItemsChanged", async () => {
             // Doesn't really matter if we await this?
             await this.refreshTodoItemListFromModel();
@@ -81,7 +82,7 @@ export class TodoView extends React.Component<TodoViewProps, TodoViewState> impl
         // approach might declare the model loaded before loading the items (since they aren't strictly
         // required in our render()) and allow the todo items to render as they come in.
         await this.refreshTodoItemListFromModel();
-        this.setState({modelLoaded: true});
+        this.setState({ modelLoaded: true });
 
         // Set focus to the text input
         this.newTextInput.focus();
@@ -89,7 +90,7 @@ export class TodoView extends React.Component<TodoViewProps, TodoViewState> impl
 
     private async refreshTodoItemListFromModel(): Promise<void> {
         const todoItemComponents = await this.props.todoModel.getTodoItemComponents();
-        this.setState({todoItemComponents});
+        this.setState({ todoItemComponents });
     }
 
     /**
@@ -113,14 +114,12 @@ export class TodoView extends React.Component<TodoViewProps, TodoViewState> impl
 
         // Using the list of TodoItem components, make a list of TodoItemViews.  We know they're available because
         // this.state.modelLoaded is true.
-        const todoItemComponents = this.state.todoItemComponents.map((todoItemComponent) => {
-            return (
-                <TodoItemView
-                    todoItemModel={todoItemComponent}
-                    key={todoItemComponent.url}
-                />
-            );
-        });
+        const todoItemComponents = this.state.todoItemComponents.map((todoItemComponent) => (
+            <TodoItemView
+                todoItemModel={todoItemComponent}
+                key={todoItemComponent.url}
+            />
+        ));
 
         // TodoView is made up of an editable title input, an input/button for submitting new items, and the list
         // of TodoItemViews.
@@ -142,7 +141,7 @@ export class TodoView extends React.Component<TodoViewProps, TodoViewState> impl
                 <form onSubmit={this.createNewTodoItem}>
                     <input
                         type="text"
-                        ref={(input) => { this.newTextInput = input; }}/>
+                        ref={(input) => { this.newTextInput = input; }} />
                     <button type="submit">+</button>
                 </form>
                 <div className="todo-item-list">

@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import { fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
-import * as assert from "assert";
 import { Client } from "./client";
 import { NonCollabClient, UniversalSequenceNumber } from "./constants";
 import { ISegment, MergeTree } from "./mergeTree";
@@ -32,7 +32,7 @@ export class SnapshotLoader {
 
         const header = await headerP;
         assert(header);
-        // override branch by default which is derived from document id,
+        // Override branch by default which is derived from document id,
         // as document id isn't stable for spo
         // which leads to branch id being in correct
         // tslint:disable-next-line: no-unsafe-any
@@ -84,7 +84,7 @@ export class SnapshotLoader {
         }
 
         return seg;
-    }
+    };
 
     private loadHeader(
         header: string,

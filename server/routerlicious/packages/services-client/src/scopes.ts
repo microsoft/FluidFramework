@@ -15,9 +15,9 @@ function calculateScope(scopes: string[]): IScope | undefined {
     if (scopes === undefined || scopes.length === 0) {
         return undefined;
     }
-    const read = scopes.indexOf(ScopeType.DocRead) !== -1;
-    const write = scopes.indexOf(ScopeType.DocWrite) !== -1;
-    const summarize = scopes.indexOf(ScopeType.SummaryWrite) !== -1;
+    const read = scopes.includes(ScopeType.DocRead);
+    const write = scopes.includes(ScopeType.DocWrite);
+    const summarize = scopes.includes(ScopeType.SummaryWrite);
     return {
         read,
         summarize,
@@ -25,7 +25,6 @@ function calculateScope(scopes: string[]): IScope | undefined {
     };
 }
 
-// tslint:disable-next-line:no-suspicious-comment
 // TODO: undefined returns true only for back-compat. return false when everybody upgrades.
 export function canRead(scopes: string[]): boolean {
     const clientScope = calculateScope(scopes);

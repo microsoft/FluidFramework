@@ -4,7 +4,7 @@
  */
 
 // set the base path for all dynamic imports first
-// tslint:disable-next-line:no-import-side-effect
+// eslint-disable-next-line import/no-unassigned-import
 import "./publicpath";
 
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
@@ -19,6 +19,7 @@ import {
 } from "@microsoft/fluid-runtime-definitions";
 import * as sharedTextComponent from "./component";
 
+/* eslint-disable capitalized-comments, max-len */
 const math = import(/* webpackChunkName: "math", webpackPrefetch: true */ "@fluid-example/math");
 // const monaco = import(/* webpackChunkName: "monaco", webpackPrefetch: true */ "@fluid-example/monaco");
 const progressBars = import(
@@ -30,7 +31,6 @@ const images = import(
 
 const DefaultComponentName = "text";
 
-// tslint:disable
 // (self as any).MonacoEnvironment = {
 // 	getWorkerUrl: function (moduleId, label) {
 // 		switch (label) {
@@ -44,7 +44,7 @@ const DefaultComponentName = "text";
 // 		}
 // 	}
 // };
-// tslint:enable
+/* eslint-enable capitalized-comments, max-len */
 
 const defaultRegistryEntries: NamedComponentRegistryEntries = [
     ["@fluid-example/math", math.then((m) => m.fluidExport)],
@@ -54,11 +54,12 @@ const defaultRegistryEntries: NamedComponentRegistryEntries = [
 ];
 
 class MyRegistry implements IComponentRegistry {
-    constructor(private context: IContainerContext,
-                private readonly defaultRegistry: string) {
+    constructor(
+        private readonly context: IContainerContext,
+        private readonly defaultRegistry: string) {
     }
 
-    public get IComponentRegistry() {return this; }
+    public get IComponentRegistry() { return this; }
 
     public async get(name: string): Promise<IComponentFactory> {
         const scope = `${name.split("/")[0]}:cdn`;
@@ -87,6 +88,7 @@ class SharedTextFactoryComponent implements IComponentFactory, IRuntimeFactory {
     private static async containerRequestHandler(request: IRequest, runtime: IHostRuntime) {
         console.log(request.url);
 
+        //
         // if (request.url === "/graphiql") {
         //     const runner = (await runtime.request({ url: "/" })).value as sharedTextComponent.SharedTextRunner;
         //     const sharedText = await runner.getRoot().get<IComponentHandle>("text").get<SharedString>();
@@ -94,7 +96,7 @@ class SharedTextFactoryComponent implements IComponentFactory, IRuntimeFactory {
         // }
 
         console.log(request.url);
-        const requestUrl = request.url.length > 0 && request.url.charAt(0) === "/"
+        const requestUrl = request.url.length > 0 && request.url.startsWith("/")
             ? request.url.substr(1)
             : request.url;
         const trailingSlash = requestUrl.indexOf("/");
@@ -122,13 +124,14 @@ class SharedTextFactoryComponent implements IComponentFactory, IRuntimeFactory {
         const runtime = await ContainerRuntime.load(
             context,
             [
-                ... defaultRegistryEntries,
+                ...defaultRegistryEntries,
                 ["@fluid-example/shared-text", Promise.resolve(this)],
                 [
                     "verdaccio",
                     Promise.resolve(new MyRegistry(context, "https://pragueauspkn-3873244262.azureedge.net")),
                 ],
             ],
+            // eslint-disable-next-line @typescript-eslint/unbound-method
             [SharedTextFactoryComponent.containerRequestHandler]);
 
         // On first boot create the base component
@@ -137,9 +140,9 @@ class SharedTextFactoryComponent implements IComponentFactory, IRuntimeFactory {
                 runtime.createComponent(DefaultComponentName, "@fluid-example/shared-text")
                     .then((componentRuntime) => componentRuntime.attach()),
             ])
-            .catch((error) => {
-                context.error(error);
-            });
+                .catch((error) => {
+                    context.error(error);
+                });
         }
 
         return runtime;

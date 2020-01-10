@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-// tslint:disable:object-literal-sort-keys align prefer-template
+/* eslint-disable @typescript-eslint/indent */
+
 import * as SearchMenu from "@fluid-example/search-menu";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import * as MergeTree from "@microsoft/fluid-merge-tree";
@@ -12,9 +13,7 @@ import { CharacterCodes } from "./characterCodes";
 
 export const cursorTex = " \\textcolor{#800080}{\\vert}";
 export const cursorColor = "rgb(128, 0, 128)";
-export function boxEmptyParam(viewText: string) {
-    return viewText.replace(/\{\}/g, "{\\Box}");
-}
+export const boxEmptyParam = (viewText: string) => viewText.replace(/{}/g, "{\\Box}");
 
 export enum MathTokenType {
     Variable,
@@ -56,19 +55,18 @@ export interface IMathCommand extends SearchMenu.ISearchMenuCommand {
     tokenType?: MathTokenType;
 }
 
-function addCommand(cmdTree: MergeTree.TST<IMathCommand>, command: IMathCommand) {
+const addCommand = (cmdTree: MergeTree.TST<IMathCommand>, command: IMathCommand) => {
     if (command.texString) {
         command.iconHTML = Katex.renderToString(command.texString, { throwOnError: false });
     }
     cmdTree.put(command.key, command);
-}
+};
+export const mathCmdTree = new MergeTree.TST<IMathCommand>();
 
-export function mathMenuCreate(context: any, boundingElm: HTMLElement,
-    onSubmit: (s: string, cmd?: IMathCommand) => void) {
+export function mathMenuCreate(context: any, boundingElm: HTMLElement, onSubmit: (s: string, cmd?: IMathCommand) => void) {
     return SearchMenu.searchBoxCreate(context, boundingElm, mathCmdTree, false, onSubmit);
 }
 
-export const mathCmdTree = new MergeTree.TST<IMathCommand>();
 const greekLetters = [
     "alpha", "beta", "gamma", "delta", "epsilon", "constepsilon",
     "zeta", "eta", "Gamma", "Delta", "Theta", "theta", "vartheta",
@@ -108,7 +106,6 @@ export enum TokenLexFlags {
     None = 0x0,
     PrimaryFirstSet = 0x1,
     Binop = 0x2,
-    // tslint:disable:no-bitwise
     Relop = 0x4 | Binop,
 }
 const singleTokText: string[] = [];
@@ -321,7 +318,6 @@ export function printTokens(tokIndex: number, mathCursor: number, tokens: MathTo
     let buf = "";
     for (let i = 0, len = tokens.length; i < len; i++) {
         const tok = tokens[i] as MathCommandToken;
-        // tslint:disable:max-line-length
         buf += `${i} [${tok.start}, ${tok.end}): ${MathTokenType[tok.type]} ${mathText.substring(tok.start, tok.end)}`;
         if (tok.endTok) {
             buf += `et: ${tok.endTok.end}`;
@@ -618,7 +614,6 @@ export function lexSpace(tokens: MathToken[], charStream: ICharStream) {
 
 // chars not recognized as math input (such as "!") stopped
 // at input filter level and not expected
-// tslint:disable:max-func-body-length
 function lexCharStream(charStream: ICharStream, tokens: MathToken[],
     cmdStack: MathCommandToken[]) {
     let prevSymTok: MathSymbolToken;
@@ -885,7 +880,6 @@ export enum ExprType {
     CALL,
     ERROR,
 }
-// tslint:disable:no-namespace
 namespace Constants {
     export function matchConstant(c: IConstant, e: IExpr) {
         if (isConstant(e)) {
@@ -1229,7 +1223,7 @@ function match(pattern: IExpr, expr: IExpr, env?: IEnvironment, literal = false)
     if (diagMatch) {
         const texP = exprToTex(pattern);
         const texE = exprToTexParens(expr);
-        console.log("matching " + texP + " vs " + texE);
+        console.log(`matching ${texP} vs ${texE}`);
     }
     let matched = false;
     if (isConstant(pattern)) {
@@ -1252,7 +1246,7 @@ function match(pattern: IExpr, expr: IExpr, env?: IEnvironment, literal = false)
             if (literal) {
                 if (expr.type !== ExprType.VARIABLE) {
                     if (diagMatch) {
-                        console.log("literal variable match failed with expr type " + ExprType[expr.type]);
+                        console.log(`literal variable match failed with expr type ${ExprType[expr.type]}`);
                     }
                     return false;
                 } else {
@@ -1319,7 +1313,7 @@ function match(pattern: IExpr, expr: IExpr, env?: IEnvironment, literal = false)
         default:
     }
     if (diagMatch) {
-        console.log("type mismatch " + ExprType[pattern.type] + " vs " + ExprType[expr.type]);
+        console.log(`type mismatch ${ExprType[pattern.type]} vs ${ExprType[expr.type]}`);
     }
     return false;
 }
@@ -1390,11 +1384,10 @@ function normalize(eqn: IExpr) {
 }
 
 // asume binex is a product
-// tslint:disable:no-string-literal
 export function mulExprNoVar(env: IEnvironment, factor = 1): boolean {
-    const origExpr: IExpr = env["f"];
+    const origExpr: IExpr = env.f;
     let expr = origExpr;
-    const v = env["v"] as IVariable;
+    const v = env.v as IVariable;
     while (expr.type === ExprType.BINOP) {
         const binex = expr as IBinop;
         if (match(v, binex.operand2, env, true)) {
@@ -1408,9 +1401,9 @@ export function mulExprNoVar(env: IEnvironment, factor = 1): boolean {
                 type: ExprType.BINOP, op: Operator.MUL,
                 operand1: Constants.makeInt(-1), operand2: origExpr,
             };
-            env["nf"] = resBinex;
+            env.nf = resBinex;
         } else {
-            env["nf"] = origExpr;
+            env.nf = origExpr;
         }
         return true;
     }
@@ -1457,8 +1450,7 @@ function walk(expr: IExpr, pre: (e: IExpr) => boolean, post?: (e: IExpr) => void
 function extractTermAndDegree(term: IBinop, negate: boolean, v: IVariable) {
     if (diagAC) {
         const tex = exprToTexParens(term);
-        // tslint:disable-next-line: restrict-plus-operands
-        console.log("extract term with negate " + negate + ": " + tex);
+        console.log(`extract term with negate ${negate}: ${tex}`);
     }
     let constPart: IExpr;
     let symbolPart: IExpr;
@@ -1565,8 +1557,7 @@ function accumCoefficients(expr: IExpr, v: IVariable, poly: ISplitTerm[], negate
 
     if (diagAC) {
         const tex = exprToTexParens(expr);
-        // tslint:disable-next-line: restrict-plus-operands
-        console.log("accum coeffs with negate " + negate + ": " + tex);
+        console.log(`accum coeffs with negate ${negate}: ${tex}`);
     }
 
     if (isConstant(expr)) {
@@ -1623,12 +1614,12 @@ function accumCoefficients(expr: IExpr, v: IVariable, poly: ISplitTerm[], negate
                         break;
                     }
                     default:
-                        console.log("unexpected operator " + Operator[binex.op]);
+                        console.log(`unexpected operator ${Operator[binex.op]}`);
                 }
                 break;
             }
             default:
-                console.log("unexpected expr type " + ExprType[expr.type]);
+                console.log(`unexpected expr type ${ExprType[expr.type]}`);
         }
     }
     if (poly[degree]) {
@@ -1775,6 +1766,7 @@ function buildIfMatch(pats: ITransformString[], e: IExpr, seedEnv?: () => IEnvir
             env = {};
         }
         if (matchS(pats[i].pattern, e, env)) {
+            // eslint-disable-next-line @typescript-eslint/unbound-method
             if ((!pats[i].exec) || (pats[i].exec(env, pats[i].param))) {
                 if (info) {
                     info.index = i;
@@ -1784,7 +1776,7 @@ function buildIfMatch(pats: ITransformString[], e: IExpr, seedEnv?: () => IEnvir
                 if (bifMatchDiag) {
                     const builtTex = exprToTex(built);
                     const etex = exprToTex(e);
-                    console.log("applied " + pats[i].pattern + " to " + etex + " yielding " + builtTex);
+                    console.log(`applied ${pats[i].pattern} to ${etex} yielding ${builtTex}`);
                 }
                 return built;
             }
@@ -1794,21 +1786,21 @@ function buildIfMatch(pats: ITransformString[], e: IExpr, seedEnv?: () => IEnvir
 }
 
 function foldConstants(env: IEnvironment, opArg: { op: Operator; reverse?: boolean }) {
-    const ca = env["a"] as IConstant;
-    const cb = env["b"] as IConstant;
+    const ca = env.a as IConstant;
+    const cb = env.b as IConstant;
     if (opArg.reverse) {
-        env["c"] = applyBinop({ type: ExprType.BINOP, op: opArg.op, operand1: cb, operand2: ca });
+        env.c = applyBinop({ type: ExprType.BINOP, op: opArg.op, operand1: cb, operand2: ca });
     } else {
-        env["c"] = applyBinop({ type: ExprType.BINOP, op: opArg.op, operand1: ca, operand2: cb });
+        env.c = applyBinop({ type: ExprType.BINOP, op: opArg.op, operand1: ca, operand2: cb });
     }
     return true;
 }
 
 function combineCoeffs(env: IEnvironment, opArg: { sgn: number }) {
-    const aLeft = env["al"] as IConstant;
-    const aRight = env["ar"] as IConstant;
-    let bLeft = env["bl"] as IConstant;
-    let bRight = env["br"] as IConstant;
+    const aLeft = env.al as IConstant;
+    const aRight = env.ar as IConstant;
+    let bLeft = env.bl as IConstant;
+    let bRight = env.br as IConstant;
 
     // aLeft * x +/- bLeft = aRight * x +/- bRight;
     // sgn 00: -,-; 01: -,+; 10: +,-; 11: +,+
@@ -1820,15 +1812,15 @@ function combineCoeffs(env: IEnvironment, opArg: { sgn: number }) {
     if ((sgn & 0x2) === 0) {
         bLeft = Constants.negate(bLeft);
     }
-    env["as"] = applyBinop({ type: ExprType.BINOP, op: Operator.SUB, operand1: aLeft, operand2: aRight });
-    env["bs"] = applyBinop({ type: ExprType.BINOP, op: Operator.SUB, operand1: bRight, operand2: bLeft });
+    env.as = applyBinop({ type: ExprType.BINOP, op: Operator.SUB, operand1: aLeft, operand2: aRight });
+    env.bs = applyBinop({ type: ExprType.BINOP, op: Operator.SUB, operand1: bRight, operand2: bLeft });
     return true;
 }
 
 function negateConstantIfNegative(env: IEnvironment) {
-    const cb = env["b"] as IConstant;
+    const cb = env.b as IConstant;
     if (Constants.isNegative(cb)) {
-        env["n"] = Constants.negate(cb);
+        env.n = Constants.negate(cb);
         return true;
     } else {
         return false;
@@ -1836,20 +1828,20 @@ function negateConstantIfNegative(env: IEnvironment) {
 }
 
 export function negateConstant(env: IEnvironment) {
-    const cb = env["b"] as IConstant;
-    env["n"] = Constants.negate(cb);
+    const cb = env.b as IConstant;
+    env.n = Constants.negate(cb);
     return true;
 }
 
 export function divrl(env: IEnvironment) {
-    const a = env["a"];
-    const b = env["b"];
+    const a = env.a;
+    const b = env.b;
 
     if (isInt(a, 0)) {
         return false;
     } else {
         const q = applyBinop({ type: ExprType.BINOP, op: Operator.DIV, operand1: b, operand2: a });
-        env["q"] = q;
+        env.q = q;
         return true;
     }
 }
@@ -1915,7 +1907,7 @@ function simplifyExpr(expr: IExpr): IExpr {
         delta = false;
         if (diagB) {
             const tex = exprToTexParens(expr);
-            console.log("simplifying " + tex);
+            console.log(`simplifying ${tex}`);
         }
         let operand1: IExpr;
         let operand2: IExpr;
@@ -2002,8 +1994,7 @@ function simplifyExpr(expr: IExpr): IExpr {
                 ], binex, () => (emptyEnvironment()), info);
                 if (result) {
                     if (diagB) {
-                        // tslint:disable-next-line: restrict-plus-operands
-                        console.log("match " + info.index + ": " + info.pat);
+                        console.log(`match ${info.index}: ${info.pat}`);
                     }
                     delta = true;
                     expr = result;
@@ -2327,7 +2318,7 @@ function parseEqn(tokStream: ITokenStream): IExpr {
 }
 
 export function testEqn(s: string, norm = false, vsolve?: IVariable) {
-    console.log("trying " + s + " ...");
+    console.log(`trying ${s} ...`);
     const tokStream = tokStreamCreate(s, lexMath(s));
     let e = parseEqn(tokStream);
     if (e) {
@@ -2342,11 +2333,11 @@ export function testEqn(s: string, norm = false, vsolve?: IVariable) {
             const tex = exprToTex(e, false);
             console.log(tex);
         } else if (vsolve) {
-            console.log("no solution for " + vsolve.text);
+            console.log(`no solution for ${vsolve.text}`);
         }
     } else {
         if (vsolve) {
-            console.log("no solution for " + vsolve.text);
+            console.log(`no solution for ${vsolve.text}`);
         }
     }
 }

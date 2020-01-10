@@ -2,8 +2,6 @@
 
 Provides a set of controls built on top of the Fluid UI library.
 
-## Button
-
 ## Canvas
 
 ## Dock
@@ -11,9 +9,5 @@ Provides a set of controls built on top of the Fluid UI library.
 ## FlowContainer
 
 ## Image
-
-## InkCanvas
-
-## StackPanel
 
 ## Status

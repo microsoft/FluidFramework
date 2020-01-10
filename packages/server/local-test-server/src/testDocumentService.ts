@@ -18,12 +18,13 @@ import { ITestDeltaConnectionServer } from "./testDeltaConnectionServer";
  * @param tenantId - ID of tenant
  * @param documentId - ID of document
  */
+// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function createTestDocumentService(
     testDeltaConnectionServer: ITestDeltaConnectionServer,
     tokenProvider: socketStorage.TokenProvider,
     tenantId: string,
     documentId: string): api.IDocumentService {
-        return new TestDocumentService(testDeltaConnectionServer, tokenProvider, tenantId, documentId);
+    return new TestDocumentService(testDeltaConnectionServer, tokenProvider, tenantId, documentId);
 }
 
 /**
@@ -37,11 +38,11 @@ export class TestDocumentService implements api.IDocumentService {
      * @param documentId - ID of document
      */
     constructor(
-        private testDeltaConnectionServer: ITestDeltaConnectionServer,
-        private tokenProvider: socketStorage.TokenProvider,
-        private tenantId: string,
-        private documentId: string,
-    ) {}
+        private readonly testDeltaConnectionServer: ITestDeltaConnectionServer,
+        private readonly tokenProvider: socketStorage.TokenProvider,
+        private readonly tenantId: string,
+        private readonly documentId: string,
+    ) { }
 
     /**
      * Creates and returns a document storage service for testing.

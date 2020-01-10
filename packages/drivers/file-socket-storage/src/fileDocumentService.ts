@@ -13,9 +13,9 @@ import { FileDeltaStorageService } from "./fileDeltaStorageService";
  */
 export class FileDocumentService implements api.IDocumentService {
     constructor(
-            private readonly storage: api.IDocumentStorageService,
-            private readonly deltaStorage: FileDeltaStorageService,
-            private readonly deltaConnection: api.IDocumentDeltaConnection) {
+        private readonly storage: api.IDocumentStorageService,
+        private readonly deltaStorage: FileDeltaStorageService,
+        private readonly deltaConnection: api.IDocumentDeltaConnection) {
     }
 
     public async connectToStorage(): Promise<api.IDocumentStorageService> {

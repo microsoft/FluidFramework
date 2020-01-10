@@ -25,7 +25,7 @@ export class Socket<T> extends EventEmitter {
     private pending: T[] = [];
     private sendScheduled = false;
 
-    constructor(private socket: ws) {
+    constructor(private readonly socket: ws) {
         super();
 
         this.socket.on(

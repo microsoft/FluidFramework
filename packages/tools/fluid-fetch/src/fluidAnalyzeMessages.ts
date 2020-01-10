@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import {
     IBlob,
     ISequencedDocumentMessage,
@@ -12,7 +13,6 @@ import {
     TreeEntry,
 } from "@microsoft/fluid-protocol-definitions";
 import { IAttachMessage, IEnvelope } from "@microsoft/fluid-runtime-definitions";
-import * as assert from "assert";
 
 const noClientName = "No Client";
 const objectTypePrefix = "https://graph.microsoft.com/types/";
@@ -68,21 +68,19 @@ class ActiveSession {
 }
 
 // Format a number separating 3 digits by comma
-export function formatNumber(num: number): string {
-    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-}
+export const formatNumber = (num: number): string => num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 
 function dumpStats(
-        map: Map<string, [number, number]>,
-        props: {
-            title: string;
-            headers: [string, string];
-            lines?: number;
-            orderByFirstColumn?: boolean;
-            reverseColumnsInUI?: boolean;
-            removeTotals?: boolean;
-            reverseSort?: boolean;
-        }) {
+    map: Map<string, [number, number]>,
+    props: {
+        title: string;
+        headers: [string, string];
+        lines?: number;
+        orderByFirstColumn?: boolean;
+        reverseColumnsInUI?: boolean;
+        removeTotals?: boolean;
+        reverseSort?: boolean;
+    }) {
     const fieldSizes = [10, 14];
     const nameLength = 72;
     const fieldsLength = fieldSizes[0] + fieldSizes[1] + 1;
@@ -145,18 +143,16 @@ function dumpStats(
 
     if (!props.removeTotals) {
         if (allOtherCount || allOtherSize) {
-            // tslint:disable-next-line: max-line-length
+            // eslint-disable-next-line max-len
             console.log(`${`All Others (${sorted.length - recordsToShow})`.padEnd(nameLength)} │ ${formatNumber(allOtherCount).padStart(fieldSizes[0])} ${formatNumber(allOtherSize).padStart(fieldSizes[1])}`);
         }
         console.log(`${"─".repeat(nameLength + 1)}┼${"─".repeat(fieldsLength + 1)}`);
-        // tslint:disable-next-line: max-line-length
+        // eslint-disable-next-line max-len
         console.log(`${"Total".padEnd(nameLength)} │ ${formatNumber(totalCount).padStart(fieldSizes[0])} ${formatNumber(sizeTotal).padStart(fieldSizes[1])}`);
     }
 }
 
-function getObjectId(componentId: string, id: string) {
-    return `[${componentId}]/${id}`;
-}
+const getObjectId = (componentId: string, id: string) => `[${componentId}]/${id}`;
 
 /**
  * Analyzer for sessions
@@ -221,9 +217,9 @@ class SessionAnalyzer implements IMessageAnalyzer {
  */
 class DataStructureAnalyzer implements IMessageAnalyzer {
     private readonly messageTypeStats = new Map<string, [number, number]>();
-    private readonly  dataType = new Map<string, string>();
-    private readonly  dataTypeStats = new Map<string, [number, number]>();
-    private readonly  objectStats = new Map<string, [number, number]>();
+    private readonly dataType = new Map<string, string>();
+    private readonly dataTypeStats = new Map<string, [number, number]>();
+    private readonly objectStats = new Map<string, [number, number]>();
 
     public processOp(message: ISequencedDocumentMessage, msgSize: number, skipMessage: boolean): void {
         if (!skipMessage) {
@@ -280,7 +276,7 @@ class FilteredMessageAnalyzer implements IMessageAnalyzer {
 
     public reportAnalyzes(lastOp: ISequencedDocumentMessage): void {
         if (this.filtered) {
-            // tslint:disable-next-line: max-line-length
+            // eslint-disable-next-line max-len
             console.log(`\nData is filtered according to --filter:messageType argument(s):\nOp size: ${this.sizeFiltered} / ${this.sizeTotal}\nOp count ${this.opsFiltered} / ${this.opsTotal}`);
         }
         if (this.opsTotal === 0) {
@@ -305,7 +301,7 @@ class MessageDensityAnalyzer implements IMessageAnalyzer {
             if (message.sequenceNumber !== 1) {
                 const timeDiff = durationFromTime(message.timestamp - this.timeStart);
                 const opsString = `ops = [${this.opLimit - this.opChunk}, ${this.opLimit - 1}]`.padEnd(26);
-                // tslint:disable-next-line: max-line-length
+                // eslint-disable-next-line max-len
                 const timeString = `time = [${durationFromTime(this.timeStart - this.doctimerStart)}, ${durationFromTime(message.timestamp - this.doctimerStart)}]`;
                 this.ranges.set(
                     `${opsString} ${timeString}`,
@@ -423,14 +419,14 @@ class MessageDumper implements IMessageAnalyzer {
 }
 
 export async function printMessageStats(
-        generator, // AsyncGenerator<ISequencedDocumentMessage[]>,
-        dumpMessageStats: boolean,
-        dumpMessages: boolean,
-        messageTypeFilter: Set<string> = new Set<string>()) {
+    generator, // AsyncGenerator<ISequencedDocumentMessage[]>,
+    dumpMessageStats: boolean,
+    dumpMessages: boolean,
+    messageTypeFilter: Set<string> = new Set<string>()) {
     let lastMessage: ISequencedDocumentMessage | undefined;
 
     const analyzers: IMessageAnalyzer[] = [
-        new FilteredMessageAnalyzer(), // should come first
+        new FilteredMessageAnalyzer(), // Should come first
         new SessionAnalyzer(),
         new DataStructureAnalyzer(),
         new MessageDensityAnalyzer(),
@@ -469,12 +465,12 @@ export async function printMessageStats(
 }
 
 function processOp(
-        message: ISequencedDocumentMessage,
-        dataType: Map<string, string>,
-        objectStats: Map<string, [number, number]>,
-        msgSize: number,
-        dataTypeStats: Map<string, [number, number]>,
-        messageTypeStats: Map<string, [number, number]>) {
+    message: ISequencedDocumentMessage,
+    dataType: Map<string, string>,
+    objectStats: Map<string, [number, number]>,
+    msgSize: number,
+    dataTypeStats: Map<string, [number, number]>,
+    messageTypeStats: Map<string, [number, number]>) {
     let type = message.type;
     let recorded = false;
     if (message.type === MessageType.Attach) {
@@ -511,7 +507,7 @@ function processOp(
             incr(objectStats, objectId, msgSize);
             let objectType = dataType.get(objectId);
             if (objectType === undefined) {
-                // somehow we do not have data...
+                // Somehow we do not have data...
                 dataType.set(objectId, objectId);
                 objectType = objectId;
             }
@@ -520,8 +516,8 @@ function processOp(
 
             let subType = innerContent2.type;
             if (innerContent2.type === "set" &&
-                    typeof innerContent2.value === "object" &&
-                    innerContent2.value !== null) {
+                typeof innerContent2.value === "object" &&
+                innerContent2.value !== null) {
                 type = `${type}/${subType}`;
                 subType = innerContent2.value.type;
             } else if (objectType === "mergeTree" && subType !== undefined) {
@@ -552,8 +548,8 @@ function processOp(
 }
 
 function processComponentAttachOp(
-        attachMessage: IAttachMessage | string,
-        dataType: Map<string, string>) {
+    attachMessage: IAttachMessage | string,
+    dataType: Map<string, string>) {
     // dataType.set(getObjectId(attachMessage.id), attachMessage.type);
 
     // That's component, and it brings a bunch of data structures.
@@ -581,10 +577,10 @@ function processComponentAttachOp(
 }
 
 function reportOpenSessions(
-        lastOpTimestamp: number,
-        sessionsInProgress: Map<string, ActiveSession>,
-        sessions: Map<string, [number, number]>,
-        users: Map<string, [number, number]>) {
+    lastOpTimestamp: number,
+    sessionsInProgress: Map<string, ActiveSession>,
+    sessions: Map<string, [number, number]>,
+    users: Map<string, [number, number]>) {
     const activeSessions = new Map<string, [number, number]>();
 
     for (const [clientId, ses] of sessionsInProgress) {
@@ -630,11 +626,11 @@ function calcChannelStats(dataType: Map<string, string>, objectStats: Map<string
 }
 
 function processQuorumMessages(
-        message: ISequencedDocumentMessage,
-        skipMessage: boolean,
-        sessionsInProgress: Map<string, ActiveSession>,
-        sessions: Map<string, [number, number]>,
-        users: Map<string, [number, number]>) {
+    message: ISequencedDocumentMessage,
+    skipMessage: boolean,
+    sessionsInProgress: Map<string, ActiveSession>,
+    sessions: Map<string, [number, number]>,
+    users: Map<string, [number, number]>) {
     let session: ActiveSession | undefined;
     const dataString = (message as any).data;
     if (message.type === "join") {
@@ -655,7 +651,7 @@ function processQuorumMessages(
                 `${clientId} (${sessionInfo.email})`,
                 [durationFromTime(sessionInfo.duration), sessionInfo.opCount]);
             incr(users, sessionInfo.email, sessionInfo.opCount);
-            session = undefined; // do not record it second time
+            session = undefined; // Do not record it second time
         }
     } else {
         // message.clientId can be null
@@ -668,6 +664,4 @@ function processQuorumMessages(
     return session;
 }
 
-function durationFromTime(time: number): number {
-    return Math.floor(time / 1000);
-}
+const durationFromTime = (time: number): number => Math.floor(time / 1000);

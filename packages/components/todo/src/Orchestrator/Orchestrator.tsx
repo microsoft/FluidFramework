@@ -10,7 +10,7 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { Todo, TodoName, TodoView } from "../Todo";
 
-// tslint:disable-next-line: no-var-requires no-require-imports
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../../package.json");
 export const OrchestratorName = `${pkg.name as string}-orchestrator`;
 
@@ -23,35 +23,35 @@ const todoId = "TodoId";
  * - List of todo items
  */
 export class Orchestrator extends PrimedComponent implements IComponentHTMLVisual {
-  private todoComponent: Todo;
+    private todoComponent: Todo;
 
-  public get IComponentHTMLVisual() { return this; }
+    public get IComponentHTMLVisual() { return this; }
 
-  /**
-   * Do setup work here
-   */
-  protected async componentInitializingFirstTime() {
-    // create a new todo item
-    const componentRuntime: IComponentRuntime = await this.context.createSubComponent(TodoName);
-    await componentRuntime.request({ url: "/" });
-    componentRuntime.attach();
+    /**
+     * Do setup work here
+     */
+    protected async componentInitializingFirstTime() {
+        // Create a new todo item
+        const componentRuntime: IComponentRuntime = await this.context.createSubComponent(TodoName);
+        await componentRuntime.request({ url: "/" });
+        componentRuntime.attach();
 
-    // Store the id of the component in our ids map so we can reference it later
-    this.root.set(todoId, componentRuntime.id);
-  }
+        // Store the id of the component in our ids map so we can reference it later
+        this.root.set(todoId, componentRuntime.id);
+    }
 
-  protected async componentHasInitialized() {
-    this.todoComponent = await this.getComponent<Todo>(this.root.get(todoId));
-  }
+    protected async componentHasInitialized() {
+        this.todoComponent = await this.getComponent<Todo>(this.root.get(todoId));
+    }
 
-  // start IComponentHTMLVisual
+    // Start IComponentHTMLVisual
 
-  /**
-   * Creates a new view for a caller that doesn't directly support React
-   */
-  public render(div: HTMLElement) {
-    ReactDOM.render(<TodoView todoModel={this.todoComponent}/>, div);
-  }
+    /**
+     * Creates a new view for a caller that doesn't directly support React
+     */
+    public render(div: HTMLElement) {
+        ReactDOM.render(<TodoView todoModel={this.todoComponent}/>, div);
+    }
 
-  // end IComponentHTMLVisual
+    // End IComponentHTMLVisual
 }

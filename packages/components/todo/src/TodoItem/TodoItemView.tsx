@@ -30,6 +30,7 @@ export async function todoItemViewRequestHandler(request: IRequest, runtime: Con
 
     const modelRequest = requestParser.createSubRequest(1);
     const todoItemModel = (await runtime.request(modelRequest)).value as TodoItem;
+    // eslint-disable-next-line @typescript-eslint/no-use-before-define
     const todoItemView = new TodoItemView({ todoItemModel });
     return { status: 200, mimeType: "fluid/component", value: todoItemView };
 }
@@ -89,15 +90,6 @@ export class TodoItemView extends React.Component<TodoItemViewProps, TodoItemVie
     }
 
     public render() {
-        // tslint:disable:react-a11y-input-elements
-        // react-a11y-input-elements incorrectly thinks checkboxes need placeholder text
-        // Issue fixed in tslint-microsoft-contrib 6.1.0:
-        // https://github.com/microsoft/tslint-microsoft-contrib/issues/749
-
-        // tslint:disable:react-a11y-role-has-required-aria-props
-        // react-a11y-role-has-required-aria-props incorrectly thinks native checkboxes need aria-checked
-        // Known open issue (9/26/2019):
-        // https://github.com/microsoft/tslint-microsoft-contrib/issues/409
         return (
             <div className="todo-item">
                 <h2>
@@ -139,7 +131,5 @@ export class TodoItemView extends React.Component<TodoItemViewProps, TodoItemVie
                 }
             </div>
         );
-        // tslint:enable:react-a11y-input-elements
-        // tslint:enable:react-a11y-role-has-required-aria-props
     }
 }

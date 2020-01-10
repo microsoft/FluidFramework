@@ -84,7 +84,7 @@ export class ResizeObserver extends View<IResizeObserverInit> {
             this.state.callback();
         }
         this.reset();
-    }
+    };
 
     private readonly onShrinkScrolled = () => {
         const { root, width, height } = this.state;
@@ -92,7 +92,7 @@ export class ResizeObserver extends View<IResizeObserverInit> {
             this.state.callback();
         }
         this.reset();
-    }
+    };
 
     private reset() {
         const { expandChild, expand, shrink, root } = this.state;

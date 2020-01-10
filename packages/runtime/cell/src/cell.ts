@@ -160,6 +160,7 @@ export class SharedCell extends SharedObject implements ISharedCell {
                     },
                 },
             ],
+            // eslint-disable-next-line no-null/no-null
             id: null,
         };
 
@@ -277,7 +278,7 @@ export class SharedCell extends SharedObject implements ISharedCell {
     private fromSerializable(operation: ICellValue) {
         let value = operation.value;
 
-        // convert any stored shared object to updated handle
+        // Convert any stored shared object to updated handle
         if (operation.type === ValueType[ValueType.Shared]) {
             const handle: ISerializedHandle = {
                 type: "__fluid_handle__",

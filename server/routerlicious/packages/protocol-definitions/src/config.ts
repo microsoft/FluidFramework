@@ -19,7 +19,7 @@ export interface ISummaryConfiguration {
 }
 
 /**
- * key value store of service configuration properties provided as part of connection
+ * Key value store of service configuration properties provided as part of connection
  */
 export interface IServiceConfiguration {
     [key: string]: any;

@@ -14,7 +14,7 @@ import {
  */
 export interface ITask {
     /**
-     * id of the task
+     * Id of the task
      */
     id: string;
 
@@ -97,6 +97,7 @@ export interface IAgentScheduler extends IProvideAgentScheduler, IComponentRoute
 }
 
 declare module "@microsoft/fluid-component-core-interfaces" {
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IComponent extends
         Readonly<Partial<IProvideTaskManager & IProvideAgentScheduler>> { }
 }

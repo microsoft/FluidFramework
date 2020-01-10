@@ -21,7 +21,7 @@ async function getFileContents(p: string): Promise<Buffer> {
     });
 }
 
-const dataDir = "../../../../server/gateway/public";
+const dataDir = "../../src/test";
 
 describe("Core-Utils", () => {
     // Expected hashes are from git hash-object file...

@@ -16,7 +16,7 @@ export class TextAnalyzer implements IComponentRouter, IComponentRunnable {
     constructor(
         private readonly sharedString: Sequence.SharedString,
         private readonly insightsMap: ISharedMap,
-        private readonly config: ITokenConfig) {}
+        private readonly config: ITokenConfig) { }
 
     public async run() {
         if (this.config === undefined || this.config.key === undefined || this.config.key.length === 0) {

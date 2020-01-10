@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import { readAndParse } from "@microsoft/fluid-driver-utils";
 import {
@@ -19,7 +20,6 @@ import {
     IComponentRuntime,
 } from "@microsoft/fluid-runtime-definitions";
 import { SummaryTracker } from "@microsoft/fluid-runtime-utils";
-import * as assert from "assert";
 import { createServiceEndpoints, IChannelContext, snapshotChannel } from "./channelContext";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ISharedObjectRegistry } from "./componentRuntime";
@@ -41,15 +41,14 @@ export class RemoteChannelContext implements IChannelContext {
         private readonly storageService: IDocumentStorageService,
         private readonly submitFn: (type: MessageType, content: any) => number,
         private readonly id: string,
-        baseSnapshot: ISnapshotTree,
+        private readonly baseSnapshot: ISnapshotTree,
         private readonly registry: ISharedObjectRegistry,
         private readonly extraBlobs: Map<string, string>,
         private readonly branch: string,
         private readonly attributes: RequiredIChannelAttributes | undefined,
-    ) {
-        this.summaryTracker.setBaseTree(baseSnapshot);
-    }
+    ) {}
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public getChannel(): Promise<IChannel> {
         if (!this.channelP) {
             this.channelP = this.loadChannel();
@@ -88,6 +87,7 @@ export class RemoteChannelContext implements IChannelContext {
 
     public async snapshot(fullTree: boolean = false): Promise<ITree> {
         const baseId = this.summaryTracker.getBaseId();
+        // eslint-disable-next-line no-null/no-null
         if (baseId !== null && !fullTree) {
             return { id: baseId, entries: [] };
         }
@@ -100,15 +100,11 @@ export class RemoteChannelContext implements IChannelContext {
         this.summaryTracker.setBaseTree(snapshot);
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     private getAttributesFromBaseTree(): Promise<RequiredIChannelAttributes> {
-        const baseTree = this.summaryTracker.baseTree;
-        if (baseTree) {
-            return readAndParse<RequiredIChannelAttributes>(
-                this.storageService,
-                baseTree.blobs[".attributes"]);
-        } else {
-            throw new Error("Null base summary tree should not be possible for remote channel.");
-        }
+        return readAndParse<RequiredIChannelAttributes>(
+            this.storageService,
+            this.baseSnapshot.blobs[".attributes"]);
     }
 
     private async loadChannel(): Promise<IChannel> {
@@ -125,7 +121,7 @@ export class RemoteChannelContext implements IChannelContext {
             throw new Error(`Channel Factory ${type} not registered`);
         }
 
-        // compare snapshot version to collaborative object version
+        // Compare snapshot version to collaborative object version
         if (snapshotFormatVersion !== undefined && snapshotFormatVersion !== factory.attributes.snapshotFormatVersion) {
             debug(`Snapshot version mismatch. Type: ${type}, ` +
                 `Snapshot format version: ${snapshotFormatVersion}, ` +
@@ -139,7 +135,7 @@ export class RemoteChannelContext implements IChannelContext {
             this.componentContext.connectionState,
             this.submitFn,
             this.storageService,
-            this.summaryTracker.baseTree === null ? undefined : this.summaryTracker.baseTree,
+            this.baseSnapshot,
             this.extraBlobs);
         this.channel = await factory.load(
             this.runtime,
