@@ -208,20 +208,20 @@ class FluidPackage {
         });
     }
 
-    public async resolve(): Promise<IResolvedPackage> {
-        if (!this.resolveP) {
-            this.resolveP = this.resolveCore();
-        }
-
-        return this.resolveP;
-    }
-
     public async load<T>(): Promise<T> {
         if (!this.loadP) {
             this.loadP = this.loadCore();
         }
 
         return this.loadP;
+    }
+
+    private async resolve(): Promise<IResolvedPackage> {
+        if (!this.resolveP) {
+            this.resolveP = this.resolveCore();
+        }
+
+        return this.resolveP;
     }
 
     private async resolveCore(): Promise<IResolvedPackage> {
