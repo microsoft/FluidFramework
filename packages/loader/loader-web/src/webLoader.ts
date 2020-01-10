@@ -87,10 +87,11 @@ class ScriptManager {
         }
         return window.document !== undefined;
     }
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public loadScript(scriptUrl: string, scriptId?: string): Promise<void> {
-        if (!this.loadCache.has(scriptUrl)) {
-            const scriptP = new Promise<void>((resolve, reject) => {
+
+    public async loadScript(scriptUrl: string, scriptId?: string): Promise<void> {
+        let scriptP = this.loadCache.get(scriptUrl);
+        if (!scriptP) {
+            scriptP = new Promise<void>((resolve, reject) => {
                 if (this.isBrowser) {
                     const script = document.createElement("script");
                     script.src = scriptUrl;
@@ -104,7 +105,6 @@ class ScriptManager {
                     // executed after all of its dependencies have been loaded and executed.
                     script.async = false;
 
-                    // Call signatures don't match and so need to wrap the method
                     script.onload = () => resolve();
                     script.onerror = () =>
                         reject(new Error(`Failed to download the script at url: ${scriptUrl}`));
@@ -123,8 +123,7 @@ class ScriptManager {
             this.loadCache.set(scriptUrl, scriptP);
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return this.loadCache.get(scriptUrl)!;
+        return scriptP;
     }
 
     public loadScripts(
