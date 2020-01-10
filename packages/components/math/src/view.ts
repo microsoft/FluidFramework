@@ -69,7 +69,6 @@ export class MathView extends View<IMathInit, IMathProps> {
     }
 
     private readonly onKeyDown = (e: KeyboardEvent) => {
-        /* eslint-disable @typescript-eslint/indent */
         switch (e.code) {
             case KeyCode.arrowLeft:
                 if (this.input.selectionEnd === 0) {
@@ -90,7 +89,6 @@ export class MathView extends View<IMathInit, IMathProps> {
             default:
                 this.onInputChanged();
         }
-        /* eslint-enable @typescript-eslint/indent */
     };
 
     private verticalCaretEnter(e: ICaretEvent) {
@@ -107,7 +105,6 @@ export class MathView extends View<IMathInit, IMathProps> {
         const input = this.input;
         input.focus();
 
-        /* eslint-disable @typescript-eslint/indent */
         switch (e.detail.direction) {
             case Direction.left:
                 input.setSelectionRange(input.value.length, input.value.length, "backward");
@@ -125,6 +122,5 @@ export class MathView extends View<IMathInit, IMathProps> {
                 break;
             default:
         }
-        /* eslint-enable @typescript-eslint/indent */
     };
 }

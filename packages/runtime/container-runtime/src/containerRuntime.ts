@@ -337,7 +337,6 @@ class ScheduleManager {
 }
 
 function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
-    /* eslint-disable @typescript-eslint/indent */
     switch (message.type) {
         case MessageType.ChunkedOp:
         case MessageType.Attach:
@@ -346,7 +345,6 @@ function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
         default:
             return false;
     }
-    /* eslint-enable @typescript-eslint/indent */
 }
 
 export const schedulerId = "_scheduler";
@@ -1006,7 +1004,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         }
 
         // Old prepare part
-        /* eslint-disable @typescript-eslint/indent */
         switch (message.type) {
             case MessageType.Attach:
                 // The local object has already been attached
@@ -1075,7 +1072,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                 break;
             default: // Do nothing
         }
-        /* eslint-enable @typescript-eslint/indent */
     }
 
     private attachComponent(componentRuntime: IComponentRuntime): void {

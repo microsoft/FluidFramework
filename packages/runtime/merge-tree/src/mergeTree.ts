@@ -590,7 +590,6 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
         const currentSegmentGroup = this.segmentGroups.dequeue();
         assert.equal(currentSegmentGroup, segmentGroup);
 
-        /* eslint-disable @typescript-eslint/indent */
         switch (opArgs.op.type) {
 
             case ops.MergeTreeDeltaType.ANNOTATE:
@@ -622,7 +621,6 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
             default:
                 assert.fail(`${opArgs.op.type} is in unrecognized operation type`);
         }
-        /* eslint-enable @typescript-eslint/indent */
     }
 
     public splitAt(pos: number): ISegment {

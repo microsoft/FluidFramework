@@ -230,7 +230,6 @@ export class SharedCell extends SharedObject implements ISharedCell {
         if (message.type === MessageType.Operation && !local) {
             const op = message.contents as ICellOperation;
 
-            /* eslint-disable @typescript-eslint/indent */
             switch (op.type) {
                 case "setCell":
                     const value = this.fromSerializable(op.value);
@@ -244,7 +243,6 @@ export class SharedCell extends SharedObject implements ISharedCell {
                 default:
                     throw new Error("Unknown operation");
             }
-            /* eslint-enable @typescript-eslint/indent */
         }
     }
 

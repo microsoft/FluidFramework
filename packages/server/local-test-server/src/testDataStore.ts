@@ -121,7 +121,6 @@ async function attach<T>(
 
     const mimeType = response.mimeType;
     debug(`loader.request(url=${url}) -> ${mimeType}`);
-    /* eslint-disable @typescript-eslint/indent */
     switch (mimeType) {
         case "fluid/component":
         case "fluid/dataType":
@@ -130,5 +129,4 @@ async function attach<T>(
         default:
             debug(`Unhandled mimeType ${mimeType}`);
     }
-    /* eslint-enable @typescript-eslint/indent */
 }

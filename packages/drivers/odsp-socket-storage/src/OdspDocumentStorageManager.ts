@@ -539,7 +539,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             let id: string | undefined;
             let value: SnapshotTreeValue | undefined;
 
-            /* eslint-disable @typescript-eslint/indent, no-case-declarations */
+            /* eslint-disable no-case-declarations */
             switch (summaryObject.type) {
                 case api.SummaryType.Tree:
                     value = this.convertSummaryToSnapshotTree(summaryObject, blobsShaToPathCacheLatest, depth + 1, `${path}/${key}`);
@@ -580,7 +580,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                 default:
                     throw new Error(`Unknown tree type ${summaryObject.type}`);
             }
-            /* eslint-enable @typescript-eslint/indent, no-case-declarations */
+            /* eslint-enable no-case-declarations */
 
             const baseEntry: ISnapshotTreeBaseEntry = {
                 mode: "100644",
@@ -615,7 +615,6 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
     private getServerType(value: api.SummaryObject): string {
         const type = value.type === api.SummaryType.Handle ? value.handleType : value.type;
-        /* eslint-disable @typescript-eslint/indent */
         switch (type) {
             case api.SummaryType.Blob:
                 return "blob";
@@ -629,7 +628,6 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             default:
                 throw new Error();
         }
-        /* eslint-enable @typescript-eslint/indent */
     }
 }
 
