@@ -252,7 +252,6 @@ export class SummaryCollection {
      * @param op - op message to handle
      */
     public handleOp(op: ISequencedDocumentMessage) {
-        /* eslint-disable @typescript-eslint/indent */
         switch (op.type) {
             case MessageType.Summarize: {
                 this.handleSummaryOp(op as ISummaryOpMessage);
@@ -270,7 +269,6 @@ export class SummaryCollection {
                 return;
             }
         }
-        /* eslint-enable @typescript-eslint/indent */
     }
 
     private handleSummaryOp(op: ISummaryOpMessage) {

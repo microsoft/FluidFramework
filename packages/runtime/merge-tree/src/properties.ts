@@ -35,7 +35,7 @@ export function combine(combiningInfo: ops.ICombiningOp, currentValue: any, newV
         currentValue = combiningInfo.defaultValue;
     }
     // Fixed set of operations for now
-    /* eslint-disable @typescript-eslint/indent, default-case */
+    /* eslint-disable default-case */
     switch (combiningInfo.name) {
         case "incr":
             currentValue += newValue as number;
@@ -61,7 +61,7 @@ export function combine(combiningInfo: ops.ICombiningOp, currentValue: any, newV
             }
             break;
     }
-    /* eslint-enable @typescript-eslint/indent, default-case */
+    /* eslint-enable default-case */
     return currentValue;
 }
 

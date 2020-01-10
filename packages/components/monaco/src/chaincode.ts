@@ -233,7 +233,6 @@ export class MonacoRunner extends PrimedComponent implements
      * @param delta The incoming op contents
      */
     private mergeDelta(delta: IMergeTreeOp): void {
-        /* eslint-disable @typescript-eslint/indent */
         switch (delta.type) {
             case MergeTreeDeltaType.GROUP:
                 this.mergeDeltaGroup(delta);
@@ -247,7 +246,6 @@ export class MonacoRunner extends PrimedComponent implements
             default:
                 break;
         }
-        /* eslint-enable @typescript-eslint/indent */
     }
 
     /**

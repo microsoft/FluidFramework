@@ -86,7 +86,6 @@ export class Editor {
             return;
         }
 
-        /* eslint-disable @typescript-eslint/indent */
         switch (e.code) {
             case KeyCode.F1: {
                 console.clear();
@@ -129,7 +128,6 @@ export class Editor {
                     this.consume(e);
                 }
             }
-            /* eslint-enable @typescript-eslint/indent */
         }
     };
 

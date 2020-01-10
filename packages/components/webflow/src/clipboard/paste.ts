@@ -34,7 +34,6 @@ const ignoredTags = [Tag.meta];
 
 function pasteChildren(doc: FlowDocument, root: Node, position: number) {
     for (let child: Node | null = root.firstChild; child !== null; child = child.nextSibling) {
-        /* eslint-disable @typescript-eslint/indent */
         switch (child.nodeType) {
             case document.TEXT_NODE: {
                 const text = child as Text;
@@ -66,7 +65,6 @@ function pasteChildren(doc: FlowDocument, root: Node, position: number) {
             default:
         }
     }
-    /* eslint-enable @typescript-eslint/indent */
 
     return position;
 }

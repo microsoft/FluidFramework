@@ -12,7 +12,7 @@ import { IContainerContext, IRuntime } from "@microsoft/fluid-container-definiti
 import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
 import { IComponentFactory } from "@microsoft/fluid-runtime-definitions";
 
-/* eslint-disable @typescript-eslint/indent, @typescript-eslint/no-require-imports, max-len */
+/* eslint-disable @typescript-eslint/no-require-imports, max-len */
 (self as any).MonacoEnvironment = {
     getWorkerUrl(moduleId, label) {
         switch (label) {
@@ -30,7 +30,7 @@ import { IComponentFactory } from "@microsoft/fluid-runtime-definitions";
         }
     },
 };
-/* eslint-enable @typescript-eslint/indent, @typescript-eslint/no-require-imports, max-len */
+/* eslint-enable @typescript-eslint/no-require-imports, max-len */
 
 async function getMonacoFluidExport() {
     const monaco = await import("@fluid-example/monaco");

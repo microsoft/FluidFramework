@@ -21,7 +21,6 @@ export enum PlayerState {
 }
 
 export function mapToPlayerState(YTState: number): PlayerState {
-    /* eslint-disable @typescript-eslint/indent */
     switch (YTState) {
         case -1:
             return PlayerState.unstarted;
@@ -37,7 +36,6 @@ export function mapToPlayerState(YTState: number): PlayerState {
         default:
             return PlayerState.unknown;
     }
-    /* eslint-enable @typescript-eslint/indent */
 }
 
 export function getProposedPlaybackTime(lastChangeUTC: number, playing: boolean, elapsedTime: number): number {

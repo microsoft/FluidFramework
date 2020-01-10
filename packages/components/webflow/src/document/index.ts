@@ -70,7 +70,6 @@ export const getDocSegmentKind = (segment: ISegment): DocSegmentKind => {
         return DocSegmentKind.text;
     } else if (Marker.is(segment)) {
         const markerType = segment.refType;
-        /* eslint-disable @typescript-eslint/indent */
         switch (markerType) {
             case ReferenceType.Tile:
             case ReferenceType.Tile | ReferenceType.NestBegin:
@@ -88,7 +87,6 @@ export const getDocSegmentKind = (segment: ISegment): DocSegmentKind => {
                 assert.strictEqual(segment.getRangeLabels()[0], DocSegmentKind.beginTags, `Unknown refType '${markerType}'.`);
                 return DocSegmentKind.endTags;
         }
-        /* eslint-enable @typescript-eslint/indent */
     }
 };
 
@@ -218,7 +216,6 @@ export class FlowDocument extends PrimedComponent {
         const ops: IMergeTreeRemoveMsg[] = [];
 
         this.visitRange((position: number, segment: ISegment) => {
-            /* eslint-disable @typescript-eslint/indent */
             switch (getDocSegmentKind(segment)) {
                 case DocSegmentKind.beginTags: {
                     // Removing a start tag implicitly removes its matching end tag.
@@ -257,7 +254,6 @@ export class FlowDocument extends PrimedComponent {
                 default:
                     break;
             }
-            /* eslint-enable @typescript-eslint/indent */
             return true;
         }, start, end);
 
@@ -435,7 +431,6 @@ export class FlowDocument extends PrimedComponent {
         const s: string[] = [];
         this.visitRange((position, segment) => {
             const kind = getDocSegmentKind(segment);
-            /* eslint-disable @typescript-eslint/indent */
             switch (kind) {
                 case DocSegmentKind.text:
                     s.push((segment as TextSegment).text);
@@ -455,7 +450,6 @@ export class FlowDocument extends PrimedComponent {
                 default:
                     s.push(kind);
             }
-            /* eslint-enable @typescript-eslint/indent */
             return true;
         });
         return s.join("");

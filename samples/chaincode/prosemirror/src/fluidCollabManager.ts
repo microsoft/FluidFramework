@@ -98,7 +98,6 @@ export class FluidCollabManager extends EventEmitter {
                 // TODO are marks applied to the structural nodes as well? Or just inner text?
 
                 const nodeType = segment.properties[nodeTypeKey];
-                /* eslint-disable @typescript-eslint/indent */
                 switch (segment.refType) {
                     case ReferenceType.NestBegin:
                         // Create the new node, add it to the top's content, and push it on the stack
@@ -138,7 +137,6 @@ export class FluidCollabManager extends EventEmitter {
                         // Throw for now when encountering something unknown
                         throw new Error("Unknown marker");
                 }
-                /* eslint-enable @typescript-eslint/indent */
             }
 
             return true;
@@ -321,7 +319,6 @@ export class FluidCollabManager extends EventEmitter {
             console.log(JSON.stringify(step, null, 2));
 
             const stepAsJson = step.toJSON();
-            /* eslint-disable @typescript-eslint/indent */
             switch (stepAsJson.stepType) {
                 case "replace": {
                     const from = stepAsJson.from;
@@ -435,7 +432,6 @@ export class FluidCollabManager extends EventEmitter {
                 default:
                     break;
             }
-            /* eslint-enable @typescript-eslint/indent */
         }
     }
 }

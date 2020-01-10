@@ -339,7 +339,6 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
         // Should I change the state at the end? So that we *can't* send new stuff before we send old?
         this._state = state;
 
-        /* eslint-disable @typescript-eslint/indent */
         switch (state) {
             case ConnectionState.Disconnected:
                 // Things that are true now...
@@ -377,7 +376,6 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
             default:
                 assert.ok(false, `Unknown ConnectionState ${state}`);
         }
-        /* eslint-enable @typescript-eslint/indent */
     }
 
     /**

@@ -165,7 +165,6 @@ export class UndoRedoStackManager {
     public pushToCurrentOperation(revertable: IRevertable) {
         let currentStack: UndoRedoStack;
 
-        /* eslint-disable @typescript-eslint/indent */
         switch (this.mode) {
             case UndoRedoMode.None:
                 currentStack = this.undoStack;
@@ -183,7 +182,6 @@ export class UndoRedoStackManager {
             default:
                 throw new Error("unknown mode");
         }
-        /* eslint-enable @typescript-eslint/indent */
         const operationStack = currentStack.top();
         if (operationStack === undefined) {
             currentStack.push(new Stack<IRevertable>(revertable));
