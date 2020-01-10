@@ -177,6 +177,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
 
             // Messages will be inbound from the remote server
             socket.on("message", (message) => {
+                /* eslint-disable @typescript-eslint/indent */
                 switch (message.type) {
                     case "connect": {
                         const connectMessage = message.payload as IConnectMessage;
@@ -227,6 +228,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
                     default:
                         break;
                 }
+                /* eslint-enable @typescript-eslint/indent */
             });
         });
 

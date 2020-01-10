@@ -129,6 +129,7 @@ export class RemoteNode extends EventEmitter implements IConcreteNode {
         this.socket.on(
             "message",
             (message) => {
+                /* eslint-disable @typescript-eslint/indent */
                 switch (message.type) {
                     case "op":
                         this.route(message.payload as IOpMessage);
@@ -163,6 +164,7 @@ export class RemoteNode extends EventEmitter implements IConcreteNode {
                     default:
                         break;
                 }
+                /* eslint-enable @typescript-eslint/indent */
             });
     }
 

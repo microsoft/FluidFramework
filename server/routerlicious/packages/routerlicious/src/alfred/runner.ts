@@ -104,6 +104,7 @@ export class AlfredRunner implements utils.IRunner {
             : `Port ${this.port}`;
 
         // Handle specific listen errors with friendly messages
+        /* eslint-disable @typescript-eslint/indent */
         switch (error.code) {
             case "EACCES":
                 this.runningDeferred.reject(`${bind} requires elevated privileges`);
@@ -114,6 +115,7 @@ export class AlfredRunner implements utils.IRunner {
             default:
                 throw error;
         }
+        /* eslint-enable @typescript-eslint/indent */
     }
 
     /**

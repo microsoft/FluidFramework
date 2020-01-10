@@ -29,6 +29,7 @@ export interface IScribeProtocolState {
 }
 
 export function isSystemMessage(message: ISequencedDocumentMessage) {
+    /* eslint-disable @typescript-eslint/indent */
     switch (message.type) {
         case MessageType.ClientJoin:
         case MessageType.ClientLeave:
@@ -42,6 +43,7 @@ export function isSystemMessage(message: ISequencedDocumentMessage) {
         default:
             return false;
     }
+    /* eslint-enable @typescript-eslint/indent */
 }
 
 /**
@@ -76,6 +78,7 @@ export class ProtocolOpHandler extends EventEmitter {
     public processMessage(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult {
         let immediateNoOp = false;
 
+        /* eslint-disable @typescript-eslint/indent */
         switch (message.type) {
             case MessageType.ClientJoin:
                 const systemJoinMessage = message as ISequencedDocumentSystemMessage;
@@ -126,6 +129,7 @@ export class ProtocolOpHandler extends EventEmitter {
 
             default:
         }
+        /* eslint-enable @typescript-eslint/indent */
 
         // Update tracked sequence numbers
         this.minimumSequenceNumber = message.minimumSequenceNumber;

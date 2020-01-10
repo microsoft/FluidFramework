@@ -58,6 +58,7 @@ export class OrdererManager implements core.IOrdererManager {
             return Promise.reject("Invalid ordering service endpoint");
         }
 
+        /* eslint-disable @typescript-eslint/indent */
         switch (tenant.orderer.type) {
             case "kafka":
                 return this.kafkaFactory.create(tenantId, documentId);
@@ -66,6 +67,7 @@ export class OrdererManager implements core.IOrdererManager {
             default:
                 return this.localOrderManager.get(tenantId, documentId);
         }
+        /* eslint-enable @typescript-eslint/indent */
     }
 }
 
