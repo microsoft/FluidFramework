@@ -260,7 +260,7 @@ class FluidPackage {
 
 export class WebCodeLoader implements ICodeLoader {
     // Cache goes CDN -> package -> entrypoint
-    private readonly resolvedCache = new Map<string, FluidPackage>();
+    private readonly fluidPackageCache = new Map<string, FluidPackage>();
     private readonly scriptManager = new ScriptManager();
 
     constructor(private readonly whiteList?: ICodeWhiteList) { }
@@ -300,13 +300,13 @@ export class WebCodeLoader implements ICodeLoader {
     private getFluidPackage(input: IFluidCodeDetails): FluidPackage {
         const details = getPackageDetails(input);
 
-        if (!this.resolvedCache.has(details.packageUrl)) {
+        if (!this.fluidPackageCache.has(details.packageUrl)) {
             const resolved = new FluidPackage(details, this.scriptManager);
-            this.resolvedCache.set(details.packageUrl, resolved);
+            this.fluidPackageCache.set(details.packageUrl, resolved);
         }
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return this.resolvedCache.get(details.packageUrl)!;
+        return this.fluidPackageCache.get(details.packageUrl)!;
     }
 }
 
