@@ -177,7 +177,7 @@ class FluidPackage {
             }
 
             const scriptFound = scriptIds.find((scriptId) => {
-                const script = document.getElementById(scriptId) as HTMLScriptElement;
+                const script = document.getElementById(scriptId);
                 // eslint-disable-next-line no-null/no-null
                 return (script !== null);
             });
@@ -191,10 +191,10 @@ class FluidPackage {
             // ScriptIds are needed here in case the script hasn't loaded yet
             // if there's no script, fetch and load it
             scriptIds.forEach((scriptId) => {
-                const script = document.getElementById(scriptId) as HTMLScriptElement;
+                const script = document.getElementById(scriptId);
 
                 // eslint-disable-next-line no-null/no-null
-                if (script !== undefined && script !== null) {
+                if (script !== null) {
                     script.onload = () => {
                         if (entrypoint in window) {
                             resolve(window[entrypoint]);
