@@ -73,7 +73,7 @@ export interface IDeltaSender extends IProvideDeltaSender {
 
 export interface IDeltaManager<T, U> extends EventEmitter, IDeltaSender, IDisposable {
     // The queue of inbound delta messages
-    inbound: IDeltaQueue<T>;
+    inbound: IDeltaQueue<T[]>;
 
     // The queue of outbound delta messages
     outbound: IDeltaQueue<U[]>;
@@ -121,6 +121,8 @@ export interface IDeltaManager<T, U> extends EventEmitter, IDeltaSender, IDispos
         resume: boolean);
 
     submitSignal(content: any): void;
+
+    setInboundMessageBufferReady(ready: boolean): void;
 }
 
 export interface IDeltaQueue<T> extends EventEmitter, IDisposable {

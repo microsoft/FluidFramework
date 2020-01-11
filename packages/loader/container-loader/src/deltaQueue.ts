@@ -118,7 +118,6 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
 
     public push(task: T) {
         this.q.push(task);
-        this.emit("push", task);
         this.ensureProcessing();
     }
 

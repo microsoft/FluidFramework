@@ -107,7 +107,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     // The sequence number we initially loaded from
     private initSequenceNumber: number = 0;
 
-    private readonly _inbound: DeltaQueue<ISequencedDocumentMessage>;
+    private readonly _inbound: DeltaQueue<ISequencedDocumentMessage[]>;
     private readonly _inboundSignal: DeltaQueue<ISignalMessage>;
     private readonly _outbound: DeltaQueue<IDocumentMessage[]>;
 
@@ -122,7 +122,8 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
     private readonly contentCache = new ContentCache(DefaultContentBufferSize);
 
-    private messageBuffer: IDocumentMessage[] = [];
+    private inboundMessageBuffer: { messages: ISequencedDocumentMessage[]; ready: boolean } | undefined;
+    private outboundMessageBuffer: IDocumentMessage[] = [];
 
     private pongCount: number = 0;
     private socketLatency = 0;
@@ -139,7 +140,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     private opSendTime: number | undefined;
     private opNumberForRTT: number | undefined;
 
-    public get inbound(): IDeltaQueue<ISequencedDocumentMessage> {
+    public get inbound(): IDeltaQueue<ISequencedDocumentMessage[]> {
         return this._inbound;
     }
 
@@ -206,7 +207,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this.clientDetails = this.client.details;
         this.systemConnectionMode = this.client.mode === "write" ? "write" : "read";
 
-        this._inbound = new DeltaQueue<ISequencedDocumentMessage>(
+        this._inbound = new DeltaQueue<ISequencedDocumentMessage[]>(
             (op) => {
                 this.processInboundMessage(op);
             },
@@ -251,6 +252,12 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this._outbound.pause();
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this._inboundSignal.pause();
+    }
+
+    public setInboundMessageBufferReady(ready: boolean) {
+        if (this.inboundMessageBuffer) {
+            this.inboundMessageBuffer.ready = ready;
+        }
     }
 
     public dispose() {
@@ -400,20 +407,20 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     }
 
     public flush() {
-        if (this.messageBuffer.length === 0) {
+        if (this.outboundMessageBuffer.length === 0) {
             return;
         }
 
         // The prepareFlush event allows listeners to append metadata to the batch prior to submission.
-        this.emit("prepareSend", this.messageBuffer);
+        this.emit("prepareSend", this.outboundMessageBuffer);
 
-        this._outbound.push(this.messageBuffer);
-        this.messageBuffer = [];
+        this._outbound.push(this.outboundMessageBuffer);
+        this.outboundMessageBuffer = [];
     }
 
     public submit(type: MessageType, contents: any, batch = false, metadata?: any): number {
         // TODO need to fail if gets too large
-        // const serializedContent = JSON.stringify(this.messageBuffer);
+        // const serializedContent = JSON.stringify(this.outboundMessageBuffer);
         // const maxOpSize = this.context.deltaManager.maxMessageSize;
 
         // Start adding trace for the op.
@@ -446,10 +453,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         if (!batch) {
             this.flush();
-            this.messageBuffer.push(outbound);
+            this.outboundMessageBuffer.push(outbound);
             this.flush();
         } else {
-            this.messageBuffer.push(outbound);
+            this.outboundMessageBuffer.push(outbound);
         }
 
         return outbound.clientSequenceNumber;
@@ -931,7 +938,19 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 this.fetchMissingDeltas(telemetryEventSuffix, this.lastQueuedSequenceNumber, message.sequenceNumber);
             } else {
                 this.lastQueuedSequenceNumber = message.sequenceNumber;
-                this._inbound.push(message);
+
+                if (this.inboundMessageBuffer === undefined) {
+                    this.inboundMessageBuffer = { messages: [], ready: true };
+                }
+                this.inboundMessageBuffer.messages.push(message);
+                this.inboundMessageBuffer.ready = true;
+
+                this.emit("preparePush", message);
+
+                if (this.inboundMessageBuffer.ready) {
+                    this._inbound.push(this.inboundMessageBuffer.messages);
+                    this.inboundMessageBuffer = undefined;
+                }
             }
         }
 
@@ -945,73 +964,75 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         }
     }
 
-    private processInboundMessage(message: ISequencedDocumentMessage): void {
+    private processInboundMessage(messages: ISequencedDocumentMessage[]): void {
         const startTime = Date.now();
 
-        if (this.connection && this.connection.details.clientId === message.clientId) {
-            const clientSequenceNumber = message.clientSequenceNumber;
+        for (const message of messages) {
+            if (this.connection && this.connection.details.clientId === message.clientId) {
+                const clientSequenceNumber = message.clientSequenceNumber;
 
-            this.logger.debugAssert(this.clientSequenceNumberObserved <= clientSequenceNumber);
-            this.logger.debugAssert(clientSequenceNumber <= this.clientSequenceNumber);
+                this.logger.debugAssert(this.clientSequenceNumberObserved <= clientSequenceNumber);
+                this.logger.debugAssert(clientSequenceNumber <= this.clientSequenceNumber);
 
-            this.clientSequenceNumberObserved = clientSequenceNumber;
-            if (clientSequenceNumber === this.clientSequenceNumber) {
-                this.emit("allSentOpsAckd");
+                this.clientSequenceNumberObserved = clientSequenceNumber;
+                if (clientSequenceNumber === this.clientSequenceNumber) {
+                    this.emit("allSentOpsAckd");
+                }
             }
+
+            // TODO Remove after SPO picks up the latest build.
+            if (message.contents && typeof message.contents === "string" && message.type !== MessageType.ClientLeave) {
+                message.contents = JSON.parse(message.contents);
+            }
+
+            // Add final ack trace.
+            if (message.traces && message.traces.length > 0) {
+                // Back-compat: 0.11 clientType
+                const clientType = this.clientDetails ? this.clientDetails.type : this.clientType;
+                message.traces.push({
+                    action: "end",
+                    service: clientType || "unknown",
+                    timestamp: Date.now(),
+                });
+            }
+
+            // Watch the minimum sequence number and be ready to update as needed
+            assert(this.minSequenceNumber <= message.minimumSequenceNumber);
+            this.minSequenceNumber = message.minimumSequenceNumber;
+
+            assert.equal(message.sequenceNumber, this.baseSequenceNumber + 1);
+            this.baseSequenceNumber = message.sequenceNumber;
+
+            // Record collab window max size after every 2000th op.
+            const msnDistance = this.baseSequenceNumber - this.minSequenceNumber;
+            if (message.sequenceNumber % 2000 === 0) {
+                this.logger.sendTelemetryEvent({
+                    eventName: "OpStats",
+                    sequenceNumber: message.sequenceNumber,
+                    value: msnDistance,
+                    timeDelta: this.lastMessageTimeForTelemetry ?
+                        message.timestamp - this.lastMessageTimeForTelemetry : undefined,
+                });
+                this.lastMessageTimeForTelemetry = message.timestamp;
+            }
+
+            if (this.opSendTime !== undefined && this.opNumberForRTT === message.clientSequenceNumber) {
+                this.logger.sendTelemetryEvent({
+                    eventName: "OpRTT",
+                    seqNumber: message.sequenceNumber,
+                    rtt: this.opSendTime ?
+                        Date.now() - this.opSendTime : undefined,
+                });
+                this.opSendTime = undefined;
+                this.opNumberForRTT = undefined;
+            }
+
+            const result = this.handler!.process(message);
+            this.scheduleSequenceNumberUpdate(message, result.immediateNoOp === true);
+
+            const endTime = Date.now();
+            this.emit("processTime", endTime - startTime);
         }
-
-        // TODO Remove after SPO picks up the latest build.
-        if (message.contents && typeof message.contents === "string" && message.type !== MessageType.ClientLeave) {
-            message.contents = JSON.parse(message.contents);
-        }
-
-        // Add final ack trace.
-        if (message.traces && message.traces.length > 0) {
-            // Back-compat: 0.11 clientType
-            const clientType = this.clientDetails ? this.clientDetails.type : this.clientType;
-            message.traces.push({
-                action: "end",
-                service: clientType || "unknown",
-                timestamp: Date.now(),
-            });
-        }
-
-        // Watch the minimum sequence number and be ready to update as needed
-        assert(this.minSequenceNumber <= message.minimumSequenceNumber);
-        this.minSequenceNumber = message.minimumSequenceNumber;
-
-        assert.equal(message.sequenceNumber, this.baseSequenceNumber + 1);
-        this.baseSequenceNumber = message.sequenceNumber;
-
-        // Record collab window max size after every 2000th op.
-        const msnDistance = this.baseSequenceNumber - this.minSequenceNumber;
-        if (message.sequenceNumber % 2000 === 0) {
-            this.logger.sendTelemetryEvent({
-                eventName: "OpStats",
-                sequenceNumber: message.sequenceNumber,
-                value: msnDistance,
-                timeDelta: this.lastMessageTimeForTelemetry ?
-                    message.timestamp - this.lastMessageTimeForTelemetry : undefined,
-            });
-            this.lastMessageTimeForTelemetry = message.timestamp;
-        }
-
-        if (this.opSendTime !== undefined && this.opNumberForRTT === message.clientSequenceNumber) {
-            this.logger.sendTelemetryEvent({
-                eventName: "OpRTT",
-                seqNumber: message.sequenceNumber,
-                rtt: this.opSendTime ?
-                    Date.now() - this.opSendTime : undefined,
-            });
-            this.opSendTime = undefined;
-            this.opNumberForRTT = undefined;
-        }
-
-        const result = this.handler!.process(message);
-        this.scheduleSequenceNumberUpdate(message, result.immediateNoOp === true);
-
-        const endTime = Date.now();
-        this.emit("processTime", endTime - startTime);
     }
 
     /**
