@@ -148,11 +148,7 @@ interface IRuntimeMessageMetadata {
 class ScheduleManager {
     private readonly messageScheduler: IMessageScheduler | undefined;
     private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    private pauseSequenceNumber: number | undefined;
     private pauseClientId: string | undefined;
-
-    private paused = false;
-    private localPaused = false;
     private batchClientId: string;
 
     constructor(
@@ -191,21 +187,9 @@ class ScheduleManager {
             lastMessage.metadata = { ...lastMessage.metadata, ...{ batch: false } };
         });
 
-        // Listen for updates and peek at the inbound
-        this.deltaManager.inbound.on(
-            "push",
-            (message: ISequencedDocumentMessage) => {
-                this.trackPending(message);
-                this.updatePauseState(message.sequenceNumber);
-            });
-
-        const allPending = this.deltaManager.inbound.toArray();
-        for (const pending of allPending) {
-            this.trackPending(pending);
-        }
-
-        // Based on track pending update the pause state
-        this.updatePauseState(this.deltaManager.referenceSequenceNumber);
+        this.deltaManager.on("preparePush", (message: ISequencedDocumentMessage) => {
+            this.trackPending(message);
+        });
     }
 
     public beginOperation(message: ISequencedDocumentMessage) {
@@ -240,8 +224,6 @@ class ScheduleManager {
             return;
         }
 
-        this.updatePauseState(message.sequenceNumber);
-
         // If no batchClientId has been set then we're in an individual batch
         if (!this.batchClientId) {
             this.emitter.emit("batchEnd", undefined, message);
@@ -265,56 +247,23 @@ class ScheduleManager {
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
     public pause(): Promise<void> {
-        this.paused = true;
         return this.deltaManager.inbound.systemPause();
     }
 
     public resume() {
-        this.paused = false;
-        if (!this.localPaused) {
-            this.deltaManager.inbound.systemResume();
-        }
+        this.deltaManager.inbound.systemResume();
     }
 
-    private setPaused(localPaused: boolean) {
-        // Return early if no change in value
-        if (this.localPaused === localPaused) {
-            return;
-        }
-
-        this.localPaused = localPaused;
-        if (localPaused || this.paused) {
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            this.deltaManager.inbound.systemPause();
-        } else {
-            this.deltaManager.inbound.systemResume();
-        }
-    }
-
-    private updatePauseState(sequenceNumber: number) {
-        // If the inbound queue is ever empty we pause it and wait for new events
-        if (this.deltaManager.inbound.length === 0) {
-            this.setPaused(true);
-            return;
-        }
-
-        // If no message has caused the pause flag to be set, or the next message up is not the one we need to pause at
-        // then we simply continue processing
-        if (!this.pauseSequenceNumber || sequenceNumber + 1 < this.pauseSequenceNumber) {
-            this.setPaused(false);
-        } else {
-            // Otherwise the next message requires us to pause
-            this.setPaused(true);
-        }
-    }
 
     private trackPending(message: ISequencedDocumentMessage) {
         const metadata = message.metadata as IRuntimeMessageMetadata | undefined;
 
+        let ready: boolean = false;
+
         // Protocol messages are never part of a runtime batch of messages
         if (!isRuntimeMessage(message)) {
-            this.pauseSequenceNumber = undefined;
             this.pauseClientId = undefined;
+            ready = true;
             return;
         }
 
@@ -325,14 +274,19 @@ class ScheduleManager {
             if (batchMetadata !== undefined) {
                 // If batchMetadata is not undefined then if it's true we've begun a new batch - if false we've ended
                 // the previous one
-                this.pauseSequenceNumber = batchMetadata ? message.sequenceNumber : undefined;
-                this.pauseClientId = batchMetadata ? this.pauseClientId : undefined;
+                if (batchMetadata === false) {
+                    this.pauseClientId = undefined;
+                    ready = true;
+                } else {
+                    // log errror
+                }
             }
         } else {
-            // We check the batch flag for the new clientID - if true we pause otherwise we reset the tracking data
-            this.pauseSequenceNumber = batchMetadata ? message.sequenceNumber : undefined;
             this.pauseClientId = batchMetadata ? message.clientId : undefined;
+            ready = batchMetadata ? false : true;
         }
+
+        this.deltaManager.setInboundMessageBufferReady(ready);
     }
 }
 

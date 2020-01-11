@@ -86,7 +86,7 @@ export class DeltaManagerProxy
     extends EventForwarder
     implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
 
-    public readonly inbound: IDeltaQueue<ISequencedDocumentMessage>;
+    public readonly inbound: IDeltaQueue<ISequencedDocumentMessage[]>;
     public readonly outbound: IDeltaQueue<IDocumentMessage[]>;
     public readonly inboundSignal: IDeltaQueue<ISignalMessage>;
 
@@ -140,6 +140,10 @@ export class DeltaManagerProxy
         this.inbound = new DeltaQueueProxy(deltaManager.inbound);
         this.outbound = new DeltaQueueProxy(deltaManager.outbound);
         this.inboundSignal = new DeltaQueueProxy(deltaManager.inboundSignal);
+    }
+
+    public setInboundMessageBufferReady(ready: boolean) {
+        this.deltaManager.setInboundMessageBufferReady(ready);
     }
 
     public dispose(): void {
