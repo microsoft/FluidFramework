@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { MockRuntime } from "@microsoft/fluid-test-runtime-utils";
 import * as assert from "assert";
-import { ISharedCell } from "..";
+import { MockRuntime } from "@microsoft/fluid-test-runtime-utils";
 import { CellFactory } from "../cellFactory";
+import { ISharedCell } from "..";
 
 describe("Routerlicious", () => {
     describe("Api", () => {
