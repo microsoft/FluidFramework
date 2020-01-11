@@ -35,7 +35,7 @@ export async function fetchJoinSession(
     path: string,
     additionalParams: string,
     method: string,
-    logger,
+    logger: ITelemetryLogger,
     getVroomToken: (refresh: boolean) => Promise<string | undefined | null>,
 ): Promise<IOdspResponse<ISocketStorageDiscovery>> {
     return getWithRetryForTokenRefresh(async (refresh: boolean) => {
@@ -71,7 +71,7 @@ export async function fetchJoinSession(
             sprequestduration: response.headers.get("sprequestduration"),
         });
         return response;
-  });
+    });
 }
 
 /**
