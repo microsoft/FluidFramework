@@ -3049,7 +3049,6 @@ export class MergeTree {
         }
         if (this.collabWindow.collaborating) {
             strbuf += internedSpaces(indentCount);
-            // tslint:disable-next-line: prefer-template
             strbuf += `${block.partialLengths.toString((id) => glc(this, id), indentCount)}\n`;
         }
         const children = block.children;

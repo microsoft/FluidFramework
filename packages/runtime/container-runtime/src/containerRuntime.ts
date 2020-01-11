@@ -631,6 +631,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     public get IComponentTokenProvider() {
 
         if (this.options && this.options.intelligence) {
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             return {
                 intelligence: this.options.intelligence,
             } as IComponentTokenProvider;
