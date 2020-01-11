@@ -86,10 +86,11 @@ export class SummaryTreeConverter {
                             content = blob.contents;
                             summaryStats.totalBlobSize += Buffer.byteLength(content);
                         }
-                        value = {
+                        const summaryBlob: ISummaryBlob = {
                             content,
                             type: SummaryType.Blob,
-                        } as ISummaryBlob;
+                        };
+                        value = summaryBlob;
                         summaryStats.blobNodeCount++;
                         break;
 

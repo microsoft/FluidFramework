@@ -94,6 +94,7 @@ export class InclusionFormatter extends Formatter<IInclusionState> {
                 const visual = component.IComponentHTMLVisual;
                 const view: IComponentHTMLView = visual.addView
                     ? visual.addView(layout.scope)
+                    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                     : {
                         IComponentHTMLVisual: visual,
                         render: visual.render.bind(visual),
