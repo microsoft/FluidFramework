@@ -98,7 +98,7 @@ describe("Errors Types", () => {
             retryAfter: 100,
         }
         const throttlingError = errorObjectFromOdspError(err, true)
-        assert.equal(throttlingError.type, ErrorType.throttling, "Error is not a throttling error");
+        assert.equal(throttlingError.type, ErrorType.throttlingError, "Error is not a throttling error");
     });
 
 });

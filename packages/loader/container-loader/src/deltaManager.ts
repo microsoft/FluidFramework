@@ -686,7 +686,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             const delayTime = Math.max(this.deltaStorageDelay, this.deltaStreamDelay);
             if (delayTime >= 0) {
                 const throttlingError: IThrottlingError = {
-                    type: ErrorType.throttling,
+                    type: ErrorType.throttlingError,
                     message: "Service busy/throttled.",
                     retryAfterSeconds: delayTime,
                 };

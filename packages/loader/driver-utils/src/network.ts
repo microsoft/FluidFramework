@@ -31,7 +31,7 @@ export class ThrottlingError extends Error implements IThrottlingError {
 
     constructor(
         errorMessage: string,
-        readonly type: ErrorType.throttling,
+        readonly type: ErrorType.throttlingError,
         readonly retryAfterSeconds: number) {
         super(errorMessage);
     }

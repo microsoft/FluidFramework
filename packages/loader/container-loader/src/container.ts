@@ -34,7 +34,6 @@ import {
 import {
     IDocumentService,
     IDocumentStorageService,
-    IThrottlingError,
     IError,
 } from "@microsoft/fluid-driver-definitions";
 import { readAndParse, createContainerError } from "@microsoft/fluid-driver-utils";
@@ -348,7 +347,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     public on(event: "connected" | "contextChanged", listener: (clientId: string) => void): this;
     public on(event: "disconnected" | "joining" | "closed", listener: () => void): this;
     public on(event: "error", listener: (error: any) => void): this;
-    public on(event: "serviceBusy", listener: (error: IThrottlingError) => void): this;
     public on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
     public on(event: "pong" | "processTime", listener: (latency: number) => void): this;
     public on(event: MessageType.BlobUploaded, listener: (contents: any) => void): this;
@@ -948,10 +946,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         deltaManager.on("error", (error: IError) => {
             this.raiseCriticalError(error);
-        });
-
-        deltaManager.on("serviceBusy", (error: IThrottlingError) => {
-            this.emit("serviceBusy", error);
         });
 
         deltaManager.on("pong", (latency) => {

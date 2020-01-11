@@ -48,7 +48,7 @@ export class OdspNetworkError extends NetworkError {
  */
 export function errorObjectFromOdspError(socketError: IOdspSocketError, canRetry: boolean) {
     if (socketError.retryAfter) {
-        return new ThrottlingError(socketError.message, ErrorType.throttling, socketError.retryAfter);
+        return new ThrottlingError(socketError.message, ErrorType.throttlingError, socketError.retryAfter);
     } else {
         return new OdspNetworkError(
             socketError.message,

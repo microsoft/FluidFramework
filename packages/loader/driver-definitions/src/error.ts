@@ -6,7 +6,7 @@
 export enum ErrorType {
     generalError,
     connectionError,
-    throttling,
+    throttlingError,
     serviceError,
     summarizingError,
 }
@@ -20,7 +20,7 @@ export interface IGeneralError {
 }
 
 export interface IThrottlingError {
-    readonly type: ErrorType.throttling;
+    readonly type: ErrorType.throttlingError;
     readonly message: string;
     readonly retryAfterSeconds: number;
 }
