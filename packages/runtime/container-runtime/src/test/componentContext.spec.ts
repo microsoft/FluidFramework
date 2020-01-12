@@ -2,7 +2,8 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-// tslint:disable: prefer-const
+
+import * as assert from "assert";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import { IBlob, ISnapshotTree } from "@microsoft/fluid-protocol-definitions";
@@ -13,7 +14,6 @@ import {
     IComponentRuntime,
 } from "@microsoft/fluid-runtime-definitions";
 import { MockRuntime } from "@microsoft/fluid-test-runtime-utils";
-import * as assert from "assert";
 import { IComponentAttributes, LocalComponentContext, RemotedComponentContext } from "../componentContext";
 import { ContainerRuntime } from "../containerRuntime";
 import { DocumentStorageServiceProxy } from "../documentStorageServiceProxy";
@@ -28,15 +28,16 @@ describe("Component Context Tests", () => {
         let containerRuntime: ContainerRuntime;
         beforeEach(async () => {
             let registry: IComponentRegistry;
-            let factory: IComponentFactory;
-            factory = {
+            const factory: IComponentFactory = {
                 get IComponentFactory() { return factory; },
                 instantiateComponent: (context: IComponentContext) => { },
             };
+            // eslint-disable-next-line prefer-const
             registry = {
                 IComponentRegistry: registry,
-                get: (pkg) => Promise.resolve(factory),
+                get: async (pkg) => Promise.resolve(factory),
             };
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             containerRuntime = { IComponentRegistry: registry } as ContainerRuntime;
         });
 
@@ -44,7 +45,7 @@ describe("Component Context Tests", () => {
             localComponentContext =
                 new LocalComponentContext("Test1", ["TestComponent1"], containerRuntime, storage, scope, attachCb);
 
-            // tslint:disable-next-line: no-floating-promises
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             localComponentContext.realize();
             localComponentContext.bindRuntime(new MockRuntime());
             const attachMessage = localComponentContext.generateAttachMessage();
@@ -71,24 +72,25 @@ describe("Component Context Tests", () => {
                 new LocalComponentContext("Test1", ["TestComp", "SubComp"], containerRuntime, storage, scope, attachCb);
 
             await localComponentContext.realize()
-            .catch((error) => {
-                exception = true;
-            });
-            assert.equal(exception, true, "Exception did not occured.");
+                .catch((error) => {
+                    exception = true;
+                });
+            assert.equal(exception, true, "Exception did not occurred.");
         });
 
         it("Supplying array of packages in LocalComponentContext should not create exception", async () => {
             const registryWithSubRegistries: {[key: string]: any} = { };
             registryWithSubRegistries.IComponentFactory = registryWithSubRegistries;
             registryWithSubRegistries.IComponentRegistry = registryWithSubRegistries;
-            registryWithSubRegistries.get = (pkg) => Promise.resolve(registryWithSubRegistries);
+            registryWithSubRegistries.get = async (pkg) => Promise.resolve(registryWithSubRegistries);
             registryWithSubRegistries.instantiateComponent = (context: IComponentContext) => { };
 
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             containerRuntime = { IComponentRegistry: registryWithSubRegistries } as ContainerRuntime;
             localComponentContext =
                 new LocalComponentContext("Test1", ["TestComp", "SubComp"], containerRuntime, storage, scope, attachCb);
 
-            // tslint:disable-next-line: no-floating-promises
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             localComponentContext.realize();
             localComponentContext.bindRuntime(new MockRuntime());
 
@@ -122,8 +124,9 @@ describe("Component Context Tests", () => {
             factory.instantiateComponent = (context: IComponentContext) => { context.bindRuntime(new MockRuntime()); };
             const registry: { [key: string]: any } = {};
             registry.IComponentRegistry = registry;
-            registry.get = (pkg) => Promise.resolve(factory);
+            registry.get = async (pkg) => Promise.resolve(factory);
 
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             containerRuntime = { IComponentRegistry: registry } as ContainerRuntime;
         });
 
