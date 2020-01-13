@@ -2,28 +2,15 @@
 
 ![Aqueduct](https://publicdomainvectors.org/photos/johnny-automatic-Roman-aqueducts.png)
 
-The Aqueduct is a library for building Components and Containers within the Fluid Framework. It's goal is to provide a thin base layer over the existing Fluid Framework interfaces that allows developers to get started quickly.
+The Aqueduct is a library for building Components and Containers within the Fluid Framework. Its goal is to provide a thin base layer over the existing Fluid Framework interfaces that allows developers to get started quickly.
 
 ## Component Development
 
-Fluid component development consists of developing the Component Object and the corresponding Factory Object. The Component Object defines the logic of your component where the Factory Object defines how to initialize your object.
+Fluid component development consists of developing the Component Object and the corresponding Factory Object. The Component Object defines the logic of your component, whereas the Factory Object defines how to initialize your object.
 
 ### Component Object Development
 
-The `SharedComponent` and the `PrimedComponent` are the two base component objects provided by the library.
-
-#### [`SharedComponent`](./src/components/sharedComponent.ts)
-
-The [`SharedComponent`](./src/components/sharedComponent.ts) provides the following functionality:
-
-- Basic set of interface implementations to be loadable in a Fluid Container.
-- Functions for managing component lifecycle.
-  - `componentInitializingFirstTime(props: any)`
-  - `componentInitializingFromExisting()`
-  - `componentHasInitialized()`
-- Helper functions for creating and getting other Component Objects in the same Container.
-
-> Note: You probably don't want to inherit from this component directly unless you are creating another base component class. If you have a component that doesn't use Distributed Data Structures you should use Container Services to manage your object.
+The `PrimedComponent` and the `SharedComponent` are the two base component objects provided by the library.
 
 #### [`PrimedComponent`](./src/components/primedComponent.ts)
 
@@ -35,9 +22,22 @@ The [`PrimedComponent`](./src/components/primedComponent.ts) extends the [`Share
 
 > Note: Most developers will want to use the PrimedComponent as their base class to extend.
 
+#### [`SharedComponent`](./src/components/sharedComponent.ts)
+
+The [`SharedComponent`](./src/components/sharedComponent.ts) provides the following functionality:
+
+- Basic set of interface implementations to be loadable in a Fluid Container.
+- Functions for managing component lifecycle.
+  - `componentInitializingFirstTime(props: any)` - called only the first time a component is initialized
+  - `componentInitializingFromExisting()` - called every time except the first time a component is initialized
+  - `componentHasInitialized()` - called every time after `componentInitializingFirstTime` or `componentInitializingFromExisting` executes
+- Helper functions for creating and getting other Component Objects in the same Container.
+
+> Note: You probably don't want to inherit from this component directly unless you are creating another base component class. If you have a component that doesn't use Distributed Data Structures you should use Container Services to manage your object.
+
 #### Component Object Example
 
-In the blow example we have a simple Component Object that will render a value alongside a button the the page. Every time the button is pressed the value will increment. Because this Component Object render to the DOM it also extends `IComponentHTMLVisual`.
+In the below example we have a simple Component Object that will render a value alongside a button the the page. Every time the button is pressed the value will increment. Because this Component Object renders to the DOM it also extends `IComponentHTMLVisual`.
 
 ```jsx
 export class Clicker extends PrimedComponent implements IComponentHTMLVisual {
@@ -72,7 +72,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLVisual {
 
 ### Component Factory Object Development
 
-The Component Factory Object is used to initialize a Component Object within the context of a Container. The Factory can live along side a Component Object or within a different package. The Component Factory Object defines the Distributed Data Structures used within the Component Object as well as the Sub-Components of the object. Sub-Components are other Component Objects required by the Component Object. Think of this a list of dependencies.
+The Component Factory Object is used to initialize a Component Object within the context of a Container. The Factory can live alongside a Component Object or within a different package. The Component Factory Object defines the Distributed Data Structures used within the Component Object as well as the Sub-Components of the object. Sub-Components are other Component Objects required by the Component Object. Think of this as a list of dependencies.
 
 The Aqueduct offers a factory for each of the Component Objects provided.
 
@@ -94,7 +94,7 @@ export const ClickerInstantiationFactory = new PrimedComponentFactory(
 
 A Container is a collection of Components and functionality that produce an experience. Containers hold the instances of Component Objects as well as defining the Component Objects that can be created within the Container. Because of this Component Objects cannot be consumed except for when they are within a Container.
 
-The Aqueduct provide the [`SimpleModuleInstantiationFactory`](./src/helpers/simpleModuleInstantiationFactory.ts) that allows you as a Container developer to:
+The Aqueduct provides the [`SimpleModuleInstantiationFactory`](./src/helpers/simpleModuleInstantiationFactory.ts) that allows you as a Container developer to:
 
 - Define the registry of Component Objects that can be created
 - Declare the Default Component
