@@ -845,7 +845,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         if ("fluidExport" in component) {
             const factory = component.fluidExport.IRuntimeFactory;
-            return factory ? factory : Promise.reject(PackageNotFactoryError);
+            if (!factory) {
+                throw new Error(PackageNotFactoryError);
+            }
+            return factory;
         }
 
         // TODO included for back-compat
@@ -853,7 +856,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             return component;
         }
 
-        return Promise.reject(PackageNotFactoryError);
+        throw new Error(PackageNotFactoryError);
     }
 
     private get client() {
