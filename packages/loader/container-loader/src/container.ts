@@ -143,7 +143,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                     res(container);
                 })
                 .catch((error) => {
-                    const err = createContainerError(error);
+                    const err = createContainerError(error, true);
                     if (!alreadyRaisedError) {
                         container.logCriticalError(err);
                     }
@@ -436,7 +436,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     // eslint-disable-next-line @typescript-eslint/promise-function-async
     public reloadContext(): Promise<void> {
         return this.reloadContextCore().catch((error) => {
-            this.raiseCriticalError(createContainerError(error));
+            this.raiseCriticalError(createContainerError(error, true));
             throw error;
         });
     }

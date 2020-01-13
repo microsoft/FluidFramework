@@ -104,7 +104,7 @@ describe("Container", () => {
                 loader,
                 testRequest);
         } catch (error) {
-            assert.equal(error.type, ErrorType.generalError, "Error is not a general error");
+            assert.equal(error.errorType, ErrorType.generalError, "Error is not a general error");
             const generalError = error as IGeneralError;
             success = generalError.error as boolean;
         }

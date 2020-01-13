@@ -6,7 +6,7 @@
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { BatchManager } from "@microsoft/fluid-core-utils";
-import { ErrorType, IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
+import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
 import { NetworkError } from "@microsoft/fluid-driver-utils";
 import {
     ConnectionMode,
@@ -36,7 +36,6 @@ export function createErrorObject(handler: string, error: any, canRetry = true) 
     // Also add actual error object(socketError), for driver to be able to parse it and reason over it.
     const errorObj = new NetworkError(
         `socket.io error: ${handler}: ${error}`,
-        ErrorType.connectionError,
         undefined,
         canRetry,
     );

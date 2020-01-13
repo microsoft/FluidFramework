@@ -616,7 +616,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         // Note: "disconnect" & "nack" do not have error object
         if (raiseContainerError && error !== undefined) {
-            this.emit("error", createContainerError(error));
+            this.emit("error", createContainerError(error, true));
         }
 
         this.logger.sendTelemetryEvent({ eventName: "ContainerClose" }, error);
@@ -686,11 +686,11 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             const delayTime = Math.max(this.deltaStorageDelay, this.deltaStreamDelay);
             if (delayTime >= 0) {
                 const throttlingError: IThrottlingError = {
-                    type: ErrorType.throttlingError,
+                    errorType: ErrorType.throttlingError,
                     message: "Service busy/throttled.",
                     retryAfterSeconds: delayTime,
                 };
-                this.emit("serviceBusy", throttlingError);
+                this.emit("error", throttlingError);
             }
         }
     }

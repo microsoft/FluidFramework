@@ -21,6 +21,7 @@ import {
 } from "@microsoft/fluid-local-test-server";
 import { createErrorObject } from "@microsoft/fluid-driver-base";
 import { errorObjectFromOdspError } from "@microsoft/fluid-odsp-driver";
+import { createContainerError } from "@microsoft/fluid-driver-utils";
 import * as assert from "assert";
 
 describe("Errors Types", () => {
@@ -60,7 +61,7 @@ describe("Errors Types", () => {
                 loader,
                 testRequest);
         } catch (error) {
-            assert.equal(error.type, ErrorType.generalError, "Error is not a general error");
+            assert.equal(error.errorType, ErrorType.generalError, "Error is not a general error");
         }
     });
 
@@ -68,8 +69,8 @@ describe("Errors Types", () => {
         const err = {
             message: "Test Error",
         }
-        const networkError = createErrorObject("handler", err, false)
-        assert.equal(networkError.type, ErrorType.connectionError, "Error is not a network error");
+        const networkError = createContainerError(createErrorObject("handler", err, false));
+        assert.equal(networkError.errorType, ErrorType.connectionError, "Error is not a network error");
     });
 
     it("Network Error Test_2", async () => {
@@ -77,8 +78,8 @@ describe("Errors Types", () => {
             message: "Test Error",
             retryAfter: 100,
         }
-        const networkError = createErrorObject("handler", err, false)
-        assert.equal(networkError.type, ErrorType.connectionError, "Error is not a network error");
+        const networkError = createContainerError(createErrorObject("handler", err, false));
+        assert.equal(networkError.errorType, ErrorType.connectionError, "Error is not a network error");
     });
 
     
@@ -87,8 +88,8 @@ describe("Errors Types", () => {
             message: "Test Error",
             code: 400,
         }
-        const networkError = errorObjectFromOdspError(err, false)
-        assert.equal(networkError.type, ErrorType.connectionError, "Error is not a network error");
+        const networkError = createContainerError(errorObjectFromOdspError(err, false));
+        assert.equal(networkError.errorType, ErrorType.connectionError, "Error is not a network error");
     });
 
     it("Throttling Error Test", async () => {
@@ -97,8 +98,28 @@ describe("Errors Types", () => {
             code: 529,
             retryAfter: 100,
         }
-        const throttlingError = errorObjectFromOdspError(err, true)
-        assert.equal(throttlingError.type, ErrorType.throttlingError, "Error is not a throttling error");
+        const throttlingError = createContainerError(errorObjectFromOdspError(err, true));
+        assert.equal(throttlingError.errorType, ErrorType.throttlingError, "Error is not a throttling error");
+    });
+
+    it("Check double conversion of network error", async () => {
+        const err = {
+            message: "Test Error",
+            code: 529,
+            retryAfter: 100,
+        }
+        const error1 = createContainerError(errorObjectFromOdspError(err, true), true);                                                                                                                                                                              
+        const error2 = createContainerError(error1, false);
+        assert.equal(error1, error2, "Both errors should be same!!");
+    });
+
+    it("Check double conversion of general error", async () => {
+        const err = {
+            message: "Test Error",
+        }
+        const error1 = createContainerError(err, true);
+        const error2 = createContainerError(error1, false);
+        assert.equal(error1, error2, "Both errors should be same!!");
     });
 
 });

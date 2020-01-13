@@ -15,18 +15,18 @@ export type IError = IGeneralError | IThrottlingError | IConnectionError |
 IServiceError | ISummarizingError;
 
 export interface IGeneralError {
-    readonly type: ErrorType.generalError;
+    readonly errorType: ErrorType.generalError;
     error: any;
 }
 
 export interface IThrottlingError {
-    readonly type: ErrorType.throttlingError;
+    readonly errorType: ErrorType.throttlingError;
     readonly message: string;
     readonly retryAfterSeconds: number;
 }
 
 export interface IConnectionError {
-    readonly type: ErrorType.connectionError;
+    readonly errorType: ErrorType.connectionError;
     readonly message: string;
     readonly canRetry?: boolean;
     readonly statusCode?: number;
@@ -34,9 +34,9 @@ export interface IConnectionError {
 }
 
 export interface IServiceError {
-    readonly type: ErrorType.serviceError;
+    readonly errorType: ErrorType.serviceError;
 }
 
 export interface ISummarizingError {
-    readonly type: ErrorType.summarizingError;
+    readonly errorType: ErrorType.summarizingError;
 }

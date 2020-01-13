@@ -11,16 +11,22 @@ export class NetworkError extends Error implements IConnectionError {
 
     constructor(
         errorMessage: string,
-        readonly type: ErrorType.connectionError,
         readonly statusCode?: number,
         readonly canRetry?: boolean,
-        readonly online = OnlineStatus[isOnline()]) {
+        readonly online = OnlineStatus[isOnline()],
+        readonly errorType: ErrorType.connectionError = ErrorType.connectionError) {
         super(errorMessage);
     }
 
-    // Return all enumerable properties (i.e. exclude stack, message)
+    // Return all properties
     public getCustomProperties(): object {
-        return this;
+        const prop = {};
+        for (const key of Object.getOwnPropertyNames(this)) {
+            if (this[key]) {
+                prop[key] = this[key];
+            }
+        }
+        return prop;
     }
 }
 
@@ -31,8 +37,8 @@ export class ThrottlingError extends Error implements IThrottlingError {
 
     constructor(
         errorMessage: string,
-        readonly type: ErrorType.throttlingError,
-        readonly retryAfterSeconds: number) {
+        readonly retryAfterSeconds: number,
+        readonly errorType: ErrorType.throttlingError = ErrorType.throttlingError) {
         super(errorMessage);
     }
 
