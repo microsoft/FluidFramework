@@ -159,7 +159,7 @@ export class TestHost {
         private readonly componentRegistry: NamedComponentRegistryEntries,
         private readonly sharedObjectFactories: readonly ISharedObjectFactory[] = [],
         deltaConnectionServer?: ITestDeltaConnectionServer,
-        scope?: IComponent,
+        private readonly scope: IComponent = {},
     ) {
         this.deltaConnectionServer = deltaConnectionServer || TestDeltaConnectionServer.create();
 
@@ -195,7 +195,8 @@ export class TestHost {
         return new TestHost(
             this.componentRegistry,
             this.sharedObjectFactories,
-            this.deltaConnectionServer);
+            this.deltaConnectionServer,
+            this.scope);
     }
 
     /**
