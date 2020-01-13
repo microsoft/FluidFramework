@@ -24,6 +24,7 @@ export function create(store: nconf.Provider): Router {
             ref: sha,
         });
 
+        // eslint-disable-next-line arrow-body-style
         return descriptions.map((description) => {
             return {
                 url: "",

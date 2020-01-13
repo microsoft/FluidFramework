@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { ICollection, IDb } from "@microsoft/fluid-server-services-core";
 import { EventEmitter } from "events";
+import { ICollection, IDb } from "@microsoft/fluid-server-services-core";
 import { Collection } from "./collection";
 
 export class DB extends EventEmitter implements IDb {
-    private collections = new Map<string, Collection<any>>();
+    private readonly collections = new Map<string, Collection<any>>();
 
     public async close(): Promise<void> {
         return;
