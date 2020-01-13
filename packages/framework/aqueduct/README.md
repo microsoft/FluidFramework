@@ -16,7 +16,7 @@ The `PrimedComponent` and the `SharedComponent` are the two base component objec
 
 The [`PrimedComponent`](./src/components/primedComponent.ts) extends the [`SharedComponent`](####SharedComponent) and provides all of its functionality as well as the following additional functionality:
 
-- A `root` directory that makes creating and storing Distributed Data Structures and Components simple.
+- A `root` SharedDirectory that makes creating and storing Distributed Data Structures and Components easy.
 - Scheduled Task routing that makes it easier to use the Scheduler Component
 - Blob Storage implementation that makes it easier to store and retrieve blobs.
 
