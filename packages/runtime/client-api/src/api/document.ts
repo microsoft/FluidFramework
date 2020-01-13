@@ -220,11 +220,18 @@ async function initializeChaincode(container: Container, pkg: string): Promise<v
     }
 
     // And then make the proposal if a code proposal has not yet been made
-    if (!quorum.has("code2")) {
-        await quorum.propose("code2", pkg);
+    if (!quorum.has("code") && !quorum.has("code2")) {
+        await quorum.propose("code", pkg);
     }
 
-    debug(`Code is ${quorum.get("code2")}`);
+    let code = quorum.get("code");
+
+    // Back compat
+    if (!code) {
+        code = quorum.get("code2");
+    }
+
+    debug(`Code is ${code}`);
 }
 
 function attach(loader: Loader, url: string, deferred: Deferred<Document>): void {
