@@ -13,7 +13,7 @@ import { IFluidResolvedUrl, IResolvedUrl } from "@microsoft/fluid-driver-definit
 import { IResolvedPackage, WebCodeLoader } from "@microsoft/fluid-web-code-loader";
 import { IBaseHostConfig } from "./hostConfig";
 
-async function attach(loader: Loader, url: string, div: HTMLDivElement) {
+async function getComponentAndRender(loader: Loader, url: string, div: HTMLDivElement) {
     const response = await loader.request({ url });
 
     if (response.status !== 200 ||
@@ -55,14 +55,6 @@ async function initializeChaincode(container: Container, pkg?: IFluidCodeDetails
     }
 
     console.log(`Code is ${quorum.get("code")}`);
-}
-
-async function registerAttach(loader: Loader, container: Container, uri: string, div: HTMLDivElement) {
-    // eslint-disable-next-line @typescript-eslint/no-misused-promises
-    container.on("contextChanged", async (value) => {
-        await attach(loader, uri, div);
-    });
-    await attach(loader, uri, div);
 }
 
 /**
@@ -162,11 +154,11 @@ export class BaseHost {
     public async loadAndRender(url: string, div: HTMLDivElement, pkg?: IFluidCodeDetails) {
         const loader = await this.getLoader();
         const container = await loader.resolve({ url });
-        await registerAttach(
-            loader,
-            container,
-            url,
-            div);
+
+        container.on("contextChanged", (value) => {
+            getComponentAndRender(loader, url, div).catch(() => { });
+        });
+        await getComponentAndRender(loader, url, div);
 
         // If this is a new document we will go and instantiate the chaincode. For old documents we assume a legacy
         // package.
