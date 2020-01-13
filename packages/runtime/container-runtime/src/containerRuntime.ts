@@ -148,7 +148,6 @@ interface IRuntimeMessageMetadata {
 class ScheduleManager {
     private readonly messageScheduler: IMessageScheduler | undefined;
     private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    private pauseClientId: string | undefined;
     private batchClientId: string;
 
     constructor(
@@ -163,33 +162,6 @@ class ScheduleManager {
 
         this.messageScheduler = messageScheduler;
         this.deltaManager = this.messageScheduler.deltaManager;
-
-        // Listen for delta manager sends and add batch metadata to messages
-        this.deltaManager.on("prepareSend", (messages: IDocumentMessage[]) => {
-            if (messages.length === 0) {
-                return;
-            }
-
-            // First message will have the batch flag set to true if doing a batched send
-            const firstMessageMetadata = messages[0].metadata as IRuntimeMessageMetadata;
-            if (!firstMessageMetadata || !firstMessageMetadata.batch) {
-                return;
-            }
-
-            // If only length one then clear
-            if (messages.length === 1) {
-                delete messages[0].metadata;
-                return;
-            }
-
-            // Set the batch flag to false on the last message to indicate the end of the send batch
-            const lastMessage = messages[messages.length - 1];
-            lastMessage.metadata = { ...lastMessage.metadata, ...{ batch: false } };
-        });
-
-        this.deltaManager.on("preparePush", (message: ISequencedDocumentMessage) => {
-            this.trackPending(message);
-        });
     }
 
     public beginOperation(message: ISequencedDocumentMessage) {
@@ -252,59 +224,6 @@ class ScheduleManager {
 
     public resume() {
         this.deltaManager.inbound.systemResume();
-    }
-
-    private trackPending(message: ISequencedDocumentMessage) {
-        const metadata = message.metadata as IRuntimeMessageMetadata | undefined;
-
-        let ready: boolean = false;
-
-        // Protocol messages are never part of a runtime batch of messages
-        if (!isRuntimeMessage(message)) {
-            this.pauseClientId = undefined;
-            ready = true;
-            return;
-        }
-
-        const batchMetadata = metadata ? metadata.batch : undefined;
-
-        // If the client ID changes then we can move the pause point. If it stayed the same then we need to check.
-        if (this.pauseClientId === message.clientId) {
-            if (batchMetadata !== undefined) {
-                // If batchMetadata is false we've ended the current batch.
-                // If batchMetadata is true, we've started a new batch while receiving the current batch which should
-                // not happen. We treat this as part of the ongoing batch and log a telemetry event.
-                if (batchMetadata === false) {
-                    this.pauseClientId = undefined;
-                    ready = true;
-                } else {
-                    // Log error.
-                }
-            }
-        } else {
-            // If pauseClientId is not undefined, we were in the middle of receiving a batch and we started receiving
-            // messages from another client. Push the current batch into the queue (indicating that the batch is over)
-            // and log a telemetry event.
-            if (this.pauseClientId) {
-                this.deltaManager.pushToInboundQueue();
-                // Log error.
-            }
-            this.pauseClientId = batchMetadata ? message.clientId : undefined;
-            ready = batchMetadata ? false : true;
-        }
-
-        this.deltaManager.setInboundMessageBufferReady(ready);
-    }
-}
-
-function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
-    switch (message.type) {
-        case MessageType.ChunkedOp:
-        case MessageType.Attach:
-        case MessageType.Operation:
-            return true;
-        default:
-            return false;
     }
 }
 
