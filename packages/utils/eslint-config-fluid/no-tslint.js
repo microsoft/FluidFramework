@@ -61,7 +61,13 @@ module.exports = {
             }
         ],
         "@typescript-eslint/class-name-casing": "error",
-        "@typescript-eslint/consistent-type-assertions": "error",
+        "@typescript-eslint/consistent-type-assertions": [
+            "error",
+            {
+                "assertionStyle": "as",
+                "objectLiteralTypeAssertions": "never"
+            }
+        ],
         "@typescript-eslint/consistent-type-definitions": "error",
         "@typescript-eslint/explicit-function-return-type": "off",
         "@typescript-eslint/indent": [

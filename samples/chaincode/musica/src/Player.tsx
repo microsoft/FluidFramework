@@ -13,6 +13,7 @@ export class Player {
         const frequency = Math.pow(2, (note.midiNumber - 69) / 12) * 440;
         const instrument = note.instrument;
 
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         let waveProperties = {
             frequency,
         } as WaveProperties;

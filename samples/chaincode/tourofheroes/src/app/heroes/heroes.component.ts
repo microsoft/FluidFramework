@@ -31,6 +31,7 @@ export class HeroesComponent implements OnInit {
         // eslint-disable-next-line no-param-reassign
         name = name.trim();
         if (!name) { return; }
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         this.heroService.addHero({ name } as Hero)
             .subscribe((hero) => {
                 this.heroes.push(hero);

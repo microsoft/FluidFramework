@@ -454,7 +454,7 @@ export function inputBoxCreate(
 
     const getText = () => span.innerText;
 
-    return {
+    const inputBox: IInputBox = {
         elm,
         getText,
         initCursor,
@@ -462,7 +462,9 @@ export function inputBoxCreate(
         keypress,
         setPrefixText,
         setText,
-    } as IInputBox;
+    };
+
+    return inputBox;
 }
 
 interface IParameterState {

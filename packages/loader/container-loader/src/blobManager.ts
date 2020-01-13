@@ -46,6 +46,7 @@ export class BlobManager implements IBlobManager {
         const response = await this.storage.createBlob(blob.content);
 
         // Remove blobContent
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         const blobMetaData = {
             fileName: blob.fileName,
             id: response.id,
