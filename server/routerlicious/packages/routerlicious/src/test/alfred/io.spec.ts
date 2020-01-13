@@ -27,9 +27,8 @@ import {
     TestWebSocketServer,
 } from "@microsoft/fluid-server-test-utils";
 import * as assert from "assert";
-import * as io from "../../alfred/io";
 import { OrdererManager } from "../../alfred/runnerFactory";
-import { DefaultServiceConfiguration } from "../../alfred/utils";
+import { register, DefaultMetricClient } from "@microsoft/fluid-server-services-core";
 
 describe("Routerlicious", () => {
     describe("Alfred", () => {
@@ -49,7 +48,6 @@ describe("Routerlicious", () => {
 
                 beforeEach(() => {
                     const collectionNames = "test";
-                    const metricClientConfig = {};
                     const testData: { [key: string]: any[] } = {};
 
                     deliKafka = new TestKafka();
@@ -71,20 +69,20 @@ describe("Routerlicious", () => {
                     const kafkaOrderer = new KafkaOrdererFactory(
                         producer,
                         1024 * 1024,
-                        DefaultServiceConfiguration);
+                        core.DefaultServiceConfiguration);
                     testOrderer = new OrdererManager(url, testTenantManager, null, kafkaOrderer, null);
 
                     webSocketServer = new TestWebSocketServer();
                     contentCollection = new TestCollection([]);
 
-                    io.register(
+                    register(
                         webSocketServer,
-                        metricClientConfig,
                         testOrderer,
                         testTenantManager,
                         testStorage,
                         contentCollection,
-                        testClientManager);
+                        testClientManager,
+                        new DefaultMetricClient());
                 });
 
                 function connectToServer(

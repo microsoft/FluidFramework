@@ -20,7 +20,6 @@ import * as redis from "redis";
 import * as winston from "winston";
 import * as ws from "ws";
 import { AlfredRunner } from "./runner";
-import { DefaultServiceConfiguration } from "./utils";
 
 class NodeWebSocketServer implements core.IWebSocketServer {
     private readonly webSocketServer: ws.Server;
@@ -203,7 +202,7 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
         const kafkaOrdererFactory = new KafkaOrdererFactory(
             producer,
             maxSendMessageSize,
-            DefaultServiceConfiguration);
+            core.DefaultServiceConfiguration);
         const serverUrl = config.get("worker:serverUrl");
 
         let eventHubOrdererFactory: KafkaOrdererFactory = null;
@@ -212,7 +211,7 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             eventHubOrdererFactory = new KafkaOrdererFactory(
                 eventHubProducer,
                 maxSendMessageSize,
-                DefaultServiceConfiguration);
+                core.DefaultServiceConfiguration);
         }
 
         const orderManager = new OrdererManager(

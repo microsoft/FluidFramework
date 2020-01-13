@@ -3,32 +3,32 @@
  * Licensed under the MIT License.
  */
 
-import { IClientManager } from "@microsoft/fluid-server-services-core";
 import { IClient, ISignalClient } from "@microsoft/fluid-protocol-definitions";
+import { IClientManager } from "@microsoft/fluid-server-services-core";
 
-export class TestClientManager implements IClientManager{
+export class TestClientManager implements IClientManager {
 
-    private readonly clients: Map<string, Map<string,Map<string, IClient>>> = new Map();
+    private readonly clients: Map<string, Map<string, Map<string, IClient>>> = new Map();
 
     public async addClient(tenantId: string, documentId: string, clientId: string, details: IClient): Promise<void> {
-        if(!this.clients.has(tenantId)){
+        if (!this.clients.has(tenantId)) {
             this.clients.set(tenantId, new Map());
         }
-        if(!this.clients.get(tenantId).has(documentId)){
+        if (!this.clients.get(tenantId).has(documentId)) {
             this.clients.get(tenantId).set(documentId, new Map());
         }
 
         this.clients.get(tenantId).get(documentId).set(clientId, details);
     }
     public async removeClient(tenantId: string, documentId: string, clientId: string): Promise<void> {
-        if(this.clients.has(tenantId) && this.clients.get(tenantId).has(documentId)){
+        if (this.clients.has(tenantId) && this.clients.get(tenantId).has(documentId)) {
             this.clients.get(tenantId).get(documentId).delete(clientId);
         }
     }
     public async getClients(tenantId: string, documentId: string): Promise<ISignalClient[]> {
         const signalClients: ISignalClient[] = [];
-        if(this.clients.has(tenantId) && this.clients.get(tenantId).has(documentId)){
-            for(const [clientId, client] of this.clients.get(tenantId).get(documentId)){
+        if (this.clients.has(tenantId) && this.clients.get(tenantId).has(documentId)) {
+            for (const [clientId, client] of this.clients.get(tenantId).get(documentId)) {
                 signalClients.push({
                     clientId,
                     client,

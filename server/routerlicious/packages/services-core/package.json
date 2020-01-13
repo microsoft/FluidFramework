@@ -24,13 +24,18 @@
     "@microsoft/fluid-core-utils": "0.13.17538",
     "@microsoft/fluid-gitresources": "^0.1001.0",
     "@microsoft/fluid-protocol-definitions": "^0.1001.0",
+    "@microsoft/fluid-protocol-base": "^0.1001.0",
     "@microsoft/fluid-server-services-client": "^0.1001.0",
+    "@microsoft/fluid-server-services-utils": "^0.1001.0",
     "@types/nconf": "^0.0.37",
     "@types/node": "^10.14.6",
     "debug": "^4.1.1",
     "jsonwebtoken": "^8.4.0",
     "nconf": "^0.10.0",
-    "uuid": "^3.3.2"
+    "uuid": "^3.3.2",
+    "@types/semver": "^6.0.1",
+    "semver": "^6.3.0",
+    "winston": "^3.1.0"
   },
   "devDependencies": {
     "@microsoft/eslint-config-fluid": "^0.13.0",

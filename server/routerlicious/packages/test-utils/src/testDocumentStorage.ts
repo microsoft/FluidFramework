@@ -100,6 +100,7 @@ export class TestDocumentStorage implements IDocumentStorage {
                 forks: [],
                 logOffset: undefined,
                 parent: null,
+                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                 scribe: JSON.stringify({
                     logOffset: -1,
                     minimumSequenceNumber: -1,
