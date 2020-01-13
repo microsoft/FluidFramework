@@ -12,8 +12,8 @@ import {
 import { IOdspResolvedUrl } from "./contracts";
 import { FetchWrapper, IFetchWrapper } from "./fetchWrapper";
 import { getSocketIo } from "./getSocketIo";
-import { OdspCache } from "./OdspCache";
-import { OdspDocumentService } from "./OdspDocumentService";
+import { OdspCache } from "./odspCache";
+import { OdspDocumentService } from "./odspDocumentService";
 
 /**
  * Factory for creating the sharepoint document service. Use this if you want to

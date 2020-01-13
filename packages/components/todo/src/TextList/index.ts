@@ -4,4 +4,4 @@
  */
 
 export * from "./TextList";
-export * from "./TextListInstantiationFactory";
+export * from "./textListInstantiationFactory";

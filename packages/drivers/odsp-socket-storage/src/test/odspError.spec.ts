@@ -4,7 +4,7 @@
  */
 // tslint:disable: no-string-literal
 import * as assert from "assert";
-import { OdspNetworkError } from "../OdspUtils";
+import { OdspNetworkError } from "../odspUtils";
 
 describe("Odsp Error", () => {
 
