@@ -38,7 +38,6 @@ import {
     buildSnapshotTree,
     isSystemMessage,
     ProtocolOpHandler,
-    Quorum,
     QuorumProxy,
     raiseConnectedEvent,
 } from "@microsoft/fluid-protocol-base";
@@ -171,7 +170,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
     private context: ContainerContext | undefined;
     private pkg: string | IFluidCodeDetails | undefined;
-    private codeQuorumKey;
     private protocolHandler: ProtocolOpHandler | undefined;
 
     private firstConnection = true;
@@ -797,16 +795,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             (sequenceNumber, key, value) => {
                 debug(`approved ${key}`);
                 if (key === "code" || key === "code2") {
-                    // Back compat - can remove in 0.7
-                    if (!this.codeQuorumKey) {
-                        this.codeQuorumKey = key;
-                    }
-
-                    // Back compat - can remove in 0.7
-                    if (key !== this.codeQuorumKey) {
-                        return;
-                    }
-
                     debug(`loadCode ${JSON.stringify(value)}`);
 
                     if (value === this.pkg) {
@@ -836,29 +824,23 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return blobManager;
     }
 
-    private async loadCodeFromQuorum(
-        quorum: Quorum,
-    ): Promise<{ pkg: IFluidCodeDetails | undefined; chaincode: IRuntimeFactory }> {
-        // Back compat - can remove in 0.7
-        const codeQuorumKey = quorum.has("code")
-            ? "code"
-            : quorum.has("code2") ? "code2" : undefined;
-        this.codeQuorumKey = codeQuorumKey;
+    private getCodeDetailsFromQuorum(): IFluidCodeDetails | undefined {
+        const quorum = this.protocolHandler!.quorum;
 
-        const pkg = codeQuorumKey ? quorum.get(codeQuorumKey) as IFluidCodeDetails : undefined;
-        const chaincode = await this.loadCode(pkg);
+        let pkg = quorum.get("code");
 
-        return { chaincode, pkg };
+        // Back compat
+        if (!pkg) {
+            pkg = quorum.get("code2");
+        }
+
+        return pkg;
     }
 
     /**
      * Loads the code for the provided package
      */
-    private async loadCode(pkg: IFluidCodeDetails | undefined): Promise<IRuntimeFactory> {
-        if (!pkg) {
-            return new NullChaincode();
-        }
-
+    private async loadCode(pkg: IFluidCodeDetails): Promise<IRuntimeFactory> {
         const component = await this.codeLoader.load<IRuntimeFactory | IFluidModule>(pkg);
 
         if ("fluidExport" in component) {
@@ -1170,8 +1152,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         storage: IDocumentStorageService,
         snapshot?: ISnapshotTree,
     ) {
-        const chaincode = await this.loadCodeFromQuorum(this.protocolHandler!.quorum);
-        this.pkg = chaincode.pkg;
+        this.pkg = this.getCodeDetailsFromQuorum();
+        const chaincode = this.pkg ? await this.loadCode(this.pkg) : new NullChaincode();
 
         // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
         // are set. Global requests will still go to this loader
@@ -1181,7 +1163,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             this,
             this.scope,
             this.codeLoader,
-            chaincode.chaincode,
+            chaincode,
             snapshot || { id: null, blobs: {}, commits: {}, trees: {} },
             attributes,
             this.blobManager,
