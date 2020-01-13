@@ -10,7 +10,7 @@ import { OdspCache } from "./odspCache";
 import { fetchHelper, getWithRetryForTokenRefresh, IOdspResponse, throwOdspNetworkError } from "./OdspUtils";
 
 function getOrigin(url: string) {
-  return new URL(url).origin;
+    return new URL(url).origin;
 }
 
 /**
@@ -28,36 +28,50 @@ function getOrigin(url: string) {
  * @param getVroomToken - A function that is able to provide the vroom token for this request
  */
 export async function fetchJoinSession(
-  appId: string,
-  driveId: string,
-  itemId: string,
-  siteUrl: string,
-  path: string,
-  additionalParams: string,
-  method: string,
-  getVroomToken: (refresh: boolean) => Promise<string | undefined | null>,
+    appId: string,
+    driveId: string,
+    itemId: string,
+    siteUrl: string,
+    path: string,
+    additionalParams: string,
+    method: string,
+    logger: ITelemetryLogger,
+    getVroomToken: (refresh: boolean) => Promise<string | undefined | null>,
 ): Promise<IOdspResponse<ISocketStorageDiscovery>> {
-  return getWithRetryForTokenRefresh(async (refresh: boolean) => {
-    const token = await getVroomToken(refresh);
-    if (!token) {
-      throwOdspNetworkError("Failed to acquire Vroom token", 400, true);
-    }
+    return getWithRetryForTokenRefresh(async (refresh: boolean) => {
+        const tokenEvent = PerformanceEvent.start(logger, { eventName: "JoinSessionToken" });
+        const token = await getVroomToken(refresh);
+        if (!token) {
+            tokenEvent.cancel();
+            throwOdspNetworkError("Failed to acquire Vroom token", 400, true);
+        }
+        tokenEvent.end();
 
-    const siteOrigin = getOrigin(siteUrl);
-    // tslint:disable-next-line: prefer-template
-    let queryParams = `app_id=${appId}&access_token=${token}${additionalParams ? "&" + additionalParams : ""}`;
-    let headers = {};
-    if (queryParams.length > 2048) {
-      // tslint:disable-next-line: prefer-template
-      queryParams = `app_id=${appId}${additionalParams ? "&" + additionalParams : ""}`;
-      headers = { Authorization: `Bearer ${token}` };
-    }
+        const joinSessionEvent = PerformanceEvent.start(logger, { eventName: "JoinSession" });
+        let response: IOdspResponse<ISocketStorageDiscovery>;
+        try {
+            const siteOrigin = getOrigin(siteUrl);
+            let queryParams = `app_id=${appId}&access_token=${token}${additionalParams ? `&${additionalParams}` : ""}`;
+            let headers = {};
+            if (queryParams.length > 2048) {
+                queryParams = `app_id=${appId}${additionalParams ? `&${additionalParams}` : ""}`;
+                headers = { Authorization: `Bearer ${token}` };
+            }
 
-    return fetchHelper(
-      `${siteOrigin}/_api/v2.1/drives/${driveId}/items/${itemId}/${path}?${queryParams}`,
-      { method, headers },
-    );
-  });
+            response = await fetchHelper(
+                `${siteOrigin}/_api/v2.1/drives/${driveId}/items/${itemId}/${path}?${queryParams}`,
+                { method, headers },
+            );
+        } catch (error) {
+            joinSessionEvent.cancel({}, error);
+            throw error;
+        }
+        joinSessionEvent.end({
+            sprequestguid: response.headers.get("sprequestguid"),
+            sprequestduration: response.headers.get("sprequestduration"),
+        });
+        return response;
+    });
 }
 
 /**
@@ -72,61 +86,48 @@ export async function fetchJoinSession(
  * @param getPushToken - A function that gets the push token
  */
 export async function getSocketStorageDiscovery(
-  appId: string,
-  driveId: string,
-  itemId: string,
-  siteUrl: string,
-  logger: ITelemetryLogger,
-  getVroomToken: (refresh: boolean) => Promise<string | undefined | null>,
-  odspCache: OdspCache,
-  joinSessionKey: string,
+    appId: string,
+    driveId: string,
+    itemId: string,
+    siteUrl: string,
+    logger: ITelemetryLogger,
+    getVroomToken: (refresh: boolean) => Promise<string | undefined | null>,
+    odspCache: OdspCache,
+    joinSessionKey: string,
 ): Promise<ISocketStorageDiscovery> {
-  // We invalidate the cache here because we will take the decision to put the joinsession result
-  // again based on the last time it was put in the cache. So if the result is valid and used within
-  // an hour we put the same result again with updated time so that we keep using the same result for
-  // consecutive join session calls because the server moved. If there is nothing in cache or the
-  // response was cached an hour ago, then we make the join session call again.
-  const cachedResult: IOdspJoinSessionCachedItem = odspCache.get(joinSessionKey, true);
-  if (cachedResult && Date.now() - cachedResult.timestamp <= 3600000 && cachedResult.content) {
-    odspCache.put(joinSessionKey, { content: cachedResult.content, timestamp: Date.now() });
-    return cachedResult.content;
-  }
-  let socketStorageDiscovery: ISocketStorageDiscovery;
+    // We invalidate the cache here because we will take the decision to put the joinsession result
+    // again based on the last time it was put in the cache. So if the result is valid and used within
+    // an hour we put the same result again with updated time so that we keep using the same result for
+    // consecutive join session calls because the server moved. If there is nothing in cache or the
+    // response was cached an hour ago, then we make the join session call again.
+    const cachedResult: IOdspJoinSessionCachedItem = odspCache.get(joinSessionKey, true);
+    if (cachedResult && Date.now() - cachedResult.timestamp <= 3600000 && cachedResult.content) {
+        odspCache.put(joinSessionKey, { content: cachedResult.content, timestamp: Date.now() });
+        return cachedResult.content;
+    }
 
-  const event = PerformanceEvent.start(logger, { eventName: "JoinSession" });
-  let response: IOdspResponse<ISocketStorageDiscovery>;
-  try {
-    response = await fetchJoinSession(
-      appId,
-      driveId,
-      itemId,
-      siteUrl,
-      "opStream/joinSession",
-      "",
-      "POST",
-      getVroomToken,
+    const response: IOdspResponse<ISocketStorageDiscovery> = await fetchJoinSession(
+        appId,
+        driveId,
+        itemId,
+        siteUrl,
+        "opStream/joinSession",
+        "",
+        "POST",
+        logger,
+        getVroomToken,
     );
-  } catch (error) {
-    event.cancel({}, error);
-    throw error;
-  }
-  socketStorageDiscovery = response.content;
-  const props = {
-    sprequestguid: response.headers.get("sprequestguid"),
-    sprequestduration: response.headers.get("sprequestduration"),
-  };
-  event.end(props);
 
-  if (socketStorageDiscovery.runtimeTenantId && !socketStorageDiscovery.tenantId) {
-    socketStorageDiscovery.tenantId = socketStorageDiscovery.runtimeTenantId;
-  }
-  // Never expire the joinsession result. On error, the delta connection will invalidate it.
-  odspCache.put(joinSessionKey, { content: socketStorageDiscovery, timestamp: Date.now() });
+    if (response.content.runtimeTenantId && !response.content.tenantId) {
+        response.content.tenantId = response.content.runtimeTenantId;
+    }
+    // Never expire the joinsession result. On error, the delta connection will invalidate it.
+    odspCache.put(joinSessionKey, { content: response.content, timestamp: Date.now() });
 
-  return socketStorageDiscovery;
+    return response.content;
 }
 
 interface IOdspJoinSessionCachedItem {
-  content: ISocketStorageDiscovery;
-  timestamp: number;
+    content: ISocketStorageDiscovery;
+    timestamp: number;
 }
