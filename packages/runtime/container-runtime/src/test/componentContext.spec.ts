@@ -75,7 +75,7 @@ describe("Component Context Tests", () => {
                 .catch((error) => {
                     exception = true;
                 });
-            assert.equal(exception, true, "Exception did not occurred.");
+            assert.equal(exception, true, "Exception did not occur.");
         });
 
         it("Supplying array of packages in LocalComponentContext should not create exception", async () => {
