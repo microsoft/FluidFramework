@@ -795,7 +795,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             (sequenceNumber, key, value) => {
                 debug(`approved ${key}`);
                 if (key === "code" || key === "code2") {
-                    debug(`loadCode ${JSON.stringify(value)}`);
+                    debug(`loadRuntimeFactory ${JSON.stringify(value)}`);
 
                     if (value === this.pkg) {
                         return;
@@ -838,9 +838,9 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     }
 
     /**
-     * Loads the code for the provided package
+     * Loads the runtime factory for the provided package
      */
-    private async loadCode(pkg: IFluidCodeDetails): Promise<IRuntimeFactory> {
+    private async loadRuntimeFactory(pkg: IFluidCodeDetails): Promise<IRuntimeFactory> {
         const component = await this.codeLoader.load<IRuntimeFactory | IFluidModule>(pkg);
 
         if ("fluidExport" in component) {
@@ -1153,7 +1153,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         snapshot?: ISnapshotTree,
     ) {
         this.pkg = this.getCodeDetailsFromQuorum();
-        const chaincode = this.pkg ? await this.loadCode(this.pkg) : new NullChaincode();
+        const chaincode = this.pkg ? await this.loadRuntimeFactory(this.pkg) : new NullChaincode();
 
         // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
         // are set. Global requests will still go to this loader
