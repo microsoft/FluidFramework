@@ -31,7 +31,7 @@ function printHandle(target: any) {
 // Start with the various JSON-serializable types
 const simple = [true, 1, "x", null, [], {}];
 
-// Add an object where each field references one of the JSON serialiable types.
+// Add an object where each field references one of the JSON serializable types.
 simple.push(
     simple.reduce<any>(
         (o, value, index) => {

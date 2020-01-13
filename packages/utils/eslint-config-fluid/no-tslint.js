@@ -156,7 +156,7 @@ module.exports = {
         "import/no-extraneous-dependencies": [
             "error",
             {
-                "devDependencies": false
+                "devDependencies": ["**/*.spec.ts"]
             }
         ],
         "import/no-internal-modules": "error",
