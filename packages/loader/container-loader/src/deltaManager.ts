@@ -260,6 +260,13 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         }
     }
 
+    public pushToInboundQueue() {
+        if (this.inboundMessageBuffer) {
+            this._inbound.push(this.inboundMessageBuffer.messages);
+            this.inboundMessageBuffer.messages = [];
+        }
+    }
+
     public dispose() {
         assert.fail("Not implemented.");
         this.isDisposed = true;
@@ -942,11 +949,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 if (this.inboundMessageBuffer === undefined) {
                     this.inboundMessageBuffer = { messages: [], ready: true };
                 }
-                this.inboundMessageBuffer.messages.push(message);
-                this.inboundMessageBuffer.ready = true;
 
                 this.emit("preparePush", message);
 
+                this.inboundMessageBuffer.messages.push(message);
                 if (this.inboundMessageBuffer.ready) {
                     this._inbound.push(this.inboundMessageBuffer.messages);
                     this.inboundMessageBuffer = undefined;
