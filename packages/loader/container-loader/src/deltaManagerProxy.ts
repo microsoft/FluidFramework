@@ -146,6 +146,10 @@ export class DeltaManagerProxy
         this.deltaManager.setInboundMessageBufferReady(ready);
     }
 
+    public pushToInboundQueue() {
+        this.deltaManager.pushToInboundQueue();
+    }
+
     public dispose(): void {
         this.inbound.dispose();
         this.outbound.dispose();

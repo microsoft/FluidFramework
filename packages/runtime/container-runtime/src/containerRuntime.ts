@@ -254,7 +254,6 @@ class ScheduleManager {
         this.deltaManager.inbound.systemResume();
     }
 
-
     private trackPending(message: ISequencedDocumentMessage) {
         const metadata = message.metadata as IRuntimeMessageMetadata | undefined;
 
@@ -272,16 +271,24 @@ class ScheduleManager {
         // If the client ID changes then we can move the pause point. If it stayed the same then we need to check.
         if (this.pauseClientId === message.clientId) {
             if (batchMetadata !== undefined) {
-                // If batchMetadata is not undefined then if it's true we've begun a new batch - if false we've ended
-                // the previous one
+                // If batchMetadata is false we've ended the current batch.
+                // If batchMetadata is true, we've started a new batch while receiving the current batch which should
+                // not happen. We treat this as part of the ongoing batch and log a telemetry event.
                 if (batchMetadata === false) {
                     this.pauseClientId = undefined;
                     ready = true;
                 } else {
-                    // log errror
+                    // Log error.
                 }
             }
         } else {
+            // If pauseClientId is not undefined, we were in the middle of receiving a batch and we started receiving
+            // messages from another client. Push the current batch into the queue (indicating that the batch is over)
+            // and log a telemetry event.
+            if (this.pauseClientId) {
+                this.deltaManager.pushToInboundQueue();
+                // Log error.
+            }
             this.pauseClientId = batchMetadata ? message.clientId : undefined;
             ready = batchMetadata ? false : true;
         }

@@ -123,6 +123,8 @@ export interface IDeltaManager<T, U> extends EventEmitter, IDeltaSender, IDispos
     submitSignal(content: any): void;
 
     setInboundMessageBufferReady(ready: boolean): void;
+
+    pushToInboundQueue(): void;
 }
 
 export interface IDeltaQueue<T> extends EventEmitter, IDisposable {
