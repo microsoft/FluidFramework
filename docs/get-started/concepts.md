@@ -13,7 +13,7 @@ A component is little more than a JavaScript object. What makes Fluid components
 
 * They are instantiated by the Fluid runtime
 * They are opened/created via a unique URL
-* The code executing inside the component is the current code package accepted by the container's quorum
+* The code executing inside the component is the current code package accepted by the container's Quorum
 * They are per-client singletons (i.e., opening the same URL multiple times on the same client returns the same
   component instance)
 * They encapsulate distributed data structures that automatically synchronize with component instances created via the
