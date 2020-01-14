@@ -197,7 +197,7 @@ export class Package {
                     this.packageJson.scripts["test"] = "test:mocha";
                     fixed = true;
                 } else {
-                    console.warn(`couldn't fix ${this.nameColored}: "test" and "test:mocha" scripts both present`)
+                    console.warn(`${this.nameColored}: couldn't fix: "test" and "test:mocha" scripts both present`)
                 }
             }
         }
@@ -211,7 +211,7 @@ export class Package {
         const pkgversion = "^10.0.0";
         if (this.packageJson.scripts && this.packageJson.scripts["test:jest"]) {
             if (!this.packageJson.devDependencies[pkgstring]) {
-                console.warn(`${this.name}: warning: missing ${pkgstring} dependency`);
+                console.warn(`${this.nameColored}: warning: missing ${pkgstring} dependency`);
                 if (options.fixScripts) {
                     this.packageJson.devDependencies[pkgstring] = pkgversion;
                     fixed = true;
