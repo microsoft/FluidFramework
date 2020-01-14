@@ -375,7 +375,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     private version: string;
 
     private _flushMode = FlushMode.Automatic;
-    private needsFlush = false;
 
     private _leader = false;
 
@@ -726,13 +725,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             debug("DeltaManager does not yet support flush modes");
             return;
         }
-
-        // If flush has already been called then exit early
-        if (!this.needsFlush) {
-            return;
-        }
-
-        this.needsFlush = false;
         return this.deltaSender.flush();
     }
 

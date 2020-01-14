@@ -72,30 +72,32 @@ interface IRuntimeMessageMetadata {
     batch?: boolean;
 }
 
-class BatchProcessorDelegate {
-    private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+class MessageProcessingDelegate {
+    private readonly deltaManager: EventEmitter;
+
     private readonly inboundQueue: DeltaQueue<ISequencedDocumentMessage[]>;
-    private readonly outboundQueue: DeltaQueue<IDocumentMessage[]>;
-    private batchClientId: string | undefined;
     private inboundMessageBuffer: ISequencedDocumentMessage[] = [];
+    private inboundBatchClientId: string | undefined;
+
+    private readonly outboundQueue: DeltaQueue<IDocumentMessage[]>;
     private outboundMessageBuffer: IDocumentMessage[] = [];
-    private needsFlush: boolean = false;
+    private outboundIsBatch: boolean = false;
 
     constructor(
-        deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-        inbound: DeltaQueue<ISequencedDocumentMessage[]>,
-        outbound: DeltaQueue<IDocumentMessage[]>
+        deltaManager: EventEmitter,
+        inboundQueue: DeltaQueue<ISequencedDocumentMessage[]>,
+        outboundQueue: DeltaQueue<IDocumentMessage[]>,
     ) {
         this.deltaManager = deltaManager;
-        this.inboundQueue = inbound;
-        this.outboundQueue = outbound;
+        this.inboundQueue = inboundQueue;
+        this.outboundQueue = outboundQueue;
 
         this.deltaManager.on("prepareSend", (messages: IDocumentMessage[]) => {
-            this.updateMetadata(messages);
+            this.updateMessagesMetadata(messages);
         });
     }
 
-    public updateMetadata(messages: IDocumentMessage[]) {
+    public updateMessagesMetadata(messages: IDocumentMessage[]) {
         if (messages.length === 0) {
             return;
         }
@@ -121,20 +123,20 @@ class BatchProcessorDelegate {
         let batch: boolean = true;
         // Protocol messages are never part of a runtime batch of messages
         if (!this.isRuntimeMessage(message)) {
-            this.batchClientId = undefined;
+            this.inboundBatchClientId = undefined;
             batch = false;
         } else {
             const metadata = message.metadata as IRuntimeMessageMetadata | undefined;
             const batchMetadata = metadata ? metadata.batch : undefined;
 
-            if (this.batchClientId === message.clientId) {
+            if (this.inboundBatchClientId === message.clientId) {
                 if (batchMetadata !== undefined) {
                     // If batchMetadata is false we've ended the current batch.
                     // If batchMetadata is true, we've started a new batch while receiving the current
                     // batch which should not happen. We treat this as part of the ongoing batch and log
                     // a telemetry event.
                     if (batchMetadata === false) {
-                        this.batchClientId = undefined;
+                        this.inboundBatchClientId = undefined;
                         batch = false;
                     } else {
                         // Log error.
@@ -144,14 +146,14 @@ class BatchProcessorDelegate {
                 // If pauseClientId is not undefined, we were in the middle of receiving a batch and we
                 // started receiving messages from another client. Push the current batch into the queue
                 // (indicating that the batch is over) and log a telemetry event.
-                if (this.batchClientId) {
+                if (this.inboundBatchClientId) {
                     if (this.inboundMessageBuffer.length !== 0) {
                         this.inboundQueue.push(this.inboundMessageBuffer);
                         this.inboundMessageBuffer = [];
                     }
                     // Log error.
                 }
-                this.batchClientId = batchMetadata ? message.clientId : undefined;
+                this.inboundBatchClientId = batchMetadata ? message.clientId : undefined;
                 batch = batchMetadata ? true : false;
             }
         }
@@ -166,9 +168,9 @@ class BatchProcessorDelegate {
     public submitMessage(message: IDocumentMessage, batch: boolean) {
         // If in manual flush mode we will trigger a flush at the next turn break
         let batchBegin = false;
-        if (batch && !this.needsFlush) {
+        if (batch && !this.outboundIsBatch) {
             batchBegin = true;
-            this.needsFlush = true;
+            this.outboundIsBatch = true;
 
             // Use Promise.resolve().then() to queue a microtask to detect the end of the turn and force a flush.
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -191,12 +193,13 @@ class BatchProcessorDelegate {
     }
 
     public flush() {
-        if ()
+        this.outboundIsBatch = false;
+
         if (this.outboundMessageBuffer.length === 0) {
             return;
         }
 
-        // The prepareFlush event allows listeners to append metadata to the batch prior to submission.
+        // The prepareSend event allows listeners to append metadata to the batch prior to submission.
         this.deltaManager.emit("prepareSend", this.outboundMessageBuffer);
 
         this.outboundQueue.push(this.outboundMessageBuffer);
@@ -271,8 +274,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
     private readonly contentCache = new ContentCache(DefaultContentBufferSize);
 
-    private outboundMessageBuffer: IDocumentMessage[] = [];
-
     private pongCount: number = 0;
     private socketLatency = 0;
 
@@ -288,7 +289,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     private opSendTime: number | undefined;
     private opNumberForRTT: number | undefined;
 
-    private readonly batchingDelegate: BatchProcessorDelegate;
+    private readonly messageProcessingDelegate: MessageProcessingDelegate;
 
     public get inbound(): IDeltaQueue<ISequencedDocumentMessage[]> {
         return this._inbound;
@@ -403,7 +404,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this._inboundSignal.pause();
 
-        this.batchingDelegate = new BatchProcessorDelegate(this, this._inbound, this._outbound);
+        this.messageProcessingDelegate = new MessageProcessingDelegate(this, this._inbound, this._outbound);
     }
 
     public dispose() {
@@ -553,7 +554,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     }
 
     public flush() {
-        this.batchingDelegate.flush();
+        this.messageProcessingDelegate.flush();
     }
 
     public submit(type: MessageType, contents: any, batch = false): number {
@@ -588,7 +589,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this.stopSequenceNumberUpdate();
         this.emit("submitOp", message);
 
-        this.batchingDelegate.submitMessage(outbound, batch);
+        this.messageProcessingDelegate.submitMessage(outbound, batch);
 
         return outbound.clientSequenceNumber;
     }
@@ -1069,7 +1070,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 this.fetchMissingDeltas(telemetryEventSuffix, this.lastQueuedSequenceNumber, message.sequenceNumber);
             } else {
                 this.lastQueuedSequenceNumber = message.sequenceNumber;
-                this.batchingDelegate.processMessage(message);
+                this.messageProcessingDelegate.processMessage(message);
             }
         }
 
