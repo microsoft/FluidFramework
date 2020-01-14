@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { EventHubResourcesFactory } from "@microsoft/fluid-server-lambdas-driver";
 import * as path from "path";
+import { EventHubResourcesFactory } from "@microsoft/fluid-server-lambdas-driver";
 import { execute } from "./command";
 
 execute(

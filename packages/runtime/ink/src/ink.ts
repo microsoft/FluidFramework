@@ -13,7 +13,7 @@ import {
 } from "@microsoft/fluid-protocol-definitions";
 import { IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
 import { SharedObject } from "@microsoft/fluid-shared-object-base";
-// tslint:disable-next-line:no-submodule-imports
+// eslint-disable-next-line import/no-internal-modules
 import * as uuid from "uuid/v4";
 import { InkFactory } from "./inkFactory";
 import {
@@ -139,6 +139,7 @@ export class Ink extends SharedObject implements IInk {
                     },
                 },
             ],
+            // eslint-disable-next-line no-null/no-null
             id: null,
         };
 

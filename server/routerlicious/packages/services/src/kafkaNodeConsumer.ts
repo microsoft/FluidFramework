@@ -3,32 +3,35 @@
  * Licensed under the MIT License.
  */
 
-import { IConsumer, IPartition } from "@microsoft/fluid-server-services-core";
 import { EventEmitter } from "events";
-import * as kafkaNode from "kafka-node";
 import * as util from "util";
+import { IConsumer, IPartition, IQueuedMessage } from "@microsoft/fluid-server-services-core";
+import * as kafkaNode from "kafka-node";
 import { debug } from "./debug";
 
 export class KafkaNodeConsumer implements IConsumer {
     private client: kafkaNode.Client;
     private offset: kafkaNode.Offset;
     private instance: kafkaNode.HighLevelConsumer;
-    private events = new EventEmitter();
+    private readonly events = new EventEmitter();
 
     constructor(
-        private endpoint: string,
-        private clientId: string,
+        private readonly endpoint: string,
+        private readonly clientId: string,
         public groupId: string,
         public topic: string,
-        private autoCommit: boolean) {
+        private readonly autoCommit: boolean) {
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.connect();
     }
 
-    public commitOffset(commitRequest: any[]): Promise<void> {
-        commitRequest.forEach((commit) => {
-            commit.topic = this.topic;
-            commit.offset = commit.offset as number + 1;
-        });
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
+    public commitCheckpoint(partitionId: number, queuedMessage: IQueuedMessage): Promise<void> {
+        const commitRequest =  [{
+            offset: queuedMessage.offset + 1,
+            partition: partitionId,
+            topic: this.topic,
+        }];
         return new Promise<any>((resolve, reject) => {
             this.offset.commit(this.groupId, commitRequest, (err, data) => {
                 if (err) {
@@ -50,14 +53,15 @@ export class KafkaNodeConsumer implements IConsumer {
         return this;
     }
 
-    public pause() {
+    public async pause() {
         this.instance.pause();
     }
 
-    public resume() {
+    public async resume() {
         this.instance.resume();
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     private connect() {
         this.client = new kafkaNode.Client(this.endpoint, this.clientId);
         this.offset = new kafkaNode.Offset(this.client);
@@ -67,7 +71,7 @@ export class KafkaNodeConsumer implements IConsumer {
                 () => {
                     this.instance = new kafkaNode.HighLevelConsumer(
                         this.client,
-                        [{topic: this.topic}],
+                        [{ topic: this.topic }],
                         {
                             autoCommit: this.autoCommit,
                             fetchMaxBytes: 1024 * 1024,
@@ -107,15 +111,14 @@ export class KafkaNodeConsumer implements IConsumer {
     }
 
     private getPartitions(rawPartitions: any[]): IPartition[] {
-        return rawPartitions.map((partition) => {
-            return {
-                offset: parseInt(partition.offset, 10),
-                partition: parseInt(partition.partition, 10),
-                topic: partition.topic,
-            };
-        });
+        return rawPartitions.map((partition) => ({
+            offset: parseInt(partition.offset, 10),
+            partition: parseInt(partition.partition, 10),
+            topic: partition.topic,
+        }));
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     private ensureTopics(client: kafkaNode.Client, topics: string[]): Promise<void> {
         return new Promise<void>((resolve, reject) => {
             // We make use of a refreshMetadata call to validate the given topics exist
@@ -141,6 +144,7 @@ export class KafkaNodeConsumer implements IConsumer {
         }
 
         debug("Kafka error - attempting reconnect", error);
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.connect();
     }
 }

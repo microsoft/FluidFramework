@@ -1,7 +1,0 @@
-{
-    "extends": ["@microsoft/fluid-build-common/tslint.json"],
-    "rules": {
-        "no-unsafe-any": false,
-        "promise-must-complete": false
-    }
-}

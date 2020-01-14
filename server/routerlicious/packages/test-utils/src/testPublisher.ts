@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as core from "@microsoft/fluid-server-services-core";
 import { EventEmitter } from "events";
+import * as core from "@microsoft/fluid-server-services-core";
 
 export interface IEvent {
     event: string;
@@ -28,7 +28,7 @@ export class TestTopic implements core.ITopic {
 }
 
 export class TestPublisher implements core.IPublisher {
-    private events = new EventEmitter();
+    private readonly events = new EventEmitter();
     private topics: { [topic: string]: TestTopic } = {};
 
     public on(event: string, listener: (...args: any[]) => void) {
@@ -41,5 +41,8 @@ export class TestPublisher implements core.IPublisher {
         }
 
         return this.topics[topic];
+    }
+
+    public async close() {
     }
 }

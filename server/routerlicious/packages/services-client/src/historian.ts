@@ -27,15 +27,15 @@ export interface ICredentials {
  * Implementation of the IHistorian interface that calls out to a REST interface
  */
 export class Historian implements IHistorian {
-    private restWrapper: RestWrapper;
+    private readonly restWrapper: RestWrapper;
 
     constructor(
         public endpoint: string,
-        private historianApi: boolean,
-        private disableCache: boolean,
+        private readonly historianApi: boolean,
+        private readonly disableCache: boolean,
         credentials?: ICredentials) {
 
-        const queryString: { token?; disableCache? } = {};
+        const queryString: { token?; disableCache?} = {};
         let cacheBust = false;
         if (this.disableCache && this.historianApi) {
             queryString.disableCache = this.disableCache;
@@ -50,7 +50,7 @@ export class Historian implements IHistorian {
         this.restWrapper = new RestWrapper(endpoint, {}, queryString, cacheBust);
     }
 
-    /* tslint:disable:promise-function-async */
+    /* eslint-disable @typescript-eslint/promise-function-async */
     public getHeader(sha: string): Promise<any> {
         if (this.historianApi) {
             return this.restWrapper.get(`/headers/${encodeURIComponent(sha)}`);
@@ -78,7 +78,7 @@ export class Historian implements IHistorian {
     public getCommits(sha: string, count: number): Promise<git.ICommitDetails[]> {
         return this.restWrapper.get<git.ICommitDetails[]>(`/commits`, { count, sha })
             .catch((error) => (error === 400 || error === 404) ?
-            [] as git.ICommitDetails[] : Promise.reject<git.ICommitDetails[]>(error));
+                [] as git.ICommitDetails[] : Promise.reject<git.ICommitDetails[]>(error));
     }
 
     public getCommit(sha: string): Promise<git.ICommit> {
@@ -104,11 +104,13 @@ export class Historian implements IHistorian {
     public updateRef(ref: string, params: git.IPatchRefParams): Promise<git.IRef> {
         return this.restWrapper.patch(`/git/refs/${ref}`, params);
     }
+    /* eslint-enable @typescript-eslint/promise-function-async */
 
     public async deleteRef(ref: string): Promise<void> {
         await this.restWrapper.delete(`/git/refs/${ref}`);
     }
 
+    /* eslint-disable @typescript-eslint/promise-function-async */
     public createTag(tag: git.ICreateTagParams): Promise<git.ITag> {
         return this.restWrapper.post(`/git/tags`, tag);
     }
@@ -125,6 +127,7 @@ export class Historian implements IHistorian {
         return this.restWrapper.get<git.ITree>(
             `/git/trees/${encodeURIComponent(sha)}`, { recursive: recursive ? 1 : 0 });
     }
+    /* eslint-enable @typescript-eslint/promise-function-async */
 
     private async getHeaderDirect(sha: string): Promise<git.IHeader> {
         const tree = await this.getTree(sha, true);

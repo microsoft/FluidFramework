@@ -21,8 +21,8 @@ import {
 import * as moniker from "moniker";
 
 const StartingSequenceNumber = 0;
-// disabling so can tag inline but keep strong typing
-// tslint:disable-next-line:no-object-literal-type-assertion
+// Disabling so can tag inline but keep strong typing
+// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 const DefaultScribe = JSON.stringify({
     logOffset: -1,
     minimumSequenceNumber: -1,
@@ -32,9 +32,9 @@ const DefaultScribe = JSON.stringify({
 
 export class DocumentStorage implements IDocumentStorage {
     constructor(
-        private databaseManager: IDatabaseManager,
-        private tenantManager: ITenantManager,
-        private producer: IProducer) {
+        private readonly databaseManager: IDatabaseManager,
+        private readonly tenantManager: ITenantManager,
+        private readonly producer: IProducer) {
     }
 
     /**

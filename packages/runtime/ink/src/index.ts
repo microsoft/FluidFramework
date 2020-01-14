@@ -6,3 +6,4 @@
 export * from "./inkFactory";
 export * from "./interfaces";
 export * from "./ink";
+export * from "./inkCanvas";

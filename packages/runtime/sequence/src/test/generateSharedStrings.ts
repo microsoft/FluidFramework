@@ -4,6 +4,7 @@
  */
 
 import { SnapshotLegacy as Snapshot } from "@microsoft/fluid-merge-tree";
+// eslint-disable-next-line import/no-extraneous-dependencies
 import * as mocks from "@microsoft/fluid-test-runtime-utils";
 import { SharedString } from "../sharedString";
 
@@ -14,7 +15,7 @@ export function* generateStrings() {
 
     let sharedString = new SharedString(runtime, documentId);
     sharedString.initializeLocal();
-    // small enough so snapshot won't have body
+    // Small enough so snapshot won't have body
     for (let i = 0; i < (Snapshot.sizeOfFirstChunk / insertText.length) / 2; ++i) {
         sharedString.insertText(0, `${insertText}${i}`);
     }
@@ -23,7 +24,7 @@ export function* generateStrings() {
 
     sharedString = new SharedString(runtime, documentId);
     sharedString.initializeLocal();
-    // big enough that snapshot will have body
+    // Big enough that snapshot will have body
     for (let i = 0; i < (Snapshot.sizeOfFirstChunk / insertText.length) * 2; ++i) {
         sharedString.insertText(0, `${insertText}${i}`);
     }
@@ -32,7 +33,7 @@ export function* generateStrings() {
 
     sharedString = new SharedString(runtime, documentId);
     sharedString.initializeLocal();
-    // very big sharedString
+    // Very big sharedString
     for (let i = 0; i < Snapshot.sizeOfFirstChunk; ++i) {
         sharedString.insertText(0, `${insertText}-${i}`);
     }
@@ -41,14 +42,14 @@ export function* generateStrings() {
 
     sharedString = new SharedString(runtime, documentId);
     sharedString.initializeLocal();
-    // sharedString with markers
+    // SharedString with markers
     for (let i = 0; i < (Snapshot.sizeOfFirstChunk / insertText.length) * 2; ++i) {
         sharedString.insertText(0, `${insertText}${i}`);
     }
     for (let i = 0; i < sharedString.getLength(); i += 70) {
         sharedString.insertMarker(i, 1, {
             ItemType: "Paragraph",
-            Properties: {Bold: false},
+            Properties: { Bold: false },
             markerId: `marker${i}`,
             referenceTileLabels: ["Eop"],
         });
@@ -58,12 +59,12 @@ export function* generateStrings() {
 
     sharedString = new SharedString(runtime, documentId);
     sharedString.initializeLocal();
-    // sharedString with annotations
+    // SharedString with annotations
     for (let i = 0; i < (Snapshot.sizeOfFirstChunk / insertText.length) * 2; ++i) {
         sharedString.insertText(0, `${insertText}${i}`);
     }
     for (let i = 0; i < sharedString.getLength(); i += 70) {
-       sharedString.annotateRange(i, i + 10, {bold: true});
+        sharedString.annotateRange(i, i + 10, { bold: true });
     }
 
     yield sharedString;

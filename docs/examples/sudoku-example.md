@@ -1,6 +1,6 @@
 ---
 
-title: Developing a Microsoft 365 package with Fluid capabilities
+title: "Sudoku: An Example Fluid Framework component"
 uid: sudoku-example
 
 ---
@@ -17,44 +17,44 @@ Keller (<https://github.com/ffflorian>).
 # Set up your dev environment
 
 1. Install Node.js 10 and VS Code
-1. Use the commands below to clone the lab repository:
-
-    ```shell
-    $ git clone https://cfyucwwsvf4tpvmuo4nszgxivuqfjgf35o3tnsrbt6csxnoqrrrq@sharkstooth.visualstudio.com/DefaultCollection/Fluid%20Dev%20Kitchen/_git/dev-kitchen
-    $ cd dev-kitchen
-    ```
-
+1. Clone the tutorial repository here: <https://offnet.visualstudio.com/officenet/_git/fluid-sudoku-tutorial>
 1. Run `npm install` in the root of the repository to install dependencies.
-1. Open the `dev-kitchen` folder in VS Code.
+1. Open the folder in VS Code.
 
 ## Folder layout
 
 The project has the following folder layout:
 
 ```text
-├───config
-│       config.json
-│       copy-assets.json
-│       deploy-azure-storage.json
-│       package-solution.json
-│       serve.json
-│       write-manifests.json
 └───src
+    |   fluidSudoku.tsx
     │   index.ts
-    └───sudoku
-        │   SudokuWebPart.tsx
-        │   SudokuWebPart.manifest.json
-        ├───helpers
-        │       coordinate.ts
-        │       puzzles.ts
-        │       styles.css
-        │       sudokuCell.ts
-        └───view
-                sudokuView.tsx
+    ├───helpers
+    │       coordinate.ts
+    │       puzzles.ts
+    |       styles.css
+    │       sudokuCell.ts
+    └───react
+            sudokuView.tsx
 ```
 
-The *config* folder contains the WebPart configuration files. The *src* folder contains the source files for the Sudoku
-Fluid component, which we'll cover in more depth later.
+The _src_ folder contains the source files for the Sudoku Fluid component.
+
+## Run the sample
+
+After you've cloned the sample, install all the dependencies using `npm install`. You can then use `npm start` to start
+a local dev environment for testing and debugging. Visit <http://localhost:8080/> in a browser to load the Fluid
+development server, which will load two instances of the component side by side.
+
+![The Sudoku component loaded in the Fluid development server](./sudoku-side-by-side.png "Sudoku component")
+
+> [!IMPORTANT]
+>
+> If you make changes to your data model during development, you may notice console failures, or your component may fail
+> to load completely, when you refresh localhost:8080. This is caused when the local code tries to load a Fluid data
+> model that uses a schema different than what the code expects. You can force a fresh Fluid document, and by extension,
+> an empty schema, by reloading <http://localhost:8080/>. This will redirect you to a new random Fluid document.
+
 
 # Deep dive
 
@@ -74,17 +74,20 @@ readonly correctValue: number // Stores the correct value of the cell
 readonly coordinate: CoordinateString // The coordinate of the cell, as a comma-separated string, e.g. "2,3"
 ```
 
-> [!IMPORTANT] Objects that are stored in distributed data structures, as `SudokuCell` is, must be safely
-> JSON-serializable. This means that you cannot use functions or TypeScript class properties with these objects, because
-> those are not JSON-serialized.
+> [!IMPORTANT]
+>
+> Objects that are stored in distributed data structures, as `SudokuCell` is, must be safely JSON-serializable. This
+> means that you cannot use functions or TypeScript class properties with these objects, because those are not
+> JSON-serialized.
 >
 > One pattern to address this is to define static functions that accept the object as a parameter and manipulate it. See
-> the `SudokuCell` class in `/helpers/sudokuCell.ts` for an example of this pattern.
+> the `SudokuCell` class in `/src/helpers/sudokuCell.ts` for an example of this pattern.
 
 ## Rendering
 
 In order to render the Sudoku data, we use a React component called `SudokuView` This component is defined in
-`view/sudokuView.tsx` and accepts the map of Sudoku cell data as a prop. It then renders the Sudoku and accompanying UI.
+`src/react/sudokuView.tsx` and accepts the map of Sudoku cell data as a prop. It then renders the Sudoku and
+accompanying UI.
 
 The `SudokuView` React component is also responsible for handling UI interaction from the user; we'll examine that in
 more detail later.
@@ -92,130 +95,182 @@ more detail later.
 ## The Fluid component
 
 The React component described above does not itself represent a Fluid component. Rather, the Fluid component is defined
-in `src/SudokuWebPart.tsx`.
+in `src/fluidSudoku.tsx`.
 
 ```typescript
-export class SudokuWebPart extends BaseMFxPart<{}> {}
+export class FluidSudoku extends PrimedComponent
+    implements IComponentHTMLVisual, IComponentReactViewable {}
 ```
 
-This class extends the `BaseMfxPart` abstract base class. Our component is visual, so we need to implement the
-[IComponentHTMLVisual][] or [IProvideComponentHTMLVisual][] interfaces. However, the `BaseMfxPart` base class already
-implements the IProvideComponentHTMLVisual Fluid component interface, so we do not need to explicitly implement it in
-our class.
+This class extends the [PrimedComponent][] abstract base class. Our component is visual, so we need to implement the
+[IComponentHTMLVisual][] or [IProvideComponentHTMLVisual][] interfaces. In our case, we want to handle rendering
+ourselves rather than delegate it to another object, so we implement [IComponentHTMLVisual][].
 
-> [!TIP]
-> The `{}` in `BaseMFxPart<{}>` denotes that we are not using the SharePoint property bag in this example. Instead, we
-> are storing all data directly in Fluid distributed data structures.
+Since we are using React, we also implement the [IComponentReactViewable][] interface. This will enable a Fluid host or
+container to use this component both with and without React. A host using React will call the `createJSXElement` method
+and use the JSX directly, while a non-React hot would just give the component a hosting element and let it render
+itself.
 
-We need to implement the `render()` method, which is straightforward since we're using the `SudokuView` React
-component to do the heavy lifting.
+### Implementing interfaces
+
+#### IComponentReactViewable
+
+[IComponentReactViewable][] requires us to implement a method that will return the JSX that represents the component.
+The implementation is as follows:
 
 ```typescript
-  public render(): void {
-    ReactDOM.render(
-      <SudokuView puzzle={this.puzzle} />,
-      this.domElement);
-  }
+public createJSXElement(props?: any): JSX.Element {
+    if (this.puzzle) {
+        return (
+            <SudokuView
+                puzzle={this.puzzle}
+                clientId={this.runtime.clientId}
+            />
+        );
+    } else {
+        return <div />;
+    }
+}
 ```
 
-As you can see, the render method uses React to render the `SudokuView` React component. We pass in the puzzle data
-which is a `SharedMap` distributed data structure that we will discuss more below.
+Notice that we pass the puzzle data, a `SharedMap` distributed data structure that we will discuss more below, to the
+SudokuView React component as props.
+
+#### IComponentHTMLVisual
+
+[IComponentHTMLVisual][] requires us to implement the `render()` method, which is straightforward since we're using the
+`SudokuView` React component to do the heavy lifting.
+
+```typescript
+public render(element?: HTMLElement): void {
+    if (element) {
+        this.domElement = element;
+    }
+    if (this.domElement) {
+        ReactDOM.render(this.createJSXElement(), this.domElement);
+    }
+}
+```
+
+As you can see, the render method uses React to render the `SudokuView` React component.
+
 
 ### Creating Fluid distributed data structures
 
 How does the `puzzle` property get populated? How are distributed data structures created and used?
 
-To answer that question, look at the `onInitializeFirstTime` method in the `SudokuWebPart` class:
+To answer that question, look at the `componentInitializingFirstTime` method in the `FluidSudoku` class:
 
 ```typescript
 private sudokuMapKey = "sudoku-map";
 private puzzle: ISharedMap;
 
-public async onInitializeFirstTime() {
-  // Create a new map for our Sudoku data
-  const map = SharedMap.create(this._fluidShim.runtime, this.sudokuMapKey);
+protected async componentInitializingFirstTime() {
+    // Create a new map for our Sudoku data
+    const map = SharedMap.create(this.runtime);
 
-  // Populate it with some puzzle data
-  loadPuzzle(0, map);
+    // Populate it with some puzzle data
+    loadPuzzle(0, map);
 
-  // Register the map with the Fluid runtime
-  map.register();
+    // Store the new map under the sudokuMapKey key in the root SharedDirectory
+    this.root.set(this.sudokuMapKey, map.handle);
 }
 ```
 
-This method is called once when a component is initially created. We create a new [SharedMap][] using `.create`, then
-register it with the runtime. Notice that we provide a string key, `this.sudokuMapKey`, when we create the `SharedMap`.
-This is how we will retrieve the data structure from the Fluid runtime later.
+This method is called once when a component is initially created. We create a new [SharedMap][] using `.create`,
+registering it with the runtime. We have access to the Fluid runtime from `this.runtime` because we have subclassed
+[PrimedComponent][].
 
-`onInitializeFirstTime` is only called the _first time_ the component is created. This is exactly what we want in order
-to create the distributed data structures. We don't want to create new SharedMaps every time a client loads the
-component! However, we do need to load the distributed data structures when the component is loaded.
+Once the SharedMap is created, we populate it with puzzle data. Finally, we store the SharedMap we just created in the
+`root` [SharedDirectory][]. The `root` [SharedDirectory][] is provided by [PrimedComponent][], and is a convenient place
+to store all Fluid data used by your component.
 
-Distributed data structures are initialized asynchronously, so we need to retrieve them from an asynchronous method. We
-do that by overloading the asynchronous `onInit` method, then store a local reference to the object so we can easily
-use it in synchronous code. Notice that we pass
+Notice that we provide a string key, `this.sudokuMapKey`, when we store the `SharedMap`. This is how we will retrieve
+the data structure from the root SharedDirectory later.
+
+`componentInitializingFirstTime` is only called the _first time_ the component is created. This is exactly what we want
+in order to create the distributed data structures. We don't want to create new SharedMaps every time a client loads the
+component! However, we do need to _load_ the distributed data structures each time the component is loaded.
+
+Distributed data structures are initialized asynchronously, so we need to retrieve them from within an asynchronous
+method. We do that by overloading the `componentHasInitialized` method, then store a local reference to the object
+(`this.puzzle`) so we can easily use it in synchronous code.
 
 ```typescript
-  public async onInit() {
-    // Retrieve the distributed data structure (also called a channel in this context)
-    this.puzzle = await this._fluidShim.runtime.getChannel(this.sudokuMapKey) as ISharedMap;
+protected async componentHasInitialized() {
+    this.puzzle = await this.root.get<IComponentHandle>(this.sudokuMapKey).get<ISharedMap>();
+}
+```
 
-    // Since we're using a Fluid distributed data structure to store our Sudoku data, we need to render whenever a value
-    // in our map changes. Recall that distributed data structures can be changed by both local and remote clients, so
-    // if we don't call render here, then our UI will not update when remote clients change data.
-    this.puzzle.on("valueChanged", (changed, local, op) => {
-      this.render();
-    });
-  }
+The `componentHasInitialized` method is called once after the component has completed initialization, be it the first
+time or subsequent times.
+
+#### A note about component handles
+
+You probably noticed some confusing code above. What are handles? Why do we store the SharedMap's _handle_ in the `root`
+SharedDirectory instead of the SharedMap itself? The underlying reasons are beyond the scope of this example, but the
+important thing to remember is this:
+
+**When you store a distributed data structure within another distributed data structure, you store the _handle_ to the
+DDS, not the DDS itself. Similarly, when loading a DDS that is stored within another DDS, you must first get the DDS
+handle, then get the full DDS from the handle.**
+
+```typescript
+await this.root.get<IComponentHandle>(this.sudokuMapKey).get<ISharedMap>()
 ```
 
 ### Handling events from distributed data structures
 
-Distributed data structures can be changed by both local and remote clients. In the `onInit` method, we also connect
-a method to be called each time the Sudoku data - the [SharedMap][] - is changed. In our case we simply call `render`
-again. This ensures that our UI updates whenever a remote client changes the Sudoku data.
+Distributed data structures can be changed by both local code and remote clients. In the `componentHasInitialized`
+method, we also connect a method to be called each time the Sudoku data - the [SharedMap][] - is changed. In our case we
+simply call `render` again. This ensures that our UI updates whenever a remote client changes the Sudoku data.
 
 ```typescript
-  this.puzzle.on("valueChanged", (changed, local, op) => {
+this.puzzle.on("valueChanged", (changed, local, op) => {
     this.render();
-  });
+});
 ```
 
 ### Updating distributed data structures
 
 In the previous step we showed how to use event listeners with distributed data structures to respond to remote data
-changes. But how do we update the data based on user input? To do that, we need to listen to some DOM events as users
+changes. But how do we update the data based on _user_ input? To do that, we need to listen to some DOM events as users
 enter data in the Sudoku cells. Since the `SudokuView` class handles the rendering, that's where the DOM events will be
 handled.
 
-Let's look at the event handler for the change event from each Sudoku cell:
+Let's look at the `numericInput` function, which is called when the user keys in a number.
 
 > [!NOTE]
-> The `handleChange` function can be found in the `SimpleTable` React component within `view/sudokuView.ts`.
+> The `numericInput` function can be found in the `SimpleTable` React component within `src/react/sudokuView.tsx`.
 > `SimpleTable` is a helper React component that is not exported; you can consider it part of the `SudokuView` React
 > component.
 
 ```typescript
-const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  let valueToSet = Number(e.target.value);
-  valueToSet = Number.isNaN(valueToSet) ? 0 : valueToSet;
-  if (valueToSet >= 10 || valueToSet < 0) {
-    return;
-  }
+const numericInput = (keyString: string, coord: string) => {
+    let valueToSet = Number(keyString);
+    valueToSet = Number.isNaN(valueToSet) ? 0 : valueToSet;
+    if (valueToSet >= 10 || valueToSet < 0) {
+        return;
+    }
 
-  const key = e.target.dataset.fluidmapkey;
-  if (key !== null) {
-    const toSet = props.puzzle.get<SudokuCell>(key);
-    toSet.value = valueToSet;
-    toSet.isCorrect = valueToSet === toSet.correctValue;
-    props.puzzle.set(key, toSet);
-  }
+    if (coord !== undefined) {
+        const cellInputElement = getCellInputElement(coord);
+        cellInputElement.value = keyString;
+
+        const toSet = props.puzzle.get<SudokuCell>(coord);
+        if (toSet.fixed) {
+            return;
+        }
+        toSet.value = valueToSet;
+        toSet.isCorrect = valueToSet === toSet.correctValue;
+        props.puzzle.set(coord, toSet);
+    }
 };
 ```
 
-Lines 2-6 ensure we only accept single-digit numeric values. In line 8, we retrieve the coordinate of the cell from a DOM
+Lines 2-7 ensure we only accept single-digit numeric values. In line 9, we retrieve the coordinate of the cell from a DOM
 attribute that we added during render. Once we have the coordinate, which is a key in the `SharedMap` storing our Sudoku
-data, we retrieve the cell data by calling `.get<SudokuCell>(key)`. We then update the cell's value and set whether it
+data, we retrieve the cell data by calling `.get<SudokuCell>(coord)`. We then update the cell's value and set whether it
 is correct. Finally, we call `.set(key, toSet)` to update the data in the `SharedMap`.
 
 This pattern of first retrieving an object from a `SharedMap`, updating it, then setting it again, is an idiomatic Fluid
@@ -225,6 +280,10 @@ setting the value, we ensure that Fluid notifies all other clients of the change
 Once the value is set, the `valueChanged` event will be raised on the SharedMap, and as you'll recall from the previous
 section, we listen to that event and render again every time the values change. Both local and remote clients will
 render based on this event, because all clients are running the same code.
+
+**This is an important design principle:** components should have the same logic for handling local and remote changes.
+In other words, it is very rare that there is a need for the handling to differ, and we recommend a unidirectional data
+flow.
 
 # Lab: Adding "presence" to the Fluid Sudoku component
 
@@ -237,7 +296,7 @@ it will be a map of cell coordinates to client names. As clients select cells, t
 current client in the cell.
 
 Note that using a SharedMap for presence means that the history of each user's movement - their presence - will be
-persisted in the Fluid op stream. In this particular scenario, maintaining a history of a client's movement isn't
+persisted in the Fluid op stream. In the Sudoku scenario, maintaining a history of a client's movement isn't
 particularly interesting, and Fluid provides an alternative mechanism, _signals_, to address cases where persisting ops
 isn't necessary. That said, this serves as a useful example of how to use Fluid to solve complex problems with very
 little code.
@@ -246,106 +305,58 @@ little code.
 
 First, you need to create a `SharedMap` for your presence data.
 
-1. Open `src/sudoku/SudokuWebPart.tsx`.
-1. Inside the `SudokuWebPart` class, declare two new private variables like so:
+1. Open `src/fluidSudoku.tsx`.
+1. Inside the `FluidSudoku` class, declare two new private variables like so:
 
     ```ts
-    private presenceMapKey = "clientPresence";
-    private clientPresence: ISharedMap;
+    private readonly presenceMapKey = "clientPresence";
+    private clientPresence: ISharedMap | undefined;
     ```
 
-1. Inside the `onInitializeFirstTime` method, add the following code below the existing code to create and register a
-   second `SharedMap`:
+1. Inside the `componentInitializingFirstTime` method, add the following code to the bottom of the method to create and
+   register a second `SharedMap`:
 
     ```ts
-    // Create and register a SharedMap to store presence data
-    const clientPresence = SharedMap.create(this._fluidShim.runtime, this.presenceMapKey);
-    clientPresence.register();
+    // Create a SharedMap to store presence data
+    const clientPresence = SharedMap.create(this.runtime);
+    this.root.set(this.presenceMapKey, clientPresence.handle);
     ```
 
-    Notice that the Fluid runtime is exposed via the `_fluidShim` property provided by `BaseMfxPart`.
+   Notice that the Fluid runtime is exposed via the `this.runtime` property provided by [PrimedComponents][].
 
-1. Inside the `onInit` method, add the following code below the existing code to retrieve the presence map when the
-   component initializes:
+1. Inside the `componentHasInitialized` method, add the following code to the bottom of the method to retrieve the
+   presence map when the component initializes:
 
     ```ts
-    this.clientPresence = await this._fluidShim.runtime.getChannel(this.presenceMapKey) as ISharedMap;
+    this.clientPresence = await this.root
+        .get<IComponentHandle>(this.presenceMapKey)
+        .get<ISharedMap>();
     ```
 
-    You now have a `SharedMap` to store presence data. When the component is first created, `onInitializeFirstTime` will
-    be called and the presence map will be created. When the component is loaded, `onInit` will be called, which
-    retrieves the `SharedMap` instance.
+You now have a `SharedMap` to store presence data. When the component is first created, `componentInitializingFirstTime`
+will be called and the presence map will be created. When the component is loaded, `componentHasInitialized` will be
+called, which retrieves the `SharedMap` instance.
 
 ## Rendering presence
 
-Now that you have a presence map, you need to render some indication that a remote user is in a cell.
+Now that you have a presence map, you need to render some indication that a remote user is in a cell. We're going to
+take a shortcut here because our SudokuView React component can already display presence information when provided two
+optional props:
 
-1. Open `src/sudoku/view/sudokuView.tsx`.
-1. Add the following code to the `ISudokuViewProps` interface:
+```ts
+clientPresence?: ISharedMap;
+setPresence?(cellCoord: CoordinateString, reset: boolean): void;
+```
 
-    ```ts
-    clientId: string;
-    clientPresence?: ISharedMap;
-    setPresence?(cellCoord: CoordinateString, reset: boolean): void;
-    ```
+We aren't providing those props, so the presence display capabilities within the React component aren't enabled. After
+you've completed this tutorial, you should consider reviewing the implementation of the presence rendering within
+SudokuView in detail. For now, however, we'll skip that and focus on implementing the two necessary props - a SharedMap
+for storing the presence data, and a function to update the map with presence data.
 
-    This interface defines the props that the React component accepts. `setPresence` is a function that the React
-    component will call to update presence. Notice that the `clientPresence` and `setPresence` properties are optional.
-    This allows the same React component to be used both with and without presence.
+## Setting presence data
 
-1. Inside the `renderGridRows` method, add the following code **before** this line:
-   `const disabled = currentCell.fixed === true;`
-
-    ```ts
-    if (props.clientPresence) {
-        const cellOwner = props.clientPresence.get(coord);
-        if (cellOwner && cellOwner !== props.clientId) {
-            inputClasses += " presence";
-        }
-    }
-    ```
-
-    You have now added a CSS class to cells based on the data in the presence map. To make sure the local client doesn't
-    see presence styles in their own cell, the second `if` check ensures that the cell is occupied by someone other than
-    the local client.
-
-## Setting presence data: DOM events
-
-As users click in and out of cells, you need to update the presence map.
-
-1. Still in `src/sudoku/view/sudokuView.tsx`, add the following event handlers under the `handleChange` method:
-
-    ```ts
-    const handleInputFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-        if (props.setPresence) {
-            const key = e.target.getAttribute("data-fluidmapkey");
-            if (key !== null) {
-                props.setPresence(key, false);
-            }
-        }
-    };
-
-    const handleInputBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-        if (props.setPresence) {
-            const key = e.target.getAttribute("data-fluidmapkey");
-            if (key !== null) {
-                props.setPresence(key, true);
-            }
-        }
-    };
-    ```
-
-1. Inside the `renderGridRows` method, add `onFocus` and `onBlur` attributes connecting the DOM events to your handlers:
-
-    ```tsx
-    onFocus={handleInputFocus}
-    onBlur={handleInputBlur}
-    ```
-
-## Setting presence data: Wiring it all together
-
-1. Open `src/sudoku/SudokuWebPart.tsx`.
-1. Add the following function at the bottom of the `SudokuWebPart` class:
+1. Open `src/fluidSudoku.tsx`.
+1. Add the following function at the bottom of the `FluidSudoku` class:
 
     ```ts
     /**
@@ -359,41 +370,46 @@ As users click in and out of cells, you need to update the presence map.
             if (reset) {
                 // Retrieve the current clientId in the cell, if there is one
                 const prev = this.clientPresence.get<string>(cellCoordinate);
-                const isCurrentClient = this._fluidShim.runtime.clientId === prev;
+                const isCurrentClient = this.runtime.clientId === prev;
                 if (!isCurrentClient) {
                     return;
                 }
                 this.clientPresence.delete(cellCoordinate);
             } else {
-                this.clientPresence.set(cellCoordinate, this._fluidShim.runtime.clientId);
+                this.clientPresence.set(cellCoordinate, this.runtime.clientId);
             }
+        }
+    };
+    ```
+
+   You can pass this function in to the `SudokuView` React component as a prop. The React component will call
+   `presenceSetter` when users enter and leave cells, which will update the presence `SharedMap`.
+
+1. Replace the `createJSXElement` method with the following code:
+
+    ```ts
+    public createJSXElement(props?: any): JSX.Element {
+        if (this.puzzle) {
+            return (
+                <SudokuView
+                    puzzle={this.puzzle}
+                    clientPresence={this.clientPresence}
+                    clientId={this.runtime.clientId}
+                    setPresence={this.presenceSetter}
+                />
+            );
+        } else {
+            return <div />;
         }
     }
     ```
 
-    You can pass this function in to the `SudokuView` React component as a prop. The component will call it when users
-    enter and leave cells, which will update the presence `SharedMap`.
-
-1. Replace the `render` method with the following code:
-
-    ```ts
-    public render(): void {
-        ReactDOM.render(
-            <SudokuView puzzle={this.puzzle}
-                clientPresence={this.clientPresence}
-                clientId={this._fluidShim.runtime.clientId}
-                setPresence={this.presenceSetter}
-            />,
-            this.domElement);
-    }
-    ```
-
-    Notice that all of the props you added earlier to the `ISudokuViewProps` interface are now provided.
+   Notice that we're now passing the `clientPresence` SharedMap and the `setPresence` function as props.
 
 ## Listening to distributed data structure events
 
-1. Still in `src/sudoku/SudokuWebPart.tsx`, add the following code to the `onInit` method to call render whenever a
-   remote change is made to the presence map:
+1. Still in `src/fluidSudoku.tsx`, add the following code to the bottom of the `componentHasInitialized` method to call
+   render whenever a remote change is made to the presence map:
 
     ```ts
     this.clientPresence.on("valueChanged", (changed, local, op) => {
@@ -403,10 +419,24 @@ As users click in and out of cells, you need to update the presence map.
 
 ## Testing the changes
 
-Now you can build and upload your updated Sudoku component to the SharePoint app catalog for testing.
+Now run `npm start` again and notice that your selected cell is now highlighted on the other side.
+
+## What's next
+
+Now that you have some experience with Fluid, are there other features you could add to the Sudoku component? Perhaps
+you could extend it to display a client name in the cell to show client-specific presence. Or you could use the
+[undo-redo][] package to add undo/redo support!
+
+If you want to build your own component, check out <xref:yo-fluid>.
+
+See <xref:examples> for more examples.
+
 
 <!-- Links -->
 [IComponentHTMLVisual]: xref:@microsoft/fluid-component-core-interfaces!IComponentHTMLVisual:interface
-[IProvideComponentHTMLVisual]: xref:@microsoft/fluid-component-core-interfaces!IProvideComponentHTMLVisual:interface
 [IComponentReactViewable]: xref:@microsoft/fluid-aqueduct-react!IComponentReactViewable:interface
+[IProvideComponentHTMLVisual]: xref:@microsoft/fluid-component-core-interfaces!IProvideComponentHTMLVisual:interface
+[PrimedComponent]: xref:@microsoft/fluid-aqueduct!PrimedComponent:class
+[SharedDirectory]: xref:@microsoft/fluid-map!SharedDirectory:class
 [SharedMap]: xref:@microsoft/fluid-map!SharedMap:class
+[undo-redo]: xref:@microsoft/fluid-undo-redo!

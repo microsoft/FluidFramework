@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export * from "./odsp-utils";
+export * from "./odspUtils";

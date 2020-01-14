@@ -40,6 +40,7 @@ COPY server/routerlicious/packages/services-utils/package*.json server/routerlic
 COPY server/routerlicious/packages/test-utils/package*.json server/routerlicious/packages/test-utils/
 COPY server/routerlicious/packages/protocol-base/package*.json server/routerlicious/packages/protocol-base/
 COPY packages/utils/build-common/package*.json server/routerlicious/packages/utils/build-common/
+COPY packages/utils/eslint-config-fluid/package*.json server/routerlicious/packages/utils/eslint-config-fluid/
 
 # Copy over chaincode npmrc and package.json to dynamically install packages.
 COPY server/routerlicious/chaincode/* /tmp/chaincode/
@@ -68,6 +69,7 @@ RUN npm install --unsafe-perm
 WORKDIR /usr/src/server
 COPY server/routerlicious/packages/ server/routerlicious/packages/
 COPY packages/utils/build-common/ server/routerlicious/packages/utils/build-common/
+COPY packages/utils/eslint-config-fluid/ server/routerlicious/packages/utils/eslint-config-fluid/
 
 # Switch to the server folder and build
 WORKDIR /usr/src/server/server/routerlicious

@@ -15,11 +15,12 @@ export class KafkaRunner implements IRunner {
     private partitionManager: PartitionManager;
 
     constructor(
-        private factory: IPartitionLambdaFactory,
-        private consumer: IConsumer,
-        private config: Provider) {
+        private readonly factory: IPartitionLambdaFactory,
+        private readonly consumer: IConsumer,
+        private readonly config: Provider) {
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public start(): Promise<void> {
         this.deferred = new Deferred<void>();
 
@@ -45,8 +46,8 @@ export class KafkaRunner implements IRunner {
     public async stop(): Promise<void> {
         winston.info("Stop requested");
 
-        // stop listening for new updates
-        this.consumer.pause();
+        // Stop listening for new updates
+        await this.consumer.pause();
 
         // Mark ourselves done once the topic manager has stopped processing
         const stopP = this.partitionManager.stop();

@@ -9,14 +9,13 @@ import { IDatabaseManager } from "@microsoft/fluid-server-services-core";
 
 export class TestDeltaStorageService implements api.IDocumentDeltaStorageService {
     constructor(
-        private tenantId: string,
-        private id: string,
-        private databaseManager: IDatabaseManager) {
+        private readonly tenantId: string,
+        private readonly id: string,
+        private readonly databaseManager: IDatabaseManager) {
     }
 
     public async get(from?: number, to?: number): Promise<ISequencedDocumentMessage[]> {
         const query = { documentId: this.id, tenantId: this.tenantId };
-        /* tslint:disable:no-unsafe-any */
         if (from !== undefined || to !== undefined) {
             query["operation.sequenceNumber"] = {};
 

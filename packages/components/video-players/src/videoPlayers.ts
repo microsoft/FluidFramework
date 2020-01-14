@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import {
     IComponent,
     IComponentHandleContext,
@@ -17,10 +18,8 @@ import { IComponentCollection, IComponentLayout } from "@microsoft/fluid-framewo
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
-import { EventEmitter } from "events";
 
 declare global {
-    // tslint:disable-next-line:interface-name
     interface Window {
         onYouTubeIframeAPIReady?: () => void;
         YT: any;
@@ -40,7 +39,6 @@ class YouTubeAPI {
     }
 
     private static async Create(): Promise<YouTubeAPI> {
-        // tslint:disable-next-line:promise-must-complete
         const playerApiReadyP = new Promise((resolve) => {
             window.onYouTubeIframeAPIReady = resolve;
         });
@@ -99,9 +97,9 @@ export class VideoPlayer implements
         public videoId: string,
         public url: string,
         context: IComponentHandleContext,
-        private keyId: string,
-        private youTubeApi: YouTubeAPI,
-        private collection: VideoPlayerCollection,
+        private readonly keyId: string,
+        private readonly youTubeApi: YouTubeAPI,
+        private readonly collection: VideoPlayerCollection,
     ) {
         this.handle = new ComponentHandle(this, keyId, context);
     }
@@ -167,10 +165,10 @@ export class VideoPlayerCollection extends EventEmitter implements
     public url: string;
     public handle: ComponentHandle;
 
-    private videoPlayers = new Map<string, VideoPlayer>();
+    private readonly videoPlayers = new Map<string, VideoPlayer>();
     private root: ISharedMap;
 
-    constructor(private runtime: IComponentRuntime, context: IComponentContext) {
+    constructor(private readonly runtime: IComponentRuntime, context: IComponentContext) {
         super();
 
         this.url = context.id;

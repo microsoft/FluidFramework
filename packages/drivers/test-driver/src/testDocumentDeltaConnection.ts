@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import { BatchManager } from "@microsoft/fluid-core-utils";
 import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
 import {
@@ -20,7 +21,6 @@ import {
 } from "@microsoft/fluid-protocol-definitions";
 import * as core from "@microsoft/fluid-server-services-core";
 import { TestWebSocketServer } from "@microsoft/fluid-server-test-utils";
-import { EventEmitter } from "events";
 import { debug } from "./debug";
 
 const testProtocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
@@ -39,7 +39,7 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
             id,
             mode,
             tenantId,
-            token,  // token is going to indicate tenant level information, etc...
+            token,  // Token is going to indicate tenant level information, etc...
             versions: testProtocolVersions,
         };
 
@@ -78,7 +78,7 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
                 socket.removeListener("signal", earlySignalHandler);
 
                 if (queuedMessages.length > 0) {
-                    // some messages were queued.
+                    // Some messages were queued.
                     // add them to the list of initialMessages to be processed
                     if (!response.initialMessages) {
                         response.initialMessages = [];
@@ -90,7 +90,7 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
                 }
 
                 if (queuedContents.length > 0) {
-                    // some contents were queued.
+                    // Some contents were queued.
                     // add them to the list of initialContents to be processed
                     if (!response.initialContents) {
                         response.initialContents = [];
@@ -98,12 +98,12 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
 
                     response.initialContents.push(...queuedContents);
 
-                    // tslint:disable max-line-length
+                    // eslint-disable-next-line max-len
                     response.initialContents.sort((a, b) => (a.clientId === b.clientId) ? 0 : ((a.clientId < b.clientId) ? -1 : 1) || a.clientSequenceNumber - b.clientSequenceNumber);
                 }
 
                 if (queuedSignals.length > 0) {
-                    // some signals were queued.
+                    // Some signals were queued.
                     // add them to the list of initialSignals to be processed
                     if (!response.initialSignals) {
                         response.initialSignals = [];
@@ -125,8 +125,8 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
         return Promise.resolve(deltaConnection);
     }
 
-    private emitter = new EventEmitter();
-    private submitManager: BatchManager<IDocumentMessage[]>;
+    private readonly emitter = new EventEmitter();
+    private readonly submitManager: BatchManager<IDocumentMessage[]>;
 
     public get clientId(): string {
         return this.details.clientId;
@@ -177,7 +177,7 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
     }
 
     constructor(
-        private socket: core.IWebSocket,
+        private readonly socket: core.IWebSocket,
         public documentId: string,
         public details: IConnected) {
         super();
@@ -217,7 +217,7 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
      */
     public submit(messages: IDocumentMessage[]): void {
         // We use a promise resolve to force a turn break given message processing is sync
-        // tslint:disable-next-line:no-floating-promises
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         Promise.resolve().then(() => {
             this.submitManager.add("submitOp", messages);
             this.submitManager.drain();
@@ -227,7 +227,6 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
     /**
      * Submits a new signal to the server
      */
-    // tslint:disable no-unsafe-any
     public submitSignal(message: any): void {
         this.submitManager.add("submitSignal", message);
         this.submitManager.drain();

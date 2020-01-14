@@ -14,7 +14,7 @@ export class TrackingGroup {
         this.segmentSet = new SortedSegmentSet();
     }
 
-    public get segments(): ReadonlyArray<ISegment> {
+    public get segments(): readonly ISegment[] {
         return this.segmentSet.items;
     }
 

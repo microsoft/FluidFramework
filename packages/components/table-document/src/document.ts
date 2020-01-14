@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { ICombiningOp, IntervalType, LocalReference, PropertySet } from "@microsoft/fluid-merge-tree";
@@ -14,9 +15,8 @@ import {
     SparseMatrix,
 } from "@microsoft/fluid-sequence";
 import { createSheetlet, ISheetlet } from "@tiny-calc/micro";
-import * as assert from "assert";
 import { CellRange } from "./cellrange";
-import { TableSliceType } from "./ComponentTypes";
+import { TableSliceType } from "./componentTypes";
 import { debug } from "./debug";
 import { TableSlice } from "./slice";
 import { ITable } from "./table";
@@ -85,7 +85,13 @@ export class TableDocument extends PrimedComponent implements ITable {
         return new CellRange(interval, this.localRefToRowCol);
     }
 
-    public async createSlice(sliceId: string, name: string, minRow: number, minCol: number, maxRow: number, maxCol: number): Promise<ITable> {
+    public async createSlice(
+        sliceId: string,
+        name: string,
+        minRow: number,
+        minCol: number,
+        maxRow: number,
+        maxCol: number): Promise<ITable> {
         return super.createAndAttachComponent<TableSlice>(sliceId, TableSliceType,
             { docId: this.runtime.id, name, minRow, minCol, maxRow, maxCol });
     }
@@ -176,15 +182,14 @@ export class TableDocument extends PrimedComponent implements ITable {
         this.maybeCols.on("sequenceDelta", (e, t) => this.emit("sequenceDelta", e, t));
         this.maybeRows.on("sequenceDelta", (e, t) => this.emit("sequenceDelta", e, t));
 
-        // tslint:disable-next-line:no-this-assignment
-        // eslint-disable-next-line
+        // eslint-disable-next-line @typescript-eslint/no-this-alias
         const table = this;
         this.maybeWorkbook = createSheetlet({
             get numRows() { return table.numRows; },
             get numCols() { return table.numCols; },
-            loadCellText(row, col) { return table[loadCellTextSym](row, col); },
+            loadCellText: (row, col) => table[loadCellTextSym](row, col),
             storeCellText(row, col, value) { table[storeCellTextSym](row, col, value); },
-            loadCellData(row, col) { return table[loadCellSym](row, col); },
+            loadCellData: (row, col) => table[loadCellSym](row, col),
             storeCellData(row, col, value) { table[storeCellSym](row, col, value); },
         });
     }
@@ -209,5 +214,5 @@ export class TableDocument extends PrimedComponent implements ITable {
     private readonly localRefToRowCol = (localRef: LocalReference) => {
         const position = localRef.toPosition();
         return positionToRowCol(position);
-    }
+    };
 }

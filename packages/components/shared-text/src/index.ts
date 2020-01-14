@@ -19,7 +19,7 @@ import {
 } from "@microsoft/fluid-runtime-definitions";
 import * as sharedTextComponent from "./component";
 
-/* eslint-disable */
+/* eslint-disable max-len */
 const math = import(/* webpackChunkName: "math", webpackPrefetch: true */ "@fluid-example/math");
 // const monaco = import(/* webpackChunkName: "monaco", webpackPrefetch: true */ "@fluid-example/monaco");
 const progressBars = import(
@@ -44,7 +44,7 @@ const DefaultComponentName = "text";
 // 		}
 // 	}
 // };
-/* eslint-enable */
+/* eslint-enable max-len */
 
 const defaultRegistryEntries: NamedComponentRegistryEntries = [
     ["@fluid-example/math", math.then((m) => m.fluidExport)],

@@ -13,7 +13,7 @@ export class RequestParser implements IRequest {
      * Splits the path of the url and decodes each path part
      * @param url - the url to get path parts of
      */
-    public static getPathParts(url: string): ReadonlyArray<string> {
+    public static getPathParts(url: string): readonly string[] {
         const queryStartIndex = url.indexOf("?");
         return url
             .substring(0, queryStartIndex < 0 ? url.length : queryStartIndex)
@@ -28,7 +28,7 @@ export class RequestParser implements IRequest {
             []);
     }
 
-    private requestPathParts: ReadonlyArray<string> | undefined;
+    private requestPathParts: readonly string[] | undefined;
     private readonly query: string;
     constructor(private readonly request: Readonly<IRequest>) {
         const queryStartIndex = this.request.url.indexOf("?");
@@ -50,7 +50,7 @@ export class RequestParser implements IRequest {
     /**
      * Returns the decoded path parts of the request's url
      */
-    public get pathParts(): ReadonlyArray<string> {
+    public get pathParts(): readonly string[] {
         if (this.requestPathParts === undefined) {
             this.requestPathParts = RequestParser.getPathParts(this.url);
         }

@@ -18,6 +18,7 @@ export async function blobUploadHandler(
 
         const dt = event.dataTransfer;
         const files = dt.files;
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         fileToInclusion(files[0])
             .then(async (blob) => {
                 await document.uploadBlob(blob);
@@ -43,7 +44,7 @@ async function fileToInclusion(file: File): Promise<IGenericBlob> {
     const arrayBufferP = new Promise<Buffer>((resolve, reject) => {
         arrayBufferReader.onerror = (error) => {
             arrayBufferReader.abort();
-            reject("error: " + JSON.stringify(error));
+            reject(`error: ${JSON.stringify(error)}`);
         };
 
         arrayBufferReader.onloadend = () => {
@@ -113,7 +114,7 @@ async function imageHandler(imageFile: File, incl: IImageBlob): Promise<IImageBl
     const urlObjP = new Promise<IImageBlob>((resolve, reject) => {
         urlObjReader.onerror = (error) => {
             urlObjReader.abort();
-            reject("error: " + JSON.stringify(error));
+            reject(`error: ${JSON.stringify(error)}`);
         };
 
         urlObjReader.onloadend = () => {
@@ -139,7 +140,7 @@ async function videoHandler(videoFile: File, incl: IVideoBlob): Promise<IVideoBl
     const urlObjP = new Promise<IVideoBlob>((resolve, reject) => {
         urlObjReader.onerror = (error) => {
             urlObjReader.abort();
-            reject("error: " + JSON.stringify(error));
+            reject(`error: ${JSON.stringify(error)}`);
         };
 
         urlObjReader.onloadend = () => {

@@ -62,6 +62,12 @@ module.exports = {
                 "lintFile": "./tslint.json"
             }
         ],
+        "import/no-unresolved": [
+            "error",
+            {
+                "caseSensitive": false
+            }
+        ],
         "no-case-declarations": "off"
     },
     "settings": {

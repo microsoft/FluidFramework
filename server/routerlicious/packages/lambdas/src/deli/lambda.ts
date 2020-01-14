@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable no-null/no-null */
+
+import * as assert from "assert";
 import { RangeTracker } from "@microsoft/fluid-core-utils";
 import { isSystemType } from "@microsoft/fluid-protocol-base";
 import {
@@ -21,7 +24,6 @@ import {
     ICollection,
     IContext,
     IDocument,
-    IKafkaMessage,
     IMessage,
     INackMessage,
     IPartitionLambda,
@@ -32,9 +34,8 @@ import {
     NackOperationType,
     RawOperationType,
     SequencedOperationType,
+    IQueuedMessage,
 } from "@microsoft/fluid-server-services-core";
-import * as assert from "assert";
-import * as _ from "lodash";
 import * as winston from "winston";
 import { CheckpointContext, ICheckpoint, IClientSequenceNumber } from "./checkpointContext";
 import { ClientSequenceNumberManager } from "./clientSeqManager";
@@ -63,9 +64,7 @@ export interface ITicketedMessageOutput {
 /**
  * Maps from a branch to a clientId stored in the MSN map
  */
-function getBranchClientId(branch: string) {
-    return `branch$${branch}`;
-}
+const getBranchClientId = (branch: string) => `branch$${branch}`;
 
 export class DeliLambda implements IPartitionLambda {
     private sequenceNumber: number = undefined;
@@ -74,27 +73,28 @@ export class DeliLambda implements IPartitionLambda {
     // Client sequence number mapping
     private readonly clientSeqManager = new ClientSequenceNumberManager();
     private minimumSequenceNumber = 0;
-    private branchMap: RangeTracker;
-    private checkpointContext: CheckpointContext;
+    private readonly branchMap: RangeTracker;
+    private readonly checkpointContext: CheckpointContext;
     private lastSendP = Promise.resolve();
     private lastSentMSN = 0;
     private idleTimer: any;
     private noopTimer: any;
     private noActiveClients = false;
+    // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
     // @ts-ignore
     private canClose = false;
 
     constructor(
-        private context: IContext,
-        private tenantId: string,
-        private documentId: string,
+        private readonly context: IContext,
+        private readonly tenantId: string,
+        private readonly documentId: string,
         dbObject: IDocument,
         collection: ICollection<IDocument>,
-        private forwardProducer: IProducer,
-        private reverseProducer: IProducer,
-        private clientTimeout: number,
-        private activityTimeout: number,
-        private noOpConsolidationTimeout: number) {
+        private readonly forwardProducer: IProducer,
+        private readonly reverseProducer: IProducer,
+        private readonly clientTimeout: number,
+        private readonly activityTimeout: number,
+        private readonly noOpConsolidationTimeout: number) {
 
         // Instantiate existing clients
         if (dbObject.clients) {
@@ -119,7 +119,6 @@ export class DeliLambda implements IPartitionLambda {
                 this.branchMap = new RangeTracker(
                     dbObject.parent.minimumSequenceNumber,
                     dbObject.parent.minimumSequenceNumber);
-                // tslint:disable-next-line:max-line-length
                 for (let i = dbObject.parent.minimumSequenceNumber + 1; i <= dbObject.parent.sequenceNumber; i++) {
                     this.branchMap.add(i, i);
                 }
@@ -143,7 +142,7 @@ export class DeliLambda implements IPartitionLambda {
         this.checkpointContext = new CheckpointContext(this.tenantId, this.documentId, collection, context);
     }
 
-    public handler(rawMessage: IKafkaMessage): void {
+    public handler(rawMessage: IQueuedMessage): void {
         // In cases where we are reprocessing messages we have already checkpointed exit early
         if (rawMessage.offset < this.logOffset) {
             return;
@@ -190,7 +189,7 @@ export class DeliLambda implements IPartitionLambda {
             this.lastSendP = this.sendToScriptorium(ticketedMessage.message);
         }
 
-        const checkpoint = this.generateCheckpoint();
+        const checkpoint = this.generateCheckpoint(rawMessage);
         // TODO optimize this to avoid doing per message
         // Checkpoint the current state
         this.lastSendP.then(
@@ -507,7 +506,6 @@ export class DeliLambda implements IPartitionLambda {
         // Perform duplicate detection on client IDs - Check that we have an increasing CID
         // For back compat ignore the 0/undefined message
         if (clientSequenceNumber && (client.clientSequenceNumber + 1 !== clientSequenceNumber)) {
-            // tslint:disable-next-line:max-line-length
             winston.info(`Duplicate ${client.clientId}:${client.clientSequenceNumber + 1} !== ${clientSequenceNumber}`);
             return true;
         }
@@ -515,6 +513,7 @@ export class DeliLambda implements IPartitionLambda {
         return false;
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     private sendToScriptorium(message: ITicketedMessage): Promise<void> {
         return this.forwardProducer.send([message], message.tenantId, message.documentId);
     }
@@ -619,12 +618,13 @@ export class DeliLambda implements IPartitionLambda {
     /**
      * Generates a checkpoint of the current ticketing state
      */
-    private generateCheckpoint(): ICheckpoint {
+    private generateCheckpoint(queuedMessage: IQueuedMessage): ICheckpoint {
         return {
             branchMap: this.branchMap ? this.branchMap.serialize() : undefined,
             clients: this.clientSeqManager.cloneValues(),
             logOffset: this.logOffset,
             sequenceNumber: this.sequenceNumber,
+            queuedMessage,
         };
     }
 

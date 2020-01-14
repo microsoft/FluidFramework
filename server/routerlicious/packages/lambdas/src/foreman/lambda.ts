@@ -9,27 +9,30 @@ import {
     IQueueMessage,
     ISequencedDocumentSystemMessage,
     MessageType,
-    ScopeType } from "@microsoft/fluid-protocol-definitions";
+    ScopeType,
+} from "@microsoft/fluid-protocol-definitions";
 import * as core from "@microsoft/fluid-server-services-core";
 import * as winston from "winston";
+import { generateToken } from "@microsoft/fluid-server-services-client";
 import { SequencedLambda } from "../sequencedLambda";
 
 // TODO: Move this to config.
 const RequestWindowMS = 15000;
 
 export class ForemanLambda extends SequencedLambda {
-    private taskQueueMap = new Map<string, string>();
-    private rateLimiter = new RateLimiter(RequestWindowMS);
+    private readonly taskQueueMap = new Map<string, string>();
+    private readonly rateLimiter = new RateLimiter(RequestWindowMS);
+
     constructor(
-        private messageSender: core.ITaskMessageSender,
-        private tenantManager: core.ITenantManager,
-        private permissions: any,
+        private readonly messageSender: core.ITaskMessageSender,
+        private readonly tenantManager: core.ITenantManager,
+        private readonly permissions: any,
         protected context: core.IContext,
         protected tenantId: string,
         protected documentId: string) {
         super(context);
         // Make a map of every task and their intended queue.
-        // tslint:disable-next-line:forin
+        // eslint-disable-next-line guard-for-in, no-restricted-syntax
         for (const queueName in this.permissions) {
             for (const task of this.permissions[queueName]) {
                 this.taskQueueMap.set(task, queueName);
@@ -37,7 +40,7 @@ export class ForemanLambda extends SequencedLambda {
         }
     }
 
-    protected async handlerCore(message: core.IKafkaMessage): Promise<void> {
+    protected async handlerCore(message: core.IQueuedMessage): Promise<void> {
         const boxcar = core.extractBoxcar(message);
 
         for (const baseMessage of boxcar.contents) {
@@ -46,9 +49,9 @@ export class ForemanLambda extends SequencedLambda {
                 // Only process "Help" messages.
                 if (sequencedMessage.operation.type === MessageType.RemoteHelp) {
                     let helpContent: string[];
-                    // tslint:disable max-line-length
+                    // eslint-disable-next-line max-len
                     const helpMessage: IHelpMessage = JSON.parse((sequencedMessage.operation as ISequencedDocumentSystemMessage).data);
-                    // back-compat to play well with older client.
+                    // Back-compat to play well with older client.
                     if (helpMessage.version) {
                         helpContent = helpMessage.tasks.map((task: string) => `chain-${task}`);
                     } else {
@@ -64,7 +67,7 @@ export class ForemanLambda extends SequencedLambda {
             }
         }
 
-        this.context.checkpoint(message.offset);
+        this.context.checkpoint(message);
     }
 
     // Sends help message for a task. Uses a rate limiter to limit request per clientId.
@@ -86,7 +89,7 @@ export class ForemanLambda extends SequencedLambda {
                         tasks,
                     },
                     tenantId,
-                    token: core.generateToken(tenantId, docId, key, scopes),
+                    token: generateToken(tenantId, docId, key, scopes),
                 };
                 this.messageSender.sendTask(
                     queueName,

@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import {
     IConsumer,
-    IKafkaMessage,
+    IQueuedMessage,
     IPartitionLambda,
     IPartitionLambdaFactory,
 } from "@microsoft/fluid-server-services-core";
 import { AsyncQueue, queue } from "async";
-import { EventEmitter } from "events";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import { CheckpointManager } from "./checkpointManager";
@@ -21,11 +21,11 @@ import { Context } from "./context";
  * overall partition offset.
  */
 export class Partition extends EventEmitter {
-    private q: AsyncQueue<IKafkaMessage>;
-    private lambdaP: Promise<IPartitionLambda>;
+    private q: AsyncQueue<IQueuedMessage>;
+    private readonly lambdaP: Promise<IPartitionLambda>;
     private lambda: IPartitionLambda;
-    private checkpointManager: CheckpointManager;
-    private context: Context;
+    private readonly checkpointManager: CheckpointManager;
+    private readonly context: Context;
 
     constructor(
         id: number,
@@ -42,7 +42,7 @@ export class Partition extends EventEmitter {
 
         // Create the incoming message queue
         this.q = queue(
-            (message: IKafkaMessage, callback) => {
+            (message: IQueuedMessage, callback) => {
                 try {
                     this.lambda.handler(message);
                     callback();
@@ -64,12 +64,13 @@ export class Partition extends EventEmitter {
                 this.q.kill();
             });
 
+        // eslint-disable-next-line @typescript-eslint/unbound-method
         this.q.error = (error) => {
             this.emit("error", error, true);
         };
     }
 
-    public process(rawMessage: IKafkaMessage) {
+    public process(rawMessage: IQueuedMessage) {
         this.q.push(rawMessage);
     }
 
@@ -87,7 +88,7 @@ export class Partition extends EventEmitter {
                 lambda.close();
             },
             (error) => {
-                // lambda never existed - no need to close
+                // Lambda never existed - no need to close
             });
 
         return;
@@ -114,7 +115,7 @@ export class Partition extends EventEmitter {
         });
         await drainedP;
 
-        // checkpoint at the latest offset
+        // Checkpoint at the latest offset
         await this.checkpointManager.flush();
     }
 }

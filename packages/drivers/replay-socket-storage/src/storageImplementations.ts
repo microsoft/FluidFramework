@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
@@ -19,7 +20,6 @@ import {
     ITree,
     IVersion,
 } from "@microsoft/fluid-protocol-definitions";
-import * as assert from "assert";
 import { EmptyDeltaStorageService } from "./emptyDeltaStorageService";
 import { ReadDocumentStorageServiceBase } from "./replayController";
 
@@ -28,7 +28,7 @@ import { ReadDocumentStorageServiceBase } from "./replayController";
  */
 export interface IFileSnapshot {
     tree: ITree;
-    commits: {[key: string]: ITree};
+    commits: { [key: string]: ITree };
 }
 
 export class FileSnapshotReader extends ReadDocumentStorageServiceBase implements IDocumentStorageService {
@@ -38,8 +38,8 @@ export class FileSnapshotReader extends ReadDocumentStorageServiceBase implement
     protected docId?: string;
     protected docTree: ISnapshotTree;
     protected readonly blobs = new Map<string, string>();
-    protected readonly commits: {[key: string]: ITree} = {};
-    protected readonly trees: {[key: string]: ISnapshotTree} = {};
+    protected readonly commits: { [key: string]: ITree } = {};
+    protected readonly trees: { [key: string]: ISnapshotTree } = {};
 
     public constructor(json: IFileSnapshot) {
         super();
@@ -48,15 +48,15 @@ export class FileSnapshotReader extends ReadDocumentStorageServiceBase implement
     }
 
     public async getVersions(
-            versionId: string,
-            count: number): Promise<IVersion[]> {
+        versionId: string,
+        count: number): Promise<IVersion[]> {
         if (this.docId === undefined || this.docId === versionId) {
             this.docId = versionId;
-            return [{id: "latest", treeId: ""}];
+            return [{ id: "latest", treeId: "" }];
         }
 
         if (this.commits[versionId] !== undefined) {
-            return [{id: versionId, treeId: FileSnapshotReader.FileStorageVersionTreeId}];
+            return [{ id: versionId, treeId: FileSnapshotReader.FileStorageVersionTreeId }];
         }
         throw new Error(`Unknown version ID: ${versionId}`);
     }
@@ -94,8 +94,8 @@ export class SnapshotStorage extends ReadDocumentStorageServiceBase {
     protected docId?: string;
 
     constructor(
-            protected readonly storage: IDocumentStorageService,
-            protected readonly docTree: ISnapshotTree | null) {
+        protected readonly storage: IDocumentStorageService,
+        protected readonly docTree: ISnapshotTree | null) {
         super();
         assert(this.docTree);
     }
@@ -103,7 +103,7 @@ export class SnapshotStorage extends ReadDocumentStorageServiceBase {
     public async getVersions(versionId: string, count: number): Promise<IVersion[]> {
         if (this.docId === undefined || this.docId === versionId) {
             this.docId = versionId;
-            return [{id: "latest", treeId: ""}];
+            return [{ id: "latest", treeId: "" }];
         }
         return this.storage.getVersions(versionId, count);
     }
@@ -116,6 +116,7 @@ export class SnapshotStorage extends ReadDocumentStorageServiceBase {
         return this.docTree;
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public read(blobId: string): Promise<string> {
         return this.storage.read(blobId);
     }
@@ -136,7 +137,7 @@ export class OpStorage extends ReadDocumentStorageServiceBase {
 }
 
 export class StaticStorageDocumentService implements IDocumentService {
-    constructor(private readonly storage: IDocumentStorageService) {}
+    constructor(private readonly storage: IDocumentStorageService) { }
 
     public async connectToStorage(): Promise<IDocumentStorageService> {
         return this.storage;
@@ -149,7 +150,7 @@ export class StaticStorageDocumentService implements IDocumentService {
     public async connectToDeltaStream(client: IClient, mode: ConnectionMode): Promise<IDocumentDeltaConnection> {
         // We have no delta stream, so make it not return forever...
         // tslint:disable-next-line:promise-must-complete
-        return new Promise(() => {});
+        return new Promise(() => { });
     }
 
     public async branch(): Promise<string> {
@@ -163,7 +164,7 @@ export class StaticStorageDocumentService implements IDocumentService {
 
 export class StaticStorageDocumentServiceFactory implements IDocumentServiceFactory {
     public readonly protocolName = "fluid-static-storage:";
-    public constructor(protected readonly storage: IDocumentStorageService) {}
+    public constructor(protected readonly storage: IDocumentStorageService) { }
 
     public async createDocumentService(fileURL: IResolvedUrl): Promise<IDocumentService> {
         return new StaticStorageDocumentService(this.storage);

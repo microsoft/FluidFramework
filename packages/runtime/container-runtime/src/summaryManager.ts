@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import { IComponent, IComponentRunnable, IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IContainerContext, LoaderHeader } from "@microsoft/fluid-container-definitions";
 import { ChildLogger, Heap, IComparer, IHeapNode, PerformanceEvent } from "@microsoft/fluid-core-utils";
 import { ISequencedClient } from "@microsoft/fluid-protocol-definitions";
-import { EventEmitter } from "events";
 
 interface ITrackedClient {
     clientId: string;
@@ -116,7 +116,6 @@ export class SummaryManager extends EventEmitter {
     }
 
     public on(event: "summarizer", listener: (clientId: string) => void): this;
-    // tslint:disable-next-line:no-unnecessary-override
     public on(event: string | symbol, listener: (...args: any[]) => void): this {
         return super.on(event, listener);
     }
@@ -142,14 +141,14 @@ export class SummaryManager extends EventEmitter {
     }
 
     private refreshSummarizer() {
-        // compute summarizer
+        // Compute summarizer
         const newSummarizerClientId = this.quorumHeap.getFirstClientId();
         if (newSummarizerClientId !== this.summarizerClientId) {
             this.summarizerClientId = newSummarizerClientId;
             this.emit("summarizer", newSummarizerClientId);
         }
 
-        // transition states depending on shouldSummarize, which is a calculated
+        // Transition states depending on shouldSummarize, which is a calculated
         // property that is only true if this client is connected and has the
         // computed summarizer client id
         switch (this.state) {
@@ -160,13 +159,13 @@ export class SummaryManager extends EventEmitter {
                 return;
             }
             case SummaryManagerState.Starting: {
-                // cannot take any action until summarizer is created
+                // Cannot take any action until summarizer is created
                 // state transition will occur after creation
                 return;
             }
             case SummaryManagerState.Running: {
                 if (!this.shouldSummarize) {
-                    // only need to check defined in case we are between
+                    // Only need to check defined in case we are between
                     // finally and then states; stopping should trigger
                     // a change in states when the running summarizer closes
                     if (this.runningSummarizer) {
@@ -190,12 +189,12 @@ export class SummaryManager extends EventEmitter {
 
         this.state = SummaryManagerState.Starting;
 
-        // if we should never summarize, lock in starting state
+        // If we should never summarize, lock in starting state
         if (!this.summariesEnabled) {
             return;
         }
 
-        // back-compat: 0.11 clientType
+        // Back-compat: 0.11 clientType
         const clientType = this.context.clientDetails ? this.context.clientDetails.type : this.context.clientType;
         if (clientType === "summarizer") {
             // Make sure that the summarizer client does not load another summarizer.
@@ -224,7 +223,7 @@ export class SummaryManager extends EventEmitter {
 
         const runningSummarizerEvent = PerformanceEvent.start(this.logger, { eventName: "RunningSummarizer" });
         this.runningSummarizer = summarizer;
-        // tslint:disable-next-line: no-floating-promises
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.runningSummarizer.run(this.clientId).then(() => {
             runningSummarizerEvent.end();
         }, (error) => {
@@ -250,7 +249,7 @@ export class SummaryManager extends EventEmitter {
         const request: IRequest = {
             headers: {
                 [LoaderHeader.cache]: false,
-                [LoaderHeader.clientType]: "summarizer", // back-compat: 0.11 clientType
+                [LoaderHeader.clientType]: "summarizer", // Back-compat: 0.11 clientType
                 [LoaderHeader.clientDetails]: {
                     capabilities: { interactive: false },
                     type: "summarizer",

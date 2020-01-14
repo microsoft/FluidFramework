@@ -3,8 +3,10 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable no-null/no-null */
+
 import { IRangeTrackerSnapshot } from "@microsoft/fluid-core-utils";
-import { ICollection, IContext, IDocument } from "@microsoft/fluid-server-services-core";
+import { ICollection, IContext, IDocument, IQueuedMessage } from "@microsoft/fluid-server-services-core";
 import * as winston from "winston";
 
 export interface IClientSequenceNumber {
@@ -23,6 +25,7 @@ export interface ICheckpoint {
     clients: IClientSequenceNumber[];
     logOffset: number;
     sequenceNumber: number;
+    queuedMessage: IQueuedMessage;
 }
 
 export class CheckpointContext {
@@ -31,10 +34,10 @@ export class CheckpointContext {
     private closed = false;
 
     constructor(
-        private tenantId: string,
-        private id: string,
-        private collection: ICollection<IDocument>,
-        private context: IContext) {
+        private readonly tenantId: string,
+        private readonly id: string,
+        private readonly collection: ICollection<IDocument>,
+        private readonly context: IContext) {
     }
 
     public checkpoint(checkpoint: ICheckpoint) {
@@ -44,6 +47,7 @@ export class CheckpointContext {
         }
 
         // Check if a checkpoint is in progress - if so store the pending checkpoint
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises
         if (this.pendingUpdateP) {
             this.pendingCheckpoint = checkpoint;
             return;
@@ -53,7 +57,7 @@ export class CheckpointContext {
         this.pendingUpdateP = this.checkpointCore(checkpoint);
         this.pendingUpdateP.then(
             () => {
-                this.context.checkpoint(checkpoint.logOffset);
+                this.context.checkpoint(checkpoint.queuedMessage);
                 this.pendingUpdateP = null;
 
                 // Trigger another round if there is a pending update
@@ -73,16 +77,23 @@ export class CheckpointContext {
         this.closed = true;
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     private checkpointCore(checkpoint: ICheckpoint) {
         const updateP = this.collection.update(
             {
                 documentId: this.id,
                 tenantId: this.tenantId,
             },
-            checkpoint,
+            {
+                branchMap: checkpoint.branchMap,
+                clients: checkpoint.clients,
+                logOffset: checkpoint.logOffset,
+                sequenceNumber: checkpoint.sequenceNumber,
+            },
             null);
 
         // Retry the checkpoint on error
+        // eslint-disable-next-line @typescript-eslint/promise-function-async
         return updateP.catch((error) => {
             winston.error("Error writing checkpoint to MongoDB", error);
             return new Promise<void>((resolve, reject) => {

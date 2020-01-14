@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// tslint:disable:align
 import * as MergeTree from "@microsoft/fluid-merge-tree";
 import { CharacterCodes } from "./characterCodes";
 import { Cursor } from "./cursor";
@@ -12,10 +11,9 @@ import { KeyCode } from "./keycode";
 import * as ui from "./rectangle";
 
 declare module "@microsoft/fluid-component-core-interfaces" {
-    export interface IComponent extends Readonly<Partial<
-        IProvideSearchMenuHost
-        & ISearchMenuClient>> {
-    }
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface IComponent
+        extends Readonly<Partial<IProvideSearchMenuHost & ISearchMenuClient>> { }
 }
 
 export interface IProvideSearchMenuHost {
@@ -105,34 +103,7 @@ export function selectionListBoxCreate(
 
     init();
 
-    return {
-        elm: listContainer,
-        getItemTextPrefix,
-        getItemTextSuffix,
-        getSelectedItem,
-        getSelectedKey,
-        getSelectionIndex,
-        hide: () => {
-            listContainer.style.visibility = "hidden";
-        },
-        items: () => items,
-        keydown,
-        nextItem,
-        prevItem,
-        removeHighlight,
-        selectItem: selectItemByKey,
-        setItemTextPrefix,
-        setItemTextSuffix,
-        setSelectionIndex,
-        show: () => {
-            listContainer.style.visibility = "visible";
-        },
-        showSelectionList,
-    };
-
-    function getSelectionIndex() {
-        return selectionIndex;
-    }
+    const getSelectionIndex = () => selectionIndex;
 
     function setSelectionIndex(indx: number) {
         selectItem(indx);
@@ -146,13 +117,9 @@ export function selectionListBoxCreate(
         itemTextSuffix = suffix;
     }
 
-    function getItemTextPrefix() {
-        return itemTextPrefix;
-    }
+    const getItemTextPrefix = () => itemTextPrefix;
 
-    function getItemTextSuffix() {
-        return itemTextSuffix;
-    }
+    const getItemTextSuffix = () => itemTextSuffix;
 
     function selectItemByKey(key: string) {
         key = key.trim();
@@ -217,7 +184,7 @@ export function selectionListBoxCreate(
         itemCapacity = Math.floor(trimRect.height / itemHeight);
 
         if (varHeight) {
-            listContainer.style.paddingBottom = varHeight + "px";
+            listContainer.style.paddingBottom = `${varHeight}px`;
         }
     }
 
@@ -252,11 +219,11 @@ export function selectionListBoxCreate(
                 listContainerRect.conformElementMaxHeightFromBottom(listContainer, bottom);
             }
             if (right !== undefined) {
-                listContainer.style.right = (window.innerWidth - right) + "px";
+                listContainer.style.right = `${window.innerWidth - right}px`;
                 listContainer.style.left = "";
             }
             if (varHeight) {
-                listContainer.style.paddingBottom = varHeight + "px";
+                listContainer.style.paddingBottom = `${varHeight}px`;
             }
         }
     }
@@ -270,7 +237,7 @@ export function selectionListBoxCreate(
     }
 
     function selectItem(indx: number) {
-        // then scroll if necessary
+        // Then scroll if necessary
         if (indx < topSelection) {
             topSelection = indx;
         } else if ((indx - topSelection) >= itemCapacity) {
@@ -287,11 +254,11 @@ export function selectionListBoxCreate(
         const itemDiv = div;
         itemDiv.style.fontSize = "18px";
         itemDiv.style.fontFamily = "Segoe UI";
-        itemDiv.style.lineHeight = itemHeight + "px";
+        itemDiv.style.lineHeight = `${itemHeight}px`;
         itemDiv.style.whiteSpace = "pre";
         items[i].div = itemDiv;
         const itemSpan = document.createElement("span");
-        itemSpan.innerText = "  " + item.key;
+        itemSpan.innerText = `  ${item.key}`;
         itemDiv.appendChild(itemSpan);
 
         if (item.iconHTML) {
@@ -346,6 +313,31 @@ export function selectionListBoxCreate(
             }
         }
     }
+
+    return {
+        elm: listContainer,
+        getItemTextPrefix,
+        getItemTextSuffix,
+        getSelectedItem,
+        getSelectedKey,
+        getSelectionIndex,
+        hide: () => {
+            listContainer.style.visibility = "hidden";
+        },
+        items: () => items,
+        keydown,
+        nextItem,
+        prevItem,
+        removeHighlight,
+        selectItem: selectItemByKey,
+        setItemTextPrefix,
+        setItemTextSuffix,
+        setSelectionIndex,
+        show: () => {
+            listContainer.style.visibility = "visible";
+        },
+        showSelectionList,
+    };
 }
 
 export interface ISearchBox {
@@ -372,7 +364,8 @@ export interface IInputBox {
     keypress(e: KeyboardEvent);
 }
 
-export function inputBoxCreate(onsubmit: (s: string) => void,
+export function inputBoxCreate(
+    onsubmit: (s: string) => void,
     onchanged: (s: string) => void) {
     const elm = document.createElement("div");
     const readOnlySpan = document.createElement("span");
@@ -380,16 +373,6 @@ export function inputBoxCreate(onsubmit: (s: string) => void,
     const span = document.createElement("span");
     elm.appendChild(span);
     let cursor: Cursor;
-
-    return {
-        elm,
-        getText,
-        initCursor,
-        keydown,
-        keypress,
-        setPrefixText,
-        setText,
-    } as IInputBox;
 
     function adjustCursorX() {
         const computedStyle = getComputedStyle(elm);
@@ -433,6 +416,8 @@ export function inputBoxCreate(onsubmit: (s: string) => void,
                     onchanged(text);
                 }
                 break;
+            default:
+                break;
         }
     }
 
@@ -455,7 +440,7 @@ export function inputBoxCreate(onsubmit: (s: string) => void,
         const lineHeight = domutils.getTextHeight(elm);
         cursor = new Cursor(elm);
         cursor.assignToLine(0, lineHeight - y, elm);
-        // cursor.editSpan.style.top=`${y}px`;
+        // Cursor.editSpan.style.top=`${y}px`;
         cursor.scope();
     }
 
@@ -467,19 +452,30 @@ export function inputBoxCreate(onsubmit: (s: string) => void,
         readOnlySpan.innerText = text;
     }
 
-    function getText() {
-        return span.innerText;
-    }
+    const getText = () => span.innerText;
+
+    const inputBox: IInputBox = {
+        elm,
+        getText,
+        initCursor,
+        keydown,
+        keypress,
+        setPrefixText,
+        setText,
+    };
+
+    return inputBox;
 }
 
 interface IParameterState {
     paramCmd: ISearchMenuCommand;
-    // represents parameters already satisfied; length of params is index of current parameter
+    // Represents parameters already satisfied; length of params is index of current parameter
     params: string[];
 }
 
 // TODO: make generic in context type
-export function searchBoxCreate(context: any, boundingElm: HTMLElement,
+export function searchBoxCreate(
+    context: any, boundingElm: HTMLElement,
     cmdTree: MergeTree.TST<ISearchMenuCommand>,
     foldCase = true,
     cmdParser?: (searchString: string, cmd?: ISearchMenuCommand) => void): ISearchBox {
@@ -493,20 +489,6 @@ export function searchBoxCreate(context: any, boundingElm: HTMLElement,
     let onExec: (c: ISearchMenuCommand) => void;
 
     init();
-
-    return {
-        dismiss,
-        focus: containerFocus,
-        getSearchString,
-        getSelectedItem,
-        getSelectedKey,
-        keydown,
-        keypress,
-        setOnExec,
-        showAllItems,
-        showSelectionList,
-        updateText,
-    };
 
     function containerFocus() {
         container.focus();
@@ -547,9 +529,7 @@ export function searchBoxCreate(context: any, boundingElm: HTMLElement,
             const paramCmd = paramState.paramCmd;
             const param = paramCmd.parameters[paramIndex];
             const paramCmdTree = param.values(context);
-            const items = paramCmdTree.pairsWithPrefix(prefix).map((res) => {
-                return res.val;
-            });
+            const items = paramCmdTree.pairsWithPrefix(prefix).map((res) => res.val);
             let suffix = "";
             for (let i = paramIndex + 1; i < paramCmd.parameters.length; i++) {
                 const ithParam = paramCmd.parameters[i];
@@ -557,26 +537,19 @@ export function searchBoxCreate(context: any, boundingElm: HTMLElement,
             }
             showSelectionList(items, `${paramState.paramCmd.key} `, suffix);
         } else {
-            const items = cmdTree.pairsWithPrefix(prefix).map((res) => {
-                return res.val;
-            }).filter((cmd) => {
-                return (!cmd.enabled) || cmd.enabled(context);
-            });
+            const items =
+                cmdTree.pairsWithPrefix(prefix)
+                    .map((res) => res.val)
+                    .filter((cmd) => (!cmd.enabled) || cmd.enabled(context));
             showSelectionList(items);
         }
     }
 
-    function getSelectedKey() {
-        return selectionListBox.getSelectedKey();
-    }
+    const getSelectedKey = () => selectionListBox.getSelectedKey();
 
-    function getSelectedItem() {
-        return selectionListBox.getSelectedItem();
-    }
+    const getSelectedItem = () => selectionListBox.getSelectedItem();
 
-    function getSearchString() {
-        return inputBox.getText();
-    }
+    const getSearchString = () => inputBox.getText();
 
     function dismiss() {
         boundingElm.removeChild(container);
@@ -590,7 +563,7 @@ export function searchBoxCreate(context: any, boundingElm: HTMLElement,
                 paramState.params.push(cmd.key);
                 const paramIndex = paramState.params.length;
                 if (paramIndex < paramState.paramCmd.parameters.length) {
-                    const paramName = paramState.paramCmd.parameters[paramIndex].name + ": ";
+                    const paramName = `${paramState.paramCmd.parameters[paramIndex].name}: `;
                     inputBox.setPrefixText(paramName);
                 }
             } else {
@@ -730,4 +703,18 @@ export function searchBoxCreate(context: any, boundingElm: HTMLElement,
         boundingElm.appendChild(container);
         inputBox.initCursor(2);
     }
+
+    return {
+        dismiss,
+        focus: containerFocus,
+        getSearchString,
+        getSelectedItem,
+        getSelectedKey,
+        keydown,
+        keypress,
+        setOnExec,
+        showAllItems,
+        showSelectionList,
+        updateText,
+    };
 }

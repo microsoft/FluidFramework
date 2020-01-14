@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
+import { EventEmitter } from "events";
 import { AgentSchedulerFactory } from "@microsoft/fluid-agent-scheduler";
 import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import {
@@ -64,9 +66,7 @@ import {
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
 import { ComponentSerializer } from "@microsoft/fluid-runtime-utils";
-import * as assert from "assert";
-import { EventEmitter } from "events";
-// tslint:disable-next-line:no-submodule-imports
+// eslint-disable-next-line import/no-internal-modules
 import * as uuid from "uuid/v4";
 import { ComponentContext, LocalComponentContext, RemotedComponentContext } from "./componentContext";
 import { ComponentHandleContext } from "./componentHandleContext";
@@ -168,7 +168,7 @@ class ScheduleManager {
         this.messageScheduler = messageScheduler;
         this.deltaManager = this.messageScheduler.deltaManager;
 
-        // listen for delta manager sends and add batch metadata to messages
+        // Listen for delta manager sends and add batch metadata to messages
         this.deltaManager.on("prepareSend", (messages: IDocumentMessage[]) => {
             if (messages.length === 0) {
                 return;
@@ -180,13 +180,13 @@ class ScheduleManager {
                 return;
             }
 
-            // if only length one then clear
+            // If only length one then clear
             if (messages.length === 1) {
                 delete messages[0].metadata;
                 return;
             }
 
-            // set the batch flag to false on the last message to indicate the end of the send batch
+            // Set the batch flag to false on the last message to indicate the end of the send batch
             const lastMessage = messages[messages.length - 1];
             lastMessage.metadata = { ...lastMessage.metadata, ...{ batch: false } };
         });
@@ -263,6 +263,7 @@ class ScheduleManager {
         }
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public pause(): Promise<void> {
         this.paused = true;
         return this.deltaManager.inbound.systemPause();
@@ -276,14 +277,14 @@ class ScheduleManager {
     }
 
     private setPaused(localPaused: boolean) {
-        // return early if no change in value
+        // Return early if no change in value
         if (this.localPaused === localPaused) {
             return;
         }
 
         this.localPaused = localPaused;
         if (localPaused || this.paused) {
-            // tslint:disable-next-line:no-floating-promises
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.deltaManager.inbound.systemPause();
         } else {
             this.deltaManager.inbound.systemResume();
@@ -414,7 +415,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this.context.existing;
     }
 
-    // tslint:disable-next-line:no-unsafe-any
     public get options(): any {
         return this.context.options;
     }
@@ -491,7 +491,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
     private tasks: string[] = [];
 
-    // back-compat: version decides between loading document and chaincode.
+    // Back-compat: version decides between loading document and chaincode.
     private version: string;
 
     private _flushMode = FlushMode.Automatic;
@@ -611,7 +611,9 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             "/_summarizer",
             this,
             () => this.summaryConfiguration,
+            // eslint-disable-next-line @typescript-eslint/promise-function-async
             () => this.generateSummary(!this.loadedFromSummary),
+            // eslint-disable-next-line @typescript-eslint/promise-function-async
             (handle, refSeq) => this.refreshLatestSummaryAck(handle, refSeq));
 
         // Create the SummaryManager and mark the initial state
@@ -628,10 +630,9 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     }
     public get IComponentTokenProvider() {
 
-        // tslint:disable-next-line: no-unsafe-any
         if (this.options && this.options.intelligence) {
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             return {
-                // tslint:disable-next-line: no-unsafe-any
                 intelligence: this.options.intelligence,
             } as IComponentTokenProvider;
         }
@@ -699,9 +700,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
         // Sort for better diffing of snapshots (in replay tool, used to find bugs in snapshotting logic)
         if (fullTree) {
-            componentVersions.sort((a, b) => {
-                return a.id.localeCompare(b.id);
-            });
+            componentVersions.sort((a, b) => a.id.localeCompare(b.id));
         }
 
         let gitModules = "";
@@ -709,7 +708,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             root.entries.push(new CommitTreeEntry(componentVersion.id, componentVersion.version));
 
             const repoUrl = "https://github.com/kurtb/praguedocs.git"; // this.storageService.repositoryUrl
-            // tslint:disable-next-line: max-line-length
+            // eslint-disable-next-line max-len
             gitModules += `[submodule "${componentVersion.id}"]\n\tpath = ${componentVersion.id}\n\turl = ${repoUrl}\n\n`;
         }
 
@@ -780,6 +779,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         }
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public postProcess(message: ISequencedDocumentMessage, local: boolean, context: any) {
         return this.context.IMessageScheduler
             ? Promise.reject("Scheduler assumes only process")
@@ -790,7 +790,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         const envelope = message.content as IEnvelope;
         const context = this.contexts.get(envelope.address);
         if (!context) {
-            // attach message may not have been processed yet
+            // Attach message may not have been processed yet
             assert(!local);
             this.logger.sendTelemetryEvent({ eventName: "SignalComponentNotFound", componentId: envelope.address });
             return;
@@ -885,7 +885,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this._createComponentWithProps(pkg, undefined, id);
     }
 
-    // tslint:disable-next-line: function-name
     public async _createComponentWithProps(pkg: string | string[], props: any, id: string): Promise<IComponentRuntime> {
         this.verifyNotClosed();
 
@@ -931,7 +930,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         }
     }
 
-    /* tslint:disable:no-unnecessary-override */
     public on(event: string | symbol, listener: (...args: any[]) => void): this {
         return super.on(event, listener);
     }
@@ -954,9 +952,9 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     }
 
     private refreshBaseSummary(snapshot: ISnapshotTree) {
-        // currently only is called from summaries
+        // Currently only is called from summaries
         this.loadedFromSummary = true;
-        // propagate updated tree to all components
+        // Propagate updated tree to all components
         for (const key of Object.keys(snapshot.trees)) {
             if (this.contexts.has(key)) {
                 const component = this.contexts.get(key);
@@ -992,7 +990,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             };
         }
 
-        summaryStats.treeNodeCount++; // add this root tree node
+        summaryStats.treeNodeCount++; // Add this root tree node
         return { summaryStats, summaryTree };
     }
 
@@ -1009,7 +1007,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         // Old prepare part
         switch (message.type) {
             case MessageType.Attach:
-                // the local object has already been attached
+                // The local object has already been attached
                 if (local) {
                     break;
                 }
@@ -1067,12 +1065,13 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                     }
                     this.contexts.set(attachMessage.id, remotedComponentContext);
 
-                    // equivalent of nextTick() - Prefetch once all current ops have completed
-                    // tslint:disable-next-line:no-floating-promises
+                    // Equivalent of nextTick() - Prefetch once all current ops have completed
+                    // eslint-disable-next-line max-len
+                    // eslint-disable-next-line @typescript-eslint/no-floating-promises, @typescript-eslint/promise-function-async
                     Promise.resolve().then(() => remotedComponentContext.realize());
                 }
                 break;
-            default: // do nothing
+            default: // Do nothing
         }
     }
 
@@ -1119,7 +1118,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             };
 
             if (!this.connected) {
-                // if summarizer loses connection it will never reconnect
+                // If summarizer loses connection it will never reconnect
                 return attemptData;
             }
 
@@ -1172,7 +1171,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         const chunkedContent = message.contents as IChunkedOp;
         this.addChunk(clientId, chunkedContent);
         if (chunkedContent.chunkId === chunkedContent.totalChunks) {
-            const newMessage = {...message};
+            const newMessage = { ...message };
             const serializedContent = this.chunkMap.get(clientId).join("");
             newMessage.contents = JSON.parse(serializedContent);
             newMessage.type = chunkedContent.originalType;
@@ -1231,7 +1230,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
             // Use Promise.resolve().then() to queue a microtask to detect the end of the turn and force a flush.
             if (!this.flushTrigger) {
-                // tslint:disable-next-line:no-floating-promises
+                // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 Promise.resolve().then(() => {
                     this.flushTrigger = false;
                     this.flush();
@@ -1303,7 +1302,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     }
 
     private subscribeToLeadership() {
-        // back-compat: 0.11 clientType
+        // Back-compat: 0.11 clientType
         const interactive = this.context.clientType === "browser"
             || (this.context.clientDetails && this.context.clientDetails.capabilities.interactive);
 
@@ -1369,7 +1368,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             if (helpTasks.browser.length > 0) {
                 const localHelpMessage: IHelpMessage = {
                     tasks: helpTasks.browser,
-                    version: this.version,   // back-compat
+                    version: this.version,   // Back-compat
                 };
                 debug(`Requesting local help for ${helpTasks.browser}`);
                 this.emit("localHelp", localHelpMessage);
@@ -1377,7 +1376,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             if (helpTasks.robot.length > 0) {
                 const remoteHelpMessage: IHelpMessage = {
                     tasks: helpTasks.robot,
-                    version: this.version,   // back-compat
+                    version: this.version,   // Back-compat
                 };
                 debug(`Requesting remote help for ${helpTasks.robot}`);
                 this.submit(MessageType.RemoteHelp, remoteHelpMessage);
@@ -1390,7 +1389,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             return;
         } else if (referenceSequenceNumber === this.latestSummaryAck.referenceSequenceNumber) {
             if (!this.latestSummaryAck.handle) {
-                // when first loading we may not have the ack handle (version)
+                // When first loading we may not have the ack handle (version)
                 this.latestSummaryAck.handle = handle;
             }
             return;
@@ -1398,19 +1397,21 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
         this.latestSummaryAck = { handle, referenceSequenceNumber };
 
-        // we have to call get version to get the treeId for r11s; this isnt needed
+        // We have to call get version to get the treeId for r11s; this isnt needed
         // for odsp currently, since their treeId is undefined
         const versionsResult = await this.setOrLogError("FailedToGetVersion",
+            // eslint-disable-next-line @typescript-eslint/promise-function-async
             () => this.storage.getVersions(handle, 1),
             (versions) => !!(versions && versions.length));
 
         if (versionsResult.success) {
             const snapshotResult = await this.setOrLogError("FailedToGetSnapshot",
+                // eslint-disable-next-line @typescript-eslint/promise-function-async
                 () => this.storage.getSnapshotTree(versionsResult.result[0]),
                 (snapshot) => !!snapshot);
 
             if (snapshotResult.success) {
-                // refresh base summary
+                // Refresh base summary
                 // it might be nice to do this in the container in the future, and maybe for all
                 // clients, not just the summarizer
                 this.context.refreshBaseSummary(snapshotResult.result);
@@ -1428,12 +1429,12 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         try {
             result = await setter();
         } catch (error) {
-            // send error event for exceptions
+            // Send error event for exceptions
             this.logger.sendErrorEvent({ eventName }, error);
             success = false;
         }
         if (success && !validator(result)) {
-            // send error event when result is invalid
+            // Send error event when result is invalid
             this.logger.sendErrorEvent({ eventName });
             success = false;
         }

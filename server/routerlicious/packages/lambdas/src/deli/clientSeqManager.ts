@@ -8,7 +8,7 @@ import * as _ from "lodash";
 import { IClientSequenceNumber } from "./checkpointContext";
 
 const SequenceNumberComparer: IComparer<IClientSequenceNumber> = {
-    compare: (a, b) =>  a.referenceSequenceNumber - b.referenceSequenceNumber,
+    compare: (a, b) => a.referenceSequenceNumber - b.referenceSequenceNumber,
     min: {
         canEvict: true,
         clientId: undefined,
@@ -21,8 +21,8 @@ const SequenceNumberComparer: IComparer<IClientSequenceNumber> = {
 };
 
 export class ClientSequenceNumberManager {
-    private clientNodeMap = new Map<string, IHeapNode<IClientSequenceNumber>>();
-    private clientSeqNumbers = new Heap<IClientSequenceNumber>(SequenceNumberComparer);
+    private readonly clientNodeMap = new Map<string, IHeapNode<IClientSequenceNumber>>();
+    private readonly clientSeqNumbers = new Heap<IClientSequenceNumber>(SequenceNumberComparer);
 
     public has(clientId: string): boolean {
         return this.clientNodeMap.has(clientId);

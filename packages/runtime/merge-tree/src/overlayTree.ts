@@ -3,11 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// tslint:disable:no-parameter-reassignment
-// tslint:disable:object-literal-sort-keys
-// tslint:disable:switch-default
-// tslint:disable:switch-final-break
-
 import * as MergeLib from "./index";
 
 export enum OverlayNodePosition {
@@ -19,7 +14,7 @@ export enum OverlayNodePosition {
     Root,
 }
 
-export let onodeTypeKey = "onodeType";
+export const onodeTypeKey = "onodeType";
 
 function createTreeMarkerOps(
     treeRangeLabel: string,
@@ -63,15 +58,14 @@ function makeId(client: MergeLib.Client) {
     return `${longClientId}Node${idSuffix++}`;
 }
 
-function endIdFromId(id: string) {
-    return `end-${id}`;
-}
+const endIdFromId = (id: string) => `end-${id}`;
 
 export function insertOverlayNode(
     treeLabel: string, client: MergeLib.Client, nodeType: string,
     position: OverlayNodePosition, beginProps: MergeLib.PropertySet,
     refNodeId?: string) {
     const nodeId = makeId(client);
+    /* eslint-disable default-case */
     switch (position) {
         case OverlayNodePosition.Append: {
             const endId = endIdFromId(refNodeId);
@@ -145,5 +139,6 @@ export function insertOverlayNode(
             break;
         }
     }
+    /* eslint-enable default-case */
     return nodeId;
 }

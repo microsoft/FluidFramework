@@ -41,7 +41,6 @@ export class PlainTextFormatter<TState extends IFormatterState> extends RootForm
 
     public onKeyDown(layout: Layout, state: Readonly<TState>, caret: Caret, e: KeyboardEvent) {
 
-        /* eslint-disable @typescript-eslint/indent */
         switch (e.code) {
             // Note: Chrome 69 delivers backspace on 'keydown' only (i.e., 'keypress' is not fired.)
             case KeyCode.backspace: {
@@ -56,11 +55,9 @@ export class PlainTextFormatter<TState extends IFormatterState> extends RootForm
             default:
                 return false;
         }
-        /* eslint-enable @typescript-eslint/indent */
     }
 
     public onKeyPress(layout: Layout, state: Readonly<TState>, caret: Caret, e: KeyboardEvent) {
-        /* eslint-disable @typescript-eslint/indent */
         switch (e.key) {
             case KeyCode.enter:
                 this.insertText(layout, caret, "\n");
@@ -70,7 +67,6 @@ export class PlainTextFormatter<TState extends IFormatterState> extends RootForm
                 const text = e.key;
                 this.insertText(layout, caret, text);
         }
-        /* eslint-enable @typescript-eslint/indent */
 
         return true;
     }

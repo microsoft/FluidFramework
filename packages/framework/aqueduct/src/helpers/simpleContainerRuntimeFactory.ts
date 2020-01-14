@@ -11,6 +11,7 @@ import {
 } from "@microsoft/fluid-container-runtime";
 import { IHostRuntime, NamedComponentRegistryEntries } from "@microsoft/fluid-runtime-definitions";
 
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class SimpleContainerRuntimeFactory {
     public static readonly defaultComponentId = "default";
 
@@ -24,23 +25,25 @@ export class SimpleContainerRuntimeFactory {
         generateSummaries: boolean = true,
         requestHandlers: RuntimeRequestHandler[] = [],
     ): Promise<ContainerRuntime> {
-        // debug(`instantiateRuntime(chaincode=${chaincode},registry=${JSON.stringify(registry)})`);
+        // Debug(`instantiateRuntime(chaincode=${chaincode},registry=${JSON.stringify(registry)})`);
         const runtime = await ContainerRuntime.load(
             context,
             registryEntries,
             [
+                // eslint-disable-next-line @typescript-eslint/no-use-before-define
                 defaultComponentRuntimeRequestHandler,
                 ...requestHandlers,
                 componentRuntimeRequestHandler,
             ],
             { generateSummaries });
-        // debug("runtime loaded.");
+        // Debug("runtime loaded.");
 
         // On first boot create the base component
         if (!runtime.existing) {
-            // debug(`createAndAttachComponent(chaincode=${chaincode})`);
-            // tslint:disable-next-line: no-floating-promises
-            SimpleContainerRuntimeFactory.createAndAttachComponent(runtime, SimpleContainerRuntimeFactory.defaultComponentId, chaincode);
+            // Debug(`createAndAttachComponent(chaincode=${chaincode})`);
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+            SimpleContainerRuntimeFactory.createAndAttachComponent(
+                runtime, SimpleContainerRuntimeFactory.defaultComponentId, chaincode);
         }
 
         return runtime;

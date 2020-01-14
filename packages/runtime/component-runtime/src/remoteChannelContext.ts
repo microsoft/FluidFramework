@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import { readAndParse } from "@microsoft/fluid-driver-utils";
 import {
@@ -19,7 +20,6 @@ import {
     IComponentRuntime,
 } from "@microsoft/fluid-runtime-definitions";
 import { SummaryTracker } from "@microsoft/fluid-runtime-utils";
-import * as assert from "assert";
 import { createServiceEndpoints, IChannelContext, snapshotChannel } from "./channelContext";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ISharedObjectRegistry } from "./componentRuntime";
@@ -48,6 +48,7 @@ export class RemoteChannelContext implements IChannelContext {
         private readonly attributes: RequiredIChannelAttributes | undefined,
     ) {}
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public getChannel(): Promise<IChannel> {
         if (!this.channelP) {
             this.channelP = this.loadChannel();
@@ -86,6 +87,7 @@ export class RemoteChannelContext implements IChannelContext {
 
     public async snapshot(fullTree: boolean = false): Promise<ITree> {
         const baseId = this.summaryTracker.getBaseId();
+        // eslint-disable-next-line no-null/no-null
         if (baseId !== null && !fullTree) {
             return { id: baseId, entries: [] };
         }
@@ -98,6 +100,7 @@ export class RemoteChannelContext implements IChannelContext {
         this.summaryTracker.setBaseTree(snapshot);
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     private getAttributesFromBaseTree(): Promise<RequiredIChannelAttributes> {
         return readAndParse<RequiredIChannelAttributes>(
             this.storageService,
@@ -118,7 +121,7 @@ export class RemoteChannelContext implements IChannelContext {
             throw new Error(`Channel Factory ${type} not registered`);
         }
 
-        // compare snapshot version to collaborative object version
+        // Compare snapshot version to collaborative object version
         if (snapshotFormatVersion !== undefined && snapshotFormatVersion !== factory.attributes.snapshotFormatVersion) {
             debug(`Snapshot version mismatch. Type: ${type}, ` +
                 `Snapshot format version: ${snapshotFormatVersion}, ` +

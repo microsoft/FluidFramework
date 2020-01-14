@@ -25,7 +25,7 @@ spec:
         imagePullPolicy: {{ default "" .Values.imagePullPolicy | quote }}
         command:
           - 'node'
-          - '/usr/src/server/packages/server/gateway/dist/www.js'
+          - '/usr/src/server/dist/www.js'
         ports:
         - name: ui
           containerPort: 3000
@@ -36,7 +36,7 @@ spec:
           value: production
         volumeMounts:
         - name: config
-          mountPath: /usr/src/server/packages/server/gateway/config.json
+          mountPath: /usr/src/server/config.json
           subPath: config.json
       dnsConfig:
         options:

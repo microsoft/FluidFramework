@@ -7,7 +7,8 @@ import {
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
     IDocumentService,
-    IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
+    IDocumentStorageService,
+} from "@microsoft/fluid-driver-definitions";
 import { ConnectionMode, IClient } from "@microsoft/fluid-protocol-definitions";
 import { InnerDocumentDeltaConnection, IOuterDocumentDeltaConnectionProxy } from "./innerDocumentDeltaConnection";
 import { InnerDocumentStorageService } from "./innerDocumentStorageService";
@@ -24,18 +25,19 @@ export class InnerDocumentService implements IDocumentService {
         stream: IOuterDocumentDeltaConnectionProxy,
         deltaStorage: IDocumentDeltaStorageService,
         storage: IDocumentStorageService,
-     }): Promise<InnerDocumentService> {
-        // tslint:disable-next-line: await-promise
+    }): Promise<InnerDocumentService> {
+        // eslint-disable-next-line @typescript-eslint/await-thenable
         return new InnerDocumentService(proxyObject, await proxyObject.clientId);
     }
 
     constructor(private readonly outerProxy: {
-                    clientId: string,
-                    stream: IOuterDocumentDeltaConnectionProxy,
-                    deltaStorage: IDocumentDeltaStorageService,
-                    storage: IDocumentStorageService,
-                },
-                public clientId: string) { }
+        clientId: string,
+        stream: IOuterDocumentDeltaConnectionProxy,
+        deltaStorage: IDocumentDeltaStorageService,
+        storage: IDocumentStorageService
+    },
+        // eslint-disable-next-line @typescript-eslint/indent
+        public clientId: string) { }
 
     /**
      * Connects to a storage endpoint for snapshot service.
@@ -53,9 +55,8 @@ export class InnerDocumentService implements IDocumentService {
      */
     public async connectToDeltaStorage(): Promise<IDocumentDeltaStorageService> {
         return {
-            get: (from?: number, to?: number) => {
-                return this.outerProxy.deltaStorage.get(from, to);
-            },
+            // eslint-disable-next-line @typescript-eslint/promise-function-async
+            get: (from?: number, to?: number) => this.outerProxy.deltaStorage.get(from, to),
         };
     }
 

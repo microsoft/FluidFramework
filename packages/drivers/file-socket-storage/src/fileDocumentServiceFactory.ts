@@ -21,9 +21,9 @@ export class FileDocumentServiceFactory implements IDocumentServiceFactory {
 
     public readonly protocolName = "fluid-file:";
     constructor(
-            private readonly storage: IDocumentStorageService,
-            private readonly deltaStorage: FileDeltaStorageService,
-            private readonly deltaConnection: IDocumentDeltaConnection) {
+        private readonly storage: IDocumentStorageService,
+        private readonly deltaStorage: FileDeltaStorageService,
+        private readonly deltaConnection: IDocumentDeltaConnection) {
     }
 
     /**

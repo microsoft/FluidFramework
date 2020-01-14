@@ -11,19 +11,18 @@ import * as ops from "./ops";
 // tslint:disable:switch-default
 // tslint:disable:no-parameter-reassignment
 // tslint:disable:switch-final-break
-// tslint:disable:object-literal-sort-keys
 // tslint:disable:no-unsafe-any
 
 export interface MapLike<T> {
     [index: string]: T;
 }
 
-// we use any because when you include custom methods
+// We use any because when you include custom methods
 // such as toJSON(), JSON.stringify accepts most types other
 // than functions
 export type PropertySet = MapLike<any>;
 
-// assume these are created with Object.create(null)
+// Assume these are created with Object.create(null)
 
 export interface IConsensusValue {
     seq: number;
@@ -34,7 +33,8 @@ export function combine(combiningInfo: ops.ICombiningOp, currentValue: any, newV
     if (currentValue === undefined) {
         currentValue = combiningInfo.defaultValue;
     }
-    // fixed set of operations for now
+    // Fixed set of operations for now
+    /* eslint-disable default-case */
     switch (combiningInfo.name) {
         case "incr":
             currentValue += newValue as number;
@@ -60,6 +60,7 @@ export function combine(combiningInfo: ops.ICombiningOp, currentValue: any, newV
             }
             break;
     }
+    /* eslint-enable default-case */
     return currentValue;
 }
 
@@ -68,7 +69,8 @@ export function matchProperties(a: PropertySet, b: PropertySet) {
         if (!b) {
             return false;
         } else {
-            // for now, straightforward; later use hashing
+            // For now, straightforward; later use hashing
+            // eslint-disable-next-line no-restricted-syntax
             for (const key in a) {
                 if (b[key] === undefined) {
                     return false;
@@ -76,6 +78,7 @@ export function matchProperties(a: PropertySet, b: PropertySet) {
                     return false;
                 }
             }
+            // eslint-disable-next-line no-restricted-syntax
             for (const key in b) {
                 if (a[key] === undefined) {
                     return false;
@@ -95,10 +98,10 @@ export function extend<T>(base: MapLike<T>, extension: MapLike<T>, combiningOp?:
         if ((typeof extension !== "object")) {
             console.log(`oh my ${extension}`);
         }
+        // eslint-disable-next-line guard-for-in, no-restricted-syntax
         for (const key in extension) {
             const v = extension[key];
             if (v === null) {
-                // tslint:disable-next-line: no-dynamic-delete
                 delete base[key];
             } else {
                 if (combiningOp && (combiningOp.name !== "rewrite")) {
@@ -117,6 +120,7 @@ export function clone<T>(extension: MapLike<T>) {
         return undefined;
     }
     const cloneMap = createMap<T>();
+    // eslint-disable-next-line guard-for-in, no-restricted-syntax
     for (const key in extension) {
         const v = extension[key];
         if (v !== null) {
@@ -139,6 +143,7 @@ export function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T>) {
         if ((typeof extension !== "object")) {
             console.log(`oh my ${extension}`);
         }
+        // eslint-disable-next-line no-restricted-syntax
         for (const key in extension) {
             if (base[key] === undefined) {
                 base[key] = extension[key];
@@ -155,9 +160,9 @@ export function createMap<T>(): MapLike<T> {
     // Using 'delete' on an object causes V8 to put the object in dictionary mode.
     // This disables creation of hidden classes, which are expensive when an object is
     // constantly changing shape.
-    // tslint:disable-next-line: no-string-literal
+    // eslint-disable-next-line dot-notation
     map["__"] = undefined;
-    // tslint:disable-next-line: no-dynamic-delete no-string-literal
+    // eslint-disable-next-line dot-notation
     delete map["__"];
 
     // tslint:disable-next-line: no-unsafe-any

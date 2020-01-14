@@ -162,7 +162,7 @@ export class Package {
         const pkgstring = "make-promises-safe";
         const pkgversion = "^5.1.0";
         const testScript = options.server ? "test" : "test:mocha";
-        if (this.packageJson.scripts && this.packageJson.scripts[testScript] && /^(ts-)?mocha/.test(this.packageJson.scripts[testScript]!)) {
+        if (this.packageJson.scripts && this.packageJson.scripts[testScript] && /(ts-)?mocha/.test(this.packageJson.scripts[testScript]!)) {
             if (this.packageJson.devDependencies && !this.packageJson.devDependencies[pkgstring]) {
                 console.warn(`${this.nameColored}: warning: missing ${pkgstring} dependency`);
                 if (options.fixScripts) {
@@ -171,7 +171,7 @@ export class Package {
                 }
             }
             if (!this.packageJson.scripts[testScript]!.includes(pkgstring)) {
-                if (/^(ts-)?mocha/.test(this.packageJson.scripts[testScript]!)) {
+                if (/(ts-)?mocha/.test(this.packageJson.scripts[testScript]!)) {
                     console.warn(`${this.nameColored}: warning: no ${pkgstring} require in test script`);
                     if (options.fixScripts) {
                         this.packageJson.scripts[testScript] += " -r " + pkgstring;

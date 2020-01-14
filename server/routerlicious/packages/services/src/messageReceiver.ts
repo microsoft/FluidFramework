@@ -3,19 +3,19 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import { ITaskMessage, ITaskMessageReceiver } from "@microsoft/fluid-server-services-core";
 import * as amqp from "amqplib";
-import { EventEmitter } from "events";
 import * as winston from "winston";
 
 class RabbitmqReceiver implements ITaskMessageReceiver {
 
-    private events = new EventEmitter();
-    private rabbitmqConnectionString: string;
+    private readonly events = new EventEmitter();
+    private readonly rabbitmqConnectionString: string;
     private connection: amqp.Connection;
     private channel: amqp.Channel;
 
-    constructor(private rabbitmqConfig: any, private taskQueueName: string) {
+    constructor(private readonly rabbitmqConfig: any, private readonly taskQueueName: string) {
         this.rabbitmqConnectionString = this.rabbitmqConfig.connectionString;
     }
 
@@ -27,11 +27,12 @@ class RabbitmqReceiver implements ITaskMessageReceiver {
 
         // We don't need to ack the task messages since they will be part of next help message if unacked.
         // TODO: Reject messages and make sure the sender knows.
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.channel.consume(this.taskQueueName, (msgBuffer) => {
             const msgString = msgBuffer.content.toString();
             const msg = JSON.parse(msgString) as ITaskMessage;
             this.events.emit("message", msg);
-        }, {noAck: true});
+        }, { noAck: true });
 
         this.connection.on("error", (error) => {
             this.events.emit("error", error);

@@ -408,7 +408,6 @@ class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout
     }
 
     private noteCursorExit(direction: ComponentCursorDirection) {
-        // eslint-disable-next-line arrow-body-style
         const cursorElement = ClientUI.controls.findFirstMatch(this.containerElement, (cursor: HTMLElement) => {
             return cursor.style && (cursor.style.color === MathExpr.cursorColor);
         }) || this.containerElement;
@@ -700,8 +699,9 @@ export class MathFactoryComponent implements IComponentFactory {
     public get IComponentFactory() { return this; }
 
     public instantiateComponent(context: IComponentContext): void {
-        /* eslint-disable @typescript-eslint/no-require-imports, import/no-internal-modules, import/no-unassigned-import */
+        // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-internal-modules, import/no-unassigned-import
         require("katex/dist/katex.min.css");
+        // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-unassigned-import
         require("./index.css");
         const mapFactory = SharedMap.getFactory();
         const sharedStringFactory = Sequence.SharedString.getFactory();

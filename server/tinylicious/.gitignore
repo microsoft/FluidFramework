@@ -4,4 +4,3 @@ dist
 nyc
 *.log
 *.tsbuildinfo
-storage

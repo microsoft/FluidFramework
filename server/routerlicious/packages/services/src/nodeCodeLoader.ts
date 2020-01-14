@@ -25,14 +25,13 @@ export class NodeWhiteList {
     }
 }
 
-// tslint:disable non-literal-fs-path
 export class NodeCodeLoader {
     constructor(
-        private registry: string,
-        private packageDirectory: string,
-        private waitTimeoutMSec: number,
-        private whiteList: any) {
-        }
+        private readonly registry: string,
+        private readonly packageDirectory: string,
+        private readonly waitTimeoutMSec: number,
+        private readonly whiteList: any) {
+    }
 
     public async load<T>(pkg: any): Promise<T> {
         if (await this.whiteList.testSource(pkg)) {
@@ -44,14 +43,15 @@ export class NodeCodeLoader {
             }
             const codeEntrypoint = await this.installOrWaitForPackages(packageName);
             const entry = import(codeEntrypoint);
-            // tslint:disable:no-unsafe-any
             return entry;
         } else {
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             Promise.reject("Invalid Package");
         }
     }
 
     private async installOrWaitForPackages(pkg: string): Promise<string> {
+        // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
         const components = pkg.match(/(.*)\/(.*)@(.*)/);
         if (!components) {
             return Promise.reject("Invalid package");
@@ -98,6 +98,7 @@ export class NodeCodeLoader {
         return new Promise((resolve, reject) => {
             const watcher = fs.watch(targetDirectory, (eventType, newFileName) => {
                 if (eventType === "rename" && newFileName === fileName) {
+                    // eslint-disable-next-line @typescript-eslint/no-use-before-define
                     clearTimeout(waitTimer);
                     watcher.close();
                     resolve();

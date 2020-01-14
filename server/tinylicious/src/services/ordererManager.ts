@@ -17,13 +17,13 @@ import {
     IOrderer,
     IOrdererManager,
     ISequencedOperationMessage,
-} from "@microsoft/fluid-server-services-core";
-import {
+
     IDatabaseManager,
     IDocumentStorage,
     ITaskMessageSender,
     ITenantManager,
 } from "@microsoft/fluid-server-services-core";
+
 import { normalizePort } from "@microsoft/fluid-server-services-utils";
 import { Server } from "socket.io";
 
@@ -79,7 +79,7 @@ export class LocalOrdererSetup implements ILocalOrdererSetup {
 }
 
 class LocalPubSub implements IPubSub {
-    constructor(private io: Server) {
+    constructor(private readonly io: Server) {
     }
 
     public subscribe(topic: string, subscriber: ISubscriber) {
@@ -94,59 +94,17 @@ class LocalPubSub implements IPubSub {
     }
 }
 
-class WrappedLocalOrdererSetup implements ILocalOrdererSetup {
-    constructor(
-        private readonly wrapped: ILocalOrdererSetup,
-        private readonly tenantId: string,
-        private readonly documentId: string,
-    ) {
-    }
-
-    public async documentP(): Promise<IDocumentDetails> {
-        const details = await this.wrapped.documentP();
-
-        // TODO can remove wrapper once fix bug in local orderer scribe setup which assumes tenantId/documentId
-        // come from saved scribe data rather than on outer document itself.
-        const scribe = JSON.parse(details.value.scribe);
-        scribe.tenantId = this.tenantId;
-        scribe.documentId = this.documentId;
-        details.value.scribe = JSON.stringify(scribe);
-
-        return details;
-    }
-
-    public documentCollectionP(): Promise<ICollection<IDocument>> {
-        return this.wrapped.documentCollectionP();
-    }
-
-    public deltaCollectionP(): Promise<ICollection<any>> {
-        return this.wrapped.deltaCollectionP();
-    }
-
-    public scribeDeltaCollectionP(): Promise<ICollection<ISequencedOperationMessage>> {
-        return this.wrapped.scribeDeltaCollectionP();
-    }
-
-    public protocolHeadP(): Promise<number> {
-        return this.wrapped.protocolHeadP();
-    }
-
-    public scribeMessagesP(): Promise<ISequencedOperationMessage[]> {
-        return this.wrapped.scribeMessagesP();
-    }
-}
-
 export class OrdererManager implements IOrdererManager {
-    private map = new Map<string, Promise<IOrderer>>();
+    private readonly map = new Map<string, Promise<IOrderer>>();
 
     constructor(
-        private storage: IDocumentStorage,
-        private databaseManager: IDatabaseManager,
-        private tenantManager: ITenantManager,
-        private taskMessageSender: ITaskMessageSender,
-        private permission: any, // can probably remove
-        private maxMessageSize: number,
-        private io: Server,
+        private readonly storage: IDocumentStorage,
+        private readonly databaseManager: IDatabaseManager,
+        private readonly tenantManager: ITenantManager,
+        private readonly taskMessageSender: ITaskMessageSender,
+        private readonly permission: any, // Can probably remove
+        private readonly maxMessageSize: number,
+        private readonly io: Server,
     ) {
     }
 
@@ -174,7 +132,6 @@ export class OrdererManager implements IOrdererManager {
             this.storage,
             this.databaseManager,
             gitManager);
-        const wrapped = new WrappedLocalOrdererSetup(localOrdererSetup, tenantId, documentId);
 
         const orderer = await LocalOrderer.load(
             this.storage,
@@ -186,7 +143,7 @@ export class OrdererManager implements IOrdererManager {
             this.permission,
             this.maxMessageSize,
             gitManager,
-            wrapped,
+            localOrdererSetup,
             new LocalPubSub(this.io));
 
         // This is a temporary hack to work around promise bugs in the LocalOrderer load. The LocalOrderer does not

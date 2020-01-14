@@ -18,32 +18,32 @@ export class FootnoteView {
     public dom;
     public innerView;
 
-    constructor(node, view, getPos, private loader: ILoader) {
+    constructor(node, view, getPos, private readonly loader: ILoader) {
         // We'll need these later
-        this.node = node
-        this.outerView = view
-        this.getPos = getPos
+        this.node = node;
+        this.outerView = view;
+        this.getPos = getPos;
 
         // The node's representation in the editor (empty, for now)
-        this.dom = document.createElement("footnote")
+        this.dom = document.createElement("footnote");
         // These are used when the footnote is selected
-        this.innerView = null
+        this.innerView = null;
     }
 
     selectNode() {
-        this.dom.classList.add("ProseMirror-selectednode")
-        if (!this.innerView) this.open()
+        this.dom.classList.add("ProseMirror-selectednode");
+        if (!this.innerView) { this.open(); }
     }
 
     deselectNode() {
-        this.dom.classList.remove("ProseMirror-selectednode")
-        if (this.innerView) this.close()
+        this.dom.classList.remove("ProseMirror-selectednode");
+        if (this.innerView) { this.close(); }
     }
 
     open() {
         // Append a tooltip to the outer node
-        const tooltip = this.dom.appendChild(document.createElement("div"))
-        tooltip.className = "footnote-tooltip"
+        const tooltip = this.dom.appendChild(document.createElement("div"));
+        tooltip.className = "footnote-tooltip";
         // And put a sub-ProseMirror into that
         this.innerView = new EditorView(tooltip, {
             // You can use any node as an editor document
@@ -51,13 +51,11 @@ export class FootnoteView {
                 doc: this.node,
                 plugins: [keymap({
                     "Mod-z": () => undo(this.outerView.state, this.outerView.dispatch),
-                    "Mod-y": () => redo(this.outerView.state, this.outerView.dispatch)
-                })]
+                    "Mod-y": () => redo(this.outerView.state, this.outerView.dispatch),
+                })],
             }),
             nodeViews: {
-                fluid: (node, view, getPos) => {
-                    return new ComponentView(node, view, getPos, this.loader);
-                },
+                fluid: (node, view, getPos) => new ComponentView(node, view, getPos, this.loader),
             },
             // This is the magic part
             dispatchTransaction: this.dispatchInner.bind(this),
@@ -66,60 +64,64 @@ export class FootnoteView {
                     // Kludge to prevent issues due to the fact that the whole
                     // footnote is node-selected (and thus DOM-selected) when
                     // the parent editor is focused.
-                    if (this.outerView.hasFocus()) this.innerView.focus()
+                    if (this.outerView.hasFocus()) { this.innerView.focus(); }
                     return true;
-                }
-            }
-        })
+                },
+            },
+        });
     }
 
     close() {
-        this.innerView.destroy()
-        this.innerView = null
-        this.dom.textContent = ""
+        this.innerView.destroy();
+        this.innerView = null;
+        this.dom.textContent = "";
     }
 
     dispatchInner(tr) {
-        const { state, transactions } = this.innerView.state.applyTransaction(tr)
-        this.innerView.updateState(state)
+        const { state, transactions } = this.innerView.state.applyTransaction(tr);
+        this.innerView.updateState(state);
 
         if (!tr.getMeta("fromOutside")) {
-            const outerTr = this.outerView.state.tr, offsetMap = StepMap.offset(this.getPos() + 1)
-            for (let i = 0; i < transactions.length; i++) {
-                const steps = transactions[i].steps
-                for (let j = 0; j < steps.length; j++)
-                    outerTr.step(steps[j].map(offsetMap))
+            const outerTr = this.outerView.state.tr; const offsetMap = StepMap.offset(this.getPos() + 1);
+
+            for (const transaction of transactions) {
+                for (const step of transaction.steps) {
+                    outerTr.step(step).map(offsetMap);
+                }
             }
-            if (outerTr.docChanged) this.outerView.dispatch(outerTr)
+
+            if (outerTr.docChanged) {
+                this.outerView.dispatch(outerTr);
+            }
         }
     }
 
     update(node) {
-        if (!node.sameMarkup(this.node)) return false
-        this.node = node
+        if (!node.sameMarkup(this.node)) { return false; }
+        this.node = node;
         if (this.innerView) {
-            const state = this.innerView.state
-            const start = node.content.findDiffStart(state.doc.content)
+            const state = this.innerView.state;
+            const start = node.content.findDiffStart(state.doc.content);
             if (start != null) {
-                let { a: endA, b: endB } = node.content.findDiffEnd(state.doc.content)
-                const overlap = start - Math.min(endA, endB)
-                if (overlap > 0) { endA += overlap; endB += overlap }
+                let { a: endA, b: endB } = node.content.findDiffEnd(state.doc.content);
+                const overlap = start - Math.min(endA, endB);
+                if (overlap > 0) { endA += overlap; endB += overlap; }
                 this.innerView.dispatch(
                     state.tr
                         .replace(start, endB, node.slice(start, endA))
-                        .setMeta("fromOutside", true))
+                        .setMeta("fromOutside", true));
             }
         }
-        return true
+        return true;
     }
 
     destroy() {
-        if (this.innerView) this.close()
+        if (this.innerView) { this.close(); }
     }
 
     stopEvent(event) {
-        return this.innerView && this.innerView.dom.contains(event.target)
+        return this.innerView && this.innerView.dom.contains(event.target);
     }
 
-    ignoreMutation() { return true }
+    ignoreMutation() { return true; }
 }

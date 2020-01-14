@@ -1,6 +1,7 @@
 ---
 uid: package-feed
 ---
+
 # Fluid private NPM feed
 
 Currently, our packages are published on our [VSTS npm feed](https://offnet.visualstudio.com/officenet/_packaging?_a=feed&feed=prague).
@@ -13,11 +14,13 @@ Prerequisites: [Node (with npm)](https://nodejs.org) installed
 
     `npm i -g vsts-npm-auth`
 
-2. Add registry to the our scopes (globally per-user):
+2. Add registry to our scopes (globally per-user)
 
     ```text
     npm config set @microsoft:registry https://offnet.pkgs.visualstudio.com/_packaging/prague/npm/registry/
     npm config set @fluid-example:registry https://offnet.pkgs.visualstudio.com/_packaging/prague/npm/registry/
+    npm config set @fluid-internal:registry https://offnet.pkgs.visualstudio.com/_packaging/prague/npm/registry/
+    npm config set @yo-fluid:registry https://offnet.pkgs.visualstudio.com/_packaging/prague/npm/registry/
     ```
 
 3. Auth with VSTS using `vsts-npm-auth` (Windows only, Linux/Mac instructions:
@@ -38,6 +41,8 @@ Prerequisites: [Node (with npm)](https://nodejs.org) installed
     ```text
     @microsoft:registry=https://offnet.pkgs.visualstudio.com/_packaging/prague/npm/registry/
     @fluid-example:registry=https://offnet.pkgs.visualstudio.com/_packaging/prague/npm/registry/
+    @fluid-internal:registry=https://offnet.pkgs.visualstudio.com/_packaging/prague/npm/registry/
+    @yo-fluid:registry=https://offnet.pkgs.visualstudio.com/_packaging/prague/npm/registry/
     ```
 
   Then run `vsts-npm-auth` in the same directory with no argument.

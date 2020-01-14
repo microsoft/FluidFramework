@@ -1,5 +1,6 @@
 {
     "Definitions": {
+        "dotGroup": false,
         "layers": {
             "Base-Definitions": {
                 "dotSameRank": true,
@@ -38,7 +39,6 @@
         }
     },
     "Utils": {
-        "dotSameRank": true,
         "layers": {
             "Base-Utils": {
                 "packages": [
@@ -78,8 +78,7 @@
         "layers": {
             "Server-Shared-Utils": {
                 "packages": [
-                    "@microsoft/fluid-server-services-client",
-                    "@microsoft/fluid-server-services-core"
+                    "@microsoft/fluid-server-services-client"
                 ],
                 "deps": [
                     "Protocol-Utils"
@@ -97,6 +96,7 @@
         }
     },
     "Client": {
+        "dotGroup": false,
         "layers": {
             "Driver": {
                 "dirs": [

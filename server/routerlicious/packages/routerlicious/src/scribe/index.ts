@@ -59,7 +59,7 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
 }
 
 export async function create(config: Provider): Promise<IPartitionLambdaFactory> {
-    // nconf has problems with prototype methods which prevents us from storing this as a class
+    // Nconf has problems with prototype methods which prevents us from storing this as a class
     config.set("documentLambda", { create: scribeCreate });
     return createDocumentRouter(config);
 }

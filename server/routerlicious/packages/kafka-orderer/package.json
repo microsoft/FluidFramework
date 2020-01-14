@@ -14,21 +14,32 @@
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
+    "eslint": "eslint --ext=ts,tsx --format stylish src",
+    "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
     "tsc": "tsc",
-    "tslint": "tslint --project tsconfig.json --format verbose"
+    "tslint": "npm run eslint"
   },
   "dependencies": {
     "@microsoft/fluid-protocol-definitions": "^0.1001.0",
     "@microsoft/fluid-server-services-core": "^0.1001.0",
     "@types/lodash": "^4.14.118",
-    "@types/node": "^10.14.6",
-    "lodash": "^4.17.11"
+    "@types/node": "^10.14.6"
   },
   "devDependencies": {
+    "@microsoft/eslint-config-fluid": "^0.13.0",
     "@microsoft/fluid-build-common": "^0.13.0",
+    "@typescript-eslint/eslint-plugin": "^2.9.0",
+    "@typescript-eslint/parser": "^2.9.0",
     "concurrently": "^4.1.0",
+    "eslint": "^6.7.1",
+    "eslint-plugin-eslint-comments": "^3.1.2",
+    "eslint-plugin-import": "^2.18.2",
+    "eslint-plugin-no-null": "^1.0.2",
+    "eslint-plugin-optimize-regex": "^1.1.7",
+    "eslint-plugin-prefer-arrow": "^1.1.7",
+    "eslint-plugin-react": "^7.16.0",
+    "eslint-plugin-unicorn": "^14.0.1",
     "rimraf": "^2.6.2",
-    "tslint": "^5.20.0",
     "typescript": "~3.4.5"
   }
 }

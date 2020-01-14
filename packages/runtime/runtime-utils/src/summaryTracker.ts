@@ -30,6 +30,7 @@ export class SummaryTracker {
     public get baseTree() { return this._baseSnapshotTree; }
 
     private _state: SummaryTrackerState = SummaryTrackerState.Initial;
+    // eslint-disable-next-line no-null/no-null
     private _baseSnapshotTree: ISnapshotTree | null = null;
 
     /**
@@ -40,6 +41,7 @@ export class SummaryTracker {
         if (this._state === SummaryTrackerState.Valid && this._baseSnapshotTree && this._baseSnapshotTree.id) {
             return this._baseSnapshotTree.id;
         } else {
+            // eslint-disable-next-line no-null/no-null
             return null;
         }
     }
