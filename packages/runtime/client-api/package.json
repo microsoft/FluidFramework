@@ -54,7 +54,7 @@
     "@microsoft/fluid-ink": "^0.13.0",
     "@microsoft/fluid-map": "^0.13.0",
     "@microsoft/fluid-ordered-collection": "^0.13.0",
-    "@microsoft/fluid-protocol-definitions": "^0.12.0",
+    "@microsoft/fluid-protocol-definitions": "^0.1001.0",
     "@microsoft/fluid-register-collection": "^0.13.0",
     "@microsoft/fluid-runtime-definitions": "^0.13.0",
     "@microsoft/fluid-sequence": "^0.13.0",
