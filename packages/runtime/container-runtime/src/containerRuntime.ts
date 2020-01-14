@@ -611,10 +611,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             "/_summarizer",
             this,
             () => this.summaryConfiguration,
-            // eslint-disable-next-line @typescript-eslint/promise-function-async
-            () => this.generateSummary(!this.loadedFromSummary),
-            // eslint-disable-next-line @typescript-eslint/promise-function-async
-            (handle, refSeq) => this.refreshLatestSummaryAck(handle, refSeq));
+            async (safe: boolean) => this.generateSummary(!this.loadedFromSummary, safe),
+            async (handle, refSeq) => this.refreshLatestSummaryAck(handle, refSeq));
 
         // Create the SummaryManager and mark the initial state
         this.summaryManager = new SummaryManager(
@@ -1091,7 +1089,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         deferred.resolve(context);
     }
 
-    private async generateSummary(fullTree: boolean = false): Promise<GenerateSummaryData> {
+    private async generateSummary(fullTree: boolean = false, safe: boolean = false): Promise<GenerateSummaryData> {
         const message =
             `Summary @${this.deltaManager.referenceSequenceNumber}:${this.deltaManager.minimumSequenceNumber}`;
 
@@ -1123,7 +1121,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             }
 
             const trace = Trace.start();
-            const treeWithStats = await this.summarize(fullTree);
+            const treeWithStats = await this.summarize(fullTree || safe);
             const generateData: IGeneratedSummaryData = {
                 summaryStats: treeWithStats.summaryStats,
                 generateDuration: trace.trace().duration,
@@ -1134,6 +1132,14 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             }
 
             const handle = await this.context.storage.uploadSummary(treeWithStats.summaryTree);
+
+            // safe mode refreshes the latest summary ack
+            if (safe) {
+                const versions = await this.storage.getVersions(this.id, 1);
+                const parents = versions.map((version) => version.id);
+                await this.refreshLatestSummaryAck(parents[0], this.deltaManager.referenceSequenceNumber);
+            }
+
             const parent = this.latestSummaryAck.handle;
             const summaryMessage: ISummaryContent = {
                 handle: handle.handle,

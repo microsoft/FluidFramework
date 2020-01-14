@@ -47,7 +47,7 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
         public readonly url: string,
         private readonly runtime: ContainerRuntime,
         private readonly configurationGetter: () => ISummaryConfiguration,
-        private readonly generateSummaryCore: () => Promise<GenerateSummaryData>,
+        private readonly generateSummaryCore: (safe: boolean) => Promise<GenerateSummaryData>,
         private readonly refreshLatestAck: (handle: string, referenceSequenceNumber: number) => Promise<void>,
     ) {
         this.logger = ChildLogger.create(this.runtime.logger, "Summarizer");
@@ -134,8 +134,7 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
             this.logger,
             this.summaryCollection.createWatcher(this.runtime.clientId),
             this.configurationGetter(),
-            // eslint-disable-next-line @typescript-eslint/promise-function-async
-            () => this.generateSummary(),
+            async (safe: boolean) => this.generateSummary(safe),
             this.runtime.deltaManager.referenceSequenceNumber,
             initialAttempt,
         );
@@ -174,14 +173,14 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
         }
     }
 
-    private async generateSummary(): Promise<GenerateSummaryData | undefined> {
+    private async generateSummary(safe: boolean): Promise<GenerateSummaryData | undefined> {
         if (this.onBehalfOfClientId !== this.runtime.summarizerClientId) {
             // We are no longer the summarizer, we should stop ourself
             this.stop("parentNoLongerSummarizer");
             return undefined;
         }
 
-        return this.generateSummaryCore();
+        return this.generateSummaryCore(safe);
     }
 
     private async handleSummaryAcks() {
@@ -234,7 +233,7 @@ export class RunningSummarizer implements IDisposable {
         logger: ITelemetryLogger,
         summaryWatcher: IClientSummaryWatcher,
         configuration: ISummaryConfiguration,
-        generateSummary: () => Promise<GenerateSummaryData | undefined>,
+        generateSummary: (safe: boolean) => Promise<GenerateSummaryData | undefined>,
         lastOpSeqNumber: number,
         firstAck: ISummaryAttempt,
     ): Promise<RunningSummarizer> {
@@ -261,6 +260,7 @@ export class RunningSummarizer implements IDisposable {
     private summarizing = false;
     private summarizeCount: number = 0;
     private tryWhileSummarizing = false;
+    private unsafeNack = false;
     private readonly summarizeTimer: Timer;
     private readonly pendingAckTimer: PromiseTimer;
     private readonly heuristics: SummarizerHeuristics;
@@ -271,13 +271,13 @@ export class RunningSummarizer implements IDisposable {
         private readonly logger: ITelemetryLogger,
         private readonly summaryWatcher: IClientSummaryWatcher,
         private readonly configuration: ISummaryConfiguration,
-        private readonly generateSummary: () => Promise<GenerateSummaryData | undefined>,
+        private readonly generateSummary: (safe: boolean) => Promise<GenerateSummaryData | undefined>,
         lastOpSeqNumber: number,
         firstAck: ISummaryAttempt,
     ) {
         this.heuristics = new SummarizerHeuristics(
             configuration,
-            (reason) => this.trySummarize(reason),
+            (reason) => this.trySummarize(reason, false),
             lastOpSeqNumber,
             firstAck);
 
@@ -339,7 +339,7 @@ export class RunningSummarizer implements IDisposable {
 
         // Check for ops requesting summary
         if (op.type === MessageType.Save) {
-            this.trySummarize(`;${op.clientId}: ${op.contents}`);
+            this.trySummarize(`;${op.clientId}: ${op.contents}`, false);
         } else {
             this.heuristics.run();
         }
@@ -363,7 +363,7 @@ export class RunningSummarizer implements IDisposable {
         }
     }
 
-    private trySummarize(reason: string) {
+    private trySummarize(reason: string, safe: boolean) {
         if (this.summarizing) {
             // We can't summarize if we are already
             this.tryWhileSummarizing = true;
@@ -376,20 +376,25 @@ export class RunningSummarizer implements IDisposable {
         this.summarizeTimer.start();
 
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.summarize(reason).finally(() => {
+        this.summarize(reason, safe).finally(() => {
             this.summarizing = false;
             this.summarizeTimer.clear();
             this.pendingAckTimer.clear();
-            if (this.tryWhileSummarizing) {
+            if (this.unsafeNack) {
+                // try again with safe restriction
+                this.unsafeNack = false;
+                this.tryWhileSummarizing = false;
+                this.trySummarize(reason, true);
+            } else if (this.tryWhileSummarizing) {
                 this.tryWhileSummarizing = false;
                 this.heuristics.run();
             }
         });
     }
 
-    private async summarize(reason: string) {
+    private async summarize(reason: string, safe: boolean) {
         // Wait to generate and send summary
-        const summaryData = await this.generateSummaryWithLogging(reason);
+        const summaryData = await this.generateSummaryWithLogging(reason, safe);
         if (!summaryData || !summaryData.submitted) {
             // Did not send the summary op
             return;
@@ -434,10 +439,12 @@ export class RunningSummarizer implements IDisposable {
         // Update for success
         if (ackNack.type === MessageType.SummaryAck) {
             this.heuristics.ackLastSent();
+        } else if (!safe) {
+            this.unsafeNack = true;
         }
     }
 
-    private async generateSummaryWithLogging(message: string): Promise<GenerateSummaryData | undefined> {
+    private async generateSummaryWithLogging(message: string, safe: boolean): Promise<GenerateSummaryData | undefined> {
         const summarizingEvent = PerformanceEvent.start(this.logger, {
             eventName: "Summarizing",
             message,
@@ -449,7 +456,7 @@ export class RunningSummarizer implements IDisposable {
         // Wait for generate/send summary
         let summaryData: GenerateSummaryData | undefined;
         try {
-            summaryData = await this.generateSummary();
+            summaryData = await this.generateSummary(safe);
         } catch (error) {
             summarizingEvent.cancel({ category: "error" }, error);
             return;
