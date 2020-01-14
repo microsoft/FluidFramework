@@ -1074,14 +1074,14 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         }
     }
 
-    private submitMessage(type: MessageType, contents: any, batch?: boolean, metadata?: any): number {
+    private submitMessage(type: MessageType, contents: any, batch?: boolean): number {
         if (this.connectionState !== ConnectionState.Connected) {
             this.logger.sendErrorEvent({ eventName: "SubmitMessageWithNoConnection", type });
             return -1;
         }
 
         this.messageCountAfterDisconnection += 1;
-        return this._deltaManager.submit(type, contents, batch, metadata);
+        return this._deltaManager.submit(type, contents, batch);
     }
 
     private processRemoteMessage(message: ISequencedDocumentMessage): IProcessMessageResult {
@@ -1169,7 +1169,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             loader,
             storage,
             (err) => this.raiseCriticalError(err),
-            (type, contents, batch, metadata) => this.submitMessage(type, contents, batch, metadata),
+            (type, contents, batch?) => this.submitMessage(type, contents, batch),
             (message) => this.submitSignal(message),
             async (message) => this.snapshot(message),
             (reason?: string) => this.close(reason),

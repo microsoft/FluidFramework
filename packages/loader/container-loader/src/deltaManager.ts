@@ -75,15 +75,20 @@ interface IRuntimeMessageMetadata {
 class BatchProcessorDelegate {
     private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     private readonly inboundQueue: DeltaQueue<ISequencedDocumentMessage[]>;
+    private readonly outboundQueue: DeltaQueue<IDocumentMessage[]>;
     private batchClientId: string | undefined;
-    private messageBuffer: ISequencedDocumentMessage[] = [];
+    private inboundMessageBuffer: ISequencedDocumentMessage[] = [];
+    private outboundMessageBuffer: IDocumentMessage[] = [];
+    private needsFlush: boolean = false;
 
     constructor(
         deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         inbound: DeltaQueue<ISequencedDocumentMessage[]>,
+        outbound: DeltaQueue<IDocumentMessage[]>
     ) {
         this.deltaManager = deltaManager;
         this.inboundQueue = inbound;
+        this.outboundQueue = outbound;
 
         this.deltaManager.on("prepareSend", (messages: IDocumentMessage[]) => {
             this.updateMetadata(messages);
@@ -140,9 +145,9 @@ class BatchProcessorDelegate {
                 // started receiving messages from another client. Push the current batch into the queue
                 // (indicating that the batch is over) and log a telemetry event.
                 if (this.batchClientId) {
-                    if (this.messageBuffer.length !== 0) {
-                        this.inboundQueue.push(this.messageBuffer);
-                        this.messageBuffer = [];
+                    if (this.inboundMessageBuffer.length !== 0) {
+                        this.inboundQueue.push(this.inboundMessageBuffer);
+                        this.inboundMessageBuffer = [];
                     }
                     // Log error.
                 }
@@ -151,11 +156,51 @@ class BatchProcessorDelegate {
             }
         }
 
-        this.messageBuffer.push(message);
+        this.inboundMessageBuffer.push(message);
         if (!batch) {
-            this.inboundQueue.push(this.messageBuffer);
-            this.messageBuffer = [];
+            this.inboundQueue.push(this.inboundMessageBuffer);
+            this.inboundMessageBuffer = [];
         }
+    }
+
+    public submitMessage(message: IDocumentMessage, batch: boolean) {
+        // If in manual flush mode we will trigger a flush at the next turn break
+        let batchBegin = false;
+        if (batch && !this.needsFlush) {
+            batchBegin = true;
+            this.needsFlush = true;
+
+            // Use Promise.resolve().then() to queue a microtask to detect the end of the turn and force a flush.
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+            Promise.resolve().then(() => {
+                this.flush();
+            });
+        }
+
+        if (batchBegin) {
+            message.metadata = { batch: true };
+        }
+
+        if (!batch) {
+            this.flush();
+            this.outboundMessageBuffer.push(message);
+            this.flush();
+        } else {
+            this.outboundMessageBuffer.push(message);
+        }
+    }
+
+    public flush() {
+        if ()
+        if (this.outboundMessageBuffer.length === 0) {
+            return;
+        }
+
+        // The prepareFlush event allows listeners to append metadata to the batch prior to submission.
+        this.deltaManager.emit("prepareSend", this.outboundMessageBuffer);
+
+        this.outboundQueue.push(this.outboundMessageBuffer);
+        this.outboundMessageBuffer = [];
     }
 
     private isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
@@ -358,7 +403,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this._inboundSignal.pause();
 
-        this.batchingDelegate = new BatchProcessorDelegate(this, this._inbound);
+        this.batchingDelegate = new BatchProcessorDelegate(this, this._inbound, this._outbound);
     }
 
     public dispose() {
@@ -508,18 +553,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     }
 
     public flush() {
-        if (this.outboundMessageBuffer.length === 0) {
-            return;
-        }
-
-        // The prepareFlush event allows listeners to append metadata to the batch prior to submission.
-        this.emit("prepareSend", this.outboundMessageBuffer);
-
-        this._outbound.push(this.outboundMessageBuffer);
-        this.outboundMessageBuffer = [];
+        this.batchingDelegate.flush();
     }
 
-    public submit(type: MessageType, contents: any, batch = false, metadata?: any): number {
+    public submit(type: MessageType, contents: any, batch = false): number {
         // TODO need to fail if gets too large
         // const serializedContent = JSON.stringify(this.outboundMessageBuffer);
         // const maxOpSize = this.context.deltaManager.maxMessageSize;
@@ -537,7 +574,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         const message: IDocumentMessage = {
             clientSequenceNumber: ++this.clientSequenceNumber,
             contents: JSON.stringify(contents),
-            metadata,
             referenceSequenceNumber: this.baseSequenceNumber,
             traces,
             type,
@@ -552,13 +588,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this.stopSequenceNumberUpdate();
         this.emit("submitOp", message);
 
-        if (!batch) {
-            this.flush();
-            this.outboundMessageBuffer.push(outbound);
-            this.flush();
-        } else {
-            this.outboundMessageBuffer.push(outbound);
-        }
+        this.batchingDelegate.submitMessage(outbound, batch);
 
         return outbound.clientSequenceNumber;
     }

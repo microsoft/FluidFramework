@@ -376,7 +376,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
     private _flushMode = FlushMode.Automatic;
     private needsFlush = false;
-    private flushTrigger = false;
 
     private _leader = false;
 
@@ -1102,22 +1101,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
         let clientSequenceNumber: number;
 
-        // If in manual flush mode we will trigger a flush at the next turn break
-        let batchBegin = false;
-        if (this.flushMode === FlushMode.Manual && !this.needsFlush) {
-            batchBegin = true;
-            this.needsFlush = true;
-
-            // Use Promise.resolve().then() to queue a microtask to detect the end of the turn and force a flush.
-            if (!this.flushTrigger) {
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                Promise.resolve().then(() => {
-                    this.flushTrigger = false;
-                    this.flush();
-                });
-            }
-        }
-
         // Note: Chunking will increase content beyond maxOpSize because we JSON'ing JSON payload -
         // there will be a lot of escape characters that can make it up to 2x bigger!
         // This is Ok, because DeltaManager.shouldSplit() will have 2 * maxMessageSize limit
@@ -1125,8 +1108,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             clientSequenceNumber = this.context.submitFn(
                 type,
                 content,
-                this._flushMode === FlushMode.Manual,
-                batchBegin ? { batch: true } : undefined);
+                this._flushMode === FlushMode.Manual);
         } else {
             clientSequenceNumber = this.submitChunkedMessage(type, serializedContent, maxOpSize);
         }
