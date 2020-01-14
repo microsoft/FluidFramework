@@ -77,7 +77,6 @@ interface IRuntimeMessageMetadata {
  * Adds all messages in a batch to a buffer before pushing it to the respective queue.
  * For outgoing messages, adds the being and end metadata to the batch before sending it out.
  */
-
 class MessageProcessingDelegate {
     private readonly deltaManager: EventEmitter;
     private readonly logger: ITelemetryLogger;

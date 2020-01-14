@@ -7,7 +7,7 @@ import * as assert from "assert";
 import { EventEmitter } from "events";
 import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import { DebugLogger } from "@microsoft/fluid-core-utils";
-import { IClient, IDocumentMessage, IProcessMessageResult, MessageType } from "@microsoft/fluid-protocol-definitions";
+import { IClient, IDocumentMessage, IProcessMessageResult, MessageType, ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { MockDocumentDeltaConnection, MockDocumentService } from "@microsoft/fluid-test-loader-utils";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 import { DeltaManager } from "../deltaManager";
@@ -40,6 +40,20 @@ describe("Loader", () => {
                     type,
                 }]);
             }
+
+            function emitBatchOps(clientId: string, length: number) {
+                const messages: Partial<ISequencedDocumentMessage>[] = [];
+                for (let i = 0; i < length; i++) {
+                    const message = {
+                        clientId,
+                        minimumSequenceNumber: 0,
+                        sequenceNumber: seq++,
+                        type: MessageType.Operation,
+                    };
+                    messages.push(message);
+                }
+                deltaConnection.emitOp(docId, messages);
+             }
 
             before(() => {
                 clock = useFakeTimers();
@@ -89,6 +103,19 @@ describe("Loader", () => {
                     assert.strictEqual(1, messages.length);
                     assert.strictEqual(MessageType.NoOp, messages[0].type);
                     assert.strictEqual(immediate ? "" : null, JSON.parse(messages[0].contents as string));
+                }
+
+                function assertValidBatch(clientId: string, messages: IDocumentMessage[], length: number) {
+                    assert.strictEqual(length, messages.length);
+                    const firstMessageMetadata = messages[0].metadata;
+                    assert.notStrictEqual(undefined, firstMessageMetadata);
+                    const firstMessageBatchMetadata = firstMessageMetadata.batch;
+                    assert.strictEqual(true, firstMessageBatchMetadata);
+
+                    const lastMessageMetadata = messages[messages.length - 1].metadata;
+                    assert.notStrictEqual(undefined, lastMessageMetadata);
+                    const lastMessageBatchMetadata = lastMessageMetadata.batch;
+                    assert.strictEqual(false, lastMessageBatchMetadata);
                 }
 
                 it("Should update after timeout with single op", async () => {
@@ -191,6 +218,24 @@ describe("Loader", () => {
 
                     // make extra sure
                     clock.tick(expectedTimeout);
+                });
+
+                it("batching", async () => {
+                    //let runCount = 0;
+                    const messageLength = 100;
+                    const clientId = "test-client-1";
+                    await startDeltaManager();
+                    emitter.on(submitEvent, (messages: IDocumentMessage[]) => {
+                        assertValidBatch(clientId, messages, messageLength);
+                    //    runCount++;
+                    });
+
+                    emitBatchOps(clientId, messageLength);
+                    //clock.tick(expectedTimeout - 1);
+                    //assert.strictEqual(runCount, 0);
+
+                    //clock.tick(1);
+                    //assert.strictEqual(runCount, 1);
                 });
             });
         });
