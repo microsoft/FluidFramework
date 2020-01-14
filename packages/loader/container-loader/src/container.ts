@@ -36,7 +36,7 @@ import {
     IDocumentStorageService,
     IError,
 } from "@microsoft/fluid-driver-definitions";
-import { readAndParse, createContainerError } from "@microsoft/fluid-driver-utils";
+import { readAndParse, createIError } from "@microsoft/fluid-driver-utils";
 import {
     buildSnapshotTree,
     isSystemMessage,
@@ -143,7 +143,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                     res(container);
                 })
                 .catch((error) => {
-                    const err = createContainerError(error, true);
+                    const err = createIError(error, true);
                     if (!alreadyRaisedError) {
                         container.logCriticalError(err);
                     }
@@ -436,7 +436,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     // eslint-disable-next-line @typescript-eslint/promise-function-async
     public reloadContext(): Promise<void> {
         return this.reloadContextCore().catch((error) => {
-            this.raiseCriticalError(createContainerError(error, true));
+            this.raiseCriticalError(createIError(error, true));
             throw error;
         });
     }

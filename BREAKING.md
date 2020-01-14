@@ -1,3 +1,8 @@
+# 0.13 Breaking Changes
+
+New error types are added in 0.13. So whenever any error is emitted from container it will be of type IError which will have the property errorType which will tell the app, what type of error it is.
+It will also contain the property critical which will tell the app that the error is critical if it is true. Different errorTypes are defined in loader/driver-definitions/src/error.ts.
+
 # 0.12 Breaking Changes
 
 - [Packages moved from packages to server](#Packages-moved-from-packages-to-server)

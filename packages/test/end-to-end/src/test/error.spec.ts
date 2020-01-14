@@ -21,7 +21,7 @@ import {
 } from "@microsoft/fluid-local-test-server";
 import { createErrorObject } from "@microsoft/fluid-driver-base";
 import { errorObjectFromOdspError } from "@microsoft/fluid-odsp-driver";
-import { createContainerError } from "@microsoft/fluid-driver-utils";
+import { createIError } from "@microsoft/fluid-driver-utils";
 import * as assert from "assert";
 
 describe("Errors Types", () => {
@@ -69,7 +69,7 @@ describe("Errors Types", () => {
         const err = {
             message: "Test Error",
         }
-        const networkError = createContainerError(createErrorObject("handler", err, false));
+        const networkError = createIError(createErrorObject("handler", err, false));
         assert.equal(networkError.errorType, ErrorType.connectionError, "Error is not a network error");
     });
 
@@ -78,7 +78,7 @@ describe("Errors Types", () => {
             message: "Test Error",
             retryAfter: 100,
         }
-        const networkError = createContainerError(createErrorObject("handler", err, false));
+        const networkError = createIError(createErrorObject("handler", err, false));
         assert.equal(networkError.errorType, ErrorType.connectionError, "Error is not a network error");
     });
 
@@ -88,7 +88,7 @@ describe("Errors Types", () => {
             message: "Test Error",
             code: 400,
         }
-        const networkError = createContainerError(errorObjectFromOdspError(err, false));
+        const networkError = createIError(errorObjectFromOdspError(err, false));
         assert.equal(networkError.errorType, ErrorType.connectionError, "Error is not a network error");
     });
 
@@ -98,7 +98,7 @@ describe("Errors Types", () => {
             code: 529,
             retryAfter: 100,
         }
-        const throttlingError = createContainerError(errorObjectFromOdspError(err, true));
+        const throttlingError = createIError(errorObjectFromOdspError(err, true));
         assert.equal(throttlingError.errorType, ErrorType.throttlingError, "Error is not a throttling error");
     });
 
@@ -108,8 +108,8 @@ describe("Errors Types", () => {
             code: 529,
             retryAfter: 100,
         }
-        const error1 = createContainerError(errorObjectFromOdspError(err, true), true);                                                                                                                                                                              
-        const error2 = createContainerError(error1, false);
+        const error1 = createIError(errorObjectFromOdspError(err, true), true);                                                                                                                                                                              
+        const error2 = createIError(error1, false);
         assert.equal(error1, error2, "Both errors should be same!!");
     });
 
@@ -117,9 +117,19 @@ describe("Errors Types", () => {
         const err = {
             message: "Test Error",
         }
-        const error1 = createContainerError(err, true);
-        const error2 = createContainerError(error1, false);
+        const error1 = createIError(err, false);
+        const error2 = createIError(error1, true);
         assert.equal(error1, error2, "Both errors should be same!!");
+    });
+
+    it("Check frozen error", async () => {
+        const err = {
+            message: "Test Error",
+        }
+        const error1 = createIError(err, false);
+        const error2 = createIError(Object.freeze(err), false);
+        assert.equal((error2 as any).critical, undefined, "Error should not contain critical property.");
+        assert.equal((error1 as any).critical, false, "Error should contain critical property.");
     });
 
 });

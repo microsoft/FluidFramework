@@ -30,7 +30,7 @@ import {
     Trace,
 } from "@microsoft/fluid-core-utils";
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
-import { readAndParse, createContainerError } from "@microsoft/fluid-driver-utils";
+import { readAndParse, createIError } from "@microsoft/fluid-driver-utils";
 import {
     BlobTreeEntry,
     buildSnapshotTree,
@@ -914,7 +914,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     }
 
     public error(error: any) {
-        this.context.error(createContainerError(error));
+        this.context.error(createIError(error));
     }
 
     /**

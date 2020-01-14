@@ -36,7 +36,7 @@ import {
     ITrace,
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
-import { createContainerError } from "@microsoft/fluid-driver-utils";
+import { createIError } from "@microsoft/fluid-driver-utils";
 import { ContentCache } from "./contentCache";
 import { debug } from "./debug";
 import { DeltaConnection } from "./deltaConnection";
@@ -217,7 +217,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         );
 
         this._inbound.on("error", (error) => {
-            this.emit("error", createContainerError(error));
+            this.emit("error", createIError(error));
         });
 
         // Outbound message queue. The outbound queue is represented as a queue of an array of ops. Ops contained
@@ -230,7 +230,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         );
 
         this._outbound.on("error", (error) => {
-            this.emit("error", createContainerError(error));
+            this.emit("error", createIError(error));
         });
 
         // Inbound signal queue
@@ -244,7 +244,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         );
 
         this._inboundSignal.on("error", (error) => {
-            this.emit("error", createContainerError(error));
+            this.emit("error", createIError(error));
         });
 
         // Require the user to start the processing
@@ -616,7 +616,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         // Note: "disconnect" & "nack" do not have error object
         if (raiseContainerError && error !== undefined) {
-            this.emit("error", createContainerError(error, true));
+            this.emit("error", createIError(error, true));
         }
 
         this.logger.sendTelemetryEvent({ eventName: "ContainerClose" }, error);
