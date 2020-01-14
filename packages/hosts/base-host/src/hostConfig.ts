@@ -14,7 +14,7 @@ import { IDocumentServiceFactory, IUrlResolver } from "@microsoft/fluid-driver-d
  */
 export interface IBaseHostConfig {
     documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[];
-    urlResolver: IUrlResolver | IUrlResolver[];
+    urlResolver: IUrlResolver;
 
     // Any config to be provided to loader.
     config?: any;

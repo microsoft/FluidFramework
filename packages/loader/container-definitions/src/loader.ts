@@ -36,7 +36,7 @@ export interface ICodeWhiteList {
  * Host provider interfaces
  */
 export interface IHost {
-    resolver: IUrlResolver | IUrlResolver[];
+    resolver: IUrlResolver;
 }
 
 export interface IContainer extends EventEmitter {

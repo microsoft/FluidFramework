@@ -15,7 +15,6 @@ import {
     IResolvedUrl,
     IUrlResolver,
 } from "@microsoft/fluid-driver-definitions";
-import { configurableUrlResolver } from "@microsoft/fluid-driver-utils";
 import {
     ConnectionMode,
     IClient,
@@ -62,7 +61,7 @@ export class IFrameDocumentServiceProxyFactory {
         documentServiceFactory: IDocumentServiceFactory,
         frame: HTMLIFrameElement,
         options: any,
-        urlResolver: IUrlResolver | IUrlResolver[],
+        urlResolver: IUrlResolver,
     ) {
         return new IFrameDocumentServiceProxyFactory(documentServiceFactory, frame, options, urlResolver);
     }
@@ -74,7 +73,7 @@ export class IFrameDocumentServiceProxyFactory {
         private readonly documentServiceFactory: IDocumentServiceFactory,
         private readonly frame: HTMLIFrameElement,
         private readonly options: any,
-        private readonly urlResolver: IUrlResolver | IUrlResolver[],
+        private readonly urlResolver: IUrlResolver,
     ) {
 
     }
@@ -92,16 +91,7 @@ export class IFrameDocumentServiceProxyFactory {
     }
 
     public async createDocumentServiceFromRequest(request: IRequest): Promise<void> {
-        // Simplify this with either https://github.com/microsoft/FluidFramework/pull/448
-        // or https://github.com/microsoft/FluidFramework/issues/447
-        const resolvers: IUrlResolver[] = [];
-        if (!(Array.isArray(this.urlResolver))) {
-            resolvers.push(this.urlResolver);
-        } else {
-            resolvers.push(... this.urlResolver);
-        }
-
-        const resolvedUrl = await configurableUrlResolver(resolvers, request);
+        const resolvedUrl = await this.urlResolver.resolve(request);
         if (!resolvedUrl) {
             return Promise.reject("No Resolver for request");
         }

@@ -25,7 +25,6 @@ import {
     IFluidResolvedUrl,
     IResolvedUrl,
 } from "@microsoft/fluid-driver-definitions";
-import { configurableUrlResolver } from "@microsoft/fluid-driver-utils";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { Container } from "./container";
 import { debug } from "./debug";
@@ -242,12 +241,7 @@ export class Loader extends EventEmitter implements ILoader {
             return maybeResolvedUrl;
         }
 
-        let toCache: IResolvedUrl | undefined;
-        if (Array.isArray(this.containerHost.resolver)) {
-            toCache = await configurableUrlResolver(this.containerHost.resolver, request);
-        } else {
-            toCache = await this.containerHost.resolver.resolve(request);
-        }
+        const toCache = await this.containerHost.resolver.resolve(request);
         if (!toCache) {
             return Promise.reject(`Invalid URL ${request.url}`);
         }
