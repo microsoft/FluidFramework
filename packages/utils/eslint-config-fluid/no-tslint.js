@@ -61,7 +61,13 @@ module.exports = {
             }
         ],
         "@typescript-eslint/class-name-casing": "error",
-        "@typescript-eslint/consistent-type-assertions": "error",
+        "@typescript-eslint/consistent-type-assertions": [
+            "error",
+            {
+                "assertionStyle": "as",
+                "objectLiteralTypeAssertions": "never"
+            }
+        ],
         "@typescript-eslint/consistent-type-definitions": "error",
         "@typescript-eslint/explicit-function-return-type": "off",
         "@typescript-eslint/indent": [
@@ -73,7 +79,8 @@ module.exports = {
                 },
                 "FunctionExpression": {
                     "parameters": "first"
-                }
+                },
+                "SwitchCase": 1
             }
         ],
         "@typescript-eslint/interface-name-prefix": "off",
@@ -149,7 +156,7 @@ module.exports = {
         "import/no-extraneous-dependencies": [
             "error",
             {
-                "devDependencies": false
+                "devDependencies": ["**/*.spec.ts"]
             }
         ],
         "import/no-internal-modules": "error",
@@ -188,21 +195,13 @@ module.exports = {
         "unicorn/no-new-buffer": "error",
 
         // eslint
-        "arrow-body-style": "error",
+        "arrow-body-style": "off",
         "arrow-parens": [
             "error",
             "always"
         ],
         "camelcase": "off", // Superseded by @typescript-eslint/camelcase
-        "capitalized-comments": [
-            "warn",
-            "always",
-            {
-                "ignoreConsecutiveComments": true,
-                "ignoreInlineComments": true,
-                "ignorePattern": "tslint:| start | end "
-            }
-        ],
+        "capitalized-comments": "off",
         "comma-dangle": [
             "error",
             "always-multiline"

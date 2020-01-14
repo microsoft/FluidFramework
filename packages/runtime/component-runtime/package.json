@@ -41,7 +41,7 @@
     "uuid": "^3.3.2"
   },
   "devDependencies": {
-    "@microsoft/api-extractor": "^7.4.4",
+    "@microsoft/api-extractor": "^7.7.2",
     "@microsoft/eslint-config-fluid": "^0.13.0",
     "@microsoft/fluid-build-common": "^0.13.0",
     "@types/debug": "^0.0.31",
@@ -63,6 +63,6 @@
     "mocha-junit-reporter": "^1.18.0",
     "nyc": "^14.1.1",
     "rimraf": "^2.6.2",
-    "typescript": "~3.4.5"
+    "typescript": "~3.7.4"
   }
 }

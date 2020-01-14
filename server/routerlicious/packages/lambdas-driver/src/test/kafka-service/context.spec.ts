@@ -23,8 +23,8 @@ describe("kafka-service", () => {
 
         describe(".checkpoint", () => {
             it("Should be able to checkpoint at a given offset", async () => {
-                testContext.checkpoint(10);
-                testContext.checkpoint(30);
+                testContext.checkpoint(TestKafka.createdQueuedMessage(10));
+                testContext.checkpoint(TestKafka.createdQueuedMessage(30));
                 await testConsumer.waitForOffset(30);
             });
         });

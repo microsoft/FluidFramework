@@ -91,7 +91,6 @@ export function getShapes(
     const polygon = new Polygon([trapezoidP0, trapezoidP3, trapezoidP2, trapezoidP1]);
     shapes.push(polygon);
 
-    /* eslint-disable @typescript-eslint/indent */
     switch (circleInclusive) {
         case SegmentCircleInclusive.None:
             break;
@@ -108,7 +107,6 @@ export function getShapes(
         default:
             break;
     }
-    /* eslint-enable @typescript-eslint/indent */
 
     return shapes;
 }

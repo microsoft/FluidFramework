@@ -9,7 +9,6 @@ import { Template } from "../template";
 import { View } from "../view";
 import * as style from "./index.css";
 
-// tslint:disable:object-literal-sort-keys
 const template = isBrowser && new Template(
     { tag: "div", ref: "root", props: { className: style.root }, children: [
         { tag: "div", ref: "observer", props: { className: style.observer }, children: [

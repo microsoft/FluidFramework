@@ -52,7 +52,6 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     private static createOpsFromDelta(event: SequenceDeltaEvent): MergeTree.IMergeTreeOp[] {
         const ops: MergeTree.IMergeTreeOp[] = [];
         for (const r of event.ranges) {
-            /* eslint-disable @typescript-eslint/indent */
             switch (event.deltaOperation) {
                 case MergeTree.MergeTreeDeltaType.ANNOTATE:
                     const lastAnnotate = ops[ops.length - 1] as MergeTree.IMergeTreeAnnotateMsg;
@@ -93,7 +92,6 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
 
                 default:
             }
-            /* eslint-enable @typescript-eslint/indent */
         }
         return ops;
     }
@@ -119,7 +117,6 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
             document.options);
 
         super.on("newListener", (event) => {
-            /* eslint-disable @typescript-eslint/indent */
             switch (event) {
                 case "sequenceDelta":
                     if (!this.client.mergeTreeDeltaCallback) {
@@ -137,10 +134,8 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
                     break;
                 default:
             }
-            /* eslint-enable @typescript-eslint/indent */
         });
         super.on("removeListener", (event: string | symbol) => {
-            /* eslint-disable @typescript-eslint/indent */
             switch (event) {
                 case "sequenceDelta":
                     if (super.listenerCount(event) === 0) {
@@ -155,7 +150,6 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
                 default:
                     break;
             }
-            /* eslint-enable @typescript-eslint/indent */
         });
 
         this.intervalMapKernel = new MapKernel(

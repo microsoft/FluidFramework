@@ -22,6 +22,7 @@ import * as moniker from "moniker";
 
 const StartingSequenceNumber = 0;
 // Disabling so can tag inline but keep strong typing
+// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 const DefaultScribe = JSON.stringify({
     logOffset: -1,
     minimumSequenceNumber: -1,

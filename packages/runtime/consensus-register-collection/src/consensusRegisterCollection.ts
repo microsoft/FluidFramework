@@ -266,7 +266,6 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
     protected processCore(message: ISequencedDocumentMessage, local: boolean) {
         if (message.type === MessageType.Operation) {
             const op: IRegisterOperation = message.contents;
-            /* eslint-disable @typescript-eslint/indent */
             switch (op.type) {
                 case "write":
                     this.processInboundWrite(message, op, local);
@@ -275,7 +274,6 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
                 default:
                     throw new Error("Unknown operation");
             }
-            /* eslint-enable @typescript-eslint/indent */
             // If it is local operation, resolve the promise.
             if (local) {
                 this.processLocalMessage(message);
@@ -370,7 +368,6 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
     }
 
     private async loadItem(item: ILocalRegister): Promise<ILocalRegister> {
-        /* eslint-disable @typescript-eslint/indent */
         switch (item.value.type) {
             case ValueType[ValueType.Plain]:
                 return item;
@@ -388,6 +385,5 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
                 assert(false, "Invalid value type");
                 return Promise.reject("Invalid value type");
         }
-        /* eslint-enable @typescript-eslint/indent */
     }
 }

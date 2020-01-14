@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { IKafkaMessage, IPartitionLambda, IPartitionLambdaFactory } from "@microsoft/fluid-server-services-core";
+import { IPartitionLambda, IPartitionLambdaFactory, IQueuedMessage } from "@microsoft/fluid-server-services-core";
 import { AsyncQueue, queue } from "async";
 import * as _ from "lodash";
 import { Provider } from "nconf";
@@ -12,7 +12,7 @@ import * as winston from "winston";
 import { DocumentContext } from "./documentContext";
 
 export class DocumentPartition extends EventEmitter {
-    private readonly q: AsyncQueue<IKafkaMessage>;
+    private readonly q: AsyncQueue<IQueuedMessage>;
     private readonly lambdaP: Promise<IPartitionLambda>;
     private lambda: IPartitionLambda;
     private corrupt = false;
@@ -34,14 +34,14 @@ export class DocumentPartition extends EventEmitter {
         const documentConfig = new Provider({}).defaults(clonedConfig).use("memory");
 
         this.q = queue(
-            (message: IKafkaMessage, callback) => {
+            (message: IQueuedMessage, callback) => {
                 // Winston.verbose(`${message.topic}:${message.partition}@${message.offset}`);
                 try {
                     if (!this.corrupt) {
                         this.lambda.handler(message);
                     } else {
                         // Until we can dead letter - simply checkpoint as handled
-                        this.context.checkpoint(message.offset);
+                        this.context.checkpoint(message);
                     }
                 } catch (error) {
                     // TODO dead letter queue for bad messages, etc... when the lambda is throwing an exception
@@ -69,7 +69,7 @@ export class DocumentPartition extends EventEmitter {
             });
     }
 
-    public process(message: IKafkaMessage) {
+    public process(message: IQueuedMessage) {
         this.q.push(message);
         this.updateActivityTimer();
     }

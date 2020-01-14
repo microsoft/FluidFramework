@@ -67,7 +67,7 @@ export class Recorder {
         this.currentSongName = name;
         this.recordedSong = { noteSequence: [] };
 
-        const songProperties = { name: this.currentSongName, song: this.recordedSong } as SongProperties;
+        const songProperties: SongProperties = { name: this.currentSongName, song: this.recordedSong };
 
         const savedSongs = this.getSavedSongs();
         savedSongs.push(songProperties);

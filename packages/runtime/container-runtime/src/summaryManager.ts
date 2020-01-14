@@ -151,7 +151,6 @@ export class SummaryManager extends EventEmitter {
         // Transition states depending on shouldSummarize, which is a calculated
         // property that is only true if this client is connected and has the
         // computed summarizer client id
-        /* eslint-disable @typescript-eslint/indent */
         switch (this.state) {
             case SummaryManagerState.Off: {
                 if (this.shouldSummarize) {
@@ -179,7 +178,6 @@ export class SummaryManager extends EventEmitter {
                 return;
             }
         }
-        /* eslint-enable @typescript-eslint/indent */
     }
 
     private start(attempt: number = 1) {

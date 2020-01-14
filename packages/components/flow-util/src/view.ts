@@ -57,7 +57,8 @@ export abstract class View<TInit extends TProps, TProps = {} | undefined> implem
 
     // eslint-disable-next-line max-len
     protected onDom<K extends keyof HTMLElementEventMap>(target: EventTarget, type: K | string, listener: (ev: HTMLElementEventMap[K]) => any) {
-        const registration: IListenerRegistration = { target, type, listener };
+        const eventListener = listener as EventListener;
+        const registration: IListenerRegistration = { target, type, listener: eventListener };
         const listeners = this.listeners;
 
         if (listeners === undefined) {
@@ -66,6 +67,6 @@ export abstract class View<TInit extends TProps, TProps = {} | undefined> implem
             listeners.push(registration);
         }
 
-        target.addEventListener(type, listener);
+        target.addEventListener(type, eventListener);
     }
 }

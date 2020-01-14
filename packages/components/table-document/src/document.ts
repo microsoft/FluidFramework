@@ -16,7 +16,7 @@ import {
 } from "@microsoft/fluid-sequence";
 import { createSheetlet, ISheetlet } from "@tiny-calc/micro";
 import { CellRange } from "./cellrange";
-import { TableSliceType } from "./ComponentTypes";
+import { TableSliceType } from "./componentTypes";
 import { debug } from "./debug";
 import { TableSlice } from "./slice";
 import { ITable } from "./table";

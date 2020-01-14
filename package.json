@@ -80,13 +80,13 @@
   "dependencies": {},
   "devDependencies": {
     "@microsoft/api-documenter": "^7.4.6",
-    "@microsoft/api-extractor": "^7.4.4",
+    "@microsoft/api-extractor": "^7.7.2",
     "concurrently": "^4.1.0",
     "copyfiles": "^2.1.0",
     "lerna": "^3.14.1",
     "nyc": "^14.1.1",
     "rimraf": "^2.6.2",
     "sort-package-json": "1.31.0",
-    "typescript": "~3.4.5"
+    "typescript": "~3.7.4"
   }
 }

@@ -23,14 +23,14 @@ export class TestConsumer implements core.IConsumer {
         this.failOnCommit = value;
     }
 
-    public async commitOffset(data: any[]): Promise<void> {
+    public async commitCheckpoint(partitionId: number, queuedMessage: core.IQueuedMessage): Promise<void> {
         // For now we assume a single partition for the test consumer
-        assert(data.length === 1 && data[0].partition === 0);
+        assert(partitionId === 0);
 
         if (this.failOnCommit) {
             return Promise.reject("TestConsumer set to fail on commit");
         } else {
-            this.context.checkpoint(data[0].offset);
+            this.context.checkpoint(queuedMessage);
             return;
         }
     }
@@ -53,13 +53,13 @@ export class TestConsumer implements core.IConsumer {
         return Promise.resolve();
     }
 
-    public pause() {
+    public async pause() {
         if (!this.pausedQueue) {
             this.pausedQueue = [];
         }
     }
 
-    public resume() {
+    public async resume() {
         if (!this.pausedQueue) {
             return;
         }
@@ -119,7 +119,17 @@ export class TestProducer implements core.IProducer {
  * Test Kafka implementation. Allows for the creation of a joined producer/consumer pair.
  */
 export class TestKafka {
-    private readonly messages: core.IKafkaMessage[] = [];
+
+    public static createdQueuedMessage(offset: number, metadata?: any): core.IQueuedMessage {
+        return {
+            topic: "topic",
+            partition: 0,
+            offset,
+            value: "",
+        };
+    }
+
+    private readonly messages: core.IQueuedMessage[] = [];
     private offset = 0;
     private readonly consumers: TestConsumer[] = [];
 
@@ -134,24 +144,21 @@ export class TestKafka {
         return consumer;
     }
 
-    public getRawMessages(): core.IKafkaMessage[] {
+    public getRawMessages(): core.IQueuedMessage[] {
         return this.messages;
     }
 
     public addMessage(message: any, topic: string) {
         const offset = this.offset++;
-        const storedMessage: core.IKafkaMessage = {
-            highWaterOffset: offset,
-            key: null,
-            offset,
-            partition: 0,
-            topic,
-            value: message,
-        };
-        this.messages.push(storedMessage);
+
+        const queuedMessage = TestKafka.createdQueuedMessage(offset);
+        queuedMessage.value = message;
+        queuedMessage.topic = topic;
+
+        this.messages.push(queuedMessage);
 
         for (const consumer of this.consumers) {
-            consumer.emit(storedMessage);
+            consumer.emit(queuedMessage);
         }
     }
 
@@ -162,4 +169,5 @@ export class TestKafka {
     public getMessage(index: number): core.ISequencedOperationMessage {
         return this.messages[index].value as core.ISequencedOperationMessage;
     }
+
 }

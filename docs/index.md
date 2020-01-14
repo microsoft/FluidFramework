@@ -13,7 +13,7 @@ Welcome to Fluid!
 We built Fluid to make it simpler for developers to build real-time collaborative experiences using Web technology.
 
 Fluid enables distributed, collaborative applications by providing developers with eventually consistent <xref:dds>, a
-flexible component and app model, and a reference server implementation ("Routerlicious.")
+flexible component and app model, and a reference server implementation called [Routerlicious](xref:r11s).
 
 Teams across Microsoft are using Fluid for low latency collaboration, zero setup data persistence, and on-by-default
 cross app compatibility. Among other projects, our partner teams are building components for text editing, gaming,
@@ -39,20 +39,7 @@ See [this draft document](xref:what-is-fluid) for some more information about Fl
 
 ## Get started now
 
-[!include[<yo yo yo>](./get-started/_yo-fluid-content.md)]
-
-
-<a name="fluid-source" />
-
-## Get the Fluid source code, including examples
-
-The repository is located at <https://github.com/Microsoft/FluidFramework/>. To gain access you will need to link your GitHub
-and Microsoft accounts. To do so follow the instructions at <https://repos.opensource.microsoft.com/link>.
-
-After linking your accounts you should be added to the <https://github.com/orgs/Microsoft/teams/everyone> group which
-will grant you access to the Fluid Framework repo. If for some reason you are not automatically added to that group request to
-join at <https://repos.opensource.microsoft.com/Microsoft/teams/pragueread>.
-
+Get up and running quickly using our [Getting Started guide](xref:get-started).
 
 ## Help
 

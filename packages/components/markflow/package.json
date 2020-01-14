@@ -76,7 +76,7 @@
     "style-loader": "^1.0.0",
     "ts-loader": "^6.1.2",
     "ts-node": "^7.0.1",
-    "typescript": "~3.4.5",
+    "typescript": "~3.7.4",
     "url-loader": "^2.1.0",
     "webpack": "^4.16.5",
     "webpack-bundle-analyzer": "^2.13.1",
