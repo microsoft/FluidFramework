@@ -4,10 +4,10 @@
  */
 
 import { strict as assert } from "assert";
+import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { ISequencedDocumentMessage, MessageType } from "@microsoft/fluid-protocol-definitions";
 import { IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
-import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import { IIntegerRange } from "./base";
 import * as Collections from "./collections";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
@@ -31,8 +31,8 @@ import * as OpBuilder from "./opBuilder";
 import * as ops from "./ops";
 import * as Properties from "./properties";
 import { Snapshot } from "./snapshot";
-import { SnapshotLegacy } from "./snapshotlegacy";
 import { SnapshotLoader } from "./snapshotLoader";
+import { SnapshotLegacy } from "./snapshotlegacy";
 import { SortedSegmentSet } from "./sortedSegmentSet";
 import { MergeTreeTextHelper } from "./textSegment";
 import {
