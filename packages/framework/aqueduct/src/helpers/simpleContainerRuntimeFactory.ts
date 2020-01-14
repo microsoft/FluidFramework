@@ -11,6 +11,8 @@ import {
 } from "@microsoft/fluid-container-runtime";
 import { IHostRuntime, NamedComponentRegistryEntries } from "@microsoft/fluid-runtime-definitions";
 
+import { IContainerService, serviceRoutePathRoot } from "./";
+
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class SimpleContainerRuntimeFactory {
     public static readonly defaultComponentId = "default";
@@ -22,7 +24,7 @@ export class SimpleContainerRuntimeFactory {
         context: IContainerContext,
         chaincode: string,
         registryEntries: NamedComponentRegistryEntries,
-        generateSummaries: boolean = true,
+        services: IContainerService[],
         requestHandlers: RuntimeRequestHandler[] = [],
     ): Promise<ContainerRuntime> {
         // Debug(`instantiateRuntime(chaincode=${chaincode},registry=${JSON.stringify(registry)})`);
@@ -32,10 +34,10 @@ export class SimpleContainerRuntimeFactory {
             [
                 // eslint-disable-next-line @typescript-eslint/no-use-before-define
                 defaultComponentRuntimeRequestHandler,
+                this.generateContainerServicesRequestHandler(services),
                 ...requestHandlers,
                 componentRuntimeRequestHandler,
-            ],
-            { generateSummaries });
+            ]);
         // Debug("runtime loaded.");
 
         // On first boot create the base component
@@ -76,6 +78,35 @@ export class SimpleContainerRuntimeFactory {
             runtime.error(error);
             throw error;
         }
+    }
+
+    private static generateContainerServicesRequestHandler(services: IContainerService[]): RuntimeRequestHandler {
+        return async (request: RequestParser, runtime: IHostRuntime) => {
+            if (request.pathParts[0] !== serviceRoutePathRoot) {
+                // if the request is not for a service we return undefined so the next handler can use it
+                return undefined;
+            }
+
+            if (request.pathParts.length < 2) {
+                // if there is not service to route to then return a failure
+                return { status: 400, mimeType: "text/plain", value: `request url: [${request.url}] did not specify a service to route to` };
+            }
+
+            services.forEach(service => { 
+                if (request.pathParts[1] === service.id) {
+        
+                    let subRequest = request.createSubRequest(2);
+                    if (!subRequest) {
+                        // if there is nothing left of the url we will request with empty path.
+                        subRequest = { url: "" };
+                    }
+
+                    return service.getComponent(runtime).request({ url: "" });
+                }
+            });
+
+            return { status: 404, mimeType: "text/plain", value: `Could not find a valid service for request url: [${request.url}]` };
+        };
     }
 }
 

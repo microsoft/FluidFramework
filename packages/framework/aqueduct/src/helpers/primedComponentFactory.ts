@@ -17,7 +17,7 @@ import { SharedComponentFactory } from "./sharedComponentFactory";
 export class PrimedComponentFactory extends SharedComponentFactory {
     constructor(
         ctor: new (runtime: IComponentRuntime, context: IComponentContext) => SharedComponent,
-        sharedObjects: readonly ISharedObjectFactory[],
+        sharedObjects: readonly ISharedObjectFactory[] = [],
         registryEntries?: NamedComponentRegistryEntries,
         onDemandInstantiation = true,
     ) {

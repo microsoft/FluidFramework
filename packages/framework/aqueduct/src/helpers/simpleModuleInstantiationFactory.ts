@@ -13,6 +13,8 @@ import {
 } from "@microsoft/fluid-runtime-definitions";
 import { SimpleContainerRuntimeFactory } from "./simpleContainerRuntimeFactory";
 
+import { IContainerService } from "./";
+
 /**
  *  Simple Fluid Module instantiation library. This should be exposed as fluidExport off the entrypoint to your module
  *
@@ -30,7 +32,8 @@ export class SimpleModuleInstantiationFactory implements
 
     constructor(
         private readonly defaultComponentName: string,
-        private readonly registryEntries: NamedComponentRegistryEntries) {
+        private readonly registryEntries: NamedComponentRegistryEntries,
+        private readonly services: IContainerService[] = []) {
         this.registry = new ComponentRegistry(registryEntries);
     }
     public get IComponentRegistry() { return this.registry; }
@@ -44,7 +47,7 @@ export class SimpleModuleInstantiationFactory implements
             context,
             this.defaultComponentName,
             this.registryEntries,
-            true,
+            this.services,
         );
     }
 }

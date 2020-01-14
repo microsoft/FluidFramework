@@ -17,6 +17,8 @@ import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-d
 
 import { ComponentHandle } from "@microsoft/fluid-component-runtime";
 
+import { serviceRoutePathRoot } from "../helpers";
+
 /**
  * This is as bare-bones base class that does basic setup and enables for factory on an initialize call.
  * You probably don't want to inherit from this component directly unless you are creating another base component class
@@ -145,6 +147,18 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
         const request = {
             headers: [[wait]],
             url: `/${id}`,
+        };
+
+        return this.asComponent(this.context.hostRuntime.request(request));
+    }
+
+    /**
+     * Gets the service at a given id.
+     * @param id - service id
+     */
+    protected async getService<T>(id: string): Promise<T> {
+        const request = {
+            url:`/${serviceRoutePathRoot}/${id}`
         };
 
         return this.asComponent(this.context.hostRuntime.request(request));
