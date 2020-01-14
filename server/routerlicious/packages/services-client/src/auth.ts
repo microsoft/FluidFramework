@@ -10,11 +10,6 @@ import * as jwt from "jsonwebtoken";
 import * as uuid from "uuid/v4";
 import { getRandomName } from "./dockerNames";
 
-export interface IAlfredTenant {
-    id: string;
-    key: string;
-}
-
 /**
  * Generates a JWT token to authorize routerlicious
  */
