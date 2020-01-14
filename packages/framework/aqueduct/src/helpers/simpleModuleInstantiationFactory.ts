@@ -16,7 +16,7 @@ import { SimpleContainerRuntimeFactory } from "./simpleContainerRuntimeFactory";
 import { IContainerService } from "./";
 
 /**
- *  Simple Fluid Module instantiation library. This should be exposed as fluidExport off the entrypoint to your module
+ *  Simple Fluid Module instantiation library. This should be exposed as fluidExport off the entry point to your module
  *
  * This factory exposes the following interfaces:
  *  IComponentFactory: instantiates the default component directly, sub-components must be registered manually
