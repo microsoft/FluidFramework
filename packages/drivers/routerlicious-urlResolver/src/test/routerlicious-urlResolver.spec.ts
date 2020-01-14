@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-// tslint:disable: max-line-length
-import { IFluidResolvedUrl } from "@microsoft/fluid-driver-definitions";
+/* eslint-disable unicorn/filename-case, max-len */
+
 import * as assert from "assert";
+import { IFluidResolvedUrl } from "@microsoft/fluid-driver-definitions";
 import { RouterliciousUrlResolver } from "../urlResolver";
 
 describe("Routerlicious Url Resolver", () => {
