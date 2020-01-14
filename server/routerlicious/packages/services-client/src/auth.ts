@@ -10,6 +10,11 @@ import * as jwt from "jsonwebtoken";
 import * as uuid from "uuid/v4";
 import { getRandomName } from "./dockerNames";
 
+export interface IAlfredTenant {
+    id: string;
+    key: string;
+}
+
 /**
  * Generates a JWT token to authorize routerlicious
  */
@@ -19,8 +24,7 @@ export function generateToken(
     key: string,
     scopes: ScopeType[],
     user?: IUser): string {
-    // eslint-disable-next-line max-len
-    // eslint-disable-next-line @typescript-eslint/no-use-before-define, @typescript-eslint/strict-boolean-expressions, no-param-reassign
+    // eslint-disable-next-line @typescript-eslint/no-use-before-define, no-param-reassign
     user = (user) ? user : generateUser();
     if (user.id === "" || user.id === undefined) {
         debug("User with no id");

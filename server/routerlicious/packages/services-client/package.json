@@ -52,13 +52,16 @@
     "@microsoft/fluid-protocol-definitions": "^0.1001.0",
     "@types/node": "^10.14.6",
     "axios": "^0.18.0",
-    "debug": "^4.1.1"
+    "debug": "^4.1.1",
+    "jsonwebtoken": "^8.4.0",
+    "uuid": "^3.3.2"
   },
   "devDependencies": {
     "@microsoft/eslint-config-fluid": "^0.13.0",
     "@microsoft/fluid-build-common": "^0.13.0",
     "@types/debug": "^0.0.31",
     "@types/mocha": "^5.2.5",
+    "@types/jsonwebtoken": "^8.3.0",
     "@typescript-eslint/eslint-plugin": "^2.9.0",
     "@typescript-eslint/parser": "^2.9.0",
     "concurrently": "^4.1.0",

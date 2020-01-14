@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+export * from "./auth";
+export * from "./dockerNames";
 export * from "./gitManager";
 export * from "./historian";
 export * from "./restWrapper";
