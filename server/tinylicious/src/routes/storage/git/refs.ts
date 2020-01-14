@@ -59,7 +59,7 @@ export function create(store: nconf.Provider): Router {
     ): Promise<IRef> {
         const dir = utils.getGitDir(store, tenantId);
 
-        // current code - or nodegit - takes in updates without the /refs input - need to resolve the behavior and
+        // Current code - or nodegit - takes in updates without the /refs input - need to resolve the behavior and
         // either leave in the refs below or update the git managers to include it.
         const rebasedRef = `refs/${ref}`;
 

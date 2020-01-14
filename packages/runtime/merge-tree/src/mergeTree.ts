@@ -37,7 +37,6 @@ import { SegmentPropertiesManager } from "./segmentPropertiesManager";
 // tslint:disable:forin
 // tslint:disable:no-suspicious-comment
 // tslint:disable:no-angle-bracket-type-assertion
-// tslint:disable:object-literal-sort-keys
 // tslint:disable:member-access
 // tslint:disable:no-parameter-reassignment
 // tslint:disable:no-shadowed-variable
@@ -3049,7 +3048,6 @@ export class MergeTree {
         }
         if (this.collabWindow.collaborating) {
             strbuf += internedSpaces(indentCount);
-            // tslint:disable-next-line: prefer-template
             strbuf += `${block.partialLengths.toString((id) => glc(this, id), indentCount)}\n`;
         }
         const children = block.children;

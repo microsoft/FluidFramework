@@ -2,16 +2,16 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
+
+import * as assert from "assert";
 import { ConnectionState } from "@microsoft/fluid-protocol-definitions";
 import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@microsoft/fluid-test-runtime-utils";
-import * as assert from "assert";
 import { ConsensusRegisterCollectionFactory } from "../consensusRegisterCollectionFactory";
 import { IConsensusRegisterCollection, IConsensusRegisterCollectionFactory } from "../interfaces";
 
 describe("Routerlicious", () => {
     describe("Api", () => {
         // tslint:disable:mocha-no-side-effect-code
-        generate("ConsensusRegisterCollection", new ConsensusRegisterCollectionFactory());
         function generate(
             name: string,
             factory: IConsensusRegisterCollectionFactory) {
@@ -30,6 +30,7 @@ describe("Routerlicious", () => {
                 });
             });
         }
+        generate("ConsensusRegisterCollection", new ConsensusRegisterCollectionFactory());
     });
 
     describe("reconnect", () => {

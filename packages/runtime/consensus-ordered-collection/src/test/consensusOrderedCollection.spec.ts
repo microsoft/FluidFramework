@@ -3,16 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { MockRuntime } from "@microsoft/fluid-test-runtime-utils";
 import * as assert from "assert";
+import { MockRuntime } from "@microsoft/fluid-test-runtime-utils";
 import { ConsensusQueueFactory, ConsensusStackFactory } from "../consensusOrderedCollectionFactory";
 import { IConsensusOrderedCollection, IConsensusOrderedCollectionFactory } from "../interfaces";
 
 describe("Routerlicious", () => {
     describe("Api", () => {
         // tslint:disable:mocha-no-side-effect-code
-        generate("ConsensusQueue", new ConsensusQueueFactory(), [1, 2], [1, 2]);
-        generate("ConsensusStack", new ConsensusStackFactory(), [1, 2], [2, 1]);
         function generate(
             name: string,
             factory: IConsensusOrderedCollectionFactory,
@@ -99,5 +97,7 @@ describe("Routerlicious", () => {
                 });
             });
         }
+        generate("ConsensusQueue", new ConsensusQueueFactory(), [1, 2], [1, 2]);
+        generate("ConsensusStack", new ConsensusStackFactory(), [1, 2], [2, 1]);
     });
 });

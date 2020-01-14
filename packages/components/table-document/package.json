@@ -57,7 +57,7 @@
     "nyc": "^14.1.1",
     "rimraf": "^2.6.2",
     "ts-node": "^7.0.1",
-    "typescript": "~3.4.5"
+    "typescript": "~3.7.4"
   },
   "nyc": {
     "all": true,

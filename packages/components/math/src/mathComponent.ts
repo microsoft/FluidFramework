@@ -408,7 +408,6 @@ class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout
     }
 
     private noteCursorExit(direction: ComponentCursorDirection) {
-        // eslint-disable-next-line arrow-body-style
         const cursorElement = ClientUI.controls.findFirstMatch(this.containerElement, (cursor: HTMLElement) => {
             return cursor.style && (cursor.style.color === MathExpr.cursorColor);
         }) || this.containerElement;
