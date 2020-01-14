@@ -5,8 +5,8 @@
 
 module.exports = {
   server: {
-    command: "npm run start",
-    port: 8080
+    command: "npm run start -- --port 8083",
+    port: 8083
   },
   launch: {
     dumpio: true, // output browser console to cmd line

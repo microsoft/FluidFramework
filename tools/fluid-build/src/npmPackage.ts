@@ -184,10 +184,13 @@ export class Package {
         return fixed;
     }
 
+    /**
+     * mocha tests in packages/ should be in a "test:mocha" script so they can be run separately from jest tests
+     */
     public checkMochaTestScripts() {
         let fixed = false;
         if (!options.server && this.packageJson.scripts && this.packageJson.scripts.test && /^(ts-)?mocha/.test(this.packageJson.scripts.test)) {
-            console.warn(`${this.nameColored}: warning: "mocha" in "test" script`)
+            console.warn(`${this.nameColored}: warning: "mocha" in "test" script instead of "test:mocha" script`)
             if (options.fixScripts) {
                 if (!this.packageJson.scripts["test:mocha"]) {
                     this.packageJson.scripts["test:mocha"] = this.packageJson.scripts["test"];
@@ -205,7 +208,7 @@ export class Package {
     public checkJestJunitTestEntry() {
         let fixed = false;
         const pkgstring = "jest-junit";
-        const pkgversion = "10.0.0";
+        const pkgversion = "^10.0.0";
         if (this.packageJson.scripts && this.packageJson.scripts["test:jest"]) {
             if (!this.packageJson.devDependencies[pkgstring]) {
                 console.warn(`${this.name}: warning: missing ${pkgstring} dependency`);
