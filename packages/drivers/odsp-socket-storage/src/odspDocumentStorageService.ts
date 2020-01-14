@@ -5,7 +5,7 @@
 
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import * as api from "@microsoft/fluid-protocol-definitions";
-import { OdspDocumentStorageManager } from "./OdspDocumentStorageManager";
+import { OdspDocumentStorageManager } from "./odspDocumentStorageManager";
 
 /**
  * Document access to underlying storage for sharepoint driver.
