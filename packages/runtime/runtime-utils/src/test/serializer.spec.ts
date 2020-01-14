@@ -7,8 +7,6 @@
 // tslint:disable:no-unsafe-any
 // tslint:disable:mocha-no-side-effect-code
 
-/* eslint-disable capitalized-comments */
-
 import { strict as assert } from "assert";
 import { ComponentSerializer } from "../serializer";
 import {
@@ -24,7 +22,6 @@ const serHandle = {
 
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 function printHandle(target: any) {
-    // eslint-disable-next-line arrow-body-style
     return JSON.stringify(target, (key, value) => {
         return value && value.IComponentHandle
             ? "#HANDLE"
