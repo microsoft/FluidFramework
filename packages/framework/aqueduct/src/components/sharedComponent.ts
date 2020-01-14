@@ -158,7 +158,7 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
      */
     protected async getService<T>(id: string): Promise<T> {
         const request = {
-            url:`/${serviceRoutePathRoot}/${id}`
+            url:`/${serviceRoutePathRoot}/${id}`,
         };
 
         return this.asComponent(this.context.hostRuntime.request(request));

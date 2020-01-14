@@ -10,8 +10,7 @@ import {
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
-// eslint-disable-next-line import/no-internal-modules
-import { SharedComponent } from "../components/sharedComponent";
+import { SharedComponent } from "../components";
 import { SharedComponentFactory } from "./sharedComponentFactory";
 
 export class PrimedComponentFactory extends SharedComponentFactory {
