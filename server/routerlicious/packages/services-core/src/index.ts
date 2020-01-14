@@ -9,7 +9,6 @@ export * from "./clientManager";
 export * from "./database";
 export * from "./document";
 export * from "./http";
-export * from "./io";
 export * from "./lambdas";
 export * from "./messages";
 export * from "./metricClient";

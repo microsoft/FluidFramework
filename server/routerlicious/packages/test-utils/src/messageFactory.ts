@@ -48,7 +48,6 @@ export class KafkaMessageFactory {
             topic: this.topic,
             value: this.stringify
                 ? JSON.stringify(value)
-                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                 : ({
                     contents: [value],
                     documentId: this.documentId,

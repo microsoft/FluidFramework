@@ -96,9 +96,7 @@ export class TestHistorian implements IHistorian {
         const commit = await this.commits.findOne({ _id: sha });
         if (commit) {
             return {
-                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                 author: {} as Partial<git.IAuthor> as git.IAuthor,
-                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                 committer: {} as Partial<git.ICommitter> as git.ICommitter,
                 message: commit.value.message,
                 parents: commit.value.parents.map<git.ICommitHash>((p) => ({ sha: p, url: "" })),

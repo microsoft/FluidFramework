@@ -30,13 +30,8 @@ import {
 import * as jwt from "jsonwebtoken";
 import * as semver from "semver";
 import * as winston from "winston";
-import { IWebSocketServer, IWebSocket } from "./http";
-import { IOrdererManager, IOrdererConnection } from "./orderer";
-import { ITenantManager } from "./tenant";
-import { IDocumentStorage } from "./document";
-import { IClientManager } from "./clientManager";
-import { ICollection } from "./database";
-import { IMetricClient } from "./metricClient";
+import * as core from "@microsoft/fluid-server-services-core";
+
 
 export const DefaultServiceConfiguration: IServiceConfiguration = {
     blockSize: 64436,
@@ -113,19 +108,19 @@ function selectProtocolVersion(connectVersions: string[]): string {
     }
 }
 
-export function register(
-    webSocketServer: IWebSocketServer,
-    orderManager: IOrdererManager,
-    tenantManager: ITenantManager,
-    storage: IDocumentStorage,
-    contentCollection: ICollection<any>,
-    clientManager: IClientManager,
-    metricLogger: IMetricClient) {
+export function configureWebSocketServices(
+    webSocketServer: core.IWebSocketServer,
+    orderManager: core.IOrdererManager,
+    tenantManager: core.ITenantManager,
+    storage: core.IDocumentStorage,
+    contentCollection: core.ICollection<any>,
+    clientManager: core.IClientManager,
+    metricLogger: core.IMetricClient) {
 
 
-    webSocketServer.on("connection", (socket: IWebSocket) => {
+    webSocketServer.on("connection", (socket: core.IWebSocket) => {
         // Map from client IDs on this connection to the object ID and user info.
-        const connectionsMap = new Map<string,IOrdererConnection>();
+        const connectionsMap = new Map<string, core.IOrdererConnection>();
         // Map from client IDs to room.
         const roomMap = new Map<string, IRoom>();
 
