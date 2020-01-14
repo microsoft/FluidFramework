@@ -6,7 +6,6 @@
         "@typescript-eslint/array-type": "off",
         "@typescript-eslint/strict-boolean-expressions": "off",
         "arrow-body-style": "off",
-        "capitalized-comments": "off",
         "import/no-internal-modules": "off",
         "max-len": "off",
         "no-bitwise": "off",

@@ -201,15 +201,7 @@ module.exports = {
             "always"
         ],
         "camelcase": "off", // Superseded by @typescript-eslint/camelcase
-        "capitalized-comments": [
-            "warn",
-            "always",
-            {
-                "ignoreConsecutiveComments": true,
-                "ignoreInlineComments": true,
-                "ignorePattern": "tslint:| start | end "
-            }
-        ],
+        "capitalized-comments": "off",
         "comma-dangle": [
             "error",
             "always-multiline"

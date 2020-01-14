@@ -6,7 +6,6 @@
         "@typescript-eslint/no-use-before-define": "off",
         "@typescript-eslint/strict-boolean-expressions": "off",
         "arrow-body-style": "off",
-        "capitalized-comments": "off",
         "no-case-declarations": "off",
         "prefer-arrow/prefer-arrow-functions": "off"
     }
