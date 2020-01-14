@@ -22,7 +22,6 @@ const serHandle = {
 
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 function printHandle(target: any) {
-    // eslint-disable-next-line arrow-body-style
     return JSON.stringify(target, (key, value) => {
         return value && value.IComponentHandle
             ? "#HANDLE"

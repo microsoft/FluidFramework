@@ -5,7 +5,6 @@
     "rules": {
         "@typescript-eslint/array-type": "off",
         "@typescript-eslint/strict-boolean-expressions": "off",
-        "arrow-body-style": "off",
         "import/no-internal-modules": "off",
         "max-len": "off",
         "no-bitwise": "off",

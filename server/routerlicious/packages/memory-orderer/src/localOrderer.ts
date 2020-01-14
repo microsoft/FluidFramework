@@ -395,7 +395,6 @@ export class LocalOrderer implements IOrderer {
             lastState.proposals,
             lastState.values,
             () => -1,
-            // eslint-disable-next-line arrow-body-style
             () => { return; });
 
         return new ScribeLambda(
