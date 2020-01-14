@@ -195,7 +195,7 @@ module.exports = {
         "unicorn/no-new-buffer": "error",
 
         // eslint
-        "arrow-body-style": "error",
+        "arrow-body-style": "off",
         "arrow-parens": [
             "error",
             "always"
