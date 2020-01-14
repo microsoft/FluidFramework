@@ -13,6 +13,7 @@ import {
 } from "@microsoft/fluid-protocol-definitions";
 import * as core from "@microsoft/fluid-server-services-core";
 import * as winston from "winston";
+import { generateToken } from "@microsoft/fluid-server-services-client";
 import { SequencedLambda } from "../sequencedLambda";
 
 // TODO: Move this to config.
@@ -88,7 +89,7 @@ export class ForemanLambda extends SequencedLambda {
                         tasks,
                     },
                     tenantId,
-                    token: core.generateToken(tenantId, docId, key, scopes),
+                    token: generateToken(tenantId, docId, key, scopes),
                 };
                 this.messageSender.sendTask(
                     queueName,

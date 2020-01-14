@@ -10,6 +10,7 @@ import {
     IMergeTreeMaintenanceCallbackArgs,
     ISegment,
     MergeTreeDeltaOperationType,
+    MergeTreeDeltaOperationTypes,
     MergeTreeMaintenanceType,
     PropertySet,
     SortedSegmentSet,
@@ -22,25 +23,25 @@ import {
  * at the time the operation was applied. They will not take into any future modifications
  * performed to the underlying sequence and merge tree.
  */
-export class SequenceEvent {
+export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationTypes> {
     public readonly isEmpty: boolean;
-    public readonly deltaOperation: MergeTreeDeltaOperationType | MergeTreeMaintenanceType;
-    private readonly sortedRanges: Lazy<SortedSegmentSet<ISequenceDeltaRange>>;
-    private readonly pFirst: Lazy<ISequenceDeltaRange>;
-    private readonly pLast: Lazy<ISequenceDeltaRange>;
+    public readonly deltaOperation: TOperation;
+    private readonly sortedRanges: Lazy<SortedSegmentSet<ISequenceDeltaRange<TOperation>>>;
+    private readonly pFirst: Lazy<ISequenceDeltaRange<TOperation>>;
+    private readonly pLast: Lazy<ISequenceDeltaRange<TOperation>>;
 
     constructor(
-        public readonly deltaArgs: IMergeTreeDeltaCallbackArgs | IMergeTreeMaintenanceCallbackArgs,
+        public readonly deltaArgs: IMergeTreeDeltaCallbackArgs<TOperation>,
         private readonly mergeTreeClient: Client,
     ) {
         this.isEmpty = deltaArgs.deltaSegments.length === 0;
         this.deltaOperation = deltaArgs.operation;
 
-        this.sortedRanges = new Lazy<SortedSegmentSet<ISequenceDeltaRange>>(
+        this.sortedRanges = new Lazy<SortedSegmentSet<ISequenceDeltaRange<TOperation>>>(
             () => {
-                const set = new SortedSegmentSet<ISequenceDeltaRange>();
+                const set = new SortedSegmentSet<ISequenceDeltaRange<TOperation>>();
                 this.deltaArgs.deltaSegments.forEach((delta) => {
-                    const newRange: ISequenceDeltaRange = {
+                    const newRange: ISequenceDeltaRange<TOperation> = {
                         operation: this.deltaArgs.operation,
                         position: this.mergeTreeClient.getPosition(delta.segment),
                         propertyDeltas: delta.propertyDeltas,
@@ -51,7 +52,7 @@ export class SequenceEvent {
                 return set;
             });
 
-        this.pFirst = new Lazy<ISequenceDeltaRange>(
+        this.pFirst = new Lazy<ISequenceDeltaRange<TOperation>>(
             () => {
                 if (this.isEmpty) {
                     return undefined;
@@ -59,7 +60,7 @@ export class SequenceEvent {
                 return this.sortedRanges.value.items[0];
             });
 
-        this.pLast = new Lazy<ISequenceDeltaRange>(
+        this.pLast = new Lazy<ISequenceDeltaRange<TOperation>>(
             () => {
                 if (this.isEmpty) {
                     return undefined;
@@ -72,7 +73,7 @@ export class SequenceEvent {
      * The in-order ranges affected by this delta.
      * These may not be continous.
      */
-    public get ranges(): readonly Readonly<ISequenceDeltaRange>[] {
+    public get ranges(): readonly Readonly<ISequenceDeltaRange<TOperation>>[] {
         return this.sortedRanges.value.items;
     }
 
@@ -83,11 +84,11 @@ export class SequenceEvent {
         return this.mergeTreeClient.longClientId;
     }
 
-    public get first(): ISequenceDeltaRange {
+    public get first(): Readonly<ISequenceDeltaRange<TOperation>> {
         return this.pFirst.value;
     }
 
-    public get last(): ISequenceDeltaRange {
+    public get last(): Readonly<ISequenceDeltaRange<TOperation>> {
         return this.pLast.value;
     }
 }
@@ -103,7 +104,7 @@ export class SequenceEvent {
  *
  * Ops may get multiple events. For instance, as insert-replace will get a remove then an insert event.
  */
-export class SequenceDeltaEvent extends SequenceEvent {
+export class SequenceDeltaEvent extends SequenceEvent<MergeTreeDeltaOperationType> {
     public readonly isLocal: boolean;
 
     constructor(
@@ -123,7 +124,7 @@ export class SequenceDeltaEvent extends SequenceEvent {
  * at the time the operation was applied. They will not take into any future modifications
  * performed to the underlying sequence and merge tree.
  */
-export class SequenceMaintenanceEvent extends SequenceEvent {
+export class SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenanceType> {
     constructor(
         deltaArgs: IMergeTreeMaintenanceCallbackArgs,
         mergeTreeClient: Client,
@@ -132,8 +133,8 @@ export class SequenceMaintenanceEvent extends SequenceEvent {
     }
 }
 
-export interface ISequenceDeltaRange {
-    operation: MergeTreeDeltaOperationType | MergeTreeMaintenanceType;
+export interface ISequenceDeltaRange<TOperation extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationTypes> {
+    operation: TOperation;
     position: number;
     segment: ISegment;
     propertyDeltas: PropertySet;

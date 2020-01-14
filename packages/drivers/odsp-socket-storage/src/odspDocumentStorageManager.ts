@@ -32,8 +32,8 @@ import { fetchSnapshot } from "./fetchSnapshot";
 import { IFetchWrapper } from "./fetchWrapper";
 import { getQueryString } from "./getQueryString";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
-import { OdspCache } from "./OdspCache";
-import { getWithRetryForTokenRefresh, throwOdspNetworkError } from "./OdspUtils";
+import { OdspCache } from "./odspCache";
+import { getWithRetryForTokenRefresh, throwOdspNetworkError } from "./odspUtils";
 
 /* eslint-disable max-len */
 

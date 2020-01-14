@@ -3,5 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export * from "./TextBox";
-export * from "./textBoxInstantiationFactory";
+export interface IAlfredTenant {
+    id: string;
+    key: string;
+}

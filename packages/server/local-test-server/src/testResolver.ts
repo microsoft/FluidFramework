@@ -6,7 +6,7 @@
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IFluidResolvedUrl, IResolvedUrl, IUrlResolver } from "@microsoft/fluid-driver-definitions";
 import { ScopeType } from "@microsoft/fluid-protocol-definitions";
-import { generateToken } from "@microsoft/fluid-server-services-core";
+import { generateToken } from "@microsoft/fluid-server-services-client";
 
 /**
  * Resolves URLs by providing fake URLs which succeed with the other

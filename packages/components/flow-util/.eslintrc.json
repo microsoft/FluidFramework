@@ -5,7 +5,6 @@
     "rules": {
         "@typescript-eslint/no-namespace": "off",
         "@typescript-eslint/strict-boolean-expressions": "off",
-        "capitalized-comments": "off",
         "no-inner-declarations": "off",
         "no-param-reassign": "off",
         "prefer-arrow/prefer-arrow-functions": "off"

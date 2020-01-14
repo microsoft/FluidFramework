@@ -21,7 +21,7 @@ import {
 } from "@microsoft/fluid-local-test-server";
 import { IUser } from "@microsoft/fluid-protocol-definitions";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
-import { getRandomName } from "@microsoft/fluid-server-services-core";
+import { getRandomName } from "@microsoft/fluid-server-services-client";
 import { extractDetails, IResolvedPackage } from "@microsoft/fluid-web-code-loader";
 import * as jwt from "jsonwebtoken";
 // eslint-disable-next-line import/no-internal-modules
