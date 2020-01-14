@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { IBlob } from "@microsoft/fluid-protocol-definitions";
 import { MockRuntime, MockSharedObjectServices } from "@microsoft/fluid-test-runtime-utils";
 
-import * as assert from "assert";
 import * as map from "../";
 import { SharedMap } from "../map";
 
@@ -205,7 +205,7 @@ describe("Routerlicious", () => {
                     sharedMap.set("object", containingObject);
 
                     const serialized = JSON.stringify((sharedMap as any).getSerializableStorage());
-                    // tslint:disable-next-line: max-line-length
+                    // eslint-disable-next-line max-len
                     assert.equal(serialized, `{"object":{"type":"Plain","value":{"subMapHandle":{"type":"__fluid_handle__","url":"subMap"},"nestedObj":{"subMap2Handle":{"type":"__fluid_handle__","url":"subMap2"}}}}}`);
                 });
 

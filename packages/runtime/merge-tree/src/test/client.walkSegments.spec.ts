@@ -34,7 +34,8 @@ describe("client.applyMsg", () => {
     it("Walk Segment Range", () => {
         let segCount = 0;
         let segLen = 0;
-        client.walkSegments((s) => {
+        client.walkSegments(
+            (s) => {
                 segCount++;
                 segLen += s.cachedLength;
                 return true;
@@ -48,7 +49,8 @@ describe("client.applyMsg", () => {
     it("Walk Segment Range With Split", () => {
         let segCount = 0;
         let segLen = 0;
-        client.walkSegments((s) => {
+        client.walkSegments(
+            (s) => {
                 segCount++;
                 segLen += s.cachedLength;
                 return true;

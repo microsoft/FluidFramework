@@ -34,8 +34,6 @@ export class EventHubConsumer implements IConsumer {
         storageContainerName: string,
         additionalOptions?: FromTokenProviderOptions,
     ) {
-        console.log("Starting Event Hub");
-
         // Create the Event Processor Host
         this.eventHost = EventProcessorHost.createFromConnectionString(
             clientId,
@@ -100,11 +98,15 @@ export class EventHubConsumer implements IConsumer {
     }
 
     private updatePartitions() {
-        let changed = false;
-        for (const partition of this.eventHost.receivingFromPartitions) {
-            if (!this.partitions.has(partition)) {
-                changed = true;
-                break;
+        const receivingFromPartitions = this.eventHost.receivingFromPartitions;
+
+        let changed = receivingFromPartitions.length !== this.partitions.size;
+        if (!changed) {
+            for (const partition of receivingFromPartitions) {
+                if (!this.partitions.has(partition)) {
+                    changed = true;
+                    break;
+                }
             }
         }
 
@@ -114,11 +116,11 @@ export class EventHubConsumer implements IConsumer {
 
         const existing = this.getPartitions(Array.from(this.partitions));
         this.events.emit("rebalancing", existing);
-        const newPartitions = this.getPartitions(this.eventHost.receivingFromPartitions);
+        const newPartitions = this.getPartitions(receivingFromPartitions);
         this.events.emit("rebalanced", newPartitions);
 
         this.partitions.clear();
-        for (const partition of this.eventHost.receivingFromPartitions) {
+        for (const partition of receivingFromPartitions) {
             this.partitions.add(partition);
         }
     }

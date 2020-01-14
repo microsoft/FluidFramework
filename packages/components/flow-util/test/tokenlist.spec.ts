@@ -4,7 +4,6 @@
  */
 
 // tslint:disable:no-import-side-effect
-// tslint:disable:object-literal-sort-keys
 import * as assert from "assert";
 import "mocha";
 import { findToken, TokenList } from "../src/tokenlist";
