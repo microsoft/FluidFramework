@@ -5,6 +5,7 @@
 
 // tslint:disable:no-console
 
+import * as assert from "assert";
 import {
     IBlob,
     TreeEntry,
@@ -14,7 +15,6 @@ import {
     MockSharedObjectServices,
 } from "@microsoft/fluid-test-runtime-utils";
 
-import * as assert from "assert";
 import * as map from "../";
 import { SharedDirectory } from "../directory";
 
@@ -147,7 +147,7 @@ describe("Routerlicious", () => {
                 testDirectory.set("object", subMap.handle);
 
                 const serialized = serialize(testDirectory);
-                // tslint:disable-next-line:max-line-length
+                // eslint-disable-next-line max-len
                 const expected = `{"storage":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain","value":"sixth"},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"subMap"}}}}`;
                 assert.equal(serialized, expected);
             });
@@ -165,7 +165,7 @@ describe("Routerlicious", () => {
                     .set("deepKey2", "deepValue2");
 
                 const serialized = serialize(testDirectory);
-                // tslint:disable-next-line:max-line-length
+                // eslint-disable-next-line max-len
                 const expected = `{"storage":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain","value":"sixth"},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"subMap"}}},"subdirectories":{"nested":{"storage":{"deepKey1":{"type":"Plain","value":"deepValue1"}},"subdirectories":{"nested2":{"subdirectories":{"nested3":{"storage":{"deepKey2":{"type":"Plain","value":"deepValue2"}}}}}}}}}`;
                 assert.equal(serialized, expected);
             });
@@ -186,7 +186,7 @@ describe("Routerlicious", () => {
                     .set("deepKey2", "deepValue2");
 
                 const serialized = serialize(testDirectory);
-                // tslint:disable-next-line:max-line-length
+                // eslint-disable-next-line max-len
                 const expected = `{"storage":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain"},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"subMap"}}},"subdirectories":{"nested":{"storage":{"deepKey1":{"type":"Plain","value":"deepValue1"},"deepKeyUndefined":{"type":"Plain"}},"subdirectories":{"nested2":{"subdirectories":{"nested3":{"storage":{"deepKey2":{"type":"Plain","value":"deepValue2"}}}}}}}}}`;
                 assert.equal(serialized, expected);
             });
@@ -270,27 +270,27 @@ describe("Routerlicious", () => {
                         },
                     },
                     subdirectories: {
-                            foo: {
-                                storage: {
-                                    testKey: {
-                                        type: "Plain",
-                                        value: "testValue",
-                                    },
-                                    testKey2: {
-                                        type: "Plain",
-                                    },
+                        foo: {
+                            storage: {
+                                testKey: {
+                                    type: "Plain",
+                                    value: "testValue",
                                 },
-                            },
-                            bar: {
-                                storage: {
-                                    testKey3: {
-                                        type: "Plain",
-                                        value: "testValue3",
-                                    },
+                                testKey2: {
+                                    type: "Plain",
                                 },
                             },
                         },
-                    });
+                        bar: {
+                            storage: {
+                                testKey3: {
+                                    type: "Plain",
+                                    value: "testValue3",
+                                },
+                            },
+                        },
+                    },
+                });
                 assert.equal(testDirectory.size, 2, "Failed to initialize directory storage correctly");
                 assert.equal(testDirectory.getWorkingDirectory("/foo").get("testKey"), "testValue");
                 assert.equal(testDirectory.getWorkingDirectory("foo").get("testKey2"), undefined);

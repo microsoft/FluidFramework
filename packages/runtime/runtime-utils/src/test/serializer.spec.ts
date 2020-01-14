@@ -7,6 +7,8 @@
 // tslint:disable:no-unsafe-any
 // tslint:disable:mocha-no-side-effect-code
 
+/* eslint-disable capitalized-comments */
+
 import { strict as assert } from "assert";
 import { ComponentSerializer } from "../serializer";
 import {
@@ -20,7 +22,9 @@ const serHandle = {
     url: "",
 };
 
+// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 function printHandle(target: any) {
+    // eslint-disable-next-line arrow-body-style
     return JSON.stringify(target, (key, value) => {
         return value && value.IComponentHandle
             ? "#HANDLE"
@@ -29,6 +33,7 @@ function printHandle(target: any) {
 }
 
 // Start with the various JSON-serializable types
+// eslint-disable-next-line no-null/no-null
 const simple = [true, 1, "x", null, [], {}];
 
 // Add an object where each field references one of the JSON serializable types.

@@ -37,7 +37,6 @@ import { SegmentPropertiesManager } from "./segmentPropertiesManager";
 // tslint:disable:forin
 // tslint:disable:no-suspicious-comment
 // tslint:disable:no-angle-bracket-type-assertion
-// tslint:disable:object-literal-sort-keys
 // tslint:disable:member-access
 // tslint:disable:no-parameter-reassignment
 // tslint:disable:no-shadowed-variable
