@@ -9,7 +9,6 @@ import { IFormatterState, RootFormatter } from "../view/formatter";
 export const htmlFormatter: Readonly<RootFormatter<IFormatterState>> = plainTextFormatter;
 
 /*
-// eslint-disable-next-line capitalized-comments
 import { IComponent, IComponentHTMLView } from "@microsoft/fluid-component-core-interfaces";
 import { Caret as CaretUtil, Direction, Rect } from "@fluid-example/flow-util-lib";
 import { Marker } from "@microsoft/fluid-merge-tree";

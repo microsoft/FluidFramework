@@ -5,7 +5,6 @@
 
 import { Deferred } from "@microsoft/fluid-core-utils";
 import {
-    IAlfredTenant,
     IClientManager,
     ICollection,
     IDocumentStorage,
@@ -21,6 +20,7 @@ import * as utils from "@microsoft/fluid-server-services-utils";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import { createMetricClient } from "@microsoft/fluid-server-services";
+import { IAlfredTenant } from "@microsoft/fluid-server-services-client";
 import * as app from "./app";
 
 export class AlfredRunner implements utils.IRunner {

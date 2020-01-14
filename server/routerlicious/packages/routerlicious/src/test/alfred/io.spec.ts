@@ -29,6 +29,7 @@ import {
 import * as assert from "assert";
 import { OrdererManager } from "../../alfred/runnerFactory";
 import { register, DefaultMetricClient } from "@microsoft/fluid-server-services-core";
+import { generateToken } from "@microsoft/fluid-server-services-client";
 
 describe("Routerlicious", () => {
     describe("Alfred", () => {
@@ -91,7 +92,7 @@ describe("Routerlicious", () => {
                     secret: string,
                     socket: TestWebSocket): Promise<IConnected> {
                     const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
-                    const token = core.generateToken(tenantId, id, secret, scopes);
+                    const token = generateToken(tenantId, id, secret, scopes);
 
                     const connectMessage: IConnect = {
                         client: undefined,

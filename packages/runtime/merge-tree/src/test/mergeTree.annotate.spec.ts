@@ -4,8 +4,8 @@
  */
 
 // tslint:disable: no-object-literal-type-assertion max-func-body-length
-import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
+import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { TextSegment } from "../";
 import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants";
 import { BaseSegment, Marker, MergeTree } from "../mergeTree";

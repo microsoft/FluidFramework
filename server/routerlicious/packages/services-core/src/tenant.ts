@@ -5,11 +5,6 @@
 
 import { IGitManager } from "@microsoft/fluid-server-services-client";
 
-export interface IAlfredTenant {
-    id: string;
-    key: string;
-}
-
 export interface ITenantConfig {
     id: string;
 

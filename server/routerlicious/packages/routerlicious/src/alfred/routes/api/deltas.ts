@@ -5,13 +5,13 @@
 
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import {
-    IAlfredTenant,
     IRawOperationMessage,
     IRawOperationMessageBatch,
     MongoManager,
 } from "@microsoft/fluid-server-services-core";
 import { Router } from "express";
 import { Provider } from "nconf";
+import { IAlfredTenant } from "@microsoft/fluid-server-services-client";
 import { getParam } from "../../utils";
 
 const sequenceNumber = "sequenceNumber";

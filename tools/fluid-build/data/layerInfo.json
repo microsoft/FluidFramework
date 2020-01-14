@@ -1,5 +1,6 @@
 {
     "Definitions": {
+        "dotGroup": false,
         "layers": {
             "Base-Definitions": {
                 "dotSameRank": true,
@@ -38,7 +39,6 @@
         }
     },
     "Utils": {
-        "dotSameRank": true,
         "layers": {
             "Base-Utils": {
                 "packages": [
@@ -97,6 +97,7 @@
         }
     },
     "Client": {
+        "dotGroup": false,
         "layers": {
             "Driver": {
                 "dirs": [

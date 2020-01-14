@@ -156,7 +156,7 @@ module.exports = {
         "import/no-extraneous-dependencies": [
             "error",
             {
-                "devDependencies": false
+                "devDependencies": ["**/*.spec.ts"]
             }
         ],
         "import/no-internal-modules": "error",
@@ -195,21 +195,13 @@ module.exports = {
         "unicorn/no-new-buffer": "error",
 
         // eslint
-        "arrow-body-style": "error",
+        "arrow-body-style": "off",
         "arrow-parens": [
             "error",
             "always"
         ],
         "camelcase": "off", // Superseded by @typescript-eslint/camelcase
-        "capitalized-comments": [
-            "warn",
-            "always",
-            {
-                "ignoreConsecutiveComments": true,
-                "ignoreInlineComments": true,
-                "ignorePattern": "tslint:| start | end "
-            }
-        ],
+        "capitalized-comments": "off",
         "comma-dangle": [
             "error",
             "always-multiline"

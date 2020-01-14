@@ -5,7 +5,6 @@
 
 // tslint:disable:no-import-side-effect
 // tslint:disable:no-submodule-imports
-// tslint:disable:object-literal-sort-keys
 import "jsdom-global/register";
 import "mocha";
 import { Template } from "../src/template";

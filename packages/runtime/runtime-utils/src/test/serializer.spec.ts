@@ -20,6 +20,7 @@ const serHandle = {
     url: "",
 };
 
+// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 function printHandle(target: any) {
     return JSON.stringify(target, (key, value) => {
         return value && value.IComponentHandle
@@ -29,9 +30,10 @@ function printHandle(target: any) {
 }
 
 // Start with the various JSON-serializable types
+// eslint-disable-next-line no-null/no-null
 const simple = [true, 1, "x", null, [], {}];
 
-// Add an object where each field references one of the JSON serialiable types.
+// Add an object where each field references one of the JSON serializable types.
 simple.push(
     simple.reduce<any>(
         (o, value, index) => {
