@@ -2436,7 +2436,7 @@ export class MergeTree {
     }
 
     // Visit segments starting from node's left siblings, then up to node's parent
-    leftExcursion<TClientData>(node: IMergeNode, leafAction: ISegmentAction<TClientData>) {
+    private leftExcursion<TClientData>(node: IMergeNode, leafAction: ISegmentAction<TClientData>) {
         const actions = { leaf: leafAction };
         let go = true;
         let startNode = node;
@@ -2469,7 +2469,7 @@ export class MergeTree {
     }
 
     // Visit segments starting from node's right siblings, then up to node's parent
-    rightExcursion<TClientData>(node: IMergeNode, leafAction: ISegmentAction<TClientData>) {
+    private rightExcursion<TClientData>(node: IMergeNode, leafAction: ISegmentAction<TClientData>) {
         const actions = { leaf: leafAction };
         let go = true;
         let startNode = node;
@@ -2877,7 +2877,7 @@ export class MergeTree {
         }
     }
 
-    nodeRemoveRange(block: IMergeBlock, start: number, end: number, refSeq: number, clientId: number, removeInfo: RemoveRangeInfo) {
+    private nodeRemoveRange(block: IMergeBlock, start: number, end: number, refSeq: number, clientId: number, removeInfo: RemoveRangeInfo) {
         const children = block.children;
         let startIndex: number;
         if (start < 0) {
@@ -3133,7 +3133,7 @@ export class MergeTree {
         }
     }
 
-    nodeMap<TClientData>(
+    private nodeMap<TClientData>(
         node: IMergeBlock, actions: SegmentActions<TClientData>, pos: number, refSeq: number,
         clientId: number, accum?: TClientData, start?: number, end?: number) {
         if (start === undefined) {
@@ -3216,7 +3216,7 @@ export class MergeTree {
     }
 
     // Straight call every segment; goes until leaf action returns false
-    nodeMapReverse<TClientData>(
+    private nodeMapReverse<TClientData>(
         block: IMergeBlock, actions: SegmentActions<TClientData>, pos: number, refSeq: number,
         clientId: number, accum?: TClientData) {
         let go = true;
