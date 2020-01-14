@@ -10,7 +10,7 @@ import { IDeltaStorageGetResponse, ISequencedDeltaOpMessage } from "./contracts"
 import { IFetchWrapper } from "./fetchWrapper";
 import { getQueryString } from "./getQueryString";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
-import { getWithRetryForTokenRefresh } from "./OdspUtils";
+import { getWithRetryForTokenRefresh } from "./odspUtils";
 
 /**
  * Provides access to the underlying delta storage on the server for sharepoint driver.

@@ -7,7 +7,7 @@ import { IOdspSnapshot } from "./contracts";
 import { IFetchWrapper } from "./fetchWrapper";
 import { getQueryString } from "./getQueryString";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
-import { IOdspResponse } from "./OdspUtils";
+import { IOdspResponse } from "./odspUtils";
 
 /**
  * Fetches a snapshot from the server with a given version id.
