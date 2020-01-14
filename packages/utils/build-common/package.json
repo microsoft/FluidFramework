@@ -7,9 +7,10 @@
   "author": "Microsoft",
   "sideEffects": "false",
   "scripts": {
-    "build": "echo Skipping @microsoft/fluid-build-common: No build steps necessary.",
-    "eslint": "eslint --ext=ts,tsx --format stylish src",
-    "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix"
+    "noop": "echo Skipping @microsoft/fluid-build-common: No source steps necessary.",
+    "build": "npm run noop",
+    "eslint": "npm run noop",
+    "eslint:fix": "npm run noop"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^2.9.0",

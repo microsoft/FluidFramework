@@ -5,7 +5,6 @@
 
 import * as path from "path";
 import {
-    IAlfredTenant,
     IDocumentStorage,
     IProducer,
     ITenantManager,
@@ -21,6 +20,7 @@ import * as safeStringify from "json-stringify-safe";
 import * as morgan from "morgan";
 import { Provider } from "nconf";
 import * as winston from "winston";
+import { IAlfredTenant } from "@microsoft/fluid-server-services-client";
 import * as alfredRoutes from "./routes";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
