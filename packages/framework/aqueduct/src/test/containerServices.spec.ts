@@ -1,13 +1,13 @@
 import * as assert from "assert";
 
-import { generateContainerServicesRequestHandler, InstanceContainerService, SingletonContainerService, serviceRoutePathRoot } from "../";
-import { IComponentRouter, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
+import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import { IHostRuntime } from "@microsoft/fluid-runtime-definitions";
 import { RequestParser } from "@microsoft/fluid-container-runtime";
 
-class ExampleServiceMock implements IComponentRouter {
+import { generateContainerServicesRequestHandler, serviceRoutePathRoot } from "../";
+import { BaseContainerService } from "../helpers";
 
-    public get IComponentRouter() { return this; }
+class ContainerServiceMock extends BaseContainerService {
 
     public route: string = "";
 
@@ -23,32 +23,6 @@ class ExampleServiceMock implements IComponentRouter {
 
 describe("Routerlicious", () => {
     describe("Aqueduct", () => {
-        describe("SingletonContainerService", () => {
-            describe("getComponent", () => {
-                it("Two gets should return the same object", async () => {
-                    const service = new SingletonContainerService("id", () => new ExampleServiceMock());
-
-                    const component1 = service.getComponent({} as IHostRuntime);
-                    const component2 = service.getComponent({} as IHostRuntime);
-
-                    assert(component1 === component2, "Component objects are the same");
-                });
-            });
-        });
-
-        describe("InstanceContainerService", () => {
-            describe("getComponent", () => {
-                it("Two gets should return different objects", async () => {
-                    const service = new InstanceContainerService("id", () => new ExampleServiceMock());
-
-                    const component1 = service.getComponent({} as IHostRuntime);
-                    const component2 = service.getComponent({} as IHostRuntime);
-
-                    assert(component1 !== component2, "Component objects are different");
-                });
-            });
-        });
-
         describe("generateContainerServicesRequestHandler", () => {
             it(`Request to ${serviceRoutePathRoot} and no id should fail`, async () => {
                 const requestHandler = generateContainerServicesRequestHandler([]);
@@ -71,8 +45,7 @@ describe("Routerlicious", () => {
             });
 
             it("Unknown service should return 404 with services", async () => {
-                const component = new ExampleServiceMock();
-                const service1 = new SingletonContainerService("id1", () => component);
+                const service1 = new ContainerServiceMock("id1");
                 const requestHandler = generateContainerServicesRequestHandler([service1]);
                 const requestParser = new RequestParser({url:`/${serviceRoutePathRoot}/id2`});
 
@@ -83,8 +56,7 @@ describe("Routerlicious", () => {
             });
 
             it("Correct service should be returned with single service", async () => {
-                const component = new ExampleServiceMock();
-                const service1 = new SingletonContainerService("id1", () => component);
+                const service1 = new ContainerServiceMock("id1");
                 const requestHandler = generateContainerServicesRequestHandler([service1]);
                 const requestParser = new RequestParser({url:`/${serviceRoutePathRoot}/id1`});
 
@@ -92,13 +64,12 @@ describe("Routerlicious", () => {
                 
                 assert(response, "Response returned");
                 assert(response?.status === 200, "Returned 200 Status Code")
-                assert(response?.value === component, "Returned expected service");
+                assert(response?.value === service1, "Returned expected service");
             });
 
             it("Correct service should be returned with multiple services", async () => {
-                const service1 = new SingletonContainerService("id1", () => new ExampleServiceMock());
-                const component = new ExampleServiceMock();
-                const service2 = new SingletonContainerService("id2", () => component);
+                const service1 = new ContainerServiceMock("id1");
+                const service2 = new ContainerServiceMock("id2");
                 const requestHandler = generateContainerServicesRequestHandler([service1, service2]);
                 const requestParser = new RequestParser({url:`/${serviceRoutePathRoot}/id2`});
 
@@ -106,12 +77,24 @@ describe("Routerlicious", () => {
                 
                 assert(response, "Response returned");
                 assert(response?.status === 200, "Returned 200 Status Code")
-                assert(response?.value === component, "Returned expected service");
+                assert(response?.value === service2, "Returned expected service");
+            });
+
+            it("First registered service should be returned with multiple services of the same name", async () => {
+                const service1 = new ContainerServiceMock("id1");
+                const service12 = new ContainerServiceMock("id1");
+                const requestHandler = generateContainerServicesRequestHandler([service1, service12]);
+                const requestParser = new RequestParser({url:`/${serviceRoutePathRoot}/id1`});
+
+                const response = await requestHandler(requestParser, {} as IHostRuntime);
+                
+                assert(response, "Response returned");
+                assert(response?.status === 200, "Returned 200 Status Code")
+                assert(response?.value === service1, "Returned expected service");
             });
 
             it("Sub-route should be persisted through", async () => {
-                const component = new ExampleServiceMock();
-                const service1 = new SingletonContainerService("id1", () => component);
+                const service1 = new ContainerServiceMock("id1");
                 const requestHandler = generateContainerServicesRequestHandler([service1]);
                 const requestParser = new RequestParser({url:`/${serviceRoutePathRoot}/id1/sub1`});
 
@@ -119,8 +102,8 @@ describe("Routerlicious", () => {
                 
                 assert(response, "Response returned");
                 assert(response?.status === 200, "Returned 200 Status Code")
-                assert(response?.value === component, "Returned expected service");
-                assert((response?.value as ExampleServiceMock).route === "sub1", "sub-route persisted");
+                assert(response?.value === service1, "Returned expected service");
+                assert((response?.value as ContainerServiceMock).route === "sub1", "sub-route persisted");
             });
         });
     });

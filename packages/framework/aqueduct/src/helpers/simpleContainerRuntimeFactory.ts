@@ -9,9 +9,9 @@ import {
     RequestParser,
     RuntimeRequestHandler,
 } from "@microsoft/fluid-container-runtime";
+import { IContainerService } from "@microsoft/fluid-framework-interfaces";
 import { IHostRuntime, NamedComponentRegistryEntries } from "@microsoft/fluid-runtime-definitions";
-
-import { generateContainerServicesRequestHandler, IContainerService } from "./";
+import { generateContainerServicesRequestHandler } from "./";
 
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class SimpleContainerRuntimeFactory {

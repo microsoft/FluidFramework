@@ -5,15 +5,13 @@
 
 import { IContainerContext, IRuntime, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
 import { ComponentRegistry } from "@microsoft/fluid-container-runtime";
-import { IComponentDefaultFactoryName } from "@microsoft/fluid-framework-interfaces";
+import { IComponentDefaultFactoryName, IContainerService } from "@microsoft/fluid-framework-interfaces";
 import {
     IComponentRegistry,
     IProvideComponentRegistry,
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
 import { SimpleContainerRuntimeFactory } from "./simpleContainerRuntimeFactory";
-
-import { IContainerService } from "./";
 
 /**
  *  Simple Fluid Module instantiation library. This should be exposed as fluidExport off the entry point to your module

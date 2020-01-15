@@ -1,54 +1,31 @@
-import { IComponent, IComponentRouter, IResponse } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentRouter, IResponse, IRequest, IComponent } from "@microsoft/fluid-component-core-interfaces";
+import { IContainerService } from "@microsoft/fluid-framework-interfaces";
 import { IHostRuntime } from "@microsoft/fluid-runtime-definitions";
 import { RequestParser, RuntimeRequestHandler } from "@microsoft/fluid-container-runtime";
 
 // TODO: should this just be "s"?
 export const serviceRoutePathRoot = "_services";
 
-export interface IContainerService {
-    id: string,
-    getComponent(runtime: IHostRuntime): IComponent & IComponentRouter,
-}
-
 /**
- * A container service that uses a single component for a given container instance.
+ * Base Class for creating a Container Service
  */
-export class SingletonContainerService implements IContainerService {
-    private component: IComponent & IComponentRouter | undefined;
+export abstract class BaseContainerService implements IContainerService, IComponentRouter {
 
-    public get id() {
-        return this.serviceId;
+    public get IContainerService() { return this; }
+
+    public get IComponentRouter() { return this; }
+
+    public get serviceId() { return this.id; }
+
+    public constructor(private readonly id: string) {
     }
 
-    public getComponent(runtime: IHostRuntime) {
-        if (!this.component) {
-            this.component = this.createComponent(runtime);
-        }
-
-        return this.component;
-    }
-
-    public constructor(
-        private readonly serviceId: string,
-        private readonly createComponent: (runtime: IHostRuntime) => IComponent & IComponentRouter) {
-    }
-}
-
-/**
- * A container service that creates a new component every time `getComponent` is called.
- */
-export class InstanceContainerService implements IContainerService {
-    public get id() {
-        return this.serviceId;
-    }
-
-    public getComponent(runtime: IHostRuntime) {
-        return this.createComponent(runtime);
-    }
-
-    public constructor(
-        private readonly serviceId: string,
-        private readonly createComponent: (runtime: IHostRuntime) => IComponent & IComponentRouter) {
+    public async request(request: IRequest): Promise<IResponse> {
+        return {
+            status: 200,
+            mimeType: "fluid/component",
+            value: this,
+        };
     }
 }
 
@@ -73,16 +50,27 @@ export const generateContainerServicesRequestHandler = (services: IContainerServ
         }
 
         let responseP: Promise<IResponse> | undefined;
-        services.forEach((service) => {
-            if (request.pathParts[1] === service.id) {
-                let subRequest = request.createSubRequest(2);
-                if (!subRequest) {
-                    // If there is nothing left of the url we will request with empty path.
-                    subRequest = { url: "" };
-                }
+        services.some((service) => {
+            if (request.pathParts[1] === service.serviceId) {
+                const router = (service as IComponent).IComponentRouter;
+                if (router) {
+                    // If the service is also a router then we will route to it
+                    let subRequest = request.createSubRequest(2);
+                    if (!subRequest) {
+                        // If there is nothing left of the url we will request with empty path.
+                        subRequest = { url: "" };
+                    }
 
-                responseP = service.getComponent(runtime).request(subRequest);
-                return;
+                    responseP = router.request(subRequest);
+                } else {
+                    // Otherwise we will just return the service
+                    responseP = Promise.resolve({
+                        status: 200,
+                        mimeType: "fluid/component",
+                        value: service,
+                    });
+                }
+                return true;
             }
         });
 
