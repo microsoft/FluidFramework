@@ -139,14 +139,14 @@ module.exports = {
             }
         ],
         "@typescript-eslint/triple-slash-reference": "error",
-        "@typescript-eslint/type-annotation-spacing": "error",
-        "@typescript-eslint/unified-signatures": "error",
+        "@typescript-eslint/type-annotation-spacing": "error", 
         "@typescript-eslint/unbound-method": [
             "error",
             {
                 "ignoreStatic": true
             }
         ],
+        "@typescript-eslint/unified-signatures": "error",
 
         // eslint-plugin-eslint-comments
         "eslint-comments/disable-enable-pair": [
