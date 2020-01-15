@@ -134,12 +134,16 @@ export class LocalReferenceCollection {
     }
 
     public hierRefCount: number = 0;
-    private refsByOffset: (IRefsAtOffest | undefined)[];
+    private readonly refsByOffset: IRefsAtOffest[];
     private refCount: number = 0;
 
     constructor(
-        private readonly segment: ISegment) {
-        this.refsByOffset = new Array(segment.cachedLength);
+        private readonly segment: ISegment,
+        initialRefsByfOffset =  new Array<IRefsAtOffest>(segment.cachedLength)) {
+        // Since javascript arrays are sparse the above won't populate any of the
+        // indicies, but it will ensure the length property of the array matches
+        // the length of the segment.
+        this.refsByOffset = initialRefsByfOffset;
     }
 
     public [Symbol.iterator]() {
@@ -265,15 +269,16 @@ export class LocalReferenceCollection {
             lref.offset += this.refsByOffset.length;
         }
 
-        this.refsByOffset.concat(other.refsByOffset);
+        this.refsByOffset.push(... other.refsByOffset);
     }
 
     public split(offset: number, splitSeg: ISegment) {
 
         if (!this.empty) {
-            splitSeg.localRefs = new LocalReferenceCollection(splitSeg);
-            splitSeg.localRefs.refsByOffset =
-                this.refsByOffset.splice(offset, this.refsByOffset.length - offset);
+            splitSeg.localRefs =
+            new LocalReferenceCollection(
+                splitSeg,
+                this.refsByOffset.splice(offset, this.refsByOffset.length - offset));
 
             for (const lref of splitSeg.localRefs) {
                 lref.segment = splitSeg;
