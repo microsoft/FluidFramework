@@ -29,8 +29,8 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { MotionAnimations } from "@uifabric/fluent-theme/lib/fluent/FluentMotion";
 import * as React from "react";
-import { getRelativeDate } from "../Utils";
-import { IBadgeType, IHistory } from "./";
+import { IBadgeType } from "./IBadgeType";
+import { IHistory } from "./IHistory";
 
 export interface IBadgeViewProps {
     currentCell: ISharedCell;
@@ -172,6 +172,7 @@ export class BadgeView extends React.Component<IBadgeViewProps, IBadgeViewState>
             history.unshift(
                 <ActivityItem
                     activityDescription={`Set to ${x.value.text}`}
+                    // eslint-disable-next-line @typescript-eslint/no-use-before-define
                     timeStamp={getRelativeDate(x.timestamp)}
                     activityIcon={<Icon {...x.value.iconProps} />} />,
             );
@@ -285,5 +286,30 @@ export class BadgeView extends React.Component<IBadgeViewProps, IBadgeViewState>
                 </Dialog>
             </div>
         );
+    }
+}
+
+function getRelativeDate(timestamp: Date): string {
+    // https://stackoverflow.com/questions/7641791/javascript-library-for-human-friendly-relative-date-formatting
+    const delta = Math.round(((new Date()).getTime() - new Date(timestamp).getTime()) / 1000);
+
+    const minute = 60;
+    const hour = minute * 60;
+    const day = hour * 24;
+
+    if (delta < 30) {
+        return "just now";
+    } else if (delta < 3 * minute) {
+        return "a few minutes ago";
+    } else if (delta < hour) {
+        return `${Math.floor(delta / minute)  } minutes ago`;
+    } else if (Math.floor(delta / hour) < 3) {
+        return "a few hours ago.";
+    } else if (delta < day) {
+        return `${Math.floor(delta / hour)  } hours ago`;
+    } else if (delta < day * 2) {
+        return "yesterday";
+    } else {
+        return timestamp.toUTCString();
     }
 }

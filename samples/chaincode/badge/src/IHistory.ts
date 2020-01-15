@@ -3,5 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export * from "./Badge";
-export * from "./BadgeInstantiationFactory";
+export interface IHistory<T> {
+    value: T;
+    timestamp: Date;
+}
