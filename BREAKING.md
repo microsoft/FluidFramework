@@ -1,3 +1,20 @@
+# 0.13 Breaking Changes
+
+- [Fluid Packages Require Consumers on Typescript ^3.6.0](##Fluid-Packages-Require-Consumers-on-Typescript-^3.4.0)
+
+## Fluid Packages Require Consumers on Typescript ^3.6.0
+
+Fluid now requires consumers on a Typescript version higher than `3.6`. The Fluid `./packages` repo has upgraded to Typescript `3.7.4`. Typescript 3.7 has a breaking change to the d.ts format having to do with getters and setters and is part of an effort to do [Class Field Mitigations](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-7.html#class-field-mitigations). Typescript made version `3.6` forwards compatible but users on Typescript version `3.5` and older will receive the following error when building against fluid:
+
+```text
+"error TS1086: An accessor cannot be declared in an ambient context."
+```
+
+Links about the changes:
+
+- [Class Field Mitigations](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-7.html#class-field-mitigations)  
+- [Full list of Typescript changes](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-7.html)
+
 # 0.12 Breaking Changes
 
 - [Packages moved from packages to server](#Packages-moved-from-packages-to-server)
