@@ -89,7 +89,6 @@ async function createWebLoader(
                 scriptIds,
             });
             if (pkg.details.package === pkg.pkg.name) {
-                // eslint-disable-next-line require-atomic-updates
                 pkg.details.package = `${pkg.pkg.name}@${pkg.pkg.version}`;
             }
         }
