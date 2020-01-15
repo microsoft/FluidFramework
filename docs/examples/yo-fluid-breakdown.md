@@ -4,13 +4,13 @@ uid: yo-fluid-details
 
 # Yo Fluid Breakdown
 
-So you've used <xref:yo-fluid> to create your first component! If you haven't done this yet, head over to <xref:yo-fluid>.
+Congratulations, you've used <xref:yo-fluid> to create your first component! If you haven't done this yet, head over to <xref:yo-fluid>.
 
 ## Creation options
 
-<xref:yo-fluid> allows you to create a Fluid component either using React or just vanilla Javascript.
+<xref:yo-fluid> allows you to create a Fluid component either using React or just vanilla JavaScript.
 
-```powershell
+```text
 ? Which experience would you like to start with?
 > react
   vanillaJS
@@ -19,11 +19,13 @@ So you've used <xref:yo-fluid> to create your first component! If you haven't do
 You'll also get the option to customize your container. If this is your first time building a component, we recommend
 choosing "no" for this option (we'll explain this option further below).
 
-```powershell
+```text
 ? Do you want to customize your container (advanced)?
 > no
   yes
 ```
+
+<hr />
 
 ## main.tsx/main.ts
 
@@ -34,9 +36,9 @@ Below we will walk through both the vanillaJS and the React examples.
 
 First we will declare all our imports. Here is a quick description and use cases for each is discussed further below.
 
-`PrimedComponent` and `PrimedComponentFactory` from <xref:@microsoft/fluid-aqueduct!> provides helper functionality.
-`IComponentHTMLVisual` from <xref:@microsoft/fluid-component-core-interfaces!> provides the interface for enabling rendering.
-`React` and `ReactDOM` are _only for React_ and enable React use.
+`PrimedComponent` and `PrimedComponentFactory` from <xref:@microsoft/fluid-aqueduct!> provide helper functionality.
+`IComponentHTMLVisual` from <xref:@microsoft/fluid-component-core-interfaces!> provides the interface for enabling
+rendering. `React` and `ReactDOM` are _only for React_ and enable React use.
 
 ```typescript
 import {
@@ -49,19 +51,19 @@ import * as React from "react"; // only used with react
 import * as ReactDOM from "react-dom"; // only used with react
 ```
 
-### Define our Component Class
+### Define our component class
 
 Below we define our component class `ExampleFluidComponent`.
 
-#### <xref:@microsoft/fluid-aqueduct!PrimedComponent:class>
+#### PrimedComponent
 
-Extending <xref:@microsoft/fluid-aqueduct!PrimedComponent:class> set up our component with required default behavior as well as additional
-helpers to make development easier.
+Extending <xref:@microsoft/fluid-aqueduct!PrimedComponent:class> sets up our component with required default behavior as
+well as additional helpers to make component development easier.
 
-#### Key Benefits
+#### Key benefits
 
-1. Setup a `root` SharedDirectory (a Distributed Data Structure) that we can use to store collaborative content and other
-   distributed data structures.
+1. Setup a `root` <xref:@microsoft/fluid-map!SharedDirectory:class> (a Distributed Data Structure) that we can use to
+   store collaborative content and other distributed data structures.
 2. Provide `this.createAndAttachComponent(...)` and `this.getComponent(...)` functions for easier creation and access
    to other components.
 3. Provide the following setup overrides
@@ -69,12 +71,12 @@ helpers to make development easier.
    - `existing()` - called every time except the first time a component is initialized
    - `opened()` - called every time a component is initialized. After `create` and `existing`.
 
-#### <xref:@microsoft/fluid-component-core-interfaces!IComponentHTMLVisual:interface>
+#### IComponentHTMLVisual
 
-Implementing <xref:@microsoft/fluid-component-core-interfaces!IComponentHTMLVisual:interface> denotes that our component can
-render a view. Throughout the Fluid Framework we define interfaces as a way to state our behavior. Whoever is attempting
-to use this component can can know we support this interface and therefore it will have a `render(...)` function. View
-rendering is explained more below.
+Implementing the <xref:@microsoft/fluid-component-core-interfaces!IComponentHTMLVisual:interface> interface denotes that
+our component can render an HTML view. Throughout the Fluid Framework we define interfaces as a way to state our
+behavior. Whoever is attempting to use this component can know we support this interface and therefore it will have a
+`render(...)` function. View rendering is explained more below.
 
 #### Code
 
@@ -86,8 +88,8 @@ export class ExampleFluidComponent extends PrimedComponent
 ```
 
 We also must implement our interface provider. As described above our component is viewable so it implements
-`IComponentHTMLViewable`. By returning the component when this interface is queried, anyone who has a reference to
-our component can discover that we implement `IComponentHTMLViewable`.
+`IComponentHTMLVisual`. By returning the component when this interface is queried, anyone who has a reference to
+our component can discover that we implement `IComponentHTMLVisual`.
 
 ```typescript
 public get IComponentHTMLVisual() { return this; }
@@ -95,10 +97,9 @@ public get IComponentHTMLVisual() { return this; }
 
 ### `componentInitializingFirstTime()`
 
-`componentInitializingFirstTime()` will be called only the first time a client opens the component. In here we
-perform setup operations that we only want to happen once.  Since we are using a `PrimedComponent`, we have a `root`
-SharedDirectory we can use to store data. We set our initial `diceValue` on our root directory
-`this.root.set("diceValue", 1);`
+`componentInitializingFirstTime()` will be called only the first time a client opens the component. In here we perform
+setup operations that we only want to happen once.  Since we are using a `PrimedComponent`, we have a `root`
+SharedDirectory we can use to store data. We set our initial `diceValue` on our root directory like so:
 
 ```typescript
 protected async componentInitializingFirstTime() {
@@ -115,11 +116,12 @@ Component can use to render into. Every time `render(...)` is called we should p
 > This is the point where React and vanillaJS differ.
 
 #### [React Implementation](#tab/tabid-1)
+
 We create a `rerender` function that will display our content into the provided `HTMLElement`.
-To get the dice value we use the `get` method on the root, using the same key `diceValue` that
+To get the dice value we use the `get` method on the root, using the same key (`diceValue`) that
 we created in `componentInitializingFirstTime()`. Because we are using React we will call
 `ReactDOM.render(...)` with a span displaying our dice value as a Unicode character and a button
-that rolls the dice when clicked. Finally we pass the provided `HTMLElement`(`div`) into our
+that rolls the dice when clicked. Finally we pass the provided `HTMLElement` (`div`) into our
 `ReactDOM.render(...)` to tell React what to render in.
 
 Once we've created our function we call it once to render the first time.
@@ -149,28 +151,13 @@ this.root.on("valueChanged", () => {
 });
 ```
 
-To set the value of the dice after rolling, we use the `set` method on the root, using the same
-key `diceValue` as before.  The helper functions used look like this:
-
-```typescript
-private rollDice() {
-  const rollValue = Math.floor(Math.random() * 6) + 1;
-  this.root.set("diceValue", rollValue);
-}
-
-private getDiceChar(value: number) {
-  // Unicode 0x2680-0x2685 are the sides of a dice (⚀⚁⚂⚃⚄⚅)
-  return String.fromCodePoint(0x267F + value);
-}
-```
-
 #### [VanillaJS Implementation](#tab/tabid-2)
 
 The VanillaJS implementation is similar in many ways to the React version.
 
 We create our component's DOM structure in `this.createComponentDom(div);` which creates the span that
-holds the dice value `diceSpan.textContent = this.getDiceChar(diceValue);`and the button that when clicked
-rolls the dice `rollButton.onclick = this.rollDice.bind(this);`.
+holds the dice value (`diceSpan.textContent = this.getDiceChar(diceValue);`) and the button that when clicked
+rolls the dice (`rollButton.onclick = this.rollDice.bind(this);`).
 
 ```typescript
 private createComponentDom(host: HTMLElement) {
@@ -201,6 +188,21 @@ this.root.on("valueChanged", () => {
 ```
 
 ***
+
+To set the value of the dice after rolling, we use the `set` method on the root, using the same
+key `diceValue` as before.  The helper functions used look like this:
+
+```typescript
+private rollDice() {
+  const rollValue = Math.floor(Math.random() * 6) + 1;
+  this.root.set("diceValue", rollValue);
+}
+
+private getDiceChar(value: number) {
+  // Unicode 0x2680-0x2685 are the sides of a dice (⚀⚁⚂⚃⚄⚅)
+  return String.fromCodePoint(0x267F + value);
+}
+```
 
 ### Component Instantiation
 
@@ -273,9 +275,7 @@ const componentName = pkg.name as string;
 
 Finally we use `SimpleModuleInstantiationFactory` to create the `fluidExport`. The factory takes a default component
 name `componentName` that is used to load the default component. It also takes the registry of components pointing to
-the creation factory. In our case just our one component.
-
-`[componentName, Promise.resolve(ExampleFluidComponentInstantiationFactory)]`
+the creation factory. In our case just our one component (`[componentName, Promise.resolve(ExampleFluidComponentInstantiationFactory)]`).
 
 ```typescript
 export const fluidExport = new SimpleModuleInstantiationFactory(

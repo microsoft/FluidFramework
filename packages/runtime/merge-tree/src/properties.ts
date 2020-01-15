@@ -11,7 +11,6 @@ import * as ops from "./ops";
 // tslint:disable:switch-default
 // tslint:disable:no-parameter-reassignment
 // tslint:disable:switch-final-break
-// tslint:disable:object-literal-sort-keys
 // tslint:disable:no-unsafe-any
 
 export interface MapLike<T> {

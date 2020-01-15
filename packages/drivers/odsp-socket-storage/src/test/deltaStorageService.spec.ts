@@ -5,7 +5,7 @@
 
 import * as assert from "assert";
 import { FetchWrapper, IFetchWrapper } from "../fetchWrapper";
-import { OdspDeltaStorageService } from "../OdspDeltaStorageService";
+import { OdspDeltaStorageService } from "../odspDeltaStorageService";
 
 describe("DeltaStorageService", () => {
     /*

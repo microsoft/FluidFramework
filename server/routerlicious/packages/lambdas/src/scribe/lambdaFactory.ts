@@ -86,7 +86,6 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             scribe.protocolState.proposals,
             scribe.protocolState.values,
             () => -1,
-            // eslint-disable-next-line arrow-body-style
             () => { return; },
         );
 

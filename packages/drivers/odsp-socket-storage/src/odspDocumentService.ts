@@ -19,13 +19,13 @@ import {
 import { ISocketStorageDiscovery } from "./contracts";
 import { debug } from "./debug";
 import { IFetchWrapper } from "./fetchWrapper";
-import { OdspCache } from "./OdspCache";
-import { OdspDeltaStorageService } from "./OdspDeltaStorageService";
-import { OdspDocumentDeltaConnection } from "./OdspDocumentDeltaConnection";
-import { OdspDocumentStorageManager } from "./OdspDocumentStorageManager";
-import { OdspDocumentStorageService } from "./OdspDocumentStorageService";
-import { getWithRetryForTokenRefresh, isLocalStorageAvailable } from "./OdspUtils";
-import { getSocketStorageDiscovery } from "./Vroom";
+import { OdspCache } from "./odspCache";
+import { OdspDeltaStorageService } from "./odspDeltaStorageService";
+import { OdspDocumentDeltaConnection } from "./odspDocumentDeltaConnection";
+import { OdspDocumentStorageManager } from "./odspDocumentStorageManager";
+import { OdspDocumentStorageService } from "./odspDocumentStorageService";
+import { getWithRetryForTokenRefresh, isLocalStorageAvailable } from "./odspUtils";
+import { getSocketStorageDiscovery } from "./vroom";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const performanceNow = require("performance-now") as (() => number);

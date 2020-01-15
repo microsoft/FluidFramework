@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { ICommand, KeyCode, Template } from "@fluid-example/flow-util-lib";
+import { ICommand, KeyCode, Template, TagName } from "@fluid-example/flow-util-lib";
 import { IComponentHTMLOptions, IComponentHTMLView } from "@microsoft/fluid-component-core-interfaces";
 import { FlowDocument } from "../document";
 import { Editor } from "../editor";
 import { htmlFormatter } from "../html/formatters";
-import { Tag } from "../util/tag";
+
 import { IFormatterState, RootFormatter } from "../view/formatter";
 import { debug } from "./debug";
 import * as styles from "./index.css";
@@ -27,7 +27,6 @@ const template = new Template(
     });
 
 export class WebflowView implements IComponentHTMLView {
-
     public get IComponentHTMLView() { return this; }
 
     private searchMenu?: SearchMenuView;
@@ -66,12 +65,12 @@ export class WebflowView implements IComponentHTMLView {
                 return start < end;
             };
 
-            const insertTags = (tags: Tag[]) => {
+            const insertTags = (tags: TagName[]) => {
                 const selection = editor.selection;
                 doc.insertTags(tags, selection.start, selection.end);
             };
 
-            const setFormat = (tag: Tag) => {
+            const setFormat = (tag: TagName) => {
                 const { end } = editor.selection;
 
                 // Note that calling 'setFormat(..)' with the position of a paragraph marker will change the block
@@ -97,20 +96,20 @@ export class WebflowView implements IComponentHTMLView {
 
             this.searchMenu.attach(template.get(this.root, "search"), {
                 commands: [
-                    { name: "blockquote", enabled: always, exec: () => { setFormat(Tag.blockquote); } },
+                    { name: "blockquote", enabled: always, exec: () => { setFormat(TagName.blockquote); } },
                     { name: "bold", enabled: hasSelection, exec: () => toggleSelection(styles.bold) },
                     // eslint-disable-next-line @typescript-eslint/no-floating-promises
                     { name: "debug", enabled: always, exec: () => { import(/* webpackChunkName: "debug" */ "./debug.css"); slot.toggleAttribute("data-debug"); } },
-                    { name: "h1", enabled: always, exec: () => { setFormat(Tag.h1); } },
-                    { name: "h2", enabled: always, exec: () => { setFormat(Tag.h2); } },
-                    { name: "h3", enabled: always, exec: () => { setFormat(Tag.h3); } },
-                    { name: "h4", enabled: always, exec: () => { setFormat(Tag.h4); } },
-                    { name: "h5", enabled: always, exec: () => { setFormat(Tag.h5); } },
-                    { name: "h6", enabled: always, exec: () => { setFormat(Tag.h6); } },
-                    { name: "ol", enabled: always, exec: () => { insertTags([Tag.ol, Tag.li]); } },
-                    { name: "p", enabled: always, exec: () => { setFormat(Tag.p); } },
+                    { name: "h1", enabled: always, exec: () => { setFormat(TagName.h1); } },
+                    { name: "h2", enabled: always, exec: () => { setFormat(TagName.h2); } },
+                    { name: "h3", enabled: always, exec: () => { setFormat(TagName.h3); } },
+                    { name: "h4", enabled: always, exec: () => { setFormat(TagName.h4); } },
+                    { name: "h5", enabled: always, exec: () => { setFormat(TagName.h5); } },
+                    { name: "h6", enabled: always, exec: () => { setFormat(TagName.h6); } },
+                    { name: "ol", enabled: always, exec: () => { insertTags([TagName.ol, TagName.li]); } },
+                    { name: "p", enabled: always, exec: () => { setFormat(TagName.p); } },
                     { name: "html", enabled: always, exec: () => { switchFormatter(htmlFormatter); } },
-                    { name: "ul", enabled: always, exec: () => { insertTags([Tag.ul, Tag.li]); } },
+                    { name: "ul", enabled: always, exec: () => { insertTags([TagName.ul, TagName.li]); } },
                     { name: "red", enabled: always, exec: () => { setStyle("color:red"); } },
                 ],
                 onComplete: this.onComplete,

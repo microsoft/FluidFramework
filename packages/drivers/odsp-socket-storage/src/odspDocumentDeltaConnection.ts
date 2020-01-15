@@ -15,7 +15,7 @@ import {
 } from "@microsoft/fluid-protocol-definitions";
 import { IOdspSocketError } from "./contracts";
 import { debug } from "./debug";
-import { errorObjectFromOdspError, OdspNetworkError, socketErrorRetryFilter } from "./OdspUtils";
+import { errorObjectFromOdspError, OdspNetworkError, socketErrorRetryFilter } from "./odspUtils";
 
 const protocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
 

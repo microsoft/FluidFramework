@@ -4,7 +4,6 @@
  */
 
 import {
-    IAlfredTenant,
     IDocumentStorage,
     IProducer,
     ITenantManager,
@@ -13,6 +12,7 @@ import {
 import * as cors from "cors";
 import { Router } from "express";
 import { Provider } from "nconf";
+import { IAlfredTenant } from "@microsoft/fluid-server-services-client";
 import * as api from "./api";
 import * as deltas from "./deltas";
 import * as documents from "./documents";

@@ -5,7 +5,6 @@
 
 import { Deferred } from "@microsoft/fluid-core-utils";
 import {
-    IAlfredTenant,
     IClientManager,
     ICollection,
     IDocumentStorage,
@@ -19,6 +18,7 @@ import {
 import * as utils from "@microsoft/fluid-server-services-utils";
 import { Provider } from "nconf";
 import * as winston from "winston";
+import { IAlfredTenant } from "@microsoft/fluid-server-services-client";
 import * as app from "./app";
 import * as io from "./io";
 
