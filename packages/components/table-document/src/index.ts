@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export { TableDocument, TableDocumentItem } from "./document";
+export { TableDocument } from "./document";
 export { TableSlice } from "./slice";
 export { ITable } from "./table";
 export * from "./componentTypes";

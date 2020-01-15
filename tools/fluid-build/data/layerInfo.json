@@ -185,8 +185,7 @@
                     "@microsoft/fluid-test-driver",
                     "@microsoft/fluid-test-runtime-utils",
                     "@microsoft/fluid-local-test-server",
-                    "@microsoft/fluid-webpack-component-loader",
-                    "@fluid-example/table-test-lib"
+                    "@microsoft/fluid-webpack-component-loader"
                 ],
                 "dirs": [
                     "packages/test/"
