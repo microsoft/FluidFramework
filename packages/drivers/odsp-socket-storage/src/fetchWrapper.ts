@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { fetchHelper, IOdspResponse } from "./OdspUtils";
+import { fetchHelper, IOdspResponse } from "./odspUtils";
 
 export interface IFetchWrapper {
     get<T>(url: string, id: string, headers: HeadersInit): Promise<IOdspResponse<T>>;

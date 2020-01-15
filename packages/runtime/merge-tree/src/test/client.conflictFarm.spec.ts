@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
+import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import * as random from "random-js";
 import { LocalReference } from "../localReference";
 import { IMergeTreeOp } from "../ops";
@@ -25,7 +25,7 @@ interface IConflictFarmConfig {
     annotate: boolean;
     insertAtRefPos: boolean;
     incrementalLog: boolean;
-    growthFunc(input: number): number;
+    growthFunc: (input: number) => number;
 }
 
 export const debugOptions: IConflictFarmConfig = {
@@ -185,6 +185,6 @@ describe("MergeTree.Client", () => {
             }
         })
         // tslint:disable-next-line: mocha-no-side-effect-code
-        .timeout(30 * 1000);
+            .timeout(30 * 1000);
     });
 });

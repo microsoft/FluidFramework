@@ -4,7 +4,6 @@
     ],
     "rules": {
         "@typescript-eslint/strict-boolean-expressions": "off",
-        "arrow-body-style": "off",
         "no-null/no-null": "off"
     }
 }

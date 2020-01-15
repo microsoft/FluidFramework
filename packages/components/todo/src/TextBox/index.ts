@@ -4,4 +4,4 @@
  */
 
 export * from "./TextBox";
-export * from "./TextBoxInstantiationFactory";
+export * from "./textBoxInstantiationFactory";

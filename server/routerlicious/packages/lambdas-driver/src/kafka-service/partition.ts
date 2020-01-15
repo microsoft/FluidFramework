@@ -6,7 +6,7 @@
 import { EventEmitter } from "events";
 import {
     IConsumer,
-    IKafkaMessage,
+    IQueuedMessage,
     IPartitionLambda,
     IPartitionLambdaFactory,
 } from "@microsoft/fluid-server-services-core";
@@ -21,7 +21,7 @@ import { Context } from "./context";
  * overall partition offset.
  */
 export class Partition extends EventEmitter {
-    private q: AsyncQueue<IKafkaMessage>;
+    private q: AsyncQueue<IQueuedMessage>;
     private readonly lambdaP: Promise<IPartitionLambda>;
     private lambda: IPartitionLambda;
     private readonly checkpointManager: CheckpointManager;
@@ -42,7 +42,7 @@ export class Partition extends EventEmitter {
 
         // Create the incoming message queue
         this.q = queue(
-            (message: IKafkaMessage, callback) => {
+            (message: IQueuedMessage, callback) => {
                 try {
                     this.lambda.handler(message);
                     callback();
@@ -70,7 +70,7 @@ export class Partition extends EventEmitter {
         };
     }
 
-    public process(rawMessage: IKafkaMessage) {
+    public process(rawMessage: IQueuedMessage) {
         this.q.push(rawMessage);
     }
 

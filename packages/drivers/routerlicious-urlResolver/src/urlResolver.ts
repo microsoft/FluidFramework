@@ -13,7 +13,7 @@ import {
     IUrlResolver,
 } from "@microsoft/fluid-driver-definitions";
 import { IUser, ScopeType } from "@microsoft/fluid-protocol-definitions";
-import { generateToken, IAlfredTenant } from "@microsoft/fluid-server-services-core";
+import { generateToken, IAlfredTenant } from "@microsoft/fluid-server-services-client";
 
 const r11sServers = [
     "www.wu2-ppe.prague.office-int.com",

@@ -307,7 +307,6 @@ export class RunningSummarizer implements IDisposable {
     }
 
     public handleSystemOp(op: ISequencedDocumentMessage) {
-        /* eslint-disable @typescript-eslint/indent */
         switch (op.type) {
             case MessageType.ClientLeave: {
                 const leavingClientId = JSON.parse((op as ISequencedDocumentSystemMessage).data) as string;
@@ -330,7 +329,6 @@ export class RunningSummarizer implements IDisposable {
                 return;
             }
         }
-        /* eslint-enable @typescript-eslint/indent */
     }
 
     public handleOp(error: any, op: ISequencedDocumentMessage) {

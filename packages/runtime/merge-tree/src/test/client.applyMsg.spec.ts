@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
+import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { SegmentGroup } from "../";
 import { UnassignedSequenceNumber } from "../constants";
 import { TestClient } from "./testClient";

@@ -225,7 +225,6 @@ export class TypeRace extends PrimedComponent implements IComponentHTMLVisual {
 
     private getMedal(username: string): string {
         const place = this.getPlayerPlace(username);
-        /* eslint-disable @typescript-eslint/indent */
         switch (place) {
             case undefined: return "";
             case 1: return "🥇";
@@ -233,7 +232,6 @@ export class TypeRace extends PrimedComponent implements IComponentHTMLVisual {
             case 3: return "🥉";
             default: return "😞";
         }
-        /* eslint-enable @typescript-eslint/indent */
     }
 
     private refreshOtherUsers(): void {

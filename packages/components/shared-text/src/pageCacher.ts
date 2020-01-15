@@ -14,7 +14,7 @@ export function createCacheHTML(): void {
     const cleanBodyHTML = bodyHTML.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
     const cleanHeadHTML = headHTML.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
     const pageHTML = craftCachePage(cleanHeadHTML, cleanBodyHTML);
-    (window as IWindow).cachePage(pageHTML);
+    ((window as unknown) as IWindow).cachePage(pageHTML);
 }
 
 function craftCachePage(headHTML: string, bodyHTML: string) {

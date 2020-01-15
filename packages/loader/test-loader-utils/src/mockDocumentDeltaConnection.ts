@@ -20,7 +20,14 @@ import {
  * Mock Document Delta Connection for testing
  */
 export class MockDocumentDeltaConnection extends EventEmitter implements IDocumentDeltaConnection {
-    public claims: ITokenClaims;
+    public claims: ITokenClaims = {
+        documentId: "documentId",
+        scopes: [ "doc:read", "doc:write", "summary:write" ],
+        tenantId: "tenantId",
+        user: {
+            id: "mockid",
+        },
+    };
     public mode: ConnectionMode;
     public existing: boolean;
     public parentBranch: string;

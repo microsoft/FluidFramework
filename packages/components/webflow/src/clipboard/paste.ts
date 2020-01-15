@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { TagName } from "@fluid-example/flow-util-lib";
 import { FlowDocument } from "../document";
-import { Tag } from "../util/tag";
 import { debug } from "./debug";
 
 const enum ClipboardFormat {
@@ -30,11 +30,10 @@ export function paste(doc: FlowDocument, data: DataTransfer, position: number) {
     /* eslint-enable no-cond-assign */
 }
 
-const ignoredTags = [Tag.meta];
+const ignoredTags = [TagName.meta];
 
 function pasteChildren(doc: FlowDocument, root: Node, position: number) {
     for (let child: Node | null = root.firstChild; child !== null; child = child.nextSibling) {
-        /* eslint-disable @typescript-eslint/indent */
         switch (child.nodeType) {
             case document.TEXT_NODE: {
                 const text = child as Text;
@@ -44,7 +43,7 @@ function pasteChildren(doc: FlowDocument, root: Node, position: number) {
             }
             case document.ELEMENT_NODE: {
                 const el = child as HTMLElement;
-                const tag = el.tagName as Tag;
+                const tag = el.tagName as TagName;
                 const emitTag = !ignoredTags.includes(tag);
                 if (emitTag) {
                     doc.insertTags([tag], position);
@@ -66,7 +65,6 @@ function pasteChildren(doc: FlowDocument, root: Node, position: number) {
             default:
         }
     }
-    /* eslint-enable @typescript-eslint/indent */
 
     return position;
 }
