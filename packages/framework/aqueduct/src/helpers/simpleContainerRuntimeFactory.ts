@@ -24,7 +24,7 @@ export class SimpleContainerRuntimeFactory {
         context: IContainerContext,
         chaincode: string,
         registryEntries: NamedComponentRegistryEntries,
-        services: IContainerService[],
+        services: IContainerService[] = [],
         requestHandlers: RuntimeRequestHandler[] = [],
     ): Promise<ContainerRuntime> {
         // Debug(`instantiateRuntime(chaincode=${chaincode},registry=${JSON.stringify(registry)})`);
