@@ -395,7 +395,7 @@ export class OdspDocumentService implements IDocumentService {
                     throw retryError;
                 });
             } else {
-                logger.sendErrorEvent({
+                logger.sendPerformanceEvent({
                     eventName: "FailedNonAfdUrl-NoAfdFallback",
                 }, connectionError);
             }
