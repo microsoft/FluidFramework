@@ -62,7 +62,7 @@
     "eslint-plugin-no-null": "^1.0.2",
     "eslint-plugin-optimize-regex": "^1.1.7",
     "eslint-plugin-prefer-arrow": "^1.1.7",
-    "eslint-plugin-react": "^7.16.0",
+    "eslint-plugin-react": "~7.17.0",
     "eslint-plugin-unicorn": "^14.0.1",
     "make-promises-safe": "^5.1.0",
     "mocha": "^5.2.0",
