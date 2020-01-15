@@ -28,7 +28,6 @@ export class KafkaNodeConsumer implements IConsumer {
     // eslint-disable-next-line @typescript-eslint/promise-function-async
     public commitCheckpoint(partitionId: number, queuedMessage: IQueuedMessage): Promise<void> {
         const commitRequest = [{
-            // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
             offset: queuedMessage.offset + 1,
             partition: partitionId,
             topic: this.topic,
