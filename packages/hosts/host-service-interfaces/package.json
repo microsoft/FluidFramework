@@ -40,10 +40,10 @@
     "eslint-plugin-eslint-comments": "~3.1.2",
     "eslint-plugin-import": "~2.20.0",
     "eslint-plugin-no-null": "^1.0.2",
-    "eslint-plugin-optimize-regex": "^1.1.7",
-    "eslint-plugin-prefer-arrow": "^1.1.7",
+    "eslint-plugin-optimize-regex": "~1.1.7",
+    "eslint-plugin-prefer-arrow": "~1.1.7",
     "eslint-plugin-react": "~7.17.0",
-    "eslint-plugin-unicorn": "^14.0.1",
+    "eslint-plugin-unicorn": "~15.0.1",
     "rimraf": "^2.6.2",
     "typescript": "~3.7.4"
   }
