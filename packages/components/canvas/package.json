@@ -22,7 +22,7 @@
     "start": "webpack-dev-server --config webpack.config.js --package package.json",
     "start:docker": "webpack-dev-server --config webpack.config.js --package package.json --env.mode docker",
     "start:live": "webpack-dev-server --config webpack.config.js --package package.json --env.mode live",
-    "test:jest_disabled": "jest",
+    "test:jest": "jest",
     "tsc": "tsc",
     "tslint": "npm run eslint",
     "webpack": "webpack --env.production",
